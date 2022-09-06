@@ -289,8 +289,30 @@ public class TrafficSignalPlugin extends AbstractPlugin implements IStrategicPlu
             Lane cnvLane = new Lane();
             cnvLane.setId(laneData.getLaneId());
 
-            cnvLane.setApproach(laneData.getIngressApproachExists());
+            int dirBitString = laneData.getLaneAttributes().getDirectionalUse().getLaneDirection();
+
+            if (dirBitString == 0) // b00
+            {
+                log.debug("lane_direction is unset. Trying to use ingress approach flag instead.");
+
+                cnvLane.setApproach(laneData.getIngressApproachExists());
+
+            } else if (dirBitString == 1) // b01 ingress
+            {
+                log.debug("Found approach lane: " + Integer.toString(laneData.getLaneId()));
+                cnvLane.setApproach(true);
+
+            } else if (dirBitString == 2) { // b10 egress
+
+                log.debug("Found approach lane: " + Integer.toString(laneData.getLaneId()));
+                cnvLane.setApproach(false);
+
+            } else { // b11 pedestrian
+                log.debug("Found pedestrian lane: " + Integer.toString(laneData.getLaneId()));
+            }
+
             cnvLane.setAttributes(0);
+
 
             if (data.getIntersectionGeometry().getLaneWidthExists()) {
                 cnvLane.setWidth((int)(data.getIntersectionGeometry().getLaneWidth() * CM_PER_M));
@@ -393,10 +415,16 @@ public class TrafficSignalPlugin extends AbstractPlugin implements IStrategicPlu
                 
                 int phase = sortedEvents.peek().getEventState().getMovementPhaseState();
                 switch(phase) {
+                    case j2735_msgs.MovementPhaseState.PROTECTED_MOVEMENT_ALLOWED: // Green light
+                        m.setCurrentState(0x00000001);
+                        break;
                     case j2735_msgs.MovementPhaseState.PERMISSIVE_MOVEMENT_ALLOWED: // Green light
                         m.setCurrentState(0x00000001);
                         break;
                     case j2735_msgs.MovementPhaseState.PROTECTED_CLEARANCE: // Yellow
+                        m.setCurrentState(0x00000002);
+                        break;
+                    case j2735_msgs.MovementPhaseState.PERMISSIVE_CLEARANCE: // Yellow
                         m.setCurrentState(0x00000002);
                         break;
                     case j2735_msgs.MovementPhaseState.STOP_AND_REMAIN: // Red light
