@@ -269,6 +269,8 @@ namespace cooperative_lanechange
     {
       clc_called_ = true;
     }
+    
+    rclcpp::Time plan_start_time = this->now();
 
     //  Only plan the trajectory for the requested LANE_CHANGE maneuver
     std::vector<carma_planning_msgs::msg::Maneuver> maneuver_plan;
@@ -377,7 +379,10 @@ namespace cooperative_lanechange
     }
 
     std::vector<carma_planning_msgs::msg::TrajectoryPlanPoint> planned_trajectory_points = plan_lanechange(req);
-      
+    rclcpp::Time plan_end_time = this->now();
+    rclcpp::Duration duration = plan_end_time - plan_start_time;
+    RCLCPP_ERROR_STREAM(get_logger(), "lanechange plan duration: " << duration.seconds());
+
     if(negotiate){
       RCLCPP_DEBUG_STREAM(get_logger(), "Negotiating");
       //send mobility request

@@ -24,6 +24,8 @@ namespace basic_autonomy
          std::vector<PointSpeedPair> create_geometry_profile(const std::vector<carma_planning_msgs::msg::Maneuver> &maneuvers, double max_starting_downtrack,const carma_wm::WorldModelConstPtr &wm,
                                                                    carma_planning_msgs::msg::VehicleState &ending_state_before_buffer,const carma_planning_msgs::msg::VehicleState& state,
                                                                    const GeneralTrajConfig &general_config, const DetailedTrajConfig &detailed_config){
+            
+            auto start_time = std::chrono::high_resolution_clock::now();
             std::vector<PointSpeedPair> points_and_target_speeds;
             
             bool first = true;
@@ -53,6 +55,7 @@ namespace basic_autonomy
                 else{
                     throw std::invalid_argument("This maneuver type is not supported");
                 }
+
                 
             }
 
@@ -61,6 +64,13 @@ namespace basic_autonomy
                 points_and_target_speeds = add_lanefollow_buffer(wm, points_and_target_speeds, maneuvers, ending_state_before_buffer, detailed_config);
 
             }
+
+            auto end_time = std::chrono::high_resolution_clock::now();
+            
+            auto duration = std::chrono::duration_cast<std::chrono::milliseconds>(end_time - start_time);
+                
+            RCLCPP_WARN_STREAM(rclcpp::get_logger(BASIC_AUTONOMY_LOGGER), "ExecutionTime for geometry: " << duration.count() << " milliseconds");
+
             return points_and_target_speeds;
 
         }
@@ -516,7 +526,7 @@ namespace basic_autonomy
             auto end_time = std::chrono::high_resolution_clock::now();
             
             auto duration = std::chrono::duration_cast<std::chrono::milliseconds>(end_time - start_time);
-            RCLCPP_DEBUG_STREAM(rclcpp::get_logger(BASIC_AUTONOMY_LOGGER), "ExecutionTime for resample lane change centerlines: " << duration.count() << " milliseconds");
+            RCLCPP_WARN_STREAM(rclcpp::get_logger(BASIC_AUTONOMY_LOGGER), "ExecutionTime for resample lane change centerlines: " << duration.count() << " milliseconds");
 
             return output;
         }
