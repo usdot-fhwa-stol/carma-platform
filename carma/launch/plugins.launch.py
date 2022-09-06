@@ -142,9 +142,12 @@ def generate_launch_description():
                     ("incoming_spat", [ EnvironmentVariable('CARMA_MSG_NS', default_value=''), "/incoming_spat" ] ),
                     ("plugin_discovery", [ EnvironmentVariable('CARMA_GUIDE_NS', default_value=''), "/plugin_discovery" ] ),
                     ("route", [ EnvironmentVariable('CARMA_GUIDE_NS', default_value=''), "/route" ] ),
+                    ("current_velocity", [ EnvironmentVariable('CARMA_INTR_NS', default_value=''), "/vehicle/twist" ] ),
+                    ("maneuver_plan", [ EnvironmentVariable('CARMA_GUIDE_NS', default_value=''), "/final_maneuver_plan" ] ),
+                    ("upcoming_lane_change_status", [ EnvironmentVariable('CARMA_GUIDE_NS', default_value=''), "/upcoming_lane_change_status" ] ),
                 ],
                 parameters=[
-                    stop_and_wait_plugin_param_file,
+                    route_following_plugin_file_path,
                     vehicle_config_param_file
                 ]
             ),
@@ -331,7 +334,26 @@ def generate_launch_description():
                 ],
                 parameters=[ platoon_tactical_ihp_param_file, vehicle_config_param_file ]
             ),
-            
+            ComposableNode(
+                    package='pure_pursuit_wrapper',
+                    plugin='pure_pursuit_wrapper::PurePursuitWrapperNode',
+                    name='pure_pursuit_wrapper',
+                    extra_arguments=[
+                    {'use_intra_process_comms': True}, 
+                    {'--log-level' : GetLogLevel('pure_pursuit_wrapper', env_log_levels) }
+                ],
+                remappings = [
+                    ("plugin_discovery", [ EnvironmentVariable('CARMA_GUIDE_NS', default_value=''), "/plugin_discovery" ] ),
+                    ("ctrl_raw", [ EnvironmentVariable('CARMA_GUIDE_NS', default_value=''), "/ctrl_raw" ] ),
+                    ("pure_pursuit_wrapper/plan_trajectory", [ EnvironmentVariable('CARMA_GUIDE_NS', default_value=''), "/plugins/pure_pursuit/plan_trajectory" ] ),
+                    ("current_pose", [ EnvironmentVariable('CARMA_LOCZ_NS', default_value=''), "/current_pose" ] ),
+                    ("vehicle/twist", [ EnvironmentVariable('CARMA_INTR_NS', default_value=''), "/vehicle/twist" ] ),
+                ],
+                parameters=[
+                    vehicle_characteristics_param_file, #vehicle_response_lag
+                    pure_pursuit_tuning_parameters #pure_pursuit calibration parameters
+                ]
+            ),
         ]
     )
 
