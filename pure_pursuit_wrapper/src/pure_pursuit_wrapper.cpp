@@ -83,6 +83,7 @@ motion::motion_common::State PurePursuitWrapperNode::convert_state(geometry_msgs
   state.state.y = pose.pose.position.y;
   state.state.z = pose.pose.position.z;
   state.state.heading.real = pose.pose.orientation.w;
+  state.state.heading.imag = pose.pose.orientation.z;
 
   state.state.longitudinal_velocity_mps = twist.twist.linear.x;
   return state;

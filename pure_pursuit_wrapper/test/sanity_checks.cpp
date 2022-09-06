@@ -61,7 +61,7 @@ TEST(PurePursuitTest, sanity_check)
   state_tf.header.stamp = rclcpp::Time(converted_time_now*1e9);
 
   state_tf.state.heading.real = 3.14 / 2;
-  state_tf.state.heading.imag = 0;
+  state_tf.state.heading.imag = 1.0;
 
   state_tf.state.x = 0;
   state_tf.state.y = 0;
