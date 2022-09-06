@@ -293,22 +293,23 @@ public class TrafficSignalPlugin extends AbstractPlugin implements IStrategicPlu
 
             if (dirBitString == 0) // b00
             {
-                log.debug("lane_direction is unset. Trying to use ingress approach flag instead.");
+                // Logging can't be done here since this is a static function
+                //log.debug("lane_direction is unset. Trying to use ingress approach flag instead.");
 
                 cnvLane.setApproach(laneData.getIngressApproachExists());
 
             } else if (dirBitString == 1) // b01 ingress
             {
-                log.debug("Found approach lane: " + Integer.toString(laneData.getLaneId()));
+                //log.debug("Found approach lane: " + Integer.toString(laneData.getLaneId()));
                 cnvLane.setApproach(true);
 
             } else if (dirBitString == 2) { // b10 egress
 
-                log.debug("Found approach lane: " + Integer.toString(laneData.getLaneId()));
+                //log.debug("Found approach lane: " + Integer.toString(laneData.getLaneId()));
                 cnvLane.setApproach(false);
 
             } else { // b11 pedestrian
-                log.debug("Found pedestrian lane: " + Integer.toString(laneData.getLaneId()));
+                //log.debug("Found pedestrian lane: " + Integer.toString(laneData.getLaneId()));
             }
 
             cnvLane.setAttributes(0);
