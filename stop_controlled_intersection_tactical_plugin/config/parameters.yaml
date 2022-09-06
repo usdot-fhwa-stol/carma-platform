@@ -1,6 +1,6 @@
 # Double: The gap in meters between points sampled from the lanelet centerlines for planning trajectory positions
 # Units: m
-cernterline_sampling_spacing: 1.0
+centerline_sampling_spacing: 1.0
 trajectory_time_length: 6.0 # Trajectory length in seconds
 curve_resample_step_size: 1.0 # Curve re-sampling step size in m
 curvature_moving_average_window_size: 9 # Size of the window used in the moving average filter to smooth the computed curvature
