@@ -456,7 +456,7 @@ namespace plan_delegator
             
             auto plan_response = client->async_send_request(plan_req);
             
-            auto future_status = plan_response.wait_for(std::chrono::milliseconds(300));
+            auto future_status = plan_response.wait_for(std::chrono::milliseconds(100));
 
             // Wait for the result.
             if (future_status == std::future_status::ready)
