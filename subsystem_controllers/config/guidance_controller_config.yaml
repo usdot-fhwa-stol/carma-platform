@@ -17,7 +17,7 @@ stop_and_wait_plugin_param_file = os.path.join(
       - /guidance/plugins/inlanecruising_plugin
       - /guidance/plugins/route_following_plugin
       - /guidance/plugins/pure_pursuit_wrapper
-    #  - /guidance/plugins/stop_and_wait_plugin
+      - /guidance/plugins/stop_and_wait_plugin
 
     # Required subsystem controller nodes for the overall system to be functional and will have their lifecycle's managed
     required_subsystem_nodes:
@@ -27,10 +27,9 @@ stop_and_wait_plugin_param_file = os.path.join(
       - /guidance/trajectory_executor
       - /guidance/twist_filter
       - /guidance/twist_gate
-      - /guidance/plugins/route_following_plugin # The minimal set of guidance plugins for system operation are route_following/inlanecruising/pure_pursuit
+      - /guidance/plugins/route_following_plugin # The minimal set of guidance plugins for system operation are route_following/inlanecruising/pure_pursuit_wrapper
       - /guidance/plugins/inlanecruising_plugin
       - /guidance/plugins/pure_pursuit_wrapper
-    #  - /guidance/plugins/pure_pursuit
       - /guidance/plugins/yield_plugin
 
     # List of nodes which will not be directly managed by this subsystem controller 
@@ -47,7 +46,7 @@ stop_and_wait_plugin_param_file = os.path.join(
       - /guidance/plugins/route_following_plugin
       - /guidance/plugins/pure_pursuit_wrapper
       - /guidance/plugins/inlanecruising_plugin
-    #  - /guidance/plugins/cooperative_lanechange
+      - /guidance/plugins/cooperative_lanechange
 
     # List of guidance plugins which are not required but the user wishes to have automatically activated
     # so that the user doesn't need to manually activate them via the UI on each launch (though they still can)
