@@ -405,10 +405,18 @@ namespace basic_autonomy
             std::vector<lanelet::BasicPoint2d> downsampled_starting_centerline;
             downsampled_starting_centerline.reserve(400);
             downsampled_starting_centerline = carma_ros2_utils::containers::downsample_vector(reference_centerline, downsample_ratio);
+            if (downsampled_starting_centerline.size() > 200)
+            {
+                downsampled_starting_centerline.resize(200);
+            }
 
             std::vector<lanelet::BasicPoint2d> downsampled_target_centerline;
             downsampled_target_centerline.reserve(400);
             downsampled_target_centerline = carma_ros2_utils::containers::downsample_vector(target_lane_centerline, downsample_ratio);
+            if (downsampled_target_centerline.size() > 200)
+            {
+                downsampled_target_centerline.resize(200);
+            }
 
             //If points are not the same size - resample to ensure same size along both centerlines
             if(downsampled_starting_centerline.size() != downsampled_target_centerline.size())
