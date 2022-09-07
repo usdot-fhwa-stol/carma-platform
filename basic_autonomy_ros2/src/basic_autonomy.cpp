@@ -844,11 +844,21 @@ namespace basic_autonomy
                 return nullptr;
             }
 
+
             RCLCPP_WARN_STREAM(rclcpp::get_logger(BASIC_AUTONOMY_LOGGER), "points size: " << basic_points.size());
+            
+            std::vector<lanelet::BasicPoint2d> resized_basic_points = basic_points;
+
+            if (resized_basic_points.size() > 200)
+            {
+                resized_basic_points.resize(200);
+            }
+
+            RCLCPP_WARN_STREAM(rclcpp::get_logger(BASIC_AUTONOMY_LOGGER), "resized points size: " << resized_basic_points.size());
 
             std::unique_ptr<basic_autonomy::smoothing::SplineI> spl = std::make_unique<basic_autonomy::smoothing::BSpline>();
 
-            spl->setPoints(basic_points);
+            spl->setPoints(resized_basic_points);
 
             auto fit_time = std::chrono::high_resolution_clock::now();
             auto fit_duration = std::chrono::duration_cast<std::chrono::milliseconds>(fit_time - start_time);
