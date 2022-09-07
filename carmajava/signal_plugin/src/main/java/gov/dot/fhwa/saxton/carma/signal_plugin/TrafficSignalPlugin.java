@@ -298,12 +298,12 @@ public class TrafficSignalPlugin extends AbstractPlugin implements IStrategicPlu
 
                 cnvLane.setApproach(laneData.getIngressApproachExists());
 
-            } else if (dirBitString == 1) // b01 ingress
+            } else if (dirBitString == 2) // b01 ingress (incorrect on easymile should be flipped)
             {
                 //log.debug("Found approach lane: " + Integer.toString(laneData.getLaneId()));
                 cnvLane.setApproach(true);
 
-            } else if (dirBitString == 2) { // b10 egress
+            } else if (dirBitString == 1) { // b10 egress (incorrect on easymile should be flipped)
 
                 //log.debug("Found approach lane: " + Integer.toString(laneData.getLaneId()));
                 cnvLane.setApproach(false);
