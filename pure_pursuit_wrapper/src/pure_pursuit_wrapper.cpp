@@ -85,14 +85,13 @@ carma_ros2_utils::CallbackReturn PurePursuitWrapperNode::on_configure_plugin()
     config_.dist_front_rear_wheels,
   };
 
-  pure_pursuit::IntegratorConfig i_cfg{ 
-    config_.dt,
-    config_.integrator_max_pp,
-    config_.integrator_min_pp,
-    config_.Ki_pp,
-    config_.integral,
-    config_.is_integrator_enabled,
-  };
+  pure_pursuit::IntegratorConfig i_cfg;
+  i_cfg.dt = config_.dt; 
+  i_cfg.integrator_max_pp = config_.integrator_max_pp; 
+  i_cfg.integrator_min_pp = config_.integrator_min_pp; 
+  i_cfg.Ki_pp = config_.Ki_pp; 
+  i_cfg.integral = config_.integral; 
+  i_cfg.is_integrator_enabled = config_.is_integrator_enabled; 
   
   pp_ = std::make_shared<pure_pursuit::PurePursuit>(cfg, i_cfg);
 
@@ -238,7 +237,9 @@ void PurePursuitWrapperNode::process_trajectory_plan(const carma_planning_msgs::
   autoware_auto_msgs::msg::Trajectory autoware_trajectory;
   autoware_trajectory.header = tp.header;
   RCLCPP_ERROR_STREAM(rclcpp::get_logger("pure_pursuit_wrapper"), "size: " << trajectory_points.size());
-  auto max_size = std::min(99, (int)trajectory_points.size());
+  
+  auto max_size = std::min(99, (int)trajectory_points.size());  //NOTE: more than this size raises exception with "Exceeded upper bound while in ACTIVE state."
+                                                                //large portion of the points are not needed anyways 
   for (int i = 0; i < max_size; i++)
   {
     autoware_auto_msgs::msg::TrajectoryPoint autoware_point;
@@ -255,7 +256,6 @@ void PurePursuitWrapperNode::process_trajectory_plan(const carma_planning_msgs::
   }
 
   pp_->set_trajectory(autoware_trajectory);
-  //pp_retry_compute(); //todo do we need this?
 };
 
 std::vector<double> PurePursuitWrapperNode::apply_response_lag(const std::vector<double>& speeds, const std::vector<double> downtracks, double response_lag) const 
