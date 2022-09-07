@@ -484,7 +484,7 @@ namespace basic_autonomy
 
             auto fit1_time = std::chrono::high_resolution_clock::now();
             auto fit1_duration = std::chrono::duration_cast<std::chrono::milliseconds>(fit1_time - start_time);
-            RCLCPP_DEBUG_STREAM(rclcpp::get_logger(BASIC_AUTONOMY_LOGGER), "ExecutionTime for fit1: " << fit1_duration.count() << " milliseconds");
+            RCLCPP_WARN_STREAM(rclcpp::get_logger(BASIC_AUTONOMY_LOGGER), "ExecutionTime for fit1: " << fit1_duration.count() << " milliseconds");
 
             std::unique_ptr<smoothing::SplineI> fit_curve_2 = compute_fit(line_2); // Compute splines based on curve points
             if (!fit_curve_2)
@@ -494,7 +494,7 @@ namespace basic_autonomy
 
             auto fit2_time = std::chrono::high_resolution_clock::now();
             auto fit2_duration = std::chrono::duration_cast<std::chrono::milliseconds>(fit2_time - start_time);
-            RCLCPP_DEBUG_STREAM(rclcpp::get_logger(BASIC_AUTONOMY_LOGGER), "ExecutionTime for fit2: " << fit2_duration.count() << " milliseconds");
+            RCLCPP_WARN_STREAM(rclcpp::get_logger(BASIC_AUTONOMY_LOGGER), "ExecutionTime for fit2: " << fit2_duration.count() << " milliseconds");
 
 
             //Sample spline to get centerlines of equal size
@@ -511,7 +511,7 @@ namespace basic_autonomy
             //      and these calcs can be deleted (see below also).
             auto arc1_time = std::chrono::high_resolution_clock::now();
             auto arc1_duration = std::chrono::duration_cast<std::chrono::milliseconds>(arc1_time - start_time);
-            RCLCPP_DEBUG_STREAM(rclcpp::get_logger(BASIC_AUTONOMY_LOGGER), "ExecutionTime for arc1: " << arc1_duration.count() << " milliseconds");
+            RCLCPP_WARN_STREAM(rclcpp::get_logger(BASIC_AUTONOMY_LOGGER), "ExecutionTime for arc1: " << arc1_duration.count() << " milliseconds");
 
             
             all_sampling_points_line2.reserve(1 + total_point_size * 2);
@@ -521,7 +521,7 @@ namespace basic_autonomy
 
             auto arc2_time = std::chrono::high_resolution_clock::now();
             auto arc2_duration = std::chrono::duration_cast<std::chrono::milliseconds>(arc2_time - start_time);
-            RCLCPP_DEBUG_STREAM(rclcpp::get_logger(BASIC_AUTONOMY_LOGGER), "ExecutionTime for arc2: " << arc2_duration.count() << " milliseconds");
+            RCLCPP_WARN_STREAM(rclcpp::get_logger(BASIC_AUTONOMY_LOGGER), "ExecutionTime for arc2: " << arc2_duration.count() << " milliseconds");
 
 
             double scaled_steps_along_curve = 0.0; // from 0 (start) to 1 (end) for the whole trajectory
@@ -540,7 +540,7 @@ namespace basic_autonomy
 
             auto loop_time = std::chrono::high_resolution_clock::now();
             auto loop_duration = std::chrono::duration_cast<std::chrono::milliseconds>(loop_time - start_time);
-            RCLCPP_DEBUG_STREAM(rclcpp::get_logger(BASIC_AUTONOMY_LOGGER), "ExecutionTime for loop: " << loop_duration.count() << " milliseconds");
+            RCLCPP_WARN_STREAM(rclcpp::get_logger(BASIC_AUTONOMY_LOGGER), "ExecutionTime for loop: " << loop_duration.count() << " milliseconds");
 
             output.push_back(all_sampling_points_line1);
             output.push_back(all_sampling_points_line2);
@@ -829,15 +829,22 @@ namespace basic_autonomy
 
         std::unique_ptr<basic_autonomy::smoothing::SplineI> compute_fit(const std::vector<lanelet::BasicPoint2d> &basic_points)
         {
+            auto start_time = std::chrono::high_resolution_clock::now();
             if (basic_points.size() < 4)
             {
                 RCLCPP_WARN_STREAM(rclcpp::get_logger(BASIC_AUTONOMY_LOGGER), "Insufficient Spline Points");
                 return nullptr;
             }
 
+            RCLCPP_WARN_STREAM(rclcpp::get_logger(BASIC_AUTONOMY_LOGGER), "points size: " << basic_points.size());
+
             std::unique_ptr<basic_autonomy::smoothing::SplineI> spl = std::make_unique<basic_autonomy::smoothing::BSpline>();
 
             spl->setPoints(basic_points);
+
+            auto fit_time = std::chrono::high_resolution_clock::now();
+            auto fit_duration = std::chrono::duration_cast<std::chrono::milliseconds>(fit_time - start_time);
+            RCLCPP_WARN_STREAM(rclcpp::get_logger(BASIC_AUTONOMY_LOGGER), "ExecutionTime for fit comp: " << fit_duration.count() << " milliseconds");
 
             return spl;
         }
