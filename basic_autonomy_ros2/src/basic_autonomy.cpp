@@ -482,11 +482,20 @@ namespace basic_autonomy
                 throw std::invalid_argument("Could not fit a spline curve along the starting_lane centerline points!");
             }
 
+            auto fit1_time = std::chrono::high_resolution_clock::now();
+            auto fit1_duration = std::chrono::duration_cast<std::chrono::milliseconds>(fit1_time - start_time);
+            RCLCPP_DEBUG_STREAM(rclcpp::get_logger(BASIC_AUTONOMY_LOGGER), "ExecutionTime for fit1: " << fit1_duration.count() << " milliseconds");
+
             std::unique_ptr<smoothing::SplineI> fit_curve_2 = compute_fit(line_2); // Compute splines based on curve points
             if (!fit_curve_2)
             {
                 throw std::invalid_argument("Could not fit a spline curve along the ending_lane centerline points!");
             }
+
+            auto fit2_time = std::chrono::high_resolution_clock::now();
+            auto fit2_duration = std::chrono::duration_cast<std::chrono::milliseconds>(fit2_time - start_time);
+            RCLCPP_DEBUG_STREAM(rclcpp::get_logger(BASIC_AUTONOMY_LOGGER), "ExecutionTime for fit2: " << fit2_duration.count() << " milliseconds");
+
 
             //Sample spline to get centerlines of equal size
             std::vector<lanelet::BasicPoint2d> all_sampling_points_line1;
@@ -500,11 +509,20 @@ namespace basic_autonomy
             //double step_threshold_line1 = (double)total_step_along_curve1 / (double)total_point_size;
             //TODO: are we missing some computation here?  step_threshold_line1 and step_threshold_line2 are not used anywhere
             //      and these calcs can be deleted (see below also).
+            auto arc1_time = std::chrono::high_resolution_clock::now();
+            auto arc1_duration = std::chrono::duration_cast<std::chrono::milliseconds>(arc1_time - start_time);
+            RCLCPP_DEBUG_STREAM(rclcpp::get_logger(BASIC_AUTONOMY_LOGGER), "ExecutionTime for arc1: " << arc1_duration.count() << " milliseconds");
+
             
             all_sampling_points_line2.reserve(1 + total_point_size * 2);
             std::vector<double> downtracks_raw_line2 = carma_wm::geometry::compute_arc_lengths(line_2);
             //TODO: unused variable: int total_step_along_curve2 = static_cast<int>(downtracks_raw_line2.back() / 2.0);
             //TODO: unused variable: double step_threshold_line2 = (double)total_step_along_curve2 / (double)total_point_size;
+
+            auto arc2_time = std::chrono::high_resolution_clock::now();
+            auto arc2_duration = std::chrono::duration_cast<std::chrono::milliseconds>(arc2_time - start_time);
+            RCLCPP_DEBUG_STREAM(rclcpp::get_logger(BASIC_AUTONOMY_LOGGER), "ExecutionTime for arc2: " << arc2_duration.count() << " milliseconds");
+
 
             double scaled_steps_along_curve = 0.0; // from 0 (start) to 1 (end) for the whole trajectory
             
@@ -519,6 +537,10 @@ namespace basic_autonomy
 
                 scaled_steps_along_curve += 1.0 / total_point_size;  //adding steps_along_curve_step_size
             }
+
+            auto loop_time = std::chrono::high_resolution_clock::now();
+            auto loop_duration = std::chrono::duration_cast<std::chrono::milliseconds>(loop_time - start_time);
+            RCLCPP_DEBUG_STREAM(rclcpp::get_logger(BASIC_AUTONOMY_LOGGER), "ExecutionTime for loop: " << loop_duration.count() << " milliseconds");
 
             output.push_back(all_sampling_points_line1);
             output.push_back(all_sampling_points_line2);
