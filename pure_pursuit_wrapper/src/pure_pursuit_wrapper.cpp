@@ -37,6 +37,14 @@ PurePursuitWrapperNode::PurePursuitWrapperNode(const rclcpp::NodeOptions& option
   config_.emergency_stop_distance = declare_parameter<double>("emergency_stop_distance", config_.emergency_stop_distance);
   config_.speed_thres_traveling_direction = declare_parameter<double>("speed_thres_traveling_direction", config_.speed_thres_traveling_direction);
   config_.dist_front_rear_wheels = declare_parameter<double>("dist_front_rear_wheels", config_.dist_front_rear_wheels);
+
+  // integrator part
+  config_.dt = declare_parameter<double>("dt", config_.dt);
+  config_.integrator_max_pp = declare_parameter<double>("integrator_max_pp", config_.integrator_max_pp);
+  config_.integrator_min_pp = declare_parameter<double>("integrator_min_pp", config_.integrator_min_pp);
+  config_.Ki_pp = declare_parameter<double>("Ki_pp", config_.Ki_pp);
+  config_.integral = declare_parameter<double>("integral", config_.integral);
+  config_.is_integrator_enabled = declare_parameter<bool>("is_integrator_enabled", config_.is_integrator_enabled);
 }
 
 carma_ros2_utils::CallbackReturn PurePursuitWrapperNode::on_configure_plugin()
@@ -51,6 +59,14 @@ carma_ros2_utils::CallbackReturn PurePursuitWrapperNode::on_configure_plugin()
   get_parameter<double>("emergency_stop_distance", config_.emergency_stop_distance);
   get_parameter<double>("speed_thres_traveling_direction", config_.speed_thres_traveling_direction);
   get_parameter<double>("dist_front_rear_wheels", config_.dist_front_rear_wheels);
+  
+  // integrator configs
+  get_parameter<double>("dt", config_.dt);
+  get_parameter<double>("integrator_max_pp", config_.integrator_max_pp);
+  get_parameter<double>("integrator_min_pp", config_.integrator_min_pp);
+  get_parameter<double>("Ki_pp", config_.Ki_pp);
+  get_parameter<double>("integral", config_.integral);
+  get_parameter<bool>("is_integrator_enabled", config_.is_integrator_enabled);
 
   RCLCPP_INFO_STREAM(rclcpp::get_logger("pure_pursuit_wrapper"), "Loaded Params: " << config_);
 
@@ -68,8 +84,17 @@ carma_ros2_utils::CallbackReturn PurePursuitWrapperNode::on_configure_plugin()
     config_.speed_thres_traveling_direction,
     config_.dist_front_rear_wheels,
   };
+
+  pure_pursuit::IntegratorConfig i_cfg{ 
+    config_.dt,
+    config_.integrator_max_pp,
+    config_.integrator_min_pp,
+    config_.Ki_pp,
+    config_.integral,
+    config_.is_integrator_enabled,
+  };
   
-  pp_ = std::make_shared<pure_pursuit::PurePursuit>(cfg);
+  pp_ = std::make_shared<pure_pursuit::PurePursuit>(cfg, i_cfg);
 
   // Return success if everything initialized successfully
   return CallbackReturn::SUCCESS;

@@ -33,6 +33,14 @@ struct PurePursuitWrapperConfig
   double emergency_stop_distance = 0.1;
   double speed_thres_traveling_direction = 0.3;
   double dist_front_rear_wheels = 3.5;
+
+  // integrator part
+  double dt = 0.1;
+  double integrator_max_pp = 0.0;
+  double integrator_min_pp = 0.0;
+  double Ki_pp = 0.0;
+  double integral = 0.0;
+  bool is_integrator_enabled = false;
   
   friend std::ostream& operator<<(std::ostream& output, const PurePursuitWrapperConfig& c)
   {
@@ -46,6 +54,13 @@ struct PurePursuitWrapperConfig
            << "emergency_stop_distance: " << c.emergency_stop_distance << std::endl
            << "speed_thres_traveling_direction: " << c.speed_thres_traveling_direction << std::endl
            << "dist_front_rear_wheels: " << c.dist_front_rear_wheels << std::endl
+            // integrator part:
+           << "dt: " << c.dt << std::endl
+           << "integrator_max_pp: " << c.integrator_max_pp << std::endl
+           << "integrator_min_pp: " << c.integrator_min_pp << std::endl
+           << "Ki_pp: " << c.Ki_pp << std::endl
+           << "integral: " << c.integral << std::endl
+           << "is_integrator_enabled: " << c.is_integrator_enabled << std::endl
            << "}" << std::endl;
     return output;
   }
