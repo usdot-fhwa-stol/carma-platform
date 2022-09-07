@@ -127,11 +127,11 @@
     <remap from="ctrl_raw" to="$(optenv CARMA_GUIDE_NS)/ctrl_raw"/>
     <remap from="twist_raw" to="$(optenv CARMA_GUIDE_NS)/twist_raw"/>
       
-    <!-- Platooning Control Plugin -->
+    <!--Platooning Control Plugin >
     <include file="$(find platoon_control)/launch/platoon_control.launch" />
 
-    <!-- Platooning Control IHP Plugin -->
-    <include file="$(find platoon_control_ihp)/launch/platoon_control_ihp.launch" />
+    <!latooning Control IHP Plugin >
+    <include file="$(find platoon_control_ihp)/launch/platoon_control_ihp.launch" /-->
 
     <!-- Intersection Transit Maneuvering Plugin-->
     <group>

@@ -212,8 +212,9 @@ void PurePursuitWrapperNode::process_trajectory_plan(const carma_planning_msgs::
     
   autoware_auto_msgs::msg::Trajectory autoware_trajectory;
   autoware_trajectory.header = tp.header;
-
-  for (int i = 0; i < trajectory_points.size(); i++)
+  RCLCPP_ERROR_STREAM(rclcpp::get_logger("pure_pursuit_wrapper"), "size: " << trajectory_points.size());
+  auto max_size = std::min(99, (int)trajectory_points.size());
+  for (int i = 0; i < max_size; i++)
   {
     autoware_auto_msgs::msg::TrajectoryPoint autoware_point;
 
