@@ -410,7 +410,6 @@ namespace basic_autonomy
             downsampled_target_centerline.reserve(400);
             downsampled_target_centerline = carma_ros2_utils::containers::downsample_vector(target_lane_centerline, downsample_ratio);
 
-
             //If points are not the same size - resample to ensure same size along both centerlines
             if(downsampled_starting_centerline.size() != downsampled_target_centerline.size())
             {
@@ -475,7 +474,8 @@ namespace basic_autonomy
             auto start_time = std::chrono::high_resolution_clock::now(); // Start timing the execution time for planning so it can be logged
 
             std::vector<std::vector<lanelet::BasicPoint2d>> output;
-            
+
+           
             //Fit centerlines to a spline
             std::unique_ptr<smoothing::SplineI> fit_curve_1 = compute_fit(line_1); // Compute splines based on curve points
             if (!fit_curve_1)
@@ -841,13 +841,10 @@ namespace basic_autonomy
             RCLCPP_WARN_STREAM(rclcpp::get_logger(BASIC_AUTONOMY_LOGGER), "points size: " << basic_points.size());
             
             std::vector<lanelet::BasicPoint2d> resized_basic_points = basic_points;
-
-            if (resized_basic_points.size() > 200)
+            if (resized_basic_points.size() > 400)
             {
-                resized_basic_points.resize(200);
+                resized_basic_points.resize(400);
             }
-
-            RCLCPP_WARN_STREAM(rclcpp::get_logger(BASIC_AUTONOMY_LOGGER), "resized points size: " << resized_basic_points.size());
 
             std::unique_ptr<basic_autonomy::smoothing::SplineI> spl = std::make_unique<basic_autonomy::smoothing::BSpline>();
 
