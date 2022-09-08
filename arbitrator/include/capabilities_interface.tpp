@@ -37,7 +37,7 @@ namespace arbitrator
         {
             auto topic = *i; //todo revert hardcode
             if (topic == "lci_strategic_plugin/plan_maneuvers")
-                topic = "/guidance/plugins/lci_strategic_plugin/plan_maneuvers"
+                topic = "/guidance/plugins/lci_strategic_plugin/plan_maneuvers";
             auto sc = nh_->create_client<carma_planning_msgs::srv::PlanManeuvers>(topic);
             RCLCPP_DEBUG_STREAM(rclcpp::get_logger("arbitrator"), "found client: " << topic);
             
