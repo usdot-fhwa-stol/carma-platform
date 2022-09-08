@@ -1475,9 +1475,9 @@ namespace carma_wm
           continue;
         }
       
-        double global_start = ros::Time::now().toSec();
-        double last_start = global_start;
-        double signal_duration = 0.0;
+        //double global_start = ros::Time::now().toSec();
+        //double last_start = global_start;
+        //double signal_duration = 0.0;
         if(current_movement_state.movement_event_list.size()>1) // Dynamic Spat Processing with future phases
         {
           for(auto current_movement_event:current_movement_state.movement_event_list)
@@ -1485,7 +1485,7 @@ namespace carma_wm
             // raw min_end_time in seconds measured from the most recent full hour
             boost::posix_time::ptime min_end_time_dynamic = lanelet::time::timeFromSec(current_movement_event.timing.min_end_time);
             boost::posix_time::ptime start_time_dynamic = lanelet::time::timeFromSec(current_movement_event.timing.start_time);
-            signal_duration += lanelet::time::toSec(min_end_time_dynamic) - lanelet::time::toSec(start_time_dynamic);
+            //signal_duration += lanelet::time::toSec(min_end_time_dynamic) - lanelet::time::toSec(start_time_dynamic);
             min_end_time_dynamic=min_end_time_converter_minute_of_year(min_end_time_dynamic,curr_intersection.moy_exists,curr_intersection.moy); // Accounting minute of the year
             start_time_dynamic=min_end_time_converter_minute_of_year(start_time_dynamic,curr_intersection.moy_exists,curr_intersection.moy); // Accounting minute of the year
 
@@ -1497,15 +1497,15 @@ namespace carma_wm
             if (!recorded)
 		        {
               sim_.traffic_signal_states_[curr_intersection.id.id][current_movement_state.signal_group].push_back(
-                                std::make_pair(lanelet::time::timeFromSec(global_start + signal_duration), received_state_dynamic)); //todo use min_end_time_dynamic on real testing
+                                std::make_pair(lanelet::time::timeFromSec(min_end_time_dynamic), received_state_dynamic)); //todo use min_end_time_dynamic on real testing
               sim_.traffic_signal_start_times_[curr_intersection.id.id][current_movement_state.signal_group].push_back(
-                                lanelet::time::timeFromSec(last_start)); //todo use start_time_dynamic on real testing
+                                lanelet::time::timeFromSec(start_time_dynamic)); //todo use start_time_dynamic on real testing
               ROS_ERROR_STREAM("intersection id: " << (int)curr_intersection.id.id << ", signal: " << (int)current_movement_state.signal_group 
-                  << ", end_time: " << lanelet::time::timeFromSec(global_start + signal_duration)
+                  << ", end_time: " << lanelet::time::timeFromSec(min_end_time_dynamic)
                  << ", state: " << received_state_dynamic);
               curr_light->recorded_time_stamps = sim_.traffic_signal_states_[curr_intersection.id.id][current_movement_state.signal_group];
               curr_light->recorded_start_time_stamps = sim_.traffic_signal_start_times_[curr_intersection.id.id][current_movement_state.signal_group];
-              last_start = global_start + signal_duration;
+              //last_start = global_start + signal_duration;
     		    }
 	        }
         } 
@@ -1650,7 +1650,7 @@ namespace carma_wm
       }
     }
 
-    first_testing_ = true;
+    //first_testing_ = true;
 
   }
 
