@@ -26,6 +26,7 @@
 #include <carma_guidance_plugins/control_plugin.hpp>
 #include <pure_pursuit/pure_pursuit.hpp>
 #include <gtest/gtest_prod.h>
+#include <basic_autonomy_ros2/basic_autonomy.hpp>
 
 namespace pure_pursuit_wrapper {
 
@@ -57,10 +58,6 @@ class PurePursuitWrapperNode : public carma_guidance_plugins::ControlPlugin
     bool get_availability() override;
 
     std::string get_version_id() override;
-
-
-    // MAIN functions
-    void process_trajectory_plan(const carma_planning_msgs::msg::TrajectoryPlan& tp);
 
      /**
      * \brief Applies a specified response lag in seconds to the trajectory shifting the whole thing by the specified lag time

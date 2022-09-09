@@ -50,6 +50,8 @@ else
       git clone --depth=1 https://github.com/usdot-fhwa-stol/carma-messenger.git --branch develop
 fi
 
+git clone --depth=1 https://github.com/usdot-fhwa-stol/autoware.auto.git --branch feature/ros2_pure_pursuit
+
 # Get humble branch of message filters which supports template Node arguments (foxy version supports rclcpp::Node only)
 git clone https://github.com/usdot-fhwa-stol/carma-message-filters.git --branch develop
 

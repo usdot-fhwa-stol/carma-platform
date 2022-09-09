@@ -149,7 +149,9 @@ autoware_msgs::msg::ControlCommandStamped PurePursuitWrapperNode::generate_comma
 
   current_trajectory_.get().header.frame_id = state_tf.header.frame_id;
 
-  process_trajectory_plan(current_trajectory_.get());
+  auto autoware_traj_plan = basic_autonomy::waypoint_generation::process_trajectory_plan(current_trajectory_.get());
+
+  pp_->set_trajectory(autoware_traj_plan);
 
   const auto cmd{pp_->compute_command(state_tf)};
   
@@ -181,82 +183,6 @@ std::string PurePursuitWrapperNode::get_version_id()
 {
   return "v1.0";
 }
-
-void PurePursuitWrapperNode::process_trajectory_plan(const carma_planning_msgs::msg::TrajectoryPlan& tp)
-{
-  RCLCPP_DEBUG_STREAM(rclcpp::get_logger("pure_pursuit_wrapper"), "Processing latest TrajectoryPlan message");
-
-  std::vector<double> times;
-  std::vector<double> downtracks;
-
-  std::vector<carma_planning_msgs::msg::TrajectoryPlanPoint> trajectory_points = tp.trajectory_points;
-
-  RCLCPP_DEBUG_STREAM(rclcpp::get_logger("pure_pursuit_wrapper"), "Original Trajectory size:"<<trajectory_points.size());
-
-
-  trajectory_utils::conversions::trajectory_to_downtrack_time(trajectory_points, &downtracks, &times);
-
-  //detect stopping case
-  size_t stopping_index = 0;
-  for (size_t i = 1; i < times.size(); i++)
-  {
-    if (times[i] == times[i - 1]) //if exactly same, it is stopping case
-    {
-      RCLCPP_DEBUG_STREAM(rclcpp::get_logger("pure_pursuit_wrapper"), "Detected a stopping case where times is exactly equal: " << times[i-1]);
-      RCLCPP_DEBUG_STREAM(rclcpp::get_logger("pure_pursuit_wrapper"), "And index of that is: " << i << ", where size is: " << times.size());
-      stopping_index = i;
-      break;
-    }
-  }
-
-  std::vector<double> speeds;
-  trajectory_utils::conversions::time_to_speed(downtracks, times, tp.initial_longitudinal_velocity, &speeds);
-
-  if (speeds.size() != trajectory_points.size())
-  {
-    throw std::invalid_argument("Speeds and trajectory points sizes do not match");
-  }
-
-  for (size_t i = 0; i < speeds.size(); i++) { // Ensure 0 is min speed
-    if (stopping_index != 0 && i >= stopping_index - 1)
-    {
-      speeds[i] = 0.0;  //stopping case
-    }
-    else
-    {
-      speeds[i] = std::max(0.0, speeds[i]);
-    }
-  }
-
-  std::vector<double> lag_speeds;
-  if (config_.is_delay_compensation)
-    lag_speeds = apply_response_lag(speeds, downtracks, config_.vehicle_response_lag); // This call requires that the first speed point be current speed to work as expected
-  else
-    lag_speeds = speeds;
-    
-  autoware_auto_msgs::msg::Trajectory autoware_trajectory;
-  autoware_trajectory.header = tp.header;
-  RCLCPP_ERROR_STREAM(rclcpp::get_logger("pure_pursuit_wrapper"), "size: " << trajectory_points.size());
-  
-  auto max_size = std::min(99, (int)trajectory_points.size());  //NOTE: more than this size raises exception with "Exceeded upper bound while in ACTIVE state."
-                                                                //large portion of the points are not needed anyways 
-  for (int i = 0; i < max_size; i++)
-  {
-    autoware_auto_msgs::msg::TrajectoryPoint autoware_point;
-
-    autoware_point.x = trajectory_points[i].x;
-    autoware_point.y = trajectory_points[i].y;
-    autoware_point.longitudinal_velocity_mps = lag_speeds[i];
-
-    autoware_point.time_from_start = rclcpp::Duration(times[i] * 1e9);
-    RCLCPP_ERROR_STREAM(rclcpp::get_logger("pure_pursuit_wrapper"), "Setting waypoint idx: " << i <<", with planner: << " << trajectory_points[i].planner_plugin_name << ", x: " << trajectory_points[i].x << 
-                            ", y: " << trajectory_points[i].y <<
-                            ", speed: " << lag_speeds[i]* 2.23694 << "mph");
-    autoware_trajectory.points.push_back(autoware_point);
-  }
-
-  pp_->set_trajectory(autoware_trajectory);
-};
 
 std::vector<double> PurePursuitWrapperNode::apply_response_lag(const std::vector<double>& speeds, const std::vector<double> downtracks, double response_lag) const 
 { // Note first speed is assumed to be vehicle speed
