@@ -51,6 +51,43 @@ Fixes in this release:
 
 - Issue 27: Fixed intermittent large delay experienced between CARMA Cloud receiving a TCR from V2XHub and CARMA Cloud sending all corresponding TCMs to V2XHub.
 
+
+
+Version 4.1.0, released June 1st, 2022
+----------------------------------------
+
+**Summary:**
+CARMA Platform release version 4.1.0 adds Personal Safety Message (PSM) support to CARMA Platform and CARMA Messenger along with updates to several CARMA Plugins to support ROS2 compatibility. Along with the aforementioned enhancements, several bug fixes and CI related enhancements are included in this release.
+
+CARMA Platform:
+
+Enhancements in this release:
+- Issue 1757: Updated port of Roadway objects node to ROS2 to support ROS2 migration.
+- Issue 1754: Updated basic autonomy library (and its ROS1 dependencies) to support ROS2 implementation.
+- Issue 1762: Updated LCI (Light Controlled Intersection) Strategic Plugin so that it uses the schedule message from the intersection for setting its ET algorithm parameters instead of computing them based on SPAT if the message is available.
+-	Issue 1672: Added J2735 Personal Safety Message (PSM) support to CARMA Platform and CARMA Messenger such that PSMs can be received and converted to an external object.
+-	Issue 1697: Added Re-Routing Functionality to Route Following Plugin such that plugin will generate a lane change or sequence of lane change maneuvers to get the vehicle back onto the shortest route path.
+-	Issue 1669: Updated GNSS to Map Convertor node from ROS1 to ROS2. 
+
+Fixes in this release:
+-	Issue 1771: Fixed vector map after switching ros1_bridge to dynamic bridge which will not make it to the ROS2 nodes which disables the object detection system.
+-	Issue 1765: Fixed Rviz which continues to display the object marker even after the object is no longer being published. 
+-	Issue 1760: Fixed few errors in motion computation node as well as BSM generator so that the accurate external object can be created using BSM messages.
+-	Issue 1725: Fixed the ET (Entering Time) in (Light Controlled Intersection) Strategic Plugin.
+-	Issue 1696: Fixed the planning for a lane follow maneuver starts close enough to the end of the maneuver such that there are only one remaining point to be added in path.
+CARMA Messenger:
+
+Enhancements in this release:
+-	Issue 142: Added PSM parameters in carma_messenger_core and a debug log statement for recording timestamp of incoming Personal Safety Message (PSM).
+   Fixes in this release:
+-	Issue 138: Fixed PSM Parser and Elevation default values, also a check is added to make sure positional accuracy fields are not checked if the values don’t exist in the incoming message.
+
+Autoware.ai:
+
+  Fixes in this release:
+-	Issue 220: Fixed the Georeference Topic that has to be published as a timer (every 2 seconds) so that the ROS Bridge can successfully publish the message.
+
+
 Version 4.0.3, released May 10th, 2022
 ----------------------------------------
 
