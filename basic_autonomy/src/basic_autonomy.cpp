@@ -801,10 +801,18 @@ namespace basic_autonomy
                 ROS_WARN_STREAM("Insufficient Spline Points");
                 return nullptr;
             }
+            std::vector<lanelet::BasicPoint2d> resized_basic_points = basic_points;
+            
+            // The large the number of points, longer it takes to calculate a spline fit
+            // So if the basic_points vector size is large, only the first 400 points are used to compute a spline fit. 
+            if (resized_basic_points.size() > 400)
+            {
+                resized_basic_points.resize(400);
+            }
 
             std::unique_ptr<basic_autonomy::smoothing::SplineI> spl = std::make_unique<basic_autonomy::smoothing::BSpline>();
 
-            spl->setPoints(basic_points);
+            spl->setPoints(resized_basic_points);
 
             return spl;
         }
