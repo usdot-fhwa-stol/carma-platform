@@ -817,9 +817,9 @@ namespace basic_autonomy
                 
                 ROS_DEBUG_STREAM( "Number of left out basic_points size: " << left_points_size);
 
-                int percent_points_lost = 100 * left_points_size/basic_points.size();
+                double percent_points_lost = 100 * left_points_size/basic_points.size();
 
-                if (percent_points_lost > 50)
+                if (percent_points_lost > 50.0)
                 {
                     ROS_WARN_STREAM("More than half of basic points are ignored for spline fitting");
                 }
