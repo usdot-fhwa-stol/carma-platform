@@ -1466,6 +1466,7 @@ namespace carma_wm
         {
           ROS_ERROR_STREAM("Received a new intersection geometry. intersection_id: " << (int)curr_intersection.id.id << ", and signal_group_id: " << (int)current_movement_state.signal_group);
           sim_.traffic_signal_states_[curr_intersection.id.id][current_movement_state.signal_group].clear();
+          
         }
 
         // all maneuver types in same signal group is currently expected to share signal timing, so only 0th index is used when setting states
@@ -1474,6 +1475,8 @@ namespace carma_wm
           ROS_ERROR_STREAM("Movement_event_list is empty . intersection_id: " << (int)curr_intersection.id.id << ", and signal_group_id: " << (int)current_movement_state.signal_group);
           continue;
         }
+
+        curr_light->revision_ = curr_intersection.revision; // valid SPAT msg
       
         //double global_start = ros::Time::now().toSec();
         //double last_start = global_start;

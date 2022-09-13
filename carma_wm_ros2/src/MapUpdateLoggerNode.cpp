@@ -151,7 +151,7 @@ carma_debug_ros2_msgs::msg::LaneletIdRegulatoryElementPair MapUpdateLogger::pair
 
   } else {
 
-    RCLCPP_WARN_STREAM(rclcpp::get_logger("map_update_debug"), "MapUpdateLogger recieved unsupported regulatory element in map update.");
+    RCLCPP_WARN_STREAM(rclcpp::get_logger("carma_wm_ros2"), "MapUpdateLogger recieved unsupported regulatory element in map update.");
     pair.element.unsupported_type = true; 
 
   }

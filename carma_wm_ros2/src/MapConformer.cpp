@@ -82,7 +82,7 @@ std::vector<lanelet::traffic_rules::TrafficRulesUPtr> getAllGermanTrafficRules()
     catch (const lanelet::InvalidInputError& e)
     {
       // Ignore participants which there is no generic rules for
-      RCLCPP_INFO_STREAM ( rclcpp::get_logger("MapConformer"), "Ignoring participant: " << participant_types[i] <<  ", which there is no generic rule for...");
+      RCLCPP_INFO_STREAM ( rclcpp::get_logger("carma_wm_ros2"), "Ignoring participant: " << participant_types[i] <<  ", which there is no generic rule for...");
     }
   }
 

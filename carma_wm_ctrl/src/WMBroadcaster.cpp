@@ -220,11 +220,11 @@ std::vector<std::shared_ptr<Geofence>> WMBroadcaster::geofenceFromMapMsg(std::sh
   std::vector<std::shared_ptr<lanelet::SignalizedIntersection>> intersections;
   std::vector<std::shared_ptr<lanelet::CarmaTrafficSignal>> traffic_signals;
 
-  auto sim_copy = sim_;
+  auto sim_copy = std::make_shared<carma_wm::SignalizedIntersectionManager>(*sim_);
 
-  sim_.createIntersectionFromMapMsg(intersections, traffic_signals, map_msg, current_map_, current_routing_graph_);
+  sim_->createIntersectionFromMapMsg(intersections, traffic_signals, map_msg, current_map_, current_routing_graph_);
 
-  if (sim_ == sim_copy) // if no change
+  if (*sim_ == *sim_copy) // if no change
   {
     RCLCPP_DEBUG_STREAM(rclcpp::get_logger("carma_wm_ctrl"), ">>> Detected no change from previous, ignoring duplicate message! with gf id: " << gf_ptr->id_);
     return {};
@@ -1039,13 +1039,13 @@ void WMBroadcaster::externalMapMsgCallback(carma_v2x_msgs::msg::MapData::UniqueP
 
   // check if we have seen this message already
   bool up_to_date = false;
-  if (sim_.intersection_id_to_regem_id_.size() == map_msg->intersections.size())
+  if (sim_->intersection_id_to_regem_id_.size() == map_msg->intersections.size())
   {
     up_to_date = true;
     // check id of the intersection only
     for (auto intersection : map_msg->intersections)
     {
-      if (sim_.intersection_id_to_regem_id_.find(intersection.id.id) == sim_.intersection_id_to_regem_id_.end())
+      if (sim_->intersection_id_to_regem_id_.find(intersection.id.id) == sim_->intersection_id_to_regem_id_.end())
       {
         up_to_date = false;
         break;
@@ -1198,28 +1198,37 @@ void WMBroadcaster::scheduleGeofence(std::shared_ptr<carma_wm_ctrl::Geofence> gf
 void WMBroadcaster::geoReferenceCallback(std_msgs::msg::String::UniquePtr geo_ref)
 {
   std::lock_guard<std::mutex> guard(map_mutex_);
-  sim_.setTargetFrame(geo_ref->data);
+  sim_->setTargetFrame(geo_ref->data);
   base_map_georef_ = geo_ref->data;
 }
 
 void WMBroadcaster::setMaxLaneWidth(double max_lane_width)
 {
+  sim_ = std::make_shared<carma_wm::SignalizedIntersectionManager>();
+  
   max_lane_width_ = max_lane_width;
-  sim_.setMaxLaneWidth(max_lane_width_);
+  sim_->setMaxLaneWidth(max_lane_width_);
 }
 
 void WMBroadcaster::setIntersectionCoordCorrection(const std::vector<int64_t>& intersection_ids_for_correction, const std::vector<double>& intersection_correction)
 {
+  RCLCPP_ERROR_STREAM(rclcpp::get_logger("carma_mw_ctrl"),"ERROR: 3a");
+  
   if (intersection_correction.size() % 2 != 0 || intersection_ids_for_correction.size() != intersection_correction.size() / 2)
   {
     throw std::invalid_argument("Some of intersection coordinate correction parameters are not fully set!");
   }
+  RCLCPP_ERROR_STREAM(rclcpp::get_logger("carma_mw_ctrl"),"ERROR: 3b");
 
   for (auto i = 0; i < intersection_correction.size(); i = i + 2)
   {
-    sim_.intersection_coord_correction_[(uint16_t)intersection_ids_for_correction[i/2]].first =  intersection_correction[i]; //x
-    sim_.intersection_coord_correction_[(uint16_t)intersection_ids_for_correction[i/2]].second = intersection_correction[i + 1]; //y
+    sim_->intersection_coord_correction_[(uint16_t)intersection_ids_for_correction[i/2]].first =  intersection_correction[i]; //x
+    sim_->intersection_coord_correction_[(uint16_t)intersection_ids_for_correction[i/2]].second = intersection_correction[i + 1]; //y
+    RCLCPP_ERROR_STREAM(rclcpp::get_logger("carma_mw_ctrl"),"ERROR: 3aa: " << i);
+
   }
+  RCLCPP_ERROR_STREAM(rclcpp::get_logger("carma_mw_ctrl"),"ERROR: 3c");
+
 }
 
 void WMBroadcaster::setConfigSpeedLimit(double cL)
@@ -1374,6 +1383,37 @@ bool WMBroadcaster::shouldChangeControlLine(const lanelet::ConstLaneletOrArea& e
   return should_change_pcl;
 }
 
+/*!
+  * TODO
+  */
+bool WMBroadcaster::shouldChangeTrafficSignal(const lanelet::ConstLaneletOrArea& el,const lanelet::RegulatoryElementConstPtr& regem, std::shared_ptr<carma_wm::SignalizedIntersectionManager> sim) const
+{
+  // should change if if the regem is not a passing control line or area, which is not supported by this logic
+  if (regem->attribute(lanelet::AttributeName::Subtype).value().compare(lanelet::CarmaTrafficSignal::RuleName) != 0 || !el.isLanelet() || !sim_)
+  {
+    return true;
+  }
+  
+  lanelet::CarmaTrafficSignalPtr traffic_signal =  std::dynamic_pointer_cast<lanelet::CarmaTrafficSignal>(current_map_->regulatoryElementLayer.get(regem->id()));
+  uint8_t signal_id = 0;
+  
+  for (auto it = sim->signal_group_to_traffic_light_id_.begin(); it != sim->signal_group_to_traffic_light_id_.end(); ++it) 
+  {
+    if (regem->id() == it->second)
+    {
+      signal_id = it->first;
+    } 
+  } 
+
+  if (signal_id == 0) // doesn't exist in the record
+    return true;
+  
+  if (sim->signal_group_to_entry_lanelet_ids_[signal_id].find(el.id()) != sim->signal_group_to_entry_lanelet_ids_[signal_id].end())
+    return false; // signal group's entry lane is still part of the intersection, so don't change
+  
+  return true;
+}
+
 void WMBroadcaster::addRegulatoryComponent(std::shared_ptr<Geofence> gf_ptr) const
 {
 
@@ -1384,7 +1424,9 @@ void WMBroadcaster::addRegulatoryComponent(std::shared_ptr<Geofence> gf_ptr) con
   {
     for (auto regem : el.regulatoryElements())
     {
-      if (!shouldChangeControlLine(el, regem, gf_ptr)) continue;
+      if (!shouldChangeControlLine(el, regem, gf_ptr) ||
+        !shouldChangeTrafficSignal(el, regem, sim_))
+        continue;
 
       if (regem->attribute(lanelet::AttributeName::Subtype).value() == gf_ptr->regulatory_element_->attribute(lanelet::AttributeName::Subtype).value())
       {
@@ -1523,7 +1565,7 @@ void WMBroadcaster::addGeofence(std::shared_ptr<Geofence> gf_ptr)
 
     if (detected_map_msg_signal && updates_to_send.back() == update) // if last update
     {
-      send_data->sim_ = sim_;
+      send_data->sim_ = *sim_;
     }
 
     carma_wm::toBinMsg(send_data, &gf_msg);
@@ -2174,9 +2216,9 @@ void WMBroadcaster::updateUpcomingSGIntersectionIds()
     }
   }
 
-  if(isLightFound)
+  if(isLightFound && !sim_)
   {
-    for(auto itr = sim_.signal_group_to_traffic_light_id_.begin(); itr != sim_.signal_group_to_traffic_light_id_.end(); itr++)
+    for(auto itr = sim_->signal_group_to_traffic_light_id_.begin(); itr != sim_->signal_group_to_traffic_light_id_.end(); itr++)
     {     
       if(itr->second == traffic_lights.front()->id())
       {
@@ -2200,7 +2242,7 @@ void WMBroadcaster::updateUpcomingSGIntersectionIds()
     lanelet::Id intersection_id = intersections.front()->id();    
     if(intersection_id != lanelet::InvalId)
     {
-      for(auto itr = sim_.intersection_id_to_regem_id_.begin(); itr != sim_.intersection_id_to_regem_id_.end(); itr++)
+      for(auto itr = sim_->intersection_id_to_regem_id_.begin(); itr != sim_->intersection_id_to_regem_id_.end(); itr++)
       {
         if(itr->second == intersection_id)
         {

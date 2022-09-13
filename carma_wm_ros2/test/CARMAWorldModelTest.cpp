@@ -1387,7 +1387,7 @@ TEST(CARMAWorldModelTest, processSpatFromMsg)
   movement.movement_event_list[0] = event;
   state.movement_list[0] = movement;
   spat.intersection_state_list[0] = state;
-  RCLCPP_DEBUG_STREAM(rclcpp::get_logger("CARMAWorldModelTest"), "Input: Duplicate, so ignore");
+  RCLCPP_DEBUG_STREAM(rclcpp::get_logger("carma_wm_ros2"), "Input: Duplicate, so ignore");
   cmw.processSpatFromMsg(spat);
   lights1 = cmw.getMutableMap()->laneletLayer.get(ll_1.id()).regulatoryElementsAs<lanelet::CarmaTrafficSignal>();
   // and query the regem again to check if its entries are updated, by checking revision or getState or predictState etc
@@ -1399,7 +1399,7 @@ TEST(CARMAWorldModelTest, processSpatFromMsg)
   movement.movement_event_list[0] = event;
   state.movement_list[0] = movement;
   spat.intersection_state_list[0] = state;
-  RCLCPP_DEBUG_STREAM(rclcpp::get_logger("CARMAWorldModelTest"), "Input: First cycle set. This is technically new cycle, but this info is not counted towards it due to inconvenience");
+  RCLCPP_DEBUG_STREAM(rclcpp::get_logger("carma_wm_ros2"), "Input: First cycle set. This is technically new cycle, but this info is not counted towards it due to inconvenience");
   cmw.processSpatFromMsg(spat);
   lights1 = cmw.getMutableMap()->laneletLayer.get(ll_1.id()).regulatoryElementsAs<lanelet::CarmaTrafficSignal>();
   // same duration, but counter set to 0
@@ -1412,7 +1412,7 @@ TEST(CARMAWorldModelTest, processSpatFromMsg)
   movement.movement_event_list[0] = event;
   state.movement_list[0] = movement;
   spat.intersection_state_list[0] = state;
-  RCLCPP_DEBUG_STREAM(rclcpp::get_logger("CARMAWorldModelTest"), "Input: New cycle, but cycle duration is same due to shifting");
+  RCLCPP_DEBUG_STREAM(rclcpp::get_logger("carma_wm_ros2"), "Input: New cycle, but cycle duration is same due to shifting");
   cmw.processSpatFromMsg(spat);
   lights1 = cmw.getMutableMap()->laneletLayer.get(ll_1.id()).regulatoryElementsAs<lanelet::CarmaTrafficSignal>();
 
@@ -1424,7 +1424,7 @@ TEST(CARMAWorldModelTest, processSpatFromMsg)
   movement.movement_event_list[0] = event;
   state.movement_list[0] = movement;
   spat.intersection_state_list[0] = state;
-  RCLCPP_DEBUG_STREAM(rclcpp::get_logger("CARMAWorldModelTest"),"Input: New partial cycle, yellow reduced");
+  RCLCPP_DEBUG_STREAM(rclcpp::get_logger("carma_wm_ros2"),"Input: New partial cycle, yellow reduced");
   cmw.processSpatFromMsg(spat);
   lights1 = cmw.getMutableMap()->laneletLayer.get(ll_1.id()).regulatoryElementsAs<lanelet::CarmaTrafficSignal>();
   // and query the regem again to check if its entries are updated, by checking revision or getState or predictState etc
@@ -1436,7 +1436,7 @@ TEST(CARMAWorldModelTest, processSpatFromMsg)
   movement.movement_event_list[0] = event;
   state.movement_list[0] = movement;
   spat.intersection_state_list[0] = state;
-  RCLCPP_DEBUG_STREAM(rclcpp::get_logger("CARMAWorldModelTest"), "Input: New partial cycle, green reduced");
+  RCLCPP_DEBUG_STREAM(rclcpp::get_logger("carma_wm_ros2"), "Input: New partial cycle, green reduced");
   cmw.processSpatFromMsg(spat);
   lights1 = cmw.getMutableMap()->laneletLayer.get(ll_1.id()).regulatoryElementsAs<lanelet::CarmaTrafficSignal>();
   // and query the regem again to check if its entries are updated, by checking revision or getState or predictState etc
@@ -1448,7 +1448,7 @@ TEST(CARMAWorldModelTest, processSpatFromMsg)
   movement.movement_event_list[0] = event;
   state.movement_list[0] = movement;
   spat.intersection_state_list[0] = state;
-  RCLCPP_DEBUG_STREAM(rclcpp::get_logger("CARMAWorldModelTest"), "Input: New full cycle, yellow reduced");
+  RCLCPP_DEBUG_STREAM(rclcpp::get_logger("carma_wm_ros2"), "Input: New full cycle, yellow reduced");
   cmw.processSpatFromMsg(spat);
   lights1 = cmw.getMutableMap()->laneletLayer.get(ll_1.id()).regulatoryElementsAs<lanelet::CarmaTrafficSignal>();
   // and query the regem again to check if its entries are updated, by checking revision or getState or predictState etc
@@ -1460,7 +1460,7 @@ TEST(CARMAWorldModelTest, processSpatFromMsg)
   movement.movement_event_list[0] = event;
   state.movement_list[0] = movement;
   spat.intersection_state_list[0] = state;
-  RCLCPP_DEBUG_STREAM(rclcpp::get_logger("CARMAWorldModelTest"), "Input: New full cycle, red reduced");
+  RCLCPP_DEBUG_STREAM(rclcpp::get_logger("carma_wm_ros2"), "Input: New full cycle, red reduced");
   cmw.processSpatFromMsg(spat);
   lights1 = cmw.getMutableMap()->laneletLayer.get(ll_1.id()).regulatoryElementsAs<lanelet::CarmaTrafficSignal>();
   // and query the regem again to check if its entries are updated, by checking revision or getState or predictState etc
