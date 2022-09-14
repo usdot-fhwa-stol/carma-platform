@@ -802,10 +802,32 @@ namespace basic_autonomy
                 RCLCPP_WARN_STREAM(rclcpp::get_logger(BASIC_AUTONOMY_LOGGER), "Insufficient Spline Points");
                 return nullptr;
             }
+            
+            RCLCPP_DEBUG_STREAM(rclcpp::get_logger(BASIC_AUTONOMY_LOGGER), "Original basic_points size: " << basic_points.size());
 
+            std::vector<lanelet::BasicPoint2d> resized_basic_points = basic_points;
+
+            // The large the number of points, longer it takes to calculate a spline fit
+            // So if the basic_points vector size is large, only the first 400 points are used to compute a spline fit. 
+            if (resized_basic_points.size() > 400)
+            {
+                resized_basic_points.resize(400);
+                RCLCPP_DEBUG_STREAM(rclcpp::get_logger(BASIC_AUTONOMY_LOGGER), "Resized basic_points size: " << resized_basic_points.size());
+
+                size_t left_points_size = basic_points.size() - resized_basic_points.size();
+                RCLCPP_DEBUG_STREAM(rclcpp::get_logger(BASIC_AUTONOMY_LOGGER), "Number of left out basic_points size: " << left_points_size);
+
+                float percent_points_lost = 100.0 * (float)left_points_size/basic_points.size();
+
+                if (percent_points_lost > 50.0)
+                {
+                    RCLCPP_WARN_STREAM(rclcpp::get_logger(BASIC_AUTONOMY_LOGGER), "More than half of basic points are ignored for spline fitting");
+                }
+            }
+            
             std::unique_ptr<basic_autonomy::smoothing::SplineI> spl = std::make_unique<basic_autonomy::smoothing::BSpline>();
 
-            spl->setPoints(basic_points);
+            spl->setPoints(resized_basic_points);
 
             return spl;
         }
