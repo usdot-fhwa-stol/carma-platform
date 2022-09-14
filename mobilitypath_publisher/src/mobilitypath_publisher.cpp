@@ -88,7 +88,7 @@ namespace mobilitypath_publisher
   {
     // update timestamp of mobilitypath
     uint64_t millisecs = get_clock()->now().nanoseconds() / 1000000;
-    latest_mobility_path_.header.timestamp = millisecs; //time in millisecond
+    latest_mobility_path_.m_header.timestamp = millisecs; //time in millisecond
     path_pub_->publish(latest_mobility_path_);
     return true;
   }
