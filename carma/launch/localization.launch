@@ -131,8 +131,12 @@
 
   <!-- GNSS/NDT selection localizer-->
   <group>
+    <remap from="selected_pose" to="old_selected_pose"/>
     <include file="$(find localization_manager)/launch/localization_manager.launch"/>
   </group>
+
+  <!-- TEMP OFFSET NODE -->
+  <node pkg="carma" type="pose_offset_node.py" name="pose_offset_node"/>
 
   <!-- Deadreckoner -->
   <include file="$(find deadreckoner)/launch/deadreckoner.launch">

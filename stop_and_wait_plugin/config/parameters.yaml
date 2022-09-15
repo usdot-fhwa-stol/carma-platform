@@ -26,7 +26,7 @@ cernterline_sampling_spacing: 1.0
 # Double: The default buffer in meters used for where the vehicle can come to a stop during execution. 
 #         This value is overriden by the first value in maneuver.parameters.float_valued_meta_data[]
 # Units: m
-default_stopping_buffer: 5.0
+default_stopping_buffer: 15.0
 
 #Double: Window size for the moving average filter used for smoothing the speeds.
 moving_average_window_size: 19.0

@@ -39,4 +39,4 @@ sequential_timesteps_until_gps_operation: 5
 # 2 - AUTO select between NDT and GNSS with GNSS timeout
 # 3 - AUTO select between NDT and GNSS without GNSS timeout
 # 4 - GNSS only with NDT initialization
-localization_mode: 4
+localization_mode: 1
