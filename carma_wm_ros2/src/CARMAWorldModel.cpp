@@ -1372,16 +1372,21 @@ namespace carma_wm
 
     if(sim_.traffic_signal_states_[mov_id][mov_signal_group].empty())
     {
-        return false;
+      return false;
     }
 
+    // temp states that does not include outdated states
     std::vector<std::pair<boost::posix_time::ptime, lanelet::CarmaTrafficSignalState>> temp_signal_states;
+    std::vector<boost::posix_time::ptime> temp_start_times;
 
+    int i = 0;
     for(auto mov_check:sim_.traffic_signal_states_[mov_id][mov_signal_group])
     {
       if (lanelet::time::timeFromSec(std::chrono::duration<double>(std::chrono::system_clock::now().time_since_epoch()).count()) < mov_check.first) //todo use node's clock
       {
         temp_signal_states.push_back(std::make_pair(mov_check.first, mov_check.second ));
+        temp_start_times.push_back(sim_.traffic_signal_start_times_[mov_id][mov_signal_group][i]);
+        i++;
       }
 
       auto last_time_difference = mov_check.first - min_end_time_dynamic;  
@@ -1391,9 +1396,11 @@ namespace carma_wm
       {
         return true;
       }
-
+      i++;
     } 
     sim_.traffic_signal_states_[mov_id][mov_signal_group]=temp_signal_states;
+    sim_.traffic_signal_start_times_[mov_id][mov_signal_group] = temp_start_times;
+    std::cerr << "ROS2: PRINTING SIZE: " << sim_.traffic_signal_states_[mov_id][mov_signal_group].size() <<std::endl;
     return false;
 
   }

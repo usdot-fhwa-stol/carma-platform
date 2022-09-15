@@ -1373,12 +1373,12 @@ namespace carma_wm
       int i = 0;
       for(auto mov_check:sim_.traffic_signal_states_[mov_id][mov_signal_group])
       {
-         if (lanelet::time::timeFromSec(ros::Time::now().toSec()) < mov_check.first)
-         {
-           temp_signal_states.push_back(std::make_pair(mov_check.first, mov_check.second ));
-           temp_start_times.push_back(sim_.traffic_signal_start_times_[mov_id][mov_signal_group][i]);
-           i++;
-         }
+        if (lanelet::time::timeFromSec(ros::Time::now().toSec()) > mov_check.first)
+        {
+          temp_signal_states.push_back(std::make_pair(mov_check.first, mov_check.second ));
+          temp_start_times.push_back(sim_.traffic_signal_start_times_[mov_id][mov_signal_group][i]);
+          i++;
+        }
         
         auto last_time_difference = mov_check.first - min_end_time_dynamic;  
         bool is_duplicate = last_time_difference.total_milliseconds() >= -500 && last_time_difference.total_milliseconds() <= 500;
