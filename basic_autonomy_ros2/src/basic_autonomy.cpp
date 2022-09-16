@@ -1151,7 +1151,7 @@ namespace basic_autonomy
             return traj_points;
         }
 
-        autoware_auto_msgs::msg::Trajectory process_trajectory_plan(const carma_planning_msgs::msg::TrajectoryPlan& tp)
+        autoware_auto_msgs::msg::Trajectory process_trajectory_plan(const carma_planning_msgs::msg::TrajectoryPlan& tp, double vehicle_response_lag )
         {
             RCLCPP_DEBUG_STREAM(rclcpp::get_logger(BASIC_AUTONOMY_LOGGER), "Processing latest TrajectoryPlan message");
 
@@ -1198,7 +1198,7 @@ namespace basic_autonomy
             }
 
             std::vector<double> lag_speeds;
-            lag_speeds = apply_response_lag(speeds, downtracks, config_.vehicle_response_lag); // This call requires that the first speed point be current speed to work as expected
+            lag_speeds = apply_response_lag(speeds, downtracks, vehicle_response_lag); // This call requires that the first speed point be current speed to work as expected
                 
             autoware_auto_msgs::msg::Trajectory autoware_trajectory;
             autoware_trajectory.header = tp.header;
@@ -1224,7 +1224,25 @@ namespace basic_autonomy
             return autoware_trajectory;
         }
 
+        
+        std::vector<double> apply_response_lag(const std::vector<double>& speeds, const std::vector<double> downtracks, double response_lag) 
+        { // Note first speed is assumed to be vehicle speed
+            if (speeds.size() != downtracks.size()) {
+                throw std::invalid_argument("Speed list and downtrack list are not the same size.");
+            }
 
+            std::vector<double> output;
+            if (speeds.empty()) {
+                return output;
+            }
+
+            double lookahead_distance = speeds[0] * response_lag;
+
+            double downtrack_cutoff = downtracks[0] + lookahead_distance;
+            size_t lookahead_count = std::lower_bound(downtracks.begin(),downtracks.end(), downtrack_cutoff) - downtracks.begin(); // Use binary search to find lower bound cutoff point
+            output = trajectory_utils::shift_by_lookahead(speeds, (unsigned int) lookahead_count);
+            return output;
+        }
     } // namespace waypoint_generation
 
 } // basic_autonomy

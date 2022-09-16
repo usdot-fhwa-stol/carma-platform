@@ -59,16 +59,6 @@ class PurePursuitWrapperNode : public carma_guidance_plugins::ControlPlugin
 
     std::string get_version_id() override;
 
-     /**
-     * \brief Applies a specified response lag in seconds to the trajectory shifting the whole thing by the specified lag time
-     * \param speeds Velocity profile to shift. The first point should be the current vehicle speed
-     * \param downtrack Distance points for each velocity point. Should have the same size as speeds and start from 0
-     * \param response_lag The lag in seconds before which the vehicle will not meaningfully accelerate
-     * 
-     * \return A Shifted trajectory
-     */ 
-    std::vector<double> apply_response_lag(const std::vector<double>& speeds, const std::vector<double> downtracks, double response_lag) const;
-
     /**
      * \brief Drops any points that sequentially have same target_time and return new trajectory_points in order to avoid divide by zero situation
      * \param traj_points Velocity profile to shift. The first point should be the current vehicle speed

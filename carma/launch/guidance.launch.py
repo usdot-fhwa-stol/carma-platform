@@ -161,7 +161,7 @@ def generate_launch_description():
             ComposableNode(
                 package='route',
                 plugin='route::Route',
-                name='route',
+                name='route_node',
                 extra_arguments=[
                     {'use_intra_process_comms': True}, 
                     {'--log-level' : GetLogLevel('route', env_log_levels) }

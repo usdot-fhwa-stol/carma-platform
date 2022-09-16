@@ -147,7 +147,7 @@ autoware_msgs::msg::ControlCommandStamped PurePursuitWrapperNode::generate_comma
 
   current_trajectory_.get().header.frame_id = state_tf.header.frame_id;
 
-  auto autoware_traj_plan = basic_autonomy::waypoint_generation::process_trajectory_plan(current_trajectory_.get());
+  auto autoware_traj_plan = basic_autonomy::waypoint_generation::process_trajectory_plan(current_trajectory_.get(), config_.vehicle_response_lag);
 
   pp_->set_trajectory(autoware_traj_plan);
 
@@ -179,26 +179,7 @@ bool PurePursuitWrapperNode::get_availability()
 
 std::string PurePursuitWrapperNode::get_version_id() 
 {
-  return "v4.0";
-}
-
-std::vector<double> PurePursuitWrapperNode::apply_response_lag(const std::vector<double>& speeds, const std::vector<double> downtracks, double response_lag) const 
-{ // Note first speed is assumed to be vehicle speed
-  if (speeds.size() != downtracks.size()) {
-    throw std::invalid_argument("Speed list and downtrack list are not the same size.");
-  }
-
-  std::vector<double> output;
-  if (speeds.empty()) {
-    return output;
-  }
-
-  double lookahead_distance = speeds[0] * response_lag;
-
-  double downtrack_cutoff = downtracks[0] + lookahead_distance;
-  size_t lookahead_count = std::lower_bound(downtracks.begin(),downtracks.end(), downtrack_cutoff) - downtracks.begin(); // Use binary search to find lower bound cutoff point
-  output = trajectory_utils::shift_by_lookahead(speeds, (unsigned int) lookahead_count);
-  return output;
+  return "v.0";
 }
 
 std::vector<carma_planning_msgs::msg::TrajectoryPlanPoint> PurePursuitWrapperNode::remove_repeated_timestamps(const std::vector<carma_planning_msgs::msg::TrajectoryPlanPoint>& traj_points) //todo this had not been used??

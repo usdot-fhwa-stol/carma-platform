@@ -72,7 +72,8 @@ TEST(PurePursuitTest, sanity_check)
   plan.trajectory_points = { tpp, tpp2, tpp3 };
 
   std::cerr << "Heree" <<std::endl;
-  node->process_trajectory_plan(plan);
+  auto traj = basic_autonomy::waypoint_generation::process_trajectory_plan(plan, 0.0);
+  node->pp_->set_trajectory(traj);
 
   std::cerr << "Here" <<std::endl;
   const auto cmd{node->get_pure_pursuit_worker()->compute_command(state_tf)};
