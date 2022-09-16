@@ -48,7 +48,7 @@ namespace subsystem_controllers
         
         for (const auto& p : required_plugins_) {
             bool is_ros1 = ros2_initial_plugins_.find(p) == ros2_initial_plugins_.end();
-            RCLCPP_WARN_STREAM(rclcpp::get_logger("subsystem_controllers"), "Added: " << p << ", as is_ros1:" << is_ros1);
+            RCLCPP_INFO_STREAM(rclcpp::get_logger("subsystem_controllers"), "Added: " << p << ", as is_ros1:" << is_ros1);
             
             Entry e(false, false, p, carma_planning_msgs::msg::Plugin::UNKNOWN, "", true, is_ros1);
             em_.update_entry(e);
@@ -58,7 +58,7 @@ namespace subsystem_controllers
 
         for (const auto& p : auto_activated_plugins_) {
             bool is_ros1 = ros2_initial_plugins_.find(p) == ros2_initial_plugins_.end();
-            RCLCPP_WARN_STREAM(rclcpp::get_logger("subsystem_controllers"), "Added: " << p << ", as is_ros1:" << is_ros1);
+            RCLCPP_INFO_STREAM(rclcpp::get_logger("subsystem_controllers"), "Added: " << p << ", as is_ros1:" << is_ros1);
 
             Entry e(false, false, p, carma_planning_msgs::msg::Plugin::UNKNOWN, "", true, is_ros1);
             em_.update_entry(e);
