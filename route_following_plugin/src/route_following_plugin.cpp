@@ -97,10 +97,7 @@ void setManeuverLaneletIds(carma_planning_msgs::msg::Maneuver& mvr, lanelet::Id 
     config_.accel_limit_ = declare_parameter<double>("vehicle_acceleration_limit", config_.accel_limit_);
     config_.lateral_accel_limit_ = declare_parameter<double>("vehicle_lateral_accel_limit", config_.lateral_accel_limit_);
     config_.stopping_accel_limit_multiplier_ = declare_parameter<double>("stopping_accel_limit_multiplier", config_.stopping_accel_limit_multiplier_);
-<<<<<<< HEAD
-=======
     config_.vehicle_id = declare_parameter<std::string>("vehicle_id", config_.vehicle_id);
->>>>>>> develop
     config_.min_maneuver_length_ = declare_parameter<double>("min_maneuver_length", config_.min_maneuver_length_);
   }
 
@@ -118,36 +115,6 @@ void setManeuverLaneletIds(carma_planning_msgs::msg::Maneuver& mvr, lanelet::Id 
     get_parameter<double>("stopping_accel_limit_multiplier", config_.stopping_accel_limit_multiplier_);
     get_parameter<double>("min_maneuver_length", config_.min_maneuver_length_);
     
-    /* TODO make it different node parameter work
-    auto parameters_client = std::make_shared<rclcpp::AsyncParametersClient>(
-        this->get_node_base_interface(),
-        this->get_node_topics_interface(),
-        this->get_node_graph_interface(),
-        this->get_node_services_interface(),
-        "/route");
-        
-    while (!parameters_client->wait_for_service(std::chrono::seconds(1))) 
-    {
-        if (!rclcpp::ok()) {
-            RCLCPP_ERROR(rclcpp::get_logger("route_following_plugin"), "Interrupted while waiting for the service. Exiting.");
-            rclcpp::shutdown();
-        }
-        std::cerr << "service not available, waiting again..." << std::endl;
-    }
-    auto parameters_future = parameters_client->get_parameters({"destination_downtrack_range"});
-
-    auto future_status = parameters_future.wait_for(std::chrono::milliseconds(1000));
-            
-    if (future_status == std::future_status::ready) {
-        if (!parameters_future.get().empty())
-            config_.route_end_point_buffer_ = parameters_future.get().front().as_double();
-    }
-    else
-    {
-        RCLCPP_WARN_STREAM(rclcpp::get_logger("route_following_plugin"), "Failed to get parameter value from route node, using default...");
-    }
-    */
-
     RCLCPP_INFO_STREAM(rclcpp::get_logger("route_following_plugin"), "RouteFollowingPlugin Config: " << config_);
 
     // Setup publishers

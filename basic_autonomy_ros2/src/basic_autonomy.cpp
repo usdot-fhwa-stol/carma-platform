@@ -1198,16 +1198,13 @@ namespace basic_autonomy
             }
 
             std::vector<double> lag_speeds;
-            if (config_.is_delay_compensation)
-                lag_speeds = apply_response_lag(speeds, downtracks, config_.vehicle_response_lag); // This call requires that the first speed point be current speed to work as expected
-            else
-                lag_speeds = speeds;
+            lag_speeds = apply_response_lag(speeds, downtracks, config_.vehicle_response_lag); // This call requires that the first speed point be current speed to work as expected
                 
             autoware_auto_msgs::msg::Trajectory autoware_trajectory;
             autoware_trajectory.header = tp.header;
             RCLCPP_ERROR_STREAM(rclcpp::get_logger(BASIC_AUTONOMY_LOGGER), "size: " << trajectory_points.size());
             
-            auto max_size = std::min(99, (int)trajectory_points.size());  //NOTE: more than this size raises exception with "Exceeded upper bound while in ACTIVE state."
+            auto max_size = std::min(99, (int)trajectory_points.size());  //NOTE: more than this size autoware auto raises exception with "Exceeded upper bound while in ACTIVE state."
                                                                             //large portion of the points are not needed anyways 
             for (int i = 0; i < max_size; i++)
             {

@@ -43,7 +43,6 @@ PurePursuitWrapperNode::PurePursuitWrapperNode(const rclcpp::NodeOptions& option
   config_.integrator_max_pp = declare_parameter<double>("integrator_max_pp", config_.integrator_max_pp);
   config_.integrator_min_pp = declare_parameter<double>("integrator_min_pp", config_.integrator_min_pp);
   config_.Ki_pp = declare_parameter<double>("Ki_pp", config_.Ki_pp);
-  config_.integral = declare_parameter<double>("integral", config_.integral);
   config_.is_integrator_enabled = declare_parameter<bool>("is_integrator_enabled", config_.is_integrator_enabled);
 }
 
@@ -65,7 +64,6 @@ carma_ros2_utils::CallbackReturn PurePursuitWrapperNode::on_configure_plugin()
   get_parameter<double>("integrator_max_pp", config_.integrator_max_pp);
   get_parameter<double>("integrator_min_pp", config_.integrator_min_pp);
   get_parameter<double>("Ki_pp", config_.Ki_pp);
-  get_parameter<double>("integral", config_.integral);
   get_parameter<bool>("is_integrator_enabled", config_.is_integrator_enabled);
 
   RCLCPP_INFO_STREAM(rclcpp::get_logger("pure_pursuit_wrapper"), "Loaded Params: " << config_);
@@ -90,14 +88,14 @@ carma_ros2_utils::CallbackReturn PurePursuitWrapperNode::on_configure_plugin()
   i_cfg.integrator_max_pp = config_.integrator_max_pp; 
   i_cfg.integrator_min_pp = config_.integrator_min_pp; 
   i_cfg.Ki_pp = config_.Ki_pp; 
-  i_cfg.integral = config_.integral; 
+  i_cfg.integral = 0.0; // accumulator of integral starts from 0
   i_cfg.is_integrator_enabled = config_.is_integrator_enabled; 
   
   pp_ = std::make_shared<pure_pursuit::PurePursuit>(cfg, i_cfg);
 
   // Return success if everything initialized successfully
   return CallbackReturn::SUCCESS;
-}
+} 
 
 motion::motion_common::State PurePursuitWrapperNode::convert_state(geometry_msgs::msg::PoseStamped pose, geometry_msgs::msg::TwistStamped twist)
 {
@@ -181,7 +179,7 @@ bool PurePursuitWrapperNode::get_availability()
 
 std::string PurePursuitWrapperNode::get_version_id() 
 {
-  return "v1.0";
+  return "v4.0";
 }
 
 std::vector<double> PurePursuitWrapperNode::apply_response_lag(const std::vector<double>& speeds, const std::vector<double> downtracks, double response_lag) const 

@@ -359,5 +359,5 @@ def generate_launch_description():
 
     return LaunchDescription([    
         carma_plugins_container,
-        #platooning_plugins_container
+        platooning_plugins_container
     ]) 
