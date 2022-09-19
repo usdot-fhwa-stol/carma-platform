@@ -39,6 +39,7 @@ from launch_ros.actions import PushRosNamespace
 def generate_launch_description():
 
     route_file_folder = LaunchConfiguration('route_file_folder')
+    vehicle_calibration_dir = LaunchConfiguration('vehicle_calibration_dir')
     vehicle_characteristics_param_file = LaunchConfiguration('vehicle_characteristics_param_file')
     enable_guidance_plugin_validator = LaunchConfiguration('enable_guidance_plugin_validator')
     strategic_plugins_to_validate = LaunchConfiguration('strategic_plugins_to_validate')
@@ -247,7 +248,8 @@ def generate_launch_description():
                 parameters=[
                     trajectory_visualizer_param_file
                 ]
-            )
+            ) 
+
         ]
     )
 
@@ -259,6 +261,7 @@ def generate_launch_description():
                 PythonLaunchDescriptionSource([ThisLaunchFileDir(), '/plugins.launch.py']),
                 launch_arguments={
                     'route_file_folder' : route_file_folder,
+                    'vehicle_calibration_dir' : vehicle_calibration_dir,
                     'vehicle_characteristics_param_file' : vehicle_characteristics_param_file, 
                     'vehicle_config_param_file' : vehicle_config_param_file,
                     'enable_guidance_plugin_validator' : enable_guidance_plugin_validator,
