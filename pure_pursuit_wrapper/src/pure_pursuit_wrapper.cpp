@@ -120,11 +120,11 @@ autoware_msgs::msg::ControlCommandStamped PurePursuitWrapperNode::convert_cmd(mo
   return_cmd.cmd.linear_velocity = cmd.velocity_mps;
   return_cmd.cmd.steering_angle = cmd.front_wheel_angle_rad;
 
-  RCLCPP_ERROR_STREAM(rclcpp::get_logger("pure_pursuit_wrapper"), "generate_command() cmd.stamp: " << std::to_string(rclcpp::Time(cmd.stamp).seconds()));
-  RCLCPP_ERROR_STREAM(rclcpp::get_logger("pure_pursuit_wrapper"), "generate_command() cmd.long_accel_mps2: " << cmd.long_accel_mps2);
-  RCLCPP_ERROR_STREAM(rclcpp::get_logger("pure_pursuit_wrapper"), "generate_command() cmd.velocity_mps: " << cmd.velocity_mps);
-  RCLCPP_ERROR_STREAM(rclcpp::get_logger("pure_pursuit_wrapper"), "generate_command() cmd.rear_wheel_angle_rad: " << cmd.rear_wheel_angle_rad);
-  RCLCPP_ERROR_STREAM(rclcpp::get_logger("pure_pursuit_wrapper"), "generate_command() cmd.front_wheel_angle_rad: " << cmd.front_wheel_angle_rad);
+  RCLCPP_DEBUG_STREAM(rclcpp::get_logger("pure_pursuit_wrapper"), "generate_command() cmd.stamp: " << std::to_string(rclcpp::Time(cmd.stamp).seconds()));
+  RCLCPP_DEBUG_STREAM(rclcpp::get_logger("pure_pursuit_wrapper"), "generate_command() cmd.long_accel_mps2: " << cmd.long_accel_mps2);
+  RCLCPP_DEBUG_STREAM(rclcpp::get_logger("pure_pursuit_wrapper"), "generate_command() cmd.velocity_mps: " << cmd.velocity_mps);
+  RCLCPP_DEBUG_STREAM(rclcpp::get_logger("pure_pursuit_wrapper"), "generate_command() cmd.rear_wheel_angle_rad: " << cmd.rear_wheel_angle_rad);
+  RCLCPP_DEBUG_STREAM(rclcpp::get_logger("pure_pursuit_wrapper"), "generate_command() cmd.front_wheel_angle_rad: " << cmd.front_wheel_angle_rad);
 
   return return_cmd;
 }
@@ -139,7 +139,7 @@ autoware_msgs::msg::ControlCommandStamped PurePursuitWrapperNode::generate_comma
 
   motion::control::controller_common::State state_tf = convert_state(current_pose_.get(), current_twist_.get());
 
-  RCLCPP_ERROR_STREAM(rclcpp::get_logger("pure_pursuit_wrapper"), "Forced from frame_id: " << state_tf.header.frame_id << ", into: " << current_trajectory_.get().header.frame_id);
+  RCLCPP_DEBUG_STREAM(rclcpp::get_logger("pure_pursuit_wrapper"), "Forced from frame_id: " << state_tf.header.frame_id << ", into: " << current_trajectory_.get().header.frame_id);
 
   current_trajectory_.get().header.frame_id = state_tf.header.frame_id;
 
