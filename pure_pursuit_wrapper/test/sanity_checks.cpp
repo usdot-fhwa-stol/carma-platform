@@ -56,7 +56,6 @@ TEST(PurePursuitTest, sanity_check)
 
   motion::control::controller_common::State state_tf;
   auto converted_time_now = std::chrono::system_clock::to_time_t(std::chrono::system_clock::now());
-  std::cerr << "Before processing: "  << std::to_string(static_cast<double>(converted_time_now)) << std::endl;
 
   state_tf.header.stamp = rclcpp::Time(converted_time_now*1e9);
 
@@ -65,49 +64,27 @@ TEST(PurePursuitTest, sanity_check)
 
   state_tf.state.x = 0;
   state_tf.state.y = 0;
-  state_tf.state.longitudinal_velocity_mps = 4.0; //TODO arbitrary speed for first point
+  state_tf.state.longitudinal_velocity_mps = 4.0; //arbitrary speed for first point
   plan.header.frame_id = state_tf.header.frame_id;
   plan.header.stamp = rclcpp::Time(converted_time_now*1e9) + rclcpp::Duration(1.0*1e9);
 
   plan.trajectory_points = { tpp, tpp2, tpp3 };
 
-  std::cerr << "Heree" <<std::endl;
   auto traj = basic_autonomy::waypoint_generation::process_trajectory_plan(plan, 0.0);
   node->pp_->set_trajectory(traj);
 
-  std::cerr << "Here" <<std::endl;
   const auto cmd{node->get_pure_pursuit_worker()->compute_command(state_tf)};
-  std::cerr << "Here1" <<std::endl;
-  
+
+  ASSERT_NEAR(cmd.front_wheel_angle_rad, -0.294355, 0.005);
+  ASSERT_NEAR(cmd.long_accel_mps2, 0.311803, 0.005);
+  ASSERT_NEAR(cmd.rear_wheel_angle_rad, 0, 0.001);
+  ASSERT_NEAR(cmd.velocity_mps, 14.14, 0.01);
+
   auto converted_cmd = node->convert_cmd(cmd);
-  std::cerr << "Here2" <<std::endl;
 
-  ASSERT_TRUE(false);
-  /*
-  node->process_trajectory_plan
-
-  ASSERT_TRUE(!!wp_msg);
-
-  autoware_msgs::Lane lane = wp_msg.get();
-
-  ASSERT_EQ(3, lane.waypoints.size());
-  ASSERT_NEAR(8.5, lane.waypoints[0].twist.twist.linear.x, 0.0000001);
-  ASSERT_NEAR(10.0, lane.waypoints[0].pose.pose.position.x, 0.0000001);
-  ASSERT_NEAR(10.0, lane.waypoints[0].pose.pose.position.y, 0.0000001);
-
-  ASSERT_NEAR(48.068542495, lane.waypoints[1].twist.twist.linear.x, 0.0000001);
-  ASSERT_NEAR(12.0, lane.waypoints[1].pose.pose.position.x, 0.0000001);
-  ASSERT_NEAR(12.0, lane.waypoints[1].pose.pose.position.y, 0.0000001);
-
-  ASSERT_NEAR(8.5, lane.waypoints[2].twist.twist.linear.x, 0.0000001);
-  ASSERT_NEAR(14.0, lane.waypoints[2].pose.pose.position.x, 0.0000001);
-  ASSERT_NEAR(14.0, lane.waypoints[2].pose.pose.position.y, 0.0000001);
-  
-  rclcpp::executors::MultiThreadedExecutor executor;
-  executor.add_node(node->get_node_base_interface());
-  executor.spin();
-  */
-
+  ASSERT_NEAR(converted_cmd.cmd.linear_acceleration, cmd.long_accel_mps2, 0.001);
+  ASSERT_NEAR(converted_cmd.cmd.linear_velocity, cmd.velocity_mps, 0.01);
+  ASSERT_NEAR(converted_cmd.cmd.steering_angle, cmd.front_wheel_angle_rad, 0.001);
 }
 } // namespace pure_pursuit_wrapper
 

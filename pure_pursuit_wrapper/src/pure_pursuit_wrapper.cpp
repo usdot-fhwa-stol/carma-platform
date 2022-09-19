@@ -99,7 +99,7 @@ carma_ros2_utils::CallbackReturn PurePursuitWrapperNode::on_configure_plugin()
 
 motion::motion_common::State PurePursuitWrapperNode::convert_state(geometry_msgs::msg::PoseStamped pose, geometry_msgs::msg::TwistStamped twist)
 {
-  motion::motion_common::State state; //todo check if correct
+  motion::motion_common::State state;
   state.header = pose.header;
   state.state.x = pose.pose.position.x;
   state.state.y = pose.pose.position.y;
@@ -113,7 +113,7 @@ motion::motion_common::State PurePursuitWrapperNode::convert_state(geometry_msgs
 
 autoware_msgs::msg::ControlCommandStamped PurePursuitWrapperNode::convert_cmd(motion::motion_common::Command cmd)
 {
-  autoware_msgs::msg::ControlCommandStamped return_cmd; //todo check if correct
+  autoware_msgs::msg::ControlCommandStamped return_cmd;
   return_cmd.header.stamp = cmd.stamp;
 
   return_cmd.cmd.linear_acceleration = cmd.long_accel_mps2;
@@ -126,7 +126,6 @@ autoware_msgs::msg::ControlCommandStamped PurePursuitWrapperNode::convert_cmd(mo
   RCLCPP_ERROR_STREAM(rclcpp::get_logger("pure_pursuit_wrapper"), "generate_command() cmd.rear_wheel_angle_rad: " << cmd.rear_wheel_angle_rad);
   RCLCPP_ERROR_STREAM(rclcpp::get_logger("pure_pursuit_wrapper"), "generate_command() cmd.front_wheel_angle_rad: " << cmd.front_wheel_angle_rad);
 
-  //todo front_wheel_angle_rad is omitted
   return return_cmd;
 }
 
@@ -135,11 +134,8 @@ autoware_msgs::msg::ControlCommandStamped PurePursuitWrapperNode::generate_comma
   // process and save the trajectory inside pure_pursuit
   autoware_msgs::msg::ControlCommandStamped converted_cmd;
 
-  RCLCPP_ERROR_STREAM(rclcpp::get_logger("pure_pursuit_wrapper"), "generate_command() is called");
-
   if (!current_trajectory_ || !current_pose_ || !current_twist_)
     return converted_cmd;
-
 
   motion::control::controller_common::State state_tf = convert_state(current_pose_.get(), current_twist_.get());
 
@@ -162,11 +158,27 @@ autoware_msgs::msg::ControlCommandStamped PurePursuitWrapperNode::generate_comma
 rcl_interfaces::msg::SetParametersResult PurePursuitWrapperNode::parameter_update_callback(const std::vector<rclcpp::Parameter> &parameters)
 {
   auto error_double = update_params<double>({
-    {"/vehicle_response_lag", config_.vehicle_response_lag}}, parameters);
-  //todo this needs to be updated with new ones, and also update the worker's config parameters while at it
+    {"vehicle_response_lag", config_.vehicle_response_lag},
+    {"minimum_lookahead_distance", config_.minimum_lookahead_distance},
+    {"maximum_lookahead_distance", config_.maximum_lookahead_distance},
+    {"speed_to_lookahead_ratio", config_.speed_to_lookahead_ratio},
+    {"emergency_stop_distance", config_.emergency_stop_distance},
+    {"speed_thres_traveling_direction", config_.speed_thres_traveling_direction},
+    {"dist_front_rear_wheels", config_.dist_front_rear_wheels},
+    {"integrator_max_pp", config_.integrator_max_pp},
+    {"integrator_min_pp", config_.integrator_min_pp},
+    {"Ki_pp", config_.Ki_pp}
+    }, parameters);
+  
+  auto error_bool = update_params<bool>({
+    {"is_interpolate_lookahead_point", config_.is_interpolate_lookahead_point},
+    {"is_delay_compensation", config_.is_delay_compensation},
+    {"is_integrator_enabled", config_.is_integrator_enabled}
+    }, parameters);
+
   rcl_interfaces::msg::SetParametersResult result;
 
-  result.successful = !error_double;
+  result.successful = !error_double && !error_bool;
 
   return result;
 }
@@ -179,10 +191,10 @@ bool PurePursuitWrapperNode::get_availability()
 
 std::string PurePursuitWrapperNode::get_version_id() 
 {
-  return "v.0";
+  return "v4.0";
 }
 
-std::vector<carma_planning_msgs::msg::TrajectoryPlanPoint> PurePursuitWrapperNode::remove_repeated_timestamps(const std::vector<carma_planning_msgs::msg::TrajectoryPlanPoint>& traj_points) //todo this had not been used??
+std::vector<carma_planning_msgs::msg::TrajectoryPlanPoint> PurePursuitWrapperNode::remove_repeated_timestamps(const std::vector<carma_planning_msgs::msg::TrajectoryPlanPoint>& traj_points)
 {
   
   std::vector<carma_planning_msgs::msg::TrajectoryPlanPoint> new_traj_points;
