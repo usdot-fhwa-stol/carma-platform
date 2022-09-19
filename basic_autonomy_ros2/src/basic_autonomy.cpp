@@ -1224,7 +1224,7 @@ namespace basic_autonomy
                 
             autoware_auto_msgs::msg::Trajectory autoware_trajectory;
             autoware_trajectory.header = tp.header;
-            RCLCPP_ERROR_STREAM(rclcpp::get_logger(BASIC_AUTONOMY_LOGGER), "size: " << trajectory_points.size());
+            RCLCPP_DEBUG_STREAM(rclcpp::get_logger(BASIC_AUTONOMY_LOGGER), "size: " << trajectory_points.size());
             
             auto max_size = std::min(99, (int)trajectory_points.size());  //NOTE: more than this size autoware auto raises exception with "Exceeded upper bound while in ACTIVE state."
                                                                             //large portion of the points are not needed anyways 
