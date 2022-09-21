@@ -1,9 +1,27 @@
-# This is a basic workflow to help you get started with Actions
+#  Copyright (C) 2018-2022 LEIDOS.
+# 
+#  Licensed under the Apache License, Version 2.0 (the "License"); you may not
+#  use this file except in compliance with the License. You may obtain a copy of
+#  the License at
+# 
+#  http://www.apache.org/licenses/LICENSE-2.0
+# 
+#  Unless required by applicable law or agreed to in writing, software
+#  distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
+#  WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
+#  License for the specific language governing permissions and limitations under
+#  the License.
+
+# Configuration file for GitHub Actions 
+# CI will report failure if any executed command returns and error status
+# Operations performed are as follows
+# Build source code Documentation
+# Run Doxygen Action
+# Deploy documentation static webpage to gh-pages
 
 name: Doxygen Action
 
-# Controls when the action will run. Triggers the workflow on push or pull request
-# events but only for the master branch
+# Controls when the action will run. Triggers the workflow on push or pull Request events but only for the develop branch
 on:
   push:
     branches: [ develop ]
@@ -19,18 +37,18 @@ jobs:
     steps:
     # Checks-out your repository under $GITHUB_WORKSPACE, so your job can access it
     - uses: actions/checkout@v2
-        
+    # Doxygen action for documentation of carma-platform source code by using mattnotmitt github actions workflow
     - name: Doxygen Action
-      uses: mattnotmitt/doxygen-action@v1.1.0
+      uses: mattnotmitt/doxygen-action@v1.9.4
       with:
         # Path to Doxyfile
         doxyfile-path: "./Doxyfile" # default is ./Doxyfile
         # Working directory
         working-directory: "." # default is .
-    
+
     - name: Deploy
       uses: peaceiris/actions-gh-pages@v3
       with:
         github_token: ${{ secrets.GITHUB_TOKEN }}
-        publish_dir: ./html
+        publish_dir: ./docs/html/
         commit_message: "[skip ci] ${{ github.event.head_commit.message }}"
