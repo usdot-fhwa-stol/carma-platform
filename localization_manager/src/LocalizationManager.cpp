@@ -299,7 +299,7 @@ void LocalizationManager::posePubTick()
     // Publish current pose message if available
     if (current_pose_){
         auto pose_to_publish = *current_pose_;
-        if (config_.localization_mode == LocalizerMode::GNSS_WITH_FIXED_OFFSET)
+        if (static_cast<LocalizerMode>(config_.localization_mode) == LocalizerMode::GNSS_WITH_FIXED_OFFSET)
         {
             pose_to_publish.pose.position.x += config_.x_offset;
             pose_to_publish.pose.position.y += config_.y_offset;
