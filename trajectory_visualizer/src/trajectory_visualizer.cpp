@@ -82,6 +82,8 @@ namespace trajectory_visualizer {
 
             if (i >= msg->trajectory_points.size()) { // If we need to delete previous points
                 marker.action = visualization_msgs::msg::Marker::DELETE;
+                tmp_marker_array.markers.push_back(marker);
+                continue;
             }
             
             double max_speed = config_.max_speed * MPH_TO_MS;
