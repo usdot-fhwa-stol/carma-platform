@@ -251,6 +251,9 @@ namespace plan_delegator
         if(latest_trajectory_plan.trajectory_points.empty())
         {
             plan_req->header.stamp = latest_pose_.header.stamp;
+            RCLCPP_ERROR_STREAM(rclcpp::get_logger("plan_delegator"), "plan_delegator: 1st: plan_req->header.stamp: " << std::to_string(plan_req->header.stamp.sec));
+            RCLCPP_ERROR_STREAM(rclcpp::get_logger("plan_delegator"), "plan_delegator: 1st: plan_req->header.stamp: " << std::to_string(plan_req->header.stamp.nanosec));
+
             plan_req->vehicle_state.longitudinal_vel = latest_twist_.twist.linear.x;
             plan_req->vehicle_state.x_pos_global = latest_pose_.pose.position.x;
             plan_req->vehicle_state.y_pos_global = latest_pose_.pose.position.y;
@@ -272,6 +275,9 @@ namespace plan_delegator
             plan_req->maneuver_index_to_plan = current_maneuver_index;
             // this assumes the vehicle does not have significant lateral velocity
             plan_req->header.stamp = latest_trajectory_plan.trajectory_points.back().target_time;
+            RCLCPP_ERROR_STREAM(rclcpp::get_logger("plan_delegator"), "plan_delegator: 2nd: plan_req->header.stamp: " << std::to_string(plan_req->header.stamp.sec));
+            RCLCPP_ERROR_STREAM(rclcpp::get_logger("plan_delegator"), "plan_delegator: 2nd: plan_req->header.stamp: " << std::to_string(plan_req->header.stamp.nanosec));
+
             plan_req->vehicle_state.longitudinal_vel = distance_diff / time_diff_sec;
             // TODO develop way to set yaw value for future points
         }
@@ -521,6 +527,9 @@ namespace plan_delegator
         if(isTrajectoryValid(trajectory_plan))
         {
             trajectory_plan.header.stamp = get_clock()->now();
+            RCLCPP_ERROR_STREAM(rclcpp::get_logger("plan_delegator")," trajectory_plan.header.stamp: " << std::to_string(trajectory_plan.header.stamp.sec) << ", nsec" 
+                << std::to_string(trajectory_plan.header.stamp.nanosec));
+            
             traj_pub_->publish(trajectory_plan);
         }
         else

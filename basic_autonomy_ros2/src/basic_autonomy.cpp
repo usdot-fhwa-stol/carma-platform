@@ -755,6 +755,7 @@ namespace basic_autonomy
             {
                 carma_planning_msgs::msg::TrajectoryPlanPoint tpp;
                 rclcpp::Duration relative_time(times[i] * 1e9); // Conversion of times[i] from seconds to nanoseconds
+                RCLCPP_ERROR_STREAM(rclcpp::get_logger("basic_autonomy_ros2"), "startTime: " << std::to_string(startTime.seconds()) << ", relative_time: " << std::to_string(relative_time.seconds()));
                 tpp.target_time = startTime + relative_time;
                 tpp.x = points[i].x();
                 tpp.y = points[i].y();
