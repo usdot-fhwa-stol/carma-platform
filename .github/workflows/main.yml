@@ -35,6 +35,9 @@ jobs:
 
     # Steps represent a sequence of tasks that will be executed as part of the job
     steps:
+    # Install graphvix to support Graph visualization and representing structural information as diagrams of abstract graphs and networks
+    - name: Install graphviz
+      run: sudo apt install graphviz && sudo dot -c
     # Checks-out your repository under $GITHUB_WORKSPACE, so your job can access it
     - uses: actions/checkout@v2
     # Doxygen action for documentation of carma-platform source code by using mattnotmitt github actions workflow
