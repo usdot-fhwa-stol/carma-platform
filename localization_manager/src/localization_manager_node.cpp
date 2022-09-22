@@ -40,7 +40,9 @@ namespace localization_manager
         config_.gnss_data_timeout = declare_parameter<int>("gnss_data_timeout", config_.gnss_data_timeout);
         config_.localization_mode = declare_parameter<int>("localization_mode", config_.localization_mode);
         config_.pose_pub_rate = declare_parameter<double>("pose_pub_rate", config_.pose_pub_rate);
-
+        config_.x_offset = declare_parameter<double>("x_offset", config_.x_offset);
+        config_.y_offset = declare_parameter<double>("y_offset", config_.y_offset);
+        config_.z_offset = declare_parameter<double>("z_offset", config_.z_offset);
     }
 
     carma_ros2_utils::CallbackReturn Node::handle_on_configure(const rclcpp_lifecycle::State &)
@@ -59,6 +61,9 @@ namespace localization_manager
         get_parameter<int>("gnss_data_timeout", config_.gnss_data_timeout);
         get_parameter<int>("localization_mode", config_.localization_mode);
         get_parameter<double>("pose_pub_rate", config_.pose_pub_rate);
+        get_parameter<double>("x_offset", config_.x_offset);
+        get_parameter<double>("y_offset", config_.y_offset);
+        get_parameter<double>("z_offset", config_.z_offset);
 
         // Initialize worker object
         manager_.reset(new LocalizationManager(std::bind(&Node::publishPoseStamped, this, std_ph::_1),

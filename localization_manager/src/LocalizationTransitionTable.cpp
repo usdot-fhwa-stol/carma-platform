@@ -54,7 +54,7 @@ void LocalizationTransitionTable::signalWhenUNINITIALIZED(LocalizationSignal sig
   switch (signal)
   {
     case LocalizationSignal::INITIAL_POSE:
-        if (mode_ == LocalizerMode::GNSS)
+        if (mode_ == LocalizerMode::GNSS || mode_ == LocalizerMode::GNSS_WITH_FIXED_OFFSET)
         {
             setAndLogState(LocalizationState::DEGRADED_NO_LIDAR_FIX, signal);
         }
@@ -173,19 +173,19 @@ void LocalizationTransitionTable::signalWhenDEGRADED_NO_LIDAR_FIX(LocalizationSi
   switch (signal)
   {
     case LocalizationSignal::INITIAL_POSE:
-      if (mode_ != LocalizerMode::GNSS)
+      if (mode_ != LocalizerMode::GNSS && mode_ != LocalizerMode::GNSS_WITH_FIXED_OFFSET)
       {
         setAndLogState(LocalizationState::INITIALIZING, signal);
       }
       break;
     case LocalizationSignal::GOOD_NDT_FREQ_AND_FITNESS_SCORE:
-      if (mode_ != LocalizerMode::GNSS)
+      if (mode_ != LocalizerMode::GNSS && mode_ != LocalizerMode::GNSS_WITH_FIXED_OFFSET)
       {
         setAndLogState(LocalizationState::OPERATIONAL, signal);
       }
       break;
     case LocalizationSignal::TIMEOUT:
-      if (mode_ != LocalizerMode::GNSS && mode_ != LocalizerMode::AUTO_WITHOUT_TIMEOUT && mode_ != LocalizerMode::GNSS_WITH_NDT_INIT)
+      if (mode_ != LocalizerMode::GNSS && mode_ != LocalizerMode::AUTO_WITHOUT_TIMEOUT && mode_ != LocalizerMode::GNSS_WITH_NDT_INIT && mode_ != LocalizerMode::GNSS_WITH_FIXED_OFFSET)
       {
         setAndLogState(LocalizationState::AWAIT_MANUAL_INITIALIZATION, signal);
       }
@@ -203,7 +203,7 @@ void LocalizationTransitionTable::signalWhenAWAIT_MANUAL_INITIALIZATION(Localiza
   switch (signal)
   {
     case LocalizationSignal::INITIAL_POSE:
-      if (mode_ == LocalizerMode::GNSS)
+      if (mode_ == LocalizerMode::GNSS || mode_ == LocalizerMode::GNSS_WITH_FIXED_OFFSET)
       {
         setAndLogState(LocalizationState::DEGRADED_NO_LIDAR_FIX, signal);
       } 

@@ -47,6 +47,10 @@ struct LocalizationManagerConfig
     int localization_mode = static_cast<int>(LocalizerMode::AUTO_WITHOUT_TIMEOUT);
     //! Selected pose publication rate
     double pose_pub_rate = 10.0;
+    //! GPS Offset to apply if that mode is enabled
+    double x_offset = 2.8;
+    double y_offset = -2.1;
+    double z_offset = 0.0;    
 
     // Stream operator for this config
     friend std::ostream &operator<<(std::ostream &output, const LocalizationManagerConfig &c)
@@ -62,6 +66,9 @@ struct LocalizationManagerConfig
             << "gnss_data_timeout: " << c.gnss_data_timeout << std::endl
             << "localization_mode: " << static_cast<LocalizerMode>(c.localization_mode) << std::endl
             << "pose_pub_rate: " << c.pose_pub_rate << std::endl
+            << "x_offset: " << c.x_offset << std::endl
+            << "y_offset: " << c.y_offset << std::endl
+            << "z_offset: " << c.z_offset << std::endl
             << "}" << std::endl;
     return output;
     }

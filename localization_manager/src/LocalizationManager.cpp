@@ -298,7 +298,15 @@ void LocalizationManager::posePubTick()
     
     // Publish current pose message if available
     if (current_pose_){
-        pose_pub_(*current_pose_);
+        auto pose_to_publish = *current_pose_;
+        if (config_.localization_mode == LocalizerMode::GNSS_WITH_FIXED_OFFSET)
+        {
+            pose_to_publish.pose.position.x += config_.x_offset;
+            pose_to_publish.pose.position.y += config_.y_offset;
+            pose_to_publish.pose.position.z += config_.z_offset;
+        }
+
+        pose_pub_(pose_to_publish);
     }
 
     // Create and publish status report message
