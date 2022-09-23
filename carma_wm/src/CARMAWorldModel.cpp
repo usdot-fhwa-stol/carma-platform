@@ -1377,7 +1377,11 @@ namespace carma_wm
         {
           temp_signal_states.push_back(std::make_pair(mov_check.first, mov_check.second ));
           temp_start_times.push_back(sim_.traffic_signal_start_times_[mov_id][mov_signal_group][i]);
+        }
+        else
+        {
           i++;
+          continue;
         }
         
         auto last_time_difference = mov_check.first - min_end_time_dynamic;  
@@ -1504,7 +1508,8 @@ namespace carma_wm
               sim_.traffic_signal_start_times_[curr_intersection.id.id][current_movement_state.signal_group].push_back(
                                 start_time_dynamic); //todo use start_time_dynamic on real testing
               ROS_ERROR_STREAM("intersection id: " << (int)curr_intersection.id.id << ", signal: " << (int)current_movement_state.signal_group 
-                  << ", end_time: " << min_end_time_dynamic
+                   << ", start_time: " << std::to_string(lanelet::time::toSec(start_time_dynamic))
+                  << ", end_time: " << std::to_string(lanelet::time::toSec(min_end_time_dynamic))
                  << ", state: " << received_state_dynamic);
               curr_light->recorded_time_stamps = sim_.traffic_signal_states_[curr_intersection.id.id][current_movement_state.signal_group];
               curr_light->recorded_start_time_stamps = sim_.traffic_signal_start_times_[curr_intersection.id.id][current_movement_state.signal_group];

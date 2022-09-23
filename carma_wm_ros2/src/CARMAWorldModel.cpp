@@ -1386,16 +1386,25 @@ namespace carma_wm
     int i = 0;
     for(auto mov_check:sim_.traffic_signal_states_[mov_id][mov_signal_group])
     {
+      std::cerr << "ROS2: now: " << std::to_string(std::chrono::duration<double>(std::chrono::system_clock::now().time_since_epoch()).count()) <<
+        "mov_check: " << std::to_string(lanelet::time::toSec(mov_check.first)) << std::endl;
+      
       if (lanelet::time::timeFromSec(std::chrono::duration<double>(std::chrono::system_clock::now().time_since_epoch()).count()) < mov_check.first) //todo use node's clock
       {
         temp_signal_states.push_back(std::make_pair(mov_check.first, mov_check.second ));
         temp_start_times.push_back(sim_.traffic_signal_start_times_[mov_id][mov_signal_group][i]);
+      }
+      else
+      {
         i++;
+        continue;
       }
 
       auto last_time_difference = mov_check.first - min_end_time_dynamic;  
       bool is_duplicate = last_time_difference.total_milliseconds() >= -500 && last_time_difference.total_milliseconds() <= 500;
 
+      std::cerr << "ROS2: difference: " << std::to_string(last_time_difference.total_milliseconds()) << std::endl;
+      
       if(received_state_dynamic == mov_check.second && is_duplicate)
       {
         return true;
@@ -1513,12 +1522,15 @@ namespace carma_wm
             if (!recorded)
 		        {
               sim_.traffic_signal_states_[curr_intersection.id.id][current_movement_state.signal_group].push_back(std::make_pair(min_end_time_dynamic, received_state_dynamic));
+              sim_.traffic_signal_start_times_[curr_intersection.id.id][current_movement_state.signal_group].push_back(
+                                start_time_dynamic); //todo use start_time_dynamic on real testing
+              
               RCLCPP_ERROR_STREAM(rclcpp::get_logger("carma_wm_ros2"), "intersection id: " << (int)curr_intersection.id.id << ", signal: " << (int)current_movement_state.signal_group
                  << ", start_time: " << std::to_string(lanelet::time::toSec(start_time_dynamic))
                  << ", end_time: " << std::to_string(lanelet::time::toSec(min_end_time_dynamic))
                  << ", state: " << received_state_dynamic);
-              curr_light->recorded_time_stamps.push_back(std::make_pair(min_end_time_dynamic, received_state_dynamic));
-              curr_light->recorded_start_time_stamps.push_back(start_time_dynamic);
+              curr_light->recorded_time_stamps = sim_.traffic_signal_states_[curr_intersection.id.id][current_movement_state.signal_group];
+              curr_light->recorded_start_time_stamps  = sim_.traffic_signal_start_times_[curr_intersection.id.id][current_movement_state.signal_group];
             }
 	        }
         } 
