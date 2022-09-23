@@ -145,6 +145,7 @@ namespace localization_manager
         }
         
 
+        RCLCPP_INFO_STREAM(get_logger(), "localization_manager finished pose and stats");
     }
 } // namespace localization_manager
 
