@@ -81,7 +81,7 @@ sudo apt update
 sudo apt install -y ros-foxy-desktop
 
 sudo apt-get install -y docker-compose
-sleep 5
+sleep 10
 sudo systemctl start docker
 
 cd ~
