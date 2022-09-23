@@ -60,6 +60,8 @@ namespace localization_manager
         get_parameter<int>("localization_mode", config_.localization_mode);
         get_parameter<double>("pose_pub_rate", config_.pose_pub_rate);
 
+        RCLCPP_INFO_STREAM(get_logger(), "Loaded params: " << config_);
+
         // Initialize worker object
         manager_.reset(new LocalizationManager(std::bind(&Node::publishPoseStamped, this, std_ph::_1),
                                          std::bind(&Node::publishStatus, this, std_ph::_1),
@@ -110,22 +112,26 @@ namespace localization_manager
 
     void Node::publishPoseStamped(const geometry_msgs::msg::PoseStamped& msg) const
     {
+        RCLCPP_DEBUG_STREAM(get_logger(), "Publishing pose");
         pose_pub_->publish(msg);
     }
 
     void Node::publishStatus(const carma_localization_msgs::msg::LocalizationStatusReport& msg) const
     {
+        RCLCPP_DEBUG_STREAM(get_logger(), "Publishing localization status");
         state_pub_->publish(msg);
     }
 
     void Node::publishManagedInitialPose(const geometry_msgs::msg::PoseWithCovarianceStamped& msg) const
     {
+        RCLCPP_DEBUG_STREAM(get_logger(), "Publishing initial pose");
         managed_initial_pose_pub_->publish(msg);
     }
 
     void Node::poseAndStatsCallback(const geometry_msgs::msg::PoseStamped::ConstPtr pose,
                                      const autoware_msgs::msg::NDTStat::ConstPtr stats)
     {
+        RCLCPP_DEBUG_STREAM(get_logger(), "Got pose and stats");
         try
         {
             manager_->poseAndStatsCallback(pose, stats);
