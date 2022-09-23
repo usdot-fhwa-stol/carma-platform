@@ -35,11 +35,11 @@ void LocalizationTransitionTable::logDebugSignal(LocalizationSignal signal) cons
 
 void LocalizationTransitionTable::setAndLogState(LocalizationState new_state, LocalizationSignal source_signal)
 {
+  RCLCPP_INFO_STREAM(rclcpp::get_logger("localization_manager"), "LocalizationTransitionTable changed localization state from "<< state_ << " to "<< new_state <<" because of signal "<<source_signal << " while in mode "<<mode_);
   if (new_state == state_)
   {
       return; //State was unchanged no need to log or trigger callbacks
   }
-  RCLCPP_INFO_STREAM(rclcpp::get_logger("localization_manager"), "LocalizationTransitionTable changed localization state from "<< state_ << " to "<< new_state <<" because of signal "<<source_signal << " while in mode "<<mode_);
   
   LocalizationState prev_state = state_;
   state_ = new_state;
@@ -170,6 +170,7 @@ void LocalizationTransitionTable::signalWhenDEGRADED(LocalizationSignal signal)
 
 void LocalizationTransitionTable::signalWhenDEGRADED_NO_LIDAR_FIX(LocalizationSignal signal)
 {
+  RCLCPP_INFO_STREAM(rclcpp::get_logger("localization_manager"), "localization_manager switch from degraded_no_lidar_fix");
   switch (signal)
   {
     case LocalizationSignal::INITIAL_POSE:
@@ -185,9 +186,12 @@ void LocalizationTransitionTable::signalWhenDEGRADED_NO_LIDAR_FIX(LocalizationSi
       }
       break;
     case LocalizationSignal::TIMEOUT:
+      RCLCPP_INFO_STREAM(rclcpp::get_logger("localization_manager"), "localization_manager timeout hit");
+      RCLCPP_INFO_STREAM(rclcpp::get_logger("localization_manager"), "localization_manager timeout hit, mode is " << mode_);
       if (mode_ != LocalizerMode::GNSS && mode_ != LocalizerMode::AUTO_WITHOUT_TIMEOUT && mode_ != LocalizerMode::GNSS_WITH_NDT_INIT)
       {
         setAndLogState(LocalizationState::AWAIT_MANUAL_INITIALIZATION, signal);
+        RCLCPP_INFO_STREAM(rclcpp::get_logger("localization_manager"), "localization_manager Switching to await_manual_initialization");
       }
       break;
     case LocalizationSignal::GNSS_DATA_TIMEOUT:

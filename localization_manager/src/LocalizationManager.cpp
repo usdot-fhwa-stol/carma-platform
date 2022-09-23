@@ -125,7 +125,7 @@ namespace localization_manager
             tf2::Vector3 gnss_translation(last_raw_gnss_value_->pose.position.x, last_raw_gnss_value_->pose.position.y, last_raw_gnss_value_->pose.position.z);
 
             gnss_offset_ = ndt_translation - gnss_translation;
-            RCLCPP_INFO_STREAM(logger_->get_logger(), "localization_manager Operational, pose offset computed as " << gnss_offset_.x << ", " << gnss_offset_.y << ", " << gnss_offset_.z);
+            RCLCPP_INFO_STREAM(logger_->get_logger(), "localization_manager Operational, pose offset computed");
         }
 
         if (state != LocalizationState::DEGRADED_NO_LIDAR_FIX)
@@ -196,6 +196,7 @@ namespace localization_manager
         RCLCPP_INFO_STREAM(logger_->get_logger(), "localization_manager Timer callback");
         // If there is already a timer callback in progress or the expected state has changed then return
         if (origin_state != transition_table_.getState())
+            RCLCPP_INFO_STREAM(logger_->get_logger(), "localization_manager different state, exiting");
             return;
 
         transition_table_.signal(LocalizationSignal::TIMEOUT);
