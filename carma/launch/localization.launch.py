@@ -59,48 +59,75 @@ def generate_launch_description():
     localization_manager_convertor_param_file = os.path.join(
     get_package_share_directory('localization_manager'), 'config/parameters.yaml')
 
-    gnss_to_map_convertor_container = ComposableNodeContainer(
-    package='carma_ros2_utils',
-    name='gnss_to_map_convertor_container',
-    executable='carma_component_container_mt',
-    namespace=GetCurrentNamespace(),
-    composable_node_descriptions=[
+    hd_maps_loader_container = ComposableNodeContainer(
+        package='carma_ros2_utils',
+        name='hd_maps_loading_container',
+        executable='lifecycle_component_wrapper_mt',
+        namespace=GetCurrentNamespace(),
+        composable_node_descriptions=[
 
-        ComposableNode(
-                package='gnss_to_map_convertor',
-                plugin='gnss_to_map_convertor::Node',
-                name='gnss_to_map_convertor',
-                extra_arguments=[
-                    {'use_intra_process_comms': True}, 
-                    {'--log-level' : GetLogLevel('gnss_to_map_convertor', env_log_levels) }
-                ],
-                remappings=[
-                    ("gnss_fix_fused",  [EnvironmentVariable('CARMA_INTR_NS', default_value=''),"/gnss_fix_fused"]),
-                    ("georeference", "map_param_loader/georeference"),
-                ],
-                parameters=[ gnss_to_map_convertor_param_file ]
-        )
-    ])
+
+
+
+            ComposableNode(
+                    package='ndt_nodes',
+                    plugin='autoware::localization::ndt_nodes::NDTMapPublisherNode',
+                    name='point_cloud_map_loader',
+                    extra_arguments=[
+                        {'use_intra_process_comms': True}, 
+                        {'--log-level' : GetLogLevel('ndt_nodes', env_log_levels) }
+                    ],
+                    remappings=[
+
+                    ],
+                    parameters=[ LaunchConfiguration('map_publisher_param_file') ]
+            ),
+
+
+        ])
+
+    gnss_to_map_convertor_container = ComposableNodeContainer(
+        package='carma_ros2_utils',
+        name='gnss_to_map_convertor_container',
+        executable='carma_component_container_mt',
+        namespace=GetCurrentNamespace(),
+        composable_node_descriptions=[
+
+            ComposableNode(
+                    package='gnss_to_map_convertor',
+                    plugin='gnss_to_map_convertor::Node',
+                    name='gnss_to_map_convertor',
+                    extra_arguments=[
+                        {'use_intra_process_comms': True}, 
+                        {'--log-level' : GetLogLevel('gnss_to_map_convertor', env_log_levels) }
+                    ],
+                    remappings=[
+                        ("gnss_fix_fused",  [EnvironmentVariable('CARMA_INTR_NS', default_value=''),"/gnss_fix_fused"]),
+                        ("georeference", "map_param_loader/georeference"),
+                    ],
+                    parameters=[ gnss_to_map_convertor_param_file ]
+            )
+        ])
 
     localization_manager_container = ComposableNodeContainer(
-    package='carma_ros2_utils',
-    name='localization_manager_container',
-    executable='carma_component_container_mt',
-    namespace=GetCurrentNamespace(),
-    composable_node_descriptions=[
-        ComposableNode(
-                package='localization_manager',
-                plugin='localization_manager::Node',
-                name='localization_manager',
-                extra_arguments=[
-                    {'use_intra_process_comms': True}, 
-                    {'--log-level' : GetLogLevel('localization_manager', env_log_levels) }
-                ],
-                remappings=[
-                    
-                ],
-                parameters=[ localization_manager_convertor_param_file ]
-        )
+        package='carma_ros2_utils',
+        name='localization_manager_container',
+        executable='carma_component_container_mt',
+        namespace=GetCurrentNamespace(),
+        composable_node_descriptions=[
+            ComposableNode(
+                    package='localization_manager',
+                    plugin='localization_manager::Node',
+                    name='localization_manager',
+                    extra_arguments=[
+                        {'use_intra_process_comms': True}, 
+                        {'--log-level' : GetLogLevel('localization_manager', env_log_levels) }
+                    ],
+                    remappings=[
+                        
+                    ],
+                    parameters=[ localization_manager_convertor_param_file ]
+            )
     ])
 
     # subsystem_controller which orchestrates the lifecycle of this subsystem's components
