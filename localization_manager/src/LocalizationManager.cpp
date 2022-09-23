@@ -194,6 +194,7 @@ namespace localization_manager
     void LocalizationManager::timerCallback(const LocalizationState origin_state)
     {
         RCLCPP_INFO_STREAM(logger_->get_logger(), "localization_manager Timer callback");
+        RCLCPP_INFO_STREAM(logger_->get_logger(), "localization_manager Timer state: " << transition_table_.getState() << " and system current state: " << origin_state);
         // If there is already a timer callback in progress or the expected state has changed then return
         if (origin_state != transition_table_.getState())
             RCLCPP_INFO_STREAM(logger_->get_logger(), "localization_manager different state, exiting");
@@ -244,6 +245,7 @@ namespace localization_manager
         switch (new_state)
         {
         case LocalizationState::INITIALIZING:
+            RCLCPP_INFO_STREAM(logger_->get_logger(), "localization_manager starting initialization timer");
             gnss_offset_ = boost::none;
             prev_ndt_stamp_ = boost::none;
 
@@ -254,7 +256,8 @@ namespace localization_manager
             timers_[current_timer_id_] = std::make_pair(std::move(current_timer_), false); // Add start timer to map by Id
             break;
         case LocalizationState::DEGRADED_NO_LIDAR_FIX:
-
+            
+            RCLCPP_INFO_STREAM(logger_->get_logger(), "localization_manager starting degraded timer");
             current_timer_ = timer_factory_->buildTimer(nextId(), rclcpp::Duration(config_.gnss_only_operation_timeout * 1e6),
                                                         std::bind(&LocalizationManager::timerCallback, this, new_state), true, true);
 
