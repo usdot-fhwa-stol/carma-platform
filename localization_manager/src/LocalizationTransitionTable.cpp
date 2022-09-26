@@ -51,6 +51,7 @@ void LocalizationTransitionTable::setAndLogState(LocalizationState new_state, Lo
 
 void LocalizationTransitionTable::signalWhenUNINITIALIZED(LocalizationSignal signal)
 {
+  RCLCPP_INFO_STREAM(rclcpp::get_logger("localization_manager"), "localization_manager switch from uninitialized");
   switch (signal)
   {
     case LocalizationSignal::INITIAL_POSE:
@@ -71,6 +72,7 @@ void LocalizationTransitionTable::signalWhenUNINITIALIZED(LocalizationSignal sig
 
 void LocalizationTransitionTable::signalWhenINITIALIZING(LocalizationSignal signal)
 {
+  RCLCPP_INFO_STREAM(rclcpp::get_logger("localization_manager"), "localization_manager switch from initializing");
   switch (signal)
   {
       // How to handle the combined conditions?
@@ -101,6 +103,7 @@ void LocalizationTransitionTable::signalWhenINITIALIZING(LocalizationSignal sign
 
 void LocalizationTransitionTable::signalWhenOPERATIONAL(LocalizationSignal signal)
 {
+  RCLCPP_INFO_STREAM(rclcpp::get_logger("localization_manager"), "localization_manager switch from operational");
   switch (signal)
   {
     case LocalizationSignal::INITIAL_POSE:
@@ -134,6 +137,7 @@ void LocalizationTransitionTable::signalWhenOPERATIONAL(LocalizationSignal signa
 
 void LocalizationTransitionTable::signalWhenDEGRADED(LocalizationSignal signal)
 {
+  RCLCPP_INFO_STREAM(rclcpp::get_logger("localization_manager"), "localization_manager switch from degraded");
   switch (signal)
   {
     case LocalizationSignal::INITIAL_POSE:
@@ -204,6 +208,7 @@ void LocalizationTransitionTable::signalWhenDEGRADED_NO_LIDAR_FIX(LocalizationSi
 
 void LocalizationTransitionTable::signalWhenAWAIT_MANUAL_INITIALIZATION(LocalizationSignal signal)
 {
+  RCLCPP_INFO_STREAM(rclcpp::get_logger("localization_manager"), "localization_manager switch from await_manual_initialization");
   switch (signal)
   {
     case LocalizationSignal::INITIAL_POSE:
@@ -224,6 +229,7 @@ void LocalizationTransitionTable::signalWhenAWAIT_MANUAL_INITIALIZATION(Localiza
 
 void LocalizationTransitionTable::signal(LocalizationSignal signal)
 {
+  RCLCPP_INFO_STREAM(rclcpp::get_logger("localization_manager"), "localization_manager received signal " << signal << ", current state " << state_);
   switch (state_)
   {
     case LocalizationState::UNINITIALIZED:
