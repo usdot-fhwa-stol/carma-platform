@@ -116,7 +116,7 @@ namespace localization_manager
     }
 
     void Node::publishStatus(const carma_localization_msgs::msg::LocalizationStatusReport& msg) const
-    
+    {
         state_pub_->publish(msg);
     }
 
