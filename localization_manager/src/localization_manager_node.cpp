@@ -61,8 +61,6 @@ namespace localization_manager
         get_parameter<double>("pose_pub_rate", config_.pose_pub_rate);
 
         RCLCPP_INFO_STREAM(rclcpp::get_logger("localization.localization_manager"), "localization_manager Loaded params: " << config_);
-        RCLCPP_INFO_STREAM(rclcpp::get_logger("localization.localization_manager"), "localization_manager ez2find");
-        RCLCPP_INFO_STREAM(rclcpp::get_logger("localization.localization_manager"), "localization_manager harder2find");
 
         // Initialize worker object
         manager_.reset(new LocalizationManager(std::bind(&Node::publishPoseStamped, this, std_ph::_1),
@@ -114,38 +112,31 @@ namespace localization_manager
 
     void Node::publishPoseStamped(const geometry_msgs::msg::PoseStamped& msg) const
     {
-        RCLCPP_INFO_STREAM(rclcpp::get_logger("localization.localization_manager"), "localization_manager Publishing pose");
         pose_pub_->publish(msg);
     }
 
     void Node::publishStatus(const carma_localization_msgs::msg::LocalizationStatusReport& msg) const
-    {
-        RCLCPP_INFO_STREAM(rclcpp::get_logger("localization.localization_manager"), "localization_manager Publishing localization status");
+    
         state_pub_->publish(msg);
     }
 
     void Node::publishManagedInitialPose(const geometry_msgs::msg::PoseWithCovarianceStamped& msg) const
     {
-        RCLCPP_INFO_STREAM(rclcpp::get_logger("localization.localization_manager"), "localization_manager Publishing initial pose");
         managed_initial_pose_pub_->publish(msg);
     }
 
     void Node::poseAndStatsCallback(const geometry_msgs::msg::PoseStamped::ConstPtr pose,
                                      const autoware_msgs::msg::NDTStat::ConstPtr stats)
     {
-        RCLCPP_INFO_STREAM(rclcpp::get_logger("localization.localization_manager"), "localization_manager Got pose and stats");
         try
         {
             manager_->poseAndStatsCallback(pose, stats);
         }
         catch (const std::exception& e)
         {
-            RCLCPP_INFO_STREAM(rclcpp::get_logger("localization.localization_manager"), "localization_manager Uncaught Exception in localization_manager. Exception: "<< e.what() );
+            RCLCPP_ERROR_STREAM(rclcpp::get_logger("localization.localization_manager"), "localization_manager Uncaught Exception in localization_manager. Exception: "<< e.what() );
             handle_primary_state_exception(e);
         }
-        
-
-        RCLCPP_INFO_STREAM(rclcpp::get_logger("localization.localization_manager"), "localization_manager finished pose and stats");
     }
 } // namespace localization_manager
 

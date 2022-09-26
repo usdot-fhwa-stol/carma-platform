@@ -30,16 +30,16 @@ LocalizationState LocalizationTransitionTable::getState() const
 
 void LocalizationTransitionTable::logDebugSignal(LocalizationSignal signal) const
 {
-  RCLCPP_INFO_STREAM(rclcpp::get_logger("localization.localization_manager"), "LocalizationTransitionTable received unsupported signal of " << signal <<"while in state" << state_);
+  RCLCPP_DEBUG_STREAM(rclcpp::get_logger("localization.localization_manager"), "LocalizationTransitionTable received unsupported signal of " << signal <<"while in state" << state_);
 }
 
 void LocalizationTransitionTable::setAndLogState(LocalizationState new_state, LocalizationSignal source_signal)
 {
-  RCLCPP_INFO_STREAM(rclcpp::get_logger("localization.localization_manager"), "LocalizationTransitionTable changed localization state from "<< state_ << " to "<< new_state <<" because of signal "<<source_signal << " while in mode "<<mode_);
   if (new_state == state_)
   {
       return; //State was unchanged no need to log or trigger callbacks
   }
+  RCLCPP_INFO_STREAM(rclcpp::get_logger("localization.localization_manager"), "LocalizationTransitionTable changed localization state from "<< state_ << " to "<< new_state <<" because of signal "<<source_signal << " while in mode "<<mode_);
   
   LocalizationState prev_state = state_;
   state_ = new_state;
@@ -51,7 +51,6 @@ void LocalizationTransitionTable::setAndLogState(LocalizationState new_state, Lo
 
 void LocalizationTransitionTable::signalWhenUNINITIALIZED(LocalizationSignal signal)
 {
-  RCLCPP_INFO_STREAM(rclcpp::get_logger("localization.localization_manager"), "localization_manager switch from uninitialized with signal " << signal);
   switch (signal)
   {
     case LocalizationSignal::INITIAL_POSE:
@@ -72,7 +71,6 @@ void LocalizationTransitionTable::signalWhenUNINITIALIZED(LocalizationSignal sig
 
 void LocalizationTransitionTable::signalWhenINITIALIZING(LocalizationSignal signal)
 {
-  RCLCPP_INFO_STREAM(rclcpp::get_logger("localization.localization_manager"), "localization_manager switch from initializing with signal " << signal);
   switch (signal)
   {
       // How to handle the combined conditions?
@@ -103,7 +101,6 @@ void LocalizationTransitionTable::signalWhenINITIALIZING(LocalizationSignal sign
 
 void LocalizationTransitionTable::signalWhenOPERATIONAL(LocalizationSignal signal)
 {
-  RCLCPP_INFO_STREAM(rclcpp::get_logger("localization.localization_manager"), "localization_manager switch from operational with signal " << signal);
   switch (signal)
   {
     case LocalizationSignal::INITIAL_POSE:
@@ -137,7 +134,6 @@ void LocalizationTransitionTable::signalWhenOPERATIONAL(LocalizationSignal signa
 
 void LocalizationTransitionTable::signalWhenDEGRADED(LocalizationSignal signal)
 {
-  RCLCPP_INFO_STREAM(rclcpp::get_logger("localization.localization_manager"), "localization_manager switch from degraded with signal " << signal);
   switch (signal)
   {
     case LocalizationSignal::INITIAL_POSE:
@@ -174,7 +170,6 @@ void LocalizationTransitionTable::signalWhenDEGRADED(LocalizationSignal signal)
 
 void LocalizationTransitionTable::signalWhenDEGRADED_NO_LIDAR_FIX(LocalizationSignal signal)
 {
-  RCLCPP_INFO_STREAM(rclcpp::get_logger("localization.localization_manager"), "localization_manager switch from degraded_no_lidar_fix with signal " << signal);
   switch (signal)
   {
     case LocalizationSignal::INITIAL_POSE:
@@ -190,12 +185,9 @@ void LocalizationTransitionTable::signalWhenDEGRADED_NO_LIDAR_FIX(LocalizationSi
       }
       break;
     case LocalizationSignal::TIMEOUT:
-      RCLCPP_INFO_STREAM(rclcpp::get_logger("localization.localization_manager"), "localization_manager timeout hit");
-      RCLCPP_INFO_STREAM(rclcpp::get_logger("localization.localization_manager"), "localization_manager timeout hit, mode is " << mode_);
       if (mode_ != LocalizerMode::GNSS && mode_ != LocalizerMode::AUTO_WITHOUT_TIMEOUT && mode_ != LocalizerMode::GNSS_WITH_NDT_INIT)
       {
         setAndLogState(LocalizationState::AWAIT_MANUAL_INITIALIZATION, signal);
-        RCLCPP_INFO_STREAM(rclcpp::get_logger("localization.localization_manager"), "localization_manager Switching to await_manual_initialization");
       }
       break;
     case LocalizationSignal::GNSS_DATA_TIMEOUT:
@@ -208,7 +200,6 @@ void LocalizationTransitionTable::signalWhenDEGRADED_NO_LIDAR_FIX(LocalizationSi
 
 void LocalizationTransitionTable::signalWhenAWAIT_MANUAL_INITIALIZATION(LocalizationSignal signal)
 {
-  RCLCPP_INFO_STREAM(rclcpp::get_logger("localization.localization_manager"), "localization_manager switch from await_manual_initialization with signal " << signal);
   switch (signal)
   {
     case LocalizationSignal::INITIAL_POSE:
@@ -229,7 +220,6 @@ void LocalizationTransitionTable::signalWhenAWAIT_MANUAL_INITIALIZATION(Localiza
 
 void LocalizationTransitionTable::signal(LocalizationSignal signal)
 {
-  RCLCPP_INFO_STREAM(rclcpp::get_logger("localization.localization_manager"), "localization_manager received signal " << signal << ", current state " << state_);
   switch (state_)
   {
     case LocalizationState::UNINITIALIZED:
@@ -251,8 +241,7 @@ void LocalizationTransitionTable::signal(LocalizationSignal signal)
       signalWhenAWAIT_MANUAL_INITIALIZATION(signal);
       break;
     default:
-      RCLCPP_INFO_STREAM(rclcpp::get_logger("localization.localization_manager"), "Invalid signal passed to LocalizationTransitionTable::signal");
-      // throw std::invalid_argument("Invalid signal passed to LocalizationTransitionTable::signal");
+      throw std::invalid_argument("Invalid signal passed to LocalizationTransitionTable::signal");
       break;
   }
 }
