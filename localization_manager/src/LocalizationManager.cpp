@@ -54,7 +54,7 @@ namespace localization_manager
 
         if (new_stamp <= rclcpp::Time(prev_ndt_stamp_.get(), timer_clock_type_))
         {
-            RCLCPP_INFO_STREAM(logger_->get_logger(), "localization_manager LocalizationManager received NDT data out of order. Prev stamp was "
+            RCLCPP_INFO_STREAM(rclcpp::get_logger("localization.localization_manager"), "localization_manager LocalizationManager received NDT data out of order. Prev stamp was "
                                                            << prev_ndt_stamp_.get().seconds() << " new stamp is " << new_stamp.seconds());
             // When invalid data is received from NDT force the frequency into the fault range
             return config_.ndt_frequency_fault_threshold / 2;
@@ -66,7 +66,7 @@ namespace localization_manager
                                                    const autoware_msgs::msg::NDTStat::ConstPtr stats)
     {
         double ndt_freq = computeNDTFreq(rclcpp::Time(pose->header.stamp, timer_clock_type_));
-        RCLCPP_INFO_STREAM(logger_->get_logger(), "localization_manager Received pose resulting in frequency value of " << ndt_freq << " with score of " << stats->score);
+        RCLCPP_INFO_STREAM(rclcpp::get_logger("localization.localization_manager"), "localization_manager Received pose resulting in frequency value of " << ndt_freq << " with score of " << stats->score);
 
         if (stats->score >= config_.fitness_score_fault_threshold || ndt_freq <= config_.ndt_frequency_fault_threshold)
         {
@@ -91,7 +91,7 @@ namespace localization_manager
 
         if (static_cast<LocalizerMode>(config_.localization_mode) == LocalizerMode::GNSS_WITH_NDT_INIT && state == LocalizationState::OPERATIONAL && last_raw_gnss_value_)
         {
-            RCLCPP_INFO_STREAM(logger_->get_logger(), "localization_manager lidar_init_sequential_timesteps_counter_: " << lidar_init_sequential_timesteps_counter_);
+            RCLCPP_INFO_STREAM(rclcpp::get_logger("localization.localization_manager"), "localization_manager lidar_init_sequential_timesteps_counter_: " << lidar_init_sequential_timesteps_counter_);
             if (lidar_init_sequential_timesteps_counter_ < config_.sequential_timesteps_until_gps_operation)
             {
                 if (is_sequential_)
@@ -102,7 +102,7 @@ namespace localization_manager
             else
             {
                 transition_table_.signal(LocalizationSignal::LIDAR_INITIALIZED_SWITCH_TO_GPS);
-                RCLCPP_INFO_STREAM(logger_->get_logger(), "localization_manager Switched to LIDAR_INITIALIZED_SWITCH_TO_GPS at lidar_init_sequential_timesteps_counter_: " << lidar_init_sequential_timesteps_counter_
+                RCLCPP_INFO_STREAM(rclcpp::get_logger("localization.localization_manager"), "localization_manager Switched to LIDAR_INITIALIZED_SWITCH_TO_GPS at lidar_init_sequential_timesteps_counter_: " << lidar_init_sequential_timesteps_counter_
                                                                                                                                                        << ", with new state: " << transition_table_.getState());
             }
         }
@@ -114,34 +114,34 @@ namespace localization_manager
         {
             is_sequential_ = false;
             lidar_init_sequential_timesteps_counter_ = 0;
-            RCLCPP_INFO_STREAM(logger_->get_logger(), "localization_manager Resetting lidar_init_sequential_timesteps_counter_: " << lidar_init_sequential_timesteps_counter_ << ", with new state: " << transition_table_.getState());
+            RCLCPP_INFO_STREAM(rclcpp::get_logger("localization.localization_manager"), "localization_manager Resetting lidar_init_sequential_timesteps_counter_: " << lidar_init_sequential_timesteps_counter_ << ", with new state: " << transition_table_.getState());
         }
 
         if (state == LocalizationState::OPERATIONAL && last_raw_gnss_value_)
         {
-            RCLCPP_INFO_STREAM(logger_->get_logger(), "localization_manager Operational, computing pose offset");
+            RCLCPP_INFO_STREAM(rclcpp::get_logger("localization.localization_manager"), "localization_manager Operational, computing pose offset");
             tf2::Vector3 ndt_translation(pose->pose.position.x, pose->pose.position.y, pose->pose.position.z);
 
             tf2::Vector3 gnss_translation(last_raw_gnss_value_->pose.position.x, last_raw_gnss_value_->pose.position.y, last_raw_gnss_value_->pose.position.z);
 
             gnss_offset_ = ndt_translation - gnss_translation;
-            RCLCPP_INFO_STREAM(logger_->get_logger(), "localization_manager Operational, pose offset computed");
+            RCLCPP_INFO_STREAM(rclcpp::get_logger("localization.localization_manager"), "localization_manager Operational, pose offset computed");
         }
 
         if (state != LocalizationState::DEGRADED_NO_LIDAR_FIX)
         {
 
-            RCLCPP_INFO_STREAM(logger_->get_logger(), "localization_manager Publishing mixed pose with lidar_init_sequential_timesteps_counter_: " << lidar_init_sequential_timesteps_counter_ << ", and state" << state);
+            RCLCPP_INFO_STREAM(rclcpp::get_logger("localization.localization_manager"), "localization_manager Publishing mixed pose with lidar_init_sequential_timesteps_counter_: " << lidar_init_sequential_timesteps_counter_ << ", and state" << state);
             current_pose_ = *pose;
         }
 
         prev_ndt_stamp_ = pose->header.stamp;
-        RCLCPP_INFO_STREAM(logger_->get_logger(), "localization_manager pose and stats callback finished");
+        RCLCPP_INFO_STREAM(rclcpp::get_logger("localization.localization_manager"), "localization_manager pose and stats callback finished");
     }
 
     void LocalizationManager::gnssPoseCallback(const geometry_msgs::msg::PoseStamped::SharedPtr msg)
     {
-        RCLCPP_INFO_STREAM(logger_->get_logger(), "localization_manager Got gps pose");
+        RCLCPP_INFO_STREAM(rclcpp::get_logger("localization.localization_manager"), "localization_manager Got gps pose");
         last_raw_gnss_value_ = *msg;
         // Just like ndt_matching the gnss pose is treated as an initialize signal if the system is not yet intialized
         if (transition_table_.getState() == LocalizationState::UNINITIALIZED)
@@ -165,43 +165,45 @@ namespace localization_manager
                 corrected_pose.pose.position.y = corrected_pose.pose.position.y + gnss_offset_->y();
                 corrected_pose.pose.position.z = corrected_pose.pose.position.z + gnss_offset_->z();
             }
-            RCLCPP_INFO_STREAM(logger_->get_logger(), "localization_manager Publishing GNSS pose with lidar_init_sequential_timesteps_counter_: " << lidar_init_sequential_timesteps_counter_);
+            RCLCPP_INFO_STREAM(rclcpp::get_logger("localization.localization_manager"), "localization_manager Publishing GNSS pose with lidar_init_sequential_timesteps_counter_: " << lidar_init_sequential_timesteps_counter_);
             current_pose_ = corrected_pose;
         }
-        RCLCPP_INFO_STREAM(logger_->get_logger(), "localization_manager gnss pose callback finished");
+        RCLCPP_INFO_STREAM(rclcpp::get_logger("localization.localization_manager"), "localization_manager gnss pose callback finished");
     }
 
     void LocalizationManager::initialPoseCallback(const geometry_msgs::msg::PoseWithCovarianceStamped::SharedPtr msg)
     {
-        RCLCPP_INFO_STREAM(logger_->get_logger(), "localization_manager Got initial pose from rviz");
+        RCLCPP_INFO_STREAM(rclcpp::get_logger("localization.localization_manager"), "localization_manager Got initial pose from rviz");
         lidar_init_sequential_timesteps_counter_ = 0;
         transition_table_.signal(LocalizationSignal::INITIAL_POSE);
         current_pose_ = boost::none; // Reset the current pose until a new pose is recieved
         initialpose_pub_(*msg);      // Forward the initial pose to the rest of the system
-        RCLCPP_INFO_STREAM(logger_->get_logger(), "localization_manager initial pose callback finished");
+        RCLCPP_INFO_STREAM(rclcpp::get_logger("localization.localization_manager"), "localization_manager initial pose callback finished");
     }
 
     void LocalizationManager::systemAlertCallback(const carma_msgs::msg::SystemAlert::SharedPtr alert)
     {
-        RCLCPP_INFO_STREAM(logger_->get_logger(), "localization_manager SystemAlert callback");
+        RCLCPP_INFO_STREAM(rclcpp::get_logger("localization.localization_manager"), "localization_manager SystemAlert callback");
         if (LIDAR_FAILURE_STRINGS.find(alert->description) != LIDAR_FAILURE_STRINGS.end())
         {
             transition_table_.signal(LocalizationSignal::LIDAR_SENSOR_FAILURE);
         }
-        RCLCPP_INFO_STREAM(logger_->get_logger(), "localization_manager SystemAlert finished");
+        RCLCPP_INFO_STREAM(rclcpp::get_logger("localization.localization_manager"), "localization_manager SystemAlert finished");
     }
 
     void LocalizationManager::timerCallback(const LocalizationState origin_state)
     {
-        RCLCPP_INFO_STREAM(logger_->get_logger(), "localization_manager Timer callback");
-        RCLCPP_INFO_STREAM(logger_->get_logger(), "localization_manager Timer state: " << transition_table_.getState() << " and system current state: " << origin_state);
+        RCLCPP_INFO_STREAM(rclcpp::get_logger("localization.localization_manager"), "localization_manager Timer callback");
+        RCLCPP_INFO_STREAM(rclcpp::get_logger("localization.localization_manager"), "localization_manager Timer state: " << origin_state << " and system current state: " << transition_table_.getState());
         // If there is already a timer callback in progress or the expected state has changed then return
         if (origin_state != transition_table_.getState())
-            RCLCPP_INFO_STREAM(logger_->get_logger(), "localization_manager different state, exiting");
+        {
+            RCLCPP_INFO_STREAM(rclcpp::get_logger("localization.localization_manager"), "localization_manager different state, exiting");
             return;
+        }
 
         transition_table_.signal(LocalizationSignal::TIMEOUT);
-        RCLCPP_INFO_STREAM(logger_->get_logger(), "localization_manager Timer callback finished");
+        RCLCPP_INFO_STREAM(rclcpp::get_logger("localization.localization_manager"), "localization_manager Timer callback finished");
     }
 
     uint32_t LocalizationManager::nextId()
@@ -234,7 +236,7 @@ namespace localization_manager
     void LocalizationManager::stateTransitionCallback(LocalizationState prev_state, LocalizationState new_state,
                                                       LocalizationSignal signal)
     {
-        RCLCPP_INFO_STREAM(logger_->get_logger(), "localization_manager State transition from " << prev_state << " to " << new_state << " with signal " << signal);
+        RCLCPP_INFO_STREAM(rclcpp::get_logger("localization.localization_manager"), "localization_manager State transition from " << prev_state << " to " << new_state << " with signal " << signal);
         // Mark the expired timers as expired if any
         if (current_timer_)
         {
@@ -245,7 +247,7 @@ namespace localization_manager
         switch (new_state)
         {
         case LocalizationState::INITIALIZING:
-            RCLCPP_INFO_STREAM(logger_->get_logger(), "localization_manager starting initialization timer");
+            RCLCPP_INFO_STREAM(rclcpp::get_logger("localization.localization_manager"), "localization_manager starting initialization timer");
             gnss_offset_ = boost::none;
             prev_ndt_stamp_ = boost::none;
 
@@ -257,8 +259,9 @@ namespace localization_manager
             break;
         case LocalizationState::DEGRADED_NO_LIDAR_FIX:
             
-            RCLCPP_INFO_STREAM(logger_->get_logger(), "localization_manager starting degraded timer");
-            current_timer_ = timer_factory_->buildTimer(nextId(), rclcpp::Duration(config_.gnss_only_operation_timeout * 1e6),
+            RCLCPP_INFO_STREAM(rclcpp::get_logger("localization.localization_manager"), "localization_manager starting degraded timer");
+            current_timer_id_ = nextId();
+            current_timer_ = timer_factory_->buildTimer(current_timer_id_, rclcpp::Duration(config_.gnss_only_operation_timeout * 1e6),
                                                         std::bind(&LocalizationManager::timerCallback, this, new_state), true, true);
 
             timers_[current_timer_id_] = std::make_pair(std::move(current_timer_), false); // Add start timer to map by Id
@@ -267,11 +270,12 @@ namespace localization_manager
         default:
             break;
         }
-        RCLCPP_INFO_STREAM(logger_->get_logger(), "localization_manager state transition callback finished");
+        RCLCPP_INFO_STREAM(rclcpp::get_logger("localization.localization_manager"), "localization_manager state transition callback finished");
     }
 
     void LocalizationManager::posePubTick()
     {
+        RCLCPP_INFO_STREAM(rclcpp::get_logger("localization.localization_manager"), "localization_manager posepubtick clearing timers");
         // Clear any expired timers
         clearTimers();
 
@@ -302,7 +306,7 @@ namespace localization_manager
             transition_table_.getState() != LocalizationState::DEGRADED_NO_LIDAR_FIX)
         {
             lidar_init_sequential_timesteps_counter_ = 0;
-            RCLCPP_INFO_STREAM(logger_->get_logger(), "localization_manager posePubTick: Resetting lidar_init_sequential_timesteps_counter_: " << lidar_init_sequential_timesteps_counter_ << ", with new state: " << transition_table_.getState());
+            RCLCPP_INFO_STREAM(rclcpp::get_logger("localization.localization_manager"), "localization_manager posePubTick: Resetting lidar_init_sequential_timesteps_counter_: " << lidar_init_sequential_timesteps_counter_ << ", with new state: " << transition_table_.getState());
         }
 
         // Publish current pose message if available
