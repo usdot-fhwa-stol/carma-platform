@@ -123,25 +123,25 @@ def generate_launch_description():
                     vehicle_config_param_file
                 ]
             ),
-            ComposableNode(
-                package='mobilitypath_visualizer',
-                plugin='mobilitypath_visualizer::MobilityPathVisualizer',
-                name='mobilitypath_visualizer_node',
-                extra_arguments=[
-                    {'use_intra_process_comms': True}, 
-                    {'--log-level' : GetLogLevel('mobilitypath_visualizer', env_log_levels) }
-                ],
-                remappings = [
-                    ("mobility_path_msg", [ EnvironmentVariable('CARMA_MSG_NS', default_value=''), "/mobility_path_msg" ] ),
-                    ("incoming_mobility_path", [ EnvironmentVariable('CARMA_MSG_NS', default_value=''), "/incoming_mobility_path" ] ),
-                    ("georeference", [ EnvironmentVariable('CARMA_LOCZ_NS', default_value=''), "/map_param_loader/georeference"])
-                ],
-                parameters=[
-                    vehicle_characteristics_param_file,
-                    mobilitypath_visualizer_param_file,
-                    vehicle_config_param_file
-                ]
-            ),
+            #ComposableNode(
+            #    package='mobilitypath_visualizer',
+            #    plugin='mobilitypath_visualizer::MobilityPathVisualizer',
+            #    name='mobilitypath_visualizer_node',
+            #    extra_arguments=[
+            #        {'use_intra_process_comms': True}, 
+            #        {'--log-level' : GetLogLevel('mobilitypath_visualizer', env_log_levels) }
+            #    ],
+            #    remappings = [
+            #        ("mobility_path_msg", [ EnvironmentVariable('CARMA_MSG_NS', default_value=''), "/mobility_path_msg" ] ),
+            #        ("incoming_mobility_path", [ EnvironmentVariable('CARMA_MSG_NS', default_value=''), "/incoming_mobility_path" ] ),
+            #        ("georeference", [ EnvironmentVariable('CARMA_LOCZ_NS', default_value=''), "/map_param_loader/georeference"])
+            #    ],
+            #    parameters=[
+            #        vehicle_characteristics_param_file,
+            #        mobilitypath_visualizer_param_file,
+            #        vehicle_config_param_file
+            #    ]
+            #),
             ComposableNode(
                 package='trajectory_executor',
                 plugin='trajectory_executor::TrajectoryExecutor',
@@ -217,38 +217,38 @@ def generate_launch_description():
                     guidance_param_file
                 ]
             ),
-            ComposableNode(
-                package='port_drayage_plugin',
-                plugin='port_drayage_plugin::PortDrayagePlugin',
-                name='port_drayage_plugin_node',
-                extra_arguments=[
-                    {'use_intra_process_comms': True}, 
-                    {'--log-level' : GetLogLevel('route', env_log_levels) }
-                ],
-                remappings = [
-                    ("georeference", [ EnvironmentVariable('CARMA_LOCZ_NS', default_value=''), "/map_param_loader/georeference" ] ),
-                    ("current_pose", [ EnvironmentVariable('CARMA_LOCZ_NS', default_value=''), "/current_pose" ] ),
-                    ("incoming_mobility_operation", [ EnvironmentVariable('CARMA_MSG_NS', default_value=''), "/incoming_mobility_operation" ] ),  
-                    ("outgoing_mobility_operation", [ EnvironmentVariable('CARMA_MSG_NS', default_value=''), "/outgoing_mobility_operation" ] ),     
-                    ("ui_instructions", [ EnvironmentVariable('CARMA_UI_NS', default_value=''), "/ui_instructions" ] )       
-                ],
-                parameters=[
-                    port_drayage_plugin_param_file,
-                    vehicle_characteristics_param_file
-                ]     
-            ),
-            ComposableNode(
-                package='trajectory_visualizer',
-                plugin='trajectory_visualizer::TrajectoryVisualizer',
-                name='trajectory_visualizer_node',
-                extra_arguments=[
-                    {'use_intra_process_comms': True}, 
-                    {'--log-level' : GetLogLevel('trajectory_visualizer', env_log_levels) }
-                ],
-                parameters=[
-                    trajectory_visualizer_param_file
-                ]
-            ) 
+            #ComposableNode(
+            #    package='port_drayage_plugin',
+            #    plugin='port_drayage_plugin::PortDrayagePlugin',
+            #    name='port_drayage_plugin_node',
+            #    extra_arguments=[
+            #        {'use_intra_process_comms': True}, 
+            #        {'--log-level' : GetLogLevel('route', env_log_levels) }
+            #    ],
+            #    remappings = [
+            #        ("georeference", [ EnvironmentVariable('CARMA_LOCZ_NS', default_value=''), "/map_param_loader/georeference" ] ),
+            #        ("current_pose", [ EnvironmentVariable('CARMA_LOCZ_NS', default_value=''), "/current_pose" ] ),
+            #        ("incoming_mobility_operation", [ EnvironmentVariable('CARMA_MSG_NS', default_value=''), "/incoming_mobility_operation" ] ),  
+            #        ("outgoing_mobility_operation", [ EnvironmentVariable('CARMA_MSG_NS', default_value=''), "/outgoing_mobility_operation" ] ),     
+            #        ("ui_instructions", [ EnvironmentVariable('CARMA_UI_NS', default_value=''), "/ui_instructions" ] )       
+            #    ],
+            #    parameters=[
+            #        port_drayage_plugin_param_file,
+            #        vehicle_characteristics_param_file
+            #    ]     
+            #),
+            #ComposableNode(
+            #    package='trajectory_visualizer',
+            #    plugin='trajectory_visualizer::TrajectoryVisualizer',
+            #    name='trajectory_visualizer_node',
+            #    extra_arguments=[
+            #        {'use_intra_process_comms': True}, 
+            #        {'--log-level' : GetLogLevel('trajectory_visualizer', env_log_levels) }
+            #    ],
+            #    parameters=[
+            #        trajectory_visualizer_param_file
+            #    ]
+            #) 
 
         ]
     )
