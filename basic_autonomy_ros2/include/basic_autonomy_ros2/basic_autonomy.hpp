@@ -38,6 +38,7 @@
 #include <basic_autonomy_ros2/smoothing/BSpline.hpp>
 #include <basic_autonomy_ros2/smoothing/filters.hpp>
 #include <carma_debug_ros2_msgs/msg/trajectory_curvature_speeds.hpp>
+#include <autoware_auto_msgs/msg/trajectory.hpp>
 
 /**
  * \brief Macro definition to enable easier access to fields shared across the maneuver types
@@ -347,8 +348,25 @@ namespace basic_autonomy
         GeneralTrajConfig compose_general_trajectory_config(const std::string& trajectory_type,
                                                             int default_downsample_ratio,
                                                             int turn_downsample_ratio);
-   
-                                                  
+        
+        /**
+        * \brief Given a carma type of trajectory_plan, generate autoware type of trajectory accounting for speed_lag and stopping case
+        *        Generated trajectory is meant to be used in autoware.auto's pure_pursuit library using set_trajectory() function
+        * \param tp trajectory plan from tactical plugins
+        * 
+        * \return trajectory plan of autoware_auto_msgs type
+        */
+        autoware_auto_msgs::msg::Trajectory process_trajectory_plan(const carma_planning_msgs::msg::TrajectoryPlan& tp, double vehicle_response_lag);
+
+        /**
+         * \brief Applies a specified response lag in seconds to the trajectory shifting the whole thing by the specified lag time
+         * \param speeds Velocity profile to shift. The first point should be the current vehicle speed
+         * \param downtrack Distance points for each velocity point. Should have the same size as speeds and start from 0
+         * \param response_lag The lag in seconds before which the vehicle will not meaningfully accelerate
+         * 
+         * \return A Shifted trajectory
+         */ 
+        std::vector<double> apply_response_lag(const std::vector<double>& speeds, const std::vector<double> downtracks, double response_lag);
     }
 
 } // basic_autonomy_ros2
