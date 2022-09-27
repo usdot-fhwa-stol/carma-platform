@@ -34,7 +34,9 @@
   <depend>lanelet2_core</depend>
   <depend>trajectory_utils_ros2</depend>
   <depend>carma_wm_ros2</depend>
+  <depend>autoware_msgs</depend>
   <depend>tf2</depend>
+  <depend>autoware_auto_msgs</depend>
 
   <test_depend>ament_lint_auto</test_depend>
   <test_depend>ament_cmake_gtest</test_depend>

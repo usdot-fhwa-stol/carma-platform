@@ -75,7 +75,6 @@ namespace trajectory_visualizer {
         marker.frame_locked = true;
 
         size_t count = std::max(prev_marker_list_size_, msg->trajectory_points.size());
-        RCLCPP_ERROR_STREAM(rclcpp::get_logger("trajectory_visualizer"), "prev_marker_list_size_: " << prev_marker_list_size_ << ", msg->trajectory_points.size(): " << msg->trajectory_points.size());
 
         for (size_t i = 1; i < count; i++)
         {
@@ -89,9 +88,6 @@ namespace trajectory_visualizer {
             
             double max_speed = config_.max_speed * MPH_TO_MS;
             double speed = max_speed;
-            
-            RCLCPP_ERROR_STREAM(rclcpp::get_logger("trajectory_visualizer"), "t2: " << std::to_string(msg->trajectory_points[i].target_time.sec) << ", i: " << i);
-            RCLCPP_ERROR_STREAM(rclcpp::get_logger("trajectory_visualizer"), "t1: " << std::to_string(msg->trajectory_points[i - 1].target_time.sec) << ", i: " << i);
 
             rclcpp::Time t2 = msg->trajectory_points[i].target_time;
             rclcpp::Time t1 = msg->trajectory_points[i - 1].target_time;
