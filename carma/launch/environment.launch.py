@@ -156,20 +156,20 @@ def generate_launch_description():
                 ],
                 parameters=[ frame_transformer_param_file ]
             ),
-            ComposableNode(
-                package='ray_ground_classifier_nodes',
-                name='ray_ground_filter',
-                plugin='autoware::perception::filters::ray_ground_classifier_nodes::RayGroundClassifierCloudNode',
-                extra_arguments=[
-                    {'use_intra_process_comms': True}, 
-                    {'--log-level' : GetLogLevel('ray_ground_classifier_nodes', env_log_levels) }
-                ],
-                remappings=[
-                    ("points_in", "points_in_base_link"), 
-                    ("points_nonground", "points_no_ground")
-                ],
-                parameters=[ ray_ground_classifier_param_file]
-            ),
+            #ComposableNode(
+            #    package='ray_ground_classifier_nodes',
+            #    name='ray_ground_filter',
+            #    plugin='autoware::perception::filters::ray_ground_classifier_nodes::RayGroundClassifierCloudNode',
+            #    extra_arguments=[
+            #        {'use_intra_process_comms': True}, 
+            #        {'--log-level' : GetLogLevel('ray_ground_classifier_nodes', env_log_levels) }
+            #    ],
+            #    remappings=[
+            #        ("points_in", "points_in_base_link"), 
+            #        ("points_nonground", "points_no_ground")
+            #    ],
+            #    parameters=[ ray_ground_classifier_param_file]
+            #),
             ComposableNode(
                 package='euclidean_cluster_nodes',
                 name='euclidean_cluster',
