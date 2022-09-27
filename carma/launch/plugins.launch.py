@@ -331,7 +331,7 @@ def generate_launch_description():
                     ("current_pose", [ EnvironmentVariable('CARMA_LOCZ_NS', default_value=''), "/current_pose" ] ),
                 ],
                 parameters=[ 
-                    platoon_strategic_ihp_param_file,
+                    #platoon_strategic_ihp_param_file,
                     vehicle_config_param_file
                 ]
             ),      
@@ -352,7 +352,8 @@ def generate_launch_description():
                     ("plugin_discovery", [ EnvironmentVariable('CARMA_GUIDE_NS', default_value=''), "/plugin_discovery" ] ),
                     ("route", [ EnvironmentVariable('CARMA_GUIDE_NS', default_value=''), "/route" ] ),
                 ],
-                parameters=[ platoon_tactical_ihp_param_file, vehicle_config_param_file ]
+                parameters=[ #platoon_tactical_ihp_param_file, 
+                vehicle_config_param_file ]
             ),
         ]
     )
