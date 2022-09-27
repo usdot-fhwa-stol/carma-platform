@@ -52,67 +52,67 @@ LCIStrategicPlugin::LCIStrategicPlugin(carma_wm::WorldModelConstPtr wm, LCIStrat
 
 cav_msgs::Plugin LCIStrategicPlugin::getDiscoveryMsg() const
 {
-  auto traffic_list = wm_->getSignalsAlongRoute({ -109.9, 340.64 });
-
-  if (traffic_list.empty())
-    return plugin_discovery_msg_; 
-    
-  ROS_DEBUG_STREAM("Found traffic lights of size: " << traffic_list.size());
-
-  auto current_lanelets = wm_->getLaneletsFromPoint({ -109.9, 340.64});
-  lanelet::ConstLanelet current_lanelet;
-  
-  if (current_lanelets.empty())
-  {
-    ROS_ERROR_STREAM("Given vehicle position is not on the road! Returning...");
-    return plugin_discovery_msg_;
-  }
-
-  // get the lanelet that is on the route in case overlapping ones found
-  for (auto llt : current_lanelets)
-  {
-    auto route = wm_->getRoute()->shortestPath();
-    if (std::find(route.begin(), route.end(), llt) != route.end())
-    {
-      current_lanelet = llt;
-      break;
-    }
-  }
-
-  lanelet::CarmaTrafficSignalPtr nearest_traffic_signal = nullptr;
-  
-  lanelet::ConstLanelet entry_lanelet;
-  lanelet::ConstLanelet exit_lanelet;
-
-  for (auto signal : traffic_list)
-  {
-    auto optional_entry_exit = wm_->getEntryExitOfSignalAlongRoute(signal);
-    // if signal is not matching our destination skip
-    if (!optional_entry_exit)
-    {
-      ROS_ERROR_STREAM("Did not find entry.exit along the route");
-      continue;
-    }
-      
-    entry_lanelet = optional_entry_exit.get().first;
-    exit_lanelet = optional_entry_exit.get().second;
-
-    nearest_traffic_signal = signal;
-    break;
-  }
-
-  auto returned_pair = nearest_traffic_signal->predictState(lanelet::time::timeFromSec(ros::Time::now().toSec()));
-
-  if (!returned_pair)
-    return plugin_discovery_msg_;
-
-  ROS_ERROR_STREAM("Current time: " << std::to_string(ros::Time::now().toSec()));
-  ROS_ERROR_STREAM("End time: " << returned_pair.get().first << ", of state: " << returned_pair.get().second);
-  ROS_ERROR_STREAM("Time difference: " << std::to_string(lanelet::time::toSec(returned_pair.get().first) - ros::Time::now().toSec()));
-  
-  ROS_DEBUG_STREAM("Current time: " << std::to_string(ros::Time::now().toSec()));
-  ROS_DEBUG_STREAM("End time: " << returned_pair.get().first << ", of state: " << returned_pair.get().second);
-  ROS_DEBUG_STREAM("Time difference: " << std::to_string(lanelet::time::toSec(returned_pair.get().first) - ros::Time::now().toSec()));
+  //auto traffic_list = wm_->getSignalsAlongRoute({ -109.9, 340.64 });
+//
+  //if (traffic_list.empty())
+  //  return plugin_discovery_msg_; 
+  //  
+  //ROS_DEBUG_STREAM("Found traffic lights of size: " << traffic_list.size());
+//
+  //auto current_lanelets = wm_->getLaneletsFromPoint({ -109.9, 340.64});
+  //lanelet::ConstLanelet current_lanelet;
+  //
+  //if (current_lanelets.empty())
+  //{
+  //  ROS_ERROR_STREAM("Given vehicle position is not on the road! Returning...");
+  //  return plugin_discovery_msg_;
+  //}
+//
+  //// get the lanelet that is on the route in case overlapping ones found
+  //for (auto llt : current_lanelets)
+  //{
+  //  auto route = wm_->getRoute()->shortestPath();
+  //  if (std::find(route.begin(), route.end(), llt) != route.end())
+  //  {
+  //    current_lanelet = llt;
+  //    break;
+  //  }
+  //}
+//
+  //lanelet::CarmaTrafficSignalPtr nearest_traffic_signal = nullptr;
+  //
+  //lanelet::ConstLanelet entry_lanelet;
+  //lanelet::ConstLanelet exit_lanelet;
+//
+  //for (auto signal : traffic_list)
+  //{
+  //  auto optional_entry_exit = wm_->getEntryExitOfSignalAlongRoute(signal);
+  //  // if signal is not matching our destination skip
+  //  if (!optional_entry_exit)
+  //  {
+  //    ROS_ERROR_STREAM("Did not find entry.exit along the route");
+  //    continue;
+  //  }
+  //    
+  //  entry_lanelet = optional_entry_exit.get().first;
+  //  exit_lanelet = optional_entry_exit.get().second;
+//
+  //  nearest_traffic_signal = signal;
+  //  break;
+  //}
+//
+  //auto returned_pair = nearest_traffic_signal->predictState(lanelet::time::timeFromSec(ros::Time::now().toSec()));
+//
+  //if (!returned_pair)
+  //  return plugin_discovery_msg_;
+//
+  //ROS_ERROR_STREAM("Current time: " << std::to_string(ros::Time::now().toSec()));
+  //ROS_ERROR_STREAM("End time: " << returned_pair.get().first << ", of state: " << returned_pair.get().second);
+  //ROS_ERROR_STREAM("Time difference: " << std::to_string(lanelet::time::toSec(returned_pair.get().first) - ros::Time::now().toSec()));
+  //
+  //ROS_DEBUG_STREAM("Current time: " << std::to_string(ros::Time::now().toSec()));
+  //ROS_DEBUG_STREAM("End time: " << returned_pair.get().first << ", of state: " << returned_pair.get().second);
+  //ROS_DEBUG_STREAM("Time difference: " << std::to_string(lanelet::time::toSec(returned_pair.get().first) - ros::Time::now().toSec()));
 
 
   return plugin_discovery_msg_;
@@ -1159,6 +1159,7 @@ bool LCIStrategicPlugin::planManeuverCb(cav_srvs::PlanManeuversRequest& req, cav
     if (nearest_traffic_signal)
     {
       current_light_state_optional = nearest_traffic_signal->predictState(lanelet::time::timeFromSec(current_state.stamp.toSec()));
+      ROS_ERROR_STREAM("Real-time current signal: " << current_light_state_optional.get().second << ", for Id: " << nearest_traffic_signal->id());
       ROS_DEBUG_STREAM("Real-time current signal: " << current_light_state_optional.get().second << ", for Id: " << nearest_traffic_signal->id());
     }
     switch (transition_table_.getState())

@@ -1330,20 +1330,20 @@ namespace carma_wm
   }
 
   lanelet::CarmaTrafficSignalPtr CARMAWorldModel::getTrafficSignal(const lanelet::Id& id) const
-  {
+  {    
     auto general_regem = semantic_map_->regulatoryElementLayer.get(id);
 
     auto lanelets_general = semantic_map_->laneletLayer.findUsages(general_regem);
     if (lanelets_general.empty())
     {
-      RCLCPP_WARN_STREAM(rclcpp::get_logger("carma_wm_ros2"), "There was an error querying lanelet for traffic light with id: " << id);
+      RCLCPP_ERROR_STREAM(rclcpp::get_logger("carma_wm_ros2"), "There was an error querying lanelet for traffic light with id: " << id);
     }
 
     auto curr_light_list = lanelets_general[0].regulatoryElementsAs<lanelet::CarmaTrafficSignal>();
 
     if (curr_light_list.empty())
     {
-      RCLCPP_WARN_STREAM(rclcpp::get_logger("carma_wm_ros2"), "There was an error querying traffic light with id: " << id);
+      RCLCPP_ERROR_STREAM(rclcpp::get_logger("carma_wm_ros2"), "There was an error querying traffic light with id: " << id);
       return nullptr;
     }
 
@@ -1360,7 +1360,7 @@ namespace carma_wm
 
     if (!curr_light)
     {
-      RCLCPP_WARN_STREAM(rclcpp::get_logger("carma_wm_ros2"), "Was not able to find traffic signal with id: " << id << ", ignoring...");
+      RCLCPP_ERROR_STREAM(rclcpp::get_logger("carma_wm_ros2"), "Was not able to find traffic signal with id: " << id << ", ignoring...");
       return nullptr;
     }
 
@@ -1371,7 +1371,7 @@ namespace carma_wm
   {
 
     if(sim_.traffic_signal_states_[mov_id][mov_signal_group].empty())
-    {
+    {      
       return false;
     }
 
@@ -1386,12 +1386,16 @@ namespace carma_wm
       {
         temp_signal_states.push_back(std::make_pair(mov_check.first, mov_check.second ));
         temp_start_times.push_back(sim_.traffic_signal_start_times_[mov_id][mov_signal_group][i]);
+      }
+      else
+      {
         i++;
+        continue;
       }
 
       auto last_time_difference = mov_check.first - min_end_time_dynamic;  
       bool is_duplicate = last_time_difference.total_milliseconds() >= -500 && last_time_difference.total_milliseconds() <= 500;
-
+      
       if(received_state_dynamic == mov_check.second && is_duplicate)
       {
         return true;
@@ -1400,7 +1404,6 @@ namespace carma_wm
     } 
     sim_.traffic_signal_states_[mov_id][mov_signal_group]=temp_signal_states;
     sim_.traffic_signal_start_times_[mov_id][mov_signal_group] = temp_start_times;
-    std::cerr << "ROS2: PRINTING SIZE: " << sim_.traffic_signal_states_[mov_id][mov_signal_group].size() <<std::endl;
     return false;
 
   }
@@ -1438,18 +1441,18 @@ namespace carma_wm
   {
     if (!semantic_map_)
     {
-      RCLCPP_INFO_STREAM(rclcpp::get_logger("carma_wm_ros2"), "Map is not set yet.");
+      RCLCPP_ERROR_STREAM(rclcpp::get_logger("carma_wm_ros2"), "Map is not set yet.");
       return;
     }
 
     if (spat_msg.intersection_state_list.empty())
     {
-      RCLCPP_WARN_STREAM(rclcpp::get_logger("carma_wm_ros2"), "No intersection_state_list in the newly received SPAT msg. Returning...");
+      RCLCPP_ERROR_STREAM(rclcpp::get_logger("carma_wm_ros2"), "No intersection_state_list in the newly received SPAT msg. Returning...");
       return;
     }
 
     for (const auto& curr_intersection : spat_msg.intersection_state_list)
-    {
+    {      
       for (const auto& current_movement_state : curr_intersection.movement_list)
       {
         lanelet::Id curr_light_id = getTrafficSignalId(curr_intersection.id.id, current_movement_state.signal_group);
@@ -1479,6 +1482,10 @@ namespace carma_wm
           RCLCPP_DEBUG_STREAM(rclcpp::get_logger("carma_wm_ros2"), "Movement_event_list is empty . intersection_id: " << (int)curr_intersection.id.id << ", and signal_group_id: " << (int)current_movement_state.signal_group);
           continue;
         }
+        else
+        {
+          RCLCPP_DEBUG_STREAM(rclcpp::get_logger("carma_wm_ros2"), "Movement_event_list size: " << current_movement_state.movement_event_list.size() << " . intersection_id: " << (int)curr_intersection.id.id << ", and signal_group_id: " << (int)current_movement_state.signal_group);
+        }
 
         curr_light->revision_ = curr_intersection.revision; // valid SPAT msg
 
@@ -1496,17 +1503,20 @@ namespace carma_wm
             auto received_state_dynamic = static_cast<lanelet::CarmaTrafficSignalState>(current_movement_event.event_state.movement_phase_state);
             
             bool recorded = check_if_seen_before_movement_state(min_end_time_dynamic,received_state_dynamic,curr_intersection.id.id,current_movement_state.signal_group);
-	    	    RCLCPP_DEBUG_STREAM(rclcpp::get_logger("carma_wm_ros2"), "recorded: " << recorded);
+	    	    //RCLCPP_DEBUG_STREAM(rclcpp::get_logger("carma_wm_ros2"), "recorded: " << recorded);
             
             if (!recorded)
 		        {
               sim_.traffic_signal_states_[curr_intersection.id.id][current_movement_state.signal_group].push_back(std::make_pair(min_end_time_dynamic, received_state_dynamic));
+              sim_.traffic_signal_start_times_[curr_intersection.id.id][current_movement_state.signal_group].push_back(
+                                start_time_dynamic); //todo use start_time_dynamic on real testing
+              
               RCLCPP_DEBUG_STREAM(rclcpp::get_logger("carma_wm_ros2"), "intersection id: " << (int)curr_intersection.id.id << ", signal: " << (int)current_movement_state.signal_group
                  << ", start_time: " << std::to_string(lanelet::time::toSec(start_time_dynamic))
                  << ", end_time: " << std::to_string(lanelet::time::toSec(min_end_time_dynamic))
                  << ", state: " << received_state_dynamic);
-              curr_light->recorded_time_stamps.push_back(std::make_pair(min_end_time_dynamic, received_state_dynamic));
-              curr_light->recorded_start_time_stamps.push_back(start_time_dynamic);
+              curr_light->recorded_time_stamps = sim_.traffic_signal_states_[curr_intersection.id.id][current_movement_state.signal_group];
+              curr_light->recorded_start_time_stamps  = sim_.traffic_signal_start_times_[curr_intersection.id.id][current_movement_state.signal_group];
             }
 	        }
         } 

@@ -97,7 +97,7 @@ def generate_launch_description():
                     {'--log-level' : GetLogLevel('localization_manager', env_log_levels) }
                 ],
                 remappings=[
-                    
+                    ("selected_pose", "old_selected_pose")
                 ],
                 parameters=[ localization_manager_convertor_param_file ]
         )
