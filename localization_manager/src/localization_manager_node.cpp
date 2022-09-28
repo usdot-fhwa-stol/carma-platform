@@ -23,15 +23,15 @@ namespace localization_manager
     namespace std_ph = std::placeholders;
 
     Node::Node(const rclcpp::NodeOptions &options)
-        :carma_ros2_utils::CarmaLifecycleNode(options)
+        : carma_ros2_utils::CarmaLifecycleNode(options)
 
     {
-        //Create initial config
+        // Create initial config
         config_ = LocalizationManagerConfig();
 
-        //Declare parameters
+        // Declare parameters
         config_.fitness_score_degraded_threshold = declare_parameter<double>("fitness_score_degraded_threshold", config_.fitness_score_degraded_threshold);
-        config_.fitness_score_fault_threshold = declare_parameter<double>("fitness_score_fault_threshold",config_.fitness_score_fault_threshold);
+        config_.fitness_score_fault_threshold = declare_parameter<double>("fitness_score_fault_threshold", config_.fitness_score_fault_threshold);
         config_.ndt_frequency_degraded_threshold = declare_parameter<double>("ndt_frequency_degraded_threshold", config_.ndt_frequency_degraded_threshold);
         config_.ndt_frequency_fault_threshold = declare_parameter<double>("ndt_frequency_fault_threshold", config_.ndt_frequency_fault_threshold);
         config_.auto_initialization_timeout = declare_parameter<int>("auto_initialization_timeout", config_.auto_initialization_timeout);
@@ -40,7 +40,6 @@ namespace localization_manager
         config_.gnss_data_timeout = declare_parameter<int>("gnss_data_timeout", config_.gnss_data_timeout);
         config_.localization_mode = declare_parameter<int>("localization_mode", config_.localization_mode);
         config_.pose_pub_rate = declare_parameter<double>("pose_pub_rate", config_.pose_pub_rate);
-
     }
 
     carma_ros2_utils::CallbackReturn Node::handle_on_configure(const rclcpp_lifecycle::State &)
@@ -48,9 +47,9 @@ namespace localization_manager
         // Reset config
         config_ = LocalizationManagerConfig();
 
-        //Load parameters
+        // Load parameters
         get_parameter<double>("fitness_score_degraded_threshold", config_.fitness_score_degraded_threshold);
-        get_parameter<double>("fitness_score_fault_threshold",config_.fitness_score_fault_threshold);
+        get_parameter<double>("fitness_score_fault_threshold", config_.fitness_score_fault_threshold);
         get_parameter<double>("ndt_frequency_degraded_threshold", config_.ndt_frequency_degraded_threshold);
         get_parameter<double>("ndt_frequency_fault_threshold", config_.ndt_frequency_fault_threshold);
         get_parameter<int>("auto_initialization_timeout", config_.auto_initialization_timeout);
@@ -64,77 +63,75 @@ namespace localization_manager
 
         // Initialize worker object
         manager_.reset(new LocalizationManager(std::bind(&Node::publishPoseStamped, this, std_ph::_1),
-                                         std::bind(&Node::publishStatus, this, std_ph::_1),
-                                         std::bind(&Node::publishManagedInitialPose, this, std_ph::_1),
-                                         config_, 
-                                         get_node_logging_interface(),
-                                         std::make_unique<carma_ros2_utils::timers::ROSTimerFactory>(shared_from_this())
-                                         ));
+                                               std::bind(&Node::publishStatus, this, std_ph::_1),
+                                               std::bind(&Node::publishManagedInitialPose, this, std_ph::_1),
+                                               config_,
+                                               get_node_logging_interface(),
+                                               std::make_unique<carma_ros2_utils::timers::ROSTimerFactory>(shared_from_this())));
 
         // Setup subscribers
-        gnss_pose_sub_ = create_subscription<geometry_msgs::msg::PoseStamped>("gnss_pose", 5, 
-                                                                                std::bind(&LocalizationManager::gnssPoseCallback, manager_.get(), std_ph::_1));
-        initialpose_sub_ = create_subscription<geometry_msgs::msg::PoseWithCovarianceStamped>("initialpose", 1, 
-                                                                                            std::bind(&LocalizationManager::initialPoseCallback, manager_.get(), std_ph::_1));
+        gnss_pose_sub_ = create_subscription<geometry_msgs::msg::PoseStamped>("gnss_pose", 5,
+                                                                              std::bind(&LocalizationManager::gnssPoseCallback, manager_.get(), std_ph::_1));
+        initialpose_sub_ = create_subscription<geometry_msgs::msg::PoseWithCovarianceStamped>("initialpose", 1,
+                                                                                              std::bind(&LocalizationManager::initialPoseCallback, manager_.get(), std_ph::_1));
 
         // Setup synchronized message_filters subscribers
         rclcpp::QoS qos(5);
         ndt_pose_sub_.subscribe(this, "ndt_pose", qos.get_rmw_qos_profile());
-        ndt_score_sub_.subscribe(this,"ndt_stat", qos.get_rmw_qos_profile());
+        ndt_score_sub_.subscribe(this, "ndt_stat", qos.get_rmw_qos_profile());
 
         pose_stats_synchronizer_ = std::make_shared<TimeSynchronizer>(ndt_pose_sub_, ndt_score_sub_, 5);
         pose_stats_synchronizer_->registerCallback(std::bind(&Node::poseAndStatsCallback, this, std_ph::_1, std_ph::_2));
-        
+
         // system_alert_topic_ protected member of CarmaLifecycleNode
-        system_alert_sub_ = create_subscription<carma_msgs::msg::SystemAlert>(system_alert_topic_, 1, 
-                                                                                std::bind(&LocalizationManager::systemAlertCallback, manager_.get(), std_ph::_1));
+        system_alert_sub_ = create_subscription<carma_msgs::msg::SystemAlert>(system_alert_topic_, 1,
+                                                                              std::bind(&LocalizationManager::systemAlertCallback, manager_.get(), std_ph::_1));
         // Setup publishers
         pose_pub_ = create_publisher<geometry_msgs::msg::PoseStamped>("selected_pose", 5);
         state_pub_ = create_publisher<carma_localization_msgs::msg::LocalizationStatusReport>("localization_status", 5);
-        
+
         // Create a publisher that will send all previously published messages to late-joining subscribers ONLY If the subscriber is transient_local too
-        rclcpp::PublisherOptions intra_proc_disabled; 
+        rclcpp::PublisherOptions intra_proc_disabled;
         intra_proc_disabled.use_intra_process_comm = rclcpp::IntraProcessSetting::Disable; // Disable intra-process comms for this PublisherOptions object
 
         auto pub_qos_transient_local = rclcpp::QoS(rclcpp::KeepLast(1)); // A publisher with this QoS will store all messages that it has sent on the topic
-        pub_qos_transient_local.transient_local();  // A publisher with this QoS will re-send all (when KeepAll is used) messages to all late-joining subscribers 
-                                         // NOTE: The subscriber's QoS must be set to transient_local() as well for earlier messages to be resent to the later-joiner.
+        pub_qos_transient_local.transient_local();                       // A publisher with this QoS will re-send all (when KeepAll is used) messages to all late-joining subscribers
+                                                                         // NOTE: The subscriber's QoS must be set to transient_local() as well for earlier messages to be resent to the later-joiner.
         managed_initial_pose_pub_ = create_publisher<geometry_msgs::msg::PoseWithCovarianceStamped>("managed_initialpose", pub_qos_transient_local, intra_proc_disabled);
 
-        //Setup timer
-        pose_timer_ = create_timer(get_clock(), std::chrono::milliseconds(int(1/config_.pose_pub_rate * 1000)), 
-            std::bind(&LocalizationManager::posePubTick, manager_.get()));
+        // Setup timer
+        pose_timer_ = create_timer(get_clock(), std::chrono::milliseconds(int(1 / config_.pose_pub_rate * 1000)),
+                                   std::bind(&LocalizationManager::posePubTick, manager_.get()));
 
         // Return success if everything initialized successfully
         return CallbackReturn::SUCCESS;
-
     }
 
-    void Node::publishPoseStamped(const geometry_msgs::msg::PoseStamped& msg) const
+    void Node::publishPoseStamped(const geometry_msgs::msg::PoseStamped &msg) const
     {
         pose_pub_->publish(msg);
     }
 
-    void Node::publishStatus(const carma_localization_msgs::msg::LocalizationStatusReport& msg) const
+    void Node::publishStatus(const carma_localization_msgs::msg::LocalizationStatusReport &msg) const
     {
         state_pub_->publish(msg);
     }
 
-    void Node::publishManagedInitialPose(const geometry_msgs::msg::PoseWithCovarianceStamped& msg) const
+    void Node::publishManagedInitialPose(const geometry_msgs::msg::PoseWithCovarianceStamped &msg) const
     {
         managed_initial_pose_pub_->publish(msg);
     }
 
     void Node::poseAndStatsCallback(const geometry_msgs::msg::PoseStamped::ConstPtr pose,
-                                     const autoware_msgs::msg::NDTStat::ConstPtr stats)
+                                    const autoware_msgs::msg::NDTStat::ConstPtr stats)
     {
         try
         {
             manager_->poseAndStatsCallback(pose, stats);
         }
-        catch (const std::exception& e)
+        catch (const std::exception &e)
         {
-            RCLCPP_ERROR_STREAM(rclcpp::get_logger("localization_manager"), "Uncaught Exception in localization_manager. Exception: "<< e.what() );
+            RCLCPP_ERROR_STREAM(rclcpp::get_logger("localization_manager"), "Uncaught Exception in localization_manager. Exception: " << e.what());
             handle_primary_state_exception(e);
         }
     }

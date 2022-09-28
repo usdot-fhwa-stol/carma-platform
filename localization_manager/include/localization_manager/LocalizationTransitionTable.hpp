@@ -20,72 +20,72 @@
 
 namespace localization_manager
 {
-/**
- * \brief Class defining the state transition table behavior for the LocalizationManager
- */
-class LocalizationTransitionTable
-{
-public:
-    using TransitionCallback = 
-    std::function<void(LocalizationState prev_state, LocalizationState new_state, LocalizationSignal signal)>;
-    
     /**
-     * \brief Constructor
-     *
-     * \param mode Defines the operational mode of the state machine which modifies some of the state transitions
-    */
-    LocalizationTransitionTable(LocalizerMode mode);
-
-    /**
-     * \brief Returns the current state
-     * \return Current state
+     * \brief Class defining the state transition table behavior for the LocalizationManager
      */
-    LocalizationState getState() const;
+    class LocalizationTransitionTable
+    {
+    public:
+        using TransitionCallback =
+            std::function<void(LocalizationState prev_state, LocalizationState new_state, LocalizationSignal signal)>;
 
-    /**
-     * \brief Trigger signal for the transition table.
-     *
-     * \param signal The signal for the transition table to evaluate
-    */
-    void signal(LocalizationSignal signal);
+        /**
+         * \brief Constructor
+         *
+         * \param mode Defines the operational mode of the state machine which modifies some of the state transitions
+         */
+        LocalizationTransitionTable(LocalizerMode mode);
 
-    /**
-     * \brief Callback setting function. The provided callback will be triggered any time the current state changes to a
-     * new state.
-     *
-     * \param cb The callback function which will be provided with the previous state, new current state, and the signal
-     * which caused the transition.
-     */
-    void setTransitionCallback(TransitionCallback cb);
+        /**
+         * \brief Returns the current state
+         * \return Current state
+         */
+        LocalizationState getState() const;
 
-private:
-    //! Current state. This state should only ever be set using the setAndLogState() function.
-    LocalizationState state_ = LocalizationState::UNINITIALIZED;
+        /**
+         * \brief Trigger signal for the transition table.
+         *
+         * \param signal The signal for the transition table to evaluate
+         */
+        void signal(LocalizationSignal signal);
 
-    LocalizerMode mode_ = LocalizerMode::AUTO_WITHOUT_TIMEOUT;
+        /**
+         * \brief Callback setting function. The provided callback will be triggered any time the current state changes to a
+         * new state.
+         *
+         * \param cb The callback function which will be provided with the previous state, new current state, and the signal
+         * which caused the transition.
+         */
+        void setTransitionCallback(TransitionCallback cb);
 
-    TransitionCallback transition_callback_;
+    private:
+        //! Current state. This state should only ever be set using the setAndLogState() function.
+        LocalizationState state_ = LocalizationState::UNINITIALIZED;
 
-    // Helper functions for processing each the provided signal based on the current state
-    void signalWhenUNINITIALIZED(LocalizationSignal signal);
-    void signalWhenINITIALIZING(LocalizationSignal signal);
-    void signalWhenOPERATIONAL(LocalizationSignal signal);
-    void signalWhenDEGRADED(LocalizationSignal signal);
-    void signalWhenDEGRADED_NO_LIDAR_FIX(LocalizationSignal signal);
-    void signalWhenAWAIT_MANUAL_INITIALIZATION(LocalizationSignal signal);
+        LocalizerMode mode_ = LocalizerMode::AUTO_WITHOUT_TIMEOUT;
 
-    /**
-     * \brief Helper function for logging the provide signal
-     * \param signal The signal to be logged
-    */
-    void logDebugSignal(LocalizationSignal signal) const;
+        TransitionCallback transition_callback_;
 
-    /**
-     * \brief Function to change the current state and log the details of the transition.
-     * 
-     * \param new_state The state to set.
-     * \param source_signal The signal which caused the new_state to be set
-    */ 
-    void setAndLogState(LocalizationState new_state, LocalizationSignal source_signal);
-};
-} //namespace localization_manager
+        // Helper functions for processing each the provided signal based on the current state
+        void signalWhenUNINITIALIZED(LocalizationSignal signal);
+        void signalWhenINITIALIZING(LocalizationSignal signal);
+        void signalWhenOPERATIONAL(LocalizationSignal signal);
+        void signalWhenDEGRADED(LocalizationSignal signal);
+        void signalWhenDEGRADED_NO_LIDAR_FIX(LocalizationSignal signal);
+        void signalWhenAWAIT_MANUAL_INITIALIZATION(LocalizationSignal signal);
+
+        /**
+         * \brief Helper function for logging the provide signal
+         * \param signal The signal to be logged
+         */
+        void logDebugSignal(LocalizationSignal signal) const;
+
+        /**
+         * \brief Function to change the current state and log the details of the transition.
+         *
+         * \param new_state The state to set.
+         * \param source_signal The signal which caused the new_state to be set
+         */
+        void setAndLogState(LocalizationState new_state, LocalizationSignal source_signal);
+    };
+} // namespace localization_manager
