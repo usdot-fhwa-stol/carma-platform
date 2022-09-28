@@ -60,7 +60,7 @@ namespace localization_manager
         get_parameter<int>("localization_mode", config_.localization_mode);
         get_parameter<double>("pose_pub_rate", config_.pose_pub_rate);
 
-        RCLCPP_INFO_STREAM(rclcpp::get_logger("localization.localization_manager"), "Loaded params: " << config_);
+        RCLCPP_INFO_STREAM(rclcpp::get_logger("localization_manager"), "Loaded params: ");
 
         // Initialize worker object
         manager_.reset(new LocalizationManager(std::bind(&Node::publishPoseStamped, this, std_ph::_1),
@@ -134,7 +134,7 @@ namespace localization_manager
         }
         catch (const std::exception& e)
         {
-            RCLCPP_ERROR_STREAM(rclcpp::get_logger("localization.localization_manager"), "Uncaught Exception in localization_manager. Exception: "<< e.what() );
+            RCLCPP_ERROR_STREAM(rclcpp::get_logger("localization_manager"), "Uncaught Exception in localization_manager. Exception: "<< e.what() );
             handle_primary_state_exception(e);
         }
     }
