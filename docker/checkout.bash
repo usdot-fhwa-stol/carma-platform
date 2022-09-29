@@ -67,7 +67,7 @@ echo "" > COLCON_IGNORE
 cd ../astuff_sensor_msgs
 echo "" > COLCON_IGNORE
 
-#cd ../
+cd ../
 
 #rosbridge_suite is a ROS meta-package including all the rosbridge packages.
 git clone https://github.com/usdot-fhwa-stol/rosbridge_suite --branch ros2

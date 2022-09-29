@@ -1561,29 +1561,4 @@ TEST(CARMAWorldModelTest, checkIfSeenBeforeMovementState)
 
   ASSERT_EQ(cmw.check_if_seen_before_movement_state(min_end_time_dynamic,received_state_dynamic,mov_id,mov_signal_group), 0);
 }
-
-/*
-TEST(CARMAWorldModelTest, minEndTimeConverterMinuteOfYear)
-{
-  carma_wm::CARMAWorldModel cmw;
-  boost::posix_time::ptime min_end_time=boost::posix_time::time_from_string("1970-01-01 00:00:00.000");
-  bool moy_exists=1;
-  double moy=1;
-  ros::Time::setNow(ros::Time(1));
-
-  ASSERT_EQ(cmw.min_end_time_converter_minute_of_year(min_end_time,moy_exists,moy), boost::posix_time::time_from_string("1970-01-01 00:00:01.000"));
-
-  min_end_time=boost::posix_time::time_from_string("1970-01-01 00:00:01.000");
-  moy_exists=1;
-  ros::Time::setNow(ros::Time(3601));
-
-  ASSERT_EQ(cmw.min_end_time_converter_minute_of_year(min_end_time,moy_exists,moy), boost::posix_time::time_from_string("1970-01-01 01:00:01.000"));
-
-  min_end_time=boost::posix_time::time_from_string("1970-01-01 00:00:00.000");
-  moy_exists=0;
-  ros::Time::setNow(ros::Time(0));
-
-  ASSERT_EQ(cmw.min_end_time_converter_minute_of_year(min_end_time,moy_exists,moy), boost::posix_time::time_from_string("1970-01-01 00:00:00.000"));
-}
-*/
 }  // namespace carma_wm
