@@ -669,36 +669,41 @@ void LCIStrategicPlugin::planWhenAPPROACHING(const cav_srvs::PlanManeuversReques
 
   ROS_DEBUG_STREAM("earliest_entry_time: " << std::to_string(earliest_entry_time.toSec()) << ", with : " << earliest_entry_time - current_state.stamp  << " left at: " << std::to_string(current_state.stamp.toSec()));
   ros::Time nearest_green_entry_time;
-
+  bool is_entry_time_within_future_events = false;
   if (config_.enable_carma_streets_connection ==false /*|| scheduled_enter_time_ == 0 */) // TODO revert
   {
-     nearest_green_entry_time = get_nearest_green_entry_time(current_state.stamp, earliest_entry_time, traffic_light) 
+    nearest_green_entry_time = get_nearest_green_entry_time(current_state.stamp, earliest_entry_time, traffic_light) 
                                           + ros::Duration(0.01); //0.01sec more buffer since green_light algorithm's timestamp picks the previous signal - Vehcile Estimation
+    is_entry_time_within_future_events = true; //UC2
   }
   else if(config_.enable_carma_streets_connection ==true /*&& scheduled_enter_time_ != 0 */) // TODO revert
   {
     //nearest_green_entry_time = ros::Time(std::max(earliest_entry_time.toSec(), (scheduled_enter_time_)/1000.0)) + ros::Duration(0.01); //Carma Street
     // temporary logic to test UC3 incrementally. Testing if UC3 will act like UC2
     // check if there is any GREEN state in the light since scheduled_enter_time_ is not sent yet
-    bool green_signal_exists = false;
+    nearest_green_entry_time = ros::Time::now() + ros::Duration(60*60.0) + ros::Duration(0.01); //Carma Street TESTING TODO revert, should come from street in the future
     for (auto pair : traffic_light->recorded_time_stamps)
     {
-      if (pair.second == lanelet::CarmaTrafficSignalState::PROTECTED_MOVEMENT_ALLOWED)
-        green_signal_exists = true;
-    }
-    if (green_signal_exists)
-      nearest_green_entry_time = get_nearest_green_entry_time(current_state.stamp, earliest_entry_time, traffic_light) 
+      if (pair.second == lanelet::CarmaTrafficSignalState::PROTECTED_MOVEMENT_ALLOWED && 
+        lanelet::time::timeFromSec(ros::Time::now().toSec()) < pair.first ) //if not outdated
+      {
+        nearest_green_entry_time = get_nearest_green_entry_time(current_state.stamp, earliest_entry_time, traffic_light) 
                                           + ros::Duration(0.01);
-    else
-      nearest_green_entry_time = earliest_entry_time + ros::Duration(0.01); //Carma Street TESTING TODO revert
+        ROS_DEBUG_STREAM("Green signal exists");
+        is_entry_time_within_future_events = true;
+        break;
+      }
+    }
   }
   
   ROS_DEBUG_STREAM("nearest_green_entry_time: " << std::to_string(nearest_green_entry_time.toSec()) << ", with : " << nearest_green_entry_time - current_state.stamp  << " seconds left at: " << std::to_string(current_state.stamp.toSec()));
   
-  if (!nearest_green_entry_time_cached_) 
+  if (!nearest_green_entry_time_cached_ && is_entry_time_within_future_events) 
   {
     ROS_DEBUG_STREAM("Applying green_light_buffer for the first time and caching! nearest_green_entry_time (without buffer):" << std::to_string(nearest_green_entry_time.toSec()) << ", and earliest_entry_time: " << std::to_string(earliest_entry_time.toSec()));
     // save first calculated nearest_green_entry_time + buffer to compare against in the future as nearest_green_entry_time changes with earliest_entry_time
+    
+    // check if it needs buffer below:
     ros::Time early_arrival_time_green_et =
         nearest_green_entry_time - ros::Duration(config_.green_light_time_buffer);
 
@@ -721,20 +726,39 @@ void LCIStrategicPlugin::planWhenAPPROACHING(const cav_srvs::PlanManeuversReques
     {
       nearest_green_entry_time_cached_ = nearest_green_entry_time;  //don't apply buffer if ET is in green
     }  
-    else
+    else //buffer is needed
     {
-      auto normal_arrival_state_green_et_optional = traffic_light->predictState(lanelet::time::timeFromSec(nearest_green_entry_time.toSec()));
-
-      if (!validLightState(normal_arrival_state_green_et_optional, nearest_green_entry_time))
+      ros::Time nearest_green_signal_start_time;
+      if (traffic_light->fixed_cycle_duration.total_milliseconds()/1000.0 > 1.0) // UC2
       {
-        ROS_ERROR_STREAM("Unable to resolve give signal...");
-        return;
-      }
+        ROS_DEBUG_STREAM("UC2 Handling");
+        auto normal_arrival_state_green_et_optional = traffic_light->predictState(lanelet::time::timeFromSec(nearest_green_entry_time.toSec()));
 
-      ROS_DEBUG_STREAM("normal_arrival_signal_end_time: " << std::to_string(lanelet::time::toSec(normal_arrival_state_green_et_optional.get().first)));
-      
-      // nearest_green_signal_start_time = normal_arrival_signal_end_time (green guaranteed) - green_signal_duration
-      ros::Time nearest_green_signal_start_time = ros::Time(lanelet::time::toSec(normal_arrival_state_green_et_optional.get().first - traffic_light->signal_durations[lanelet::CarmaTrafficSignalState::PROTECTED_MOVEMENT_ALLOWED]));
+        if (!validLightState(normal_arrival_state_green_et_optional, nearest_green_entry_time))
+        {
+          ROS_ERROR_STREAM("Unable to resolve give signal...");
+          return;
+        }
+
+        ROS_DEBUG_STREAM("normal_arrival_signal_end_time: " << std::to_string(lanelet::time::toSec(normal_arrival_state_green_et_optional.get().first)));
+        
+        // nearest_green_signal_start_time = normal_arrival_signal_end_time (green guaranteed) - green_signal_duration
+        nearest_green_signal_start_time = ros::Time(lanelet::time::toSec(normal_arrival_state_green_et_optional.get().first - traffic_light->signal_durations[lanelet::CarmaTrafficSignalState::PROTECTED_MOVEMENT_ALLOWED]));
+      }
+      else  // UC3
+      {
+        ROS_DEBUG_STREAM("UC3 Handling");
+        
+        for (size_t i = 0; i < traffic_light->recorded_start_time_stamps.size(); i++)
+        {
+          if (traffic_light->recorded_time_stamps[i].second == lanelet::CarmaTrafficSignalState::PROTECTED_MOVEMENT_ALLOWED && 
+            lanelet::time::timeFromSec(ros::Time::now().toSec()) < traffic_light->recorded_time_stamps[i].first ) //if not outdated
+          {
+            nearest_green_signal_start_time = ros::Time(lanelet::time::toSec(traffic_light->recorded_start_time_stamps[i])); // by using this, we are assuming the ET given by streets falls into this green signal time
+            break;
+          }
+        }
+      }
 
       if (early_arrival_time_green_et.toSec() - nearest_green_signal_start_time.toSec() < config_.green_light_time_buffer)
       {
@@ -747,7 +771,6 @@ void LCIStrategicPlugin::planWhenAPPROACHING(const cav_srvs::PlanManeuversReques
         // However, that is okay because those timestamps that fit this criteria is treated non-green by later late/early arrival checks
       }
     }
-
     nearest_green_entry_time = nearest_green_entry_time_cached_.get();
   }
   else if (nearest_green_entry_time_cached_) 
@@ -759,6 +782,7 @@ void LCIStrategicPlugin::planWhenAPPROACHING(const cav_srvs::PlanManeuversReques
   {
     ROS_DEBUG_STREAM("Earliest entry time has gone past the cached green light. nearest_green_entry_time_cached_:" << std::to_string(nearest_green_entry_time_cached_.get().toSec()) << ", and earliest_entry_time: " << std::to_string(earliest_entry_time.toSec()));
   }
+
   ROS_DEBUG_STREAM("Final nearest_green_entry_time: " << std::to_string(nearest_green_entry_time.toSec()));
 
   double remaining_time = nearest_green_entry_time.toSec() - current_state.stamp.toSec();

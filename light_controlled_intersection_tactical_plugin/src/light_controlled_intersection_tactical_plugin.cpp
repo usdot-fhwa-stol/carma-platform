@@ -29,7 +29,7 @@ namespace light_controlled_intersection_tactical_plugin
         carma_planning_msgs::srv::PlanTrajectory::Request::SharedPtr req, 
         carma_planning_msgs::srv::PlanTrajectory::Response::SharedPtr resp)
     {
-        RCLCPP_DEBUG_STREAM(logger_->get_logger(), "Starting light controlled intersection trajectory planning");
+        RCLCPP_ERROR_STREAM(logger_->get_logger(), "Starting light controlled intersection trajectory planning");
         
         if(req->maneuver_index_to_plan >= req->maneuver_plan.maneuvers.size())
         {
@@ -52,11 +52,11 @@ namespace light_controlled_intersection_tactical_plugin
         }
 
         lanelet::BasicPoint2d veh_pos(req->vehicle_state.x_pos_global, req->vehicle_state.y_pos_global);
-        RCLCPP_DEBUG_STREAM(logger_->get_logger(), "Planning state x:" << req->vehicle_state.x_pos_global << " , y: " << req->vehicle_state.y_pos_global);
+        RCLCPP_ERROR_STREAM(logger_->get_logger(), "Planning state x:" << req->vehicle_state.x_pos_global << " , y: " << req->vehicle_state.y_pos_global);
 
         current_downtrack_ = wm_->routeTrackPos(veh_pos).downtrack;
 
-        RCLCPP_DEBUG_STREAM(logger_->get_logger(), "Current_downtrack: "<< current_downtrack_);
+        RCLCPP_ERROR_STREAM(logger_->get_logger(), "Current_downtrack: "<< current_downtrack_);
 
         auto current_lanelets = wm_->getLaneletsFromPoint({req->vehicle_state.x_pos_global, req->vehicle_state.y_pos_global});
         lanelet::ConstLanelet current_lanelet;
@@ -78,11 +78,11 @@ namespace light_controlled_intersection_tactical_plugin
             }
         }
 
-        RCLCPP_DEBUG_STREAM(logger_->get_logger(), "Current_lanelet: " << current_lanelet.id());
+        RCLCPP_ERROR_STREAM(logger_->get_logger(), "Current_lanelet: " << current_lanelet.id());
 
         speed_limit_ = findSpeedLimit(current_lanelet, wm_);
 
-        RCLCPP_DEBUG_STREAM(logger_->get_logger(), "speed_limit_: " << speed_limit_);
+        RCLCPP_ERROR_STREAM(logger_->get_logger(), "speed_limit_: " << speed_limit_);
 
         DetailedTrajConfig wpg_detail_config;
         GeneralTrajConfig wpg_general_config;
@@ -107,9 +107,9 @@ namespace light_controlled_intersection_tactical_plugin
         // Change raw speed limit values to target speeds specified by the algorithm
         applyOptimizedTargetSpeedProfile(maneuver_plan.front(), req->vehicle_state.longitudinal_vel, points_and_target_speeds);
 
-        RCLCPP_DEBUG_STREAM(logger_->get_logger(), "points_and_target_speeds: " << points_and_target_speeds.size());
+        RCLCPP_ERROR_STREAM(logger_->get_logger(), "points_and_target_speeds: " << points_and_target_speeds.size());
 
-        RCLCPP_DEBUG_STREAM(logger_->get_logger(), "PlanTrajectory");
+        RCLCPP_ERROR_STREAM(logger_->get_logger(), "PlanTrajectory");
 
         //Trajectory Plan
         carma_planning_msgs::msg::TrajectoryPlan trajectory;
@@ -371,7 +371,8 @@ namespace light_controlled_intersection_tactical_plugin
 
             RCLCPP_DEBUG_STREAM(logger_->get_logger(), "Creating Lane Follow Geometry");
             std::vector<PointSpeedPair> lane_follow_points = basic_autonomy::waypoint_generation::create_lanefollow_geometry(maneuver, starting_downtrack, wm, general_config, detailed_config, visited_lanelets);
-            points_and_target_speeds.insert(points_and_target_speeds.end(), lane_follow_points.begin(), lane_follow_points.end());            
+            points_and_target_speeds.insert(points_and_target_speeds.end(), lane_follow_points.begin(), lane_follow_points.end());   
+            processed_maneuvers.push_back(maneuver);         
         }
         else 
         {
@@ -381,6 +382,10 @@ namespace light_controlled_intersection_tactical_plugin
         //Add buffer ending to lane follow points at the end of maneuver(s) end dist 
         if(!processed_maneuvers.empty() && processed_maneuvers.back().type == carma_planning_msgs::msg::Maneuver::LANE_FOLLOWING){
             points_and_target_speeds = add_lanefollow_buffer(wm, points_and_target_speeds, processed_maneuvers, ending_state_before_buffer, detailed_config);
+            RCLCPP_ERROR_STREAM(logger_->get_logger(), ">>>>>>>>>>>>>>>>>>add_lanefollow_buffer:" << ending_state_before_buffer.x_pos_global << ", " << ending_state_before_buffer.y_pos_global);
+        }
+        else{
+            RCLCPP_ERROR_STREAM(logger_->get_logger(), ">>>>>>>>>>>>>>>>>>add_lanefollow_buffer: DID NOT RUN");
         }
 
         return points_and_target_speeds;
