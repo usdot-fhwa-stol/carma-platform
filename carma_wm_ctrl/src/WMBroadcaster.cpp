@@ -1212,22 +1212,16 @@ void WMBroadcaster::setMaxLaneWidth(double max_lane_width)
 
 void WMBroadcaster::setIntersectionCoordCorrection(const std::vector<int64_t>& intersection_ids_for_correction, const std::vector<double>& intersection_correction)
 {
-  RCLCPP_ERROR_STREAM(rclcpp::get_logger("carma_mw_ctrl"),"ERROR: 3a");
-  
   if (intersection_correction.size() % 2 != 0 || intersection_ids_for_correction.size() != intersection_correction.size() / 2)
   {
     throw std::invalid_argument("Some of intersection coordinate correction parameters are not fully set!");
   }
-  RCLCPP_ERROR_STREAM(rclcpp::get_logger("carma_mw_ctrl"),"ERROR: 3b");
 
   for (auto i = 0; i < intersection_correction.size(); i = i + 2)
   {
     sim_->intersection_coord_correction_[(uint16_t)intersection_ids_for_correction[i/2]].first =  intersection_correction[i]; //x
     sim_->intersection_coord_correction_[(uint16_t)intersection_ids_for_correction[i/2]].second = intersection_correction[i + 1]; //y
-    RCLCPP_ERROR_STREAM(rclcpp::get_logger("carma_mw_ctrl"),"ERROR: 3aa: " << i);
-
   }
-  RCLCPP_ERROR_STREAM(rclcpp::get_logger("carma_mw_ctrl"),"ERROR: 3c");
 
 }
 
@@ -1384,11 +1378,16 @@ bool WMBroadcaster::shouldChangeControlLine(const lanelet::ConstLaneletOrArea& e
 }
 
 /*!
-  * TODO
+  * \brief This is a helper function that returns true if signal in the lanelet should be changed according to the records of signalizer intersection manager
+           Used in managing multiple signal_groups in a single entry lanelet for example
+  * \param el The LaneletOrArea that houses the regem
+  * \param regem The regulatoryElement that needs to be checked
+  * \param sim The signalized intersection manager that has records regems and corresponding lanelets
+  * NOTE: Currently this function only works on lanelets. It returns true if the regem is not CarmaTrafficSignal or if the signal should be changed.
   */
 bool WMBroadcaster::shouldChangeTrafficSignal(const lanelet::ConstLaneletOrArea& el,const lanelet::RegulatoryElementConstPtr& regem, std::shared_ptr<carma_wm::SignalizedIntersectionManager> sim) const
 {
-  // should change if if the regem is not a passing control line or area, which is not supported by this logic
+  // should change if the regem is not a CarmaTrafficSignal, which is not supported by this logic
   if (regem->attribute(lanelet::AttributeName::Subtype).value().compare(lanelet::CarmaTrafficSignal::RuleName) != 0 || !el.isLanelet() || !sim_)
   {
     return true;
@@ -1416,8 +1415,6 @@ bool WMBroadcaster::shouldChangeTrafficSignal(const lanelet::ConstLaneletOrArea&
 
 void WMBroadcaster::addRegulatoryComponent(std::shared_ptr<Geofence> gf_ptr) const
 {
-
-
   // First loop is to save the relation between element and regulatory element
   // so that we can add back the old one after geofence deactivates
   for (auto el: gf_ptr->affected_parts_)

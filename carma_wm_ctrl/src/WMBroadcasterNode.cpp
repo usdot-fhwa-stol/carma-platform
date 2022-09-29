@@ -85,8 +85,6 @@ carma_ros2_utils::CallbackReturn WMBroadcasterNode::handle_on_configure(const rc
 
   RCLCPP_INFO_STREAM(rclcpp::get_logger("carma_mw_ctrl"),"Done initializing worker!");
 
-  RCLCPP_ERROR_STREAM(rclcpp::get_logger("carma_mw_ctrl"),"ERROR: 0a");
-
   get_parameter<int>("ack_pub_times", config_.ack_pub_times);
   get_parameter<double>("max_lane_width", config_.max_lane_width);
   get_parameter<double>("traffic_control_request_period", config_.traffic_control_request_period);
@@ -94,30 +92,20 @@ carma_ros2_utils::CallbackReturn WMBroadcasterNode::handle_on_configure(const rc
   get_parameter<std::string>("vehicle_participant_type", config_.participant);
   get_parameter<double>("config_speed_limit", config_.config_limit);
   
-  RCLCPP_ERROR_STREAM(rclcpp::get_logger("carma_mw_ctrl"),"ERROR: 0b");
-
   wmb_->setConfigACKPubTimes(config_.ack_pub_times);
   wmb_->setMaxLaneWidth(config_.max_lane_width);
   wmb_->setConfigSpeedLimit(config_.config_limit);
   wmb_->setConfigVehicleId(config_.vehicle_id);
   wmb_->setVehicleParticipationType(config_.participant);
 
-  RCLCPP_ERROR_STREAM(rclcpp::get_logger("carma_mw_ctrl"),"ERROR: 1");
-
   rclcpp::Parameter intersection_coord_correction_param = get_parameter("intersection_coord_correction");
   config_.intersection_coord_correction = intersection_coord_correction_param.as_double_array();
-
-  RCLCPP_ERROR_STREAM(rclcpp::get_logger("carma_mw_ctrl"),"ERROR: 2");
 
   rclcpp::Parameter intersection_ids_for_correction_param = get_parameter("intersection_ids_for_correction");
   config_.intersection_ids_for_correction = intersection_ids_for_correction_param.as_integer_array();
   
-  RCLCPP_ERROR_STREAM(rclcpp::get_logger("carma_mw_ctrl"),"ERROR: 3");
-
   wmb_->setIntersectionCoordCorrection(config_.intersection_ids_for_correction, config_.intersection_coord_correction);
   
-  RCLCPP_ERROR_STREAM(rclcpp::get_logger("carma_mw_ctrl"),"ERROR: 4");
-
   RCLCPP_INFO_STREAM(rclcpp::get_logger("carma_mw_ctrl"),"Done loading parameters: " << config_);
 
   /////////////
