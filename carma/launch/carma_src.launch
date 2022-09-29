@@ -136,7 +136,7 @@
       <arg name="control_plugins_to_validate" value="$(arg control_plugins_to_validate)"/>
     </include>
   </group>
-  
+
   <!-- Set up the rosbag record node that will exclude sensitive topics -->
   <group ns="carma_record">
     <include file="$(find carma_record)/launch/carma_record.launch" if="$(arg use_rosbag)" />

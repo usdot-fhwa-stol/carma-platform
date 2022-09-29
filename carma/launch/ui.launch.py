@@ -37,6 +37,7 @@ def generate_launch_description():
         default_value = "9090",
         description = "The default port for rosbridge is 9090"
     )
+
     rosbridge_server_group = GroupAction(
         actions=[
             SetRemap("get_available_routes",[EnvironmentVariable('CARMA_GUIDE_NS', default_value=''),"/get_available_routes"]),

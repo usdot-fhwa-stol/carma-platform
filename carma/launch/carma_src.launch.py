@@ -111,9 +111,9 @@ def generate_launch_description():
     # Declare port
     port = LaunchConfiguration('port')
     declare_port = DeclareLaunchArgument(
-       name = 'port',
-       default_value= "9090",
-       description='The default port for rosbridge is 909'
+        name = 'port',
+        default_value= "9090",
+        description='The default port for rosbridge is 909'
     )
 
     # Nodes
@@ -210,16 +210,16 @@ def generate_launch_description():
     )
 
     ui_group = GroupAction(
-       actions=[
-           PushRosNamespace(EnvironmentVariable('CARMA_UI_NS', default_value='ui')),
-           
-           IncludeLaunchDescription(
-               PythonLaunchDescriptionSource([ThisLaunchFileDir(), '/ui.launch.py']),
-               launch_arguments={
-               'port' : port
-               }.items()
-           ),
-       ]
+        actions=[
+            PushRosNamespace(EnvironmentVariable('CARMA_UI_NS', default_value='ui')),
+            
+            IncludeLaunchDescription(
+                PythonLaunchDescriptionSource([ThisLaunchFileDir(), '/ui.launch.py']),
+                launch_arguments={
+                'port' : port
+                }.items()
+            ),
+        ]
     )
 
     return LaunchDescription([

@@ -1152,13 +1152,13 @@ namespace carma_wm
     // Check if the map is loaded yet
     if (!semantic_map_ || semantic_map_->laneletLayer.empty())
     {
-      ROS_DEBUG_STREAM("Map is not set or does not contain lanelets");
+      ROS_ERROR_STREAM("Map is not set or does not contain lanelets");
       return {};
     }
     // Check if the route was loaded yet
     if (!route_)
     {
-      ROS_DEBUG_STREAM("Route has not yet been loaded");
+      ROS_ERROR_STREAM("Route has not yet been loaded");
       return {};
     }
     std::vector<lanelet::CarmaTrafficSignalPtr> light_list;
@@ -1368,13 +1368,14 @@ namespace carma_wm
           return false;
       }
 
+      // temporary states to save up to date states
       std::vector<std::pair<boost::posix_time::ptime, lanelet::CarmaTrafficSignalState>> temp_signal_states;
       std::vector<boost::posix_time::ptime> temp_start_times;
 
       int i = 0;
       for(auto mov_check:sim_.traffic_signal_states_[mov_id][mov_signal_group])
       {
-        if (lanelet::time::timeFromSec(ros::Time::now().toSec()) < mov_check.first)
+        if (lanelet::time::timeFromSec(ros::Time::now().toSec()) < mov_check.first) // filter outdated states
         {
           temp_signal_states.push_back(std::make_pair(mov_check.first, mov_check.second ));
           temp_start_times.push_back(sim_.traffic_signal_start_times_[mov_id][mov_signal_group][i]);
