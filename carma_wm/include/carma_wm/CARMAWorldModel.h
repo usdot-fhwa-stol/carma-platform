@@ -48,8 +48,6 @@ namespace carma_wm
 class CARMAWorldModel : public WorldModel
 {
 public:
-
-  bool first_testing_ = true;
   /**
    * @brief Constructor
    *

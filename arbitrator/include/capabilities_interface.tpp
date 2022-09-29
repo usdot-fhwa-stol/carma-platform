@@ -35,7 +35,7 @@ namespace arbitrator
 
         for (auto i = topics.begin(); i != topics.end(); i++) 
         {
-            auto topic = *i; //todo revert hardcode
+            auto topic = *i; //todo revert hardcode, lci_strategic is the last ros1 plugin
             if (topic == "lci_strategic_plugin/plan_maneuvers")
                 topic = "/guidance/plugins/lci_strategic_plugin/plan_maneuvers";
             auto sc = nh_->create_client<carma_planning_msgs::srv::PlanManeuvers>(topic);

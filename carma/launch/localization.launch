@@ -129,10 +129,6 @@
     </include>
   </group>
 
-
-  <!-- TEMP OFFSET NODE -->
-  <node pkg="carma" type="pose_offset_node.py" name="pose_offset_node"/>
-  
   <!-- Deadreckoner -->
   <include file="$(find deadreckoner)/launch/deadreckoner.launch">
     <arg name="current_twist" value="$(optenv CARMA_INTR_NS)/vehicle/twist" />

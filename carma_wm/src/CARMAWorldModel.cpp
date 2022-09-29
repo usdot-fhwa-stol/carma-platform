@@ -1252,13 +1252,13 @@ namespace carma_wm
     // Check if the map is loaded yet
     if (!semantic_map_ || semantic_map_->laneletLayer.empty())
     {
-      ROS_DEBUG_STREAM("Map is not set or does not contain lanelets");
+      ROS_ERROR_STREAM("Map is not set or does not contain lanelets");
       return {};
     }
     // Check if the route was loaded yet
     if (!route_)
     {
-      ROS_DEBUG_STREAM("Route has not yet been loaded");
+      ROS_ERROR_STREAM("Route has not yet been loaded");
       return {};
     }
     std::vector<std::shared_ptr<lanelet::AllWayStop>> intersection_list;
@@ -1289,13 +1289,13 @@ namespace carma_wm
     // Check if the map is loaded yet
     if (!semantic_map_ || semantic_map_->laneletLayer.empty())
     {
-      ROS_DEBUG_STREAM("Map is not set or does not contain lanelets");
+      ROS_ERROR_STREAM("Map is not set or does not contain lanelets");
       return {};
     }
     // Check if the route was loaded yet
     if (!route_)
     {
-      ROS_DEBUG_STREAM("Route has not yet been loaded");
+      ROS_ERROR_STREAM("Route has not yet been loaded");
       return {};
     }
     std::vector<lanelet::SignalizedIntersectionPtr> intersection_list;
@@ -1329,6 +1329,7 @@ namespace carma_wm
     if (lanelets_general.empty())
     {
       ROS_WARN_STREAM("There was an error querying lanelet for traffic light with id: " << id);
+      return nullptr;
     }
 
     auto curr_light_list = lanelets_general[0].regulatoryElementsAs<lanelet::CarmaTrafficSignal>();
@@ -1432,19 +1433,16 @@ namespace carma_wm
   {
     if (!semantic_map_)
     {
-      ROS_DEBUG_STREAM("Map is not set yet.");
+      ROS_INFO_STREAM("Map is not set yet.");
       return;
     }
 
     if (spat_msg.intersection_state_list.empty())
     {
-      ROS_DEBUG_STREAM("No intersection_state_list in the newly received SPAT msg. Returning...");
+      ROS_WARN_STREAM("No intersection_state_list in the newly received SPAT msg. Returning...");
       return;
     }
-
-    // if (!first_testing_) //TODO revert
-    //       return;
-    //       
+  
     for (const auto& curr_intersection : spat_msg.intersection_state_list)
     {
       for (const auto& current_movement_state : curr_intersection.movement_list)
@@ -1480,9 +1478,6 @@ namespace carma_wm
 
         curr_light->revision_ = curr_intersection.revision; // valid SPAT msg
       
-        //double global_start = ros::Time::now().toSec();
-        //double last_start = global_start;
-        //double signal_duration = 0.0;
         if(current_movement_state.movement_event_list.size()>1) // Dynamic Spat Processing with future phases
         {
           for(auto current_movement_event:current_movement_state.movement_event_list)
@@ -1490,7 +1485,6 @@ namespace carma_wm
             // raw min_end_time in seconds measured from the most recent full hour
             boost::posix_time::ptime min_end_time_dynamic = lanelet::time::timeFromSec(current_movement_event.timing.min_end_time);
             boost::posix_time::ptime start_time_dynamic = lanelet::time::timeFromSec(current_movement_event.timing.start_time);
-            //signal_duration += lanelet::time::toSec(min_end_time_dynamic) - lanelet::time::toSec(start_time_dynamic);
             min_end_time_dynamic=min_end_time_converter_minute_of_year(min_end_time_dynamic,curr_intersection.moy_exists,curr_intersection.moy); // Accounting minute of the year
             start_time_dynamic=min_end_time_converter_minute_of_year(start_time_dynamic,curr_intersection.moy_exists,curr_intersection.moy); // Accounting minute of the year
 
@@ -1501,7 +1495,7 @@ namespace carma_wm
             if (!recorded)
 		        {
               sim_.traffic_signal_states_[curr_intersection.id.id][current_movement_state.signal_group].push_back(
-                                std::make_pair(min_end_time_dynamic, received_state_dynamic)); //todo use min_end_time_dynamic on real testing
+                                std::make_pair(min_end_time_dynamic, received_state_dynamic));
               sim_.traffic_signal_start_times_[curr_intersection.id.id][current_movement_state.signal_group].push_back(
                                 start_time_dynamic); //todo use start_time_dynamic on real testing
               ROS_DEBUG_STREAM("intersection id: " << (int)curr_intersection.id.id << ", signal: " << (int)current_movement_state.signal_group 
@@ -1510,13 +1504,12 @@ namespace carma_wm
                  << ", state: " << received_state_dynamic);
               curr_light->recorded_time_stamps = sim_.traffic_signal_states_[curr_intersection.id.id][current_movement_state.signal_group];
               curr_light->recorded_start_time_stamps = sim_.traffic_signal_start_times_[curr_intersection.id.id][current_movement_state.signal_group];
-              //last_start = global_start + signal_duration;
     		    }
 	        }
         } 
         else // Fixed Spat Processing without future phases
         {
-          ROS_DEBUG_STREAM("There was no more than 1 future phases!!! for inter id: " << (int)curr_intersection.id.id << ", signal: " << (int)current_movement_state.signal_group);
+          ROS_DEBUG_STREAM("Detected fixed cycle as there was no more than 1 future phases! for inter id: " << (int)curr_intersection.id.id << ", signal: " << (int)current_movement_state.signal_group);
         // raw min_end_time in seconds measured from the most recent full hour
         boost::posix_time::ptime min_end_time = lanelet::time::timeFromSec(current_movement_state.movement_event_list[0].timing.min_end_time);
         auto received_state = static_cast<lanelet::CarmaTrafficSignalState>(current_movement_state.movement_event_list[0].event_state.movement_phase_state);
@@ -1654,8 +1647,6 @@ namespace carma_wm
         }  
       }
     }
-
-    //first_testing_ = true;
 
   }
 
