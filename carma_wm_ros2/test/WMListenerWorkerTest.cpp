@@ -258,7 +258,7 @@ TEST(WMListenerWorkerTest, setConfigSpeedLimitTest)
   current_cl = wmlw.getConfigSpeedLimit();
 
   ASSERT_EQ(cL, current_cl);
-  RCLCPP_INFO_STREAM(rclcpp::get_logger("carma_wm_ros2"), "config_speed_limit = "<< current_cl);
+  RCLCPP_INFO_STREAM(rclcpp::get_logger("WMListenerWorkerTest"), "config_speed_limit = "<< current_cl);
 }
 
 TEST(WMListenerWorkerTest, getVehicleParticipationTypeTest)
@@ -274,7 +274,7 @@ TEST(WMListenerWorkerTest, getVehicleParticipationTypeTest)
   current_pt = wmlw.getVehicleParticipationType();
 
   ASSERT_EQ(pt, current_pt);
-  RCLCPP_INFO_STREAM(rclcpp::get_logger("carma_wm_ros2"),"Participant = "<< current_pt);
+  RCLCPP_INFO_STREAM(rclcpp::get_logger("WMListenerWorkerTest"),"Participant = "<< current_pt);
 }
 
 TEST(WMListenerWorkerTest, checkIfReRoutingNeeded1)

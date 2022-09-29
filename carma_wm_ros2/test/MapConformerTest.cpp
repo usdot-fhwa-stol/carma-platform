@@ -179,7 +179,7 @@ TEST(MapConformer, ensureCompliance)
 /*
   * Create lanelet map by hand
   */
- RCLCPP_INFO_STREAM(rclcpp::get_logger("carma_wm_ros2"), "Create new map");
+ RCLCPP_INFO_STREAM(rclcpp::get_logger("carma_wm::MapConformerTest"), "Create new map");
 std::vector<lanelet::Lanelet> llts;
 lanelet::Areas areas;
   // Linestring points
@@ -234,7 +234,7 @@ lanelet::Areas areas;
         llts.back().addRegulatoryElement(dsl2);
 
   ASSERT_EQ(2u, llts.size());//Assert that there are 2 lanelets
-  RCLCPP_INFO_STREAM(rclcpp::get_logger("carma_wm_ros2"),"There are "<<llts.size()<<" lanelets.");
+  RCLCPP_INFO_STREAM(rclcpp::get_logger("carma_wm::MapConformerTest"),"There are "<<llts.size()<<" lanelets.");
 
 
   // Create lanelet map
@@ -265,7 +265,7 @@ std::vector<lanelet::Lanelet> llt2;
 
 
   ASSERT_EQ(1u, llt2.size());
-  RCLCPP_INFO_STREAM(rclcpp::get_logger("carma_wm_ros2"), "Number of lanelets: "<< llt2.size());
+  RCLCPP_INFO_STREAM(rclcpp::get_logger("carma_wm::MapConformerTest"), "Number of lanelets: "<< llt2.size());
 
   lanelet::LaneletMapPtr map3;
   map3 = lanelet::utils::createMap(llt2, {});

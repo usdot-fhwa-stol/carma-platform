@@ -372,7 +372,7 @@ inline void addObstacle(carma_wm::TrackPos tp, lanelet::Id lanelet_id, std::shar
     auto predNearestLanelet = cmw->getMap()->laneletLayer.nearest(object_center_pred, 1)[0]; 
     if (!boost::geometry::within(object_center_pred, predNearestLanelet.polygon2d()))
     {
-      RCLCPP_WARN_STREAM(rclcpp::get_logger("carma_wm_ros2"),"Given pred trackpos from given lanelet id does land on any lanelet in the map");
+      RCLCPP_WARN_STREAM(rclcpp::get_logger("WMTestLibForGuidance"),"Given pred trackpos from given lanelet id does land on any lanelet in the map");
       continue;
     }
     rwo.predicted_lanelet_ids.emplace_back(predNearestLanelet.id());
@@ -419,7 +419,7 @@ inline void setSpeedLimit (lanelet::Velocity speed_limit, std::shared_ptr<carma_
                                                      { lanelet::Participants::Vehicle }));
     cmw->getMutableMap()->update(llt, sl);
   }
-  RCLCPP_INFO_STREAM(rclcpp::get_logger("carma_wm_ros2"),"Set the new speed limit! Value: " << speed_limit.value());
+  RCLCPP_INFO_STREAM(rclcpp::get_logger("WMTestLibForGuidance"),"Set the new speed limit! Value: " << speed_limit.value());
 }
 
 /**
@@ -462,7 +462,7 @@ inline void setRouteByLanelets (std::vector<lanelet::ConstLanelet> lanelets, std
   carma_wm::LaneletRoutePtr route_ptr = std::make_shared<lanelet::routing::Route>(std::move(route));
   cmw->setRoute(route_ptr);
 
-  RCLCPP_INFO_STREAM(rclcpp::get_logger("carma_wm_ros2"),"New route has been set successfully!");
+  RCLCPP_INFO_STREAM(rclcpp::get_logger("WMTestLibForGuidance"),"New route has been set successfully!");
 }
 
 /**
