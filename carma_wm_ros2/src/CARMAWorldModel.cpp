@@ -1336,14 +1336,14 @@ namespace carma_wm
     auto lanelets_general = semantic_map_->laneletLayer.findUsages(general_regem);
     if (lanelets_general.empty())
     {
-      RCLCPP_ERROR_STREAM(rclcpp::get_logger("carma_wm_ros2"), "There was an error querying lanelet for traffic light with id: " << id);
+      RCLCPP_WARN_STREAM(rclcpp::get_logger("carma_wm_ros2"), "There was an error querying lanelet for traffic light with id: " << id);
     }
 
     auto curr_light_list = lanelets_general[0].regulatoryElementsAs<lanelet::CarmaTrafficSignal>();
 
     if (curr_light_list.empty())
     {
-      RCLCPP_ERROR_STREAM(rclcpp::get_logger("carma_wm_ros2"), "There was an error querying traffic light with id: " << id);
+      RCLCPP_WARN_STREAM(rclcpp::get_logger("carma_wm_ros2"), "There was an error querying traffic light with id: " << id);
       return nullptr;
     }
 
@@ -1360,7 +1360,7 @@ namespace carma_wm
 
     if (!curr_light)
     {
-      RCLCPP_ERROR_STREAM(rclcpp::get_logger("carma_wm_ros2"), "Was not able to find traffic signal with id: " << id << ", ignoring...");
+      RCLCPP_WARN_STREAM(rclcpp::get_logger("carma_wm_ros2"), "Was not able to find traffic signal with id: " << id << ", ignoring...");
       return nullptr;
     }
 
@@ -1382,7 +1382,7 @@ namespace carma_wm
     int i = 0;
     for(auto mov_check:sim_.traffic_signal_states_[mov_id][mov_signal_group])
     {
-      if (lanelet::time::timeFromSec(std::chrono::duration<double>(std::chrono::system_clock::now().time_since_epoch()).count()) < mov_check.first) //todo use node's clock
+      if (lanelet::time::timeFromSec(std::chrono::duration<double>(std::chrono::system_clock::now().time_since_epoch()).count()) < mov_check.first)
       {
         temp_signal_states.push_back(std::make_pair(mov_check.first, mov_check.second ));
         temp_start_times.push_back(sim_.traffic_signal_start_times_[mov_id][mov_signal_group][i]);
@@ -1413,7 +1413,7 @@ namespace carma_wm
     if (moy_exists) //account for minute of the year
     {
       auto inception_boost(boost::posix_time::time_from_string("1970-01-01 00:00:00.000")); // inception of epoch
-      auto duration_since_inception(lanelet::time::durationFromSec(std::chrono::duration<double>(std::chrono::system_clock::now().time_since_epoch()).count())); //todo use node's clock
+      auto duration_since_inception(lanelet::time::durationFromSec(std::chrono::duration<double>(std::chrono::system_clock::now().time_since_epoch()).count()));
       auto curr_time_boost = inception_boost + duration_since_inception;
 
       int curr_year = curr_time_boost.date().year();
@@ -1441,13 +1441,13 @@ namespace carma_wm
   {
     if (!semantic_map_)
     {
-      RCLCPP_ERROR_STREAM(rclcpp::get_logger("carma_wm_ros2"), "Map is not set yet.");
+      RCLCPP_INFO_STREAM(rclcpp::get_logger("carma_wm_ros2"), "Map is not set yet.");
       return;
     }
 
     if (spat_msg.intersection_state_list.empty())
     {
-      RCLCPP_ERROR_STREAM(rclcpp::get_logger("carma_wm_ros2"), "No intersection_state_list in the newly received SPAT msg. Returning...");
+      RCLCPP_WARN_STREAM(rclcpp::get_logger("carma_wm_ros2"), "No intersection_state_list in the newly received SPAT msg. Returning...");
       return;
     }
 
@@ -1503,18 +1503,18 @@ namespace carma_wm
             auto received_state_dynamic = static_cast<lanelet::CarmaTrafficSignalState>(current_movement_event.event_state.movement_phase_state);
             
             bool recorded = check_if_seen_before_movement_state(min_end_time_dynamic,received_state_dynamic,curr_intersection.id.id,current_movement_state.signal_group);
-	    	    //RCLCPP_DEBUG_STREAM(rclcpp::get_logger("carma_wm_ros2"), "recorded: " << recorded);
             
             if (!recorded)
 		        {
               sim_.traffic_signal_states_[curr_intersection.id.id][current_movement_state.signal_group].push_back(std::make_pair(min_end_time_dynamic, received_state_dynamic));
               sim_.traffic_signal_start_times_[curr_intersection.id.id][current_movement_state.signal_group].push_back(
-                                start_time_dynamic); //todo use start_time_dynamic on real testing
+                                start_time_dynamic);
               
               RCLCPP_DEBUG_STREAM(rclcpp::get_logger("carma_wm_ros2"), "intersection id: " << (int)curr_intersection.id.id << ", signal: " << (int)current_movement_state.signal_group
                  << ", start_time: " << std::to_string(lanelet::time::toSec(start_time_dynamic))
                  << ", end_time: " << std::to_string(lanelet::time::toSec(min_end_time_dynamic))
                  << ", state: " << received_state_dynamic);
+                 
               curr_light->recorded_time_stamps = sim_.traffic_signal_states_[curr_intersection.id.id][current_movement_state.signal_group];
               curr_light->recorded_start_time_stamps  = sim_.traffic_signal_start_times_[curr_intersection.id.id][current_movement_state.signal_group];
             }

@@ -186,7 +186,7 @@ public:
   ////////// VARIABLES ///////////
 
   TurnDirection intersection_turn_direction_ = TurnDirection::Straight;
-  bool approaching_light_controlled_interction_ = true;
+  bool approaching_light_controlled_interction_ = true; // TODO set to true until carma-street is capable of sending strategy parameters for UC3
 
   // CARMA Streets Variakes
   // timestamp for msg received from carma streets

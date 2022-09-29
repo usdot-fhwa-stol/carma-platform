@@ -52,69 +52,6 @@ LCIStrategicPlugin::LCIStrategicPlugin(carma_wm::WorldModelConstPtr wm, LCIStrat
 
 cav_msgs::Plugin LCIStrategicPlugin::getDiscoveryMsg() const
 {
-  //auto traffic_list = wm_->getSignalsAlongRoute({ -109.9, 340.64 });
-//
-  //if (traffic_list.empty())
-  //  return plugin_discovery_msg_; 
-  //  
-  //ROS_DEBUG_STREAM("Found traffic lights of size: " << traffic_list.size());
-//
-  //auto current_lanelets = wm_->getLaneletsFromPoint({ -109.9, 340.64});
-  //lanelet::ConstLanelet current_lanelet;
-  //
-  //if (current_lanelets.empty())
-  //{
-  //  ROS_ERROR_STREAM("Given vehicle position is not on the road! Returning...");
-  //  return plugin_discovery_msg_;
-  //}
-//
-  //// get the lanelet that is on the route in case overlapping ones found
-  //for (auto llt : current_lanelets)
-  //{
-  //  auto route = wm_->getRoute()->shortestPath();
-  //  if (std::find(route.begin(), route.end(), llt) != route.end())
-  //  {
-  //    current_lanelet = llt;
-  //    break;
-  //  }
-  //}
-//
-  //lanelet::CarmaTrafficSignalPtr nearest_traffic_signal = nullptr;
-  //
-  //lanelet::ConstLanelet entry_lanelet;
-  //lanelet::ConstLanelet exit_lanelet;
-//
-  //for (auto signal : traffic_list)
-  //{
-  //  auto optional_entry_exit = wm_->getEntryExitOfSignalAlongRoute(signal);
-  //  // if signal is not matching our destination skip
-  //  if (!optional_entry_exit)
-  //  {
-  //    ROS_ERROR_STREAM("Did not find entry.exit along the route");
-  //    continue;
-  //  }
-  //    
-  //  entry_lanelet = optional_entry_exit.get().first;
-  //  exit_lanelet = optional_entry_exit.get().second;
-//
-  //  nearest_traffic_signal = signal;
-  //  break;
-  //}
-//
-  //auto returned_pair = nearest_traffic_signal->predictState(lanelet::time::timeFromSec(ros::Time::now().toSec()));
-//
-  //if (!returned_pair)
-  //  return plugin_discovery_msg_;
-//
-  //ROS_ERROR_STREAM("Current time: " << std::to_string(ros::Time::now().toSec()));
-  //ROS_ERROR_STREAM("End time: " << returned_pair.get().first << ", of state: " << returned_pair.get().second);
-  //ROS_ERROR_STREAM("Time difference: " << std::to_string(lanelet::time::toSec(returned_pair.get().first) - ros::Time::now().toSec()));
-  //
-  //ROS_DEBUG_STREAM("Current time: " << std::to_string(ros::Time::now().toSec()));
-  //ROS_DEBUG_STREAM("End time: " << returned_pair.get().first << ", of state: " << returned_pair.get().second);
-  //ROS_DEBUG_STREAM("Time difference: " << std::to_string(lanelet::time::toSec(returned_pair.get().first) - ros::Time::now().toSec()));
-
-
   return plugin_discovery_msg_;
 }
 
@@ -670,16 +607,17 @@ void LCIStrategicPlugin::planWhenAPPROACHING(const cav_srvs::PlanManeuversReques
   ROS_DEBUG_STREAM("earliest_entry_time: " << std::to_string(earliest_entry_time.toSec()) << ", with : " << earliest_entry_time - current_state.stamp  << " left at: " << std::to_string(current_state.stamp.toSec()));
   ros::Time nearest_green_entry_time;
   bool is_entry_time_within_future_events = false;
-  if (config_.enable_carma_streets_connection ==false /*|| scheduled_enter_time_ == 0 */) // TODO revert
+  if (config_.enable_carma_streets_connection ==false /*|| scheduled_enter_time_ == 0 */) // TODO uncomment when carma-street is capable of sending strategy params
   {
     nearest_green_entry_time = get_nearest_green_entry_time(current_state.stamp, earliest_entry_time, traffic_light) 
-                                          + ros::Duration(0.01); //0.01sec more buffer since green_light algorithm's timestamp picks the previous signal - Vehcile Estimation
+                                          + ros::Duration(0.01); //0.01sec more buffer since green_light algorithm's timestamp picks the previous signal - Vehicle Estimation
     is_entry_time_within_future_events = true; //UC2
   }
-  else if(config_.enable_carma_streets_connection ==true /*&& scheduled_enter_time_ != 0 */) // TODO revert
+  else if(config_.enable_carma_streets_connection ==true /*&& scheduled_enter_time_ != 0 */) // TODO uncomment when carma-street is capable of sending strategy params
   {
     //nearest_green_entry_time = ros::Time(std::max(earliest_entry_time.toSec(), (scheduled_enter_time_)/1000.0)) + ros::Duration(0.01); //Carma Street
-    // temporary logic to test UC3 incrementally. Testing if UC3 will act like UC2
+    
+    // below is temporary logic to test UC3 incrementally. Testing if UC3 will act like UC2
     // check if there is any GREEN state in the light since scheduled_enter_time_ is not sent yet
     nearest_green_entry_time = ros::Time::now() + ros::Duration(60*60.0) + ros::Duration(0.01); //Carma Street TESTING TODO revert, should come from street in the future
     for (auto pair : traffic_light->recorded_time_stamps)
@@ -689,7 +627,7 @@ void LCIStrategicPlugin::planWhenAPPROACHING(const cav_srvs::PlanManeuversReques
       {
         nearest_green_entry_time = get_nearest_green_entry_time(current_state.stamp, earliest_entry_time, traffic_light) 
                                           + ros::Duration(0.01);
-        ROS_DEBUG_STREAM("Green signal exists");
+        ROS_DEBUG_STREAM("Up to date GREEN signal exists");
         is_entry_time_within_future_events = true;
         break;
       }
@@ -728,6 +666,8 @@ void LCIStrategicPlugin::planWhenAPPROACHING(const cav_srvs::PlanManeuversReques
     }  
     else //buffer is needed
     {
+      // below logic stores correct buffered timestamp into nearest_green_entry_time_cached_ to be used later
+      
       ros::Time nearest_green_signal_start_time;
       if (traffic_light->fixed_cycle_duration.total_milliseconds()/1000.0 > 1.0) // UC2
       {
@@ -771,6 +711,7 @@ void LCIStrategicPlugin::planWhenAPPROACHING(const cav_srvs::PlanManeuversReques
         // However, that is okay because those timestamps that fit this criteria is treated non-green by later late/early arrival checks
       }
     }
+
     nearest_green_entry_time = nearest_green_entry_time_cached_.get();
   }
   else if (nearest_green_entry_time_cached_) 
@@ -778,7 +719,7 @@ void LCIStrategicPlugin::planWhenAPPROACHING(const cav_srvs::PlanManeuversReques
     nearest_green_entry_time = ros::Time(std::max(nearest_green_entry_time.toSec(), nearest_green_entry_time_cached_.get().toSec()));
   }
   
-  if (nearest_green_entry_time >= nearest_green_entry_time_cached_.get())
+  if (nearest_green_entry_time > nearest_green_entry_time_cached_.get())
   {
     ROS_DEBUG_STREAM("Earliest entry time has gone past the cached green light. nearest_green_entry_time_cached_:" << std::to_string(nearest_green_entry_time_cached_.get().toSec()) << ", and earliest_entry_time: " << std::to_string(earliest_entry_time.toSec()));
   }
@@ -1090,7 +1031,7 @@ bool LCIStrategicPlugin::planManeuverCb(cav_srvs::PlanManeuversRequest& req, cav
     return true;
   }
 
-  if(config_.enable_carma_streets_connection ==true) //TODO member value revert
+  if(config_.enable_carma_streets_connection ==true)
   {
   if (!approaching_light_controlled_interction_)
   {
