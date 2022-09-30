@@ -1385,7 +1385,7 @@ namespace carma_wm
           i++;
           continue;
         }
-        
+
         auto last_time_difference = mov_check.first - min_end_time_dynamic;  
         bool is_duplicate = last_time_difference.total_milliseconds() >= -500 && last_time_difference.total_milliseconds() <= 500;
 
