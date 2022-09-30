@@ -607,6 +607,9 @@ void LCIStrategicPlugin::planWhenAPPROACHING(const cav_srvs::PlanManeuversReques
   ROS_DEBUG_STREAM("earliest_entry_time: " << std::to_string(earliest_entry_time.toSec()) << ", with : " << earliest_entry_time - current_state.stamp  << " left at: " << std::to_string(current_state.stamp.toSec()));
   ros::Time nearest_green_entry_time;
   bool is_entry_time_within_future_events = false;
+
+  // Following TODO comments are tracked in this issue: https://github.com/usdot-fhwa-stol/carma-platform/issues/1947
+  
   if (config_.enable_carma_streets_connection ==false /*|| scheduled_enter_time_ == 0 */) // TODO uncomment when carma-street is capable of sending strategy params
   {
     nearest_green_entry_time = get_nearest_green_entry_time(current_state.stamp, earliest_entry_time, traffic_light) 
@@ -805,7 +808,7 @@ void LCIStrategicPlugin::planWhenAPPROACHING(const cav_srvs::PlanManeuversReques
 
   if (safe_distance_to_stop > distance_remaining_to_traffic_light)
   {
-    ROS_DEBUG_STREAM("No longer within safe distance to stop! Decide to continue stopping or continue into intersection"); //TODO handle stopping or handle failure
+    ROS_DEBUG_STREAM("No longer within safe distance to stop! Decide to continue stopping or continue into intersection");
     
     if (last_case_num_ != TSCase::STOPPING && last_case_num_ != TSCase::UNAVAILABLE && last_case_num_ != TSCase::CASE_8) //case 1-7
     {
@@ -1040,7 +1043,7 @@ bool LCIStrategicPlugin::planManeuverCb(cav_srvs::PlanManeuversRequest& req, cav
     return true;
   }
 
-  bool is_empty_schedule_msg  = false ;// = (scheduled_enter_time_ == 0); TODO
+  bool is_empty_schedule_msg  = false ;// = (scheduled_enter_time_ == 0); TODO https://github.com/usdot-fhwa-stol/carma-platform/issues/1947
   if (is_empty_schedule_msg)
   {
     resp.new_plan.maneuvers = {};
