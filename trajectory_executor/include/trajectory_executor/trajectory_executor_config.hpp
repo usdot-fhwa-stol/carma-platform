@@ -26,9 +26,9 @@ namespace trajectory_executor
   {
     double trajectory_publish_rate = 10.0; // Publish rate (in Hz) for the outbound trajectories to the control plugins
 
-    std::string default_control_plugin = "Pure Pursuit"; // Name of default control plugin
+    std::string default_control_plugin = "pure_pursuit_wrapper_node"; // Name of default control plugin
 
-    std::string default_control_plugin_topic = "/guidance/pure_pursuit/plan_trajectory"; // Full path to default control plugin's trajectory input topic
+    std::string default_control_plugin_topic = "/guidance/plugins/pure_pursuit/plan_trajectory"; // Full path to default control plugin's trajectory input topic
 
     // Stream operator for this config
     friend std::ostream &operator<<(std::ostream &output, const Config &c)

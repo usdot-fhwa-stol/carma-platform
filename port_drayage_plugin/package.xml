@@ -1,21 +1,47 @@
 <?xml version="1.0"?>
+
+<!--  
+ Copyright (C) 2020-2022 LEIDOS.
+ Licensed under the Apache License, Version 2.0 (the "License"); you may not
+ use this file except in compliance with the License. You may obtain a copy of
+ the License at
+ http://www.apache.org/licenses/LICENSE-2.0
+ Unless required by applicable law or agreed to in writing, software
+ distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
+ WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
+ License for the specific language governing permissions and limitations under
+ the License.
+-->
+
 <package format="3">
   <name>port_drayage_plugin</name>
-  <version>1.0.0</version>
-  <description>CARMA plugin to support port drayage applications for CARMA Freight</description>
-  <maintainer email="caram@dot.gov">CARMA Team</maintainer>
-  <license>MIT</license>
+  <version>4.0.0</version>
+  <description>The port_drayage_plugin package</description>
 
-  <buildtool_depend>catkin</buildtool_depend>
-  <depend>carma_utils</depend>
-  <depend>cav_msgs</depend>
-  <depend>cav_srvs</depend>
-  <depend>roscpp</depend>
-  <depend>std_msgs</depend>
-  <depend>carma_wm</depend>
+  <maintainer email="carma@dot.gov">carma</maintainer>
+
+  <license>Apache 2.0</license>
+  
+  <buildtool_depend>ament_cmake</buildtool_depend>
   <build_depend>carma_cmake_common</build_depend>
+  <build_depend>ament_auto_cmake</build_depend>
 
-  <!-- The export tag contains other, unspecified, tags -->
+  <depend>rclcpp</depend>
+  <depend>carma_ros2_utils</depend>
+  <depend>rclcpp_components</depend>
+  <depend>carma_planning_msgs</depend>
+  <depend>carma_v2x_msgs</depend>
+  <depend>carma_msgs</depend>
+  <depend>geometry_msgs</depend>
+  <depend>lanelet2_extension</depend>
+
+  <test_depend>ament_lint_auto</test_depend>
+  <test_depend>ament_cmake_gtest</test_depend>
+
+  <exec_depend>launch</exec_depend>
+  <exec_depend>launch_ros</exec_depend>
+
   <export>
+    <build_type>ament_cmake</build_type>
   </export>
 </package>

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2021 LEIDOS.
+ * Copyright (C) 2020-2022 LEIDOS.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -14,67 +14,65 @@
  * the License.
  */
 
-#include <ros/ros.h>
-#include "port_drayage_plugin/port_drayage_state_machine.h"
-#include <exception>
+#include "port_drayage_plugin/port_drayage_state_machine.hpp"
 
 namespace port_drayage_plugin
 {
-    void PortDrayageStateMachine::process_event(PortDrayageEvent event) {
-        switch (_state)
+    void PortDrayageStateMachine::processEvent(PortDrayageEvent event) {
+        switch (state_)
         {
             case PortDrayageState::INACTIVE:
                 if (event == PortDrayageEvent::DRAYAGE_START) {
-                    _state = PortDrayageState::EN_ROUTE_TO_INITIAL_DESTINATION;
+                    state_ = PortDrayageState::EN_ROUTE_TO_INITIAL_DESTINATION;
                 }
                 break;
             case PortDrayageState::EN_ROUTE_TO_INITIAL_DESTINATION:
                 if (event == PortDrayageEvent::ARRIVED_AT_DESTINATION) {
-                    if (_on_arrived_at_destination) {
-                        _on_arrived_at_destination();
+                    if (on_arrived_at_destination_) {
+                        on_arrived_at_destination_();
                     }
-                    _state = PortDrayageState::AWAITING_DIRECTION;
+                    state_ = PortDrayageState::AWAITING_DIRECTION;
                 }
                 break;
             case PortDrayageState::EN_ROUTE_TO_RECEIVED_DESTINATION:
                 if (event == PortDrayageEvent::ARRIVED_AT_DESTINATION) {
-                    if (_on_arrived_at_destination) {
-                        _on_arrived_at_destination();
+                    if (on_arrived_at_destination_) {
+                        on_arrived_at_destination_();
                     }
-                    _state = PortDrayageState::AWAITING_DIRECTION;
+                    state_ = PortDrayageState::AWAITING_DIRECTION;
                 }
                 break;
             case PortDrayageState::AWAITING_DIRECTION:
                 if (event == PortDrayageEvent::RECEIVED_NEW_DESTINATION) {
-                    _state = PortDrayageState::EN_ROUTE_TO_RECEIVED_DESTINATION;
-                    if (_on_received_new_destination) {
-                        _on_received_new_destination();
+                    state_ = PortDrayageState::EN_ROUTE_TO_RECEIVED_DESTINATION;
+                    if (on_received_new_destination_) {
+                        on_received_new_destination_();
                     }
                 }
                 break;
             default:
-                ROS_ERROR_STREAM("Unhandled port drayage state: " << _state << "!");
+                RCLCPP_ERROR_STREAM(logger_->get_logger(), "Unhandled port drayage state: " << state_ << "!");
                 throw std::invalid_argument("Unhandled port drayage state");
         }
     }
 
-    PortDrayageState PortDrayageStateMachine::get_state() const {
-        return _state;
+    PortDrayageState PortDrayageStateMachine::getState() const {
+        return state_;
     }
 
-    void PortDrayageStateMachine::set_on_system_startup_callback(const std::function<void()> &cb) {
-        _on_system_startup = cb;
+    void PortDrayageStateMachine::setOnSystemStartupCallback(const std::function<void()> &cb) {
+        on_system_startup_ = cb;
     }
 
-    void PortDrayageStateMachine::set_on_received_new_destination_callback(const std::function<void()> &cb) {
-        _on_received_new_destination = cb;
+    void PortDrayageStateMachine::setOnReceivedNewDestinationCallback(const std::function<void()> &cb) {
+        on_received_new_destination_ = cb;
     }
     
-    void PortDrayageStateMachine::set_on_arrived_at_destination_callback(const std::function<void()> &cb) {
-        _on_arrived_at_destination = cb;
+    void PortDrayageStateMachine::setOnArrivedAtDestinationCallback(const std::function<void()> &cb) {
+        on_arrived_at_destination_ = cb;
     }
 
-    void PortDrayageStateMachine::set_on_drayage_completed_callback(const std::function<void()> &cb) {
-        _on_drayage_completed = cb;
+    void PortDrayageStateMachine::setOnDrayageCompletedCallback(const std::function<void()> &cb) {
+        on_drayage_completed_ = cb;
     }
 }

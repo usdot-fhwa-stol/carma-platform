@@ -33,7 +33,7 @@
 # Stage 1 - Acquire the CARMA source as well as any extra packages
 # /////////////////////////////////////////////////////////////////////////////
 
-FROM afee97531059 AS base-image
+FROM usdotfhwastoldev/autoware.ai:develop AS base-image
 
 FROM afee97531059 AS source-code
 

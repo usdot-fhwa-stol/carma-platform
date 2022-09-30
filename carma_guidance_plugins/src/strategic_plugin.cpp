@@ -38,7 +38,7 @@ namespace carma_guidance_plugins
   carma_ros2_utils::CallbackReturn StrategicPlugin::handle_on_configure(const rclcpp_lifecycle::State &prev_state)
   {
     // Initialize plan maneuvers service
-    plan_maneuvers_service_ = create_service<carma_planning_msgs::srv::PlanManeuvers>(get_plugin_name() + "/plan_maneuvers", 
+    plan_maneuvers_service_ = create_service<carma_planning_msgs::srv::PlanManeuvers>(std::string(get_name()) + "/plan_maneuvers", 
       [this] (auto header, auto req, auto resp) {
         if (this->get_activation_status()) // Only trigger when activated
         {

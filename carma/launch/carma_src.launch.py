@@ -38,6 +38,7 @@ def generate_launch_description():
 
     env_log_levels = EnvironmentVariable('CARMA_ROS_LOGGING_CONFIG', default_value='{ "default_level" : "WARN" }')
 
+    # Declare the vehicle_calibration_dir launch argument
     vehicle_calibration_dir = LaunchConfiguration('vehicle_calibration_dir')
     declare_vehicle_calibration_dir_arg = DeclareLaunchArgument(
         name = 'vehicle_calibration_dir', 
@@ -52,7 +53,6 @@ def generate_launch_description():
         description = "Path to file containing vehicle config directories"
     )
 
-    # Declare the vehicle_calibration_dir launch argument
     vehicle_characteristics_param_file = LaunchConfiguration('vehicle_characteristics_param_file')
     declare_vehicle_characteristics_param_file_arg = DeclareLaunchArgument(
         name = 'vehicle_characteristics_param_file', 
@@ -106,6 +106,14 @@ def generate_launch_description():
         name = 'control_plugins_to_validate',
         default_value= '[]',
         description='List of String: Guidance Control Plugins that will be validated by the Guidance Plugin Validator Node if enabled'
+    )
+    
+    # Declare port
+    port = LaunchConfiguration('port')
+    declare_port = DeclareLaunchArgument(
+        name = 'port',
+        default_value= "9090",
+        description='The default port for rosbridge is 909'
     )
 
     # Nodes
@@ -201,6 +209,19 @@ def generate_launch_description():
         arguments=['--ros-args', '--log-level', GetLogLevel('system_controller', env_log_levels)]
     )
 
+    ui_group = GroupAction(
+        actions=[
+            PushRosNamespace(EnvironmentVariable('CARMA_UI_NS', default_value='ui')),
+            
+            IncludeLaunchDescription(
+                PythonLaunchDescriptionSource([ThisLaunchFileDir(), '/ui.launch.py']),
+                launch_arguments={
+                'port' : port
+                }.items()
+            ),
+        ]
+    )
+
     return LaunchDescription([
         declare_vehicle_calibration_dir_arg,
         declare_vehicle_config_dir_arg,
@@ -211,11 +232,13 @@ def generate_launch_description():
         declare_strategic_plugins_to_validate,
         declare_tactical_plugins_to_validate,
         declare_control_plugins_to_validate,
+        declare_port,
         drivers_group,
         transform_group,
         environment_group,
         localization_group,
         v2x_group,
         guidance_group, 
+        ui_group,
         system_controller
     ])

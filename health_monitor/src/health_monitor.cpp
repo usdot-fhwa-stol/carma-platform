@@ -34,23 +34,13 @@ namespace health_monitor
         pnh_.reset(new ros::CARMANodeHandle("~"));
         nh_.reset(new ros::CARMANodeHandle());
         // init ros service servers, publishers and subscribers
-        registered_plugin_service_server_ = nh_->advertiseService("plugins/get_registered_plugins", &HealthMonitor::registered_plugin_cb, this);
-        active_plugin_service_server_ = nh_->advertiseService("plugins/get_active_plugins", &HealthMonitor::active_plugin_cb, this);
-        activate_plugin_service_server_ = nh_->advertiseService("plugins/activate_plugin", &HealthMonitor::activate_plugin_cb, this);
-        get_strategic_plugin_by_capability_server_ = nh_->advertiseService("plugins/get_strategic_plugin_by_capability", &PluginManager::get_strategic_plugins_by_capability, &plugin_manager_);
-        get_tactical_plugin_by_capability_server_ = nh_->advertiseService("plugins/get_tactical_plugin_by_capability", &PluginManager::get_tactical_plugins_by_capability, &plugin_manager_);
-        plugin_discovery_subscriber_ = nh_->subscribe<cav_msgs::Plugin>("plugin_discovery", 10, &HealthMonitor::plugin_discovery_cb, this);
         driver_discovery_subscriber_ = nh_->subscribe<cav_msgs::DriverStatus>("driver_discovery", 5, &HealthMonitor::driver_discovery_cb, this);
 
         // load params
         spin_rate_ = pnh_->param<double>("spin_rate_hz", 10.0);
         driver_timeout_ = pnh_->param<double>("required_driver_timeout", 500);
         startup_duration_ = pnh_->param<double>("startup_duration", 25);
-        plugin_service_prefix_ = pnh_->param<std::string>("plugin_service_prefix", "");
-        strategic_plugin_service_suffix_ = pnh_->param<std::string>("strategic_plugin_service_suffix", "");
-        tactical_plugin_service_suffix_ = pnh_->param<std::string>("tactical_plugin_service_suffix", "");
         
-        pnh_->getParam("required_plugins", required_plugins_);
         pnh_->getParam("required_drivers", required_drivers_);
         pnh_->getParam("lidar_gps_drivers", lidar_gps_drivers_);
         pnh_->getParam("camera_drivers",camera_drivers_);
@@ -65,16 +55,8 @@ namespace health_monitor
         ROS_INFO_STREAM("spin_rate_hz: " << spin_rate_);
         ROS_INFO_STREAM("required_driver_timeout: " << driver_timeout_);
         ROS_INFO_STREAM("startup_duration: " << startup_duration_);
-        ROS_INFO_STREAM("plugin_service_prefix: " << plugin_service_prefix_);
-        ROS_INFO_STREAM("strategic_plugin_service_suffix: " << strategic_plugin_service_suffix_);
-        ROS_INFO_STREAM("tactical_plugin_service_suffix: " << tactical_plugin_service_suffix_);
         ROS_INFO_STREAM("truck: " << truck_);
         ROS_INFO_STREAM("car: " << car_);
-        ROS_INFO_STREAM("required_plugins: [");
-        for(auto p : required_plugins_) {
-            ROS_INFO_STREAM("   " << p);
-        }
-        ROS_INFO_STREAM("  ]");
 
         ROS_INFO_STREAM("required_drivers: [");
         for(auto p : required_drivers_) {
@@ -99,7 +81,6 @@ namespace health_monitor
          
 
         // initialize worker class
-        plugin_manager_ = PluginManager(required_plugins_, plugin_service_prefix_, strategic_plugin_service_suffix_, tactical_plugin_service_suffix_);
         driver_manager_ = DriverManager(required_drivers_, driver_timeout_,lidar_gps_drivers_,camera_drivers_); 
 
         // record starup time
@@ -164,31 +145,6 @@ namespace health_monitor
         ros::CARMANodeHandle::spin();
     }
 
-    bool HealthMonitor::registered_plugin_cb(cav_srvs::PluginListRequest& req, cav_srvs::PluginListResponse& res)
-    {
-        plugin_manager_.get_registered_plugins(res);
-        return true;
-    }
-
-    bool HealthMonitor::active_plugin_cb(cav_srvs::PluginListRequest& req, cav_srvs::PluginListResponse& res)
-    {
-        plugin_manager_.get_active_plugins(res);
-        return true;
-    }
-    
-    bool HealthMonitor::activate_plugin_cb(cav_srvs::PluginActivationRequest& req, cav_srvs::PluginActivationResponse& res)
-    {
-        bool answer = plugin_manager_.activate_plugin(req.plugin_name, req.activated);
-        if(answer) {
-            res.newstate = req.activated;
-        }
-        return answer;
-    }
-
-    void HealthMonitor::plugin_discovery_cb(const cav_msgs::PluginConstPtr& msg)
-    {
-        plugin_manager_.update_plugin_status(msg);
-    }
 
     void HealthMonitor::driver_discovery_cb(const cav_msgs::DriverStatusConstPtr& msg)
     {

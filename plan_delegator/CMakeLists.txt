@@ -1,4 +1,4 @@
-# Copyright (C) 2018-2021 LEIDOS.
+# Copyright (C) 2022 LEIDOS.
 #
 # Licensed under the Apache License, Version 2.0 (the "License"); you may not
 # use this file except in compliance with the License. You may obtain a copy of
@@ -12,112 +12,60 @@
 # License for the specific language governing permissions and limitations under
 # the License.
 
-cmake_minimum_required(VERSION 2.8.3)
+cmake_minimum_required(VERSION 3.5)
 project(plan_delegator)
 
+# Declare carma package and check ROS version
 find_package(carma_cmake_common REQUIRED)
-carma_check_ros_version(1)
+carma_check_ros_version(2)
 carma_package()
 
-## Find catkin macros and libraries
-## if COMPONENTS list like find_package(catkin REQUIRED COMPONENTS xyz)
-## is used, also find other catkin packages
-find_package(catkin REQUIRED COMPONENTS
-  cav_msgs
-  cav_srvs
-  roscpp
-  std_msgs
-  carma_utils
-  carma_wm
-  tf
-  tf2
-  tf2_geometry_msgs
-)
+## Find dependencies using ament auto
+find_package(ament_cmake_auto REQUIRED)
+ament_auto_find_build_dependencies()
 
-###################################
-## catkin specific configuration ##
-###################################
-## The catkin_package macro generates cmake config files for your package
-## Declare things to be passed to dependent projects
-## INCLUDE_DIRS: uncomment this if your package contains header files
-## LIBRARIES: libraries you create in this project that dependent projects also need
-## CATKIN_DEPENDS: catkin_packages dependent projects also need
-## DEPENDS: system dependencies of this project that dependent projects also need
-catkin_package(
-  INCLUDE_DIRS include
-#  LIBRARIES plan_delegator
-   CATKIN_DEPENDS cav_msgs cav_srvs roscpp std_msgs carma_utils carma_wm tf tf2 tf2_geometry_msgs
-#  DEPENDS system_lib
-)
+# Name build targets
+set(node_exec plan_delegator_exec)
+set(node_lib plan_delegator_node)
 
-###########
-## Build ##
-###########
-
-## Specify additional locations of header files
-## Your package locations should be listed before other locations
+# Includes
 include_directories(
   include
-  ${catkin_INCLUDE_DIRS}
 )
 
-## With catkin_make all packages are built within a single CMake context
-## The recommended prefix ensures that target names across packages don't collide
-add_executable(${PROJECT_NAME}_node 
-  src/plan_delegator_node.cpp)
-
-add_library(${PROJECT_NAME}_lib src/plan_delegator.cpp)
-
-## Add cmake target dependencies of the executable
-## same as for the library above
-add_dependencies(${PROJECT_NAME}_node ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
-add_dependencies(${PROJECT_NAME}_lib ${catkin_EXPORTED_TARGETS})
-
-## Specify libraries to link a library or executable target against
-target_link_libraries(${PROJECT_NAME}_lib
-  ${catkin_LIBRARIES}
-)
-target_link_libraries(${PROJECT_NAME}_node
-  ${PROJECT_NAME}_lib
+# Build
+ament_auto_add_library(${node_lib} SHARED
+        src/plan_delegator.cpp
 )
 
-#############
-## Install ##
-#############
-
-# all install targets should use catkin DESTINATION variables
-# See http://ros.org/doc/api/catkin/html/adv_user_guide/variables.html
-
-## Mark executables for installation
-## See http://docs.ros.org/melodic/api/catkin/html/howto/format1/building_executables.html
-install(TARGETS ${PROJECT_NAME}_node ${PROJECT_NAME}_lib
-  RUNTIME DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}
-  ARCHIVE DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
-  LIBRARY DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
+ament_auto_add_executable(${node_exec} 
+        src/plan_delegator_node.cpp 
 )
 
-## Mark cpp header files for installation
-install(DIRECTORY include/${PROJECT_NAME}/
-  DESTINATION ${CATKIN_PACKAGE_INCLUDE_DESTINATION}
-  FILES_MATCHING PATTERN "*.h"
-  PATTERN ".svn" EXCLUDE
+# Register component
+rclcpp_components_register_nodes(${node_lib} "plan_delegator::PlanDelegator")
+
+# All locally created targets will need to be manually linked
+# ament auto will handle linking of external dependencies
+target_link_libraries(${node_exec}
+        ${node_lib}
 )
 
-## Mark other files for installation (e.g. launch and bag files, etc.)
-install(DIRECTORY
-  launch
-  config
-  DESTINATION ${CATKIN_PACKAGE_SHARE_DESTINATION}
-)
+#Testing
+if(BUILD_TESTING)  
 
-#############
-## Testing ##
-#############
-#catkin_add_gmock(${PROJECT_NAME}-test test/test_plan_delegator.cpp)
+  find_package(ament_lint_auto REQUIRED)
+  ament_lint_auto_find_test_dependencies() # This populates the ${${PROJECT_NAME}_FOUND_TEST_DEPENDS} variable
 
-if(CATKIN_ENABLE_TESTING)
-  find_package(rostest REQUIRED)
-  add_rostest_gtest(test_plan_delegator test/plan_delegator.test test/test_plan_delegator.cpp)
-  target_link_libraries(test_plan_delegator ${PROJECT_NAME}_lib ${catkin_LIBRARIES})
+  ament_add_gtest(test_plan_delegator test/test_plan_delegator.cpp)
+
+  ament_target_dependencies(test_plan_delegator ${${PROJECT_NAME}_FOUND_TEST_DEPENDS})
+
+  target_link_libraries(test_plan_delegator ${node_lib})
+
 endif()
 
+# Install
+ament_auto_package(
+        INSTALL_TO_SHARE launch config
+)

@@ -1,7 +1,144 @@
 CARMA Platform Release Notes
 ----------------------------
 
-Version 3.11.0, released Feb 3rd, 2021
+Version 4.2.0, released July 29th, 2022
+----------------------------------------
+
+**Summary:**
+Carma-platform release version 4.2.0 is comprised of three major enhancements. First, Cooperative Traffic Management (CTM) Speed harmonization. Second, Cooperative Lane Follow (CLF) - Platoon Formation, Operation, Dissolution. Third, Cooperative Lane Coordination (CLC), cooperative lane merge. Along with the above enhancements, several bug fixes and CI related enhancements are included in this release.
+
+Carma Platform:
+
+Enhancements in this release:
+
+- Issue 1766: Updated port the Traffic Incident Parser node to ROS2 and updated several subscribers and publishers created within carma_wm_ros2 in order to support publishers being able to re-publish earlier messages to late-joining subscribers.
+- Issue 1762: Updated LCI (Light Controlled Intersection) Strategic Plugin so that it uses the scheduled message from the intersection for setting its ET algorithm parameters instead of computing them based on SPAT if the message is available.
+- Issue 1793: Updated Carma wm_ctrl timer classes to Ros2 and changed bridge map directions to 2 to 1 in Carma-config.
+- Issue 1812: Updated Configuration parameters in Platooning Strategic IHP logic for enable/disable Front& Rear cut-in join functionality.
+- Issue 1810: Added port route node to ROS2 and updated Carma environment launch files and Guidance launch files.
+- Issue 1826: Added IHP Strategic and Control plugins, Also Implemented the 2nd iteration of the integrated highway prototype which include cut-in rear and front platoon joins whereas Departure from a platoon and speed harmonization is done via Carma-cloud.
+Fixes in this release:
+
+- Issue 1737: Fixed Current J2735 MAP.msg creator which does not work with TFHRC Vector Map.osm where the Center points created by the tool does not align with road center points in OSM map.
+- Issue 1794: Fixed Geofence (getAffectedLaneletOrAreas) function such that Carma should not crash if it detected Geofence (getAffectedLaneletOrAreas) with only 1 point.
+- Issue 1799: Fixed IHP Control plugin Cmake file to be compatible with Carma platform's Docker build process.
+- Issue 1810: This issue includes small fixes after updating port the route node to ROS2 :
+o Stop and Wait Plugin incorrectly had the route node as a dependency, this dependency has been removed.
+o Topic naming mismatches were fixed for Trajectory Executor, Roadway Objects, and Traffic Incident Parser.
+o ROS1 messages and service related to routing (SetActiveRoute.srv, RouteState.msg) had their field names updated to Snake case to match ROS2 message and service definition requirements. This resulted in an update to the field names in the Port Drayage Plugin package.
+o The Route Generator Worker class had a mix of Snake case and Camel case function names. This PR has updated all functions to camelCase to match the style used in other Carma-platform classes.
+- Issue 1819: Fixed the Crosstrack distances in world model Trackpos object which returned wrong sign when logic in the method assumes a right handed frame.
+- Issue 1846: Fixed Motion computation's parameters that are not set in worker class during runtime updates
+- Issue 1847: Fixed the Roadway-objects node and Traffic-Incident-parser crash on receipt of semantic map in Cabin release branch.
+- Issue 1851: Fixed the platooning gap calculation which does not consider vehicles in between and gap calculation is always assuming the preceding vehicle is the leader.
+
+Carma-Cloud:
+
+Enhancements in this release:
+
+- Issue 31: Implemented IHP2 Speed Harmonization algorithm in which Carma-cloud application listens to incoming traffic control requests (TCRs) from vehicles, and responds with traffic control messages (TCMs) that has the calculated advisory speed using speed harmonization algorithm.
+Fixes in this release:
+- Issue 27: Fixed Occasional large delay experienced between CARMA Cloud receiving a TCR from V2XHub and CARMA Cloud sending all corresponding TCMs to V2XHub.
+
+Autoware.ai:
+
+Enhancements in this release:
+
+- Issue 221: Added ROS2 support for Autoware build flags.
+- Issue 222: Added Carma Utils Timer interfaces into ROS2 so that they can be used in Carma wm ctrl and Localization manager.
+
+Fixes in this release:
+
+- Issue 27: Fixed intermittent large delay experienced between CARMA Cloud receiving a TCR from V2XHub and CARMA Cloud sending all corresponding TCMs to V2XHub.
+
+
+
+Version 4.1.0, released June 1st, 2022
+----------------------------------------
+
+**Summary:**
+CARMA Platform release version 4.1.0 adds Personal Safety Message (PSM) support to CARMA Platform and CARMA Messenger along with updates to several CARMA Plugins to support ROS2 compatibility. Along with the aforementioned enhancements, several bug fixes and CI related enhancements are included in this release.
+
+CARMA Platform:
+
+Enhancements in this release:
+- Issue 1757: Updated port of Roadway objects node to ROS2 to support ROS2 migration.
+- Issue 1754: Updated basic autonomy library (and its ROS1 dependencies) to support ROS2 implementation.
+- Issue 1762: Updated LCI (Light Controlled Intersection) Strategic Plugin so that it uses the schedule message from the intersection for setting its ET algorithm parameters instead of computing them based on SPAT if the message is available.
+-	Issue 1672: Added J2735 Personal Safety Message (PSM) support to CARMA Platform and CARMA Messenger such that PSMs can be received and converted to an external object.
+-	Issue 1697: Added Re-Routing Functionality to Route Following Plugin such that plugin will generate a lane change or sequence of lane change maneuvers to get the vehicle back onto the shortest route path.
+-	Issue 1669: Updated GNSS to Map Convertor node from ROS1 to ROS2. 
+
+Fixes in this release:
+-	Issue 1771: Fixed vector map after switching ros1_bridge to dynamic bridge which will not make it to the ROS2 nodes which disables the object detection system.
+-	Issue 1765: Fixed Rviz which continues to display the object marker even after the object is no longer being published. 
+-	Issue 1760: Fixed few errors in motion computation node as well as BSM generator so that the accurate external object can be created using BSM messages.
+-	Issue 1725: Fixed the ET (Entering Time) in (Light Controlled Intersection) Strategic Plugin.
+-	Issue 1696: Fixed the planning for a lane follow maneuver starts close enough to the end of the maneuver such that there are only one remaining point to be added in path.
+CARMA Messenger:
+
+Enhancements in this release:
+-	Issue 142: Added PSM parameters in carma_messenger_core and a debug log statement for recording timestamp of incoming Personal Safety Message (PSM).
+   Fixes in this release:
+-	Issue 138: Fixed PSM Parser and Elevation default values, also a check is added to make sure positional accuracy fields are not checked if the values don’t exist in the incoming message.
+
+Autoware.ai:
+
+  Fixes in this release:
+-	Issue 220: Fixed the Georeference Topic that has to be published as a timer (every 2 seconds) so that the ROS Bridge can successfully publish the message.
+
+
+Version 4.0.3, released May 10th, 2022
+----------------------------------------
+
+**Summary:**
+Carma-platform release version 4.0.0 is first version that starts of the transition of system to ROS2 with V2X, Object Perception and some driver nodes transitioned to ROS2 and others still using ROS1 with communication enabled using ROS bridge. This release includes feature enhancements in support of the following proof-of-concept applications to demonstrate the following TSMO use cases:
+- Cooperative Traffic Signaling (CTS), fixed signal traversal.
+- Commercial Motor Vehicle (CMV) - Work Zone
+Along with the above enhancements, several bug fixes are included in this release.
+Note: V2X Hub release 7.2 includes CARMA streets plugin for following operations:
+- Enhancement to receive, decode and forward the Traffic Control Message (TCM) and Mobility Operations Message (MOM) to enable lane restrictions by vehicle type and to record and notify the vehicle acknowledgement of receiving a TCM from infrastructure.
+
+Carma Platform:
+
+Enhancements in this release:
+
+ROS2 - V2X, Object Perception, Drivers: Developed a ROS2 version of CARMA Platform capable of running on the Lexus RX450h with AutonomouStuff Pacmod3. Specifically, this milestone focused on the creation of a hybrid ROS1 and ROS2 system where the V2X, Object Perception, and core drivers are all ported to ROS2. This milestone included the following enhancements and defect fixes:
+
+- Issue 1687: Updated the SSC Wrapper to support the ROS2 versions of SSC and Lexus Pacmod while preserving the ROS1 version as well.
+- Issue 1500: Integrated driver_discovery and health_monitor behavior into subsystem_controllers/driver_controller
+- Issue 1645: Launch ROS2 novatel GPS driver
+- Issue 1580: ROS2 V2X Stack migration to ROS2
+- Issue 1557: ROS2 Object Perception Stack migration to ROS2
+- Issue 1277: CARMAWeb UI - Logout should issue a shutdown of the platform
+- Issue 1689: Twist Filter node ms to mph speed limit
+- Issue 1701: UI based remote launch (non-debug) fails to launch containers
+- Issue 1703: UI appears to duplicate /system_alert notifications
+
+Cooperative Traffic Signaling (CTS), fixed signal traversal: Upon receiving Signal Phase and Timing (SPaT) information (fixed plan information), a vehicle plans a maneuver to proceed through the intersection as efficiently as possible, or come to a safe stop if needed. This milestone include the following enhancements:
+
+- Issue 1587: Signalized Intersection support in world model to handle SAE J2735 MAP and SPaT messages.
+- Issue 1528 Feature/signalized intersection – Signalized Intersection regulatory element has been implemented to support the signalized intersection.
+
+CMV Work Zone – Enhanced features to demonstrate CMV’s interaction with work zones to reduce speeds, adjust its trajectory to change lanes and adhere to lane use restrictions. The CMV will also demonstrate the capability to acknowledge receipt of work zone geofence information which will include the reduced speed and lane use restriction information.
+
+- PR 1636: Update WMBroadcaster to process received TCM with a restricted lane
+- PR 1682 & 1691: CMV broadcast acknowledgement after processing the incoming TCM
+
+Fixes in this release:
+
+- Issue 1608: The Web UI does not notify the user when the vehicle has left the route
+- Issue 1634: Route is not selectable due to vehicle position not being set.
+- Issue 1650: When CLC follows ILC in a trajectory plan, the first CLC TrajectoryPlanPoint has an abnormally high speed
+
+Carma-Cloud:
+
+Enhancement in this release:
+
+- PR 12: CARMA Cloud sets up Lane Use Restriction to add, remove and update a lane use restriction for vehicles in a work zone area. Enhancement also has been made to receive TCM acknowledgement via the REST interface and log it in the logs.
+
+
+Version 3.11.0, released Feb 3rd, 2022
 ----------------------------------------
 
 **Summary:**
