@@ -1286,10 +1286,10 @@ TEST(CARMAWorldModelTest, sampleRoutePoints)
 TEST(CARMAWorldModelTest, getTrafficSignalId)
 {
   CARMAWorldModel cmw;
-  uint32_t id_bit = 257;
-  cmw.traffic_light_ids_[id_bit] = 1000;
   uint16_t intersection_id=1;
   uint8_t signal_group_id=1;
+  cmw.sim_.intersection_id_to_regem_id_[intersection_id] = 1001;
+  cmw.sim_.signal_group_to_traffic_light_id_[signal_group_id] = 1000;
 
   EXPECT_EQ(cmw.getTrafficSignalId(intersection_id, signal_group_id), 1000); 
 }
@@ -1315,8 +1315,12 @@ TEST(CARMAWorldModelTest, processSpatFromMsg)
   auto map = lanelet::utils::createMap({ ll_1 }, {});
   map->add(traffic_light);
   cmw.setMap(std::move(map));
-  uint32_t id_bit = 257;
-  cmw.traffic_light_ids_[id_bit] = traffic_light_id;
+
+  uint16_t intersection_id=1;
+  uint8_t signal_group_id=1;
+  cmw.sim_.intersection_id_to_regem_id_[intersection_id] = 1001;
+  cmw.sim_.signal_group_to_traffic_light_id_[signal_group_id] = traffic_light_id;
+
   // create sample SPAT.msg and fill its entries
   carma_v2x_msgs::msg::SPAT spat;
   carma_v2x_msgs::msg::IntersectionState state;
@@ -1544,17 +1548,19 @@ TEST(CARMAWorldModelTest, getIntersectionAlongRoute)
 TEST(CARMAWorldModelTest, checkIfSeenBeforeMovementState)
 {
   carma_wm::CARMAWorldModel cmw;
+  auto system_now = std::chrono::duration<double>(std::chrono::system_clock::now().time_since_epoch()).count() + 1.0;
 
-  cmw.sim_.traffic_signal_states_[13][15].push_back(std::make_pair(boost::posix_time::time_from_string("1970-01-01 00:00:00.000"), lanelet::CarmaTrafficSignalState::STOP_AND_REMAIN));
+  cmw.sim_.traffic_signal_states_[13][15].push_back(std::make_pair(lanelet::time::timeFromSec(system_now + 1.0), lanelet::CarmaTrafficSignalState::STOP_AND_REMAIN));
+  cmw.sim_.traffic_signal_start_times_[13][15].push_back(lanelet::time::timeFromSec(system_now));
 
-  boost::posix_time::ptime min_end_time_dynamic = boost::posix_time::time_from_string("1970-01-01 00:00:00.000");
+  boost::posix_time::ptime min_end_time_dynamic = lanelet::time::timeFromSec(system_now + 1.0);
   auto received_state_dynamic=lanelet::CarmaTrafficSignalState::STOP_AND_REMAIN;
   int mov_id=13;
   int mov_signal_group=15;
 
   ASSERT_EQ(cmw.check_if_seen_before_movement_state(min_end_time_dynamic,received_state_dynamic,mov_id,mov_signal_group), 1);
 
-  min_end_time_dynamic=boost::posix_time::time_from_string("1970-01-01 00:00:00.000");
+  min_end_time_dynamic=lanelet::time::timeFromSec(system_now);
   received_state_dynamic= lanelet::CarmaTrafficSignalState::PROTECTED_CLEARANCE;
   mov_id=13;
   mov_signal_group=15;
