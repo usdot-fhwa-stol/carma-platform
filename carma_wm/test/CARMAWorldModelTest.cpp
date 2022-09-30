@@ -151,7 +151,7 @@ void createTestingWorld(std::vector<lanelet::Lanelet>& llts, lanelet::LaneletMap
 
 }
 
-TEST(CARMAWorldModelTest, DISABLED_getLane)
+TEST(CARMAWorldModelTest, getLane)
 {
   /*
   * PREPARE THE TESTING ENVIRONMENT
@@ -194,7 +194,7 @@ TEST(CARMAWorldModelTest, DISABLED_getLane)
 
 }
 
-TEST(CARMAWorldModelTest, DISABLED_getNearestObjInLane)
+TEST(CARMAWorldModelTest, getNearestObjInLane)
 {
   /*
   * PREPARE THE TESTING ENVIRONMENT
@@ -255,7 +255,7 @@ TEST(CARMAWorldModelTest, DISABLED_getNearestObjInLane)
   
 }
 
-TEST(CARMAWorldModelTest, DISABLED_nearestObjectBehindInLane)
+TEST(CARMAWorldModelTest, nearestObjectBehindInLane)
 {
   /*
   * PREPARE THE TESTING ENVIRONMENT
@@ -300,7 +300,7 @@ TEST(CARMAWorldModelTest, DISABLED_nearestObjectBehindInLane)
 
 }
 
-TEST(CARMAWorldModelTest, DISABLED_nearestObjectAheadInLane)
+TEST(CARMAWorldModelTest, nearestObjectAheadInLane)
 {
   /*
   * PREPARE THE TESTING ENVIRONMENT
@@ -349,7 +349,7 @@ TEST(CARMAWorldModelTest, DISABLED_nearestObjectAheadInLane)
   ASSERT_EQ(std::get<1>(tp).lanelet_id, roadway_objects[1].lanelet_id);
 }
 
-TEST(CARMAWorldModelTest, DISABLED_getInLaneObjects)
+TEST(CARMAWorldModelTest, getInLaneObjects)
 {
   /*
   * PREPARE THE TESTING ENVIRONMENT
@@ -417,7 +417,7 @@ TEST(CARMAWorldModelTest, DISABLED_getInLaneObjects)
 
 }
 
-TEST(CARMAWorldModelTest, DISABLED_distToNearestObjInLane)
+TEST(CARMAWorldModelTest, distToNearestObjInLane)
 {
    /*
   * PREPARE THE TESTING ENVIRONMENT
@@ -479,7 +479,7 @@ TEST(CARMAWorldModelTest, DISABLED_distToNearestObjInLane)
 
 }
 
-TEST(CARMAWorldModelTest, DISABLED_getIntersectingLanelet)
+TEST(CARMAWorldModelTest, getIntersectingLanelet)
 {
   CARMAWorldModel cmw;
   // Build map
@@ -551,7 +551,7 @@ TEST(CARMAWorldModelTest, DISABLED_getIntersectingLanelet)
   
 }
 
-TEST(CARMAWorldModelTest, DISABLED_getSetMap)
+TEST(CARMAWorldModelTest, getSetMap)
 {
   CARMAWorldModel cmw;
 
@@ -579,7 +579,7 @@ TEST(CARMAWorldModelTest, DISABLED_getSetMap)
   ASSERT_TRUE((bool)cmw.getMapRoutingGraph());
 }
 
-TEST(CARMAWorldModelTest, DISABLED_getSetRoute)
+TEST(CARMAWorldModelTest, getSetRoute)
 {
   CARMAWorldModel cmw;
 
@@ -638,7 +638,7 @@ TEST(CARMAWorldModelTest, DISABLED_getSetRoute)
   ASSERT_TRUE((bool)cmw.getMapRoutingGraph());
 }
 
-TEST(CARMAWorldModelTest, DISABLED_routeTrackPos_point)
+TEST(CARMAWorldModelTest, routeTrackPos_point)
 {
   CARMAWorldModel cmw;
 
@@ -733,7 +733,7 @@ TEST(CARMAWorldModelTest, DISABLED_routeTrackPos_point)
   ASSERT_NEAR(1.0, result.crosstrack, 0.000001);
 }
 
-TEST(CARMAWorldModelTest, DISABLED_routeTrackPos_lanelet)
+TEST(CARMAWorldModelTest, routeTrackPos_lanelet)
 {
   CARMAWorldModel cmw;
 
@@ -768,7 +768,7 @@ TEST(CARMAWorldModelTest, DISABLED_routeTrackPos_lanelet)
   ASSERT_NEAR(0.0, result.crosstrack, 0.000001);
 }
 
-TEST(CARMAWorldModelTest, DISABLED_routeTrackPos_area)
+TEST(CARMAWorldModelTest, routeTrackPos_area)
 {
   CARMAWorldModel cmw;
 
@@ -800,7 +800,7 @@ TEST(CARMAWorldModelTest, DISABLED_routeTrackPos_area)
   ASSERT_THROW(cmw.routeTrackPos(a), std::invalid_argument);
 }
 
-TEST(CARMAWorldModelTest, DISABLED_getLaneletsBetween) // HERE
+TEST(CARMAWorldModelTest, getLaneletsBetween) // HERE
 {
   CARMAWorldModel cmw;
 
@@ -879,7 +879,7 @@ TEST(CARMAWorldModelTest, DISABLED_getLaneletsBetween) // HERE
   ASSERT_NEAR(result[0].id(), (cmw.getRoute()->shortestPath().begin() + 1)->id(), 0.000001);
 }
 
-TEST(CARMAWorldModelTest, DISABLED_getTrafficRules)
+TEST(CARMAWorldModelTest, getTrafficRules)
 {
   CARMAWorldModel cmw;
 
@@ -910,7 +910,7 @@ TEST(CARMAWorldModelTest, DISABLED_getTrafficRules)
   ASSERT_FALSE(!!default_participant);
 }
 
-TEST(CARMAWorldModelTest, DISABLED_getTrafficRules2)
+TEST(CARMAWorldModelTest, getTrafficRules2)
 {
   CARMAWorldModel cmw;
 
@@ -941,7 +941,7 @@ TEST(CARMAWorldModelTest, DISABLED_getTrafficRules2)
   ASSERT_FALSE(!!default_participant);
 }
 
-TEST(CARMAWorldModelTest, DISABLED_toRoadwayObstacle)
+TEST(CARMAWorldModelTest, toRoadwayObstacle)
 {
   CARMAWorldModel cmw;
   // Build map
@@ -1037,7 +1037,7 @@ TEST(CARMAWorldModelTest, DISABLED_toRoadwayObstacle)
   ASSERT_FALSE(!!result);
 }
 
-TEST(CARMAWorldModelTest, DISABLED_getLaneletsFromPoint)
+TEST(CARMAWorldModelTest, getLaneletsFromPoint)
 {
   carma_wm::CARMAWorldModel cmw;
   std::vector<lanelet::Lanelet> llts;
@@ -1063,7 +1063,7 @@ TEST(CARMAWorldModelTest, DISABLED_getLaneletsFromPoint)
   ASSERT_EQ(underlyings.back().id(), 1200);
 }
 
-TEST(CARMAWorldModelTest, DISABLED_setConfigSpeedLimitTest)
+TEST(CARMAWorldModelTest, setConfigSpeedLimitTest)
 {
   CARMAWorldModel cmw;
 
@@ -1079,7 +1079,7 @@ TEST(CARMAWorldModelTest, DISABLED_setConfigSpeedLimitTest)
 
 
 
-TEST(CARMAWorldModelTest, DISABLED_pointFromRouteTrackPos)
+TEST(CARMAWorldModelTest, pointFromRouteTrackPos)
 {
   std::shared_ptr<carma_wm::CARMAWorldModel> wm = std::make_shared<carma_wm::CARMAWorldModel>();
 
@@ -1252,7 +1252,7 @@ TEST(CARMAWorldModelTest, DISABLED_pointFromRouteTrackPos)
   ASSERT_NEAR((*point).y(), lanelet.centerline().back().y(), 0.001);
 }
 
-TEST(CARMAWorldModelTest, DISABLED_sampleRoutePoints)
+TEST(CARMAWorldModelTest, sampleRoutePoints)
 {
   std::shared_ptr<carma_wm::CARMAWorldModel> wm = std::make_shared<carma_wm::CARMAWorldModel>();
 
@@ -1291,7 +1291,7 @@ TEST(CARMAWorldModelTest, DISABLED_sampleRoutePoints)
   }
 }
 
-TEST(CARMAWorldModelTest, DISABLED_getTrafficSignalId)
+TEST(CARMAWorldModelTest, getTrafficSignalId)
 {
   CARMAWorldModel cmw;
   uint32_t id_bit = 257;
@@ -1406,7 +1406,7 @@ TEST(CARMAWorldModelTest, processSpatFromMsgDynamic)
   
 }
 
-TEST(CARMAWorldModelTest, DISABLED_processSpatFromMsg)
+TEST(CARMAWorldModelTest, processSpatFromMsg)
 {
   CARMAWorldModel cmw;
   auto pl1 = carma_wm::getPoint(0, 0, 0);
@@ -1580,7 +1580,7 @@ TEST(CARMAWorldModelTest, DISABLED_processSpatFromMsg)
 
 }
 
-TEST(CARMAWorldModelTest, DISABLED_getSignalsAlongRoute)
+TEST(CARMAWorldModelTest, getSignalsAlongRoute)
 {
   carma_wm::CARMAWorldModel cmw;
   lanelet::LaneletMapPtr map;
@@ -1612,7 +1612,7 @@ TEST(CARMAWorldModelTest, DISABLED_getSignalsAlongRoute)
 
 }
 
-TEST(CARMAWorldModelTest, DISABLED_getIntersectionAlongRoute)
+TEST(CARMAWorldModelTest, getIntersectionAlongRoute)
 {
   lanelet::Id id{1200};
   // intersection id
@@ -1653,7 +1653,7 @@ TEST(CARMAWorldModelTest, DISABLED_getIntersectionAlongRoute)
 
 }
 
-TEST(CARMAWorldModelTest, DISABLED_checkIfSeenBeforeMovementState)
+TEST(CARMAWorldModelTest, checkIfSeenBeforeMovementState)
 {
   carma_wm::CARMAWorldModel cmw;
 
@@ -1674,7 +1674,7 @@ TEST(CARMAWorldModelTest, DISABLED_checkIfSeenBeforeMovementState)
   ASSERT_EQ(cmw.check_if_seen_before_movement_state(min_end_time_dynamic,received_state_dynamic,mov_id,mov_signal_group), 0);
 }
 
-TEST(CARMAWorldModelTest, DISABLED_minEndTimeConverterMinuteOfYear)
+TEST(CARMAWorldModelTest, minEndTimeConverterMinuteOfYear)
 {
   carma_wm::CARMAWorldModel cmw;
   boost::posix_time::ptime min_end_time=boost::posix_time::time_from_string("1970-01-01 00:00:00.000");
