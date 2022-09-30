@@ -63,7 +63,7 @@ namespace light_controlled_intersection_tactical_plugin
         
         if (current_lanelets.empty())
         {
-            RCLCPP_DEBUG_STREAM(logger_->get_logger(), "Given vehicle position is not on the road! Returning...");
+            RCLCPP_ERROR_STREAM(logger_->get_logger(), "Given vehicle position is not on the road! Returning...");
             return;
         }
 
