@@ -39,12 +39,6 @@ namespace bsm_generator
             BSMGeneratorWorker();
 
             /**
-             * \brief Constructor for BSMGeneratorWorker
-             * \param first_id to use for BSM_Id
-             */
-            BSMGeneratorWorker(int first_id);
-
-            /**
              * \brief Function to increment the BSM message counter and obtain the new counter value.
              * Counter restarts at 0 once it reaches a value of 128.
              * \return The updated BSM message counter value
