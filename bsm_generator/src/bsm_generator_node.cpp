@@ -192,7 +192,17 @@ namespace bsm_generator
   {
     bsm_.header.stamp = this->now();
     bsm_.core_data.msg_count = worker->getNextMsgCount();
-    bsm_.core_data.id = worker->getMsgId( this->now(), config_.bsm_id_change_period);
+    
+    if (config_.bsm_id_rotation_enabled)
+      bsm_.core_data.id = worker->getMsgId( this->now(), config_.bsm_id_change_period);
+    else
+    {
+      for(int i = 0; i < bsm_.core_data.id.size(); ++i)
+      {
+        bsm_.core_data.id[i] = config_.bsm_message_id >> (8 * i);
+      }
+    }
+
     bsm_.core_data.sec_mark = worker->getSecMark( this->now() );
     bsm_.core_data.presence_vector = bsm_.core_data.presence_vector | bsm_.core_data.SEC_MARK_AVAILABLE;
     // currently the accuracy is not available because ndt_matching does not provide accuracy measurement
