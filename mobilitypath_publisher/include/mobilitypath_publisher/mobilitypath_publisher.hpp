@@ -25,6 +25,7 @@
 #include <bsm_helper/bsm_helper.h>
 #include <std_msgs/msg/string.hpp>
 #include <carma_planning_msgs/msg/trajectory_plan.hpp>
+#include <carma_planning_msgs/msg/guidance_state.hpp>
 #include <carma_v2x_msgs/msg/mobility_path.hpp>
 #include <carma_v2x_msgs/msg/bsm.hpp>
 
@@ -48,7 +49,10 @@ namespace mobilitypath_publisher
     carma_ros2_utils::SubPtr<carma_planning_msgs::msg::TrajectoryPlan> traj_sub_;
     carma_ros2_utils::SubPtr<carma_v2x_msgs::msg::BSM> bsm_sub_;
     carma_ros2_utils::SubPtr<std_msgs::msg::String> georeference_sub_;
+    carma_ros2_utils::SubPtr<carma_planning_msgs::msg::GuidanceState> guidance_state_sub_;
 
+    bool guidance_engaged_ = false;
+    
     // Publishers
     carma_ros2_utils::PubPtr<carma_v2x_msgs::msg::MobilityPath> path_pub_;
 
@@ -93,6 +97,12 @@ namespace mobilitypath_publisher
      * \param msg Latest BSM message
      */
     void bsm_cb(const carma_v2x_msgs::msg::BSM::UniquePtr msg);
+
+    /**
+     * \brief Callback for the Guidance State
+     * \param msg Latest GuidanceState message
+     */
+    void guidance_state_cb(const carma_planning_msgs::msg::GuidanceState::UniquePtr msg);
 
     /**
      * \brief Generates a MobilityHeader to be used for a published MobilityPath message
