@@ -416,6 +416,7 @@ private:
   void removeGeofenceHelper(std::shared_ptr<Geofence> gf_ptr) const;
   void addGeofenceHelper(std::shared_ptr<Geofence> gf_ptr);
   bool shouldChangeControlLine(const lanelet::ConstLaneletOrArea& el,const lanelet::RegulatoryElementConstPtr& regem, std::shared_ptr<Geofence> gf_ptr) const;
+  bool shouldChangeTrafficSignal(const lanelet::ConstLaneletOrArea& el,const lanelet::RegulatoryElementConstPtr& regem, std::shared_ptr<carma_wm::SignalizedIntersectionManager> sim) const;
   void addPassingControlLineFromMsg(std::shared_ptr<Geofence> gf_ptr, const carma_v2x_msgs::msg::TrafficControlMessageV01& msg_v01, const std::vector<lanelet::Lanelet>& affected_llts) const; 
   void addScheduleFromMsg(std::shared_ptr<Geofence> gf_ptr, const carma_v2x_msgs::msg::TrafficControlMessageV01& msg_v01);
   void scheduleGeofence(std::shared_ptr<carma_wm_ctrl::Geofence> gf_ptr_list);
@@ -459,7 +460,8 @@ private:
 
   size_t update_count_ = -1; // Records the total number of sent map updates. Used as the set value for update.seq_id
 
-  carma_wm::SignalizedIntersectionManager sim_;
+  std::shared_ptr<carma_wm::SignalizedIntersectionManager> sim_;
+
   enum class AcknowledgementStatus {
     ACKNOWLEDGED = 1,
     REJECTED = 2
