@@ -600,7 +600,7 @@ Visualization Manager:
       Marker Topic: /guidance/route_marker
       Name: RouteMarker
       Namespaces:
-        route_visualizer: true
+        {}
       Queue Size: 100
       Value: true
     - Class: rviz/MarkerArray
