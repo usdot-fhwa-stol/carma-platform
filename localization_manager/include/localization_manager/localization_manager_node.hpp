@@ -39,74 +39,73 @@
 namespace localization_manager
 {
     /**
-   * \brief Core execution node for this package
-   */
+     * \brief Core execution node for this package
+     */
 
-  class Node : public carma_ros2_utils::CarmaLifecycleNode
-  {
+    class Node : public carma_ros2_utils::CarmaLifecycleNode
+    {
     private:
-    // Subscribers
-    message_filters::Subscriber<geometry_msgs::msg::PoseStamped, Node> ndt_pose_sub_;
-    message_filters::Subscriber<autoware_msgs::msg::NDTStat, Node> ndt_score_sub_;
-    carma_ros2_utils::SubPtr<geometry_msgs::msg::PoseStamped> gnss_pose_sub_;
-    carma_ros2_utils::SubPtr<geometry_msgs::msg::PoseWithCovarianceStamped> initialpose_sub_;
-    carma_ros2_utils::SubPtr<carma_msgs::msg::SystemAlert> system_alert_sub_;
+        // Subscribers
+        message_filters::Subscriber<geometry_msgs::msg::PoseStamped, Node> ndt_pose_sub_;
+        message_filters::Subscriber<autoware_msgs::msg::NDTStat, Node> ndt_score_sub_;
+        carma_ros2_utils::SubPtr<geometry_msgs::msg::PoseStamped> gnss_pose_sub_;
+        carma_ros2_utils::SubPtr<geometry_msgs::msg::PoseWithCovarianceStamped> initialpose_sub_;
+        carma_ros2_utils::SubPtr<carma_msgs::msg::SystemAlert> system_alert_sub_;
 
-    // Publishers
-    carma_ros2_utils::PubPtr<geometry_msgs::msg::PoseStamped> pose_pub_;
-    carma_ros2_utils::PubPtr<carma_localization_msgs::msg::LocalizationStatusReport> state_pub_;
-    carma_ros2_utils::PubPtr<geometry_msgs::msg::PoseWithCovarianceStamped> managed_initial_pose_pub_;
+        // Publishers
+        carma_ros2_utils::PubPtr<geometry_msgs::msg::PoseStamped> pose_pub_;
+        carma_ros2_utils::PubPtr<carma_localization_msgs::msg::LocalizationStatusReport> state_pub_;
+        carma_ros2_utils::PubPtr<geometry_msgs::msg::PoseWithCovarianceStamped> managed_initial_pose_pub_;
 
-    // Timers
-    rclcpp::TimerBase::SharedPtr pose_timer_;
+        // Timers
+        rclcpp::TimerBase::SharedPtr pose_timer_;
 
-    // Node configuration
-    LocalizationManagerConfig config_;
+        // Node configuration
+        LocalizationManagerConfig config_;
 
-    // Worker object
-    std::unique_ptr<LocalizationManager> manager_; 
+        // Worker object
+        std::unique_ptr<LocalizationManager> manager_;
 
-    // Message filters policies (TimeSynchronizer by default uses ExactTime Policy)
-    typedef message_filters::TimeSynchronizer <geometry_msgs::msg::PoseStamped, autoware_msgs::msg::NDTStat> TimeSynchronizer;
-    std::shared_ptr<TimeSynchronizer> pose_stats_synchronizer_;
+        // Message filters policies (TimeSynchronizer by default uses ExactTime Policy)
+        typedef message_filters::TimeSynchronizer<geometry_msgs::msg::PoseStamped, autoware_msgs::msg::NDTStat> TimeSynchronizer;
+        std::shared_ptr<TimeSynchronizer> pose_stats_synchronizer_;
 
     public:
-    /**
-     * \brief Node constructor 
-     */
-    explicit Node(const rclcpp::NodeOptions &);
+        /**
+         * \brief Node constructor
+         */
+        explicit Node(const rclcpp::NodeOptions &);
 
-    /**
-     * \brief Callback to publish the selected pose
-     * \param msg The pose to publish
-     */
-    void publishPoseStamped(const geometry_msgs::msg::PoseStamped& msg) const;
+        /**
+         * \brief Callback to publish the selected pose
+         * \param msg The pose to publish
+         */
+        void publishPoseStamped(const geometry_msgs::msg::PoseStamped &msg) const;
 
-    /**
-     * \brief Callback to publish the provided localization status report
-     * \param msg The report to publish
-     */
-    void publishStatus(const carma_localization_msgs::msg::LocalizationStatusReport& msg) const;
+        /**
+         * \brief Callback to publish the provided localization status report
+         * \param msg The report to publish
+         */
+        void publishStatus(const carma_localization_msgs::msg::LocalizationStatusReport &msg) const;
 
-    /**
-      * \brief Callback to publish the initial pose deemed suitable to intialize NDT
-      * \param msg The msg to publish
-      */
-    void publishManagedInitialPose(const geometry_msgs::msg::PoseWithCovarianceStamped& msg) const;
+        /**
+         * \brief Callback to publish the initial pose deemed suitable to intialize NDT
+         * \param msg The msg to publish
+         */
+        void publishManagedInitialPose(const geometry_msgs::msg::PoseWithCovarianceStamped &msg) const;
 
-    /**
-     * \brief Synchronized callback for pose and stats data for usage with message_filters.
-     *        Provides exception handling. 
-     * \param pose The received pose message
-     * \param stats The received stats message
-     */ 
-    void poseAndStatsCallback(const geometry_msgs::msg::PoseStamped::ConstPtr pose,
-                                     const autoware_msgs::msg::NDTStat::ConstPtr stats);
+        /**
+         * \brief Synchronized callback for pose and stats data for usage with message_filters.
+         *        Provides exception handling.
+         * \param pose The received pose message
+         * \param stats The received stats message
+         */
+        void poseAndStatsCallback(const geometry_msgs::msg::PoseStamped::ConstPtr pose,
+                                  const autoware_msgs::msg::NDTStat::ConstPtr stats);
 
-    ////
-    // Overrides
-    ////
-    carma_ros2_utils::CallbackReturn handle_on_configure(const rclcpp_lifecycle::State &);
-
-  }; 
+        ////
+        // Overrides
+        ////
+        carma_ros2_utils::CallbackReturn handle_on_configure(const rclcpp_lifecycle::State &);
+    };
 }

@@ -162,6 +162,9 @@ public:
   // Traffic signal states and their end_time mappings.
   std::unordered_map<uint16_t, std::unordered_map<uint8_t,std::vector<std::pair<boost::posix_time::ptime, lanelet::CarmaTrafficSignalState>>>> traffic_signal_states_; //[intersection_id][signal_group_id]
 
+// Traffic signal's start_time mappings (must be same size as traffic_signal_states_)
+  std::unordered_map<uint16_t, std::unordered_map<uint8_t,std::vector<boost::posix_time::ptime>>> traffic_signal_start_times_; //[intersection_id][signal_group_id]
+
   // Last received signal state from SPAT
   std::unordered_map<uint16_t, std::unordered_map<uint8_t,std::pair<boost::posix_time::ptime, lanelet::CarmaTrafficSignalState>>> last_seen_state_; //[intersection_id][signal_group_id]
 
