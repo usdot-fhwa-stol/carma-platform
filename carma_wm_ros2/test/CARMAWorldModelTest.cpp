@@ -1071,8 +1071,6 @@ TEST(CARMAWorldModelTest, setConfigSpeedLimitTest)
 
 }
 
-
-
 TEST(CARMAWorldModelTest, pointFromRouteTrackPos)
 {
   std::shared_ptr<carma_wm::CARMAWorldModel> wm = std::make_shared<carma_wm::CARMAWorldModel>();
@@ -1288,10 +1286,10 @@ TEST(CARMAWorldModelTest, sampleRoutePoints)
 TEST(CARMAWorldModelTest, getTrafficSignalId)
 {
   CARMAWorldModel cmw;
-  uint32_t id_bit = 257;
-  cmw.traffic_light_ids_[id_bit] = 1000;
   uint16_t intersection_id=1;
   uint8_t signal_group_id=1;
+  cmw.sim_.intersection_id_to_regem_id_[intersection_id] = 1001;
+  cmw.sim_.signal_group_to_traffic_light_id_[signal_group_id] = 1000;
 
   EXPECT_EQ(cmw.getTrafficSignalId(intersection_id, signal_group_id), 1000); 
 }
@@ -1317,8 +1315,12 @@ TEST(CARMAWorldModelTest, processSpatFromMsg)
   auto map = lanelet::utils::createMap({ ll_1 }, {});
   map->add(traffic_light);
   cmw.setMap(std::move(map));
-  uint32_t id_bit = 257;
-  cmw.traffic_light_ids_[id_bit] = traffic_light_id;
+
+  uint16_t intersection_id=1;
+  uint8_t signal_group_id=1;
+  cmw.sim_.intersection_id_to_regem_id_[intersection_id] = 1001;
+  cmw.sim_.signal_group_to_traffic_light_id_[signal_group_id] = traffic_light_id;
+
   // create sample SPAT.msg and fill its entries
   carma_v2x_msgs::msg::SPAT spat;
   carma_v2x_msgs::msg::IntersectionState state;
@@ -1389,7 +1391,7 @@ TEST(CARMAWorldModelTest, processSpatFromMsg)
   movement.movement_event_list[0] = event;
   state.movement_list[0] = movement;
   spat.intersection_state_list[0] = state;
-  RCLCPP_DEBUG_STREAM(rclcpp::get_logger("CARMAWorldModelTest"), "Input: Duplicate, so ignore");
+  RCLCPP_DEBUG_STREAM(rclcpp::get_logger("carma_wm_ros2"), "Input: Duplicate, so ignore");
   cmw.processSpatFromMsg(spat);
   lights1 = cmw.getMutableMap()->laneletLayer.get(ll_1.id()).regulatoryElementsAs<lanelet::CarmaTrafficSignal>();
   // and query the regem again to check if its entries are updated, by checking revision or getState or predictState etc
@@ -1401,7 +1403,7 @@ TEST(CARMAWorldModelTest, processSpatFromMsg)
   movement.movement_event_list[0] = event;
   state.movement_list[0] = movement;
   spat.intersection_state_list[0] = state;
-  RCLCPP_DEBUG_STREAM(rclcpp::get_logger("CARMAWorldModelTest"), "Input: First cycle set. This is technically new cycle, but this info is not counted towards it due to inconvenience");
+  RCLCPP_DEBUG_STREAM(rclcpp::get_logger("carma_wm_ros2"), "Input: First cycle set. This is technically new cycle, but this info is not counted towards it due to inconvenience");
   cmw.processSpatFromMsg(spat);
   lights1 = cmw.getMutableMap()->laneletLayer.get(ll_1.id()).regulatoryElementsAs<lanelet::CarmaTrafficSignal>();
   // same duration, but counter set to 0
@@ -1414,7 +1416,7 @@ TEST(CARMAWorldModelTest, processSpatFromMsg)
   movement.movement_event_list[0] = event;
   state.movement_list[0] = movement;
   spat.intersection_state_list[0] = state;
-  RCLCPP_DEBUG_STREAM(rclcpp::get_logger("CARMAWorldModelTest"), "Input: New cycle, but cycle duration is same due to shifting");
+  RCLCPP_DEBUG_STREAM(rclcpp::get_logger("carma_wm_ros2"), "Input: New cycle, but cycle duration is same due to shifting");
   cmw.processSpatFromMsg(spat);
   lights1 = cmw.getMutableMap()->laneletLayer.get(ll_1.id()).regulatoryElementsAs<lanelet::CarmaTrafficSignal>();
 
@@ -1426,7 +1428,7 @@ TEST(CARMAWorldModelTest, processSpatFromMsg)
   movement.movement_event_list[0] = event;
   state.movement_list[0] = movement;
   spat.intersection_state_list[0] = state;
-  RCLCPP_DEBUG_STREAM(rclcpp::get_logger("CARMAWorldModelTest"),"Input: New partial cycle, yellow reduced");
+  RCLCPP_DEBUG_STREAM(rclcpp::get_logger("carma_wm_ros2"),"Input: New partial cycle, yellow reduced");
   cmw.processSpatFromMsg(spat);
   lights1 = cmw.getMutableMap()->laneletLayer.get(ll_1.id()).regulatoryElementsAs<lanelet::CarmaTrafficSignal>();
   // and query the regem again to check if its entries are updated, by checking revision or getState or predictState etc
@@ -1438,7 +1440,7 @@ TEST(CARMAWorldModelTest, processSpatFromMsg)
   movement.movement_event_list[0] = event;
   state.movement_list[0] = movement;
   spat.intersection_state_list[0] = state;
-  RCLCPP_DEBUG_STREAM(rclcpp::get_logger("CARMAWorldModelTest"), "Input: New partial cycle, green reduced");
+  RCLCPP_DEBUG_STREAM(rclcpp::get_logger("carma_wm_ros2"), "Input: New partial cycle, green reduced");
   cmw.processSpatFromMsg(spat);
   lights1 = cmw.getMutableMap()->laneletLayer.get(ll_1.id()).regulatoryElementsAs<lanelet::CarmaTrafficSignal>();
   // and query the regem again to check if its entries are updated, by checking revision or getState or predictState etc
@@ -1450,7 +1452,7 @@ TEST(CARMAWorldModelTest, processSpatFromMsg)
   movement.movement_event_list[0] = event;
   state.movement_list[0] = movement;
   spat.intersection_state_list[0] = state;
-  RCLCPP_DEBUG_STREAM(rclcpp::get_logger("CARMAWorldModelTest"), "Input: New full cycle, yellow reduced");
+  RCLCPP_DEBUG_STREAM(rclcpp::get_logger("carma_wm_ros2"), "Input: New full cycle, yellow reduced");
   cmw.processSpatFromMsg(spat);
   lights1 = cmw.getMutableMap()->laneletLayer.get(ll_1.id()).regulatoryElementsAs<lanelet::CarmaTrafficSignal>();
   // and query the regem again to check if its entries are updated, by checking revision or getState or predictState etc
@@ -1462,7 +1464,7 @@ TEST(CARMAWorldModelTest, processSpatFromMsg)
   movement.movement_event_list[0] = event;
   state.movement_list[0] = movement;
   spat.intersection_state_list[0] = state;
-  RCLCPP_DEBUG_STREAM(rclcpp::get_logger("CARMAWorldModelTest"), "Input: New full cycle, red reduced");
+  RCLCPP_DEBUG_STREAM(rclcpp::get_logger("carma_wm_ros2"), "Input: New full cycle, red reduced");
   cmw.processSpatFromMsg(spat);
   lights1 = cmw.getMutableMap()->laneletLayer.get(ll_1.id()).regulatoryElementsAs<lanelet::CarmaTrafficSignal>();
   // and query the regem again to check if its entries are updated, by checking revision or getState or predictState etc
@@ -1543,5 +1545,26 @@ TEST(CARMAWorldModelTest, getIntersectionAlongRoute)
 
 }
 
+TEST(CARMAWorldModelTest, checkIfSeenBeforeMovementState)
+{
+  carma_wm::CARMAWorldModel cmw;
+  auto system_now = std::chrono::duration<double>(std::chrono::system_clock::now().time_since_epoch()).count() + 1.0;
 
+  cmw.sim_.traffic_signal_states_[13][15].push_back(std::make_pair(lanelet::time::timeFromSec(system_now + 1.0), lanelet::CarmaTrafficSignalState::STOP_AND_REMAIN));
+  cmw.sim_.traffic_signal_start_times_[13][15].push_back(lanelet::time::timeFromSec(system_now));
+
+  boost::posix_time::ptime min_end_time_dynamic = lanelet::time::timeFromSec(system_now + 1.0);
+  auto received_state_dynamic=lanelet::CarmaTrafficSignalState::STOP_AND_REMAIN;
+  int mov_id=13;
+  int mov_signal_group=15;
+
+  ASSERT_EQ(cmw.check_if_seen_before_movement_state(min_end_time_dynamic,received_state_dynamic,mov_id,mov_signal_group), 1);
+
+  min_end_time_dynamic=lanelet::time::timeFromSec(system_now);
+  received_state_dynamic= lanelet::CarmaTrafficSignalState::PROTECTED_CLEARANCE;
+  mov_id=13;
+  mov_signal_group=15;
+
+  ASSERT_EQ(cmw.check_if_seen_before_movement_state(min_end_time_dynamic,received_state_dynamic,mov_id,mov_signal_group), 0);
+}
 }  // namespace carma_wm

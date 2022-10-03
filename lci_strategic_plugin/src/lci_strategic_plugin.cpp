@@ -264,7 +264,7 @@ void LCIStrategicPlugin::handleFailureCase(const cav_srvs::PlanManeuversRequest&
 
   auto incomplete_traj_params = handleFailureCaseHelper(current_state_speed, intersection_speed_.get(), speed_limit, distance_remaining_to_traffic_light, remaining_time, traffic_light_down_track);
 
-  resp.new_plan.maneuvers.push_back(composeTrajectorySmoothingManeuverMessage(current_state.downtrack, traffic_light_down_track, 
+  resp.new_plan.maneuvers.push_back(composeTrajectorySmoothingManeuverMessage(current_state.downtrack, traffic_light_down_track, crossed_lanelets,
                                           current_state_speed, incomplete_traj_params.modified_departure_speed, current_state.stamp, current_state.stamp + ros::Duration(incomplete_traj_params.modified_remaining_time), incomplete_traj_params));
 
   double intersection_length = intersection_end_downtrack_.get() - traffic_light_down_track;
@@ -302,10 +302,14 @@ void LCIStrategicPlugin::handleCruisingUntilStop(const cav_srvs::PlanManeuversRe
   new_ts_params.v3_ = new_ts_params.v2_;
   new_ts_params.a3_ = new_ts_params.a2_;
 
-  resp.new_plan.maneuvers.push_back(composeTrajectorySmoothingManeuverMessage(current_state.downtrack, traffic_light_down_track, 
+  // Identify the lanelets which will be crossed by approach maneuvers stopping part
+  std::vector<lanelet::ConstLanelet> lane_follow_crossed_lanelets =
+      getLaneletsBetweenWithException(new_ts_params.x1_, new_ts_params.x2_, true, true);
+
+  resp.new_plan.maneuvers.push_back(composeTrajectorySmoothingManeuverMessage(current_state.downtrack, traffic_light_down_track, lane_follow_crossed_lanelets, 
                                           current_state_speed, new_ts_params.v2_, current_state.stamp, ros::Time(new_ts_params.t2_), new_ts_params));
 
-  // Identify the lanelets which will be crossed by approach maneuvers lane follow maneuver
+  // Identify the lanelets which will be crossed by approach maneuvers stopping part
   std::vector<lanelet::ConstLanelet> case_8_crossed_lanelets =
       getLaneletsBetweenWithException(new_ts_params.x2_, traffic_light_down_track, true, true);
 
@@ -336,6 +340,10 @@ void LCIStrategicPlugin::handleGreenSignalScenario(const cav_srvs::PlanManeuvers
   ROS_DEBUG_STREAM("Algo initially successful: New light_arrival_time_by_algo: " << std::to_string(light_arrival_time_by_algo.toSec()) << ", with remaining_time: " << std::to_string(remaining_time));
   auto can_make_green_optional = canArriveAtGreenWithCertainty(light_arrival_time_by_algo, traffic_light);
 
+    // Identify the lanelets which will be crossed by approach maneuvers lane follow maneuver
+  std::vector<lanelet::ConstLanelet> crossed_lanelets =
+        getLaneletsBetweenWithException(current_state.downtrack, traffic_light_down_track, true, true);
+
   // no change for maneuver if invalid light states
   if (!can_make_green_optional) 
     return;
@@ -344,7 +352,7 @@ void LCIStrategicPlugin::handleGreenSignalScenario(const cav_srvs::PlanManeuvers
   {
     ROS_DEBUG_STREAM("HANDLE_SUCCESSFULL: Algorithm successful, and able to make it at green with certainty. Planning traj smooth and intersection transit maneuvers");
     
-    resp.new_plan.maneuvers.push_back(composeTrajectorySmoothingManeuverMessage(current_state.downtrack, traffic_light_down_track, 
+    resp.new_plan.maneuvers.push_back(composeTrajectorySmoothingManeuverMessage(current_state.downtrack, traffic_light_down_track, crossed_lanelets,
                                           current_state_speed, ts_params.v3_, current_state.stamp, light_arrival_time_by_algo, ts_params));
 
     double intersection_length = intersection_end_downtrack_.get() - traffic_light_down_track;
@@ -598,21 +606,45 @@ void LCIStrategicPlugin::planWhenAPPROACHING(const cav_srvs::PlanManeuversReques
 
   ROS_DEBUG_STREAM("earliest_entry_time: " << std::to_string(earliest_entry_time.toSec()) << ", with : " << earliest_entry_time - current_state.stamp  << " left at: " << std::to_string(current_state.stamp.toSec()));
   ros::Time nearest_green_entry_time;
+  bool is_entry_time_within_future_events = false;
 
-  if (config_.enable_carma_streets_connection ==false || scheduled_enter_time_ == 0 )
+  // Following TODO comments are tracked in this issue: https://github.com/usdot-fhwa-stol/carma-platform/issues/1947
+  
+  if (config_.enable_carma_streets_connection ==false /*|| scheduled_enter_time_ == 0 */) // TODO uncomment when carma-street is capable of sending strategy params
   {
-     nearest_green_entry_time = get_nearest_green_entry_time(current_state.stamp, earliest_entry_time, traffic_light) 
-                                          + ros::Duration(0.01); //0.01sec more buffer since green_light algorithm's timestamp picks the previous signal - Vehcile Estimation
+    nearest_green_entry_time = get_nearest_green_entry_time(current_state.stamp, earliest_entry_time, traffic_light) 
+                                          + ros::Duration(0.01); //0.01sec more buffer since green_light algorithm's timestamp picks the previous signal - Vehicle Estimation
+    is_entry_time_within_future_events = true; //UC2
   }
-  else if(config_.enable_carma_streets_connection ==true && scheduled_enter_time_ != 0 )
+  else if(config_.enable_carma_streets_connection ==true /*&& scheduled_enter_time_ != 0 */) // TODO uncomment when carma-street is capable of sending strategy params
   {
-          nearest_green_entry_time = ros::Time(std::max(earliest_entry_time.toSec(), (scheduled_enter_time_)/1000.0)) + ros::Duration(0.01); //Carma Street
+    //nearest_green_entry_time = ros::Time(std::max(earliest_entry_time.toSec(), (scheduled_enter_time_)/1000.0)) + ros::Duration(0.01); //Carma Street
+    
+    // below is temporary logic to test UC3 incrementally. Testing if UC3 will act like UC2
+    // check if there is any GREEN state in the light since scheduled_enter_time_ is not sent yet
+    nearest_green_entry_time = ros::Time::now() + ros::Duration(60*60.0) + ros::Duration(0.01); //Carma Street TESTING TODO revert, should come from street in the future
+    for (auto pair : traffic_light->recorded_time_stamps)
+    {
+      if (pair.second == lanelet::CarmaTrafficSignalState::PROTECTED_MOVEMENT_ALLOWED && 
+        lanelet::time::timeFromSec(ros::Time::now().toSec()) < pair.first ) //if not outdated
+      {
+        nearest_green_entry_time = get_nearest_green_entry_time(current_state.stamp, earliest_entry_time, traffic_light) 
+                                          + ros::Duration(0.01);
+        ROS_DEBUG_STREAM("Up to date GREEN signal exists");
+        is_entry_time_within_future_events = true;
+        break;
+      }
+    }
   }
   
-  if (!nearest_green_entry_time_cached_) 
+  ROS_DEBUG_STREAM("nearest_green_entry_time: " << std::to_string(nearest_green_entry_time.toSec()) << ", with : " << nearest_green_entry_time - current_state.stamp  << " seconds left at: " << std::to_string(current_state.stamp.toSec()));
+  
+  if (!nearest_green_entry_time_cached_ && is_entry_time_within_future_events) 
   {
     ROS_DEBUG_STREAM("Applying green_light_buffer for the first time and caching! nearest_green_entry_time (without buffer):" << std::to_string(nearest_green_entry_time.toSec()) << ", and earliest_entry_time: " << std::to_string(earliest_entry_time.toSec()));
     // save first calculated nearest_green_entry_time + buffer to compare against in the future as nearest_green_entry_time changes with earliest_entry_time
+    
+    // check if it needs buffer below:
     ros::Time early_arrival_time_green_et =
         nearest_green_entry_time - ros::Duration(config_.green_light_time_buffer);
 
@@ -635,20 +667,41 @@ void LCIStrategicPlugin::planWhenAPPROACHING(const cav_srvs::PlanManeuversReques
     {
       nearest_green_entry_time_cached_ = nearest_green_entry_time;  //don't apply buffer if ET is in green
     }  
-    else
+    else //buffer is needed
     {
-      auto normal_arrival_state_green_et_optional = traffic_light->predictState(lanelet::time::timeFromSec(nearest_green_entry_time.toSec()));
-
-      if (!validLightState(normal_arrival_state_green_et_optional, nearest_green_entry_time))
-      {
-        ROS_ERROR_STREAM("Unable to resolve give signal...");
-        return;
-      }
-
-      ROS_DEBUG_STREAM("normal_arrival_signal_end_time: " << std::to_string(lanelet::time::toSec(normal_arrival_state_green_et_optional.get().first)));
+      // below logic stores correct buffered timestamp into nearest_green_entry_time_cached_ to be used later
       
-      // nearest_green_signal_start_time = normal_arrival_signal_end_time (green guaranteed) - green_signal_duration
-      ros::Time nearest_green_signal_start_time = ros::Time(lanelet::time::toSec(normal_arrival_state_green_et_optional.get().first - traffic_light->signal_durations[lanelet::CarmaTrafficSignalState::PROTECTED_MOVEMENT_ALLOWED]));
+      ros::Time nearest_green_signal_start_time;
+      if (traffic_light->fixed_cycle_duration.total_milliseconds()/1000.0 > 1.0) // UC2
+      {
+        ROS_DEBUG_STREAM("UC2 Handling");
+        auto normal_arrival_state_green_et_optional = traffic_light->predictState(lanelet::time::timeFromSec(nearest_green_entry_time.toSec()));
+
+        if (!validLightState(normal_arrival_state_green_et_optional, nearest_green_entry_time))
+        {
+          ROS_ERROR_STREAM("Unable to resolve give signal...");
+          return;
+        }
+
+        ROS_DEBUG_STREAM("normal_arrival_signal_end_time: " << std::to_string(lanelet::time::toSec(normal_arrival_state_green_et_optional.get().first)));
+        
+        // nearest_green_signal_start_time = normal_arrival_signal_end_time (green guaranteed) - green_signal_duration
+        nearest_green_signal_start_time = ros::Time(lanelet::time::toSec(normal_arrival_state_green_et_optional.get().first - traffic_light->signal_durations[lanelet::CarmaTrafficSignalState::PROTECTED_MOVEMENT_ALLOWED]));
+      }
+      else  // UC3
+      {
+        ROS_DEBUG_STREAM("UC3 Handling");
+        
+        for (size_t i = 0; i < traffic_light->recorded_start_time_stamps.size(); i++)
+        {
+          if (traffic_light->recorded_time_stamps[i].second == lanelet::CarmaTrafficSignalState::PROTECTED_MOVEMENT_ALLOWED && 
+            lanelet::time::timeFromSec(ros::Time::now().toSec()) < traffic_light->recorded_time_stamps[i].first ) //if not outdated
+          {
+            nearest_green_signal_start_time = ros::Time(lanelet::time::toSec(traffic_light->recorded_start_time_stamps[i])); // by using this, we are assuming the ET given by streets falls into this green signal time
+            break;
+          }
+        }
+      }
 
       if (early_arrival_time_green_et.toSec() - nearest_green_signal_start_time.toSec() < config_.green_light_time_buffer)
       {
@@ -669,10 +722,11 @@ void LCIStrategicPlugin::planWhenAPPROACHING(const cav_srvs::PlanManeuversReques
     nearest_green_entry_time = ros::Time(std::max(nearest_green_entry_time.toSec(), nearest_green_entry_time_cached_.get().toSec()));
   }
   
-  if (nearest_green_entry_time >= nearest_green_entry_time_cached_.get())
+  if (nearest_green_entry_time > nearest_green_entry_time_cached_.get())
   {
     ROS_DEBUG_STREAM("Earliest entry time has gone past the cached green light. nearest_green_entry_time_cached_:" << std::to_string(nearest_green_entry_time_cached_.get().toSec()) << ", and earliest_entry_time: " << std::to_string(earliest_entry_time.toSec()));
   }
+
   ROS_DEBUG_STREAM("Final nearest_green_entry_time: " << std::to_string(nearest_green_entry_time.toSec()));
 
   double remaining_time = nearest_green_entry_time.toSec() - current_state.stamp.toSec();
@@ -754,7 +808,7 @@ void LCIStrategicPlugin::planWhenAPPROACHING(const cav_srvs::PlanManeuversReques
 
   if (safe_distance_to_stop > distance_remaining_to_traffic_light)
   {
-    ROS_DEBUG_STREAM("No longer within safe distance to stop! Decide to continue stopping or continue into intersection"); //TODO handle stopping or handle failure
+    ROS_DEBUG_STREAM("No longer within safe distance to stop! Decide to continue stopping or continue into intersection");
     
     if (last_case_num_ != TSCase::STOPPING && last_case_num_ != TSCase::UNAVAILABLE && last_case_num_ != TSCase::CASE_8) //case 1-7
     {
@@ -989,7 +1043,7 @@ bool LCIStrategicPlugin::planManeuverCb(cav_srvs::PlanManeuversRequest& req, cav
     return true;
   }
 
-  bool is_empty_schedule_msg = (scheduled_enter_time_ == 0);
+  bool is_empty_schedule_msg  = false ;// = (scheduled_enter_time_ == 0); TODO https://github.com/usdot-fhwa-stol/carma-platform/issues/1947
   if (is_empty_schedule_msg)
   {
     resp.new_plan.maneuvers = {};
@@ -1033,7 +1087,6 @@ bool LCIStrategicPlugin::planManeuverCb(cav_srvs::PlanManeuversRequest& req, cav
       break;
     }
   }
-
 
   lanelet::CarmaTrafficSignalPtr nearest_traffic_signal = nullptr;
   
@@ -1110,7 +1163,7 @@ bool LCIStrategicPlugin::planManeuverCb(cav_srvs::PlanManeuversRequest& req, cav
   // We need to evaluate the events so the state transitions can be triggered
 }
 
-cav_msgs::Maneuver LCIStrategicPlugin::composeTrajectorySmoothingManeuverMessage(double start_dist, double end_dist, double start_speed,
+cav_msgs::Maneuver LCIStrategicPlugin::composeTrajectorySmoothingManeuverMessage(double start_dist, double end_dist, const std::vector<lanelet::ConstLanelet>& crossed_lanelets, double start_speed,
                                                        double target_speed, ros::Time start_time, ros::Time end_time,
                                                        const TrajectoryParams& tsp) const
 {
@@ -1148,6 +1201,10 @@ cav_msgs::Maneuver LCIStrategicPlugin::composeTrajectorySmoothingManeuverMessage
   maneuver_msg.lane_following_maneuver.parameters.int_valued_meta_data.push_back(static_cast<int>(tsp.case_num));
   maneuver_msg.lane_following_maneuver.parameters.int_valued_meta_data.push_back(static_cast<int>(tsp.is_algorithm_successful));
 
+  for (auto llt : crossed_lanelets)
+  {
+    maneuver_msg.lane_following_maneuver.lane_ids.push_back(std::to_string(llt.id()));
+  }
   // Start time and end time for maneuver are assigned in updateTimeProgress
 
   ROS_INFO_STREAM("Creating TrajectorySmoothingManeuver start dist: " << start_dist << " end dist: " << end_dist
