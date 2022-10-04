@@ -165,12 +165,6 @@ namespace mobilitypath_visualizer {
     visualization_msgs::msg::MarkerArray MobilityPathVisualizer::composeVisualizationMarker(const carma_v2x_msgs::msg::MobilityPath& msg, const MarkerColor& color)
     {
         visualization_msgs::msg::MarkerArray output;
-        
-        if (msg.trajectory.offsets.empty())
-        {
-            RCLCPP_WARN_STREAM(get_logger(), "Received empty mobility path to visualize! Returning...");
-            return output;
-        }
 
         visualization_msgs::msg::Marker marker;
         marker.header.frame_id = "map";
@@ -196,19 +190,27 @@ namespace mobilitypath_visualizer {
         auto curr_location_msg = msg; //variable to update on each iteration as offsets are measured since last traj point
         
         marker.id = 0;
-        geometry_msgs::msg::Point arrow_start;
-        RCLCPP_DEBUG_STREAM(get_logger(), "ECEF point x: " << curr_location_msg.trajectory.location.ecef_x << ", y:" << curr_location_msg.trajectory.location.ecef_y);
-        arrow_start = ECEFToMapPoint(curr_location_msg.trajectory.location); //also convert from cm to m
-        RCLCPP_DEBUG_STREAM(get_logger(), "Map point x: " << arrow_start.x << ", y:" << arrow_start.y);
 
-        geometry_msgs::msg::Point arrow_end;
-        curr_location_msg.trajectory.location.ecef_x += + msg.trajectory.offsets[0].offset_x;
-        curr_location_msg.trajectory.location.ecef_y += + msg.trajectory.offsets[0].offset_y;
-        curr_location_msg.trajectory.location.ecef_z += + msg.trajectory.offsets[0].offset_z;
-        arrow_end = ECEFToMapPoint(curr_location_msg.trajectory.location); //also convert from cm to m
+        if (msg.trajectory.offsets.empty())
+        {
+            marker.action = visualization_msgs::msg::Marker::DELETE;
+        }
+        else
+        {
+            geometry_msgs::msg::Point arrow_start;
+            RCLCPP_DEBUG_STREAM(get_logger(), "ECEF point x: " << curr_location_msg.trajectory.location.ecef_x << ", y:" << curr_location_msg.trajectory.location.ecef_y);
+            arrow_start = ECEFToMapPoint(curr_location_msg.trajectory.location); //also convert from cm to m
+            RCLCPP_DEBUG_STREAM(get_logger(), "Map point x: " << arrow_start.x << ", y:" << arrow_start.y);
 
-        marker.points.push_back(arrow_start);
-        marker.points.push_back(arrow_end);
+            geometry_msgs::msg::Point arrow_end;
+            curr_location_msg.trajectory.location.ecef_x += + msg.trajectory.offsets[0].offset_x;
+            curr_location_msg.trajectory.location.ecef_y += + msg.trajectory.offsets[0].offset_y;
+            curr_location_msg.trajectory.location.ecef_z += + msg.trajectory.offsets[0].offset_z;
+            arrow_end = ECEFToMapPoint(curr_location_msg.trajectory.location); //also convert from cm to m
+
+            marker.points.push_back(arrow_start);
+            marker.points.push_back(arrow_end);
+        }
 
         output.markers.push_back(marker);
 
