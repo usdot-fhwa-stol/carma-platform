@@ -48,10 +48,12 @@ jobs:
         doxyfile-path: "./Doxyfile" # default is ./Doxyfile
         # Working directory
         working-directory: "." # default is .
-
     - name: Deploy
       uses: peaceiris/actions-gh-pages@v3
       with:
-        github_token: ${{ secrets.GITHUB_TOKEN }}
+        deploy_key: ${{ secrets.ACTIONS_DEPLOY_KEY }}
+        external_repository: SaikrishnaBairamoni/StolDocumentation
+        publish_branch: gh-pages
+        # default: gh-pages
         publish_dir: ./docs/html/
-        commit_message: "[skip ci] ${{ github.event.head_commit.message }}"
+        destination_dir: ${{ github.event.repository.name }}
