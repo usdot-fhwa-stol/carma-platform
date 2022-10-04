@@ -43,6 +43,11 @@ namespace localization_manager
         return 1.0 / (new_stamp - old_stamp).seconds(); // Convert delta to frequency (Hz = 1/s)
     }
 
+    void LocalizationManager::setConfig(const LocalizationManagerConfig& config)
+    {
+        config_ = config;
+    }
+
     double LocalizationManager::computeNDTFreq(const rclcpp::Time &new_stamp)
     {
         if (!prev_ndt_stamp_)
@@ -138,6 +143,7 @@ namespace localization_manager
     void LocalizationManager::gnssPoseCallback(const geometry_msgs::msg::PoseStamped::SharedPtr msg)
     {
         last_raw_gnss_value_ = *msg;
+        last_raw_gnss_value_->header.stamp = timer_factory_->now();
         // Just like ndt_matching the gnss pose is treated as an initialize signal if the system is not yet intialized
         if (transition_table_.getState() == LocalizationState::UNINITIALIZED)
         {
@@ -293,7 +299,14 @@ namespace localization_manager
         // Publish current pose message if available
         if (current_pose_)
         {
-            pose_pub_(*current_pose_);
+            auto pose_to_publish = *current_pose_;
+            if (static_cast<LocalizerMode>(config_.localization_mode) == LocalizerMode::GNSS_WITH_FIXED_OFFSET)
+            {
+                pose_to_publish.pose.position.x += config_.x_offset;
+                pose_to_publish.pose.position.y += config_.y_offset;
+                pose_to_publish.pose.position.z += config_.z_offset;
+            }
+            pose_pub_(pose_to_publish);
         }
 
         // Create and publish status report message
