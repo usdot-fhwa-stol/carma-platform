@@ -40,6 +40,9 @@ namespace localization_manager
         config_.gnss_data_timeout = declare_parameter<int>("gnss_data_timeout", config_.gnss_data_timeout);
         config_.localization_mode = declare_parameter<int>("localization_mode", config_.localization_mode);
         config_.pose_pub_rate = declare_parameter<double>("pose_pub_rate", config_.pose_pub_rate);
+        config_.x_offset = declare_parameter<double>("x_offset", config_.x_offset);
+        config_.y_offset = declare_parameter<double>("y_offset", config_.y_offset);
+        config_.z_offset = declare_parameter<double>("z_offset", config_.z_offset);
     }
 
     carma_ros2_utils::CallbackReturn Node::handle_on_configure(const rclcpp_lifecycle::State &)
@@ -58,6 +61,9 @@ namespace localization_manager
         get_parameter<int>("gnss_data_timeout", config_.gnss_data_timeout);
         get_parameter<int>("localization_mode", config_.localization_mode);
         get_parameter<double>("pose_pub_rate", config_.pose_pub_rate);
+        get_parameter<double>("x_offset", config_.x_offset);
+        get_parameter<double>("y_offset", config_.y_offset);
+        get_parameter<double>("z_offset", config_.z_offset);
 
         RCLCPP_INFO_STREAM(rclcpp::get_logger("localization_manager"), "Loaded params: ");
 
@@ -68,6 +74,9 @@ namespace localization_manager
                                                config_,
                                                get_node_logging_interface(),
                                                std::make_unique<carma_ros2_utils::timers::ROSTimerFactory>(shared_from_this())));
+
+        // Register runtime parameter update callback
+        add_on_set_parameters_callback(std::bind(&Node::parameter_update_callback, this, std_ph::_1));
 
         // Setup subscribers
         gnss_pose_sub_ = create_subscription<geometry_msgs::msg::PoseStamped>("gnss_pose", 5,
@@ -115,6 +124,37 @@ namespace localization_manager
     void Node::publishStatus(const carma_localization_msgs::msg::LocalizationStatusReport &msg) const
     {
         state_pub_->publish(msg);
+    }
+
+    rcl_interfaces::msg::SetParametersResult Node::parameter_update_callback(const std::vector<rclcpp::Parameter> &parameters)
+    {
+        auto error = update_params<double>(
+        {{"pose_pub_rate", config_.pose_pub_rate},
+        {"fitness_score_degraded_threshold", config_.fitness_score_degraded_threshold},
+        {"fitness_score_fault_threshold", config_.fitness_score_fault_threshold},
+        {"ndt_frequency_degraded_threshold", config_.ndt_frequency_degraded_threshold},
+        {"ndt_frequency_fault_threshold", config_.ndt_frequency_fault_threshold},
+        {"x_offset", config_.x_offset},
+        {"y_offset", config_.y_offset},
+        {"z_offset", config_.z_offset}}, parameters);
+        
+        auto error_2 = update_params<int>(
+        {{"auto_initialization_timeout", config_.auto_initialization_timeout},
+        {"gnss_only_operation_timeout", config_.gnss_only_operation_timeout},
+        {"gnss_data_timeout", config_.gnss_data_timeout},
+        {"sequential_timesteps_until_gps_operation", config_.sequential_timesteps_until_gps_operation},
+        {"localization_mode", config_.localization_mode}}, parameters);
+
+        rcl_interfaces::msg::SetParametersResult result;
+
+        result.successful = !error && !error_2;
+
+        if (result.successful)
+        {
+            manager_->setConfig(config_);
+        }
+
+        return result;
     }
 
     void Node::publishManagedInitialPose(const geometry_msgs::msg::PoseWithCovarianceStamped &msg) const

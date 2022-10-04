@@ -29,6 +29,7 @@ namespace localization_manager
         AUTO_WITH_TIMEOUT = 2,    // NDT operation with support for GPS fallback that will timeout
         AUTO_WITHOUT_TIMEOUT = 3, // NDT operation with support for GPS fallback that will not timeout
         GNSS_WITH_NDT_INIT = 4,   // GNSS only operation with NDT initialization, switching to GNSS after 5 sequential timesteps of OPERATIONAL NDT
+        GNSS_WITH_FIXED_OFFSET = 5 // GNSS only operation with fixed offset
     };
 
     /**
