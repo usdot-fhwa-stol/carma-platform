@@ -166,6 +166,12 @@ namespace mobilitypath_visualizer {
     {
         visualization_msgs::msg::MarkerArray output;
         
+        if (msg.trajectory.offsets.empty())
+        {
+            RCLCPP_WARN_STREAM(get_logger(), "Received empty mobility path to visualize! Returning...");
+            return output;
+        }
+
         visualization_msgs::msg::Marker marker;
         marker.header.frame_id = "map";
 
