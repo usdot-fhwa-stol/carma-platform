@@ -126,6 +126,13 @@ namespace localization_manager
          */
         void clearTimers();
 
+        /**
+         * \brief Set config.
+         * 
+         * \param config localization manager config
+         */
+        void setConfig(const LocalizationManagerConfig& config);
+
     private:
         //! The set of strings which mark a lidar failure in a system alert message
         static const std::unordered_set<std::string> LIDAR_FAILURE_STRINGS; // Static const container defined in cpp file
