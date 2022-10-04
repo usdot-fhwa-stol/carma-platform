@@ -143,7 +143,6 @@ namespace localization_manager
     void LocalizationManager::gnssPoseCallback(const geometry_msgs::msg::PoseStamped::SharedPtr msg)
     {
         last_raw_gnss_value_ = *msg;
-        last_raw_gnss_value_->header.stamp = timer_factory_->now();
         // Just like ndt_matching the gnss pose is treated as an initialize signal if the system is not yet intialized
         if (transition_table_.getState() == LocalizationState::UNINITIALIZED)
         {
