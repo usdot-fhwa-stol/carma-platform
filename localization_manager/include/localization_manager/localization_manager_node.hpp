@@ -103,6 +103,12 @@ namespace localization_manager
         void poseAndStatsCallback(const geometry_msgs::msg::PoseStamped::ConstPtr pose,
                                   const autoware_msgs::msg::NDTStat::ConstPtr stats);
 
+         /**
+         * \brief Callback for dynamic parameter updates
+         */
+        rcl_interfaces::msg::SetParametersResult 
+        parameter_update_callback(const std::vector<rclcpp::Parameter> &parameters);
+        
         ////
         // Overrides
         ////

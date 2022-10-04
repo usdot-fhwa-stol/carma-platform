@@ -25,6 +25,7 @@ namespace localization_manager
         case LocalizerMode::NDT   : os << "NDT"; break;
         case LocalizerMode::GNSS: os << "GNSS"; break;
         case LocalizerMode::GNSS_WITH_NDT_INIT: os << "GNSS_WITH_NDT_INIT"; break;
+        case LocalizerMode::GNSS_WITH_FIXED_OFFSET: os << "GNSS_WITH_FIXED_OFFSET"; break;
         case LocalizerMode::AUTO_WITH_TIMEOUT : os << "AUTO_WITH_TIMEOUT"; break;
         case LocalizerMode::AUTO_WITHOUT_TIMEOUT : os << "AUTO_WITHOUT_TIMEOUT"; break;
         default: os.setstate(std::ios_base::failbit);
