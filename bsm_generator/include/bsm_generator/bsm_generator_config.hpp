@@ -28,6 +28,7 @@ namespace bsm_generator
   struct Config
   {
     double bsm_generation_frequency = 10.0; // Rate (in Hz) at which a BSM is generated
+    double bsm_id_change_period = 300.0; // BSM id change period (in sec)
     bool bsm_id_rotation_enabled = true; // Flag to enable/disable rotation of BSM ID during vehicle operations
     int bsm_message_id = 0; // Value is converted to a 4 element array of uint8_t where each byte of the parameter becomes one element of the array 
     double vehicle_length = 5.0; // Vehicle length (in meters)
@@ -39,6 +40,7 @@ namespace bsm_generator
     {
       output << "bsm_generator::Config { " << std::endl
              << "bsm_generation_frequency: " << c.bsm_generation_frequency << std::endl
+             << "bsm_id_change_period: " << c.bsm_id_change_period << std::endl
              << "bsm_id_rotation_enabled: " << c.bsm_id_rotation_enabled << std::endl
              << "bsm_message_id: " << c.bsm_message_id << std::endl
              << "vehicle_length: " << c.vehicle_length << std::endl

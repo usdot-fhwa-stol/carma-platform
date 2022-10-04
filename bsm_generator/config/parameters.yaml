@@ -2,3 +2,6 @@
 # Units: Hz
 bsm_generation_frequency: 10.0
 
+# Double: BSM id change period
+# Units: seconds
+bsm_id_change_period: 300.0
