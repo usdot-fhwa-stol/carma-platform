@@ -216,6 +216,8 @@ namespace mobilitypath_visualizer {
 
             if (i >= msg.trajectory.offsets.size()) { // If we need to delete previous points
                 marker.action = visualization_msgs::msg::Marker::DELETE;
+                output.markers.push_back(marker);
+                continue;
             }
 
             marker.points = {};
