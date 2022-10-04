@@ -190,6 +190,8 @@ namespace mobilitypath_visualizer {
         auto curr_location_msg = msg; //variable to update on each iteration as offsets are measured since last traj point
         
         marker.id = 0;
+        geometry_msgs::msg::Point arrow_start;
+        geometry_msgs::msg::Point arrow_end;
 
         if (msg.trajectory.offsets.empty())
         {
@@ -197,12 +199,10 @@ namespace mobilitypath_visualizer {
         }
         else
         {
-            geometry_msgs::msg::Point arrow_start;
             RCLCPP_DEBUG_STREAM(get_logger(), "ECEF point x: " << curr_location_msg.trajectory.location.ecef_x << ", y:" << curr_location_msg.trajectory.location.ecef_y);
             arrow_start = ECEFToMapPoint(curr_location_msg.trajectory.location); //also convert from cm to m
             RCLCPP_DEBUG_STREAM(get_logger(), "Map point x: " << arrow_start.x << ", y:" << arrow_start.y);
-
-            geometry_msgs::msg::Point arrow_end;
+            
             curr_location_msg.trajectory.location.ecef_x += + msg.trajectory.offsets[0].offset_x;
             curr_location_msg.trajectory.location.ecef_y += + msg.trajectory.offsets[0].offset_y;
             curr_location_msg.trajectory.location.ecef_z += + msg.trajectory.offsets[0].offset_z;
