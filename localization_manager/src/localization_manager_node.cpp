@@ -142,8 +142,8 @@ namespace localization_manager
         {{"auto_initialization_timeout", config_.auto_initialization_timeout},
         {"gnss_only_operation_timeout", config_.gnss_only_operation_timeout},
         {"gnss_data_timeout", config_.gnss_data_timeout},
-        {"sequential_timesteps_until_gps_operation", config_.sequential_timesteps_until_gps_operation},
-        {"localization_mode", config_.localization_mode}}, parameters);
+        {"sequential_timesteps_until_gps_operation", config_.sequential_timesteps_until_gps_operation}
+        }, parameters);
 
         rcl_interfaces::msg::SetParametersResult result;
 
