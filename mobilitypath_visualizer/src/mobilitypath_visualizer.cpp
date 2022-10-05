@@ -165,7 +165,7 @@ namespace mobilitypath_visualizer {
     visualization_msgs::msg::MarkerArray MobilityPathVisualizer::composeVisualizationMarker(const carma_v2x_msgs::msg::MobilityPath& msg, const MarkerColor& color)
     {
         visualization_msgs::msg::MarkerArray output;
-        
+
         visualization_msgs::msg::Marker marker;
         marker.header.frame_id = "map";
 
@@ -191,18 +191,26 @@ namespace mobilitypath_visualizer {
         
         marker.id = 0;
         geometry_msgs::msg::Point arrow_start;
-        RCLCPP_DEBUG_STREAM(get_logger(), "ECEF point x: " << curr_location_msg.trajectory.location.ecef_x << ", y:" << curr_location_msg.trajectory.location.ecef_y);
-        arrow_start = ECEFToMapPoint(curr_location_msg.trajectory.location); //also convert from cm to m
-        RCLCPP_DEBUG_STREAM(get_logger(), "Map point x: " << arrow_start.x << ", y:" << arrow_start.y);
-
         geometry_msgs::msg::Point arrow_end;
-        curr_location_msg.trajectory.location.ecef_x += + msg.trajectory.offsets[0].offset_x;
-        curr_location_msg.trajectory.location.ecef_y += + msg.trajectory.offsets[0].offset_y;
-        curr_location_msg.trajectory.location.ecef_z += + msg.trajectory.offsets[0].offset_z;
-        arrow_end = ECEFToMapPoint(curr_location_msg.trajectory.location); //also convert from cm to m
 
-        marker.points.push_back(arrow_start);
-        marker.points.push_back(arrow_end);
+        if (msg.trajectory.offsets.empty())
+        {
+            marker.action = visualization_msgs::msg::Marker::DELETE;
+        }
+        else
+        {
+            RCLCPP_DEBUG_STREAM(get_logger(), "ECEF point x: " << curr_location_msg.trajectory.location.ecef_x << ", y:" << curr_location_msg.trajectory.location.ecef_y);
+            arrow_start = ECEFToMapPoint(curr_location_msg.trajectory.location); //also convert from cm to m
+            RCLCPP_DEBUG_STREAM(get_logger(), "Map point x: " << arrow_start.x << ", y:" << arrow_start.y);
+            
+            curr_location_msg.trajectory.location.ecef_x += + msg.trajectory.offsets[0].offset_x;
+            curr_location_msg.trajectory.location.ecef_y += + msg.trajectory.offsets[0].offset_y;
+            curr_location_msg.trajectory.location.ecef_z += + msg.trajectory.offsets[0].offset_z;
+            arrow_end = ECEFToMapPoint(curr_location_msg.trajectory.location); //also convert from cm to m
+
+            marker.points.push_back(arrow_start);
+            marker.points.push_back(arrow_end);
+        }
 
         output.markers.push_back(marker);
 
@@ -216,6 +224,8 @@ namespace mobilitypath_visualizer {
 
             if (i >= msg.trajectory.offsets.size()) { // If we need to delete previous points
                 marker.action = visualization_msgs::msg::Marker::DELETE;
+                output.markers.push_back(marker);
+                continue;
             }
 
             marker.points = {};
