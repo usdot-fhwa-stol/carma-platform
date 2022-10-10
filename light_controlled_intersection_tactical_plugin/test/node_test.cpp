@@ -299,6 +299,7 @@ namespace light_controlled_intersection_tactical_plugin
         auto lci_node = std::make_shared<light_controlled_intersection_tactical_plugin::LightControlledIntersectionTransitPluginNode>(options);
         Config config;
         config.minimum_speed = 1;
+        config.default_downsample_ratio = 1;
 
         auto lci_tactical = LightControlledIntersectionTacticalPlugin(wm, config, lci_node->get_node_logging_interface());
         
@@ -310,7 +311,7 @@ namespace light_controlled_intersection_tactical_plugin
             carma_planning_msgs::msg::ManeuverParameters::HAS_TACTICAL_PLUGIN | carma_planning_msgs::msg::ManeuverParameters::HAS_FLOAT_META_DATA | carma_planning_msgs::msg::ManeuverParameters::HAS_INT_META_DATA;
         maneuver_msg.lane_following_maneuver.start_dist = 1;
         maneuver_msg.lane_following_maneuver.start_speed = 1;
-        maneuver_msg.lane_following_maneuver.end_dist = 4;
+        maneuver_msg.lane_following_maneuver.end_dist = 11.0;
         maneuver_msg.lane_following_maneuver.end_speed = 2;
         
         TrajectoryParams tsp;
@@ -323,19 +324,8 @@ namespace light_controlled_intersection_tactical_plugin
 
         carma_planning_msgs::msg::VehicleState state;
         state.x_pos_global = 1.0;
-        state.y_pos_global = 0.0;
+        state.y_pos_global = 0.1;
         state.longitudinal_vel = 1;
-
-        carma_planning_msgs::msg::VehicleState ending_state;
-        ending_state.x_pos_global = 1.0;
-        ending_state.y_pos_global = 5.0;
-        ending_state.longitudinal_vel = 2.0;
-
-        DetailedTrajConfig wpg_detail_config;
-        GeneralTrajConfig wpg_general_config;
-        wpg_general_config.default_downsample_ratio = 1;
-
-        EXPECT_THROW(lci_tactical.createGeometryProfile({maneuver_msg}, 1, wm, ending_state, state, wpg_general_config, wpg_detail_config), std::invalid_argument);
 
         maneuver_msg.lane_following_maneuver.parameters.float_valued_meta_data.push_back(tsp.a1_);
         maneuver_msg.lane_following_maneuver.parameters.float_valued_meta_data.push_back(tsp.v1_);
@@ -351,19 +341,22 @@ namespace light_controlled_intersection_tactical_plugin
 
         maneuver_msg.lane_following_maneuver.parameters.int_valued_meta_data.push_back(1);
         maneuver_msg.lane_following_maneuver.parameters.int_valued_meta_data.push_back(1);
+        maneuver_msg.lane_following_maneuver.parameters.string_valued_meta_data.push_back("signalized");
 
         maneuver_msg.lane_following_maneuver.lane_ids.push_back(std::to_string(1200));
 
-        EXPECT_THROW(lci_tactical.createGeometryProfile({maneuver_msg, maneuver_msg}, 1, wm, ending_state, state, wpg_general_config, wpg_detail_config), std::invalid_argument);
-
-
-        EXPECT_EQ(lci_tactical.createGeometryProfile({maneuver_msg}, 1, wm, ending_state, state, wpg_general_config, wpg_detail_config).size(), 7);
+        auto req = std::make_shared<carma_planning_msgs::srv::PlanTrajectory::Request>();
+        auto resp = std::make_shared<carma_planning_msgs::srv::PlanTrajectory::Response>();
         
-        auto points_and_target_speeds = lci_tactical.createGeometryProfile({maneuver_msg}, 1, wm, ending_state, state, wpg_general_config, wpg_detail_config);
+        req->maneuver_plan.maneuvers.push_back(maneuver_msg);
+        req->maneuver_index_to_plan = 0;
+        req->vehicle_state = state;
+
+        lci_tactical.planTrajectoryCB(req, resp);
         
-        EXPECT_NEAR(points_and_target_speeds.front().speed, 2.0, 0.001);
-        EXPECT_NEAR(points_and_target_speeds.back().speed, 2.0, 0.001);
-        EXPECT_NEAR(points_and_target_speeds.front().point.y(), 0.0, 0.001);
+        EXPECT_NEAR(rclcpp::Time(resp->trajectory_plan.trajectory_points.front().target_time).seconds(), 0.0, 0.001);
+        EXPECT_NEAR(rclcpp::Time(resp->trajectory_plan.trajectory_points.back().target_time).seconds(), 9.23, 0.1);
+        EXPECT_NEAR(resp->trajectory_plan.trajectory_points.front().y, 0.1, 0.001);
 
     }
 

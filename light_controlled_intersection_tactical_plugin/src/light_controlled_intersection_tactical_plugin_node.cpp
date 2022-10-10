@@ -122,9 +122,6 @@ namespace light_controlled_intersection_tactical_plugin
     // Initialize worker object
     worker_ = std::make_shared<LightControlledIntersectionTacticalPlugin>(get_world_model(), config_, get_node_logging_interface());
 
-         std::cerr << " HERE4" << std::endl;
-
-
     // Return success if everything initialized successfully
     return CallbackReturn::SUCCESS;
   }

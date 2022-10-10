@@ -282,17 +282,17 @@ namespace light_controlled_intersection_tactical_plugin
                 speed_i = prev_speed;
             }
 
-            RCLCPP_ERROR_STREAM(logger_->get_logger(), "speed_i: " << speed_i);
+            RCLCPP_DEBUG_STREAM(logger_->get_logger(), "speed_i: " << speed_i);
             
             if (isnan(speed_i))
             {
                 speed_i = std::max(config_.minimum_speed, algo_min_speed);
-                RCLCPP_ERROR_STREAM(logger_->get_logger(), "Detected nan number from equations. Set to " << speed_i);
+                RCLCPP_DEBUG_STREAM(logger_->get_logger(), "Detected nan number from equations. Set to " << speed_i);
             }
 
             p.speed = std::max({speed_i, config_.minimum_speed, algo_min_speed});
             p.speed = std::min({p.speed, speed_limit_, algo_max_speed}); 
-            RCLCPP_ERROR_STREAM(logger_->get_logger(), "Applied speed: " << p.speed << ", at dist: " << total_dist_planned);
+            RCLCPP_DEBUG_STREAM(logger_->get_logger(), "Applied speed: " << p.speed << ", at dist: " << total_dist_planned);
 
             prev_point = p;
             prev_speed = p.speed;
@@ -375,7 +375,6 @@ namespace light_controlled_intersection_tactical_plugin
             RCLCPP_DEBUG_STREAM(logger_->get_logger(), "Creating Lane Follow Geometry");
             std::vector<PointSpeedPair> lane_follow_points = basic_autonomy::waypoint_generation::create_lanefollow_geometry(maneuver, starting_downtrack, wm, general_config, detailed_config, visited_lanelets);
             points_and_target_speeds.insert(points_and_target_speeds.end(), lane_follow_points.begin(), lane_follow_points.end());   
-            RCLCPP_ERROR_STREAM(logger_->get_logger(), "Size: " << points_and_target_speeds.size());
             
             processed_maneuvers.push_back(maneuver);         
         }
