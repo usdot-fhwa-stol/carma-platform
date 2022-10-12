@@ -186,14 +186,16 @@ public:
   ////////// VARIABLES ///////////
 
   TurnDirection intersection_turn_direction_ = TurnDirection::Straight;
-  bool approaching_light_controlled_interction_ = true; // TODO set to true until carma-street is capable of sending strategy parameters for UC3
-                                                        // https://github.com/usdot-fhwa-stol/carma-platform/issues/1947
+  bool approaching_light_controlled_intersection_ = false; 
 
   // CARMA Streets Variakes
   // timestamp for msg received from carma streets
   unsigned long long street_msg_timestamp_ = 0;
   // scheduled enter time
   unsigned long long scheduled_enter_time_ = 0;
+  
+  // todo delete once carma-street is available
+  double cached_testing_enter_time_ = 0.0;
   
   //BSM
   std::string bsm_id_ = "default_bsm_id";
