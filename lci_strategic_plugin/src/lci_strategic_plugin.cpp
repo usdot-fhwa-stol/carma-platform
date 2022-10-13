@@ -756,7 +756,7 @@ void LCIStrategicPlugin::planWhenAPPROACHING(const cav_srvs::PlanManeuversReques
 
   // todo testing uc3
   auto et_state = traffic_light->predictState(lanelet::time::timeFromSec(nearest_green_entry_time.toSec()));
-  ROS_ERROR_STREAM("Signal at ET: " << et_state.get().second << ", at time: " << );
+  ROS_ERROR_STREAM("Signal at ET: " << et_state.get().second);
   ///////////////
 
   double remaining_time = nearest_green_entry_time.toSec() - current_state.stamp.toSec();

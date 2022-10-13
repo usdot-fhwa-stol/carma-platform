@@ -43,12 +43,18 @@ cd ${dir}/src
 if [[ "$BRANCH" = "develop" ]]; then
       git clone --depth=1 https://github.com/usdot-fhwa-stol/carma-msgs.git --branch  $BRANCH
       git clone --depth=1 https://github.com/usdot-fhwa-stol/carma-utils.git --branch $BRANCH
-      git clone --depth=1 https://github.com/usdot-fhwa-stol/carma-messenger.git --branch $BRANCH
+      git clone --depth=6 https://github.com/usdot-fhwa-stol/carma-messenger.git --branch $BRANCH
 else
       git clone --depth=1 https://github.com/usdot-fhwa-stol/carma-msgs.git --branch develop
       git clone --depth=1 https://github.com/usdot-fhwa-stol/carma-utils.git --branch develop
-      git clone --depth=1 https://github.com/usdot-fhwa-stol/carma-messenger.git --branch develop
+      git clone --depth=6 https://github.com/usdot-fhwa-stol/carma-messenger.git --branch develop
 fi
+
+cd carma-messenger
+git remote update origin
+git pull
+git checkout aa114a4257ebbf65cdf8b341365df6777d11d0e9
+cd ..
 
 # Get humble branch of message filters which supports template Node arguments (foxy version supports rclcpp::Node only)
 git clone https://github.com/usdot-fhwa-stol/carma-message-filters.git --branch develop
