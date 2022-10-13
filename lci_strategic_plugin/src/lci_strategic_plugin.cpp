@@ -274,7 +274,7 @@ void LCIStrategicPlugin::handleFailureCase(const cav_srvs::PlanManeuversRequest&
 
   resp.new_plan.maneuvers.push_back(composeIntersectionTransitMessage(
       traffic_light_down_track, intersection_end_downtrack_.get(), intersection_speed_.get(),
-      incomplete_traj_params.modified_departure_speed, current_state.stamp + ros::Duration(incomplete_traj_params.modified_remaining_time), intersection_exit_time, crossed_lanelets.back().id(), exit_lanelet_id));
+      incomplete_traj_params.modified_departure_speed, current_state.stamp + ros::Duration(incomplete_traj_params.modified_remaining_time), intersection_exit_time, crossed_lanelets.back().id(), crossed_lanelets.back().id()));
 
   case_num_ = TSCase::UNAVAILABLE;
 }
@@ -362,7 +362,7 @@ void LCIStrategicPlugin::handleGreenSignalScenario(const cav_srvs::PlanManeuvers
 
     resp.new_plan.maneuvers.push_back(composeIntersectionTransitMessage(
         traffic_light_down_track, intersection_end_downtrack_.get(), intersection_speed_.get(),
-        intersection_speed_.get(), light_arrival_time_by_algo, intersection_exit_time, entry_lanelet.id(), exit_lanelet.id()));
+        intersection_speed_.get(), light_arrival_time_by_algo, intersection_exit_time, crossed_lanelets.back().id(), crossed_lanelets.back().id()));
   }
 }
 
@@ -936,12 +936,12 @@ void LCIStrategicPlugin::planWhenDEPARTING(const cav_srvs::PlanManeuversRequest&
 
   // Identify the lanelets which will be crossed by approach maneuvers lane follow maneuver
   std::vector<lanelet::ConstLanelet> crossed_lanelets =
-      getLaneletsBetweenWithException(current_state.downtrack, intersection_end_downtrack, true, true);
+      getLaneletsBetweenWithException(current_state.downtrack, intersection_end_downtrack, true, false);
 
   // Compose intersection transit maneuver
   resp.new_plan.maneuvers.push_back(composeIntersectionTransitMessage(
       current_state.downtrack, intersection_end_downtrack, current_state.speed, intersection_speed_limit,
-      current_state.stamp, intersection_exit_time, crossed_lanelets.front().id(), crossed_lanelets.back().id()));
+      current_state.stamp, intersection_exit_time, crossed_lanelets.back().id(), crossed_lanelets.back().id()));
 }
 
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////

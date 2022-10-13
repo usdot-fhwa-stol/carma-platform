@@ -215,8 +215,6 @@ void setManeuverLaneletIds(carma_planning_msgs::msg::Maneuver& mvr, lanelet::Id 
                 continue;
             }
 
-
-
             if (isLaneChangeNeeded(following_lanelets, route_shortest_path[shortest_path_index + 1].id()))
             {
                 RCLCPP_DEBUG_STREAM(get_logger(),"LaneChangeNeeded");

@@ -44,7 +44,6 @@ reaction_time : 2.0
 # Bool: If enable_carma_streets_connection is true when we want to allow carma streets functionality (UC3) and if its false that means we don't want to allow carma streets behaviour and will only use UC2 behaviour.
 enable_carma_streets_connection : true
 
-
 # Double: Mobility operation rate
 mobility_rate : 10.0
 
