@@ -146,6 +146,7 @@ def generate_launch_description():
                 ],
                 remappings=[
                     ("outgoing_bsm", "bsm_outbound" ),
+                    ("incoming_mobility_operation", "incoming_mobility_operation_actual" ),
                 ],
             ),
         ]

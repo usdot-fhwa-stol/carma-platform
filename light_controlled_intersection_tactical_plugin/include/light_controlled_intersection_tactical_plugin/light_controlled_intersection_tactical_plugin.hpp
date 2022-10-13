@@ -130,7 +130,7 @@ namespace light_controlled_intersection_tactical_plugin
     carma_debug_ros2_msgs::msg::TrajectoryCurvatureSpeeds debug_msg_;
     std::vector<double> last_final_speeds_;
 
-    std::string light_controlled_intersection_strategy_ = "signalized"; // Strategy carma-streets is sending. Could be more verbose but needs to be changed on both ends
+    std::string light_controlled_intersection_strategy_ = "Carma/signalized_intersection"; // Strategy carma-streets is sending. Could be more verbose but needs to be changed on both ends
 
     /**
      * \brief Creates a speed profile according to case one or two of the light controlled intersection, where the vehicle accelerates (then cruises if needed) and decelerates into the intersection. 
