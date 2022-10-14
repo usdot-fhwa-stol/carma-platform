@@ -891,10 +891,10 @@ void LCIStrategicPlugin::planWhenWAITING(const cav_srvs::PlanManeuversRequest& r
   ROS_DEBUG_STREAM("WAITING STATE: requested time to check: " << std::to_string(req.header.stamp.toSec()));
   ROS_DEBUG_STREAM("WAITING STATE: requested time to CURRENT STATE check: " << std::to_string(entering_time));
   
-  if (!validLightState(current_light_state_optional, current_state.stamp))
+  if (!validLightState(current_light_state_optional, ros::Time(entering_time)))
     return;
 
-  auto bool_optional_late_certainty = canArriveAtGreenWithCertainty(current_state.stamp, traffic_light, true, false);
+  auto bool_optional_late_certainty = canArriveAtGreenWithCertainty(ros::Time(entering_time), traffic_light, true, false);
   
   if (!bool_optional_late_certainty)
   {
@@ -902,8 +902,13 @@ void LCIStrategicPlugin::planWhenWAITING(const cav_srvs::PlanManeuversRequest& r
     return;
   }
 
+  bool should_enter = true; //uc2
+  
+  if (config_.enable_carma_streets_connection && entering_time > current_state.stamp.toSec()) //uc3
+    should_enter = false;
+
   if (current_light_state_optional.get().second == lanelet::CarmaTrafficSignalState::PROTECTED_MOVEMENT_ALLOWED &&
-        bool_optional_late_certainty.get()) // if can make with certainty
+        bool_optional_late_certainty.get() && should_enter) // if can make with certainty
   {
     transition_table_.signal(TransitEvent::RED_TO_GREEN_LIGHT);  // If the light is green send the light transition
                                                                  // signal
@@ -919,8 +924,8 @@ void LCIStrategicPlugin::planWhenWAITING(const cav_srvs::PlanManeuversRequest& r
 
   resp.new_plan.maneuvers.push_back(composeStopAndWaitManeuverMessage(
       current_state.downtrack - stop_maneuver_buffer, traffic_light_down_track, current_state.speed,
-      current_state.lane_id, current_state.lane_id, current_state.stamp,
-      current_state.stamp + ros::Duration(config_.min_maneuver_planning_period), stopping_accel));
+      current_state.lane_id, current_state.lane_id, ros::Time(entering_time),
+      ros::Time(entering_time) + ros::Duration(config_.min_maneuver_planning_period), stopping_accel));
 }
 
 void LCIStrategicPlugin::planWhenDEPARTING(const cav_srvs::PlanManeuversRequest& req,
