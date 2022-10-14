@@ -416,7 +416,7 @@ private:
                                         double current_state_speed,
                                         const lanelet::CarmaTrafficSignalPtr& traffic_light,
                                         const lanelet::ConstLanelet& entry_lanelet, const lanelet::ConstLanelet& exit_lanelet, 
-                                        double traffic_light_down_track, const TrajectoryParams& ts_params);
+                                        double traffic_light_down_track, const TrajectoryParams& ts_params, bool is_certainty_check_optional);
   /**
    * \brief This function returns valid maneuvers if the vehicle is able to utilize trajectory smoothing parameters to go through the intersection with certainty
    *        It utilizes canMakeWithCertainty function to determine if it is able to make it. Corresponds to TSCase 1-7

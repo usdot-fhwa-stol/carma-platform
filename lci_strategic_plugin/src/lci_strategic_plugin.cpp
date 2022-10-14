@@ -328,7 +328,7 @@ void LCIStrategicPlugin::handleGreenSignalScenario(const cav_srvs::PlanManeuvers
                                         double current_state_speed,
                                         const lanelet::CarmaTrafficSignalPtr& traffic_light,
                                         const lanelet::ConstLanelet& entry_lanelet, const lanelet::ConstLanelet& exit_lanelet,
-                                        double traffic_light_down_track, const TrajectoryParams& ts_params)
+                                        double traffic_light_down_track, const TrajectoryParams& ts_params, bool is_certainty_check_optional)
 {
   if (!ts_params.is_algorithm_successful || ts_params.case_num == TSCase::CASE_8) 
   {
@@ -348,7 +348,7 @@ void LCIStrategicPlugin::handleGreenSignalScenario(const cav_srvs::PlanManeuvers
   if (!can_make_green_optional) 
     return;
   
-  if (can_make_green_optional.get())
+  if (can_make_green_optional.get() || is_certainty_check_optional)
   {
     ROS_DEBUG_STREAM("HANDLE_SUCCESSFULL: Algorithm successful, and able to make it at green with certainty. Planning traj smooth and intersection transit maneuvers");
     
@@ -780,8 +780,8 @@ void LCIStrategicPlugin::planWhenAPPROACHING(const cav_srvs::PlanManeuversReques
   // Although algorithm determines nearest_green_time is possible, check if the vehicle can arrive with certainty (Case 1-7)
   if (ts_params.is_algorithm_successful && ts_params.case_num != TSCase::CASE_8) 
   {
-    handleGreenSignalScenario(req, resp, current_state, current_state_speed, traffic_light, entry_lanelet, exit_lanelet, traffic_light_down_track, ts_params);
-    
+    handleGreenSignalScenario(req, resp, current_state, current_state_speed, traffic_light, entry_lanelet, exit_lanelet, traffic_light_down_track, ts_params, !is_entry_time_within_future_events);
+  
     if (!resp.new_plan.maneuvers.empty()) // able to pass at green
     {
       last_case_num_ = ts_params.case_num;
@@ -880,10 +880,16 @@ void LCIStrategicPlugin::planWhenWAITING(const cav_srvs::PlanManeuversRequest& r
       wm_->routeTrackPos(stop_line.get().front().basicPoint2d()).downtrack;
 
   ROS_DEBUG("traffic_light_down_track %f", traffic_light_down_track);
-  
-  auto current_light_state_optional = traffic_light->predictState(lanelet::time::timeFromSec(current_state.stamp.toSec()));
+
+  double entering_time = current_state.stamp.toSec(); // uc2
+
+  if (config_.enable_carma_streets_connection)
+    entering_time = cached_testing_enter_time_;
+    
+  auto current_light_state_optional = traffic_light->predictState(lanelet::time::timeFromSec(cached_testing_enter_time_)); //todo
+
   ROS_DEBUG_STREAM("WAITING STATE: requested time to check: " << std::to_string(req.header.stamp.toSec()));
-  ROS_DEBUG_STREAM("WAITING STATE: requested time to CURRENT STATE check: " << std::to_string(current_state.stamp.toSec()));
+  ROS_DEBUG_STREAM("WAITING STATE: requested time to CURRENT STATE check: " << std::to_string(entering_time));
   
   if (!validLightState(current_light_state_optional, current_state.stamp))
     return;
