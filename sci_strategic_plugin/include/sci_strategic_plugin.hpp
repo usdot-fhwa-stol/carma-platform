@@ -20,6 +20,7 @@
 #include <string>
 #include <carma_planning_msgs/srv/plan_maneuvers.hpp>
 #include <carma_planning_msgs/msg/plugin.hpp>
+#include <carma_planning_msgs/msg/guidance_state.hpp>
 #include <carma_v2x_msgs/msg/mobility_operation.hpp>
 #include <carma_wm_ros2/WMListener.hpp>
 #include <carma_wm_ros2/WorldModel.hpp>
@@ -261,6 +262,12 @@ public:
   void BSMCb(carma_v2x_msgs::msg::BSM::UniquePtr msg);
 
   /**
+   * \brief Callback for the Guidance State
+   * \param msg Latest GuidanceState message
+   */
+  void guidance_state_cb(const carma_planning_msgs::msg::GuidanceState::UniquePtr msg);
+
+  /**
    * \brief Determine the turn direction at intersection
    *
    * \param lanelets_list List of lanelets crossed around the intersection area
@@ -315,6 +322,9 @@ public:
   carma_ros2_utils::SubPtr<geometry_msgs::msg::PoseStamped> current_pose_sub_;
   carma_ros2_utils::SubPtr<carma_v2x_msgs::msg::BSM> bsm_sub_;
   carma_ros2_utils::PubPtr<carma_v2x_msgs::msg::MobilityOperation> mobility_operation_pub_;
+  carma_ros2_utils::SubPtr<carma_planning_msgs::msg::GuidanceState> guidance_state_sub_;
+
+  bool guidance_engaged_ = false;
 
   // timer to publish mobility operation message
   rclcpp::TimerBase::SharedPtr mob_op_pub_timer_;

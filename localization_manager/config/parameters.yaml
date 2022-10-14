@@ -39,4 +39,10 @@ sequential_timesteps_until_gps_operation: 5
 # 2 - AUTO select between NDT and GNSS with GNSS timeout
 # 3 - AUTO select between NDT and GNSS without GNSS timeout
 # 4 - GNSS only with NDT initialization
+# 5 - GNSS only with fixed offset
 localization_mode: 4
+
+# Fixed offset (in meters in map frame) to use when GNSS only with fixed offset is being used (Mode 5)
+x_offset: 2.8
+y_offset: -2.1
+z_offset: 0.0

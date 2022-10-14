@@ -89,7 +89,8 @@ def generate_launch_description():
                 ],
                 remappings=[
                     ("plan_trajectory", [ EnvironmentVariable('CARMA_GUIDE_NS', default_value=''), "/plan_trajectory" ] ),
-                    ("georeference", [ EnvironmentVariable('CARMA_LOCZ_NS', default_value=''), "/map_param_loader/georeference" ] )
+                    ("georeference", [ EnvironmentVariable('CARMA_LOCZ_NS', default_value=''), "/map_param_loader/georeference" ] ),
+                    ("mobility_path_msg", [ EnvironmentVariable('CARMA_MSG_NS', default_value=''), "/outgoing_mobility_path" ] )
                 ],
                 parameters=[ 
                     mobilitypath_publisher_param_file,

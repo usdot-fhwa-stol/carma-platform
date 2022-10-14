@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022 LEIDOS.
+ * Copyright (C) 2018-2022 LEIDOS.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -13,21 +13,19 @@
  * License for the specific language governing permissions and limitations under
  * the License.
  */
+#include <pure_pursuit_wrapper/pure_pursuit_wrapper.hpp>
 
-#include <rclcpp/rclcpp.hpp>
-#include "localization_manager/localization_manager_node.hpp"
-
-int main(int argc, char **argv)
+// Main execution
+int main(int argc, char** argv)
 {
-    rclcpp::init(argc, argv);
+  // Initialize node
+  rclcpp::init(argc, argv);
+  
+  auto node = std::make_shared<pure_pursuit_wrapper::PurePursuitWrapperNode>(rclcpp::NodeOptions());
+  
+  rclcpp::executors::MultiThreadedExecutor executor;
+  executor.add_node(node->get_node_base_interface());
+  executor.spin();
 
-    auto node = std::make_shared<localization_manager::Node>(rclcpp::NodeOptions());
-
-    rclcpp::executors::MultiThreadedExecutor executor;
-    executor.add_node(node->get_node_base_interface());
-    executor.spin();
-
-    rclcpp::shutdown();
-
-    return 0;
-}
+  rclcpp::shutdown();
+};

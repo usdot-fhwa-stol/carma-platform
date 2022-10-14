@@ -802,10 +802,32 @@ namespace basic_autonomy
                 RCLCPP_WARN_STREAM(rclcpp::get_logger(BASIC_AUTONOMY_LOGGER), "Insufficient Spline Points");
                 return nullptr;
             }
+            
+            RCLCPP_DEBUG_STREAM(rclcpp::get_logger(BASIC_AUTONOMY_LOGGER), "Original basic_points size: " << basic_points.size());
 
+            std::vector<lanelet::BasicPoint2d> resized_basic_points = basic_points;
+
+            // The large the number of points, longer it takes to calculate a spline fit
+            // So if the basic_points vector size is large, only the first 400 points are used to compute a spline fit. 
+            if (resized_basic_points.size() > 400)
+            {
+                resized_basic_points.resize(400);
+                RCLCPP_DEBUG_STREAM(rclcpp::get_logger(BASIC_AUTONOMY_LOGGER), "Resized basic_points size: " << resized_basic_points.size());
+
+                size_t left_points_size = basic_points.size() - resized_basic_points.size();
+                RCLCPP_DEBUG_STREAM(rclcpp::get_logger(BASIC_AUTONOMY_LOGGER), "Number of left out basic_points size: " << left_points_size);
+
+                float percent_points_lost = 100.0 * (float)left_points_size/basic_points.size();
+
+                if (percent_points_lost > 50.0)
+                {
+                    RCLCPP_WARN_STREAM(rclcpp::get_logger(BASIC_AUTONOMY_LOGGER), "More than half of basic points are ignored for spline fitting");
+                }
+            }
+            
             std::unique_ptr<basic_autonomy::smoothing::SplineI> spl = std::make_unique<basic_autonomy::smoothing::BSpline>();
 
-            spl->setPoints(basic_points);
+            spl->setPoints(resized_basic_points);
 
             return spl;
         }
@@ -1151,6 +1173,98 @@ namespace basic_autonomy
             return traj_points;
         }
 
+        autoware_auto_msgs::msg::Trajectory process_trajectory_plan(const carma_planning_msgs::msg::TrajectoryPlan& tp, double vehicle_response_lag )
+        {
+            RCLCPP_DEBUG_STREAM(rclcpp::get_logger(BASIC_AUTONOMY_LOGGER), "Processing latest TrajectoryPlan message");
 
-    }
-}
+            std::vector<double> times;
+            std::vector<double> downtracks;
+
+            std::vector<carma_planning_msgs::msg::TrajectoryPlanPoint> trajectory_points = tp.trajectory_points;
+
+            RCLCPP_DEBUG_STREAM(rclcpp::get_logger(BASIC_AUTONOMY_LOGGER), "Original Trajectory size:"<<trajectory_points.size());
+
+
+            trajectory_utils::conversions::trajectory_to_downtrack_time(trajectory_points, &downtracks, &times);
+
+            //detect stopping case
+            size_t stopping_index = 0;
+            for (size_t i = 1; i < times.size(); i++)
+            {
+                if (times[i] == times[i - 1]) //if exactly same, it is stopping case
+                {
+                    RCLCPP_DEBUG_STREAM(rclcpp::get_logger(BASIC_AUTONOMY_LOGGER), "Detected a stopping case where times is exactly equal: " << times[i-1]);
+                    RCLCPP_DEBUG_STREAM(rclcpp::get_logger(BASIC_AUTONOMY_LOGGER), "And index of that is: " << i << ", where size is: " << times.size());
+                    stopping_index = i;
+                    break;
+                }
+            }
+
+            std::vector<double> speeds;
+            trajectory_utils::conversions::time_to_speed(downtracks, times, tp.initial_longitudinal_velocity, &speeds);
+
+            if (speeds.size() != trajectory_points.size())
+            {
+                throw std::invalid_argument("Speeds and trajectory points sizes do not match");
+            }
+
+            for (size_t i = 0; i < speeds.size(); i++) { // Ensure 0 is min speed
+                if (stopping_index != 0 && i >= stopping_index - 1)
+                {
+                    speeds[i] = 0.0;  //stopping case
+                }
+                else
+                {
+                    speeds[i] = std::max(0.0, speeds[i]);
+                }
+            }
+
+            std::vector<double> lag_speeds;
+            lag_speeds = apply_response_lag(speeds, downtracks, vehicle_response_lag); // This call requires that the first speed point be current speed to work as expected
+                
+            autoware_auto_msgs::msg::Trajectory autoware_trajectory;
+            autoware_trajectory.header = tp.header;
+            RCLCPP_DEBUG_STREAM(rclcpp::get_logger(BASIC_AUTONOMY_LOGGER), "size: " << trajectory_points.size());
+            
+            auto max_size = std::min(99, (int)trajectory_points.size());  //NOTE: more than this size autoware auto raises exception with "Exceeded upper bound while in ACTIVE state."
+                                                                            //large portion of the points are not needed anyways 
+            for (int i = 0; i < max_size; i++)
+            {
+                autoware_auto_msgs::msg::TrajectoryPoint autoware_point;
+
+                autoware_point.x = trajectory_points[i].x;
+                autoware_point.y = trajectory_points[i].y;
+                autoware_point.longitudinal_velocity_mps = lag_speeds[i];
+
+                autoware_point.time_from_start = rclcpp::Duration(times[i] * 1e9);
+                RCLCPP_DEBUG_STREAM(rclcpp::get_logger(BASIC_AUTONOMY_LOGGER), "Setting waypoint idx: " << i <<", with planner: << " << trajectory_points[i].planner_plugin_name << ", x: " << trajectory_points[i].x << 
+                                        ", y: " << trajectory_points[i].y <<
+                                        ", speed: " << lag_speeds[i]* 2.23694 << "mph");
+                autoware_trajectory.points.push_back(autoware_point);
+            }
+
+            return autoware_trajectory;
+        }
+
+        
+        std::vector<double> apply_response_lag(const std::vector<double>& speeds, const std::vector<double> downtracks, double response_lag) 
+        { // Note first speed is assumed to be vehicle speed
+            if (speeds.size() != downtracks.size()) {
+                throw std::invalid_argument("Speed list and downtrack list are not the same size.");
+            }
+
+            std::vector<double> output;
+            if (speeds.empty()) {
+                return output;
+            }
+
+            double lookahead_distance = speeds[0] * response_lag;
+
+            double downtrack_cutoff = downtracks[0] + lookahead_distance;
+            size_t lookahead_count = std::lower_bound(downtracks.begin(),downtracks.end(), downtrack_cutoff) - downtracks.begin(); // Use binary search to find lower bound cutoff point
+            output = trajectory_utils::shift_by_lookahead(speeds, (unsigned int) lookahead_count);
+            return output;
+        }
+    } // namespace waypoint_generation
+
+} // basic_autonomy
