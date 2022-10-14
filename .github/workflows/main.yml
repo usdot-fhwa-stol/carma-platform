@@ -52,7 +52,7 @@ jobs:
       uses: peaceiris/actions-gh-pages@v3
       with:
         deploy_key: ${{ secrets.ACTIONS_DEPLOY_KEY }}
-        external_repository: SaikrishnaBairamoni/StolDocumentation
+        external_repository: usdot-fhwa-stol/documentation
         publish_branch: gh-pages
         # default: gh-pages
         publish_dir: ./docs/html/
