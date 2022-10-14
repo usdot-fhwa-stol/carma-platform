@@ -653,8 +653,8 @@ void LCIStrategicPlugin::planWhenAPPROACHING(const cav_srvs::PlanManeuversReques
       if (pair.second == lanelet::CarmaTrafficSignalState::PROTECTED_MOVEMENT_ALLOWED && 
         lanelet::time::timeFromSec(nearest_green_entry_time.toSec()) < pair.first ) 
       {
-        nearest_green_entry_time = get_nearest_green_entry_time(current_state.stamp, earliest_entry_time, traffic_light) 
-                                          + ros::Duration(0.01);
+        //nearest_green_entry_time = get_nearest_green_entry_time(current_state.stamp, earliest_entry_time, traffic_light) 
+        //                                  + ros::Duration(0.01);
         ROS_DEBUG_STREAM("ET is inside the green signal!");
         is_entry_time_within_future_events = true;
         break;
@@ -953,7 +953,7 @@ void LCIStrategicPlugin::mobilityOperationCb(const cav_msgs::MobilityOperationCo
     ROS_DEBUG_STREAM("Received Schedule message with id: " << msg->m_header.plan_id);
     approaching_light_controlled_intersection_ = true;
     ROS_DEBUG_STREAM("Approaching light Controlled Intersection: " << approaching_light_controlled_intersection_);
-
+  
     if (msg->m_header.recipient_id == config_.vehicle_id)
     {
       street_msg_timestamp_ = msg->m_header.timestamp;
