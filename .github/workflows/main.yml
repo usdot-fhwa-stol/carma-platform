@@ -55,5 +55,5 @@ jobs:
         external_repository: usdot-fhwa-stol/documentation
         publish_branch: gh-pages
         # default: gh-pages
-        publish_dir: ./docs/html/
+        publish_dir: ./html/
         destination_dir: ${{ github.event.repository.name }}
