@@ -1,7 +1,0 @@
-version: 2
-jobs:
-  build:
-    docker:
-      - image: ubuntu:latest
-    steps:
-      - run: echo Skipping gh-pages build
