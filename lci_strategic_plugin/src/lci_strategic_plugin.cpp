@@ -657,7 +657,7 @@ void LCIStrategicPlugin::planWhenAPPROACHING(const cav_srvs::PlanManeuversReques
         //nearest_green_entry_time = get_nearest_green_entry_time(current_state.stamp, earliest_entry_time, traffic_light) 
         //                                  + ros::Duration(0.01);
         ROS_DEBUG_STREAM("ET is inside the available future events! where starting time: " << std::to_string(lanelet::time::toSec(traffic_light->recorded_start_time_stamps[i])) 
-          << "ending time of that green signal is: " << std::to_string(lanelet::time::toSec(pair.first)));
+          << ", ending time of that green signal is: " << std::to_string(lanelet::time::toSec(pair.first)));
         is_entry_time_within_future_events = true;
         break;
       }
