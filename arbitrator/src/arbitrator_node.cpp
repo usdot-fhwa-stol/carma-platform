@@ -86,7 +86,7 @@ namespace arbitrator
             wm_ );
         
         
-        carma_ros2_utils::SubPtr<geometry_msgs::msg::TwistStamped> twist_sub = create_subscription<geometry_msgs::msg::TwistStamped>("current_velocity", 1, std::bind(&Arbitrator::twist_cb, arbitrator_.get(), std::placeholders::_1));
+        twist_sub_ = create_subscription<geometry_msgs::msg::TwistStamped>("current_velocity", 1, std::bind(&Arbitrator::twist_cb, arbitrator_.get(), std::placeholders::_1));
 
         arbitrator_->initializeBumperTransformLookup();
 
