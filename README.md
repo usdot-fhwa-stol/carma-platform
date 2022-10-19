@@ -22,7 +22,7 @@ CARMA Platform provides the navigation and guidance functions for its host vehic
 
 ![CARMA Demo](docs/image/CARMA2_Platooning_from_Office.jpg)
 
-Documentation of the setup, operation, and design of the CARMA Platform can be found on the project [Confluence](https://usdot-carma.atlassian.net/wiki/spaces/CRMPLT/) pages. 
+Documentation of the setup, operation, and design of the CARMA Platform can be found on the project [Confluence](https://usdot-carma.atlassian.net/wiki/spaces/CRMPLT/) pages. Additional documentation can be found on the [Doxygen Source Code Documentation page](https://usdot-fhwa-stol.github.io/documentation/carma-platform/).
 
 <!-- We would like to publish this section, but are not ready to at this time:
 ## System Specifications
