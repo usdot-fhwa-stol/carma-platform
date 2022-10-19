@@ -214,7 +214,7 @@ def generate_launch_description():
                 parameters=[
                     guidance_param_file
                 ]
-            )
+            ),
             #ComposableNode(
             #    package='port_drayage_plugin',
             #    plugin='port_drayage_plugin::PortDrayagePlugin',
@@ -236,18 +236,18 @@ def generate_launch_description():
             #        vehicle_characteristics_param_file
             #    ]     
             #),
-            #ComposableNode(
-            #    package='trajectory_visualizer',
-            #    plugin='trajectory_visualizer::TrajectoryVisualizer',
-            #    name='trajectory_visualizer_node',
-            #    extra_arguments=[
-            #        {'use_intra_process_comms': True}, 
-            #        {'--log-level' : GetLogLevel('trajectory_visualizer', env_log_levels) }
-            #    ],
-            #    parameters=[
-            #        trajectory_visualizer_param_file
-            #    ]
-            #) 
+            ComposableNode(
+                package='trajectory_visualizer',
+                plugin='trajectory_visualizer::TrajectoryVisualizer',
+                name='trajectory_visualizer_node',
+                extra_arguments=[
+                    {'use_intra_process_comms': True}, 
+                    {'--log-level' : GetLogLevel('trajectory_visualizer', env_log_levels) }
+                ],
+                parameters=[
+                    trajectory_visualizer_param_file
+                ]
+            ) 
 
         ]
     )

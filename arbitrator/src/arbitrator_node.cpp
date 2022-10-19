@@ -100,7 +100,7 @@ namespace arbitrator
                                 [this]() {this->arbitrator_->bumper_pose_cb();});
         
         arbitrator_run_ = create_timer(get_clock(),
-                                std::chrono::duration<double>(1/config_.planning_frequency),
+                                std::chrono::duration<double>(1/(config_.planning_frequency * 2 )), //there is waiting state between each planning state
                                 [this]() {this->arbitrator_->run();});
         RCLCPP_INFO_STREAM(rclcpp::get_logger("arbitrator"), "Arbitrator started, beginning arbitrator state machine.");
         return CallbackReturn::SUCCESS;

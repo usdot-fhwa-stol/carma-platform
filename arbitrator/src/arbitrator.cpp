@@ -152,12 +152,6 @@ namespace arbitrator
 
     void Arbitrator::waiting_state()
     {
-        // Sleep in 100ms increments until our next planning cycle
-        // This ensures we spin() at least a few times
-        while (nh_->get_clock()->now() < next_planning_process_start_)
-        {
-            std::this_thread::sleep_for(std::chrono::milliseconds(100));
-        }
         RCLCPP_INFO_STREAM(nh_->get_logger(), "Arbitrator transitioning from WAITING to PLANNING state.");
         sm_->submit_event(ArbitratorEvent::PLANNING_TIMER_TRIGGER);
     }

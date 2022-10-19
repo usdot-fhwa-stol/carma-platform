@@ -633,7 +633,10 @@ void LCIStrategicPlugin::planWhenAPPROACHING(const cav_srvs::PlanManeuversReques
           auto nearest_green_signal_start_time_testing = lanelet::time::toSec(traffic_light->recorded_start_time_stamps[i]);
           
           if (cached_testing_enter_time_ - (scheduled_enter_time_)/1000.0 < nearest_green_signal_start_time_testing) // if the green signal start time changed, update
+          {
+            nearest_green_entry_time_cached_ = boost::none;
             cached_testing_enter_time_ =  nearest_green_signal_start_time_testing + (scheduled_enter_time_)/1000.0;
+          }
           
           nearest_green_entry_time = ros::Time(std::max(earliest_entry_time.toSec(), cached_testing_enter_time_)) + ros::Duration(0.01); //Carma Street 
 
@@ -733,7 +736,7 @@ void LCIStrategicPlugin::planWhenAPPROACHING(const cav_srvs::PlanManeuversReques
 
       if (early_arrival_time_green_et.toSec() - nearest_green_signal_start_time.toSec() < config_.green_light_time_buffer)
       {
-        nearest_green_entry_time_cached_ = nearest_green_signal_start_time + ros::Duration(config_.green_light_time_buffer);
+        nearest_green_entry_time_cached_ = nearest_green_signal_start_time + ros::Duration(config_.green_light_time_buffer + 0.01); 
       }
       else
       {
