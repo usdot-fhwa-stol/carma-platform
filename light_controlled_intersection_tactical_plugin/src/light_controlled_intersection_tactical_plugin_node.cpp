@@ -120,7 +120,7 @@ namespace light_controlled_intersection_tactical_plugin
     RCLCPP_INFO_STREAM(get_logger(), "Loaded params: " << config_);
 
     // Initialize worker object
-    worker_ = std::make_shared<LightControlledIntersectionTacticalPlugin>(get_world_model(), config_, get_node_logging_interface());
+    worker_ = std::make_shared<LightControlledIntersectionTacticalPlugin>(get_world_model(), config_, get_plugin_name(), get_node_logging_interface());
 
     // Return success if everything initialized successfully
     return CallbackReturn::SUCCESS;

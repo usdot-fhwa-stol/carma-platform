@@ -145,7 +145,8 @@ def generate_launch_description():
                     {'--log-level' : GetLogLevel('j2735_convertor', env_log_levels) }
                 ],
                 remappings=[
-                    ("outgoing_bsm", "bsm_outbound" )                    
+                    ("outgoing_bsm", "bsm_outbound" )
+                   #("incoming_mobility_operation", "incoming_mobility_operation_actual" )
                 ],
             ),
         ]

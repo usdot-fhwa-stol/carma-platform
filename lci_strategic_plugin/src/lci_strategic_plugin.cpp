@@ -306,7 +306,7 @@ void LCIStrategicPlugin::handleCruisingUntilStop(const cav_srvs::PlanManeuversRe
   std::vector<lanelet::ConstLanelet> lane_follow_crossed_lanelets =
       getLaneletsBetweenWithException(new_ts_params.x1_, new_ts_params.x2_, true, true);
 
-  resp.new_plan.maneuvers.push_back(composeTrajectorySmoothingManeuverMessage(current_state.downtrack, traffic_light_down_track, lane_follow_crossed_lanelets, 
+  resp.new_plan.maneuvers.push_back(composeTrajectorySmoothingManeuverMessage(current_state.downtrack, new_ts_params.x2_, lane_follow_crossed_lanelets, 
                                           current_state_speed, new_ts_params.v2_, current_state.stamp, ros::Time(new_ts_params.t2_), new_ts_params));
 
   // Identify the lanelets which will be crossed by approach maneuvers stopping part
@@ -316,7 +316,7 @@ void LCIStrategicPlugin::handleCruisingUntilStop(const cav_srvs::PlanManeuversRe
   resp.new_plan.maneuvers.push_back(composeStopAndWaitManeuverMessage(
     new_ts_params.x2_, traffic_light_down_track, new_ts_params.v2_, case_8_crossed_lanelets.front().id(),
     case_8_crossed_lanelets.back().id(), ros::Time(new_ts_params.t2_),
-    current_state.stamp + ros::Duration(config_.min_maneuver_planning_period), decel_rate));
+    ros::Time(new_ts_params.t2_) + ros::Duration(config_.min_maneuver_planning_period), decel_rate));
 
   case_num_ = TSCase::CASE_8;
 

@@ -44,7 +44,7 @@ namespace light_controlled_intersection_tactical_plugin
 
         std::vector<PointSpeedPair> points_and_target_speeds;
 
-        auto lci_tactical = LightControlledIntersectionTacticalPlugin(wm, config, lci_node->get_node_logging_interface());
+        auto lci_tactical = LightControlledIntersectionTacticalPlugin(wm, config, "", lci_node->get_node_logging_interface());
     
         TrajectoryParams tp;
         tp.v1_ = 1.0;
@@ -140,7 +140,7 @@ namespace light_controlled_intersection_tactical_plugin
 
         std::vector<PointSpeedPair> points_and_target_speeds;
 
-        auto lci_tactical = LightControlledIntersectionTacticalPlugin(wm, config, lci_node->get_node_logging_interface());
+        auto lci_tactical = LightControlledIntersectionTacticalPlugin(wm, config, "", lci_node->get_node_logging_interface());
         
         carma_planning_msgs::msg::Maneuver maneuver_msg;
         maneuver_msg.type = carma_planning_msgs::msg::Maneuver::LANE_FOLLOWING;
@@ -219,7 +219,7 @@ namespace light_controlled_intersection_tactical_plugin
         Config config;
         config.minimum_speed = 1;
 
-        auto lci_tactical = LightControlledIntersectionTacticalPlugin(wm, config, lci_node->get_node_logging_interface());
+        auto lci_tactical = LightControlledIntersectionTacticalPlugin(wm, config, "", lci_node->get_node_logging_interface());
         
         carma_planning_msgs::msg::Maneuver maneuver_msg;
         maneuver_msg.type = carma_planning_msgs::msg::Maneuver::LANE_FOLLOWING;
@@ -301,7 +301,7 @@ namespace light_controlled_intersection_tactical_plugin
         config.minimum_speed = 1;
         config.default_downsample_ratio = 1;
 
-        auto lci_tactical = LightControlledIntersectionTacticalPlugin(wm, config, lci_node->get_node_logging_interface());
+        auto lci_tactical = LightControlledIntersectionTacticalPlugin(wm, config, "", lci_node->get_node_logging_interface());
         
         carma_planning_msgs::msg::Maneuver maneuver_msg;
         maneuver_msg.type = carma_planning_msgs::msg::Maneuver::LANE_FOLLOWING;

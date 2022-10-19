@@ -19,9 +19,9 @@ namespace light_controlled_intersection_tactical_plugin
 {
 
 
-    LightControlledIntersectionTacticalPlugin::LightControlledIntersectionTacticalPlugin(carma_wm::WorldModelConstPtr wm, const Config& config,
+    LightControlledIntersectionTacticalPlugin::LightControlledIntersectionTacticalPlugin(carma_wm::WorldModelConstPtr wm, const Config& config, const std::string& plugin_name, 
         rclcpp::node_interfaces::NodeLoggingInterface::SharedPtr logger)
-        :wm_(wm), config_(config), logger_(logger)
+        :wm_(wm), config_(config), plugin_name_(plugin_name), logger_(logger)
     {
     }
 
@@ -124,7 +124,7 @@ namespace light_controlled_intersection_tactical_plugin
 
         // Set the planning plugin field name
         for (auto& p : trajectory.trajectory_points) {
-            p.planner_plugin_name = plugin_discovery_msg_.name;
+            p.planner_plugin_name = plugin_name_;
         }
         
         bool is_new_case_successful = GET_MANEUVER_PROPERTY(maneuver_plan.front(), parameters.int_valued_meta_data[1]);
@@ -164,7 +164,7 @@ namespace light_controlled_intersection_tactical_plugin
         if (is_last_case_successful_ != boost::none && last_case_ != boost::none
             && last_case_.get() == new_case
             && is_new_case_successful == true
-            && !last_trajectory_.trajectory_points.empty()
+            && last_trajectory_.trajectory_points.size() >= 2
             && rclcpp::Time(last_trajectory_.trajectory_points.back().target_time) > rclcpp::Time(req->header.stamp) + rclcpp::Duration(1 * 1e9)) // Duration is in nanoseconds
         {
             resp->trajectory_plan = last_trajectory_;
@@ -176,7 +176,7 @@ namespace light_controlled_intersection_tactical_plugin
             && is_new_case_successful == false
             && last_successful_ending_downtrack_ - current_downtrack_ < config_.algorithm_evaluation_distance
             && last_successful_scheduled_entry_time_ - rclcpp::Time(req->header.stamp).seconds() < config_.algorithm_evaluation_period
-            && !last_trajectory_.trajectory_points.empty()
+            && last_trajectory_.trajectory_points.size() >= 2
             && rclcpp::Time(last_trajectory_.trajectory_points.back().target_time).seconds() > rclcpp::Time(req->header.stamp).seconds())
         {
             resp->trajectory_plan = last_trajectory_;
