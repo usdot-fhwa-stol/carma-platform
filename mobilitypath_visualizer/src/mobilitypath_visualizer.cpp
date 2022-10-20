@@ -63,7 +63,7 @@ namespace mobilitypath_visualizer {
 
         get_parameter("vehicle_id", config_.host_id);
 
-        RCLCPP_INFO_STREAM(get_logger(), "Loaded params "<< config_);
+        RCLCPP_ERROR_STREAM(get_logger(), "Loaded params "<< config_);
 
         // init publishers
         host_marker_pub_ = create_publisher<visualization_msgs::msg::MarkerArray>("host_marker", 1);
@@ -102,17 +102,30 @@ namespace mobilitypath_visualizer {
 
         // publish host marker
         host_marker_pub_->publish(host_marker_);
-        
-        cav_markers_ = matchTrajectoryTimestamps(host_marker_, cav_markers_);
 
-        for (auto const &marker: cav_markers_)
+        try
         {
-            cav_marker_pub_->publish(marker);
-        }
+               
+            cav_markers_ = matchTrajectoryTimestamps(host_marker_, cav_markers_);
 
-        // publish label
-        label_marker_ = composeLabelMarker(host_marker_, cav_markers_);
-        label_marker_pub_->publish(label_marker_);
+            for (auto const &marker: cav_markers_)
+            {
+                cav_marker_pub_->publish(marker);
+            }
+
+            // publish label
+            label_marker_ = composeLabelMarker(host_marker_, cav_markers_);
+            label_marker_pub_->publish(label_marker_);
+        }
+        catch(const std::exception& e)
+        {
+            RCLCPP_ERROR_STREAM(get_logger(), "3: Most likely matchTrayjectory Failed!!!");;
+            
+            std::cerr << e.what() << '\n';
+        }
+        
+        RCLCPP_ERROR_STREAM(get_logger(), "Ttimer call back ending");;
+     
         
     }
 
@@ -123,41 +136,73 @@ namespace mobilitypath_visualizer {
     
     void MobilityPathVisualizer::callbackMobilityPath(carma_v2x_msgs::msg::MobilityPath::UniquePtr msg)
     {
+        try
+        {
+            RCLCPP_ERROR_STREAM(get_logger(), "Received a msg from sender: " << msg->m_header.sender_id << ", and plan id:" << msg->m_header.plan_id << ", for receiver:" 
+                            << msg->m_header.recipient_id << ", time:" << msg->m_header.timestamp << ", at now: " << std::to_string(this->now().seconds()));
+
+            if (latest_cav_mob_path_msg_.find(msg->m_header.sender_id) != latest_cav_mob_path_msg_.end() &&
+                msg->m_header.plan_id.compare(latest_cav_mob_path_msg_[msg->m_header.sender_id].m_header.plan_id) == 0 &&
+                msg->m_header.timestamp == latest_cav_mob_path_msg_[msg->m_header.sender_id].m_header.timestamp)
+            {
+                RCLCPP_ERROR_STREAM(get_logger(), "Already received this plan id:" << msg->m_header.plan_id << "from sender_id: " << msg->m_header.sender_id);
+                return;
+            }
+            latest_cav_mob_path_msg_[msg->m_header.sender_id] = *msg;
+
+            if (!map_projector_) {
+                RCLCPP_ERROR(get_logger(), "Cannot visualize mobility path as map projection not yet available");
+                return;
+            }
+
+        }
+        catch(const std::exception& e)
+        {
+            RCLCPP_ERROR_STREAM(get_logger(), "0: PRERUNNING IS FAILING!!!!");
+            
+            std::cerr << e.what() << '\n';
+        }
+
         if (msg->m_header.timestamp == 0) //if empty
         {
             host_marker_received_ = false;
             return;
         } 
-        RCLCPP_DEBUG_STREAM(get_logger(), "Received a msg from sender: " << msg->m_header.sender_id << ", and plan id:" << msg->m_header.plan_id << ", for receiver:" 
-                            << msg->m_header.recipient_id << ", time:" << msg->m_header.timestamp << ", at now: " << std::to_string(this->now().seconds()));
-
-        if (latest_cav_mob_path_msg_.find(msg->m_header.sender_id) != latest_cav_mob_path_msg_.end() &&
-            msg->m_header.plan_id.compare(latest_cav_mob_path_msg_[msg->m_header.sender_id].m_header.plan_id) == 0 &&
-            msg->m_header.timestamp == latest_cav_mob_path_msg_[msg->m_header.sender_id].m_header.timestamp)
-        {
-            RCLCPP_DEBUG_STREAM(get_logger(), "Already received this plan id:" << msg->m_header.plan_id << "from sender_id: " << msg->m_header.sender_id);
-            return;
-        }
-        latest_cav_mob_path_msg_[msg->m_header.sender_id] = *msg;
-
-        if (!map_projector_) {
-            RCLCPP_DEBUG(get_logger(), "Cannot visualize mobility path as map projection not yet available");
-            return;
-        }
-
+      
         MarkerColor cav_color;
         if (msg->m_header.sender_id.compare(config_.host_id) == 0)
         {
             cav_color.green = 1.0;
-            host_marker_ = composeVisualizationMarker(*msg,cav_color);
-            host_marker_received_ = true;
-            RCLCPP_DEBUG_STREAM(get_logger(), "Composed host marker successfuly!");
+            try
+            {
+                host_marker_ = composeVisualizationMarker(*msg,cav_color);
+                host_marker_received_ = true;
+            }
+            catch(const std::exception& e)
+            {
+                RCLCPP_ERROR_STREAM(get_logger(), "1: HOST MARKER PRINTING FAILED!!!!");
+                
+                std::cerr << e.what() << '\n';
+            }
+            
+           
+            RCLCPP_ERROR_STREAM(get_logger(), "Composed host marker successfuly!");
         }
         else
         {
-            cav_color.blue = 1.0;
-            cav_markers_.push_back(composeVisualizationMarker(*msg,cav_color));
-            RCLCPP_DEBUG_STREAM(get_logger(), "Composed cav marker successfuly! with sender_id: " << msg->m_header.sender_id);
+            try
+            {
+                cav_color.blue = 1.0;
+                cav_markers_.push_back(composeVisualizationMarker(*msg,cav_color));
+            }
+            catch(const std::exception& e)
+            {
+                RCLCPP_ERROR_STREAM(get_logger(), "1: CAV MARKER PRINTING FAILED!!!!");
+                
+                std::cerr << e.what() << '\n';
+            }
+            
+            RCLCPP_ERROR_STREAM(get_logger(), "Composed cav marker successfuly! with sender_id: " << msg->m_header.sender_id);
         }
 
     }
@@ -199,9 +244,9 @@ namespace mobilitypath_visualizer {
         }
         else
         {
-            RCLCPP_DEBUG_STREAM(get_logger(), "ECEF point x: " << curr_location_msg.trajectory.location.ecef_x << ", y:" << curr_location_msg.trajectory.location.ecef_y);
+            RCLCPP_ERROR_STREAM(get_logger(), "ECEF point x: " << curr_location_msg.trajectory.location.ecef_x << ", y:" << curr_location_msg.trajectory.location.ecef_y);
             arrow_start = ECEFToMapPoint(curr_location_msg.trajectory.location); //also convert from cm to m
-            RCLCPP_DEBUG_STREAM(get_logger(), "Map point x: " << arrow_start.x << ", y:" << arrow_start.y);
+            RCLCPP_ERROR_STREAM(get_logger(), "Map point x: " << arrow_start.x << ", y:" << arrow_start.y);
             
             curr_location_msg.trajectory.location.ecef_x += + msg.trajectory.offsets[0].offset_x;
             curr_location_msg.trajectory.location.ecef_y += + msg.trajectory.offsets[0].offset_y;
@@ -229,9 +274,9 @@ namespace mobilitypath_visualizer {
             }
 
             marker.points = {};
-            RCLCPP_DEBUG_STREAM(get_logger(), "ECEF Point- DEBUG x: " << curr_location_msg.trajectory.location.ecef_x << ", y:" << curr_location_msg.trajectory.location.ecef_y);
+            RCLCPP_ERROR_STREAM(get_logger(), "ECEF Point- DEBUG x: " << curr_location_msg.trajectory.location.ecef_x << ", y:" << curr_location_msg.trajectory.location.ecef_y);
             arrow_start = ECEFToMapPoint(curr_location_msg.trajectory.location); //convert from cm to m
-            RCLCPP_DEBUG_STREAM(get_logger(), "Map Point- DEBUG x: " << arrow_start.x << ", y:" << arrow_start.y);
+            RCLCPP_ERROR_STREAM(get_logger(), "Map Point- DEBUG x: " << arrow_start.x << ", y:" << arrow_start.y);
 
             curr_location_msg.trajectory.location.ecef_x += msg.trajectory.offsets[i].offset_x;
             curr_location_msg.trajectory.location.ecef_y += msg.trajectory.offsets[i].offset_y;
@@ -243,8 +288,8 @@ namespace mobilitypath_visualizer {
 
             output.markers.push_back(marker);
         }
-        RCLCPP_DEBUG_STREAM(get_logger(), "Last ECEF Point- DEBUG x: " << curr_location_msg.trajectory.location.ecef_x << ", y:" << curr_location_msg.trajectory.location.ecef_y);
-        RCLCPP_DEBUG_STREAM(get_logger(), "Last Map Point- DEBUG x: " << arrow_end.x << ", y:" << arrow_end.y);
+        RCLCPP_ERROR_STREAM(get_logger(), "Last ECEF Point- DEBUG x: " << curr_location_msg.trajectory.location.ecef_x << ", y:" << curr_location_msg.trajectory.location.ecef_y);
+        RCLCPP_ERROR_STREAM(get_logger(), "Last Map Point- DEBUG x: " << arrow_end.x << ", y:" << arrow_end.y);
         prev_marker_list_size_[msg.m_header.sender_id] = msg.trajectory.offsets.size();
         
         return output;
@@ -269,6 +314,7 @@ namespace mobilitypath_visualizer {
 
     visualization_msgs::msg::MarkerArray MobilityPathVisualizer::composeLabelMarker(const visualization_msgs::msg::MarkerArray& host_marker, const std::vector<visualization_msgs::msg::MarkerArray>& cav_markers) const
     {
+        RCLCPP_ERROR_STREAM(get_logger(), "composeLabelMarker starting ");
         visualization_msgs::msg::MarkerArray output;
         visualization_msgs::msg::Marker marker;
         marker.header.frame_id = "map";
@@ -327,12 +373,18 @@ namespace mobilitypath_visualizer {
                 output.markers.push_back(marker);
             }
         }
+        RCLCPP_ERROR_STREAM(get_logger(), "composeLabelMarker ending ");
+
         return output;
     }
 
     std::vector<visualization_msgs::msg::MarkerArray> MobilityPathVisualizer::matchTrajectoryTimestamps(const visualization_msgs::msg::MarkerArray& host_marker, 
                                                                     const std::vector<visualization_msgs::msg::MarkerArray>& cav_markers) const
     {
+        RCLCPP_ERROR_STREAM(get_logger(), "mathTrajectoryTimestamps starting cav_markers.size(): " << cav_markers.size());
+        if (host_marker.markers.empty() || host_marker.markers[0].action == visualization_msgs::msg::Marker::DELETE)
+            return cav_markers;
+        
         std::vector<visualization_msgs::msg::MarkerArray> synchronized_output;
         for (auto const& curr_cav: cav_markers)
         {
@@ -341,14 +393,21 @@ namespace mobilitypath_visualizer {
             double time_step = 0.1;
             // although it is very rare to reach here
             // we do not need to visualize other car that starts "in the future", so skip
-            if (rclcpp::Time(curr_cav.markers[0].header.stamp) > rclcpp::Time(host_marker.markers[0].header.stamp))
+            RCLCPP_ERROR_STREAM(get_logger(), "1 curr_idx: " << curr_idx);
+
+            if (rclcpp::Time(curr_cav.markers[0].header.stamp) > rclcpp::Time(host_marker.markers[0].header.stamp) || 
+            curr_cav.markers[0].action == visualization_msgs::msg::Marker::DELETE)
             {
                 continue;
             }
             // this marker is outdated, drop
+            RCLCPP_ERROR_STREAM(get_logger(), "2 curr_idx: " << curr_idx);
+
             rclcpp::Time curr_cav_marker_stamp(curr_cav.markers.back().header.stamp);
             rclcpp::Time host_marker_stamp(host_marker.markers[0].header.stamp);
             
+            RCLCPP_ERROR_STREAM(get_logger(), "3 curr_idx: " << curr_idx);
+
             if (curr_cav_marker_stamp + rclcpp::Duration(time_step * 1e9) < host_marker_stamp){
                 continue;
             }
@@ -359,18 +418,30 @@ namespace mobilitypath_visualizer {
                 curr_idx++;
             }
             
+            RCLCPP_ERROR_STREAM(get_logger(), "4 curr_idx: " << curr_idx);
+
+
             curr_idx -= 1; // carma_v2x_msg stamp is before that of host now
             // interpolate position to match the starting time (dt < time_step)
+            if (curr_idx < 0 )
+                curr_idx = 0;
+                
             double dt = (rclcpp::Time(host_marker.markers[0].header.stamp) - rclcpp::Time(curr_cav.markers[curr_idx].header.stamp)).seconds();
             
+            RCLCPP_ERROR_STREAM(get_logger(), "6 curr_idx: " << curr_idx);
+
             rclcpp::Time curr_time(host_marker.markers[0].header.stamp);
             
             // only update start_point of each arrow type marker for now
 
             while (curr_idx < curr_cav.markers.size())
             {
+                RCLCPP_ERROR_STREAM(get_logger(), "7 curr_idx: " << curr_idx << ", curr_cav.markers[curr_idx].points.size():" << curr_cav.markers[curr_idx].points.size());
+                if (curr_cav.markers[curr_idx].action == visualization_msgs::msg::Marker::DELETE)
+                    break;
+
                 visualization_msgs::msg::Marker curr_marker = curr_cav.markers[curr_idx]; //copy static info
-                if (dt != 0.0) // if not already synchronized
+                if (dt != 0.0 && !curr_cav.markers[curr_idx].points.empty()) // if not already synchronized
                 {
                     double dx = (curr_cav.markers[curr_idx].points[1].x - curr_cav.markers[curr_idx].points[0].x)/time_step * dt;
                     double dy = (curr_cav.markers[curr_idx].points[1].y - curr_cav.markers[curr_idx].points[0].y)/time_step * dt;
@@ -389,27 +460,40 @@ namespace mobilitypath_visualizer {
 
             curr_idx = 0; // resetting idx to work on new, synchronized list
 
+            
             // update end_point of each arrow type marker, except that of last point
             while (curr_idx < synchronized_marker_array.markers.size()-1)
             {
-                synchronized_marker_array.markers[curr_idx].points[1] = synchronized_marker_array.markers[curr_idx + 1].points[0];
+                RCLCPP_ERROR_STREAM(get_logger(), "8 curr_idx: " << curr_idx << ", curr_cav.markers[curr_idx].points.size():" << synchronized_marker_array.markers[curr_idx].points.size());
+                if (curr_cav.markers[curr_idx].action == visualization_msgs::msg::Marker::DELETE)
+                    break;
+                    
+                if (!synchronized_marker_array.markers[curr_idx].points.empty())
+                    synchronized_marker_array.markers[curr_idx].points[1] = synchronized_marker_array.markers[curr_idx + 1].points[0];
                 curr_idx ++;
             }
 
-            // extrapolate the last point just to conform with 0.1s interval between points
-            double dx = (synchronized_marker_array.markers[curr_idx].points[1].x - synchronized_marker_array.markers[curr_idx].points[0].x)/(time_step - dt) * time_step;
-            double dy = (synchronized_marker_array.markers[curr_idx].points[1].y - synchronized_marker_array.markers[curr_idx].points[0].y)/(time_step - dt) * time_step;
-            double dz = (synchronized_marker_array.markers[curr_idx].points[1].z - synchronized_marker_array.markers[curr_idx].points[0].z)/(time_step - dt) * time_step;
+            if (!synchronized_marker_array.markers[curr_idx].points.empty())
+            {
+                // extrapolate the last point just to conform with 0.1s interval between points
+                double dx = (synchronized_marker_array.markers[curr_idx].points[1].x - synchronized_marker_array.markers[curr_idx].points[0].x)/(time_step - dt) * time_step;
+                double dy = (synchronized_marker_array.markers[curr_idx].points[1].y - synchronized_marker_array.markers[curr_idx].points[0].y)/(time_step - dt) * time_step;
+                double dz = (synchronized_marker_array.markers[curr_idx].points[1].z - synchronized_marker_array.markers[curr_idx].points[0].z)/(time_step - dt) * time_step;
 
-            synchronized_marker_array.markers[curr_idx].points[1].x = synchronized_marker_array.markers[curr_idx].points[0].x + dx; 
-            synchronized_marker_array.markers[curr_idx].points[1].y = synchronized_marker_array.markers[curr_idx].points[0].y + dy;
-            synchronized_marker_array.markers[curr_idx].points[1].z = synchronized_marker_array.markers[curr_idx].points[0].z + dz; 
+                synchronized_marker_array.markers[curr_idx].points[1].x = synchronized_marker_array.markers[curr_idx].points[0].x + dx; 
+                synchronized_marker_array.markers[curr_idx].points[1].y = synchronized_marker_array.markers[curr_idx].points[0].y + dy;
+                synchronized_marker_array.markers[curr_idx].points[1].z = synchronized_marker_array.markers[curr_idx].points[0].z + dz; 
 
+            }
+            
+            RCLCPP_ERROR_STREAM(get_logger(), "9 curr_idx: " << curr_idx << ", curr_cav.markers[curr_idx].points.size():" << synchronized_marker_array.markers[curr_idx].points.size());
 
             synchronized_output.push_back(synchronized_marker_array);
             
         }
 
+        RCLCPP_ERROR_STREAM(get_logger(), "mathTrajectoryTimestamps ending ");
+        
         return synchronized_output;
     }
 

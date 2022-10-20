@@ -120,25 +120,25 @@ def generate_launch_description():
                     vehicle_config_param_file
                 ]
             ),
-            #ComposableNode(
-            #    package='mobilitypath_visualizer',
-            #    plugin='mobilitypath_visualizer::MobilityPathVisualizer',
-            #    name='mobilitypath_visualizer_node',
-            #    extra_arguments=[
-            #        {'use_intra_process_comms': True}, 
-            #        {'--log-level' : GetLogLevel('mobilitypath_visualizer', env_log_levels) }
-            #    ],
-            #    remappings = [
-            #        ("mobility_path_msg", [ EnvironmentVariable('CARMA_MSG_NS', default_value=''), "/outgoing_mobility_path" ] ),
-            #        ("incoming_mobility_path", [ EnvironmentVariable('CARMA_MSG_NS', default_value=''), "/incoming_mobility_path" ] ),
-            #        ("georeference", [ EnvironmentVariable('CARMA_LOCZ_NS', default_value=''), "/map_param_loader/georeference"])
-            #    ],
-            #    parameters=[
-            #        vehicle_characteristics_param_file,
-            #        mobilitypath_visualizer_param_file,
-            #        vehicle_config_param_file
-            #    ]
-            #),
+            ComposableNode(
+                package='mobilitypath_visualizer',
+                plugin='mobilitypath_visualizer::MobilityPathVisualizer',
+                name='mobilitypath_visualizer_node',
+                extra_arguments=[
+                    {'use_intra_process_comms': True}, 
+                    {'--log-level' : GetLogLevel('mobilitypath_visualizer', env_log_levels) }
+                ],
+                remappings = [
+                    ("mobility_path_msg", [ EnvironmentVariable('CARMA_MSG_NS', default_value=''), "/outgoing_mobility_path" ] ),
+                    ("incoming_mobility_path", [ EnvironmentVariable('CARMA_MSG_NS', default_value=''), "/incoming_mobility_path" ] ),
+                    ("georeference", [ EnvironmentVariable('CARMA_LOCZ_NS', default_value=''), "/map_param_loader/georeference"])
+                ],
+                parameters=[
+                    vehicle_characteristics_param_file,
+                    mobilitypath_visualizer_param_file,
+                    vehicle_config_param_file
+                ]
+            ),
             ComposableNode(
                 package='trajectory_executor',
                 plugin='trajectory_executor::TrajectoryExecutor',

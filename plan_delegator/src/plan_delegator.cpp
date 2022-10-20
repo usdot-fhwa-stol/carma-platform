@@ -417,6 +417,7 @@ namespace plan_delegator
         // Loop through maneuver list to make service call to applicable Tactical Plugin
         while(current_maneuver_index < latest_maneuver_plan_.maneuvers.size())
         {
+            RCLCPP_DEBUG_STREAM(rclcpp::get_logger("plan_delegator"),"Trying to plan current_maneuver_index: " << current_maneuver_index);
             // const auto& maneuver = latest_maneuver_plan_.maneuvers[current_maneuver_index];
             auto& maneuver = latest_maneuver_plan_.maneuvers[current_maneuver_index];
 
@@ -508,6 +509,7 @@ namespace plan_delegator
                 // if one service call fails, it should end plan immediately because it is there is no point to generate plan with empty space
                 break;
             }
+            RCLCPP_DEBUG_STREAM(rclcpp::get_logger("plan_delegator"),"Ended the iteration. updated current_maneuver_index: " << current_maneuver_index);
         }
 
         return latest_trajectory_plan;

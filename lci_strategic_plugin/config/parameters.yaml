@@ -20,10 +20,10 @@ green_light_time_buffer : 1.0
 stop_light_time_buffer : 2.0
 
 # Double: Minimum allowable speed in trajectory smoothing algorithm m/s
-algo_minimum_speed : 0.89408
+algo_minimum_speed : 2.235
 
 # Double: Minimum allowable speed of the car m/s # not used
-absolute_minimum_speed : 0.89408
+absolute_minimum_speed : 2.235
 
 # Double: Safety multiplier of planned allowable vehicle deceleration to use when stopping. This new deceleration makes vehicle decelerate earlier distance.
 #         NOTE: Stacks on vehicle_decel_limit_multiplier and stopping uses max_decel; this distance is only used for calculating earlier downtrack
