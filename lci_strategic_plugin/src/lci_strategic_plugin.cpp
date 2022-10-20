@@ -888,11 +888,19 @@ void LCIStrategicPlugin::planWhenWAITING(const cav_srvs::PlanManeuversRequest& r
   ROS_DEBUG("traffic_light_down_track %f", traffic_light_down_track);
 
   double entering_time = current_state.stamp.toSec(); // uc2
+  if (config_.enable_carma_streets_connection){
+    if (street_msg_timestamp_ == 0)
+    {
+      entering_time = cached_testing_enter_time_; //testing
+    }
+    else
+    {
+      entering_time = scheduled_enter_time_/1000.0 + 0.01; // actual carma-streets
+    }
+  }
 
-  if (config_.enable_carma_streets_connection)
-    entering_time = cached_testing_enter_time_;
     
-  auto current_light_state_optional = traffic_light->predictState(lanelet::time::timeFromSec(cached_testing_enter_time_)); //todo
+  auto current_light_state_optional = traffic_light->predictState(lanelet::time::timeFromSec(entering_time)); //todo
 
   ROS_DEBUG_STREAM("WAITING STATE: requested time to check: " << std::to_string(req.header.stamp.toSec()));
   ROS_DEBUG_STREAM("WAITING STATE: requested time to CURRENT STATE check: " << std::to_string(entering_time));
@@ -1003,7 +1011,12 @@ void LCIStrategicPlugin::parseStrategyParams(const std::string& strategy_params)
 
   std::vector<std::string> et_parsed;
   boost::algorithm::split(et_parsed, inputsParams[0], boost::is_any_of(":"));
-  scheduled_enter_time_ = std::stoull(et_parsed[1]);
+  auto new_scheduled_enter_time = std::stoull(et_parsed[1]);
+
+  if (scheduled_enter_time_ != new_scheduled_enter_time) //reset green buffer cache so it can be re-evaluated
+    nearest_green_entry_time_cached_ = boost::none;
+
+  scheduled_enter_time_ = new_scheduled_enter_time;
   ROS_DEBUG_STREAM("scheduled_enter_time_: " << scheduled_enter_time_);
 
 }
