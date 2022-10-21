@@ -194,9 +194,6 @@ public:
   // scheduled enter time
   unsigned long long scheduled_enter_time_ = 0;
   
-  // todo delete once carma-street is available
-  double cached_testing_enter_time_ = 0.0;
-  
   //BSM
   std::string bsm_id_ = "default_bsm_id";
   uint8_t bsm_msg_count_ = 0;
