@@ -887,19 +887,8 @@ void LCIStrategicPlugin::planWhenWAITING(const cav_srvs::PlanManeuversRequest& r
 
   ROS_DEBUG("traffic_light_down_track %f", traffic_light_down_track);
 
-  double entering_time = current_state.stamp.toSec(); // uc2
-  if (config_.enable_carma_streets_connection){
-    if (street_msg_timestamp_ == 0)
-    {
-      entering_time = cached_testing_enter_time_; //testing
-    }
-    else
-    {
-      entering_time = scheduled_enter_time_/1000.0 + 0.01; // actual carma-streets
-    }
-  }
-
-    
+  double entering_time = current_state.stamp.toSec();
+  
   auto current_light_state_optional = traffic_light->predictState(lanelet::time::timeFromSec(entering_time)); //todo
 
   ROS_DEBUG_STREAM("WAITING STATE: requested time to check: " << std::to_string(req.header.stamp.toSec()));
