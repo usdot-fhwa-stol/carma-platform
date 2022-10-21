@@ -151,7 +151,7 @@ namespace mobilitypath_visualizer {
             latest_cav_mob_path_msg_[msg->m_header.sender_id] = *msg;
 
             if (!map_projector_) {
-                RCLCPP_ERROR(get_logger(), "Cannot visualize mobility path as map projection not yet available");
+                RCLCPP_DEBUG(get_logger(), "Cannot visualize mobility path as map projection not yet available");
                 return;
             }
 
