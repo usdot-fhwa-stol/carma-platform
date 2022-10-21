@@ -111,12 +111,8 @@ namespace mobilitypath_publisher
 
   void MobilityPathPublication::trajectory_cb(const carma_planning_msgs::msg::TrajectoryPlan::UniquePtr msg)
   {
-    RCLCPP_ERROR_STREAM(this->get_logger(), "DEBUG 1a");
-    
     latest_trajectory_ = *msg;
     latest_mobility_path_ = mobility_path_message_generator(latest_trajectory_);
-    RCLCPP_ERROR_STREAM(this->get_logger(), "DEBUG 1b");
-
   }
 
   void MobilityPathPublication::bsm_cb(const carma_v2x_msgs::msg::BSM::UniquePtr msg)
@@ -158,31 +154,20 @@ namespace mobilitypath_publisher
 
   carma_v2x_msgs::msg::Trajectory MobilityPathPublication::trajectory_plan_to_trajectory(const std::vector<carma_planning_msgs::msg::TrajectoryPlanPoint>& traj_points) const
   {
-    RCLCPP_ERROR_STREAM(this->get_logger(), "DEBUG 1");
-    
     carma_v2x_msgs::msg::Trajectory traj;
 
     if (traj_points.empty()) {
       throw std::invalid_argument("Received an empty vector of Trajectory Plan Points");
     }
 
-    RCLCPP_ERROR_STREAM(this->get_logger(), "DEBUG 2");
-
     carma_v2x_msgs::msg::LocationECEF ecef_location = trajectory_point_to_ECEF(traj_points[0]); //m to cm to fit the msg standard 
-
-    RCLCPP_ERROR_STREAM(this->get_logger(), "DEBUG 3");
-
 
     if (traj_points.size() < 2){
       RCLCPP_WARN_STREAM(this->get_logger(), "Received Trajectory Plan is too small");
       traj.offsets = {};
-      RCLCPP_ERROR_STREAM(this->get_logger(), "DEBUG 4");
-
     }
     else{
       carma_v2x_msgs::msg::LocationECEF prev_point = ecef_location;
-      RCLCPP_ERROR_STREAM(this->get_logger(), "DEBUG 5");
-
       for (size_t i=1; i<traj_points.size(); i++){
                 
         carma_v2x_msgs::msg::LocationOffsetECEF offset;
@@ -194,12 +179,9 @@ namespace mobilitypath_publisher
         traj.offsets.push_back(offset);
         if( i >= 60 ){ break;};
       }
-      RCLCPP_ERROR_STREAM(this->get_logger(), "DEBUG 6");
-
     }
 
     traj.location = ecef_location; 
-    RCLCPP_ERROR_STREAM(this->get_logger(), "DEBUG 7");
 
     return traj;    
   }

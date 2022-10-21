@@ -607,8 +607,6 @@ void LCIStrategicPlugin::planWhenAPPROACHING(const cav_srvs::PlanManeuversReques
   ROS_DEBUG_STREAM("earliest_entry_time: " << std::to_string(earliest_entry_time.toSec()) << ", with : " << earliest_entry_time - current_state.stamp  << " left at: " << std::to_string(current_state.stamp.toSec()));
   ros::Time nearest_green_entry_time;
   bool is_entry_time_within_future_events = false;
-
-  // Following TODO comments are tracked in this issue: https://github.com/usdot-fhwa-stol/carma-platform/issues/1947
   
   if (config_.enable_carma_streets_connection ==false || scheduled_enter_time_ == 0) //UC2
   {
@@ -618,38 +616,8 @@ void LCIStrategicPlugin::planWhenAPPROACHING(const cav_srvs::PlanManeuversReques
   }
   else if(config_.enable_carma_streets_connection ==true && scheduled_enter_time_ != 0 ) // UC3
   {
-    if (street_msg_timestamp_ != 0 ) // todo don't need this guard once carma-street is available
-      nearest_green_entry_time = ros::Time(std::max(earliest_entry_time.toSec(), (scheduled_enter_time_)/1000.0)) + ros::Duration(0.01); //Carma Street 
+    nearest_green_entry_time = ros::Time(std::max(earliest_entry_time.toSec(), (scheduled_enter_time_)/1000.0)) + ros::Duration(0.01); //Carma Street 
     
-    ///// todo delete once carma-street is available /////
-    else if (street_msg_timestamp_ == 0) 
-    {
-      // generate ET by nearest_green_entry_time = nearest green signal start time + scheduled_enter_time_
-      int i = 0;
-      for (auto pair : traffic_light->recorded_time_stamps)
-      {
-        if (pair.second == lanelet::CarmaTrafficSignalState::PROTECTED_MOVEMENT_ALLOWED)
-        {
-          auto nearest_green_signal_start_time_testing = lanelet::time::toSec(traffic_light->recorded_start_time_stamps[i]);
-          
-          if (cached_testing_enter_time_ - (scheduled_enter_time_)/1000.0 < nearest_green_signal_start_time_testing) // if the green signal start time changed, update
-          {
-            nearest_green_entry_time_cached_ = boost::none;
-            cached_testing_enter_time_ =  nearest_green_signal_start_time_testing + (scheduled_enter_time_)/1000.0;
-          }
-          
-          nearest_green_entry_time = ros::Time(std::max(earliest_entry_time.toSec(), cached_testing_enter_time_)) + ros::Duration(0.01); //Carma Street 
-
-          ROS_DEBUG_STREAM("ET is generated to be: " << std::to_string(nearest_green_entry_time.toSec()) << ", where nearest green signal start time: " 
-                        << std::to_string(lanelet::time::toSec(traffic_light->recorded_start_time_stamps[i])));
-          break;
-        }
-        i++;
-      }
-    }
-
-    //////////////////////////////////////////////////////////=
-
     // check if scheduled_enter_time_ is inside the available states interval
     size_t i = 0;
     for (auto pair : traffic_light->recorded_time_stamps)
@@ -760,10 +728,8 @@ void LCIStrategicPlugin::planWhenAPPROACHING(const cav_srvs::PlanManeuversReques
 
   ROS_DEBUG_STREAM("Final nearest_green_entry_time: " << std::to_string(nearest_green_entry_time.toSec()));
 
-  // todo testing uc3
   auto et_state = traffic_light->predictState(lanelet::time::timeFromSec(nearest_green_entry_time.toSec()));
-  ROS_ERROR_STREAM("Signal at ET: " << et_state.get().second);
-  ///////////////
+  ROS_DEBUG_STREAM("Signal at ET: " << et_state.get().second);
 
   double remaining_time = nearest_green_entry_time.toSec() - current_state.stamp.toSec();
   double remaining_time_earliest_entry = earliest_entry_time.toSec() - current_state.stamp.toSec();
@@ -889,9 +855,9 @@ void LCIStrategicPlugin::planWhenWAITING(const cav_srvs::PlanManeuversRequest& r
 
   double entering_time = current_state.stamp.toSec();
   
-  auto current_light_state_optional = traffic_light->predictState(lanelet::time::timeFromSec(entering_time)); //todo
+  auto current_light_state_optional = traffic_light->predictState(lanelet::time::timeFromSec(entering_time));
 
-  ROS_DEBUG_STREAM("WAITING STATE: requested time to check: " << std::to_string(req.header.stamp.toSec()));
+  ROS_DEBUG_STREAM("WAITING STATE: requested time to req.header.stamp check: " << std::to_string(req.header.stamp.toSec()));
   ROS_DEBUG_STREAM("WAITING STATE: requested time to CURRENT STATE check: " << std::to_string(entering_time));
   
   if (!validLightState(current_light_state_optional, ros::Time(entering_time)))
@@ -971,11 +937,7 @@ void LCIStrategicPlugin::mobilityOperationCb(const cav_msgs::MobilityOperationCo
     if (msg->m_header.recipient_id == config_.vehicle_id)
     {
       street_msg_timestamp_ = msg->m_header.timestamp;
-      ROS_DEBUG_STREAM("street_msg_timestamp_: " << street_msg_timestamp_); // 0 if testing
-      if (street_msg_timestamp_ == 0) //todo
-      {
-        ROS_DEBUG_STREAM("Running LCI mobility operation in a testing mode because it was 0!. Given ET in strategy_params will be added as seconds to the start_time of nearest green signal."); // 0 if testing
-      }
+      ROS_DEBUG_STREAM("street_msg_timestamp_: " << street_msg_timestamp_);
       parseStrategyParams(msg->strategy_params);
       previous_strategy_params_ = msg->strategy_params;
     }
@@ -1179,7 +1141,7 @@ bool LCIStrategicPlugin::planManeuverCb(cav_srvs::PlanManeuversRequest& req, cav
     if (nearest_traffic_signal)
     {
       current_light_state_optional = nearest_traffic_signal->predictState(lanelet::time::timeFromSec(current_state.stamp.toSec()));
-      ROS_ERROR_STREAM("Real-time current signal: " << current_light_state_optional.get().second << ", for Id: " << nearest_traffic_signal->id());
+      ROS_DEBUG_STREAM("Real-time current signal: " << current_light_state_optional.get().second << ", for Id: " << nearest_traffic_signal->id());
     }
     switch (transition_table_.getState())
     {
