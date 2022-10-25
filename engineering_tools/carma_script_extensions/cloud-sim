@@ -1,0 +1,155 @@
+#!/bin/bash
+
+#  Copyright (C) 2022 LEIDOS.
+# 
+#  Licensed under the Apache License, Version 2.0 (the "License"); you may not
+#  use this file except in compliance with the License. You may obtain a copy of
+#  the License at
+# 
+#  http://www.apache.org/licenses/LICENSE-2.0
+# 
+#  Unless required by applicable law or agreed to in writing, software
+#  distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
+#  WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
+#  License for the specific language governing permissions and limitations under
+#  the License.
+
+CARMA_CLOUD_SIM_CONFIG_PATH="~/carma_extensions/cloud-sim-config/config.txt"
+CARMA_CLOUD_SIM_STACK_PATH="~/carma_extensions/cloud-sim-config/stack.txt"
+
+cloud-sim__config() {
+    #local USERNAME=usdotfhwastol
+    if [ ! -f "$CARMA_CLOUD_SIM_CONFIG_PATH" ]; then
+# Not indented so that vscode will display bash coloring correctly
+cat <<EOF > ${CARMA_CLOUD_SIM_CONFIG_PATH}
+USER_ARN=
+PASS=
+SIM_IMAGE=
+PLATFORM_IMAGE=
+EOF
+        
+    fi
+    
+    while [[ $# -gt 0 ]]; do
+        arg="$1"
+        case $arg in
+            -a|--arn)
+                # | is used instead of / as delimeter in sed because the ARN usually contains slashes
+                cat ${CARMA_CLOUD_SIM_CONFIG_PATH}| sed "s|USER_ARN=.*|USER_ARN=${2}|"
+                shift
+                shift
+                ;;
+            -p|--password)
+                # | is used instead of / as delimeter in sed because the ARN usually contains slashes
+                cat ${CARMA_CLOUD_SIM_CONFIG_PATH}| sed "s|PASS=.*|PASS=${2}|"
+                shift
+                shift
+                ;;
+            -x|--xilversion)
+                
+                SIM_IMAGE=$2
+                if [[ $2 == "develop" ]]
+                    SIM_IMAGE="usdotfhwastoldev/carma-simulation:develop"
+                elif [[ $2 =~ ^[0-9] ]]
+                    SIM_IMAGE="usdotfhwastol/carma-simulation:carma-simulation-${2}"
+                fi
+
+                cat ${CARMA_CLOUD_SIM_CONFIG_PATH}| sed "s|SIM_IMAGE=.*|SIM_IMAGE=${SIM_IMAGE}|"
+                shift
+                shift
+                ;;
+            -v|--platformversion)
+                
+                PLATFORM_IMAGE=$2
+                if [[ $2 == "develop" ]]
+                    PLATFORM_IMAGE="usdotfhwastoldev/carma-config:develop-carla_integration"
+                elif [[ $2 =~ ^[0-9] ]]
+                    PLATFORM_IMAGE="usdotfhwastol/carma-config:carma-system-${2}-carla_integration"
+                fi
+
+                cat ${CARMA_CLOUD_SIM_CONFIG_PATH}| sed "s|PLATFORM_IMAGE=.*|PLATFORM_IMAGE=${PLATFORM_IMAGE}|"
+                shift
+                shift
+                ;;
+
+        esac
+    done
+
+}
+
+cloud-sim__get-config() {
+    if [ -f "$CARMA_CLOUD_SIM_CONFIG_PATH" ]; then
+        echo "Current Cloud-Sim Config"
+        cat $CARMA_CLOUD_SIM_CONFIG_PATH
+    else
+        echo "There is no config at ${CARMA_CLOUD_SIM_CONFIG_PATH} did you run carma cloud-sim config at least once?"
+    fi
+}
+
+cloud-sim__start() {
+    #local USERNAME=usdotfhwastol
+}
+
+cloud-sim__stop() {
+    #local USERNAME=usdotfhwastol
+}
+
+cloud-sim__status() {
+    #local USERNAME=usdotfhwastol
+}
+
+
+cloud-sim__help() {
+    cat <<HELP
+-------------------------------------------------------------------------------
+| USDOT FHWA STOL CARMA                                              |
+-------------------------------------------------------------------------------
+
+Please enter one of the following commands when using the cloud-sim extension:
+    carma
+        cloud-sim: 
+            config
+                - Set the configuration for AWS instances launched using the cloud-sim command. 
+                  On first run creates a file at ${CARMA_CLOUD_SIM_CONFIG_PATH} containing these settings unencrypted.
+                -a
+                    - AWS user ARN. Generally of the form arn:aws:iam::<user id number>:user/<IAM User (usually email)>
+                      For example: arn:aws:iam::928947697780:user/Bob.Marley@reggae.com 
+                -p 
+                    - Password to set for the default "ubuntu" user on the started EC2 instance. 
+                      This password will be used to login to the remote desktop session for the EC2 instance. 
+                -x
+                    - Default CARMA Co-Simulation version to install in the instance. Use "develop" to indicate the dev version.
+                      The full image name can also be specified instead.  
+                      For example using " -x 1.0.1 " would pull the image usdotfhwastol/carma-simulation:carma-simulation-1.0.1
+                      For example using " -x develop " would pull the image usdotfhwastoldev/carma-simulation:carma-simulation-develop
+                -v
+                    - Default CARMA Platform version to install in the instance. Use "develop" to indicate the dev version.
+                      The full carma-config image name can also be specified instead.  
+                      Example usage is similar to those shown in the -x argument.
+            start
+                - Starts the cloud formation stack using the configurations specified by cloud-sim config and returns access information for the user.
+                  Saves the stack ARN to ${CARMA_CLOUD_SIM_STACK_PATH} for future reference by the stop command. 
+                  If the config is not fully defined returns an error. 
+            stop
+                - Shutsdown the current cloud formation stack started by cloud-sim start and stored in ${CARMA_CLOUD_SIM_STACK_PATH}
+                  If the stack is not availble returns a warning. 
+            get-config
+                - Print the contents of the current configuration located at ${CARMA_CLOUD_SIM_CONFIG_PATH}
+            status
+                - Returns the operational status of the cloud formation stack. 
+                
+            help - Display this information for cloud-sim sub-command"
+        help - Display information for other available carma commands. 
+HELP
+}
+
+carma__cloud-sim() {
+    local cmdname=$1; shift
+    if type "cloud-sim__$cmdname" >/dev/null 2>&1; then
+        "cloud-sim__$cmdname" "$@"
+    else
+        cloud-sim__help
+        exit -1
+    fi
+}
+

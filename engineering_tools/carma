@@ -586,6 +586,12 @@ carma() {
 # for $_ to successfully distinguish between sourcing and invocation:
 [[ $_ != $0 ]] && return
 
+# Check if a matching script extension is available to be checked
+EXTENSIONS_FILE="~/carma_script_extensions/$1"
+if [ -f "$EXTENSIONS_FILE" ]; then
+    source ${EXTENSIONS_FILE}
+fi
+
 # make sure we actually *did* get passed a valid function name
 if declare -f "carma__$1" >/dev/null 2>&1; then
   # invoke that function, passing arguments through
