@@ -151,6 +151,15 @@ cloud-sim__start() {
     
     echo "AWS Launch Suceeded for stack: ${STACK_NAME}"
 
+    #TODO
+    # 1. aws cloudformation describe-stack-resources --stack-name "${STACK_NAME}" to get the resource json
+    # 2. Pull the ec2 instance name arn OR Maybe look for overall stack completion
+    # 3. Pull cloud9 arn
+    # 3. Spin on checking status of both
+    # 4. When both started extract ip address of each
+    # 5. Print IP address of each to terminal
+    # Note we may also want some kind of loading output to show progress is being made
+
     # Save the stack name for cleanup
     echo "STACK_NAME=${STACK_NAME}" > ${CARMA_CLOUD_SIM_STACK_PATH}
 }
