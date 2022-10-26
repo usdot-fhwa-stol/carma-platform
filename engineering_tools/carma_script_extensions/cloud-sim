@@ -16,6 +16,7 @@
 
 CARMA_CLOUD_SIM_CONFIG_PATH="~/carma_extensions/cloud-sim-config/config.txt"
 CARMA_CLOUD_SIM_STACK_PATH="~/carma_extensions/cloud-sim-config/stack.txt"
+CARMA_CLOUD_SIM_CLOUD_FORMATION_PATH="~/carma_extensions/cloud-sim-config/xil-cloud-formation-v0.yaml"
 
 cloud-sim__config() {
     #local USERNAME=usdotfhwastol
@@ -47,11 +48,11 @@ EOF
                 ;;
             -x|--xilversion)
                 
-                SIM_IMAGE=$2
+                local SIM_IMAGE=$2
                 if [[ $2 == "develop" ]]
-                    SIM_IMAGE="usdotfhwastoldev/carma-simulation:develop"
+                    local SIM_IMAGE="usdotfhwastoldev/carma-simulation:develop"
                 elif [[ $2 =~ ^[0-9] ]]
-                    SIM_IMAGE="usdotfhwastol/carma-simulation:carma-simulation-${2}"
+                    local SIM_IMAGE="usdotfhwastol/carma-simulation:carma-simulation-${2}"
                 fi
 
                 cat ${CARMA_CLOUD_SIM_CONFIG_PATH}| sed "s|SIM_IMAGE=.*|SIM_IMAGE=${SIM_IMAGE}|"
@@ -60,11 +61,11 @@ EOF
                 ;;
             -v|--platformversion)
                 
-                PLATFORM_IMAGE=$2
+                local PLATFORM_IMAGE=$2
                 if [[ $2 == "develop" ]]
-                    PLATFORM_IMAGE="usdotfhwastoldev/carma-config:develop-carla_integration"
+                    local PLATFORM_IMAGE="usdotfhwastoldev/carma-config:develop-carla_integration"
                 elif [[ $2 =~ ^[0-9] ]]
-                    PLATFORM_IMAGE="usdotfhwastol/carma-config:carma-system-${2}-carla_integration"
+                    local PLATFORM_IMAGE="usdotfhwastol/carma-config:carma-system-${2}-carla_integration"
                 fi
 
                 cat ${CARMA_CLOUD_SIM_CONFIG_PATH}| sed "s|PLATFORM_IMAGE=.*|PLATFORM_IMAGE=${PLATFORM_IMAGE}|"
@@ -75,6 +76,17 @@ EOF
         esac
     done
 
+    if ! command -v "aws" &> /dev/null
+    then
+        echo "aws cli is not installed. Attempting to install. This requires sudo."
+        
+        curl "https://awscli.amazonaws.com/awscli-exe-linux-x86_64.zip" -o "awscliv2.zip"
+        unzip awscliv2.zip
+        sudo ./aws/install
+
+        echo "NOTE: You need to manually configure the aws cli for your user access key. Refer to this video for instructions https://www.youtube.com/watch?v=Rp-A84oh4G8"
+    fi
+
 }
 
 cloud-sim__get-config() {
@@ -83,19 +95,97 @@ cloud-sim__get-config() {
         cat $CARMA_CLOUD_SIM_CONFIG_PATH
     else
         echo "There is no config at ${CARMA_CLOUD_SIM_CONFIG_PATH} did you run carma cloud-sim config at least once?"
+        exit -1
     fi
 }
 
 cloud-sim__start() {
-    #local USERNAME=usdotfhwastol
+
+    if [ ! -f "$CARMA_CLOUD_SIM_CLOUD_FORMATION_PATH" ] || [ ${1} = '-c'  ]; then
+        wget -O ${CARMA_CLOUD_SIM_CLOUD_FORMATION_PATH} https://raw.githubusercontent.com/usdot-fhwa-stol/carma-platform/feature/aws-xil/engineering_tools/xil-cloud-formation-v0.yaml
+    fi
+
+    if [ ! -f "$CARMA_CLOUD_SIM_CONFIG_PATH" ]; then
+        echo "No configuration file exists at ${CARMA_CLOUD_SIM_CONFIG_PATH}, please run: carma cloud-sim cofig -a <User ARN> -p <Instance Password> -x <Desired simulation image> -v <Desired platform image>"
+        exit -1
+    else
+
+    # Extract config
+    local USER_ARN=$(cat ${CARMA_CLOUD_SIM_CONFIG_PATH} | grep "USER_ARN=" | sed "s|USER_ARN=||")
+    local PASS=$(cat ${CARMA_CLOUD_SIM_CONFIG_PATH} | grep "PASS=" | sed "s|PASS=||")
+    local SIM_IMAGE=$(cat ${CARMA_CLOUD_SIM_CONFIG_PATH} | grep "SIM_IMAGE=" | sed "s|SIM_IMAGE=||")
+    local PLATFORM_IMAGE=$(cat ${CARMA_CLOUD_SIM_CONFIG_PATH} | grep "PLATFORM_IMAGE=" | sed "s|PLATFORM_IMAGE=||")
+
+    if [ -z "$USER_ARN" ]; then
+        echo "Configuration does not include AWS User ARN. Please run: carma cloud-sim cofig -a <User ARN>"
+    fi
+
+    if [ -z "$PASS" ]; then
+        echo "Configuration does not include instance password. Please run: carma cloud-sim cofig -p <Instance Password>"
+    fi
+
+    if [ -z "$SIM_IMAGE" ]; then
+        echo "Configuration does not include AWS User ARN. Please run: carma cloud-sim cofig -x <Desired simulation image>"
+    fi
+
+    if [ -z "$PLATFORM_IMAGE" ]; then
+        echo "Configuration does not include AWS User ARN. Please run: carma cloud-sim cofig -v <Desired platform image>"
+    fi
+
+    if ! command -v "aws" &> /dev/null
+    then
+        echo "aws cli has not been installed please install and configure it for your desired user account."
+        exit 1
+    fi
+    
+
+    # Call cloud formation
+    local STACK_NAME=$(echo ${USER_ARN} |  grep -oh "/.*@" | sed "s|@|-|" | sed "s|[^A-Za-z0-9]|-|")
+    local RESULT=$(aws --region us-east-1 cloudformation create-stack --template-body ${CARMA_CLOUD_SIM_CLOUD_FORMATION_PATH} --stack-name "${STACK_NAME}" --parameters  ParameterKey=Cloud9AccessRoleName,ParameterValue="${USER_ARN}" ParameterKey=Password,ParameterValue="${PASS}" ParameterKey=CarmaSimulationImage,ParameterValue="${SIM_IMAGE}" ParameterKey=CarmaConfigImage,ParameterValue="${PLATFORM_IMAGE}" --capabilities CAPABILITY_NAMED_IAM)
+    
+    if [ -z $(${RESULT} | grep "arn:aws:cloudformation:us-east-1") ]; then
+        echo "AWS Launch Failed with error:"
+        echo ${RESULT}
+        exit 1
+    fi
+    
+    echo "AWS Launch Suceeded for stack: ${STACK_NAME}"
+
+    # Save the stack name for cleanup
+    echo "STACK_NAME=${STACK_NAME}" > ${CARMA_CLOUD_SIM_STACK_PATH}
 }
 
 cloud-sim__stop() {
-    #local USERNAME=usdotfhwastol
+
+    if [ ! -f "$CARMA_CLOUD_SIM_STACK_PATH" ]; then
+        echo "No stack cache file exists cannot determine name. Either the stack was never started or an error has occured and you must manually delete the stack on AWS."
+        exit -1
+    else
+
+    local STACK_NAME=$(cat ${CARMA_CLOUD_SIM_CONFIG_PATH} | grep "STACK_NAME=" | sed "s|STACK_NAME=||")
+
+    if [ -z "$STACK_NAME" ]; then
+        echo "STACK_NAME not found in cache file. Either the stack was never started or an error has occured and you must manually delete the stack on AWS."
+        exist -1
+    fi
+
+    aws --region us-east-1 cloudformation delete-stack --stack-name "${STACK_NAME}"
 }
 
 cloud-sim__status() {
-    #local USERNAME=usdotfhwastol
+    if [ ! -f "$CARMA_CLOUD_SIM_STACK_PATH" ]; then
+        echo "No stack cache file exists cannot report status. If you expected a running stack this might indicate an error."
+        exit -1
+    else
+
+    local STACK_NAME=$(cat ${CARMA_CLOUD_SIM_CONFIG_PATH} | grep "STACK_NAME=" | sed "s|STACK_NAME=||")
+
+    if [ -z "$STACK_NAME" ]; then
+        echo "STACK_NAME not found in cache file. If you expected a running stack this might indicate an error."
+        exist -1
+    fi
+
+    aws cloudformation describe-stack-resources --stack-name "${STACK_NAME}"
 }
 
 
@@ -130,13 +220,16 @@ Please enter one of the following commands when using the cloud-sim extension:
                 - Starts the cloud formation stack using the configurations specified by cloud-sim config and returns access information for the user.
                   Saves the stack ARN to ${CARMA_CLOUD_SIM_STACK_PATH} for future reference by the stop command. 
                   If the config is not fully defined returns an error. 
+                -c [optional]
+                    - If specified then the cloud formation template used to create the AWS instances will be repulled from the repository.
+                      This happens automatically if the file does not exist. The cloud formation template is stored at ${CARMA_CLOUD_SIM_CLOUD_FORMATION_PATH}
             stop
                 - Shutsdown the current cloud formation stack started by cloud-sim start and stored in ${CARMA_CLOUD_SIM_STACK_PATH}
                   If the stack is not availble returns a warning. 
             get-config
                 - Print the contents of the current configuration located at ${CARMA_CLOUD_SIM_CONFIG_PATH}
             status
-                - Returns the operational status of the cloud formation stack. 
+                - Returns the operational status of the cloud formation stack's aws resources. 
                 
             help - Display this information for cloud-sim sub-command"
         help - Display information for other available carma commands. 
