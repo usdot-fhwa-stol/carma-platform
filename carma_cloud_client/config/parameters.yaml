@@ -1,0 +1,7 @@
+url : "http://127.0.0.1:33333" # 33333 is the port that will send from v2xhub to carma cloud ## initally was 23665
+base_hb : "/carmacloud/v2xhub"
+base_req : "/carmacloud/tcmreq"
+base_ack : "/carmacloud/tcmack"
+port : "33333"
+list : "force"
+fetchtime : 15
