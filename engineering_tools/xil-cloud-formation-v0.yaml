@@ -176,14 +176,17 @@ Resources:
       UserData:
         Fn::Base64: !Sub |
           #!/bin/bash -v
-          ### 1. PREPARATION
+          ### Connect logger for AWS
 
           exec > >(tee /var/log/user-data.log|logger -t user-data -s 2>/dev/console) 2>&1
 
 
-          ### 6. CLOUD9 HERE DOWN LEAVE AS IS
+          ### CLOUD9 Connection
+          #   This section was originally provided by the AWS team for setting up the Cloud9 connection
+          #   It is an embedded python script which connects cloud9 to the EC2 instance
 
           cd /home/ubuntu
+          mkdir /home/ubuntu/carma_ws
           cat -  << 'EOFPY' > registercloud9.py
           import sys, os, base64, datetime, hashlib, hmac, json, boto3, uuid, time
           import requests # pip install requests
@@ -247,7 +250,7 @@ Resources:
               file1.write(pub_key)
               file1.close()
 
-          def write_c9_settings(new_data, filename='/home/ubuntu/environment/.c9/project.settings'):
+          def write_c9_settings(new_data, filename='/home/ubuntu/carma_ws/.c9/project.settings'):
               with open(filename,'r+') as file:
                   file_data = json.load(file)
                   file_data["preview"] = new_data
@@ -255,7 +258,7 @@ Resources:
                   json.dump(file_data, file, indent = 4)
 
           def write_instructions_file(URL):
-              f = open("/home/ubuntu/environment/instructions-to-open-virtual-desktop.txt", "w")
+              f = open("/home/ubuntu/carma_ws/instructions-to-open-virtual-desktop.txt", "w")
               f.write("Opening the Ubuntu Virtual Desktop.  \n \n"+
                       "Open a **new** browser tab or window and paste the following URL into the address bar: \n \n"+URL+"\n")
               f.close()
@@ -298,7 +301,7 @@ Resources:
                 request_parameters +=  '"ownerArn":"'+os.getenv('ROLE_ARN', default = 'arn:aws:sts::'+account_id+':assumed-role/TeamRole/MasterKey')+'",'
               request_parameters +=  '"port":22,'
               request_parameters +=  '"loginName":"'+os.getenv('LOGIN_NAME', default = 'ubuntu')+'",'
-              request_parameters +=  '"environmentPath":"'+os.getenv('ENVIRONMENT_PATH', default = '~/environment')+'"'
+              request_parameters +=  '"environmentPath":"'+os.getenv('ENVIRONMENT_PATH', default = '~/carma_ws')+'"'
               request_parameters +=  '}'
               print (request_parameters)
 
@@ -350,9 +353,9 @@ Resources:
           curl -sL https://deb.nodesource.com/setup_14.x | sudo -E bash -
           sudo apt update
           sudo apt install -y nodejs
-          sudo su -l ubuntu -c 'mkdir -p /home/ubuntu/environment/.c9/'
+          sudo su -l ubuntu -c 'mkdir -p /home/ubuntu/carma_ws/.c9/'
           runuser -l ubuntu -c 'curl -L https://raw.githubusercontent.com/c9/install/master/install.sh | bash'
-          sudo -u ubuntu cat << EOF > ./environment/.c9/.nakignore
+          sudo -u ubuntu cat << EOF > ./carma_ws/.c9/.nakignore
           *~backup-*
           .c9revisions
           .c9
@@ -371,12 +374,12 @@ Resources:
           .nakignore
           /dev
           EOF
-          sudo -u ubuntu cat << EOF > ./environment/.c9/launch.json
+          sudo -u ubuntu cat << EOF > ./carma_ws/.c9/launch.json
           {
               "configurations": []
           }
           EOF
-          sudo -u ubuntu cat << EOF > ./environment/.c9/project.settings
+          sudo -u ubuntu cat << EOF > ./carma_ws/.c9/project.settings
           {
               "language": {
                   "tern_defs": {
@@ -411,10 +414,10 @@ Resources:
           }
           EOF
           echo '{"@syncProjectSettings": false}' > '/home/ubuntu/.c9/user.settings'  || true
-          chown ubuntu:ubuntu -R ./environment/.c9
+          chown ubuntu:ubuntu -R ./carma_ws/.c9
 
           # Register to Cloud9
-          sudo su -l ubuntu -c 'echo "{}" > /home/ubuntu/environment/.c9/project.settings'
+          sudo su -l ubuntu -c 'echo "{}" > /home/ubuntu/carma_ws/.c9/project.settings'
           sudo su -l ubuntu -c "ROLE_ARN=${Cloud9AccessRoleName} ENVIRONMENT_NAME=RobotWorkshop-${AWS::StackName} python3 registercloud9.py"
 
           ### 7. COMPLETION
@@ -467,7 +470,6 @@ Resources:
           echo "source /usr/share/vcstool-completion/vcs.bash" >> ~/.bashrc
           
           # Clone Repos
-          mkdir /home/ubuntu/carma_ws
           cd /home/ubuntu/carma_ws
           curl -L https://raw.githubusercontent.com/usdot-fhwa-stol/carma-platform/develop/carma-platform.repos | sed 's/git@github.com:/https:\/\/github.com\//' | vcs import
 
