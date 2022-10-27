@@ -143,25 +143,79 @@ cloud-sim__start() {
     local STACK_NAME=$(echo ${USER_ARN} |  grep -oh "/.*@" | sed "s|@|-|" | sed "s|[^A-Za-z0-9]|-|")
     local RESULT=$(aws --region us-east-1 cloudformation create-stack --template-body ${CARMA_CLOUD_SIM_CLOUD_FORMATION_PATH} --stack-name "${STACK_NAME}" --parameters  ParameterKey=Cloud9AccessRoleName,ParameterValue="${USER_ARN}" ParameterKey=Password,ParameterValue="${PASS}" ParameterKey=CarmaSimulationImage,ParameterValue="${SIM_IMAGE}" ParameterKey=CarmaConfigImage,ParameterValue="${PLATFORM_IMAGE}" --capabilities CAPABILITY_NAMED_IAM)
     
-    if [ -z $(${RESULT} | grep "arn:aws:cloudformation:us-east-1") ]; then
+    if [ -z $(echo "${RESULT}" | grep "arn:aws:cloudformation:us-east-1") ]; then
         echo "AWS Launch Failed with error:"
         echo ${RESULT}
         exit 1
     fi
     
-    echo "AWS Launch Suceeded for stack: ${STACK_NAME}"
+    echo "AWS Stack ${STACK_NAME} starting up.....: "
 
-    #TODO
-    # 1. aws cloudformation describe-stack-resources --stack-name "${STACK_NAME}" to get the resource json
-    # 2. Pull the ec2 instance name arn OR Maybe look for overall stack completion
-    # 3. Pull cloud9 arn
-    # 3. Spin on checking status of both
-    # 4. When both started extract ip address of each
-    # 5. Print IP address of each to terminal
-    # Note we may also want some kind of loading output to show progress is being made
+    local STACK_RESOURCE_STATUS="NOT_EMPTY"
+    local LAUNCHED_RESOURCE_COUNT=0
+    local PREV_LAUNCH_COUNT=0
+    local i=0
+    local SLEEP_SEC=5
+    local LAUNCH_TIMEOUT=600 # 10m timeout to launch the stack
+    local ELAPSED_TIME=0
+    # As long as there are resources which do not have the status CREATE_COMPLETE 
+    while [ ! -z  $("${STACK_RESOURCE_STATUS}" | grep -v "CREATE_COMPLETE") ] || [ $(( ELAPSED_TIME >= LAUNCH_TIMEOUT )) ] ; do 
+
+        # TODO can be cleaned up with aws cloudformation describe-stack-resources --stack-name XilEc2Stackv0 --query StackResources[].ResourceStatus
+        local STACK_RESOURCE_STATUS=$(aws cloudformation describe-stack-resources --stack-name "${STACK_NAME}" | grep -oh '"ResourceStatus":.*",' | sed "s|\s*\"ResourceStatus\": \"||" | sed "s|\",||")
+
+        # If the status returns a ROLLBACK or FAILED state at any point then launch has failed
+        if [ ! -z $("${STACK_RESOURCE_STATUS}" | grep "\(ROLLBACK\|FAILED\)") ]; then 
+            echo "Stack launch failed. Inspect AWS console for details. Remember to delete the stack after debugging!"
+            exit 1
+        fi
+
+        local TOTAL_STACK_RESOURCE=$(echo "${STACK_RESOURCE_STATUS}" | wc -l)
+        
+        local LAUNCHED_RESOURCE_COUNT=$(echo "${STACK_RESOURCE_STATUS}" | grep "CREATE_COMPLETE" | wc -l)
+
+        if [ ${PREV_LAUNCH_COUNT} -ne ${LAUNCHED_RESOURCE_COUNT} ]; then
+            echo "Launched Stack Resource: ${LAUNCHED_RESOURCE_COUNT}/${TOTAL_STACK_RESOURCE}"
+            
+            local PREV_LAUNCH_COUNT=${LAUNCHED_RESOURCE_COUNT}
+        elif [ $(( (ELAPSED_TIME  % 20) == 0 )) ]; then
+            echo "Waiting on resources. Launched Stack Resources: ${LAUNCHED_RESOURCE_COUNT}/${TOTAL_STACK_RESOURCE}"
+        fi 
+
+        ((i++))
+
+        # Wait SLEEP_SEC seconds before checking again
+        sleep ${SLEEP_SEC}
+        ELAPSED_TIME=$((SLEEP_SEC * i)
+
+    done
+
+    if [ $(( ELAPSED_TIME >= LAUNCH_TIMEOUT )) ]; then
+        echo "Stack launch timedout. Inspect AWS console for details. Remember to delete the stack after debugging!"
+        exit 1
+    fi
+
+
+    local DEV_MACHINE_ID=$(aws cloudformation describe-stack-resources --stack-name XilEc2Stackv0 --output text --logical-resource-id DevMachine --query StackResources[].PhysicalResourceId)
+
+    local PUBLIC_DNS=$(aws ec2 describe-instances --instance-ids ${DEV_MACHINE_ID} --output text --query Reservations[].Instances[].PublicDnsName)
+
+    # TODO determine cloud 9 address
+    local CLOUD9_ADDRESS_BASE="https://us-east-1.console.aws.amazon.com/cloud9/ide"
+    # 1. Extract cloud9 name from stack details
+    local CLOUD9_ENVS=$(aws cloud9 list-environments --output text | sed "s|ENVIRONMENTIDS\s||")
+    # 2. Determine cloud9 environment id
+    local CLOUD9_ID=$(aws cloud9 describe-environments --output text --environment-ids $(echo $C9E) --query "environments[?name=='RobotWorkshop-${STACK_NAME}'].id")
+    # 3. Update URL
+    local CLOUD9_ADDRESS="${CLOUD9_ADDRESS_BASE}/${CLOUD9_ID}"
 
     # Save the stack name for cleanup
     echo "STACK_NAME=${STACK_NAME}" > ${CARMA_CLOUD_SIM_STACK_PATH}
+
+    echo "AWS Stack ${STACK_NAME} Launch Suceeded"
+
+    echo "EC2 Instance Address: ${PUBLIC_DNS}"
+    echo "Cloud9 IDE Address: ${CLOUD9_ADDRESS}"
 }
 
 cloud-sim__stop() {
