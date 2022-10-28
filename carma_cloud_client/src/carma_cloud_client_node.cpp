@@ -26,14 +26,19 @@ namespace carma_cloud_client
     config_ = Config();
 
     // Declare parameters
-    // config_.example_param = declare_parameter<std::string>("example_param", config_.example_param);
+    config_.url = declare_parameter<std::string>("url", config_.url);
+    config_.base_req = declare_parameter<std::string>("base_req", config_.base_req);
+    config_.base_ack = declare_parameter<std::string>("base_ack", config_.base_ack);
+    config_.port = declare_parameter<std::string>("port", config_.port);
+    config_.list = declare_parameter<std::string>("list", config_.list);
+    config_.method = declare_parameter<std::string>("method", config_.method);
+    config_.fetchtime = declare_parameter<int>("fetchtime", config_.fetchtime);
   }
 
   rcl_interfaces::msg::SetParametersResult CarmaCloudClient::parameter_update_callback(const std::vector<rclcpp::Parameter> &parameters)
   {
     
     auto error = update_params<std::string>({{"url", config_.url}, 
-                                             {"base_hb", config_.base_hb},
                                              {"base_req", config_.base_req},
                                              {"base_ack", config_.base_ack},
                                              {"port", config_.port},
@@ -49,13 +54,12 @@ namespace carma_cloud_client
 
   carma_ros2_utils::CallbackReturn CarmaCloudClient::handle_on_configure(const rclcpp_lifecycle::State &)
   {
-    RCLCPP_INFO_STREAM(this->get_logger(), "CarmaCloudClient trying to configure");
+    RCLCPP_DEBUG_STREAM(this->get_logger(), "CarmaCloudClient trying to configure");
     // Reset config
     config_ = Config();
 
     // Load parameters
     get_parameter<std::string>("url", config_.url);
-    get_parameter<std::string>("base_hb", config_.base_hb);
     get_parameter<std::string>("base_req", config_.base_req);
     get_parameter<std::string>("base_ack", config_.base_ack);
     get_parameter<std::string>("port", config_.port);
@@ -85,7 +89,7 @@ namespace carma_cloud_client
 
     CloudSend(xml_str, config_.url, config_.base_req, config_.method);
     
-    RCLCPP_INFO_STREAM(  get_logger(), "tcr_sub_ callback called ");
+    RCLCPP_DEBUG_STREAM(  get_logger(), "tcr_sub_ callback called ");
   }
 
   void CarmaCloudClient::XMLconversion(char* xml_str, carma_v2x_msgs::msg::TrafficControlRequest request_msg)
@@ -94,7 +98,7 @@ namespace carma_cloud_client
 
     j2735_convertor::geofence_request::convert(request_msg, j2735_tcr);
 
-    RCLCPP_INFO_STREAM(  get_logger(), "converted: "); 
+    RCLCPP_DEBUG_STREAM(  get_logger(), "converted: "); 
 
     size_t hexlen = 2; //size of each hex representation with a leading 0
     char reqid[j2735_tcr.tcr_v01.reqid.id.size() * hexlen + 1];
@@ -103,13 +107,13 @@ namespace carma_cloud_client
       sprintf(reqid+(i*hexlen), "%.2X", j2735_tcr.tcr_v01.reqid.id[i]);
     }
 
-	  RCLCPP_INFO_STREAM(  get_logger(), "reqid: " << reqid);
+	  RCLCPP_DEBUG_STREAM(  get_logger(), "reqid: " << reqid);
   
     long int reqseq = j2735_tcr.tcr_v01.reqseq;
-    RCLCPP_INFO_STREAM(  get_logger(), "reqseq: " << reqseq);
+    RCLCPP_DEBUG_STREAM(  get_logger(), "reqseq: " << reqseq);
 
 	  long int scale = j2735_tcr.tcr_v01.scale;
-    RCLCPP_INFO_STREAM(  get_logger(), "scale: " << scale);
+    RCLCPP_DEBUG_STREAM(  get_logger(), "scale: " << scale);
 
     int totBounds =  j2735_tcr.tcr_v01.bounds.size();
     int cnt=0;
@@ -151,7 +155,7 @@ namespace carma_cloud_client
     // with port and list
     sprintf(xml_str,"<?xml version=\"1.0\" encoding=\"UTF-8\"?><TrafficControlRequest port=\"%s\" list=\"%s\"><reqid>%s</reqid><reqseq>%ld</reqseq><scale>%ld</scale>%s</TrafficControlRequest>",port, list, reqid, reqseq,scale,bounds_str);
 
-    RCLCPP_INFO_STREAM(  get_logger(), "xml_str: " << xml_str);
+    RCLCPP_DEBUG_STREAM(  get_logger(), "xml_str: " << xml_str);
 
   }
 
@@ -160,7 +164,7 @@ namespace carma_cloud_client
     CURL *req;
     CURLcode res;
     std::string urlfull = local_url + config_.port + local_base;	
-    RCLCPP_INFO_STREAM(  get_logger(), "full url: " << urlfull);
+    RCLCPP_DEBUG_STREAM(  get_logger(), "full url: " << urlfull);
     req = curl_easy_init();
     if(req) {
       curl_easy_setopt(req, CURLOPT_URL, urlfull.c_str());

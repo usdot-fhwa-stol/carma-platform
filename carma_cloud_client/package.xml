@@ -16,7 +16,8 @@
 <package format="3">
   <name>carma_cloud_client</name>
   <version>1.0.0</version>
-  <description>The carma_cloud_client package</description>
+  <description>The carma_cloud_client package communicates with carma cloud by forwarding the TCR 
+                and receives TCM to/from cloud through http</description>
 
   <maintainer email="carma@dot.gov">carma</maintainer>
 
@@ -30,7 +31,6 @@
   <depend>rclcpp</depend>
   <depend>carma_ros2_utils</depend>
   <depend>rclcpp_components</depend>
-  <depend>std_srvs</depend>
   <depend>j2735_v2x_msgs</depend>
   <depend>carma_v2x_msgs</depend>
   <depend>j2735_convertor</depend>

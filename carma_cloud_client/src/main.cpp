@@ -19,11 +19,8 @@
 
 int main(int argc, char **argv) 
 {
-  std::cerr<<"0"<<std::endl;
   rclcpp::init(argc, argv);
-  std::cerr<<"1"<<std::endl;
   auto node = std::make_shared<carma_cloud_client::CarmaCloudClient>(rclcpp::NodeOptions());
-  std::cerr<<"2"<<std::endl;
   rclcpp::executors::MultiThreadedExecutor executor;
   executor.add_node(node->get_node_base_interface());
   executor.spin();

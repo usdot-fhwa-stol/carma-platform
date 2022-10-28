@@ -27,16 +27,19 @@ namespace carma_cloud_client
    */
   struct Config
   {
-    
+    //host machine IP
     std::string url ="http://127.0.0.1:"; 
     std::string base_hb = "/carmacloud/v2xhub";
+    //URL for traffic control request
     std::string base_req = "/carmacloud/tcmreq";
+    //URL for traffic control acknowlegement.
     std::string base_ack = "/carmacloud/tcmack";
+    std::string method = "POST";
     // 33333 is the port that will send from v2xhub to carma cloud ## initally was 23665
     std::string port = "33333";
     // list determines how the TCMs will be sent in response. "true" means a list of TCMs are sent. "false" means one at a time
     std::string list = "true";
-    std::string method = "POST";
+    // number of days back when a geofence is valid
     int fetchtime = 15;
 
     // Stream operator for this config
