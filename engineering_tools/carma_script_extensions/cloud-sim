@@ -14,19 +14,25 @@
 #  License for the specific language governing permissions and limitations under
 #  the License.
 
-CARMA_CLOUD_SIM_CONFIG_PATH="~/carma_extensions/cloud-sim-config/config.txt"
-CARMA_CLOUD_SIM_STACK_PATH="~/carma_extensions/cloud-sim-config/stack.txt"
-CARMA_CLOUD_SIM_CLOUD_FORMATION_PATH="~/carma_extensions/cloud-sim-config/xil-cloud-formation-v0.yaml"
+CARMA_CLOUD_SIM_CONFIG_DIR="${CARMA_SCRIPT_EXTENSIONS_DIR}/cloud-sim-config"
+CARMA_CLOUD_SIM_CONFIG_PATH="${CARMA_CLOUD_SIM_CONFIG_DIR}/config.txt"
+CARMA_CLOUD_SIM_STACK_PATH="${CARMA_CLOUD_SIM_CONFIG_DIR}/stack.txt"
+CARMA_CLOUD_SIM_CLOUD_FORMATION_PATH="${CARMA_CLOUD_SIM_CONFIG_DIR}/xil-cloud-formation-v0.yaml"
 
 cloud-sim__config() {
-    #local USERNAME=usdotfhwastol
+
+    # Create config folder if it doesn't exist
+    if [ ! -d "$CARMA_CLOUD_SIM_CONFIG_DIR" ]; then
+        mkdir "${CARMA_CLOUD_SIM_CONFIG_DIR}"
+    fi
+
+    # Create config file if it does not already exist
     if [ ! -f "$CARMA_CLOUD_SIM_CONFIG_PATH" ]; then
 # Not indented so that vscode will display bash coloring correctly
 cat <<EOF > ${CARMA_CLOUD_SIM_CONFIG_PATH}
 USER_ARN=
 PASS=
-SIM_IMAGE=
-PLATFORM_IMAGE=
+CONFIG_IMAGE=
 EOF
         
     fi
@@ -36,39 +42,42 @@ EOF
         case $arg in
             -a|--arn)
                 # | is used instead of / as delimeter in sed because the ARN usually contains slashes
-                cat ${CARMA_CLOUD_SIM_CONFIG_PATH}| sed "s|USER_ARN=.*|USER_ARN=${2}|"
+                sed -i "s|USER_ARN=.*|USER_ARN=${2}|" "${CARMA_CLOUD_SIM_CONFIG_PATH}"
                 shift
                 shift
                 ;;
             -p|--password)
                 # | is used instead of / as delimeter in sed because the ARN usually contains slashes
-                cat ${CARMA_CLOUD_SIM_CONFIG_PATH}| sed "s|PASS=.*|PASS=${2}|"
+                sed -i "s|PASS=.*|PASS=${2}|" "${CARMA_CLOUD_SIM_CONFIG_PATH}"
                 shift
                 shift
                 ;;
-            -x|--xilversion)
+            -v|--carmaversion)
                 
-                local SIM_IMAGE=$2
-                if [[ $2 == "develop" ]]
-                    local SIM_IMAGE="usdotfhwastoldev/carma-simulation:develop"
-                elif [[ $2 =~ ^[0-9] ]]
-                    local SIM_IMAGE="usdotfhwastol/carma-simulation:carma-simulation-${2}"
+                local CONFIG_IMAGE=$2
+                if [[ $2 == "develop" ]]; then
+                    local CONFIG_IMAGE="usdotfhwastoldev/carma-config:develop-carla_integration"
+                elif [[ $2 =~ "^[0-9]" ]]; then
+                    local CONFIG_IMAGE="usdotfhwastol/carma-config:carma-system-${2}-carla_integration"
+                else
+                    echo "Inavlid version tag. Must be of the form 1.1.1 or develop. If specifying a full config name use -i instead."
+                    exit 1
                 fi
 
-                cat ${CARMA_CLOUD_SIM_CONFIG_PATH}| sed "s|SIM_IMAGE=.*|SIM_IMAGE=${SIM_IMAGE}|"
+                sed -i "s|CONFIG_IMAGE=.*|CONFIG_IMAGE=${CONFIG_IMAGE}|" "${CARMA_CLOUD_SIM_CONFIG_PATH}"
                 shift
                 shift
                 ;;
-            -v|--platformversion)
+            -i|--configimage)
                 
-                local PLATFORM_IMAGE=$2
-                if [[ $2 == "develop" ]]
-                    local PLATFORM_IMAGE="usdotfhwastoldev/carma-config:develop-carla_integration"
-                elif [[ $2 =~ ^[0-9] ]]
-                    local PLATFORM_IMAGE="usdotfhwastol/carma-config:carma-system-${2}-carla_integration"
+                if [[ -z $2 ]]; then
+                    echo "When using -i a full docker image name must be specified."
+                    exit 1
                 fi
+                
+                local CONFIG_IMAGE=$2
 
-                cat ${CARMA_CLOUD_SIM_CONFIG_PATH}| sed "s|PLATFORM_IMAGE=.*|PLATFORM_IMAGE=${PLATFORM_IMAGE}|"
+                sed -i "s|CONFIG_IMAGE=.*|CONFIG_IMAGE=${CONFIG_IMAGE}|" "${CARMA_CLOUD_SIM_CONFIG_PATH}"
                 shift
                 shift
                 ;;
@@ -95,26 +104,35 @@ cloud-sim__get-config() {
         cat $CARMA_CLOUD_SIM_CONFIG_PATH
     else
         echo "There is no config at ${CARMA_CLOUD_SIM_CONFIG_PATH} did you run carma cloud-sim config at least once?"
-        exit -1
+        exit 1
     fi
 }
 
 cloud-sim__start() {
 
-    if [ ! -f "$CARMA_CLOUD_SIM_CLOUD_FORMATION_PATH" ] || [ ${1} = '-c'  ]; then
-        wget -O ${CARMA_CLOUD_SIM_CLOUD_FORMATION_PATH} https://raw.githubusercontent.com/usdot-fhwa-stol/carma-platform/feature/aws-xil/engineering_tools/xil-cloud-formation-v0.yaml
+    if [ ! -f "$CARMA_CLOUD_SIM_CONFIG_PATH" ]; then
+        echo "No configuration file exists at ${CARMA_CLOUD_SIM_CONFIG_PATH}, please run: carma cloud-sim cofig -a <User ARN> -p <Instance Password> -v <Desired config image>"
+        exit 1
     fi
 
-    if [ ! -f "$CARMA_CLOUD_SIM_CONFIG_PATH" ]; then
-        echo "No configuration file exists at ${CARMA_CLOUD_SIM_CONFIG_PATH}, please run: carma cloud-sim cofig -a <User ARN> -p <Instance Password> -x <Desired simulation image> -v <Desired platform image>"
-        exit -1
-    else
+    echo $1
+    if [ ! -f "$CARMA_CLOUD_SIM_CLOUD_FORMATION_PATH" ] || [ "${1}" == '-c'  ]; then
+       
+        echo "###################################"
+        echo "## Pulling cloud formation template"
+        echo "###################################"
+
+        # Remove existing file if it exists
+        if [ -f "$CARMA_CLOUD_SIM_CLOUD_FORMATION_PATH" ]; then rm "${CARMA_CLOUD_SIM_CLOUD_FORMATION_PATH}"; fi
+
+        # Pull new file
+        wget -O "${CARMA_CLOUD_SIM_CLOUD_FORMATION_PATH}" "https://raw.githubusercontent.com/usdot-fhwa-stol/carma-platform/feature/aws-xil/engineering_tools/xil-cloud-formation-v0.yaml"
+    fi
 
     # Extract config
     local USER_ARN=$(cat ${CARMA_CLOUD_SIM_CONFIG_PATH} | grep "USER_ARN=" | sed "s|USER_ARN=||")
     local PASS=$(cat ${CARMA_CLOUD_SIM_CONFIG_PATH} | grep "PASS=" | sed "s|PASS=||")
-    local SIM_IMAGE=$(cat ${CARMA_CLOUD_SIM_CONFIG_PATH} | grep "SIM_IMAGE=" | sed "s|SIM_IMAGE=||")
-    local PLATFORM_IMAGE=$(cat ${CARMA_CLOUD_SIM_CONFIG_PATH} | grep "PLATFORM_IMAGE=" | sed "s|PLATFORM_IMAGE=||")
+    local CONFIG_IMAGE=$(cat ${CARMA_CLOUD_SIM_CONFIG_PATH} | grep "CONFIG_IMAGE=" | sed "s|CONFIG_IMAGE=||")
 
     if [ -z "$USER_ARN" ]; then
         echo "Configuration does not include AWS User ARN. Please run: carma cloud-sim cofig -a <User ARN>"
@@ -124,12 +142,8 @@ cloud-sim__start() {
         echo "Configuration does not include instance password. Please run: carma cloud-sim cofig -p <Instance Password>"
     fi
 
-    if [ -z "$SIM_IMAGE" ]; then
-        echo "Configuration does not include AWS User ARN. Please run: carma cloud-sim cofig -x <Desired simulation image>"
-    fi
-
-    if [ -z "$PLATFORM_IMAGE" ]; then
-        echo "Configuration does not include AWS User ARN. Please run: carma cloud-sim cofig -v <Desired platform image>"
+    if [ -z "$CONFIG_IMAGE" ]; then
+        echo "Configuration does not include AWS User ARN. Please run: carma cloud-sim cofig -v <Desired config version>"
     fi
 
     if ! command -v "aws" &> /dev/null
@@ -138,65 +152,80 @@ cloud-sim__start() {
         exit 1
     fi
     
-
     # Call cloud formation
-    local STACK_NAME=$(echo ${USER_ARN} |  grep -oh "/.*@" | sed "s|@|-|" | sed "s|[^A-Za-z0-9]|-|")
-    local RESULT=$(aws --region us-east-1 cloudformation create-stack --template-body ${CARMA_CLOUD_SIM_CLOUD_FORMATION_PATH} --stack-name "${STACK_NAME}" --parameters  ParameterKey=Cloud9AccessRoleName,ParameterValue="${USER_ARN}" ParameterKey=Password,ParameterValue="${PASS}" ParameterKey=CarmaSimulationImage,ParameterValue="${SIM_IMAGE}" ParameterKey=CarmaConfigImage,ParameterValue="${PLATFORM_IMAGE}" --capabilities CAPABILITY_NAMED_IAM)
+    local STACK_NAME="CloudSimStack"$(echo ${USER_ARN} |  grep -oh "/.*@" | sed "s|@|-|" | sed "s|\.|-|" | sed "s|[^A-Za-z0-9]|-|")
+
+    local RESULT=$(aws --region us-east-1 cloudformation create-stack --template-body "file://${CARMA_CLOUD_SIM_CLOUD_FORMATION_PATH}" \
+        --stack-name "${STACK_NAME}" \
+        --parameters  ParameterKey=Cloud9AccessRoleName,ParameterValue="${USER_ARN}" \
+        ParameterKey=Password,ParameterValue="${PASS}" \
+        ParameterKey=CarmaConfigImage,ParameterValue="${CONFIG_IMAGE}" \
+        --capabilities CAPABILITY_NAMED_IAM)
     
-    if [ -z $(echo "${RESULT}" | grep "arn:aws:cloudformation:us-east-1") ]; then
+    local VALID_LAUNCH=$(echo "${RESULT}" | grep 'arn:aws:cloudformation:us-east-1')
+    if [ -z "${VALID_LAUNCH}" ]; then
         echo "AWS Launch Failed with error:"
         echo ${RESULT}
         exit 1
     fi
     
-    echo "AWS Stack ${STACK_NAME} starting up.....: "
+    echo "AWS Stack ${STACK_NAME} starting up......."
 
     local STACK_RESOURCE_STATUS="NOT_EMPTY"
     local LAUNCHED_RESOURCE_COUNT=0
     local PREV_LAUNCH_COUNT=0
     local i=0
     local SLEEP_SEC=5
-    local LAUNCH_TIMEOUT=600 # 10m timeout to launch the stack
+    local LAUNCH_TIMEOUT=595 # 10m timeout to launch the stack
     local ELAPSED_TIME=0
-    # As long as there are resources which do not have the status CREATE_COMPLETE 
-    while [ ! -z  $("${STACK_RESOURCE_STATUS}" | grep -v "CREATE_COMPLETE") ] || [ $(( ELAPSED_TIME >= LAUNCH_TIMEOUT )) ] ; do 
+    local NON_COMPLETE_RES="ALL"
+    local FAILED_RES="NONE"
+    local TOTAL_STACK_RESOURCE=0
 
-        # TODO can be cleaned up with aws cloudformation describe-stack-resources --stack-name XilEc2Stackv0 --query StackResources[].ResourceStatus
-        local STACK_RESOURCE_STATUS=$(aws cloudformation describe-stack-resources --stack-name "${STACK_NAME}" | grep -oh '"ResourceStatus":.*",' | sed "s|\s*\"ResourceStatus\": \"||" | sed "s|\",||")
+    sleep ${SLEEP_SEC}
+
+    # As long as there are resources which do not have the status CREATE_COMPLETE 
+    while [ -n "${NON_COMPLETE_RES}" ] || [ ${ELAPSED_TIME} -gt ${LAUNCH_TIMEOUT} ] ; do 
+
+        STACK_RESOURCE_STATUS=$(aws cloudformation describe-stack-resources --stack-name "${STACK_NAME}" | grep -oh '"ResourceStatus":.*",' | sed "s|\s*\"ResourceStatus\": \"||" | sed "s|\",||")
+
+        NON_COMPLETE_RES=$(echo "${STACK_RESOURCE_STATUS}" | grep -v "CREATE_COMPLETE" | sed "s/\n//" )
+        FAILED_RES=$(echo "${STACK_RESOURCE_STATUS}" | grep "\(ROLLBACK\|FAILED\|DELETE\)" | sed "s/\n//")
 
         # If the status returns a ROLLBACK or FAILED state at any point then launch has failed
-        if [ ! -z $("${STACK_RESOURCE_STATUS}" | grep "\(ROLLBACK\|FAILED\)") ]; then 
+        if [ -n "${FAILED_RES}" ]; then 
             echo "Stack launch failed. Inspect AWS console for details. Remember to delete the stack after debugging!"
             exit 1
         fi
 
-        local TOTAL_STACK_RESOURCE=$(echo "${STACK_RESOURCE_STATUS}" | wc -l)
+        TOTAL_STACK_RESOURCE=$(echo "${STACK_RESOURCE_STATUS}" | wc -l)
         
-        local LAUNCHED_RESOURCE_COUNT=$(echo "${STACK_RESOURCE_STATUS}" | grep "CREATE_COMPLETE" | wc -l)
+        LAUNCHED_RESOURCE_COUNT=$(echo "${STACK_RESOURCE_STATUS}" | grep "CREATE_COMPLETE" | wc -l)
 
         if [ ${PREV_LAUNCH_COUNT} -ne ${LAUNCHED_RESOURCE_COUNT} ]; then
-            echo "Launched Stack Resource: ${LAUNCHED_RESOURCE_COUNT}/${TOTAL_STACK_RESOURCE}"
+            echo "Launched Stack Resource: ${LAUNCHED_RESOURCE_COUNT}/${TOTAL_STACK_RESOURCE} Elapsed Sec: ${ELAPSED_TIME}"
             
-            local PREV_LAUNCH_COUNT=${LAUNCHED_RESOURCE_COUNT}
-        elif [ $(( (ELAPSED_TIME  % 20) == 0 )) ]; then
-            echo "Waiting on resources. Launched Stack Resources: ${LAUNCHED_RESOURCE_COUNT}/${TOTAL_STACK_RESOURCE}"
+            PREV_LAUNCH_COUNT=${LAUNCHED_RESOURCE_COUNT}
+
+        elif [ $(( ELAPSED_TIME % 20 )) == 0 ]; then
+            echo "Waiting on resources. Launched Stack Resources: ${LAUNCHED_RESOURCE_COUNT}/${TOTAL_STACK_RESOURCE} Elapsed Sec: ${ELAPSED_TIME}"
         fi 
 
         ((i++))
 
         # Wait SLEEP_SEC seconds before checking again
         sleep ${SLEEP_SEC}
-        ELAPSED_TIME=$((SLEEP_SEC * i)
+        ELAPSED_TIME=$((SLEEP_SEC * i))
 
     done
 
-    if [ $(( ELAPSED_TIME >= LAUNCH_TIMEOUT )) ]; then
+    if [ ${ELAPSED_TIME} -gt ${LAUNCH_TIMEOUT} ]; then
         echo "Stack launch timedout. Inspect AWS console for details. Remember to delete the stack after debugging!"
         exit 1
     fi
 
 
-    local DEV_MACHINE_ID=$(aws cloudformation describe-stack-resources --stack-name XilEc2Stackv0 --output text --logical-resource-id DevMachine --query StackResources[].PhysicalResourceId)
+    local DEV_MACHINE_ID=$(aws cloudformation describe-stack-resources --stack-name ${STACK_NAME} --output text --logical-resource-id DevMachine --query StackResources[].PhysicalResourceId)
 
     local PUBLIC_DNS=$(aws ec2 describe-instances --instance-ids ${DEV_MACHINE_ID} --output text --query Reservations[].Instances[].PublicDnsName)
 
@@ -205,7 +234,8 @@ cloud-sim__start() {
     # 1. Extract cloud9 name from stack details
     local CLOUD9_ENVS=$(aws cloud9 list-environments --output text | sed "s|ENVIRONMENTIDS\s||")
     # 2. Determine cloud9 environment id
-    local CLOUD9_ID=$(aws cloud9 describe-environments --output text --environment-ids $(echo $C9E) --query "environments[?name=='RobotWorkshop-${STACK_NAME}'].id")
+    local CLOUD9_NAME="RobotWorkshop-${STACK_NAME}"
+    local CLOUD9_ID=$(aws cloud9 describe-environments --output text --environment-ids $(echo $CLOUD9_ENVS) --query "environments[?name=='${CLOUD9_NAME}'].id")
     # 3. Update URL
     local CLOUD9_ADDRESS="${CLOUD9_ADDRESS_BASE}/${CLOUD9_ID}"
 
@@ -222,10 +252,10 @@ cloud-sim__stop() {
 
     if [ ! -f "$CARMA_CLOUD_SIM_STACK_PATH" ]; then
         echo "No stack cache file exists cannot determine name. Either the stack was never started or an error has occured and you must manually delete the stack on AWS."
-        exit -1
-    else
+        exit 1
+    fi
 
-    local STACK_NAME=$(cat ${CARMA_CLOUD_SIM_CONFIG_PATH} | grep "STACK_NAME=" | sed "s|STACK_NAME=||")
+    local STACK_NAME=$(cat ${CARMA_CLOUD_SIM_STACK_PATH} | grep "STACK_NAME=" | sed "s|STACK_NAME=||")
 
     if [ -z "$STACK_NAME" ]; then
         echo "STACK_NAME not found in cache file. Either the stack was never started or an error has occured and you must manually delete the stack on AWS."
@@ -236,16 +266,16 @@ cloud-sim__stop() {
 }
 
 cloud-sim__status() {
-    if [ ! -f "$CARMA_CLOUD_SIM_STACK_PATH" ]; then
+    if [ ! -f "${CARMA_CLOUD_SIM_STACK_PATH}" ]; then
         echo "No stack cache file exists cannot report status. If you expected a running stack this might indicate an error."
-        exit -1
-    else
+        exit 1
+    fi
 
-    local STACK_NAME=$(cat ${CARMA_CLOUD_SIM_CONFIG_PATH} | grep "STACK_NAME=" | sed "s|STACK_NAME=||")
+    local STACK_NAME=$(cat ${CARMA_CLOUD_SIM_STACK_PATH} | grep "STACK_NAME=" | sed "s|STACK_NAME=||")
 
-    if [ -z "$STACK_NAME" ]; then
+    if [ -z "${STACK_NAME}" ]; then
         echo "STACK_NAME not found in cache file. If you expected a running stack this might indicate an error."
-        exist -1
+        exit 1
     fi
 
     aws cloudformation describe-stack-resources --stack-name "${STACK_NAME}"
@@ -270,15 +300,16 @@ Please enter one of the following commands when using the cloud-sim extension:
                 -p 
                     - Password to set for the default "ubuntu" user on the started EC2 instance. 
                       This password will be used to login to the remote desktop session for the EC2 instance. 
-                -x
-                    - Default CARMA Co-Simulation version to install in the instance. Use "develop" to indicate the dev version.
-                      The full image name can also be specified instead.  
-                      For example using " -x 1.0.1 " would pull the image usdotfhwastol/carma-simulation:carma-simulation-1.0.1
-                      For example using " -x develop " would pull the image usdotfhwastoldev/carma-simulation:carma-simulation-develop
                 -v
                     - Default CARMA Platform version to install in the instance. Use "develop" to indicate the dev version.
                       The full carma-config image name can also be specified instead.  
-                      Example usage is similar to those shown in the -x argument.
+                      For example using " -x 1.0.1 " would pull the image usdotfhwastol/carma-config:carma-system-1.0.1
+                      For example using " -x develop " would pull the image usdotfhwastoldev/carma-config:carla-integration-develop
+                      This option should only be specified if -i is not specified. 
+                -i 
+                    - Specify the exact carma-config to use for launching the vehicle and simulation
+                      For example " -i image usdotfhwastol/carma-config:carma-system-1.0.1 "
+                      This option is an alternative to -v and should only be used if that option is not specified. 
             start
                 - Starts the cloud formation stack using the configurations specified by cloud-sim config and returns access information for the user.
                   Saves the stack ARN to ${CARMA_CLOUD_SIM_STACK_PATH} for future reference by the stop command. 
@@ -292,9 +323,9 @@ Please enter one of the following commands when using the cloud-sim extension:
             get-config
                 - Print the contents of the current configuration located at ${CARMA_CLOUD_SIM_CONFIG_PATH}
             status
-                - Returns the operational status of the cloud formation stack's aws resources. 
+                - Returns the operational status of the cloud formation stacks aws resources. 
                 
-            help - Display this information for cloud-sim sub-command"
+            help - Display this information for cloud-sim sub-command
         help - Display information for other available carma commands. 
 HELP
 }
@@ -305,7 +336,7 @@ carma__cloud-sim() {
         "cloud-sim__$cmdname" "$@"
     else
         cloud-sim__help
-        exit -1
+        exit 1
     fi
 }
 

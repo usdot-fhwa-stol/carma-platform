@@ -18,14 +18,10 @@ Parameters:
     Type: String
     NoEcho: true
     MinLength: 6
-  CarmaSimulationImage:
-    Description: The specific image of the carma simulation to make available in the instance
-    Type: String
-    Default: "usdotfhwastol/carma-simulation:carma-simulation-1.0.1"
   CarmaConfigImage:
-    Description: The specific image of carma-platform to make available in the instance
+    Description: The specific carma config which launches xil and platform to make available in the instance
     Type: String
-    Default: "usdotfhwastol/carma-config:carma-config-tag" # TODO
+    Default: "usdotfhwastoldev/carma-config:xil-cloud-test"
 Mappings:
   AMIMap:
     us-east-1:
@@ -55,7 +51,6 @@ Resources:
         - 0
         - !GetAZs
           Ref: 'AWS::Region'
-      #AvailabilityZone: us-east-1b
       VpcId: !Ref VPC
       CidrBlock: 10.0.0.0/24
       MapPublicIpOnLaunch: true
@@ -439,12 +434,9 @@ Resources:
           sudo curl -o /etc/bash_completion.d/__carma_autocomplete -L https://raw.githubusercontent.com/usdot-fhwa-stol/carma-platform/develop/engineering_tools/__carma_autocomplete
           sudo chmod ugo+x /etc/bash_completion.d/__carma_autocomplete
 
-          # Install carma-platform
-          #carma config install ${CarmaConfigImage}
-          #carma config set ${CarmaConfigImage}
-
-          # Install carma-simulation
-          #docker pull ${CarmaSimulationImage}
+          # Install carma-config
+          carma config install ${CarmaConfigImage}
+          carma config set ${CarmaConfigImage}
           
           ## Add VCS Sources
           sudo apt-get update
