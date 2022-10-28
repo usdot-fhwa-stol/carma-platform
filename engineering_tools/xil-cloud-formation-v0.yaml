@@ -434,6 +434,9 @@ Resources:
           sudo curl -o /etc/bash_completion.d/__carma_autocomplete -L https://raw.githubusercontent.com/usdot-fhwa-stol/carma-platform/develop/engineering_tools/__carma_autocomplete
           sudo chmod ugo+x /etc/bash_completion.d/__carma_autocomplete
 
+          # Install docker compose
+          sudo apt-get install -y docker-compose
+
           # Install carma-config
           carma config install ${CarmaConfigImage}
           carma config set ${CarmaConfigImage}

@@ -240,9 +240,13 @@ cloud-sim__start() {
     local CLOUD9_ADDRESS="${CLOUD9_ADDRESS_BASE}/${CLOUD9_ID}"
 
     # Save the stack name for cleanup
+    echo "##############################"
+    echo ""
     echo "STACK_NAME=${STACK_NAME}" > ${CARMA_CLOUD_SIM_STACK_PATH}
-
+    echo ""
     echo "AWS Stack ${STACK_NAME} Launch Suceeded"
+    echo ""
+    echo "##############################"
 
     echo "EC2 Instance Address: ${PUBLIC_DNS}"
     echo "Cloud9 IDE Address: ${CLOUD9_ADDRESS}"
