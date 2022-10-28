@@ -149,11 +149,8 @@ namespace carma_cloud_client
     strcpy(list, config_.list.c_str());
  
     // with port and list
-    sprintf(xml_str,"<?xml version=\"1.0\" encoding=\"UTF-8\"?><TrafficControlRequest port=%s list=%s><reqid>%s</reqid><reqseq>%ld</reqseq><scale>%ld</scale>%s</TrafficControlRequest>",port, list, reqid, reqseq,scale,bounds_str);
-    
-    // without port and list
-    // sprintf(xml_str,"<?xml version=\"1.0\" encoding=\"UTF-8\"?><TrafficControlRequest><reqid>%s</reqid><reqseq>%ld</reqseq><scale>%ld</scale>%s</TrafficControlRequest>", reqid, reqseq,scale,bounds_str);
-        
+    sprintf(xml_str,"<?xml version=\"1.0\" encoding=\"UTF-8\"?><TrafficControlRequest port=\"%s\" list=\"%s\"><reqid>%s</reqid><reqseq>%ld</reqseq><scale>%ld</scale>%s</TrafficControlRequest>",port, list, reqid, reqseq,scale,bounds_str);
+
     RCLCPP_INFO_STREAM(  get_logger(), "xml_str: " << xml_str);
 
   }
