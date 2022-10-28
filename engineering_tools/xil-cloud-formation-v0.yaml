@@ -435,8 +435,8 @@ Resources:
           sudo chmod ugo+x /etc/bash_completion.d/__carma_autocomplete
 
           # Install docker compose
-          sudo rm /usr/local/bin/docker-compose
-          DESTINATION=/usr/local/bin/docker-compose
+          DESTINATION=/usr/bin/docker-compose
+          sudo rm $DESTINATION
           sudo curl -L "https://github.com/docker/compose/releases/download/1.29.1/docker-compose-$(uname -s)-$(uname -m)" -o $DESTINATION
           sudo chmod 755 $DESTINATION
 
