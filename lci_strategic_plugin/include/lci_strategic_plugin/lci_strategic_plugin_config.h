@@ -52,9 +52,6 @@ struct LCIStrategicPluginConfig
   //! Minimum allowable speed TS algorithm in m/s
   double algo_minimum_speed = 2.2352;
 
-  //! Minimum allowable speed in m/s
-  double absolute_minimum_speed = 2.2352;
-
   //! Double: Safety multiplier of planned allowable vehicle deceleration to use when stopping. This new deceleration makes vehicle decelerate earlier distance.
   //!      NOTE: Stacks on vehicle_decel_limit_multiplier and stopping uses max_decel; this distance is only used for calculating earlier downtrack
   double deceleration_fraction = 0.8;
