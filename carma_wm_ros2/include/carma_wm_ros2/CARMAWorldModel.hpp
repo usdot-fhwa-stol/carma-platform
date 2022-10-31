@@ -130,6 +130,21 @@ public:
    */
   lanelet::Optional<std::tuple<TrackPos,carma_perception_msgs::msg::RoadwayObstacle>> getNearestObjInLane(const lanelet::BasicPoint2d& object_center, const LaneSection& section = LANE_AHEAD) const;
 
+  /*! \brief update minimum end time to account for minute of the year
+    * \param min_end_time minimum end time of the spat movement event list
+    * \param moy_exists tells weather minute of the year exist or not
+    * \param moy value of the minute of the year
+   */
+  boost::posix_time::ptime min_end_time_converter_minute_of_year(boost::posix_time::ptime min_end_time,bool moy_exists,uint32_t moy=0);
+
+  /*! \brief for cheking previous rate to avoid repetation.
+    * \param min_end_time_dynamic dynamic spat processing minimum end time
+    * \param received_state_dynamic phase rate of the movement event list event state
+    * \param mov_id id of the traffic signal states
+    * \param mov_signal_group signal group of the traffic signal states
+   */
+  bool check_if_seen_before_movement_state(boost::posix_time::ptime min_end_time_dynamic,lanelet::CarmaTrafficSignalState received_state_dynamic,uint16_t mov_id, uint8_t mov_signal_group);
+
 /** \param config_lim the configurable speed limit value populated from WMListener using the config_speed_limit parameter
  * in VehicleConfigParams.yaml
 *

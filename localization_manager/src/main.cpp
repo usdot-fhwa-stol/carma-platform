@@ -17,17 +17,17 @@
 #include <rclcpp/rclcpp.hpp>
 #include "localization_manager/localization_manager_node.hpp"
 
-int main(int argc, char **argv) 
+int main(int argc, char **argv)
 {
-  rclcpp::init(argc, argv);
+    rclcpp::init(argc, argv);
 
-  auto node = std::make_shared<localization_manager::Node>(rclcpp::NodeOptions());
-  
-  rclcpp::executors::MultiThreadedExecutor executor;
-  executor.add_node(node->get_node_base_interface());
-  executor.spin();
+    auto node = std::make_shared<localization_manager::Node>(rclcpp::NodeOptions());
 
-  rclcpp::shutdown();
+    rclcpp::executors::MultiThreadedExecutor executor;
+    executor.add_node(node->get_node_base_interface());
+    executor.spin();
 
-  return 0;
+    rclcpp::shutdown();
+
+    return 0;
 }

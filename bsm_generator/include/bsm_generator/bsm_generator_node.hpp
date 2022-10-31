@@ -67,7 +67,7 @@ namespace bsm_generator
     Config config_;
 
     // Worker class
-    BSMGeneratorWorker worker;
+    std::shared_ptr<BSMGeneratorWorker> worker;
 
     // The BSM object that all subscribers make updates to
     carma_v2x_msgs::msg::BSM bsm_;

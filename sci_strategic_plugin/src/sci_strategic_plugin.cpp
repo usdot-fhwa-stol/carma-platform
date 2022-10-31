@@ -125,6 +125,10 @@ carma_ros2_utils::CallbackReturn SCIStrategicPlugin::on_configure_plugin()
   bsm_sub_ = create_subscription<carma_v2x_msgs::msg::BSM>("bsm_outbound", 1, 
     std::bind(&SCIStrategicPlugin::BSMCb,this,std_ph::_1));
 
+  // Guidance State subscriber
+  guidance_state_sub_ = create_subscription<carma_planning_msgs::msg::GuidanceState>("guidance_state", 5, 
+    std::bind(&SCIStrategicPlugin::guidance_state_cb, this, std::placeholders::_1));
+
   // set world model point form wm listener
   wm_ = get_world_model();
   
@@ -217,6 +221,11 @@ void SCIStrategicPlugin::BSMCb(carma_v2x_msgs::msg::BSM::UniquePtr msg)
   bsm_id_ = BSMHelper::BSMHelper::bsmIDtoString(bsm_id_vec);
   bsm_msg_count_ = msg->core_data.msg_count;
   bsm_sec_mark_ = msg->core_data.sec_mark;
+}
+
+void SCIStrategicPlugin::guidance_state_cb(const carma_planning_msgs::msg::GuidanceState::UniquePtr msg)
+{
+  guidance_engaged_ = (msg->state == carma_planning_msgs::msg::GuidanceState::ENGAGED);
 }
 
 void SCIStrategicPlugin::currentPoseCb(geometry_msgs::msg::PoseStamped::UniquePtr msg)
@@ -809,7 +818,7 @@ carma_v2x_msgs::msg::MobilityOperation SCIStrategicPlugin::generateMobilityOpera
 
 void SCIStrategicPlugin::publishMobilityOperation()
 {
-  if (approaching_stop_controlled_interction_)
+  if (approaching_stop_controlled_interction_ && guidance_engaged_)
   {
     carma_v2x_msgs::msg::MobilityOperation status_msg = generateMobilityOperation();
     mobility_operation_pub_->publish(status_msg);
