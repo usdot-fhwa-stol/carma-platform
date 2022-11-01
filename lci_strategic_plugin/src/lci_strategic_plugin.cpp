@@ -16,6 +16,8 @@
 #include "lci_strategic_plugin/lci_strategic_plugin.h"
 #include "lci_strategic_plugin/lci_states.h"
 
+#define EPSILON 0.01
+
 #define GET_MANEUVER_PROPERTY(mvr, property)                                                                           \
   (((mvr).type == cav_msgs::Maneuver::INTERSECTION_TRANSIT_LEFT_TURN ?                                                 \
         (mvr).intersection_transit_left_turn_maneuver.property :                                                       \
@@ -611,7 +613,7 @@ void LCIStrategicPlugin::planWhenAPPROACHING(const cav_srvs::PlanManeuversReques
   if (config_.enable_carma_streets_connection ==false || scheduled_enter_time_ == 0) //UC2
   {
     nearest_green_entry_time = get_nearest_green_entry_time(current_state.stamp, earliest_entry_time, traffic_light) 
-                                          + ros::Duration(0.01); //0.01sec more buffer since green_light algorithm's timestamp picks the previous signal - Vehicle Estimation
+                                          + ros::Duration(0/01); //0.01sec more buffer since green_light algorithm's timestamp picks the previous signal - Vehicle Estimation
     is_entry_time_within_future_events = true; 
   }
   else if(config_.enable_carma_streets_connection ==true && scheduled_enter_time_ != 0 ) // UC3
@@ -702,7 +704,15 @@ void LCIStrategicPlugin::planWhenAPPROACHING(const cav_srvs::PlanManeuversReques
 
       if (early_arrival_time_green_et.toSec() - nearest_green_signal_start_time.toSec() < config_.green_light_time_buffer)
       {
-        nearest_green_entry_time_cached_ = nearest_green_signal_start_time + ros::Duration(config_.green_light_time_buffer + 0.01); 
+        nearest_green_entry_time_cached_ = nearest_green_signal_start_time + ros::Duration(config_.green_light_time_buffer + EPSILON);
+        
+        // EPSILON=0.01 is there because if predicState's input exactly falls on ending_time it picks the previous state.
+        //For example, if 0 - 10s is GREEN, and 10 - 12s is YELLOW, checking exactly 10.0s will return GREEN,
+        //but 10.01s will return YELLOW. This 0.01 convention is used throughout the file, so thought it is better
+        //to keep it consistent and probably too detailed for the user to think about, which is why it is not included in the buffer.
+        //Actually including in the buffer doesn't work because it uses that same buffer to check early and late. If buffer is 2s and 
+        //green starts at 10s, it will check +/-2s from 12s. If the buffer was 2.01s and green starts at 10s again, it checks +/-2.01 
+        //from 12.01, so both checks 10s.
       }
       else
       {
