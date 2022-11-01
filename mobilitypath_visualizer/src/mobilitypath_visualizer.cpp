@@ -375,7 +375,8 @@ namespace mobilitypath_visualizer {
             
             curr_idx -= 1; // carma_v2x_msg stamp is before that of host now
             // interpolate position to match the starting time (dt < time_step)
-            if (curr_idx < 0 )
+            unsigned int curr_idx_chk = curr_idx;
+            if (curr_idx_chk < 0 )
                 curr_idx = 0;
                 
             double dt = (rclcpp::Time(host_marker.markers[0].header.stamp) - rclcpp::Time(curr_cav.markers[curr_idx].header.stamp)).seconds();
