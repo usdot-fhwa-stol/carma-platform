@@ -81,6 +81,10 @@ EOF
                 shift
                 shift
                 ;;
+            *) 
+                echo "Invalid argument $arg"
+                exit 1
+                ;;
 
         esac
     done
@@ -126,7 +130,7 @@ cloud-sim__start() {
         if [ -f "$CARMA_CLOUD_SIM_CLOUD_FORMATION_PATH" ]; then rm "${CARMA_CLOUD_SIM_CLOUD_FORMATION_PATH}"; fi
 
         # Pull new file
-        wget -O "${CARMA_CLOUD_SIM_CLOUD_FORMATION_PATH}" "https://raw.githubusercontent.com/usdot-fhwa-stol/carma-platform/feature/aws-xil/engineering_tools/xil-cloud-formation-v0.yaml"
+        wget -O "${CARMA_CLOUD_SIM_CLOUD_FORMATION_PATH}" "https://raw.githubusercontent.com/usdot-fhwa-stol/carma-platform/feature/cloud-sim/engineering_tools/xil-cloud-formation-v0.yaml"
     fi
 
     # Extract config
@@ -135,15 +139,15 @@ cloud-sim__start() {
     local CONFIG_IMAGE=$(cat ${CARMA_CLOUD_SIM_CONFIG_PATH} | grep "CONFIG_IMAGE=" | sed "s|CONFIG_IMAGE=||")
 
     if [ -z "$USER_ARN" ]; then
-        echo "Configuration does not include AWS User ARN. Please run: carma cloud-sim cofig -a <User ARN>"
+        echo "Configuration does not include AWS User ARN. Please run: carma cloud-sim config -a <User ARN>"
     fi
 
     if [ -z "$PASS" ]; then
-        echo "Configuration does not include instance password. Please run: carma cloud-sim cofig -p <Instance Password>"
+        echo "Configuration does not include instance password. Please run: carma cloud-sim config -p <Instance Password>"
     fi
 
     if [ -z "$CONFIG_IMAGE" ]; then
-        echo "Configuration does not include AWS User ARN. Please run: carma cloud-sim cofig -v <Desired config version>"
+        echo "Configuration does not include AWS User ARN. Please run: carma cloud-sim config -v <Desired config version>"
     fi
 
     if ! command -v "aws" &> /dev/null
@@ -185,7 +189,8 @@ cloud-sim__start() {
     sleep ${SLEEP_SEC}
 
     # As long as there are resources which do not have the status CREATE_COMPLETE 
-    while [ -n "${NON_COMPLETE_RES}" ] || [ ${ELAPSED_TIME} -gt ${LAUNCH_TIMEOUT} ] ; do 
+    # TODO: Ideally we wouldn't need to hard code 14 resources but a rare race condition can occur where 13 complete before 14 starts which leads to the need to hard code it for now
+    while { [ -n "${NON_COMPLETE_RES}" ] || [ ${TOTAL_STACK_RESOURCE} -lt 14 ]; } && [ ${ELAPSED_TIME} -lt ${LAUNCH_TIMEOUT} ]; do 
 
         STACK_RESOURCE_STATUS=$(aws cloudformation describe-stack-resources --stack-name "${STACK_NAME}" | grep -oh '"ResourceStatus":.*",' | sed "s|\s*\"ResourceStatus\": \"||" | sed "s|\",||")
 
@@ -229,7 +234,6 @@ cloud-sim__start() {
 
     local PUBLIC_DNS=$(aws ec2 describe-instances --instance-ids ${DEV_MACHINE_ID} --output text --query Reservations[].Instances[].PublicDnsName)
 
-    # TODO determine cloud 9 address
     local CLOUD9_ADDRESS_BASE="https://us-east-1.console.aws.amazon.com/cloud9/ide"
     # 1. Extract cloud9 name from stack details
     local CLOUD9_ENVS=$(aws cloud9 list-environments --output text | sed "s|ENVIRONMENTIDS\s||")
@@ -300,6 +304,7 @@ Please enter one of the following commands when using the cloud-sim extension:
             config
                 - Set the configuration for AWS instances launched using the cloud-sim command. 
                   On first run creates a file at ${CARMA_CLOUD_SIM_CONFIG_PATH} containing these settings unencrypted.
+                  Multiple or only one of the optional arguments can be specified.
                 -a
                     - AWS user ARN. Generally of the form arn:aws:iam::<user id number>:user/<IAM User (usually email)>
                       For example: arn:aws:iam::928947697780:user/Bob.Marley@reggae.com 
