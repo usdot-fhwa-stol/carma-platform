@@ -80,4 +80,4 @@ else
     colcon build  --install-base /opt/carma/install_ros2 --build-base build_ros2 --cmake-args -DCMAKE_BUILD_TYPE=Release
 fi
 
-echo "Build of ROS2 CARMA Components Complete"
+echo "Build of ROS 2 CARMA Components Complete"
