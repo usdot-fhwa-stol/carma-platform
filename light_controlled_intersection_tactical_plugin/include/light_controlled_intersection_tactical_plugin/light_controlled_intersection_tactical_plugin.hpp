@@ -186,6 +186,12 @@ namespace light_controlled_intersection_tactical_plugin
      */
     double findSpeedLimit(const lanelet::ConstLanelet& llt, const carma_wm::WorldModelConstPtr &wm) const;
 
+    FRIEND_TEST(LCITacticalPluginTest, applyTrajectorySmoothingAlgorithm);
+    FRIEND_TEST(LCITacticalPluginTest, applyOptimizedTargetSpeedProfile);
+    FRIEND_TEST(LCITacticalPluginTest, createGeometryProfile);
+    FRIEND_TEST(LCITacticalPluginTest, planTrajectoryCB);
+    FRIEND_TEST(LCITacticalPluginTest, setConfig);
+
   public:
 
     /*!

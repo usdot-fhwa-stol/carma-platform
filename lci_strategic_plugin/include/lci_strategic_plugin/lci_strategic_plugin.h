@@ -186,7 +186,8 @@ public:
   ////////// VARIABLES ///////////
 
   TurnDirection intersection_turn_direction_ = TurnDirection::Straight;
-  bool approaching_light_controlled_interction_ = false;
+  bool approaching_light_controlled_interction_ = true; // TODO set to true until carma-street is capable of sending strategy parameters for UC3
+                                                        // https://github.com/usdot-fhwa-stol/carma-platform/issues/1947
 
   // CARMA Streets Variakes
   // timestamp for msg received from carma streets
@@ -330,7 +331,7 @@ private:
    *
    * \return A transift maneuver message specifically designed for light controlled intersection tactical plugin
    */
-  cav_msgs::Maneuver composeTrajectorySmoothingManeuverMessage(double start_dist, double end_dist, double start_speed,
+  cav_msgs::Maneuver composeTrajectorySmoothingManeuverMessage(double start_dist, double end_dist, const std::vector<lanelet::ConstLanelet>& crossed_lanelets, double start_speed,
                                                        double target_speed, ros::Time start_time, ros::Time end_time,
                                                        const TrajectoryParams& tsp) const;
   

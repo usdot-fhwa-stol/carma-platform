@@ -63,14 +63,23 @@ namespace mobilitypath_publisher
                                                                                std::bind(&MobilityPathPublication::trajectory_cb, this, std_ph::_1));
     bsm_sub_ = create_subscription<carma_v2x_msgs::msg::BSM>("bsm_outbound", 1,
                                                              std::bind(&MobilityPathPublication::bsm_cb, this, std_ph::_1));
+    
+    guidance_state_sub_ = create_subscription<carma_planning_msgs::msg::GuidanceState>("guidance_state", 5, std::bind(&MobilityPathPublication::guidance_state_cb, this, std::placeholders::_1));
+
     georeference_sub_ = create_subscription<std_msgs::msg::String>("georeference", 1,
                                                                    std::bind(&MobilityPathPublication::georeference_cb, this, std_ph::_1));
 
     // Setup publishers
     path_pub_ = create_publisher<carma_v2x_msgs::msg::MobilityPath>("mobility_path_msg", 5);
+    
 
     // Return success if everthing initialized successfully
     return CallbackReturn::SUCCESS;
+  }
+
+  void MobilityPathPublication::guidance_state_cb(const carma_planning_msgs::msg::GuidanceState::UniquePtr msg)
+  {
+    guidance_engaged_ = (msg->state == carma_planning_msgs::msg::GuidanceState::ENGAGED);
   }
 
   carma_ros2_utils::CallbackReturn MobilityPathPublication::handle_on_activate(const rclcpp_lifecycle::State &prev_state)
@@ -86,7 +95,11 @@ namespace mobilitypath_publisher
 
   bool MobilityPathPublication::spin_callback()
   {
-    path_pub_->publish(latest_mobility_path_);
+    // update timestamp of mobilitypath
+    uint64_t millisecs = get_clock()->now().nanoseconds() / 1000000;
+    latest_mobility_path_.m_header.timestamp = millisecs; //time in millisecond
+    if (guidance_engaged_)
+      path_pub_->publish(latest_mobility_path_);
     return true;
   }
 
