@@ -130,7 +130,7 @@ cloud-sim__start() {
         if [ -f "$CARMA_CLOUD_SIM_CLOUD_FORMATION_PATH" ]; then rm "${CARMA_CLOUD_SIM_CLOUD_FORMATION_PATH}"; fi
 
         # Pull new file
-        wget -O "${CARMA_CLOUD_SIM_CLOUD_FORMATION_PATH}" "https://raw.githubusercontent.com/usdot-fhwa-stol/carma-platform/feature/cloud-sim/engineering_tools/xil-cloud-formation-v0.yaml"
+        wget -O "${CARMA_CLOUD_SIM_CLOUD_FORMATION_PATH}" "https://raw.githubusercontent.com/usdot-fhwa-stol/carma-platform/develop/engineering_tools/xil-cloud-formation-v0.yaml"
     fi
 
     # Extract config
