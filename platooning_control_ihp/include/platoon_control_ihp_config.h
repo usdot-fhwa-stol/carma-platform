@@ -28,8 +28,8 @@ struct PlatooningControlIHPPluginConfig
   double Kp = 0.5;  // Proportional weight for PID controller
   double Kd = -0.5; // Derivative Weight for PID controller
   double Ki = 0.0;  // Integral weight for PID controller
-  double maxValue = 100;  // Max value to restrict speed cmd (m/s)
-  double minValue = -100; // Min value to restrict speed cmd (m/s)
+  double maxValue = 2;  // Max value to restrict speed adjustment at one time step (limit on delta_v) (m/s)
+  double minValue = -10; // Min value to restrict speed adjustment at one time step (limit on delta_v) (m/s)
   double dt = 0.1; // Timestep to calculate ctrl commands (s)
   double adjustmentCap = 10;  // Adjustment cap for speed command (m/s)
   int cmdTmestamp = 100;  // Timestamp to calculate ctrl commands (ms)
@@ -51,7 +51,7 @@ struct PlatooningControlIHPPluginConfig
   * \brief Parameter sets for IHP platoon trajectory regulation algorithm. 
   * Please refer to the updated design doc for detailed parameter description.
   */
-  double ss_theta   = 4.0;    // Minimum speed to be considered as moving, in mph.
+  double ss_theta   = 1.5;    // Minimum speed to be considered as moving, in m/s.
   double standstill = 2.0;    // Extra time needed to reacte to traffic sceanrios when vehicle is standstill (not moving), in s.
   double inter_tau  = 1.5;    // Inter-platoon time gap, refer to bumper to bumper gap time, in s.
   double intra_tau  = 0.6;    // Intra-platoon time gao, refer to bumper to bumper gap time, in s.

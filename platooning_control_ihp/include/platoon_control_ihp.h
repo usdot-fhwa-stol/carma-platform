@@ -66,16 +66,16 @@ namespace platoon_control_ihp
 			
 			/**
 			* \brief Compose twist message from linear and angular velocity commands.
-			* \param linear_vel linear velocity
-			* \param angular_vel angular velocity
+			* \param linear_vel linear velocity in m/s
+			* \param angular_vel angular velocity in rad/s
 			* \return twist message
 			*/
 			geometry_msgs::TwistStamped composeTwistCmd(double linear_vel, double angular_vel);
 
 			/**
 			* \brief Compose control message from speed and steering commands.
-			* \param linear_vel linear velocity
-			* \param steering_angle steering angle
+			* \param linear_vel linear velocity in m/s
+			* \param steering_angle steering angle in rad
 			* \return control command
 			*/
 			autoware_msgs::ControlCommandStamped composeCtrlCmd(double linear_vel, double steering_angle);
@@ -148,7 +148,7 @@ namespace platoon_control_ihp
 			/**
 			* \brief calculate average speed of a set of trajectory points
 			* \param trajectory_points set of trajectory points
-			* \return trajectory speed
+			* \return trajectory speed in m/s
 			*/
 			double getTrajectorySpeed(std::vector<cav_msgs::TrajectoryPlanPoint> trajectory_points);
 

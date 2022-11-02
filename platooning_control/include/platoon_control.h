@@ -65,16 +65,16 @@ namespace platoon_control
 			
 			/**
 			* \brief Compose twist message from linear and angular velocity commands.
-			* \param linear_vel linear velocity
-			* \param angular_vel angular velocity
+			* \param linear_vel linear velocity in m/s
+			* \param angular_vel angular velocity in rad/s
 			* \return twist message
 			*/
 			geometry_msgs::TwistStamped composeTwistCmd(double linear_vel, double angular_vel);
 
 			/**
 			* \brief Compose control message from speed and steering commands.
-			* \param linear_vel linear velocity
-			* \param steering_angle steering angle
+			* \param linear_vel linear velocity in m/s
+			* \param steering_angle steering angle in rad
 			* \return control command
 			*/
 			autoware_msgs::ControlCommandStamped composeCtrlCmd(double linear_vel, double steering_angle);

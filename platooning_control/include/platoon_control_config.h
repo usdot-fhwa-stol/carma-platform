@@ -28,8 +28,8 @@ struct PlatooningControlPluginConfig
   double Kp = 0.5;  // Proportional weight for PID controller
   double Kd = -0.5;  // Derivative Weight for PID controller
   double Ki = 0.0;  // Integral weight for PID controller
-  double maxValue = 100;  // Max value to restrict speed cmd (m/s)
-  double minValue = -100; // Min value to restrict speed cmd (m/s)
+  double maxValue = 2;  // Max value to restrict speed adjustment at one time step (limit on delta_v) (m/s)
+  double minValue = -10; // Min value to restrict speed adjustment at one time step (limit on delta_v) (m/s)
   double dt = 0.1; // Timestep to calculate ctrl commands (s)
   double adjustmentCap = 10;  // Adjustment cap for speed command (m/s)
   int cmdTmestamp = 100;  // Timestamp to calculate ctrl commands (ms)

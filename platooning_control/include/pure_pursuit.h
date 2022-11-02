@@ -81,14 +81,14 @@ namespace platoon_control
 		double lowPassfilter(double gain, double prev_value, double value);
 
 		/**
-        * \brief returns steering angle
-		* \return steering angle
+        * \brief returns steering angle 
+		* \return steering angle in rad
         */ 
 		double getSteeringAngle();
 		
 		/**
-        * \brief returns angular velocity
-		* \return angular velocity
+        * \brief returns angular velocity 
+		* \return angular velocity in rad/s
         */
 		double getAngularVelocity();
 
@@ -112,14 +112,14 @@ namespace platoon_control
 		/**
         * \brief calculate yaw angle of the vehicle
 		* \param tp trajectory point
-		* \return yaw angle of the vehicle
+		* \return yaw angle of the vehicle in rad
         */
 		double getYaw(const cav_msgs::TrajectoryPlanPoint& tp) const;
 
 		/**
         * \brief calculate steering direction
 		* \param tp trajectory point
-		* \return steering direction
+		* \return steering direction (+1 is left and -1 is right)
         */
 		int getSteeringDirection(std::vector<double> v1, std::vector<double> v2) const;
 

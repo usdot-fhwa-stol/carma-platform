@@ -3,8 +3,8 @@ maxAccel: 1.5 # Maximum acceleration absolute value used in controller filters (
 Kp: 0.4 # Proportional weight for PID controller
 Kd: 0.05 # Derivative Weight for PID controller
 Ki: 0.0 # Integral weight for PID controller
-maxValue: 2.0 # Max value to restrict speed cmd (m/s)
-minValue: -10.0 # Min value to restrict speed cmd (m/s)
+maxValue: 2.0 # Max value to restrict speed adjustment at one time step (limit on delta_v) (m/s)
+minValue: -10.0 # Min value to restrict speed adjustment at one time step (limit on delta_v) (m/s)
 cmdTmestamp: 100  # Timestep to calculate ctrl commands (ms)
 adjustmentCap: 11.0 # Adjustment cap for speed command (m/s)
 dt: 0.1 # Timestep to calculate ctrl commands (s)
@@ -14,7 +14,7 @@ lowpassGain: 1.0  #Lowpass filter gain
 lookaheadRatio: 1.6  # Ratio to calculate lookahead distance
 minLookaheadDist: 15.0  # Min lookahead distance (m)
 vehicleLength: 5.0 # Average length of a vehicle (m)
-ss_theta: 4.0 # Minimum speed to be considered as moving (mph)
+ss_theta: 1.5 # Minimum speed to be considered as moving (m/s)
 standstill: 2.0 # Extra time needed to reacte to traffic sceanrios when vehicle is standstill (not moving) (s).
 inter_tau: 1.5 # Inter-platoon time gap, refer to bumper to bumper gap time (s)
 intra_tau: 0.6  #Intra-platoon time gao, refer to bumper to bumper gap time (s)

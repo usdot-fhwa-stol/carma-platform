@@ -79,24 +79,25 @@ namespace platoon_control
 
         /**
         * \brief Returns latest speed command
-        * \return lastest speed command
+        * \return lastest speed command in m/s
         */
         double getLastSpeedCommand() const;
 
         /**
-        * \brief Generates speed commands based on the trajectory point
+        * \brief Generates speed commands (in m/s) based on the trajectory point
         * \param point trajectory point
         */
         void generateSpeed(const cav_msgs::TrajectoryPlanPoint& point);
         
         /**
-        * \brief Generates steering commands based on lookahead trajectory point
+        * \brief Generates steering commands (in rad) based on lookahead trajectory point
+        * \param point trajectory point
         */
         void generateSteer(const cav_msgs::TrajectoryPlanPoint& point);
 
         /**
-        * \brief Generates steering commands based on lookahead trajectory point
-        * \param point trajectory point
+        * \brief Sets the platoon leader object using info from msg
+        * \param leader leader information msg received from strategic plugin
         */
         void setLeader(const PlatoonLeaderInfo& leader);
         

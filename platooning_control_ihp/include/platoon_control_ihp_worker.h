@@ -80,18 +80,18 @@ namespace platoon_control_ihp
 
         /**
         * \brief Returns latest speed command
-        * \return latest speed command
+        * \return latest speed command in m/s
         */
         double getLastSpeedCommand() const;
 
         /**
-        * \brief Generates speed commands based on the trajectory point
+        * \brief Generates speed commands in m/s based on the trajectory point
         * \param point trajectory point
         */
         void generateSpeed(const cav_msgs::TrajectoryPlanPoint& point);
         
         /**
-        * \brief Generates steering commands based on lookahead trajectory point
+        * \brief Generates steering commands in rad based on lookahead trajectory point
         * \param point trajectory point
         */
         void generateSteer(const cav_msgs::TrajectoryPlanPoint& point);
@@ -104,7 +104,7 @@ namespace platoon_control_ihp
         
         /**
         * \brief set current speed
-        * \param speed speed value
+        * \param speed speed value in m/s
         */
         void setCurrentSpeed(double speed);
 
