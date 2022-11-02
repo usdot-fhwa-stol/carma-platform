@@ -41,7 +41,7 @@ sudo chgrp carma /opt/carma # Set group to expose permissions for build
 if [[ ! -z "$ROS1_PACKAGES$ROS2_PACKAGES" ]]; then
     if [[ ! -z "$ROS1_PACKAGES" ]]; then
         echo "Incrementally building ROS1 packages: $ROS1_PACKAGES"
-        colcon build --install-base /opt/carma/install --cmake-args -DCMAKE_BUILD_TYPE=Release --packages-above $ROS1_PACKAGES --allow-overriding $ROS1_PACKAGES
+        colcon build --install-base /opt/carma/install --cmake-args -DCMAKE_BUILD_TYPE=Release --packages-above $ROS1_PACKAGES --allow-overriding $ROS1_PACKAGES 
     else
         echo "Build type is incremental but no ROS1 packages specified, skipping ROS1 build..."
     fi
@@ -80,4 +80,4 @@ else
     colcon build  --install-base /opt/carma/install_ros2 --build-base build_ros2 --cmake-args -DCMAKE_BUILD_TYPE=Release
 fi
 
-echo "Build of ROS2 CARMA Components Complete"
+echo "Build of ROS 2 CARMA Components Complete"

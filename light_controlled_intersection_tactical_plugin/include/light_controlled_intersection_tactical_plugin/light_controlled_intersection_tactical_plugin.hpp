@@ -126,11 +126,11 @@ namespace light_controlled_intersection_tactical_plugin
     double last_successful_ending_downtrack_;         // if algorithm was successful, this is traffic_light_downtrack
     double last_successful_scheduled_entry_time_;     // if algorithm was successful, this is also scheduled entry time (ET in TSMO UC2 Algo)
 
-    carma_planning_msgs::msg::Plugin plugin_discovery_msg_;
+    std::string plugin_name_;
     carma_debug_ros2_msgs::msg::TrajectoryCurvatureSpeeds debug_msg_;
     std::vector<double> last_final_speeds_;
 
-    std::string light_controlled_intersection_strategy_ = "signalized"; // Strategy carma-streets is sending. Could be more verbose but needs to be changed on both ends
+    std::string light_controlled_intersection_strategy_ = "Carma/signalized_intersection"; // Strategy carma-streets is sending. Could be more verbose but needs to be changed on both ends
 
     /**
      * \brief Creates a speed profile according to case one or two of the light controlled intersection, where the vehicle accelerates (then cruises if needed) and decelerates into the intersection. 
@@ -197,7 +197,7 @@ namespace light_controlled_intersection_tactical_plugin
     /*!
     * \brief LightControlledIntersectionTacticalPlugin constructor
     */
-    LightControlledIntersectionTacticalPlugin(carma_wm::WorldModelConstPtr wm, const Config& config,
+    LightControlledIntersectionTacticalPlugin(carma_wm::WorldModelConstPtr wm, const Config& config, const std::string& plugin_name, 
         rclcpp::node_interfaces::NodeLoggingInterface::SharedPtr logger);
 
     /**

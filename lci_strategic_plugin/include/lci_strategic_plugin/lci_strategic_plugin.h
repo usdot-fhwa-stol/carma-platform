@@ -186,8 +186,7 @@ public:
   ////////// VARIABLES ///////////
 
   TurnDirection intersection_turn_direction_ = TurnDirection::Straight;
-  bool approaching_light_controlled_interction_ = true; // TODO set to true until carma-street is capable of sending strategy parameters for UC3
-                                                        // https://github.com/usdot-fhwa-stol/carma-platform/issues/1947
+  bool approaching_light_controlled_intersection_ = false; 
 
   // CARMA Streets Variakes
   // timestamp for msg received from carma streets
@@ -414,7 +413,7 @@ private:
                                         double current_state_speed,
                                         const lanelet::CarmaTrafficSignalPtr& traffic_light,
                                         const lanelet::ConstLanelet& entry_lanelet, const lanelet::ConstLanelet& exit_lanelet, 
-                                        double traffic_light_down_track, const TrajectoryParams& ts_params);
+                                        double traffic_light_down_track, const TrajectoryParams& ts_params, bool is_certainty_check_optional);
   /**
    * \brief This function returns valid maneuvers if the vehicle is able to utilize trajectory smoothing parameters to go through the intersection with certainty
    *        It utilizes canMakeWithCertainty function to determine if it is able to make it. Corresponds to TSCase 1-7
@@ -741,7 +740,7 @@ private:
   //! Cache variables for storing the current intersection state between state machine transitions
   boost::optional<double> intersection_speed_;
   boost::optional<double> intersection_end_downtrack_;
-  std::string light_controlled_intersection_strategy_ = "signalized"; // Strategy carma-streets is sending. Could be more verbose but needs to be changed on both ends
+  std::string light_controlled_intersection_strategy_ = "Carma/signalized_intersection"; // Strategy carma-streets is sending. Could be more verbose but needs to be changed on both ends
   
   // TF listenser
   tf2_ros::Buffer tf2_buffer_;

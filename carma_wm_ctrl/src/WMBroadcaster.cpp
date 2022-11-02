@@ -2033,9 +2033,10 @@ carma_perception_msgs::msg::CheckActiveGeofence WMBroadcaster::checkActiveGeofen
 
   if (active_geofence_llt_ids_.size() <= 0 ) 
   {
-    RCLCPP_INFO_STREAM(rclcpp::get_logger("carma_wm_ctrl"), "No active geofence llt ids are loaded to the WMBroadcaster");
     return outgoing_geof;
   }
+  
+  RCLCPP_INFO_STREAM(rclcpp::get_logger("carma_wm_ctrl"), "Active geofence llt ids are loaded to the WMBroadcaster");
 
   // Obtain the closest lanelet to the vehicle's current position
   auto current_llt = lanelet::geometry::findNearest(current_map_->laneletLayer, curr_pos, 1)[0].second;

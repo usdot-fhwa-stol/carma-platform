@@ -89,11 +89,55 @@ def generate_launch_description():
         description = "Path to file containing override parameters for the subsystem controller"
     )
 
+    # Below nodes are separated to individual container such that the nodes with reentrant services are within their separate container.
+    # When all nodes are within single container, it is prone to fail throwing runtime_error, and it is currently hypothesized to be
+    # because of this issue: https://github.com/ros2/rclcpp/issues/1212, where fix in the rclcpp library, so not able to be integrated at this moment:
+    # https://github.com/ros2/rclcpp/pull/1241. This issue was first discovered in this carma issue: https://github.com/usdot-fhwa-stol/carma-platform/issues/1961  
 
     # Nodes
-    carma_guidance_container = ComposableNodeContainer(
+    carma_guidance_visualizer_container = ComposableNodeContainer(
         package='carma_ros2_utils',
-        name='carma_guidance_container',
+        name='carma_guidance_visualizer_container',
+        executable='carma_component_container_mt',
+        namespace=GetCurrentNamespace(),
+        composable_node_descriptions=[
+            ComposableNode(
+                package='mobilitypath_visualizer',
+                plugin='mobilitypath_visualizer::MobilityPathVisualizer',
+                name='mobilitypath_visualizer_node',
+                extra_arguments=[
+                    {'use_intra_process_comms': True}, 
+                    {'--log-level' : GetLogLevel('mobilitypath_visualizer', env_log_levels) }
+                ],
+                remappings = [
+                    ("mobility_path_msg", [ EnvironmentVariable('CARMA_MSG_NS', default_value=''), "/outgoing_mobility_path" ] ),
+                    ("incoming_mobility_path", [ EnvironmentVariable('CARMA_MSG_NS', default_value=''), "/incoming_mobility_path" ] ),
+                    ("georeference", [ EnvironmentVariable('CARMA_LOCZ_NS', default_value=''), "/map_param_loader/georeference"])
+                ],
+                parameters=[
+                    vehicle_characteristics_param_file,
+                    mobilitypath_visualizer_param_file,
+                    vehicle_config_param_file
+                ]
+            ),
+            ComposableNode(
+                package='trajectory_visualizer',
+                plugin='trajectory_visualizer::TrajectoryVisualizer',
+                name='trajectory_visualizer_node',
+                extra_arguments=[
+                    {'use_intra_process_comms': True}, 
+                    {'--log-level' : GetLogLevel('trajectory_visualizer', env_log_levels) }
+                ],
+                parameters=[
+                    trajectory_visualizer_param_file
+                ]
+            )
+        ]
+    )
+
+    carma_plan_delegator_container = ComposableNodeContainer(
+        package='carma_ros2_utils',
+        name='carma_plan_delegator_container',
         executable='carma_component_container_mt',
         namespace=GetCurrentNamespace(),
         composable_node_descriptions=[
@@ -119,42 +163,16 @@ def generate_launch_description():
                     plan_delegator_param_file,
                     vehicle_config_param_file
                 ]
-            ),
-            ComposableNode(
-                package='mobilitypath_visualizer',
-                plugin='mobilitypath_visualizer::MobilityPathVisualizer',
-                name='mobilitypath_visualizer_node',
-                extra_arguments=[
-                    {'use_intra_process_comms': True}, 
-                    {'--log-level' : GetLogLevel('mobilitypath_visualizer', env_log_levels) }
-                ],
-                remappings = [
-                    ("mobility_path_msg", [ EnvironmentVariable('CARMA_MSG_NS', default_value=''), "/mobility_path_msg" ] ),
-                    ("incoming_mobility_path", [ EnvironmentVariable('CARMA_MSG_NS', default_value=''), "/incoming_mobility_path" ] ),
-                    ("georeference", [ EnvironmentVariable('CARMA_LOCZ_NS', default_value=''), "/map_param_loader/georeference"])
-                ],
-                parameters=[
-                    vehicle_characteristics_param_file,
-                    mobilitypath_visualizer_param_file,
-                    vehicle_config_param_file
-                ]
-            ),
-            ComposableNode(
-                package='trajectory_executor',
-                plugin='trajectory_executor::TrajectoryExecutor',
-                name='trajectory_executor_node',
-                extra_arguments=[
-                    {'use_intra_process_comms': True}, 
-                    {'--log-level' : GetLogLevel('trajectory_executor', env_log_levels) }
-                ],
-                remappings = [
-                    ("trajectory", "plan_trajectory"),
-                ],
-                parameters=[
-                    trajectory_executor_param_file,
-                    vehicle_config_param_file
-                ]
-            ),
+            )
+        ]
+    )
+    
+    carma_trajectory_executor_and_route_container = ComposableNodeContainer(
+        package='carma_ros2_utils',
+        name='carma_trajectory_executor_and_route_container',
+        executable='carma_component_container_mt',
+        namespace=GetCurrentNamespace(),
+        composable_node_descriptions=[
             ComposableNode(
                 package='route',
                 plugin='route::Route',
@@ -178,6 +196,31 @@ def generate_launch_description():
                 ]
             ),
             ComposableNode(
+                package='trajectory_executor',
+                plugin='trajectory_executor::TrajectoryExecutor',
+                name='trajectory_executor_node',
+                extra_arguments=[
+                    {'use_intra_process_comms': True}, 
+                    {'--log-level' : GetLogLevel('trajectory_executor', env_log_levels) }
+                ],
+                remappings = [
+                    ("trajectory", "plan_trajectory"),
+                ],
+                parameters=[
+                    trajectory_executor_param_file,
+                    vehicle_config_param_file
+                ]
+            )
+        ]
+    )
+    
+    carma_arbitrator_container = ComposableNodeContainer(
+        package='carma_ros2_utils',
+        name='carma_arbitrator_container',
+        executable='carma_component_container_mt',
+        namespace=GetCurrentNamespace(),
+        composable_node_descriptions=[    
+            ComposableNode(
                 package='arbitrator',
                 plugin='arbitrator::ArbitratorNode',
                 name='arbitrator',
@@ -186,6 +229,7 @@ def generate_launch_description():
                     {'--log-level' : GetLogLevel('arbitrator', env_log_levels) }
                 ],
                 remappings = [
+                    ("current_velocity", [ EnvironmentVariable('CARMA_INTR_NS', default_value=''), "/vehicle/twist" ] ),
                     ("guidance_state", [ EnvironmentVariable('CARMA_GUIDE_NS', default_value=''), "/state" ] ),
                     ("semantic_map", [ EnvironmentVariable('CARMA_ENV_NS', default_value=''), "/semantic_map" ] ),
                     ("map_update", [ EnvironmentVariable('CARMA_ENV_NS', default_value=''), "/map_update" ] ),
@@ -196,7 +240,15 @@ def generate_launch_description():
                     arbitrator_param_file_path,
                     vehicle_config_param_file
                 ]
-            ),
+            )
+        ]
+    )
+    carma_guidance_worker_container = ComposableNodeContainer(
+        package='carma_ros2_utils',
+        name='carma_guidance_worker_container',
+        executable='carma_component_container_mt',
+        namespace=GetCurrentNamespace(),
+        composable_node_descriptions=[
             ComposableNode(
                 package='guidance',
                 plugin='guidance::GuidanceWorker',
@@ -213,7 +265,16 @@ def generate_launch_description():
                 parameters=[
                     guidance_param_file
                 ]
-            ),
+            )
+        ]
+    )
+    
+    carma_port_drayage_plugin_container = ComposableNodeContainer(
+        package='carma_ros2_utils',
+        name='carma_port_drayage_plugin_container',
+        executable='carma_component_container_mt',
+        namespace=GetCurrentNamespace(),
+        composable_node_descriptions=[
             ComposableNode(
                 package='port_drayage_plugin',
                 plugin='port_drayage_plugin::PortDrayagePlugin',
@@ -223,6 +284,7 @@ def generate_launch_description():
                     {'--log-level' : GetLogLevel('route', env_log_levels) }
                 ],
                 remappings = [
+                    ("guidance_state", [ EnvironmentVariable('CARMA_GUIDE_NS', default_value=''), "/state" ] ),
                     ("georeference", [ EnvironmentVariable('CARMA_LOCZ_NS', default_value=''), "/map_param_loader/georeference" ] ),
                     ("current_pose", [ EnvironmentVariable('CARMA_LOCZ_NS', default_value=''), "/current_pose" ] ),
                     ("incoming_mobility_operation", [ EnvironmentVariable('CARMA_MSG_NS', default_value=''), "/incoming_mobility_operation" ] ),  
@@ -233,20 +295,7 @@ def generate_launch_description():
                     port_drayage_plugin_param_file,
                     vehicle_characteristics_param_file
                 ]     
-            ),
-            ComposableNode(
-                package='trajectory_visualizer',
-                plugin='trajectory_visualizer::TrajectoryVisualizer',
-                name='trajectory_visualizer_node',
-                extra_arguments=[
-                    {'use_intra_process_comms': True}, 
-                    {'--log-level' : GetLogLevel('trajectory_visualizer', env_log_levels) }
-                ],
-                parameters=[
-                    trajectory_visualizer_param_file
-                ]
-            ) 
-
+            )
         ]
     )
 
@@ -283,8 +332,13 @@ def generate_launch_description():
 
     return LaunchDescription([  
         declare_vehicle_config_param_file_arg,
-        declare_subsystem_controller_param_file_arg,      
-        carma_guidance_container,
+        declare_subsystem_controller_param_file_arg,  
+        carma_trajectory_executor_and_route_container,
+        carma_guidance_visualizer_container,    
+        carma_guidance_worker_container,
+        carma_plan_delegator_container,
+        carma_arbitrator_container,
+        carma_port_drayage_plugin_container,
         plugins_group,
         subsystem_controller
     ]) 
