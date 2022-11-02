@@ -26,7 +26,7 @@
 namespace platooning_tactical_plugin
 {
   /**
-   * \brief ROS node for the PlatooningTacticalPlugin
+   * \brief ROS node for the PlatooningTacticalPlugin to initialize and configure parameters and publishers/subscribers
    */ 
   class Node : public carma_guidance_plugins::TacticalPlugin
   {

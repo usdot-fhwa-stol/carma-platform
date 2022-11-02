@@ -59,7 +59,9 @@ namespace platoon_control
 
         // Leader info: platoonmember + leader index + number of vehicles in front
 
-
+    /**
+    * \brief This is the worker class for platoon controller. It is responsible for generating and smoothing the speed and steering control commands from trajectory points.  
+    */
     class PlatoonControlWorker
     {
     public:
@@ -71,31 +73,44 @@ namespace platoon_control
 
         /**
         * \brief Update configurations
+        * \param new_config new configuration
         */
         void updateConfigParams(PlatooningControlPluginConfig new_config);
 
         /**
         * \brief Returns latest speed command
+        * \return lastest speed command in m/s
         */
         double getLastSpeedCommand() const;
 
         /**
-        * \brief Generates speed commands based on the trajectory point
+        * \brief Generates speed commands (in m/s) based on the trajectory point
+        * \param point trajectory point
         */
         void generateSpeed(const cav_msgs::TrajectoryPlanPoint& point);
         
         /**
-        * \brief Generates steering commands based on lookahead trajectory point
+        * \brief Generates steering commands (in rad) based on lookahead trajectory point
+        * \param point trajectory point
         */
         void generateSteer(const cav_msgs::TrajectoryPlanPoint& point);
 
         /**
-        * \brief set platoon leader
+        * \brief Sets the platoon leader object using info from msg
+        * \param leader leader information msg received from strategic plugin
         */
         void setLeader(const PlatoonLeaderInfo& leader);
         
         /**
+        * \brief set current pose
+        * \param msg pose value
+        */
+        void setCurrentPose(const geometry_msgs::PoseStamped msg);
+
+
+        /**
         * \brief set current speed
+        * \param speed speed value
         */
         void setCurrentSpeed(double speed);
 
@@ -112,9 +127,6 @@ namespace platoon_control
 
         // Platoon Leader
         PlatoonLeaderInfo platoon_leader;
-
-
-        void setCurrentPose(const geometry_msgs::PoseStamped msg);
 
 		// geometry pose
         geometry_msgs::Pose current_pose_;

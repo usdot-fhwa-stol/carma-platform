@@ -35,6 +35,9 @@
 namespace platoon_control
 {
 
+	/**
+    * \brief This class includes logic for Pure Pursuit controller. This controller is used to calculate a steering angle using the current pose of the vehcile and a lookahead point.
+    */
 
     class PurePursuit
     {
@@ -49,13 +52,45 @@ namespace platoon_control
 
 		/**
         * \brief calculates steering angle based on lookahead trajectory point
+		* \param tp lookahead trajectory point
         */
     	void calculateSteer(const cav_msgs::TrajectoryPlanPoint& tp);
 
 		/**
         * \brief calculates curvature to the lookahead trajectory point
+		* \param tp lookahead trajectory point
+		* \return curvature to the lookahead point
         */
 		double calculateKappa(const cav_msgs::TrajectoryPlanPoint& tp);
+
+		/**
+        * \brief calculates sin of the heading angle to the target point
+		* \param tp lookahead trajectory point
+		* \param current_pose current pose of the vehicle
+		* \return sin of the heading angle
+        */
+		double getAlphaSin(cav_msgs::TrajectoryPlanPoint tp, geometry_msgs::Pose current_pose);
+
+		/**
+        * \brief Lowpass filter to smoothen control signal
+		* \param gain filter gain
+		* \param prev_value previous value
+		* \param value current value
+		* \return smoothened control signal
+        */  
+		double lowPassfilter(double gain, double prev_value, double value);
+
+		/**
+        * \brief returns steering angle 
+		* \return steering angle in rad
+        */ 
+		double getSteeringAngle();
+		
+		/**
+        * \brief returns angular velocity 
+		* \return angular velocity in rad/s
+        */
+		double getAngularVelocity();
 
 		// geometry pose
 		geometry_msgs::Pose current_pose_;
@@ -65,34 +100,27 @@ namespace platoon_control
 
 		PlatooningControlPluginConfig config_;
 
-		/**
-        * \brief calculates sin of the heading angle to the target point
-        */ 
-		double getAlphaSin(cav_msgs::TrajectoryPlanPoint tp, geometry_msgs::Pose current_pose);
-
-		/**
-        * \brief Lowpass filter to smoothen control signal
-        */ 
-		double lowPassfilter(double gain, double prev_value, double value);
-
-		/**
-        * \brief returns steering angle
-        */ 
-		double getSteeringAngle();
-		
-		/**angular velocity
-        */ 
-		double getAngularVelocity();
-
     private:
 
-		// calculate the lookahead distance from next trajectory point
+		/**
+        * \brief calculate lookahead distance
+		* \param tp trajectory point
+		* \return lookahead distance from next trajectory point
+        */
 		double getLookaheadDist(const cav_msgs::TrajectoryPlanPoint& tp) const;
 
-		// calculate yaw angle of the vehicle
+		/**
+        * \brief calculate yaw angle of the vehicle
+		* \param tp trajectory point
+		* \return yaw angle of the vehicle in rad
+        */
 		double getYaw(const cav_msgs::TrajectoryPlanPoint& tp) const;
 
-		// calculate steering direction
+		/**
+        * \brief calculate steering direction
+		* \param tp trajectory point
+		* \return steering direction (+1 is left and -1 is right)
+        */
 		int getSteeringDirection(std::vector<double> v1, std::vector<double> v2) const;
 
 		
@@ -107,6 +135,7 @@ namespace platoon_control
 		cav_msgs::TrajectoryPlanPoint tp0;
 
 		double _integral = 0.0;
+		
 		// helper function (if needed)
 		// inline double deg2rad(double deg) const
 		// {

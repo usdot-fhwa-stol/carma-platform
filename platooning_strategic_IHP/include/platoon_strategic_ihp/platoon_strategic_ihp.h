@@ -63,6 +63,9 @@ namespace platoon_strategic_ihp
     using MobilityOperationCB = std::function<void(const carma_v2x_msgs::msg::MobilityOperation&)>;
     using PlatooningInfoCB = std::function<void(const carma_planning_msgs::msg::PlatooningInfo&)>;
 
+    /**
+    * \brief Class containing the logic for Strategic IHP Plugin. This class is responsible for all the negotiations as well as generating a maneuver msg. 
+    */
     class PlatoonStrategicIHPPlugin
     {
         public:

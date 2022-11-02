@@ -44,7 +44,7 @@ struct PointSpeedPair
 };
 
 /**
- * \brief Class containing primary business logic for the Platooning Tactical Plugin
+ * \brief Class containing primary business logic for the Platooning Tactical Plugin for trajectory generation
  * 
  */ 
 class PlatooningTacticalPlugin

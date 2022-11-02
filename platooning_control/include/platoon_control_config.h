@@ -23,38 +23,35 @@
  */
 struct PlatooningControlPluginConfig
 {
-  double timeHeadway = 6.0;
-  double standStillHeadway = 12.0;
-  double maxAccel = 2.5;
-  double Kp = 0.5;
-  double Kd = -0.5;
-  double Ki = 0.0;
-  double maxValue = 100;
-  double minValue = -100;
-  double dt = 0.1;
-  double adjustmentCap = 10;
-  int cmdTmestamp = 100;
-  double integratorMax = 100;
-  double integratorMin = -100;
-  double Kdd = 4.5;                             //coefficient for smooth steering
-  double wheelBase = 3.09;
-  double lowpassGain = 0.5;
-  double lookaheadRatio = 2.0;
-  double minLookaheadDist = 6.0;
+  double standStillHeadway = 12.0; // Standstill gap between vehicles (m)
+  double maxAccel = 2.5;  // Maximum acceleration absolute value used in controller filters (m/s^2)
+  double Kp = 0.5;  // Proportional weight for PID controller
+  double Kd = -0.5;  // Derivative Weight for PID controller
+  double Ki = 0.0;  // Integral weight for PID controller
+  double maxValue = 2;  // Max value to restrict speed adjustment at one time step (limit on delta_v) (m/s)
+  double minValue = -10; // Min value to restrict speed adjustment at one time step (limit on delta_v) (m/s)
+  double dt = 0.1; // Timestep to calculate ctrl commands (s)
+  double adjustmentCap = 10;  // Adjustment cap for speed command (m/s)
+  int cmdTmestamp = 100;  // Timestamp to calculate ctrl commands (ms)
+  double integratorMax = 100; // Max limit for integrator term
+  double integratorMin = -100;  // Max limit for integrator term
+  double Kdd = 4.5; //coefficient for smooth steering
+  double wheelBase = 3.09; //Wheelbase of the vehicle (m)
+  double lowpassGain = 0.5;  // Lowpass filter gain
+  double lookaheadRatio = 2.0;  // Ratio to calculate lookahead distance
+  double minLookaheadDist = 6.0;  // Min lookahead distance (m)
   std::string vehicleID = "DEFAULT_VEHICLE_ID";         // Vehicle id is the license plate of the vehicle
-  int     shutdownTimeout = 200;                // ms 
-  int     ignoreInitialInputs = 0;              // num inputs to throw away after startup
-  double correctionAngle = 0.0;
-  
-  double integratorMax_pp = 0.0;
-  double integratorMin_pp = 0.0;
-  double Ki_pp = 0.0;
+  int     shutdownTimeout = 200;    // Timeout to stop generating ctrl signals after stopped receiving trajectory (ms) 
+  int     ignoreInitialInputs = 0;  // num inputs to throw away after startup
+  double correctionAngle = 0.0;  //Correction angle to improve steering accuracy
+  double integratorMax_pp = 0.0; //Max integrator val for pure pursuit integral controller
+  double integratorMin_pp = 0.0;   //Min integrator val for pure pursuit integral controller
+  double Ki_pp = 0.0; // Integral weight for pure pursuit integral controller
   
   
   friend std::ostream& operator<<(std::ostream& output, const PlatooningControlPluginConfig& c)
   {
     output << "PlatooningControlPluginConfig { " << std::endl
-           << "timeHeadway: " << c.timeHeadway << std::endl
            << "standStillHeadway: " << c.standStillHeadway << std::endl
            << "maxAccel: " << c.maxAccel << std::endl
            << "Kp: " << c.Kp << std::endl

@@ -46,7 +46,7 @@ namespace platoon_strategic_ihp
 {
 
   /**
-   * \brief ROS Node to for Platooning Strategic Plugin IHP2 variant
+   * \brief ROS Node to for Platooning Strategic Plugin IHP2 variant. It includes all the service clients, publishers and subscribers
    */ 
   class Node : public carma_guidance_plugins::StrategicPlugin
   {

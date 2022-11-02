@@ -114,7 +114,9 @@ namespace platoon_strategic_ihp
             commandSpeed(commandSpeed), vehicleSpeed(vehicleSpeed), vehiclePosition(vehiclePosition), vehicleCrossTrack(vehicleCrossTrack), timestamp(timestamp) {}
     };
 
-
+    /**
+    * \brief Class containing the logic for platoon manager. It is responsible for keeping track of the platoon members and role of the host vehicle in the platoon
+    */ 
     class PlatoonManager
     {
     public:

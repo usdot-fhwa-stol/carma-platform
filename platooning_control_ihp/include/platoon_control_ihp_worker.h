@@ -59,6 +59,9 @@ namespace platoon_control_ihp
 
         // Leader info: platoonmember + leader index + number of vehicles in front
 
+    /**
+    * \brief This is the worker class for platoon controller. It is responsible for generating and smoothing the speed and steering control commands from trajectory points.  
+    */
 
     class PlatoonControlIHPWorker
     {
@@ -71,39 +74,44 @@ namespace platoon_control_ihp
 
         /**
         * \brief Update configurations
+        * \param new_config new configuration
         */
         void updateConfigParams(PlatooningControlIHPPluginConfig new_config);
 
         /**
         * \brief Returns latest speed command
+        * \return latest speed command in m/s
         */
         double getLastSpeedCommand() const;
 
         /**
-        * \brief Generates speed commands based on the trajectory point
+        * \brief Generates speed commands in m/s based on the trajectory point
+        * \param point trajectory point
         */
         void generateSpeed(const cav_msgs::TrajectoryPlanPoint& point);
         
         /**
-        * \brief Generates steering commands based on lookahead trajectory point
+        * \brief Generates steering commands in rad based on lookahead trajectory point
+        * \param point trajectory point
         */
         void generateSteer(const cav_msgs::TrajectoryPlanPoint& point);
 
         /**
         * \brief set platoon leader
+        * \param leader platoon leader information
         */
         void setLeader(const PlatoonLeaderInfo& leader);
         
         /**
         * \brief set current speed
+        * \param speed speed value in m/s
         */
         void setCurrentSpeed(double speed);
 
         /**
-         * \brief UCLA: HP gap regulation that calculate the deisred position (Dtd, in m) for the platoon members. 
-         * 
-         * \params leaderCurrentPosition: The current position (dtd) of the leader, in m.
-         * 
+         * \brief UCLA: IHP gap regulation that calculate the deisred position (Dtd, in m) for the platoon members. 
+         * \param leaderCurrentPosition: The current position (dtd) of the leader, in m.
+         * \return gap value
          */
         double getIHPTargetPositionFollower(double leaderCurrentPosition);
 
@@ -131,7 +139,10 @@ namespace platoon_control_ihp
         // Platoon Leader
         PlatoonLeaderInfo platoon_leader;
 
-        
+        /**
+         * \brief sets current pose value
+         * \param msg: The current position
+         */
         void setCurrentPose(const geometry_msgs::PoseStamped msg);
 
 		// geometry pose

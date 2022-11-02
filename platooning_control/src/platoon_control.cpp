@@ -32,7 +32,6 @@ namespace platoon_control
 
         PlatooningControlPluginConfig config;
 
-        pnh_->param<double>("timeHeadway", config.timeHeadway, config.timeHeadway);
         pnh_->param<double>("standStillHeadway", config.standStillHeadway, config.standStillHeadway);
         pnh_->param<double>("maxAccel", config.maxAccel, config.maxAccel);
         pnh_->param<double>("Kp", config.Kp, config.Kp);
