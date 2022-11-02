@@ -1,0 +1,604 @@
+---
+AWSTemplateFormatVersion: '2010-09-09'
+Description: AWS CloudFormation template for dynamic Cloud 9 RoboMaker setups. Creates a Cloud9 and bootstraps the instance, installs DCV, and optionally installs ROS and a simulator.
+Parameters:
+  C9InstanceType:
+    Description: Cloud9 Instance Type
+    Type: String
+    Default: g4dn.4xlarge
+    AllowedValues:
+      - g4dn.4xlarge # g3.4xlarge
+    ConstraintDescription: Instance type for the Cloud9 environment.
+  Cloud9AccessRoleName:
+    Description: Cloud9 Role ARN to permit access to C9 environment
+    Type: String
+    Default: default
+  Password:
+    Description: The password to use for the ubuntu user and remote access. At least 6 characters.
+    Type: String
+    NoEcho: true
+    MinLength: 6
+  CarmaConfigImage:
+    Description: The specific carma config which launches xil and platform to make available in the instance
+    Type: String
+    Default: "usdotfhwastoldev/carma-config:xil-cloud-test"
+Mappings:
+  AMIMap:
+    us-east-1:
+      ami: ami-0c5b5f70bfa4f1021 # Custom Leidos AMI
+Resources:
+  VPC:
+    Type: AWS::EC2::VPC
+    Properties:
+      CidrBlock: 10.0.0.0/16
+      EnableDnsSupport: true
+      EnableDnsHostnames: true
+      InstanceTenancy: default
+      Tags:
+        - Key: Name
+          Value: !Sub "Cloud9 Dev VPC-${AWS::StackName}"
+  InternetGateway:
+    Type: AWS::EC2::InternetGateway
+  VPCGatewayAttachment:
+    Type: AWS::EC2::VPCGatewayAttachment
+    Properties:
+      VpcId: !Ref VPC
+      InternetGatewayId: !Ref InternetGateway
+  SubnetA:
+    Type: AWS::EC2::Subnet
+    Properties:
+      AvailabilityZone: !Select
+        - 0
+        - !GetAZs
+          Ref: 'AWS::Region'
+      VpcId: !Ref VPC
+      CidrBlock: 10.0.0.0/24
+      MapPublicIpOnLaunch: true
+  RouteTable:
+    Type: AWS::EC2::RouteTable
+    Properties:
+      VpcId: !Ref VPC
+  InternetRoute:
+    Type: AWS::EC2::Route
+    Properties:
+      DestinationCidrBlock: 0.0.0.0/0
+      GatewayId: !Ref InternetGateway
+      RouteTableId: !Ref RouteTable
+  SubnetARouteTableAssociation:
+    Type: AWS::EC2::SubnetRouteTableAssociation
+    Properties:
+      RouteTableId: !Ref RouteTable
+      SubnetId: !Ref SubnetA
+  InstanceSecurityGroup:
+    Type: AWS::EC2::SecurityGroup
+    Properties:
+      GroupName: !Sub "Cloud9 Security Group-${AWS::StackName}"
+      GroupDescription: !Sub "Permit SSH traffic for Cloud9 and 8443 traffic for DCV"
+      VpcId: !Ref VPC
+      SecurityGroupIngress:
+        - IpProtocol: tcp
+          FromPort: '22'
+          ToPort: '22'
+          CidrIp:  0.0.0.0/0
+          Description: Allow SSH traffic for Cloud9
+        - IpProtocol: tcp
+          FromPort: '8443'
+          ToPort: '8443'
+          CidrIp:  0.0.0.0/0
+          Description: Allow DCV traffic
+      SecurityGroupEgress:
+        - IpProtocol: -1
+          CidrIp: 0.0.0.0/0
+          Description: Allow all outbound traffic
+################## PERMISSIONS AND ROLES #################
+
+  InstanceRole:
+    Type: 'AWS::IAM::Role'
+    Properties:
+      AssumeRolePolicyDocument:
+        Version: "2012-10-17"
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service:
+                - ec2.amazonaws.com
+            Action:
+              - 'sts:AssumeRole'
+      Path: /
+      ManagedPolicyArns:
+        - 'arn:aws:iam::aws:policy/AmazonS3ReadOnlyAccess'
+        - 'arn:aws:iam::721937194770:policy/NiceDCVLicensePolicy'
+      Policies:
+        - PolicyName: !Sub "Cloud9Actions-${AWS::StackName}"
+          PolicyDocument:
+            Version: "2012-10-17"
+            Statement:
+              - Effect: Allow
+                Action:
+                  - 'cloud9:GetUserPublicKey'
+                  - 'cloud9:CreateEnvironmentSSH'
+                  - 'cloud9:CreateEnvironmentMembership'
+                  - 'cloud9:CreateEnvironmentMembership'
+                Resource: 'arn:aws:cloud9:*:*:*'
+        - PolicyName: !Sub "RobotActions-${AWS::StackName}"
+          PolicyDocument:
+            Statement:
+              - Effect: Allow
+                Action: [
+                      "ecr:GetAuthorizationToken",
+                      "ecr:BatchGetImage",
+                      "ecr:GetDownloadUrlForLayer"
+                        ]
+                Resource: 'arn:aws:ecr:*:*:*'
+              - Effect: Allow
+                Action: [
+                      "ssm:UpdateInstanceInformation",
+                      "ssmmessages:CreateControlChannel",
+                      "ssmmessages:CreateDataChannel",
+                      "ssmmessages:OpenControlChannel",
+                      "ssmmessages:OpenDataChannel"
+                        ]
+                Resource: '*'
+
+  C9InstanceProfile:
+    Type: 'AWS::IAM::InstanceProfile'
+    Properties:
+      Path: /
+      Roles:
+        - !Ref InstanceRole
+
+################## INSTANCE #####################
+  DevMachine:
+    Type: 'AWS::EC2::Instance'
+    CreationPolicy:
+      ResourceSignal:
+        Count: 1
+        Timeout: PT60M
+    Properties:
+      ImageId:
+        Fn::FindInMap:
+          - AMIMap
+          - !Ref "AWS::Region"
+          - ami
+      InstanceType: !Ref C9InstanceType
+      SubnetId: !Ref SubnetA
+      SecurityGroupIds:
+        - Ref: InstanceSecurityGroup
+      BlockDeviceMappings:
+        - DeviceName: /dev/sda1
+          Ebs:
+            VolumeSize: 200
+      UserData:
+        Fn::Base64: !Sub |
+          #!/bin/bash -v
+          ### Connect logger for AWS
+
+          exec > >(tee /var/log/user-data.log|logger -t user-data -s 2>/dev/console) 2>&1
+
+
+          ### CLOUD9 Connection
+          #   This section was originally provided by the AWS team for setting up the Cloud9 connection
+          #   It is an embedded python script which connects cloud9 to the EC2 instance
+
+          cd /home/ubuntu
+          mkdir /home/ubuntu/carma_ws
+          cat -  << 'EOFPY' > registercloud9.py
+          import sys, os, base64, datetime, hashlib, hmac, json, boto3, uuid, time
+          import requests # pip install requests
+          from botocore.utils import InstanceMetadataFetcher
+          from botocore.credentials import InstanceMetadataProvider
+
+          def sign(key, msg):
+              return hmac.new(key, msg.encode("utf-8"), hashlib.sha256).digest()
+
+          def getSignatureKey(key, date_stamp, regionName, serviceName):
+              kDate = sign(('AWS4' + key).encode('utf-8'), date_stamp)
+              kRegion = sign(kDate, regionName)
+              kService = sign(kRegion, serviceName)
+              kSigning = sign(kService, 'aws4_request')
+              return kSigning
+
+          def sigv4_request(amz_target, request_parameters, region, creds):
+              method = 'POST'
+              service = 'cloud9'
+              host = service+'.'+region+'.amazonaws.com'
+              endpoint = 'https://'+host
+              content_type = 'application/x-amz-json-1.1'
+
+              if creds.access_key is None or creds.secret_key is None:
+                  print('No access key is available.')
+                  sys.exit()
+
+              t = datetime.datetime.utcnow()
+              amz_date = t.strftime('%Y%m%dT%H%M%SZ')
+              date_stamp = t.strftime('%Y%m%d')
+              canonical_uri = '/'
+              canonical_querystring = ''
+              canonical_headers = 'content-type:' + content_type + '\n' + 'host:' + host + '\n' + 'x-amz-date:' + amz_date + '\n' + 'x-amz-target:' + amz_target + '\n'
+              signed_headers = 'content-type;host;x-amz-date;x-amz-target'
+              payload_hash = hashlib.sha256(request_parameters.encode('utf-8')).hexdigest()
+              canonical_request = method + '\n' + canonical_uri + '\n' + canonical_querystring + '\n' + canonical_headers + '\n' + signed_headers + '\n' + payload_hash
+              algorithm = 'AWS4-HMAC-SHA256'
+              credential_scope = date_stamp + '/' + region + '/' + service + '/' + 'aws4_request'
+              string_to_sign = algorithm + '\n' +  amz_date + '\n' +  credential_scope + '\n' +  hashlib.sha256(canonical_request.encode('utf-8')).hexdigest()
+              signing_key = getSignatureKey(creds.secret_key, date_stamp, region, service)
+              signature = hmac.new(signing_key, (string_to_sign).encode('utf-8'), hashlib.sha256).hexdigest()
+
+              authorization_header = algorithm + ' ' + 'Credential=' + creds.access_key + '/' + credential_scope + ', ' +  'SignedHeaders=' + signed_headers + ', ' + 'Signature=' + signature
+              headers = {
+                          'Content-Type':content_type,
+                          'X-Amz-Date':amz_date,
+                          'X-Amz-Target':amz_target,
+                          'Content-Length': '2',
+                          'Accept-Encoding': 'identity',
+                          'User-Agent': 'custom',
+                          'Authorization':authorization_header
+                        }
+
+              if (creds.token) is not None:
+                  headers['x-amz-security-token'] = creds.token
+
+              return requests.post(endpoint, data=request_parameters, headers=headers)
+
+          def get_c9_pub_key(pub_key):
+              file1 = open("/home/ubuntu/.ssh/authorized_keys", "a")  # append mode
+              file1.write(pub_key)
+              file1.close()
+
+          def write_c9_settings(new_data, filename='/home/ubuntu/carma_ws/.c9/project.settings'):
+              with open(filename,'r+') as file:
+                  file_data = json.load(file)
+                  file_data["preview"] = new_data
+                  file.seek(0)
+                  json.dump(file_data, file, indent = 4)
+
+          def write_instructions_file(URL):
+              f = open("/home/ubuntu/carma_ws/instructions-to-open-virtual-desktop.txt", "w")
+              f.write("Opening the Ubuntu Virtual Desktop.  \n \n"+
+                      "Open a **new** browser tab or window and paste the following URL into the address bar: \n \n"+URL+"\n")
+              f.close()
+
+          if __name__ == "__main__":
+
+              r = requests.get('http://169.254.169.254/latest/dynamic/instance-identity/document')
+              instance_details = json.loads(r.text)
+              region = instance_details['region']
+              account_id = instance_details['accountId']
+
+              r = requests.get('http://169.254.169.254/latest/meta-data/public-hostname')
+              hostname = r.text
+              print("Hostname: "+hostname)
+
+              session = boto3.Session()
+              credentials = session.get_credentials()
+
+              amz_target = 'AWSCloud9WorkspaceManagementService.GetUserPublicKey'
+              request_parameters =  '{}'
+              if("default" != os.getenv('ROLE_ARN', 'default')):
+                request_parameters = '{"userArn": "'+os.getenv('ROLE_ARN')+'"}'
+              else:
+                request_parameters = '{"userArn": "arn:aws:sts::'+account_id+':assumed-role/TeamRole/MasterKey"}'
+
+              r = sigv4_request(amz_target, request_parameters, region, credentials)
+              response = json.loads(r.text)
+              get_c9_pub_key(response['publicKey'])
+              print("Public key written.")
+
+              time.sleep(5)
+
+              amz_target = 'AWSCloud9WorkspaceManagementService.CreateEnvironmentSSH'
+              request_parameters =  '{'
+              request_parameters +=  '"name":"'+os.getenv('ENVIRONMENT_NAME', default = 'cloud-dev-'+uuid.uuid4().hex)+'",'
+              request_parameters +=  '"host":"'+hostname+'",'
+              if("default" == os.getenv('ROLE_ARN', 'default')):
+                request_parameters +=  '"ownerArn":"arn:aws:sts::'+account_id+':assumed-role/TeamRole/MasterKey",'
+              else:
+                request_parameters +=  '"ownerArn":"'+os.getenv('ROLE_ARN', default = 'arn:aws:sts::'+account_id+':assumed-role/TeamRole/MasterKey')+'",'
+              request_parameters +=  '"port":22,'
+              request_parameters +=  '"loginName":"'+os.getenv('LOGIN_NAME', default = 'ubuntu')+'",'
+              request_parameters +=  '"environmentPath":"'+os.getenv('ENVIRONMENT_PATH', default = '~/carma_ws')+'"'
+              request_parameters +=  '}'
+              print (request_parameters)
+
+              r = sigv4_request(amz_target, request_parameters, region, credentials)
+              print(r.text)
+              environment = json.loads(r.text)["environmentId"]
+
+              amz_target = 'AWSCloud9WorkspaceManagementService.CreateEnvironmentMembership'
+              request_parameters = '{'
+              request_parameters +=  '"environmentId":"'+environment+'",'
+              if("default" == os.getenv('ROLE_ARN', 'default')):
+                request_parameters +=  '"userArn":"arn:aws:sts::'+account_id+':assumed-role/TeamRole/MasterKey",'
+              else:
+                request_parameters +=  '"userArn":"'+os.getenv('ROLE_ARN', default = 'arn:aws:sts::'+account_id+':assumed-role/TeamRole/MasterKey')+'",'
+              request_parameters +=  '"permissions":"read-write"'
+              request_parameters += '}'
+              print (request_parameters)
+
+              r = sigv4_request(amz_target, request_parameters, region, credentials)
+              print(r.text)
+
+              if("default" == os.getenv('ROLE_ARN', 'default')):
+                  amz_target = 'AWSCloud9WorkspaceManagementService.CreateEnvironmentMembership'
+                  request_parameters = '{'
+                  request_parameters +=  '"environmentId":"'+environment+'",'
+                  request_parameters +=  '"userArn":"arn:aws:sts::'+account_id+':assumed-role/OpsRole/MasterKey",'
+                  request_parameters +=  '"permissions":"read-write"'
+                  request_parameters += '}'
+                  print (request_parameters)
+
+              r = sigv4_request(amz_target, request_parameters, region, credentials)
+              print(r.text)
+
+              desktop_url = "http://"+environment+".vfs.cloud9."+region+".amazonaws.com/"
+              print(desktop_url)
+
+              write_c9_settings({
+                  "@url": desktop_url
+              })
+
+              write_instructions_file(desktop_url)
+
+          EOFPY
+
+          cd /home/ubuntu
+
+          # setup_cloud9
+          chmod u=rwx,g=rx,o=rx /home/ubuntu
+          curl -sL https://deb.nodesource.com/setup_14.x | sudo -E bash -
+          sudo apt update
+          sudo apt install -y nodejs
+          sudo su -l ubuntu -c 'mkdir -p /home/ubuntu/carma_ws/.c9/'
+          runuser -l ubuntu -c 'curl -L https://raw.githubusercontent.com/c9/install/master/install.sh | bash'
+          sudo -u ubuntu cat << EOF > ./carma_ws/.c9/.nakignore
+          *~backup-*
+          .c9revisions
+          .c9
+          .git
+          .svn
+          .DS_Store
+          .bzr
+          .cdv
+          ~.dep
+          ~.dot
+          ~.nib
+          ~.plst
+          .hg
+          .pc
+          *.min.js
+          .nakignore
+          /dev
+          EOF
+          sudo -u ubuntu cat << EOF > ./carma_ws/.c9/launch.json
+          {
+              "configurations": []
+          }
+          EOF
+          sudo -u ubuntu cat << EOF > ./carma_ws/.c9/project.settings
+          {
+              "language": {
+                  "tern_defs": {
+                      "json()": {
+                          "browser": {
+                              "enabled": true
+                          },
+                          "ecma5": {
+                              "enabled": true
+                          },
+                          "jQuery": {
+                              "enabled": true
+                          }
+                      }
+                  }
+              },
+              "launchconfigurations": {
+                  "@currentconfig": ""
+              },
+              "python": {
+                  "@path": "/usr/local/lib/python3.4/dist-packages:/usr/local/lib/python3.5/dist-packages"
+              },
+              "run": {
+                  "configs": {
+                      "@inited": "true",
+                      "json()": {}
+                  }
+              },
+              "welcome": {
+                  "@first": true
+              }
+          }
+          EOF
+          echo '{"@syncProjectSettings": false}' > '/home/ubuntu/.c9/user.settings'  || true
+          chown ubuntu:ubuntu -R ./carma_ws/.c9
+
+          # Register to Cloud9
+          sudo su -l ubuntu -c 'echo "{}" > /home/ubuntu/carma_ws/.c9/project.settings'
+          sudo su -l ubuntu -c "ROLE_ARN=${Cloud9AccessRoleName} ENVIRONMENT_NAME=RobotWorkshop-${AWS::StackName} python3 registercloud9.py"
+
+          ### 7. COMPLETION
+
+          # Signal creation complete
+          wget https://s3.amazonaws.com/cloudformation-examples/aws-cfn-bootstrap-py3-latest.zip
+          unzip aws-cfn-bootstrap-py3-latest.zip
+          cd aws-cfn-bootstrap-2.0/
+          python3 setup.py install
+          /usr/local/bin/cfn-signal -e $? --stack ${AWS::StackName} --resource DevMachine --region ${AWS::Region}
+
+          # Set user password
+          sudo echo ${Password} > /home/ubuntu/my_pass.txt
+          sudo usermod --password $(echo ${Password} | openssl passwd -1 -stdin) ubuntu
+
+          # # Install carma script
+          sudo curl -o /usr/bin/carma -L https://raw.githubusercontent.com/usdot-fhwa-stol/carma-platform/develop/engineering_tools/carma
+          sudo chmod ugo+x /usr/bin/carma
+          sudo curl -o /etc/bash_completion.d/__carma_autocomplete -L https://raw.githubusercontent.com/usdot-fhwa-stol/carma-platform/develop/engineering_tools/__carma_autocomplete
+          sudo chmod ugo+x /etc/bash_completion.d/__carma_autocomplete
+
+          # Install docker compose
+          DESTINATION=/usr/bin/docker-compose
+          sudo rm $DESTINATION
+          sudo curl -L "https://github.com/docker/compose/releases/download/1.29.1/docker-compose-$(uname -s)-$(uname -m)" -o $DESTINATION
+          sudo chmod 755 $DESTINATION
+
+          # Install carma-config
+          carma config install ${CarmaConfigImage}
+          carma config set ${CarmaConfigImage}
+          
+          ## Add VCS Sources
+          sudo apt-get update
+          sudo apt-get install -y lsb-release
+          sudo sh -c 'echo "deb http://packages.ros.org/ros/ubuntu $(lsb_release -sc) main" > /etc/apt/sources.list.d/ros-latest.list'
+
+          ## Add ROS Key
+          sudo apt-key adv --keyserver 'hkp://keyserver.ubuntu.com:80' --recv-key C1CF6E31E6BADE8868B172B4F42ED6FBAB17C654
+
+          ## Apt update
+          sudo apt-get update
+
+          ## Install Curl (not needed for vcs but will be used later)
+          sudo apt-get install curl
+
+          ## Apt update
+          sudo apt-get update
+
+          ## Install VCS
+          sudo apt-get install python3-vcstool
+
+          ## Add VCS auto completion
+          echo "source /usr/share/vcstool-completion/vcs.bash" >> ~/.bashrc
+          
+          # Clone Repos
+          cd /home/ubuntu/carma_ws
+          curl -L https://raw.githubusercontent.com/usdot-fhwa-stol/carma-platform/develop/carma-platform.repos | sed 's/git@github.com:/https:\/\/github.com\//' | vcs import
+
+          # Setup /opt/carma folder
+          sudo curl -L https://raw.githubusercontent.com/usdot-fhwa-stol/carma-platform/develop/engineering_tools/opt_carma_setup.bash > /home/ubuntu/opt_carma_setup.bash
+          sudo bash /home/ubuntu/opt_carma_setup.bash /home/ubuntu/carma_ws/src/carma-config/example_calibration_folder/vehicle
+          rm /home/ubuntu/opt_carma_setup.bash
+
+          # Install default map
+          sudo curl -o /opt/carma/maps/Town04.osm -L https://raw.githubusercontent.com/usdot-fhwa-stol/carma-platform/develop/testing_maps/Town04.osm
+          sudo chmod ugo+r /opt/carma/maps/Town04.osm
+          ln -s /opt/carma/maps/Town04.osm /opt/carma/maps/vector_map.osm
+
+          # Install default route
+          sudo curl -o /opt/carma/routes/Release_test_case_1.csv -L https://raw.githubusercontent.com/usdot-fhwa-stol/carma-platform/develop/testing_maps/Release_test_case_1.csv
+
+          reboot
+
+      IamInstanceProfile: !Ref C9InstanceProfile
+      Tags:
+        -
+          Key: Name
+          Value: !Sub "${AWS::StackName}"
+        -
+          Key: Application
+          Value: XiL Development Machine
+
+  C9CleanUpFunction:
+    Type: AWS::Lambda::Function
+    Properties:
+      Code:
+        ZipFile: !Sub |
+          import json
+          import urllib3
+          import boto3
+          def send_response(event, context, response_status, response_data):
+            '''Send a resource manipulation status response to CloudFormation'''
+            responsebody = json.dumps({
+              "Status": response_status,
+              "Reason": "See the details in CloudWatch Log Stream: " + context.log_stream_name,
+              "PhysicalResourceId": context.log_stream_name,
+              "StackId": event['StackId'],
+              "RequestId": event['RequestId'],
+              "LogicalResourceId": event['LogicalResourceId'],
+              "Data": response_data
+            }).encode('utf-8')
+            http = urllib3.PoolManager()
+            r = http.request(
+              'PUT', event['ResponseURL'],
+              body=responsebody,
+              headers={'Content-Type': 'application/json'}
+            )
+            print(f"response: {r}")
+          def handler( event, context ):
+            try:
+              print(f'received event {event}')
+              if event['RequestType'] == 'Create':
+                print('CREATE!')
+                send_response(event, context, 'SUCCESS', {'Message': 'Resource creation successful!'})
+              elif event['RequestType'] == 'Update':
+                print('UPDATE!')
+                send_response(event, context, 'SUCCESS', {'Message': 'Resource update successful!'})
+              elif event['RequestType'] == 'Delete':
+                print('DELETE!')
+                client = boto3.client('cloud9')
+                list_envs = client.list_environments()
+                description_env = client.describe_environments(environmentIds=list_envs['environmentIds'])
+                print(description_env)
+                target = ""
+                for env in description_env["environments"]:
+                  if env["type"] == "ssh" and env["name"] == "RobotWorkshop-${AWS::StackName}":
+                    target = env["id"]
+                    break
+
+                if "" != target:
+                  print(f"Target environment is {target}")
+                  response = client.delete_environment(environmentId=target)
+                  print(response)
+
+                send_response(event, context, 'SUCCESS', {'Message': 'Resource deletion successful!'})
+              else:
+                print('FAILED!')
+                send_response(event, context, 'FAILED', {'Message': 'Unknown message type'})
+              return { 'statusCode': '200', 'body': '' }
+            except Exception as ex:
+              print(ex)
+              print('EXCEPTION FAILED!')
+              send_response(event, context, 'FAILED', {'Message': 'Unknown message type'})
+              return { 'statusCode': '200', 'body': '' }
+      Handler: "index.handler"
+      Runtime: python3.9
+      Timeout: 30
+      Role: !GetAtt LambdaExecutionRole.Arn
+  LambdaExecutionRole:
+    Type: AWS::IAM::Role
+    Properties:
+      AssumeRolePolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+        - Effect: Allow
+          Principal:
+            Service:
+            - lambda.amazonaws.com
+          Action:
+          - sts:AssumeRole
+      Path: "/"
+      Policies:
+      - PolicyName: root
+        PolicyDocument:
+          Version: '2012-10-17'
+          Statement:
+          - Effect: Allow
+            Action:
+            - cloud9:DeleteEnvironment
+            - cloud9:ListEnvironments
+            - cloud9:DescribeEnvironments
+            Resource: 'arn:aws:cloud9:*:*:*'
+          - Effect: Allow
+            Action:
+            - logs:CreateLogGroup
+            - logs:CreateLogStream
+            - logs:PutLogEvents
+            - cloud9:DeleteEnvironment
+            - cloud9:ListEnvironments
+            - cloud9:DescribeEnvironments
+            Resource: 'arn:aws:logs:*:*:*'
+  C9Cleanup:
+    Type: Custom::C9Cleanup
+    Properties:
+      ServiceToken: !GetAtt C9CleanUpFunction.Arn
+Outputs:
+  EC2Host:
+    Description: EC2 Instance Created.
+    Value: !Ref DevMachine

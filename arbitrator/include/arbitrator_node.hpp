@@ -63,7 +63,8 @@ namespace arbitrator
         private:
             // helper function to parse plugin_priorities param from yaml as a json
             std::map<std::string, double> plugin_priorities_map_from_json(const std::string& json_string);
-
+            carma_ros2_utils::SubPtr<geometry_msgs::msg::TwistStamped> twist_sub_;
+            
             Config config_;
              // wm listener pointer and pointer to the actual wm object
             std::shared_ptr<carma_wm::WMListener> wm_listener_;

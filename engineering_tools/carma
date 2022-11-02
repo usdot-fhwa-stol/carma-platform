@@ -1,6 +1,6 @@
 #!/bin/bash
 
-#  Copyright (C) 2018-2021 LEIDOS.
+#  Copyright (C) 2018-2022 LEIDOS.
 # 
 #  Licensed under the Apache License, Version 2.0 (the "License"); you may not
 #  use this file except in compliance with the License. You may obtain a copy of
@@ -120,7 +120,7 @@ carma-config__set() {
     if [[ -z $1 ]]; then
         echo "Please specify a tag string for carma-config to set."
         echo "Done."
-        exit -1
+        exit 1
     fi
 
     local IMAGE_NAME="$USERNAME/carma-config:$1"
@@ -408,7 +408,7 @@ carma__exec() {
 
         if [ -z "$2" ]; then
             echo " When -i is specified you must enter a carma docker image and tag."
-            exit -1
+            exit 1
         fi
 
         local TARGET_IMAGE="$2"
@@ -424,7 +424,7 @@ carma__exec() {
     if [ -z "$(docker images -q $TARGET_IMAGE 2> /dev/null)" ]; then
         echo "Specified image could not be found. carma exec attempted to use image $TARGET_IMAGE but it was not found."
         echo "If an alternative image is available, please specify it using the -i option."
-        exit -1
+        exit 1
     fi
 
     # Docker setup here is based on Pierre Killy's docker-ros-box https://github.com/pierrekilly/docker-ros-box located here.
@@ -554,7 +554,13 @@ Please enter one of the following commands:
         - List all running CARMA docker containers
     attach
         - View STDOUT from all running CARMA foreground processes
-    help - Display this information"
+    list_extensions
+        - List the locally available script extensions
+    <script extension>
+        - Script extensions can be added by placing a file in ~/.carma_script_extensions/ with the name of the new subcommand and no file extension.
+          The file should contain a matching carma__<script extension>() function to recieve the commands.
+    help 
+        - Display this information"
 HELP
 }
 
@@ -564,9 +570,15 @@ carma__config() {
         "carma-config__$cmdname" "$@"
     else
         carma__help
-        exit -1
+        exit 1
     fi
 }
+
+carma__list_extensions() {
+    # List all executable files in the extensions directory
+    find "${CARMA_SCRIPT_EXTENSIONS_DIR}/" -executable -type f | sed "s|${CARMA_SCRIPT_EXTENSIONS_DIR}/||"
+}
+
 
 carma() {
     local cmdname=$1; shift
@@ -574,7 +586,7 @@ carma() {
         "carma__$cmdname" "$@"
     else
         carma__help
-        exit -1
+        exit 1
     fi
 }
 
@@ -586,11 +598,18 @@ carma() {
 # for $_ to successfully distinguish between sourcing and invocation:
 [[ $_ != $0 ]] && return
 
+# Check if a matching script extension is available to be checked
+CARMA_SCRIPT_EXTENSIONS_DIR="/home/$USER/.carma_script_extensions"
+CARMA_SCRIPT_EXTENSIONS_FILE="${CARMA_SCRIPT_EXTENSIONS_DIR}/$1"
+if [ -f "$CARMA_SCRIPT_EXTENSIONS_FILE" ]; then
+    source ${CARMA_SCRIPT_EXTENSIONS_FILE}
+fi
+
 # make sure we actually *did* get passed a valid function name
 if declare -f "carma__$1" >/dev/null 2>&1; then
   # invoke that function, passing arguments through
   "carma__$@" # same as "$1" "$2" "$3" ... for full argument list
 else
     carma__help
-    exit -1
+    exit 1
 fi

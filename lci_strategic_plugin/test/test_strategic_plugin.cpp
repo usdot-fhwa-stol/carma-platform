@@ -390,11 +390,11 @@ TEST(LCIStrategicPluginTest, moboperationcbtest)
   LCIStrategicPluginConfig config;
   LCIStrategicPlugin lcip(wm, config);
 
-  ASSERT_EQ(lcip.approaching_light_controlled_interction_, false);
+  ASSERT_EQ(lcip.approaching_light_controlled_intersection_, false);
   auto msg_ptr = boost::make_shared<const cav_msgs::MobilityOperation>(msg);
   lcip.mobilityOperationCb(msg_ptr);
 
-  ASSERT_EQ(lcip.approaching_light_controlled_interction_, true);
+  ASSERT_EQ(lcip.approaching_light_controlled_intersection_, true);
 }
 
 TEST(LCIStrategicPluginTest, parseStrategyParamstest)

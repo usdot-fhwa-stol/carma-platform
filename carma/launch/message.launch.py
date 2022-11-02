@@ -89,6 +89,7 @@ def generate_launch_description():
                 ],
                 remappings=[
                     ("plan_trajectory", [ EnvironmentVariable('CARMA_GUIDE_NS', default_value=''), "/plan_trajectory" ] ),
+                    ("guidance_state", [ EnvironmentVariable('CARMA_GUIDE_NS', default_value=''), "/state" ] ),
                     ("georeference", [ EnvironmentVariable('CARMA_LOCZ_NS', default_value=''), "/map_param_loader/georeference" ] ),
                     ("mobility_path_msg", [ EnvironmentVariable('CARMA_MSG_NS', default_value=''), "/outgoing_mobility_path" ] )
                 ],
@@ -144,7 +145,7 @@ def generate_launch_description():
                     {'--log-level' : GetLogLevel('j2735_convertor', env_log_levels) }
                 ],
                 remappings=[
-                    ("outgoing_bsm", "bsm_outbound" ),
+                    ("outgoing_bsm", "bsm_outbound" )
                 ],
             ),
         ]

@@ -111,9 +111,17 @@ namespace basic_autonomy
 
             // Add extra lanelet to ensure there are sufficient points for buffer
             auto extra_following_lanelets = wm->getMapRoutingGraph()->following(lanelets.back());
-            if (!extra_following_lanelets.empty())
+           
+            for (auto llt : wm->getRoute()->shortestPath())
             {
-                lanelets.push_back(extra_following_lanelets[0]);
+                for (size_t i = 0; i < extra_following_lanelets.size(); i++)
+                {
+                    if (llt.id() == extra_following_lanelets[i].id())
+                    {
+                        lanelets.push_back(extra_following_lanelets[i]);
+                        break;
+                    }
+                }
             }
 
             if (lanelets.empty())
