@@ -613,12 +613,12 @@ void LCIStrategicPlugin::planWhenAPPROACHING(const cav_srvs::PlanManeuversReques
   if (config_.enable_carma_streets_connection ==false || scheduled_enter_time_ == 0) //UC2
   {
     nearest_green_entry_time = get_nearest_green_entry_time(current_state.stamp, earliest_entry_time, traffic_light) 
-                                          + ros::Duration(0/01); //0.01sec more buffer since green_light algorithm's timestamp picks the previous signal - Vehicle Estimation
+                                          + ros::Duration(EPSILON); //0.01sec more buffer since green_light algorithm's timestamp picks the previous signal - Vehicle Estimation
     is_entry_time_within_future_events = true; 
   }
   else if(config_.enable_carma_streets_connection ==true && scheduled_enter_time_ != 0 ) // UC3
   {
-    nearest_green_entry_time = ros::Time(std::max(earliest_entry_time.toSec(), (scheduled_enter_time_)/1000.0)) + ros::Duration(0.01); //Carma Street 
+    nearest_green_entry_time = ros::Time(std::max(earliest_entry_time.toSec(), (scheduled_enter_time_)/1000.0)) + ros::Duration(EPSILON); //Carma Street 
     
     // check if scheduled_enter_time_ is inside the available states interval
     size_t i = 0;
