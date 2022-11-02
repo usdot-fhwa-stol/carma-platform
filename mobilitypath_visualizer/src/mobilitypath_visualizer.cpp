@@ -347,7 +347,7 @@ namespace mobilitypath_visualizer {
         for (auto const& curr_cav: cav_markers)
         {
             visualization_msgs::msg::MarkerArray synchronized_marker_array;
-            unsigned int curr_idx = 0;
+            signed int curr_idx = 0;
             double time_step = 0.1;
             // although it is very rare to reach here
             // we do not need to visualize other car that starts "in the future", so skip
@@ -375,8 +375,8 @@ namespace mobilitypath_visualizer {
             
             curr_idx -= 1; // carma_v2x_msg stamp is before that of host now
             // interpolate position to match the starting time (dt < time_step)
-            unsigned int curr_idx_chk = curr_idx;
-            if (curr_idx_chk < 0 )
+            
+            if (curr_idx < 0 )
                 curr_idx = 0;
                 
             double dt = (rclcpp::Time(host_marker.markers[0].header.stamp) - rclcpp::Time(curr_cav.markers[curr_idx].header.stamp)).seconds();
