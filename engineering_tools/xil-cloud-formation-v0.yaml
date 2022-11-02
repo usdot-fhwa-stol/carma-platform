@@ -477,12 +477,12 @@ Resources:
           rm /home/ubuntu/opt_carma_setup.bash
 
           # Install default map
-          sudo curl -o /opt/carma/maps/Town04.osm -L https://raw.githubusercontent.com/usdot-fhwa-stol/carma-platform/feature/cloud-sim/testing_maps/Town04.osm
+          sudo curl -o /opt/carma/maps/Town04.osm -L https://raw.githubusercontent.com/usdot-fhwa-stol/carma-platform/develop/testing_maps/Town04.osm
           sudo chmod ugo+r /opt/carma/maps/Town04.osm
           ln -s /opt/carma/maps/Town04.osm /opt/carma/maps/vector_map.osm
 
           # Install default route
-          sudo curl -o /opt/carma/routes/Release_test_case_1.csv -L https://raw.githubusercontent.com/usdot-fhwa-stol/carma-platform/feature/cloud-sim/testing_maps/Release_test_case_1.csv
+          sudo curl -o /opt/carma/routes/Release_test_case_1.csv -L https://raw.githubusercontent.com/usdot-fhwa-stol/carma-platform/develop/testing_maps/Release_test_case_1.csv
 
           reboot
 
