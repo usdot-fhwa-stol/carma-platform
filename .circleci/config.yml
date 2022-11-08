@@ -64,7 +64,7 @@ jobs:
           command: |
             source ${INIT_ENV}
             export ROS_PARALLEL_JOBS='-j4 -l4' # Try to reduce memory consumption on build
-            build-wrapper-linux-x86-64 --out-dir /opt/carma/bw-output bash make_with_coverage.bash -m -e /opt/carma/ -o ./coverage_reports/gcov
+            make_with_coverage.bash -m -e /opt/carma/ -o ./coverage_reports/gcov
       - run:
           name: Run C++ Tests ROS 1
           command: |
@@ -83,7 +83,7 @@ jobs:
           command: |
             source ${INIT_ENV}
             source ${ROS_2_ENV}
-            build-wrapper-linux-x86-64 --out-dir /opt/carma/bw-output bash make_with_coverage.bash -m -e /opt/carma/ -o ./coverage_reports/gcov
+            make_with_coverage.bash -m -e /opt/carma/ -o ./coverage_reports/gcov
       - run:
           name: Run C++ Tests ROS 2
           command: |
