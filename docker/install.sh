@@ -77,6 +77,8 @@ if [[ ! -z "$ROS1_PACKAGES$ROS2_PACKAGES" ]]; then
     fi
 else
     echo "Building all ROS2 components..."
+    git clone --branch master --depth 1 https://github.com/nitroshare/qhttpengine.git
+    git clone --branch develop --depth 1 https://github.com/usdot-fhwa-OPS/V2X-Hub.git
     colcon build  --install-base /opt/carma/install_ros2 --build-base build_ros2 --cmake-args -DCMAKE_BUILD_TYPE=Release
 fi
 
