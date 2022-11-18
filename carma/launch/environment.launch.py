@@ -87,6 +87,9 @@ def generate_launch_description():
     
     carma_wm_ctrl_param_file = os.path.join(
         get_package_share_directory('carma_wm_ctrl'), 'config/parameters.yaml')
+    
+    carma_cloud_client_param_file = os.path.join(
+        get_package_share_directory('carma_cloud_client'), 'config/parameters.yaml')
 
 
     # lidar_perception_container contains all nodes for lidar based object perception
@@ -334,6 +337,23 @@ def generate_launch_description():
                     ],
                     parameters = [
                         vehicle_config_param_file
+                    ]
+                    
+            ),
+            ComposableNode( 
+                    package='carma_cloud_client',
+                    plugin='carma_cloud_client::CarmaCloudClient',
+                    name='carma_cloud_client_node',
+                    extra_arguments=[
+                        {'use_intra_process_comms': True}, 
+                        {'--log-level' : GetLogLevel('carma_cloud_client', env_log_levels) }
+                    ],
+                    remappings=[
+                        ("incoming_geofence_control", [ EnvironmentVariable('CARMA_MSG_NS', default_value=''), "/incoming_geofence_control" ] ),
+                        ("outgoing_geofence_request", [ EnvironmentVariable('CARMA_MSG_NS', default_value=''), "/outgoing_geofence_request" ] )
+                    ],
+                    parameters = [
+                        vehicle_config_param_file, carma_cloud_client_param_file
                     ]
                     
             ),
