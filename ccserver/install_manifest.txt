@@ -1,0 +1,15 @@
+/usr/local/lib/libv2xhubWebAPI.a
+/usr/local/include/v2xhubWebAPI/OAIApiRouter.h
+/usr/local/include/v2xhubWebAPI/OAIDefaultApiHandler.h
+/usr/local/include/v2xhubWebAPI/OAIDefaultApiHandler.cpp
+/usr/local/include/v2xhubWebAPI/OAIApiRouter.cpp
+/usr/local/include/v2xhubWebAPI/OAIEnum.h
+/usr/local/include/v2xhubWebAPI/OAIHelpers.cpp
+/usr/local/include/v2xhubWebAPI/OAIHttpFileElement.h
+/usr/local/include/v2xhubWebAPI/OAIHttpFileElement.cpp
+/usr/local/include/v2xhubWebAPI/OAIObject.h
+/usr/local/include/v2xhubWebAPI/OAIHelpers.h
+/usr/local/include/v2xhubWebAPI/OAIDefaultApiRequest.h
+/usr/local/include/v2xhubWebAPI/OAIDefaultApiRequest.cpp
+/usr/local/share/v2xhubWebAPI/cmake/v2xhubWebAPIConfig.cmake
+/usr/local/share/v2xhubWebAPI/cmake/v2xhubWebAPIConfig-noconfig.cmake
