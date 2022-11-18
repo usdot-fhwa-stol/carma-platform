@@ -19,6 +19,15 @@
 
 #define CURL_STATICLIB 
 
+// #include <QCommandLineOption>
+// #include <QCommandLineParser>
+// #include <QCoreApplication>
+// #include <QHostAddress>
+// #include <QRegExp>
+// #include <QStringList>
+// #include <QSharedPointer>
+// #include <QObject>
+
 #include <rclcpp/rclcpp.hpp>
 #include <functional>
 #include <std_msgs/msg/string.hpp>
@@ -29,13 +38,29 @@
 #include <stdio.h>
 #include <cstdio>
 #include <iostream>
+#include <zlib.h>
 
+#include <QCoreApplication>
+#include <QHostAddress>
+#include <QVariantMap>
+
+#include <qhttpengine/handler.h>
+#include <qhttpengine/localauthmiddleware.h>
+#include <qhttpengine/qobjecthandler.h>
+#include <qhttpengine/server.h>
+#include <qhttpengine/socket.h>
 
 #include <carma_ros2_utils/carma_lifecycle_node.hpp>
 #include "carma_cloud_client/carma_cloud_client_config.hpp"
 #include <j2735_v2x_msgs/msg/traffic_control_request.hpp>
 #include <carma_v2x_msgs/msg/traffic_control_request.hpp>
+#include <carma_v2x_msgs/msg/traffic_control_message.hpp>
+#include <boost/property_tree/ptree.hpp>
+#include <boost/property_tree/xml_parser.hpp>
 
+#include <v2xhubWebAPI/OAIApiRouter.h>
+
+// using namespace OpenAPI;
 
 namespace carma_cloud_client
 {
@@ -50,9 +75,13 @@ namespace carma_cloud_client
   private:
     // TCR Subscriber
     carma_ros2_utils::SubPtr<carma_v2x_msgs::msg::TrafficControlRequest> tcr_sub_;
+    carma_ros2_utils::PubPtr<carma_v2x_msgs::msg::TrafficControlMessage> tcm_pub_;
 
     // Node configuration
     Config config_;
+
+    const char *CONTENT_ENCODING_KEY = "Content-Encoding";
+    const char *CONTENT_ENCODING_VALUE = "gzip";
 
   public:
     /**
@@ -98,7 +127,37 @@ namespace carma_cloud_client
      * \param local_method method
      */
     void CloudSendAsync(const std::string& local_msg,const std::string& local_url, const std::string& local_base, const std::string& local_method);
-  
+
+    void TCMHandler(QHttpEngine::Socket *socket);
+
+    int StartWebService();
+
+    carma_v2x_msgs::msg::TrafficControlMessage parseTCMXML(std::string& tcm_xml);
+
+    unsigned char parse_hex(char c);
+
+    std::vector<unsigned char> parse_string(const std::string & s);
+
+    j2735_v2x_msgs::msg::TrafficControlPackage parse_package(boost::property_tree::ptree& tree);
+
+    carma_v2x_msgs::msg::TrafficControlParams parse_params(boost::property_tree::ptree& tree);
+    
+    carma_v2x_msgs::msg::TrafficControlGeometry parse_geometry(boost::property_tree::ptree& tree);
+
+    carma_v2x_msgs::msg::TrafficControlSchedule parse_schedule(boost::property_tree::ptree& tree);
+
+    carma_v2x_msgs::msg::TrafficControlDetail parse_detail(boost::property_tree::ptree& tree);
+    
+    QByteArray UncompressBytes(const QByteArray compressedBytes) const;
+
+    template <typename T>
+    std::vector<T> as_vector(boost::property_tree::ptree const& pt, boost::property_tree::ptree::key_type const& key)
+    {
+      std::vector<T> r;
+      for (auto& item : pt.get_child(key))
+        r.push_back(item.second.get_value<T>());
+      return r;
+    }
 
     ////
     // Overrides

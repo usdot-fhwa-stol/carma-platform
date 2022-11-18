@@ -28,12 +28,16 @@
   <build_depend>ament_auto_cmake</build_depend>
   <build_depend>curl</build_depend>
 
+
   <depend>rclcpp</depend>
   <depend>carma_ros2_utils</depend>
   <depend>rclcpp_components</depend>
   <depend>j2735_v2x_msgs</depend>
   <depend>carma_v2x_msgs</depend>
   <depend>j2735_convertor</depend>
+  <depend>v2xhubWebAPI</depend>
+  <depend>qhttpengine</depend>
+  
   
 
   <test_depend>ament_lint_auto</test_depend>
