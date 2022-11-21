@@ -1,0 +1,11 @@
+prefix=/workspaces/carma_ws/src/carma-platform/ccserver/external
+libdir=${prefix}/lib
+includedir=${prefix}/include
+
+Name: QHttpEngine
+Description: Simple and secure HTTP server for Qt applications
+URL: https://github.com/nitroshare/qhttpengine
+Version: 1.0.1
+Requires: Qt5Network
+Cflags: -I${includedir}
+Libs: -L${libdir} -lqhttpengine

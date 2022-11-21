@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 3.2 FATAL_ERROR)
-
+find_package(qhttpengine REQUIRED)
 set(CMAKE_VERBOSE_MAKEFILE ON)
 set(CMAKE_INCLUDE_CURRENT_DIR ON)
 set(CMAKE_AUTOMOC ON)
@@ -20,7 +20,6 @@ endif(${NODEBUG} STREQUAL "OFF")
 find_package(Qt5Core REQUIRED)
 find_package(Qt5Network REQUIRED)
 include(GNUInstallDirs)
-find_package(qhttpengine REQUIRED)
 file(GLOB SRCS
     ${CMAKE_CURRENT_SOURCE_DIR}/models/*.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/handlers/*.cpp

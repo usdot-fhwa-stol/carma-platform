@@ -58,10 +58,6 @@ git clone https://github.com/usdot-fhwa-stol/carma-message-filters.git --branch 
 #       which can make them incompatible with a new ros version after a source switch
 git clone https://github.com/astuff/astuff_sensor_msgs 
 
-# git clone --branch master --depth 1 https://github.com/nitroshare/qhttpengine.git
-git clone --branch master --depth 1 https://github.com/etherealjoy/qhttpengine.git
-# git clone --branch develop --depth 1 https://github.com/usdot-fhwa-OPS/V2X-Hub.git
-
 cd astuff_sensor_msgs
 git checkout 41d5ef0c33fb27eb3c9ba808b51332bcce186a83
 
@@ -75,3 +71,11 @@ cd ../
 
 #rosbridge_suite is a ROS meta-package including all the rosbridge packages.
 git clone https://github.com/usdot-fhwa-stol/rosbridge_suite --branch ros2
+
+# git clone --branch master --depth 1 https://github.com/nitroshare/qhttpengine.git
+git clone --branch master --depth 1 https://github.com/etherealjoy/qhttpengine.git
+# git clone --branch develop --depth 1 https://github.com/usdot-fhwa-OPS/V2X-Hub.git
+# cd V2X-Hub
+# git config core.sparsecheckout true
+# git sparse-checkout init
+# git sparse-checkout set ext/ccserver
