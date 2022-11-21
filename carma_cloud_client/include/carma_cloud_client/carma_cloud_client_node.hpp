@@ -83,7 +83,31 @@ namespace carma_cloud_client
 
     const char *CONTENT_ENCODING_KEY = "Content-Encoding";
     const char *CONTENT_ENCODING_VALUE = "gzip";
+    
 
+
+    const double DECI_MPS_PER_MPS = 10.0;
+    const double DECI_S_PER_S = 10.0;
+    const double MS_PER_S = 1000.0;
+    const double CM_PER_M = 100.0;
+    const double TENTH_MICRO_DEG_PER_DEG = 10000000.0;
+    const double DECI_M_PER_M = 10.0;
+    const double TWENTIETH_M_PER_M = 20.0;
+    const double FIFTIETH_M_PER_M = 50.0;
+    const double FIFTIETH_G_PER_M_PER_SEC_SQR = 5.10204081633;
+    const double ONE_AND_A_HALF_DEG = 1.5;
+    const double ONE_AND_A_HALF_DEG_PER_DEG = 0.666666666666;
+    const double CENTI_DEG_PER_DEG = 100.0;
+    const double THREE_TENTHS_DEG = 0.3;
+    const double EIGHTIETH_DEG_PER_DEG = 80.0;
+    const double DEG_360_OVER_65535_PER_DEG = 182.041666097;
+    const double UNCHANGED = 1.0;
+    const double SEC_PER_MIN = 60.0;
+    const double DECA_DEG_PER_DEG = 10.0;
+
+    // Integer Varients
+    const uint64_t NS_PER_MS_INT = 1000000;
+    
   public:
     /**
      * \brief Node constructor 

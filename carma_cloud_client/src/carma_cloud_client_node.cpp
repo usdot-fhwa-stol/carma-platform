@@ -422,6 +422,7 @@ namespace carma_cloud_client
   {
     carma_v2x_msgs::msg::TrafficControlSchedule tcm_schedule;
     tcm_schedule.start.sec = tree.get<int32_t>("schedule.start");
+    // tcm_schedule.start = rclcpp::Time(tree.get<int32_t>("schedule.start") * j2735_convertor::units::SEC_PER_MIN, 0);
     
     auto child_end = tree.get_child_optional("schedule.end");
     if (!child_end)
@@ -431,6 +432,7 @@ namespace carma_cloud_client
     else
     {
       tcm_schedule.end.sec = tree.get<uint64_t>("schedule.end");
+      // tcm_schedule.end = rclcpp::Time(tree.get<int32_t>("schedule.end") * j2735_convertor::units::SEC_PER_MIN, 0);
       tcm_schedule.end_exists = true;
     }
 
@@ -754,10 +756,10 @@ namespace carma_cloud_client
     tcm_geometry.proj = tree.get<std::string>("proj");
     tcm_geometry.datum = tree.get<std::string>("datum");
     tcm_geometry.reftime.sec = tree.get<int32_t>("reftime");
-    tcm_geometry.reflon = tree.get<float>("reflon");
-    tcm_geometry.reflat = tree.get<float>("reflat");
-    tcm_geometry.refelv = tree.get<float>("refelv");
-    tcm_geometry.heading = tree.get<float>("heading");
+    tcm_geometry.reflon = tree.get<float>("reflon")/TENTH_MICRO_DEG_PER_DEG;
+    tcm_geometry.reflat = tree.get<float>("reflat")/TENTH_MICRO_DEG_PER_DEG;
+    tcm_geometry.refelv = tree.get<float>("refelv")/DECI_M_PER_M - (float) 409.6; //handle offset
+    tcm_geometry.heading = tree.get<float>("heading")/DECI_S_PER_S;
     
     for (auto& item : tree.get_child("nodes"))
     {
@@ -766,21 +768,21 @@ namespace carma_cloud_client
       {
         if (which.first == "x")
         {
-          pathnode.x = which.second.get_value<float>();
+          pathnode.x = which.second.get_value<float>()/CM_PER_M;
         }
         else if (which.first == "y")
         {
-          pathnode.y = which.second.get_value<float>();
+          pathnode.y = which.second.get_value<float>()/CM_PER_M;
         }
         else if (which.first == "z")
         {
           pathnode.z_exists = true;
-          pathnode.z = which.second.get_value<float>();
+          pathnode.z = which.second.get_value<float>()/CM_PER_M;
         }
         else if (which.first == "width")
         {
           pathnode.width_exists = true;
-          pathnode.width = which.second.get_value<float>();
+          pathnode.width = which.second.get_value<float>()/CM_PER_M;
         }
         
       }
