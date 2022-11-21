@@ -236,7 +236,6 @@ namespace carma_cloud_client
 
   void CarmaCloudClient::TCMHandler(QHttpEngine::Socket *socket)
   {
-    std::cerr<<"in tcm cb"<<std::endl;
     QString st; 
     while(socket->bytesAvailable()>0)
     {	
@@ -245,12 +244,10 @@ namespace carma_cloud_client
       {
         //readBytes is compressed in gzip format
         st.append(UncompressBytes(readBytes));			
-        std::cerr<<"x1"<<std::endl;
       }
       else
       {
 			  st.append(readBytes);
-        std::cerr<<"x2"<<std::endl;
 		  }
 
     }
@@ -268,48 +265,37 @@ namespace carma_cloud_client
       RCLCPP_DEBUG_STREAM(  get_logger(), "Received TCM length is zero, and skipped.");
       return;
     }
-    std::cerr<<"TCM in XML format: " << tcm_string<<std::endl;
-    std::cerr<<"z4"<<std::endl;
-    std::cerr<<"parse tcm"<<std::endl;
 
     boost::property_tree::ptree list_tree;
     std :: stringstream ss; 
     ss << tcm_string;
     read_xml(ss, list_tree);
 
-    // auto k = list_tree.get_child("TrafficControlMessageList");
+    auto child_tcm_list = list_tree.get_child_optional("TrafficControlMessageList");
 
-    // std::string reqid_string = k.get<std::string>("TrafficControlMessage.tcmV01.reqid");
-    // std::cerr<<"reqid_string " << reqid_string <<std::endl;
-    // std::cerr<<"k.second" << k.second<<std::endl;
+    if (!child_tcm_list)
+    {
+      carma_v2x_msgs::msg::TrafficControlMessage parsed_tcm = parseTCMXML(list_tree);
+      tcm_pub_->publish(parsed_tcm);
+    }
+    else
+    {
+      auto tcm_list = child_tcm_list.get();
 
+      BOOST_FOREACH(auto &node, list_tree.get_child("TrafficControlMessageList"))
+      {
+        carma_v2x_msgs::msg::TrafficControlMessage parsed_tcm = parseTCMXML(tcm_list);
+        tcm_pub_->publish(parsed_tcm);
+      }
 
-    carma_v2x_msgs::msg::TrafficControlMessage parsed_tcm = parseTCMXML(tcm_string);
-    
-    tcm_pub_->publish(parsed_tcm);
+    }
 
-
+ 
   }
 
-  carma_v2x_msgs::msg::TrafficControlMessage CarmaCloudClient::parseTCMXML(std::string& tcm_xml)
+  carma_v2x_msgs::msg::TrafficControlMessage CarmaCloudClient::parseTCMXML(boost::property_tree::ptree& tree)
   {
     carma_v2x_msgs::msg::TrafficControlMessage tcm;
-
-    // Create an empty property tree object
-    boost::property_tree::ptree tree;
-    try 
-    {
-      std :: stringstream ss; 
-      ss << tcm_xml;
-      read_xml(ss, tree);
-    } 
-    catch (boost::property_tree::xml_parser_error &e) 
-    {
-      std :: cerr << "Failed to parse the xml string." << e.what();
-    } 
-    catch (...) {
-      std :: cerr << "Failed !!!";
-    }
 
     auto child_tcmv01 = tree.get_child_optional("TrafficControlMessage.tcmV01");
     if (!child_tcmv01)
@@ -347,7 +333,7 @@ namespace carma_cloud_client
     else
     {
       tcm.tcm_v01.package_exists = true;
-      tcm.tcm_v01.package = parse_package(tree);
+      tcm.tcm_v01.package = parse_package(tree_package.get());
     }
 
     auto tree_params = tree.get_child_optional("TrafficControlMessage.tcmV01.params");
@@ -358,7 +344,7 @@ namespace carma_cloud_client
     else
     {
       tcm.tcm_v01.params_exists = true;
-      tcm.tcm_v01.params = parse_params(tree);
+      tcm.tcm_v01.params = parse_params(tree_params.get());
     }
 
     auto tree_geometry = tree.get_child_optional("TrafficControlMessage.tcmV01.geometry");
@@ -369,7 +355,7 @@ namespace carma_cloud_client
     else
     {
       tcm.tcm_v01.geometry_exists = true;
-      tcm.tcm_v01.geometry = parse_geometry(tree);
+      tcm.tcm_v01.geometry = parse_geometry(tree_geometry.get());
     }
 
 
@@ -379,23 +365,19 @@ namespace carma_cloud_client
 
   int CarmaCloudClient::StartWebService()
   {
-    std::cerr<<"a1"<<std::endl;
     //Web services 
     char *placeholderX[1]={0};
     int placeholderC=1;
     QCoreApplication a(placeholderC,placeholderX);
     
-    std::cerr<<"a1"<<std::endl;
     QHostAddress address = QHostAddress(QString::fromStdString (config_.webip));
     quint16 port = static_cast<quint16>(config_.webport);
     
-    std::cerr<<"a3"<<std::endl;
     QSharedPointer<OpenAPI::OAIApiRequestHandler> handler(new OpenAPI::OAIApiRequestHandler());
     handler = QSharedPointer<OpenAPI::OAIApiRequestHandler> (new OpenAPI::OAIApiRequestHandler());
     auto router = QSharedPointer<OpenAPI::OAIApiRouter>::create();
     router->setUpRoutes();
 
-    std::cerr<<"a4"<<std::endl;
     QObject::connect(handler.data(), &OpenAPI::OAIApiRequestHandler::requestReceived, [&](QHttpEngine::Socket *socket) {
 		  TCMHandler(socket);
     });
@@ -403,7 +385,6 @@ namespace carma_cloud_client
     QObject::connect(handler.data(), &OpenAPI::OAIApiRequestHandler::requestReceived, [&](QHttpEngine::Socket *socket) {
 		  router->processRequest(socket);
     });
-    std::cerr<<"a5"<<std::endl;
     QHttpEngine::Server server(handler.data());
 
     if (!server.listen(address, port)) {
@@ -411,7 +392,6 @@ namespace carma_cloud_client
         return 1;
     }
 
-    std::cerr<<"a6"<<std::endl;
     RCLCPP_DEBUG_STREAM(this->get_logger(), "CarmaCloudClient :: Started web service");
     return a.exec();
 
@@ -421,7 +401,7 @@ namespace carma_cloud_client
   {
     j2735_v2x_msgs::msg::TrafficControlPackage tcm_pkg;
 
-    auto tree_label = tree.get_child_optional("TrafficControlMessage.tcmV01.package.label");
+    auto tree_label = tree.get_child_optional("label");
     if( !tree_label )
     {
       tcm_pkg.label_exists = false;
@@ -429,10 +409,10 @@ namespace carma_cloud_client
     else
     {
       tcm_pkg.label_exists = true;
-      tcm_pkg.label = tree.get<std::string>("TrafficControlMessage.tcmV01.package.label");
+      tcm_pkg.label = tree.get<std::string>("label");
     }
-    //TODO string to Id128b[]
-    std::string tcids_string = tree.get<std::string>("TrafficControlMessage.tcmV01.package.tcids");
+
+    std::string tcids_string = tree.get<std::string>("tcids");
     
     return tcm_pkg;
 
@@ -441,20 +421,20 @@ namespace carma_cloud_client
   carma_v2x_msgs::msg::TrafficControlSchedule CarmaCloudClient::parse_schedule(boost::property_tree::ptree& tree)
   {
     carma_v2x_msgs::msg::TrafficControlSchedule tcm_schedule;
-    tcm_schedule.start.sec = tree.get<int>("TrafficControlMessage.tcmV01.params.schedule.start");
+    tcm_schedule.start.sec = tree.get<int32_t>("schedule.start");
     
-    auto child_end = tree.get_child_optional("TrafficControlMessage.tcmV01.params.schedule.end");
+    auto child_end = tree.get_child_optional("schedule.end");
     if (!child_end)
     {
       tcm_schedule.end_exists = false;
     }
     else
     {
-      tcm_schedule.end.sec = 11;// tree.get<int>("TrafficControlMessage.tcmV01.params.schedule.end");
+      tcm_schedule.end.sec = tree.get<uint64_t>("schedule.end");
       tcm_schedule.end_exists = true;
     }
 
-    auto child_dow = tree.get_child_optional("TrafficControlMessage.tcmV01.params.schedule.dow");
+    auto child_dow = tree.get_child_optional("schedule.dow");
     if (!child_dow)
     {
       tcm_schedule.dow_exists = false;
@@ -462,14 +442,14 @@ namespace carma_cloud_client
     else
     {
       tcm_schedule.dow_exists = true;
-      std::string dow_string = tree.get<std::string>("TrafficControlMessage.tcmV01.params.schedule.dow");
+      std::string dow_string = tree.get<std::string>("schedule.dow");
       for (size_t i=0; i<dow_string.size(); i++)
       {
         tcm_schedule.dow.dow[i] = dow_string[i] - '0';
       }
     }
 
-    auto child_between = tree.get_child_optional("TrafficControlMessage.tcmV01.params.schedule.between");
+    auto child_between = tree.get_child_optional("schedule.between");
     if( !child_between )
     {
       tcm_schedule.between_exists = false;
@@ -479,25 +459,25 @@ namespace carma_cloud_client
       tcm_schedule.between_exists = true;
       auto child_tree = child_between.get();
       
-      for (auto& item : tree.get_child("TrafficControlMessage.tcmV01.params.schedule.between"))
+      for (auto& item : tree.get_child("schedule.between"))
       {
         carma_v2x_msgs::msg::DailySchedule daily;
         for (auto& which : item.second)
         {
           if (which.first == "begin")
           {
-            daily.begin.sec = which.second.get_value<int>();
+            daily.begin.sec = which.second.get_value<int32_t>();
           }
           else if (which.first == "duration")
           {
-            daily.duration.sec = which.second.get_value<int>();
+            daily.duration.sec = which.second.get_value<int32_t>();
           }
         }
         tcm_schedule.between.push_back(daily);
       }
     }
 
-    auto child_repeat = tree.get_child_optional("TrafficControlMessage.tcmV01.params.schedule.repeat");
+    auto child_repeat = tree.get_child_optional("schedule.repeat");
 
     if(!child_repeat)
     {
@@ -518,11 +498,11 @@ namespace carma_cloud_client
   {
     carma_v2x_msgs::msg::TrafficControlDetail tcm_detail;
 
-    auto child_closed = tree.get_child_optional( "TrafficControlMessage.tcmV01.params.detail.closed" );
+    auto child_closed = tree.get_child_optional( "detail.closed" );
     if( child_closed )
     {
       tcm_detail.choice = carma_v2x_msgs::msg::TrafficControlDetail::CLOSED_CHOICE;
-      std::string closed_val = tree.get<std::string>("TrafficControlMessage.tcmV01.params.detail.closed");
+      std::string closed_val = tree.get<std::string>("detail.closed");
       if (closed_val == "open")
       {
         tcm_detail.closed = carma_v2x_msgs::msg::TrafficControlDetail::OPEN;
@@ -551,11 +531,11 @@ namespace carma_cloud_client
       
     }
 
-    auto child_chains = tree.get_child_optional( "TrafficControlMessage.tcmV01.params.detail.chains" );
+    auto child_chains = tree.get_child_optional( "detail.chains" );
     if( child_chains )
     {
       tcm_detail.chains = carma_v2x_msgs::msg::TrafficControlDetail::CHAINS_CHOICE;
-      std::string chains_val = tree.get<std::string>("TrafficControlMessage.tcmV01.params.detail.chains");
+      std::string chains_val = tree.get<std::string>("detail.chains");
       if (chains_val == "no")
       {
         tcm_detail.chains = carma_v2x_msgs::msg::TrafficControlDetail::NO;
@@ -570,15 +550,15 @@ namespace carma_cloud_client
       }
     }
 
-    auto child_direction = tree.get_child_optional( "TrafficControlMessage.tcmV01.params.detail.chains" );
+    auto child_direction = tree.get_child_optional( "detail.chains" );
     if( child_direction )
     {
       tcm_detail.direction = carma_v2x_msgs::msg::TrafficControlDetail::DIRECTION_CHOICE;
-      std::string direction_val = tree.get<std::string>("TrafficControlMessage.tcmV01.params.detail.chains");
+      std::string direction_val = tree.get<std::string>("detail.chains");
       if( child_direction )
       {
         tcm_detail.direction = carma_v2x_msgs::msg::TrafficControlDetail::DIRECTION_CHOICE;
-        std::string direction_val = tree.get<std::string>("TrafficControlMessage.tcmV01.params.detail.chains");
+        std::string direction_val = tree.get<std::string>("detail.chains");
         if (direction_val == "forward")
         {
           tcm_detail.direction = carma_v2x_msgs::msg::TrafficControlDetail::FORWARD;
@@ -591,81 +571,81 @@ namespace carma_cloud_client
     }
 
 
-    auto child_mins = tree.get_child_optional( "TrafficControlMessage.tcmV01.params.detail.minspeed" );
+    auto child_mins = tree.get_child_optional( "detail.minspeed" );
     if( child_mins )
     {
       tcm_detail.choice = carma_v2x_msgs::msg::TrafficControlDetail::MINSPEED_CHOICE;
-      tcm_detail.minspeed = tree.get<float>("TrafficControlMessage.tcmV01.params.detail.minspeed");
+      tcm_detail.minspeed = tree.get<float>("detail.minspeed");
     }
 
-    auto child_maxs = tree.get_child_optional("TrafficControlMessage.tcmV01.params.detail.maxspeed");
+    auto child_maxs = tree.get_child_optional("detail.maxspeed");
     if( child_maxs )
     {
       tcm_detail.choice = carma_v2x_msgs::msg::TrafficControlDetail::MAXSPEED_CHOICE;
-      tcm_detail.maxspeed = tree.get<float>("TrafficControlMessage.tcmV01.params.detail.maxspeed");
+      tcm_detail.maxspeed = tree.get<float>("detail.maxspeed");
     }
 
-    auto child_minhdwy = tree.get_child_optional("TrafficControlMessage.tcmV01.params.detail.minhdwy");
+    auto child_minhdwy = tree.get_child_optional("detail.minhdwy");
     if( child_minhdwy )
     {
       tcm_detail.choice = carma_v2x_msgs::msg::TrafficControlDetail::MINHDWY_CHOICE;
-      tcm_detail.minhdwy = tree.get<float>("TrafficControlMessage.tcmV01.params.detail.minhdwy");
+      tcm_detail.minhdwy = tree.get<float>("detail.minhdwy");
     }
 
-    auto child_maxvehmass = tree.get_child_optional("TrafficControlMessage.tcmV01.params.detail.maxvehmass");
+    auto child_maxvehmass = tree.get_child_optional("detail.maxvehmass");
     if( child_maxvehmass )
     {
       tcm_detail.choice = carma_v2x_msgs::msg::TrafficControlDetail::MAXVEHMASS_CHOICE;
-      tcm_detail.maxvehmass = tree.get<float>("TrafficControlMessage.tcmV01.params.detail.maxvehmass");
+      tcm_detail.maxvehmass = tree.get<float>("detail.maxvehmass");
     }
 
-    auto child_maxvehheight = tree.get_child_optional("TrafficControlMessage.tcmV01.params.detail.maxvehheight");
+    auto child_maxvehheight = tree.get_child_optional("detail.maxvehheight");
     if( child_maxvehheight )
     {
       tcm_detail.choice = carma_v2x_msgs::msg::TrafficControlDetail::MAXVEHHEIGHT_CHOICE;
-      tcm_detail.maxvehheight = tree.get<float>("TrafficControlMessage.tcmV01.params.detail.maxvehheight");
+      tcm_detail.maxvehheight = tree.get<float>("detail.maxvehheight");
     }
 
-    auto child_maxvehwidth = tree.get_child_optional("TrafficControlMessage.tcmV01.params.detail.maxvehwidth");
+    auto child_maxvehwidth = tree.get_child_optional("detail.maxvehwidth");
     if( child_maxvehwidth )
     {
       tcm_detail.choice = carma_v2x_msgs::msg::TrafficControlDetail::MAXVEHWIDTH_CHOICE;
-      tcm_detail.maxvehwidth = tree.get<float>("TrafficControlMessage.tcmV01.params.detail.maxvehwidth");
+      tcm_detail.maxvehwidth = tree.get<float>("detail.maxvehwidth");
     }
 
-    auto child_maxvehlength = tree.get_child_optional("TrafficControlMessage.tcmV01.params.detail.maxvehlength");
+    auto child_maxvehlength = tree.get_child_optional("detail.maxvehlength");
     if( child_maxvehlength )
     {
       tcm_detail.choice = carma_v2x_msgs::msg::TrafficControlDetail::MAXVEHLENGTH_CHOICE;
-      tcm_detail.maxvehlength = tree.get<float>("TrafficControlMessage.tcmV01.params.detail.maxvehlength");
+      tcm_detail.maxvehlength = tree.get<float>("detail.maxvehlength");
     }
 
-    auto child_maxvehaxles = tree.get_child_optional("TrafficControlMessage.tcmV01.params.detail.maxvehaxles");
+    auto child_maxvehaxles = tree.get_child_optional("detail.maxvehaxles");
     if( child_maxvehaxles)
     {
       tcm_detail.choice = carma_v2x_msgs::msg::TrafficControlDetail::MAXVEHAXLES_CHOICE;
-      tcm_detail.maxvehaxles = tree.get<int>("TrafficControlMessage.tcmV01.params.detail.maxvehaxles");
+      tcm_detail.maxvehaxles = tree.get<int>("detail.maxvehaxles");
     }
 
-    auto child_minvehocc = tree.get_child_optional("TrafficControlMessage.tcmV01.params.detail.minvehocc");
+    auto child_minvehocc = tree.get_child_optional("detail.minvehocc");
     if( child_minvehocc)
     {
       tcm_detail.choice = carma_v2x_msgs::msg::TrafficControlDetail::MINVEHOCC_CHOICE;
-      tcm_detail.minvehocc = tree.get<int>("TrafficControlMessage.tcmV01.params.detail.minvehocc");
+      tcm_detail.minvehocc = tree.get<int>("detail.minvehocc");
     }
 
-    auto child_maxplatoonsize = tree.get_child_optional("TrafficControlMessage.tcmV01.params.detail.maxplatoonsize");
+    auto child_maxplatoonsize = tree.get_child_optional("detail.maxplatoonsize");
     if( child_maxplatoonsize)
     {
       tcm_detail.choice = carma_v2x_msgs::msg::TrafficControlDetail::MAXPLATOONSIZE_CHOICE;
-      tcm_detail.maxplatoonsize = tree.get<int>("TrafficControlMessage.tcmV01.params.detail.maxplatoonsize");
+      tcm_detail.maxplatoonsize = tree.get<int>("detail.maxplatoonsize");
     }
 
-    auto child_minplatoonhdwy = tree.get_child_optional("TrafficControlMessage.tcmV01.params.detail.minplatoonhdwy");
+    auto child_minplatoonhdwy = tree.get_child_optional("detail.minplatoonhdwy");
     if( child_minplatoonhdwy)
     {
       tcm_detail.choice = carma_v2x_msgs::msg::TrafficControlDetail::MINPLATOONHDWY_CHOICE;
-      tcm_detail.minplatoonhdwy = tree.get<int>("TrafficControlMessage.tcmV01.params.detail.minplatoonhdwy");
+      tcm_detail.minplatoonhdwy = tree.get<int>("detail.minplatoonhdwy");
     }
 
     return tcm_detail;
@@ -674,7 +654,7 @@ namespace carma_cloud_client
   carma_v2x_msgs::msg::TrafficControlParams CarmaCloudClient::parse_params(boost::property_tree::ptree& tree)
   {
     carma_v2x_msgs::msg::TrafficControlParams tcm_params;
-    for (auto& item : tree.get_child("TrafficControlMessage.tcmV01.params.vclasses"))
+    for (auto& item : tree.get_child("vclasses"))
     {
       j2735_v2x_msgs::msg::TrafficControlVehClass vclass;
       if (item.first == "any")
@@ -757,8 +737,8 @@ namespace carma_cloud_client
     }
     tcm_params.schedule = parse_schedule(tree);
     
-    std::string bool_str = tree.get_value<std::string>("TrafficControlMessage.tcmV01.params.regulatory");
-    std::cerr<"size " <<bool_str<<std::endl;
+    std::string bool_str = tree.get_value<std::string>("regulatory");
+    std::cerr << "size " <<bool_str.size() <<std::endl;
     if (bool_str == "false") tcm_params.regulatory = false;
     else tcm_params.regulatory = true;
      
@@ -771,15 +751,15 @@ namespace carma_cloud_client
   carma_v2x_msgs::msg::TrafficControlGeometry CarmaCloudClient::parse_geometry(boost::property_tree::ptree& tree)
   {
     carma_v2x_msgs::msg::TrafficControlGeometry tcm_geometry;
-    tcm_geometry.proj = tree.get<std::string>("TrafficControlMessage.tcmV01.geometry.proj");
-    tcm_geometry.datum = tree.get<std::string>("TrafficControlMessage.tcmV01.geometry.datum");
-    tcm_geometry.reftime.sec = tree.get<int>("TrafficControlMessage.tcmV01.geometry.reftime");
-    tcm_geometry.reflon = tree.get<float>("TrafficControlMessage.tcmV01.geometry.reflon");
-    tcm_geometry.reflat = tree.get<float>("TrafficControlMessage.tcmV01.geometry.reflat");
-    tcm_geometry.refelv = tree.get<float>("TrafficControlMessage.tcmV01.geometry.refelv");
-    tcm_geometry.heading = tree.get<float>("TrafficControlMessage.tcmV01.geometry.heading");
+    tcm_geometry.proj = tree.get<std::string>("proj");
+    tcm_geometry.datum = tree.get<std::string>("datum");
+    tcm_geometry.reftime.sec = tree.get<int32_t>("reftime");
+    tcm_geometry.reflon = tree.get<float>("reflon");
+    tcm_geometry.reflat = tree.get<float>("reflat");
+    tcm_geometry.refelv = tree.get<float>("refelv");
+    tcm_geometry.heading = tree.get<float>("heading");
     
-    for (auto& item : tree.get_child("TrafficControlMessage.tcmV01.geometry.nodes"))
+    for (auto& item : tree.get_child("nodes"))
     {
       carma_v2x_msgs::msg::PathNode pathnode;
       for (auto& which : item.second)

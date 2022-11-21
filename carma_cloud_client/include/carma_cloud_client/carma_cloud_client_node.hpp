@@ -57,6 +57,7 @@
 #include <carma_v2x_msgs/msg/traffic_control_message.hpp>
 #include <boost/property_tree/ptree.hpp>
 #include <boost/property_tree/xml_parser.hpp>
+#include <boost/foreach.hpp>
 
 #include <v2xhubWebAPI/OAIApiRouter.h>
 
@@ -132,7 +133,7 @@ namespace carma_cloud_client
 
     int StartWebService();
 
-    carma_v2x_msgs::msg::TrafficControlMessage parseTCMXML(std::string& tcm_xml);
+    carma_v2x_msgs::msg::TrafficControlMessage parseTCMXML(boost::property_tree::ptree& tree);
 
     unsigned char parse_hex(char c);
 
@@ -150,14 +151,6 @@ namespace carma_cloud_client
     
     QByteArray UncompressBytes(const QByteArray compressedBytes) const;
 
-    template <typename T>
-    std::vector<T> as_vector(boost::property_tree::ptree const& pt, boost::property_tree::ptree::key_type const& key)
-    {
-      std::vector<T> r;
-      for (auto& item : pt.get_child(key))
-        r.push_back(item.second.get_value<T>());
-      return r;
-    }
 
     ////
     // Overrides
