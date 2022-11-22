@@ -90,7 +90,7 @@
   <remap from="/current_pose" to="$(optenv CARMA_LOCZ_NS)/current_pose"/>  
 
   <!-- Twist Filter -->
-  <group>
+  <!-- <group>
     <remap from="/accel_cmd" to="accel_cmd"/>
     <remap from="/brake_cmd" to="brake_cmd"/>
     <remap from="/ctrl_cmd" to="ctrl_cmd"/>
@@ -116,7 +116,7 @@
         <arg name="lowpass_gain_linear_x" value="0.1"/>
         <arg name="lowpass_gain_steering_angle" value="0.1"/>
     </include>
-  </group>
+  </group> -->
 
   <!-- Planning Stack -->
   <group ns="plugins">
