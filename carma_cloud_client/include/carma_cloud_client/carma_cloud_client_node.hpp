@@ -84,30 +84,6 @@ namespace carma_cloud_client
     const char *CONTENT_ENCODING_KEY = "Content-Encoding";
     const char *CONTENT_ENCODING_VALUE = "gzip";
     
-
-
-    const double DECI_MPS_PER_MPS = 10.0;
-    const double DECI_S_PER_S = 10.0;
-    const double MS_PER_S = 1000.0;
-    const double CM_PER_M = 100.0;
-    const double TENTH_MICRO_DEG_PER_DEG = 10000000.0;
-    const double DECI_M_PER_M = 10.0;
-    const double TWENTIETH_M_PER_M = 20.0;
-    const double FIFTIETH_M_PER_M = 50.0;
-    const double FIFTIETH_G_PER_M_PER_SEC_SQR = 5.10204081633;
-    const double ONE_AND_A_HALF_DEG = 1.5;
-    const double ONE_AND_A_HALF_DEG_PER_DEG = 0.666666666666;
-    const double CENTI_DEG_PER_DEG = 100.0;
-    const double THREE_TENTHS_DEG = 0.3;
-    const double EIGHTIETH_DEG_PER_DEG = 80.0;
-    const double DEG_360_OVER_65535_PER_DEG = 182.041666097;
-    const double UNCHANGED = 1.0;
-    const double SEC_PER_MIN = 60.0;
-    const double DECA_DEG_PER_DEG = 10.0;
-
-    // Integer Varients
-    const uint64_t NS_PER_MS_INT = 1000000;
-    
   public:
     /**
      * \brief Node constructor 
@@ -153,26 +129,70 @@ namespace carma_cloud_client
      */
     void CloudSendAsync(const std::string& local_msg,const std::string& local_url, const std::string& local_base, const std::string& local_method);
 
+    /**
+     * \brief Handles the TCM received from CARMA Cloud
+     * \param socket http socket
+     */
     void TCMHandler(QHttpEngine::Socket *socket);
 
+    /**
+     * \brief Starts web service
+     */
     int StartWebService();
 
+    /**
+     * \brief Parse xml package of tcm msg using boost property tree xml parser
+     * \param tree xml boost ptree subtree
+     * \return TrafficControlMessage
+     */
     carma_v2x_msgs::msg::TrafficControlMessage parseTCMXML(boost::property_tree::ptree& tree);
 
+    /**
+     * \brief Convert Hex char to unsigned char
+     * \param c char in hex format
+     */
     unsigned char parse_hex(char c);
 
-    std::vector<unsigned char> parse_string(const std::string & s);
-
+    /**
+     * \brief Parse xml package subtree of tcm msg
+     * \param tree xml package boost ptree subtree
+     * \return TrafficControlPackage
+     */
     j2735_v2x_msgs::msg::TrafficControlPackage parse_package(boost::property_tree::ptree& tree);
 
+    /**
+     * \brief Parse xml params subtree of tcm msg
+     * \param tree xml params boost ptree subtree
+     * \return TrafficControlParams
+     */
     carma_v2x_msgs::msg::TrafficControlParams parse_params(boost::property_tree::ptree& tree);
     
+    /**
+     * \brief Parse xml geometry subtree of tcm msg
+     * \param tree xml geometry boost ptree subtree
+     * \return TrafficControlGeometry
+     */
     carma_v2x_msgs::msg::TrafficControlGeometry parse_geometry(boost::property_tree::ptree& tree);
 
+    /**
+     * \brief Parse xml schedule subtree of tcm msg
+     * \param tree xml schedule boost ptree subtree
+     * \return TrafficControlSchedule
+     */
     carma_v2x_msgs::msg::TrafficControlSchedule parse_schedule(boost::property_tree::ptree& tree);
 
+    /**
+     * \brief Parse xml detail subtree of tcm msg
+     * \param tree xml detail boost ptree subtree
+     * \return TrafficControlDetail
+     */
     carma_v2x_msgs::msg::TrafficControlDetail parse_detail(boost::property_tree::ptree& tree);
     
+    /**
+     * \brief Uncompress bytes using zlib library
+     * \param compressedBytes compressed bytes
+     * \return Uncompressed bytes
+     */
     QByteArray UncompressBytes(const QByteArray compressedBytes) const;
 
 
