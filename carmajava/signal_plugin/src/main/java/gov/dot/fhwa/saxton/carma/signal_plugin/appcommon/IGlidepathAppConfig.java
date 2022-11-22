@@ -17,6 +17,7 @@
 package gov.dot.fhwa.saxton.carma.signal_plugin.appcommon;
 
 import gov.dot.fhwa.saxton.utils.IAppConfig;
+import java.util.*;
 
 /**
  * Glidepath specific appconfig interface
@@ -26,4 +27,5 @@ public interface IGlidepathAppConfig extends IAppConfig {
     String getGpsHost();
     int getGpsPort();
     int getMaximumSpeed(double downtrack);
+    List<Integer> getIntegerList(String name);
 }

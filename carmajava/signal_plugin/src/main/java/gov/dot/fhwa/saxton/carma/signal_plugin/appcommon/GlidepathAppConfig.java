@@ -18,6 +18,7 @@ package gov.dot.fhwa.saxton.carma.signal_plugin.appcommon;
 
 import gov.dot.fhwa.saxton.carma.guidance.params.ParameterSource;
 import gov.dot.fhwa.saxton.carma.guidance.util.RouteService;
+import java.util.*;
 
 /**
  * AppConfig using dvi.properties instead of application.properties
@@ -81,6 +82,10 @@ public class GlidepathAppConfig implements IGlidepathAppConfig {
 
     public boolean getBooleanValue(String property)   {
         return params.getBoolean(toROSString(property));
+    }
+
+    public List<Integer> getIntegerList(String name) {
+	return (List<Integer>) params.getList(toROSString(name));
     }
 
     @Override

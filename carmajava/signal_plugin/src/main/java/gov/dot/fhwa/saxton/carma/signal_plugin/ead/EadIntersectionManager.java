@@ -51,6 +51,12 @@ public class EadIntersectionManager {
 		// Load constants for intersection geometry processing
 		cteThreshold_ = config.getIntValue("ead.cte.threshold");
 		periodicDelay_ = config.getIntValue("periodicDelay");
+		usableLanes_ = config.getIntegerList("usableLaneIds");
+		
+		for (Integer i: usableLanes_)
+		{
+			log_.warn("TRAJI", "Usable %d", i);
+		}
 
 		//get the list of intersections that we will be paying attention to
 		String tmpList = config.getProperty("asd.intersections");
@@ -249,9 +255,29 @@ public class EadIntersectionManager {
 		//if the computation was successful (vehicle can be associated with a lane) then
 		if (associatedWithLane) {
 			int laneId = geometry.laneId();
-			log_.debugf("TRAJ",
+
+			if (usableLanes_.isEmpty() || ( usableLanes_.contains(laneId) && dtsb < (Integer.MAX_VALUE - 5.0)) )
+			{
+				int idx = geometry.getLaneIndex();
+				log_.debugf("TRAJ",
+					"  computeIntersectionGeometry: we are %.1f m from stop bar on a usable lane %d of intersection %d",
+					dtsb, laneId, mapMessage.getIntersectionId());
+				currentLane_ = laneId;
+				currentLaneIdx_ = idx;
+				
+			} else
+			{
+				log_.debugf("TRAJ",
 					"  computeIntersectionGeometry: we are %.1f m from stop bar on lane %d of intersection %d",
 					dtsb, laneId, mapMessage.getIntersectionId());
+
+				if (currentLaneIdx_ != -1 && dtsb < (Integer.MAX_VALUE - 5.0))
+				{
+					geometry.setLaneIndex(currentLaneIdx_);
+				}
+			}
+			
+			
 		} else {
 			return null;
 		}
@@ -280,4 +306,7 @@ public class EadIntersectionManager {
 	private static ILogger		log_ = LoggerManager.getLogger(EadIntersectionManager.class);
 	private final int cteThreshold_;
 	private final int periodicDelay_;
+	private final List<Integer> usableLanes_;
+	private int currentLane_ = -1;
+	private int currentLaneIdx_ = -1;
 }

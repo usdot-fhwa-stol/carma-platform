@@ -405,11 +405,11 @@ public class TrafficSignalPlugin extends AbstractPlugin implements IStrategicPlu
                         long millisToHourStart = dt.getHourOfDay() * 3600000L;
                         double secondInHour = (double)(millisOfDay - millisToHourStart) / 1000.0;
                         m.setMaxTimeRemaining(Math.max(0.0, earliestEvent.getTiming().getMaxEndTime() - secondInHour));
-                        m.setMinTimeRemaining(Math.max(0.0, earliestEvent.getTiming().getMinEndTime() - secondInHour));
+                        m.setMinTimeRemaining(Math.max(0.0, earliestEvent.getTiming().getMaxEndTime() - secondInHour));
                         // Check if lights should always be green
                         if (ignoreLights) {
                             m.setMaxTimeRemaining(900.0);
-                            m.setMinTimeRemaining(900.0);
+                            m.setMaxTimeRemaining(900.0);
                         }
                     }
                 //TODO move this statment log.warn("Empty movement event list in spat for intersection id: " + state.getId().getId());

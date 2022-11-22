@@ -434,7 +434,16 @@ public class IntersectionGeometry {
 	public double stopBoxWidth() {
 		return stopBoxWidth_;
 	}
+
+	public int getLaneIndex()
+	{
+		return laneIndex_;
+	}
 	
+	public void setLaneIndex(int idx)
+	{
+		laneIndex_=idx;
+	}
 	//////////////////
 	// member elements
 	//////////////////
@@ -483,7 +492,8 @@ public class IntersectionGeometry {
 		//store the DTSB as the previous time step's value for the next time step's call to computeGeometry()
 		prevDtsb_ = result;
 	}
-	
+	// TODO we need to determine how to set the laneIndex based on the returned lane id
+	// Maybe just return the index and then set that
 	private int								laneIndex_;			//storage vector index of the associated lane
 	private int								laneDtsb_;			//vehicle's distance to stop bar of the currently associated lane, cm
 	private int								cte_;				//vehicle's current cross-track error, cm
