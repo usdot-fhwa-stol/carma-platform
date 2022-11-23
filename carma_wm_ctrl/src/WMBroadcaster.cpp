@@ -2214,7 +2214,7 @@ void WMBroadcaster::updateUpcomingSGIntersectionIds()
     }
   }
 
-  if(isLightFound && !sim_)
+  if(isLightFound && sim_)
   {
     for(auto itr = sim_->signal_group_to_traffic_light_id_.begin(); itr != sim_->signal_group_to_traffic_light_id_.end(); itr++)
     {     
@@ -2225,14 +2225,14 @@ void WMBroadcaster::updateUpcomingSGIntersectionIds()
     }
   }
   else{
-     RCLCPP_DEBUG_STREAM(rclcpp::get_logger("carma_wm_ctrl"), "NO matching Traffic lights along the route");
+     RCLCPP_ERROR_STREAM(rclcpp::get_logger("carma_wm_ctrl"), "NO matching Traffic lights along the route");
   }//END Traffic signals
 
   auto intersections = route_lanelet.regulatoryElementsAs<lanelet::SignalizedIntersection>();
   if (intersections.empty())
   {
     // no match if any of the entry lanelet is not part of any intersection.
-    RCLCPP_DEBUG_STREAM(rclcpp::get_logger("carma_wm_ctrl"), "NO matching intersection for current lanelet. lanelet id = " << route_lanelet.id());
+    RCLCPP_ERROR_STREAM(rclcpp::get_logger("carma_wm_ctrl"), "NO matching intersection for current lanelet. lanelet id = " << route_lanelet.id());
   }
   else
   {
@@ -2250,7 +2250,7 @@ void WMBroadcaster::updateUpcomingSGIntersectionIds()
     }
   } //END intersections
 
-  RCLCPP_DEBUG_STREAM(rclcpp::get_logger("carma_wm_ctrl"), "MAP msg: Intersection ID = " <<  map_msg_intersection_id << ", Signal Group ID =" << cur_signal_group_id );
+  RCLCPP_ERROR_STREAM(rclcpp::get_logger("carma_wm_ctrl"), "MAP msg: Intersection ID = " <<  map_msg_intersection_id << ", Signal Group ID =" << cur_signal_group_id );
   if(map_msg_intersection_id != 0 && cur_signal_group_id != 0)
   { 
     upcoming_intersection_ids_.data.clear();

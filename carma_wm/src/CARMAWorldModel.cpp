@@ -1446,6 +1446,17 @@ namespace carma_wm
   
     for (const auto& curr_intersection : spat_msg.intersection_state_list)
     {
+      bool is_dynamic_spat = false;
+
+      for (const auto& current_movement_state : curr_intersection.movement_list)
+      {
+        if (current_movement_state.movement_event_list.size() > 1)
+        {
+          is_dynamic_spat = true; // if only one of the signal_group is dynamic, then rest is as well
+          break;
+        }
+      }
+      
       for (const auto& current_movement_state : curr_intersection.movement_list)
       {
         lanelet::Id curr_light_id = getTrafficSignalId(curr_intersection.id.id, current_movement_state.signal_group);
@@ -1479,7 +1490,7 @@ namespace carma_wm
 
         curr_light->revision_ = curr_intersection.revision; // valid SPAT msg
       
-        if(current_movement_state.movement_event_list.size()>1) // Dynamic Spat Processing with future phases
+        if(is_dynamic_spat) // Dynamic Spat Processing with future phases
         {
           for(auto current_movement_event:current_movement_state.movement_event_list)
           {
