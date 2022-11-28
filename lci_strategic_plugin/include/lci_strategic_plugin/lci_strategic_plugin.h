@@ -719,6 +719,7 @@ private:
   ////////// VARIABLES ///////////
   
   std::string previous_strategy_params_ = "";  
+  std::string upcoming_id_ = "";
 
   double max_comfort_accel_ = 2.0;  // acceleration rates after applying miltiplier
   double max_comfort_decel_ = -2.0; 
