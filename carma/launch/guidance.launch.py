@@ -326,7 +326,8 @@ def generate_launch_description():
                     ("/steer_cmd", ["steer_cmd" ] ),
                     ("/ctrl_mode", ["ctrl_mode" ] ),
                     ("/emergency_stop", ["emergency_stop" ] ),
-                    ("/vehicle_cmd", [ EnvironmentVariable('CARMA_INTR_NS', default_value=''), "/vehicle_cmd" ] )       
+                    ("/state_cmd", ["state_cmd" ] ),
+                    ("/vehicle_cmd", [ EnvironmentVariable('CARMA_INTR_NS', default_value=''), "/vehicle_cmd" ] ),
                     # Parameter remapping
                     ("vehicle_model_wheelbase", ["/vehicle_wheel_base" ] ),
                     ("lateral_accel_limit", ["/vehicle_lateral_accel_limit" ] ),
