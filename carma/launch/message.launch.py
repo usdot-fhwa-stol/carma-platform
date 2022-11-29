@@ -69,6 +69,8 @@ def generate_launch_description():
         default_value = subsystem_controller_default_param_file,
         description = "Path to file containing override parameters for the subsystem controller"
     )
+    carma_cloud_client_param_file = os.path.join(
+        get_package_share_directory('carma_cloud_client'), 'config/parameters.yaml')
     
 
     # Nodes
@@ -147,6 +149,22 @@ def generate_launch_description():
                 remappings=[
                     ("outgoing_bsm", "bsm_outbound" )
                 ],
+            ),
+            ComposableNode( 
+                package='carma_cloud_client',
+                plugin='carma_cloud_client::CarmaCloudClient',
+                name='carma_cloud_client_node',
+                extra_arguments=[
+                    {'use_intra_process_comms': True}, 
+                    {'--log-level' : GetLogLevel('carma_cloud_client', env_log_levels) }
+                ],
+                remappings=[
+                    ("incoming_geofence_control", [ EnvironmentVariable('CARMA_MSG_NS', default_value=''), "/incoming_geofence_control" ] ),
+                ],
+                parameters = [
+                    vehicle_config_param_file, carma_cloud_client_param_file
+                ]
+                    
             ),
         ]
     )
