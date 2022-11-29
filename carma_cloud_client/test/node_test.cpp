@@ -62,7 +62,7 @@ TEST(Testcarma_cloud_client, test_xml_parse_full){
     ss << xml;
     read_xml(ss, tree);
 
-    carma_v2x_msgs::msg::TrafficControlMessage tcm_msg = plugin.parseTCMXML(tree);
+    j2735_v2x_msgs::msg::TrafficControlMessage tcm_msg = plugin.parseTCMXML(tree);
     
     // std::cout << "bool " << tcm_msg.tcm_v01.reqseq <<std::endl;
     ASSERT_TRUE(tcm_msg.tcm_v01.package_exists);

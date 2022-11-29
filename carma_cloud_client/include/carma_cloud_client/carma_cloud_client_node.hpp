@@ -54,7 +54,7 @@
 #include "carma_cloud_client/carma_cloud_client_config.hpp"
 #include <j2735_v2x_msgs/msg/traffic_control_request.hpp>
 #include <carma_v2x_msgs/msg/traffic_control_request.hpp>
-#include <carma_v2x_msgs/msg/traffic_control_message.hpp>
+#include <j2735_v2x_msgs/msg/traffic_control_message.hpp>
 #include <boost/property_tree/ptree.hpp>
 #include <boost/property_tree/xml_parser.hpp>
 #include <boost/foreach.hpp>
@@ -76,7 +76,7 @@ namespace carma_cloud_client
   private:
     // TCR Subscriber
     carma_ros2_utils::SubPtr<carma_v2x_msgs::msg::TrafficControlRequest> tcr_sub_;
-    carma_ros2_utils::PubPtr<carma_v2x_msgs::msg::TrafficControlMessage> tcm_pub_;
+    carma_ros2_utils::PubPtr<j2735_v2x_msgs::msg::TrafficControlMessage> tcm_pub_;
 
     // Node configuration
     Config config_;
@@ -145,7 +145,7 @@ namespace carma_cloud_client
      * \param tree xml boost ptree subtree
      * \return TrafficControlMessage
      */
-    carma_v2x_msgs::msg::TrafficControlMessage parseTCMXML(boost::property_tree::ptree& tree);
+    j2735_v2x_msgs::msg::TrafficControlMessage parseTCMXML(boost::property_tree::ptree& tree);
 
     /**
      * \brief Convert Hex char to unsigned char
@@ -165,28 +165,28 @@ namespace carma_cloud_client
      * \param tree xml params boost ptree subtree
      * \return TrafficControlParams
      */
-    carma_v2x_msgs::msg::TrafficControlParams parse_params(boost::property_tree::ptree& tree);
+    j2735_v2x_msgs::msg::TrafficControlParams parse_params(boost::property_tree::ptree& tree);
     
     /**
      * \brief Parse xml geometry subtree of tcm msg
      * \param tree xml geometry boost ptree subtree
      * \return TrafficControlGeometry
      */
-    carma_v2x_msgs::msg::TrafficControlGeometry parse_geometry(boost::property_tree::ptree& tree);
+    j2735_v2x_msgs::msg::TrafficControlGeometry parse_geometry(boost::property_tree::ptree& tree);
 
     /**
      * \brief Parse xml schedule subtree of tcm msg
      * \param tree xml schedule boost ptree subtree
      * \return TrafficControlSchedule
      */
-    carma_v2x_msgs::msg::TrafficControlSchedule parse_schedule(boost::property_tree::ptree& tree);
+    j2735_v2x_msgs::msg::TrafficControlSchedule parse_schedule(boost::property_tree::ptree& tree);
 
     /**
      * \brief Parse xml detail subtree of tcm msg
      * \param tree xml detail boost ptree subtree
      * \return TrafficControlDetail
      */
-    carma_v2x_msgs::msg::TrafficControlDetail parse_detail(boost::property_tree::ptree& tree);
+    j2735_v2x_msgs::msg::TrafficControlDetail parse_detail(boost::property_tree::ptree& tree);
     
     /**
      * \brief Uncompress bytes using zlib library
