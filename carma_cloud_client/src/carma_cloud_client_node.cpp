@@ -76,7 +76,7 @@ namespace carma_cloud_client
     // Setup subscribers
     tcr_sub_ = create_subscription<carma_v2x_msgs::msg::TrafficControlRequest>("outgoing_geofence_request", 10,
                                                               std::bind(&CarmaCloudClient::tcr_callback, this, std_ph::_1));                                                     
-    tcm_pub_ = create_publisher<j2735_v2x_msgs::msg::TrafficControlMessage>("outgoing_j2735_geofence_control", 1);
+    tcm_pub_ = create_publisher<j2735_v2x_msgs::msg::TrafficControlMessage>("incoming_j2735_geofence_control", 1);
     std::thread webthread(&CarmaCloudClient::StartWebService,this);
     webthread.detach(); // wait for the thread to finish 
     // Return success if everything initialized successfully
