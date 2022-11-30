@@ -1491,7 +1491,9 @@ namespace carma_wm
         curr_light->revision_ = curr_intersection.revision; // valid SPAT msg
       
         if(is_dynamic_spat) // Dynamic Spat Processing with future phases
-        {
+        {  sim_.traffic_signal_states_[curr_intersection.id.id][current_movement_state.signal_group]={};
+           sim_.traffic_signal_start_times_[curr_intersection.id.id][current_movement_state.signal_group]={};
+          
           for(auto current_movement_event:current_movement_state.movement_event_list)
           {
             // raw min_end_time in seconds measured from the most recent full hour
@@ -1502,10 +1504,9 @@ namespace carma_wm
 
             auto received_state_dynamic = static_cast<lanelet::CarmaTrafficSignalState>(current_movement_event.event_state.movement_phase_state);
             
-            bool recorded = check_if_seen_before_movement_state(min_end_time_dynamic,received_state_dynamic,curr_intersection.id.id,current_movement_state.signal_group);
+            //bool recorded = check_if_seen_before_movement_state(min_end_time_dynamic,received_state_dynamic,curr_intersection.id.id,current_movement_state.signal_group);
             
-            if (!recorded)
-		        {
+            
               sim_.traffic_signal_states_[curr_intersection.id.id][current_movement_state.signal_group].push_back(
                                 std::make_pair(min_end_time_dynamic, received_state_dynamic));
               sim_.traffic_signal_start_times_[curr_intersection.id.id][current_movement_state.signal_group].push_back(
@@ -1516,8 +1517,10 @@ namespace carma_wm
                  << ", state: " << received_state_dynamic);
               curr_light->recorded_time_stamps = sim_.traffic_signal_states_[curr_intersection.id.id][current_movement_state.signal_group];
               curr_light->recorded_start_time_stamps = sim_.traffic_signal_start_times_[curr_intersection.id.id][current_movement_state.signal_group];
-    		    }
+    		    
 	        }
+          curr_light->recorded_time_stamps = sim_.traffic_signal_states_[curr_intersection.id.id][current_movement_state.signal_group];
+          curr_light->recorded_start_time_stamps = sim_.traffic_signal_start_times_[curr_intersection.id.id][current_movement_state.signal_group];
         } 
         else // Fixed Spat Processing without future phases
         {
