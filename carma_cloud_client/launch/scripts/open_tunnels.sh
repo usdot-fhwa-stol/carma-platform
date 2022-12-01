@@ -6,13 +6,10 @@ showUsage()
     echo
     exit 1
 }
-
 while getopts "p:u:a:t:k:r:" opt; do
-    echo "0"
     case $opt in
         u)
             REMOTE_USER="$OPTARG"
-            echo "00"
             ;;
         a)
             REMOTE_ADDR="$OPTARG"
@@ -41,28 +38,18 @@ if [ -z "$TEMP_FILE" ]; then
     TEMP_FILE="/dev/shm/rt_temp.txt"
 fi
 
-if  [ -z "$REMOTE_USER" ]; then
-    echo "1"
-fi
-if  [ -z "$REMOTE_ADDR" ]; then
-    echo "2"
-fi
-if  [ -z "$KEY_FILE" ]; then
-    echo "3"
-fi
+
 # open http tunnel, port-forwarding from HOST_PORT to port 8080 (8080: running on carma cloud)
 if  [ -z "$REMOTE_USER" ] || [ -z "$REMOTE_ADDR" ] || [ -z "$KEY_FILE" ]; then
     showUsage
 fi
 
-echo "4"
 # kill local process that is running on port HOST_PORT
 if sudo lsof -t -i:$HOST_PORT >/dev/null; then
     sudo kill -9 $(sudo lsof -t -i:$HOST_PORT)
     echo "Closed existing host port $HOST_PORT"
 fi
 
-echo "5"
 
 # Open forward tunnel: This port (33333) is forwarded to remote host (carma-cloud) and port: 8080 
 echo "Open forward tunnel..."
