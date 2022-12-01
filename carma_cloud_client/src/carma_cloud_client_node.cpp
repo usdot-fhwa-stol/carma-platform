@@ -270,12 +270,14 @@ namespace carma_cloud_client
     std :: stringstream ss; 
     ss << tcm_string;
     read_xml(ss, list_tree);
+    
 
     auto child_tcm_list = list_tree.get_child_optional("TrafficControlMessageList");
 
     if (!child_tcm_list)
     {
-      j2735_v2x_msgs::msg::TrafficControlMessage parsed_tcm = parseTCMXML(list_tree);
+      auto child_tree = list_tree.get_child("TrafficControlMessage");
+      j2735_v2x_msgs::msg::TrafficControlMessage parsed_tcm = parseTCMXML(child_tree);
       tcm_pub_->publish(parsed_tcm);
     }
     else
@@ -284,7 +286,7 @@ namespace carma_cloud_client
 
       BOOST_FOREACH(auto &node, list_tree.get_child("TrafficControlMessageList"))
       {
-        j2735_v2x_msgs::msg::TrafficControlMessage parsed_tcm = parseTCMXML(tcm_list);
+        j2735_v2x_msgs::msg::TrafficControlMessage parsed_tcm = parseTCMXML(node.second);
         tcm_pub_->publish(parsed_tcm);
       }
 
@@ -295,10 +297,9 @@ namespace carma_cloud_client
 
   j2735_v2x_msgs::msg::TrafficControlMessage CarmaCloudClient::parseTCMXML(boost::property_tree::ptree& tree)
   {
-    // carma_v2x_msgs::msg::TrafficControlMessage tcm;
     j2735_v2x_msgs::msg::TrafficControlMessage tcm;
 
-    auto child_tcmv01 = tree.get_child_optional("TrafficControlMessage.tcmV01");
+    auto child_tcmv01 = tree.get_child_optional("tcmV01");
     if (!child_tcmv01)
     {
       tcm.choice = j2735_v2x_msgs::msg::TrafficControlMessage::RESERVED;
@@ -306,27 +307,26 @@ namespace carma_cloud_client
     }
     else tcm.choice = j2735_v2x_msgs::msg::TrafficControlMessage::TCMV01;
 
-    std::string reqid_string = tree.get<std::string>("TrafficControlMessage.tcmV01.reqid");
+    std::string reqid_string = tree.get<std::string>("tcmV01.reqid");
     j2735_v2x_msgs::msg::Id64b output;
     for (std::size_t i = 0; i != reqid_string.size() / 2; ++i)
     {
       tcm.tcm_v01.reqid.id[i] = 16 * parse_hex(reqid_string[2 * i]) + parse_hex(reqid_string[2 * i + 1]);
     }
 
- 
-    tcm.tcm_v01.reqseq = tree.get<uint8_t>("TrafficControlMessage.tcmV01.reqseq");
-    tcm.tcm_v01.msgtot = tree.get<uint16_t>("TrafficControlMessage.tcmV01.msgtot");
-    tcm.tcm_v01.msgnum = tree.get<uint16_t>("TrafficControlMessage.tcmV01.msgnum");
+    tcm.tcm_v01.reqseq = tree.get<uint8_t>("tcmV01.reqseq");
+    tcm.tcm_v01.msgtot = tree.get<uint16_t>("tcmV01.msgtot");
+    tcm.tcm_v01.msgnum = tree.get<uint16_t>("tcmV01.msgnum");
 
-    std::string id_string = tree.get<std::string>("TrafficControlMessage.tcmV01.id");
+    std::string id_string = tree.get<std::string>("tcmV01.id");
     for (std::size_t i = 0; i != id_string.size() / 2; ++i)
     {
       tcm.tcm_v01.id.id[i] = 16 * parse_hex(id_string[2 * i]) + parse_hex(id_string[2 * i + 1]);
     }
 
-    tcm.tcm_v01.updated = tree.get<uint64_t>("TrafficControlMessage.tcmV01.updated");
+    tcm.tcm_v01.updated = tree.get<uint64_t>("tcmV01.updated");
 
-    auto tree_package = tree.get_child_optional("TrafficControlMessage.tcmV01.package");
+    auto tree_package = tree.get_child_optional("tcmV01.package");
     if (!tree_package)
     {
       tcm.tcm_v01.package_exists = false;
@@ -337,7 +337,7 @@ namespace carma_cloud_client
       tcm.tcm_v01.package = parse_package(tree_package.get());
     }
 
-    auto tree_params = tree.get_child_optional("TrafficControlMessage.tcmV01.params");
+    auto tree_params = tree.get_child_optional("tcmV01.params");
     if (!tree_params)
     {
       tcm.tcm_v01.params_exists = false;
@@ -348,7 +348,7 @@ namespace carma_cloud_client
       tcm.tcm_v01.params = parse_params(tree_params.get());
     }
 
-    auto tree_geometry = tree.get_child_optional("TrafficControlMessage.tcmV01.geometry");
+    auto tree_geometry = tree.get_child_optional("tcmV01.geometry");
     if (!tree_geometry)
     {
       tcm.tcm_v01.geometry_exists = false;
@@ -737,7 +737,6 @@ namespace carma_cloud_client
     tcm_params.schedule = parse_schedule(tree);
     
     std::string bool_str = tree.get_value<std::string>("regulatory");
-    std::cerr << "size " <<bool_str.size() <<std::endl;
     if (bool_str == "false") tcm_params.regulatory = false;
     else tcm_params.regulatory = true;
      
@@ -767,21 +766,27 @@ namespace carma_cloud_client
       {
         if (which.first == "x")
         {
-          pathnode.x = which.second.get_value<int16_t>();
+          std::string x_val = which.second.get_value<std::string>();
+          pathnode.x = std::stoll(x_val);
         }
+        
         else if (which.first == "y")
         {
-          pathnode.y = which.second.get_value<int16_t>();
+          std::string y_val = which.second.get_value<std::string>();
+          pathnode.y = std::stoll(y_val);
         }
         else if (which.first == "z")
         {
           pathnode.z_exists = true;
-          pathnode.z = which.second.get_value<int16_t>();
+          std::string z_val = which.second.get_value<std::string>();
+          pathnode.z = std::stoll(z_val);
         }
         else if (which.first == "width")
         {
           pathnode.width_exists = true;
-          pathnode.width = which.second.get_value<int8_t>();
+          std::string w_val = which.second.get_value<std::string>();
+          pathnode.width = std::stoll(w_val);
+          
         }
         
       }
