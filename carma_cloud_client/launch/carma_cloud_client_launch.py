@@ -30,41 +30,33 @@ This file is can be used to launch the CARMA carma_cloud_client_node.
   Though in carma-platform it may be launched directly from the base launch file.
 '''
 
+def open_tunnels():
+
+    REMOTE_USER="ubuntu"
+    REMOTE_ADDR="www.carma-cloud.com"
+    KEY_FILE="carma-cloud-test-1.pem"
+    HOST_PORT="33333" # This port is forwarded to remote host (carma-cloud)
+    REMOTE_PORT="33333" # This port is forwarded to local host 
+
+    param_launch_path = os.path.join(
+        get_package_share_directory('carma_cloud_client'), 'launch/scripts')
+        
+    
+    cmd = param_launch_path + '/open_tunnels.sh'
+
+    subprocess.check_call(['chmod','u+x', cmd])
+
+    key_path = "/opt/carma/vehicle/calibration/cloud_permission"
+    
+    key = param_launch_path + '/' + KEY_FILE
+
+    subprocess.check_call(['sudo','chmod','400', key])
+    subprocess.check_call(['sudo', cmd, '-u', REMOTE_USER, '-a', REMOTE_ADDR, '-k', key, '-p', REMOTE_PORT,  '-r', HOST_PORT])
+
+
 def generate_launch_description():
 
-
-    # REMOTE_USER="ubuntu"
-    # REMOTE_ADDR="www.carma-cloud.com"
-    # KEY_FILE="carma-cloud-test-1.pem"
-    # HOST_PORT="33333" # This port is forwarded to remote host (carma-cloud)
-    # REMOTE_PORT="10001" # This port is forwarded to local host 
-
-    # param_launch_path = os.path.join(
-    #     get_package_share_directory('carma_cloud_client'), 'launch/scripts')
-    
-   
-    # cmd = param_launch_path + '/open_tunnels.sh'
-
-    # subprocess.check_call(['chmod','u+x', cmd])
-
-    # key_path = "/opt/carma/vehicle/calibration/cloud_permission"
-    
-    # key = param_launch_path + '/' + KEY_FILE
-
-    # arg1 = '-u'
-    # arg2 = REMOTE_USER #'-a $REMOTE_ADDR'
-    # arg3 = '-a'
-    # arg4 = REMOTE_ADDR
-    # arg5 = '-k'
-    # arg6 = key
-    # arg7 = '-p'
-    # arg8 = REMOTE_PORT
-    # arg9 = '-r'
-    # arg10 = HOST_PORT
-
-    # subprocess.check_call(['sudo','chmod','400', key])
-    # subprocess.check_call(['sudo', cmd, arg1, arg2, arg3, arg4, arg5, arg6, arg7, arg8,  arg9, arg10])
-
+    open_tunnels()
     # Declare the log_level launch argument
     log_level = LaunchConfiguration('log_level')
     declare_log_level_arg = DeclareLaunchArgument(
