@@ -32,9 +32,10 @@ from launch.launch_description_sources import PythonLaunchDescriptionSource
 from launch.actions import GroupAction
 from launch_ros.actions import set_remap
 
-
-def generate_launch_description():
-
+'''
+This function opens http tunnels with carma cloud, so it can communicate directly with platform
+'''
+def open_tunnels():
 
     REMOTE_USER="ubuntu"
     REMOTE_ADDR="www.carma-cloud.com"
@@ -44,29 +45,24 @@ def generate_launch_description():
 
     param_launch_path = os.path.join(
         get_package_share_directory('carma_cloud_client'), 'launch/scripts')
+        
     
-   
     cmd = param_launch_path + '/open_tunnels.sh'
 
     subprocess.check_call(['chmod','u+x', cmd])
 
     key_path = "/opt/carma/vehicle/calibration/cloud_permission"
     
-    key = key_path + '/' + KEY_FILE
-
-    arg1 = '-u'
-    arg2 = REMOTE_USER #'-a $REMOTE_ADDR'
-    arg3 = '-a'
-    arg4 = REMOTE_ADDR
-    arg5 = '-k'
-    arg6 = key
-    arg7 = '-p'
-    arg8 = REMOTE_PORT
-    arg9 = '-r'
-    arg10 = HOST_PORT
+    key = param_launch_path + '/' + KEY_FILE
 
     subprocess.check_call(['sudo','chmod','400', key])
-    subprocess.check_call(['sudo', cmd, arg1, arg2, arg3, arg4, arg5, arg6, arg7, arg8,  arg9, arg10])
+    subprocess.check_call(['sudo', cmd, '-u', REMOTE_USER, '-a', REMOTE_ADDR, '-k', key, '-p', REMOTE_PORT,  '-r', HOST_PORT])
+
+
+def generate_launch_description():
+
+    # Open http tunnels with carma cloud
+    open_tunnels()
 
     """
     Launch V2X subsystem nodes.
