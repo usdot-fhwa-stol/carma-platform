@@ -19,15 +19,6 @@
 
 #define CURL_STATICLIB 
 
-// #include <QCommandLineOption>
-// #include <QCommandLineParser>
-// #include <QCoreApplication>
-// #include <QHostAddress>
-// #include <QRegExp>
-// #include <QStringList>
-// #include <QSharedPointer>
-// #include <QObject>
-
 #include <rclcpp/rclcpp.hpp>
 #include <functional>
 #include <std_msgs/msg/string.hpp>

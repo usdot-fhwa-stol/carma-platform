@@ -90,6 +90,79 @@ TEST(Testcarma_cloud_client, test_xml_list){
 
 }
 
+TEST(Testcarma_cloud_client, test_xml_parse_geometry){
+
+    rclcpp::NodeOptions options;
+    carma_cloud_client::CarmaCloudClient plugin(options);
+
+    std::string xml = "<?xml version=\"1.0\" encoding=\"UTF-8\"?><TrafficControlMessage><tcmV01><reqid>C7C9A13FE6AC464E</reqid><reqseq>0</reqseq><msgtot>11</msgtot><msgnum>8</msgnum><id>00308202879d343fea29d21a5181f099</id><updated>0</updated><package><label>Close Lane Small Vehicles</label><tcids><Id128b>00308202879d343fea29d21a5181f099</Id128b></tcids></package><params><vclasses><micromobile/><motorcycle/><passenger-car/><light-truck-van/><bus/><two-axle-six-tire-single-unit-truck/><three-axle-single-unit-truck/><four-or-more-axle-single-unit-truck/><four-or-fewer-axle-single-trailer-truck/><five-axle-single-trailer-truck/><six-or-more-axle-single-trailer-truck/><five-or-fewer-axle-multi-trailer-truck/><six-axle-multi-trailer-truck/><seven-or-more-axle-multi-trailer-truck/></vclasses><schedule><start>27707632</start><end>153722867280912</end><dow>1111111</dow></schedule><regulatory><true/></regulatory><detail><closed><notopen/></closed></detail></params><geometry><proj>epsg:3785</proj><datum>WGS84</datum><reftime>27707632</reftime><reflon>-818330861</reflon><reflat>281182920</reflat><refelv>0</refelv><refwidth>397</refwidth><heading>3403</heading><nodes><PathNode><x>2</x><y>0</y><width>0</width></PathNode><PathNode><x>-406</x><y>1444</y><width>-1</width></PathNode><PathNode><x>-406</x><y>1443</y><width>1</width></PathNode><PathNode><x>-407</x><y>1444</y><width>2</width></PathNode><PathNode><x>-406</x><y>1443</y><width>0</width></PathNode><PathNode><x>-406</x><y>1444</y><width>0</width></PathNode></nodes></geometry></tcmV01></TrafficControlMessage>";
+    
+    boost::property_tree::ptree tree;
+    std :: stringstream ss; 
+    ss << xml;
+    read_xml(ss, tree);
+
+    j2735_v2x_msgs::msg::TrafficControlGeometry tcm_geometry = plugin.parse_geometry(tree.get_child("TrafficControlMessage.tcmV01.geometry"));
+    ASSERT_EQ(tcm_geometry.proj, "epsg:3785");
+    ASSERT_EQ(tcm_geometry.datum, "WGS84");
+    ASSERT_EQ(tcm_geometry.reflat, 281182920);
+}
+
+TEST(Testcarma_cloud_client, test_xml_parse_params){
+
+    rclcpp::NodeOptions options;
+    carma_cloud_client::CarmaCloudClient plugin(options);
+
+    std::string xml = "<?xml version=\"1.0\" encoding=\"UTF-8\"?><TrafficControlMessage><tcmV01><reqid>C7C9A13FE6AC464E</reqid><reqseq>0</reqseq><msgtot>11</msgtot><msgnum>8</msgnum><id>00308202879d343fea29d21a5181f099</id><updated>0</updated><package><label>Close Lane Small Vehicles</label><tcids><Id128b>00308202879d343fea29d21a5181f099</Id128b></tcids></package><params><vclasses><micromobile/><motorcycle/><passenger-car/><light-truck-van/><bus/><two-axle-six-tire-single-unit-truck/><three-axle-single-unit-truck/><four-or-more-axle-single-unit-truck/><four-or-fewer-axle-single-trailer-truck/><five-axle-single-trailer-truck/><six-or-more-axle-single-trailer-truck/><five-or-fewer-axle-multi-trailer-truck/><six-axle-multi-trailer-truck/><seven-or-more-axle-multi-trailer-truck/></vclasses><schedule><start>27707632</start><end>153722867280912</end><dow>1111111</dow></schedule><regulatory><true/></regulatory><detail><closed><notopen/></closed></detail></params><geometry><proj>epsg:3785</proj><datum>WGS84</datum><reftime>27707632</reftime><reflon>-818330861</reflon><reflat>281182920</reflat><refelv>0</refelv><refwidth>397</refwidth><heading>3403</heading><nodes><PathNode><x>2</x><y>0</y><width>0</width></PathNode><PathNode><x>-406</x><y>1444</y><width>-1</width></PathNode><PathNode><x>-406</x><y>1443</y><width>1</width></PathNode><PathNode><x>-407</x><y>1444</y><width>2</width></PathNode><PathNode><x>-406</x><y>1443</y><width>0</width></PathNode><PathNode><x>-406</x><y>1444</y><width>0</width></PathNode></nodes></geometry></tcmV01></TrafficControlMessage>";
+    
+    boost::property_tree::ptree tree;
+    std :: stringstream ss; 
+    ss << xml;
+    read_xml(ss, tree);
+
+    j2735_v2x_msgs::msg::TrafficControlParams tcm_params = plugin.parse_params(tree.get_child("TrafficControlMessage.tcmV01.params"));
+    ASSERT_EQ(tcm_params.vclasses.size(), 14);
+    ASSERT_TRUE(tcm_params.regulatory);
+
+    j2735_v2x_msgs::msg::TrafficControlSchedule tcm_schedule = plugin.parse_schedule(tree.get_child("TrafficControlMessage.tcmV01.params"));
+    ASSERT_EQ(tcm_schedule.start, 27707632);
+    ASSERT_EQ(tcm_schedule.dow.dow.size(), 7);
+    ASSERT_FALSE(tcm_schedule.between_exists);
+    ASSERT_FALSE(tcm_schedule.repeat_exists);
+}
+
+TEST(Testcarma_cloud_client, test_xml_parse_package){
+
+    rclcpp::NodeOptions options;
+    carma_cloud_client::CarmaCloudClient plugin(options);
+
+    std::string xml = "<?xml version=\"1.0\" encoding=\"UTF-8\"?><TrafficControlMessage><tcmV01><reqid>C7C9A13FE6AC464E</reqid><reqseq>0</reqseq><msgtot>11</msgtot><msgnum>8</msgnum><id>00308202879d343fea29d21a5181f099</id><updated>0</updated><package><label>Close Lane Small Vehicles</label><tcids><Id128b>00308202879d343fea29d21a5181f099</Id128b></tcids></package><params><vclasses><micromobile/><motorcycle/><passenger-car/><light-truck-van/><bus/><two-axle-six-tire-single-unit-truck/><three-axle-single-unit-truck/><four-or-more-axle-single-unit-truck/><four-or-fewer-axle-single-trailer-truck/><five-axle-single-trailer-truck/><six-or-more-axle-single-trailer-truck/><five-or-fewer-axle-multi-trailer-truck/><six-axle-multi-trailer-truck/><seven-or-more-axle-multi-trailer-truck/></vclasses><schedule><start>27707632</start><end>153722867280912</end><dow>1111111</dow></schedule><regulatory><true/></regulatory><detail><closed><notopen/></closed></detail></params><geometry><proj>epsg:3785</proj><datum>WGS84</datum><reftime>27707632</reftime><reflon>-818330861</reflon><reflat>281182920</reflat><refelv>0</refelv><refwidth>397</refwidth><heading>3403</heading><nodes><PathNode><x>2</x><y>0</y><width>0</width></PathNode><PathNode><x>-406</x><y>1444</y><width>-1</width></PathNode><PathNode><x>-406</x><y>1443</y><width>1</width></PathNode><PathNode><x>-407</x><y>1444</y><width>2</width></PathNode><PathNode><x>-406</x><y>1443</y><width>0</width></PathNode><PathNode><x>-406</x><y>1444</y><width>0</width></PathNode></nodes></geometry></tcmV01></TrafficControlMessage>";
+    
+    boost::property_tree::ptree tree;
+    std :: stringstream ss; 
+    ss << xml;
+    read_xml(ss, tree);
+
+    j2735_v2x_msgs::msg::TrafficControlPackage tcm_package = plugin.parse_package(tree.get_child("TrafficControlMessage.tcmV01.package"));
+    ASSERT_EQ(tcm_package.label, "Close Lane Small Vehicles");
+}
+
+TEST(Testcarma_cloud_client, test_xml_parse_detail){
+
+    rclcpp::NodeOptions options;
+    carma_cloud_client::CarmaCloudClient plugin(options);
+
+    std::string xml = "<?xml version=\"1.0\" encoding=\"UTF-8\"?><TrafficControlMessage><tcmV01><reqid>C7C9A13FE6AC464E</reqid><reqseq>0</reqseq><msgtot>11</msgtot><msgnum>8</msgnum><id>00308202879d343fea29d21a5181f099</id><updated>0</updated><package><label>Close Lane Small Vehicles</label><tcids><Id128b>00308202879d343fea29d21a5181f099</Id128b></tcids></package><params><vclasses><micromobile/><motorcycle/><passenger-car/><light-truck-van/><bus/><two-axle-six-tire-single-unit-truck/><three-axle-single-unit-truck/><four-or-more-axle-single-unit-truck/><four-or-fewer-axle-single-trailer-truck/><five-axle-single-trailer-truck/><six-or-more-axle-single-trailer-truck/><five-or-fewer-axle-multi-trailer-truck/><six-axle-multi-trailer-truck/><seven-or-more-axle-multi-trailer-truck/></vclasses><schedule><start>27707632</start><end>153722867280912</end><dow>1111111</dow></schedule><regulatory><true/></regulatory><detail><closed><notopen/></closed></detail></params><geometry><proj>epsg:3785</proj><datum>WGS84</datum><reftime>27707632</reftime><reflon>-818330861</reflon><reflat>281182920</reflat><refelv>0</refelv><refwidth>397</refwidth><heading>3403</heading><nodes><PathNode><x>2</x><y>0</y><width>0</width></PathNode><PathNode><x>-406</x><y>1444</y><width>-1</width></PathNode><PathNode><x>-406</x><y>1443</y><width>1</width></PathNode><PathNode><x>-407</x><y>1444</y><width>2</width></PathNode><PathNode><x>-406</x><y>1443</y><width>0</width></PathNode><PathNode><x>-406</x><y>1444</y><width>0</width></PathNode></nodes></geometry></tcmV01></TrafficControlMessage>";
+    
+    boost::property_tree::ptree tree;
+    std :: stringstream ss; 
+    ss << xml;
+    read_xml(ss, tree);
+
+    j2735_v2x_msgs::msg::TrafficControlDetail tcm_detail = plugin.parse_detail(tree.get_child("TrafficControlMessage.tcmV01.params"));
+    ASSERT_EQ(tcm_detail.closed, j2735_v2x_msgs::msg::TrafficControlDetail::CLOSED);
+}
+
 TEST(Testcarma_cloud_client, test_xml_parse_full){
 
     rclcpp::NodeOptions options;
@@ -104,10 +177,8 @@ TEST(Testcarma_cloud_client, test_xml_parse_full){
 
     j2735_v2x_msgs::msg::TrafficControlMessage tcm_msg = plugin.parseTCMXML(tree.get_child("TrafficControlMessage"));
     
-    // std::cout << "bool " << tcm_msg.tcm_v01.reqseq <<std::endl;
     ASSERT_TRUE(tcm_msg.tcm_v01.package_exists);
     ASSERT_TRUE(tcm_msg.tcm_v01.package.label_exists);
-    std::cout<<"label: "<<tcm_msg.tcm_v01.package.label<<std::endl;
     // Close Lane Small Vehicles
     
     ASSERT_TRUE(tcm_msg.tcm_v01.params_exists);
