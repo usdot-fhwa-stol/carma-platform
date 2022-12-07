@@ -985,6 +985,7 @@ cav_msgs::MobilityOperation LCIStrategicPlugin::generateMobilityOperation()
     cav_msgs::MobilityOperation mo_;
     mo_.m_header.timestamp = ros::Time::now().toNSec()/1000000;
     mo_.m_header.sender_id = config_.vehicle_id;
+    mo_.m_header.recipient_id = upcoming_id_;
     mo_.m_header.sender_bsm_id = bsm_id_;
     mo_.strategy = light_controlled_intersection_strategy_;
 
@@ -1085,6 +1086,9 @@ bool LCIStrategicPlugin::planManeuverCb(cav_srvs::PlanManeuversRequest& req, cav
   }
   // Get current traffic light information
   ROS_DEBUG("\n\nFinding traffic_light information");
+
+  auto inter_list = wm_->getSignalizedIntersectionsAlongRoute({ req.veh_x, req.veh_y });
+  auto upcoming_id_= inter_list.front()->id();
 
   auto traffic_list = wm_->getSignalsAlongRoute({ req.veh_x, req.veh_y });
 
