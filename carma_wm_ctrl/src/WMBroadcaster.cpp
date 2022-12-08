@@ -2214,7 +2214,7 @@ void WMBroadcaster::updateUpcomingSGIntersectionIds()
     }
   }
 
-  if(isLightFound && !sim_)
+  if(isLightFound && sim_)
   {
     for(auto itr = sim_->signal_group_to_traffic_light_id_.begin(); itr != sim_->signal_group_to_traffic_light_id_.end(); itr++)
     {     
