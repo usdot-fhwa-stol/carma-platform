@@ -183,7 +183,21 @@ namespace light_controlled_intersection_tactical_plugin
             RCLCPP_DEBUG_STREAM(logger_->get_logger(), "Last Traj's target time: " << rclcpp::Time(last_trajectory_.trajectory_points.back().target_time).seconds() << ", and stamp:" << rclcpp::Time(req->header.stamp).seconds() << ", and scheduled: " << std::to_string(last_successful_scheduled_entry_time_));
             RCLCPP_DEBUG_STREAM(logger_->get_logger(), "EDGE CASE: USING LAST TRAJ: " << (int)last_case_.get());
         }  
-        else
+        else if (trajectory.trajectory_points.size () < 2)
+        {
+            if (last_trajectory_.trajectory_points.size() >= 2
+                && rclcpp::Time(last_trajectory_.trajectory_points.back().target_time) > rclcpp::Time(req->header.stamp))
+            {
+                resp->trajectory_plan = last_trajectory_;
+                RCLCPP_WARN_STREAM(logger_->get_logger(), "Failed to generate new trajectory, so using last valid trajectory!");    
+            }
+            else
+            {
+                resp->trajectory_plan = trajectory;
+                RCLCPP_WARN_STREAM(logger_->get_logger(), "Failed to generate new trajectory or use old valid trajectory, so returning empty/invalid trajectory!");    
+            }
+        }
+        else 
         {
             last_trajectory_ = trajectory;
             resp->trajectory_plan = trajectory;

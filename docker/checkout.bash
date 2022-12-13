@@ -77,7 +77,7 @@ cd ${dir}/src
 
 # git clone --branch master --depth 1 https://github.com/nitroshare/qhttpengine.git
 git clone --branch master --depth 1 https://github.com/etherealjoy/qhttpengine.git
-git clone --branch release/isetta --depth 1 https://github.com/usdot-fhwa-OPS/V2X-Hub.git
+git clone --branch isetta --depth 1 https://github.com/usdot-fhwa-OPS/V2X-Hub.git
 cd V2X-Hub
 git config core.sparsecheckout true
 git sparse-checkout init
