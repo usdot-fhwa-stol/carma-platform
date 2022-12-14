@@ -470,7 +470,7 @@ private:
    *
    * \return TSP with parameters that is best available to pass the intersection. Either cruising with starting_speed or sacrifice departure speed to meet time and distance
    */
-  TrajectoryParams handleFailureCaseHelper(double starting_speed, double departure_speed, double speed_limit, double remaining_downtrack, double remaining_time, double traffic_light_downtrack);
+  TrajectoryParams handleFailureCaseHelper(const lanelet::CarmaTrafficSignalPtr& traffic_light, double current_time, double starting_speed, double departure_speed, double speed_limit, double remaining_downtrack, double remaining_time, double traffic_light_downtrack);
                                         
   /**
    * \brief Helper method to evaluate if the given traffic light state is supported by this plugin
