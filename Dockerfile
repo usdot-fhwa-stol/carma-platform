@@ -33,7 +33,7 @@
 # Stage 1 - Acquire the CARMA source as well as any extra packages
 # /////////////////////////////////////////////////////////////////////////////
 
-FROM 4da4f7496dbb AS base-image
+FROM usdotfhwastolcandidate/autoware.ai:isetta AS base-image
 
 FROM 4da4f7496dbb AS source-code
 

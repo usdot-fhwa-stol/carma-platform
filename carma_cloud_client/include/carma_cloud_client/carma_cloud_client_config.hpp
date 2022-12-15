@@ -42,6 +42,9 @@ namespace carma_cloud_client
     // number of days back when a geofence is valid
     int fetchtime = 15;
 
+    uint16_t webport = 22222;
+	  std::string webip = "WebServiceIP";
+
     // Stream operator for this config
     friend std::ostream &operator<<(std::ostream &output, const Config &c)
     {

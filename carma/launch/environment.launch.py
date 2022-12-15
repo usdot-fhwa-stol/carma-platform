@@ -89,6 +89,7 @@ def generate_launch_description():
         get_package_share_directory('carma_wm_ctrl'), 'config/parameters.yaml')
 
 
+
     # lidar_perception_container contains all nodes for lidar based object perception
     # a failure in any one node in the chain would invalidate the rest of it, so they can all be 
     # placed in the same container without reducing fault tolerance
