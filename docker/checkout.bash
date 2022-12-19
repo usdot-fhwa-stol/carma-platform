@@ -70,7 +70,7 @@ echo "" > COLCON_IGNORE
 cd ../
 
 #rosbridge_suite is a ROS meta-package including all the rosbridge packages.
-git clone https://github.com/usdot-fhwa-stol/rosbridge_suite -branch ros2
+git clone https://github.com/usdot-fhwa-stol/rosbridge_suite --branch ros2
 
 
 cd ${dir}/src
@@ -82,4 +82,3 @@ cd V2X-Hub
 git config core.sparsecheckout true
 git sparse-checkout init
 git sparse-checkout set ext/ccserver
-
