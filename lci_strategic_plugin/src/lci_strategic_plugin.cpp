@@ -380,7 +380,7 @@ TrajectoryParams LCIStrategicPlugin::handleFailureCaseHelper(const lanelet::Carm
   ROS_DEBUG_STREAM("HANDLE_LAST_RESORT_CASE: Starting...");
   double starting_downtrack = traffic_light_downtrack - remaining_downtrack;
   double modified_remaining_time_upper; // upper meaning downtrack vs time trajectory is curved upwards
-  double modified_remaining_time_lower; // upper meaning downtrack vs time trajectory is curved lower
+  double modified_remaining_time_lower; // lower meaning downtrack vs time trajectory is curved lower
   double modified_departure_speed_upper;
   double modified_departure_speed_lower;
   bool calculation_success_upper = true; // identifies places in codes where calculation can be invalid such as negative distance
@@ -392,14 +392,14 @@ TrajectoryParams LCIStrategicPlugin::handleFailureCaseHelper(const lanelet::Carm
   traj_upper.t0_ = current_time;
   traj_upper.v0_ = starting_speed;
   traj_upper.x0_ = starting_downtrack;
-  traj_upper.is_algorithm_successful = false;
+  traj_upper.is_algorithm_successful = true;
   traj_upper.case_num = CASE_1;
 
-  if (departure_speed > starting_speed)
+  if (departure_speed >= starting_speed)
   {
     if ((pow(departure_speed,2) - pow(starting_speed,2))/(2*max_comfort_accel_) >= remaining_downtrack)
     {
-      ROS_DEBUG_STREAM("Failure case upper 1");
+      ROS_DEBUG_STREAM("HandleFailureCase -> Upper Trajectory -> Current Speed <= Desired Departure Speed, Actual Departure Speed < Desired Departure Speed");
       
       modified_departure_speed_upper = sqrt(pow(starting_speed, 2) + (2 * max_comfort_accel_ * remaining_downtrack));
       modified_remaining_time_upper = (modified_departure_speed_upper - starting_speed) / max_comfort_accel_;
@@ -419,7 +419,7 @@ TrajectoryParams LCIStrategicPlugin::handleFailureCaseHelper(const lanelet::Carm
     }
     else // NOTE: most likely will not happen as it would have happened at trajectory smoothing part
     { 
-      ROS_DEBUG_STREAM("Failure case upper 2");
+      ROS_DEBUG_STREAM("HandleFailureCase -> Upper Trajectory -> Current Speed < Desired Departure Speed, Actual Departure Speed = Desired Departure Speed");
       
       double cruising_distance = remaining_downtrack - (pow(departure_speed, 2) - pow(starting_speed, 2))/ ( 2 * max_comfort_accel_);
       if (cruising_distance < -EPSILON)
@@ -427,9 +427,9 @@ TrajectoryParams LCIStrategicPlugin::handleFailureCaseHelper(const lanelet::Carm
         ROS_DEBUG_STREAM("Detected calculation failure in upper case 2");
         calculation_success_upper = false;
       }
-      modified_remaining_time_upper = (departure_speed - starting_speed) / max_comfort_accel_ + cruising_distance / departure_speed;
+      modified_remaining_time_upper = ((departure_speed - starting_speed) / max_comfort_accel_) + (cruising_distance / departure_speed);
 
-      traj_upper.t1_ = current_time + (departure_speed - starting_speed) / max_comfort_accel_;
+      traj_upper.t1_ = current_time + ((departure_speed - starting_speed) / max_comfort_accel_);
       traj_upper.v1_ = departure_speed;
       traj_upper.a1_ = max_comfort_accel_;
       traj_upper.x1_ = starting_downtrack + (pow(departure_speed, 2) - pow(starting_speed, 2)) / (2 * max_comfort_accel_);
@@ -448,7 +448,7 @@ TrajectoryParams LCIStrategicPlugin::handleFailureCaseHelper(const lanelet::Carm
   {
     if ((pow(departure_speed,2) - pow(starting_speed,2))/(2*max_comfort_decel_) >= remaining_downtrack)
     {
-      ROS_DEBUG_STREAM("Failure case upper 3");
+      ROS_DEBUG_STREAM("HandleFailureCase -> Upper Trajectory -> Current Speed > Desired Departure Speed, Actual Departure Speed > Desired Departure Speed");
       
       modified_departure_speed_upper = sqrt(pow(starting_speed, 2) + (2 * max_comfort_decel_ * remaining_downtrack));
       modified_remaining_time_upper = (modified_departure_speed_upper - starting_speed) / max_comfort_decel_;
@@ -468,7 +468,7 @@ TrajectoryParams LCIStrategicPlugin::handleFailureCaseHelper(const lanelet::Carm
     }
     else  // NOTE: most likely will not happen as it would have happened at trajectory smoothing part
     {
-      ROS_DEBUG_STREAM("Failure case upper 4");
+      ROS_DEBUG_STREAM("HandleFailureCase -> Upper Trajectory -> Current Speed > Desired Departure Speed, Actual Departure Speed = Desired Departure Speed");
       
       double cruising_distance = remaining_downtrack - (pow(departure_speed, 2) - pow(starting_speed, 2))/ ( 2 * max_comfort_decel_);
 
@@ -508,7 +508,7 @@ TrajectoryParams LCIStrategicPlugin::handleFailureCaseHelper(const lanelet::Carm
   traj_lower.t0_ = current_time;
   traj_lower.v0_ = starting_speed;
   traj_lower.x0_ = starting_downtrack;
-  traj_lower.is_algorithm_successful = false;
+  traj_lower.is_algorithm_successful = true;
   traj_lower.case_num = CASE_1;
 
   traj_lower.t1_ = current_time + modified_remaining_time_lower;
@@ -574,6 +574,10 @@ TrajectoryParams LCIStrategicPlugin::handleFailureCaseHelper(const lanelet::Carm
     ROS_DEBUG_STREAM("Updated the speed, and using modified_departure_speed: " << return_params.modified_departure_speed);
     print_params(return_params);
     return return_params;
+  }
+  else
+  {
+     ROS_DEBUG_STREAM("is_return_params_found is green and the speed is wrong");
   }
 
   // If everything above fails, cruise but log as ERROR
