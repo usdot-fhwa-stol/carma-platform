@@ -608,13 +608,14 @@ void LCIStrategicPlugin::planWhenAPPROACHING(const cav_srvs::PlanManeuversReques
 
   ROS_DEBUG_STREAM("earliest_entry_time: " << std::to_string(earliest_entry_time.toSec()) << ", with : " << earliest_entry_time - current_state.stamp  << " left at: " << std::to_string(current_state.stamp.toSec()));
   ros::Time nearest_green_entry_time;
-  bool is_entry_time_within_future_events = false;
-  
+  bool is_entry_time_within_green_or_tdb = false;
+  bool in_tdb = true;
+
   if (config_.enable_carma_streets_connection ==false || scheduled_enter_time_ == 0) //UC2
   {
     nearest_green_entry_time = get_nearest_green_entry_time(current_state.stamp, earliest_entry_time, traffic_light) 
                                           + ros::Duration(EPSILON); //0.01sec more buffer since green_light algorithm's timestamp picks the previous signal - Vehicle Estimation
-    is_entry_time_within_future_events = true; 
+    is_entry_time_within_green_or_tdb = true; 
   }
   else if(config_.enable_carma_streets_connection ==true && scheduled_enter_time_ != 0 ) // UC3
   {
@@ -622,23 +623,51 @@ void LCIStrategicPlugin::planWhenAPPROACHING(const cav_srvs::PlanManeuversReques
     
     // check if scheduled_enter_time_ is inside the available states interval
     size_t i = 0;
+    
+
     for (auto pair : traffic_light->recorded_time_stamps)
     {
-      if (pair.second == lanelet::CarmaTrafficSignalState::PROTECTED_MOVEMENT_ALLOWED && 
-        lanelet::time::timeFromSec(nearest_green_entry_time.toSec()) < pair.first ) 
+      if (lanelet::time::timeFromSec(nearest_green_entry_time.toSec()) < pair.first)
       {
-        ROS_DEBUG_STREAM("ET is inside the available future events! where starting time: " << std::to_string(lanelet::time::toSec(traffic_light->recorded_start_time_stamps[i])) 
-          << ", ending time of that green signal is: " << std::to_string(lanelet::time::toSec(pair.first)));
-        is_entry_time_within_future_events = true;
+        if (pair.second == lanelet::CarmaTrafficSignalState::PROTECTED_MOVEMENT_ALLOWED) 
+        {
+          ROS_DEBUG_STREAM("ET is inside the GREEN phase! where starting time: " << std::to_string(lanelet::time::toSec(traffic_light->recorded_start_time_stamps[i])) 
+            << ", ending time of that green signal is: " << std::to_string(lanelet::time::toSec(pair.first)));
+          is_entry_time_within_green_or_tdb = true;
+        }
+        else
+        {
+          ROS_ERROR_STREAM("Vehicle should plan cruise and stop as ET is inside the RED or YELLOW phase! where starting time: " << std::to_string(lanelet::time::toSec(traffic_light->recorded_start_time_stamps[i])) 
+            << ", ending time of that green signal is: " << std::to_string(lanelet::time::toSec(pair.first)));
+          is_entry_time_within_green_or_tdb = false;
+        }
+
+        in_tdb = false;
         break;
       }
       i++;
     }
+
+    if (in_tdb)
+    {
+      ROS_DEBUG_STREAM("ET is inside TDB phase! where starting time: " << std::to_string(lanelet::time::toSec(traffic_light->recorded_time_stamps.back().first)));
+      is_entry_time_within_green_or_tdb = true;
+    }
+
   }
+
+ 
   
   ROS_DEBUG_STREAM("nearest_green_entry_time: " << std::to_string(nearest_green_entry_time.toSec()) << ", with : " << nearest_green_entry_time - current_state.stamp  << " seconds left at: " << std::to_string(current_state.stamp.toSec()));
   
-  if (!nearest_green_entry_time_cached_ && is_entry_time_within_future_events) 
+  if (nearest_green_entry_time_cached_) 
+  { // always pick later of buffered green entry time, or earliest entry time
+    nearest_green_entry_time = ros::Time(std::max(nearest_green_entry_time.toSec(), nearest_green_entry_time_cached_.get().toSec()));
+  }
+
+  ROS_DEBUG_STREAM("After accounting for cached - nearest_green_entry_time: " << std::to_string(nearest_green_entry_time.toSec()) << ", with : " << nearest_green_entry_time - current_state.stamp  << " seconds left at: " << std::to_string(current_state.stamp.toSec()));
+  
+  if (!nearest_green_entry_time_cached_ && is_entry_time_within_green_or_tdb) 
   {
     ROS_DEBUG_STREAM("Applying green_light_buffer for the first time and caching! nearest_green_entry_time (without buffer):" << std::to_string(nearest_green_entry_time.toSec()) << ", and earliest_entry_time: " << std::to_string(earliest_entry_time.toSec()));
     // save first calculated nearest_green_entry_time + buffer to compare against in the future as nearest_green_entry_time changes with earliest_entry_time
@@ -670,7 +699,7 @@ void LCIStrategicPlugin::planWhenAPPROACHING(const cav_srvs::PlanManeuversReques
     {
       // below logic stores correct buffered timestamp into nearest_green_entry_time_cached_ to be used later
       
-      ros::Time nearest_green_signal_start_time;
+      ros::Time nearest_green_signal_start_time = ros::Time(0);
       if (traffic_light->fixed_cycle_duration.total_milliseconds()/1000.0 > 1.0) // UC2
       {
         ROS_DEBUG_STREAM("UC2 Handling");
@@ -694,44 +723,39 @@ void LCIStrategicPlugin::planWhenAPPROACHING(const cav_srvs::PlanManeuversReques
         for (size_t i = 0; i < traffic_light->recorded_start_time_stamps.size(); i++)
         {
           if (traffic_light->recorded_time_stamps[i].second == lanelet::CarmaTrafficSignalState::PROTECTED_MOVEMENT_ALLOWED && 
-            lanelet::time::timeFromSec(ros::Time::now().toSec()) < traffic_light->recorded_time_stamps[i].first ) //if not outdated
+            lanelet::time::timeFromSec(nearest_green_entry_time.toSec()) < traffic_light->recorded_time_stamps[i].first ) // Make sure it is in correct GREEN phase there are multiple
           {
-            nearest_green_signal_start_time = ros::Time(lanelet::time::toSec(traffic_light->recorded_start_time_stamps[i])); // by using this, we are assuming the ET given by streets falls into this green signal time
+            nearest_green_signal_start_time = ros::Time(lanelet::time::toSec(traffic_light->recorded_start_time_stamps[i])); 
             break;
           }
         }
+
+        if (nearest_green_signal_start_time == ros::Time(0)) //in tdb
+        {
+          nearest_green_signal_start_time = ros::Time(lanelet::time::toSec(traffic_light->recorded_time_stamps.back().first)); 
+        }
       }
 
-      if (early_arrival_time_green_et.toSec() - nearest_green_signal_start_time.toSec() < config_.green_light_time_buffer)
-      {
-        nearest_green_entry_time_cached_ = nearest_green_signal_start_time + ros::Duration(config_.green_light_time_buffer + EPSILON);
-        
-        // EPSILON=0.01 is there because if predicState's input exactly falls on ending_time it picks the previous state.
-        //For example, if 0 - 10s is GREEN, and 10 - 12s is YELLOW, checking exactly 10.0s will return GREEN,
-        //but 10.01s will return YELLOW. This 0.01 convention is used throughout the file, so thought it is better
-        //to keep it consistent and probably too detailed for the user to think about, which is why it is not included in the buffer.
-        //Actually including in the buffer doesn't work because it uses that same buffer to check early and late. If buffer is 2s and 
-        //green starts at 10s, it will check +/-2s from 12s. If the buffer was 2.01s and green starts at 10s again, it checks +/-2.01 
-        //from 12.01, so both checks 10s.
-      }
-      else
-      {
-        nearest_green_entry_time_cached_ = nearest_green_entry_time + ros::Duration(config_.green_light_time_buffer);
-        // NOTE: around ending time of green signal duration, this buffer addition might push ET out of green phase.
-        // However, that is okay because those timestamps that fit this criteria is treated non-green by later late/early arrival checks
-      }
+      // If ET is within green or TDB, it should always aim for at least minimum of "start_time of green or tdb + green_buffer" for safety
+
+      nearest_green_entry_time_cached_ = nearest_green_signal_start_time + ros::Duration(config_.green_light_time_buffer + EPSILON);
+      
+      // EPSILON=0.01 is there because if predictState's input exactly falls on ending_time it picks the previous state.
+      //For example, if 0 - 10s is GREEN, and 10 - 12s is YELLOW, checking exactly 10.0s will return GREEN,
+      //but 10.01s will return YELLOW. This 0.01 convention is used throughout the file, so thought it is better
+      //to keep it consistent and probably too detailed for the user to think about, which is why it is not included in the buffer.
+      //Actually including in the buffer doesn't work because it uses that same buffer to check early and late. If buffer is 2s and 
+      //green starts at 10s, it will check +/-2s from 12s. If the buffer was 2.01s and green starts at 10s again, it checks +/-2.01 
+      //from 12.01, so both checks 10s.
+      
     }
 
     nearest_green_entry_time = nearest_green_entry_time_cached_.get();
   }
-  else if (nearest_green_entry_time_cached_) 
-  { // always pick later of buffered green entry time, or earliest entry time
-    nearest_green_entry_time = ros::Time(std::max(nearest_green_entry_time.toSec(), nearest_green_entry_time_cached_.get().toSec()));
-  }
-  
+
   if (nearest_green_entry_time_cached_ && nearest_green_entry_time > nearest_green_entry_time_cached_.get())
   {
-    ROS_DEBUG_STREAM("Earliest entry time has gone past the cached green light. nearest_green_entry_time_cached_:" << std::to_string(nearest_green_entry_time_cached_.get().toSec()) << ", and earliest_entry_time: " << std::to_string(earliest_entry_time.toSec()));
+    ROS_DEBUG_STREAM("Earliest entry time... has gone past the cashed entering time. nearest_green_entry_time_cached_ (which can also be TDB):" << std::to_string(nearest_green_entry_time_cached_.get().toSec()) << ", and earliest_entry_time: " << std::to_string(earliest_entry_time.toSec()));
   }
 
   ROS_DEBUG_STREAM("Final nearest_green_entry_time: " << std::to_string(nearest_green_entry_time.toSec()));
@@ -760,7 +784,7 @@ void LCIStrategicPlugin::planWhenAPPROACHING(const cav_srvs::PlanManeuversReques
   // Although algorithm determines nearest_green_time is possible, check if the vehicle can arrive with certainty (Case 1-7)
   if (ts_params.is_algorithm_successful && ts_params.case_num != TSCase::CASE_8) 
   {
-    handleGreenSignalScenario(req, resp, current_state, current_state_speed, traffic_light, entry_lanelet, exit_lanelet, traffic_light_down_track, ts_params, !is_entry_time_within_future_events);
+    handleGreenSignalScenario(req, resp, current_state, current_state_speed, traffic_light, entry_lanelet, exit_lanelet, traffic_light_down_track, ts_params, in_tdb); //in_tdb means optional to check certainty arrival at green
   
     if (!resp.new_plan.maneuvers.empty()) // able to pass at green
     {
