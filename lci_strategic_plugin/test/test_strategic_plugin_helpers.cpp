@@ -133,7 +133,7 @@ TEST_F(LCIStrategicTestFixture, composeTrajectorySmoothingManeuverMessage)
 {
   LCIStrategicPluginConfig config;
   LCIStrategicPlugin lcip(cmw_, config);
-  TrajectorySmoothingParameters tsp;
+  TrajectoryParams tsp;
 
   auto result =
       lcip.composeTrajectorySmoothingManeuverMessage(10.2, 20.4, 5, 10, ros::Time(1.2), ros::Time(2.2), tsp);
