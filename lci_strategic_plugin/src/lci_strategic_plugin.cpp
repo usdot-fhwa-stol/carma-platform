@@ -266,6 +266,12 @@ void LCIStrategicPlugin::handleFailureCase(const cav_srvs::PlanManeuversRequest&
 
   auto incomplete_traj_params = handleFailureCaseHelper(traffic_light, current_state.stamp.toSec(), current_state_speed, intersection_speed_.get(), speed_limit, distance_remaining_to_traffic_light, remaining_time, traffic_light_down_track);
 
+  if (incomplete_traj_params.is_algorithm_successful == false)
+  {
+    ROS_DEBUG_STREAM("Failed to generate maneuver for edge cases...");
+    return;
+  } 
+
   resp.new_plan.maneuvers.push_back(composeTrajectorySmoothingManeuverMessage(current_state.downtrack, traffic_light_down_track, crossed_lanelets,
                                           current_state_speed, incomplete_traj_params.modified_departure_speed, current_state.stamp, current_state.stamp + ros::Duration(incomplete_traj_params.modified_remaining_time), incomplete_traj_params));
 
@@ -577,38 +583,10 @@ TrajectoryParams LCIStrategicPlugin::handleFailureCaseHelper(const lanelet::Carm
   }
   else
   {
-     ROS_DEBUG_STREAM("is_return_params_found is green and the speed is wrong");
+    ROS_DEBUG_STREAM("Unable to handle edge case gracefully");
+    return_params.is_algorithm_successful = false;
+    return return_params;
   }
-
-  // If everything above fails, cruise but log as ERROR
-  return_params.a1_ = 0;
-  return_params.v1_ = starting_speed;
-  return_params.x1_ = traffic_light_downtrack;
-  return_params.is_algorithm_successful = false;
-  return_params.case_num = CASE_1;
-
-  return_params.a2_ = 0;
-  return_params.v2_ = return_params.v1_;
-  return_params.x2_ = return_params.x1_;
-
-  return_params.a3_ = 0;
-  return_params.v3_ = return_params.v1_;
-  return_params.x3_ = return_params.x1_;
-
-  return_params.modified_departure_speed = return_params.v1_;
-  return_params.modified_remaining_time = remaining_downtrack / starting_speed;
-
-  ROS_ERROR_STREAM("Failed to get valid trajectory, cruising!!! at: " << return_params.modified_departure_speed <<", for sec: " << return_params.modified_remaining_time << ", where remaining_time: " << remaining_time);
-  
-  // handle hard failure case such as nan
-  if (isnan(return_params.modified_departure_speed) || return_params.modified_departure_speed < - epsilon_ ||
-      return_params.modified_departure_speed > 35.7632 ) //80_mph
-  {
-    throw std::invalid_argument("Calculated departure speed is invalid: " + std::to_string(return_params.modified_departure_speed));
-  }
-  print_params(return_params);
-  
-  return return_params;
 }
 
 
@@ -1016,6 +994,12 @@ void LCIStrategicPlugin::planWhenAPPROACHING(const cav_srvs::PlanManeuversReques
       
       handleFailureCase(req, resp, current_state, current_state_speed, speed_limit, remaining_time, 
                                     exit_lanelet.id(), traffic_light, traffic_light_down_track, ts_params);
+      
+      if (resp.new_plan.maneuvers.empty())
+      {
+        ROS_WARN_STREAM("HANDLE_SAFETY: Planning forced slow-down... last case:" << static_cast<int>(last_case_num_));
+        handleStopping(req,resp, current_state, traffic_light, entry_lanelet, exit_lanelet, current_lanelet, traffic_light_down_track); //case_9
+      }
     }
     else
     {
