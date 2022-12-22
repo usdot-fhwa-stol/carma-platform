@@ -61,8 +61,12 @@ def open_tunnels():
 
 def generate_launch_description():
 
-    # Open http tunnels with carma cloud
-    open_tunnels()
+    enable_opening_tunnels = rospy.get_param("/enable_opening_tunnels", False)
+
+    if enable_opening_tunnels:
+        # Open http tunnels with carma cloud
+        open_tunnels()
+
 
     """
     Launch V2X subsystem nodes.
