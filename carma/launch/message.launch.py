@@ -22,7 +22,8 @@ from launch.substitutions import EnvironmentVariable
 from carma_ros2_utils.launch.get_log_level import GetLogLevel
 from carma_ros2_utils.launch.get_current_namespace import GetCurrentNamespace
 from launch.substitutions import LaunchConfiguration
-from launch.actions import DeclareLaunchArgument
+from launch.actions import DeclareLaunchArgument, ExecuteProcess
+from launch.conditions import IfCondition
 
 import os
 import subprocess
@@ -216,17 +217,21 @@ def generate_launch_description():
         arguments=['--ros-args', '--log-level', GetLogLevel('subsystem_controllers', env_log_levels)]
     )
 
+    # Open http tunnels with carma cloud
+
+    open_tunnels_action = ExecuteProcess(
+        cmd=[open_tunnels()],
+        condition=IfCondition(LaunchConfiguration(enable_opening_tunnels)))
+    )
+
     return LaunchDescription([
         declare_vehicle_config_param_file_arg,
         declare_vehicle_characteristics_param_file_arg, 
         declare_subsystem_controller_param_file_arg,  
-        declare_enable_opening_tunnels,     
+        declare_enable_opening_tunnels, 
+        open_tunnels_action,    
         carma_v2x_container,
         subsystem_controller
     ])
-
-    # Open http tunnels with carma cloud
-    if enable_opening_tunnels:
-        open_tunnels()
  
 
