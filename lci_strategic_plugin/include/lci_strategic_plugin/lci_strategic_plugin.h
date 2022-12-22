@@ -465,12 +465,11 @@ private:
    * \param departure_speed departure_speed originally planned
    * \param speed_limit speed_limit
    * \param remaining_downtrack remaining_downtrack until the intersection
-   * \param remaining_time  remaining_time when vehicle is scheduled to enter
    * \param traffic_light_downtrack  traffic_light_downtrack when vehicle is scheduled to enter
    *
    * \return TSP with parameters that is best available to pass the intersection. Either cruising with starting_speed or sacrifice departure speed to meet time and distance
    */
-  TrajectoryParams handleFailureCaseHelper(const lanelet::CarmaTrafficSignalPtr& traffic_light, double current_time, double starting_speed, double departure_speed, double speed_limit, double remaining_downtrack, double remaining_time, double traffic_light_downtrack);
+  TrajectoryParams handleFailureCaseHelper(const lanelet::CarmaTrafficSignalPtr& traffic_light, double current_time, double starting_speed, double departure_speed, double speed_limit, double remaining_downtrack, double traffic_light_downtrack);
                                         
   /**
    * \brief Helper method to evaluate if the given traffic light state is supported by this plugin
@@ -764,6 +763,7 @@ private:
   FRIEND_TEST(LCIStrategicTestFixture, composeIntersectionTransitMessage);
   FRIEND_TEST(LCIStrategicTestFixture, composeTrajectorySmoothingManeuverMessage);
   FRIEND_TEST(LCIStrategicTestFixture, findSpeedLimit);
+  FRIEND_TEST(LCIStrategicTestFixture, handleFailureCaseHelper);
   // Algo Unit Tests
   FRIEND_TEST(LCIStrategicTestFixture, calc_estimated_entry_time_left);
   FRIEND_TEST(LCIStrategicTestFixture, estimate_distance_to_stop);

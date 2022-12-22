@@ -264,7 +264,7 @@ void LCIStrategicPlugin::handleFailureCase(const cav_srvs::PlanManeuversRequest&
   std::vector<lanelet::ConstLanelet> crossed_lanelets =
         getLaneletsBetweenWithException(current_state.downtrack, traffic_light_down_track, true, true);
 
-  auto incomplete_traj_params = handleFailureCaseHelper(traffic_light, current_state.stamp.toSec(), current_state_speed, intersection_speed_.get(), speed_limit, distance_remaining_to_traffic_light, remaining_time, traffic_light_down_track);
+  auto incomplete_traj_params = handleFailureCaseHelper(traffic_light, current_state.stamp.toSec(), current_state_speed, intersection_speed_.get(), speed_limit, distance_remaining_to_traffic_light, traffic_light_down_track);
 
   if (incomplete_traj_params.is_algorithm_successful == false)
   {
@@ -375,7 +375,7 @@ void LCIStrategicPlugin::handleGreenSignalScenario(const cav_srvs::PlanManeuvers
 }
 
 
-TrajectoryParams LCIStrategicPlugin::handleFailureCaseHelper(const lanelet::CarmaTrafficSignalPtr& traffic_light, double current_time, double starting_speed, double departure_speed,  double speed_limit, double remaining_downtrack, double remaining_time, double traffic_light_downtrack)
+TrajectoryParams LCIStrategicPlugin::handleFailureCaseHelper(const lanelet::CarmaTrafficSignalPtr& traffic_light, double current_time, double starting_speed, double departure_speed,  double speed_limit, double remaining_downtrack, double traffic_light_downtrack)
 {
   //Requested maneuver needs to be modified to meet remaining_dist req
   //by trying to get close to the target_speed and remaining_time as much as possible
@@ -390,8 +390,6 @@ TrajectoryParams LCIStrategicPlugin::handleFailureCaseHelper(const lanelet::Carm
   double modified_departure_speed_upper;
   double modified_departure_speed_lower;
   bool calculation_success_upper = true; // identifies places in codes where calculation can be invalid such as negative distance
-
-  // TODO change light_controlled_intersection_tactical_plugin...
 
   // the upper ET
   // accel case
@@ -484,7 +482,7 @@ TrajectoryParams LCIStrategicPlugin::handleFailureCaseHelper(const lanelet::Carm
         calculation_success_upper = false;
       }
       
-      modified_remaining_time_upper = cruising_distance / starting_speed + (departure_speed - starting_speed) / max_comfort_decel_ ;  // current_time where todo
+      modified_remaining_time_upper = cruising_distance / starting_speed + (departure_speed - starting_speed) / max_comfort_decel_ ;
 
       traj_upper.t1_ = current_time + cruising_distance / starting_speed;
       traj_upper.v1_ = starting_speed;
@@ -532,12 +530,19 @@ TrajectoryParams LCIStrategicPlugin::handleFailureCaseHelper(const lanelet::Carm
   traj_lower.a3_ = traj_lower.a2_;
   traj_lower.x3_ = traj_lower.x2_;
 
+  traj_lower.modified_departure_speed = modified_departure_speed_lower;
+  traj_lower.modified_remaining_time = modified_remaining_time_upper;
+
   // Pick UPPER or LOWER trajectory based on light
   bool is_return_params_found = false;
   
   if (calculation_success_upper)
   {
+    ROS_DEBUG_STREAM("Checking this time!: " << current_time + modified_remaining_time_upper);
+
     auto upper_optional = traffic_light->predictState(lanelet::time::timeFromSec(current_time + modified_remaining_time_upper));
+
+    ROS_DEBUG_STREAM("Checking this time! state: " << upper_optional.get().second);
 
     if (!validLightState(upper_optional, ros::Time(current_time + modified_remaining_time_upper)))
     {
@@ -584,6 +589,7 @@ TrajectoryParams LCIStrategicPlugin::handleFailureCaseHelper(const lanelet::Carm
   else
   {
     ROS_DEBUG_STREAM("Unable to handle edge case gracefully");
+    return_params = TrajectoryParams(); //reset
     return_params.is_algorithm_successful = false;
     return return_params;
   }
