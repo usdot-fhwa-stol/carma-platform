@@ -127,7 +127,6 @@ namespace approaching_emergency_vehicle_plugin
     // Trigger timeout event if a timeout has occurred for the currently tracked ERV
     if(has_tracked_erv_){
       double seconds_since_prev_update = (this->get_clock()->now() - tracked_erv_.latest_update_time).seconds();
-      std::cout<<"Seconds since previous update: " << seconds_since_prev_update << '\n';
 
       if(seconds_since_prev_update >= config_.timeout_duration){
         RCLCPP_DEBUG_STREAM(rclcpp::get_logger(logger_name), "Timeout occurred for ERV " << tracked_erv_.vehicle_id);
@@ -178,12 +177,8 @@ namespace approaching_emergency_vehicle_plugin
     }
     erv_information.vehicle_id = ss.str();
 
-    std::cout<<"Vehicle ID is " << erv_information.vehicle_id << '\n';
-
     // Get timestamp from BSM
     erv_information.latest_bsm_timestamp = rclcpp::Time(msg->header.stamp, this->get_clock()->get_clock_type());
-
-    std::cout<<"Timestamp received\n";
 
     // Check whether vehicle's lights and sirens are active
     bool has_active_lights_and_sirens = false;
@@ -213,8 +208,6 @@ namespace approaching_emergency_vehicle_plugin
       return boost::optional<ErvInformation>();
     }
 
-    std::cout<<"ERV has active lights and sirens\n";
-
     // Get vehicle's current speed from the BSM
     if(msg->core_data.presence_vector & carma_v2x_msgs::msg::BSMCoreData::SPEED_AVAILABLE){
       erv_information.current_speed = msg->core_data.speed;
@@ -223,8 +216,6 @@ namespace approaching_emergency_vehicle_plugin
       // BSM is not a valid ERV BSM since current speed is not included; return an empty object
       return boost::optional<ErvInformation>();
     }
-
-    std::cout<<"ERV speed is " << erv_information.current_speed << "\n";
 
     // Get vehicle's current latitude from the BSM
     if(msg->core_data.presence_vector & carma_v2x_msgs::msg::BSMCoreData::LATITUDE_AVAILABLE){
@@ -251,8 +242,6 @@ namespace approaching_emergency_vehicle_plugin
       erv_information.current_position_in_map = *erv_position_in_map;
     }
 
-    std::cout<<"ERV has current latitude and longitude \n";
-
     // Get vehicle's route destination points from the BSM
     std::vector<carma_v2x_msgs::msg::Position3D> erv_destination_points;
     if(msg->presence_vector & carma_v2x_msgs::msg::BSM::HAS_REGIONAL){
@@ -273,8 +262,6 @@ namespace approaching_emergency_vehicle_plugin
       return boost::optional<ErvInformation>();
     }
 
-    std::cout<<"ERV has route destination points \n";
-
     // Generate ERV's route based on its current position and its destination points
     lanelet::Optional<lanelet::routing::Route> erv_future_route = generateErvRoute(erv_information.current_latitude, erv_information.current_longitude, erv_destination_points);
 
@@ -282,8 +269,6 @@ namespace approaching_emergency_vehicle_plugin
       // ERV cannot be tracked since its route could not be generated; return an empty object
       return boost::optional<ErvInformation>();
     }
-
-    std::cout<<"ERV has future route \n";
 
     // Get intersecting lanelet between ERV's future route and ego vehicle's future shortest path
     boost::optional<lanelet::ConstLanelet> intersecting_lanelet = getRouteIntersectingLanelet(erv_future_route.get(), wm_->getRoute()->shortestPath());
@@ -295,8 +280,6 @@ namespace approaching_emergency_vehicle_plugin
       // No intersecting lanelet between ERV and ego vehicle was found; return an empty object
       return boost::optional<ErvInformation>();
     }
-
-    std::cout<< "Intersecting lanelet: " << (*intersecting_lanelet).id() << "\n";
 
     // Get the time (seconds) until the ERV passes the ego vehicle
     double seconds_until_passing = getSecondsUntilPassing(erv_future_route, erv_information.current_position_in_map, erv_information.current_speed, erv_information.intersecting_lanelet);
@@ -415,10 +398,6 @@ namespace approaching_emergency_vehicle_plugin
     // Generate the ERV's route
     auto erv_route = wm_->getMapRoutingGraph()->getRouteVia(starting_lanelet, via_lanelets_vector, ending_lanelet);
 
-    for(auto ll : erv_route->shortestPath()){
-      std::cout<<"ERV shortest path lanelet: " << ll.id() << '\n';
-    }
-
     return erv_route;
   }
 
@@ -480,8 +459,6 @@ namespace approaching_emergency_vehicle_plugin
     // Note: Distance shall be 0.0 if ego vehicle is currently located within the intersecting lanelet
     double ego_dist_to_lanelet = wm_->routeTrackPos(intersecting_end_point).downtrack - latest_route_state_.down_track;
 
-    std::cout<<"Ego vehicle's distance to intersecting lanelet is " << ego_dist_to_lanelet << " meters\n";
-
     // Set erv_world_model_ route to the erv_future_route
     lanelet::routing::Route route = std::move(*erv_future_route);
     carma_wm::LaneletRoutePtr erv_future_route_ptr = std::make_shared<lanelet::routing::Route>(std::move(route));
@@ -489,7 +466,6 @@ namespace approaching_emergency_vehicle_plugin
 
     // Get downtrack of intersecting lanelet on ERV's route
     double erv_dist_to_lanelet = erv_world_model_->routeTrackPos(intersecting_end_point).downtrack - erv_world_model_->routeTrackPos(erv_position_in_map).downtrack;
-    std::cout<<"ERV's distance to intersecting lanelet is " << erv_dist_to_lanelet << " meters\n";
 
     // Calculate seconds_until_passing and protect against division by zero
     double delta_speed = erv_current_speed - current_speed_;
@@ -497,7 +473,6 @@ namespace approaching_emergency_vehicle_plugin
       delta_speed = epsilon_;
     }
     double seconds_until_passing = (erv_dist_to_lanelet - ego_dist_to_lanelet) / delta_speed;
-    std::cout<<"Seconds until ERV passes ego vehicle: " << seconds_until_passing << '\n';
 
     return seconds_until_passing;
   }
