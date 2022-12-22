@@ -229,7 +229,8 @@ void LCIStrategicPlugin::handleStopping(const cav_srvs::PlanManeuversRequest& re
                                         const VehicleState& current_state, 
                                         const lanelet::CarmaTrafficSignalPtr& traffic_light,
                                         const lanelet::ConstLanelet& entry_lanelet, const lanelet::ConstLanelet& exit_lanelet, const lanelet::ConstLanelet& current_lanelet,
-                                        double traffic_light_down_track)
+                                        double traffic_light_down_track,
+                                        bool is_emergency)
 {
   double distance_remaining_to_traffic_light = traffic_light_down_track - current_state.downtrack;
 
@@ -238,6 +239,10 @@ void LCIStrategicPlugin::handleStopping(const cav_srvs::PlanManeuversRequest& re
         getLaneletsBetweenWithException(current_state.downtrack, traffic_light_down_track, true, true);
 
   double decel_rate =  max_comfort_decel_norm_; // Kinematic |(v_f - v_i) / t = a|
+
+  if (is_emergency)
+    decel_rate = 2 * max_comfort_decel_norm_;
+
   ROS_DEBUG_STREAM("HANDLE_STOPPING: Planning stop and wait maneuver at decel_rate: " << decel_rate);
   
   case_num_ = TSCase::STOPPING;
@@ -264,7 +269,13 @@ void LCIStrategicPlugin::handleFailureCase(const cav_srvs::PlanManeuversRequest&
   std::vector<lanelet::ConstLanelet> crossed_lanelets =
         getLaneletsBetweenWithException(current_state.downtrack, traffic_light_down_track, true, true);
 
-  auto incomplete_traj_params = handleFailureCaseHelper(current_state_speed, intersection_speed_.get(), speed_limit, distance_remaining_to_traffic_light, remaining_time, traffic_light_down_track);
+  auto incomplete_traj_params = handleFailureCaseHelper(traffic_light, current_state.stamp.toSec(), current_state_speed, intersection_speed_.get(), speed_limit, distance_remaining_to_traffic_light, traffic_light_down_track);
+
+  if (incomplete_traj_params.is_algorithm_successful == false)
+  {
+    ROS_DEBUG_STREAM("Failed to generate maneuver for edge cases...");
+    return;
+  } 
 
   resp.new_plan.maneuvers.push_back(composeTrajectorySmoothingManeuverMessage(current_state.downtrack, traffic_light_down_track, crossed_lanelets,
                                           current_state_speed, incomplete_traj_params.modified_departure_speed, current_state.stamp, current_state.stamp + ros::Duration(incomplete_traj_params.modified_remaining_time), incomplete_traj_params));
@@ -369,82 +380,224 @@ void LCIStrategicPlugin::handleGreenSignalScenario(const cav_srvs::PlanManeuvers
 }
 
 
-TrajectoryParams LCIStrategicPlugin::handleFailureCaseHelper(double starting_speed, double departure_speed,  double speed_limit, double remaining_downtrack, double remaining_time, double traffic_light_downtrack)
+TrajectoryParams LCIStrategicPlugin::handleFailureCaseHelper(const lanelet::CarmaTrafficSignalPtr& traffic_light, double current_time, double starting_speed, double departure_speed,  double speed_limit, double remaining_downtrack, double traffic_light_downtrack)
 {
   //Requested maneuver needs to be modified to meet remaining_dist req
   //by trying to get close to the target_speed and remaining_time as much as possible
-  TrajectoryParams params;
-
-  params.is_algorithm_successful = false;
-  params.case_num = CASE_1;
+  TrajectoryParams return_params;
+  TrajectoryParams traj_upper;
+  TrajectoryParams traj_lower;
 
   ROS_DEBUG_STREAM("HANDLE_LAST_RESORT_CASE: Starting...");
-  double modified_remaining_time;
+  double starting_downtrack = traffic_light_downtrack - remaining_downtrack;
+  double modified_remaining_time_upper; // upper meaning downtrack vs time trajectory is curved upwards
+  double modified_remaining_time_lower; // lower meaning downtrack vs time trajectory is curved lower
+  double modified_departure_speed_upper;
+  double modified_departure_speed_lower;
+  bool calculation_success_upper = true; // identifies places in codes where calculation can be invalid such as negative distance
 
-  if (starting_speed <= departure_speed)
-    modified_remaining_time = (sqrt(pow(starting_speed, 2) + (2 * max_comfort_accel_ * remaining_downtrack)) - starting_speed)/ max_comfort_accel_;
-  else
-    modified_remaining_time = (sqrt(pow(starting_speed, 2) + (2 * max_comfort_decel_ * remaining_downtrack)) - starting_speed) / max_comfort_decel_;
+  // the upper ET
+  // accel case
+  traj_upper.t0_ = current_time;
+  traj_upper.v0_ = starting_speed;
+  traj_upper.x0_ = starting_downtrack;
+  traj_upper.is_algorithm_successful = true;
+  traj_upper.case_num = CASE_1;
 
-  if (starting_speed <= departure_speed)
+  if (departure_speed >= starting_speed)
   {
-    params.a1_ = max_comfort_accel_;
-    params.v1_ = sqrt(pow(starting_speed, 2) + (2 * max_comfort_accel_ * remaining_downtrack));
+    if ((pow(departure_speed,2) - pow(starting_speed,2))/(2*max_comfort_accel_) >= remaining_downtrack)
+    {
+      ROS_DEBUG_STREAM("HandleFailureCase -> Upper Trajectory -> Current Speed <= Desired Departure Speed, Actual Departure Speed < Desired Departure Speed");
+      
+      modified_departure_speed_upper = sqrt(pow(starting_speed, 2) + (2 * max_comfort_accel_ * remaining_downtrack));
+      modified_remaining_time_upper = (modified_departure_speed_upper - starting_speed) / max_comfort_accel_;
+
+      traj_upper.t1_ = current_time + modified_remaining_time_upper;
+      traj_upper.v1_ = modified_departure_speed_upper;
+      traj_upper.a1_ = max_comfort_accel_;
+      traj_upper.x1_ = traffic_light_downtrack;
+
+      traj_upper.t2_ = traj_upper.t1_;
+      traj_upper.v2_ = traj_upper.v1_;
+      traj_upper.a2_ = traj_upper.a1_;
+      traj_upper.x2_ = traj_upper.x1_;
+
+      traj_upper.modified_departure_speed = modified_departure_speed_upper;
+      traj_upper.modified_remaining_time = modified_remaining_time_upper;
+    }
+    else // NOTE: most likely will not happen as it would have happened at trajectory smoothing part
+    { 
+      ROS_DEBUG_STREAM("HandleFailureCase -> Upper Trajectory -> Current Speed < Desired Departure Speed, Actual Departure Speed = Desired Departure Speed");
+      
+      double cruising_distance = remaining_downtrack - (pow(departure_speed, 2) - pow(starting_speed, 2))/ ( 2 * max_comfort_accel_);
+      if (cruising_distance < -EPSILON)
+      {
+        ROS_DEBUG_STREAM("Detected calculation failure in upper case 2");
+        calculation_success_upper = false;
+      }
+      modified_remaining_time_upper = ((departure_speed - starting_speed) / max_comfort_accel_) + (cruising_distance / departure_speed);
+
+      traj_upper.t1_ = current_time + ((departure_speed - starting_speed) / max_comfort_accel_);
+      traj_upper.v1_ = departure_speed;
+      traj_upper.a1_ = max_comfort_accel_;
+      traj_upper.x1_ = starting_downtrack + (pow(departure_speed, 2) - pow(starting_speed, 2)) / (2 * max_comfort_accel_);
+
+      traj_upper.t2_ = current_time + modified_remaining_time_upper;
+      traj_upper.v2_ = departure_speed;
+      traj_upper.a2_ = 0;
+      traj_upper.x2_ = traffic_light_downtrack;
+
+      traj_upper.modified_departure_speed = departure_speed;
+      traj_upper.modified_remaining_time = modified_remaining_time_upper;
+    }
   }
-  else
+
+  if (departure_speed < starting_speed) // NOTE: most cases will not run due to departure speed being equal to speed limit
   {
-    params.a1_ = max_comfort_decel_;
-    params.v1_ = sqrt(pow(starting_speed, 2) + (2 * max_comfort_decel_ * remaining_downtrack));
+    if ((pow(departure_speed,2) - pow(starting_speed,2))/(2*max_comfort_decel_) >= remaining_downtrack)
+    {
+      ROS_DEBUG_STREAM("HandleFailureCase -> Upper Trajectory -> Current Speed > Desired Departure Speed, Actual Departure Speed > Desired Departure Speed");
+      
+      modified_departure_speed_upper = sqrt(pow(starting_speed, 2) + (2 * max_comfort_decel_ * remaining_downtrack));
+      modified_remaining_time_upper = (modified_departure_speed_upper - starting_speed) / max_comfort_decel_;
+
+      traj_upper.t1_ = current_time + modified_remaining_time_upper; 
+      traj_upper.v1_ = modified_departure_speed_upper;
+      traj_upper.a1_ = max_comfort_decel_;
+      traj_upper.x1_ = traffic_light_downtrack;
+
+      traj_upper.t2_ = traj_upper.t1_;
+      traj_upper.v2_ = traj_upper.v1_;
+      traj_upper.a2_ = traj_upper.a1_;
+      traj_upper.x2_ = traj_upper.x1_;
+
+      traj_upper.modified_departure_speed = modified_departure_speed_upper;
+      traj_upper.modified_remaining_time = modified_remaining_time_upper;
+    }
+    else  // NOTE: most likely will not happen as it would have happened at trajectory smoothing part
+    {
+      ROS_DEBUG_STREAM("HandleFailureCase -> Upper Trajectory -> Current Speed > Desired Departure Speed, Actual Departure Speed = Desired Departure Speed");
+      
+      double cruising_distance = remaining_downtrack - (pow(departure_speed, 2) - pow(starting_speed, 2))/ ( 2 * max_comfort_decel_);
+
+      if (cruising_distance < -EPSILON)
+      {
+        ROS_DEBUG_STREAM("Detected calculation failure in upper case 4");
+        calculation_success_upper = false;
+      }
+      
+      modified_remaining_time_upper = cruising_distance / starting_speed + (departure_speed - starting_speed) / max_comfort_decel_ ;
+
+      traj_upper.t1_ = current_time + cruising_distance / starting_speed;
+      traj_upper.v1_ = starting_speed;
+      traj_upper.a1_ = 0.0;
+      traj_upper.x1_ = starting_downtrack + cruising_distance;
+
+      traj_upper.t2_ = current_time + modified_remaining_time_upper;
+      traj_upper.v2_ = departure_speed;
+      traj_upper.a2_ = max_comfort_decel_;
+      traj_upper.x2_ = traffic_light_downtrack;
+
+      traj_upper.modified_departure_speed = departure_speed;
+      traj_upper.modified_remaining_time = modified_remaining_time_upper;
+    }
   }
-
-  params.x1_ = traffic_light_downtrack;
-
-  params.a2_ = 0;
-  params.v2_ = params.v1_;
-  params.x2_ = params.x1_;
-
-  params.a3_ = 0;
-  params.v3_ = params.v1_;
-  params.x3_ = params.x1_;
-
-  params.modified_departure_speed = params.v1_;
-  params.modified_remaining_time = modified_remaining_time;
-
-  // handle hard failure case such as nan
-  if (!isnan(params.modified_departure_speed) && params.modified_departure_speed > epsilon_ &&
-      params.modified_departure_speed <  speed_limit ) //80_mph
-  {
-    ROS_DEBUG_STREAM("Updated the speed, and using modified_departure_speed: " << params.modified_departure_speed);
-    print_params(params);
-    return params;
-  }
-
-  params.a1_ = 0;
-  params.v1_ = starting_speed;
-  params.x1_ = traffic_light_downtrack;
-
-  params.a2_ = 0;
-  params.v2_ = params.v1_;
-  params.x2_ = params.x1_;
-
-  params.a3_ = 0;
-  params.v3_ = params.v1_;
-  params.x3_ = params.x1_;
-
-  params.modified_departure_speed = params.v1_;
-  params.modified_remaining_time = remaining_downtrack / starting_speed;
-
-  ROS_DEBUG_STREAM("Cruising!!! at: " << params.modified_departure_speed <<", for sec: " << params.modified_remaining_time << ", where remaining_time: " << remaining_time);
   
-  // handle hard failure case such as nan
-  if (isnan(params.modified_departure_speed) || params.modified_departure_speed < - epsilon_ ||
-      params.modified_departure_speed > 35.7632 ) //80_mph
-  {
-    throw std::invalid_argument("Calculated departure speed is invalid: " + std::to_string(params.modified_departure_speed));
-  }
-  print_params(params);
+  traj_upper.t3_ = traj_upper.t2_;
+  traj_upper.v3_ = traj_upper.v2_;
+  traj_upper.a3_ = traj_upper.a2_;
+  traj_upper.x3_ = traj_upper.x2_;
+
+  // The lower ET 
+  // (note that the distance is definitely not enough for deceleration to zero speed, therefore, modified_departure_speed will be greater than zero for sure!).
+  modified_departure_speed_lower = sqrt(pow(starting_speed, 2) + (2 * max_comfort_decel_ * remaining_downtrack));
+  modified_remaining_time_lower = (modified_departure_speed_lower - starting_speed) / max_comfort_decel_;
+
+  traj_lower.t0_ = current_time;
+  traj_lower.v0_ = starting_speed;
+  traj_lower.x0_ = starting_downtrack;
+  traj_lower.is_algorithm_successful = true;
+  traj_lower.case_num = CASE_1;
+
+  traj_lower.t1_ = current_time + modified_remaining_time_lower;
+  traj_lower.v1_ = modified_departure_speed_lower;
+  traj_lower.a1_ = max_comfort_decel_;
+  traj_lower.x1_ = traffic_light_downtrack;
+
+  traj_lower.t2_ = traj_lower.t1_;
+  traj_lower.v2_ = traj_lower.v1_;
+  traj_lower.a2_ = traj_lower.a1_;
+  traj_lower.x2_ = traj_lower.x1_;
   
-  return params;
+  traj_lower.t3_ = traj_lower.t2_;
+  traj_lower.v3_ = traj_lower.v2_;
+  traj_lower.a3_ = traj_lower.a2_;
+  traj_lower.x3_ = traj_lower.x2_;
+
+  traj_lower.modified_departure_speed = modified_departure_speed_lower;
+  traj_lower.modified_remaining_time = modified_remaining_time_upper;
+
+  // Pick UPPER or LOWER trajectory based on light
+  bool is_return_params_found = false;
+  
+  if (calculation_success_upper)
+  {
+    ROS_DEBUG_STREAM("Checking this time!: " << current_time + modified_remaining_time_upper);
+
+    auto upper_optional = traffic_light->predictState(lanelet::time::timeFromSec(current_time + modified_remaining_time_upper));
+
+    ROS_DEBUG_STREAM("Checking this time! state: " << upper_optional.get().second);
+
+    if (!validLightState(upper_optional, ros::Time(current_time + modified_remaining_time_upper)))
+    {
+      ROS_ERROR_STREAM("Unable to resolve give signal for modified_remaining_time_upper: " << std::to_string(current_time + modified_remaining_time_upper));
+    }
+    else
+    {
+      if (upper_optional.get().second == lanelet::CarmaTrafficSignalState::PROTECTED_MOVEMENT_ALLOWED)
+      {
+        ROS_DEBUG_STREAM("Detected Upper GREEN case");    
+        return_params = traj_upper;
+        is_return_params_found = true;
+      }
+    }
+  }
+ 
+  if (!is_return_params_found)
+  {
+    auto lower_optional = traffic_light->predictState(lanelet::time::timeFromSec(current_time + modified_remaining_time_lower));
+
+    if (!validLightState(lower_optional, ros::Time(current_time + modified_remaining_time_lower)))
+    {
+      ROS_ERROR_STREAM("Unable to resolve give signal for modified_remaining_time_lower:" << std::to_string(current_time + modified_remaining_time_lower));
+    }
+    else
+    {
+      if (lower_optional.get().second == lanelet::CarmaTrafficSignalState::PROTECTED_MOVEMENT_ALLOWED)
+      {
+        ROS_DEBUG_STREAM("Detected Lower GREEN case");    
+        return_params = traj_lower;
+        is_return_params_found = true;
+      }
+    }
+  }
+
+  // Handle hard failure case such as nan or invalid states
+  if (is_return_params_found && !isnan(return_params.modified_departure_speed) && return_params.modified_departure_speed > epsilon_ &&
+      return_params.modified_departure_speed < speed_limit ) //80_mph
+  {
+    ROS_DEBUG_STREAM("Updated the speed, and using modified_departure_speed: " << return_params.modified_departure_speed);
+    print_params(return_params);
+    return return_params;
+  }
+  else
+  {
+    ROS_DEBUG_STREAM("Unable to handle edge case gracefully");
+    return_params = TrajectoryParams(); //reset
+    return_params.is_algorithm_successful = false;
+    return return_params;
+  }
 }
 
 
@@ -851,6 +1004,12 @@ void LCIStrategicPlugin::planWhenAPPROACHING(const cav_srvs::PlanManeuversReques
       
       handleFailureCase(req, resp, current_state, current_state_speed, speed_limit, remaining_time, 
                                     exit_lanelet.id(), traffic_light, traffic_light_down_track, ts_params);
+      
+      if (resp.new_plan.maneuvers.empty())
+      {
+        ROS_WARN_STREAM("HANDLE_SAFETY: Planning forced slow-down... last case:" << static_cast<int>(last_case_num_));
+        handleStopping(req,resp, current_state, traffic_light, entry_lanelet, exit_lanelet, current_lanelet, traffic_light_down_track, true); //case_9 emergency case with twice the normal deceleration
+      }
     }
     else
     {

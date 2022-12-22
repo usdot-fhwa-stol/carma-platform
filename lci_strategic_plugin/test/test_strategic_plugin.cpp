@@ -83,7 +83,7 @@ TEST_F(LCIStrategicTestFixture, planManeuverCb)
   ASSERT_NEAR(24.01, resp.new_plan.maneuvers[0].lane_following_maneuver.end_time.toSec(), 0.01);
   ASSERT_NEAR(300, resp.new_plan.maneuvers[0].lane_following_maneuver.end_dist, 0.0001);
   // check trajectory smoothing parameters:
-  ASSERT_EQ("signalized", resp.new_plan.maneuvers[0].lane_following_maneuver.parameters.string_valued_meta_data.front());
+  ASSERT_EQ("Carma/signalized_intersection", resp.new_plan.maneuvers[0].lane_following_maneuver.parameters.string_valued_meta_data.front());
   ASSERT_NEAR(0.6823, resp.new_plan.maneuvers[0].lane_following_maneuver.parameters.float_valued_meta_data[0], 0.01);
   ASSERT_NEAR(-0.6823, resp.new_plan.maneuvers[0].lane_following_maneuver.parameters.float_valued_meta_data[1], 0.01);
   ASSERT_NEAR(85.00, resp.new_plan.maneuvers[0].lane_following_maneuver.parameters.float_valued_meta_data[2], 0.01);
@@ -241,77 +241,6 @@ TEST_F(LCIStrategicTestFixture, planManeuverCb)
   
 }
 
-TEST_F(LCIStrategicTestFixture, determine_speed_profile_case)
-{
-  LCIStrategicPluginConfig config;
-  LCIStrategicPlugin lcip(cmw_, config);
-
-  auto profile_case = lcip.determine_speed_profile_case(10, 5, 3, 0, 5);
-
-  EXPECT_EQ(profile_case,SpeedProfileCase::ACCEL_DECEL);
-
-  profile_case = lcip.determine_speed_profile_case(10, 5, 6, 0, 5);
- 
-  EXPECT_EQ(profile_case,SpeedProfileCase::ACCEL_CRUISE_DECEL);
-
-  profile_case = lcip.determine_speed_profile_case(5, 10, 0, 1, 5);
-
-  EXPECT_EQ(profile_case,SpeedProfileCase::DECEL_CRUISE_ACCEL);
-
-  profile_case = lcip.determine_speed_profile_case(5, 10, 0, 3, 5);
-
-  EXPECT_EQ(profile_case,SpeedProfileCase::DECEL_ACCEL);
-
-  TrajectorySmoothingParameters params;
-  params.a_accel = 999;
-  params.a_decel = 999;
-  params.dist_accel = 999;
-  params.dist_cruise = 999;
-  params.dist_decel = 999;
-  params.speed_before_accel = 999;
-  
-
-  params.is_algorithm_successful = false;
-  params.case_num = SpeedProfileCase::ACCEL_DECEL;
-  auto mvr = lcip.composeTrajectorySmoothingManeuverMessage(0, 0, 0, 0,ros::Time(0), ros::Time(0), params);
-
-  bool is_successful = mvr.lane_following_maneuver.parameters.int_valued_meta_data[1];
-  SpeedProfileCase new_case = static_cast<SpeedProfileCase>(mvr.lane_following_maneuver.parameters.int_valued_meta_data[0]);
-
-  ASSERT_EQ(new_case, SpeedProfileCase::ACCEL_DECEL);
-  ASSERT_TRUE(false);
-} 
-
-TEST_F(LCIStrategicTestFixture, inflection_speeds_calc)
-{
-  LCIStrategicPluginConfig config;
-  LCIStrategicPlugin lcip(cmw_, config);
-
-  auto speed = lcip.calc_speed_before_decel(2, 2, 5, 5);
-
-  EXPECT_NEAR(speed, 5, 0.001);
-
-  speed = lcip.calc_speed_before_accel(2, 2, 5, 5);
-
-  EXPECT_NEAR(speed, -3, 0.001);
-
-  speed = lcip.get_inflection_speed_value(5, 4, 2, 10, 2, 4, 1, -1);
-
-  EXPECT_NEAR(speed, 10, 0.001);
-
-  speed = lcip.get_inflection_speed_value(3, 4, 2, 10, 2, 4, 1, -1);
-
-  EXPECT_NEAR(speed, 3.1622, 0.001);
-
-  speed = lcip.get_inflection_speed_value(1, 4, 2, 10, 2, 4, 1, -1);
-
-  EXPECT_NEAR(speed, 2.449, 0.001);
-
-  speed = lcip.get_inflection_speed_value(1, 4, 2, 10, 5, 4, 1, -1);
-
-  EXPECT_NEAR(speed,  4.796, 0.001);
-}
-
 TEST_F(LCIStrategicTestFixture, get_nearest_green_entry_time)
 {
   LCIStrategicPluginConfig config;
@@ -339,52 +268,514 @@ TEST_F(LCIStrategicTestFixture, get_nearest_green_entry_time)
   EXPECT_EQ(ros::Time(122), time);
 }
 
-
-TEST_F(LCIStrategicTestFixture, handleFailureCase)
+TEST_F(LCIStrategicTestFixture, handleFailureCaseHelper)
 {
+  carma_wm::test::setSpeedLimit(25_mph, cmw_);
+
+  // Light will be located on lanelet 1200 (300m) and control lanelet 1202, 1203
+  lanelet::Id traffic_light_id = lanelet::utils::getId();
+  carma_wm::test::addTrafficLight(cmw_, traffic_light_id, {1200}, { 1203 });
+
   LCIStrategicPluginConfig config;
-  config.vehicle_accel_limit = 1;
+  config.vehicle_accel_limit = 2;
   config.vehicle_accel_limit_multiplier = 1;
   config.vehicle_decel_limit_multiplier = 1;
-  config.vehicle_decel_limit= 1;
-
-
+  config.vehicle_decel_limit= 2;
+  config.green_light_time_buffer = 1.0;
+  ros::Time::setNow(ros::Time(0));
   LCIStrategicPlugin lcip(cmw_, config);
 
-  auto params = lcip.handleFailureCase(5, 10, 12, 0);
+  auto signal = cmw_->getMutableMap()->laneletLayer.get(1200).regulatoryElementsAs<lanelet::CarmaTrafficSignal>().front();
   
-  EXPECT_NEAR(params.a_accel, 1, 0.001);
-  EXPECT_NEAR(params.a_decel, 0, 0.001);
-  EXPECT_NEAR(params.speed_before_accel, 5, 0.001);
-  EXPECT_NEAR(params.speed_before_decel, -1, 0.001);
-  EXPECT_NEAR(params.dist_accel, 12, 0.001);
-  EXPECT_NEAR(params.dist_cruise, 0, 0.001);
-  EXPECT_NEAR(params.dist_decel, 0, 0.001);
-  EXPECT_NEAR(params.modified_departure_speed, 7, 0.01);
-  EXPECT_NEAR(params.modified_remaining_time, 2, 0.01);
-  EXPECT_EQ(params.case_num, SpeedProfileCase::DECEL_ACCEL);
+  ////////// CASE 1 ////////////////
+  // Traj upper 1
 
-  params = lcip.handleFailureCase(5, 0, 8, 0);
+  double green_start_time = 1.0;
+  double green_end_time = 5.0;
+  double remaining_distance = 12.0;
+  double current_time = 0.0;
 
-  EXPECT_NEAR(params.a_accel, 0, 0.001);
-  EXPECT_NEAR(params.a_decel, -1, 0.001);
-  EXPECT_NEAR(params.speed_before_accel, -1, 0.001);
-  EXPECT_NEAR(params.speed_before_decel, 5, 0.001);
-  EXPECT_NEAR(params.dist_accel, 0, 0.001);
-  EXPECT_NEAR(params.dist_cruise, 0, 0.001);
-  EXPECT_NEAR(params.dist_decel, 8, 0.001);
-  EXPECT_NEAR(params.modified_departure_speed, 3, 0.01);
-  EXPECT_NEAR(params.modified_remaining_time, 2, 0.01);
-  EXPECT_EQ(params.case_num, SpeedProfileCase::ACCEL_DECEL);
+  signal->fixed_cycle_duration = lanelet::time::durationFromSec(0.0); //dynamic
+  signal->recorded_time_stamps = {};
+  signal->recorded_start_time_stamps = {};
+  signal->recorded_time_stamps.push_back(std::pair<boost::posix_time::ptime, lanelet::CarmaTrafficSignalState>(boost::posix_time::from_time_t(green_start_time), lanelet::CarmaTrafficSignalState::STOP_AND_REMAIN));
+  signal->recorded_start_time_stamps.push_back(boost::posix_time::from_time_t(0.0));
+  signal->recorded_time_stamps.push_back(std::pair<boost::posix_time::ptime, lanelet::CarmaTrafficSignalState>(boost::posix_time::from_time_t(green_end_time), lanelet::CarmaTrafficSignalState::PROTECTED_MOVEMENT_ALLOWED));
+  signal->recorded_start_time_stamps.push_back(boost::posix_time::from_time_t(green_start_time));
+  
+  TrajectoryParams params;
 
-  EXPECT_THROW(lcip.handleFailureCase(5 ,0, 15, 0), std::invalid_argument);
+  params = lcip.handleFailureCaseHelper(signal, 
+                                            current_time, 
+                                            8.0, 
+                                            11.0, 
+                                            11.176, 
+                                            remaining_distance, 
+                                            remaining_distance);
+
+  EXPECT_NEAR(params.t0_, 0.0, 0.01);
+  EXPECT_NEAR(params.v0_, 8, 0.01);
+  EXPECT_NEAR(params.x0_, 0, 0.01);
+  EXPECT_NEAR(params.t1_, 1.291503, 0.01);
+  EXPECT_NEAR(params.v1_, 10.583, 0.01);
+  EXPECT_NEAR(params.x1_, 12, 0.01);
+  EXPECT_NEAR(params.a1_, 2, 0.01);
+  EXPECT_NEAR(params.t2_, 1.291, 0.01);
+  EXPECT_NEAR(params.v2_, 10.583, 0.01);
+  EXPECT_NEAR(params.x2_, 12, 0.01);
+  EXPECT_NEAR(params.a2_, 2, 0.01);
+  EXPECT_NEAR(params.t3_, 1.291, 0.01);
+  EXPECT_NEAR(params.v3_, 10.583, 0.01);
+  EXPECT_NEAR(params.x3_, 12, 0.01);
+  EXPECT_NEAR(params.a3_, 2, 0.01);
+
+    // Traj upper 2
+  green_start_time = 1.0;
+  green_end_time = 5.0;
+  remaining_distance = 12.0;
+  current_time = 3.0;
+
+  params = lcip.handleFailureCaseHelper(signal, 
+                                        current_time, 
+                                        8.0, 
+                                        11.0, 
+                                        11.176, 
+                                        remaining_distance, 
+                                        remaining_distance);
+
+  EXPECT_NEAR(params.t0_, current_time, 0.01);
+  EXPECT_NEAR(params.v0_, 8, 0.01);
+  EXPECT_NEAR(params.x0_, 0, 0.01);
+  EXPECT_NEAR(params.t1_, current_time + 1.291503, 0.01);
+  EXPECT_NEAR(params.v1_, 10.583, 0.01);
+  EXPECT_NEAR(params.x1_, 12, 0.01);
+  EXPECT_NEAR(params.a1_, 2, 0.01);
+  EXPECT_NEAR(params.t2_, current_time + 1.291, 0.01);
+  EXPECT_NEAR(params.v2_, 10.583, 0.01);
+  EXPECT_NEAR(params.x2_, 12, 0.01);
+  EXPECT_NEAR(params.a2_, 2, 0.01);
+  EXPECT_NEAR(params.t3_, current_time + 1.291, 0.01);
+  EXPECT_NEAR(params.v3_, 10.583, 0.01);
+  EXPECT_NEAR(params.x3_, 12, 0.01);
+  EXPECT_NEAR(params.a3_, 2, 0.01);
+
+
+
+  // Traj lower 
+
+  green_start_time = 1.0;
+  green_end_time = 5.0;
+  remaining_distance = 12.0;
+  current_time = -0.5; // unrealistic time, only used for unit test purpose
+
+  params = lcip.handleFailureCaseHelper(signal, 
+                                        current_time, 
+                                        8.0, 
+                                        11.0, 
+                                        11.176, 
+                                        remaining_distance, 
+                                        remaining_distance);
+
+  EXPECT_NEAR(params.t0_, current_time, 0.01);
+  EXPECT_NEAR(params.v0_, 8, 0.01);
+  EXPECT_NEAR(params.x0_, 0, 0.01);
+  EXPECT_NEAR(params.t1_, current_time + 2.0, 0.01);
+  EXPECT_NEAR(params.v1_, 4.0, 0.01);
+  EXPECT_NEAR(params.x1_, 12, 0.01);
+  EXPECT_NEAR(params.a1_, -2, 0.01);
+  EXPECT_NEAR(params.t2_, current_time + 2.0, 0.01);
+  EXPECT_NEAR(params.v2_, 4.0, 0.01);
+  EXPECT_NEAR(params.x2_, 12, 0.01);
+  EXPECT_NEAR(params.a2_, -2, 0.01);
+  EXPECT_NEAR(params.t3_, current_time + 2.0, 0.01);
+  EXPECT_NEAR(params.v3_, 4.0, 0.01);
+  EXPECT_NEAR(params.x3_, 12, 0.01);
+  EXPECT_NEAR(params.a3_, -2, 0.01);
+
+
+  // Traj failure
+
+  green_start_time = 1.0;
+  green_end_time = 5.0;
+  remaining_distance = 12.0;
+  current_time = 4.0; 
+
+  params = lcip.handleFailureCaseHelper(signal, 
+                                        current_time, 
+                                        8.0, 
+                                        11.0, 
+                                        11.176, 
+                                        remaining_distance, 
+                                        remaining_distance);
+
+  EXPECT_NEAR(params.t0_, 0.0, 0.01);
+  EXPECT_NEAR(params.v0_, 0.0, 0.01);
+  EXPECT_NEAR(params.x0_, 0, 0.01);
+  EXPECT_NEAR(params.t1_, 0.0, 0.01);
+  EXPECT_NEAR(params.v1_, 0.0, 0.01);
+  EXPECT_NEAR(params.x1_, 0, 0.01);
+  EXPECT_NEAR(params.a1_, 0, 0.01);
+
+  green_start_time = 1.0;
+  green_end_time = 5.0;
+  remaining_distance = 12.0;
+  current_time = 6.0;
+
+  params = lcip.handleFailureCaseHelper(signal, 
+                                        current_time, 
+                                        8.0, 
+                                        11.0, 
+                                        11.176, 
+                                        remaining_distance, 
+                                        remaining_distance);
+
+  EXPECT_NEAR(params.t0_, 0.0, 0.01);
+  EXPECT_NEAR(params.v0_, 0.0, 0.01);
+  EXPECT_NEAR(params.x0_, 0, 0.01);
+  EXPECT_NEAR(params.t1_, 0.0, 0.01);
+  EXPECT_NEAR(params.v1_, 0.0, 0.01);
+  EXPECT_NEAR(params.x1_, 0, 0.01);
+  EXPECT_NEAR(params.a1_, 0, 0.01);
+
+    
+  ////////// CASE 2 ////////////////
+
+  // Traj upper GREEN
+
+  green_start_time = 1.0;
+  green_end_time = 5.0;
+  remaining_distance = 12.0;
+  current_time = 2.0;
+
+  params = lcip.handleFailureCaseHelper(signal, 
+                                        current_time, 
+                                        9.0, 
+                                        11.0, 
+                                        11.176, 
+                                        remaining_distance, 
+                                        remaining_distance);
+
+  EXPECT_NEAR(params.t0_, current_time, 0.01);
+  EXPECT_NEAR(params.v0_, 9, 0.01);
+  EXPECT_NEAR(params.x0_, 0, 0.01);
+  EXPECT_NEAR(params.t1_, current_time + 1.0, 0.01);
+  EXPECT_NEAR(params.v1_, 11.0, 0.01);
+  EXPECT_NEAR(params.x1_, 10, 0.01);
+  EXPECT_NEAR(params.a1_, 2.0, 0.01);
+  EXPECT_NEAR(params.t2_, current_time + 1.1818, 0.01);
+  EXPECT_NEAR(params.v2_, 11.0, 0.01);
+  EXPECT_NEAR(params.x2_, 12, 0.01);
+  EXPECT_NEAR(params.a2_, 0.0, 0.01);
+  EXPECT_NEAR(params.t3_, current_time + 1.1818, 0.01);
+  EXPECT_NEAR(params.v3_, 11.0, 0.01);
+  EXPECT_NEAR(params.x3_, 12, 0.01);
+  EXPECT_NEAR(params.a3_, 0.0, 0.01);
+
+  green_start_time = 1.0;
+  green_end_time = 5.0;
+  remaining_distance = 12.0;
+  current_time = 0.0;
+
+  params = lcip.handleFailureCaseHelper(signal, 
+                                        current_time, 
+                                        9.0, 
+                                        11.0, 
+                                        11.176, 
+                                        remaining_distance, 
+                                        remaining_distance);
+
+  EXPECT_NEAR(params.t0_, current_time, 0.01);
+  EXPECT_NEAR(params.v0_, 9, 0.01);
+  EXPECT_NEAR(params.x0_, 0, 0.01);
+  EXPECT_NEAR(params.t1_, current_time + 1.0, 0.01);
+  EXPECT_NEAR(params.v1_, 11.0, 0.01);
+  EXPECT_NEAR(params.x1_, 10, 0.01);
+  EXPECT_NEAR(params.a1_, 2.0, 0.01);
+  EXPECT_NEAR(params.t2_, current_time + 1.1818, 0.01);
+  EXPECT_NEAR(params.v2_, 11.0, 0.01);
+  EXPECT_NEAR(params.x2_, 12, 0.01);
+  EXPECT_NEAR(params.a2_, 0.0, 0.01);
+  EXPECT_NEAR(params.t3_, current_time + 1.1818, 0.01);
+  EXPECT_NEAR(params.v3_, 11.0, 0.01);
+  EXPECT_NEAR(params.x3_, 12, 0.01);
+  EXPECT_NEAR(params.a3_, 0.0, 0.01);
+
+   // Traj lower GREEN
+
+  green_start_time = 1.0;
+  green_end_time = 5.0;
+  remaining_distance = 12.0;
+  current_time = -0.5; //unrealistic time only for unit test only
+
+  params = lcip.handleFailureCaseHelper(signal, 
+                                        current_time, 
+                                        9.0, 
+                                        11.0, 
+                                        11.176, 
+                                        remaining_distance, 
+                                        remaining_distance);
+
+  EXPECT_NEAR(params.t0_, current_time, 0.01);
+  EXPECT_NEAR(params.v0_, 9, 0.01);
+  EXPECT_NEAR(params.x0_, 0, 0.01);
+  EXPECT_NEAR(params.t1_, current_time + 1.6277, 0.01);
+  EXPECT_NEAR(params.v1_, 5.74456, 0.01);
+  EXPECT_NEAR(params.x1_, 12, 0.01);
+  EXPECT_NEAR(params.a1_, -2.0, 0.01);
+  EXPECT_NEAR(params.t2_, current_time + 1.6277, 0.01);
+  EXPECT_NEAR(params.v2_, 5.74456, 0.01);
+  EXPECT_NEAR(params.x2_, 12, 0.01);
+  EXPECT_NEAR(params.a2_, -2.0, 0.01);
+  EXPECT_NEAR(params.t3_, current_time + 1.6277, 0.01);
+  EXPECT_NEAR(params.v3_, 5.74456, 0.01);
+  EXPECT_NEAR(params.x3_, 12, 0.01);
+  EXPECT_NEAR(params.a3_, -2.0, 0.01);
+
+  // TRAJ FAILURE
+
+  green_start_time = 1.0;
+  green_end_time = 5.0;
+  remaining_distance = 12.0;
+  current_time = 4.0;
+
+  params = lcip.handleFailureCaseHelper(signal, 
+                                        current_time, 
+                                        9.0, 
+                                        11.0, 
+                                        11.176, 
+                                        remaining_distance, 
+                                        remaining_distance);
+
+  EXPECT_NEAR(params.t0_, 0.0, 0.01);
+  EXPECT_NEAR(params.v0_, 0.0, 0.01);
+  EXPECT_NEAR(params.x0_, 0, 0.01);
+  EXPECT_NEAR(params.t1_, 0.0, 0.01);
+  EXPECT_NEAR(params.v1_, 0.0, 0.01);
+  EXPECT_NEAR(params.x1_, 0, 0.01);
+  EXPECT_NEAR(params.a1_, 0, 0.01);
+
+  green_start_time = 1.0;
+  green_end_time = 5.0;
+  remaining_distance = 12.0;
+  current_time = 7.0;
+
+  params = lcip.handleFailureCaseHelper(signal, 
+                                        current_time, 
+                                        9.0, 
+                                        11.0, 
+                                        11.176, 
+                                        remaining_distance, 
+                                        remaining_distance);
+
+  EXPECT_NEAR(params.t0_, 0.0, 0.01);
+  EXPECT_NEAR(params.v0_, 0.0, 0.01);
+  EXPECT_NEAR(params.x0_, 0, 0.01);
+  EXPECT_NEAR(params.t1_, 0.0, 0.01);
+  EXPECT_NEAR(params.v1_, 0.0, 0.01);
+  EXPECT_NEAR(params.x1_, 0, 0.01);
+  EXPECT_NEAR(params.a1_, 0, 0.01);
+
+  ////////// CASE 3 ////////////////
+  
+  // Traj upper GREEN  
+  green_start_time = 1.0;
+  green_end_time = 5.0;
+  remaining_distance = 12.0;
+  current_time = 0.0;
+
+  params = lcip.handleFailureCaseHelper(signal, 
+                                        current_time, 
+                                        9.0, 
+                                        7.0, 
+                                        11.176, 
+                                        remaining_distance, 
+                                        remaining_distance);
+
+  EXPECT_NEAR(params.t0_, current_time, 0.01);
+  EXPECT_NEAR(params.v0_, 9, 0.01);
+  EXPECT_NEAR(params.x0_, 0, 0.01);
+  EXPECT_NEAR(params.t1_, current_time + 0.4444, 0.01);
+  EXPECT_NEAR(params.v1_, 9.0, 0.01);
+  EXPECT_NEAR(params.x1_, 4.0, 0.01);
+  EXPECT_NEAR(params.a1_, 0.0, 0.01);
+  EXPECT_NEAR(params.t2_, current_time + 1.4444, 0.01);
+  EXPECT_NEAR(params.v2_, 7.0, 0.01);
+  EXPECT_NEAR(params.x2_, 12, 0.01);
+  EXPECT_NEAR(params.a2_, -2.0, 0.01);
+  EXPECT_NEAR(params.t3_, current_time + 1.4444, 0.01);
+  EXPECT_NEAR(params.v3_, 7.0, 0.01);
+  EXPECT_NEAR(params.x3_, 12, 0.01);
+  EXPECT_NEAR(params.a3_, -2.0, 0.01);
+
+  green_start_time = 1.0;
+  green_end_time = 5.0;
+  remaining_distance = 12.0;
+  current_time = 2.0;
+
+  params = lcip.handleFailureCaseHelper(signal, 
+                                        current_time, 
+                                        9.0, 
+                                        7.0, 
+                                        11.176, 
+                                        remaining_distance, 
+                                        remaining_distance);
+
+  EXPECT_NEAR(params.t0_, current_time, 0.01);
+  EXPECT_NEAR(params.v0_, 9, 0.01);
+  EXPECT_NEAR(params.x0_, 0, 0.01);
+  EXPECT_NEAR(params.t1_, current_time + 0.4444, 0.01);
+  EXPECT_NEAR(params.v1_, 9.0, 0.01);
+  EXPECT_NEAR(params.x1_, 4.0, 0.01);
+  EXPECT_NEAR(params.a1_, 0.0, 0.01);
+  EXPECT_NEAR(params.t2_, current_time + 1.4444, 0.01);
+  EXPECT_NEAR(params.v2_, 7.0, 0.01);
+  EXPECT_NEAR(params.x2_, 12, 0.01);
+  EXPECT_NEAR(params.a2_, -2.0, 0.01);
+  EXPECT_NEAR(params.t3_, current_time + 1.4444, 0.01);
+  EXPECT_NEAR(params.v3_, 7.0, 0.01);
+  EXPECT_NEAR(params.x3_, 12, 0.01);
+  EXPECT_NEAR(params.a3_, -2.0, 0.01);
+
+  // Traj lower GREEN
+  green_start_time = 1.0;
+  green_end_time = 5.0;
+  remaining_distance = 12.0;
+  current_time = -0.5; //unrealistic time only for unit test only
+
+  params = lcip.handleFailureCaseHelper(signal, 
+                                        current_time, 
+                                        9.0, 
+                                        7.0, 
+                                        11.176, 
+                                        remaining_distance, 
+                                        remaining_distance);
+
+  EXPECT_NEAR(params.t0_, current_time, 0.01);
+  EXPECT_NEAR(params.v0_, 9, 0.01);
+  EXPECT_NEAR(params.x0_, 0, 0.01);
+  EXPECT_NEAR(params.t1_, current_time + 1.6277, 0.01);
+  EXPECT_NEAR(params.v1_, 5.74456, 0.01);
+  EXPECT_NEAR(params.x1_, 12, 0.01);
+  EXPECT_NEAR(params.a1_, -2.0, 0.01);
+  EXPECT_NEAR(params.t2_, current_time + 1.6277, 0.01);
+  EXPECT_NEAR(params.v2_, 5.74456, 0.01);
+  EXPECT_NEAR(params.x2_, 12, 0.01);
+  EXPECT_NEAR(params.a2_, -2.0, 0.01);
+  EXPECT_NEAR(params.t3_, current_time + 1.6277, 0.01);
+  EXPECT_NEAR(params.v3_, 5.74456, 0.01);
+  EXPECT_NEAR(params.x3_, 12, 0.01);
+  EXPECT_NEAR(params.a3_, -2.0, 0.01);
+
+  ////////// CASE 4 ////////////////
+  
+  // Traj upper GREEN  
+  green_start_time = 1.0;
+  green_end_time = 5.0;
+  remaining_distance = 12.0;
+  current_time = 0.0;
+
+  params = lcip.handleFailureCaseHelper(signal, 
+                                        current_time, 
+                                        10.0, 
+                                        7.0, 
+                                        11.176, 
+                                        remaining_distance, 
+                                        remaining_distance);
+
+  EXPECT_NEAR(params.t0_, current_time, 0.01);
+  EXPECT_NEAR(params.v0_, 10.0, 0.01);
+  EXPECT_NEAR(params.x0_, 0, 0.01);
+  EXPECT_NEAR(params.t1_, current_time + 1.39445, 0.01);
+  EXPECT_NEAR(params.v1_, 7.211, 0.01);
+  EXPECT_NEAR(params.x1_, 12.0, 0.01);
+  EXPECT_NEAR(params.a1_, -2.0, 0.01);
+  EXPECT_NEAR(params.t2_, current_time + 1.39445, 0.01);
+  EXPECT_NEAR(params.v2_, 7.211, 0.01);
+  EXPECT_NEAR(params.x2_, 12.0, 0.01);
+  EXPECT_NEAR(params.a2_, -2.0, 0.01);
+  EXPECT_NEAR(params.t3_, current_time + 1.39445, 0.01);
+  EXPECT_NEAR(params.v3_, 7.211, 0.01);
+  EXPECT_NEAR(params.x3_, 12.0, 0.01);
+  EXPECT_NEAR(params.a3_, -2.0, 0.01);
+
+  green_start_time = 1.0;
+  green_end_time = 5.0;
+  remaining_distance = 12.0;
+  current_time = 2.0;
+
+  params = lcip.handleFailureCaseHelper(signal, 
+                                        current_time, 
+                                        10.0, 
+                                        7.0, 
+                                        11.176, 
+                                        remaining_distance, 
+                                        remaining_distance);
+
+  EXPECT_NEAR(params.t0_, current_time, 0.01);
+  EXPECT_NEAR(params.v0_, 10.0, 0.01);
+  EXPECT_NEAR(params.x0_, 0, 0.01);
+  EXPECT_NEAR(params.t1_, current_time + 1.39445, 0.01);
+  EXPECT_NEAR(params.v1_, 7.211, 0.01);
+  EXPECT_NEAR(params.x1_, 12.0, 0.01);
+  EXPECT_NEAR(params.a1_, -2.0, 0.01);
+  EXPECT_NEAR(params.t2_, current_time + 1.39445, 0.01);
+  EXPECT_NEAR(params.v2_, 7.211, 0.01);
+  EXPECT_NEAR(params.x2_, 12.0, 0.01);
+  EXPECT_NEAR(params.a2_, -2.0, 0.01);
+  EXPECT_NEAR(params.t3_, current_time + 1.39445, 0.01);
+  EXPECT_NEAR(params.v3_, 7.211, 0.01);
+  EXPECT_NEAR(params.x3_, 12.0, 0.01);
+  EXPECT_NEAR(params.a3_, -2.0, 0.01);
+
+  // Traj lower GREEN
+  green_start_time = 1.0;
+  green_end_time = 5.0;
+  remaining_distance = 12.0;
+  current_time = 4; 
+
+  params = lcip.handleFailureCaseHelper(signal, 
+                                        current_time, 
+                                        10.0, 
+                                        7.0, 
+                                        11.176, 
+                                        remaining_distance, 
+                                        remaining_distance);
+
+  EXPECT_NEAR(params.t0_, 0.0, 0.01);
+  EXPECT_NEAR(params.v0_, 0.0, 0.01);
+  EXPECT_NEAR(params.x0_, 0, 0.01);
+  EXPECT_NEAR(params.t1_, 0.0, 0.01);
+  EXPECT_NEAR(params.v1_, 0.0, 0.01);
+  EXPECT_NEAR(params.x1_, 0, 0.01);
+  EXPECT_NEAR(params.a1_, 0, 0.01);
+
+  green_start_time = 1.0;
+  green_end_time = 5.0;
+  remaining_distance = 12.0;
+  current_time = -0.5; //unrealistic time only for unit test
+
+  params = lcip.handleFailureCaseHelper(signal, 
+                                        current_time, 
+                                        10.0, 
+                                        7.0, 
+                                        11.176, 
+                                        remaining_distance, 
+                                        remaining_distance);
+
+  EXPECT_NEAR(params.t0_, 0.0, 0.01);
+  EXPECT_NEAR(params.v0_, 0.0, 0.01);
+  EXPECT_NEAR(params.x0_, 0, 0.01);
+  EXPECT_NEAR(params.t1_, 0.0, 0.01);
+  EXPECT_NEAR(params.v1_, 0.0, 0.01);
+  EXPECT_NEAR(params.x1_, 0, 0.01);
+  EXPECT_NEAR(params.a1_, 0, 0.01);
 
 } 
 
 TEST(LCIStrategicPluginTest, moboperationcbtest)
 {
   cav_msgs::MobilityOperation msg;
-  msg.strategy = "signalized";
+  msg.strategy = "Carma/signalized_intersection";
 
   std::shared_ptr<carma_wm::CARMAWorldModel> wm = std::make_shared<carma_wm::CARMAWorldModel>();
   LCIStrategicPluginConfig config;
@@ -408,14 +799,14 @@ TEST(LCIStrategicPluginTest, parseStrategyParamstest)
 
   lcip.parseStrategyParams(msg.strategy_params);
 
-  
-  EXPECT_EQ(16000, lcip.scheduled_stop_time_);
   EXPECT_EQ(32000, lcip.scheduled_enter_time_);
 
   cav_msgs::MobilityOperation outgoing_msg = lcip.generateMobilityOperation();
-  EXPECT_EQ(outgoing_msg.strategy, "signalized");
+  EXPECT_EQ(outgoing_msg.strategy, "Carma/signalized_intersection");
   EXPECT_EQ(outgoing_msg.m_header.sender_id, config.vehicle_id);
   std::cout << "strategy_param: " << outgoing_msg.strategy_params << std::endl;
 }
+
+
 
 }  // namespace lci_strategic_plugin

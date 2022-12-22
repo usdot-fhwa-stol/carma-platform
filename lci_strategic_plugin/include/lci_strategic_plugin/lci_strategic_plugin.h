@@ -384,6 +384,7 @@ private:
    * \param exit_lanelet Exit lanelet in to the intersection along route
    * \param current_lanelet Current lanelet
    * \param traffic_light_down_track Downtrack to the given traffic_light
+   * \param is_emergency if enabled, double the deceleration rate of max_comfort_accel is used
    *
    * \return void. if successful, resp is non-empty
    */
@@ -391,7 +392,8 @@ private:
                                         const VehicleState& current_state, 
                                         const lanelet::CarmaTrafficSignalPtr& traffic_light,
                                         const lanelet::ConstLanelet& entry_lanelet, const lanelet::ConstLanelet& exit_lanelet, const lanelet::ConstLanelet& current_lanelet,
-                                        double traffic_light_down_track);
+                                        double traffic_light_down_track,
+                                        bool is_emergency = false);
 
   /**
    * \brief This function returns valid maneuvers if the vehicle is able to utilize trajectory smoothing parameters to go through the intersection with certainty
@@ -465,12 +467,11 @@ private:
    * \param departure_speed departure_speed originally planned
    * \param speed_limit speed_limit
    * \param remaining_downtrack remaining_downtrack until the intersection
-   * \param remaining_time  remaining_time when vehicle is scheduled to enter
    * \param traffic_light_downtrack  traffic_light_downtrack when vehicle is scheduled to enter
    *
    * \return TSP with parameters that is best available to pass the intersection. Either cruising with starting_speed or sacrifice departure speed to meet time and distance
    */
-  TrajectoryParams handleFailureCaseHelper(double starting_speed, double departure_speed, double speed_limit, double remaining_downtrack, double remaining_time, double traffic_light_downtrack);
+  TrajectoryParams handleFailureCaseHelper(const lanelet::CarmaTrafficSignalPtr& traffic_light, double current_time, double starting_speed, double departure_speed, double speed_limit, double remaining_downtrack, double traffic_light_downtrack);
                                         
   /**
    * \brief Helper method to evaluate if the given traffic light state is supported by this plugin
@@ -764,6 +765,7 @@ private:
   FRIEND_TEST(LCIStrategicTestFixture, composeIntersectionTransitMessage);
   FRIEND_TEST(LCIStrategicTestFixture, composeTrajectorySmoothingManeuverMessage);
   FRIEND_TEST(LCIStrategicTestFixture, findSpeedLimit);
+  FRIEND_TEST(LCIStrategicTestFixture, handleFailureCaseHelper);
   // Algo Unit Tests
   FRIEND_TEST(LCIStrategicTestFixture, calc_estimated_entry_time_left);
   FRIEND_TEST(LCIStrategicTestFixture, estimate_distance_to_stop);
