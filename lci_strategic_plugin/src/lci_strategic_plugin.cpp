@@ -229,7 +229,8 @@ void LCIStrategicPlugin::handleStopping(const cav_srvs::PlanManeuversRequest& re
                                         const VehicleState& current_state, 
                                         const lanelet::CarmaTrafficSignalPtr& traffic_light,
                                         const lanelet::ConstLanelet& entry_lanelet, const lanelet::ConstLanelet& exit_lanelet, const lanelet::ConstLanelet& current_lanelet,
-                                        double traffic_light_down_track)
+                                        double traffic_light_down_track,
+                                        bool is_emergency)
 {
   double distance_remaining_to_traffic_light = traffic_light_down_track - current_state.downtrack;
 
@@ -238,6 +239,10 @@ void LCIStrategicPlugin::handleStopping(const cav_srvs::PlanManeuversRequest& re
         getLaneletsBetweenWithException(current_state.downtrack, traffic_light_down_track, true, true);
 
   double decel_rate =  max_comfort_decel_norm_; // Kinematic |(v_f - v_i) / t = a|
+
+  if (is_emergency)
+    decel_rate = 2 * max_comfort_decel_norm_;
+
   ROS_DEBUG_STREAM("HANDLE_STOPPING: Planning stop and wait maneuver at decel_rate: " << decel_rate);
   
   case_num_ = TSCase::STOPPING;
@@ -1003,7 +1008,7 @@ void LCIStrategicPlugin::planWhenAPPROACHING(const cav_srvs::PlanManeuversReques
       if (resp.new_plan.maneuvers.empty())
       {
         ROS_WARN_STREAM("HANDLE_SAFETY: Planning forced slow-down... last case:" << static_cast<int>(last_case_num_));
-        handleStopping(req,resp, current_state, traffic_light, entry_lanelet, exit_lanelet, current_lanelet, traffic_light_down_track); //case_9
+        handleStopping(req,resp, current_state, traffic_light, entry_lanelet, exit_lanelet, current_lanelet, traffic_light_down_track, true); //case_9 emergency case with twice the normal deceleration
       }
     }
     else

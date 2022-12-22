@@ -384,6 +384,7 @@ private:
    * \param exit_lanelet Exit lanelet in to the intersection along route
    * \param current_lanelet Current lanelet
    * \param traffic_light_down_track Downtrack to the given traffic_light
+   * \param is_emergency if enabled, double the deceleration rate of max_comfort_accel is used
    *
    * \return void. if successful, resp is non-empty
    */
@@ -391,7 +392,8 @@ private:
                                         const VehicleState& current_state, 
                                         const lanelet::CarmaTrafficSignalPtr& traffic_light,
                                         const lanelet::ConstLanelet& entry_lanelet, const lanelet::ConstLanelet& exit_lanelet, const lanelet::ConstLanelet& current_lanelet,
-                                        double traffic_light_down_track);
+                                        double traffic_light_down_track,
+                                        bool is_emergency = false);
 
   /**
    * \brief This function returns valid maneuvers if the vehicle is able to utilize trajectory smoothing parameters to go through the intersection with certainty
