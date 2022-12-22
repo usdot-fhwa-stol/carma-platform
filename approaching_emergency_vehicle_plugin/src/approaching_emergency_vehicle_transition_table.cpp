@@ -58,7 +58,6 @@ void ApproachingEmergencyVehicleTransitionTable::eventWhenNO_APPROACHING_ERV(App
 {
   switch (event)
   {
-    // TODO: Remove case of remaining in same state?
     case ApproachingEmergencyVehicleEvent::NO_APPROACHING_ERV:
       setAndLogState(ApproachingEmergencyVehicleState::NO_APPROACHING_ERV, event);
       break;
@@ -72,7 +71,6 @@ void ApproachingEmergencyVehicleTransitionTable::eventWhenNO_APPROACHING_ERV(App
       break;
 
     case ApproachingEmergencyVehicleEvent::ERV_ABOUT_TO_PASS_IN_PATH:
-      // TODO PUBLISH EMERGENCY_VEHICLE_RESPONSE WARNING
       setAndLogState(ApproachingEmergencyVehicleState::WAITING_FOR_APPROACHING_ERV, event);
       break;
 
@@ -85,7 +83,6 @@ void ApproachingEmergencyVehicleTransitionTable::eventWhenNO_APPROACHING_ERV(App
       break;
 
     case ApproachingEmergencyVehicleEvent::ERV_PASSING_NOT_IN_PATH:
-      // TODO PUBLISH EMERGENCY_VEHICLE_RESPONSE WARNING
       setAndLogState(ApproachingEmergencyVehicleState::SLOWING_DOWN_FOR_ERV, event);
       break;
 
@@ -107,7 +104,6 @@ void ApproachingEmergencyVehicleTransitionTable::eventWhenMOVING_OVER_FOR_APPROA
       setAndLogState(ApproachingEmergencyVehicleState::NO_APPROACHING_ERV, event);
       break;
 
-    // TODO: Remove case of remaining in same state?
     case ApproachingEmergencyVehicleEvent::APPROACHING_ERV_IN_PATH:
       setAndLogState(ApproachingEmergencyVehicleState::MOVING_OVER_FOR_APPROACHING_ERV, event);
       break;
@@ -117,7 +113,6 @@ void ApproachingEmergencyVehicleTransitionTable::eventWhenMOVING_OVER_FOR_APPROA
       break;
 
     case ApproachingEmergencyVehicleEvent::ERV_ABOUT_TO_PASS_IN_PATH:
-      // TODO PUBLISH EMERGENCY_VEHICLE_RESPONSE WARNING
       setAndLogState(ApproachingEmergencyVehicleState::WAITING_FOR_APPROACHING_ERV, event);
       break;
 
@@ -143,12 +138,10 @@ void ApproachingEmergencyVehicleTransitionTable::eventWhenWAITING_FOR_APPROACHIN
       setAndLogState(ApproachingEmergencyVehicleState::NO_APPROACHING_ERV, event);
       break;
 
-    // TODO PROTECT AGAINST FLIPPING BETWEEN THESE STATES?
     case ApproachingEmergencyVehicleEvent::APPROACHING_ERV_IN_PATH:
       setAndLogState(ApproachingEmergencyVehicleState::MOVING_OVER_FOR_APPROACHING_ERV, event);
       break;
 
-    // TODO PROTECT AGAINST FLIPPING BETWEEN THESE STATES?
     case ApproachingEmergencyVehicleEvent::APPROACHING_ERV_NOT_IN_PATH:
       setAndLogState(ApproachingEmergencyVehicleState::WAITING_FOR_APPROACHING_ERV, event);
       break;
