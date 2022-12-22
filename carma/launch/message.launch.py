@@ -61,19 +61,6 @@ def open_tunnels():
 
 def generate_launch_description():
 
-    # Declare enable_opening_tunnels
-    enable_opening_tunnels = LaunchConfiguration('enable_opening_tunnels')
-    declare_enable_opening_tunnels = DeclareLaunchArgument(
-        name = 'enable_opening_tunnels',
-        default_value= 'False',
-        description='Flag to enable opening http tunnesl to CARMA Cloud'
-    )
-
-    if enable_opening_tunnels:
-        # Open http tunnels with carma cloud
-        open_tunnels()
-
-
     """
     Launch V2X subsystem nodes.
     """
@@ -110,6 +97,15 @@ def generate_launch_description():
         default_value = subsystem_controller_default_param_file,
         description = "Path to file containing override parameters for the subsystem controller"
     )
+
+    # Declare enable_opening_tunnels
+    enable_opening_tunnels = LaunchConfiguration('enable_opening_tunnels')
+    declare_enable_opening_tunnels = DeclareLaunchArgument(
+        name = 'enable_opening_tunnels',
+        default_value= 'False',
+        description='Flag to enable opening http tunnesl to CARMA Cloud'
+    )
+
     carma_cloud_client_param_file = os.path.join(
         get_package_share_directory('carma_cloud_client'), 'config/parameters.yaml')
     
@@ -227,5 +223,10 @@ def generate_launch_description():
         declare_enable_opening_tunnels,     
         carma_v2x_container,
         subsystem_controller
-    ]) 
+    ])
+
+    # Open http tunnels with carma cloud
+    if enable_opening_tunnels:
+        open_tunnels()
+ 
 
