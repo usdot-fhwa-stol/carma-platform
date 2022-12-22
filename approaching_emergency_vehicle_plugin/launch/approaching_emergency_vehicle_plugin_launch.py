@@ -51,7 +51,7 @@ def generate_launch_description():
             # Launch the core node(s)
             ComposableNode(
                     package='approaching_emergency_vehicle_plugin',
-                    plugin='approaching_emergency_vehicle_plugin::Node',
+                    plugin='approaching_emergency_vehicle_plugin::ApproachingEmergencyVehiclePlugin',
                     name='approaching_emergency_vehicle_plugin_node',
                     extra_arguments=[
                         {'use_intra_process_comms': True},
