@@ -48,7 +48,7 @@ def open_tunnels():
 
     key_path = "/opt/carma/vehicle/calibration/cloud_permission"
     
-    key = param_launch_path + '/' + KEY_FILE
+    key = key_path + '/' + KEY_FILE
 
     subprocess.check_call(['sudo','chmod','400', key])
     subprocess.check_call(['sudo', cmd, '-u', REMOTE_USER, '-a', REMOTE_ADDR, '-k', key, '-p', REMOTE_PORT,  '-r', HOST_PORT])
