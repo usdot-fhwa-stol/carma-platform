@@ -79,9 +79,9 @@ def generate_launch_description():
 
     pure_pursuit_tuning_parameters = [vehicle_calibration_dir, "/pure_pursuit/calibration.yaml"]
 
-    carma_lane_follow_plugins_container = ComposableNodeContainer(
+    carma_inlanecruising_plugin_container = ComposableNodeContainer(
         package='carma_ros2_utils',
-        name='carma_lane_follow_plugins_container',
+        name='carma_lainlanecruising_plugin_container',
         executable='carma_component_container_mt',
         namespace=GetCurrentNamespace(),
         composable_node_descriptions=[
@@ -106,6 +106,16 @@ def generate_launch_description():
                     vehicle_config_param_file
                 ]
             ),
+        ]
+    )
+
+    carma_route_following_plugin_container = ComposableNodeContainer(
+        package='carma_ros2_utils',
+        name='carma_route_following_plugin_container',
+        executable='carma_component_container_mt',
+        namespace=GetCurrentNamespace(),
+        composable_node_descriptions=[
+
             ComposableNode(
                 package='route_following_plugin',
                 plugin='route_following_plugin::RouteFollowingPlugin',
@@ -164,9 +174,9 @@ def generate_launch_description():
         ]
     )
 
-    carma_stop_controlled_intersection_plugins_container = ComposableNodeContainer(
+    carma_sci_strategic_plugin_container = ComposableNodeContainer(
         package='carma_ros2_utils',
-        name='carma_stop_controlled_intersection_plugins_container',
+        name='carma_sci_strategic_plugin_container',
         executable='carma_component_container_mt',
         namespace=GetCurrentNamespace(),
         composable_node_descriptions=[
@@ -196,6 +206,15 @@ def generate_launch_description():
                     vehicle_config_param_file
                 ]
             ),
+        ]
+    )
+
+    carma_stop_controlled_intersection_tactical_plugin_container = ComposableNodeContainer(
+        package='carma_ros2_utils',
+        name='carma_stop_controlled_intersection_tactical_plugin_container',
+        executable='carma_component_container_mt',
+        namespace=GetCurrentNamespace(),
+        composable_node_descriptions=[
             ComposableNode(
                 package='stop_controlled_intersection_tactical_plugin',
                 plugin='stop_controlled_intersection_tactical_plugin::StopControlledIntersectionTacticalPlugin',
@@ -352,9 +371,9 @@ def generate_launch_description():
         ]
     )
     
-    platooning_plugins_container = ComposableNodeContainer(
+    platooning_strategic_plugin_container = ComposableNodeContainer(
         package='carma_ros2_utils',
-        name='platooning_plugins_container',
+        name='platooning_strategic_plugin_container',
         executable='carma_component_container_mt',
         namespace=GetCurrentNamespace(),
         composable_node_descriptions=[
@@ -389,7 +408,16 @@ def generate_launch_description():
                     platoon_strategic_ihp_param_file,
                     vehicle_config_param_file
                 ]
-            ),      
+            ),
+        ]
+    )
+      
+    platooning_tactical_plugin_container = ComposableNodeContainer(
+        package='carma_ros2_utils',
+        name='platooning_tactical_plugin_container',
+        executable='carma_component_container_mt',
+        namespace=GetCurrentNamespace(),
+        composable_node_descriptions=[
             ComposableNode(
                 package='platooning_tactical_plugin',
                 plugin='platooning_tactical_plugin::Node',
@@ -413,12 +441,15 @@ def generate_launch_description():
     )
 
     return LaunchDescription([    
-        platooning_plugins_container,
-        carma_lane_follow_plugins_container,
-        carma_stop_and_wait_plugin_container,
-        carma_stop_controlled_intersection_plugins_container,
-        carma_cooperative_lanechange_plugins_container,
-        carma_yield_plugin_container,
-        carma_light_controlled_intersection_plugins_container,
-        carma_pure_pursuit_wrapper_container
+        carma_inlanecruising_plugin_container, 
+        carma_route_following_plugin_container, 
+        carma_stop_and_wait_plugin_container, 
+        carma_sci_strategic_plugin_container, 
+        carma_stop_controlled_intersection_tactical_plugin_container, 
+        carma_cooperative_lanechange_plugins_container, 
+        carma_yield_plugin_container, 
+        carma_light_controlled_intersection_plugins_container, 
+        carma_pure_pursuit_wrapper_container, 
+        platooning_strategic_plugin_container, 
+        platooning_tactical_plugin_container
     ])
