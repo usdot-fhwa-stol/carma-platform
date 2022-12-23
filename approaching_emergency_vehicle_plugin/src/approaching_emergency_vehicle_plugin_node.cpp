@@ -455,8 +455,7 @@ namespace approaching_emergency_vehicle_plugin
     lanelet::ConstLineString2d intersecting_centerline = lanelet::utils::to2D(intersecting_lanelet.centerline());
     lanelet::BasicPoint2d intersecting_end_point = intersecting_centerline.back();
 
-    // Get ego vehicle's distance to the beginning of the intersecting lanelet
-    // Note: Distance shall be 0.0 if ego vehicle is currently located within the intersecting lanelet
+    // Get ego vehicle's distance to the intersecting lanelet's centerline endpoint
     double ego_dist_to_lanelet = wm_->routeTrackPos(intersecting_end_point).downtrack - latest_route_state_.down_track;
 
     // Set erv_world_model_ route to the erv_future_route
@@ -464,7 +463,7 @@ namespace approaching_emergency_vehicle_plugin
     carma_wm::LaneletRoutePtr erv_future_route_ptr = std::make_shared<lanelet::routing::Route>(std::move(route));
     erv_world_model_->setRoute(erv_future_route_ptr);
 
-    // Get downtrack of intersecting lanelet on ERV's route
+    // Get downtrack of intersecting lanelet's centerline endpoint on ERV's route
     double erv_dist_to_lanelet = erv_world_model_->routeTrackPos(intersecting_end_point).downtrack - erv_world_model_->routeTrackPos(erv_position_in_map).downtrack;
 
     // Calculate seconds_until_passing and protect against division by zero
