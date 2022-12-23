@@ -306,7 +306,7 @@ def generate_launch_description():
         namespace=GetCurrentNamespace(),
         composable_node_descriptions=[
             ComposableNode(
-                package='twist_filter_ros2',
+                package='twist_filter',
                 plugin='twist_filter::TwistFilter',
                 name='twist_filter_node',
                 extra_arguments=[
