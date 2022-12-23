@@ -321,7 +321,7 @@ def generate_launch_description():
                 ],
                 parameters=[
                     approaching_emergency_vehicle_plugin_param_file,
-                    vehicle_config_param_file
+                    vehicle_characteristics_param_file
                 ]
             ),
         ]
