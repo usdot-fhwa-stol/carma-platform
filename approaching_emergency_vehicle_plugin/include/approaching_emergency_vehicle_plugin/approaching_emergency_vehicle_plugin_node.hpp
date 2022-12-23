@@ -122,7 +122,8 @@ namespace approaching_emergency_vehicle_plugin
      * \param erv_current_speed The ERV's current speed (m/s)
      * \param intersecting_lanelet The earliest lanelet that exists on both the ERV's future route and the ego vehicle's
      * future shortest path.
-     * \return The estimated seconds until the ERV will pass the ego vehicle. 
+     * \return The estimated seconds until the ERV will pass the ego vehicle. If negative, the ERV is estimated to 
+     * never pass the ego vehicle.
      */
     double getSecondsUntilPassing(lanelet::Optional<lanelet::routing::Route>& erv_future_route, const lanelet::BasicPoint2d& erv_position_in_map, 
                                   const double& erv_current_speed, lanelet::ConstLanelet& intersecting_lanelet);
