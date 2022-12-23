@@ -27,6 +27,9 @@
   <build_depend>carma_cmake_common</build_depend>
   <build_depend>ament_auto_cmake</build_depend>
   <build_depend>curl</build_depend>
+  
+  <build_depend>qhttpengine</build_depend>  
+  <build_depend>v2xhubWebAPI</build_depend>
 
   <depend>rclcpp</depend>
   <depend>carma_ros2_utils</depend>
@@ -34,6 +37,9 @@
   <depend>j2735_v2x_msgs</depend>
   <depend>carma_v2x_msgs</depend>
   <depend>j2735_convertor</depend>
+  
+  <!-- <depend>qhttpengine</depend> -->
+  <!-- <depend>v2xhubWebAPI</depend> -->
   
 
   <test_depend>ament_lint_auto</test_depend>

@@ -23,43 +23,64 @@ echo ""
 echo "##### $IMAGE Docker Image Build Script #####"
 echo ""
 
+ROS1_PACKAGES=""
+ROS2_PACKAGES=""
+ROS1_PACKAGES_COLLECT=false
+ROS2_PACKAGES_COLLECT=false
+
 while [[ $# -gt 0 ]]; do
     arg="$1"
     case $arg in
         -v|--version)
+            ROS1_PACKAGES_COLLECT=false
+            ROS2_PACKAGES_COLLECT=false
+
             COMPONENT_VERSION_STRING="$2"
             shift
             shift
             ;;
         --system-release)
+            ROS1_PACKAGES_COLLECT=false
+            ROS2_PACKAGES_COLLECT=false
+
             SYSTEM_RELEASE=true
             shift
             ;;
         -p|--push)
+            ROS1_PACKAGES_COLLECT=false
+            ROS2_PACKAGES_COLLECT=false
+
             PUSH=true
             shift
             ;;
         -d|--develop)
+            ROS1_PACKAGES_COLLECT=false
+            ROS2_PACKAGES_COLLECT=false
+
             USERNAME=usdotfhwastoldev
             COMPONENT_VERSION_STRING=develop
             shift
             ;;
         --ros-1-packages|--ros1)
-            ROS1_PACKAGES=""
+            ROS1_PACKAGES_COLLECT=true
+            ROS2_PACKAGES_COLLECT=false
+
             shift
             ;;
         --ros-2-packages|--ros2)
-            ROS2_PACKAGES=""
+            ROS1_PACKAGES_COLLECT=false
+            ROS2_PACKAGES_COLLECT=true
+
             shift
             ;;
         *)
             # Var test based on Stack Overflow question: https://stackoverflow.com/questions/5406858/difference-between-unset-and-empty-variables-in-bash
             # Asker: green69
             # Answerer: geekosaur
-            if [ "${ROS2_PACKAGES+set}" = "set" ]; then
-                ROS2_PACKAGES="$ROS2_PACKAGES $arg"
-            elif [ "${ROS1_PACKAGES+set}" = "set" ]; then
+            if $ROS1_PACKAGES_COLLECT; then
                 ROS1_PACKAGES="$ROS1_PACKAGES $arg"
+            elif $ROS2_PACKAGES_COLLECT; then
+                ROS2_PACKAGES="$ROS2_PACKAGES $arg"
             else
                 echo "Unknown argument $arg..."
                 exit -1
@@ -70,7 +91,7 @@ while [[ $# -gt 0 ]]; do
 done
 
 if [[ ! -z "$ROS1_PACKAGES$ROS2_PACKAGES" ]]; then
-    echo "Performing incremental build of image to rebuild packages: $ROS1_PACKAGES $ROS2_PACKAGES..."
+    echo "Performing incremental build of image to rebuild packages: ROS1>> $ROS1_PACKAGES ROS2>> $ROS2_PACKAGES..."
 
     echo "Updating Dockerfile references to use most recent image as base image"
     # Trim of docker image LS command sourced from 

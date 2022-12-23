@@ -25,14 +25,45 @@ from launch.substitutions import LaunchConfiguration
 from launch.actions import DeclareLaunchArgument
 
 import os
+import subprocess
 
 from launch.actions import IncludeLaunchDescription
 from launch.launch_description_sources import PythonLaunchDescriptionSource
 from launch.actions import GroupAction
 from launch_ros.actions import set_remap
 
+'''
+This function opens http tunnels with carma cloud, so it can communicate directly with platform
+'''
+def open_tunnels():
+
+    REMOTE_USER="ubuntu"
+    REMOTE_ADDR="www.carma-cloud.com"
+    KEY_FILE="carma-cloud-test-1.pem"
+    HOST_PORT="33333" # This port is forwarded to remote host (carma-cloud)
+    REMOTE_PORT="33333" # This port is forwarded to local host 
+
+    param_launch_path = os.path.join(
+        get_package_share_directory('carma_cloud_client'), 'launch/scripts')
+        
+    
+    cmd = param_launch_path + '/open_tunnels.sh'
+
+    subprocess.check_call(['chmod','u+x', cmd])
+
+    key_path = "/opt/carma/vehicle/calibration/cloud_permission"
+    
+    key = key_path + '/' + KEY_FILE
+
+    subprocess.check_call(['sudo','chmod','400', key])
+    subprocess.check_call(['sudo', cmd, '-u', REMOTE_USER, '-a', REMOTE_ADDR, '-k', key, '-p', REMOTE_PORT,  '-r', HOST_PORT])
+
 
 def generate_launch_description():
+
+    # Open http tunnels with carma cloud
+    open_tunnels()
+
     """
     Launch V2X subsystem nodes.
     """
@@ -69,6 +100,8 @@ def generate_launch_description():
         default_value = subsystem_controller_default_param_file,
         description = "Path to file containing override parameters for the subsystem controller"
     )
+    carma_cloud_client_param_file = os.path.join(
+        get_package_share_directory('carma_cloud_client'), 'config/parameters.yaml')
     
 
     # Nodes
@@ -147,6 +180,22 @@ def generate_launch_description():
                 remappings=[
                     ("outgoing_bsm", "bsm_outbound" )
                 ],
+            ),
+            ComposableNode( 
+                package='carma_cloud_client',
+                plugin='carma_cloud_client::CarmaCloudClient',
+                name='carma_cloud_client_node',
+                extra_arguments=[
+                    {'use_intra_process_comms': True}, 
+                    {'--log-level' : GetLogLevel('carma_cloud_client', env_log_levels) }
+                ],
+                remappings=[
+                    ("incoming_geofence_control", [ EnvironmentVariable('CARMA_MSG_NS', default_value=''), "/incoming_geofence_control" ] ),
+                ],
+                parameters = [
+                    vehicle_config_param_file, carma_cloud_client_param_file
+                ]
+                    
             ),
         ]
     )
