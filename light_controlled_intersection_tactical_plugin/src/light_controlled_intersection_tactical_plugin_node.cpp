@@ -83,7 +83,7 @@ namespace light_controlled_intersection_tactical_plugin
 
   carma_ros2_utils::CallbackReturn LightControlledIntersectionTransitPluginNode::on_configure_plugin()
   {
-    RCLCPP_INFO_STREAM(get_logger(), "LightControlledIntersectionTransitPluginNode trying to configure");
+    RCLCPP_INFO_STREAM(rclcpp::get_logger("light_controlled_intersection_tactical_plugin"), "LightControlledIntersectionTransitPluginNode trying to configure");
 
     // Reset config
     config_ = Config();
@@ -117,7 +117,7 @@ namespace light_controlled_intersection_tactical_plugin
     // Register runtime parameter update callback
     add_on_set_parameters_callback(std::bind(&LightControlledIntersectionTransitPluginNode::parameter_update_callback, this, std_ph::_1));
 
-    RCLCPP_INFO_STREAM(get_logger(), "Loaded params: " << config_);
+    RCLCPP_INFO_STREAM(rclcpp::get_logger("light_controlled_intersection_tactical_plugin"), "Loaded params: " << config_);
 
     // Initialize worker object
     worker_ = std::make_shared<LightControlledIntersectionTacticalPlugin>(get_world_model(), config_, get_plugin_name(), get_node_logging_interface());
