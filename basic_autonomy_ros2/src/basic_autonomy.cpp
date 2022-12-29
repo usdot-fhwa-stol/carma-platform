@@ -1183,14 +1183,14 @@ namespace basic_autonomy
 
         autoware_auto_msgs::msg::Trajectory process_trajectory_plan(const carma_planning_msgs::msg::TrajectoryPlan& tp, double vehicle_response_lag )
         {
-            RCLCPP_DEBUG_STREAM(rclcpp::get_logger(BASIC_AUTONOMY_LOGGER), "Processing latest TrajectoryPlan message");
+            RCLCPP_ERROR_STREAM(rclcpp::get_logger(BASIC_AUTONOMY_LOGGER), "Processing latest TrajectoryPlan message");
 
             std::vector<double> times;
             std::vector<double> downtracks;
 
             std::vector<carma_planning_msgs::msg::TrajectoryPlanPoint> trajectory_points = tp.trajectory_points;
 
-            RCLCPP_DEBUG_STREAM(rclcpp::get_logger(BASIC_AUTONOMY_LOGGER), "Original Trajectory size:"<<trajectory_points.size());
+            RCLCPP_ERROR_STREAM(rclcpp::get_logger(BASIC_AUTONOMY_LOGGER), "Original Trajectory size:"<<trajectory_points.size());
 
 
             trajectory_utils::conversions::trajectory_to_downtrack_time(trajectory_points, &downtracks, &times);
@@ -1201,8 +1201,8 @@ namespace basic_autonomy
             {
                 if (times[i] == times[i - 1]) //if exactly same, it is stopping case
                 {
-                    RCLCPP_DEBUG_STREAM(rclcpp::get_logger(BASIC_AUTONOMY_LOGGER), "Detected a stopping case where times is exactly equal: " << times[i-1]);
-                    RCLCPP_DEBUG_STREAM(rclcpp::get_logger(BASIC_AUTONOMY_LOGGER), "And index of that is: " << i << ", where size is: " << times.size());
+                    RCLCPP_ERROR_STREAM(rclcpp::get_logger(BASIC_AUTONOMY_LOGGER), "Detected a stopping case where times is exactly equal: " << times[i-1]);
+                    RCLCPP_ERROR_STREAM(rclcpp::get_logger(BASIC_AUTONOMY_LOGGER), "And index of that is: " << i << ", where size is: " << times.size());
                     stopping_index = i;
                     break;
                 }
@@ -1232,7 +1232,7 @@ namespace basic_autonomy
                 
             autoware_auto_msgs::msg::Trajectory autoware_trajectory;
             autoware_trajectory.header = tp.header;
-            RCLCPP_DEBUG_STREAM(rclcpp::get_logger(BASIC_AUTONOMY_LOGGER), "size: " << trajectory_points.size());
+            RCLCPP_ERROR_STREAM(rclcpp::get_logger(BASIC_AUTONOMY_LOGGER), "size: " << trajectory_points.size());
             
             auto max_size = std::min(99, (int)trajectory_points.size());  //NOTE: more than this size autoware auto raises exception with "Exceeded upper bound while in ACTIVE state."
                                                                             //large portion of the points are not needed anyways 
@@ -1245,7 +1245,7 @@ namespace basic_autonomy
                 autoware_point.longitudinal_velocity_mps = lag_speeds[i];
 
                 autoware_point.time_from_start = rclcpp::Duration(times[i] * 1e9);
-                RCLCPP_DEBUG_STREAM(rclcpp::get_logger(BASIC_AUTONOMY_LOGGER), "Setting waypoint idx: " << i <<", with planner: << " << trajectory_points[i].planner_plugin_name << ", x: " << trajectory_points[i].x << 
+                RCLCPP_ERROR_STREAM(rclcpp::get_logger(BASIC_AUTONOMY_LOGGER), "Setting waypoint idx: " << i <<", with planner: << " << trajectory_points[i].planner_plugin_name << ", x: " << trajectory_points[i].x << 
                                         ", y: " << trajectory_points[i].y <<
                                         ", speed: " << lag_speeds[i]* 2.23694 << "mph");
                 autoware_trajectory.points.push_back(autoware_point);
