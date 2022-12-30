@@ -33,6 +33,8 @@ from launch.launch_description_sources import PythonLaunchDescriptionSource
 from launch.actions import GroupAction
 from launch_ros.actions import set_remap
 
+
+
 def generate_launch_description():
 
     """
@@ -76,7 +78,7 @@ def generate_launch_description():
     enable_opening_tunnels = LaunchConfiguration('enable_opening_tunnels')
     declare_enable_opening_tunnels = DeclareLaunchArgument(
         name = 'enable_opening_tunnels',
-        default_value= 'False',
+        default_value= 'True',
         description='Flag to enable opening http tunnesl to CARMA Cloud'
     )
 
@@ -200,21 +202,21 @@ def generate_launch_description():
     param_launch_path = os.path.join(
         get_package_share_directory('carma_cloud_client'), 'launch/scripts')
         
-    cmd1 = param_launch_path + '/open_tunnels.sh'
+    script = param_launch_path + '/open_tunnels.sh'
 
-    subprocess.check_call(['chmod','u+x', cmd1])
+    subprocess.check_call(['chmod','u+x', script])
 
-    key_path = "/opt/carma/vehicle/calibration/cloud_permission"
+    key_path =  "/opt/carma/vehicle/calibration/cloud_permission"
     
-    key = key_path + '/' + KEY_FILE
+    keyfile = key_path + '/' + KEY_FILE
     
-    subprocess.check_call(['sudo','chmod','400', key])
+    subprocess.check_call(['sudo','chmod','400', keyfile])
 
     
     open_tunnels_action = ExecuteProcess(
         
         condition=IfCondition(enable_opening_tunnels),
-        cmd = ['sudo',  cmd1, '-u', REMOTE_USER, '-a', REMOTE_ADDR, '-k', key_path + '/' + KEY_FILE, '-p', REMOTE_PORT,  '-r', HOST_PORT],
+        cmd = ['sudo',  script, '-u', REMOTE_USER, '-a', REMOTE_ADDR, '-k', keyfile, '-p', REMOTE_PORT,  '-r', HOST_PORT],
         output = 'screen'
     )
 
