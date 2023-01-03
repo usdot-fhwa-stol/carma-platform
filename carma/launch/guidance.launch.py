@@ -326,6 +326,7 @@ def generate_launch_description():
                 parameters=[
                     vehicle_config_param_file,
                     {'lowpass_gain_linear_x':0.1},
+                    {'lowpass_gain_angular_z':0.0},
                     {'lowpass_gain_steering_angle':0.1}
                 ]     
             ),
@@ -344,6 +345,10 @@ def generate_launch_description():
                     ("/decision_maker/state", ["decision_maker/state" ] ),
                     ("/ctrl_mode", ["ctrl_mode" ] ),
                     ("/ctrl_cmd",   ["ctrl_cmd" ] ),
+                ],
+                parameters = [
+                    {'loop_rate':30.0},
+                    {'use_decision_maker':False}
                 ]
             )
         ]
