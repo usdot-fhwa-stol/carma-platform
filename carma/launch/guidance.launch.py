@@ -316,30 +316,35 @@ def generate_launch_description():
                 remappings = [
                     ("/accel_cmd", ["accel_cmd" ] ),
                     ("/brake_cmd", ["brake_cmd" ] ),
-                    ("/ctrl_cmd",   ["ctrl_cmd" ] ),
-                    ("/decision_maker/state", ["decision_maker/state" ] ),
                     ("/gear_cmd", ["gear_cmd" ] ),
-                    ("/twist_cmd", ["twist_cmd" ] ),
-                    ("/lamp_cmd", ["lamp_cmd" ] ),
                     ("/mode_cmd", ["mode_cmd" ] ),
                     ("/remote_cmd", ["remote_cmd" ] ),
                     ("/steer_cmd", ["steer_cmd" ] ),
-                    ("/ctrl_mode", ["ctrl_mode" ] ),
                     ("/emergency_stop", ["emergency_stop" ] ),
-                    ("/state_cmd", ["state_cmd" ] ),
-                    ("/vehicle_cmd", [ EnvironmentVariable('CARMA_INTR_NS', default_value=''), "/vehicle_cmd" ] ),
-                    # Parameter remapping
-                    ("vehicle_model_wheelbase", ["/vehicle_wheel_base" ] ),
-                    ("lateral_accel_limit", ["/vehicle_lateral_accel_limit" ] ),
-                    ("lateral_jerk_limit", ["/vehicle_lateral_jerk_limit" ] ),
-                    ("longitudinal_velocity_limit", ["/config_speed_limit" ] ),
-                    ("longitudinal_accel_limit", ["/vehicle_acceleration_limit" ] ),
+                    ("/state_cmd", ["state_cmd" ] )
                 ],
                 parameters=[
                     vehicle_config_param_file,
                     {'lowpass_gain_linear_x':0.1},
                     {'lowpass_gain_steering_angle':0.1}
                 ]     
+            ),
+            ComposableNode(
+                package='twist_gate',
+                plugin='TwistGate',
+                name='twist_gate_node',
+                extra_arguments=[
+                    {'use_intra_process_comms': True},
+                    {'--log-level' : GetLogLevel('twist_gate', env_log_levels) }
+                ],
+                remappings = [
+                    ("/vehicle_cmd", [ EnvironmentVariable('CARMA_INTR_NS', default_value=''), "/vehicle_cmd" ] ),
+                    ("/lamp_cmd", ["lamp_cmd" ] ),
+                    ("/twist_cmd", ["twist_cmd" ] ),
+                    ("/decision_maker/state", ["decision_maker/state" ] ),
+                    ("/ctrl_mode", ["ctrl_mode" ] ),
+                    ("/ctrl_cmd",   ["ctrl_cmd" ] ),
+                ]
             )
         ]
     )
