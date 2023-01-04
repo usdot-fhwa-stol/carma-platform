@@ -299,6 +299,7 @@ namespace localization_manager
         if (current_pose_)
         {
             auto pose_to_publish = *current_pose_;
+            pose_to_publish.header.stamp = timer_factory_->now();
             if (static_cast<LocalizerMode>(config_.localization_mode) == LocalizerMode::GNSS_WITH_FIXED_OFFSET)
             {
                 pose_to_publish.pose.position.x += config_.x_offset;
