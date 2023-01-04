@@ -151,7 +151,7 @@ namespace light_controlled_intersection_tactical_plugin
 
         for (size_t i = 0; i < last_trajectory_.trajectory_points.size(); i++)
         {
-            if (rclcpp::Time(last_trajectory_.trajectory_points[i].target_time) > rclcpp::Time(req->header.stamp) - rclcpp::Duration(0.1 * 1e9)) // Duration is in nanoseconds
+            if ((rclcpp::Time(last_trajectory_.trajectory_points[i].target_time) > rclcpp::Time(req->header.stamp) - rclcpp::Duration(0.1 * 1e9))) // Duration is in nanoseconds
             {
                 reduced_last_traj.trajectory_points.emplace_back(last_trajectory_.trajectory_points[i]);
                 reduced_final_speeds.emplace_back(last_final_speeds_[i]);
@@ -168,7 +168,7 @@ namespace light_controlled_intersection_tactical_plugin
             && rclcpp::Time(last_trajectory_.trajectory_points.back().target_time) > rclcpp::Time(req->header.stamp) + rclcpp::Duration(1 * 1e9)) // Duration is in nanoseconds
         {
             resp->trajectory_plan = last_trajectory_;
-            RCLCPP_DEBUG_STREAM(rclcpp::get_logger("light_controlled_intersection_tactical_plugin"), "Last TRAJ's target time: " << rclcpp::Time(last_trajectory_.trajectory_points.back().target_time).seconds() << ", and stamp:" << rclcpp::Time(req->header.stamp).seconds());
+            RCLCPP_DEBUG_STREAM(rclcpp::get_logger("light_controlled_intersection_tactical_plugin"), "Last TRAJ's target time: " << std::to_string(rclcpp::Time(last_trajectory_.trajectory_points.back().target_time).seconds()) << ", and stamp:" << std::to_string(rclcpp::Time(req->header.stamp).seconds()));
             RCLCPP_DEBUG_STREAM(rclcpp::get_logger("light_controlled_intersection_tactical_plugin"), "USING LAST TRAJ: " << (int)last_case_.get());
         }
         else if (is_last_case_successful_ != boost::none && last_case_ != boost::none
@@ -180,7 +180,7 @@ namespace light_controlled_intersection_tactical_plugin
             && rclcpp::Time(last_trajectory_.trajectory_points.back().target_time).seconds() > rclcpp::Time(req->header.stamp).seconds())
         {
             resp->trajectory_plan = last_trajectory_;
-            RCLCPP_DEBUG_STREAM(rclcpp::get_logger("light_controlled_intersection_tactical_plugin"), "Last Traj's target time: " << rclcpp::Time(last_trajectory_.trajectory_points.back().target_time).seconds() << ", and stamp:" << rclcpp::Time(req->header.stamp).seconds() << ", and scheduled: " << std::to_string(last_successful_scheduled_entry_time_));
+            RCLCPP_DEBUG_STREAM(rclcpp::get_logger("light_controlled_intersection_tactical_plugin"), "Last Traj's target time: " << std::to_string(rclcpp::Time(last_trajectory_.trajectory_points.back().target_time).seconds()) << ", and stamp:" << std::to_string(rclcpp::Time(req->header.stamp).seconds()) << ", and scheduled: " << std::to_string(last_successful_scheduled_entry_time_));
             RCLCPP_DEBUG_STREAM(rclcpp::get_logger("light_controlled_intersection_tactical_plugin"), "EDGE CASE: USING LAST TRAJ: " << (int)last_case_.get());
         }  
         else if (trajectory.trajectory_points.size () < 2)
@@ -204,7 +204,7 @@ namespace light_controlled_intersection_tactical_plugin
             last_case_ = new_case;
             last_final_speeds_ = debug_msg_.velocity_profile;
             is_last_case_successful_ = is_new_case_successful;
-            RCLCPP_DEBUG_STREAM(rclcpp::get_logger("light_controlled_intersection_tactical_plugin"), "USING NEW: Target time: " << rclcpp::Time(last_trajectory_.trajectory_points.back().target_time).seconds() << ", and stamp:" << rclcpp::Time(req->header.stamp).seconds());
+            RCLCPP_DEBUG_STREAM(rclcpp::get_logger("light_controlled_intersection_tactical_plugin"), "USING NEW: Target time: " << std::to_string(rclcpp::Time(last_trajectory_.trajectory_points.back().target_time).seconds()) << ", and stamp:" << std::to_string(rclcpp::Time(req->header.stamp).seconds()));
             if (is_new_case_successful)
             {
                 last_successful_ending_downtrack_ = GET_MANEUVER_PROPERTY(maneuver_plan.front(), end_dist);              // if algorithm was successful, this is traffic_light_downtrack
