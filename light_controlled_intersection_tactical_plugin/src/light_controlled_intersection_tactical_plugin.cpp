@@ -99,34 +99,8 @@ namespace light_controlled_intersection_tactical_plugin
                                                                                 config_.curvature_moving_average_window_size, config_.back_distance,
                                                                                 config_.buffer_ending_downtrack);
 
+         // CHECK IF LAST TRAJECTORY WILL BE USED
 
-        // Create curve-fitting compatible trajectories (with extra back and front attached points) with raw speed limits from maneuver 
-        auto points_and_target_speeds = createGeometryProfile(maneuver_plan, std::max((double)0, current_downtrack_ - config_.back_distance),
-                                                                                wm_, ending_state_before_buffer_, req->vehicle_state, wpg_general_config, wpg_detail_config);
-
-        // Change raw speed limit values to target speeds specified by the algorithm
-        applyOptimizedTargetSpeedProfile(maneuver_plan.front(), req->vehicle_state.longitudinal_vel, points_and_target_speeds);
-
-        RCLCPP_DEBUG_STREAM(rclcpp::get_logger("light_controlled_intersection_tactical_plugin"), "points_and_target_speeds: " << points_and_target_speeds.size());
-
-        RCLCPP_DEBUG_STREAM(rclcpp::get_logger("light_controlled_intersection_tactical_plugin"), "PlanTrajectory");
-
-        //Trajectory Plan
-        carma_planning_msgs::msg::TrajectoryPlan trajectory;
-        trajectory.header.frame_id = "map";
-        trajectory.header.stamp = req->header.stamp;
-        trajectory.trajectory_id = boost::uuids::to_string(boost::uuids::random_generator()());
-
-        // Compose smooth trajectory/speed by resampling
-        trajectory.trajectory_points = basic_autonomy::waypoint_generation::compose_lanefollow_trajectory_from_path(points_and_target_speeds, 
-                                                                                    req->vehicle_state, req->header.stamp, wm_, ending_state_before_buffer_, debug_msg_, 
-                                                                                    wpg_detail_config); // Compute the trajectory
-
-        // Set the planning plugin field name
-        for (auto& p : trajectory.trajectory_points) {
-            p.planner_plugin_name = plugin_name_;
-        }
-        
         bool is_new_case_successful = GET_MANEUVER_PROPERTY(maneuver_plan.front(), parameters.int_valued_meta_data[1]);
         TSCase new_case = static_cast<TSCase>GET_MANEUVER_PROPERTY(maneuver_plan.front(), parameters.int_valued_meta_data[0]);
 
@@ -183,7 +157,45 @@ namespace light_controlled_intersection_tactical_plugin
             RCLCPP_DEBUG_STREAM(rclcpp::get_logger("light_controlled_intersection_tactical_plugin"), "Last Traj's target time: " << std::to_string(rclcpp::Time(last_trajectory_.trajectory_points.back().target_time).seconds()) << ", and stamp:" << std::to_string(rclcpp::Time(req->header.stamp).seconds()) << ", and scheduled: " << std::to_string(last_successful_scheduled_entry_time_));
             RCLCPP_DEBUG_STREAM(rclcpp::get_logger("light_controlled_intersection_tactical_plugin"), "EDGE CASE: USING LAST TRAJ: " << (int)last_case_.get());
         }  
-        else if (trajectory.trajectory_points.size () < 2)
+        RCLCPP_DEBUG_STREAM(rclcpp::get_logger("light_controlled_intersection_tactical_plugin"), "Debug: new case:" << (int) new_case << ", is_new_case_successful: " << is_new_case_successful);
+
+        resp->trajectory_plan.initial_longitudinal_velocity = last_final_speeds_.front();
+
+        resp->maneuver_status.push_back(carma_planning_msgs::srv::PlanTrajectory::Response::MANEUVER_IN_PROGRESS);
+
+        return;
+        
+        
+        // IF NOT USING LAST TRAJECTORY PLAN NEW TRAJECTORY
+
+        // Create curve-fitting compatible trajectories (with extra back and front attached points) with raw speed limits from maneuver 
+        auto points_and_target_speeds = createGeometryProfile(maneuver_plan, std::max((double)0, current_downtrack_ - config_.back_distance),
+                                                                                wm_, ending_state_before_buffer_, req->vehicle_state, wpg_general_config, wpg_detail_config);
+
+        // Change raw speed limit values to target speeds specified by the algorithm
+        applyOptimizedTargetSpeedProfile(maneuver_plan.front(), req->vehicle_state.longitudinal_vel, points_and_target_speeds);
+
+        RCLCPP_DEBUG_STREAM(rclcpp::get_logger("light_controlled_intersection_tactical_plugin"), "points_and_target_speeds: " << points_and_target_speeds.size());
+
+        RCLCPP_DEBUG_STREAM(rclcpp::get_logger("light_controlled_intersection_tactical_plugin"), "PlanTrajectory");
+
+        //Trajectory Plan
+        carma_planning_msgs::msg::TrajectoryPlan trajectory;
+        trajectory.header.frame_id = "map";
+        trajectory.header.stamp = req->header.stamp;
+        trajectory.trajectory_id = boost::uuids::to_string(boost::uuids::random_generator()());
+
+        // Compose smooth trajectory/speed by resampling
+        trajectory.trajectory_points = basic_autonomy::waypoint_generation::compose_lanefollow_trajectory_from_path(points_and_target_speeds, 
+                                                                                    req->vehicle_state, req->header.stamp, wm_, ending_state_before_buffer_, debug_msg_, 
+                                                                                    wpg_detail_config); // Compute the trajectory
+
+        // Set the planning plugin field name
+        for (auto& p : trajectory.trajectory_points) {
+            p.planner_plugin_name = plugin_name_;
+        }
+                
+        if (trajectory.trajectory_points.size () < 2)
         {
             if (last_trajectory_.trajectory_points.size() >= 2
                 && rclcpp::Time(last_trajectory_.trajectory_points.back().target_time) > rclcpp::Time(req->header.stamp))

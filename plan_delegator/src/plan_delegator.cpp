@@ -251,8 +251,8 @@ namespace plan_delegator
         if(latest_trajectory_plan.trajectory_points.empty())
         {
             plan_req->header.stamp = now(); // used to be latest_pose_.header.stamp which was not reliable
-            RCLCPP_ERROR_STREAM(rclcpp::get_logger("plan_delegator"), "latest_pose_.header.stamp: " << std::to_string(rclcpp::Time(latest_pose_.header.stamp).seconds()));
-            RCLCPP_ERROR_STREAM(rclcpp::get_logger("plan_delegator"), "plan_req->header.stamp: " << std::to_string(rclcpp::Time(plan_req->header.stamp).seconds()));
+            RCLCPP_DEBUG_STREAM(rclcpp::get_logger("plan_delegator"), "latest_pose_.header.stamp: " << std::to_string(rclcpp::Time(latest_pose_.header.stamp).seconds()));
+            RCLCPP_DEBUG_STREAM(rclcpp::get_logger("plan_delegator"), "plan_req->header.stamp: " << std::to_string(rclcpp::Time(plan_req->header.stamp).seconds()));
 
             plan_req->vehicle_state.longitudinal_vel = latest_twist_.twist.linear.x;
             plan_req->vehicle_state.x_pos_global = latest_pose_.pose.position.x;
@@ -275,7 +275,7 @@ namespace plan_delegator
             plan_req->maneuver_index_to_plan = current_maneuver_index;
             // this assumes the vehicle does not have significant lateral velocity
             plan_req->header.stamp = latest_trajectory_plan.trajectory_points.back().target_time;
-            RCLCPP_ERROR_STREAM(rclcpp::get_logger("plan_delegator"), "plan_req->header.stamp: " << std::to_string(rclcpp::Time(plan_req->header.stamp).seconds()));
+            RCLCPP_DEBUG_STREAM(rclcpp::get_logger("plan_delegator"), "plan_req->header.stamp: " << std::to_string(rclcpp::Time(plan_req->header.stamp).seconds()));
 
             plan_req->vehicle_state.longitudinal_vel = distance_diff / time_diff_sec;
             // TODO develop way to set yaw value for future points
@@ -293,7 +293,7 @@ namespace plan_delegator
     {
         if (!wm_->getMap())
         {
-            RCLCPP_ERROR_STREAM(rclcpp::get_logger("plan_delegator"), "Map is not set yet");
+            RCLCPP_DEBUG_STREAM(rclcpp::get_logger("plan_delegator"), "Map is not set yet");
             return;
         }
         // Update maneuver starting and ending downtrack distances
@@ -461,7 +461,7 @@ namespace plan_delegator
             
             auto plan_response = client->async_send_request(plan_req);
             
-            auto future_status = plan_response.wait_for(std::chrono::milliseconds(100));
+            auto future_status = plan_response.wait_for(std::chrono::milliseconds(200)); //TODO was 100
 
             // Wait for the result.
             if (future_status == std::future_status::ready)
