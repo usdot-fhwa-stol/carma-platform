@@ -250,8 +250,7 @@ namespace plan_delegator
         // set current vehicle state if we have NOT planned any previous trajectories
         if(latest_trajectory_plan.trajectory_points.empty())
         {
-            latest_pose_.header.stamp = now();
-            plan_req->header.stamp = latest_pose_.header.stamp; // not reliable by itself
+            plan_req->header.stamp = now(); // used to be latest_pose_.header.stamp which was not reliable
             RCLCPP_ERROR_STREAM(rclcpp::get_logger("plan_delegator"), "latest_pose_.header.stamp: " << std::to_string(rclcpp::Time(latest_pose_.header.stamp).seconds()));
 
             plan_req->vehicle_state.longitudinal_vel = latest_twist_.twist.linear.x;
