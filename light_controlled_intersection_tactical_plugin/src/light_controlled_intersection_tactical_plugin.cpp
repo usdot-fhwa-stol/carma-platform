@@ -135,6 +135,7 @@ namespace light_controlled_intersection_tactical_plugin
         last_final_speeds_ = reduced_final_speeds;
         last_trajectory_.trajectory_points = reduced_last_traj.trajectory_points;
 
+        
         if (is_last_case_successful_ != boost::none && last_case_ != boost::none
             && last_case_.get() == new_case
             && is_new_case_successful == true
@@ -157,14 +158,17 @@ namespace light_controlled_intersection_tactical_plugin
             RCLCPP_DEBUG_STREAM(rclcpp::get_logger("light_controlled_intersection_tactical_plugin"), "Last Traj's target time: " << std::to_string(rclcpp::Time(last_trajectory_.trajectory_points.back().target_time).seconds()) << ", and stamp:" << std::to_string(rclcpp::Time(req->header.stamp).seconds()) << ", and scheduled: " << std::to_string(last_successful_scheduled_entry_time_));
             RCLCPP_DEBUG_STREAM(rclcpp::get_logger("light_controlled_intersection_tactical_plugin"), "EDGE CASE: USING LAST TRAJ: " << (int)last_case_.get());
         }  
-        RCLCPP_DEBUG_STREAM(rclcpp::get_logger("light_controlled_intersection_tactical_plugin"), "Debug: new case:" << (int) new_case << ", is_new_case_successful: " << is_new_case_successful);
 
-        resp->trajectory_plan.initial_longitudinal_velocity = last_final_speeds_.front();
+        if (!resp->trajectory_plan.trajectory_points.empty()) // if has valid trajectory saved from before return
+        {
+            RCLCPP_DEBUG_STREAM(rclcpp::get_logger("light_controlled_intersection_tactical_plugin"), "Debug: new case:" << (int) new_case << ", is_new_case_successful: " << is_new_case_successful);
 
-        resp->maneuver_status.push_back(carma_planning_msgs::srv::PlanTrajectory::Response::MANEUVER_IN_PROGRESS);
+            resp->trajectory_plan.initial_longitudinal_velocity = last_final_speeds_.front();
 
-        return;
-        
+            resp->maneuver_status.push_back(carma_planning_msgs::srv::PlanTrajectory::Response::MANEUVER_IN_PROGRESS);
+
+            return;
+        }
         
         // IF NOT USING LAST TRAJECTORY PLAN NEW TRAJECTORY
 
