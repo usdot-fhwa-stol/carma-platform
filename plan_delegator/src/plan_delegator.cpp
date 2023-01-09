@@ -293,7 +293,7 @@ namespace plan_delegator
     {
         if (!wm_->getMap())
         {
-            RCLCPP_DEBUG_STREAM(rclcpp::get_logger("plan_delegator"), "Map is not set yet");
+            RCLCPP_ERROR_STREAM(rclcpp::get_logger("plan_delegator"), "Map is not set yet");
             return;
         }
         // Update maneuver starting and ending downtrack distances
@@ -461,7 +461,7 @@ namespace plan_delegator
             
             auto plan_response = client->async_send_request(plan_req);
             
-            auto future_status = plan_response.wait_for(std::chrono::milliseconds(100)); //TODO was 100
+            auto future_status = plan_response.wait_for(std::chrono::milliseconds(100));
 
             // Wait for the result.
             if (future_status == std::future_status::ready)
