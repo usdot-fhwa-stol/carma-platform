@@ -88,7 +88,10 @@ class NS3Adapter : public cav::DriverApplication
         // Current vehicle pose in map
         geometry_msgs::PoseStamped pose_msg_;
 
-        std::string vehicle_id_;
+        std::string vehicle_id_ = "default_id";
+        std::string role_id_ = "ego_vehicle";
+        std::string port_ = "2000";
+        std::string host_ip_ = "127.0.0.1";
 
 
         //dynamic reconfig
@@ -208,6 +211,15 @@ class NS3Adapter : public cav::DriverApplication
         void loadWaveConfig(const std::string& fileName);
 
         void pose_cb(geometry_msgs::PoseStamped pose_msg);
+
+        /**
+        * @brief Composes the json string for handshake with ns-3
+        * @param fileName
+        * @return the json string for the msg
+        */
+        std::string compose_handshake_msg(std::string veh_id, std::string role_id, std::string port, std::string ip);
+
+        void broadcastHandshakemsg(const std::string& msg_string);
 
         cav_msgs::DriverStatus getDriverStatus();
 
