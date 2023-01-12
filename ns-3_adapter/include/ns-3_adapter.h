@@ -88,7 +88,7 @@ class NS3Adapter : public cav::DriverApplication
         // Current vehicle pose in map
         geometry_msgs::PoseStamped pose_msg_;
 
-        std::string vehicle_id_ = "default_id";
+        std::string vehicle_id_;
         std::string role_id_ = "ego_vehicle";
         std::string port_ = "2000";
         std::string host_ip_ = "127.0.0.1";
