@@ -112,17 +112,17 @@ TEST(StopandWait, TestStopandWaitPlanning)
   rclcpp::Time prev_time = rclcpp::Time(0.0* 1e9);
   for (auto point : resp->trajectory_plan.trajectory_points) {
     lanelet::BasicPoint2d p(point.x, point.y);
-    RCLCPP_INFO_STREAM(nh->get_logger(),"Y: " << point.y);
+    RCLCPP_INFO_STREAM(rclcpp::get_logger("stop_and_wait_plugin"),"Y: " << point.y);
     double delta = 0;
     if (first) {
       first = false;
     } else {
       delta = lanelet::geometry::distance2d(p, prev_point);
       dist += delta;
-      RCLCPP_INFO_STREAM(nh->get_logger(),"delta: " << delta << " timediff: " << (rclcpp::Time(point.target_time) - prev_time).seconds() << "pre_vel: " << vel);
+      RCLCPP_INFO_STREAM(rclcpp::get_logger("stop_and_wait_plugin"),"delta: " << delta << " timediff: " << (rclcpp::Time(point.target_time) - prev_time).seconds() << "pre_vel: " << vel);
       vel = (2.0 * delta / (rclcpp::Time(point.target_time) - prev_time).seconds()) - vel;
     }
-    RCLCPP_ERROR_STREAM(nh->get_logger(),"point time: " << rclcpp::Time(point.target_time).seconds() << " dist: " << dist << " vel: " << vel);
+    RCLCPP_ERROR_STREAM(rclcpp::get_logger("stop_and_wait_plugin"),"point time: " << rclcpp::Time(point.target_time).seconds() << " dist: " << dist << " vel: " << vel);
     prev_point = p;
     prev_time = point.target_time;
   }

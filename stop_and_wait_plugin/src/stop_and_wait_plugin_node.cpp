@@ -69,6 +69,8 @@ namespace stop_and_wait_plugin
     get_parameter<double>("centerline_sampling_spacing", config_.centerline_sampling_spacing);
     get_parameter<double>("default_stopping_buffer", config_.default_stopping_buffer);
 
+    RCLCPP_INFO_STREAM(rclcpp::get_logger("stop_and_wait_plugin"),"Done loading parameters: " << config_);
+
     // Register runtime parameter update callback
     add_on_set_parameters_callback(std::bind(&StopandWaitNode::parameter_update_callback, this, std_ph::_1));
   
