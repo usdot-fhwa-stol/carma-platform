@@ -68,9 +68,9 @@ void NS3Adapter::initialize() {
     pose_sub_ = pnh_->subscribe("current_pose", 1, &NS3Adapter::pose_cb, this);
 
     pnh_->getParam("vehicle_id", vehicle_id_);
-    pnh_->getParam("role_name", role_id_);
-    pnh_->getParam("port", port_);
-    pnh_->getParam("host", host_ip_);
+    pnh_->getParam("carla/ego_vehicle/role_name", role_id_);
+    pnh_->getParam("carla/port", port_);
+    pnh_->getParam("carla/host", host_ip_);
 
 
     ns3_client_.onMessageReceived.connect([this](std::vector<uint8_t> const &msg, uint16_t id) {onMessageReceivedHandler(msg, id); });
