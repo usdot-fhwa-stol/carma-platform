@@ -29,6 +29,8 @@ namespace light_controlled_intersection_tactical_plugin
         carma_planning_msgs::srv::PlanTrajectory::Request::SharedPtr req, 
         carma_planning_msgs::srv::PlanTrajectory::Response::SharedPtr resp)
     {
+        std::chrono::system_clock::time_point start_time = std::chrono::system_clock::now();  // Start timing the execution time for planning so it can be logged
+        
         RCLCPP_DEBUG_STREAM(rclcpp::get_logger("light_controlled_intersection_tactical_plugin"), "Starting light controlled intersection trajectory planning");
         
         if(req->maneuver_index_to_plan >= req->maneuver_plan.maneuvers.size())
@@ -167,6 +169,11 @@ namespace light_controlled_intersection_tactical_plugin
 
             resp->maneuver_status.push_back(carma_planning_msgs::srv::PlanTrajectory::Response::MANEUVER_IN_PROGRESS);
 
+            std::chrono::system_clock::time_point end_time = std::chrono::system_clock::now();  // Planning complete
+
+            auto duration = end_time - start_time;
+            RCLCPP_DEBUG_STREAM(rclcpp::get_logger("light_controlled_intersection_tactical_plugin"), "ExecutionTime Using New: " << std::chrono::duration<double>(duration).count());
+
             return;
         }
         
@@ -235,6 +242,11 @@ namespace light_controlled_intersection_tactical_plugin
         resp->trajectory_plan.initial_longitudinal_velocity = last_final_speeds_.front();
 
         resp->maneuver_status.push_back(carma_planning_msgs::srv::PlanTrajectory::Response::MANEUVER_IN_PROGRESS);
+
+        std::chrono::system_clock::time_point end_time = std::chrono::system_clock::now();  // Planning complete
+
+        auto duration = end_time - start_time;
+        RCLCPP_DEBUG_STREAM(rclcpp::get_logger("light_controlled_intersection_tactical_plugin"), "ExecutionTime Using Last: " << std::chrono::duration<double>(duration).count());
 
         return;
     }
