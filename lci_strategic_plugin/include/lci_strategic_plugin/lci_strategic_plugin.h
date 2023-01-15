@@ -514,6 +514,22 @@ private:
                                                                      bool bounds_inclusive = true) const;
   
   /**
+   * \brief Get the final entry time from either vehicle's own internal ET calculation (TSMO UC2) or from carma-street (TSMO UC3)
+   *        This function also applies necessary green_buffer to adjust the ET. 
+   * \param current_state Current state of the vehicle
+   * \param earliest_entry_time Earliest entry time calculated by the vehicle
+   * \param traffic_light traffic signal the vehicle is using
+   * \param is_entry_time_within_green_or_tdb this function sets it to true if ET is in green or TDB (related to UC3, always set to true in UC2)
+   * \param in_tdb this function sets it to true if ET is in TDB (not modified if in UC2)
+   * \return final entry time the vehicle uses to enter the intersection
+  */
+  ros::Time get_final_entry_time_and_conditions(const VehicleState& current_state, 
+                                                const ros::Time& earliest_entry_time, 
+                                                lanelet::CarmaTrafficSignalPtr traffic_light, 
+                                                bool& is_entry_time_within_green_or_tdb, 
+                                                bool& in_tdb);
+
+  /**
    * \brief Provides the scheduled entry time for the vehicle in the future. This scheduled time is the earliest possible entry time that 
    *        is during green phase and after timestamps both that is kinematically possible and required times for vehicle in front to pass through first 
    *
