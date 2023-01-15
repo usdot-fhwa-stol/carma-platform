@@ -675,6 +675,7 @@ void LCIStrategicPlugin::planWhenAPPROACHING(const cav_srvs::PlanManeuversReques
                                             cav_srvs::PlanManeuversResponse& resp, const VehicleState& current_state,
                                             const lanelet::CarmaTrafficSignalPtr& traffic_light, const lanelet::ConstLanelet& entry_lanelet, const lanelet::ConstLanelet& exit_lanelet, const lanelet::ConstLanelet& current_lanelet)
 {
+  ///////////// 1. Get various required variables //////////////
 
   if (!traffic_light)  // If we are in the approaching state and there is no longer any lights ahead of us then
                        // the vehicle must have crossed the stop bar
@@ -754,7 +755,7 @@ void LCIStrategicPlugin::planWhenAPPROACHING(const cav_srvs::PlanManeuversReques
     return;
   }
 
-  // Start of TSMO UC2 Algorithm
+  /////////////  2. Start of TSMO UC2 & UC3 Algorithm = ET determination //////////////
 
   ros::Time earliest_entry_time = current_state.stamp + get_earliest_entry_time(distance_remaining_to_traffic_light, speed_limit, 
                                                   current_state_speed, intersection_speed_.get(), max_comfort_accel_, max_comfort_decel_);
@@ -809,8 +810,6 @@ void LCIStrategicPlugin::planWhenAPPROACHING(const cav_srvs::PlanManeuversReques
 
   }
 
- 
-  
   ROS_DEBUG_STREAM("nearest_green_entry_time: " << std::to_string(nearest_green_entry_time.toSec()) << ", with : " << nearest_green_entry_time - current_state.stamp  << " seconds left at: " << std::to_string(current_state.stamp.toSec()));
   
   if (nearest_green_entry_time_cached_) 
@@ -915,13 +914,14 @@ void LCIStrategicPlugin::planWhenAPPROACHING(const cav_srvs::PlanManeuversReques
 
   auto et_state = traffic_light->predictState(lanelet::time::timeFromSec(nearest_green_entry_time.toSec()));
   ROS_DEBUG_STREAM("Signal at ET: " << et_state.get().second);
+  
+  /////////////  3. Start of TSMO UC2 & UC3 Algorithm = Trajectory Smoothing CASE SELECTION //////////////
 
   double remaining_time = nearest_green_entry_time.toSec() - current_state.stamp.toSec();
   double remaining_time_earliest_entry = earliest_entry_time.toSec() - current_state.stamp.toSec();
   scheduled_entry_time_ = remaining_time; // performance metric
   earliest_entry_time_ = remaining_time_earliest_entry; // performance metric
   
-  // CASE SELECTION START
   auto boundary_distances = get_delta_x(current_state_speed, intersection_speed_.get(), speed_limit, config_.algo_minimum_speed, max_comfort_accel_, max_comfort_decel_);
   print_boundary_distances(boundary_distances); //debug
 
@@ -932,10 +932,23 @@ void LCIStrategicPlugin::planWhenAPPROACHING(const cav_srvs::PlanManeuversReques
 
   ROS_DEBUG_STREAM("SPEED PROFILE CASE:" << ts_params.case_num);
 
-  // CASE SELECTION END
+  /////////////  4. Safety Check against traffic signals and maneuver generation //////////////
+
+   double safe_distance_to_stop = pow(current_state.speed, 2)/(2 * max_comfort_decel_norm_);
+  ROS_DEBUG_STREAM("safe_distance_to_stop at max_comfort_decel:  " << safe_distance_to_stop << ", max_comfort_decel_norm_: " << max_comfort_decel_norm_);
+
+  double desired_distance_to_stop = pow(current_state.speed, 2)/(2 * max_comfort_decel_norm_ * config_.deceleration_fraction) + config_.desired_distance_to_stop_buffer;
+  ROS_DEBUG_STREAM("desired_distance_to_stop at: " << desired_distance_to_stop << ", where effective deceleration rate is: " << max_comfort_decel_norm_ * config_.deceleration_fraction);
+  
+  desired_distance_to_stop = std::max(desired_distance_to_stop, config_.stopping_location_buffer);
+
+  ROS_DEBUG_STREAM("new desired_distance_to_stop: " << desired_distance_to_stop);
+
+  ROS_DEBUG_STREAM("distance_remaining_to_traffic_light:  " << distance_remaining_to_traffic_light << ", current_state.speed: " << current_state.speed);
 
   // Although algorithm determines nearest_green_time is possible, check if the vehicle can arrive with certainty (Case 1-7)
-  if (ts_params.is_algorithm_successful && ts_params.case_num != TSCase::CASE_8) 
+  if (ts_params.is_algorithm_successful && ts_params.case_num != TSCase::CASE_8 && 
+    (distance_remaining_to_traffic_light >= desired_distance_to_stop || !in_tdb))
   {
     handleGreenSignalScenario(req, resp, current_state, current_state_speed, traffic_light, entry_lanelet, exit_lanelet, traffic_light_down_track, ts_params, in_tdb); //in_tdb means optional to check certainty arrival at green
   
@@ -952,21 +965,13 @@ void LCIStrategicPlugin::planWhenAPPROACHING(const cav_srvs::PlanManeuversReques
     ts_params.case_num = CASE_8;
     print_params(ts_params);
   }
+  else if (distance_remaining_to_traffic_light <= desired_distance_to_stop && in_tdb) // Given ET is in TDB, but vehicle is too close to intersection
+  {
+    ROS_DEBUG_STREAM("ET is still in TDB despite the vehicle being in desired distance to start stopping. Trying to handle this edge case gracefully...");
+  }
   
   ROS_DEBUG_STREAM("Not able to make it with certainty: NEW TSCase: " << ts_params.case_num);
   // if algorithm is NOT successful or if the vehicle cannot make the green light with certainty
-
-  double safe_distance_to_stop = pow(current_state.speed, 2)/(2 * max_comfort_decel_norm_);
-  ROS_DEBUG_STREAM("safe_distance_to_stop at max_comfort_decel:  " << safe_distance_to_stop << ", max_comfort_decel_norm_: " << max_comfort_decel_norm_);
-
-  double desired_distance_to_stop = pow(current_state.speed, 2)/(2 * max_comfort_decel_norm_ * config_.deceleration_fraction) + config_.desired_distance_to_stop_buffer;
-  ROS_DEBUG_STREAM("desired_distance_to_stop at: " << desired_distance_to_stop << ", where effective deceleration rate is: " << max_comfort_decel_norm_ * config_.deceleration_fraction);
-  
-  desired_distance_to_stop = std::max(desired_distance_to_stop, config_.stopping_location_buffer);
-
-  ROS_DEBUG_STREAM("new desired_distance_to_stop: " << desired_distance_to_stop);
-
-  ROS_DEBUG_STREAM("distance_remaining_to_traffic_light:  " << distance_remaining_to_traffic_light << ", current_state.speed: " << current_state.speed);
 
   if (desired_distance_to_stop < distance_remaining_to_traffic_light && last_case_num_ != TSCase::STOPPING) // do not switch from STOPPING to case8 again
   {
