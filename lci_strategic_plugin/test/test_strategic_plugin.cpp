@@ -836,7 +836,7 @@ TEST_F(LCIStrategicTestFixture, planWhenETInTBD)
   lanelet::Id traffic_light_id = lanelet::utils::getId();
   carma_wm::test::addTrafficLight(cmw_, traffic_light_id, {1200}, { 1203 });
 
-  req.header.stamp = ros::Time(4); // GREEN ends at 5, but 1.3 sec minimum to intersection
+  req.header.stamp = ros::Time(6); // GREEN ends at 7, but 1.3 sec minimum to intersection
   req.veh_x = 1.85;
   req.veh_y = 285; // traffic light is at 300
   req.veh_downtrack = req.veh_y;
@@ -846,8 +846,8 @@ TEST_F(LCIStrategicTestFixture, planWhenETInTBD)
   auto signal = cmw_->getMutableMap()->laneletLayer.get(1200).regulatoryElementsAs<lanelet::CarmaTrafficSignal>().front();
   LCIStrategicPlugin::VehicleState current_state = lcip.extractInitialState(req);
 
-  double green_start_time = 1.0;
-  double green_end_time = 5.0;
+  double green_start_time = 3.0;
+  double green_end_time = 7.0;
 
   signal->fixed_cycle_duration = lanelet::time::durationFromSec(0.0); //dynamic
   signal->recorded_time_stamps = {};
@@ -857,21 +857,21 @@ TEST_F(LCIStrategicTestFixture, planWhenETInTBD)
   signal->recorded_time_stamps.push_back(std::pair<boost::posix_time::ptime, lanelet::CarmaTrafficSignalState>(boost::posix_time::from_time_t(green_end_time), lanelet::CarmaTrafficSignalState::PROTECTED_MOVEMENT_ALLOWED));
   signal->recorded_start_time_stamps.push_back(boost::posix_time::from_time_t(green_start_time));
 
-  ////////// CASE 1: When too close to intersection to stop and in TBD, so stop at double accel (HandleFailureCase) ////////////////
+  ////////// CASE 1: When close to intersection check for basic red light violation ////////////////
   lcip.last_case_num_ = TSCase::CASE_1; //simulating when vehicle is speeding up while ET goes into TBD
   lcip.planWhenAPPROACHING(req, resp, current_state, signal, cmw_->getMutableMap()->laneletLayer.get(1200), cmw_->getMutableMap()->laneletLayer.get(1203), cmw_->getMutableMap()->laneletLayer.get(1200));
 
   ASSERT_FALSE(resp.new_plan.maneuvers.empty());
   ASSERT_TRUE(resp.new_plan.maneuvers.front().type == cav_msgs::Maneuver::STOP_AND_WAIT);
-  ASSERT_NEAR(resp.new_plan.maneuvers.front().stop_and_wait_maneuver.parameters.float_valued_meta_data[1], 3.0, 0.01);
+  ASSERT_NEAR(resp.new_plan.maneuvers.front().stop_and_wait_maneuver.parameters.float_valued_meta_data[1], 1.5, 0.01);
  
-  ////////// CASE 2: When within desired stopping distance and able to stop and in TBD, so start stopping ////////////////
+  ////////// CASE 2: Check edge cases when not red light violating ////////////////
   resp.new_plan.maneuvers = {};
-  req.header.stamp = ros::Time(0); // GREEN ends at 5, but 1.3 sec minimum to intersection
+  req.header.stamp = ros::Time(0);
   req.veh_x = 1.85;
-  req.veh_y = 260; // traffic light is at 300 
+  req.veh_y = 270; // traffic light is at 300 
   req.veh_downtrack = req.veh_y;
-  req.veh_logitudinal_velocity = 10.0;
+  req.veh_logitudinal_velocity = 9.5;
   req.veh_lane_id = "1200";
   lcip.scheduled_enter_time_ = 20000; // 20s in TBD
   current_state = lcip.extractInitialState(req);
@@ -881,12 +881,11 @@ TEST_F(LCIStrategicTestFixture, planWhenETInTBD)
   lcip.planWhenAPPROACHING(req, resp, current_state, signal, cmw_->getMutableMap()->laneletLayer.get(1200), cmw_->getMutableMap()->laneletLayer.get(1203), cmw_->getMutableMap()->laneletLayer.get(1200));
 
   ASSERT_FALSE(resp.new_plan.maneuvers.empty());
-  ASSERT_TRUE(resp.new_plan.maneuvers.front().type == cav_msgs::Maneuver::STOP_AND_WAIT);
-  ASSERT_NEAR(resp.new_plan.maneuvers.front().stop_and_wait_maneuver.parameters.float_valued_meta_data[1], 1.5, 0.01);
+  ASSERT_TRUE(resp.new_plan.maneuvers.front().type == cav_msgs::Maneuver::LANE_FOLLOWING); // not stop because edge case
 
   ////////// CASE 3: When far from desired stopping distance and ET in TBD, keep going ////////////////
   resp.new_plan.maneuvers = {};
-  req.header.stamp = ros::Time(0); // GREEN ends at 5, but 1.3 sec minimum to intersection
+  req.header.stamp = ros::Time(2);
   req.veh_x = 1.85;
   req.veh_y = 200; // traffic light is at 300 
   req.veh_downtrack = req.veh_y;

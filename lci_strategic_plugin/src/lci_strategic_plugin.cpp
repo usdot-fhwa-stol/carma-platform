@@ -789,8 +789,8 @@ void LCIStrategicPlugin::planWhenAPPROACHING(const cav_srvs::PlanManeuversReques
   print_params(ts_params);
 
   ROS_DEBUG_STREAM("SPEED PROFILE CASE:" << ts_params.case_num);
-   
-  /////////////  4. Safety Check against traffic signals and Final Maneuver Generation //////////////
+
+  /////////////  4 . Safety Check against traffic signals and Final Maneuver Generation //////////////
 
   double safe_distance_to_stop = pow(current_state.speed, 2)/(2 * max_comfort_decel_norm_) + config_.stopping_location_buffer / 2; //Idea is to aim the middle part of stopping buffer
   ROS_DEBUG_STREAM("safe_distance_to_stop at max_comfort_decel (with stopping_location_buffer/2):  " << safe_distance_to_stop << ", max_comfort_decel_norm_: " << max_comfort_decel_norm_);
@@ -804,8 +804,40 @@ void LCIStrategicPlugin::planWhenAPPROACHING(const cav_srvs::PlanManeuversReques
 
   ROS_DEBUG_STREAM("distance_remaining_to_traffic_light:  " << distance_remaining_to_traffic_light << ", current_state.speed: " << current_state.speed);
 
- 
-  // Although algorithm determines nearest_green_time is possible, check if the vehicle can arrive with certainty (Case 1-7)
+  // Basic RED signal violation check
+  if (distance_remaining_to_traffic_light <= desired_distance_to_stop)
+  {
+    if (in_tbd) // Given ET is in TBD, but vehicle is too close to intersection
+    {
+      ROS_DEBUG_STREAM("ET is still in TBD despite the vehicle being in desired distance to start stopping. Trying to handle this edge case gracefully...");
+    }
+
+    double stopping_time = current_state.speed / max_comfort_decel_norm_;
+
+    ros::Time stopping_arrival_time =
+          current_state.stamp + ros::Duration(stopping_time);
+
+    ROS_DEBUG_STREAM("stopping_arrival_time: " << std::to_string(stopping_arrival_time.toSec()));
+
+    auto stopping_arrival_state_optional = traffic_light->predictState(lanelet::time::timeFromSec(stopping_arrival_time.toSec()));
+
+    if (!validLightState(stopping_arrival_state_optional, stopping_arrival_time))
+    {
+      ROS_ERROR_STREAM("Unable to resolve give signal for stopping_arrival_state_optional: " << std::to_string(stopping_arrival_time.toSec()));
+      return;
+    }
+
+    if (stopping_arrival_state_optional.get().second == lanelet::CarmaTrafficSignalState::STOP_AND_REMAIN)
+    {
+      ROS_WARN_STREAM("Detected possible RED light violation! Stopping!");
+      handleStopping(req,resp, current_state, traffic_light, entry_lanelet, exit_lanelet, current_lanelet, traffic_light_down_track); //case_9
+      last_case_num_ = TSCase::STOPPING;
+
+      return;
+    }
+  }
+
+  // Check if the vehicle can arrive with certainty (Case 1-7)
   if (ts_params.is_algorithm_successful && ts_params.case_num != TSCase::CASE_8 && 
     (distance_remaining_to_traffic_light >= desired_distance_to_stop || !in_tbd) &&
     is_entry_time_within_green_or_tbd) // ET cannot be explicitly inside RED or YELLOW in available future states, which is ERROR case
@@ -824,10 +856,6 @@ void LCIStrategicPlugin::planWhenAPPROACHING(const cav_srvs::PlanManeuversReques
     ts_params.is_algorithm_successful = true; //false correspond to cases when vehicle is beyond safe_distance to stop for case8
     ts_params.case_num = CASE_8;
     print_params(ts_params);
-  }
-  else if (distance_remaining_to_traffic_light <= desired_distance_to_stop && in_tbd) // Given ET is in TDB, but vehicle is too close to intersection
-  {
-    ROS_DEBUG_STREAM("ET is still in TDB despite the vehicle being in desired distance to start stopping. Trying to handle this edge case gracefully...");
   }
   
   ROS_DEBUG_STREAM("Not able to make it with certainty: NEW TSCase: " << ts_params.case_num);
