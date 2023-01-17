@@ -780,6 +780,8 @@ private:
   FRIEND_TEST(LCIStrategicTestFixture, composeTrajectorySmoothingManeuverMessage);
   FRIEND_TEST(LCIStrategicTestFixture, findSpeedLimit);
   FRIEND_TEST(LCIStrategicTestFixture, handleFailureCaseHelper);
+  FRIEND_TEST(LCIStrategicTestFixture, planWhenETInTBD);
+  
   // Algo Unit Tests
   FRIEND_TEST(LCIStrategicTestFixture, calc_estimated_entry_time_left);
   FRIEND_TEST(LCIStrategicTestFixture, estimate_distance_to_stop);

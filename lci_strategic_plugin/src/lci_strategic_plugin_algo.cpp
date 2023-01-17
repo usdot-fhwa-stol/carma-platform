@@ -345,7 +345,7 @@ std::tuple<ros::Time, bool, bool> LCIStrategicPlugin::get_final_entry_time_and_c
       }
 
       // If ET is within green or TBD, it should always aim for at least minimum of "start_time of green or tdb + green_buffer" for safety
-
+  
       nearest_green_entry_time_cached_ = nearest_green_signal_start_time + ros::Duration(config_.green_light_time_buffer + EPSILON);
       
       // EPSILON=0.01 is there because if predictState's input exactly falls on ending_time it picks the previous state.
@@ -358,7 +358,7 @@ std::tuple<ros::Time, bool, bool> LCIStrategicPlugin::get_final_entry_time_and_c
       
     }
 
-    nearest_green_entry_time = nearest_green_entry_time_cached_.get();
+    nearest_green_entry_time = ros::Time(std::max(nearest_green_entry_time.toSec(), nearest_green_entry_time_cached_.get().toSec()));
   }
 
   if (nearest_green_entry_time_cached_ && nearest_green_entry_time > nearest_green_entry_time_cached_.get())

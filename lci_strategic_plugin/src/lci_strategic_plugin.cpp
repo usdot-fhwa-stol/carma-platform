@@ -738,6 +738,7 @@ void LCIStrategicPlugin::planWhenAPPROACHING(const cav_srvs::PlanManeuversReques
 
   ROS_DEBUG_STREAM("current_state_speed: " << current_state_speed);
   ROS_DEBUG_STREAM("intersection_speed_: " << intersection_speed_.get());
+  ROS_DEBUG_STREAM("distance_remaining_to_traffic_light: " << distance_remaining_to_traffic_light);
 
   intersection_end_downtrack_ =
       wm_->routeTrackPos(exit_lanelet.centerline2d().front().basicPoint2d()).downtrack;
@@ -754,7 +755,7 @@ void LCIStrategicPlugin::planWhenAPPROACHING(const cav_srvs::PlanManeuversReques
 
     return;
   }
-
+  
   /////////////  2. Start of TSMO UC2 & UC3 Algorithm : ET determination //////////////
 
   ros::Time earliest_entry_time = current_state.stamp + get_earliest_entry_time(distance_remaining_to_traffic_light, speed_limit, 
@@ -762,15 +763,11 @@ void LCIStrategicPlugin::planWhenAPPROACHING(const cav_srvs::PlanManeuversReques
 
   ROS_DEBUG_STREAM("earliest_entry_time: " << std::to_string(earliest_entry_time.toSec()) << ", with : " << earliest_entry_time - current_state.stamp  << " left at: " << std::to_string(current_state.stamp.toSec()));
 
-  //ros::Time nearest_green_entry_time; 
-  //bool is_entry_time_within_green_or_tbd = false;
-  //bool in_tbd = true;
-
   auto [nearest_green_entry_time, is_entry_time_within_green_or_tbd, in_tbd] = get_final_entry_time_and_conditions(current_state, earliest_entry_time, traffic_light);
 
   if (nearest_green_entry_time == ros::Time(0))
     return;
-    
+
   ROS_DEBUG_STREAM("Final nearest_green_entry_time: " << std::to_string(nearest_green_entry_time.toSec()));
 
   auto et_state = traffic_light->predictState(lanelet::time::timeFromSec(nearest_green_entry_time.toSec()));
@@ -792,7 +789,7 @@ void LCIStrategicPlugin::planWhenAPPROACHING(const cav_srvs::PlanManeuversReques
   print_params(ts_params);
 
   ROS_DEBUG_STREAM("SPEED PROFILE CASE:" << ts_params.case_num);
-
+   
   /////////////  4. Safety Check against traffic signals and Final Maneuver Generation //////////////
 
   double safe_distance_to_stop = pow(current_state.speed, 2)/(2 * max_comfort_decel_norm_) + config_.stopping_location_buffer / 2; //Idea is to aim the middle part of stopping buffer
@@ -807,6 +804,7 @@ void LCIStrategicPlugin::planWhenAPPROACHING(const cav_srvs::PlanManeuversReques
 
   ROS_DEBUG_STREAM("distance_remaining_to_traffic_light:  " << distance_remaining_to_traffic_light << ", current_state.speed: " << current_state.speed);
 
+ 
   // Although algorithm determines nearest_green_time is possible, check if the vehicle can arrive with certainty (Case 1-7)
   if (ts_params.is_algorithm_successful && ts_params.case_num != TSCase::CASE_8 && 
     (distance_remaining_to_traffic_light >= desired_distance_to_stop || !in_tbd) &&

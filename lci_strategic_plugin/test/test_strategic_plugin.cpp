@@ -25,7 +25,7 @@ namespace lci_strategic_plugin
 {
 
 
-
+/*
 /**
  *  - getGuidanceTestMap gives a simple one way, 3 lane map (25mph speed limit) with one static prebaked obstacle and
  *      4 lanelets in a lane (if 2 stripes make up one lanelet):
@@ -807,6 +807,101 @@ TEST(LCIStrategicPluginTest, parseStrategyParamstest)
   std::cout << "strategy_param: " << outgoing_msg.strategy_params << std::endl;
 }
 
+/**
+ *  - getGuidanceTestMap gives a simple one way, 3 lane map (25mph speed limit) with one static prebaked obstacle and
+ *      4 lanelets in a lane (if 2 stripes make up one lanelet):
+ *
+ *        |1203|1213|1223|
+ *        | _  _  _  _  _|
+ *        |1202| Ob |1222|
+ *        | _  _  _  _  _|
+ *        |1201|1211|1221|    num   = lanelet id hardcoded for easier testing
+ *        | _  _  _  _  _|    |     = lane lines
+ *        |1200|1210|1220|    - - - = Lanelet boundary
+ *        |              |    O     = Default Obstacle
+ *        ****************
+ *           START_LINE
+ */
+TEST_F(LCIStrategicTestFixture, planWhenETInTBD)
+{
+  LCIStrategicPluginConfig config;
+  config.enable_carma_streets_connection = true;
+  config.green_light_time_buffer = 1.0;
+  LCIStrategicPlugin lcip(cmw_, config);
+
+  cav_srvs::PlanManeuversRequest req;
+  cav_srvs::PlanManeuversResponse resp;
+
+  // Light will be located on lanelet 1200 (300m) and control lanelet 1202, 1203
+  lanelet::Id traffic_light_id = lanelet::utils::getId();
+  carma_wm::test::addTrafficLight(cmw_, traffic_light_id, {1200}, { 1203 });
+
+  req.header.stamp = ros::Time(4); // GREEN ends at 5, but 1.3 sec minimum to intersection
+  req.veh_x = 1.85;
+  req.veh_y = 285; // traffic light is at 300
+  req.veh_downtrack = req.veh_y;
+  req.veh_logitudinal_velocity = 10.0;
+  req.veh_lane_id = "1200";
+  lcip.scheduled_enter_time_ = 20000; // 20s in TBD
+  auto signal = cmw_->getMutableMap()->laneletLayer.get(1200).regulatoryElementsAs<lanelet::CarmaTrafficSignal>().front();
+  LCIStrategicPlugin::VehicleState current_state = lcip.extractInitialState(req);
+
+  double green_start_time = 1.0;
+  double green_end_time = 5.0;
+
+  signal->fixed_cycle_duration = lanelet::time::durationFromSec(0.0); //dynamic
+  signal->recorded_time_stamps = {};
+  signal->recorded_start_time_stamps = {};
+  signal->recorded_time_stamps.push_back(std::pair<boost::posix_time::ptime, lanelet::CarmaTrafficSignalState>(boost::posix_time::from_time_t(green_start_time), lanelet::CarmaTrafficSignalState::STOP_AND_REMAIN));
+  signal->recorded_start_time_stamps.push_back(boost::posix_time::from_time_t(0.0));
+  signal->recorded_time_stamps.push_back(std::pair<boost::posix_time::ptime, lanelet::CarmaTrafficSignalState>(boost::posix_time::from_time_t(green_end_time), lanelet::CarmaTrafficSignalState::PROTECTED_MOVEMENT_ALLOWED));
+  signal->recorded_start_time_stamps.push_back(boost::posix_time::from_time_t(green_start_time));
+
+  ////////// CASE 1: When too close to intersection to stop and in TBD, so stop at double accel (HandleFailureCase) ////////////////
+  lcip.last_case_num_ = TSCase::CASE_1; //simulating when vehicle is speeding up while ET goes into TBD
+  lcip.planWhenAPPROACHING(req, resp, current_state, signal, cmw_->getMutableMap()->laneletLayer.get(1200), cmw_->getMutableMap()->laneletLayer.get(1203), cmw_->getMutableMap()->laneletLayer.get(1200));
+
+  ASSERT_FALSE(resp.new_plan.maneuvers.empty());
+  ASSERT_TRUE(resp.new_plan.maneuvers.front().type == cav_msgs::Maneuver::STOP_AND_WAIT);
+  ASSERT_NEAR(resp.new_plan.maneuvers.front().stop_and_wait_maneuver.parameters.float_valued_meta_data[1], 3.0, 0.01);
+ 
+  ////////// CASE 2: When within desired stopping distance and able to stop and in TBD, so start stopping ////////////////
+  resp.new_plan.maneuvers = {};
+  req.header.stamp = ros::Time(0); // GREEN ends at 5, but 1.3 sec minimum to intersection
+  req.veh_x = 1.85;
+  req.veh_y = 260; // traffic light is at 300 
+  req.veh_downtrack = req.veh_y;
+  req.veh_logitudinal_velocity = 10.0;
+  req.veh_lane_id = "1200";
+  lcip.scheduled_enter_time_ = 20000; // 20s in TBD
+  current_state = lcip.extractInitialState(req);
+
+  lcip.last_case_num_ = TSCase::CASE_1; //simulating when vehicle is speeding up while ET goes into TBD
+  
+  lcip.planWhenAPPROACHING(req, resp, current_state, signal, cmw_->getMutableMap()->laneletLayer.get(1200), cmw_->getMutableMap()->laneletLayer.get(1203), cmw_->getMutableMap()->laneletLayer.get(1200));
+
+  ASSERT_FALSE(resp.new_plan.maneuvers.empty());
+  ASSERT_TRUE(resp.new_plan.maneuvers.front().type == cav_msgs::Maneuver::STOP_AND_WAIT);
+  ASSERT_NEAR(resp.new_plan.maneuvers.front().stop_and_wait_maneuver.parameters.float_valued_meta_data[1], 1.5, 0.01);
+
+  ////////// CASE 3: When far from desired stopping distance and ET in TBD, keep going ////////////////
+  resp.new_plan.maneuvers = {};
+  req.header.stamp = ros::Time(0); // GREEN ends at 5, but 1.3 sec minimum to intersection
+  req.veh_x = 1.85;
+  req.veh_y = 200; // traffic light is at 300 
+  req.veh_downtrack = req.veh_y;
+  req.veh_logitudinal_velocity = 10.0;
+  req.veh_lane_id = "1200";
+  lcip.scheduled_enter_time_ = 20000; // 20s in TBD
+  current_state = lcip.extractInitialState(req);
+
+  lcip.last_case_num_ = TSCase::CASE_1; //simulating when vehicle is speeding up while ET goes into TBD
+  
+  lcip.planWhenAPPROACHING(req, resp, current_state, signal, cmw_->getMutableMap()->laneletLayer.get(1200), cmw_->getMutableMap()->laneletLayer.get(1203), cmw_->getMutableMap()->laneletLayer.get(1200));
+
+  ASSERT_FALSE(resp.new_plan.maneuvers.empty());
+  ASSERT_TRUE(resp.new_plan.maneuvers.front().type == cav_msgs::Maneuver::LANE_FOLLOWING); //not stop
+}
 
 
 }  // namespace lci_strategic_plugin
