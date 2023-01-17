@@ -519,15 +519,13 @@ private:
    * \param current_state Current state of the vehicle
    * \param earliest_entry_time Earliest entry time calculated by the vehicle
    * \param traffic_light traffic signal the vehicle is using
-   * \param is_entry_time_within_green_or_tdb this function sets it to true if ET is in green or TDB (related to UC3, always set to true in UC2)
-   * \param in_tdb this function sets it to true if ET is in TDB (not modified if in UC2)
-   * \return final entry time the vehicle uses to enter the intersection
+   * \return tuple of <final entry time the vehicle uses to enter the intersection, 
+   *         is_entry_time_within_green_or_tbd: true if ET is in green or TBD (related to UC3, always set to true in UC2),
+   *         in_tbd: true if ET is in TBD (false if in UC2)>
   */
-  ros::Time get_final_entry_time_and_conditions(const VehicleState& current_state, 
+  std::tuple<ros::Time, bool, bool> get_final_entry_time_and_conditions(const VehicleState& current_state, 
                                                 const ros::Time& earliest_entry_time, 
-                                                lanelet::CarmaTrafficSignalPtr traffic_light, 
-                                                bool& is_entry_time_within_green_or_tdb, 
-                                                bool& in_tdb);
+                                                lanelet::CarmaTrafficSignalPtr traffic_light);
 
   /**
    * \brief Provides the scheduled entry time for the vehicle in the future. This scheduled time is the earliest possible entry time that 

@@ -215,15 +215,17 @@ ros::Duration LCIStrategicPlugin::get_earliest_entry_time(double remaining_dista
 
 }
 
-ros::Time LCIStrategicPlugin::get_final_entry_time_and_conditions(const VehicleState& current_state, const ros::Time& earliest_entry_time, lanelet::CarmaTrafficSignalPtr traffic_light, bool& is_entry_time_within_green_or_tdb, bool& in_tdb)
+std::tuple<ros::Time, bool, bool> LCIStrategicPlugin::get_final_entry_time_and_conditions(const VehicleState& current_state, const ros::Time& earliest_entry_time, lanelet::CarmaTrafficSignalPtr traffic_light)
 {
-  ros::Time nearest_green_entry_time;
+  ros::Time nearest_green_entry_time = ros::Time(0);
+  bool is_entry_time_within_green_or_tbd = false;
+  bool in_tbd = true;
 
   if (config_.enable_carma_streets_connection ==false || scheduled_enter_time_ == 0) //UC2
   {
     nearest_green_entry_time = get_nearest_green_entry_time(current_state.stamp, earliest_entry_time, traffic_light) 
                                           + ros::Duration(EPSILON); //0.01sec more buffer since green_light algorithm's timestamp picks the previous signal - Vehicle Estimation
-    is_entry_time_within_green_or_tdb = true; 
+    is_entry_time_within_green_or_tbd = true; 
   }
   else if(config_.enable_carma_streets_connection ==true && scheduled_enter_time_ != 0 ) // UC3
   {
@@ -241,25 +243,25 @@ ros::Time LCIStrategicPlugin::get_final_entry_time_and_conditions(const VehicleS
         {
           ROS_DEBUG_STREAM("ET is inside the GREEN phase! where starting time: " << std::to_string(lanelet::time::toSec(traffic_light->recorded_start_time_stamps[i])) 
             << ", ending time of that green signal is: " << std::to_string(lanelet::time::toSec(pair.first)));
-          is_entry_time_within_green_or_tdb = true;
+          is_entry_time_within_green_or_tbd = true;
         }
         else
         {
           ROS_ERROR_STREAM("Vehicle should plan cruise and stop as ET is inside the RED or YELLOW phase! where starting time: " << std::to_string(lanelet::time::toSec(traffic_light->recorded_start_time_stamps[i])) 
             << ", ending time of that green signal is: " << std::to_string(lanelet::time::toSec(pair.first)));
-          is_entry_time_within_green_or_tdb = false;
+          is_entry_time_within_green_or_tbd = false;
         }
 
-        in_tdb = false;
+        in_tbd = false;
         break;
       }
       i++;
     }
 
-    if (in_tdb)
+    if (in_tbd)
     {
-      ROS_DEBUG_STREAM("ET is inside TDB phase! where starting time: " << std::to_string(lanelet::time::toSec(traffic_light->recorded_time_stamps.back().first)));
-      is_entry_time_within_green_or_tdb = true;
+      ROS_DEBUG_STREAM("ET is inside TBD phase! where starting time: " << std::to_string(lanelet::time::toSec(traffic_light->recorded_time_stamps.back().first)));
+      is_entry_time_within_green_or_tbd = true;
     }
 
   }
@@ -273,7 +275,7 @@ ros::Time LCIStrategicPlugin::get_final_entry_time_and_conditions(const VehicleS
 
   ROS_DEBUG_STREAM("After accounting for cached - nearest_green_entry_time: " << std::to_string(nearest_green_entry_time.toSec()) << ", with : " << nearest_green_entry_time - current_state.stamp  << " seconds left at: " << std::to_string(current_state.stamp.toSec()));
   
-  if (!nearest_green_entry_time_cached_ && is_entry_time_within_green_or_tdb) 
+  if (!nearest_green_entry_time_cached_ && is_entry_time_within_green_or_tbd) 
   {
     ROS_DEBUG_STREAM("Applying green_light_buffer for the first time and caching! nearest_green_entry_time (without buffer):" << std::to_string(nearest_green_entry_time.toSec()) << ", and earliest_entry_time: " << std::to_string(earliest_entry_time.toSec()));
     // save first calculated nearest_green_entry_time + buffer to compare against in the future as nearest_green_entry_time changes with earliest_entry_time
@@ -289,7 +291,7 @@ ros::Time LCIStrategicPlugin::get_final_entry_time_and_conditions(const VehicleS
     if (!validLightState(early_arrival_state_green_et_optional, early_arrival_time_green_et))
     {
       ROS_ERROR_STREAM("Unable to resolve give signal...");
-      return ros::Time(0);
+      return std::make_tuple(ros::Time(0), is_entry_time_within_green_or_tbd, in_tbd);
     }
 
     ROS_DEBUG_STREAM("early_arrival_state_green_et: " << early_arrival_state_green_et_optional.get().second);
@@ -314,7 +316,7 @@ ros::Time LCIStrategicPlugin::get_final_entry_time_and_conditions(const VehicleS
         if (!validLightState(normal_arrival_state_green_et_optional, nearest_green_entry_time))
         {
           ROS_ERROR_STREAM("Unable to resolve give signal...");
-          return ros::Time(0);
+          return std::make_tuple(ros::Time(0), is_entry_time_within_green_or_tbd, in_tbd);
         }
 
         ROS_DEBUG_STREAM("normal_arrival_signal_end_time: " << std::to_string(lanelet::time::toSec(normal_arrival_state_green_et_optional.get().first)));
@@ -342,7 +344,7 @@ ros::Time LCIStrategicPlugin::get_final_entry_time_and_conditions(const VehicleS
         }
       }
 
-      // If ET is within green or TDB, it should always aim for at least minimum of "start_time of green or tdb + green_buffer" for safety
+      // If ET is within green or TBD, it should always aim for at least minimum of "start_time of green or tdb + green_buffer" for safety
 
       nearest_green_entry_time_cached_ = nearest_green_signal_start_time + ros::Duration(config_.green_light_time_buffer + EPSILON);
       
@@ -361,10 +363,9 @@ ros::Time LCIStrategicPlugin::get_final_entry_time_and_conditions(const VehicleS
 
   if (nearest_green_entry_time_cached_ && nearest_green_entry_time > nearest_green_entry_time_cached_.get())
   {
-    ROS_DEBUG_STREAM("Earliest entry time... has gone past the cashed entering time. nearest_green_entry_time_cached_ (which can also be TDB):" << std::to_string(nearest_green_entry_time_cached_.get().toSec()) << ", and earliest_entry_time: " << std::to_string(earliest_entry_time.toSec()));
+    ROS_DEBUG_STREAM("Earliest entry time... has gone past the cashed entering time. nearest_green_entry_time_cached_ (which can also be TBD):" << std::to_string(nearest_green_entry_time_cached_.get().toSec()) << ", and earliest_entry_time: " << std::to_string(earliest_entry_time.toSec()));
   }
-
-  return nearest_green_entry_time;
+  return std::make_tuple(nearest_green_entry_time, is_entry_time_within_green_or_tbd, in_tbd);
 }
 
 double LCIStrategicPlugin::get_inflection_speed_value(double x, double x1, double x2, double free_flow_speed, double current_speed, double departure_speed, double max_accel, double max_decel) const

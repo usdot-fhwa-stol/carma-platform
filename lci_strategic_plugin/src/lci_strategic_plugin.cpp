@@ -761,11 +761,12 @@ void LCIStrategicPlugin::planWhenAPPROACHING(const cav_srvs::PlanManeuversReques
                                                   current_state_speed, intersection_speed_.get(), max_comfort_accel_, max_comfort_decel_);
 
   ROS_DEBUG_STREAM("earliest_entry_time: " << std::to_string(earliest_entry_time.toSec()) << ", with : " << earliest_entry_time - current_state.stamp  << " left at: " << std::to_string(current_state.stamp.toSec()));
-  ros::Time nearest_green_entry_time;
-  bool is_entry_time_within_green_or_tdb = false;
-  bool in_tdb = true;
 
-  nearest_green_entry_time = get_final_entry_time_and_conditions(current_state, earliest_entry_time, traffic_light, is_entry_time_within_green_or_tdb, in_tdb);
+  //ros::Time nearest_green_entry_time; 
+  //bool is_entry_time_within_green_or_tbd = false;
+  //bool in_tbd = true;
+
+  auto [nearest_green_entry_time, is_entry_time_within_green_or_tbd, in_tbd] = get_final_entry_time_and_conditions(current_state, earliest_entry_time, traffic_light);
 
   if (nearest_green_entry_time == ros::Time(0))
     return;
@@ -794,8 +795,8 @@ void LCIStrategicPlugin::planWhenAPPROACHING(const cav_srvs::PlanManeuversReques
 
   /////////////  4. Safety Check against traffic signals and Final Maneuver Generation //////////////
 
-   double safe_distance_to_stop = pow(current_state.speed, 2)/(2 * max_comfort_decel_norm_);
-  ROS_DEBUG_STREAM("safe_distance_to_stop at max_comfort_decel:  " << safe_distance_to_stop << ", max_comfort_decel_norm_: " << max_comfort_decel_norm_);
+  double safe_distance_to_stop = pow(current_state.speed, 2)/(2 * max_comfort_decel_norm_) + config_.stopping_location_buffer / 2; //Idea is to aim the middle part of stopping buffer
+  ROS_DEBUG_STREAM("safe_distance_to_stop at max_comfort_decel (with stopping_location_buffer/2):  " << safe_distance_to_stop << ", max_comfort_decel_norm_: " << max_comfort_decel_norm_);
 
   double desired_distance_to_stop = pow(current_state.speed, 2)/(2 * max_comfort_decel_norm_ * config_.deceleration_fraction) + config_.desired_distance_to_stop_buffer;
   ROS_DEBUG_STREAM("desired_distance_to_stop at: " << desired_distance_to_stop << ", where effective deceleration rate is: " << max_comfort_decel_norm_ * config_.deceleration_fraction);
@@ -808,9 +809,10 @@ void LCIStrategicPlugin::planWhenAPPROACHING(const cav_srvs::PlanManeuversReques
 
   // Although algorithm determines nearest_green_time is possible, check if the vehicle can arrive with certainty (Case 1-7)
   if (ts_params.is_algorithm_successful && ts_params.case_num != TSCase::CASE_8 && 
-    (distance_remaining_to_traffic_light >= desired_distance_to_stop || !in_tdb)) // Given ET is in TDB, but vehicle is too close to intersection
+    (distance_remaining_to_traffic_light >= desired_distance_to_stop || !in_tbd) &&
+    is_entry_time_within_green_or_tbd) // ET cannot be explicitly inside RED or YELLOW in available future states, which is ERROR case
   {
-    handleGreenSignalScenario(req, resp, current_state, current_state_speed, traffic_light, entry_lanelet, exit_lanelet, traffic_light_down_track, ts_params, in_tdb); //in_tdb means optional to check certainty arrival at green
+    handleGreenSignalScenario(req, resp, current_state, current_state_speed, traffic_light, entry_lanelet, exit_lanelet, traffic_light_down_track, ts_params, in_tbd); //in_tbd means optional to check certainty arrival at green
   
     if (!resp.new_plan.maneuvers.empty()) // able to pass at green
     {
@@ -825,7 +827,7 @@ void LCIStrategicPlugin::planWhenAPPROACHING(const cav_srvs::PlanManeuversReques
     ts_params.case_num = CASE_8;
     print_params(ts_params);
   }
-  else if (distance_remaining_to_traffic_light <= desired_distance_to_stop && in_tdb) // Given ET is in TDB, but vehicle is too close to intersection
+  else if (distance_remaining_to_traffic_light <= desired_distance_to_stop && in_tbd) // Given ET is in TDB, but vehicle is too close to intersection
   {
     ROS_DEBUG_STREAM("ET is still in TDB despite the vehicle being in desired distance to start stopping. Trying to handle this edge case gracefully...");
   }
