@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022 LEIDOS.
+ * Copyright (C) 2022-2023 LEIDOS.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -120,6 +120,14 @@ void ApproachingEmergencyVehicleTransitionTable::eventWhenMOVING_OVER_FOR_APPROA
       setAndLogState(ApproachingEmergencyVehicleState::WAITING_FOR_APPROACHING_ERV, event);
       break;
 
+    case ApproachingEmergencyVehicleEvent::ERV_PASSING_IN_PATH:
+      setAndLogState(ApproachingEmergencyVehicleState::SLOWING_DOWN_FOR_ERV, event);
+      break;
+
+    case ApproachingEmergencyVehicleEvent::ERV_PASSING_NOT_IN_PATH:
+      setAndLogState(ApproachingEmergencyVehicleState::SLOWING_DOWN_FOR_ERV, event);
+      break;
+
     default:
       logDebugEvent(event);
       break;
@@ -143,6 +151,14 @@ void ApproachingEmergencyVehicleTransitionTable::eventWhenWAITING_FOR_APPROACHIN
       break;
 
     case ApproachingEmergencyVehicleEvent::APPROACHING_ERV_NOT_IN_PATH:
+      setAndLogState(ApproachingEmergencyVehicleState::WAITING_FOR_APPROACHING_ERV, event);
+      break;
+
+    case ApproachingEmergencyVehicleEvent::ERV_ABOUT_TO_PASS_IN_PATH:
+      setAndLogState(ApproachingEmergencyVehicleState::WAITING_FOR_APPROACHING_ERV, event);
+      break;
+
+    case ApproachingEmergencyVehicleEvent::ERV_ABOUT_TO_PASS_NOT_IN_PATH:
       setAndLogState(ApproachingEmergencyVehicleState::WAITING_FOR_APPROACHING_ERV, event);
       break;
 

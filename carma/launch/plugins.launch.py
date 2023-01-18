@@ -1,4 +1,4 @@
-# Copyright (C) 2022 LEIDOS.
+# Copyright (C) 2022-2023 LEIDOS.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -317,11 +317,13 @@ def generate_launch_description():
                     ("incoming_bsm", [ EnvironmentVariable('CARMA_MSG_NS', default_value=''), "/incoming_bsm" ] ),
                     ("georeference", [ EnvironmentVariable('CARMA_LOCZ_NS', default_value=''), "/map_param_loader/georeference" ] ),
                     ("route_state", [ EnvironmentVariable('CARMA_GUIDE_NS', default_value=''), "/route_state" ] ),
-                    ("outgoing_emergency_vehicle_response", [ EnvironmentVariable('CARMA_MSG_NS', default_value=''), "/outgoing_emergency_vehicle_response" ] )
+                    ("outgoing_emergency_vehicle_response", [ EnvironmentVariable('CARMA_MSG_NS', default_value=''), "/outgoing_emergency_vehicle_response" ] ),
+                    ("incoming_emergency_vehicle_ack", [ EnvironmentVariable('CARMA_MSG_NS', default_value=''), "/incoming_emergency_vehicle_ack" ])
                 ],
                 parameters=[
                     approaching_emergency_vehicle_plugin_param_file,
-                    vehicle_characteristics_param_file
+                    vehicle_characteristics_param_file,
+                    vehicle_config_param_file
                 ]
             ),
         ]
