@@ -14,7 +14,7 @@ trajectory_smoothing_activation_distance: 200.0
 stopping_location_buffer : 8.0
 
 # Double: A buffer in seconds around the green phase which will reduce the phase length such that vehicle still considers it non-green
-green_light_time_buffer : 1.0
+green_light_time_buffer : 0.5
 
 # Double: A buffer in seconds starting green phase which is still considered valid stop if safety requires it
 stop_light_time_buffer : 2.0
