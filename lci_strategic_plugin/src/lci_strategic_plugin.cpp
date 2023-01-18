@@ -241,11 +241,16 @@ void LCIStrategicPlugin::handleStopping(const cav_srvs::PlanManeuversRequest& re
   double decel_rate =  max_comfort_decel_norm_; // Kinematic |(v_f - v_i) / t = a|
 
   if (is_emergency)
+  {
     decel_rate = 2 * max_comfort_decel_norm_;
+    case_num_ = TSCase::EMERGENCY_STOPPING;
+  }
+  else
+  {
+    case_num_ = TSCase::STOPPING;
+  }
 
   ROS_DEBUG_STREAM("HANDLE_STOPPING: Planning stop and wait maneuver at decel_rate: " << decel_rate);
-  
-  case_num_ = TSCase::STOPPING;
   
   resp.new_plan.maneuvers.push_back(composeStopAndWaitManeuverMessage(
     current_state.downtrack, traffic_light_down_track, current_state.speed, crossed_lanelets.front().id(),
@@ -805,14 +810,14 @@ void LCIStrategicPlugin::planWhenAPPROACHING(const cav_srvs::PlanManeuversReques
   ROS_DEBUG_STREAM("distance_remaining_to_traffic_light:  " << distance_remaining_to_traffic_light << ", current_state.speed: " << current_state.speed);
 
   // Basic RED signal violation check
-  if (distance_remaining_to_traffic_light <= desired_distance_to_stop)
+  if (distance_remaining_to_traffic_light <= desired_distance_to_stop || last_case_num_ == TSCase::EMERGENCY_STOPPING)
   {
     if (in_tbd) // Given ET is in TBD, but vehicle is too close to intersection
     {
       ROS_DEBUG_STREAM("ET is still in TBD despite the vehicle being in desired distance to start stopping. Trying to handle this edge case gracefully...");
     }
 
-    double stopping_time = current_state.speed / max_comfort_decel_norm_;
+    double stopping_time = current_state.speed / 1.5 * max_comfort_decel_norm_; //one half the acceleration (twice the acceleration to stop) to account for emergency case
 
     ros::Time stopping_arrival_time =
           current_state.stamp + ros::Duration(stopping_time);
@@ -831,8 +836,8 @@ void LCIStrategicPlugin::planWhenAPPROACHING(const cav_srvs::PlanManeuversReques
       stopping_arrival_state_optional.get().second == lanelet::CarmaTrafficSignalState::PROTECTED_CLEARANCE)
     {
       ROS_WARN_STREAM("Detected possible RED light violation! Stopping!");
-      handleStopping(req,resp, current_state, traffic_light, entry_lanelet, exit_lanelet, current_lanelet, traffic_light_down_track); //case_9
-      last_case_num_ = TSCase::STOPPING;
+      handleStopping(req,resp, current_state, traffic_light, entry_lanelet, exit_lanelet, current_lanelet, traffic_light_down_track, true); //case_11
+      last_case_num_ = TSCase::EMERGENCY_STOPPING;
 
       return;
     }
@@ -902,7 +907,7 @@ void LCIStrategicPlugin::planWhenAPPROACHING(const cav_srvs::PlanManeuversReques
       if (resp.new_plan.maneuvers.empty())
       {
         ROS_WARN_STREAM("HANDLE_SAFETY: Planning forced slow-down... last case:" << static_cast<int>(last_case_num_));
-        handleStopping(req,resp, current_state, traffic_light, entry_lanelet, exit_lanelet, current_lanelet, traffic_light_down_track, true); //case_9 emergency case with twice the normal deceleration
+        handleStopping(req,resp, current_state, traffic_light, entry_lanelet, exit_lanelet, current_lanelet, traffic_light_down_track, true); //case_11 emergency case with twice the normal deceleration
       }
     }
     else
