@@ -1,0 +1,40 @@
+# Double: A threshold; if the estimated duration until an ERV passes the ego vehicle is below this, the
+#         ERV is considered to be actively passing the ego vehicle.
+# Units: Seconds
+passing_threshold : 15.0
+
+# Double: A threshold; if the estimated duration until an ERV passes the ego vehicle is below this, the
+#         ERV will no longer attempt to change lanes in reaction to an approaching ERV.
+# Units: Seconds
+do_not_move_over_threshold : 20.0
+
+# Double: A threshold; if the estimated duration until an ERV passes the ego vehicle is below this, the
+#         ERV will no longer attempt to change lanes in reaction to an approaching ERV.
+# Units: Seconds
+approaching_threshold : 60.0
+
+# Double: The rate that incoming BSMs from a specific ERV will be processed by this plugin. All received 
+#         BSMs from an ERV between processed BSMs will be dropped.
+# Units: Hz
+bsm_processing_frequency : 1.0
+
+# Double: The amount that the target speed of maneuvers will be reduced below the speed limit when an
+#         ERV is actively passing the ego vehicle.
+# Units: m/s
+speed_reduction_during_passing : 10.0
+
+# Double: The minimum target speed that will be assigned to maneuvers when an ERV is actively passing
+#         the ego vehicle.
+# Units: m/s
+minimum_reduced_speed : 10.0
+
+# Double: The frequency at which this plugin will check whether a timeout has occurred for the currently-tracked ERV.
+# Units: Hz
+timeout_check_frequency : 2.0
+
+# Double: If no BSM has been received from the currently-tracked ERV, than the ERV will no longer be tracked by
+#         this plugin. 
+# Units: Seconds
+timeout_duration : 5.0
+
+
