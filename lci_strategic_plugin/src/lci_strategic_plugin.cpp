@@ -832,12 +832,12 @@ void LCIStrategicPlugin::planWhenAPPROACHING(const cav_srvs::PlanManeuversReques
       return;
     }
 
-    if (stopping_arrival_state_optional.get().second == lanelet::CarmaTrafficSignalState::STOP_AND_REMAIN || 
-      stopping_arrival_state_optional.get().second == lanelet::CarmaTrafficSignalState::PROTECTED_CLEARANCE)
+    if (stopping_arrival_state_optional.get().second == lanelet::CarmaTrafficSignalState::STOP_AND_REMAIN || last_case_num_ == TSCase::EMERGENCY_STOPPING) // if once started emergency stopped, keep doing it to avoid jerkiness
     {
       ROS_WARN_STREAM("Detected possible RED light violation! Stopping!");
       handleStopping(req,resp, current_state, traffic_light, entry_lanelet, exit_lanelet, current_lanelet, traffic_light_down_track, true); //case_11
       last_case_num_ = TSCase::EMERGENCY_STOPPING;
+      case_num_ = TSCase::EMERGENCY_STOPPING;
 
       return;
     }
