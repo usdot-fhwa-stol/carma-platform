@@ -244,11 +244,11 @@ void LCIStrategicPlugin::handleStopping(const cav_srvs::PlanManeuversRequest& re
   if (is_emergency)
   {
     decel_rate = emergency_decel_norm_;
-    case_num_ = TSCase::EMERGENCY_STOPPING;
+    last_case_num_ = TSCase::EMERGENCY_STOPPING;
   }
   else
   {
-    case_num_ = TSCase::STOPPING;
+    last_case_num_ = TSCase::STOPPING;
   }
 
   ROS_DEBUG_STREAM("HANDLE_STOPPING: Planning stop and wait maneuver at decel_rate: " << decel_rate);
@@ -295,7 +295,7 @@ void LCIStrategicPlugin::handleFailureCase(const cav_srvs::PlanManeuversRequest&
       traffic_light_down_track, intersection_end_downtrack_.get(), intersection_speed_.get(),
       incomplete_traj_params.modified_departure_speed, current_state.stamp + ros::Duration(incomplete_traj_params.modified_remaining_time), intersection_exit_time, crossed_lanelets.back().id(), crossed_lanelets.back().id()));
 
-  case_num_ = TSCase::UNAVAILABLE;
+  last_case_num_ = TSCase::DEGRADED_TSCASE;
 }
 
 void LCIStrategicPlugin::handleCruisingUntilStop(const cav_srvs::PlanManeuversRequest& req, cav_srvs::PlanManeuversResponse& resp, 
@@ -336,8 +336,6 @@ void LCIStrategicPlugin::handleCruisingUntilStop(const cav_srvs::PlanManeuversRe
     new_ts_params.x2_, traffic_light_down_track, new_ts_params.v2_, case_8_crossed_lanelets.front().id(),
     case_8_crossed_lanelets.back().id(), ros::Time(new_ts_params.t2_),
     ros::Time(new_ts_params.t2_) + ros::Duration(config_.min_maneuver_planning_period), decel_rate));
-
-  case_num_ = TSCase::CASE_8;
 
   return;
 }
@@ -671,7 +669,7 @@ void LCIStrategicPlugin::planWhenUNAVAILABLE(const cav_srvs::PlanManeuversReques
   }
   else
   {
-    case_num_ = TSCase::UNAVAILABLE;
+    last_case_num_ = TSCase::UNAVAILABLE;
     ROS_DEBUG_STREAM("Not within intersection range");
   }
 
@@ -844,7 +842,6 @@ void LCIStrategicPlugin::planWhenAPPROACHING(const cav_srvs::PlanManeuversReques
       ROS_WARN_STREAM("Detected possible RED light violation! Stopping!");
       handleStopping(req,resp, current_state, traffic_light, entry_lanelet, exit_lanelet, current_lanelet, traffic_light_down_track, true); //case_11
       last_case_num_ = TSCase::EMERGENCY_STOPPING;
-      case_num_ = TSCase::EMERGENCY_STOPPING;
 
       return;
     }
@@ -860,7 +857,6 @@ void LCIStrategicPlugin::planWhenAPPROACHING(const cav_srvs::PlanManeuversReques
     if (!resp.new_plan.maneuvers.empty()) // able to pass at green
     {
       last_case_num_ = ts_params.case_num;
-      case_num_ = ts_params.case_num; //to print for debugging
       return;
     }
     
@@ -881,7 +877,7 @@ void LCIStrategicPlugin::planWhenAPPROACHING(const cav_srvs::PlanManeuversReques
     
     if (!resp.new_plan.maneuvers.empty())
     {
-      last_case_num_ = ts_params.case_num; //case 8
+      last_case_num_ = TSCase::CASE_8;
       return;
     }
   }
@@ -891,19 +887,14 @@ void LCIStrategicPlugin::planWhenAPPROACHING(const cav_srvs::PlanManeuversReques
   {
     ROS_DEBUG_STREAM("Planning stopping now. last case:" << static_cast<int>(last_case_num_));
     handleStopping(req,resp, current_state, traffic_light, entry_lanelet, exit_lanelet, current_lanelet, traffic_light_down_track); //case_9
-
-    if (!resp.new_plan.maneuvers.empty()) // able to stop
-    {
-      last_case_num_ = TSCase::STOPPING;
-      return;
-    }
+    return;
   }
 
   if (safe_distance_to_stop > distance_remaining_to_traffic_light)
   {
     ROS_DEBUG_STREAM("No longer within safe distance to stop! Decide to continue stopping or continue into intersection");
     
-    if (last_case_num_ != TSCase::STOPPING && last_case_num_ != TSCase::UNAVAILABLE && last_case_num_ != TSCase::CASE_8) //case 1-7
+    if (last_case_num_ != TSCase::STOPPING && last_case_num_ != TSCase::UNAVAILABLE && last_case_num_ != TSCase::CASE_8) //case 1-7 or emergency stop or handlefailure 
     {
       // 3. if not able to stop nor reach target speed at green, attempt its best to reach the target parameters at the intersection
       ROS_DEBUG_STREAM("HANDLE_LAST_RESORT: The vehicle is not able to stop at red/yellow light nor is able to reach target speed at green. Attempting its best to pass through at green!");
@@ -931,7 +922,7 @@ void LCIStrategicPlugin::planWhenWAITING(const cav_srvs::PlanManeuversRequest& r
                                         cav_srvs::PlanManeuversResponse& resp, const VehicleState& current_state,
                                         const lanelet::CarmaTrafficSignalPtr& traffic_light, const lanelet::ConstLanelet& entry_lanelet, const lanelet::ConstLanelet& exit_lanelet, const lanelet::ConstLanelet& current_lanelet)
 {
-  case_num_ = TSCase::STOPPING;
+  last_case_num_ = TSCase::STOPPING;
 
   if (!traffic_light)
   {
@@ -998,7 +989,7 @@ void LCIStrategicPlugin::planWhenDEPARTING(const cav_srvs::PlanManeuversRequest&
                                           cav_srvs::PlanManeuversResponse& resp, const VehicleState& current_state,
                                           double intersection_end_downtrack, double intersection_speed_limit)
 {
-  case_num_ = TSCase::UNAVAILABLE;
+  last_case_num_ = TSCase::UNAVAILABLE;
   
   if (current_state.downtrack > intersection_end_downtrack)
   {

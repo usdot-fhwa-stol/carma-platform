@@ -40,7 +40,7 @@ namespace lci_strategic_plugin
  *        |              |    O     = Default Obstacle
  *        ****************
  *           START_LINE
- *
+ */
 TEST_F(LCIStrategicTestFixture, planManeuverCb)
 {
   LCIStrategicPluginConfig config;
@@ -806,7 +806,7 @@ TEST(LCIStrategicPluginTest, parseStrategyParamstest)
   EXPECT_EQ(outgoing_msg.m_header.sender_id, config.vehicle_id);
   std::cout << "strategy_param: " << outgoing_msg.strategy_params << std::endl;
 }
-*/
+
 /**
  *  - getGuidanceTestMap gives a simple one way, 3 lane map (25mph speed limit) with one static prebaked obstacle and
  *      4 lanelets in a lane (if 2 stripes make up one lanelet):
@@ -959,6 +959,47 @@ TEST_F(LCIStrategicTestFixture, planWhenETInTBD)
   ASSERT_FALSE(resp.new_plan.maneuvers.empty());
   ASSERT_TRUE(resp.new_plan.maneuvers.front().type == cav_msgs::Maneuver::STOP_AND_WAIT); //not stop
   ASSERT_NEAR(resp.new_plan.maneuvers.front().stop_and_wait_maneuver.parameters.float_valued_meta_data[1], 4.0, 0.01);
+
+  ///////// CASE 5. Hypothetical run that can make the GREEN using handleFailure ///////////
+  LCIStrategicPluginConfig config_failure;
+  config_failure.vehicle_accel_limit = 2;
+  config_failure.vehicle_accel_limit_multiplier = 1;
+  config_failure.vehicle_decel_limit_multiplier = 1;
+  config_failure.vehicle_decel_limit= 2;
+  config_failure.green_light_time_buffer = 1.0;
+  ros::Time::setNow(ros::Time(0));
+  LCIStrategicPlugin lcip_failure(cmw_, config_failure);
+
+  ////////// CASE 1 //////////////// copy from test HandleFailureCaseHelper
+  // Traj upper 1
+
+  green_start_time = 1.0;
+  green_end_time = 5.0;
+
+  signal->fixed_cycle_duration = lanelet::time::durationFromSec(0.0); //dynamic
+  signal->recorded_time_stamps = {};
+  signal->recorded_start_time_stamps = {};
+  signal->recorded_time_stamps.push_back(std::pair<boost::posix_time::ptime, lanelet::CarmaTrafficSignalState>(boost::posix_time::from_time_t(green_start_time), lanelet::CarmaTrafficSignalState::STOP_AND_REMAIN));
+  signal->recorded_start_time_stamps.push_back(boost::posix_time::from_time_t(0.0));
+  signal->recorded_time_stamps.push_back(std::pair<boost::posix_time::ptime, lanelet::CarmaTrafficSignalState>(boost::posix_time::from_time_t(green_end_time), lanelet::CarmaTrafficSignalState::PROTECTED_MOVEMENT_ALLOWED));
+  signal->recorded_start_time_stamps.push_back(boost::posix_time::from_time_t(green_start_time));
+
+  resp.new_plan.maneuvers = {};
+  req.header.stamp = ros::Time(2.0);
+  req.veh_x = 1.85;
+  req.veh_y = 300.0 - 12.0;         //unit test light is at 300
+  req.veh_downtrack = req.veh_y;
+  req.veh_logitudinal_velocity = 9.0;
+  req.veh_lane_id = "1200";
+  lcip_failure.scheduled_enter_time_ = 20000; // 20.0 
+  current_state = lcip_failure.extractInitialState(req);
+
+  lcip_failure.last_case_num_ = TSCase::CASE_1;
+  
+  lcip_failure.planWhenAPPROACHING(req, resp, current_state, signal, cmw_->getMutableMap()->laneletLayer.get(1200), cmw_->getMutableMap()->laneletLayer.get(1203), cmw_->getMutableMap()->laneletLayer.get(1200));
+
+  ASSERT_FALSE(resp.new_plan.maneuvers.empty());
+  ASSERT_TRUE(resp.new_plan.maneuvers.front().type == cav_msgs::Maneuver::LANE_FOLLOWING); //not stop
 
 }
 

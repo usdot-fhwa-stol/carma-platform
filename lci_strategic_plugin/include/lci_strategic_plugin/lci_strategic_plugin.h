@@ -68,6 +68,7 @@ enum TSCase {
   STOPPING=9,
   UNAVAILABLE = 10,
   EMERGENCY_STOPPING=11,
+  DEGRADED_TSCASE=12  // when not performing trajectory smoothing, but making through GREEN
 };
 
 struct TrajectoryParams
@@ -203,13 +204,12 @@ public:
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////
    /**
    * \brief Useful metrics for LCI Plugin
-   * \param case_num_ Current speed profile case generated
+   * \param last_case_num_ Current speed profile case generated
    * \param distance_remaining_to_tf_ distance_remaining_to_traffic signal meters
    * \param earliest_entry_time_ earliest_entry_time in sec
    * \param scheduled_entry_time_ scheduled_entry_time in sec
    * 
    */
-  TSCase case_num_ = TSCase::UNAVAILABLE; 
   TSCase last_case_num_ = TSCase::UNAVAILABLE; 
   double distance_remaining_to_tf_ = 0.0;
   double earliest_entry_time_ = 0.0;
