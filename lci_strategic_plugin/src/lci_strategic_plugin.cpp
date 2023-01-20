@@ -806,8 +806,12 @@ void LCIStrategicPlugin::planWhenAPPROACHING(const cav_srvs::PlanManeuversReques
   double desired_distance_to_stop = pow(current_state.speed, 2)/(2 * max_comfort_decel_norm_ * config_.deceleration_fraction) + config_.desired_distance_to_stop_buffer;
   ROS_DEBUG_STREAM("desired_distance_to_stop at: " << desired_distance_to_stop << ", where effective deceleration rate is: " << max_comfort_decel_norm_ * config_.deceleration_fraction);
   
+  emergency_distance_to_stop = std::max(emergency_distance_to_stop, config_.stopping_location_buffer);
+  safe_distance_to_stop = std::max(safe_distance_to_stop, config_.stopping_location_buffer);
   desired_distance_to_stop = std::max(desired_distance_to_stop, config_.stopping_location_buffer);
 
+  ROS_DEBUG_STREAM("new emergency_distance_to_stop: " << emergency_distance_to_stop);
+  ROS_DEBUG_STREAM("new safe_distance_to_stop: " << safe_distance_to_stop);
   ROS_DEBUG_STREAM("new desired_distance_to_stop: " << desired_distance_to_stop);
 
   ROS_DEBUG_STREAM("distance_remaining_to_traffic_light:  " << distance_remaining_to_traffic_light << ", current_state.speed: " << current_state.speed);

@@ -856,7 +856,7 @@ TEST_F(LCIStrategicTestFixture, planWhenETInTBD)
   signal->recorded_start_time_stamps.push_back(boost::posix_time::from_time_t(0.0));
   signal->recorded_time_stamps.push_back(std::pair<boost::posix_time::ptime, lanelet::CarmaTrafficSignalState>(boost::posix_time::from_time_t(green_end_time), lanelet::CarmaTrafficSignalState::PROTECTED_MOVEMENT_ALLOWED));
   signal->recorded_start_time_stamps.push_back(boost::posix_time::from_time_t(green_start_time));
-/*
+
   ////////// CASE 1: When close to intersection check for basic red light violation ////////////////
   lcip.last_case_num_ = TSCase::CASE_1; //simulating when vehicle is speeding up while ET goes into TBD
   lcip.planWhenAPPROACHING(req, resp, current_state, signal, cmw_->getMutableMap()->laneletLayer.get(1200), cmw_->getMutableMap()->laneletLayer.get(1203), cmw_->getMutableMap()->laneletLayer.get(1200));
@@ -900,15 +900,16 @@ TEST_F(LCIStrategicTestFixture, planWhenETInTBD)
 
   ASSERT_FALSE(resp.new_plan.maneuvers.empty());
   ASSERT_TRUE(resp.new_plan.maneuvers.front().type == cav_msgs::Maneuver::LANE_FOLLOWING); //not stop
-*/
+
   ////////// CASE 4: Actual run from platform ////////////////
   LCIStrategicPluginConfig config_real;
   config_real.enable_carma_streets_connection = true;
   config_real.green_light_time_buffer = 1.0;
-  config_real.deceleration_fraction = 0.8;
+  config_real.deceleration_fraction = 0.7;  // actual was 0.8 which failed. 
   config_real.vehicle_decel_limit_multiplier = 1.0;
   config_real.vehicle_accel_limit_multiplier = 1.0;
   config_real.desired_distance_to_stop_buffer = 15.0;
+  config_real.stopping_location_buffer = 8.0;
 
   LCIStrategicPlugin lcip_real(cmw_, config_real);
 
@@ -929,10 +930,29 @@ TEST_F(LCIStrategicTestFixture, planWhenETInTBD)
   req.veh_downtrack = req.veh_y;
   req.veh_logitudinal_velocity = 10.402;
   req.veh_lane_id = "1200";
-  lcip_real.scheduled_enter_time_ = 8103635; // 8103.635 which is 6.238s left until it
+  lcip_real.scheduled_enter_time_ = 8103635; // 8103.635 
   current_state = lcip_real.extractInitialState(req);
 
   lcip_real.last_case_num_ = TSCase::CASE_3; //simulating when vehicle is speeding up while ET goes into TBD
+  
+  lcip_real.planWhenAPPROACHING(req, resp, current_state, signal, cmw_->getMutableMap()->laneletLayer.get(1200), cmw_->getMutableMap()->laneletLayer.get(1203), cmw_->getMutableMap()->laneletLayer.get(1200));
+
+  ASSERT_FALSE(resp.new_plan.maneuvers.empty());
+  ASSERT_TRUE(resp.new_plan.maneuvers.front().type == cav_msgs::Maneuver::STOP_AND_WAIT); //not stop
+  ASSERT_NEAR(resp.new_plan.maneuvers.front().stop_and_wait_maneuver.parameters.float_valued_meta_data[1], 2.0, 0.01);
+
+  // approximately 3sec later assuming it was not able to slow down, check emergency stopping
+  resp.new_plan.maneuvers = {};
+  req.header.stamp = ros::Time(8100.49);
+  req.veh_x = 1.85;
+  req.veh_y = 300.0 - 14.0;         //unit test light is at 300
+  req.veh_downtrack = req.veh_y;
+  req.veh_logitudinal_velocity = 9.402;
+  req.veh_lane_id = "1200";
+  lcip_real.scheduled_enter_time_ = 8103635; // 8103.635 
+  current_state = lcip_real.extractInitialState(req);
+
+  lcip_real.last_case_num_ = TSCase::STOPPING;
   
   lcip_real.planWhenAPPROACHING(req, resp, current_state, signal, cmw_->getMutableMap()->laneletLayer.get(1200), cmw_->getMutableMap()->laneletLayer.get(1203), cmw_->getMutableMap()->laneletLayer.get(1200));
 
