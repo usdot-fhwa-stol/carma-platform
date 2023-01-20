@@ -24,7 +24,7 @@ algo_minimum_speed : 2.235
 
 # Double: Safety multiplier (must be less than 1.0) of planned allowable vehicle deceleration to use when stopping. This new deceleration makes vehicle decelerate earlier distance.
 #         NOTE: Stacks on vehicle_decel_limit_multiplier and stopping uses max_decel; this distance is only used for calculating earlier downtrack
-deceleration_fraction : 0.8
+deceleration_fraction : 0.7
 
 # Double: Desired distance to stop buffer in meters
 desired_distance_to_stop_buffer : 15.0
