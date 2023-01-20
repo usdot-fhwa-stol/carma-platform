@@ -50,6 +50,7 @@ LCIStrategicPlugin::LCIStrategicPlugin(carma_wm::WorldModelConstPtr wm, LCIStrat
   max_comfort_accel_ = config_.vehicle_accel_limit * config_.vehicle_accel_limit_multiplier;
   max_comfort_decel_ = -1 * config_.vehicle_decel_limit * config_.vehicle_decel_limit_multiplier;
   max_comfort_decel_norm_ = config_.vehicle_decel_limit * config_.vehicle_decel_limit_multiplier;
+  emergency_decel_norm_ = 2 * config_.vehicle_decel_limit * config_.vehicle_decel_limit_multiplier;
 };
 
 cav_msgs::Plugin LCIStrategicPlugin::getDiscoveryMsg() const
@@ -242,7 +243,7 @@ void LCIStrategicPlugin::handleStopping(const cav_srvs::PlanManeuversRequest& re
 
   if (is_emergency)
   {
-    decel_rate = 2 * max_comfort_decel_norm_;
+    decel_rate = emergency_decel_norm_;
     case_num_ = TSCase::EMERGENCY_STOPPING;
   }
   else
@@ -796,6 +797,8 @@ void LCIStrategicPlugin::planWhenAPPROACHING(const cav_srvs::PlanManeuversReques
   ROS_DEBUG_STREAM("SPEED PROFILE CASE:" << ts_params.case_num);
 
   /////////////  4 . Safety Check against traffic signals and Final Maneuver Generation //////////////
+  double emergency_distance_to_stop = pow(current_state.speed, 2)/(2 * emergency_decel_norm_) + config_.stopping_location_buffer / 2; //Idea is to aim the middle part of stopping buffer
+  ROS_DEBUG_STREAM("emergency_distance_to_stop at emergency_decel_norm_ (with stopping_location_buffer/2):  " << emergency_distance_to_stop << ", emergency_decel_norm_: " << emergency_decel_norm_);
 
   double safe_distance_to_stop = pow(current_state.speed, 2)/(2 * max_comfort_decel_norm_) + config_.stopping_location_buffer / 2; //Idea is to aim the middle part of stopping buffer
   ROS_DEBUG_STREAM("safe_distance_to_stop at max_comfort_decel (with stopping_location_buffer/2):  " << safe_distance_to_stop << ", max_comfort_decel_norm_: " << max_comfort_decel_norm_);
@@ -810,14 +813,14 @@ void LCIStrategicPlugin::planWhenAPPROACHING(const cav_srvs::PlanManeuversReques
   ROS_DEBUG_STREAM("distance_remaining_to_traffic_light:  " << distance_remaining_to_traffic_light << ", current_state.speed: " << current_state.speed);
 
   // Basic RED signal violation check
-  if (distance_remaining_to_traffic_light <= desired_distance_to_stop || last_case_num_ == TSCase::EMERGENCY_STOPPING)
+  if (distance_remaining_to_traffic_light <= emergency_distance_to_stop || last_case_num_ == TSCase::EMERGENCY_STOPPING)
   {
     if (in_tbd) // Given ET is in TBD, but vehicle is too close to intersection
     {
       ROS_DEBUG_STREAM("ET is still in TBD despite the vehicle being in desired distance to start stopping. Trying to handle this edge case gracefully...");
     }
 
-    double stopping_time = current_state.speed / 1.5 * max_comfort_decel_norm_; //one half the acceleration (twice the acceleration to stop) to account for emergency case
+    double stopping_time = current_state.speed / 1.5 * max_comfort_decel_norm_; //one half the acceleration (twice the acceleration to stop) to account for emergency case, see emergency_decel_norm_
 
     ros::Time stopping_arrival_time =
           current_state.stamp + ros::Duration(stopping_time);
