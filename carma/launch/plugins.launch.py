@@ -450,6 +450,6 @@ def generate_launch_description():
         carma_yield_plugin_container, 
         carma_light_controlled_intersection_plugins_container, 
         carma_pure_pursuit_wrapper_container, 
-        platooning_strategic_plugin_container, 
+        #platooning_strategic_plugin_container, 
         platooning_tactical_plugin_container
     ])
