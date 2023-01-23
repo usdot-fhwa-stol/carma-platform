@@ -94,7 +94,7 @@ int main(int argc, char** argv)
         std_msgs::Float64 earliest_et;
         std_msgs::Float64 scheduled_et;
 
-        case_num_msg.data = static_cast<int>(lcip.case_num_);
+        case_num_msg.data = static_cast<int>(lcip.last_case_num_);
         tf_distance.data = lcip.distance_remaining_to_tf_;
         earliest_et.data = lcip.earliest_entry_time_;
         scheduled_et.data = lcip.scheduled_entry_time_;

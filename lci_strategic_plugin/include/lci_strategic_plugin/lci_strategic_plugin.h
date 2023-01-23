@@ -67,6 +67,8 @@ enum TSCase {
   CASE_8 = 8,
   STOPPING=9,
   UNAVAILABLE = 10,
+  EMERGENCY_STOPPING=11,
+  DEGRADED_TSCASE=12  // when not performing trajectory smoothing, but making through GREEN
 };
 
 struct TrajectoryParams
@@ -202,13 +204,12 @@ public:
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////
    /**
    * \brief Useful metrics for LCI Plugin
-   * \param case_num_ Current speed profile case generated
+   * \param last_case_num_ Current speed profile case generated
    * \param distance_remaining_to_tf_ distance_remaining_to_traffic signal meters
    * \param earliest_entry_time_ earliest_entry_time in sec
    * \param scheduled_entry_time_ scheduled_entry_time in sec
    * 
    */
-  TSCase case_num_ = TSCase::UNAVAILABLE; 
   TSCase last_case_num_ = TSCase::UNAVAILABLE; 
   double distance_remaining_to_tf_ = 0.0;
   double earliest_entry_time_ = 0.0;
@@ -514,6 +515,20 @@ private:
                                                                      bool bounds_inclusive = true) const;
   
   /**
+   * \brief Get the final entry time from either vehicle's own internal ET calculation (TSMO UC2) or from carma-street (TSMO UC3)
+   *        This function also applies necessary green_buffer to adjust the ET. 
+   * \param current_state Current state of the vehicle
+   * \param earliest_entry_time Earliest entry time calculated by the vehicle
+   * \param traffic_light traffic signal the vehicle is using
+   * \return tuple of <final entry time the vehicle uses to enter the intersection, 
+   *         is_entry_time_within_green_or_tbd: true if ET is in green or TBD (related to UC3, always set to true in UC2),
+   *         in_tbd: true if ET is in TBD (false if in UC2)>
+  */
+  std::tuple<ros::Time, bool, bool> get_final_entry_time_and_conditions(const VehicleState& current_state, 
+                                                const ros::Time& earliest_entry_time, 
+                                                lanelet::CarmaTrafficSignalPtr traffic_light);
+
+  /**
    * \brief Provides the scheduled entry time for the vehicle in the future. This scheduled time is the earliest possible entry time that 
    *        is during green phase and after timestamps both that is kinematically possible and required times for vehicle in front to pass through first 
    *
@@ -725,6 +740,8 @@ private:
   double max_comfort_accel_ = 2.0;  // acceleration rates after applying miltiplier
   double max_comfort_decel_ = -2.0; 
   double max_comfort_decel_norm_ = -1 * max_comfort_decel_;
+  double emergency_decel_norm_ = -2 * max_comfort_decel_;
+
   boost::optional<ros::Time> nearest_green_entry_time_cached_;
 
   //! World Model pointer
@@ -766,6 +783,8 @@ private:
   FRIEND_TEST(LCIStrategicTestFixture, composeTrajectorySmoothingManeuverMessage);
   FRIEND_TEST(LCIStrategicTestFixture, findSpeedLimit);
   FRIEND_TEST(LCIStrategicTestFixture, handleFailureCaseHelper);
+  FRIEND_TEST(LCIStrategicTestFixture, planWhenETInTBD);
+  
   // Algo Unit Tests
   FRIEND_TEST(LCIStrategicTestFixture, calc_estimated_entry_time_left);
   FRIEND_TEST(LCIStrategicTestFixture, estimate_distance_to_stop);
