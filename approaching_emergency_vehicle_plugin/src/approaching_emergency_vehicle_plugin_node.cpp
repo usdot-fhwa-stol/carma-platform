@@ -785,7 +785,7 @@ namespace approaching_emergency_vehicle_plugin
 
   void ApproachingEmergencyVehiclePlugin::addStopAndWaitToEndOfPlan(carma_planning_msgs::srv::PlanManeuvers::Response::SharedPtr resp, 
                           double downtrack_progress, double stop_maneuver_beginning_downtrack, double end_of_route_downtrack, 
-                          double speed_progress, double target_speed, double stopping_deceleration, double current_lanelet_ending_downtrack,
+                          double stopping_entry_speed, double stopping_deceleration, double current_lanelet_ending_downtrack,
                           lanelet::ConstLanelet current_lanelet, rclcpp::Time time_progress)
   {
     RCLCPP_DEBUG_STREAM(rclcpp::get_logger(logger_name), "Maneuver plan is reaching the end of the route");
@@ -794,7 +794,7 @@ namespace approaching_emergency_vehicle_plugin
     if((stop_maneuver_beginning_downtrack - downtrack_progress) >= config_.buffer_distance_before_stopping){
       // Compose lane follow maneuver and update downtrack_progress
       resp->new_plan.maneuvers.push_back(composeLaneFollowingManeuverMessage(downtrack_progress, stop_maneuver_beginning_downtrack,  
-                            speed_progress, target_speed, current_lanelet.id(), time_progress));
+                            stopping_entry_speed, stopping_entry_speed, current_lanelet.id(), time_progress));
       
       downtrack_progress = stop_maneuver_beginning_downtrack;
       time_progress += getManeuverDuration(resp->new_plan.maneuvers.back(), epsilon_);
@@ -831,7 +831,7 @@ namespace approaching_emergency_vehicle_plugin
 
     // Add stop and wait maneuver to maneuver plan
     resp->new_plan.maneuvers.push_back(composeStopAndWaitManeuverMessage(downtrack_progress, end_of_route_downtrack,
-                  speed_progress, start_lane_id, current_lanelet.id(), stopping_deceleration, time_progress));
+                  stopping_entry_speed, start_lane_id, current_lanelet.id(), stopping_deceleration, time_progress));
   }
 
   void ApproachingEmergencyVehiclePlugin::generateRemainInLaneManeuverPlan(
@@ -871,7 +871,7 @@ namespace approaching_emergency_vehicle_plugin
       if(begin_stopping_downtrack <= current_lanelet_ending_downtrack){
         // Complete maneuver plan with a stop and wait maneuver if the current lanelet intercepts the stopping downtrack
         addStopAndWaitToEndOfPlan(resp, downtrack_progress, begin_stopping_downtrack, wm_->getRouteEndTrackPos().downtrack, 
-                        speed_progress, target_speed, stopping_deceleration, current_lanelet_ending_downtrack, current_lanelet, time_progress);
+                        speed_progress, stopping_deceleration, current_lanelet_ending_downtrack, current_lanelet, time_progress);
         return;
       }
       else{
@@ -944,7 +944,7 @@ namespace approaching_emergency_vehicle_plugin
         if(begin_stopping_downtrack <= current_lanelet_ending_downtrack){
           // Complete maneuver plan with a stop and wait maneuver if the current lanelet intercepts the stopping downtrack
           addStopAndWaitToEndOfPlan(resp, downtrack_progress, begin_stopping_downtrack, wm_->getRouteEndTrackPos().downtrack, 
-                          speed_progress, target_speed, stopping_deceleration, current_lanelet_ending_downtrack, current_lanelet, time_progress);
+                          speed_progress, stopping_deceleration, current_lanelet_ending_downtrack, current_lanelet, time_progress);
           return;
         }
         else{
@@ -997,7 +997,7 @@ namespace approaching_emergency_vehicle_plugin
         if(begin_stopping_downtrack <= current_lanelet_ending_downtrack){
           // Complete maneuver plan with a stop and wait maneuver if the current lanelet intercepts the stopping downtrack
           addStopAndWaitToEndOfPlan(resp, downtrack_progress, begin_stopping_downtrack, wm_->getRouteEndTrackPos().downtrack, 
-                          speed_progress, target_speed, stopping_deceleration, current_lanelet_ending_downtrack, current_lanelet, time_progress);
+                          speed_progress, stopping_deceleration, current_lanelet_ending_downtrack, current_lanelet, time_progress);
           return;
         }
         else{
