@@ -50,8 +50,9 @@ namespace approaching_emergency_vehicle_plugin
     config_.approaching_threshold = declare_parameter<double>("approaching_threshold", config_.approaching_threshold);
     config_.finished_passing_threshold = declare_parameter<double>("finished_passing_threshold", config_.finished_passing_threshold);
     config_.bsm_processing_frequency = declare_parameter<double>("bsm_processing_frequency", config_.bsm_processing_frequency);
-    config_.speed_reduction_during_passing = declare_parameter<double>("speed_reduction_during_passing", config_.speed_reduction_during_passing);
-    config_.minimum_reduced_speed = declare_parameter<double>("minimum_reduced_speed", config_.minimum_reduced_speed);
+    config_.speed_limit_reduction_during_passing = declare_parameter<double>("speed_limit_reduction_during_passing", config_.speed_limit_reduction_during_passing);
+    config_.minimum_reduced_speed_limit = declare_parameter<double>("minimum_reduced_speed_limit", config_.minimum_reduced_speed_limit);
+    config_.default_speed_limit = declare_parameter<double>("default_speed_limit", config_.default_speed_limit);
     config_.timeout_check_frequency = declare_parameter<double>("timeout_check_frequency", config_.timeout_check_frequency);
     config_.timeout_duration = declare_parameter<double>("timeout_duration", config_.timeout_duration);
     config_.minimal_plan_duration = declare_parameter<double>("minimal_plan_duration", config_.minimal_plan_duration);
@@ -76,7 +77,9 @@ namespace approaching_emergency_vehicle_plugin
         {"approaching_threshold", config_.approaching_threshold},
         {"finished_passing_threshold", config_.finished_passing_threshold},
         {"bsm_processing_frequency", config_.bsm_processing_frequency},
-        {"speed_reduction_during_passing", config_.speed_reduction_during_passing},
+        {"speed_limit_reduction_during_passing", config_.speed_limit_reduction_during_passing},
+        {"minimum_reduced_speed_limit", config_.minimum_reduced_speed_limit},
+        {"default_speed_limit", config_.default_speed_limit},
         {"timeout_check_frequency", config_.timeout_check_frequency},
         {"timeout_duration", config_.timeout_duration},
         {"minimal_plan_duration", config_.minimal_plan_duration},
@@ -118,8 +121,9 @@ namespace approaching_emergency_vehicle_plugin
     get_parameter<double>("approaching_threshold", config_.approaching_threshold);
     get_parameter<double>("finished_passing_threshold", config_.finished_passing_threshold);
     get_parameter<double>("bsm_processing_frequency", config_.bsm_processing_frequency);
-    get_parameter<double>("speed_reduction_during_passing", config_.speed_reduction_during_passing);
-    get_parameter<double>("minimum_reduced_speed", config_.minimum_reduced_speed);
+    get_parameter<double>("speed_limit_reduction_during_passing", config_.speed_limit_reduction_during_passing);
+    get_parameter<double>("minimum_reduced_speed_limit", config_.minimum_reduced_speed_limit);
+    get_parameter<double>("default_speed_limit", config_.default_speed_limit);
     get_parameter<double>("timeout_check_frequency", config_.timeout_check_frequency);
     get_parameter<double>("timeout_duration", config_.timeout_duration);
     get_parameter<double>("minimal_plan_duration", config_.minimal_plan_duration);
@@ -650,7 +654,7 @@ namespace approaching_emergency_vehicle_plugin
 
   double ApproachingEmergencyVehiclePlugin::getLaneletSpeedLimit(const lanelet::ConstLanelet& lanelet)
   {
-    double speed_limit = 0.0;
+    double speed_limit = config_.default_speed_limit;
 
     lanelet::Optional<carma_wm::TrafficRulesConstPtr> traffic_rules = wm_->getTrafficRules();
     if (traffic_rules)
@@ -846,7 +850,10 @@ namespace approaching_emergency_vehicle_plugin
 
     // Reduce target_speed if an ERV is actively passing the ego vehicle
     if(is_slowing_down_for_erv){
-      target_speed = std::max((target_speed - config_.speed_reduction_during_passing), config_.minimum_reduced_speed);
+      double reduced_speed_limit = std::max((target_speed - config_.speed_limit_reduction_during_passing), config_.minimum_reduced_speed_limit);
+
+      // If the vehicle's current speed is below the reduced speed limit, set target_speed to maintain the current speed
+      target_speed = std::min(speed_progress, reduced_speed_limit);
     }
 
     double maneuver_plan_ending_downtrack = downtrack_progress + config_.minimal_plan_duration * target_speed;
@@ -904,8 +911,12 @@ namespace approaching_emergency_vehicle_plugin
         speed_progress = getManeuverEndSpeed(resp->new_plan.maneuvers.back());
         target_speed = getLaneletSpeedLimit(current_lanelet);
 
+        // Reduce target_speed if an ERV is actively passing the ego vehicle
         if(is_slowing_down_for_erv){
-          target_speed = std::max((target_speed - config_.speed_reduction_during_passing), config_.minimum_reduced_speed);
+          double reduced_speed_limit = std::max((target_speed - config_.speed_limit_reduction_during_passing), config_.minimum_reduced_speed_limit);
+
+          // If the vehicle's current speed is below the reduced speed limit, set target_speed to maintain the current speed
+          target_speed = std::min(speed_progress, reduced_speed_limit);
         }
 
         time_progress += getManeuverDuration(resp->new_plan.maneuvers.back(), epsilon_);
@@ -1021,10 +1032,12 @@ namespace approaching_emergency_vehicle_plugin
               if(!ego_in_rightmost_lane && !tracked_erv_.in_rightmost_lane){
                 // Get right target lanelet
                 target_lanelet = wm_->getMapRoutingGraph()->right(current_lanelet);
+                RCLCPP_DEBUG_STREAM(rclcpp::get_logger(logger_name), "Composing a right lane change maneuver from lanelet " << current_lanelet.id());
               }
               else if(ego_in_rightmost_lane && tracked_erv_.in_rightmost_lane){
                 // Get left target lanelet
                 target_lanelet = wm_->getMapRoutingGraph()->left(current_lanelet);   
+                RCLCPP_DEBUG_STREAM(rclcpp::get_logger(logger_name), "Composing a left lane change maneuver from lanelet " << current_lanelet.id());
               }
               else{
                 RCLCPP_WARN_STREAM(rclcpp::get_logger(logger_name), "Planning a move-over maneuver plan when the ego vehicle is not in the ERV's path! Returning an empty maneuver plan");
@@ -1051,6 +1064,7 @@ namespace approaching_emergency_vehicle_plugin
                 current_lanelet = *target_lanelet;
               }
               else{
+                RCLCPP_WARN_STREAM(rclcpp::get_logger(logger_name), "A lane change maneuver from " << current_lanelet.id() << " could not be composed since no target lanelet was found!");
                 resp->new_plan.maneuvers.push_back(composeLaneFollowingManeuverMessage(downtrack_progress, current_lanelet_ending_downtrack,  
                                         speed_progress, target_speed, current_lanelet.id(), time_progress));
               }

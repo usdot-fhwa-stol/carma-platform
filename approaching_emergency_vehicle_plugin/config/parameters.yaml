@@ -23,15 +23,19 @@ finished_passing_threshold : 152.4
 # Units: Hz
 bsm_processing_frequency : 1.0
 
-# Double: The amount that the target speed of maneuvers will be reduced below the speed limit when an
+# Double: The amount that the speed limit of a lanelet will be reduced by when planning a maneuver when an
 #         ERV is actively passing the ego vehicle.
 # Units: m/s
-speed_reduction_during_passing : 4.4704 # NOTE: 4.4704 m/s is 10 mph
+speed_limit_reduction_during_passing : 4.4704 # NOTE: 4.4704 m/s is 10 mph
 
-# Double: The minimum target speed that will be assigned to maneuvers when an ERV is actively passing
+# Double: The minimum speed limit that a lanelet's speed limit will be reduced to when an ERV is actively passing
 #         the ego vehicle.
 # Units: m/s
-minimum_reduced_speed : 4.4704 # NOTE: 4.4704 m/s is 10 mph
+minimum_reduced_speed_limit : 2.2352 # NOTE: 2.2352 m/s is 5 mph
+
+# Double: The default speed limit used when a lanelet does not have a specified speed limit in the map.
+# Units: m/s
+default_speed_limit : 2.2352 # NOTE: 2.2352 m/s is 5 mph
 
 # Double: The frequency at which this plugin will check whether a timeout has occurred for the currently-tracked ERV.
 # Units: Hz

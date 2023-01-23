@@ -41,11 +41,13 @@ namespace approaching_emergency_vehicle_plugin
 
     double bsm_processing_frequency = 1.0;         // (Hz) The rate that incoming BSMs from a specific ERV will be processed by this plugin.
 
-    double speed_reduction_during_passing = 10.0;  // (m/s) The amount that the target speed of maneuvers will be reduced below the speed limit when an
-                                                   // ERV is actively passing the ego vehicle.
+    double speed_limit_reduction_during_passing = 4.4704; // (m/s) The amount that the speed limit of a lanelet will be reduced by when planning a maneuver when an
+                                                          // ERV is actively passing the ego vehicle.
 
-    double minimum_reduced_speed = 10.0;           // (m/s) The minimum target speed that will be assigned to maneuvers when an ERV is actively passing
+    double minimum_reduced_speed_limit = 2.2352;   // (m/s) The minimum speed limit that a lanelet's speed limit will be reduced to when an ERV is actively passing
                                                    // the ego vehicle.
+
+    double default_speed_limit = 2.2352;           // (m/s) The default speed limit used when a lanelet does not have a specified speed limit in the map.
 
     double timeout_check_frequency = 2.0;          // (Hz) The frequency at which this plugin will check whether a timeout has occurred for the 
                                                    // currently-tracked ERV.
@@ -87,8 +89,9 @@ namespace approaching_emergency_vehicle_plugin
            << "approaching_threshold: " << c.approaching_threshold << std::endl
            << "finished_passing_threshold: " << c.finished_passing_threshold << std::endl
            << "bsm_processing_frequency: " << c.bsm_processing_frequency << std::endl
-           << "speed_reduction_during_passing: " << c.speed_reduction_during_passing << std::endl
-           << "minimum_reduced_speed: " << c.minimum_reduced_speed << std::endl
+           << "speed_limit_reduction_during_passing: " << c.speed_limit_reduction_during_passing << std::endl
+           << "minimum_reduced_speed_limit: " << c.minimum_reduced_speed_limit << std::endl
+           << "default_speed_limit: " << c.default_speed_limit << std::endl
            << "timeout_check_frequency: " << c.timeout_check_frequency << std::endl
            << "timeout_duration: " << c.timeout_duration << std::endl
            << "minimal_plan_duration: " << c.minimal_plan_duration << std::endl
