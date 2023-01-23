@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022 LEIDOS.
+ * Copyright (C) 2022-2023 LEIDOS.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -132,7 +132,7 @@ namespace approaching_emergency_vehicle_plugin{
         lanelet::Optional<lanelet::routing::Route> erv_future_route = map_graph->getRoute(lanelet_1210, lanelet_1213);
 
         // Verify that ERV's future route intersects ego vehicle's future shortest path in lanelet 1212
-        boost::optional<lanelet::ConstLanelet> intersecting_lanelet = worker_node->getRouteIntersectingLanelet(erv_future_route.get(), ego_shortest_path);
+        boost::optional<lanelet::ConstLanelet> intersecting_lanelet = worker_node->getRouteIntersectingLanelet(erv_future_route.get());
         ASSERT_TRUE(intersecting_lanelet);
         ASSERT_EQ((*intersecting_lanelet).id(), 1212);
 
@@ -145,8 +145,9 @@ namespace approaching_emergency_vehicle_plugin{
         double erv_speed = 20.0; // Set ERV's current speed to 20 m/s
 
         // Verify that ERV will pass ego vehicle in ~5 seconds (ERV is 50 meters behind ego vehicle and travelling 10 m/s faster)
-        double seconds_until_passing = worker_node->getSecondsUntilPassing(erv_future_route, erv_current_position_in_map, erv_speed, *intersecting_lanelet);
-        ASSERT_NEAR(seconds_until_passing, 5.0, 0.01);
+        boost::optional<double> seconds_until_passing = worker_node->getSecondsUntilPassing(erv_future_route, erv_current_position_in_map, erv_speed, *intersecting_lanelet);
+        ASSERT_TRUE(seconds_until_passing);
+        ASSERT_NEAR(seconds_until_passing.get(), 5.0, 0.01);
     }
 
     TEST(Testapproaching_emergency_vehicle_plugin, testBSMProcessing){
@@ -281,13 +282,662 @@ namespace approaching_emergency_vehicle_plugin{
         worker_node->incomingBsmCallback(std::move(erv_bsm_ptr4)); 
         ASSERT_EQ(worker_node->tracked_erv_.latest_bsm_timestamp, rclcpp::Time(2, 50, worker_node->get_clock()->get_clock_type()));
 
-        // Trigger a timeout on the currently tracked ERV and verify that the plugin no longer has an approaching ERV
-        std::this_thread::sleep_for(std::chrono::seconds(10));
-        worker_node->checkForErvTimeout();
+        worker_node->config_.timeout_duration = 2.0; //(Seconds) Update timeout duration to decrease time of this unit test
+
+        // Add Node to an executor and spin it to trigger timer callbacks
+        rclcpp::executors::MultiThreadedExecutor executor;
+        executor.add_node(worker_node->get_node_base_interface());
+
+        // Spin executor for 10 seconds
+        auto end_time = std::chrono::system_clock::now() + std::chrono::seconds(3);
+        while(std::chrono::system_clock::now() < end_time){
+            executor.spin_once();
+        }
+
+        // Verify that the plugin no longer has an approaching ERV
         ASSERT_FALSE(worker_node->has_tracked_erv_);
     }
 
-    // Test ERV BSM that times out
+    TEST(Testapproaching_emergency_vehicle_plugin, testManeuverPlanWhenWaitingForApproachingErv){
+        // Create, configure, and activate worker_node (ApproachingEmergencyVehiclePlugin)
+        rclcpp::NodeOptions options;
+        auto worker_node = std::make_shared<approaching_emergency_vehicle_plugin::ApproachingEmergencyVehiclePlugin>(options);
+
+        worker_node->configure(); //Call configure state transition
+        worker_node->activate();  //Call activate state transition to get not read for runtime
+
+        // Verify that initial state is NO_APPROACHING_ERV
+        ASSERT_EQ(worker_node->transition_table_.getState(), ApproachingEmergencyVehicleState::NO_APPROACHING_ERV);
+
+        worker_node->has_tracked_erv_ = true;
+        worker_node->tracked_erv_.seconds_until_passing = 17.5; // Set value to trigger state machine transition to 'WAITING_FOR_APPROACHING_ERV' state
+        worker_node->config_.minimal_plan_duration = 15.0; // (Seconds) Maneuver plan shall be at least 15.0 seconds long
+
+        // Set georeference for worker_node so that it can convert ERV BSM lat/lon coordinates to map coordinates
+        std::string proj = "+proj=tmerc +lat_0=0 +lon_0=0 +k=1 +x_0=0 +y_0=0 +datum=WGS84 +units=m +geoidgrids=egm96_15.gtx +vunits=m +no_defs";
+        std_msgs::msg::String str_msg;
+        str_msg.data = proj;
+        std::unique_ptr<std_msgs::msg::String> msg_ptr = std::make_unique<std_msgs::msg::String>(str_msg);
+        worker_node->georeferenceCallback(std::move(msg_ptr)); 
+
+        // Create a world model object for worker_node and set its map
+        std::shared_ptr<carma_wm::CARMAWorldModel> cmw = std::make_shared<carma_wm::CARMAWorldModel>(); 
+
+        // Set projection
+        int projector_type = 0;
+        std::string target_frame;
+        lanelet::ErrorMessages load_errors;
+
+        // Load map file and parameters
+        std::string file = "../../install_ros2/approaching_emergency_vehicle_plugin/share/approaching_emergency_vehicle_plugin/resource/town01_vector_map_1.osm";
+
+        lanelet::io_handlers::AutowareOsmParser::parseMapParams(file, &projector_type, &target_frame);
+        lanelet::projection::LocalFrameProjector local_projector(target_frame.c_str());
+        lanelet::LaneletMapPtr map = lanelet::load(file, local_projector, &load_errors);
+
+        // Set map
+        cmw->carma_wm::CARMAWorldModel::setMap(map);
+
+        // Build routing graph from map	
+        auto traffic_rules = cmw->getTrafficRules();
+        lanelet::routing::RoutingGraphUPtr map_graph = lanelet::routing::RoutingGraph::build(*cmw->getMap(), *traffic_rules.get());
+
+        // Place ego vehicle in left lane on route with shortest path 164->165->171->109->106
+        lanelet::ConstLanelet starting_lanelet = cmw->getMap()->laneletLayer.get(164); 
+        lanelet::ConstLanelet ending_lanelet = cmw->getMap()->laneletLayer.get(106);
+        lanelet::Optional<lanelet::routing::Route> optional_route = map_graph->getRoute(starting_lanelet, ending_lanelet);
+        lanelet::routing::Route route = std::move(*optional_route);
+        carma_wm::LaneletRoutePtr route_ptr = std::make_shared<lanelet::routing::Route>(std::move(route));
+        cmw->setRoute(route_ptr);
+
+        // Set worker_node's world model to cmw
+        worker_node->wm_ = cmw;
+
+        //**********************//
+        // TEST 1: Verify correct ego vehicle lane-following maneuver plan in non-shortest-path lanelets on route when in 
+        //         WAITING_FOR_APPROACHING_ERV state.
+        //**********************//
+
+        // Create plan maneuvers service request for worker_node
+        auto req = std::make_shared<carma_planning_msgs::srv::PlanManeuvers::Request>();
+
+        // Set maneuver plan service request's vehicle state parameters to place ego vehicle in right lane to verify that it can remain off its
+        //     shortest path (but still on its route) when generating a plan that keeps the ego vehicle in its lane.
+        req->veh_x = 585277.966793666; // Lanelet 167 (right adjacent to 164)
+        req->veh_y = 5460258.19308606; // Lanelet 167 (right adjacent to 164)
+        req->veh_downtrack = 88.11799880; // (meters) Matches downtrack of (veh_x, veh_y) on ego vehicle's route
+        req->veh_logitudinal_velocity = 10.0; // (m/s)
+        req->veh_lane_id = "167";
+
+        auto resp = std::make_shared<carma_planning_msgs::srv::PlanManeuvers::Response>();
+        auto header_srv = std::make_shared<rmw_request_id_t>();
+        worker_node->plan_maneuvers_callback(header_srv, req, resp);
+
+        ASSERT_EQ(resp->new_plan.maneuvers.size(), 3);
+
+        // Verify Maneuver 0 lane following parameters in lanelet 167
+        ASSERT_EQ(resp->new_plan.maneuvers[0].type, carma_planning_msgs::msg::Maneuver::LANE_FOLLOWING);
+        ASSERT_NEAR(rclcpp::Time(resp->new_plan.maneuvers[0].lane_following_maneuver.start_time).seconds(), 0.0, 0.01); 
+        ASSERT_NEAR(resp->new_plan.maneuvers[0].lane_following_maneuver.end_dist, 190.243, 0.01);
+        ASSERT_NEAR(resp->new_plan.maneuvers[0].lane_following_maneuver.end_speed, 10.0, 0.01); 
+        ASSERT_NEAR(rclcpp::Time(resp->new_plan.maneuvers[0].lane_following_maneuver.end_time).seconds(), 10.2125, 0.01); 
+        std::vector<std::string> maneuver_0_lane_id {"167"};
+        ASSERT_EQ(resp->new_plan.maneuvers[0].lane_following_maneuver.lane_ids, maneuver_0_lane_id); 
+        ASSERT_EQ(resp->new_plan.maneuvers[0].lane_following_maneuver.parameters.negotiation_type, carma_planning_msgs::msg::ManeuverParameters::NO_NEGOTIATION);
+        ASSERT_EQ(resp->new_plan.maneuvers[0].lane_following_maneuver.parameters.planning_strategic_plugin, "approaching_emergency_vehicle_plugin");
+        ASSERT_EQ(resp->new_plan.maneuvers[0].lane_following_maneuver.parameters.presence_vector, carma_planning_msgs::msg::ManeuverParameters::HAS_TACTICAL_PLUGIN);
+        ASSERT_EQ(resp->new_plan.maneuvers[0].lane_following_maneuver.parameters.planning_tactical_plugin, "inlanecruising_plugin");
+
+        // Verify Maneuver 1 lane following parameters in lanelet 169
+        ASSERT_EQ(resp->new_plan.maneuvers[1].type, carma_planning_msgs::msg::Maneuver::LANE_FOLLOWING);
+        ASSERT_NEAR(rclcpp::Time(resp->new_plan.maneuvers[1].lane_following_maneuver.start_time).seconds(), 10.2125, 0.01); 
+        ASSERT_NEAR(resp->new_plan.maneuvers[1].lane_following_maneuver.end_dist, 206.164, 0.01);
+        ASSERT_NEAR(resp->new_plan.maneuvers[1].lane_following_maneuver.end_speed, 10.0, 0.01); 
+        ASSERT_NEAR(rclcpp::Time(resp->new_plan.maneuvers[1].lane_following_maneuver.end_time).seconds(), 11.8046, 0.01); 
+        std::vector<std::string> maneuver_1_lane_id {"169"};
+        ASSERT_EQ(resp->new_plan.maneuvers[1].lane_following_maneuver.lane_ids, maneuver_1_lane_id); 
+        ASSERT_EQ(resp->new_plan.maneuvers[1].lane_following_maneuver.parameters.negotiation_type, carma_planning_msgs::msg::ManeuverParameters::NO_NEGOTIATION);
+        ASSERT_EQ(resp->new_plan.maneuvers[1].lane_following_maneuver.parameters.planning_strategic_plugin, "approaching_emergency_vehicle_plugin");
+        ASSERT_EQ(resp->new_plan.maneuvers[1].lane_following_maneuver.parameters.presence_vector, carma_planning_msgs::msg::ManeuverParameters::HAS_TACTICAL_PLUGIN);
+        ASSERT_EQ(resp->new_plan.maneuvers[1].lane_following_maneuver.parameters.planning_tactical_plugin, "inlanecruising_plugin");
+
+        // Verify Maneuver 2 lane following parameters in lanelet 168
+        ASSERT_EQ(resp->new_plan.maneuvers[2].type, carma_planning_msgs::msg::Maneuver::LANE_FOLLOWING);
+        ASSERT_NEAR(rclcpp::Time(resp->new_plan.maneuvers[2].lane_following_maneuver.start_time).seconds(), 11.8046, 0.01); 
+        ASSERT_NEAR(resp->new_plan.maneuvers[2].lane_following_maneuver.end_dist, 240.438, 0.01);
+        ASSERT_NEAR(resp->new_plan.maneuvers[2].lane_following_maneuver.end_speed, 10.0, 0.01); 
+        ASSERT_NEAR(rclcpp::Time(resp->new_plan.maneuvers[2].lane_following_maneuver.end_time).seconds(), 15.232, 0.01); 
+        std::vector<std::string> maneuver_2_lane_id {"168"};
+        ASSERT_EQ(resp->new_plan.maneuvers[2].lane_following_maneuver.lane_ids, maneuver_2_lane_id); 
+        ASSERT_EQ(resp->new_plan.maneuvers[2].lane_following_maneuver.parameters.negotiation_type, carma_planning_msgs::msg::ManeuverParameters::NO_NEGOTIATION);
+        ASSERT_EQ(resp->new_plan.maneuvers[2].lane_following_maneuver.parameters.planning_strategic_plugin, "approaching_emergency_vehicle_plugin");
+        ASSERT_EQ(resp->new_plan.maneuvers[2].lane_following_maneuver.parameters.presence_vector, carma_planning_msgs::msg::ManeuverParameters::HAS_TACTICAL_PLUGIN);
+        ASSERT_EQ(resp->new_plan.maneuvers[2].lane_following_maneuver.parameters.planning_tactical_plugin, "inlanecruising_plugin");
+
+        ASSERT_EQ(worker_node->transition_table_.getState(), ApproachingEmergencyVehicleState::WAITING_FOR_APPROACHING_ERV);
+
+        //**********************//
+        // TEST 2: Verify that an empty maneuver plan is generated when the lane-following maneuver plan would result in the
+        //         ego vehicle passing the end of its route when in WAITING_FOR_APPROACHING_ERV state.
+        //**********************//
+
+        // Increase minimal plan duration so that maneuver plan will reach end of route, resulting in an empty maneuver plan
+        worker_node->config_.minimal_plan_duration = 100.0; // (Seconds) Maneuver plan shall be at least 100.0 seconds long
+        auto resp2 = std::make_shared<carma_planning_msgs::srv::PlanManeuvers::Response>();
+        worker_node->plan_maneuvers_callback(header_srv, req, resp2);
+        ASSERT_EQ(resp2->new_plan.maneuvers.size(), 6);
+        ASSERT_EQ(resp2->new_plan.maneuvers.back().stop_and_wait_maneuver.parameters.planning_tactical_plugin, "stop_and_wait_plugin");
+
+        //**********************//
+        // TEST 3: Verify that an empty maneuver plan is generated when the lane-following maneuver plan would result in the
+        //         ego vehicle exiting its route when in WAITING_FOR_APPROACHING_ERV state.
+        //**********************//
+        lanelet::ConstLanelet ending_lanelet_2 = cmw->getMap()->laneletLayer.get(160);
+        lanelet::Optional<lanelet::routing::Route> optional_route_2 = map_graph->getRoute(starting_lanelet, ending_lanelet_2);
+        lanelet::routing::Route route_2 = std::move(*optional_route_2);
+        carma_wm::LaneletRoutePtr route_ptr_2 = std::make_shared<lanelet::routing::Route>(std::move(route_2));
+        cmw->setRoute(route_ptr_2);
+
+        // Set worker_node's world model to cmw
+        worker_node->wm_ = cmw;
+        worker_node->config_.minimal_plan_duration = 100.0; // (Seconds) Maneuver plan shall be at least 100.0 seconds long
+        auto resp3 = std::make_shared<carma_planning_msgs::srv::PlanManeuvers::Response>();
+        worker_node->plan_maneuvers_callback(header_srv, req, resp3);
+
+        ASSERT_TRUE(resp3->new_plan.maneuvers.empty());
+    }
+
+    TEST(Testapproaching_emergency_vehicle_plugin, testManeuverPlanWhenSlowingDownForErv){
+        // Create, configure, and activate worker_node (ApproachingEmergencyVehiclePlugin)
+        rclcpp::NodeOptions options;
+        auto worker_node = std::make_shared<approaching_emergency_vehicle_plugin::ApproachingEmergencyVehiclePlugin>(options);
+
+        worker_node->configure(); //Call configure state transition
+        worker_node->activate();  //Call activate state transition to get not read for runtime
+
+        // Verify that initial state is NO_APPROACHING_ERV
+        ASSERT_EQ(worker_node->transition_table_.getState(), ApproachingEmergencyVehicleState::NO_APPROACHING_ERV);
+
+        worker_node->has_tracked_erv_ = true;
+        worker_node->tracked_erv_.seconds_until_passing = 10.0; // Set value to trigger state machine transition to 'SLOWING_DOWN_FOR_ERV' state
+        worker_node->config_.minimal_plan_duration = 25.0; // (Seconds) Maneuver plan shall be at least 25.0 seconds long to enable multiple maneuvers for this test case
+        worker_node->config_.speed_limit_reduction_during_passing = 10.0; // (m/s) Amount to reduce maneuver target speed by when in 'SLOWING_DOWN_FOR_ERV' state
+        worker_node->config_.minimum_reduced_speed_limit = 5.0; // (m/s) Minimum target speed when in 'SLOWING_DOWN_FOR_ERV' state
+
+        // Set georeference for worker_node so that it can convert ERV BSM lat/lon coordinates to map coordinates
+        std::string proj = "+proj=tmerc +lat_0=0 +lon_0=0 +k=1 +x_0=0 +y_0=0 +datum=WGS84 +units=m +geoidgrids=egm96_15.gtx +vunits=m +no_defs";
+        std_msgs::msg::String str_msg;
+        str_msg.data = proj;
+        std::unique_ptr<std_msgs::msg::String> msg_ptr = std::make_unique<std_msgs::msg::String>(str_msg);
+        worker_node->georeferenceCallback(std::move(msg_ptr)); 
+
+        // Create a world model object for worker_node and set its map
+        std::shared_ptr<carma_wm::CARMAWorldModel> cmw = std::make_shared<carma_wm::CARMAWorldModel>(); 
+
+        // Set projection
+        int projector_type = 0;
+        std::string target_frame;
+        lanelet::ErrorMessages load_errors;
+
+        // Load map file and parameters
+        std::string file = "../../install_ros2/approaching_emergency_vehicle_plugin/share/approaching_emergency_vehicle_plugin/resource/town01_vector_map_1.osm";
+
+        lanelet::io_handlers::AutowareOsmParser::parseMapParams(file, &projector_type, &target_frame);
+        lanelet::projection::LocalFrameProjector local_projector(target_frame.c_str());
+        lanelet::LaneletMapPtr map = lanelet::load(file, local_projector, &load_errors);
+
+        // Set map
+        cmw->carma_wm::CARMAWorldModel::setMap(map);
+
+        // Build routing graph from map	
+        auto traffic_rules = cmw->getTrafficRules();
+        lanelet::routing::RoutingGraphUPtr map_graph = lanelet::routing::RoutingGraph::build(*cmw->getMap(), *traffic_rules.get());
+
+        // Place ego vehicle in left lane on route with shortest path 164->165->171->109->106
+        lanelet::ConstLanelet starting_lanelet = cmw->getMap()->laneletLayer.get(164); 
+        lanelet::ConstLanelet ending_lanelet = cmw->getMap()->laneletLayer.get(106);
+        lanelet::Optional<lanelet::routing::Route> optional_route = map_graph->getRoute(starting_lanelet, ending_lanelet);
+        lanelet::routing::Route route = std::move(*optional_route);
+        carma_wm::LaneletRoutePtr route_ptr = std::make_shared<lanelet::routing::Route>(std::move(route));
+        cmw->setRoute(route_ptr);
+
+        // Set worker_node's world model to cmw
+        worker_node->wm_ = cmw;
+
+        //**********************//
+        // TEST 1: Verify correct ego vehicle lane-following maneuver plan in non-shortest-path lanelets on route when in 
+        //         WAITING_FOR_APPROACHING_ERV state.
+        //**********************//
+
+        // Create plan maneuvers service request for worker_node
+        auto req = std::make_shared<carma_planning_msgs::srv::PlanManeuvers::Request>();
+
+        // Set maneuver plan service request's vehicle state parameters to place ego vehicle in right lane to verify that it can remain off its
+        //     shortest path (but still on its route) when generating a plan that keeps the ego vehicle in its lane.
+        req->veh_x = 585277.966793666; // Lanelet 167 (right adjacent to 164)
+        req->veh_y = 5460258.19308606; // Lanelet 167 (right adjacent to 164)
+        req->veh_downtrack = 88.11799880; // (meters) Matches downtrack of (veh_x, veh_y) on ego vehicle's route
+        req->veh_logitudinal_velocity = 10.0; // (m/s)
+        req->veh_lane_id = "167";
+
+        auto resp = std::make_shared<carma_planning_msgs::srv::PlanManeuvers::Response>();
+        auto header_srv = std::make_shared<rmw_request_id_t>();
+        worker_node->plan_maneuvers_callback(header_srv, req, resp);
+
+        ASSERT_EQ(resp->new_plan.maneuvers.size(), 3);
+
+        // Verify Maneuver 0 lane following parameters in lanelet 167
+        ASSERT_EQ(resp->new_plan.maneuvers[0].type, carma_planning_msgs::msg::Maneuver::LANE_FOLLOWING);
+        ASSERT_NEAR(rclcpp::Time(resp->new_plan.maneuvers[0].lane_following_maneuver.start_time).seconds(), 0.0, 0.01); 
+        ASSERT_NEAR(resp->new_plan.maneuvers[0].lane_following_maneuver.end_dist, 190.243, 0.01);
+        ASSERT_NEAR(resp->new_plan.maneuvers[0].lane_following_maneuver.end_speed, 5.0, 0.01); 
+        ASSERT_NEAR(rclcpp::Time(resp->new_plan.maneuvers[0].lane_following_maneuver.end_time).seconds(), 13.6167, 0.01); 
+        std::vector<std::string> maneuver_0_lane_id {"167"};
+        ASSERT_EQ(resp->new_plan.maneuvers[0].lane_following_maneuver.lane_ids, maneuver_0_lane_id); 
+        ASSERT_EQ(resp->new_plan.maneuvers[0].lane_following_maneuver.parameters.negotiation_type, carma_planning_msgs::msg::ManeuverParameters::NO_NEGOTIATION);
+        ASSERT_EQ(resp->new_plan.maneuvers[0].lane_following_maneuver.parameters.planning_strategic_plugin, "approaching_emergency_vehicle_plugin");
+        ASSERT_EQ(resp->new_plan.maneuvers[0].lane_following_maneuver.parameters.presence_vector, carma_planning_msgs::msg::ManeuverParameters::HAS_TACTICAL_PLUGIN);
+        ASSERT_EQ(resp->new_plan.maneuvers[0].lane_following_maneuver.parameters.planning_tactical_plugin, "inlanecruising_plugin");
+
+        // Verify Maneuver 1 lane following parameters in lanelet 169
+        ASSERT_EQ(resp->new_plan.maneuvers[1].type, carma_planning_msgs::msg::Maneuver::LANE_FOLLOWING);
+        ASSERT_NEAR(rclcpp::Time(resp->new_plan.maneuvers[1].lane_following_maneuver.start_time).seconds(), 13.6167, 0.01); 
+        ASSERT_NEAR(resp->new_plan.maneuvers[1].lane_following_maneuver.end_dist, 206.164, 0.01);
+        ASSERT_NEAR(resp->new_plan.maneuvers[1].lane_following_maneuver.end_speed, 5.0, 0.01); 
+        ASSERT_NEAR(rclcpp::Time(resp->new_plan.maneuvers[1].lane_following_maneuver.end_time).seconds(), 16.8008, 0.01); 
+        std::vector<std::string> maneuver_1_lane_id {"169"};
+        ASSERT_EQ(resp->new_plan.maneuvers[1].lane_following_maneuver.lane_ids, maneuver_1_lane_id); 
+        ASSERT_EQ(resp->new_plan.maneuvers[1].lane_following_maneuver.parameters.negotiation_type, carma_planning_msgs::msg::ManeuverParameters::NO_NEGOTIATION);
+        ASSERT_EQ(resp->new_plan.maneuvers[1].lane_following_maneuver.parameters.planning_strategic_plugin, "approaching_emergency_vehicle_plugin");
+        ASSERT_EQ(resp->new_plan.maneuvers[1].lane_following_maneuver.parameters.presence_vector, carma_planning_msgs::msg::ManeuverParameters::HAS_TACTICAL_PLUGIN);
+        ASSERT_EQ(resp->new_plan.maneuvers[1].lane_following_maneuver.parameters.planning_tactical_plugin, "inlanecruising_plugin");
+
+        // Verify Maneuver 2 lane following parameters in lanelet 168
+        ASSERT_EQ(resp->new_plan.maneuvers[2].type, carma_planning_msgs::msg::Maneuver::LANE_FOLLOWING);
+        ASSERT_NEAR(rclcpp::Time(resp->new_plan.maneuvers[2].lane_following_maneuver.start_time).seconds(), 16.8008, 0.01); 
+        ASSERT_NEAR(resp->new_plan.maneuvers[2].lane_following_maneuver.end_dist, 240.438, 0.01);
+        ASSERT_NEAR(resp->new_plan.maneuvers[2].lane_following_maneuver.end_speed, 5.0, 0.01); 
+        ASSERT_NEAR(rclcpp::Time(resp->new_plan.maneuvers[2].lane_following_maneuver.end_time).seconds(), 23.6558, 0.01); 
+        std::vector<std::string> maneuver_2_lane_id {"168"};
+        ASSERT_EQ(resp->new_plan.maneuvers[2].lane_following_maneuver.lane_ids, maneuver_2_lane_id); 
+        ASSERT_EQ(resp->new_plan.maneuvers[2].lane_following_maneuver.parameters.negotiation_type, carma_planning_msgs::msg::ManeuverParameters::NO_NEGOTIATION);
+        ASSERT_EQ(resp->new_plan.maneuvers[2].lane_following_maneuver.parameters.planning_strategic_plugin, "approaching_emergency_vehicle_plugin");
+        ASSERT_EQ(resp->new_plan.maneuvers[2].lane_following_maneuver.parameters.presence_vector, carma_planning_msgs::msg::ManeuverParameters::HAS_TACTICAL_PLUGIN);
+        ASSERT_EQ(resp->new_plan.maneuvers[2].lane_following_maneuver.parameters.planning_tactical_plugin, "inlanecruising_plugin");
+    }
+
+    TEST(Testapproaching_emergency_vehicle_plugin, testManeuverPlanWhenMovingOverForErv){
+        // Create, configure, and activate worker_node (ApproachingEmergencyVehiclePlugin)
+        rclcpp::NodeOptions options;
+        auto worker_node = std::make_shared<approaching_emergency_vehicle_plugin::ApproachingEmergencyVehiclePlugin>(options);
+
+        worker_node->configure(); //Call configure state transition
+        worker_node->activate();  //Call activate state transition to get not read for runtime
+
+        // Verify that initial state is NO_APPROACHING_ERV
+        ASSERT_EQ(worker_node->transition_table_.getState(), ApproachingEmergencyVehicleState::NO_APPROACHING_ERV);
+
+        worker_node->has_tracked_erv_ = true;
+        worker_node->tracked_erv_.seconds_until_passing = 40.0; // Set value to trigger state machine transition to 'MOVING_OVER_FOR_APPROACHING_ERV' state
+        worker_node->config_.minimal_plan_duration = 15.0; // (Seconds) Maneuver plan shall be at least 25.0 seconds long to enable multiple maneuvers for this test case
+
+        // Set georeference for worker_node so that it can convert ERV BSM lat/lon coordinates to map coordinates
+        std::string proj = "+proj=tmerc +lat_0=0 +lon_0=0 +k=1 +x_0=0 +y_0=0 +datum=WGS84 +units=m +geoidgrids=egm96_15.gtx +vunits=m +no_defs";
+        std_msgs::msg::String str_msg;
+        str_msg.data = proj;
+        std::unique_ptr<std_msgs::msg::String> msg_ptr = std::make_unique<std_msgs::msg::String>(str_msg);
+        worker_node->georeferenceCallback(std::move(msg_ptr)); 
+
+        // Create a world model object for worker_node and set its map
+        std::shared_ptr<carma_wm::CARMAWorldModel> cmw = std::make_shared<carma_wm::CARMAWorldModel>(); 
+
+        // Set projection
+        int projector_type = 0;
+        std::string target_frame;
+        lanelet::ErrorMessages load_errors;
+
+        // Load map file and parameters
+        std::string file = "../../install_ros2/approaching_emergency_vehicle_plugin/share/approaching_emergency_vehicle_plugin/resource/town01_vector_map_1.osm";
+
+        lanelet::io_handlers::AutowareOsmParser::parseMapParams(file, &projector_type, &target_frame);
+        lanelet::projection::LocalFrameProjector local_projector(target_frame.c_str());
+        lanelet::LaneletMapPtr map = lanelet::load(file, local_projector, &load_errors);
+
+        // Set map
+        cmw->carma_wm::CARMAWorldModel::setMap(map);
+
+        // Build routing graph from map	
+        auto traffic_rules = cmw->getTrafficRules();
+        lanelet::routing::RoutingGraphUPtr map_graph = lanelet::routing::RoutingGraph::build(*cmw->getMap(), *traffic_rules.get());
+
+        // Place ego vehicle in left lane on route with shortest path 164->165->171->109->106->107
+        lanelet::ConstLanelet starting_lanelet = cmw->getMap()->laneletLayer.get(164); 
+        lanelet::ConstLanelet ending_lanelet = cmw->getMap()->laneletLayer.get(107);
+        lanelet::Optional<lanelet::routing::Route> optional_route = map_graph->getRoute(starting_lanelet, ending_lanelet);
+        lanelet::routing::Route route = std::move(*optional_route);
+        carma_wm::LaneletRoutePtr route_ptr = std::make_shared<lanelet::routing::Route>(std::move(route));
+        cmw->setRoute(route_ptr);
+
+        // Set worker_node's world model to cmw
+        worker_node->wm_ = cmw;
+
+        //**********************//
+        // TEST 1: Ego vehicle is in rightmost lane and the approaching ERV is in the rightmost lane. Verify that ego vehicle generates
+        //         left lane change maneuver when in MOVING_OVER_FOR_APPROACHING_ERV state.
+        //**********************//
+
+        // Create plan maneuvers service request for worker_node
+        auto req = std::make_shared<carma_planning_msgs::srv::PlanManeuvers::Request>();
+        
+        worker_node->tracked_erv_.in_rightmost_lane = true;
+
+        // Set maneuver plan service request's vehicle state parameters to place ego vehicle in right lane to verify that it can remain off its
+        //     shortest path (but still on its route) when generating a plan that keeps the ego vehicle in its lane.
+        req->veh_x = 585277.966793666; // Lanelet 167 (rightmost lane; right adjacent to 164)
+        req->veh_y = 5460258.19308606; // Lanelet 167 (rightmost lane; right adjacent to 164)
+        req->veh_downtrack = 88.11799880; // (meters) Matches downtrack of (veh_x, veh_y) on ego vehicle's route
+        req->veh_logitudinal_velocity = 10.0; // (m/s)
+        req->veh_lane_id = "167";
+
+        auto resp = std::make_shared<carma_planning_msgs::srv::PlanManeuvers::Response>();
+        auto header_srv = std::make_shared<rmw_request_id_t>();
+        worker_node->plan_maneuvers_callback(header_srv, req, resp);    
+
+        ASSERT_TRUE(worker_node->has_planned_upcoming_lc_);
+
+        // Verify Maneuver 0 lane following parameters in lanelet 167
+        ASSERT_EQ(resp->new_plan.maneuvers[0].type, carma_planning_msgs::msg::Maneuver::LANE_FOLLOWING);
+        ASSERT_NEAR(rclcpp::Time(resp->new_plan.maneuvers[0].lane_following_maneuver.start_time).seconds(), 0.0, 0.01); 
+        ASSERT_NEAR(resp->new_plan.maneuvers[0].lane_following_maneuver.end_dist, 190.243, 0.01);
+        ASSERT_NEAR(resp->new_plan.maneuvers[0].lane_following_maneuver.end_speed, 10.0, 0.01); 
+        ASSERT_NEAR(rclcpp::Time(resp->new_plan.maneuvers[0].lane_following_maneuver.end_time).seconds(), 10.2125, 0.01); 
+        std::vector<std::string> maneuver_0_lane_id {"167"};
+        ASSERT_EQ(resp->new_plan.maneuvers[0].lane_following_maneuver.lane_ids, maneuver_0_lane_id); 
+        ASSERT_EQ(resp->new_plan.maneuvers[0].lane_following_maneuver.parameters.negotiation_type, carma_planning_msgs::msg::ManeuverParameters::NO_NEGOTIATION);
+        ASSERT_EQ(resp->new_plan.maneuvers[0].lane_following_maneuver.parameters.planning_strategic_plugin, "approaching_emergency_vehicle_plugin");
+        ASSERT_EQ(resp->new_plan.maneuvers[0].lane_following_maneuver.parameters.presence_vector, carma_planning_msgs::msg::ManeuverParameters::HAS_TACTICAL_PLUGIN);
+        ASSERT_EQ(resp->new_plan.maneuvers[0].lane_following_maneuver.parameters.planning_tactical_plugin, "inlanecruising_plugin");
+
+        // Verify Maneuver 1 lane change parameters for left lane change from lanelet 169 to lanelet 165
+        ASSERT_EQ(resp->new_plan.maneuvers[1].type, carma_planning_msgs::msg::Maneuver::LANE_CHANGE);
+        ASSERT_NEAR(rclcpp::Time(resp->new_plan.maneuvers[1].lane_change_maneuver.start_time).seconds(), 10.2125, 0.01); 
+        ASSERT_NEAR(resp->new_plan.maneuvers[1].lane_change_maneuver.start_dist, 190.243, 0.01);
+        ASSERT_NEAR(resp->new_plan.maneuvers[1].lane_change_maneuver.start_speed, 10.0, 0.01); 
+        ASSERT_NEAR(resp->new_plan.maneuvers[1].lane_change_maneuver.end_dist, 206.164, 0.01);
+        ASSERT_NEAR(resp->new_plan.maneuvers[1].lane_change_maneuver.end_speed, 10.0, 0.01); 
+        ASSERT_NEAR(rclcpp::Time(resp->new_plan.maneuvers[1].lane_change_maneuver.end_time).seconds(), 11.80458, 0.01); 
+        ASSERT_EQ(resp->new_plan.maneuvers[1].lane_change_maneuver.starting_lane_id, "169");
+        ASSERT_EQ(resp->new_plan.maneuvers[1].lane_change_maneuver.ending_lane_id, "165");
+        ASSERT_EQ(resp->new_plan.maneuvers[1].lane_change_maneuver.parameters.negotiation_type, carma_planning_msgs::msg::ManeuverParameters::NO_NEGOTIATION);
+        ASSERT_EQ(resp->new_plan.maneuvers[1].lane_change_maneuver.parameters.planning_strategic_plugin, "approaching_emergency_vehicle_plugin");
+        ASSERT_EQ(resp->new_plan.maneuvers[1].lane_change_maneuver.parameters.presence_vector, carma_planning_msgs::msg::ManeuverParameters::HAS_TACTICAL_PLUGIN);
+        ASSERT_EQ(resp->new_plan.maneuvers[1].lane_change_maneuver.parameters.planning_tactical_plugin, "cooperative_lanechange");
+        std::string lane_change_maneuver_id = resp->new_plan.maneuvers[1].lane_change_maneuver.parameters.maneuver_id;
+
+        // Verify Maneuver 2 lane following parameters in lanelet 109
+        ASSERT_EQ(resp->new_plan.maneuvers[2].type, carma_planning_msgs::msg::Maneuver::LANE_FOLLOWING);
+        ASSERT_NEAR(rclcpp::Time(resp->new_plan.maneuvers[2].lane_following_maneuver.start_time).seconds(), 11.80458, 0.01); 
+        ASSERT_NEAR(resp->new_plan.maneuvers[2].lane_following_maneuver.start_dist, 206.164, 0.01);
+        ASSERT_NEAR(resp->new_plan.maneuvers[2].lane_following_maneuver.start_speed, 10.0, 0.01); 
+        ASSERT_NEAR(resp->new_plan.maneuvers[2].lane_following_maneuver.end_dist, 240.438, 0.01);
+        ASSERT_NEAR(resp->new_plan.maneuvers[2].lane_following_maneuver.end_speed, 10.0, 0.01); 
+        ASSERT_NEAR(rclcpp::Time(resp->new_plan.maneuvers[2].lane_following_maneuver.end_time).seconds(), 15.232, 0.01); 
+        std::vector<std::string> maneuver_2_lane_id {"171"};
+        ASSERT_EQ(resp->new_plan.maneuvers[2].lane_following_maneuver.lane_ids, maneuver_2_lane_id); 
+        ASSERT_EQ(resp->new_plan.maneuvers[2].lane_following_maneuver.parameters.negotiation_type, carma_planning_msgs::msg::ManeuverParameters::NO_NEGOTIATION);
+        ASSERT_EQ(resp->new_plan.maneuvers[2].lane_following_maneuver.parameters.planning_strategic_plugin, "approaching_emergency_vehicle_plugin");
+        ASSERT_EQ(resp->new_plan.maneuvers[2].lane_following_maneuver.parameters.presence_vector, carma_planning_msgs::msg::ManeuverParameters::HAS_TACTICAL_PLUGIN);
+        ASSERT_EQ(resp->new_plan.maneuvers[2].lane_following_maneuver.parameters.planning_tactical_plugin, "inlanecruising_plugin");
+
+        //**********************//
+        // TEST 2: Set maneuver plan service request that begins with ego vehicle in the middle of its lane change. Check that first maneuver is
+        //         the same lane change maneuver from the previous maneuver plan, and also verify that lane-follow maneuvers after that lane change maneuver.
+        //**********************//
+        req->veh_x = 585325.842977; // Lanelet 169 (rightmost lane; right adjacent to 165)
+        req->veh_y = 5460330.84628; // Lanelet 169 (rightmost lane; right adjacent to 165)
+        req->veh_downtrack = 197.52434; // (meters) Matches downtrack of (veh_x, veh_y) on ego vehicle's route
+        req->veh_logitudinal_velocity = 10.0; // (m/s)
+        req->veh_lane_id = "169";
+
+        auto resp2 = std::make_shared<carma_planning_msgs::srv::PlanManeuvers::Response>();
+        worker_node->plan_maneuvers_callback(header_srv, req, resp2); 
+
+        ASSERT_EQ(resp2->new_plan.maneuvers.size(), 5);
+
+        // Verify Maneuver 0 lane change parameters for left lane change from lanelet 169 to lanelet 165
+        ASSERT_EQ(resp2->new_plan.maneuvers[0].type, carma_planning_msgs::msg::Maneuver::LANE_CHANGE);
+        ASSERT_NEAR(rclcpp::Time(resp2->new_plan.maneuvers[0].lane_change_maneuver.start_time).seconds(), 0.0, 0.01); 
+        ASSERT_NEAR(resp2->new_plan.maneuvers[0].lane_change_maneuver.start_dist, 190.243, 0.01);
+        ASSERT_NEAR(resp2->new_plan.maneuvers[0].lane_change_maneuver.start_speed, 10.0, 0.01); 
+        ASSERT_NEAR(resp2->new_plan.maneuvers[0].lane_change_maneuver.end_dist, 206.164, 0.01);
+        ASSERT_NEAR(resp2->new_plan.maneuvers[0].lane_change_maneuver.end_speed, 10.0, 0.01); 
+        ASSERT_NEAR(rclcpp::Time(resp2->new_plan.maneuvers[0].lane_change_maneuver.end_time).seconds(), 1.59208, 0.01); 
+        ASSERT_EQ(resp2->new_plan.maneuvers[0].lane_change_maneuver.starting_lane_id, "169");
+        ASSERT_EQ(resp2->new_plan.maneuvers[0].lane_change_maneuver.ending_lane_id, "165");
+        ASSERT_EQ(resp2->new_plan.maneuvers[0].lane_change_maneuver.parameters.negotiation_type, carma_planning_msgs::msg::ManeuverParameters::NO_NEGOTIATION);
+        ASSERT_EQ(resp2->new_plan.maneuvers[0].lane_change_maneuver.parameters.planning_strategic_plugin, "approaching_emergency_vehicle_plugin");
+        ASSERT_EQ(resp2->new_plan.maneuvers[0].lane_change_maneuver.parameters.presence_vector, carma_planning_msgs::msg::ManeuverParameters::HAS_TACTICAL_PLUGIN);
+        ASSERT_EQ(resp2->new_plan.maneuvers[0].lane_change_maneuver.parameters.planning_tactical_plugin, "cooperative_lanechange");
+        ASSERT_EQ(resp2->new_plan.maneuvers[0].lane_change_maneuver.parameters.maneuver_id, lane_change_maneuver_id);
+
+        // Verify Maneuver 1 lane following parameters in lanelet 171
+        ASSERT_EQ(resp2->new_plan.maneuvers[1].type, carma_planning_msgs::msg::Maneuver::LANE_FOLLOWING);
+        ASSERT_NEAR(rclcpp::Time(resp2->new_plan.maneuvers[1].lane_following_maneuver.start_time).seconds(), 1.59208, 0.01); 
+        ASSERT_NEAR(resp2->new_plan.maneuvers[1].lane_following_maneuver.start_dist, 206.1637, 0.01);
+        ASSERT_NEAR(resp2->new_plan.maneuvers[1].lane_following_maneuver.start_speed, 10.0, 0.01); 
+        ASSERT_NEAR(resp2->new_plan.maneuvers[1].lane_following_maneuver.end_dist, 240.43874, 0.01);
+        ASSERT_NEAR(resp2->new_plan.maneuvers[1].lane_following_maneuver.end_speed, 10.0, 0.01); 
+        ASSERT_NEAR(rclcpp::Time(resp2->new_plan.maneuvers[1].lane_following_maneuver.end_time).seconds(), 5.01953, 0.01); 
+        std::vector<std::string> maneuver_1_lane_id {"171"};
+        ASSERT_EQ(resp2->new_plan.maneuvers[1].lane_following_maneuver.lane_ids, maneuver_1_lane_id); 
+        ASSERT_EQ(resp2->new_plan.maneuvers[1].lane_following_maneuver.parameters.negotiation_type, carma_planning_msgs::msg::ManeuverParameters::NO_NEGOTIATION);
+        ASSERT_EQ(resp2->new_plan.maneuvers[1].lane_following_maneuver.parameters.planning_strategic_plugin, "approaching_emergency_vehicle_plugin");
+        ASSERT_EQ(resp2->new_plan.maneuvers[1].lane_following_maneuver.parameters.presence_vector, carma_planning_msgs::msg::ManeuverParameters::HAS_TACTICAL_PLUGIN);
+        ASSERT_EQ(resp2->new_plan.maneuvers[1].lane_following_maneuver.parameters.planning_tactical_plugin, "inlanecruising_plugin");
+
+        // Verify Maneuver 2 lane following parameters in lanelet 109
+        ASSERT_EQ(resp2->new_plan.maneuvers[2].type, carma_planning_msgs::msg::Maneuver::LANE_FOLLOWING);
+        ASSERT_NEAR(rclcpp::Time(resp2->new_plan.maneuvers[2].lane_following_maneuver.start_time).seconds(), 5.01953, 0.01); 
+        ASSERT_NEAR(resp2->new_plan.maneuvers[2].lane_following_maneuver.start_dist, 240.43874, 0.01);
+        ASSERT_NEAR(resp2->new_plan.maneuvers[2].lane_following_maneuver.start_speed, 10.0, 0.01); 
+        ASSERT_NEAR(resp2->new_plan.maneuvers[2].lane_following_maneuver.end_dist, 255.52386, 0.01);
+        ASSERT_NEAR(resp2->new_plan.maneuvers[2].lane_following_maneuver.end_speed, 10.0, 0.01); 
+        ASSERT_NEAR(rclcpp::Time(resp2->new_plan.maneuvers[2].lane_following_maneuver.end_time).seconds(), 6.528, 0.01); 
+        maneuver_2_lane_id[0] = "109";
+        ASSERT_EQ(resp2->new_plan.maneuvers[2].lane_following_maneuver.lane_ids, maneuver_2_lane_id); 
+        ASSERT_EQ(resp2->new_plan.maneuvers[2].lane_following_maneuver.parameters.negotiation_type, carma_planning_msgs::msg::ManeuverParameters::NO_NEGOTIATION);
+        ASSERT_EQ(resp2->new_plan.maneuvers[2].lane_following_maneuver.parameters.planning_strategic_plugin, "approaching_emergency_vehicle_plugin");
+        ASSERT_EQ(resp2->new_plan.maneuvers[2].lane_following_maneuver.parameters.presence_vector, carma_planning_msgs::msg::ManeuverParameters::HAS_TACTICAL_PLUGIN);
+        ASSERT_EQ(resp2->new_plan.maneuvers[2].lane_following_maneuver.parameters.planning_tactical_plugin, "inlanecruising_plugin");
+
+        // Verify Maneuver 3 lane following parameters in lanelet 106
+        ASSERT_EQ(resp2->new_plan.maneuvers[3].type, carma_planning_msgs::msg::Maneuver::LANE_FOLLOWING);
+        ASSERT_NEAR(rclcpp::Time(resp2->new_plan.maneuvers[3].lane_following_maneuver.start_time).seconds(), 6.528, 0.01); 
+        ASSERT_NEAR(resp2->new_plan.maneuvers[3].lane_following_maneuver.start_dist, 255.52386, 0.01);
+        ASSERT_NEAR(resp2->new_plan.maneuvers[3].lane_following_maneuver.start_speed, 10.0, 0.01); 
+        ASSERT_NEAR(resp2->new_plan.maneuvers[3].lane_following_maneuver.end_dist, 554.941, 0.01);
+        ASSERT_NEAR(resp2->new_plan.maneuvers[3].lane_following_maneuver.end_speed, 10.0, 0.01); 
+        ASSERT_NEAR(rclcpp::Time(resp2->new_plan.maneuvers[3].lane_following_maneuver.end_time).seconds(), 36.4697, 0.01); 
+        std::vector<std::string> maneuver_3_lane_id {"106"};
+        ASSERT_EQ(resp2->new_plan.maneuvers[3].lane_following_maneuver.lane_ids, maneuver_3_lane_id); 
+        ASSERT_EQ(resp2->new_plan.maneuvers[3].lane_following_maneuver.parameters.negotiation_type, carma_planning_msgs::msg::ManeuverParameters::NO_NEGOTIATION);
+        ASSERT_EQ(resp2->new_plan.maneuvers[3].lane_following_maneuver.parameters.planning_strategic_plugin, "approaching_emergency_vehicle_plugin");
+        ASSERT_EQ(resp2->new_plan.maneuvers[3].lane_following_maneuver.parameters.presence_vector, carma_planning_msgs::msg::ManeuverParameters::HAS_TACTICAL_PLUGIN);
+        ASSERT_EQ(resp2->new_plan.maneuvers[3].lane_following_maneuver.parameters.planning_tactical_plugin, "inlanecruising_plugin");
+
+        // Verify Maneuver 4 stop and wait maneuver spans lanelets 106 and 107
+        ASSERT_EQ(resp2->new_plan.maneuvers[4].type, carma_planning_msgs::msg::Maneuver::STOP_AND_WAIT);
+        ASSERT_NEAR(rclcpp::Time(resp2->new_plan.maneuvers[4].stop_and_wait_maneuver.start_time).seconds(), 36.4697, 0.01); 
+        ASSERT_NEAR(resp2->new_plan.maneuvers[4].stop_and_wait_maneuver.start_dist, 554.941, 0.01);
+        ASSERT_NEAR(resp2->new_plan.maneuvers[4].stop_and_wait_maneuver.start_speed, 10.0, 0.01); 
+        ASSERT_NEAR(resp2->new_plan.maneuvers[4].stop_and_wait_maneuver.end_dist, 604.941, 0.01);
+        ASSERT_NEAR(rclcpp::Time(resp2->new_plan.maneuvers[4].stop_and_wait_maneuver.end_time).seconds(), 46.4697, 0.01); 
+        ASSERT_EQ(resp2->new_plan.maneuvers[4].stop_and_wait_maneuver.starting_lane_id, "106"); 
+        ASSERT_EQ(resp2->new_plan.maneuvers[4].stop_and_wait_maneuver.ending_lane_id, "107"); 
+        ASSERT_EQ(resp2->new_plan.maneuvers[4].stop_and_wait_maneuver.parameters.negotiation_type, carma_planning_msgs::msg::ManeuverParameters::NO_NEGOTIATION);
+        ASSERT_EQ(resp2->new_plan.maneuvers[4].stop_and_wait_maneuver.parameters.planning_strategic_plugin, "approaching_emergency_vehicle_plugin");
+        ASSERT_EQ(resp2->new_plan.maneuvers[4].stop_and_wait_maneuver.parameters.planning_tactical_plugin, "stop_and_wait_plugin");
+
+        ASSERT_EQ(worker_node->has_planned_upcoming_lc_, true);
+
+        //**********************//
+        // TEST 3: Set maneuver plan service request that begins with ego vehicle positioned after its lane change. Check that first maneuver is
+        //         a lane follow maneuver. Verify that all maneuvers include the expected parameters.
+        //**********************//
+        req->veh_x = 585314.2535; // Lanelet 169 (rightmost lane; right adjacent to 165)
+        req->veh_y = 5460392.8554; // Lanelet 169 (rightmost lane; right adjacent to 165)
+        req->veh_downtrack = 260.411; // (meters) Matches downtrack of (veh_x, veh_y) on ego vehicle's route
+        req->veh_logitudinal_velocity = 10.0; // (m/s)
+        req->veh_lane_id = "106";
+
+        auto resp3 = std::make_shared<carma_planning_msgs::srv::PlanManeuvers::Response>();
+        worker_node->plan_maneuvers_callback(header_srv, req, resp3); 
+
+        // Verify that node no longer has a planned upcoming lane change
+        ASSERT_FALSE(worker_node->has_planned_upcoming_lc_);
+
+        ASSERT_EQ(resp3->new_plan.maneuvers.size(), 2);
+
+        // Verify Maneuver 0 lane following parameters in lanelet 106
+        ASSERT_EQ(resp3->new_plan.maneuvers[0].type, carma_planning_msgs::msg::Maneuver::LANE_FOLLOWING);
+        ASSERT_NEAR(rclcpp::Time(resp3->new_plan.maneuvers[0].lane_following_maneuver.start_time).seconds(), 0.0, 0.01); 
+        ASSERT_NEAR(resp3->new_plan.maneuvers[0].lane_following_maneuver.start_dist, 260.411, 0.01);
+        ASSERT_NEAR(resp3->new_plan.maneuvers[0].lane_following_maneuver.start_speed, 10.0, 0.01); 
+        ASSERT_NEAR(resp3->new_plan.maneuvers[0].lane_following_maneuver.end_dist, 554.941, 0.01);
+        ASSERT_NEAR(resp3->new_plan.maneuvers[0].lane_following_maneuver.end_speed, 10.0, 0.01); 
+        ASSERT_NEAR(rclcpp::Time(resp3->new_plan.maneuvers[0].lane_following_maneuver.end_time).seconds(), 29.453, 0.01); 
+        maneuver_0_lane_id[0] = "106";
+        ASSERT_EQ(resp3->new_plan.maneuvers[0].lane_following_maneuver.lane_ids, maneuver_0_lane_id); 
+        ASSERT_EQ(resp3->new_plan.maneuvers[0].lane_following_maneuver.parameters.negotiation_type, carma_planning_msgs::msg::ManeuverParameters::NO_NEGOTIATION);
+        ASSERT_EQ(resp3->new_plan.maneuvers[0].lane_following_maneuver.parameters.planning_strategic_plugin, "approaching_emergency_vehicle_plugin");
+        ASSERT_EQ(resp3->new_plan.maneuvers[0].lane_following_maneuver.parameters.presence_vector, carma_planning_msgs::msg::ManeuverParameters::HAS_TACTICAL_PLUGIN);
+        ASSERT_EQ(resp3->new_plan.maneuvers[0].lane_following_maneuver.parameters.planning_tactical_plugin, "inlanecruising_plugin");
+
+        // Verify Maneuver 1 stop and wait maneuver spans lanelets 106 and 107
+        ASSERT_EQ(resp3->new_plan.maneuvers[1].type, carma_planning_msgs::msg::Maneuver::STOP_AND_WAIT);
+        ASSERT_NEAR(rclcpp::Time(resp3->new_plan.maneuvers[1].stop_and_wait_maneuver.start_time).seconds(), 29.453, 0.01); 
+        ASSERT_NEAR(resp3->new_plan.maneuvers[1].stop_and_wait_maneuver.start_dist, 554.941, 0.01);
+        ASSERT_NEAR(resp3->new_plan.maneuvers[1].stop_and_wait_maneuver.start_speed, 10.0, 0.01); 
+        ASSERT_NEAR(resp3->new_plan.maneuvers[1].stop_and_wait_maneuver.end_dist, 604.941, 0.01);
+        ASSERT_NEAR(rclcpp::Time(resp3->new_plan.maneuvers[1].stop_and_wait_maneuver.end_time).seconds(), 39.453, 0.01); 
+        ASSERT_EQ(resp3->new_plan.maneuvers[1].stop_and_wait_maneuver.starting_lane_id, "106"); 
+        ASSERT_EQ(resp3->new_plan.maneuvers[1].stop_and_wait_maneuver.ending_lane_id, "107"); 
+        ASSERT_EQ(resp3->new_plan.maneuvers[1].stop_and_wait_maneuver.parameters.negotiation_type, carma_planning_msgs::msg::ManeuverParameters::NO_NEGOTIATION);
+        ASSERT_EQ(resp3->new_plan.maneuvers[1].stop_and_wait_maneuver.parameters.planning_strategic_plugin, "approaching_emergency_vehicle_plugin");
+        ASSERT_EQ(resp3->new_plan.maneuvers[1].stop_and_wait_maneuver.parameters.planning_tactical_plugin, "stop_and_wait_plugin");
+    }
+
+    TEST(Testapproaching_emergency_vehicle_plugin, testWarningBroadcast){
+        // Create, configure, and activate worker_node (ApproachingEmergencyVehiclePlugin)
+        rclcpp::NodeOptions options;
+        auto worker_node = std::make_shared<approaching_emergency_vehicle_plugin::ApproachingEmergencyVehiclePlugin>(options);
+
+        worker_node->configure(); //Call configure state transition
+        worker_node->activate();  //Call activate state transition to get not read for runtime
+
+        // Verify that initial state is NO_APPROACHING_ERV
+        ASSERT_EQ(worker_node->transition_table_.getState(), ApproachingEmergencyVehicleState::NO_APPROACHING_ERV);
+
+        worker_node->has_tracked_erv_ = true;
+        worker_node->tracked_erv_.seconds_until_passing = 40.0; // Set value to trigger state machine transition to 'MOVING_OVER_FOR_APPROACHING_ERV' state
+        worker_node->config_.minimal_plan_duration = 15.0; // (Seconds) Maneuver plan shall be at least 25.0 seconds long to enable multiple maneuvers for this test case
+
+        // Set georeference for worker_node so that it can convert ERV BSM lat/lon coordinates to map coordinates
+        std::string proj = "+proj=tmerc +lat_0=0 +lon_0=0 +k=1 +x_0=0 +y_0=0 +datum=WGS84 +units=m +geoidgrids=egm96_15.gtx +vunits=m +no_defs";
+        std_msgs::msg::String str_msg;
+        str_msg.data = proj;
+        std::unique_ptr<std_msgs::msg::String> msg_ptr = std::make_unique<std_msgs::msg::String>(str_msg);
+        worker_node->georeferenceCallback(std::move(msg_ptr)); 
+
+        // Create a world model object for worker_node and set its map
+        std::shared_ptr<carma_wm::CARMAWorldModel> cmw = std::make_shared<carma_wm::CARMAWorldModel>(); 
+
+        // Set projection
+        int projector_type = 0;
+        std::string target_frame;
+        lanelet::ErrorMessages load_errors;
+
+        // Load map file and parameters
+        std::string file = "../../install_ros2/approaching_emergency_vehicle_plugin/share/approaching_emergency_vehicle_plugin/resource/town01_vector_map_1.osm";
+
+        lanelet::io_handlers::AutowareOsmParser::parseMapParams(file, &projector_type, &target_frame);
+        lanelet::projection::LocalFrameProjector local_projector(target_frame.c_str());
+        lanelet::LaneletMapPtr map = lanelet::load(file, local_projector, &load_errors);
+
+        // Set map
+        cmw->carma_wm::CARMAWorldModel::setMap(map);
+
+        // Build routing graph from map	
+        auto traffic_rules = cmw->getTrafficRules();
+        lanelet::routing::RoutingGraphUPtr map_graph = lanelet::routing::RoutingGraph::build(*cmw->getMap(), *traffic_rules.get());
+
+        // Place ego vehicle in left lane on route with shortest path 164->165->171->109->106->107
+        lanelet::ConstLanelet starting_lanelet = cmw->getMap()->laneletLayer.get(164); 
+        lanelet::ConstLanelet ending_lanelet = cmw->getMap()->laneletLayer.get(107);
+        lanelet::Optional<lanelet::routing::Route> optional_route = map_graph->getRoute(starting_lanelet, ending_lanelet);
+        lanelet::routing::Route route = std::move(*optional_route);
+        carma_wm::LaneletRoutePtr route_ptr = std::make_shared<lanelet::routing::Route>(std::move(route));
+        cmw->setRoute(route_ptr);
+
+        // Set worker_node's world model to cmw
+        worker_node->wm_ = cmw;
+        
+        // Set configuration parameters relevant to this unit test
+        worker_node->config_.passing_threshold = 10.0; // Seconds
+        worker_node->config_.warning_broadcast_frequency = 1; // Hz
+        worker_node->config_.max_warning_broadcasts = 3;
+
+        worker_node->has_tracked_erv_ = true;
+        worker_node->tracked_erv_.in_rightmost_lane = true; // Plan maneuvers request will place ego vehicle in rightmost lane as well
+        worker_node->tracked_erv_.seconds_until_passing = 10.0;
+
+        // Create plan maneuvers service request for worker_node
+        auto req = std::make_shared<carma_planning_msgs::srv::PlanManeuvers::Request>();
+
+        // Set maneuver plan service request's vehicle state parameters to place ego vehicle in right lane to verify that it can remain off its
+        //     shortest path (but still on its route) when generating a plan that keeps the ego vehicle in its lane.
+        req->veh_x = 585277.966793666; // Lanelet 167 (rightmost lane; right adjacent to 164)
+        req->veh_y = 5460258.19308606; // Lanelet 167 (rightmost lane; right adjacent to 164)
+        req->veh_downtrack = 88.11799880; // (meters) Matches downtrack of (veh_x, veh_y) on ego vehicle's route
+        req->veh_logitudinal_velocity = 10.0; // (m/s)
+        req->veh_lane_id = "167";
+
+        auto resp = std::make_shared<carma_planning_msgs::srv::PlanManeuvers::Response>();
+        auto header_srv = std::make_shared<rmw_request_id_t>();
+        worker_node->plan_maneuvers_callback(header_srv, req, resp);   
+
+        // Set parameters so that ERV remains tracked throughout this unit test
+        worker_node->tracked_erv_.latest_update_time = worker_node->now(); 
+        worker_node->config_.timeout_duration = 30.0; // (Seconds) Increase timeout duration so that ERV is still tracked throughout this unit test
+        
+        // Verify that the state transition resulting from the plan maneuvers request triggers the node to set should_broadcast_warnings to true
+        ASSERT_EQ(worker_node->num_warnings_broadcasted_, 0);
+        ASSERT_TRUE(worker_node->should_broadcast_warnings_);
+
+        // Add Node to an executor and spin it to trigger timer callbacks
+        rclcpp::executors::MultiThreadedExecutor executor;
+        executor.add_node(worker_node->get_node_base_interface());
+
+        // Spin executor for 1 second
+        auto end_time = std::chrono::system_clock::now() + std::chrono::seconds(1);
+        while(std::chrono::system_clock::now() < end_time){
+            executor.spin_once();
+        }
+        
+        // Verify that node has broadcasted 2 (of 3) warning messages
+        ASSERT_EQ(worker_node->num_warnings_broadcasted_, 2);
+
+        // Spin executor for 2 seconds
+        end_time = std::chrono::system_clock::now() + std::chrono::seconds(2);
+        while(std::chrono::system_clock::now() < end_time){
+            executor.spin_once();
+        }
+
+        // Verify that node has broadcasted all warning messages and counter has been reset to 0
+        ASSERT_EQ(worker_node->num_warnings_broadcasted_, 0);
+        ASSERT_FALSE(worker_node->should_broadcast_warnings_); // Node should no longer be broadcasting warnings since all have been broadcasted
+    }
+
 } // namespace approaching_emergency_vehicle_plugin
 
 int main(int argc, char ** argv)
