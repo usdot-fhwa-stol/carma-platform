@@ -88,11 +88,16 @@ class NS3Adapter : public cav::DriverApplication
         // Current vehicle pose in map
         geometry_msgs::PoseStamped pose_msg_;
 
+        // Confirm these values
         std::string vehicle_id_;
+        // vehicle role id in carla
         std::string role_id_ = "ego_vehicle";
         std::string port_ = "2000";
         std::string host_ip_ = "127.0.0.1";
 
+        std::string ns3_address_ = "192.168.88.40";
+        int ns3_registration_port_ = 1000;
+ 
 
         //dynamic reconfig
         std::mutex cfg_mutex_;

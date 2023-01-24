@@ -39,6 +39,18 @@ public:
     ~NS3Client();
 
     /**
+    * @brief connects and send handshake message to MOSAIC CARMA Ambassador 
+    * @param message udp message
+    * @param remote_address IPv4 address of OBU
+    * @param remote_port of client service
+    * @param local_port of client service
+    * @return true on sucessful connect, false otherwise
+    */
+    bool registermsg(const std::shared_ptr<std::vector<uint8_t>>&message, 
+                const std::string &remote_address, unsigned short remote_port, 
+                unsigned short local_port);
+
+    /**
     * @brief Connects the driver to the OBU at the provided IPv4 address and Port
     * @param address IPv4 address of OBU
     * @param port of client service
@@ -114,4 +126,6 @@ private:
     * identified message doesn't keep a real one from getting through.
     */
     void process(const std::shared_ptr<const std::vector<uint8_t>> &data);
+
+    
 };

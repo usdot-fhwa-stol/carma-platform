@@ -42,6 +42,16 @@ void NS3Adapter::initialize() {
     //dyn_cfg_server_->updateConfig(config_);
     //dyn_cfg_server_->setCallback([this](dsrc::DSRCConfig & cfg, uint32_t level) { dynReconfigCB(cfg, level); });
 
+    // Start the handshake
+    pnh_->getParam("vehicle_id", vehicle_id_);  
+    pnh_->getParam("carla/ego_vehicle/role_name", role_id_);
+    pnh.param<std::string>("ns-3_address", ns3_address_, "192.168.88.40");
+    pnh.param<int>("ns-3_registration_port", ns3_registration_port_, 1000);
+    std::string handshake_msg = compose_handshake_msg(vehicle_id_, role_id_, port_, host_ip_);
+    
+    broadcastHandshakemsg(handshake_msg);
+
+
     //Setup connection handlers
     ns3_client_error_.clear();
     ns3_client_.onConnect.connect([this]() { onConnectHandler(); });
@@ -67,17 +77,11 @@ void NS3Adapter::initialize() {
 
     pose_sub_ = pnh_->subscribe("current_pose", 1, &NS3Adapter::pose_cb, this);
 
-    pnh_->getParam("vehicle_id", vehicle_id_);
-    pnh_->getParam("carla/ego_vehicle/role_name", role_id_);
-    pnh_->getParam("carla/port", port_);
-    pnh_->getParam("carla/host", host_ip_);
-
+    
 
     ns3_client_.onMessageReceived.connect([this](std::vector<uint8_t> const &msg, uint16_t id) {onMessageReceivedHandler(msg, id); });
 
-    std::string handshake_msg = compose_handshake_msg(vehicle_id_, role_id_, port_, host_ip_);
     
-    broadcastHandshakemsg(handshake_msg);
     
     spin_rate = 50;
 }
@@ -460,7 +464,10 @@ void NS3Adapter::broadcastHandshakemsg(const std::string& msg_string)
     auto msg_vector = std::vector<uint8_t>(msg_string.begin(), msg_string.end());
     std::shared_ptr<std::vector<uint8_t>> message_content = std::make_shared<std::vector<uint8_t>>(std::move(msg_vector));
 
-    bool success = ns3_client_.sendNS3Message(message_content);
+    std::string addres;
+    unsigned short remote_port;
+    
+    bool success = ns3_client_.registermsg(message_content, ns3_address_, ns3_registration_port_, ns3_registration_port_);
     if (!success) {
         ROS_WARN_STREAM("Handshake Message send failed");
     }
