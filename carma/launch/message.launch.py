@@ -198,7 +198,7 @@ def generate_launch_description():
     REMOTE_ADDR="www.carma-cloud.com"
     KEY_FILE="carma-cloud-test-1.pem"
     HOST_PORT="33333" # This port is forwarded to remote host (carma-cloud)
-    REMOTE_PORT="33333" # This port is forwarded to local host 
+    REMOTE_PORT="10001" # This port is forwarded to local host 
     param_launch_path = os.path.join(
         get_package_share_directory('carma_cloud_client'), 'launch/scripts')
         
