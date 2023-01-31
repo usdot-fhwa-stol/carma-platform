@@ -822,7 +822,7 @@ void LCIStrategicPlugin::planWhenAPPROACHING(const cav_srvs::PlanManeuversReques
       ROS_DEBUG_STREAM("ET is still in TBD despite the vehicle being in desired distance to start stopping. Trying to handle this edge case gracefully...");
     }
 
-    double stopping_time = current_state.speed / 1.5 * max_comfort_decel_norm_; //one half the acceleration (twice the acceleration to stop) to account for emergency case, see emergency_decel_norm_
+    double stopping_time = current_state.speed / 1.5 / max_comfort_decel_norm_; //one half the acceleration (twice the acceleration to stop) to account for emergency case, see emergency_decel_norm_
 
     ros::Time stopping_arrival_time =
           current_state.stamp + ros::Duration(stopping_time);
