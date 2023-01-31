@@ -1129,6 +1129,8 @@ bool LCIStrategicPlugin::mobilityPubSpin()
 
 bool LCIStrategicPlugin::planManeuverCb(cav_srvs::PlanManeuversRequest& req, cav_srvs::PlanManeuversResponse& resp)
 {
+  std::chrono::system_clock::time_point execution_start_time = std::chrono::system_clock::now();  // Start timing the execution time for planning so it can be logged
+  
   ROS_DEBUG("<<<<<<<<<<<<<<<<< STARTING LCI_STRATEGIC_PLAN!!!!!!!!! >>>>>>>>>>>>>>>>");
 
   if (!wm_->getRoute())
@@ -1264,6 +1266,11 @@ bool LCIStrategicPlugin::planManeuverCb(cav_srvs::PlanManeuversRequest& req, cav
     }
 
   } while (transition_table_.getState() != prev_state);  // If the state has changed then continue looping
+
+  std::chrono::system_clock::time_point execution_end_time = std::chrono::system_clock::now();  // Planning complete
+
+  auto execution_duration = execution_end_time - execution_start_time;
+  ROS_DEBUG_STREAM("ExecutionTime lci_strategic_plugin: " << std::chrono::duration<double>(execution_duration).count());
 
   return true;
   // We need to evaluate the events so the state transitions can be triggered
