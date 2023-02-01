@@ -137,12 +137,12 @@ namespace light_controlled_intersection_tactical_plugin
             
             new_starting_idx = i;
         }
-
-        carma_planning_msgs::msg::TrajectoryPlan reduced_last_traj(last_trajectory_.trajectory_points.begin() + new_starting_idx, last_trajectory_.trajectory_points.end());
+        
+        std::vector<carma_planning_msgs::msg::TrajectoryPlanPoint> reduced_last_traj_points(last_trajectory_.trajectory_points.begin() + new_starting_idx, last_trajectory_.trajectory_points.end());
         std::vector<double> reduced_final_speeds (last_final_speeds_.begin() + new_starting_idx, last_final_speeds_.end());
 
         last_final_speeds_ = reduced_final_speeds;
-        last_trajectory_.trajectory_points = reduced_last_traj.trajectory_points;
+        last_trajectory_.trajectory_points = reduced_last_traj_points;
 
         if (is_last_case_successful_ != boost::none && last_case_ != boost::none
             && last_case_.get() == new_case
