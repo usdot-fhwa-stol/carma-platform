@@ -119,25 +119,31 @@ namespace light_controlled_intersection_tactical_plugin
             RCLCPP_DEBUG_STREAM(rclcpp::get_logger("light_controlled_intersection_tactical_plugin"), "Not all variables are set...");
         }
 
-        carma_planning_msgs::msg::TrajectoryPlan reduced_last_traj;
-        std::vector<double> reduced_final_speeds;
-
         RCLCPP_DEBUG_STREAM(rclcpp::get_logger("light_controlled_intersection_tactical_plugin"), "traj points size: " << last_trajectory_.trajectory_points.size() << ", last_final_speeds_ size: " <<
                             last_final_speeds_.size() );
 
-        for (size_t i = 0; i < last_trajectory_.trajectory_points.size(); i++)
+
+        lanelet::BasicPoint2d front_point_of_last_traj(last_trajectory_.trajectory_points.front().x, last_trajectory_.trajectory_points.front().y);
+        double starting_downtrack_of_reduced_traj = wm_->routeTrackPos(front_point_of_last_traj).downtrack;
+        size_t new_starting_idx = 0;
+        for (size_t i = 1; i < last_trajectory_.trajectory_points.size(); i++)
         {
-            if ((rclcpp::Time(last_trajectory_.trajectory_points[i].target_time) > rclcpp::Time(req->header.stamp) - rclcpp::Duration(0.1 * 1e9))) // Duration is in nanoseconds
+            if (starting_downtrack_of_reduced_traj > current_downtrack_)
             {
-                reduced_last_traj.trajectory_points.emplace_back(last_trajectory_.trajectory_points[i]);
-                reduced_final_speeds.emplace_back(last_final_speeds_[i]);
+                break;
             }
+            double delta = sqrt(pow(last_trajectory_.trajectory_points[i].x - last_trajectory_.trajectory_points[i-1].x,2) + pow(last_trajectory_.trajectory_points[i].y - last_trajectory_.trajectory_points[i-1].y,2));
+            starting_downtrack_of_reduced_traj += delta;
+            
+            new_starting_idx = i;
         }
+
+        carma_planning_msgs::msg::TrajectoryPlan reduced_last_traj(last_trajectory_.trajectory_points.begin() + new_starting_idx, last_trajectory_.trajectory_points.end());
+        std::vector<double> reduced_final_speeds (last_final_speeds_.begin() + new_starting_idx, last_final_speeds_.end());
 
         last_final_speeds_ = reduced_final_speeds;
         last_trajectory_.trajectory_points = reduced_last_traj.trajectory_points;
 
-        
         if (is_last_case_successful_ != boost::none && last_case_ != boost::none
             && last_case_.get() == new_case
             && is_new_case_successful == true
