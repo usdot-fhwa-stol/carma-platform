@@ -28,7 +28,7 @@ jobs:
     # Pull docker image from docker hub
     # XTERM used for better catkin_make output
     docker:
-      - image: usdotfhwastolcandidate/autoware.ai:isetta
+      - image: usdotfhwastol/autoware.ai:carma-system-4.3.0
         user: carma
         environment:
           TERM: xterm
