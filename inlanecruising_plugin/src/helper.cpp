@@ -34,7 +34,7 @@ int main(int argc, char **argv)
   ros::init(argc, argv, "helper");
   ros::NodeHandle n;
 
-  ros::ServiceServer service = n.advertiseService("plugins/YieldPlugin/plan_trajectory", callback);
+  ros::ServiceServer service = n.advertiseService("yield_plugin/plan_trajectory", callback);
   ros::spin();
   ros::Duration(5).sleep();
 

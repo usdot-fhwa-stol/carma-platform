@@ -1,6 +1,6 @@
-| CicleCI Build Status | Sonar Code Quality |
-|----------------------|---------------------|
-[![CircleCI](https://circleci.com/gh/usdot-fhwa-stol/carma-platform.svg?style=svg)](https://circleci.com/gh/usdot-fhwa-stol/carma-platform) | [![Quality Gate Status](https://sonarcloud.io/api/project_badges/measure?project=usdot-fhwa-stol_CARMAPlatform&metric=alert_status)](https://sonarcloud.io/dashboard?id=usdot-fhwa-stol_CARMAPlatform) |
+| CicleCI Build Status | Sonar Code Quality | DockerHub Release | DockerHub Release Candidate | DockerHub Develop |
+|------|-----|-----|-----|-----|
+[![CircleCI](https://circleci.com/gh/usdot-fhwa-stol/carma-platform.svg?style=svg)](https://circleci.com/gh/usdot-fhwa-stol/carma-platform) | [![Quality Gate Status](https://sonarcloud.io/api/project_badges/measure?project=usdot-fhwa-stol_CARMAPlatform&metric=alert_status)](https://sonarcloud.io/dashboard?id=usdot-fhwa-stol_CARMAPlatform) | [![Docker Cloud Build Status](https://img.shields.io/docker/cloud/build/usdotfhwastol/carma-platform?label=Usdotfhwa%20STOL&logo=%232496ED)](https://hub.docker.com/repository/docker/usdotfhwastol/carma-platform) | [![Docker Cloud Build Status](https://img.shields.io/docker/cloud/build/usdotfhwastolcandidate/carma-platform?label=Usdotfhwastol%20Candidate&logo=%232496ED)](https://hub.docker.com/repository/docker/usdotfhwastolcandidate/carma-platform) | [![Docker Cloud Build Status](https://img.shields.io/docker/cloud/build/usdotfhwastoldev/carma-platform?label=Usdotfhwastol%20DEV&logo=%232496ED)](https://hub.docker.com/repository/docker/usdotfhwastoldev/carma-platform)
 
 # CARMA
 ![CARMA Arch](docs/image/CARMA3_Vehicles.jpg)
@@ -22,7 +22,7 @@ CARMA Platform provides the navigation and guidance functions for its host vehic
 
 ![CARMA Demo](docs/image/CARMA2_Platooning_from_Office.jpg)
 
-Documentation of the setup, operation, and design of the CARMA Platform can be found on the project [Confluence](https://usdot-carma.atlassian.net/wiki/spaces/CRMPLT/) pages. 
+Documentation of the setup, operation, and design of the CARMA Platform can be found on the project [Confluence](https://usdot-carma.atlassian.net/wiki/spaces/CRMPLT/) pages. Additional documentation can be found on the [Doxygen Source Code Documentation page](https://usdot-fhwa-stol.github.io/documentation/carma-platform/).
 
 <!-- We would like to publish this section, but are not ready to at this time:
 ## System Specifications

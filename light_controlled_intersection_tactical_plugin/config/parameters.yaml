@@ -6,10 +6,10 @@ centerline_sampling_spacing: 1.0
 trajectory_time_length: 12.0
 
 # Amount to downsample input lanelet centerline data. Value corresponds to saving each nth point.
-default_downsample_ratio: 10  
+default_downsample_ratio: 18
 
 # Amount to downsample input lanelet centerline data on turns. Value corresponds to saving each nth point.
-turn_downsample_ratio: 5 
+turn_downsample_ratio: 20
 
 # Curve re-sampling step size in m
 curve_resample_step_size: 1.0 
@@ -39,7 +39,7 @@ lat_accel_multiplier: 0.50
 stop_line_buffer : 2.0
 
 # Double: Minimum allowable speed in m/s
-minimum_speed : 4.4704
+minimum_speed : 2.235
 
 # Double: Distance from the nearest traffic light where the vehicle decides whether to run last successful trajectory or accept new one (in meters)
 algorithm_evaluation_distance : 35.0

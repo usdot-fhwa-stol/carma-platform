@@ -55,7 +55,6 @@ int main(int argc, char** argv)
   pnh.param<double>("green_light_time_buffer",          config.green_light_time_buffer, config.green_light_time_buffer);
   pnh.param<double>("stop_light_time_buffer",          config.stop_light_time_buffer, config.stop_light_time_buffer);
   pnh.param<double>("algo_minimum_speed",                    config.algo_minimum_speed, config.algo_minimum_speed);
-  pnh.param<double>("absolute_minimum_speed",                    config.absolute_minimum_speed, config.absolute_minimum_speed);
   pnh.param<double>("deceleration_fraction",                    config.deceleration_fraction, config.deceleration_fraction);
   pnh.param<double>("desired_distance_to_stop_buffer",                    config.desired_distance_to_stop_buffer, config.desired_distance_to_stop_buffer);
   pnh.param<double>("min_maneuver_planning_period",     config.min_maneuver_planning_period, config.min_maneuver_planning_period);
@@ -83,7 +82,7 @@ int main(int argc, char** argv)
 
   // Setup callback connections
   ros::ServiceServer plan_maneuver_srv =
-      nh.advertiseService("plugins/" + config.strategic_plugin_name + "/plan_maneuvers", &lci_strategic_plugin::LCIStrategicPlugin::planManeuverCb, &lcip);
+      nh.advertiseService(config.strategic_plugin_name + "/plan_maneuvers", &lci_strategic_plugin::LCIStrategicPlugin::planManeuverCb, &lcip);
 
   lcip.lookupFrontBumperTransform();
   
@@ -95,7 +94,7 @@ int main(int argc, char** argv)
         std_msgs::Float64 earliest_et;
         std_msgs::Float64 scheduled_et;
 
-        case_num_msg.data = static_cast<int>(lcip.case_num_);
+        case_num_msg.data = static_cast<int>(lcip.last_case_num_);
         tf_distance.data = lcip.distance_remaining_to_tf_;
         earliest_et.data = lcip.earliest_entry_time_;
         scheduled_et.data = lcip.scheduled_entry_time_;

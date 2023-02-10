@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2018-2020 LEIDOS.
+# Copyright (C) 2022 LEIDOS.
 #
 # Licensed under the Apache License, Version 2.0 (the "License"); you may not
 # use this file except in compliance with the License. You may obtain a copy of
@@ -13,97 +13,66 @@
 # License for the specific language governing permissions and limitations under
 # the License.
 #
-cmake_minimum_required(VERSION 3.0.2)
+cmake_minimum_required(VERSION 3.5)
 project(stop_and_wait_plugin)
 
+# Declare carma package and check ROS version
 find_package(carma_cmake_common REQUIRED)
-carma_check_ros_version(1)
+carma_check_ros_version(2)
 carma_package()
 
-set( CATKIN_DEPS
-  roscpp
-  std_msgs
-  cav_msgs
-  cav_srvs
-  carma_utils
-  trajectory_utils
-  autoware_msgs
-  carma_wm
-  tf
-  tf2
-  tf2_geometry_msgs
-  roslib
-  basic_autonomy
-)
+## Find dependencies using ament auto
+find_package(ament_cmake_auto REQUIRED)
+ament_auto_find_build_dependencies()
 
-## Find catkin macros and libraries
-find_package(catkin REQUIRED COMPONENTS
- ${CATKIN_DEPS}
-)
-## System dependencies are found with CMake's conventions
-find_package(Boost)
-find_package(Eigen3 REQUIRED)
-
-###################################
-## catkin specific configuration ##
-###################################
-
-catkin_package(
-  CATKIN_DEPENDS ${CATKIN_DEPS}
-  DEPENDS Boost EIGEN3
-)
-
-###########
-## Build ##
-###########
+# Name build targets
+set(node_exec stop_and_wait_plugin_exec)
+set(worker_lib stop_and_wait_plugin_lib)
+set(node_lib stop_and_wait_plugin_node)
 
 include_directories(
   include
-  ${catkin_INCLUDE_DIRS}
-  ${Boost_INCLUDE_DIRS}
-  ${EIGEN3_INCLUDE_DIRS}
-)
-file(GLOB_RECURSE headers */*.hpp */*.h)
-
-add_executable( ${PROJECT_NAME}
-  ${headers}
-  src/main.cpp
-  src/stop_and_wait_plugin.cpp)
-
-add_library(stopandwait_plugin_lib  src/stop_and_wait_plugin.cpp)  
-add_dependencies(stopandwait_plugin_lib ${catkin_EXPORTED_TARGETS})
-
-target_link_libraries(stopandwait_plugin_lib ${catkin_LIBRARIES} ${Boost_LIBRARIES})
-target_link_libraries(${PROJECT_NAME}  stopandwait_plugin_lib)
-
-
-#############
-## Install ##
-#############
-
-install(DIRECTORY include/${PROJECT_NAME}/
-  DESTINATION ${CATKIN_PACKAGE_INCLUDE_DESTINATION}
-  FILES_MATCHING PATTERN "*.h"
-  PATTERN ".svn" EXCLUDE
 )
 
-## Install C++
-install(TARGETS ${PROJECT_NAME} stopandwait_plugin_lib
-  ARCHIVE DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
-  LIBRARY DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
-  RUNTIME DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}
+# Build
+ament_auto_add_library(${worker_lib} SHARED
+        src/stop_and_wait_plugin.cpp
 )
 
-## Install Other Resources
-install(DIRECTORY launch config
-  DESTINATION ${CATKIN_PACKAGE_SHARE_DESTINATION}
+ament_auto_add_library(${node_lib} SHARED
+        src/stop_and_wait_plugin_node.cpp
 )
 
-#############
-## Testing ##
-#############
+ament_auto_add_executable(${node_exec} 
+        src/main.cpp 
+)
 
-catkin_add_gmock(${PROJECT_NAME}-test 
- test/test_stopandwait_plugin.cpp
- WORKING_DIRECTORY ${PROJECT_SOURCE_DIR}/test)
-target_link_libraries(${PROJECT_NAME}-test stopandwait_plugin_lib ${catkin_LIBRARIES})
+# Register component
+rclcpp_components_register_nodes(${node_lib} "stop_and_wait_plugin::StopandWaitNode")
+
+# All locally created targets will need to be manually linked
+# ament auto will handle linking of external dependencies
+target_link_libraries(${node_lib}
+        ${worker_lib}
+)
+
+target_link_libraries(${node_exec}
+        ${node_lib}
+)
+
+# Testing
+if(BUILD_TESTING)  
+
+find_package(ament_lint_auto REQUIRED)
+ament_lint_auto_find_test_dependencies()
+
+ament_add_gtest(test_stopandwait_plugin test/test_stopandwait_plugin.cpp)
+ament_target_dependencies(test_stopandwait_plugin
+${${PROJECT_NAME}_FOUND_TEST_DEPENDS})
+target_link_libraries(test_stopandwait_plugin ${worker_lib})
+endif()
+
+  # Install
+ament_auto_package(
+        INSTALL_TO_SHARE launch config
+)

@@ -27,6 +27,7 @@ namespace bsm_generator
 
     // Declare parameters
     config_.bsm_generation_frequency = declare_parameter<double>("bsm_generation_frequency", config_.bsm_generation_frequency);
+    config_.bsm_id_change_period = declare_parameter<double>("bsm_id_change_period", config_.bsm_id_change_period);
     config_.bsm_id_rotation_enabled  = declare_parameter<bool>("bsm_id_rotation_enabled", config_.bsm_id_rotation_enabled);
     config_.bsm_message_id           = declare_parameter<int>("bsm_message_id", config_.bsm_message_id);
     config_.vehicle_length           = declare_parameter<double>("vehicle_length", config_.vehicle_length);
@@ -39,6 +40,7 @@ namespace bsm_generator
     auto error_2 = update_params<int>({{"bsm_message_id", config_.bsm_message_id}}, parameters);
     auto error_3 = update_params<double>({
         {"bsm_generation_frequency", config_.bsm_generation_frequency},
+        {"bsm_id_change_period", config_.bsm_id_change_period},
         {"vehicle_length", config_.vehicle_length},
         {"vehicle_width", config_.vehicle_width}
     }, parameters);
@@ -59,6 +61,7 @@ namespace bsm_generator
 
     // Load parameters
     get_parameter<double>("bsm_generation_frequency", config_.bsm_generation_frequency);
+    get_parameter<double>("bsm_id_change_period", config_.bsm_id_change_period);
     get_parameter<bool>("bsm_id_rotation_enabled", config_.bsm_id_rotation_enabled);
     get_parameter<int>("bsm_message_id", config_.bsm_message_id);
     get_parameter<double>("vehicle_length", config_.vehicle_length);
@@ -92,14 +95,10 @@ namespace bsm_generator
     // Setup publishers
     bsm_pub_ = create_publisher<carma_v2x_msgs::msg::BSM>("bsm_outbound", 5);
 
-    // Set the BSM Message ID 
-    for(size_t i = 0; i < 4; ++i) // As the BSM Message ID is a four-element vector, the loop should iterate four times.
-    {
-      bsm_message_id_.emplace_back(config_.bsm_message_id >> (8 * i));
-    }
-
     // Initialize the generated BSM message
     initializeBSM();
+
+    worker = std::make_shared<BSMGeneratorWorker>();
 
     // Return success if everthing initialized successfully
     return CallbackReturn::SUCCESS;
@@ -133,7 +132,7 @@ namespace bsm_generator
 
   void BSMGenerator::speedCallback(const geometry_msgs::msg::TwistStamped::UniquePtr msg)
   {
-    bsm_.core_data.speed = worker.getSpeedInRange(msg->twist.linear.x);
+    bsm_.core_data.speed = worker->getSpeedInRange(msg->twist.linear.x);
     bsm_.core_data.presence_vector = bsm_.core_data.presence_vector | bsm_.core_data.SPEED_AVAILABLE;
   }
 
@@ -144,25 +143,25 @@ namespace bsm_generator
 
   void BSMGenerator::steerWheelAngleCallback(const std_msgs::msg::Float64::UniquePtr msg)
   {
-    bsm_.core_data.angle = worker.getSteerWheelAngleInRange(msg->data);
+    bsm_.core_data.angle = worker->getSteerWheelAngleInRange(msg->data);
     bsm_.core_data.presence_vector = bsm_.core_data.presence_vector | bsm_.core_data.STEER_WHEEL_ANGLE_AVAILABLE;
   }
 
   void BSMGenerator::accelCallback(const automotive_platform_msgs::msg::VelocityAccelCov::UniquePtr msg)
   {
-    bsm_.core_data.accel_set.longitudinal = worker.getLongAccelInRange(msg->accleration);
+    bsm_.core_data.accel_set.longitudinal = worker->getLongAccelInRange(msg->accleration);
     bsm_.core_data.accel_set.presence_vector = bsm_.core_data.accel_set.presence_vector | bsm_.core_data.accel_set.ACCELERATION_AVAILABLE;
   }
 
   void BSMGenerator::yawCallback(const sensor_msgs::msg::Imu::UniquePtr msg)
   {
-    bsm_.core_data.accel_set.yaw_rate = worker.getYawRateInRange(static_cast<float>(msg->angular_velocity.z));
+    bsm_.core_data.accel_set.yaw_rate = worker->getYawRateInRange(static_cast<float>(msg->angular_velocity.z));
     bsm_.core_data.accel_set.presence_vector = bsm_.core_data.accel_set.presence_vector | bsm_.core_data.accel_set.YAWRATE_AVAILABLE;
   }
 
   void BSMGenerator::brakeCallback(const std_msgs::msg::Float64::UniquePtr msg)
   {
-    bsm_.core_data.brakes.wheel_brakes.brake_applied_status = worker.getBrakeAppliedStatus(msg->data);
+    bsm_.core_data.brakes.wheel_brakes.brake_applied_status = worker->getBrakeAppliedStatus(msg->data);
   }
 
   void BSMGenerator::poseCallback(const geometry_msgs::msg::PoseStamped::UniquePtr msg)
@@ -185,16 +184,28 @@ namespace bsm_generator
 
   void BSMGenerator::headingCallback(const gps_msgs::msg::GPSFix::UniquePtr msg)
   {
-    bsm_.core_data.heading = worker.getHeadingInRange(static_cast<float>(msg->track));
+    bsm_.core_data.heading = worker->getHeadingInRange(static_cast<float>(msg->track));
     bsm_.core_data.presence_vector = bsm_.core_data.presence_vector | bsm_.core_data.HEADING_AVAILABLE;
   }
 
   void BSMGenerator::generateBSM()
   {
     bsm_.header.stamp = this->now();
-    bsm_.core_data.msg_count = worker.getNextMsgCount();
-    bsm_.core_data.id = worker.getMsgId( this->now() );
-    bsm_.core_data.sec_mark = worker.getSecMark( this->now() );
+    bsm_.core_data.msg_count = worker->getNextMsgCount();
+
+    if (config_.bsm_id_rotation_enabled)
+      bsm_.core_data.id = worker->getMsgId( this->now(), config_.bsm_id_change_period);
+    else
+    {
+      std::vector<uint8_t> id(4);
+      for(int i = 0; i < id.size(); ++i)
+      {
+        id[i] = config_.bsm_message_id >> (8 * i);
+      }
+      bsm_.core_data.id = id;
+    }
+
+    bsm_.core_data.sec_mark = worker->getSecMark( this->now() );
     bsm_.core_data.presence_vector = bsm_.core_data.presence_vector | bsm_.core_data.SEC_MARK_AVAILABLE;
     // currently the accuracy is not available because ndt_matching does not provide accuracy measurement
     bsm_.core_data.accuracy.presence_vector = 0;

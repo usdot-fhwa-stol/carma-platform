@@ -102,7 +102,7 @@ namespace mobilitypath_visualizer {
 
         // publish host marker
         host_marker_pub_->publish(host_marker_);
-        
+
         cav_markers_ = matchTrajectoryTimestamps(host_marker_, cav_markers_);
 
         for (auto const &marker: cav_markers_)
@@ -123,13 +123,9 @@ namespace mobilitypath_visualizer {
     
     void MobilityPathVisualizer::callbackMobilityPath(carma_v2x_msgs::msg::MobilityPath::UniquePtr msg)
     {
-        if (msg->m_header.timestamp == 0) //if empty
-        {
-            host_marker_received_ = false;
-            return;
-        } 
+
         RCLCPP_DEBUG_STREAM(get_logger(), "Received a msg from sender: " << msg->m_header.sender_id << ", and plan id:" << msg->m_header.plan_id << ", for receiver:" 
-                            << msg->m_header.recipient_id << ", time:" << msg->m_header.timestamp << ", at now: " << std::to_string(this->now().seconds()));
+                        << msg->m_header.recipient_id << ", time:" << msg->m_header.timestamp << ", at now: " << std::to_string(this->now().seconds()));
 
         if (latest_cav_mob_path_msg_.find(msg->m_header.sender_id) != latest_cav_mob_path_msg_.end() &&
             msg->m_header.plan_id.compare(latest_cav_mob_path_msg_[msg->m_header.sender_id].m_header.plan_id) == 0 &&
@@ -141,22 +137,32 @@ namespace mobilitypath_visualizer {
         latest_cav_mob_path_msg_[msg->m_header.sender_id] = *msg;
 
         if (!map_projector_) {
-            RCLCPP_DEBUG(get_logger(), "Cannot visualize mobility path as map projection not yet available");
+            RCLCPP_ERROR(get_logger(), "Cannot visualize mobility path as map projection not yet available");
             return;
         }
 
+        if (msg->m_header.timestamp == 0) //if empty
+        {
+            host_marker_received_ = false;
+            return;
+        } 
+      
         MarkerColor cav_color;
         if (msg->m_header.sender_id.compare(config_.host_id) == 0)
         {
             cav_color.green = 1.0;
+           
             host_marker_ = composeVisualizationMarker(*msg,cav_color);
             host_marker_received_ = true;
+           
             RCLCPP_DEBUG_STREAM(get_logger(), "Composed host marker successfuly!");
         }
         else
         {
+
             cav_color.blue = 1.0;
             cav_markers_.push_back(composeVisualizationMarker(*msg,cav_color));
+            
             RCLCPP_DEBUG_STREAM(get_logger(), "Composed cav marker successfuly! with sender_id: " << msg->m_header.sender_id);
         }
 
@@ -165,7 +171,7 @@ namespace mobilitypath_visualizer {
     visualization_msgs::msg::MarkerArray MobilityPathVisualizer::composeVisualizationMarker(const carma_v2x_msgs::msg::MobilityPath& msg, const MarkerColor& color)
     {
         visualization_msgs::msg::MarkerArray output;
-        
+
         visualization_msgs::msg::Marker marker;
         marker.header.frame_id = "map";
 
@@ -191,18 +197,26 @@ namespace mobilitypath_visualizer {
         
         marker.id = 0;
         geometry_msgs::msg::Point arrow_start;
-        RCLCPP_DEBUG_STREAM(get_logger(), "ECEF point x: " << curr_location_msg.trajectory.location.ecef_x << ", y:" << curr_location_msg.trajectory.location.ecef_y);
-        arrow_start = ECEFToMapPoint(curr_location_msg.trajectory.location); //also convert from cm to m
-        RCLCPP_DEBUG_STREAM(get_logger(), "Map point x: " << arrow_start.x << ", y:" << arrow_start.y);
-
         geometry_msgs::msg::Point arrow_end;
-        curr_location_msg.trajectory.location.ecef_x += + msg.trajectory.offsets[0].offset_x;
-        curr_location_msg.trajectory.location.ecef_y += + msg.trajectory.offsets[0].offset_y;
-        curr_location_msg.trajectory.location.ecef_z += + msg.trajectory.offsets[0].offset_z;
-        arrow_end = ECEFToMapPoint(curr_location_msg.trajectory.location); //also convert from cm to m
 
-        marker.points.push_back(arrow_start);
-        marker.points.push_back(arrow_end);
+        if (msg.trajectory.offsets.empty())
+        {
+            marker.action = visualization_msgs::msg::Marker::DELETE;
+        }
+        else
+        {
+            RCLCPP_DEBUG_STREAM(get_logger(), "ECEF point x: " << curr_location_msg.trajectory.location.ecef_x << ", y:" << curr_location_msg.trajectory.location.ecef_y);
+            arrow_start = ECEFToMapPoint(curr_location_msg.trajectory.location); //also convert from cm to m
+            RCLCPP_DEBUG_STREAM(get_logger(), "Map point x: " << arrow_start.x << ", y:" << arrow_start.y);
+            
+            curr_location_msg.trajectory.location.ecef_x += + msg.trajectory.offsets[0].offset_x;
+            curr_location_msg.trajectory.location.ecef_y += + msg.trajectory.offsets[0].offset_y;
+            curr_location_msg.trajectory.location.ecef_z += + msg.trajectory.offsets[0].offset_z;
+            arrow_end = ECEFToMapPoint(curr_location_msg.trajectory.location); //also convert from cm to m
+
+            marker.points.push_back(arrow_start);
+            marker.points.push_back(arrow_end);
+        }
 
         output.markers.push_back(marker);
 
@@ -216,6 +230,8 @@ namespace mobilitypath_visualizer {
 
             if (i >= msg.trajectory.offsets.size()) { // If we need to delete previous points
                 marker.action = visualization_msgs::msg::Marker::DELETE;
+                output.markers.push_back(marker);
+                continue;
             }
 
             marker.points = {};
@@ -317,28 +333,36 @@ namespace mobilitypath_visualizer {
                 output.markers.push_back(marker);
             }
         }
+
         return output;
     }
 
     std::vector<visualization_msgs::msg::MarkerArray> MobilityPathVisualizer::matchTrajectoryTimestamps(const visualization_msgs::msg::MarkerArray& host_marker, 
                                                                     const std::vector<visualization_msgs::msg::MarkerArray>& cav_markers) const
     {
+        if (host_marker.markers.empty() || host_marker.markers[0].action == visualization_msgs::msg::Marker::DELETE)
+            return cav_markers;
+        
         std::vector<visualization_msgs::msg::MarkerArray> synchronized_output;
         for (auto const& curr_cav: cav_markers)
         {
             visualization_msgs::msg::MarkerArray synchronized_marker_array;
-            unsigned int curr_idx = 0;
+            signed int curr_idx = 0;
             double time_step = 0.1;
             // although it is very rare to reach here
             // we do not need to visualize other car that starts "in the future", so skip
-            if (rclcpp::Time(curr_cav.markers[0].header.stamp) > rclcpp::Time(host_marker.markers[0].header.stamp))
+
+            if (rclcpp::Time(curr_cav.markers[0].header.stamp) > rclcpp::Time(host_marker.markers[0].header.stamp) || 
+            curr_cav.markers[0].action == visualization_msgs::msg::Marker::DELETE)
             {
                 continue;
             }
             // this marker is outdated, drop
+
             rclcpp::Time curr_cav_marker_stamp(curr_cav.markers.back().header.stamp);
             rclcpp::Time host_marker_stamp(host_marker.markers[0].header.stamp);
             
+
             if (curr_cav_marker_stamp + rclcpp::Duration(time_step * 1e9) < host_marker_stamp){
                 continue;
             }
@@ -351,6 +375,10 @@ namespace mobilitypath_visualizer {
             
             curr_idx -= 1; // carma_v2x_msg stamp is before that of host now
             // interpolate position to match the starting time (dt < time_step)
+            
+            if (curr_idx < 0 )
+                curr_idx = 0;
+                
             double dt = (rclcpp::Time(host_marker.markers[0].header.stamp) - rclcpp::Time(curr_cav.markers[curr_idx].header.stamp)).seconds();
             
             rclcpp::Time curr_time(host_marker.markers[0].header.stamp);
@@ -359,8 +387,11 @@ namespace mobilitypath_visualizer {
 
             while (curr_idx < curr_cav.markers.size())
             {
+                if (curr_cav.markers[curr_idx].action == visualization_msgs::msg::Marker::DELETE)
+                    break;
+
                 visualization_msgs::msg::Marker curr_marker = curr_cav.markers[curr_idx]; //copy static info
-                if (dt != 0.0) // if not already synchronized
+                if (dt != 0.0 && !curr_cav.markers[curr_idx].points.empty()) // if not already synchronized
                 {
                     double dx = (curr_cav.markers[curr_idx].points[1].x - curr_cav.markers[curr_idx].points[0].x)/time_step * dt;
                     double dy = (curr_cav.markers[curr_idx].points[1].y - curr_cav.markers[curr_idx].points[0].y)/time_step * dt;
@@ -379,23 +410,31 @@ namespace mobilitypath_visualizer {
 
             curr_idx = 0; // resetting idx to work on new, synchronized list
 
+            
             // update end_point of each arrow type marker, except that of last point
             while (curr_idx < synchronized_marker_array.markers.size()-1)
             {
-                synchronized_marker_array.markers[curr_idx].points[1] = synchronized_marker_array.markers[curr_idx + 1].points[0];
+                if (curr_cav.markers[curr_idx].action == visualization_msgs::msg::Marker::DELETE)
+                    break;
+                    
+                if (!synchronized_marker_array.markers[curr_idx].points.empty())
+                    synchronized_marker_array.markers[curr_idx].points[1] = synchronized_marker_array.markers[curr_idx + 1].points[0];
                 curr_idx ++;
             }
 
-            // extrapolate the last point just to conform with 0.1s interval between points
-            double dx = (synchronized_marker_array.markers[curr_idx].points[1].x - synchronized_marker_array.markers[curr_idx].points[0].x)/(time_step - dt) * time_step;
-            double dy = (synchronized_marker_array.markers[curr_idx].points[1].y - synchronized_marker_array.markers[curr_idx].points[0].y)/(time_step - dt) * time_step;
-            double dz = (synchronized_marker_array.markers[curr_idx].points[1].z - synchronized_marker_array.markers[curr_idx].points[0].z)/(time_step - dt) * time_step;
+            if (!synchronized_marker_array.markers[curr_idx].points.empty())
+            {
+                // extrapolate the last point just to conform with 0.1s interval between points
+                double dx = (synchronized_marker_array.markers[curr_idx].points[1].x - synchronized_marker_array.markers[curr_idx].points[0].x)/(time_step - dt) * time_step;
+                double dy = (synchronized_marker_array.markers[curr_idx].points[1].y - synchronized_marker_array.markers[curr_idx].points[0].y)/(time_step - dt) * time_step;
+                double dz = (synchronized_marker_array.markers[curr_idx].points[1].z - synchronized_marker_array.markers[curr_idx].points[0].z)/(time_step - dt) * time_step;
 
-            synchronized_marker_array.markers[curr_idx].points[1].x = synchronized_marker_array.markers[curr_idx].points[0].x + dx; 
-            synchronized_marker_array.markers[curr_idx].points[1].y = synchronized_marker_array.markers[curr_idx].points[0].y + dy;
-            synchronized_marker_array.markers[curr_idx].points[1].z = synchronized_marker_array.markers[curr_idx].points[0].z + dz; 
+                synchronized_marker_array.markers[curr_idx].points[1].x = synchronized_marker_array.markers[curr_idx].points[0].x + dx; 
+                synchronized_marker_array.markers[curr_idx].points[1].y = synchronized_marker_array.markers[curr_idx].points[0].y + dy;
+                synchronized_marker_array.markers[curr_idx].points[1].z = synchronized_marker_array.markers[curr_idx].points[0].z + dz; 
 
-
+            }
+            
             synchronized_output.push_back(synchronized_marker_array);
             
         }

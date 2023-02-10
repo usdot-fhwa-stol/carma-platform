@@ -8,26 +8,23 @@ vehicle_accel_limit_multiplier : 1.0
 min_approach_distance : 30.0
 
 # Double: Downtrack distance until nearest intersection where the Trajectory Smoothing algorithm should activate
-trajectory_smoothing_activation_distance: 90.0
+trajectory_smoothing_activation_distance: 200.0
 
 # Double: A buffer infront of the stopping location which will still be considered a valid stop. Units in meters
 stopping_location_buffer : 8.0
 
 # Double: A buffer in seconds around the green phase which will reduce the phase length such that vehicle still considers it non-green
-green_light_time_buffer : 1.0
+green_light_time_buffer : 0.5
 
 # Double: A buffer in seconds starting green phase which is still considered valid stop if safety requires it
 stop_light_time_buffer : 2.0
 
 # Double: Minimum allowable speed in trajectory smoothing algorithm m/s
-algo_minimum_speed : 4.4704 
+algo_minimum_speed : 2.235
 
-# Double: Minimum allowable speed of the car m/s
-absolute_minimum_speed : 4.4704
-
-# Double: Safety multiplier of planned allowable vehicle deceleration to use when stopping. This new deceleration makes vehicle decelerate earlier distance.
+# Double: Safety multiplier (must be less than 1.0) of planned allowable vehicle deceleration to use when stopping. This new deceleration makes vehicle decelerate earlier distance.
 #         NOTE: Stacks on vehicle_decel_limit_multiplier and stopping uses max_decel; this distance is only used for calculating earlier downtrack
-deceleration_fraction : 0.8
+deceleration_fraction : 0.7
 
 # Double: Desired distance to stop buffer in meters
 desired_distance_to_stop_buffer : 15.0
@@ -42,23 +39,22 @@ carma_streets_update_interval : 1.0
 reaction_time : 2.0
 
 # Bool: If enable_carma_streets_connection is true when we want to allow carma streets functionality (UC3) and if its false that means we don't want to allow carma streets behaviour and will only use UC2 behaviour.
-enable_carma_streets_connection : false
-
+enable_carma_streets_connection : true
 
 # Double: Mobility operation rate
 mobility_rate : 10.0
 
 
 # String: The name to use for this plugin during comminications with the arbitrator
-strategic_plugin_name : LCIStrategicPlugin
+strategic_plugin_name : lci_strategic_plugin
 
 # String: The name of the tactical plugin to use for Lane Following trajectory planning
 #         This plugin is used to apply trajectory smoothing algorithm BEFORE entering the intersection if within activation distance
-lane_following_plugin_name : LightControlledIntersectionTacticalPlugin
+lane_following_plugin_name : light_controlled_intersection_tactical_plugin
 
 # String: The name of the plugin to use for stop and wait trajectory planning
-stop_and_wait_plugin_name : StopAndWaitPlugin
+stop_and_wait_plugin_name : stop_and_wait_plugin
 
 # String: The name of the plugin to use for intersection transit trajectory planning
 #         This plugin is used to travel INSIDE the intersection where there is no trajectory smoothing algorithm active
-intersection_transit_plugin_name : IntersectionTransitPlugin
+intersection_transit_plugin_name : intersection_transit_maneuvering

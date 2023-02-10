@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2019-2021 LEIDOS.
+ * Copyright (C) 2022 LEIDOS.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -21,21 +21,37 @@
 #include <map>
 #include <string>
 #include <functional>
-#include <cav_srvs/PlanManeuvers.h>
+#include <carma_planning_msgs/srv/plan_maneuvers.hpp>
 
 namespace arbitrator 
 {
-    template<typename MSrv>
-    std::map<std::string, MSrv> CapabilitiesInterface::multiplex_service_call_for_capability(std::string query_string, MSrv msg)
+    template<typename MSrvReq, typename MSrvRes>
+    std::map<std::string, std::shared_ptr<MSrvRes>> 
+        CapabilitiesInterface::multiplex_service_call_for_capability(const std::string& query_string, std::shared_ptr<MSrvReq> msg)
     {
         std::vector<std::string> topics = get_topics_for_capability(query_string);
-        std::map<std::string, MSrv> responses;
+
+        std::map<std::string, std::shared_ptr<MSrvRes>> responses;
+
         for (auto i = topics.begin(); i != topics.end(); i++) 
         {
-            ros::ServiceClient sc = nh_->serviceClient<cav_srvs::PlanManeuvers>(*i);
-            ROS_DEBUG_STREAM("found client: " << *i);
-            if (sc.call(msg)) {
-                responses.emplace(*i, msg);
+            auto topic = *i; //todo revert hardcode, lci_strategic is the last ros1 plugin
+                             // https://github.com/usdot-fhwa-stol/carma-platform/issues/1949
+            if (topic == "lci_strategic_plugin/plan_maneuvers")
+                topic = "/guidance/plugins/lci_strategic_plugin/plan_maneuvers";
+            auto sc = nh_->create_client<carma_planning_msgs::srv::PlanManeuvers>(topic);
+            RCLCPP_DEBUG_STREAM(rclcpp::get_logger("arbitrator"), "found client: " << topic);
+            
+            std::shared_future<std::shared_ptr<MSrvRes>> resp = sc->async_send_request(msg);
+
+            auto future_status = resp.wait_for(std::chrono::milliseconds(500));
+            
+            if (future_status == std::future_status::ready) {
+                responses.emplace(topic, resp.get());
+            }
+            else
+            {
+                RCLCPP_WARN_STREAM(rclcpp::get_logger("arbitrator"), "failed...: " << topic);
             }
         }
         return responses;

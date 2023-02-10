@@ -29,6 +29,7 @@
   <build_depend>carma_cmake_common</build_depend>
   <depend>carma_ros2_utils</depend>
   <depend>carma_msgs</depend>
+  <depend>carma_planning_msgs</depend>
   <depend>lifecycle_msgs</depend>
   <depend>rclcpp</depend>
   <depend>ros2_lifecycle_manager</depend>

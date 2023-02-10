@@ -22,13 +22,22 @@
 namespace platoon_control
 {
 
+    /**
+    * \brief This class includes logic for PID controller. PID controller is used in this plugin to maintain the inter-vehicle gap by adjusting the speed.
+    */
 
     class PIDController
     {
     public:
 
+        /**
+        * \brief Constructor for the PID controller class
+        */
     	PIDController();
 
+        /**
+        * \brief plugin config object
+        */
         PlatooningControlPluginConfig config_;
     	
     	// ~PIDController();
@@ -41,7 +50,12 @@ namespace platoon_control
         // min - minimum value of manipulated variable
         // PID( double dt, double max, double min, double Kp, double Kd, double Ki );
 
-        // Returns the manipulated variable given a setpoint and current process value
+        /**
+        * \brief function to calculate control command based on setpoint and process vale
+        * \param setpoint desired value
+        * \param pv current value
+        * \return the manipulated variable given a setpoint and current process value
+        */
         double calculate( double setpoint, double pv );
         // ~PID();
 

@@ -137,11 +137,6 @@
     </include>
   </group>
 
-  <!-- UI Stack -->
-  <group ns="$(env CARMA_UI_NS)">
-    <include file="$(find carma)/launch/ui.launch"/>
-  </group>
-
   <!-- Set up the rosbag record node that will exclude sensitive topics -->
   <group ns="carma_record">
     <include file="$(find carma_record)/launch/carma_record.launch" if="$(arg use_rosbag)" />

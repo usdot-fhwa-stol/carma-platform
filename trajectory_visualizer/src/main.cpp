@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2021 LEIDOS.
+ * Copyright (C) 2020-2022 LEIDOS.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -13,16 +13,20 @@
  * License for the specific language governing permissions and limitations under
  * the License.
  */
+ 
+#include <rclcpp/rclcpp.hpp>
+#include "trajectory_visualizer.hpp"
 
-#include <ros/ros.h>
+int main(int argc, char **argv) 
+{
+  rclcpp::init(argc, argv);
 
-#include "trajectory_visualizer.h"
+  auto node = std::make_shared<trajectory_visualizer::TrajectoryVisualizer>(rclcpp::NodeOptions());
+  
+  rclcpp::executors::MultiThreadedExecutor executor;
+  executor.add_node(node->get_node_base_interface());
+  executor.spin();
+  rclcpp::shutdown();
 
-int main(int argc, char** argv)
-{ 
-    ros::init(argc, argv, "trajectory_visualizer");
-    trajectory_visualizer::TrajectoryVisualizer trajectory_visualizer_node;
-    trajectory_visualizer_node.run();
-    return 0;
-
-};
+  return 0;
+}

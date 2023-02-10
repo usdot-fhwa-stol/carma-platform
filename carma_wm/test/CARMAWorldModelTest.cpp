@@ -1294,12 +1294,116 @@ TEST(CARMAWorldModelTest, sampleRoutePoints)
 TEST(CARMAWorldModelTest, getTrafficSignalId)
 {
   CARMAWorldModel cmw;
-  uint32_t id_bit = 257;
-  cmw.traffic_light_ids_[id_bit] = 1000;
   uint16_t intersection_id=1;
   uint8_t signal_group_id=1;
+  cmw.sim_.intersection_id_to_regem_id_[intersection_id] = 1001;
+  cmw.sim_.signal_group_to_traffic_light_id_[signal_group_id] = 1000;
 
   EXPECT_EQ(cmw.getTrafficSignalId(intersection_id, signal_group_id), 1000); 
+}
+
+TEST(CARMAWorldModelTest, processSpatFromMsgDynamic)
+{
+  ros::Time::init();
+  CARMAWorldModel cmw;
+  auto pl1 = carma_wm::getPoint(0, 0, 0);
+  auto pl2 = carma_wm::getPoint(0, 1, 0);
+  auto pl3 = carma_wm::getPoint(0, 2, 0);
+  auto pr1 = carma_wm::getPoint(1, 0, 0);
+  auto pr2 = carma_wm::getPoint(1, 1, 0);
+  auto pr3 = carma_wm::getPoint(1, 2, 0);
+  std::vector<lanelet::Point3d> left_1 = { pl1, pl2, pl3 };
+  std::vector<lanelet::Point3d> right_1 = { pr1, pr2, pr3 };
+  auto ll_1 = carma_wm::getLanelet(left_1, right_1, lanelet::AttributeValueString::SolidDashed,lanelet::AttributeValueString::Dashed);
+  lanelet::Id traffic_light_id = lanelet::utils::getId();
+  lanelet::LineString3d virtual_stop_line(lanelet::utils::getId(), {pl2, pr2});
+  // Creat passing control line for solid dashed line
+  std::shared_ptr<lanelet::CarmaTrafficSignal> traffic_light(new lanelet::CarmaTrafficSignal(lanelet::CarmaTrafficSignal::buildData(traffic_light_id, { virtual_stop_line }, { ll_1 }, { ll_1 })));
+  traffic_light->revision_ = 0;
+  ll_1.addRegulatoryElement(traffic_light);
+  auto map = lanelet::utils::createMap({ ll_1 }, {});
+  map->add(traffic_light);
+  cmw.setMap(std::move(map));
+
+  // create sample SPAT.msg and fill its entries
+  cav_msgs::SPAT spat;
+  cav_msgs::IntersectionState state;
+  state.id.id = 1;
+  state.revision = 0;
+  cav_msgs::MovementState movement;
+  movement.signal_group = 1;
+  cav_msgs::MovementEvent event;
+  cmw.sim_.intersection_id_to_regem_id_[state.id.id] = 1; //dummy lanelet id
+  cmw.sim_.signal_group_to_traffic_light_id_[movement.signal_group] = traffic_light_id;
+
+
+  // call with cycle with 2 future events
+  ros::Time::setNow(ros::Time(0.0));
+  event.event_state.movement_phase_state = 5;
+  event.timing.start_time = 0;
+  event.timing.min_end_time = 2;
+  movement.movement_event_list.push_back(event);
+  event.event_state.movement_phase_state = 8;
+  event.timing.start_time = 2;
+  event.timing.min_end_time = 4;
+  movement.movement_event_list.push_back(event);
+
+  state.movement_list.push_back(movement);
+  spat.intersection_state_list.push_back(state);
+  cmw.processSpatFromMsg(spat);
+  auto lights1 = cmw.getMutableMap()->laneletLayer.get(ll_1.id()).regulatoryElementsAs<lanelet::CarmaTrafficSignal>();
+  // TEST 1. default
+  EXPECT_EQ(lanelet::time::durationFromSec(0), lights1[0]->fixed_cycle_duration); //since it is dynamic, fixed_cycle_duration is 0
+  ASSERT_EQ(lights1[0]->recorded_time_stamps.size(), 2);
+  double start_time = lanelet::time::toSec(lights1[0]->recorded_start_time_stamps.front());
+  double end_time = lanelet::time::toSec(lights1[0]->recorded_time_stamps.back().first);
+  EXPECT_NEAR(end_time - start_time, movement.movement_event_list.back().timing.min_end_time - 
+                                      movement.movement_event_list.front().timing.start_time, 0.001);
+
+  // TEST 2. call again with same msg
+  cmw.processSpatFromMsg(spat);
+  lights1 = cmw.getMutableMap()->laneletLayer.get(ll_1.id()).regulatoryElementsAs<lanelet::CarmaTrafficSignal>();
+
+  // everything should be same
+  EXPECT_EQ(lanelet::time::durationFromSec(0), lights1[0]->fixed_cycle_duration); //since it is dynamic, fixed_cycle_duration is 0
+  ASSERT_EQ(lights1[0]->recorded_time_stamps.size(), 2);
+  start_time = lanelet::time::toSec(lights1[0]->recorded_start_time_stamps.front());
+  end_time = lanelet::time::toSec(lights1[0]->recorded_time_stamps.back().first);
+  EXPECT_NEAR(end_time - start_time, movement.movement_event_list.back().timing.min_end_time - 
+                                      movement.movement_event_list.front().timing.start_time, 0.001);
+  
+  // TEST 3. call again with same cycle but different msg
+  ros::Time::setNow(ros::Time(4.1));
+  movement.movement_event_list = {};
+  state.movement_list = {};
+  spat.intersection_state_list = {};
+
+  event.event_state.movement_phase_state = 5;
+  event.timing.start_time = 4;
+  event.timing.min_end_time = 6;
+  movement.movement_event_list.push_back(event);
+  event.event_state.movement_phase_state = 8;
+  event.timing.start_time = 6;
+  event.timing.min_end_time = 8;
+  movement.movement_event_list.push_back(event);
+
+  state.movement_list.push_back(movement);
+  spat.intersection_state_list.push_back(state);
+  cmw.processSpatFromMsg(spat);
+
+  lights1 = cmw.getMutableMap()->laneletLayer.get(ll_1.id()).regulatoryElementsAs<lanelet::CarmaTrafficSignal>();
+
+  // everything should still be same
+  EXPECT_EQ(lanelet::time::durationFromSec(0), lights1[0]->fixed_cycle_duration); //since it is dynamic, fixed_cycle_duration is 0
+  ASSERT_EQ(lights1[0]->recorded_time_stamps.size(), 2);
+  start_time = lanelet::time::toSec(lights1[0]->recorded_start_time_stamps.front());
+  end_time = lanelet::time::toSec(lights1[0]->recorded_time_stamps.back().first);
+  EXPECT_NEAR(end_time - start_time, movement.movement_event_list.back().timing.min_end_time - 
+                                      movement.movement_event_list.front().timing.start_time, 0.001);
+
+  // TEST 4. check if signalized_manager is being updated correctly
+  ASSERT_EQ(cmw.sim_.traffic_signal_states_[1][1].size(), 2);
+  
 }
 
 TEST(CARMAWorldModelTest, processSpatFromMsg)
@@ -1323,8 +1427,12 @@ TEST(CARMAWorldModelTest, processSpatFromMsg)
   auto map = lanelet::utils::createMap({ ll_1 }, {});
   map->add(traffic_light);
   cmw.setMap(std::move(map));
-  uint32_t id_bit = 257;
-  cmw.traffic_light_ids_[id_bit] = traffic_light_id;
+
+  uint16_t intersection_id=1;
+  uint8_t signal_group_id=1;
+  cmw.sim_.intersection_id_to_regem_id_[intersection_id] = 1001;
+  cmw.sim_.signal_group_to_traffic_light_id_[signal_group_id] = traffic_light_id;
+
   // create sample SPAT.msg and fill its entries
   cav_msgs::SPAT spat;
   cav_msgs::IntersectionState state;
@@ -1552,17 +1660,19 @@ TEST(CARMAWorldModelTest, getIntersectionAlongRoute)
 TEST(CARMAWorldModelTest, checkIfSeenBeforeMovementState)
 {
   carma_wm::CARMAWorldModel cmw;
+  ros::Time::init();
+  ros::Time::setNow(ros::Time(0.0));
+  cmw.sim_.traffic_signal_states_[13][15].push_back(std::make_pair(boost::posix_time::time_from_string("1970-01-01 00:00:01.000"), lanelet::CarmaTrafficSignalState::STOP_AND_REMAIN));
+  cmw.sim_.traffic_signal_start_times_[13][15].push_back(boost::posix_time::time_from_string("1970-01-01 00:00:00.000"));
 
-  cmw.sim_.traffic_signal_states_[13][15].push_back(std::make_pair(boost::posix_time::time_from_string("1970-01-01 00:00:00.000"), lanelet::CarmaTrafficSignalState::STOP_AND_REMAIN));
-
-  boost::posix_time::ptime min_end_time_dynamic = boost::posix_time::time_from_string("1970-01-01 00:00:00.000");
+  boost::posix_time::ptime min_end_time_dynamic = boost::posix_time::time_from_string("1970-01-01 00:00:01.000");
   auto received_state_dynamic=lanelet::CarmaTrafficSignalState::STOP_AND_REMAIN;
   int mov_id=13;
   int mov_signal_group=15;
  
   ASSERT_EQ(cmw.check_if_seen_before_movement_state(min_end_time_dynamic,received_state_dynamic,mov_id,mov_signal_group), 1);
 
-  min_end_time_dynamic=boost::posix_time::time_from_string("1970-01-01 00:00:00.000");
+  min_end_time_dynamic=boost::posix_time::time_from_string("1970-01-01 00:00:01.000");
   received_state_dynamic= lanelet::CarmaTrafficSignalState::PROTECTED_CLEARANCE;
   mov_id=13;
   mov_signal_group=15;
@@ -1578,9 +1688,9 @@ TEST(CARMAWorldModelTest, minEndTimeConverterMinuteOfYear)
   double moy=1;
   ros::Time::setNow(ros::Time(1));
     
-  ASSERT_EQ(cmw.min_end_time_converter_minute_of_year(min_end_time,moy_exists,moy), boost::posix_time::time_from_string("1970-01-01 00:00:01.000"));
+  ASSERT_EQ(cmw.min_end_time_converter_minute_of_year(min_end_time,moy_exists,moy), boost::posix_time::time_from_string("1970-01-01 00:00:00.000"));
 
-  min_end_time=boost::posix_time::time_from_string("1970-01-01 00:00:01.000");
+  min_end_time=boost::posix_time::time_from_string("1970-01-01 01:00:01.000");
   moy_exists=1;
   ros::Time::setNow(ros::Time(3601));
     

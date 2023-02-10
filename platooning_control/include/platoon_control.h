@@ -34,32 +34,62 @@
 
 namespace platoon_control
 {
+	/**
+    * \brief This class includes logic for Platoon control. It includes publishers and subscribers and their callback functions
+	*/
     class PlatoonControlPlugin
     {
         public:
             
-			// Default constructor for PlatoonControlPlugin class
+			/**
+			* \brief Default constructor for PlatoonControlPlugin class
+			*/
 			PlatoonControlPlugin();
 
+			/**
+			* \brief Initialize plugin variables and publishers/subscribers
+			*/
 			void initialize();
 
-			// general starting point of this node
+			/**
+			* \brief  general starting point of this node
+			*/
 			void run();
 
-			// Compose twist message by calculating speed and steering commands.
+			/**
+			* \brief generate control signal by calculating speed and steering commands.
+			* \param point0 start point of control window
+			* \param point_end end point of control wondow
+			*/
 			void generateControlSignals(const cav_msgs::TrajectoryPlanPoint& point0, const cav_msgs::TrajectoryPlanPoint& point_end);
 			
-			// Compose twist message by calculating speed and steering commands.
+			/**
+			* \brief Compose twist message from linear and angular velocity commands.
+			* \param linear_vel linear velocity in m/s
+			* \param angular_vel angular velocity in rad/s
+			* \return twist message
+			*/
 			geometry_msgs::TwistStamped composeTwistCmd(double linear_vel, double angular_vel);
 
-			// Compose control message by calculating speed and steering commands.
+			/**
+			* \brief Compose control message from speed and steering commands.
+			* \param linear_vel linear velocity in m/s
+			* \param steering_angle steering angle in rad
+			* \return control command
+			*/
 			autoware_msgs::ControlCommandStamped composeCtrlCmd(double linear_vel, double steering_angle);
 
-			// find the point correspoding to the lookahead distance
+			/**
+			* \brief find the point correspoding to the lookahead distance
+			* \param trajectory_plan trajectory plan
+			* \return trajectory point
+			*/
 			cav_msgs::TrajectoryPlanPoint getLookaheadTrajectoryPoint(cav_msgs::TrajectoryPlan trajectory_plan);
 
-			// timer callback for control signal publishers
-			// returns true if control signals are correctly calculated.
+			/**
+			* \brief timer callback for control signal publishers
+			* \returns true if control signals are correctly calculated.
+			*/
 			bool controlTimerCb();
 			
 			// local copy of pose
@@ -90,18 +120,35 @@ namespace platoon_control
 			long prev_input_time_ = 0;				//timestamp of the previous trajectory plan input received
 			long consecutive_input_counter_ = 0;	//num inputs seen without a timeout
 
-			// callback function for pose
+			/**
+			* \brief callback function for pose
+			* \param msg pose stamped msg
+			*/
 			void pose_cb(const geometry_msgs::PoseStampedConstPtr& msg);
 
-			// callback function for platoon info
+			/**
+			* \brief callback function for platoon info
+			* \param msg platoon info msg
+			*/
 			void platoonInfo_cb(const cav_msgs::PlatooningInfoConstPtr& msg);
 
-			// callback function for trajectory plan
+			/**
+			* \brief callback function for trajectory plan
+			* \param msg trajectory plan msg
+			*/
         	void trajectoryPlan_cb(const cav_msgs::TrajectoryPlan::ConstPtr& tp);
 
-			// callback function for current twist
+			/**
+			* \brief callback function for current twist
+			* \param msg twist stamped msg
+			*/
 			void currentTwist_cb(const geometry_msgs::TwistStamped::ConstPtr& twist);
 
+			/**
+			* \brief calculate average speed of a set of trajectory points
+			* \param trajectory_points set of trajectory points
+			* \return trajectory speed
+			*/
 			double getTrajectorySpeed(std::vector<cav_msgs::TrajectoryPlanPoint> trajectory_points);
 
         	// Plugin discovery message

@@ -38,6 +38,7 @@
 #include <basic_autonomy_ros2/smoothing/BSpline.hpp>
 #include <basic_autonomy_ros2/smoothing/filters.hpp>
 #include <carma_debug_ros2_msgs/msg/trajectory_curvature_speeds.hpp>
+#include <autoware_auto_msgs/msg/trajectory.hpp>
 
 /**
  * \brief Macro definition to enable easier access to fields shared across the maneuver types
@@ -86,6 +87,7 @@ namespace basic_autonomy
                                                           // computed curvature and output speeds
             double back_distance = 20;                    // Number of meters behind the first maneuver that need to be included in points for curvature calculation
             double buffer_ending_downtrack = 20.0;        //The additional downtrack beyond requested end dist used to fit points along spline
+            std::string desired_controller_plugin = "default"; //The desired controller plugin for the generated trajectory
         };
      
 
@@ -148,12 +150,13 @@ namespace basic_autonomy
         * \param times The times which at the vehicle should arrive at the specified points. First point should have a value of 0. Units s
         * \param yaws The orientation the vehicle should achieve at each point. Units radians
         * \param startTime The absolute start time which will be used to update the input relative times. Units s
+        * \param desired_controller_plugin The name of the controller plugin for the generated trajectory.
         * 
         * \return A list of trajectory points built from the provided inputs.
         */
         std::vector<carma_planning_msgs::msg::TrajectoryPlanPoint> trajectory_from_points_times_orientations(
             const std::vector<lanelet::BasicPoint2d> &points, const std::vector<double> &times,
-            const std::vector<double> &yaws, rclcpp::Time startTime);
+            const std::vector<double> &yaws, rclcpp::Time startTime, const std::string &desired_controller_plugin);
 
        /**
         * \brief Attaches back_distance length of points behind the future points
@@ -339,13 +342,31 @@ namespace basic_autonomy
                                                                 int speed_moving_average_window_size,
                                                                 int curvature_moving_average_window_size,
                                                                 double back_distance,
-                                                                double buffer_ending_downtrack);
+                                                                double buffer_ending_downtrack,
+                                                                std::string desired_controller_plugin = "default");
 
         GeneralTrajConfig compose_general_trajectory_config(const std::string& trajectory_type,
                                                             int default_downsample_ratio,
                                                             int turn_downsample_ratio);
-   
-                                                  
+        
+        /**
+        * \brief Given a carma type of trajectory_plan, generate autoware type of trajectory accounting for speed_lag and stopping case
+        *        Generated trajectory is meant to be used in autoware.auto's pure_pursuit library using set_trajectory() function
+        * \param tp trajectory plan from tactical plugins
+        * 
+        * \return trajectory plan of autoware_auto_msgs type
+        */
+        autoware_auto_msgs::msg::Trajectory process_trajectory_plan(const carma_planning_msgs::msg::TrajectoryPlan& tp, double vehicle_response_lag);
+
+        /**
+         * \brief Applies a specified response lag in seconds to the trajectory shifting the whole thing by the specified lag time
+         * \param speeds Velocity profile to shift. The first point should be the current vehicle speed
+         * \param downtrack Distance points for each velocity point. Should have the same size as speeds and start from 0
+         * \param response_lag The lag in seconds before which the vehicle will not meaningfully accelerate
+         * 
+         * \return A Shifted trajectory
+         */ 
+        std::vector<double> apply_response_lag(const std::vector<double>& speeds, const std::vector<double> downtracks, double response_lag);
     }
 
 } // basic_autonomy_ros2

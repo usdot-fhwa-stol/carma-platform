@@ -32,8 +32,6 @@ namespace platoon_control_ihp
 
         PlatooningControlIHPPluginConfig config;
 
-        pnh_->param<double>("timeHeadway", config.timeHeadway, config.timeHeadway);
-        pnh_->param<double>("standStillHeadway", config.standStillHeadway, config.standStillHeadway);
         pnh_->param<double>("maxAccel", config.maxAccel, config.maxAccel);
         pnh_->param<double>("Kp", config.Kp, config.Kp);
         pnh_->param<double>("Kd", config.Kd, config.Kd);
@@ -60,7 +58,7 @@ namespace platoon_control_ihp
         config_ = config;
 
 	  	// Trajectory Plan Subscriber
-		trajectory_plan_sub = nh_->subscribe<cav_msgs::TrajectoryPlan>("PlatoonControlIHPPlugin/plan_trajectory", 1, &PlatoonControlIHPPlugin::trajectoryPlan_cb, this);
+		trajectory_plan_sub = nh_->subscribe<cav_msgs::TrajectoryPlan>("platoon_control_ihp/plan_trajectory", 1, &PlatoonControlIHPPlugin::trajectoryPlan_cb, this);
         
         // Current Twist Subscriber
         current_twist_sub_ = nh_->subscribe<geometry_msgs::TwistStamped>("current_velocity", 1, &PlatoonControlIHPPlugin::currentTwist_cb, this);
@@ -78,7 +76,7 @@ namespace platoon_control_ihp
         pose_sub_ = nh_->subscribe("current_pose", 1, &PlatoonControlIHPPlugin::pose_cb, this);
 
 		plugin_discovery_pub_ = nh_->advertise<cav_msgs::Plugin>("plugin_discovery", 1);
-        plugin_discovery_msg_.name = "PlatoonControlIHPPlugin";
+        plugin_discovery_msg_.name = "platoon_control_ihp";
         plugin_discovery_msg_.version_id = "v1.0";
         plugin_discovery_msg_.available = true;
         plugin_discovery_msg_.activated = true;
