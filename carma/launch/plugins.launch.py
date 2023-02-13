@@ -1,4 +1,4 @@
-# Copyright (C) 2022 LEIDOS.
+# Copyright (C) 2022-2023 LEIDOS.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -71,6 +71,9 @@ def generate_launch_description():
 
     platoon_tactical_ihp_param_file = os.path.join(
         get_package_share_directory('platooning_tactical_plugin'), 'config/parameters.yaml') 
+
+    approaching_emergency_vehicle_plugin_param_file = os.path.join(
+        get_package_share_directory('approaching_emergency_vehicle_plugin'), 'config/parameters.yaml')
     
     stop_controlled_intersection_tactical_plugin_file_path = os.path.join(
         get_package_share_directory('stop_controlled_intersection_tactical_plugin'), 'config/parameters.yaml') 
@@ -292,6 +295,35 @@ def generate_launch_description():
                 parameters=[
                     vehicle_characteristics_param_file, #vehicle_response_lag
                     pure_pursuit_tuning_parameters #pure_pursuit calibration parameters
+                ]
+            ),
+            ComposableNode(
+                package='approaching_emergency_vehicle_plugin',
+                plugin='approaching_emergency_vehicle_plugin::ApproachingEmergencyVehiclePlugin',
+                name='approaching_emergency_vehicle_plugin',
+                extra_arguments=[
+                    {'use_intra_process_comms': True}, 
+                    {'--log-level' : GetLogLevel('approaching_emergency_vehicle_plugin', env_log_levels) }
+                ],
+                remappings = [
+                    ("semantic_map", [ EnvironmentVariable('CARMA_ENV_NS', default_value=''), "/semantic_map" ] ),
+                    ("map_update", [ EnvironmentVariable('CARMA_ENV_NS', default_value=''), "/map_update" ] ),
+                    ("roadway_objects", [ EnvironmentVariable('CARMA_ENV_NS', default_value=''), "/roadway_objects" ] ),
+                    ("incoming_spat", [ EnvironmentVariable('CARMA_MSG_NS', default_value=''), "/incoming_spat" ] ),
+                    ("plugin_discovery", [ EnvironmentVariable('CARMA_GUIDE_NS', default_value=''), "/plugin_discovery" ] ),
+                    ("route", [ EnvironmentVariable('CARMA_GUIDE_NS', default_value=''), "/route" ] ),
+                    ("current_velocity", [ EnvironmentVariable('CARMA_INTR_NS', default_value=''), "/vehicle/twist" ] ),
+                    ("upcoming_lane_change_status", [ EnvironmentVariable('CARMA_GUIDE_NS', default_value=''), "/upcoming_lane_change_status" ] ),
+                    ("incoming_bsm", [ EnvironmentVariable('CARMA_MSG_NS', default_value=''), "/incoming_bsm" ] ),
+                    ("georeference", [ EnvironmentVariable('CARMA_LOCZ_NS', default_value=''), "/map_param_loader/georeference" ] ),
+                    ("route_state", [ EnvironmentVariable('CARMA_GUIDE_NS', default_value=''), "/route_state" ] ),
+                    ("outgoing_emergency_vehicle_response", [ EnvironmentVariable('CARMA_MSG_NS', default_value=''), "/outgoing_emergency_vehicle_response" ] ),
+                    ("incoming_emergency_vehicle_ack", [ EnvironmentVariable('CARMA_MSG_NS', default_value=''), "/incoming_emergency_vehicle_ack" ])
+                ],
+                parameters=[
+                    approaching_emergency_vehicle_plugin_param_file,
+                    vehicle_characteristics_param_file,
+                    vehicle_config_param_file
                 ]
             ),
         ]
