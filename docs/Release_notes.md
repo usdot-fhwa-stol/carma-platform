@@ -7,7 +7,7 @@ Version 4.3.0, released Feb 10th, 2023
 **Summary:**
 CARMA system release version 4.3.0 is comprised of new features in both CARMA Streets and CARMA Platform to support Adaptive Traffic Signal Optimization in a cooperative driving automation (CDA) environment; a new feature in CARMA Platform to support Cellular Traffic Control Messages; CARMA Platform ROS upgrades; and an upgraded CARMA XiL Co-simulation tool to support CARMA Platform Robotics Operating System 2 (ROS2) implementation. Along with the above enhancements, several bug fixes and CI related enhancements are included in this release. 
 
-- Adaptive Traffic Signal Optimization in a CDA environment (TSMO UC3) - The TSMO UC3 has developed algorithms to simultaneously optimize signal timing and vehicle trajectories. The algorithms have three main functionalities that have been implemented as multiple new features in both CARMA Streets and CARMA Platform:  
+- **<ins>Adaptive Traffic Signal Optimization in a CDA environment (TSMO UC3)</ins>** - The TSMO UC3 has developed algorithms to simultaneously optimize signal timing and vehicle trajectories. The algorithms have three main functionalities that have been implemented as multiple new features in both CARMA Streets and CARMA Platform:  
 
     1. Signal Optimization: CARMA Streets determines a near-optimal signal timing plan based on the received status and intent information from CDA vehicles.
     2. Vehicle Entering Time Estimation: CARMA Streets estimates an entering time to the intersection box for each CDA vehicle.
@@ -19,11 +19,11 @@ CARMA system release version 4.3.0 is comprised of new features in both CARMA St
     2. Lower travel delays due to optimized signal timing. 
     3. Lower fuel consumption due to smoother trajectories.  
 
-- Integrated Highway Prototype 2 (IHP2) Cellular Traffic Control Messages - CARMA Platform is updated to communicate with CARMA Cloud through cellular communication. In this feature, the platform submits a Traffic Control Request (TCR) directly to CARMA Cloud and receives all corresponding Traffic Control Messages (TCMs). As a result, communication with CARMA Cloud is no longer dependent on short range communication (e.g., DSRC or C-V2X) and V2XHub.  Currently CARMA Cloud is only configured to directly communicate with a single entity. The TCM returned from CARMA Cloud over cellular communications may contain a single message or multiple messages. 
+- **<ins>Integrated Highway Prototype 2 (IHP2) Cellular Traffic Control Messages</ins>** - CARMA Platform is updated to communicate with CARMA Cloud through cellular communication. In this feature, the platform submits a Traffic Control Request (TCR) directly to CARMA Cloud and receives all corresponding Traffic Control Messages (TCMs). As a result, communication with CARMA Cloud is no longer dependent on short range communication (e.g., DSRC or C-V2X) and V2XHub.  Currently CARMA Cloud is only configured to directly communicate with a single entity. The TCM returned from CARMA Cloud over cellular communications may contain a single message or multiple messages. 
 
-CARMA Platform:
+**CARMA Platform:**
 
-TSMO UC3 Functionalities: 
+**<ins>TSMO UC3 Functionalities:</ins>** 
 
 Enhancements in TSMO UC3 Functionalities:
 
@@ -46,7 +46,7 @@ Known issues in this release related to TSMO UC3 functionalities:
 - Issue 2004: Fixed the service call success rate of the LCI (Light Control Intersection) tactical plugin by omitting heavy logic of trajectory generation when unnecessary and uses previous successful trajectory whenever possible but still generates the new trajectory all the time even though it is not used.  
 - Issue 2009: Fixed down sampling ratio in light_controlled_intersection_tactical_plugin that caused the platform to crash throwing error such as "Insufficient Spline Points" with new ratio same as in lane cruising plugin's ratio as they use same basic autonomy library functions to generate its trajectory. 
 
-IHP2 Functionalities: 
+**<ins>IHP2 Functionalities:</ins>** 
 
 Enhancements in this release related to IHP2: 
 
@@ -62,7 +62,7 @@ Fixes in this release related to IHP2:
 Known issues in this release:  
 - Issue 2033: During verification of cellular communication with CARMA Cloud, it was noticed that active event information on the UI do not display accurate information. 
 
-ROS2 Upgrades:
+**<ins>ROS2 Upgrades:</ins>**
 
 Enhancements in this release related to ROS2 upgrades: 
 
@@ -91,9 +91,9 @@ Other Enhancements, Fixes, and Known issues:
 - Issue 2035: During testing in the CARMA XIL cosimulation tool to evaluate basic vehicle control capabilities, it was observed that CARMA Platform planning and control was unable to complete an initial lane change and right turn in the default CARLA Town4 map. 
 - Issue 2034: During testing in the CARMA XIL cosimulation tool to evaluate advanced vehicle control capabilities, it was observed that CARMA Platform Yield Plugin implementation was not aggressive enough in resolving detected conflicts.
 
-CARMA-Streets:
+**CARMA-Streets:**
 
-TSMO UC3 Functionalities:
+**<ins>TSMO UC3 Functionalities:</ins>**
 
 - To enable the infrastructure-side functionalities designed for TSMO UC3, 
 
