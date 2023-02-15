@@ -36,7 +36,9 @@ Enhancements in this release related to TSMO UC3 functionalities:
 
 - Issue 1762: Updated Light Controlled Intersection (LCI) Strategic Plugin so that it uses the scheduled message from the intersection for setting its ET algorithm parameters instead of computing them based on SPAT if the message is available. 
 - Issue 1932: Updated Carma world model to support multiple signal groups in a single entry lane. 
+
 Fixes in this release related to TSMO UC3 functionalities: 
+
 - Issue 1986: Fixed light-controlled Intersection tactical plugin exception which cannot store a negative time point in rclcpp time while in ACTIVE state. 
 - Issues 1970 and 2012: Fixed CARMA Platform UI incorrect signal head display. 
 
@@ -54,13 +56,16 @@ Enhancements in this release related to IHP2:
 - Issue 1998: Added Opening HTTP tunnels to CARMA Cloud that can be enabled and disabled using a Flag in CARMA Configuration. 
 - Issue 1864: Updated Platooning plugin to handle more general cases that involve a single vehicle joining a platoon from an adjacent lane. 
 - Issue 1965: Implemented a CARMA Cloud client ROS2 node in CARMA Platform. Functionalities for the CARMA Cloud client ROS node include: 
-- Subscribe to carma_wm_ctrl node to get Traffic Control Request (TCR) data. 
-- Create an HTTP client and sends a TCR post request to Carma-cloud. TCR is in XML format. 
-- Create a j2735_v2x_msgs::msg::Traffic Control Request object and fills it with the data from the XML TCR. 
+    - Subscribe to carma_wm_ctrl node to get Traffic Control Request (TCR) data. 
+    - Create an HTTP client and sends a TCR post request to Carma-cloud. TCR is in XML format. 
+    - Create a j2735_v2x_msgs::msg::Traffic Control Request object and fills it with the data from the XML TCR. 
 
 Fixes in this release related to IHP2: 
+
 - Issue 2022: Fixed an ASN1 mismatch between CARMA Messenger and V2XHub, which caused CARMA Messenger (used within CARMA Platform) to be unable to decode DSRC Traffic Control Messages (TCMs) broadcasted by V2XHub. 
+
 Known issues in this release:  
+
 - Issue 2033: During verification of cellular communication with CARMA Cloud, it was noticed that active event information on the UI do not display accurate information. 
 
 **<ins>ROS2 Upgrades</ins>**
@@ -90,7 +95,9 @@ Enhancements and Fixes in this release:
 - Issue 1911: Fixed vehicle localization when the vehicle is engaged and starts moving to drift out of the lane, but on rviz it shows that the localized position is still in the lane following the path. 
 - Issue 1897: Fixed the route following plugin is failing to load into its component container at startup due to a parameter mismatch between a double and integer. 
 - Issue 1863: Fixed basic_autonomy library, which was ignoring the Lanelets defined in the “lane_ids” field of received lane follow maneuver messages. 
+
 Known issues in this release:
+
 - Issue 2036: BSM encoding occasionally fails silently in vehicles, allowing them to engage without sending BSMs. 
 - Issue 2035: During testing in the CARMA XIL cosimulation tool to evaluate basic vehicle control capabilities, it was observed that CARMA Platform planning and control was unable to complete an initial lane change and right turn in the default CARLA Town4 map. 
 - Issue 2034: During testing in the CARMA XIL cosimulation tool to evaluate advanced vehicle control capabilities, it was observed that CARMA Platform Yield Plugin implementation was not aggressive enough in resolving detected conflicts.
