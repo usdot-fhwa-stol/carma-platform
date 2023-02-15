@@ -25,8 +25,6 @@ CARMA system release version 4.3.0 is comprised of new features in both CARMA St
 
 **<ins>TSMO UC3 Functionalities</ins>** 
 
-Enhancements in TSMO UC3 Functionalities:
-
 To enable the vehicle-side functionalities designed for TSMO UC3,  
 
    - The World Model feature in CARMA Platform is refactored to enable processing the designed signal phase plan in this use case. 
