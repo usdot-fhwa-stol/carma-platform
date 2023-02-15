@@ -27,7 +27,7 @@ CARMA system release version 4.3.0 is comprised of new features in both CARMA St
 
 Enhancements in TSMO UC3 Functionalities:
 
-- To enable the vehicle-side functionalities designed for TSMO UC3,  
+To enable the vehicle-side functionalities designed for TSMO UC3,  
 
    - The World Model feature in CARMA Platform is refactored to enable processing the designed signal phase plan in this use case. 
    - The Light Controlled Intersection (LCI) Strategic Plugin has been refactored to include the new entering time (ET) processing and trajectory selection logics. 
@@ -106,7 +106,7 @@ Known issues in this release:
 
 **<ins>TSMO UC3 Functionalities</ins>**
 
-- To enable the infrastructure-side functionalities designed for TSMO UC3, 
+To enable the infrastructure-side functionalities designed for TSMO UC3, 
 
    - The intersection model feature is enhanced to enable correlating the link lanelets and signal group IDs. The intersection model feature enables CARMA Streets to      process both lanelet2 and MAP information for a given intersection in order to understand intersection geometry. 
    - A new service called signal optimization service (SO) is added to CARMA Streets which continuously computes a near-optimal signal phase plan for the near future      based on the status and intent of all vehicles in the area. 
