@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2019-2021 LEIDOS.
+ * Copyright (C) 2019-2023 LEIDOS.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -44,7 +44,7 @@ namespace route_following_plugin
         EXPECT_EQ(carma_planning_msgs::msg::ManeuverParameters::NO_NEGOTIATION, msg.lane_following_maneuver.parameters.negotiation_type);
         EXPECT_EQ(carma_planning_msgs::msg::ManeuverParameters::HAS_TACTICAL_PLUGIN, msg.lane_following_maneuver.parameters.presence_vector);
         EXPECT_EQ("inlanecruising_plugin", msg.lane_following_maneuver.parameters.planning_tactical_plugin);
-        EXPECT_EQ("RouteFollowingPlugin", msg.lane_following_maneuver.parameters.planning_strategic_plugin);
+        EXPECT_EQ("route_following_plugin", msg.lane_following_maneuver.parameters.planning_strategic_plugin);
         EXPECT_NEAR(1.0, msg.lane_following_maneuver.start_dist, 0.01);
         EXPECT_NEAR(0.9, msg.lane_following_maneuver.start_speed, 0.01);
         EXPECT_NEAR(10.0, msg.lane_following_maneuver.end_dist, 0.01);
@@ -105,9 +105,9 @@ namespace route_following_plugin
 
         //Define plan for request and response
         //PlanManeuversRequest
-        carma_planning_msgs::srv::PlanManeuvers::Request::SharedPtr plan_request;
-        carma_planning_msgs::srv::PlanManeuvers::Response::SharedPtr plan_response;
-        carma_planning_msgs::srv::PlanManeuvers::Request::SharedPtr pplan;
+        auto plan_request = std::make_shared<carma_planning_msgs::srv::PlanManeuvers::Request>();
+        auto plan_response = std::make_shared<carma_planning_msgs::srv::PlanManeuvers::Response>();
+        auto pplan = std::make_shared<carma_planning_msgs::srv::PlanManeuvers::Request>();
 
         carma_planning_msgs::msg::ManeuverPlan plan_req1;
         plan_req1.header;
@@ -120,7 +120,7 @@ namespace route_following_plugin
         pplan->prior_plan = plan_req1;
         plan_request = pplan;
         //PlanManeuversResponse
-        carma_planning_msgs::srv::PlanManeuvers::Response::SharedPtr newplan;
+        auto newplan = std::make_shared<carma_planning_msgs::srv::PlanManeuvers::Response>();
         for (auto i = 0; i < plan_req1.maneuvers.size(); i++)
             newplan->new_plan.maneuvers.push_back(plan_req1.maneuvers[i]);
 
@@ -152,7 +152,7 @@ namespace route_following_plugin
     TEST(RouteFollowingPlugin, TestAssociateSpeedLimitusingosm)
     {
         // File to process. Path is relative to test folder
-        std::string file = "../resource/map/town01_vector_map_1.osm";
+        std::string file = "../../install_ros2/route_following_plugin/share/route_following_plugin/resource/map/town01_vector_map_1.osm";
         lanelet::Id start_id = 100;
         lanelet::Id end_id = 111;
         /***
@@ -216,9 +216,9 @@ namespace route_following_plugin
         auto shortest_path = cmw->getRoute()->shortestPath();
         //Define plan for request and response
         //PlanManeuversRequest
-        carma_planning_msgs::srv::PlanManeuvers::Request::SharedPtr plan_request;
-        carma_planning_msgs::srv::PlanManeuvers::Response::SharedPtr plan_response;
-        carma_planning_msgs::srv::PlanManeuvers::Request::SharedPtr pplan;
+        auto plan_request = std::make_shared<carma_planning_msgs::srv::PlanManeuvers::Request>();
+        auto plan_response = std::make_shared<carma_planning_msgs::srv::PlanManeuvers::Response>();
+        auto pplan = std::make_shared<carma_planning_msgs::srv::PlanManeuvers::Request>();
 
         carma_planning_msgs::msg::ManeuverPlan plan_req1;
         plan_req1.header;
@@ -230,7 +230,7 @@ namespace route_following_plugin
         pplan->prior_plan = plan_req1;
         plan_request = pplan;
         //PlanManeuversResponse
-        carma_planning_msgs::srv::PlanManeuvers::Response::SharedPtr newplan;
+        auto newplan = std::make_shared<carma_planning_msgs::srv::PlanManeuvers::Response>();
         for (auto i = 0; i < plan_req1.maneuvers.size(); i++)
             newplan->new_plan.maneuvers.push_back(plan_req1.maneuvers[i]);
 
@@ -327,9 +327,9 @@ namespace route_following_plugin
 
 
 
-TEST(RouteFollowingPlugin, TestReturnToShortestPath)
+    TEST(RouteFollowingPlugin, TestReturnToShortestPath)
     {
-    //Use Guidance Lib to create map
+        //Use Guidance Lib to create map
         carma_wm::test::MapOptions options;
         options.lane_length_ = 25;
         options.lane_width_ = 3.7;
@@ -378,24 +378,24 @@ TEST(RouteFollowingPlugin, TestReturnToShortestPath)
         // Since the vehicle is not on the shortest path, the first maneuver is lane change
         ASSERT_EQ(worker->latest_maneuver_plan_[0].type, carma_planning_msgs::msg::Maneuver::LANE_CHANGE);
     }
+} // namespace route_following_plugin
+
+/*!
+* \brief Main entrypoint for unit tests
+*/
+int main (int argc, char **argv) {
+    ::testing::InitGoogleTest(&argc, argv);
+
+    //Initialize ROS
+    rclcpp::init(argc, argv);
+    auto ret = rcutils_logging_set_logger_level(
+            rclcpp::get_logger("route_following_plugin").get_name(), RCUTILS_LOG_SEVERITY_DEBUG);
+
+    bool success = RUN_ALL_TESTS();
+
+    //shutdown ROS
+    rclcpp::shutdown();
+
+    return success;
 }
-
-    /*!
-    * \brief Main entrypoint for unit tests
-    */
-    int main (int argc, char **argv) {
-        ::testing::InitGoogleTest(&argc, argv);
-
-        //Initialize ROS
-        rclcpp::init(argc, argv);
-        auto ret = rcutils_logging_set_logger_level(
-                rclcpp::get_logger("route_following_plugin").get_name(), RCUTILS_LOG_SEVERITY_DEBUG);
-
-        bool success = RUN_ALL_TESTS();
-
-        //shutdown ROS
-        rclcpp::shutdown();
-
-        return success;
-    }
 
