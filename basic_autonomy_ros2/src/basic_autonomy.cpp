@@ -1219,6 +1219,8 @@ namespace basic_autonomy
             for (size_t i = 0; i < speeds.size(); i++) { // Ensure 0 is min speed
                 if (stopping_index != 0 && i >= stopping_index - 1)
                 {
+                    RCLCPP_DEBUG_STREAM(rclcpp::get_logger(BASIC_AUTONOMY_LOGGER), "Made it to 0, i: " << i);
+                    
                     speeds[i] = 0.0;  //stopping case
                 }
                 else

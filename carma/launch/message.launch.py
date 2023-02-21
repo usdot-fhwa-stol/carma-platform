@@ -22,7 +22,8 @@ from launch.substitutions import EnvironmentVariable
 from carma_ros2_utils.launch.get_log_level import GetLogLevel
 from carma_ros2_utils.launch.get_current_namespace import GetCurrentNamespace
 from launch.substitutions import LaunchConfiguration
-from launch.actions import DeclareLaunchArgument
+from launch.actions import DeclareLaunchArgument, ExecuteProcess
+from launch.conditions import IfCondition
 
 import os
 import subprocess
@@ -32,37 +33,9 @@ from launch.launch_description_sources import PythonLaunchDescriptionSource
 from launch.actions import GroupAction
 from launch_ros.actions import set_remap
 
-'''
-This function opens http tunnels with carma cloud, so it can communicate directly with platform
-'''
-def open_tunnels():
-
-    REMOTE_USER="ubuntu"
-    REMOTE_ADDR="www.carma-cloud.com"
-    KEY_FILE="carma-cloud-test-1.pem"
-    HOST_PORT="33333" # This port is forwarded to remote host (carma-cloud)
-    REMOTE_PORT="33333" # This port is forwarded to local host 
-
-    param_launch_path = os.path.join(
-        get_package_share_directory('carma_cloud_client'), 'launch/scripts')
-        
-    
-    cmd = param_launch_path + '/open_tunnels.sh'
-
-    subprocess.check_call(['chmod','u+x', cmd])
-
-    key_path = "/opt/carma/vehicle/calibration/cloud_permission"
-    
-    key = key_path + '/' + KEY_FILE
-
-    subprocess.check_call(['sudo','chmod','400', key])
-    subprocess.check_call(['sudo', cmd, '-u', REMOTE_USER, '-a', REMOTE_ADDR, '-k', key, '-p', REMOTE_PORT,  '-r', HOST_PORT])
 
 
 def generate_launch_description():
-
-    # Open http tunnels with carma cloud
-    open_tunnels()
 
     """
     Launch V2X subsystem nodes.
@@ -100,6 +73,15 @@ def generate_launch_description():
         default_value = subsystem_controller_default_param_file,
         description = "Path to file containing override parameters for the subsystem controller"
     )
+
+    # Declare enable_opening_tunnels
+    enable_opening_tunnels = LaunchConfiguration('enable_opening_tunnels')
+    declare_enable_opening_tunnels = DeclareLaunchArgument(
+        name = 'enable_opening_tunnels',
+        default_value= 'True',
+        description='Flag to enable opening http tunnesl to CARMA Cloud'
+    )
+
     carma_cloud_client_param_file = os.path.join(
         get_package_share_directory('carma_cloud_client'), 'config/parameters.yaml')
     
@@ -210,11 +192,43 @@ def generate_launch_description():
         arguments=['--ros-args', '--log-level', GetLogLevel('subsystem_controllers', env_log_levels)]
     )
 
+    # Info needed for opening the tunnels
+    # TODO: Investigate if this can be further cleaned up
+    REMOTE_USER="ubuntu"
+    REMOTE_ADDR="www.carma-cloud.com"
+    KEY_FILE="carma-cloud-test-1.pem"
+    HOST_PORT="33333" # This port is forwarded to remote host (carma-cloud)
+    REMOTE_PORT="10001" # This port is forwarded to local host 
+    param_launch_path = os.path.join(
+        get_package_share_directory('carma_cloud_client'), 'launch/scripts')
+        
+    script = param_launch_path + '/open_tunnels.sh'
+
+    subprocess.check_call(['chmod','u+x', script])
+
+    key_path =  "/opt/carma/vehicle/calibration/cloud_permission"
+    
+    keyfile = key_path + '/' + KEY_FILE
+    
+    subprocess.check_call(['sudo','chmod','400', keyfile])
+
+    
+    open_tunnels_action = ExecuteProcess(
+        
+        condition=IfCondition(enable_opening_tunnels),
+        cmd = ['sudo',  script, '-u', REMOTE_USER, '-a', REMOTE_ADDR, '-k', keyfile, '-p', REMOTE_PORT,  '-r', HOST_PORT],
+        output = 'screen'
+    )
+
+
     return LaunchDescription([
         declare_vehicle_config_param_file_arg,
         declare_vehicle_characteristics_param_file_arg, 
-        declare_subsystem_controller_param_file_arg,       
+        declare_subsystem_controller_param_file_arg,  
+        declare_enable_opening_tunnels, 
+        open_tunnels_action,    
         carma_v2x_container,
         subsystem_controller
-    ]) 
+    ])
+ 
 

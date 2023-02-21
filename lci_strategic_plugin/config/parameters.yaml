@@ -14,7 +14,7 @@ trajectory_smoothing_activation_distance: 200.0
 stopping_location_buffer : 8.0
 
 # Double: A buffer in seconds around the green phase which will reduce the phase length such that vehicle still considers it non-green
-green_light_time_buffer : 1.0
+green_light_time_buffer : 0.5
 
 # Double: A buffer in seconds starting green phase which is still considered valid stop if safety requires it
 stop_light_time_buffer : 2.0
@@ -22,9 +22,9 @@ stop_light_time_buffer : 2.0
 # Double: Minimum allowable speed in trajectory smoothing algorithm m/s
 algo_minimum_speed : 2.235
 
-# Double: Safety multiplier of planned allowable vehicle deceleration to use when stopping. This new deceleration makes vehicle decelerate earlier distance.
+# Double: Safety multiplier (must be less than 1.0) of planned allowable vehicle deceleration to use when stopping. This new deceleration makes vehicle decelerate earlier distance.
 #         NOTE: Stacks on vehicle_decel_limit_multiplier and stopping uses max_decel; this distance is only used for calculating earlier downtrack
-deceleration_fraction : 0.8
+deceleration_fraction : 0.7
 
 # Double: Desired distance to stop buffer in meters
 desired_distance_to_stop_buffer : 15.0

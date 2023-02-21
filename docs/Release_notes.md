@@ -1,6 +1,147 @@
 CARMA Platform Release Notes
 ----------------------------
 
+Version 4.3.0, released Feb 10th, 2023
+----------------------------------------
+
+### **Summary**
+CARMA system release version 4.3.0 is comprised of new features in both CARMA Streets and CARMA Platform to support Adaptive Traffic Signal Optimization in a cooperative driving automation (CDA) environment; a new feature in CARMA Platform to support Cellular Traffic Control Messages; CARMA Platform ROS upgrades; and an upgraded CARMA XiL Co-simulation tool to support CARMA Platform Robotics Operating System 2 (ROS2) implementation. Along with the above enhancements, several bug fixes and CI related enhancements are included in this release. 
+
+- **<ins>Adaptive Traffic Signal Optimization in a CDA environment (TSMO UC3)</ins>** - The TSMO UC3 has developed algorithms to simultaneously optimize signal timing and vehicle trajectories. The algorithms have three main functionalities that have been implemented as multiple new features in both CARMA Streets and CARMA Platform:  
+
+    1. Signal Optimization: CARMA Streets determines a near-optimal signal timing plan based on the received status and intent information from CDA vehicles.
+    2. Vehicle Entering Time Estimation: CARMA Streets estimates an entering time to the intersection box for each CDA vehicle.
+    3. Trajectory Planning: each CDA vehicle plans a smooth trajectory individually based on the estimated entering time received from CARMA Streets. 
+   
+  Potential benefits of this use case are: 
+  
+    1. Higher throughput due to increased entering speeds.
+    2. Lower travel delays due to optimized signal timing. 
+    3. Lower fuel consumption due to smoother trajectories.  
+
+- **<ins>Integrated Highway Prototype 2 (IHP2) Cellular Traffic Control Messages</ins>** - CARMA Platform is updated to communicate with CARMA Cloud through cellular communication. In this feature, the platform submits a Traffic Control Request (TCR) directly to CARMA Cloud and receives all corresponding Traffic Control Messages (TCMs). As a result, communication with CARMA Cloud is no longer dependent on short range communication (e.g., DSRC or C-V2X) and V2XHub.  Currently CARMA Cloud is only configured to directly communicate with a single entity. The TCM returned from CARMA Cloud over cellular communications may contain a single message or multiple messages. 
+
+### **CARMA Platform**
+
+**<ins>TSMO UC3 Functionalities</ins>** 
+
+To enable the vehicle-side functionalities designed for TSMO UC3,  
+
+   - The World Model feature in CARMA Platform is refactored to enable processing the designed signal phase plan in this use case. 
+   - The Light Controlled Intersection (LCI) Strategic Plugin has been refactored to include the new entering time (ET) processing and trajectory selection logics. 
+
+Enhancements in this release related to TSMO UC3 functionalities: 
+
+- Issue 1762: Updated Light Controlled Intersection (LCI) Strategic Plugin so that it uses the scheduled message from the intersection for setting its ET algorithm parameters instead of computing them based on SPAT if the message is available. 
+- Issue 1932: Updated Carma world model to support multiple signal groups in a single entry lane. 
+
+Fixes in this release related to TSMO UC3 functionalities: 
+
+- Issue 1986: Fixed light-controlled Intersection tactical plugin exception which cannot store a negative time point in rclcpp time while in ACTIVE state. 
+- Issues 1970 and 2012: Fixed CARMA Platform UI incorrect signal head display. 
+
+Known issues in this release related to TSMO UC3 functionalities: 
+
+- While the current LCI logic includes multiple safeguards to prevent a CARMA Platform vehicle from running a red light when engaged with TSMO UC3 logic (Issue 1985, PR 2010), users should exercise caution when deploying and testing TSMO UC3 functionalities. No redlight running was observed during verification testing performed by the Saxton Transportation Laboratory at the west intersection on the campus of Turn Fairbanks Highway Research Center with three CARMA Platform vehicles. Redlight running could still be possible with different roadway geometry, vehicle low-level controller, CARMA Platform tuning parameters, and CARMA Streets configurations. 
+- Issue 1996: Fixed Black Pacifica fail to call light-controlled intersection tactical plugin service. Some runs the platform failed to call it the entire run. After turning off camera and Lidar logging, the failure rate reduced to about 10% of the time it fails to call randomly. Currently it is believed to be error in ROS2 service call to components where less computing power could lead to timeouts for the service calls. 
+- Issue 2004: Fixed the service call success rate of the LCI (Light Control Intersection) tactical plugin by omitting heavy logic of trajectory generation when unnecessary and uses previous successful trajectory whenever possible but still generates the new trajectory all the time even though it is not used.  
+- Issue 2009: Fixed down sampling ratio in light_controlled_intersection_tactical_plugin that caused the platform to crash throwing error such as "Insufficient Spline Points" with new ratio same as in lane cruising plugin's ratio as they use same basic autonomy library functions to generate its trajectory. 
+
+**<ins>IHP2 Functionalities</ins>** 
+
+Enhancements in this release related to IHP2: 
+
+- Issue 1998: Added Opening HTTP tunnels to CARMA Cloud that can be enabled and disabled using a Flag in CARMA Configuration. 
+- Issue 1864: Updated Platooning plugin to handle more general cases that involve a single vehicle joining a platoon from an adjacent lane. 
+- Issue 1965: Implemented a CARMA Cloud client ROS2 node in CARMA Platform. Functionalities for the CARMA Cloud client ROS node include: 
+    - Subscribe to carma_wm_ctrl node to get Traffic Control Request (TCR) data. 
+    - Create an HTTP client and sends a TCR post request to Carma-cloud. TCR is in XML format. 
+    - Create a j2735_v2x_msgs::msg::Traffic Control Request object and fills it with the data from the XML TCR. 
+
+Fixes in this release related to IHP2: 
+
+- Issue 2022: Fixed an ASN1 mismatch between CARMA Messenger and V2XHub, which caused CARMA Messenger (used within CARMA Platform) to be unable to decode DSRC Traffic Control Messages (TCMs) broadcasted by V2XHub. 
+
+Known issues in this release:  
+
+- Issue 2033: During verification of cellular communication with CARMA Cloud, it was noticed that active event information on the UI do not display accurate information. 
+
+**<ins>ROS2 Upgrades</ins>**
+
+Enhancements in this release related to ROS2 upgrades: 
+
+- Issue 1754: Ported basic autonomy library (and its ROS1 dependencies) to ROS2. 
+- PR 1872: Updated port in localization manager node to ROS2 and to launch it from the carma_src.launch.py launch file. 
+- Issue 1885: Ported cooperative lane change node from ROS1 to ROS2. 
+- Issue 1889: Ported light controlled intersection tactical plugin node to ROS2. 
+- Issue 1894: Ported platooning strategic IHP plugin to ROS2. 
+- Issue 1904: Ported platooning tactical plugin to ROS2. 
+- Issue 1096: Ported SCI strategic plugin to ROS2. 
+
+Fixes in this release related to ROS2 upgrades: 
+
+- Issue 1896: Fixed CARMA UI which cannot connect to the ROS2 network ROS bridge web socket and is being incorrectly launched as a component despite being a python node. 
+- Issue 1898: Fixed the ROS2 stop_and_wait_plugin which is failing to load at startup due to the component not being found and wrong binary being loaded as the component. 
+- Issue 1899: Fixed ROS2 plugins that are not being configured by the plugin manager at startup of CARMA. 
+
+**<ins>Other</ins>** 
+
+Enhancements and Fixes in this release: 
+
+- Issue 1967: Implemented Simulation testing tooling for launching development environments for testing CARMA Platform in simulation. 
+- Issue 1908: Fixed Tactical plugins can take longer than 0.1 seconds to convert maneuver(s) to detailed trajectories which caused the trajectory plan service call from plan delegator to fail. 
+- Issue 1911: Fixed vehicle localization when the vehicle is engaged and starts moving to drift out of the lane, but on rviz it shows that the localized position is still in the lane following the path. 
+- Issue 1897: Fixed the route following plugin is failing to load into its component container at startup due to a parameter mismatch between a double and integer. 
+- Issue 1863: Fixed basic_autonomy library, which was ignoring the Lanelets defined in the “lane_ids” field of received lane follow maneuver messages. 
+
+Known issues in this release:
+
+- Issue 2036: BSM encoding occasionally fails silently in vehicles, allowing them to engage without sending BSMs. 
+- Issue 2035: During testing in the CARMA XIL cosimulation tool to evaluate basic vehicle control capabilities, it was observed that CARMA Platform planning and control was unable to complete an initial lane change and right turn in the default CARLA Town4 map. 
+- Issue 2034: During testing in the CARMA XIL cosimulation tool to evaluate advanced vehicle control capabilities, it was observed that CARMA Platform Yield Plugin implementation was not aggressive enough in resolving detected conflicts.
+
+### **CARMA-Streets**
+
+**<ins>TSMO UC3 Functionalities</ins>**
+
+To enable the infrastructure-side functionalities designed for TSMO UC3, 
+
+   - The intersection model feature is enhanced to enable correlating the link lanelets and signal group IDs. The intersection model feature enables CARMA Streets to      process both lanelet2 and MAP information for a given intersection in order to understand intersection geometry. 
+   - A new service called signal optimization service (SO) is added to CARMA Streets which continuously computes a near-optimal signal phase plan for the near future      based on the status and intent of all vehicles in the area. 
+   - A new service called traffic signal controller (TSC) service is added to CARMA Streets. The TSC service in CARMA Streets interfaces with the physical traffic          signal controller to obtain necessary configuration and signal timing and phasing (SPaT) information and command TSC changes based on the optimized signal phase      plan. The TSC Service also produces SPaT data that contains information about planned SPaT changes to be sent out to equipped vehicles. 
+   - The existing scheduling service in CARMA Streets is refactored to include the new scheduling logic designed for UC3. The new scheduling logic computes the entry      time for each CDA vehicle based on signal phase plan as well as the status and intent of all vehicles in the area. 
+
+Enhancements in this release related to TSMO UC3 functionalities: 
+
+- Issue 159: Implement UC3 Scheduling logic in CARMA-Streets scheduling library. 
+- Issue 166: Added Utility Methods to streets signal phase and timing library for unit translation from J2735. 
+- Issue 169: Implement Traffic signal controller state monitoring to generate a state data structure with the required information for all vehicle phases. 
+- Issue 170: Update TSC (Traffic signal Controller) service to query signal group to phase mapping information for all vehicle phases including pedestrian phase information for SPaT message population. 
+- Issue 173: Update TSC (Traffic Signal Controller) service to receive UDP NTCIP Spat data from the traffic signal controller and convert it into the spat structure provided by the streets signal phase and timing library and publish JSON updates of this Object to a Kafka topic. 
+- Issue 179: Added support for retaining start_time for movement_events in the streets_signal_phase library. 
+- Issue 197: Updated Consume Desired Phase Plan at TSC Service and populate SPaT MovementEventList information with desired changes. 
+- Issue 202: Updated TSC (Traffic Signal Controller) service to broadcast Traffic Signal Controller Configuration for Signal Optimization service. 
+- Issue 228: Update TSC Service to make SNMP calls to set phases according to desired phase plan. 
+- Issue 219: Updated Signal Optimization Service to consume Traffic Signal Controller (TSC) configuration information from TSC Service on startup to allow it to produce valid desired phase plan messages. 
+- Issue 227: Implement Signal Optimization Phase plan modification Algorithm. 
+- Issue 247: Added streets signal optimization library to signal opt service as the streets signal optimization library contains the logic for calculating the queue length and dissipation time for each entry lane and finds the list of candidate desired phase plans to pick the one that has the highest delay ratio.  
+- Issue 259: Implement logging for performance latency for SPaT generation, SO Desired Phase Plan selection, Intersection Schedule generation, and SNMP dynamic requests. 
+
+Known issues in this release related to TSMO UC3 functionalities: 
+
+- Issue 278: SPaT Get methods returns wrong timestamp at the hour change. 
+- Issue 310: Python collect_kafka_logs script will stop consuming messages off of topics when buffer for pipe subprocess is full.  
+- Issue 307: Message Service occasionally restarts on single vehicle testing when log level is set to error and vehicle enters intersection.  
+- Issue 306: Message Service does purge Mobility Operations messages until it receives Mobility Path and BSM messages.  
+- Issue 264: TSC Service throws segfault when Channel Table includes vehicle/pedestrian phase that do not have a Control Source.  
+- Issue 263: TSC Service is not pattern aware.  
+
+Other Enhancements and Fixes: 
+
+- Issue 290: Added named Docker volume for MySQL database to allow for V2X-Hub Plugin configurations and users to persist between Docker-compose up and down calls 
+- Issue 299: Updated Docker ignore file to ignore log directories for Docker build context to speed up builds. Docker-compose updates to persist Kafka volume between Docker-compose up and down redeployments. 
+
+
 Version 4.2.0, released July 29th, 2022
 ----------------------------------------
 
