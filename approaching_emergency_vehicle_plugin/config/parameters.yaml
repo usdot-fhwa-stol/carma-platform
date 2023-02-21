@@ -1,0 +1,87 @@
+# Double: A threshold; if the estimated duration until an ERV passes the ego vehicle is below this, the
+#         ERV is considered to be actively passing the ego vehicle.
+# Units: Seconds
+passing_threshold : 15.0
+
+# Double: A threshold; if the estimated duration until an ERV passes the ego vehicle is below this, the
+#         ERV will no longer attempt to change lanes in reaction to an approaching ERV.
+# Units: Seconds
+do_not_move_over_threshold : 20.0
+
+# Double: A threshold; if the estimated duration until an ERV passes the ego vehicle is below this, the
+#         ERV will no longer attempt to change lanes in reaction to an approaching ERV.
+# Units: Seconds
+approaching_threshold : 60.0
+
+# Double: A threshold; an actively-passing ERV is considered to have completed passing the ego vehicle when
+#         it is this distance in front of the ego vehicle.
+# Units: Meters
+finished_passing_threshold : 152.4
+
+# Double: The rate that incoming BSMs from a specific ERV will be processed by this plugin. All received 
+#         BSMs from an ERV between processed BSMs will be dropped.
+# Units: Hz
+bsm_processing_frequency : 1.0
+
+# Double: The amount that the speed limit of a lanelet will be reduced by when planning a maneuver when an
+#         ERV is actively passing the ego vehicle.
+# Units: m/s
+speed_limit_reduction_during_passing : 4.4704 # NOTE: 4.4704 m/s is 10 mph
+
+# Double: The minimum speed limit that a lanelet's speed limit will be reduced to when an ERV is actively passing
+#         the ego vehicle.
+# Units: m/s
+minimum_reduced_speed_limit : 2.2352 # NOTE: 2.2352 m/s is 5 mph
+
+# Double: The default speed limit used when a lanelet does not have a specified speed limit in the map.
+# Units: m/s
+default_speed_limit : 2.2352 # NOTE: 2.2352 m/s is 5 mph
+
+# Double: The frequency at which this plugin will check whether a timeout has occurred for the currently-tracked ERV.
+# Units: Hz
+timeout_check_frequency : 2.0
+
+# Double: If no BSM has been received from the currently-tracked ERV, than the ERV will no longer be tracked by
+#         this plugin. 
+# Units: Seconds
+timeout_duration : 5.0
+
+# Double: The frequency at which this plugin will broadcast EmergencyVehicleResponse warning messages to the currently-tracked ERV
+#         when the ego vehicle is in the approaching ERV's path but is unable to change lanes.
+# Units: Hz
+warning_broadcast_frequency : 1.0
+
+# Int: The maximum number of times that an EmergencyVehicleResponse warning message will be broadcasted to an ERV if an
+#      EmergencyVehicleAck message is not received from the ERV.
+# Units: N/A
+max_warning_broadcasts : 5
+
+# Double: The minimal duration of a generated maneuver plan.
+# Units: Seconds
+minimal_plan_duration : 15.0
+
+# Double: The distance that the beginning of a stop_and_wait maneuver can be extended by.
+# Units: Meters
+buffer_distance_before_stopping : 45.0
+
+# Multiplier for the acceleration limit which will be used for formulating the stopping maneuver
+# NOTE: This multiplier should be lower than the value used by the plugin that will be used to bring the vehicle to a stop to provide buffer in planning
+# Units: m/s^2
+stopping_accel_limit_multiplier : 0.5
+
+# The distance from the route end point in which the trajectory planner will attempt to stop the ego vehicle for a stop and wait maneuver.
+# Units: Meters
+route_end_point_buffer : 10.0
+
+# String : The tactical plugin being used for lane following.
+# Units: N/A
+lane_following_plugin : "inlanecruising_plugin"
+
+# String : The tactical plugin being used for lane changes.
+# Units: N/A
+lane_change_plugin : "cooperative_lanechange"
+
+# String : The tactical plugin being used for planning a stopping maneuver.
+# Units: N/A
+stop_and_wait_plugin : "stop_and_wait_plugin"
+

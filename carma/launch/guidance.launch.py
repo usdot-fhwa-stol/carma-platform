@@ -281,7 +281,7 @@ def generate_launch_description():
                 name='port_drayage_plugin_node',
                 extra_arguments=[
                     {'use_intra_process_comms': True}, 
-                    {'--log-level' : GetLogLevel('route', env_log_levels) }
+                    {'--log-level' : GetLogLevel('port_drayage_plugin', env_log_levels) }
                 ],
                 remappings = [
                     ("guidance_state", [ EnvironmentVariable('CARMA_GUIDE_NS', default_value=''), "/state" ] ),
@@ -295,6 +295,61 @@ def generate_launch_description():
                     port_drayage_plugin_param_file,
                     vehicle_characteristics_param_file
                 ]     
+            )
+        ]
+    )
+
+    twist_filter_container = ComposableNodeContainer(
+        package='carma_ros2_utils',
+        name='twist_filter_container',
+        executable='carma_component_container_mt',
+        namespace=GetCurrentNamespace(),
+        composable_node_descriptions=[
+            ComposableNode(
+                package='twist_filter',
+                plugin='twist_filter::TwistFilter',
+                name='twist_filter_node',
+                extra_arguments=[
+                    {'use_intra_process_comms': True}, 
+                    {'--log-level' : GetLogLevel('twist_filter', env_log_levels) }
+                ],
+                remappings = [
+                    ("/accel_cmd", ["accel_cmd" ] ),
+                    ("/brake_cmd", ["brake_cmd" ] ),
+                    ("/gear_cmd", ["gear_cmd" ] ),
+                    ("/mode_cmd", ["mode_cmd" ] ),
+                    ("/remote_cmd", ["remote_cmd" ] ),
+                    ("/steer_cmd", ["steer_cmd" ] ),
+                    ("/emergency_stop", ["emergency_stop" ] ),
+                    ("/state_cmd", ["state_cmd" ] )
+                ],
+                parameters=[
+                    vehicle_config_param_file,
+                    {'lowpass_gain_linear_x':0.1},
+                    {'lowpass_gain_angular_z':0.0},
+                    {'lowpass_gain_steering_angle':0.1}
+                ]     
+            ),
+            ComposableNode(
+                package='twist_gate',
+                plugin='TwistGate',
+                name='twist_gate_node',
+                extra_arguments=[
+                    {'use_intra_process_comms': True},
+                    {'--log-level' : GetLogLevel('twist_gate', env_log_levels) }
+                ],
+                remappings = [
+                    ("/vehicle_cmd", [ EnvironmentVariable('CARMA_INTR_NS', default_value=''), "/vehicle_cmd" ] ),
+                    ("/lamp_cmd", ["lamp_cmd" ] ),
+                    ("/twist_cmd", ["twist_cmd" ] ),
+                    ("/decision_maker/state", ["decision_maker/state" ] ),
+                    ("/ctrl_mode", ["ctrl_mode" ] ),
+                    ("/ctrl_cmd",   ["ctrl_cmd" ] ),
+                ],
+                parameters = [
+                    {'loop_rate':30.0},
+                    {'use_decision_maker':False}
+                ]
             )
         ]
     )
@@ -339,6 +394,7 @@ def generate_launch_description():
         carma_plan_delegator_container,
         carma_arbitrator_container,
         carma_port_drayage_plugin_container,
+        twist_filter_container,
         plugins_group,
         subsystem_controller
     ]) 
