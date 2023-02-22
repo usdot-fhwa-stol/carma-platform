@@ -93,10 +93,10 @@ install(DIRECTORY launch config
 
 catkin_add_gmock(${PROJECT_NAME}-test 
  test/test_main.cpp
- #test/test_fixture.h
- #test/test_strategic_plugin_helpers.cpp
+ test/test_fixture.h
+ ##test/test_strategic_plugin_helpers.cpp
  #test/test_transition_table.cpp
- #test/test_strategic_plugin.cpp
+ test/test_strategic_plugin.cpp
  WORKING_DIRECTORY ${PROJECT_SOURCE_DIR}/test)
 
 target_link_libraries(${PROJECT_NAME}-test ${PROJECT_NAME} ${catkin_LIBRARIES})
