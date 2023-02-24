@@ -57,7 +57,7 @@ if(BUILD_TESTING)
   find_package(ament_lint_auto REQUIRED)
   ament_lint_auto_find_test_dependencies() # This populates the ${${PROJECT_NAME}_FOUND_TEST_DEPENDS} variable
 
-  ament_add_gtest(test_plan_delegator test/test_plan_delegator.cpp TIMEOUT 120)
+  ament_add_gtest(test_plan_delegator test/test_plan_delegator.cpp TIMEOUT 120) # Increase timeout due to longer unit tests
 
   ament_target_dependencies(test_plan_delegator ${${PROJECT_NAME}_FOUND_TEST_DEPENDS})
 

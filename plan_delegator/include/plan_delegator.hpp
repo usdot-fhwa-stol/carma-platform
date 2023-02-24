@@ -206,16 +206,16 @@ namespace plan_delegator
             tf2_ros::Buffer tf2_buffer_;
             std::unique_ptr<tf2_ros::TransformListener> tf2_listener_;
 
-            // Object to store information regarding the next upcoming lane change in latest_maneuver_plan_; empty if no lane change exists in latest_maneuver_plan_
+            // Object to store information regarding the next upcoming lane change in latest_maneuver_plan_; empty if no upcoming lane change exists in latest_maneuver_plan_
             boost::optional<LaneChangeInformation> upcoming_lane_change_information_;
 
             // Object to store information regarding the current active lane change in latest_maneuver_plan_; empty if first maneuver in latest_maneuver_plan_ is not a lane change
             boost::optional<LaneChangeInformation> current_lane_change_information_;
 
-            // The latest UpcomingLaneChangeStatus, which is published to upcoming_lane_change_status_pub_ in poseCallback()
+            // The latest UpcomingLaneChangeStatus that was published to upcoming_lane_change_status_pub_.
             carma_planning_msgs::msg::UpcomingLaneChangeStatus upcoming_lane_change_status_;
 
-            // Object to store the latest turn signal command published to turn_signal_command_pub_
+            // The latest turn signal command published to turn_signal_command_pub_.
             autoware_msgs::msg::LampCmd latest_turn_signal_command_;
 
             /**
@@ -255,7 +255,7 @@ namespace plan_delegator
             LaneChangeInformation getLaneChangeInformation(const carma_planning_msgs::msg::Maneuver& lane_change_maneuver);
 
             /**
-             * \brief Funtion for processing an optional LaneChangeInformation object pertaining to an upcoming lane change. If not empty, 
+             * \brief Function for processing an optional LaneChangeInformation object pertaining to an upcoming lane change. If not empty, 
              * an UpcomingLaneChangeStatus message is created and published based on the contents of the LaneChangeInformation. The published 
              * UpcomingLaneChangeStatus message is stored in upcoming_lane_change_status_.
              * \param upcoming_lane_change_information An optional LaneChangeInformation object. Empty if no upcoming lane change exists.
@@ -263,7 +263,7 @@ namespace plan_delegator
             void publishUpcomingLaneChangeStatus(const boost::optional<LaneChangeInformation>& upcoming_lane_change_information);
 
             /**
-             * \brief Funtion for processing an optional LaneChangeInformation object pertaining to the currently-occurring lane change
+             * \brief Function for processing an optional LaneChangeInformation object pertaining to the currently-occurring lane change
              * and an UpcomingLaneChangeStatus message. If the optional object pertaining to the currently-occurring lane change is not empty,
              * then a turn signal command is published based on the current lane change direction. Otherwise, a turn signal command in the direction 
              * of the UpcomingLaneChangeStatus message is published if the vehicle is estimated to begin that lane change in under the time
