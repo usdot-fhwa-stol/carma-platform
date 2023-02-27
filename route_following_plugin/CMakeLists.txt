@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2022 LEIDOS.
+# Copyright (C) 2022-2023 LEIDOS.
 #
 # Licensed under the Apache License, Version 2.0 (the "License"); you may not
 # use this file except in compliance with the License. You may obtain a copy of
@@ -65,5 +65,5 @@ endif()
 
 # Install
 ament_auto_package(
-        INSTALL_TO_SHARE config launch
+        INSTALL_TO_SHARE config launch resource
 )
