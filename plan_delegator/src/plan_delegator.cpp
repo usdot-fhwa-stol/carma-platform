@@ -311,6 +311,7 @@ namespace plan_delegator
     void PlanDelegator::publishTurnSignalCommand(const boost::optional<LaneChangeInformation>& current_lane_change_information, const carma_planning_msgs::msg::UpcomingLaneChangeStatus& upcoming_lane_change_status)
     {
         // Initialize turn signal command message
+        // NOTE: A LampCmd message can have its 'r' OR 'l' field set to 1 to indicate an activated right or left turn signal, respectively. Both fields cannot be set to 1 at the same time.
         autoware_msgs::msg::LampCmd turn_signal_command;
 
         // Publish turn signal command with priority placed on the current lane change, if one exists
