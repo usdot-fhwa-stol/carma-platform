@@ -125,7 +125,7 @@ namespace plan_delegator
 
             /**
              * \brief Callback function for vehicle pose subscriber. Updates latest_pose_ and makes calls to
-             * publishpublishUpcomingLaneChangeStatus() and publishTurnSignalCommand().
+             * publishUpcomingLaneChangeStatus() and publishTurnSignalCommand().
              * \param pose_msg The received pose message.
              */
             void poseCallback(geometry_msgs::msg::PoseStamped::UniquePtr pose_msg);
