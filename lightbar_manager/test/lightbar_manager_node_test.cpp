@@ -22,13 +22,29 @@
 namespace lightbar_manager
 {
 
+void setupUnitTest(const std::shared_ptr<lightbar_manager::LightBarManagerWorker>& lbm_)
+{
+    // Add mock components for unit test
+    while (lbm_->control_priorities.size() != 0)
+        lbm_->control_priorities.pop_back();
+    lbm_->control_priorities.push_back("lightbar_manager");
+    lbm_->control_priorities.push_back("tester1");
+    lbm_->control_priorities.push_back("tester2");
+    lbm_->control_priorities.push_back("tester3");
+    return;
+}
+
 TEST(LightBarManagerNodeTest, testSetIndicator) 
 {   
     rclcpp::NodeOptions options;
+    options.allow_undeclared_parameters(true);
     auto lbm = std::make_shared<lightbar_manager::LightBarManager>(options);
+    setupUnitTest(lbm->lbm_);
     rclcpp_lifecycle::State dummy;
     lbm->handle_on_configure(dummy);
-    //lbm->handle_on_activate(dummy);
+    lbm->handle_on_activate(dummy);
+   
+    std::cerr << "Size is: " << lbm->lbm_->control_priorities.size() << std::endl;
     // initialize worker that is unit testable
 
     int response_code;

@@ -29,13 +29,14 @@ LightBarManager::LightBarManager(const rclcpp::NodeOptions &options) : carma_ros
     config_ = Config();
     config_.spin_rate_hz = declare_parameter<double>("spin_rate_hz", config_.spin_rate_hz);
     config_.normal_operation = declare_parameter<bool>("normal_operation", config_.normal_operation);
+    lbm_ = std::make_shared<LightBarManagerWorker>();
 }
 
 carma_ros2_utils::CallbackReturn LightBarManager::handle_on_configure(const rclcpp_lifecycle::State &)
 {
     // Reset config
     config_ = Config();
-    lbm_ = std::make_shared<LightBarManagerWorker>();
+    
     RCLCPP_INFO_STREAM(rclcpp::get_logger("lightbar_manager"),"Initalizing lightbar manager node...");
     
     // Load the spin rate param to determine how fast to process messages
@@ -51,18 +52,21 @@ carma_ros2_utils::CallbackReturn LightBarManager::handle_on_configure(const rclc
     lightbar_driver_client_ = create_client<carma_driver_msgs::srv::SetLights>("set_lights");
 
     // Load Conversion table, CDAType to Indicator mapping
-//    rclcpp::Parameter lightbar_cda_table_param = get_parameter("lightbar_cda_table");
-//    config_.lightbar_cda_table = lightbar_cda_table_param.as_string_array();
-//
-//    rclcpp::Parameter lightbar_ind_table_param = get_parameter("lightbar_ind_table");
-//    config_.lightbar_ind_table = lightbar_ind_table_param.as_string_array();
-//    
-//    if (config_.lightbar_cda_table.size() != config_.lightbar_ind_table.size())
-//    {
-//        throw std::invalid_argument("Size of lightbar_cda_table is not same as that of lightbar_ind_table");
-//    }
-//    
-//    lbm_->setIndicatorCDAMap(config_.lightbar_cda_table, config_.lightbar_ind_table);
+ 
+    rclcpp::Parameter lightbar_cda_table_param = get_parameter("lightbar_cda_table");
+    if (lightbar_cda_table_param.get_type() !=  rclcpp::ParameterType::PARAMETER_NOT_SET)
+        config_.lightbar_cda_table = lightbar_cda_table_param.as_string_array();
+
+    rclcpp::Parameter lightbar_ind_table_param = get_parameter("lightbar_ind_table");
+    if (lightbar_ind_table_param.get_type() !=  rclcpp::ParameterType::PARAMETER_NOT_SET)
+        config_.lightbar_ind_table = lightbar_ind_table_param.as_string_array();
+    
+    if (config_.lightbar_cda_table.size() != config_.lightbar_ind_table.size())
+    {
+        throw std::invalid_argument("Size of lightbar_cda_table is not same as that of lightbar_ind_table");
+    }
+    
+    lbm_->setIndicatorCDAMap(config_.lightbar_cda_table, config_.lightbar_ind_table);
 
     // Initialize indicator control map. Fills with supporting indicators with empty string name as owners.
     lbm_->setIndicatorControllers();
@@ -71,19 +75,17 @@ carma_ros2_utils::CallbackReturn LightBarManager::handle_on_configure(const rclc
     for (int i =0; i < INDICATOR_COUNT; i++)
         lbm_->light_status.push_back(OFF);
 
-    //rclcpp::Parameter lightbar_priorities_param = get_parameter("lightbar_priorities");
-    //config_.lightbar_priorities = lightbar_priorities_param.as_string_array();
-    //lbm_->control_priorities = config_.lightbar_priorities;
-
-    // Setup priorities for unit test TODO
-    //if (mode == "test")
-    //    setupUnitTest();
-
+    rclcpp::Parameter lightbar_priorities_param = get_parameter("lightbar_priorities");
+    if (lightbar_priorities_param.get_type() !=  rclcpp::ParameterType::PARAMETER_NOT_SET)
+    {
+        config_.lightbar_priorities = lightbar_priorities_param.as_string_array();
+        lbm_->control_priorities = config_.lightbar_priorities;
+    }
+        
     // Take control of green light
     get_parameter<bool>("normal_operation", config_.normal_operation);
 
     std::vector<LightBarIndicator> denied_list, greens = {GREEN_SOLID, GREEN_FLASH};
-
 
     denied_list = lbm_->requestControl(greens, node_name_);
     if (denied_list.size() != 0)
@@ -380,18 +382,6 @@ bool LightBarManager::setIndicatorCallBack(const std::shared_ptr<rmw_request_id_
         return false;
 
     return true;
-}
-
-void LightBarManager::setupUnitTest()
-{
-    // Add mock components for unit test
-    while (lbm_->control_priorities.size() != 0)
-        lbm_->control_priorities.pop_back();
-    lbm_->control_priorities.push_back("lightbar_manager");
-    lbm_->control_priorities.push_back("tester1");
-    lbm_->control_priorities.push_back("tester2");
-    lbm_->control_priorities.push_back("tester3");
-    return;
 }
 
 } // namespace lightbar_manager

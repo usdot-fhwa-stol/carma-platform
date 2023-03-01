@@ -107,6 +107,7 @@ class LightBarManager : public carma_ros2_utils::CarmaLifecycleNode
         carma_ros2_utils::CallbackReturn handle_on_activate(const rclcpp_lifecycle::State &);
 
     private:
+        
         Config config_;
         
         /*!
@@ -152,6 +153,9 @@ class LightBarManager : public carma_ros2_utils::CarmaLifecycleNode
         std::shared_ptr<LightBarManagerWorker> lbm_;
 
         rclcpp::TimerBase::SharedPtr pub_timer_;
+
+
+        FRIEND_TEST(LightBarManagerNodeTest, testSetIndicator);
 
 }; //class LightBarManagerNode
 } // namespace lightbar_manager

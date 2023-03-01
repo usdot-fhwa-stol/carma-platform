@@ -15,7 +15,7 @@
  */
 
 #pragma once
-
+#include <gtest/gtest.h>
 #include <string>
 #include <rclcpp/rclcpp.hpp>
 #include <carma_ros2_utils/carma_lifecycle_node.hpp>
@@ -207,6 +207,17 @@ class LightBarManagerWorker
             {"YELLOW_ARROW_LEFT", YELLOW_ARROW_LEFT},
             {"YELLOW_ARROW_RIGHT", YELLOW_ARROW_RIGHT},
             {"YELLOW_ARROW_OUT", YELLOW_ARROW_OUT}};
+        
+        FRIEND_TEST(LightBarManagerNodeTest, testSetIndicator);
+
+    // Unit Test Accessors
+    
+    //FRIEND_TEST(Testapproaching_emergency_vehicle_plugin, testBSMProcessing);
+    //FRIEND_TEST(Testapproaching_emergency_vehicle_plugin, testRouteConflict);
+    //FRIEND_TEST(Testapproaching_emergency_vehicle_plugin, testManeuverPlanWhenWaitingForApproachingErv);
+    //FRIEND_TEST(Testapproaching_emergency_vehicle_plugin, testManeuverPlanWhenSlowingDownForErv);
+    //FRIEND_TEST(Testapproaching_emergency_vehicle_plugin, testManeuverPlanWhenMovingOverForErv);
+    //FRIEND_TEST(Testapproaching_emergency_vehicle_plugin, testWarningBroadcast);
 
 }; //class LightBarManagerWorker
 } // namespace lightbar_manager
