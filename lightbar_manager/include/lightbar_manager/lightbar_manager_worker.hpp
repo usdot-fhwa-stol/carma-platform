@@ -76,7 +76,7 @@ class LightBarManagerWorker
         * \brief This function checks if the turn signal should be changed on the lightbar
         * \return size one vector of turn signal, empty if no change is required
         */
-        std::vector<lightbar_manager::LightBarIndicator> handleTurnSignal(const automotive_platform_msgs::msg::TurnSignalCommand& msg_ptr);
+        std::vector<lightbar_manager::LightBarIndicator> handleTurnSignal(automotive_platform_msgs::msg::TurnSignalCommand::UniquePtr msg_ptr);
 
         /*!
         * \brief Releases the specified owner plugin or component's control of the given indicator list.
@@ -197,6 +197,7 @@ class LightBarManagerWorker
             {"TypeB",TYPE_B},
             {"TypeC",TYPE_C},
             {"TypeD",TYPE_D}};
+            
         std::map<std::string, LightBarIndicator> ind_dict = {
             {"GREEN_SOLID", GREEN_SOLID},
             {"GREEN_FLASH", GREEN_FLASH},

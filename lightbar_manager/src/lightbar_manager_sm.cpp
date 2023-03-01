@@ -61,7 +61,7 @@ void LightBarManagerStateMachine::next(const LightBarEvent& event)
     }
 }
 
-void LightBarManagerStateMachine::handleStateChange(const carma_planning_msgs::msg::GuidanceStateConstPtr& msg_ptr)
+void LightBarManagerStateMachine::handleStateChange(const carma_planning_msgs::msg::GuidanceStateUniquePtr msg_ptr)
 {
     // Check if the msg is as same as before
     if (msg_ptr->state == guidance_state_)
@@ -85,7 +85,7 @@ void LightBarManagerStateMachine::handleStateChange(const carma_planning_msgs::m
             break;
 
         default:
-            ROS_WARN_STREAM("LightBarManager received unknown state from guidance state machine:" << msg_ptr->state);
+            RCLCPP_WARN_STREAM(rclcpp::get_logger("lightbar_manager"),"LightBarManager received unknown state from guidance state machine:" << msg_ptr->state);
             break;
     }
     // Update the current state

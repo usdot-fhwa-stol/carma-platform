@@ -45,7 +45,24 @@ namespace lightbar_manager
  */
 struct Config
 {
-    
+    double spin_rate_hz = 10.0;
+    bool normal_operation = true;   // if false, other plugins are able to take control over the lightbar status
+    std::vector<std::string> lightbar_priorities = {}; // Tsesters are for unit testing. Keep it there.
+    std::vector<std::string> lightbar_cda_table = {}; // Keys for lightbar_cda_to_ind_table, 1-to-1 with lightbar_ind_table
+    std::vector<std::string> lightbar_ind_table = {}; // Values for lightbar_cda_to_ind_table, 1-to-1 with lightbar_cda_table
+
+    // Stream operator for this config
+    friend std::ostream &operator<<(std::ostream &output, const Config &c)
+    {
+      output << "LightBarManager::Config { " << std::endl
+           << "spin_rate_hz: " << c.spin_rate_hz << std::endl
+           << "lightbar_priorities.size(): " << c.lightbar_priorities.size() << std::endl
+           << "lightbar_cda_table.size(): " << c.lightbar_cda_table.size() << std::endl
+           << "lightbar_ind_table.size(): " << c.lightbar_ind_table.size() << std::endl
+           << "}" << std::endl;
+      return output;
+    }
+
 };
 
 class LightBarManager : public carma_ros2_utils::CarmaLifecycleNode
@@ -125,7 +142,7 @@ class LightBarManager : public carma_ros2_utils::CarmaLifecycleNode
         carma_ros2_utils::ClientPtr<carma_driver_msgs::srv::SetLights> lightbar_driver_client_;
 
         // Publishers
-        carma_ros2_utils::PubPtr<carma_msgs::msg::LightBarIndicator> indicator_control_publisher_;
+        carma_ros2_utils::PubPtr<carma_msgs::msg::LightBarIndicatorControllers> indicator_control_publisher_;
 
         // Subscribers
         carma_ros2_utils::SubPtr<carma_planning_msgs::msg::GuidanceState> guidance_state_subscriber_;

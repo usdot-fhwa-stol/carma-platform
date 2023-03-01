@@ -81,7 +81,7 @@ TEST(LightBarManagerNodeTest, testTurnSignalCallback)
     //rclcpp::service::waitForService("/hardware_interface/lightbar/set_lights", rclcpp::Duration(60, 0));
     node.getWorker()->control_priorities.push_back("tester_left");
     node.getWorker()->control_priorities.push_back("tester_right");
-    ROS_ERROR_STREAM("Below 'LightBarManager was not able to set light...' errors are expected");
+    RCLCPP_ERROR_STREAM(rclcpp::get_logger("lightbar_manager"),"Below 'LightBarManager was not able to set light...' errors are expected");
     automotive_platform_msgs::msg::TurnSignalCommandPtr msg_ptr = boost::make_shared<automotive_platform_msgs::msg::TurnSignalCommand>();
     msg_ptr->mode = 1;
     // turn right (no prev owner)

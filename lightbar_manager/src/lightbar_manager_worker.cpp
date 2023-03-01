@@ -72,7 +72,7 @@ namespace lightbar_manager
         return curr;
     }
 
-    void LightBarManagerWorker::handleStateChange(const carma_planning_msgs::msg::GuidanceStateConstPtr& msg_ptr)
+    void LightBarManagerWorker::handleStateChange(carma_planning_msgs::msg::GuidanceStateConstPtr msg_ptr)
     {
         lbsm_.handleStateChange(msg_ptr);
         return;
@@ -124,7 +124,7 @@ namespace lightbar_manager
 
         if (raw_map.size() < 4)
         {
-            ROS_WARN_STREAM("In function: " << __FUNCTION__ << ": LightBarManager's CDAType to Indicator table is not configured correctly. Using default mapping...");
+            RCLCPP_WARN_STREAM(rclcpp::get_logger("lightbar_manager"),"In function: " << __FUNCTION__ << ": LightBarManager's CDAType to Indicator table is not configured correctly. Using default mapping...");
             cda_ind_map_ = default_map;
             return cda_ind_map_;
         }
@@ -140,7 +140,7 @@ namespace lightbar_manager
             }
             catch(const std::exception& e)
             {
-                ROS_WARN_STREAM ("In function: " << __FUNCTION__ << 
+                RCLCPP_WARN_STREAM(rclcpp::get_logger("lightbar_manager"),"In function: " << __FUNCTION__ << 
                 ": LightBarManager Received unknown CDA Msg Type. Using default mapping for cda-indicators...");
                 cda_ind_map_ = default_map;
                 return cda_ind_map_;
@@ -151,7 +151,7 @@ namespace lightbar_manager
             }
             catch(const std::exception& e)
             {
-                ROS_WARN_STREAM ("In function: " << __FUNCTION__ << 
+                RCLCPP_WARN_STREAM(rclcpp::get_logger("lightbar_manager"),"In function: " << __FUNCTION__ << 
                 ": LightBarManager Received unknown indicator type. Using default mapping for cda-indicators...");
                 cda_ind_map_ = default_map;
                 return cda_ind_map_;
@@ -172,12 +172,12 @@ namespace lightbar_manager
         // Components not in the priority list are assumed to have the lowest priority
         if (requesterPriority == end)
         {
-            ROS_WARN_STREAM(requester << " is referenced in lightbar_manager, but is not in the priority list");
+            RCLCPP_WARN_STREAM(rclcpp::get_logger("lightbar_manager"),requester << " is referenced in lightbar_manager, but is not in the priority list");
             return false;
         }  
         else if (controllerPriority == end)
         {
-            ROS_WARN_STREAM(controller << " is referenced in lightbar_manager and is controlling an indicator, but is not in the priority list");
+            RCLCPP_WARN_STREAM(rclcpp::get_logger("lightbar_manager"),controller << " is referenced in lightbar_manager and is controlling an indicator, but is not in the priority list");
             return true;
         }
         return (requesterPriority - end) <= (controllerPriority - end);
@@ -197,7 +197,7 @@ namespace lightbar_manager
             }
             catch(const std::exception& e)
             {
-                ROS_WARN_STREAM("In function: " << __FUNCTION__ << ", the component, " << requester_name 
+                RCLCPP_WARN_STREAM(rclcpp::get_logger("lightbar_manager"),"In function: " << __FUNCTION__ << ", the component, " << requester_name 
                     << ", requested a control of invalid indicator. Skipping with WARNING:" << e.what() << "\n");
                 continue;
             }
@@ -241,7 +241,7 @@ namespace lightbar_manager
             }
             catch(const std::exception& e)
             {
-                ROS_WARN_STREAM("In function: " << __FUNCTION__ << ", the component, " << owner_name 
+                RCLCPP_WARN_STREAM(rclcpp::get_logger("lightbar_manager"),"In function: " << __FUNCTION__ << ", the component, " << owner_name 
                     << ", requested a release of an invalid indicator. Skipping with WARNING:" << e.what() << "\n");
                 continue;
             }
