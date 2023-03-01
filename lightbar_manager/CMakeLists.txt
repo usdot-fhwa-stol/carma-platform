@@ -62,20 +62,24 @@ target_link_libraries(${node_exec}
 )
 
 # Testing
-#if(BUILD_TESTING)   TODO
-#
-#  find_package(ament_lint_auto REQUIRED)
-#  ament_lint_auto_find_test_dependencies() # This populates the ${${PROJECT_NAME}_FOUND_TEST_DEPENDS} variable
-#
-#  ament_add_gtest(test_lightbar_manager test/test_traffic_parser.cpp)
-#
-#  ament_target_dependencies(test_lightbar_manager ${${PROJECT_NAME}_FOUND_TEST_DEPENDS})
-#
-#  target_link_libraries(test_lightbar_manager ${node_lib})
-#
-#endif()
+if(BUILD_TESTING)
+
+  find_package(ament_lint_auto REQUIRED)
+  ament_lint_auto_find_test_dependencies() # This populates the ${${PROJECT_NAME}_FOUND_TEST_DEPENDS} variable
+
+  ament_add_gtest(test_lightbar_manager
+                test/lightbar_manager_node_test.cpp
+                #test/test_lightbar_manager_sm.cpp
+                #test/test_lightbar_manager_worker.cpp
+  )
+
+  ament_target_dependencies(test_lightbar_manager ${${PROJECT_NAME}_FOUND_TEST_DEPENDS})
+
+  target_link_libraries(test_lightbar_manager ${node_lib})
+
+endif()
 
 # Install
 ament_auto_package(
-        INSTALL_TO_SHARE launch
+        INSTALL_TO_SHARE config launch
 )
