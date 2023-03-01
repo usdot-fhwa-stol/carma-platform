@@ -34,32 +34,32 @@ namespace lightbar_manager
         return lbsm_.getCurrentState();
     }
 
-    std::vector<cav_msgs::LightBarIndicator> LightBarManagerWorker::getMsg(std::vector<LightBarIndicator> indicators)
+    std::vector<carma_msgs::msg::LightBarIndicator> LightBarManagerWorker::getMsg(std::vector<LightBarIndicator> indicators)
     {
-        std::vector<cav_msgs::LightBarIndicator> return_msg;
+        std::vector<carma_msgs::msg::LightBarIndicator> return_msg;
         for (auto indicator : indicators)
         {
-            cav_msgs::LightBarIndicator msg;
+            carma_msgs::msg::LightBarIndicator msg;
             msg.indicator = indicator;
             return_msg.push_back(msg);
         }
         return return_msg;
     }
 
-    std::vector<cav_msgs::LightBarCDAType> LightBarManagerWorker::getMsg(std::vector<LightBarCDAType> cda_types)
+    std::vector<carma_msgs::msg::LightBarCDAType> LightBarManagerWorker::getMsg(std::vector<LightBarCDAType> cda_types)
     {
-        std::vector<cav_msgs::LightBarCDAType> return_msg;
+        std::vector<carma_msgs::msg::LightBarCDAType> return_msg;
         for (auto cda_type : cda_types)
         {
-            cav_msgs::LightBarCDAType msg;
+            carma_msgs::msg::LightBarCDAType msg;
             msg.type = cda_type;
             return_msg.push_back(msg);
         }
         return return_msg;
     }
-    cav_msgs::LightBarIndicatorControllers LightBarManagerWorker::getMsg(std::map<LightBarIndicator, std::string> ind_ctrl_map)
+    carma_msgs::msg::LightBarIndicatorControllers LightBarManagerWorker::getMsg(std::map<LightBarIndicator, std::string> ind_ctrl_map)
     {
-        cav_msgs::LightBarIndicatorControllers curr;
+        carma_msgs::msg::LightBarIndicatorControllers curr;
         curr.green_solid_owner = ind_ctrl_map[GREEN_SOLID];
         curr.green_flash_owner = ind_ctrl_map[GREEN_FLASH];
         curr.yellow_sides_owner= ind_ctrl_map[YELLOW_SIDES];
@@ -72,7 +72,7 @@ namespace lightbar_manager
         return curr;
     }
 
-    void LightBarManagerWorker::handleStateChange(const cav_msgs::GuidanceStateConstPtr& msg_ptr)
+    void LightBarManagerWorker::handleStateChange(const carma_planning_msgs::msg::GuidanceStateConstPtr& msg_ptr)
     {
         lbsm_.handleStateChange(msg_ptr);
         return;
@@ -343,23 +343,23 @@ namespace lightbar_manager
 
     }
 
-    cav_msgs::LightBarStatus LightBarManagerWorker::getLightBarStatusMsg(std::vector<IndicatorStatus> indicators)
+    carma_driver_msgs::msg::LightBarStatus LightBarManagerWorker::getLightBarStatusMsg(std::vector<IndicatorStatus> indicators)
     {
         // it is assumed that mutually exclusive cases are handled properly.
-        cav_msgs::LightBarStatus msg;
-        msg.green_solid = indicators[GREEN_SOLID] == ON ? cav_msgs::LightBarStatus::ON : cav_msgs::LightBarStatus::OFF;
-        msg.green_flash = indicators[GREEN_FLASH]== ON ? cav_msgs::LightBarStatus::ON : cav_msgs::LightBarStatus::OFF;
-        msg.sides_solid = indicators[YELLOW_SIDES]== ON ? cav_msgs::LightBarStatus::ON : cav_msgs::LightBarStatus::OFF;
-        msg.yellow_solid = indicators[YELLOW_DIM]== ON ? cav_msgs::LightBarStatus::ON : cav_msgs::LightBarStatus::OFF;
-        msg.flash = indicators[YELLOW_FLASH]== ON ? cav_msgs::LightBarStatus::ON : cav_msgs::LightBarStatus::OFF;
+        carma_driver_msgs::msg::LightBarStatus msg;
+        msg.green_solid = indicators[GREEN_SOLID] == ON ? carma_driver_msgs::msg::LightBarStatus::ON : carma_driver_msgs::msg::LightBarStatus::OFF;
+        msg.green_flash = indicators[GREEN_FLASH]== ON ? carma_driver_msgs::msg::LightBarStatus::ON : carma_driver_msgs::msg::LightBarStatus::OFF;
+        msg.sides_solid = indicators[YELLOW_SIDES]== ON ? carma_driver_msgs::msg::LightBarStatus::ON : carma_driver_msgs::msg::LightBarStatus::OFF;
+        msg.yellow_solid = indicators[YELLOW_DIM]== ON ? carma_driver_msgs::msg::LightBarStatus::ON : carma_driver_msgs::msg::LightBarStatus::OFF;
+        msg.flash = indicators[YELLOW_FLASH]== ON ? carma_driver_msgs::msg::LightBarStatus::ON : carma_driver_msgs::msg::LightBarStatus::OFF;
 
-        msg.left_arrow = indicators[YELLOW_ARROW_LEFT]== ON ? cav_msgs::LightBarStatus::ON : cav_msgs::LightBarStatus::OFF;
-        msg.right_arrow = indicators[YELLOW_ARROW_RIGHT]== ON ? cav_msgs::LightBarStatus::ON : cav_msgs::LightBarStatus::OFF;
+        msg.left_arrow = indicators[YELLOW_ARROW_LEFT]== ON ? carma_driver_msgs::msg::LightBarStatus::ON : carma_driver_msgs::msg::LightBarStatus::OFF;
+        msg.right_arrow = indicators[YELLOW_ARROW_RIGHT]== ON ? carma_driver_msgs::msg::LightBarStatus::ON : carma_driver_msgs::msg::LightBarStatus::OFF;
         // for YELLOW_ARROW_OUT set left and right
         if (indicators[YELLOW_ARROW_OUT] == ON)
         {
-            msg.left_arrow = cav_msgs::LightBarStatus::ON;
-            msg.right_arrow = cav_msgs::LightBarStatus::ON;
+            msg.left_arrow = carma_driver_msgs::msg::LightBarStatus::ON;
+            msg.right_arrow = carma_driver_msgs::msg::LightBarStatus::ON;
         }
         return msg;
     }

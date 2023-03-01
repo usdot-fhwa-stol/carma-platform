@@ -315,14 +315,14 @@ TEST(LightBarManagerWorkerTest, testGetLightBarStatusMsg)
 
 
     std::vector<IndicatorStatus> all_indicators = {ON, OFF, ON, ON, OFF, OFF, OFF, ON};
-    cav_msgs::LightBarStatus msg = worker.getLightBarStatusMsg(all_indicators);
-    EXPECT_EQ(cav_msgs::LightBarStatus::ON, msg.green_solid);
-    EXPECT_EQ(cav_msgs::LightBarStatus::OFF, msg.green_flash);
-    EXPECT_EQ(cav_msgs::LightBarStatus::ON, msg.sides_solid);
-    EXPECT_EQ(cav_msgs::LightBarStatus::ON, msg.yellow_solid);
-    EXPECT_EQ(cav_msgs::LightBarStatus::OFF, msg.flash);
-    EXPECT_EQ(cav_msgs::LightBarStatus::ON, msg.left_arrow);
-    EXPECT_EQ(cav_msgs::LightBarStatus::ON, msg.right_arrow);
+    carma_driver_msgs::msg::LightBarStatus msg = worker.getLightBarStatusMsg(all_indicators);
+    EXPECT_EQ(carma_driver_msgs::msg::LightBarStatus::ON, msg.green_solid);
+    EXPECT_EQ(carma_driver_msgs::msg::LightBarStatus::OFF, msg.green_flash);
+    EXPECT_EQ(carma_driver_msgs::msg::LightBarStatus::ON, msg.sides_solid);
+    EXPECT_EQ(carma_driver_msgs::msg::LightBarStatus::ON, msg.yellow_solid);
+    EXPECT_EQ(carma_driver_msgs::msg::LightBarStatus::OFF, msg.flash);
+    EXPECT_EQ(carma_driver_msgs::msg::LightBarStatus::ON, msg.left_arrow);
+    EXPECT_EQ(carma_driver_msgs::msg::LightBarStatus::ON, msg.right_arrow);
 }
 
 TEST(LightBarManagerWorkerTest, testHandleHandleTurnSignal) 

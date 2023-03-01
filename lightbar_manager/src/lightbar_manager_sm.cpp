@@ -61,7 +61,7 @@ void LightBarManagerStateMachine::next(const LightBarEvent& event)
     }
 }
 
-void LightBarManagerStateMachine::handleStateChange(const cav_msgs::GuidanceStateConstPtr& msg_ptr)
+void LightBarManagerStateMachine::handleStateChange(const carma_planning_msgs::msg::GuidanceStateConstPtr& msg_ptr)
 {
     // Check if the msg is as same as before
     if (msg_ptr->state == guidance_state_)
@@ -69,18 +69,18 @@ void LightBarManagerStateMachine::handleStateChange(const cav_msgs::GuidanceStat
     
     switch (msg_ptr->state)
     {
-        case cav_msgs::GuidanceState::STARTUP:
-        case cav_msgs::GuidanceState::SHUTDOWN:
+        case carma_planning_msgs::msg::GuidanceState::STARTUP:
+        case carma_planning_msgs::msg::GuidanceState::SHUTDOWN:
             onDisengage();
             break;
 
-        case cav_msgs::GuidanceState::ACTIVE:
-        case cav_msgs::GuidanceState::DRIVERS_READY:
-        case cav_msgs::GuidanceState::INACTIVE:
+        case carma_planning_msgs::msg::GuidanceState::ACTIVE:
+        case carma_planning_msgs::msg::GuidanceState::DRIVERS_READY:
+        case carma_planning_msgs::msg::GuidanceState::INACTIVE:
             onActive();
             break;
 
-        case cav_msgs::GuidanceState::ENGAGED:
+        case carma_planning_msgs::msg::GuidanceState::ENGAGED:
             onEngage();
             break;
 
@@ -100,7 +100,7 @@ void LightBarManagerStateMachine::onDisengage()
 void LightBarManagerStateMachine::onActive()
 {
     // Transitioning FROM ENGAGED state to Active
-    if (guidance_state_ == cav_msgs::GuidanceState::ENGAGED)
+    if (guidance_state_ == carma_planning_msgs::msg::GuidanceState::ENGAGED)
         next(GUIDANCE_DISCONNECTED);
     // Transitioning FROM all "OFF" states of guidance for lightbar (STARTUP, DRIVERS_READY, INACTIVE, OFF)
     else

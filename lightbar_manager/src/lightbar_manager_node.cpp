@@ -152,7 +152,7 @@ bool LightBarManager::spinCallBack()
     return true;
 }
 
-void LightBarManager::stateChangeCallBack(const cav_msgs::GuidanceStateConstPtr& msg_ptr)
+void LightBarManager::stateChangeCallBack(const carma_planning_msgs::msg::GuidanceStateConstPtr& msg_ptr)
 {
     // Relay the msg to state machine
     LightBarState prev_lightbar_state = lbm_->getCurrentState();
@@ -261,7 +261,7 @@ int LightBarManager::setIndicator(LightBarIndicator ind, IndicatorStatus ind_sta
     }
 
     std::vector<IndicatorStatus> light_status_proposed = lbm_->setIndicator(ind, ind_status, requester_name);
-    cav_msgs::LightBarStatus msg = lbm_->getLightBarStatusMsg(light_status_proposed);
+    carma_driver_msgs::msg::LightBarStatus msg = lbm_->getLightBarStatusMsg(light_status_proposed);
     carma_msgs::srv::SetLights srv;
     srv.request.set_state = msg;
     
@@ -311,7 +311,7 @@ void LightBarManager::init(std::string mode)
     request_control_server_= nh_.advertiseService("request_control", &LightBarManager::requestControlCallBack, this);
     release_control_server_= nh_.advertiseService("release_control", &LightBarManager::releaseControlCallBack, this);
     set_indicator_server_= nh_.advertiseService("set_indicator", &LightBarManager::setIndicatorCallBack, this);
-    indicator_control_publisher_ = nh_.advertise<cav_msgs::LightBarIndicatorControllers>("indicator_control", 5);
+    indicator_control_publisher_ = nh_.advertise<carma_msgs::msg::LightBarIndicatorControllers>("indicator_control", 5);
     guidance_state_subscriber_ = nh_.subscribe(guidance_state_topic_name, 5, &LightBarManager::stateChangeCallBack, this);
     turn_signal_subscriber_ = nh_.subscribe(turn_signal_topic_name, 5, &LightBarManager::turnSignalCallback, this);
     lightbar_driver_client_ = nh_.serviceClient<carma_msgs::srv::SetLights>(lightbar_driver_service_name);

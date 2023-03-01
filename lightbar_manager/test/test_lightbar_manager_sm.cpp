@@ -31,57 +31,57 @@ TEST(LightBarManagerStateMachineTest, testStates)
     /*
     * test possible/impossible states from lightbar DISENGAGE
     */
-    cav_msgs::GuidanceStatePtr msg_ptr = boost::make_shared<cav_msgs::GuidanceState>();
+    carma_planning_msgs::msg::GuidanceStatePtr msg_ptr = boost::make_shared<carma_planning_msgs::msg::GuidanceState>();
     // guidance startup, lightbar should not change state
-    msg_ptr->state = cav_msgs::GuidanceState::STARTUP;
+    msg_ptr->state = carma_planning_msgs::msg::GuidanceState::STARTUP;
     lbsm.handleStateChange(msg_ptr);
     EXPECT_EQ(DISENGAGED, lbsm.getCurrentState());
     // guidance driver_ready, lightbar should become active
-    msg_ptr->state = cav_msgs::GuidanceState::DRIVERS_READY;
+    msg_ptr->state = carma_planning_msgs::msg::GuidanceState::DRIVERS_READY;
     lbsm.handleStateChange(msg_ptr);
     EXPECT_EQ(ACTIVE, lbsm.getCurrentState());
     // guidance SHUTDOWN, lightbar should disengage
-    msg_ptr->state = cav_msgs::GuidanceState::SHUTDOWN;
+    msg_ptr->state = carma_planning_msgs::msg::GuidanceState::SHUTDOWN;
     lbsm.handleStateChange(msg_ptr);
     EXPECT_EQ(DISENGAGED, lbsm.getCurrentState());
      // guidance INACTIVE, lightbar should become active
-    msg_ptr->state = cav_msgs::GuidanceState::INACTIVE;
+    msg_ptr->state = carma_planning_msgs::msg::GuidanceState::INACTIVE;
     lbsm.handleStateChange(msg_ptr);
     EXPECT_EQ(ACTIVE, lbsm.getCurrentState());
     // guidance ACTIVE, lightbar should change to ACTIVE
-    msg_ptr->state = cav_msgs::GuidanceState::ACTIVE;
+    msg_ptr->state = carma_planning_msgs::msg::GuidanceState::ACTIVE;
     lbsm.handleStateChange(msg_ptr);
     EXPECT_EQ(ACTIVE, lbsm.getCurrentState());
     lbsm = lbsm_reset;
     // guidance ENGAGED, lightbar should change to ENGAGED
-    msg_ptr->state = cav_msgs::GuidanceState::ENGAGED;
+    msg_ptr->state = carma_planning_msgs::msg::GuidanceState::ENGAGED;
     lbsm.handleStateChange(msg_ptr);
     EXPECT_EQ(ENGAGED, lbsm.getCurrentState());
 
     /*
     * test possible/impossible states from ENGAGED/ACTIVE
     */
-    msg_ptr->state = cav_msgs::GuidanceState::ENGAGED;
+    msg_ptr->state = carma_planning_msgs::msg::GuidanceState::ENGAGED;
     // guidance ENGAGED, lightbar should not change
-    msg_ptr->state = cav_msgs::GuidanceState::ENGAGED;
+    msg_ptr->state = carma_planning_msgs::msg::GuidanceState::ENGAGED;
     lbsm.handleStateChange(msg_ptr);
     EXPECT_EQ(ENGAGED, lbsm.getCurrentState());
     // guidance ACTIVE, lightbar should change to ACTIVE
-    msg_ptr->state = cav_msgs::GuidanceState::ACTIVE;
+    msg_ptr->state = carma_planning_msgs::msg::GuidanceState::ACTIVE;
     lbsm.handleStateChange(msg_ptr);
     EXPECT_EQ(ACTIVE, lbsm.getCurrentState());
     // guidance ENGAGED, lightbar should change to ENGAGED
-    msg_ptr->state = cav_msgs::GuidanceState::ENGAGED;
+    msg_ptr->state = carma_planning_msgs::msg::GuidanceState::ENGAGED;
     lbsm.handleStateChange(msg_ptr);
     EXPECT_EQ(ENGAGED, lbsm.getCurrentState());
     // guidance SHUTDOWN, lightbar should change to DISENGAGED
-    msg_ptr->state = cav_msgs::GuidanceState::SHUTDOWN;
+    msg_ptr->state = carma_planning_msgs::msg::GuidanceState::SHUTDOWN;
     lbsm.handleStateChange(msg_ptr);
     EXPECT_EQ(DISENGAGED, lbsm.getCurrentState());
-    msg_ptr->state = cav_msgs::GuidanceState::ACTIVE;
+    msg_ptr->state = carma_planning_msgs::msg::GuidanceState::ACTIVE;
     lbsm.handleStateChange(msg_ptr);
     // guidance SHUTDOWN, lightbar should change to DISENGAGED
-    msg_ptr->state = cav_msgs::GuidanceState::SHUTDOWN;
+    msg_ptr->state = carma_planning_msgs::msg::GuidanceState::SHUTDOWN;
     lbsm.handleStateChange(msg_ptr);
     EXPECT_EQ(DISENGAGED, lbsm.getCurrentState());
 
