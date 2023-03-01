@@ -18,22 +18,22 @@
 #define _LIGHTBAR_MANAGER_H
 
 #include <string>
-#include <ros/ros.h>
-#include <carma_utils/CARMAUtils.h>
+#include <rclcpp/rclcpp.hpp>
+#include <carma_utils/CARMAUtils.hpp>
 #include <vector>
 #include <map>
 
-#include <cav_msgs/LightBarCDAType.h>
-#include <cav_msgs/LightBarIndicator.h>
-#include <cav_msgs/LightBarIndicatorControllers.h>
-#include <cav_msgs/LightBarStatus.h>
-#include <cav_msgs/GuidanceState.h>
-#include <automotive_platform_msgs/TurnSignalCommand.h>
+#include <carma_msgs/msg/LightBarCDAType.hpp>
+#include <carma_msgs/msg/LightBarIndicator.hpp>
+#include <carma_msgs/msg/LightBarIndicatorControllers.hpp>
+#include <carma_msgs/msg/LightBarStatus.hpp>
+#include <carma_planning_msgs/msg/guidance_state.hpp>
+#include <automotive_platform_msgs/TurnSignalCommand.hpp>
 
-#include <cav_srvs/RequestIndicatorControl.h>
-#include <cav_srvs/ReleaseIndicatorControl.h>
-#include <cav_srvs/SetLightBarIndicator.h>
-#include <cav_srvs/SetLights.h>
+#include <carma_msgs/msg/srv/RequestIndicatorControl.hpp>
+#include <carma_msgs/msg/srv/ReleaseIndicatorControl.hpp>
+#include <carma_msgs/msg/srv/SetLightBarIndicator.hpp>
+#include <carma_msgs/msg/srv/SetLights.hpp>
 
 #include "lightbar_manager/lightbar_manager_worker.hpp"
 
@@ -106,20 +106,20 @@ class LightBarManager
         void stateChangeCallBack(const cav_msgs::GuidanceStateConstPtr& msg_ptr);
 
         // Service servers/clients
-        ros::ServiceServer request_control_server_;
-        ros::ServiceServer release_control_server_;
-        ros::ServiceServer set_indicator_server_;
-        ros::ServiceClient lightbar_driver_client_;
+        rclcpp::ServiceServer request_control_server_;
+        rclcpp::ServiceServer release_control_server_;
+        rclcpp::ServiceServer set_indicator_server_;
+        rclcpp::ServiceClient lightbar_driver_client_;
 
         // Publishers
-        ros::Publisher indicator_control_publisher_;
+        rclcpp::Publisher indicator_control_publisher_;
 
         // Subscribers
-        ros::Subscriber guidance_state_subscriber_;
-        ros::Subscriber turn_signal_subscriber_;
+        rclcpp::Subscriber guidance_state_subscriber_;
+        rclcpp::Subscriber turn_signal_subscriber_;
 
         // Node handles
-        ros::CARMANodeHandle nh_{"lightbar_manager"}, pnh_{"~"};
+        rclcpp::CARMANodeHandle nh_{"lightbar_manager"}, pnh_{"~"};
 
         // LightBarManager Worker
         std::shared_ptr<LightBarManagerWorker> lbm_;

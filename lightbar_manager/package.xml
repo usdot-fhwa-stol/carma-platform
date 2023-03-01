@@ -1,22 +1,3 @@
-<?xml version="1.0"?>
-<package format="3">
-  <name>lightbar_manager</name>
-  <version>3.3.0</version>
-  <description>LightBar Manager</description>
-  <maintainer email="carma@dot.gov">carma</maintainer>
-  <license>Apache 2.0 License</license>
-  <author>Misheel Bayartsengel</author>
-  <buildtool_depend>catkin</buildtool_depend>
-  <depend>carma_utils</depend>
-  <depend>cav_msgs</depend>
-  <depend>cav_srvs</depend>
-  <depend>roscpp</depend>
-  <build_depend>carma_cmake_common</build_depend>
-</package>
-
-
-<?xml version="1.0"?>
-
 <!--  
  Copyright (C) 2020-2023 LEIDOS.
  Licensed under the Apache License, Version 2.0 (the "License"); you may not

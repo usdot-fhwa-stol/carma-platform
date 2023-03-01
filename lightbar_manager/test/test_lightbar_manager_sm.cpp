@@ -15,9 +15,9 @@
  */
 
 #include "lightbar_manager/lightbar_manager_sm.hpp"
-#include <cav_msgs/GuidanceState.h>
-#include <gtest/gtest.h>
-#include <ros/ros.h>
+#include <carma_planning_msgs/msg/guidance_state.hpp>
+#include <gtest/gtest.hpp>
+#include <rclcpp/rclcpp.hpp>
 
 namespace lightbar_manager
 {

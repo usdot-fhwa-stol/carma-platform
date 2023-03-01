@@ -13,9 +13,9 @@
  * the License.
  */
 
-#include <gtest/gtest.h>
-#include <ros/ros.h>
-#include <cav_msgs/GuidanceState.h>
+#include <gtest/gtest.hpp>
+#include <rclcpp/rclcpp.hpp>
+#include <carma_planning_msgs/msg/guidance_state.hpp>
 #include <thread>
 #include "lightbar_manager/lightbar_manager_node.hpp"
 #include "lightbar_manager/lightbar_manager_worker.hpp"

@@ -17,8 +17,8 @@
 #ifndef _LIGHTBAR_MANAGER_SM_H
 #define _LIGHTBAR_MANAGER_SM_H
 
-#include <ros/ros.h>
-#include <cav_msgs/GuidanceState.h>
+#include <rclcpp/rclcpp.hpp>
+#include <carma_planning_msgs/msg/guidance_state.hpp>
 
 
 namespace lightbar_manager
@@ -83,9 +83,9 @@ class LightBarManagerStateMachine
     uint8_t guidance_state_ = cav_msgs::GuidanceState::SHUTDOWN;
 
     // ROS Service 
-    ros::ServiceClient request_control_client_;
-    ros::ServiceClient release_control_client_;
-    ros::ServiceClient set_indicator_client_;
+    rclcpp::ServiceClient request_control_client_;
+    rclcpp::ServiceClient release_control_client_;
+    rclcpp::ServiceClient set_indicator_client_;
     
     // a local variable keeps the current state machine state
     LightBarState current_state_ = DISENGAGED;

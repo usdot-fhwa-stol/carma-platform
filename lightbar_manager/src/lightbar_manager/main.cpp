@@ -14,7 +14,7 @@
  * the License.
  */
 
-#include <ros/ros.h>
+#include <rclcpp/rclcpp.hpp>
 #include "lightbar_manager/lightbar_manager_node.hpp"
 
 /*!
@@ -22,7 +22,7 @@
  */
 int main(int argc, char** argv)
 {
-    ros::init(argc, argv, "lightbar_manager");
+    rclcpp::init(argc, argv, "lightbar_manager");
     lightbar_manager::LightBarManager node("lightbar_manager");
     return node.run();
 }

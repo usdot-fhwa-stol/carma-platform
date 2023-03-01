@@ -16,7 +16,7 @@
 
 #include "lightbar_manager/lightbar_manager_worker.hpp"
 #include <algorithm>
-#include <ros/console.h>
+#include <ros/console.hpp>
 namespace lightbar_manager
 {
     LightBarManagerWorker::LightBarManagerWorker(std::string node_name) : node_name_(node_name){};

@@ -13,9 +13,9 @@
  * the License.
  */
 
-#include <gtest/gtest.h>
-#include <ros/ros.h>
-#include <cav_msgs/GuidanceState.h>
+#include <gtest/gtest.hpp>
+#include <rclcpp/rclcpp.hpp>
+#include <carma_planning_msgs/msg/guidance_state.hpp>
 #include <thread>
 #include "lightbar_manager/lightbar_manager_node.hpp"
 
@@ -78,7 +78,7 @@ TEST(LightBarManagerNodeTest, testTurnSignalCallback)
     LightBarManager node("lightbar_manager");
     // initialize worker that is unit testable
     node.init("test");
-    //ros::service::waitForService("/hardware_interface/lightbar/set_lights", ros::Duration(60, 0));
+    //rclcpp::service::waitForService("/hardware_interface/lightbar/set_lights", rclcpp::Duration(60, 0));
     node.getWorker()->control_priorities.push_back("tester_left");
     node.getWorker()->control_priorities.push_back("tester_right");
     ROS_ERROR_STREAM("Below 'LightBarManager was not able to set light...' errors are expected");
@@ -139,12 +139,12 @@ TEST(LightBarManagerNodeTest, testTurnSignalCallback)
 int main (int argc, char **argv) 
 {
     testing::InitGoogleTest(&argc, argv);
-    ros::init(argc, argv, "lightbar_manager_test");
-    std::thread spinner([] {while (ros::ok()) ros::spin();});
+    rclcpp::init(argc, argv, "lightbar_manager_test");
+    std::thread spinner([] {while (rclcpp::ok()) rclcpp::spin();});
 
     auto res = RUN_ALL_TESTS();
 
-    ros::shutdown();
+    rclcpp::shutdown();
 
     return res;
 }
