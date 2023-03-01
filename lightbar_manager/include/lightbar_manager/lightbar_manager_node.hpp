@@ -92,28 +92,28 @@ class LightBarManager : public carma_ros2_utils::CarmaLifecycleNode
 
         // Message/service callbacks
         bool requestControlCallBack(const std::shared_ptr<rmw_request_id_t>,
-                                const std::shared_ptr<carma_msgs::srv::RequestLightBarIndicator::Request>,
-                                std::shared_ptr<carma_msgs::srv::RequestLightBarIndicator::Response> resp);
+                                const std::shared_ptr<carma_msgs::srv::RequestIndicatorControl::Request> req,
+                                std::shared_ptr<carma_msgs::srv::RequestIndicatorControl::Response> resp);
         bool releaseControlCallBack(const std::shared_ptr<rmw_request_id_t>,
-                                const std::shared_ptr<carma_msgs::srv::ReleaseLightBarIndicator::Request>,
-                                std::shared_ptr<carma_msgs::srv::ReleaseLightBarIndicator::Response> resp);
+                                const std::shared_ptr<carma_msgs::srv::ReleaseIndicatorControl::Request> req,
+                                std::shared_ptr<carma_msgs::srv::ReleaseIndicatorControl::Response> resp);
         bool setIndicatorCallBack(const std::shared_ptr<rmw_request_id_t>,
-                                const std::shared_ptr<carma_msgs::srv::SetLightBarIndicator::Request>,
-                                std::shared_ptr<carma_msgs::srv::SetLightBarIndicator::Response> resp);
+                                const std::shared_ptr<carma_driver_msgs::srv::SetLightBarIndicator::Request> req,
+                                std::shared_ptr<carma_driver_msgs::srv::SetLightBarIndicator::Response> resp);
         void stateChangeCallBack(carma_planning_msgs::msg::GuidanceState::UniquePtr msg_ptr);
 
         // Service servers/clients
         carma_ros2_utils::ServicePtr<carma_msgs::srv::RequestIndicatorControl> request_control_server_;
         carma_ros2_utils::ServicePtr<carma_msgs::srv::ReleaseIndicatorControl> release_control_server_;
-        carma_ros2_utils::ServicePtr<carma_msgs::srv::SetLightbarIndicator> set_indicator_server_;
-        carma_ros2_utils::ClientPtr<carma_msgs::srv::SetLights> lightbar_driver_client_;
+        carma_ros2_utils::ServicePtr<carma_driver_msgs::srv::SetLightBarIndicator> set_indicator_server_;
+        carma_ros2_utils::ClientPtr<carma_driver_msgs::srv::SetLights> lightbar_driver_client_;
 
         // Publishers
         carma_ros2_utils::PubPtr<carma_msgs::msg::LightBarIndicator> indicator_control_publisher_;
 
         // Subscribers
         carma_ros2_utils::SubPtr<carma_planning_msgs::msg::GuidanceState> guidance_state_subscriber_;
-        carma_ros2_utils::SubPtr<automotive_platform_msgs:msg::TurnSignalCommand> turn_signal_subscriber_;
+        carma_ros2_utils::SubPtr<automotive_platform_msgs::msg::TurnSignalCommand> turn_signal_subscriber_;
 
         // LightBarManager Worker
         std::shared_ptr<LightBarManagerWorker> lbm_;

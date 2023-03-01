@@ -17,7 +17,7 @@
 #include <rclcpp/rclcpp.hpp>
 #include "lightbar_manager/lightbar_manager_node.hpp"
 
-// Main entry point for plan delegator
+// Main entry point for lightbar_manager_node
 int main(int argc, char** argv)
 {
   rclcpp::init(argc, argv);

@@ -17,13 +17,12 @@
 
 #include "lightbar_manager/lightbar_manager_node.hpp"
 #include <algorithm>
-/* TODO
+
 namespace lightbar_manager
 {
-LightBarManager::LightBarManager(const std::string& node_name) : 
-    lbm_(std::make_shared<LightBarManagerWorker>(LightBarManagerWorker(node_name))),
-    node_name_ (node_name) {}
-
+LightBarManager::LightBarManager(const rclcpp::NodeOptions &options) : carma_ros2_utils::CarmaLifecycleNode(options)
+    {}
+/*
 void LightBarManager::turnOffAll()
 {
     // All components lose controls and turn the indicators off by giving lightbarmanar the control
@@ -356,22 +355,7 @@ void LightBarManager::setupUnitTest()
     lbm_->control_priorities.push_back("tester3");
     return;
 }
-
-int LightBarManager::run()
-{
-    // Initialize
-    init();
-
-    // Spin until system shutdown
-    ROS_INFO_STREAM("LightBarManager node initialized, spinning at " << spin_rate_ << "hz...");
-    rclcpp::CARMANodeHandle::setSpinRate(spin_rate_);
-    rclcpp::CARMANodeHandle::setSpinCallback(std::bind(&LightBarManager::spinCallBack, this));
-    rclcpp::CARMANodeHandle::spin();
-
-    // return
-    return 0;
-} 
+*/
 } // namespace lightbar_manager
 
 
-*/
