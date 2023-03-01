@@ -82,14 +82,14 @@ TEST(LightBarManagerNodeTest, testTurnSignalCallback)
     node.getWorker()->control_priorities.push_back("tester_left");
     node.getWorker()->control_priorities.push_back("tester_right");
     ROS_ERROR_STREAM("Below 'LightBarManager was not able to set light...' errors are expected");
-    automotive_platform_msgs::TurnSignalCommandPtr msg_ptr = boost::make_shared<automotive_platform_msgs::TurnSignalCommand>();
+    automotive_platform_msgs::msg::TurnSignalCommandPtr msg_ptr = boost::make_shared<automotive_platform_msgs::msg::TurnSignalCommand>();
     msg_ptr->mode = 1;
     // turn right (no prev owner)
-    msg_ptr->turn_signal = automotive_platform_msgs::TurnSignalCommand::RIGHT;
+    msg_ptr->turn_signal = automotive_platform_msgs::msg::TurnSignalCommand::RIGHT;
     node.turnSignalCallback(msg_ptr);
     std::map<lightbar_manager::LightBarIndicator, std::string> owners = node.getWorker()->getIndicatorControllers();
     EXPECT_TRUE(owners[YELLOW_ARROW_RIGHT].compare("lightbar_manager") == 0);
-    msg_ptr->turn_signal = automotive_platform_msgs::TurnSignalCommand::NONE;
+    msg_ptr->turn_signal = automotive_platform_msgs::msg::TurnSignalCommand::NONE;
     node.turnSignalCallback(msg_ptr);
     owners = node.getWorker()->getIndicatorControllers();
     EXPECT_TRUE(owners[YELLOW_ARROW_RIGHT].compare("") == 0);
@@ -101,9 +101,9 @@ TEST(LightBarManagerNodeTest, testTurnSignalCallback)
     EXPECT_TRUE(owners[YELLOW_ARROW_LEFT].compare("tester_left") == 0);
     EXPECT_TRUE(owners[YELLOW_ARROW_RIGHT].compare("tester_unaffected") == 0);
     // turn left and finish
-    msg_ptr->turn_signal = automotive_platform_msgs::TurnSignalCommand::LEFT;
+    msg_ptr->turn_signal = automotive_platform_msgs::msg::TurnSignalCommand::LEFT;
     node.turnSignalCallback(msg_ptr);
-    msg_ptr->turn_signal = automotive_platform_msgs::TurnSignalCommand::NONE;
+    msg_ptr->turn_signal = automotive_platform_msgs::msg::TurnSignalCommand::NONE;
     node.turnSignalCallback(msg_ptr);
     // make sure the previous owner is there
     owners = node.getWorker()->getIndicatorControllers();
@@ -115,7 +115,7 @@ TEST(LightBarManagerNodeTest, testTurnSignalCallback)
     owners =node.getWorker()->getIndicatorControllers();
     EXPECT_TRUE(owners[YELLOW_ARROW_RIGHT].compare("tester_right") == 0);
     // turn right and don't finish 
-    msg_ptr->turn_signal = automotive_platform_msgs::TurnSignalCommand::RIGHT;
+    msg_ptr->turn_signal = automotive_platform_msgs::msg::TurnSignalCommand::RIGHT;
     node.turnSignalCallback(msg_ptr);
     // middle of turn
     owners =node.getWorker()->getIndicatorControllers();
@@ -123,7 +123,7 @@ TEST(LightBarManagerNodeTest, testTurnSignalCallback)
     node.turnSignalCallback(msg_ptr);
     owners =node.getWorker()->getIndicatorControllers();
     EXPECT_TRUE(owners[YELLOW_ARROW_RIGHT].compare("lightbar_manager") == 0);
-    msg_ptr->turn_signal = automotive_platform_msgs::TurnSignalCommand::NONE;
+    msg_ptr->turn_signal = automotive_platform_msgs::msg::TurnSignalCommand::NONE;
     node.turnSignalCallback(msg_ptr);
     // make sure the previous owner is there
     owners = node.getWorker()->getIndicatorControllers();

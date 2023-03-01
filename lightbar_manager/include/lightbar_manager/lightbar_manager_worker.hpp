@@ -19,7 +19,8 @@
 
 #include <string>
 #include <rclcpp/rclcpp.hpp>
-#include <carma_utils/CARMAUtils.hpp>
+#include <carma_ros2_utils/carma_lifecycle_node.hpp>
+
 #include <vector>
 #include <map>
 
@@ -28,7 +29,7 @@
 #include <carma_msgs/msg/LightBarIndicatorControllers.hpp>
 #include <carma_msgs/msg/LightBarStatus.hpp>
 #include <carma_planning_msgs/msg/guidance_state.hpp>
-#include <automotive_platform_msgs/TurnSignalCommand.hpp>
+#include <automotive_platform_msgs/msg/turn_signal_command.hpp>
 
 #include <carma_msgs/msg/srv/RequestIndicatorControl.hpp>
 #include <carma_msgs/msg/srv/ReleaseIndicatorControl.hpp>
@@ -76,7 +77,7 @@ class LightBarManagerWorker
         * \brief This function checks if the turn signal should be changed on the lightbar
         * \return size one vector of turn signal, empty if no change is required
         */
-        std::vector<lightbar_manager::LightBarIndicator> handleTurnSignal(const automotive_platform_msgs::TurnSignalCommandPtr& msg_ptr);
+        std::vector<lightbar_manager::LightBarIndicator> handleTurnSignal(const automotive_platform_msgs::msg::TurnSignalCommandPtr& msg_ptr);
 
         /*!
         * \brief Releases the specified owner plugin or component's control of the given indicator list.
@@ -191,7 +192,7 @@ class LightBarManagerWorker
         std::map<LightBarCDAType, LightBarIndicator> cda_ind_map_;
 
         // Current turn signal
-        uint8_t current_turn_signal_ = automotive_platform_msgs::TurnSignalCommand::NONE;
+        uint8_t current_turn_signal_ = automotive_platform_msgs::msg::TurnSignalCommand::NONE;
 
         // Helper maps that convert string into enum representations when reading from ROSParameter
         std::map<std::string, LightBarCDAType> cda_type_dict_ = {

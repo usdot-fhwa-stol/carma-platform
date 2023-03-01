@@ -19,7 +19,8 @@
 
 #include <string>
 #include <rclcpp/rclcpp.hpp>
-#include <carma_utils/CARMAUtils.hpp>
+#include <carma_ros2_utils/carma_lifecycle_node.hpp>
+
 #include <vector>
 #include <map>
 
@@ -28,7 +29,7 @@
 #include <carma_msgs/msg/LightBarIndicatorControllers.hpp>
 #include <carma_msgs/msg/LightBarStatus.hpp>
 #include <carma_planning_msgs/msg/guidance_state.hpp>
-#include <automotive_platform_msgs/TurnSignalCommand.hpp>
+#include <automotive_platform_msgs/msg/turn_signal_command.hpp>
 
 #include <carma_msgs/msg/srv/RequestIndicatorControl.hpp>
 #include <carma_msgs/msg/srv/ReleaseIndicatorControl.hpp>
@@ -82,7 +83,7 @@ class LightBarManager
         * \brief Callback function for turning signal
         * \return 
         */
-        void turnSignalCallback(const automotive_platform_msgs::TurnSignalCommandPtr& msg_ptr);
+        void turnSignalCallback(const automotive_platform_msgs::msg::TurnSignalCommandPtr& msg_ptr);
 
     private:
         /*!

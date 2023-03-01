@@ -166,7 +166,7 @@ void LightBarManager::stateChangeCallBack(const cav_msgs::GuidanceStateConstPtr&
     }
 }
 
-void LightBarManager::turnSignalCallback(const automotive_platform_msgs::TurnSignalCommandPtr& msg_ptr)
+void LightBarManager::turnSignalCallback(const automotive_platform_msgs::msg::TurnSignalCommandPtr& msg_ptr)
 {
     // if not automated
     if (msg_ptr->mode != 1)
@@ -184,7 +184,7 @@ void LightBarManager::turnSignalCallback(const automotive_platform_msgs::TurnSig
     
     lightbar_manager::IndicatorStatus indicator_status;
     // check if we should turn off or on given any indicator
-    if (msg_ptr->turn_signal == automotive_platform_msgs::TurnSignalCommand::NONE)
+    if (msg_ptr->turn_signal == automotive_platform_msgs::msg::TurnSignalCommand::NONE)
     {
         indicator_status = lightbar_manager::IndicatorStatus::OFF;
     }
@@ -204,7 +204,7 @@ void LightBarManager::turnSignalCallback(const automotive_platform_msgs::TurnSig
     }
     else
     {
-        std::string turn_string = msg_ptr->turn_signal == automotive_platform_msgs::TurnSignalCommand::LEFT ? "left" : "right";
+        std::string turn_string = msg_ptr->turn_signal == automotive_platform_msgs::msg::TurnSignalCommand::LEFT ? "left" : "right";
         ROS_WARN_STREAM("Lightbar was not able to take control of lightbar to indicate " << turn_string << "turn!");
         return;
     }

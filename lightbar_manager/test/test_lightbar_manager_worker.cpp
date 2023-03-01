@@ -330,34 +330,34 @@ TEST(LightBarManagerWorkerTest, testHandleHandleTurnSignal)
     // Handle left/right indicators with arrow_out correctly
     LightBarManagerWorker worker("lightbar_manager");
 
-    automotive_platform_msgs::TurnSignalCommandPtr turn_signal = boost::make_shared<automotive_platform_msgs::TurnSignalCommand>();
-    turn_signal->turn_signal = automotive_platform_msgs::TurnSignalCommand::RIGHT;
+    automotive_platform_msgs::msg::TurnSignalCommandPtr turn_signal = boost::make_shared<automotive_platform_msgs::msg::TurnSignalCommand>();
+    turn_signal->turn_signal = automotive_platform_msgs::msg::TurnSignalCommand::RIGHT;
     auto light_signals = worker.handleTurnSignal(turn_signal);
 
     EXPECT_EQ(light_signals.size(), 1);
     EXPECT_EQ(light_signals[0], lightbar_manager::LightBarIndicator::YELLOW_ARROW_RIGHT);
     
-    turn_signal->turn_signal = automotive_platform_msgs::TurnSignalCommand::NONE;
+    turn_signal->turn_signal = automotive_platform_msgs::msg::TurnSignalCommand::NONE;
     light_signals = worker.handleTurnSignal(turn_signal);
 
     EXPECT_EQ(light_signals.size(), 1);
     EXPECT_EQ(light_signals[0], lightbar_manager::LightBarIndicator::YELLOW_ARROW_RIGHT);
 
-    turn_signal->turn_signal = automotive_platform_msgs::TurnSignalCommand::NONE;
+    turn_signal->turn_signal = automotive_platform_msgs::msg::TurnSignalCommand::NONE;
     light_signals = worker.handleTurnSignal(turn_signal);
     EXPECT_EQ(light_signals.size(), 0);
 
-    turn_signal->turn_signal = automotive_platform_msgs::TurnSignalCommand::LEFT;
+    turn_signal->turn_signal = automotive_platform_msgs::msg::TurnSignalCommand::LEFT;
     light_signals = worker.handleTurnSignal(turn_signal);
     EXPECT_EQ(light_signals.size(), 1);
     EXPECT_EQ(light_signals[0], lightbar_manager::LightBarIndicator::YELLOW_ARROW_LEFT);
     
-    turn_signal->turn_signal = automotive_platform_msgs::TurnSignalCommand::NONE;
+    turn_signal->turn_signal = automotive_platform_msgs::msg::TurnSignalCommand::NONE;
     light_signals = worker.handleTurnSignal(turn_signal);
     EXPECT_EQ(light_signals.size(), 1);
     EXPECT_EQ(light_signals[0], lightbar_manager::LightBarIndicator::YELLOW_ARROW_LEFT);
 
-    turn_signal->turn_signal = automotive_platform_msgs::TurnSignalCommand::NONE;
+    turn_signal->turn_signal = automotive_platform_msgs::msg::TurnSignalCommand::NONE;
     light_signals = worker.handleTurnSignal(turn_signal);
     EXPECT_EQ(light_signals.size(), 0);
 }
