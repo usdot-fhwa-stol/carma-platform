@@ -116,8 +116,8 @@ class LightBarManager : public carma_ros2_utils::CarmaLifecycleNode
         void setupUnitTest();
 
         // Node Data
-        std::string node_name_;
-        double spin_rate_;
+        std::string node_name_ = "lightbar_manager";
+        double spin_rate_ = 10.0;
         std::map<lightbar_manager::LightBarIndicator, std::string> prev_owners_before_turn_;
 
         // spin callback function
@@ -150,6 +150,8 @@ class LightBarManager : public carma_ros2_utils::CarmaLifecycleNode
 
         // LightBarManager Worker
         std::shared_ptr<LightBarManagerWorker> lbm_;
+
+        rclcpp::TimerBase::SharedPtr pub_timer_;
 
 }; //class LightBarManagerNode
 } // namespace lightbar_manager

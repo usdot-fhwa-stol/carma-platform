@@ -17,12 +17,9 @@
 #include "lightbar_manager/lightbar_manager_worker.hpp"
 #include <algorithm>
 
-
-/* TODO
-
 namespace lightbar_manager
 {
-    LightBarManagerWorker::LightBarManagerWorker(std::string node_name) : node_name_(node_name){};
+    LightBarManagerWorker::LightBarManagerWorker(){};
 
     void LightBarManagerWorker::next(const LightBarEvent& event)
     {
@@ -72,13 +69,13 @@ namespace lightbar_manager
         return curr;
     }
 
-    void LightBarManagerWorker::handleStateChange(carma_planning_msgs::msg::GuidanceStateConstPtr msg_ptr)
+    void LightBarManagerWorker::handleStateChange(carma_planning_msgs::msg::GuidanceState::UniquePtr msg_ptr)
     {
-        lbsm_.handleStateChange(msg_ptr);
+        lbsm_.handleStateChange(std::move(msg_ptr));
         return;
     }
 
-    std::vector<lightbar_manager::LightBarIndicator> LightBarManagerWorker::handleTurnSignal(const automotive_platform_msgs::msg::TurnSignalCommandPtr& msg_ptr)
+    std::vector<lightbar_manager::LightBarIndicator> LightBarManagerWorker::handleTurnSignal(automotive_platform_msgs::msg::TurnSignalCommand::UniquePtr msg_ptr)
     {
         std::vector<lightbar_manager::LightBarIndicator> turn_signal;
         if (msg_ptr->turn_signal == current_turn_signal_)
@@ -112,9 +109,15 @@ namespace lightbar_manager
     }
     
 
-    std::map<LightBarCDAType, LightBarIndicator> LightBarManagerWorker::setIndicatorCDAMap(std::map<std::string, std::string> raw_map)
+    std::map<LightBarCDAType, LightBarIndicator> LightBarManagerWorker::setIndicatorCDAMap(const std::vector<std::string>& lightbar_cda_table, const std::vector<std::string>& lightbar_ind_table)
     {
-        // In case if the parameter is not loaded corretly and there is an error, return this`1
+        // In case if the parameter is not loaded corretly and there is an error, return this
+        std::map<std::string, std::string> raw_map;
+        for (size_t i = 0; i < lightbar_cda_table.size(); i ++)
+        {
+            raw_map[lightbar_cda_table[i]] = lightbar_ind_table[i];
+        }
+        
         std::map<LightBarCDAType, LightBarIndicator> default_map;
         
         default_map[TYPE_A] = YELLOW_DIM;
@@ -396,4 +399,3 @@ namespace lightbar_manager
     }
 
 }
-*/

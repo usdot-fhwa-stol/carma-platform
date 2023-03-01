@@ -115,7 +115,7 @@ class LightBarManagerWorker
         * \brief Helper function that initializes CDAType to Indicator Mapping (updates internal copy)
         * \return return the mapping for debug purposes. 
         */
-        std::map<LightBarCDAType, LightBarIndicator> setIndicatorCDAMap(std::map<std::string, std::string> raw_map);
+        std::map<LightBarCDAType, LightBarIndicator> setIndicatorCDAMap(const std::vector<std::string>& lightbar_cda_table, const std::vector<std::string>& lightbar_ind_table);
 
         /*!
         * \brief Helper function that gets all current owners of the indicator.

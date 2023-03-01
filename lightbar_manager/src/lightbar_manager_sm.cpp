@@ -16,8 +16,6 @@
 
 #include "lightbar_manager/lightbar_manager_sm.hpp"
 
-/* TODO
-
 namespace lightbar_manager
 {
 // Default constructor
@@ -61,7 +59,7 @@ void LightBarManagerStateMachine::next(const LightBarEvent& event)
     }
 }
 
-void LightBarManagerStateMachine::handleStateChange(const carma_planning_msgs::msg::GuidanceStateUniquePtr msg_ptr)
+void LightBarManagerStateMachine::handleStateChange(carma_planning_msgs::msg::GuidanceState::UniquePtr msg_ptr)
 {
     // Check if the msg is as same as before
     if (msg_ptr->state == guidance_state_)
@@ -119,4 +117,3 @@ LightBarState LightBarManagerStateMachine::getCurrentState()
 }
 
 } // namespace lightbar_manager
-*/

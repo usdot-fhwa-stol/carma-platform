@@ -24,7 +24,12 @@ namespace lightbar_manager
 namespace std_ph = std::placeholders;
 
 LightBarManager::LightBarManager(const rclcpp::NodeOptions &options) : carma_ros2_utils::CarmaLifecycleNode(options)
-{}
+{
+    // Create initial config
+    config_ = Config();
+    config_.spin_rate_hz = declare_parameter<double>("spin_rate_hz", config_.spin_rate_hz);
+    config_.normal_operation = declare_parameter<double>("normal_operation", config_.normal_operation);
+}
 
 carma_ros2_utils::CallbackReturn LightBarManager::handle_on_configure(const rclcpp_lifecycle::State &)
 {
@@ -50,8 +55,13 @@ carma_ros2_utils::CallbackReturn LightBarManager::handle_on_configure(const rclc
 
     rclcpp::Parameter lightbar_ind_table_param = get_parameter("lightbar_ind_table");
     config_.lightbar_ind_table = lightbar_ind_table_param.as_string_array();
-
-    //lbm_->setIndicatorCDAMap(config_.lightbar_cda_table, config_.lightbar_ind_table);
+    
+    if (config_.lightbar_cda_table.size() != config_.lightbar_ind_table.size())
+    {
+        throw std::invalid_argument("Size of lightbar_cda_table is not same as that of lightbar_ind_table");
+    }
+    
+    lbm_->setIndicatorCDAMap(config_.lightbar_cda_table, config_.lightbar_ind_table);
 
     // Initialize indicator control map. Fills with supporting indicators with empty string name as owners.
     lbm_->setIndicatorControllers();
@@ -64,7 +74,7 @@ carma_ros2_utils::CallbackReturn LightBarManager::handle_on_configure(const rclc
     config_.lightbar_priorities = lightbar_priorities_param.as_string_array();
     lbm_->control_priorities = config_.lightbar_priorities;
 
-    // Setup priorities for unit test 
+    // Setup priorities for unit test TODO
     //if (mode == "test")
     //    setupUnitTest();
 
@@ -93,6 +103,9 @@ carma_ros2_utils::CallbackReturn LightBarManager::handle_on_configure(const rclc
     
 carma_ros2_utils::CallbackReturn LightBarManager::handle_on_activate(const rclcpp_lifecycle::State &)
 {
+    pub_timer_ = create_timer(get_clock(), 
+            std::chrono::milliseconds((int)(1 / config_.spin_rate_hz * 1000)),
+            std::bind(&LightBarManager::spinCallBack, this));
     return CallbackReturn::SUCCESS;
 }
 
