@@ -40,6 +40,14 @@
 namespace lightbar_manager
 {
 
+/**
+ * \brief Config struct
+ */
+struct Config
+{
+    
+};
+
 class LightBarManager : public carma_ros2_utils::CarmaLifecycleNode
 {
     public:
@@ -50,7 +58,7 @@ class LightBarManager : public carma_ros2_utils::CarmaLifecycleNode
          * 
          */
         explicit LightBarManager(const rclcpp::NodeOptions &);
-
+        
         /*!
         * \brief Get ptr to lightbar_manager_worker (for ease of unit testing)
         * \return LightBarManagerWorker
@@ -75,7 +83,15 @@ class LightBarManager : public carma_ros2_utils::CarmaLifecycleNode
         */
         void turnSignalCallback(automotive_platform_msgs::msg::TurnSignalCommand::UniquePtr msg_ptr);
 
+        ////
+        // Overrides
+        ////
+        carma_ros2_utils::CallbackReturn handle_on_configure(const rclcpp_lifecycle::State &);
+        carma_ros2_utils::CallbackReturn handle_on_activate(const rclcpp_lifecycle::State &);
+
     private:
+        Config config_;
+        
         /*!
         * \brief Helper function that sets up ROS parameters for unit test
         * \return none

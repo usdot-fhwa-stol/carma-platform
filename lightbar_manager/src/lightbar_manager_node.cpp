@@ -20,8 +20,21 @@
 
 namespace lightbar_manager
 {
-LightBarManager::LightBarManager(const rclcpp::NodeOptions &options) : carma_ros2_utils::CarmaLifecycleNode(options)
+
+    LightBarManager::LightBarManager(const rclcpp::NodeOptions &options) : carma_ros2_utils::CarmaLifecycleNode(options)
     {}
+
+    carma_ros2_utils::CallbackReturn LightBarManager::handle_on_configure(const rclcpp_lifecycle::State &)
+    {
+        // Reset config
+        config_ = Config();
+        return CallbackReturn::SUCCESS;
+    }
+      
+    carma_ros2_utils::CallbackReturn LightBarManager::handle_on_activate(const rclcpp_lifecycle::State &)
+    {
+         return CallbackReturn::SUCCESS;
+    }
 /*
 void LightBarManager::turnOffAll()
 {
