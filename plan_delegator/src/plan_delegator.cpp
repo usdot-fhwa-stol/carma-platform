@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022 LEIDOS.
+ * Copyright (C) 2022-2023 LEIDOS.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -141,6 +141,7 @@ namespace plan_delegator
         config_.trajectory_planning_rate = declare_parameter<double>("trajectory_planning_rate", config_.trajectory_planning_rate); 
         config_.max_trajectory_duration = declare_parameter<double>("trajectory_duration_threshold", config_.max_trajectory_duration);
         config_.min_crawl_speed = declare_parameter<double>("min_speed", config_.min_crawl_speed);
+        config_.duration_to_signal_before_lane_change = declare_parameter<double>("duration_to_signal_before_lane_change", config_.duration_to_signal_before_lane_change);
     }
 
     carma_ros2_utils::CallbackReturn PlanDelegator::handle_on_configure(const rclcpp_lifecycle::State &)
@@ -153,15 +154,20 @@ namespace plan_delegator
         get_parameter<double>("trajectory_planning_rate", config_.trajectory_planning_rate); 
         get_parameter<double>("trajectory_duration_threshold", config_.max_trajectory_duration);
         get_parameter<double>("min_speed", config_.min_crawl_speed);
+        get_parameter<double>("duration_to_signal_before_lane_change", config_.duration_to_signal_before_lane_change);
 
         RCLCPP_INFO_STREAM(rclcpp::get_logger("plan_delegator"),"Done loading parameters: " << config_);
 
+        // Setup publishers
         traj_pub_ = create_publisher<carma_planning_msgs::msg::TrajectoryPlan>("plan_trajectory", 5);
+        upcoming_lane_change_status_pub_ = create_publisher<carma_planning_msgs::msg::UpcomingLaneChangeStatus>("upcoming_lane_change_status", 1);
+        turn_signal_command_pub_ = create_publisher<autoware_msgs::msg::LampCmd>("lamp_cmd", 1);
+
+        // Setup subscribers
         plan_sub_ = create_subscription<carma_planning_msgs::msg::ManeuverPlan>("final_maneuver_plan", 5, std::bind(&PlanDelegator::maneuverPlanCallback, this, std_ph::_1));
         twist_sub_ = create_subscription<geometry_msgs::msg::TwistStamped>("current_velocity", 5,
             [this](geometry_msgs::msg::TwistStamped::UniquePtr twist) {this->latest_twist_ = *twist;});
-        pose_sub_ = create_subscription<geometry_msgs::msg::PoseStamped>("current_pose", 5,
-            [this](geometry_msgs::msg::PoseStamped::UniquePtr pose) {this->latest_pose_ = *pose;});
+        pose_sub_ = create_subscription<geometry_msgs::msg::PoseStamped>("current_pose", 5, std::bind(&PlanDelegator::poseCallback, this, std_ph::_1));
         guidance_state_sub_ = create_subscription<carma_planning_msgs::msg::GuidanceState>("guidance_state", 5,  std::bind(&PlanDelegator::guidanceStateCallback, this, std_ph::_1));
 
         lookupFrontBumperTransform();
@@ -201,6 +207,143 @@ namespace plan_delegator
         else {
             RCLCPP_WARN_STREAM(rclcpp::get_logger("plan_delegator"),"Received empty plan, no maneuvers found in plan ID " << std::string(plan->maneuver_plan_id));
         }
+
+        // Update upcoming_lane_change_information_ and current_lane_change_information_ based on the received maneuver plan
+        if(!latest_maneuver_plan_.maneuvers.empty()){
+            // Get ego vehicle's current downtrack
+            lanelet::BasicPoint2d current_loc(latest_pose_.pose.position.x, latest_pose_.pose.position.y);
+            double current_downtrack = wm_->routeTrackPos(current_loc).downtrack;
+
+            // Set upcoming_lane_change_information_ based on the first found lane change in the plan that begins after current_downtrack, if one exists
+            upcoming_lane_change_information_ = boost::optional<LaneChangeInformation>(); // Reset to empty optional
+            for(const auto& maneuver : latest_maneuver_plan_.maneuvers){
+                if(maneuver.type == carma_planning_msgs::msg::Maneuver::LANE_CHANGE){
+                    if(current_downtrack >= maneuver.lane_change_maneuver.start_dist){
+                        // Skip this lane change maneuver since ego vehicle has passed the lane change start point (this is not an 'upcoming' lane change)
+                        continue;
+                    }
+                    else{
+                        LaneChangeInformation upcoming_lane_change_information = getLaneChangeInformation(maneuver);
+                        upcoming_lane_change_information_ = boost::optional<LaneChangeInformation>(upcoming_lane_change_information);
+                        break;
+                    }
+                }
+            }
+
+            // Set current_lane_change_information_ if the first maneuver is a lane change
+            current_lane_change_information_ = boost::optional<LaneChangeInformation>(); // Reset to empty optional
+            if(latest_maneuver_plan_.maneuvers[0].type == carma_planning_msgs::msg::Maneuver::LANE_CHANGE){
+                LaneChangeInformation current_lane_change_information = getLaneChangeInformation(latest_maneuver_plan_.maneuvers[0]);
+                current_lane_change_information_ = boost::optional<LaneChangeInformation>(current_lane_change_information);
+            }
+        }
+    }
+
+    void PlanDelegator::poseCallback(geometry_msgs::msg::PoseStamped::UniquePtr pose_msg)
+    {
+        latest_pose_ = *pose_msg;
+
+        // Publish the upcoming lane change status
+        publishUpcomingLaneChangeStatus(upcoming_lane_change_information_);
+
+        // Publish the current turn signal command
+        publishTurnSignalCommand(current_lane_change_information_, upcoming_lane_change_status_);
+    }
+
+    LaneChangeInformation PlanDelegator::getLaneChangeInformation(const carma_planning_msgs::msg::Maneuver& lane_change_maneuver){
+        LaneChangeInformation lane_change_information;
+
+        lane_change_information.starting_downtrack = lane_change_maneuver.lane_change_maneuver.start_dist;
+
+        // Get the starting and ending lanelets for this lane change maneuver
+        lanelet::ConstLanelet starting_lanelet = wm_->getMap()->laneletLayer.get(std::stoi(lane_change_maneuver.lane_change_maneuver.starting_lane_id));
+        lanelet::ConstLanelet ending_lanelet = wm_->getMap()->laneletLayer.get(std::stoi(lane_change_maneuver.lane_change_maneuver.ending_lane_id));
+
+        // Compare the lane indexes of the starting and ending lanelets to determine if this is a left or right lane change
+        // NOTE: For 'lane index', 0 is rightmost lane, 1 is second rightmost, etc.; Only the current travel direction is considered
+        int starting_lanelet_index = wm_->getMapRoutingGraph()->rights(starting_lanelet).size();
+        int ending_lanelet_index = wm_->getMapRoutingGraph()->rights(ending_lanelet).size();
+
+        if(starting_lanelet_index > ending_lanelet_index){
+            lane_change_information.is_right_lane_change = true;
+        }
+        else if(starting_lanelet_index > ending_lanelet_index){
+            lane_change_information.is_right_lane_change = false;
+        }
+        else{
+            RCLCPP_WARN_STREAM(get_logger(), "Lane change starting lanelet and ending lanelet have the same lane index!");
+            throw std::invalid_argument("Lane change starting lanelet and ending lanelet have the same lane index!");
+        }
+
+        return lane_change_information;
+    }
+
+    void PlanDelegator::publishUpcomingLaneChangeStatus(const boost::optional<LaneChangeInformation>& upcoming_lane_change_information){
+        // Initialize an UpcomingLaneChangeStatus message, which will be populated based on upcoming_lane_change_information
+        carma_planning_msgs::msg::UpcomingLaneChangeStatus upcoming_lane_change_status;
+
+        // Update upcoming_lane_change_status
+        if(upcoming_lane_change_information){
+            // Get the downtrack distance between the ego vehicle and the start of the upcoming lane change maneuver
+            lanelet::BasicPoint2d current_loc(latest_pose_.pose.position.x, latest_pose_.pose.position.y);
+            double current_downtrack = wm_->routeTrackPos(current_loc).downtrack;       
+            upcoming_lane_change_status.downtrack_until_lanechange = std::max(0.0, upcoming_lane_change_information.get().starting_downtrack - current_downtrack);
+
+            // Set upcoming lane change status as a right lane change or left lane change
+            if(upcoming_lane_change_information.get().is_right_lane_change){
+                upcoming_lane_change_status.lane_change = carma_planning_msgs::msg::UpcomingLaneChangeStatus::RIGHT;
+            }
+            else{
+                upcoming_lane_change_status.lane_change = carma_planning_msgs::msg::UpcomingLaneChangeStatus::LEFT;
+            }
+        }
+        else{
+            upcoming_lane_change_status.lane_change = carma_planning_msgs::msg::UpcomingLaneChangeStatus::NONE;
+        }
+
+        // Publish upcoming_lane_change_status
+        upcoming_lane_change_status_pub_->publish(upcoming_lane_change_status);
+
+        // Store UpcomingLaneChangeStatus in upcoming_lane_change_status_
+        upcoming_lane_change_status_ = upcoming_lane_change_status;
+    }
+
+    void PlanDelegator::publishTurnSignalCommand(const boost::optional<LaneChangeInformation>& current_lane_change_information, const carma_planning_msgs::msg::UpcomingLaneChangeStatus& upcoming_lane_change_status)
+    {
+        // Initialize turn signal command message
+        // NOTE: A LampCmd message can have its 'r' OR 'l' field set to 1 to indicate an activated right or left turn signal, respectively. Both fields cannot be set to 1 at the same time.
+        autoware_msgs::msg::LampCmd turn_signal_command;
+
+        // Publish turn signal command with priority placed on the current lane change, if one exists
+        if(current_lane_change_information){
+            // Publish turn signal command for the current lane change based on the lane change direction
+            if(current_lane_change_information.get().is_right_lane_change){
+                turn_signal_command.r = 1;
+            }
+            else{
+                turn_signal_command.l = 1;
+            }
+            turn_signal_command_pub_->publish(turn_signal_command);
+        }
+        else if(upcoming_lane_change_status.lane_change != carma_planning_msgs::msg::UpcomingLaneChangeStatus::NONE){
+            // Only publish turn signal command for upcoming lane change if it will begin in less than the time defined by config_.duration_to_signal_before_lane_change
+            if((upcoming_lane_change_status.downtrack_until_lanechange / latest_twist_.twist.linear.x) <= config_.duration_to_signal_before_lane_change){
+                if(upcoming_lane_change_status.lane_change == carma_planning_msgs::msg::UpcomingLaneChangeStatus::RIGHT){
+                    turn_signal_command.r = 1;
+                }
+                else{
+                    turn_signal_command.l = 1;
+                }
+                turn_signal_command_pub_->publish(turn_signal_command);
+            }
+        }
+        else{
+            // Publish turn signal command with neither turn signal activated
+            turn_signal_command_pub_->publish(turn_signal_command);
+        }
+
+        // Store turn signal command in latest_turn_signal_command_
+        latest_turn_signal_command_ = turn_signal_command;
     }
 
     carma_ros2_utils::ClientPtr<carma_planning_msgs::srv::PlanTrajectory> PlanDelegator::getPlannerClientByName(const std::string& planner_name)
