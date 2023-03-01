@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2021 LEIDOS.
+ * Copyright (C) 2023 LEIDOS.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -14,9 +14,10 @@
  * the License.
  */
 
+
 #include "lightbar_manager/lightbar_manager_node.hpp"
 #include <algorithm>
-
+/* TODO
 namespace lightbar_manager
 {
 LightBarManager::LightBarManager(const std::string& node_name) : 
@@ -53,7 +54,7 @@ void LightBarManager::turnOffAll()
     lbm_->releaseControl(all_indicators, node_name_);
 }
 
-bool LightBarManager::requestControlCallBack(cav_srvs::RequestIndicatorControlRequest& req, cav_srvs::RequestIndicatorControlResponse& res)
+bool LightBarManager::requestControlCallBack(carma_msgs::srv::RequestIndicatorControlRequest& req, carma_msgs::srv::RequestIndicatorControlResponse& res)
 {
     std::vector<LightBarIndicator> ind_list, controlled_ind_list;
     std::vector<LightBarCDAType> controlled_cda_type_list;
@@ -103,7 +104,7 @@ bool LightBarManager::requestControlCallBack(cav_srvs::RequestIndicatorControlRe
     return true;
 }
 
-bool LightBarManager::releaseControlCallBack(cav_srvs::ReleaseIndicatorControlRequest& req, cav_srvs::ReleaseIndicatorControlResponse& res)
+bool LightBarManager::releaseControlCallBack(carma_msgs::srv::ReleaseIndicatorControlRequest& req, carma_msgs::srv::ReleaseIndicatorControlResponse& res)
 {
     std::vector<LightBarIndicator> ind_list;
 
@@ -249,7 +250,7 @@ int LightBarManager::setIndicator(LightBarIndicator ind, IndicatorStatus ind_sta
 
     std::vector<IndicatorStatus> light_status_proposed = lbm_->setIndicator(ind, ind_status, requester_name);
     cav_msgs::LightBarStatus msg = lbm_->getLightBarStatusMsg(light_status_proposed);
-    cav_srvs::SetLights srv;
+    carma_msgs::srv::SetLights srv;
     srv.request.set_state = msg;
     
     // Try to send the request
@@ -267,7 +268,7 @@ int LightBarManager::setIndicator(LightBarIndicator ind, IndicatorStatus ind_sta
     return response_code;
 
 }
-bool LightBarManager::setIndicatorCallBack(cav_srvs::SetLightBarIndicatorRequest& req, cav_srvs::SetLightBarIndicatorResponse& res)
+bool LightBarManager::setIndicatorCallBack(carma_msgs::srv::SetLightBarIndicatorRequest& req, carma_msgs::srv::SetLightBarIndicatorResponse& res)
 {
     LightBarIndicator indicator;
     int response_code = 0;
@@ -301,7 +302,7 @@ void LightBarManager::init(std::string mode)
     indicator_control_publisher_ = nh_.advertise<cav_msgs::LightBarIndicatorControllers>("indicator_control", 5);
     guidance_state_subscriber_ = nh_.subscribe(guidance_state_topic_name, 5, &LightBarManager::stateChangeCallBack, this);
     turn_signal_subscriber_ = nh_.subscribe(turn_signal_topic_name, 5, &LightBarManager::turnSignalCallback, this);
-    lightbar_driver_client_ = nh_.serviceClient<cav_srvs::SetLights>(lightbar_driver_service_name);
+    lightbar_driver_client_ = nh_.serviceClient<carma_msgs::srv::SetLights>(lightbar_driver_service_name);
 
     // Load Conversion table, CDAType to Indicator mapping
     std::map<std::string,std::string> cda_ind_map_raw;
@@ -371,3 +372,6 @@ int LightBarManager::run()
     return 0;
 } 
 } // namespace lightbar_manager
+
+
+*/

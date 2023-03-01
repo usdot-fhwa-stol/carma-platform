@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2021 LEIDOS.
+ * Copyright (C) 2023 LEIDOS.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -16,7 +16,10 @@
 
 #include "lightbar_manager/lightbar_manager_worker.hpp"
 #include <algorithm>
-#include <ros/console.hpp>
+
+
+/* TODO
+
 namespace lightbar_manager
 {
     LightBarManagerWorker::LightBarManagerWorker(std::string node_name) : node_name_(node_name){};
@@ -393,3 +396,4 @@ namespace lightbar_manager
     }
 
 }
+*/
