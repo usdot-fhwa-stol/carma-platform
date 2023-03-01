@@ -48,6 +48,33 @@ def generate_launch_description():
         description = "Path to file containing override parameters for the subsystem controller"
     )
 
+    lightbar_manager_param_file = os.path.join(
+        get_package_share_directory('lightbar_manager'), 'config/params.yaml')
+
+    lightbar_manager_container = ComposableNodeContainer(
+        package='carma_ros2_utils', # rclcpp_components
+        name='lightbar_manager_container',
+        executable='lifecycle_component_wrapper_mt',
+        namespace=GetCurrentNamespace(),
+        composable_node_descriptions=[
+            ComposableNode(
+                package='lightbar_manager',
+                plugin='lightbar_manager::LightBarManager',
+                name='lightbar_manager',
+                extra_arguments=[
+                    {'use_intra_process_comms': True}, 
+                    {'--log-level' : GetLogLevel('lightbar_manager', env_log_levels) },
+                    {'is_lifecycle_node': True} # Flag to allow lifecycle node loading in lifecycle wrapper
+                ],
+                remappings=[
+                    ("state", [ EnvironmentVariable('CARMA_GUIDE_NS', default_value=''), "/state" ] ),
+                    ("set_lights", [ EnvironmentVariable('CARMA_INTR_NS', default_value=''), "/lightbar/set_lights" ] )
+                ],
+                parameters=[ lightbar_manager_param_file ]
+            )
+        ]
+    )
+
     # subsystem_controller which orchestrates the lifecycle of this subsystem's components
     subsystem_controller = Node(
         package='subsystem_controllers',
@@ -61,5 +88,6 @@ def generate_launch_description():
     return LaunchDescription([
         declare_subsystem_controller_param_file_arg,
         declare_vehicle_config_param_file_arg,
+        lightbar_manager_container,
         subsystem_controller
     ])
