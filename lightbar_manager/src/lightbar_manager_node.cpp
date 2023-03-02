@@ -29,6 +29,9 @@ LightBarManager::LightBarManager(const rclcpp::NodeOptions &options) : carma_ros
     config_ = Config();
     config_.spin_rate_hz = declare_parameter<double>("spin_rate_hz", config_.spin_rate_hz);
     config_.normal_operation = declare_parameter<bool>("normal_operation", config_.normal_operation);
+    declare_parameter("lightbar_cda_table");
+    declare_parameter("lightbar_ind_table");
+    declare_parameter("lightbar_priorities");
     lbm_ = std::make_shared<LightBarManagerWorker>();
 }
 
@@ -84,6 +87,8 @@ carma_ros2_utils::CallbackReturn LightBarManager::handle_on_configure(const rclc
         
     // Take control of green light
     get_parameter<bool>("normal_operation", config_.normal_operation);
+
+    RCLCPP_INFO_STREAM(rclcpp::get_logger("lightbar_manager"), "Loaded params: " << config_);
 
     std::vector<LightBarIndicator> denied_list, greens = {GREEN_SOLID, GREEN_FLASH};
 

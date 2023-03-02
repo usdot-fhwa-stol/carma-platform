@@ -35,22 +35,13 @@ normal_operation: true
 # TypeD
 
 # Priority in descending order. Higher priority takes over lightbar
-lightbar_priorities: 
-  - 'lightbar_manager'
+lightbar_priorities: ['lightbar_manager']
 
 # Keys for lightbar_cda_to_ind_table, 1-to-1 with lightbar_ind_table
-lightbar_cda_table:
-  - 'TypeA'
-  - 'TypeB'
-  - 'TypeC'
-  - 'TypeD'
+lightbar_cda_table: ['TypeA', 'TypeB', 'TypeC', 'TypeD']
 
 # Values for lightbar_cda_to_ind_table, 1-to-1 with lightbar_cda_table
-lightbar_ind_table:
-  - 'YELLOW_DIM'  
-  - 'YELLOW_DIM'
-  - 'YELLOW_FLASH'
-  - 'YELLOW_SIDES'
+lightbar_ind_table: ['YELLOW_DIM','YELLOW_DIM','YELLOW_FLASH','YELLOW_SIDES']
 
 
 
