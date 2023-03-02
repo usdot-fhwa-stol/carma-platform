@@ -211,15 +211,5 @@ class LightBarManagerWorker
         FRIEND_TEST(LightBarManagerNodeTest, testSetIndicator);
         FRIEND_TEST(LightBarManagerNodeTest, testTurnOffAll);
         FRIEND_TEST(LightBarManagerNodeTest, testTurnSignalCallback);
-
-    // Unit Test Accessors
-    
-    //FRIEND_TEST(Testapproaching_emergency_vehicle_plugin, testBSMProcessing);
-    //FRIEND_TEST(Testapproaching_emergency_vehicle_plugin, testRouteConflict);
-    //FRIEND_TEST(Testapproaching_emergency_vehicle_plugin, testManeuverPlanWhenWaitingForApproachingErv);
-    //FRIEND_TEST(Testapproaching_emergency_vehicle_plugin, testManeuverPlanWhenSlowingDownForErv);
-    //FRIEND_TEST(Testapproaching_emergency_vehicle_plugin, testManeuverPlanWhenMovingOverForErv);
-    //FRIEND_TEST(Testapproaching_emergency_vehicle_plugin, testWarningBroadcast);
-
 }; //class LightBarManagerWorker
 } // namespace lightbar_manager
