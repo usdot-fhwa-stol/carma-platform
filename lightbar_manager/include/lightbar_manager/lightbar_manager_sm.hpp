@@ -73,7 +73,7 @@ class LightBarManagerStateMachine
     * \brief This function triggers the transitioning to the next state in LightBarStateMachine
     * based on the guidance state change
     */
-    void handleStateChange(carma_planning_msgs::msg::GuidanceState::UniquePtr msg_ptr);
+    void handleStateChange(const carma_planning_msgs::msg::GuidanceState& msg);
 
     private:
 

@@ -70,7 +70,7 @@ class LightBarManagerWorker
         * \brief This function relays the state change msg to the state maching. 
         * It triggers the transitioning to the next state in LightBarStateMachine based on the guidance state change. 
         */
-        void handleStateChange(carma_planning_msgs::msg::GuidanceState::UniquePtr msg_ptr);
+        void handleStateChange(const carma_planning_msgs::msg::GuidanceState& msg);
 
         /*!
         * \brief This function checks if the turn signal should be changed on the lightbar

@@ -69,8 +69,8 @@ if(BUILD_TESTING)
 
   ament_add_gtest(test_lightbar_manager
                 test/lightbar_manager_node_test.cpp
-                #test/test_lightbar_manager_sm.cpp
-                #test/test_lightbar_manager_worker.cpp
+                test/test_lightbar_manager_sm.cpp
+                test/test_lightbar_manager_worker.cpp
   )
 
   ament_target_dependencies(test_lightbar_manager ${${PROJECT_NAME}_FOUND_TEST_DEPENDS})

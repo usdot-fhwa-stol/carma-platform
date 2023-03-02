@@ -69,9 +69,9 @@ namespace lightbar_manager
         return curr;
     }
 
-    void LightBarManagerWorker::handleStateChange(carma_planning_msgs::msg::GuidanceState::UniquePtr msg_ptr)
+    void LightBarManagerWorker::handleStateChange(const carma_planning_msgs::msg::GuidanceState& msg)
     {
-        lbsm_.handleStateChange(std::move(msg_ptr));
+        lbsm_.handleStateChange(msg);
         return;
     }
 

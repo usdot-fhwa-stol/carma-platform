@@ -237,7 +237,7 @@ void LightBarManager::stateChangeCallBack(carma_planning_msgs::msg::GuidanceStat
 {
     // Relay the msg to state machine
     LightBarState prev_lightbar_state = lbm_->getCurrentState();
-    lbm_->handleStateChange(std::move(msg_ptr));
+    lbm_->handleStateChange(*msg_ptr);
 
     // Change green lights depending on states, no need to check if its current owner, as it will always be for green lights
     LightBarState curr_lightbar_state = lbm_->getCurrentState();
@@ -276,37 +276,28 @@ void LightBarManager::processTurnSignal(const automotive_platform_msgs::msg::Tur
     // check if left or right signal should be controlled, or none at all
     std::vector<lightbar_manager::LightBarIndicator> changed_turn_signal = lbm_->handleTurnSignal(msg);
 
-    std::cerr << "here0a" << std::endl;
 
     if (changed_turn_signal.empty())
     {
-        std::cerr << "here0b" << std::endl;
         return; //no need to do anything if it is same turn signal changed
     }
     
     lightbar_manager::IndicatorStatus indicator_status;
-    std::cerr << "11" << std::endl;
     // check if we should turn off or on given any indicator
     if (msg.turn_signal == automotive_platform_msgs::msg::TurnSignalCommand::NONE)
     {
-        std::cerr << "12" << std::endl;
         indicator_status = lightbar_manager::IndicatorStatus::OFF;
     }
     else 
     {
         indicator_status = lightbar_manager::IndicatorStatus::ON;
-        std::cerr << "here0bb" << std::endl;
         prev_owners_before_turn_ = lbm_->getIndicatorControllers(); // save the owner if new turn is starting
-        std::cerr << "here0bbb" << std::endl;
 
     }
-    std::cerr << "here0cc" << std::endl;
     if (lbm_->requestControl(changed_turn_signal, node_name_).empty())
     {
         int response_code = 0;
-            std::cerr << "here0c" << std::endl;
         response_code = setIndicator(changed_turn_signal[0], indicator_status, node_name_);
-            std::cerr << "here0d" << std::endl;
         if (response_code != 0)
             RCLCPP_ERROR_STREAM(rclcpp::get_logger("lightbar_manager"),"In Function " << __FUNCTION__ << ": LightBarManager was not able to set light of indicator ID:" 
                 << changed_turn_signal[0] << ". Response code: " << response_code);

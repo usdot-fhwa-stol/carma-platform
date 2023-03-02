@@ -59,13 +59,13 @@ void LightBarManagerStateMachine::next(const LightBarEvent& event)
     }
 }
 
-void LightBarManagerStateMachine::handleStateChange(carma_planning_msgs::msg::GuidanceState::UniquePtr msg_ptr)
+void LightBarManagerStateMachine::handleStateChange(const carma_planning_msgs::msg::GuidanceState& msg)
 {
     // Check if the msg is as same as before
-    if (msg_ptr->state == guidance_state_)
+    if (msg.state == guidance_state_)
         return;
     
-    switch (msg_ptr->state)
+    switch (msg.state)
     {
         case carma_planning_msgs::msg::GuidanceState::STARTUP:
         case carma_planning_msgs::msg::GuidanceState::SHUTDOWN:
@@ -83,11 +83,11 @@ void LightBarManagerStateMachine::handleStateChange(carma_planning_msgs::msg::Gu
             break;
 
         default:
-            RCLCPP_WARN_STREAM(rclcpp::get_logger("lightbar_manager"),"LightBarManager received unknown state from guidance state machine:" << msg_ptr->state);
+            RCLCPP_WARN_STREAM(rclcpp::get_logger("lightbar_manager"),"LightBarManager received unknown state from guidance state machine:" << msg.state);
             break;
     }
     // Update the current state
-    guidance_state_ = msg_ptr->state;
+    guidance_state_ = msg.state;
 }
 
 void LightBarManagerStateMachine::onDisengage()
