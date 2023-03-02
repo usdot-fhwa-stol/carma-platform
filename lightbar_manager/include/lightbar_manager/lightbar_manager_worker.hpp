@@ -76,7 +76,7 @@ class LightBarManagerWorker
         * \brief This function checks if the turn signal should be changed on the lightbar
         * \return size one vector of turn signal, empty if no change is required
         */
-        std::vector<lightbar_manager::LightBarIndicator> handleTurnSignal(automotive_platform_msgs::msg::TurnSignalCommand::UniquePtr msg_ptr);
+        std::vector<lightbar_manager::LightBarIndicator> handleTurnSignal(const automotive_platform_msgs::msg::TurnSignalCommand& msg);
 
         /*!
         * \brief Releases the specified owner plugin or component's control of the given indicator list.
@@ -209,6 +209,8 @@ class LightBarManagerWorker
             {"YELLOW_ARROW_OUT", YELLOW_ARROW_OUT}};
         
         FRIEND_TEST(LightBarManagerNodeTest, testSetIndicator);
+        FRIEND_TEST(LightBarManagerNodeTest, testTurnOffAll);
+        FRIEND_TEST(LightBarManagerNodeTest, testTurnSignalCallback);
 
     // Unit Test Accessors
     

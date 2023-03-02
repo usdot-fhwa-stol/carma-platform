@@ -262,43 +262,58 @@ void LightBarManager::stateChangeCallBack(carma_planning_msgs::msg::GuidanceStat
 
 void LightBarManager::turnSignalCallback(automotive_platform_msgs::msg::TurnSignalCommand::UniquePtr msg_ptr)
 {
+    return processTurnSignal(*msg_ptr);
+}
+
+void LightBarManager::processTurnSignal(const automotive_platform_msgs::msg::TurnSignalCommand& msg)
+{
     // if not automated
-    if (msg_ptr->mode != 1)
+    if (msg.mode != 1)
     {
         return;
     }
 
     // check if left or right signal should be controlled, or none at all
-    std::vector<lightbar_manager::LightBarIndicator> changed_turn_signal = lbm_->handleTurnSignal(std::move(msg_ptr));
+    std::vector<lightbar_manager::LightBarIndicator> changed_turn_signal = lbm_->handleTurnSignal(msg);
+
+    std::cerr << "here0a" << std::endl;
 
     if (changed_turn_signal.empty())
     {
+        std::cerr << "here0b" << std::endl;
         return; //no need to do anything if it is same turn signal changed
     }
     
     lightbar_manager::IndicatorStatus indicator_status;
+    std::cerr << "11" << std::endl;
     // check if we should turn off or on given any indicator
-    if (msg_ptr->turn_signal == automotive_platform_msgs::msg::TurnSignalCommand::NONE)
+    if (msg.turn_signal == automotive_platform_msgs::msg::TurnSignalCommand::NONE)
     {
+        std::cerr << "12" << std::endl;
         indicator_status = lightbar_manager::IndicatorStatus::OFF;
     }
     else 
     {
         indicator_status = lightbar_manager::IndicatorStatus::ON;
+        std::cerr << "here0bb" << std::endl;
         prev_owners_before_turn_ = lbm_->getIndicatorControllers(); // save the owner if new turn is starting
-    }
+        std::cerr << "here0bbb" << std::endl;
 
+    }
+    std::cerr << "here0cc" << std::endl;
     if (lbm_->requestControl(changed_turn_signal, node_name_).empty())
     {
         int response_code = 0;
+            std::cerr << "here0c" << std::endl;
         response_code = setIndicator(changed_turn_signal[0], indicator_status, node_name_);
+            std::cerr << "here0d" << std::endl;
         if (response_code != 0)
             RCLCPP_ERROR_STREAM(rclcpp::get_logger("lightbar_manager"),"In Function " << __FUNCTION__ << ": LightBarManager was not able to set light of indicator ID:" 
                 << changed_turn_signal[0] << ". Response code: " << response_code);
     }
     else
     {
-        std::string turn_string = msg_ptr->turn_signal == automotive_platform_msgs::msg::TurnSignalCommand::LEFT ? "left" : "right";
+        std::string turn_string = msg.turn_signal == automotive_platform_msgs::msg::TurnSignalCommand::LEFT ? "left" : "right";
         RCLCPP_WARN_STREAM(rclcpp::get_logger("lightbar_manager"),"Lightbar was not able to take control of lightbar to indicate " << turn_string << "turn!");
         return;
     }

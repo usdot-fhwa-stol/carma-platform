@@ -43,9 +43,6 @@ TEST(LightBarManagerNodeTest, testSetIndicator)
     rclcpp_lifecycle::State dummy;
     lbm->handle_on_configure(dummy);
     lbm->handle_on_activate(dummy);
-   
-    std::cerr << "Size is: " << lbm->lbm_->control_priorities.size() << std::endl;
-    // initialize worker that is unit testable
 
     int response_code;
     /*
@@ -69,13 +66,17 @@ TEST(LightBarManagerNodeTest, testSetIndicator)
     EXPECT_EQ(1, response_code);
 
 }
-/*
+
 TEST(LightBarManagerNodeTest, testTurnOffAll) 
 {
-    LightBarManager node("lightbar_manager");
-    // initialize worker that is unit testable
-    node.init("test");
-    auto worker = node.getWorker();
+    rclcpp::NodeOptions options;
+    options.allow_undeclared_parameters(true);
+    auto lbm = std::make_shared<lightbar_manager::LightBarManager>(options);
+    setupUnitTest(lbm->lbm_);
+    rclcpp_lifecycle::State dummy;
+    lbm->handle_on_configure(dummy);
+    lbm->handle_on_activate(dummy);
+    auto worker = lbm->lbm_;
 
     // As unit test cannot actually turn on indicators, observing change in control is enough
     std::vector<LightBarIndicator> some_indicators = 
@@ -86,8 +87,8 @@ TEST(LightBarManagerNodeTest, testTurnOffAll)
     EXPECT_EQ("tester1", curr_owners[YELLOW_ARROW_OUT]);
     EXPECT_EQ("tester1", curr_owners[YELLOW_DIM]);
     // In order to turn all off, lightbar_manager has to take control and release once done
-    node.turnOffAll();
-    curr_owners= node.getWorker()->getIndicatorControllers();
+    lbm->turnOffAll();
+    curr_owners= lbm->getWorker()->getIndicatorControllers();
     EXPECT_EQ("", curr_owners[YELLOW_ARROW_LEFT]);
     EXPECT_EQ("", curr_owners[YELLOW_ARROW_OUT]);
     EXPECT_EQ("", curr_owners[YELLOW_DIM]);
@@ -95,64 +96,68 @@ TEST(LightBarManagerNodeTest, testTurnOffAll)
 
 TEST(LightBarManagerNodeTest, testTurnSignalCallback)
 {
-    LightBarManager node("lightbar_manager");
-    // initialize worker that is unit testable
-    node.init("test");
+    rclcpp::NodeOptions options;
+    options.allow_undeclared_parameters(true);
+    auto lbm = std::make_shared<lightbar_manager::LightBarManager>(options);
+    setupUnitTest(lbm->lbm_);
+    rclcpp_lifecycle::State dummy;
+    lbm->handle_on_configure(dummy);
+    lbm->handle_on_activate(dummy);
+    auto worker = lbm->lbm_;
+
     //rclcpp::service::waitForService("/hardware_interface/lightbar/set_lights", rclcpp::Duration(60, 0));
-    node.getWorker()->control_priorities.push_back("tester_left");
-    node.getWorker()->control_priorities.push_back("tester_right");
+    lbm->getWorker()->control_priorities.push_back("tester_left");
+    lbm->getWorker()->control_priorities.push_back("tester_right");
     RCLCPP_ERROR_STREAM(rclcpp::get_logger("lightbar_manager"),"Below 'LightBarManager was not able to set light...' errors are expected");
-    automotive_platform_msgs::msg::TurnSignalCommandPtr msg_ptr = boost::make_shared<automotive_platform_msgs::msg::TurnSignalCommand>();
-    msg_ptr->mode = 1;
+    automotive_platform_msgs::msg::TurnSignalCommand msg;
+    msg.mode = 1;
     // turn right (no prev owner)
-    msg_ptr->turn_signal = automotive_platform_msgs::msg::TurnSignalCommand::RIGHT;
-    node.turnSignalCallback(msg_ptr);
-    std::map<lightbar_manager::LightBarIndicator, std::string> owners = node.getWorker()->getIndicatorControllers();
+    msg.turn_signal = automotive_platform_msgs::msg::TurnSignalCommand::RIGHT;
+    lbm->processTurnSignal(msg);
+    std::map<lightbar_manager::LightBarIndicator, std::string> owners = lbm->getWorker()->getIndicatorControllers();
     EXPECT_TRUE(owners[YELLOW_ARROW_RIGHT].compare("lightbar_manager") == 0);
-    msg_ptr->turn_signal = automotive_platform_msgs::msg::TurnSignalCommand::NONE;
-    node.turnSignalCallback(msg_ptr);
-    owners = node.getWorker()->getIndicatorControllers();
+    msg.turn_signal = automotive_platform_msgs::msg::TurnSignalCommand::NONE;
+    lbm->processTurnSignal(msg);
+    owners = lbm->getWorker()->getIndicatorControllers();
     EXPECT_TRUE(owners[YELLOW_ARROW_RIGHT].compare("") == 0);
 
     // through other mutually inclusive lights, it was on before the turn
-    node.getWorker()->requestControl({YELLOW_ARROW_LEFT}, "tester_left");
-    node.getWorker()->requestControl({YELLOW_ARROW_RIGHT}, "tester_unaffected");
-    owners =node.getWorker()->getIndicatorControllers();
+    lbm->getWorker()->requestControl({YELLOW_ARROW_LEFT}, "tester_left");
+    lbm->getWorker()->requestControl({YELLOW_ARROW_RIGHT}, "tester_unaffected");
+    owners =lbm->getWorker()->getIndicatorControllers();
     EXPECT_TRUE(owners[YELLOW_ARROW_LEFT].compare("tester_left") == 0);
     EXPECT_TRUE(owners[YELLOW_ARROW_RIGHT].compare("tester_unaffected") == 0);
     // turn left and finish
-    msg_ptr->turn_signal = automotive_platform_msgs::msg::TurnSignalCommand::LEFT;
-    node.turnSignalCallback(msg_ptr);
-    msg_ptr->turn_signal = automotive_platform_msgs::msg::TurnSignalCommand::NONE;
-    node.turnSignalCallback(msg_ptr);
+    msg.turn_signal = automotive_platform_msgs::msg::TurnSignalCommand::LEFT;
+    lbm->processTurnSignal(msg);
+    msg.turn_signal = automotive_platform_msgs::msg::TurnSignalCommand::NONE;
+    lbm->processTurnSignal(msg);
     // make sure the previous owner is there
-    owners = node.getWorker()->getIndicatorControllers();
+    owners = lbm->getWorker()->getIndicatorControllers();
     EXPECT_TRUE(owners[YELLOW_ARROW_LEFT].compare("tester_left") == 0);
     EXPECT_TRUE(owners[YELLOW_ARROW_RIGHT].compare("tester_unaffected") == 0);
 
     // through other mutually inclusive lights, it was on before the turn
-    node.getWorker()->requestControl({YELLOW_ARROW_RIGHT}, "tester_right");
-    owners =node.getWorker()->getIndicatorControllers();
+    lbm->getWorker()->requestControl({YELLOW_ARROW_RIGHT}, "tester_right");
+    owners =lbm->getWorker()->getIndicatorControllers();
     EXPECT_TRUE(owners[YELLOW_ARROW_RIGHT].compare("tester_right") == 0);
     // turn right and don't finish 
-    msg_ptr->turn_signal = automotive_platform_msgs::msg::TurnSignalCommand::RIGHT;
-    node.turnSignalCallback(msg_ptr);
+    msg.turn_signal = automotive_platform_msgs::msg::TurnSignalCommand::RIGHT;
+    lbm->processTurnSignal(msg);
     // middle of turn
-    owners =node.getWorker()->getIndicatorControllers();
+    owners =lbm->getWorker()->getIndicatorControllers();
     EXPECT_TRUE(owners[YELLOW_ARROW_RIGHT].compare("lightbar_manager") == 0);
-    node.turnSignalCallback(msg_ptr);
-    owners =node.getWorker()->getIndicatorControllers();
+    lbm->processTurnSignal(msg);
+    owners =lbm->getWorker()->getIndicatorControllers();
     EXPECT_TRUE(owners[YELLOW_ARROW_RIGHT].compare("lightbar_manager") == 0);
-    msg_ptr->turn_signal = automotive_platform_msgs::msg::TurnSignalCommand::NONE;
-    node.turnSignalCallback(msg_ptr);
+    msg.turn_signal = automotive_platform_msgs::msg::TurnSignalCommand::NONE;
+    lbm->processTurnSignal(msg);
     // make sure the previous owner is there
-    owners = node.getWorker()->getIndicatorControllers();
+    owners = lbm->getWorker()->getIndicatorControllers();
     EXPECT_TRUE(owners[YELLOW_ARROW_LEFT].compare("tester_left") == 0);
     EXPECT_TRUE(owners[YELLOW_ARROW_RIGHT].compare("tester_right") == 0);
-
+    
 }
-*/
-
 
 } // namespace lightbar_manager
 

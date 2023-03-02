@@ -109,12 +109,12 @@ class LightBarManager : public carma_ros2_utils::CarmaLifecycleNode
     private:
         
         Config config_;
-        
+
         /*!
-        * \brief Helper function that sets up ROS parameters for unit test
-        * \return none
+        * \brief Turn signal callback function helper
+        * \return 
         */
-        void setupUnitTest();
+        void processTurnSignal(const automotive_platform_msgs::msg::TurnSignalCommand& msg);
 
         // Node Data
         std::string node_name_ = "lightbar_manager";
@@ -154,8 +154,9 @@ class LightBarManager : public carma_ros2_utils::CarmaLifecycleNode
 
         rclcpp::TimerBase::SharedPtr pub_timer_;
 
-
         FRIEND_TEST(LightBarManagerNodeTest, testSetIndicator);
+        FRIEND_TEST(LightBarManagerNodeTest, testTurnOffAll);
+        FRIEND_TEST(LightBarManagerNodeTest, testTurnSignalCallback);
 
 }; //class LightBarManagerNode
 } // namespace lightbar_manager
