@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2021 LEIDOS.
+ * Copyright (C) 2023 LEIDOS.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -14,26 +14,26 @@
  * the License.
  */
 
-#ifndef _LIGHTBAR_MANAGER_WORKER_H
-#define _LIGHTBAR_MANAGER_WORKER_H
-
+#pragma once
+#include <gtest/gtest.h>
 #include <string>
-#include <ros/ros.h>
-#include <carma_utils/CARMAUtils.h>
+#include <rclcpp/rclcpp.hpp>
+#include <carma_ros2_utils/carma_lifecycle_node.hpp>
+
 #include <vector>
 #include <map>
 
-#include <cav_msgs/LightBarCDAType.h>
-#include <cav_msgs/LightBarIndicator.h>
-#include <cav_msgs/LightBarIndicatorControllers.h>
-#include <cav_msgs/LightBarStatus.h>
-#include <cav_msgs/GuidanceState.h>
-#include <automotive_platform_msgs/TurnSignalCommand.h>
+#include <carma_msgs/msg/light_bar_cda_type.hpp>
+#include <carma_msgs/msg/light_bar_indicator.hpp>
+#include <carma_msgs/msg/light_bar_indicator_controllers.hpp>
+#include <carma_driver_msgs/msg/light_bar_status.hpp>
+#include <carma_planning_msgs/msg/guidance_state.hpp>
+#include <automotive_platform_msgs/msg/turn_signal_command.hpp>
 
-#include <cav_srvs/RequestIndicatorControl.h>
-#include <cav_srvs/ReleaseIndicatorControl.h>
-#include <cav_srvs/SetLightBarIndicator.h>
-#include <cav_srvs/SetLights.h>
+#include <carma_msgs/srv/request_indicator_control.hpp>
+#include <carma_msgs/srv/release_indicator_control.hpp>
+#include <carma_driver_msgs/srv/set_light_bar_indicator.hpp>
+#include <carma_driver_msgs/srv/set_lights.hpp>
 
 #include "lightbar_manager/lightbar_manager_sm.hpp"
 #define INDICATOR_COUNT 8
@@ -52,7 +52,7 @@ class LightBarManagerWorker
         /*!
         * \brief Default constructor for LightBarManager
         */
-        LightBarManagerWorker(std::string node_name);
+        LightBarManagerWorker();
 
         /*!
         * \brief Get current state of the LightBarStateMachine
@@ -70,13 +70,13 @@ class LightBarManagerWorker
         * \brief This function relays the state change msg to the state maching. 
         * It triggers the transitioning to the next state in LightBarStateMachine based on the guidance state change. 
         */
-        void handleStateChange(const cav_msgs::GuidanceStateConstPtr& msg_ptr);
+        void handleStateChange(const carma_planning_msgs::msg::GuidanceState& msg);
 
         /*!
         * \brief This function checks if the turn signal should be changed on the lightbar
         * \return size one vector of turn signal, empty if no change is required
         */
-        std::vector<lightbar_manager::LightBarIndicator> handleTurnSignal(const automotive_platform_msgs::TurnSignalCommandPtr& msg_ptr);
+        std::vector<lightbar_manager::LightBarIndicator> handleTurnSignal(const automotive_platform_msgs::msg::TurnSignalCommand& msg);
 
         /*!
         * \brief Releases the specified owner plugin or component's control of the given indicator list.
@@ -115,7 +115,7 @@ class LightBarManagerWorker
         * \brief Helper function that initializes CDAType to Indicator Mapping (updates internal copy)
         * \return return the mapping for debug purposes. 
         */
-        std::map<LightBarCDAType, LightBarIndicator> setIndicatorCDAMap(std::map<std::string, std::string> raw_map);
+        std::map<LightBarCDAType, LightBarIndicator> setIndicatorCDAMap(const std::vector<std::string>& lightbar_cda_table, const std::vector<std::string>& lightbar_ind_table);
 
         /*!
         * \brief Helper function that gets all current owners of the indicator.
@@ -150,25 +150,25 @@ class LightBarManagerWorker
         * \brief Helper function that translates IndicatorStatus vector into LightBarStatus.msg, a lightbar driver compatible msg.
         * \return light bar status
         */
-        cav_msgs::LightBarStatus getLightBarStatusMsg(std::vector<IndicatorStatus> indicators);
+        carma_driver_msgs::msg::LightBarStatus getLightBarStatusMsg(std::vector<IndicatorStatus> indicators);
 
         /*!
         * \brief Helper function that translates LightBarIndicator vector into LightBarIndicator.msg vector.
         * \return LightBarIndicator.msg vector
         */
-        std::vector<cav_msgs::LightBarIndicator> getMsg(std::vector<LightBarIndicator> indicators);
+        std::vector<carma_msgs::msg::LightBarIndicator> getMsg(std::vector<LightBarIndicator> indicators);
 
         /*!
         * \brief Helper function that translates LightBarIndicator vector into LightBarIndicator.msg vector.
         * \return LightBarCDAType.msg vector
         */
-        std::vector<cav_msgs::LightBarCDAType> getMsg(std::vector<LightBarCDAType> cda_types);
+        std::vector<carma_msgs::msg::LightBarCDAType> getMsg(std::vector<LightBarCDAType> cda_types);
 
         /*!
         * \brief Helper function that translates mapping of indicators to their owners into Msg
         * \return LightBarIndicatorControlllers.msg
         */
-        cav_msgs::LightBarIndicatorControllers getMsg(std::map<LightBarIndicator, std::string> ind_ctrl_map);
+        carma_msgs::msg::LightBarIndicatorControllers getMsg(std::map<LightBarIndicator, std::string> ind_ctrl_map);
 
         // Priorities of components/plugins read from ROSParamter
         std::vector<std::string> control_priorities;
@@ -178,8 +178,6 @@ class LightBarManagerWorker
 
     private:
         
-        // Node data
-        std::string node_name_;
 
         // LightBarManager state machine
         LightBarManagerStateMachine lbsm_;
@@ -191,7 +189,7 @@ class LightBarManagerWorker
         std::map<LightBarCDAType, LightBarIndicator> cda_ind_map_;
 
         // Current turn signal
-        uint8_t current_turn_signal_ = automotive_platform_msgs::TurnSignalCommand::NONE;
+        uint8_t current_turn_signal_ = automotive_platform_msgs::msg::TurnSignalCommand::NONE;
 
         // Helper maps that convert string into enum representations when reading from ROSParameter
         std::map<std::string, LightBarCDAType> cda_type_dict_ = {
@@ -199,6 +197,7 @@ class LightBarManagerWorker
             {"TypeB",TYPE_B},
             {"TypeC",TYPE_C},
             {"TypeD",TYPE_D}};
+            
         std::map<std::string, LightBarIndicator> ind_dict = {
             {"GREEN_SOLID", GREEN_SOLID},
             {"GREEN_FLASH", GREEN_FLASH},
@@ -208,8 +207,9 @@ class LightBarManagerWorker
             {"YELLOW_ARROW_LEFT", YELLOW_ARROW_LEFT},
             {"YELLOW_ARROW_RIGHT", YELLOW_ARROW_RIGHT},
             {"YELLOW_ARROW_OUT", YELLOW_ARROW_OUT}};
-
+        
+        FRIEND_TEST(LightBarManagerNodeTest, testSetIndicator);
+        FRIEND_TEST(LightBarManagerNodeTest, testTurnOffAll);
+        FRIEND_TEST(LightBarManagerNodeTest, testTurnSignalCallback);
 }; //class LightBarManagerWorker
 } // namespace lightbar_manager
-
-#endif //_LIGHTBAR_MANAGER_WORKER_H

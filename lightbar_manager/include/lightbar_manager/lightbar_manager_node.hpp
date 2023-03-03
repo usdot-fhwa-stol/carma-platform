@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2021 LEIDOS.
+ * Copyright (C) 2023 LEIDOS.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -14,52 +14,68 @@
  * the License.
  */
 
-#ifndef _LIGHTBAR_MANAGER_H
-#define _LIGHTBAR_MANAGER_H
+#pragma once
 
 #include <string>
-#include <ros/ros.h>
-#include <carma_utils/CARMAUtils.h>
+#include <rclcpp/rclcpp.hpp>
+#include <carma_ros2_utils/carma_lifecycle_node.hpp>
+
 #include <vector>
 #include <map>
 
-#include <cav_msgs/LightBarCDAType.h>
-#include <cav_msgs/LightBarIndicator.h>
-#include <cav_msgs/LightBarIndicatorControllers.h>
-#include <cav_msgs/LightBarStatus.h>
-#include <cav_msgs/GuidanceState.h>
-#include <automotive_platform_msgs/TurnSignalCommand.h>
+#include <carma_msgs/msg/light_bar_cda_type.hpp>
+#include <carma_msgs/msg/light_bar_indicator.hpp>
+#include <carma_msgs/msg/light_bar_indicator_controllers.hpp>
+#include <carma_driver_msgs/msg/light_bar_status.hpp>
+#include <carma_planning_msgs/msg/guidance_state.hpp>
+#include <automotive_platform_msgs/msg/turn_signal_command.hpp>
 
-#include <cav_srvs/RequestIndicatorControl.h>
-#include <cav_srvs/ReleaseIndicatorControl.h>
-#include <cav_srvs/SetLightBarIndicator.h>
-#include <cav_srvs/SetLights.h>
+#include <carma_msgs/srv/request_indicator_control.hpp>
+#include <carma_msgs/srv/release_indicator_control.hpp>
+#include <carma_driver_msgs/srv/set_light_bar_indicator.hpp>
+#include <carma_driver_msgs/srv/set_lights.hpp>
 
 #include "lightbar_manager/lightbar_manager_worker.hpp"
 
 namespace lightbar_manager
 {
 
-class LightBarManager
+/**
+ * \brief Config struct
+ */
+struct Config
+{
+    double spin_rate_hz = 10.0;
+    bool normal_operation = true;   // if false, other plugins are able to take control over the lightbar status
+    std::vector<std::string> lightbar_priorities = {}; // Tsesters are for unit testing. Keep it there.
+    std::vector<std::string> lightbar_cda_table = {}; // Keys for lightbar_cda_to_ind_table, 1-to-1 with lightbar_ind_table
+    std::vector<std::string> lightbar_ind_table = {}; // Values for lightbar_cda_to_ind_table, 1-to-1 with lightbar_cda_table
+
+    // Stream operator for this config
+    friend std::ostream &operator<<(std::ostream &output, const Config &c)
+    {
+      output << "LightBarManager::Config { " << std::endl
+           << "spin_rate_hz: " << c.spin_rate_hz << std::endl
+           << "lightbar_priorities.size(): " << c.lightbar_priorities.size() << std::endl
+           << "lightbar_cda_table.size(): " << c.lightbar_cda_table.size() << std::endl
+           << "lightbar_ind_table.size(): " << c.lightbar_ind_table.size() << std::endl
+           << "}" << std::endl;
+      return output;
+    }
+
+};
+
+class LightBarManager : public carma_ros2_utils::CarmaLifecycleNode
 {
     public:
 
-        /*!
-        * \brief Default constructor for LightBarManager node
-        */
-        LightBarManager(const std::string& node_name);
-
-        /*!
-        * \brief Initialize ROS related functions. Pass "test" to setup ROS parameters for unit testing
-        */
-        void init(std::string mode = "");
-
-        /*!
-        * \brief Begin normal execution of LightBarManager worker. Will take over control flow of program and exit from here.
-        * \return The exit status of this program
-        */
-        int run();
-
+        /**
+         * \class LightBarManager
+         * \brief The class responsible for managing light bar status based on the guidance status
+         * 
+         */
+        explicit LightBarManager(const rclcpp::NodeOptions &);
+        
         /*!
         * \brief Get ptr to lightbar_manager_worker (for ease of unit testing)
         * \return LightBarManagerWorker
@@ -82,49 +98,70 @@ class LightBarManager
         * \brief Callback function for turning signal
         * \return 
         */
-        void turnSignalCallback(const automotive_platform_msgs::TurnSignalCommandPtr& msg_ptr);
+        void turnSignalCallback(automotive_platform_msgs::msg::TurnSignalCommand::UniquePtr msg_ptr);
+
+        ////
+        // Overrides
+        ////
+        carma_ros2_utils::CallbackReturn handle_on_configure(const rclcpp_lifecycle::State &);
+        carma_ros2_utils::CallbackReturn handle_on_activate(const rclcpp_lifecycle::State &);
 
     private:
+        
+        Config config_;
+
         /*!
-        * \brief Helper function that sets up ROS parameters for unit test
-        * \return none
+        * \brief Turn signal callback function helper
+        * \return 
         */
-        void setupUnitTest();
+        void processTurnSignal(const automotive_platform_msgs::msg::TurnSignalCommand& msg);
 
         // Node Data
-        std::string node_name_;
-        double spin_rate_;
+        std::string node_name_ = "lightbar_manager";
+        double spin_rate_ = 10.0;
         std::map<lightbar_manager::LightBarIndicator, std::string> prev_owners_before_turn_;
 
         // spin callback function
         bool spinCallBack();
 
         // Message/service callbacks
-        bool requestControlCallBack(cav_srvs::RequestIndicatorControlRequest& req, cav_srvs::RequestIndicatorControlResponse& res);
-        bool releaseControlCallBack(cav_srvs::ReleaseIndicatorControlRequest& req, cav_srvs::ReleaseIndicatorControlResponse& res);
-        bool setIndicatorCallBack(cav_srvs::SetLightBarIndicatorRequest& req, cav_srvs::SetLightBarIndicatorResponse& res);
-        void stateChangeCallBack(const cav_msgs::GuidanceStateConstPtr& msg_ptr);
+        bool requestControlCallBack(const std::shared_ptr<rmw_request_id_t>,
+                                const std::shared_ptr<carma_msgs::srv::RequestIndicatorControl::Request> req,
+                                std::shared_ptr<carma_msgs::srv::RequestIndicatorControl::Response> resp);
+        bool releaseControlCallBack(const std::shared_ptr<rmw_request_id_t>,
+                                const std::shared_ptr<carma_msgs::srv::ReleaseIndicatorControl::Request> req,
+                                std::shared_ptr<carma_msgs::srv::ReleaseIndicatorControl::Response> resp);
+        bool setIndicatorCallBack(const std::shared_ptr<rmw_request_id_t>,
+                                const std::shared_ptr<carma_driver_msgs::srv::SetLightBarIndicator::Request> req,
+                                std::shared_ptr<carma_driver_msgs::srv::SetLightBarIndicator::Response> resp);
+        void stateChangeCallBack(carma_planning_msgs::msg::GuidanceState::UniquePtr msg_ptr);
 
         // Service servers/clients
-        ros::ServiceServer request_control_server_;
-        ros::ServiceServer release_control_server_;
-        ros::ServiceServer set_indicator_server_;
-        ros::ServiceClient lightbar_driver_client_;
+        carma_ros2_utils::ServicePtr<carma_msgs::srv::RequestIndicatorControl> request_control_server_;
+        carma_ros2_utils::ServicePtr<carma_msgs::srv::ReleaseIndicatorControl> release_control_server_;
+        carma_ros2_utils::ServicePtr<carma_driver_msgs::srv::SetLightBarIndicator> set_indicator_server_;
+        carma_ros2_utils::ClientPtr<carma_driver_msgs::srv::SetLights> lightbar_driver_client_;
 
         // Publishers
-        ros::Publisher indicator_control_publisher_;
+        carma_ros2_utils::PubPtr<carma_msgs::msg::LightBarIndicatorControllers> indicator_control_publisher_;
 
         // Subscribers
-        ros::Subscriber guidance_state_subscriber_;
-        ros::Subscriber turn_signal_subscriber_;
-
-        // Node handles
-        ros::CARMANodeHandle nh_{"lightbar_manager"}, pnh_{"~"};
+        carma_ros2_utils::SubPtr<carma_planning_msgs::msg::GuidanceState> guidance_state_subscriber_;
+        carma_ros2_utils::SubPtr<automotive_platform_msgs::msg::TurnSignalCommand> turn_signal_subscriber_;
 
         // LightBarManager Worker
         std::shared_ptr<LightBarManagerWorker> lbm_;
 
+        rclcpp::TimerBase::SharedPtr pub_timer_;
+
+        FRIEND_TEST(LightBarManagerNodeTest, testSetIndicator);
+        FRIEND_TEST(LightBarManagerNodeTest, testTurnOffAll);
+        FRIEND_TEST(LightBarManagerNodeTest, testTurnSignalCallback);
+
 }; //class LightBarManagerNode
 } // namespace lightbar_manager
 
-#endif //_LIGHTBAR_MANAGER_H
+#include "rclcpp_components/register_node_macro.hpp"
+
+// Register the component with class_loader
+RCLCPP_COMPONENTS_REGISTER_NODE(lightbar_manager::LightBarManager)

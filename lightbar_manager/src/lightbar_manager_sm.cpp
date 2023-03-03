@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2021 LEIDOS.
+ * Copyright (C) 2023 LEIDOS.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -59,35 +59,35 @@ void LightBarManagerStateMachine::next(const LightBarEvent& event)
     }
 }
 
-void LightBarManagerStateMachine::handleStateChange(const cav_msgs::GuidanceStateConstPtr& msg_ptr)
+void LightBarManagerStateMachine::handleStateChange(const carma_planning_msgs::msg::GuidanceState& msg)
 {
     // Check if the msg is as same as before
-    if (msg_ptr->state == guidance_state_)
+    if (msg.state == guidance_state_)
         return;
     
-    switch (msg_ptr->state)
+    switch (msg.state)
     {
-        case cav_msgs::GuidanceState::STARTUP:
-        case cav_msgs::GuidanceState::SHUTDOWN:
+        case carma_planning_msgs::msg::GuidanceState::STARTUP:
+        case carma_planning_msgs::msg::GuidanceState::SHUTDOWN:
             onDisengage();
             break;
 
-        case cav_msgs::GuidanceState::ACTIVE:
-        case cav_msgs::GuidanceState::DRIVERS_READY:
-        case cav_msgs::GuidanceState::INACTIVE:
+        case carma_planning_msgs::msg::GuidanceState::ACTIVE:
+        case carma_planning_msgs::msg::GuidanceState::DRIVERS_READY:
+        case carma_planning_msgs::msg::GuidanceState::INACTIVE:
             onActive();
             break;
 
-        case cav_msgs::GuidanceState::ENGAGED:
+        case carma_planning_msgs::msg::GuidanceState::ENGAGED:
             onEngage();
             break;
 
         default:
-            ROS_WARN_STREAM("LightBarManager received unknown state from guidance state machine:" << msg_ptr->state);
+            RCLCPP_WARN_STREAM(rclcpp::get_logger("lightbar_manager"),"LightBarManager received unknown state from guidance state machine:" << msg.state);
             break;
     }
     // Update the current state
-    guidance_state_ = msg_ptr->state;
+    guidance_state_ = msg.state;
 }
 
 void LightBarManagerStateMachine::onDisengage()
@@ -98,7 +98,7 @@ void LightBarManagerStateMachine::onDisengage()
 void LightBarManagerStateMachine::onActive()
 {
     // Transitioning FROM ENGAGED state to Active
-    if (guidance_state_ == cav_msgs::GuidanceState::ENGAGED)
+    if (guidance_state_ == carma_planning_msgs::msg::GuidanceState::ENGAGED)
         next(GUIDANCE_DISCONNECTED);
     // Transitioning FROM all "OFF" states of guidance for lightbar (STARTUP, DRIVERS_READY, INACTIVE, OFF)
     else
