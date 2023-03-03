@@ -60,7 +60,7 @@ if(BUILD_TESTING)
   find_package(ament_lint_auto REQUIRED)
   ament_lint_auto_find_test_dependencies() # This populates the ${${PROJECT_NAME}_FOUND_TEST_DEPENDS} variable
 
-  ament_add_gtest(test_approaching_emergency_vehicle_plugin test/test_approaching_erv.cpp)
+  ament_add_gtest(test_approaching_emergency_vehicle_plugin test/test_approaching_erv.cpp TIMEOUT 90) # Increase timeout due to longer unit tests
 
   ament_target_dependencies(test_approaching_emergency_vehicle_plugin ${${PROJECT_NAME}_FOUND_TEST_DEPENDS})
 
