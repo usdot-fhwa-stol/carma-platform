@@ -367,7 +367,7 @@ namespace approaching_emergency_vehicle_plugin
     rclcpp::TimerBase::SharedPtr warning_broadcast_timer_;
 
     // Timer used to trigger the publication of a message describing the status of this plugin and the ego vehicle's current action in response to an approaching ERV
-    rclcpp::TimerBase::SharedPtr approaching_emergency_vehicle_status_timer_
+    rclcpp::TimerBase::SharedPtr approaching_emergency_vehicle_status_timer_;
 
     // Object to store the parameters of an upcoming lane change maneuver so that the same parameters are used when the
     //        maneuver plan is regenerated
