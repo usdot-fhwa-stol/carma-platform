@@ -85,7 +85,7 @@ namespace approaching_emergency_vehicle_plugin
   struct UpcomingLaneChangeParameters{
     lanelet::ConstLanelet starting_lanelet; // The starting lanelet of the upcoming lane change
     lanelet::ConstLanelet ending_lanelet;   // The ending lanelet of the upcoming lane change
-    bool is_right_lane_change;              // Flag to indicate lane change direction; true if a right lane change
+    bool is_right_lane_change;              // Flag to indicate lane change direction; true if a right lane change, false if a left lane change
     double start_dist;                      // The starting downtrack of the upcoming lane change
     double end_dist;                        // The ending downtrack of the upcoming lane change
     double start_speed;                     // The start speed of the upcoming lane change
