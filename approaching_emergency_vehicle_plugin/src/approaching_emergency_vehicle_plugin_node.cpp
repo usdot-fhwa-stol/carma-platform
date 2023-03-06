@@ -255,10 +255,10 @@ namespace approaching_emergency_vehicle_plugin
 
     /**
       * Note: APPROACHING_ERV_STATUS_PARAMS format:
-      *       "HAS_APPROACHING_ERV:%1%,TIME_UNTIL_PASSING:%2%,EGO_VEHICLE_ACTION:%3%"
+      *       "HAS_APPROACHING_ERV:%1%,TIME_UNTIL_PASSING:%2$.1f,EGO_VEHICLE_ACTION:%3%"
       *       |--------0----------------------1----------------------2--------------|
       *       Index 0: (Boolean) Value indicating whether the ego vehicle is tracking an approaching ERV
-      *       Index 1: (Double; precision 6)  If an approaching ERV exists, this indicates the estimated seconds until the ERV passes the ego vehicle.
+      *       Index 1: (Double; rounded to first decimal place)  If an approaching ERV exists, this indicates the estimated seconds until the ERV passes the ego vehicle.
       *       Index 2: (String)  If an approaching ERV exists, this describes the current action of the ego vehicle in response to the approaching ERV. 
       *       NOTE: The values of indexes 1 and 2 can be ignored if index 0 indicates that no approaching ERV is being tracked.
       */

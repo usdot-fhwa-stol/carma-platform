@@ -347,11 +347,11 @@ namespace approaching_emergency_vehicle_plugin
     /**
       * Formatted string for conveying the status of this plugin and the ego vehicle's current action in response to an approaching ERV.
       *    - Index 0: (Boolean) Value indicating whether the ego vehicle is tracking an approaching ERV
-      *    - Index 1: (Double; precision 6)  If an approaching ERV exists, this indicates the estimated seconds until the ERV passes the ego vehicle.
+      *    - Index 1: (Double; rounded to first decimal place)  If an approaching ERV exists, this indicates the estimated seconds until the ERV passes the ego vehicle.
       *    - Index 2: (String)  If an approaching ERV exists, this describes the current action of the ego vehicle in response to the approaching ERV. 
       *    - NOTE: The values of indexes 1 and 2 can be ignored if index 0 indicates that no approaching ERV is being tracked.
       */
-    const std::string APPROACHING_ERV_STATUS_PARAMS = "HAS_APPROACHING_ERV:%1%,TIME_UNTIL_PASSING:%2%,EGO_VEHICLE_ACTION:%3%";
+    const std::string APPROACHING_ERV_STATUS_PARAMS = "HAS_APPROACHING_ERV:%1%,TIME_UNTIL_PASSING:%2$.1f,EGO_VEHICLE_ACTION:%3%";
 
     // Timer used to check whether a timeout has occurred with the currently-tracked ERV
     rclcpp::TimerBase::SharedPtr erv_timeout_timer_;
