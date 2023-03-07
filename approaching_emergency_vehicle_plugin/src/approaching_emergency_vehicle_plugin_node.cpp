@@ -292,12 +292,15 @@ namespace approaching_emergency_vehicle_plugin
       case ApproachingEmergencyVehicleState::SLOWING_DOWN_FOR_ERV:
         // Add ego vehicle action based on whether the current speed is near the reduced target speed of the latest maneuver plan's first maneuver
         if(!latest_maneuver_plan_.maneuvers.empty()){
-          double target_speed = getManeuverEndSpeed(latest_maneuver_plan_.maneuvers[0]);
-          if(abs(current_speed_ - target_speed) <= config_.reduced_speed_buffer){
-            fmter %"Remaining in the current lane at a reduced speed limit.";
+          // Extract the target speed in m/s from the latest maneuver plan's first maneuver and convert it to mph
+          double target_speed_ms = getManeuverEndSpeed(latest_maneuver_plan_.maneuvers[0]);
+          int target_speed_mph = std::round(target_speed_ms * METERS_PER_SEC_TO_MILES_PER_HOUR);
+
+          if(abs(current_speed_ - target_speed_ms) <= config_.reduced_speed_buffer){
+            fmter %("Remaining in the current lane at a reduced speed of " + std::to_string(target_speed_mph) + " mph.");
           }
           else{
-            fmter %"Remaining in the current lane and slowing down to a reduced speed limit.";
+            fmter %("Remaining in the current lane and slowing down to a reduced speed of " + std::to_string(target_speed_mph) + " mph.");
           }
         }
         else{

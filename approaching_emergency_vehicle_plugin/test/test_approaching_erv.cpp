@@ -995,14 +995,14 @@ namespace approaching_emergency_vehicle_plugin{
 
         status_msg = worker_node->generateApproachingErvStatusMessage();
         ASSERT_EQ(status_msg.type, carma_msgs::msg::UIInstructions::INFO);
-        ASSERT_EQ(status_msg.msg, "HAS_APPROACHING_ERV:1,TIME_UNTIL_PASSING:1.6,EGO_VEHICLE_ACTION:Remaining in the current lane and slowing down to a reduced speed limit.");
+        ASSERT_EQ(status_msg.msg, "HAS_APPROACHING_ERV:1,TIME_UNTIL_PASSING:1.6,EGO_VEHICLE_ACTION:Remaining in the current lane and slowing down to a reduced speed of 15 mph.");
 
         // Generate status message when an ERV is being tracked in state SLOWING_DOWN_FOR_ERV with ego vehicle travelling near the the target reduced speed, and verify the output
         worker_node->current_speed_ = 6.8; // (m/s), within threshold (config_.reduced_speed_buffer) of first maneuver's target speed (end_speed)
 
         status_msg = worker_node->generateApproachingErvStatusMessage();
         ASSERT_EQ(status_msg.type, carma_msgs::msg::UIInstructions::INFO);
-        ASSERT_EQ(status_msg.msg, "HAS_APPROACHING_ERV:1,TIME_UNTIL_PASSING:1.6,EGO_VEHICLE_ACTION:Remaining in the current lane at a reduced speed limit.");
+        ASSERT_EQ(status_msg.msg, "HAS_APPROACHING_ERV:1,TIME_UNTIL_PASSING:1.6,EGO_VEHICLE_ACTION:Remaining in the current lane at a reduced speed of 15 mph.");
 
         // Generate status message when an ERV is being tracked in state SLOWING_DOWN_FOR_ERV without a generated maneuver plan, and verify an exception is thrown
         carma_planning_msgs::msg::ManeuverPlan empty_maneuver_plan;

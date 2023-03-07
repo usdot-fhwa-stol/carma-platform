@@ -93,6 +93,9 @@ namespace approaching_emergency_vehicle_plugin
     std::string maneuver_id;                // The maneuver ID of the upcoming lane change
   };
 
+  // Constant for converting from meters per second to miles per hour
+  constexpr double METERS_PER_SEC_TO_MILES_PER_HOUR = 2.23694;
+
   /**
    * \brief Class that implements the Approaching Emergency Vehicle Plugin (ERV) strategic plugin. This
    * class is primarily responsible for handling ROS topic subscriptions, publications, and service callbacks
