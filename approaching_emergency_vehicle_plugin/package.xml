@@ -33,6 +33,7 @@
   <depend>carma_guidance_plugins</depend>
   <depend>carma_v2x_msgs</depend>
   <depend>carma_planning_msgs</depend>
+  <depend>carma_msgs</depend>
   <depend>geometry_msgs</depend>
   <depend>carma_wm_ros2</depend>
   <depend>lanelet2_core</depend>

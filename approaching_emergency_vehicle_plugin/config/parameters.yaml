@@ -37,6 +37,11 @@ minimum_reduced_speed_limit : 2.2352 # NOTE: 2.2352 m/s is 5 mph
 # Units: m/s
 default_speed_limit : 2.2352 # NOTE: 2.2352 m/s is 5 mph
 
+# Double: A buffer value; if the ego vehicle speed is within this speed of its target speed when slowing down for an actively passing
+#         ERV, then this plugin will state in its approaching ERV status message that the ego vehicle has finished slowing down.
+# Units: m/s
+reduced_speed_buffer : 1.1176 # NOTE: 1.1176 m/s to 2.5 mph
+
 # Double: The frequency at which this plugin will check whether a timeout has occurred for the currently-tracked ERV.
 # Units: Hz
 timeout_check_frequency : 2.0
@@ -45,6 +50,11 @@ timeout_check_frequency : 2.0
 #         this plugin. 
 # Units: Seconds
 timeout_duration : 5.0
+
+# Double: The frequency at which this plugin will publish status updates to the Web UI that describe the estimated time until an approaching ERV
+#         passes the ego vehicle, and a description of the ego vehicle's path plan in response to the approaching ERV. 
+# Units: Hz
+approaching_erv_status_publication_frequency : 1.0
 
 # Double: The frequency at which this plugin will broadcast EmergencyVehicleResponse warning messages to the currently-tracked ERV
 #         when the ego vehicle is in the approaching ERV's path but is unable to change lanes.

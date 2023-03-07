@@ -145,6 +145,44 @@ def generate_launch_description():
         ]
     )
 
+    carma_approaching_emergency_vehicle_plugin_container = ComposableNodeContainer(
+        package='carma_ros2_utils',
+        name='carma_approaching_emergency_vehicle_plugin_container',
+        executable='carma_component_container_mt',
+        namespace=GetCurrentNamespace(),
+        composable_node_descriptions=[
+
+            ComposableNode(
+                package='approaching_emergency_vehicle_plugin',
+                plugin='approaching_emergency_vehicle_plugin::ApproachingEmergencyVehiclePlugin',
+                name='approaching_emergency_vehicle_plugin',
+                extra_arguments=[
+                    {'use_intra_process_comms': True}, 
+                    {'--log-level' : GetLogLevel('approaching_emergency_vehicle_plugin', env_log_levels) }
+                ],
+                remappings = [
+                    ("semantic_map", [ EnvironmentVariable('CARMA_ENV_NS', default_value=''), "/semantic_map" ] ),
+                    ("map_update", [ EnvironmentVariable('CARMA_ENV_NS', default_value=''), "/map_update" ] ),
+                    ("roadway_objects", [ EnvironmentVariable('CARMA_ENV_NS', default_value=''), "/roadway_objects" ] ),
+                    ("incoming_spat", [ EnvironmentVariable('CARMA_MSG_NS', default_value=''), "/incoming_spat" ] ),
+                    ("plugin_discovery", [ EnvironmentVariable('CARMA_GUIDE_NS', default_value=''), "/plugin_discovery" ] ),
+                    ("route", [ EnvironmentVariable('CARMA_GUIDE_NS', default_value=''), "/route" ] ),
+                    ("current_velocity", [ EnvironmentVariable('CARMA_INTR_NS', default_value=''), "/vehicle/twist" ] ),
+                    ("incoming_bsm", [ EnvironmentVariable('CARMA_MSG_NS', default_value=''), "/incoming_bsm" ] ),
+                    ("georeference", [ EnvironmentVariable('CARMA_LOCZ_NS', default_value=''), "/map_param_loader/georeference" ] ),
+                    ("route_state", [ EnvironmentVariable('CARMA_GUIDE_NS', default_value=''), "/route_state" ] ),
+                    ("outgoing_emergency_vehicle_response", [ EnvironmentVariable('CARMA_MSG_NS', default_value=''), "/outgoing_emergency_vehicle_response" ] ),
+                    ("incoming_emergency_vehicle_ack", [ EnvironmentVariable('CARMA_MSG_NS', default_value=''), "/incoming_emergency_vehicle_ack" ])
+                ],
+                parameters=[
+                    approaching_emergency_vehicle_plugin_param_file,
+                    vehicle_characteristics_param_file,
+                    vehicle_config_param_file
+                ]
+            ),
+        ]
+    )
+
     carma_stop_and_wait_plugin_container = ComposableNodeContainer(
         package='carma_ros2_utils',
         name='carma_stop_and_wait_plugin_container',
@@ -370,35 +408,6 @@ def generate_launch_description():
                     pure_pursuit_tuning_parameters #pure_pursuit calibration parameters
                 ]
             ),
-            ComposableNode(
-                package='approaching_emergency_vehicle_plugin',
-                plugin='approaching_emergency_vehicle_plugin::ApproachingEmergencyVehiclePlugin',
-                name='approaching_emergency_vehicle_plugin',
-                extra_arguments=[
-                    {'use_intra_process_comms': True}, 
-                    {'--log-level' : GetLogLevel('approaching_emergency_vehicle_plugin', env_log_levels) }
-                ],
-                remappings = [
-                    ("semantic_map", [ EnvironmentVariable('CARMA_ENV_NS', default_value=''), "/semantic_map" ] ),
-                    ("map_update", [ EnvironmentVariable('CARMA_ENV_NS', default_value=''), "/map_update" ] ),
-                    ("roadway_objects", [ EnvironmentVariable('CARMA_ENV_NS', default_value=''), "/roadway_objects" ] ),
-                    ("incoming_spat", [ EnvironmentVariable('CARMA_MSG_NS', default_value=''), "/incoming_spat" ] ),
-                    ("plugin_discovery", [ EnvironmentVariable('CARMA_GUIDE_NS', default_value=''), "/plugin_discovery" ] ),
-                    ("route", [ EnvironmentVariable('CARMA_GUIDE_NS', default_value=''), "/route" ] ),
-                    ("current_velocity", [ EnvironmentVariable('CARMA_INTR_NS', default_value=''), "/vehicle/twist" ] ),
-                    ("upcoming_lane_change_status", [ EnvironmentVariable('CARMA_GUIDE_NS', default_value=''), "/upcoming_lane_change_status" ] ),
-                    ("incoming_bsm", [ EnvironmentVariable('CARMA_MSG_NS', default_value=''), "/incoming_bsm" ] ),
-                    ("georeference", [ EnvironmentVariable('CARMA_LOCZ_NS', default_value=''), "/map_param_loader/georeference" ] ),
-                    ("route_state", [ EnvironmentVariable('CARMA_GUIDE_NS', default_value=''), "/route_state" ] ),
-                    ("outgoing_emergency_vehicle_response", [ EnvironmentVariable('CARMA_MSG_NS', default_value=''), "/outgoing_emergency_vehicle_response" ] ),
-                    ("incoming_emergency_vehicle_ack", [ EnvironmentVariable('CARMA_MSG_NS', default_value=''), "/incoming_emergency_vehicle_ack" ])
-                ],
-                parameters=[
-                    approaching_emergency_vehicle_plugin_param_file,
-                    vehicle_characteristics_param_file,
-                    vehicle_config_param_file
-                ]
-            ),
         ]
     )
     
@@ -474,6 +483,7 @@ def generate_launch_description():
     return LaunchDescription([    
         carma_inlanecruising_plugin_container, 
         carma_route_following_plugin_container, 
+        carma_approaching_emergency_vehicle_plugin_container,
         carma_stop_and_wait_plugin_container, 
         carma_sci_strategic_plugin_container, 
         carma_stop_controlled_intersection_tactical_plugin_container, 

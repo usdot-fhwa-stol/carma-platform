@@ -53,6 +53,7 @@ namespace approaching_emergency_vehicle_plugin
     config_.speed_limit_reduction_during_passing = declare_parameter<double>("speed_limit_reduction_during_passing", config_.speed_limit_reduction_during_passing);
     config_.minimum_reduced_speed_limit = declare_parameter<double>("minimum_reduced_speed_limit", config_.minimum_reduced_speed_limit);
     config_.default_speed_limit = declare_parameter<double>("default_speed_limit", config_.default_speed_limit);
+    config_.reduced_speed_buffer = declare_parameter<double>("reduced_speed_buffer", config_.reduced_speed_buffer);
     config_.timeout_check_frequency = declare_parameter<double>("timeout_check_frequency", config_.timeout_check_frequency);
     config_.timeout_duration = declare_parameter<double>("timeout_duration", config_.timeout_duration);
     config_.minimal_plan_duration = declare_parameter<double>("minimal_plan_duration", config_.minimal_plan_duration);
@@ -60,6 +61,7 @@ namespace approaching_emergency_vehicle_plugin
     config_.stopping_accel_limit_multiplier = declare_parameter<double>("stopping_accel_limit_multiplier", config_.stopping_accel_limit_multiplier);
     config_.vehicle_acceleration_limit = declare_parameter<double>("vehicle_acceleration_limit", config_.vehicle_acceleration_limit);
     config_.route_end_point_buffer = declare_parameter<double>("route_end_point_buffer", config_.route_end_point_buffer);
+    config_.approaching_erv_status_publication_frequency = declare_parameter<double>("approaching_erv_status_publication_frequency", config_.approaching_erv_status_publication_frequency);
     config_.warning_broadcast_frequency = declare_parameter<double>("warning_broadcast_frequency", config_.warning_broadcast_frequency);
     config_.max_warning_broadcasts = declare_parameter<int>("max_warning_broadcasts", config_.max_warning_broadcasts);
     config_.lane_following_plugin = declare_parameter<std::string>("lane_following_plugin", config_.lane_following_plugin);
@@ -80,6 +82,7 @@ namespace approaching_emergency_vehicle_plugin
         {"speed_limit_reduction_during_passing", config_.speed_limit_reduction_during_passing},
         {"minimum_reduced_speed_limit", config_.minimum_reduced_speed_limit},
         {"default_speed_limit", config_.default_speed_limit},
+        {"reduced_speed_buffer", config_.reduced_speed_buffer},
         {"timeout_check_frequency", config_.timeout_check_frequency},
         {"timeout_duration", config_.timeout_duration},
         {"minimal_plan_duration", config_.minimal_plan_duration},
@@ -87,6 +90,7 @@ namespace approaching_emergency_vehicle_plugin
         {"stopping_accel_limit_multiplier", config_.stopping_accel_limit_multiplier},
         {"vehicle_acceleration_limit", config_.vehicle_acceleration_limit},
         {"route_end_point_buffer", config_.route_end_point_buffer},
+        {"approaching_erv_status_publication_frequency", config_.approaching_erv_status_publication_frequency},
         {"warning_broadcast_frequency", config_.warning_broadcast_frequency}
     }, parameters);
 
@@ -124,6 +128,7 @@ namespace approaching_emergency_vehicle_plugin
     get_parameter<double>("speed_limit_reduction_during_passing", config_.speed_limit_reduction_during_passing);
     get_parameter<double>("minimum_reduced_speed_limit", config_.minimum_reduced_speed_limit);
     get_parameter<double>("default_speed_limit", config_.default_speed_limit);
+    get_parameter<double>("reduced_speed_buffer", config_.reduced_speed_buffer);
     get_parameter<double>("timeout_check_frequency", config_.timeout_check_frequency);
     get_parameter<double>("timeout_duration", config_.timeout_duration);
     get_parameter<double>("minimal_plan_duration", config_.minimal_plan_duration);
@@ -131,6 +136,7 @@ namespace approaching_emergency_vehicle_plugin
     get_parameter<double>("stopping_accel_limit_multiplier", config_.stopping_accel_limit_multiplier);
     get_parameter<double>("vehicle_acceleration_limit", config_.vehicle_acceleration_limit);
     get_parameter<double>("route_end_point_buffer", config_.route_end_point_buffer);
+    get_parameter<double>("approaching_erv_status_publication_frequency", config_.approaching_erv_status_publication_frequency);
     get_parameter<double>("warning_broadcast_frequency", config_.warning_broadcast_frequency);
     get_parameter<int>("max_warning_broadcasts", config_.max_warning_broadcasts);
     get_parameter<std::string>("lane_following_plugin", config_.lane_following_plugin);
@@ -163,7 +169,7 @@ namespace approaching_emergency_vehicle_plugin
 
     outgoing_emergency_vehicle_response_pub_ = create_publisher<carma_v2x_msgs::msg::EmergencyVehicleResponse>("outgoing_emergency_vehicle_response", 10);
 
-    upcoming_lane_change_status_pub_ = create_publisher<carma_planning_msgs::msg::UpcomingLaneChangeStatus>("upcoming_lane_change_status", 10);
+    approaching_erv_status_pub_ = create_publisher<carma_msgs::msg::UIInstructions>("approaching_erv_status", 10);
 
     // set world model pointer from wm listener
     wml_ = get_world_model_listener();
@@ -187,6 +193,12 @@ namespace approaching_emergency_vehicle_plugin
     warning_broadcast_timer_ = create_timer(get_clock(),
                           std::chrono::milliseconds(emergency_vehicle_response_period_ms),
                           std::bind(&ApproachingEmergencyVehiclePlugin::broadcastWarningToErv, this));
+
+    // Timer setup for publishing approaching ERV status update to the Web UI
+    int approaching_erv_status_period_ms = (1 / config_.approaching_erv_status_publication_frequency) * 1000; // Conversion from frequency (Hz) to milliseconds time period
+    approaching_emergency_vehicle_status_timer_ = create_timer(get_clock(),
+                          std::chrono::milliseconds(approaching_erv_status_period_ms),
+                          std::bind(&ApproachingEmergencyVehiclePlugin::publishApproachingErvStatus, this));
 
     return CallbackReturn::SUCCESS;
   }
@@ -228,6 +240,83 @@ namespace approaching_emergency_vehicle_plugin
         should_broadcast_warnings_ = false;
       }
     }
+  }
+
+  void ApproachingEmergencyVehiclePlugin::publishApproachingErvStatus(){
+    // Generate the status message and publish it to the applicable ROS topic
+    carma_msgs::msg::UIInstructions status_msg = generateApproachingErvStatusMessage();
+    approaching_erv_status_pub_->publish(status_msg);
+  }
+  
+  carma_msgs::msg::UIInstructions ApproachingEmergencyVehiclePlugin::generateApproachingErvStatusMessage(){
+    // Initialize the message that will be returned by this function
+    carma_msgs::msg::UIInstructions status_msg;
+    status_msg.type = carma_msgs::msg::UIInstructions::INFO;
+
+    /**
+      * Note: APPROACHING_ERV_STATUS_PARAMS format:
+      *       "HAS_APPROACHING_ERV:%1%,TIME_UNTIL_PASSING:%2$.1f,EGO_VEHICLE_ACTION:%3%"
+      *       |--------0----------------------1----------------------2--------------|
+      *       Index 0: (Boolean) Value indicating whether the ego vehicle is tracking an approaching ERV
+      *       Index 1: (Double; rounded to first decimal place)  If an approaching ERV exists, this indicates the estimated seconds until the ERV passes the ego vehicle.
+      *       Index 2: (String)  If an approaching ERV exists, this describes the current action of the ego vehicle in response to the approaching ERV. 
+      *       NOTE: The values of indexes 1 and 2 can be ignored if index 0 indicates that no approaching ERV is being tracked.
+      */
+    boost::format fmter(APPROACHING_ERV_STATUS_PARAMS);
+    
+    fmter %has_tracked_erv_; // Index 0 of formatted string; indicates whether the ego vehicle is tracking an approaching ERV
+    fmter %tracked_erv_.seconds_until_passing; // Index 1 of formatted string; indicates estimated time until tracked ERV passes the ego vehicle
+
+    // Add Index 2 of formatted string based on this plugin's current ApproachingEmergencyVehicleState
+    switch (transition_table_.getState())
+    {
+      case ApproachingEmergencyVehicleState::NO_APPROACHING_ERV:
+        fmter %"No action.";
+        break;
+
+      case ApproachingEmergencyVehicleState::MOVING_OVER_FOR_APPROACHING_ERV:
+        // Add ego vehicle action based on the direction of the upcoming lane change
+        if(upcoming_lc_params_.is_right_lane_change){
+          fmter %"Changing lanes to the right.";
+        }
+        else{
+          fmter %"Changing lanes to the left.";
+        }
+
+        break;
+
+      case ApproachingEmergencyVehicleState::WAITING_FOR_APPROACHING_ERV:
+        fmter %"Remaining in the current lane at the speed limit.";
+        break;
+
+      case ApproachingEmergencyVehicleState::SLOWING_DOWN_FOR_ERV:
+        // Add ego vehicle action based on whether the current speed is near the reduced target speed of the latest maneuver plan's first maneuver
+        if(!latest_maneuver_plan_.maneuvers.empty()){
+          // Extract the target speed in m/s from the latest maneuver plan's first maneuver and convert it to mph
+          double target_speed_ms = getManeuverEndSpeed(latest_maneuver_plan_.maneuvers[0]);
+          int target_speed_mph = std::round(target_speed_ms * METERS_PER_SEC_TO_MILES_PER_HOUR);
+
+          if(abs(current_speed_ - target_speed_ms) <= config_.reduced_speed_buffer){
+            fmter %("Remaining in the current lane at a reduced speed of " + std::to_string(target_speed_mph) + " mph.");
+          }
+          else{
+            fmter %("Remaining in the current lane and slowing down to a reduced speed of " + std::to_string(target_speed_mph) + " mph.");
+          }
+        }
+        else{
+          throw std::invalid_argument("State is SLOWING_DOWN_FOR_ERV but latest maneuver plan is empty!");
+        }
+        break;
+
+      default:
+        throw std::invalid_argument("Transition table in unsupported state");
+    }
+
+    // Add formatted string to status message
+    std::string str = fmter.str();
+    status_msg.msg = str;
+
+    return status_msg;
   }
 
   boost::optional<lanelet::BasicPoint2d> ApproachingEmergencyVehiclePlugin::getErvPositionInMap(const double& current_latitude, const double& current_longitude){
@@ -1021,6 +1110,9 @@ namespace approaching_emergency_vehicle_plugin
           else{
 
             if(!has_planned_upcoming_lc_){
+              // Initialize UpcomingLaneChangeParameters object to store information regarding the planned lane change maneuver
+              UpcomingLaneChangeParameters new_lc_params;
+
               // Determine if the ego vehicle's current lanelet is in the rightmost lane
               bool ego_in_rightmost_lane = false;
               if(wm_->getMapRoutingGraph()->rights(current_lanelet).size() == 0){
@@ -1033,11 +1125,13 @@ namespace approaching_emergency_vehicle_plugin
                 // Get right target lanelet
                 target_lanelet = wm_->getMapRoutingGraph()->right(current_lanelet);
                 RCLCPP_DEBUG_STREAM(rclcpp::get_logger(logger_name), "Composing a right lane change maneuver from lanelet " << current_lanelet.id());
+                new_lc_params.is_right_lane_change = true;
               }
               else if(ego_in_rightmost_lane && tracked_erv_.in_rightmost_lane){
                 // Get left target lanelet
                 target_lanelet = wm_->getMapRoutingGraph()->left(current_lanelet);   
                 RCLCPP_DEBUG_STREAM(rclcpp::get_logger(logger_name), "Composing a left lane change maneuver from lanelet " << current_lanelet.id());
+                new_lc_params.is_right_lane_change = false;
               }
               else{
                 RCLCPP_WARN_STREAM(rclcpp::get_logger(logger_name), "Planning a move-over maneuver plan when the ego vehicle is not in the ERV's path! Returning an empty maneuver plan");
@@ -1051,7 +1145,7 @@ namespace approaching_emergency_vehicle_plugin
                                         speed_progress, target_speed, current_lanelet.id(), target_lanelet.get().id(), time_progress));
                 
                 has_planned_upcoming_lc_ = true;
-                UpcomingLaneChangeParameters new_lc_params;
+                
                 new_lc_params.starting_lanelet = current_lanelet;
                 new_lc_params.ending_lanelet = target_lanelet.get();
                 new_lc_params.start_dist = downtrack_progress;
@@ -1266,7 +1360,8 @@ namespace approaching_emergency_vehicle_plugin
       default:
         throw std::invalid_argument("Transition table in unsupported state");
     }
-  
+
+    latest_maneuver_plan_ = resp->new_plan;
   }
 
   bool ApproachingEmergencyVehiclePlugin::get_availability() {

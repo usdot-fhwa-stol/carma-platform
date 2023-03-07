@@ -49,6 +49,9 @@ namespace approaching_emergency_vehicle_plugin
 
     double default_speed_limit = 2.2352;           // (m/s) The default speed limit used when a lanelet does not have a specified speed limit in the map.
 
+    double reduced_speed_buffer = 1.1176;          // (m/s) A buffer value; if the ego vehicle speed is within this speed of its target speed when slowing down for an actively passing
+                                                   // ERV, then this plugin will state in its approaching ERV status message that the ego vehicle has finished slowing down.
+
     double timeout_check_frequency = 2.0;          // (Hz) The frequency at which this plugin will check whether a timeout has occurred for the 
                                                    // currently-tracked ERV.
   
@@ -65,6 +68,9 @@ namespace approaching_emergency_vehicle_plugin
     double vehicle_acceleration_limit = 2.0;       // (m/s^2) The vehicle acceleration limit configured for the CARMA System
 
     double route_end_point_buffer = 10.0;          // (Meters) The distance from the route end point in which the trajectory planner will attempt to stop the ego vehicle for a stop and wait maneuver.
+
+    double approaching_erv_status_publication_frequency = 1.0;  // (Hz) The frequency at which this plugin will publish status updates to the Web UI that describe the estimated time until an approaching ERV
+                                                                // passes the ego vehicle, and a description of the ego vehicle's path plan in response to the approaching ERV.
     
     double warning_broadcast_frequency = 1.0;      // (Hz) The frequency at which this plugin will broadcast EmergencyVehicleResponse warning messages to the currently-tracked ERV
                                                    // when the ego vehicle is in the approaching ERV's path but is unable to change lanes.
@@ -92,6 +98,7 @@ namespace approaching_emergency_vehicle_plugin
            << "speed_limit_reduction_during_passing: " << c.speed_limit_reduction_during_passing << std::endl
            << "minimum_reduced_speed_limit: " << c.minimum_reduced_speed_limit << std::endl
            << "default_speed_limit: " << c.default_speed_limit << std::endl
+           << "reduced_speed_buffer: " << c.reduced_speed_buffer << std::endl
            << "timeout_check_frequency: " << c.timeout_check_frequency << std::endl
            << "timeout_duration: " << c.timeout_duration << std::endl
            << "minimal_plan_duration: " << c.minimal_plan_duration << std::endl
@@ -99,6 +106,7 @@ namespace approaching_emergency_vehicle_plugin
            << "stopping_accel_limit_multiplier: " << c.stopping_accel_limit_multiplier << std::endl 
            << "vehicle_acceleration_limit: " << c.vehicle_acceleration_limit << std::endl 
            << "route_end_point_buffer: " << c.route_end_point_buffer << std::endl
+           << "approaching_erv_status_publication_frequency: " << c.approaching_erv_status_publication_frequency << std::endl
            << "warning_broadcast_frequency: " << c.warning_broadcast_frequency << std::endl 
            << "max_warning_broadcasts: " << c.max_warning_broadcasts << std::endl 
            << "lane_following_plugin: " << c.lane_following_plugin << std::endl
