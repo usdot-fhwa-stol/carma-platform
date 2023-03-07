@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2021 LEIDOS.
+ * Copyright (C) 2023 LEIDOS.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -16,10 +16,10 @@
 
 #include "lightbar_manager/lightbar_manager_worker.hpp"
 #include <algorithm>
-#include <ros/console.h>
+
 namespace lightbar_manager
 {
-    LightBarManagerWorker::LightBarManagerWorker(std::string node_name) : node_name_(node_name){};
+    LightBarManagerWorker::LightBarManagerWorker(){};
 
     void LightBarManagerWorker::next(const LightBarEvent& event)
     {
@@ -31,32 +31,32 @@ namespace lightbar_manager
         return lbsm_.getCurrentState();
     }
 
-    std::vector<cav_msgs::LightBarIndicator> LightBarManagerWorker::getMsg(std::vector<LightBarIndicator> indicators)
+    std::vector<carma_msgs::msg::LightBarIndicator> LightBarManagerWorker::getMsg(std::vector<LightBarIndicator> indicators)
     {
-        std::vector<cav_msgs::LightBarIndicator> return_msg;
+        std::vector<carma_msgs::msg::LightBarIndicator> return_msg;
         for (auto indicator : indicators)
         {
-            cav_msgs::LightBarIndicator msg;
+            carma_msgs::msg::LightBarIndicator msg;
             msg.indicator = indicator;
             return_msg.push_back(msg);
         }
         return return_msg;
     }
 
-    std::vector<cav_msgs::LightBarCDAType> LightBarManagerWorker::getMsg(std::vector<LightBarCDAType> cda_types)
+    std::vector<carma_msgs::msg::LightBarCDAType> LightBarManagerWorker::getMsg(std::vector<LightBarCDAType> cda_types)
     {
-        std::vector<cav_msgs::LightBarCDAType> return_msg;
+        std::vector<carma_msgs::msg::LightBarCDAType> return_msg;
         for (auto cda_type : cda_types)
         {
-            cav_msgs::LightBarCDAType msg;
+            carma_msgs::msg::LightBarCDAType msg;
             msg.type = cda_type;
             return_msg.push_back(msg);
         }
         return return_msg;
     }
-    cav_msgs::LightBarIndicatorControllers LightBarManagerWorker::getMsg(std::map<LightBarIndicator, std::string> ind_ctrl_map)
+    carma_msgs::msg::LightBarIndicatorControllers LightBarManagerWorker::getMsg(std::map<LightBarIndicator, std::string> ind_ctrl_map)
     {
-        cav_msgs::LightBarIndicatorControllers curr;
+        carma_msgs::msg::LightBarIndicatorControllers curr;
         curr.green_solid_owner = ind_ctrl_map[GREEN_SOLID];
         curr.green_flash_owner = ind_ctrl_map[GREEN_FLASH];
         curr.yellow_sides_owner= ind_ctrl_map[YELLOW_SIDES];
@@ -69,37 +69,37 @@ namespace lightbar_manager
         return curr;
     }
 
-    void LightBarManagerWorker::handleStateChange(const cav_msgs::GuidanceStateConstPtr& msg_ptr)
+    void LightBarManagerWorker::handleStateChange(const carma_planning_msgs::msg::GuidanceState& msg)
     {
-        lbsm_.handleStateChange(msg_ptr);
+        lbsm_.handleStateChange(msg);
         return;
     }
 
-    std::vector<lightbar_manager::LightBarIndicator> LightBarManagerWorker::handleTurnSignal(const automotive_platform_msgs::TurnSignalCommandPtr& msg_ptr)
+    std::vector<lightbar_manager::LightBarIndicator> LightBarManagerWorker::handleTurnSignal(const automotive_platform_msgs::msg::TurnSignalCommand& msg)
     {
         std::vector<lightbar_manager::LightBarIndicator> turn_signal;
-        if (msg_ptr->turn_signal == current_turn_signal_)
+        if (msg.turn_signal == current_turn_signal_)
         {
             return {};
         }
-        if (msg_ptr->turn_signal == automotive_platform_msgs::TurnSignalCommand::LEFT) //NONE -> LEFT
+        if (msg.turn_signal == automotive_platform_msgs::msg::TurnSignalCommand::LEFT) //NONE -> LEFT
         {
             turn_signal.push_back(lightbar_manager::LightBarIndicator::YELLOW_ARROW_LEFT);  
         }
-        else if (msg_ptr->turn_signal == automotive_platform_msgs::TurnSignalCommand::RIGHT) //NONE -> RIGHT
+        else if (msg.turn_signal == automotive_platform_msgs::msg::TurnSignalCommand::RIGHT) //NONE -> RIGHT
         {
             turn_signal.push_back(lightbar_manager::LightBarIndicator::YELLOW_ARROW_RIGHT);
         }
-        else if (msg_ptr->turn_signal == automotive_platform_msgs::TurnSignalCommand::NONE) 
+        else if (msg.turn_signal == automotive_platform_msgs::msg::TurnSignalCommand::NONE) 
         {
             // check previous signal
-            if (current_turn_signal_ == automotive_platform_msgs::TurnSignalCommand::RIGHT) // RIGHT -> NONE
+            if (current_turn_signal_ == automotive_platform_msgs::msg::TurnSignalCommand::RIGHT) // RIGHT -> NONE
                 turn_signal.push_back(lightbar_manager::LightBarIndicator::YELLOW_ARROW_RIGHT);
-            else if (current_turn_signal_ == automotive_platform_msgs::TurnSignalCommand::LEFT) // LEFT -> NONE
+            else if (current_turn_signal_ == automotive_platform_msgs::msg::TurnSignalCommand::LEFT) // LEFT -> NONE
                 turn_signal.push_back(lightbar_manager::LightBarIndicator::YELLOW_ARROW_LEFT);
         }
 
-        current_turn_signal_ = msg_ptr->turn_signal;
+        current_turn_signal_ = msg.turn_signal;
 
         return turn_signal;
     }
@@ -109,9 +109,15 @@ namespace lightbar_manager
     }
     
 
-    std::map<LightBarCDAType, LightBarIndicator> LightBarManagerWorker::setIndicatorCDAMap(std::map<std::string, std::string> raw_map)
+    std::map<LightBarCDAType, LightBarIndicator> LightBarManagerWorker::setIndicatorCDAMap(const std::vector<std::string>& lightbar_cda_table, const std::vector<std::string>& lightbar_ind_table)
     {
-        // In case if the parameter is not loaded corretly and there is an error, return this`1
+        // In case if the parameter is not loaded corretly and there is an error, return this
+        std::map<std::string, std::string> raw_map;
+        for (size_t i = 0; i < lightbar_cda_table.size(); i ++)
+        {
+            raw_map[lightbar_cda_table[i]] = lightbar_ind_table[i];
+        }
+        
         std::map<LightBarCDAType, LightBarIndicator> default_map;
         
         default_map[TYPE_A] = YELLOW_DIM;
@@ -121,7 +127,7 @@ namespace lightbar_manager
 
         if (raw_map.size() < 4)
         {
-            ROS_WARN_STREAM("In function: " << __FUNCTION__ << ": LightBarManager's CDAType to Indicator table is not configured correctly. Using default mapping...");
+            RCLCPP_WARN_STREAM(rclcpp::get_logger("lightbar_manager"),"In function: " << __FUNCTION__ << ": LightBarManager's CDAType to Indicator table is not configured correctly. Using default mapping...");
             cda_ind_map_ = default_map;
             return cda_ind_map_;
         }
@@ -137,7 +143,7 @@ namespace lightbar_manager
             }
             catch(const std::exception& e)
             {
-                ROS_WARN_STREAM ("In function: " << __FUNCTION__ << 
+                RCLCPP_WARN_STREAM(rclcpp::get_logger("lightbar_manager"),"In function: " << __FUNCTION__ << 
                 ": LightBarManager Received unknown CDA Msg Type. Using default mapping for cda-indicators...");
                 cda_ind_map_ = default_map;
                 return cda_ind_map_;
@@ -148,7 +154,7 @@ namespace lightbar_manager
             }
             catch(const std::exception& e)
             {
-                ROS_WARN_STREAM ("In function: " << __FUNCTION__ << 
+                RCLCPP_WARN_STREAM(rclcpp::get_logger("lightbar_manager"),"In function: " << __FUNCTION__ << 
                 ": LightBarManager Received unknown indicator type. Using default mapping for cda-indicators...");
                 cda_ind_map_ = default_map;
                 return cda_ind_map_;
@@ -169,12 +175,12 @@ namespace lightbar_manager
         // Components not in the priority list are assumed to have the lowest priority
         if (requesterPriority == end)
         {
-            ROS_WARN_STREAM(requester << " is referenced in lightbar_manager, but is not in the priority list");
+            RCLCPP_WARN_STREAM(rclcpp::get_logger("lightbar_manager"),requester << " is referenced in lightbar_manager, but is not in the priority list");
             return false;
         }  
         else if (controllerPriority == end)
         {
-            ROS_WARN_STREAM(controller << " is referenced in lightbar_manager and is controlling an indicator, but is not in the priority list");
+            RCLCPP_WARN_STREAM(rclcpp::get_logger("lightbar_manager"),controller << " is referenced in lightbar_manager and is controlling an indicator, but is not in the priority list");
             return true;
         }
         return (requesterPriority - end) <= (controllerPriority - end);
@@ -194,7 +200,7 @@ namespace lightbar_manager
             }
             catch(const std::exception& e)
             {
-                ROS_WARN_STREAM("In function: " << __FUNCTION__ << ", the component, " << requester_name 
+                RCLCPP_WARN_STREAM(rclcpp::get_logger("lightbar_manager"),"In function: " << __FUNCTION__ << ", the component, " << requester_name 
                     << ", requested a control of invalid indicator. Skipping with WARNING:" << e.what() << "\n");
                 continue;
             }
@@ -238,7 +244,7 @@ namespace lightbar_manager
             }
             catch(const std::exception& e)
             {
-                ROS_WARN_STREAM("In function: " << __FUNCTION__ << ", the component, " << owner_name 
+                RCLCPP_WARN_STREAM(rclcpp::get_logger("lightbar_manager"),"In function: " << __FUNCTION__ << ", the component, " << owner_name 
                     << ", requested a release of an invalid indicator. Skipping with WARNING:" << e.what() << "\n");
                 continue;
             }
@@ -340,23 +346,23 @@ namespace lightbar_manager
 
     }
 
-    cav_msgs::LightBarStatus LightBarManagerWorker::getLightBarStatusMsg(std::vector<IndicatorStatus> indicators)
+    carma_driver_msgs::msg::LightBarStatus LightBarManagerWorker::getLightBarStatusMsg(std::vector<IndicatorStatus> indicators)
     {
         // it is assumed that mutually exclusive cases are handled properly.
-        cav_msgs::LightBarStatus msg;
-        msg.green_solid = indicators[GREEN_SOLID] == ON ? cav_msgs::LightBarStatus::ON : cav_msgs::LightBarStatus::OFF;
-        msg.green_flash = indicators[GREEN_FLASH]== ON ? cav_msgs::LightBarStatus::ON : cav_msgs::LightBarStatus::OFF;
-        msg.sides_solid = indicators[YELLOW_SIDES]== ON ? cav_msgs::LightBarStatus::ON : cav_msgs::LightBarStatus::OFF;
-        msg.yellow_solid = indicators[YELLOW_DIM]== ON ? cav_msgs::LightBarStatus::ON : cav_msgs::LightBarStatus::OFF;
-        msg.flash = indicators[YELLOW_FLASH]== ON ? cav_msgs::LightBarStatus::ON : cav_msgs::LightBarStatus::OFF;
+        carma_driver_msgs::msg::LightBarStatus msg;
+        msg.green_solid = indicators[GREEN_SOLID] == ON ? carma_driver_msgs::msg::LightBarStatus::ON : carma_driver_msgs::msg::LightBarStatus::OFF;
+        msg.green_flash = indicators[GREEN_FLASH]== ON ? carma_driver_msgs::msg::LightBarStatus::ON : carma_driver_msgs::msg::LightBarStatus::OFF;
+        msg.sides_solid = indicators[YELLOW_SIDES]== ON ? carma_driver_msgs::msg::LightBarStatus::ON : carma_driver_msgs::msg::LightBarStatus::OFF;
+        msg.yellow_solid = indicators[YELLOW_DIM]== ON ? carma_driver_msgs::msg::LightBarStatus::ON : carma_driver_msgs::msg::LightBarStatus::OFF;
+        msg.flash = indicators[YELLOW_FLASH]== ON ? carma_driver_msgs::msg::LightBarStatus::ON : carma_driver_msgs::msg::LightBarStatus::OFF;
 
-        msg.left_arrow = indicators[YELLOW_ARROW_LEFT]== ON ? cav_msgs::LightBarStatus::ON : cav_msgs::LightBarStatus::OFF;
-        msg.right_arrow = indicators[YELLOW_ARROW_RIGHT]== ON ? cav_msgs::LightBarStatus::ON : cav_msgs::LightBarStatus::OFF;
+        msg.left_arrow = indicators[YELLOW_ARROW_LEFT]== ON ? carma_driver_msgs::msg::LightBarStatus::ON : carma_driver_msgs::msg::LightBarStatus::OFF;
+        msg.right_arrow = indicators[YELLOW_ARROW_RIGHT]== ON ? carma_driver_msgs::msg::LightBarStatus::ON : carma_driver_msgs::msg::LightBarStatus::OFF;
         // for YELLOW_ARROW_OUT set left and right
         if (indicators[YELLOW_ARROW_OUT] == ON)
         {
-            msg.left_arrow = cav_msgs::LightBarStatus::ON;
-            msg.right_arrow = cav_msgs::LightBarStatus::ON;
+            msg.left_arrow = carma_driver_msgs::msg::LightBarStatus::ON;
+            msg.right_arrow = carma_driver_msgs::msg::LightBarStatus::ON;
         }
         return msg;
     }

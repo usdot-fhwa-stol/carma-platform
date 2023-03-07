@@ -24,7 +24,6 @@
 #include <carma_wm_ros2/WMListener.hpp>
 #include <carma_wm_ros2/WorldModel.hpp>
 #include <carma_planning_msgs/srv/plan_maneuvers.hpp>
-#include <carma_planning_msgs/msg/upcoming_lane_change_status.hpp>
 #include <carma_planning_msgs/msg/trajectory_plan.hpp>
 #include <gtest/gtest_prod.h>
 #include <tf2_ros/transform_listener.h>
@@ -74,15 +73,6 @@ namespace route_following_plugin
         // wm listener pointer and pointer to the actual wm object
         std::shared_ptr<carma_wm::WMListener> wml_;
         carma_wm::WorldModelConstPtr wm_;
-
-        /**
-         * \brief Compose UpcomingLaneChangeStatus msg from given starting and ending lanelets
-         * \param start_lanelet lanelet the lanechange is starting from
-         * \param ending_lanelet lanelet the lanechange is starting from
-         * \return UpcomingLaneChangeStatus Note: this method will only work correctly if the 
-         * two provided lanelets are forming a lane change
-         */
-        carma_planning_msgs::msg::UpcomingLaneChangeStatus ComposeLaneChangeStatus(lanelet::ConstLanelet starting_lanelet,lanelet::ConstLanelet ending_lanelet);
 
         bool get_availability();
         std::string get_version_id();
@@ -237,9 +227,6 @@ namespace route_following_plugin
         carma_ros2_utils::SubPtr<geometry_msgs::msg::TwistStamped> twist_sub_;
         carma_ros2_utils::SubPtr<carma_planning_msgs::msg::ManeuverPlan> current_maneuver_plan_sub_;
     
-        // Publishers
-        carma_ros2_utils::PubPtr<carma_planning_msgs::msg::UpcomingLaneChangeStatus> upcoming_lane_change_status_pub_;
-
         // unordered set of all the lanelet ids in shortest path
         std::unordered_set<lanelet::Id> shortest_path_set_;
        
@@ -247,9 +234,6 @@ namespace route_following_plugin
 
         // Node configuration
         Config config_;
-
-        //Upcoming Lane Change downtrack and its lanechange status message map
-        std::queue<std::pair<double, carma_planning_msgs::msg::UpcomingLaneChangeStatus>> upcoming_lane_change_status_msg_map_;
         
         // Current vehicle forward speed
         double current_speed_ = 0.0;

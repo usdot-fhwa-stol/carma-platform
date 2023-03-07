@@ -21,3 +21,7 @@ trajectory_duration_threshold: 6.0
 # Double: The minimum speed the vehicle will say it is moving in order to support accelerations
 # Units: m/s
 min_speed: 2.2352
+
+# Double: If an upcoming lane change will begin in under this time threshold, a turn signal activation command will be published.
+# Units: Seconds
+duration_to_signal_before_lane_change: 2.5
