@@ -327,7 +327,12 @@ def generate_launch_description():
                     vehicle_config_param_file,
                     {'lowpass_gain_linear_x':0.1},
                     {'lowpass_gain_angular_z':0.0},
-                    {'lowpass_gain_steering_angle':0.1}
+                    {'lowpass_gain_steering_angle':0.1},
+                    {'/config_speed_limit':20.0},
+                    {'/vehicle_acceleration_limit':2.0},
+                    {'/vehicle_lateral_accel_limit':2.0},
+                    {'/vehicle_lateral_jerk_limit':2.0},
+                    {'/vehicle_wheel_base':5.334}
                 ]     
             ),
             ComposableNode(
@@ -339,11 +344,11 @@ def generate_launch_description():
                     {'--log-level' : GetLogLevel('twist_gate', env_log_levels) }
                 ],
                 remappings = [
-                    ("/vehicle_cmd", [ EnvironmentVariable('CARMA_INTR_NS', default_value=''), "/vehicle_cmd" ] ),
+                    ("vehicle_cmd", [ EnvironmentVariable('CARMA_INTR_NS', default_value=''), "/vehicle_cmd" ] ),
                     ("/lamp_cmd", ["lamp_cmd" ] ),
                     ("/twist_cmd", ["twist_cmd" ] ),
                     ("/decision_maker/state", ["decision_maker/state" ] ),
-                    ("/ctrl_mode", ["ctrl_mode" ] ),
+                    #("/ctrl_mode", ["ctrl_mode" ] ),
                     ("/ctrl_cmd",   ["ctrl_cmd" ] ),
                 ],
                 parameters = [

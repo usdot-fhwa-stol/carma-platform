@@ -78,7 +78,7 @@ def generate_launch_description():
     stop_controlled_intersection_tactical_plugin_file_path = os.path.join(
         get_package_share_directory('stop_controlled_intersection_tactical_plugin'), 'config/parameters.yaml') 
 
-    env_log_levels = EnvironmentVariable('CARMA_ROS_LOGGING_CONFIG', default_value='{ "default_level" : "WARN" }')
+    env_log_levels = EnvironmentVariable('CARMA_ROS_LOGGING_CONFIG', default_value='{ "default_level" : "c" }')
 
     pure_pursuit_tuning_parameters = [vehicle_calibration_dir, "/pure_pursuit/calibration.yaml"]
 
@@ -291,7 +291,7 @@ def generate_launch_description():
                 name='cooperative_lanechange',
                 extra_arguments=[
                     {'use_intra_process_comms': True}, 
-                    {'--log-level' : GetLogLevel('cooperative_lanechange', env_log_levels) }
+                    {'--log-level' : "DEBUG"} #GetLogLevel('cooperative_lanechange', env_log_levels) }
                 ],
                 remappings = [
                     ("semantic_map", [ EnvironmentVariable('CARMA_ENV_NS', default_value=''), "/semantic_map" ] ),
