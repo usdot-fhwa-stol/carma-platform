@@ -389,8 +389,9 @@ namespace basic_autonomy
                         curr_end_lanelet = wm->getMapRoutingGraph()->adjacentRight(starting_lane[i]).get();
                     }
                 }
-                
+                RCLCPP_ERROR_STREAM(rclcpp::get_logger(BASIC_AUTONOMY_LOGGER), "Before basicLineString() for lanelet " << curr_end_lanelet.id());
                 auto target_lane_linestring = curr_end_lanelet.centerline2d().basicLineString();
+                RCLCPP_ERROR_STREAM(rclcpp::get_logger(BASIC_AUTONOMY_LOGGER), "After basicLineString() for lanelet " << curr_end_lanelet.id());
                 //Concatenate linestring starting from + 1 to avoid overlap
                 target_lane_centerline.insert(target_lane_centerline.end(), target_lane_linestring.begin() + 1, target_lane_linestring.end());
                 

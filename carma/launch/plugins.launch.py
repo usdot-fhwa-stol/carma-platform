@@ -78,7 +78,7 @@ def generate_launch_description():
     stop_controlled_intersection_tactical_plugin_file_path = os.path.join(
         get_package_share_directory('stop_controlled_intersection_tactical_plugin'), 'config/parameters.yaml') 
 
-    env_log_levels = EnvironmentVariable('CARMA_ROS_LOGGING_CONFIG', default_value='{ "default_level" : "c" }')
+    env_log_levels = EnvironmentVariable('CARMA_ROS_LOGGING_CONFIG', default_value='{ "default_level" : "WARN" }')
 
     pure_pursuit_tuning_parameters = [vehicle_calibration_dir, "/pure_pursuit/calibration.yaml"]
 

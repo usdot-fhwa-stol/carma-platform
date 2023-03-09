@@ -58,7 +58,7 @@ curvature_moving_average_window_size : 9
 curvature_calc_lookahead_count : 1
 
 # Int: Amount to downsample input lanelet centerline data. Value corresponds to saving each nth point.
-downsample_ratio : 1
+downsample_ratio : 2
 
 # Double : Acceptable range from the ending downtrack, when planning success can be published, if vehicle has changed lanes
 # Units: meters
@@ -74,7 +74,7 @@ min_timestep : 0.1
 
 # Double:  The range from the start from which the plugin can start working
 # Units: meters
-starting_downtrack_range : 5.0
+starting_downtrack_range : 25.0
 
 # Double: Fraction of the maneuver that has been completed. Starting fraction specifies a higher urgency of in the request to lane change
 starting_fraction : 0.2

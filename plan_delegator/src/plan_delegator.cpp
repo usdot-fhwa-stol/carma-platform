@@ -243,6 +243,8 @@ namespace plan_delegator
     {
         latest_pose_ = *pose_msg;
 
+        RCLCPP_ERROR_STREAM(rclcpp::get_logger("plan_delegator"), "Received new pose update with x,y " << latest_pose_.pose.position.x << "," << latest_pose_.pose.position.y);
+
         // Publish the upcoming lane change status
         publishUpcomingLaneChangeStatus(upcoming_lane_change_information_);
 
@@ -318,20 +320,26 @@ namespace plan_delegator
         if(current_lane_change_information){
             // Publish turn signal command for the current lane change based on the lane change direction
             if(current_lane_change_information.get().is_right_lane_change){
+                RCLCPP_DEBUG_STREAM(rclcpp::get_logger("plan_delegator"),"Publishing right lane change");
                 turn_signal_command.r = 1;
             }
             else{
+                RCLCPP_DEBUG_STREAM(rclcpp::get_logger("plan_delegator"),"Publishing left lane change");
                 turn_signal_command.l = 1;
             }
+
+            
             turn_signal_command_pub_->publish(turn_signal_command);
         }
         else if(upcoming_lane_change_status.lane_change != carma_planning_msgs::msg::UpcomingLaneChangeStatus::NONE){
             // Only publish turn signal command for upcoming lane change if it will begin in less than the time defined by config_.duration_to_signal_before_lane_change
             if((upcoming_lane_change_status.downtrack_until_lanechange / latest_twist_.twist.linear.x) <= config_.duration_to_signal_before_lane_change){
                 if(upcoming_lane_change_status.lane_change == carma_planning_msgs::msg::UpcomingLaneChangeStatus::RIGHT){
+                    RCLCPP_DEBUG_STREAM(rclcpp::get_logger("plan_delegator"),"Publishing right lane change");
                     turn_signal_command.r = 1;
                 }
                 else{
+                    RCLCPP_DEBUG_STREAM(rclcpp::get_logger("plan_delegator"),"Publishing left lane change");
                     turn_signal_command.l = 1;
                 }
                 turn_signal_command_pub_->publish(turn_signal_command);
@@ -339,6 +347,7 @@ namespace plan_delegator
         }
         else{
             // Publish turn signal command with neither turn signal activated
+            RCLCPP_DEBUG_STREAM(rclcpp::get_logger("plan_delegator"),"Publishing NO lane change");
             turn_signal_command_pub_->publish(turn_signal_command);
         }
 
@@ -604,7 +613,7 @@ namespace plan_delegator
             
             auto plan_response = client->async_send_request(plan_req);
             
-            auto future_status = plan_response.wait_for(std::chrono::milliseconds(100));
+            auto future_status = plan_response.wait_for(std::chrono::milliseconds(400));
 
             // Wait for the result.
             if (future_status == std::future_status::ready)
