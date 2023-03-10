@@ -58,7 +58,7 @@ curvature_moving_average_window_size : 9
 curvature_calc_lookahead_count : 1
 
 # Int: Amount to downsample input lanelet centerline data. Value corresponds to saving each nth point.
-downsample_ratio : 2
+downsample_ratio : 3
 
 # Double : Acceptable range from the ending downtrack, when planning success can be published, if vehicle has changed lanes
 # Units: meters
@@ -88,7 +88,7 @@ min_desired_gap: 5.0
 
 # Double: Maximum time gap with vehicle in adjacent lane to require negotiation for lane change
 # Units: seconds
-desired_time_gap: 3.0
+desired_time_gap: 4.0
 
 ## Unused parameters added for using basic autonomy library
 # Int: Amount to downsample input lanelet centerline data on turns. Value corresponds to saving each nth point.
@@ -104,4 +104,4 @@ back_distance: 0.0
 
 # Double: Additional distance beyond ending downtrack to ensure sufficient points
 # Units: meters
-buffer_ending_downtrack: 5.0
+buffer_ending_downtrack: 20.0

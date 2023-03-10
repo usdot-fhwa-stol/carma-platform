@@ -158,7 +158,7 @@ def generate_launch_description():
                     ("roadway_objects", [ EnvironmentVariable('CARMA_ENV_NS', default_value=''), "/roadway_objects" ] ),
                     ("incoming_spat", [ EnvironmentVariable('CARMA_MSG_NS', default_value=''), "/incoming_spat" ] ),
                     ("guidance_state", [ EnvironmentVariable('CARMA_GUIDE_NS', default_value=''), "/state" ] ),
-                    ("lamp_cmd", "fake_lamp_cmd" ),
+                    #("lamp_cmd", "fake_lamp_cmd" ),
                 ],
                 parameters=[
                     plan_delegator_param_file,
@@ -329,7 +329,7 @@ def generate_launch_description():
                     {'lowpass_gain_linear_x':0.1},
                     {'lowpass_gain_angular_z':0.0},
                     {'lowpass_gain_steering_angle':0.1},
-                    {'/config_speed_limit':15.0},
+                    {'/config_speed_limit':20.0},
                     {'/vehicle_acceleration_limit':2.0},
                     {'/vehicle_lateral_accel_limit':2.0},
                     {'/vehicle_lateral_jerk_limit':2.0},

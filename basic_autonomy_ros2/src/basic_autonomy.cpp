@@ -475,17 +475,20 @@ namespace basic_autonomy
             std::vector<std::vector<lanelet::BasicPoint2d>> output;
             
             //Fit centerlines to a spline
+            RCLCPP_ERROR_STREAM(rclcpp::get_logger(BASIC_AUTONOMY_LOGGER), "Before compute_fit 1");
             std::unique_ptr<smoothing::SplineI> fit_curve_1 = compute_fit(line_1); // Compute splines based on curve points
             if (!fit_curve_1)
             {
                 throw std::invalid_argument("Could not fit a spline curve along the starting_lane centerline points!");
             }
+            RCLCPP_ERROR_STREAM(rclcpp::get_logger(BASIC_AUTONOMY_LOGGER), "After compute_fit 1");
 
             std::unique_ptr<smoothing::SplineI> fit_curve_2 = compute_fit(line_2); // Compute splines based on curve points
             if (!fit_curve_2)
             {
                 throw std::invalid_argument("Could not fit a spline curve along the ending_lane centerline points!");
             }
+            RCLCPP_ERROR_STREAM(rclcpp::get_logger(BASIC_AUTONOMY_LOGGER), "After compute_fit 2");
 
             //Sample spline to get centerlines of equal size
             std::vector<lanelet::BasicPoint2d> all_sampling_points_line1;
@@ -509,7 +512,7 @@ namespace basic_autonomy
             
             
             all_sampling_points_line2.reserve(1 + total_point_size * 2);
-            
+            RCLCPP_ERROR_STREAM(rclcpp::get_logger(BASIC_AUTONOMY_LOGGER), "Before re-sampling points");
             for(size_t i = 0;i<total_point_size; ++i){
                 lanelet::BasicPoint2d p1 = (*fit_curve_1)(scaled_steps_along_curve);
                 lanelet::BasicPoint2d p2 = (*fit_curve_2)(scaled_steps_along_curve);
@@ -518,6 +521,7 @@ namespace basic_autonomy
 
                 scaled_steps_along_curve += 1.0 / total_point_size;  //adding steps_along_curve_step_size
             }
+            RCLCPP_ERROR_STREAM(rclcpp::get_logger(BASIC_AUTONOMY_LOGGER), "After re-sampling points");
 
             output.push_back(all_sampling_points_line1);
             output.push_back(all_sampling_points_line2);
