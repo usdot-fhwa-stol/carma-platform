@@ -329,7 +329,7 @@ def generate_launch_description():
                     {'lowpass_gain_linear_x':0.1},
                     {'lowpass_gain_angular_z':0.0},
                     {'lowpass_gain_steering_angle':0.1},
-                    {'/config_speed_limit':20.0},
+                    {'/config_speed_limit':25.0},
                     {'/vehicle_acceleration_limit':2.0},
                     {'/vehicle_lateral_accel_limit':2.0},
                     {'/vehicle_lateral_jerk_limit':2.0},

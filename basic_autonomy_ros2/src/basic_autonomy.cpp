@@ -409,15 +409,6 @@ namespace basic_autonomy
             downsampled_target_centerline.reserve(400);
             downsampled_target_centerline = carma_ros2_utils::containers::downsample_vector(target_lane_centerline, downsample_ratio);
 
-            //If points are not the same size - resample to ensure same size along both centerlines
-            if(downsampled_starting_centerline.size() != downsampled_target_centerline.size())
-            {
-                auto centerlines = resample_linestring_pair_to_same_size(downsampled_starting_centerline, downsampled_target_centerline);
-                downsampled_starting_centerline = centerlines[0];
-                downsampled_target_centerline = centerlines[1];
-
-            }
-
             //Constrain to starting and ending downtrack
             int start_index_starting_centerline = waypoint_generation::get_nearest_index_by_downtrack(downsampled_starting_centerline, wm, starting_downtrack);
             carma_planning_msgs::msg::VehicleState start_state;
@@ -433,6 +424,32 @@ namespace basic_autonomy
 
             std::vector<lanelet::BasicPoint2d> constrained_start_centerline(downsampled_starting_centerline.begin() + start_index_starting_centerline, downsampled_starting_centerline.begin() + end_index_starting_centerline);
             std::vector<lanelet::BasicPoint2d> constrained_target_centerline(downsampled_target_centerline.begin() + start_index_target_centerline, downsampled_target_centerline.begin() + end_index_target_centerline);
+
+
+            //If points are not the same size - resample to ensure same size along both centerlines
+            if(downsampled_starting_centerline.size() != downsampled_target_centerline.size())
+            {
+                auto centerlines = resample_linestring_pair_to_same_size(constrained_start_centerline, constrained_target_centerline);
+                constrained_start_centerline = centerlines[0];
+                constrained_target_centerline = centerlines[1];
+
+            }
+
+            // //Constrain to starting and ending downtrack
+            // int start_index_starting_centerline = waypoint_generation::get_nearest_index_by_downtrack(downsampled_starting_centerline, wm, starting_downtrack);
+            // carma_planning_msgs::msg::VehicleState start_state;
+            // start_state.x_pos_global = downsampled_starting_centerline[start_index_starting_centerline].x();
+            // start_state.y_pos_global = downsampled_starting_centerline[start_index_starting_centerline].y();
+            // int start_index_target_centerline = waypoint_generation::get_nearest_point_index(downsampled_target_centerline, start_state);
+
+            // int end_index_target_centerline = waypoint_generation::get_nearest_index_by_downtrack(downsampled_target_centerline, wm, ending_downtrack);
+            // carma_planning_msgs::msg::VehicleState end_state;
+            // end_state.x_pos_global = downsampled_target_centerline[end_index_target_centerline].x();
+            // end_state.y_pos_global = downsampled_target_centerline[end_index_target_centerline].y();
+            // int end_index_starting_centerline = waypoint_generation::get_nearest_point_index(downsampled_starting_centerline, end_state);
+
+            // std::vector<lanelet::BasicPoint2d> constrained_start_centerline(downsampled_starting_centerline.begin() + start_index_starting_centerline, downsampled_starting_centerline.begin() + end_index_starting_centerline);
+            // std::vector<lanelet::BasicPoint2d> constrained_target_centerline(downsampled_target_centerline.begin() + start_index_target_centerline, downsampled_target_centerline.begin() + end_index_target_centerline);
 
             //Create Trajectory geometry
             double delta_step = 1.0 / constrained_start_centerline.size();
