@@ -339,11 +339,10 @@ def generate_launch_description():
                     {'--log-level' : GetLogLevel('twist_gate', env_log_levels) }
                 ],
                 remappings = [
-                    ("/vehicle_cmd", [ EnvironmentVariable('CARMA_INTR_NS', default_value=''), "/vehicle_cmd" ] ),
+                    ("vehicle_cmd", [ EnvironmentVariable('CARMA_INTR_NS', default_value=''), "/vehicle_cmd" ] ),
                     ("/lamp_cmd", ["lamp_cmd" ] ),
                     ("/twist_cmd", ["twist_cmd" ] ),
                     ("/decision_maker/state", ["decision_maker/state" ] ),
-                    ("/ctrl_mode", ["ctrl_mode" ] ),
                     ("/ctrl_cmd",   ["ctrl_cmd" ] ),
                 ],
                 parameters = [
