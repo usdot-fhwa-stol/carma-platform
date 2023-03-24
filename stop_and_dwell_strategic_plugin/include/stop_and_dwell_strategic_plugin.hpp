@@ -181,4 +181,4 @@ public:
   FRIEND_TEST(StopAndDwellStrategicPluginTest, findSpeedLimit);
   FRIEND_TEST(StopAndDwellStrategicPluginTest, maneuvercbtest);
 };
-}  // namespace sci_strategic_plugin
+}  // namespace stop_and_dwell_strategic_plugin

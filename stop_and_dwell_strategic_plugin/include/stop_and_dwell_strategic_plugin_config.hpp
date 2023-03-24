@@ -1,6 +1,6 @@
 #pragma once
 /*
- * Copyright (C) 2022 LEIDOS.
+ * Copyright (C) 2023 LEIDOS.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -43,17 +43,11 @@ struct StopAndDwellStrategicPluginConfig
   // Double: Approximate update time interval of carma streets
   double delta_t = 1.0;
 
-  // Double: Minimum inter-vehicle gap
-  double min_gap = 10.0;
-
   // Double: Length od the vehicle
   double veh_length = 4.0;
 
-  // Double: Vehicle reaction time to a received schedule in seconds (approximate value, only used for communication with the schedule)
-  double reaction_time = 5.0;
-
-  // Double: The distance vehicle drives to be considered out of intersections
-  double intersection_exit_zone_length = 15.0;
+  // Double: The distance bus drives to be considered out of bus stop
+  double bus_line_exit_zone_length = 15.0;
 
   //! The name to use for this plugin during comminications with the arbitrator
   std::string strategic_plugin_name = "stop_and_dwell_strategic_plugin";
@@ -64,16 +58,13 @@ struct StopAndDwellStrategicPluginConfig
   //! The name of the plugin to use for stop and wait trajectory planning
   std::string stop_and_wait_plugin_name = "stop_and_wait_plugin";
 
-  //! The name of the plugin to use for intersection transit trajectory planning
-  std::string intersection_transit_plugin_name = "intersection_transit_maneuvering";
-
   //! License plate of the vehicle.
   std::string vehicle_id = "default_id";
 
   // Stream operator for this config
   friend std::ostream &operator<<(std::ostream &output, const StopAndDwellStrategicPluginConfig &c)
   {
-    output << "SCIStrategicPluginConfig { " << std::endl
+    output << "StopAndDwellStrategicPluginConfig { " << std::endl
           << "vehicle_decel_limit: " << c.vehicle_decel_limit << std::endl
           << "vehicle_decel_limit_multiplier: " << c.vehicle_decel_limit_multiplier << std::endl
           << "vehicle_accel_limit: " << c.vehicle_accel_limit << std::endl
@@ -81,17 +72,14 @@ struct StopAndDwellStrategicPluginConfig
           << "stop_line_buffer: " << c.stop_line_buffer << std::endl
           << "min_maneuver_planning_period: " << c.min_maneuver_planning_period << std::endl
           << "delta_t: " << c.delta_t << std::endl
-          << "min_gap: " << c.min_gap << std::endl
           << "veh_length: " << c.veh_length << std::endl
-          << "reaction_time: " << c.reaction_time << std::endl
-          << "intersection_exit_zone_length: " << c.intersection_exit_zone_length << std::endl
+          << "bus_line_exit_zone_length: " << c.bus_line_exit_zone_length << std::endl
           << "strategic_plugin_name: " << c.strategic_plugin_name << std::endl
           << "lane_following_plugin_name: " << c.lane_following_plugin_name << std::endl
           << "stop_and_wait_plugin_name: " << c.stop_and_wait_plugin_name << std::endl
-          << "intersection_transit_plugin_name: " << c.intersection_transit_plugin_name << std::endl
           << "vehicle_id: " << c.vehicle_id << std::endl
           << "}" << std::endl;
     return output;
   }
 };
-}  // namespace 
+}  // namespace stop_and_dwell_strategic_plugin

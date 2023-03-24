@@ -16,12 +16,6 @@
 #include "stop_and_dwell_strategic_plugin.hpp"
 
 #define GET_MANEUVER_PROPERTY(mvr, property)                                                                           \
-  (((mvr).type == carma_planning_msgs::msg::Maneuver::INTERSECTION_TRANSIT_LEFT_TURN ?                                                 \
-        (mvr).intersection_transit_left_turn_maneuver.property :                                                       \
-        ((mvr).type == carma_planning_msgs::msg::Maneuver::INTERSECTION_TRANSIT_RIGHT_TURN ?                                           \
-             (mvr).intersection_transit_right_turn_maneuver.property :                                                 \
-             ((mvr).type == carma_planning_msgs::msg::Maneuver::INTERSECTION_TRANSIT_STRAIGHT ?                                        \
-                  (mvr).intersection_transit_straight_maneuver.property :                                              \
                   ((mvr).type == carma_planning_msgs::msg::Maneuver::LANE_CHANGE    ? (mvr).lane_change_maneuver.property :            \
                   ((mvr).type == carma_planning_msgs::msg::Maneuver::LANE_FOLLOWING ? (mvr).lane_following_maneuver.property :         \
                   ((mvr).type == carma_planning_msgs::msg::Maneuver::STOP_AND_WAIT ? (mvr).stop_and_wait_maneuver.property :           \
@@ -31,7 +25,7 @@
                                                                                                       "called on "     \
                                                                                                       "maneuver with " \
                                                                                                       "invalid type "  \
-                                                                                                      "id"))))))))
+                                                                                                      "id"))))
 
 
 namespace stop_and_dwell_strategic_plugin
@@ -52,12 +46,6 @@ namespace {
           return mvr.lane_following_maneuver.end_speed;
       case carma_planning_msgs::msg::Maneuver::LANE_CHANGE:
           return mvr.lane_change_maneuver.end_speed;
-      case carma_planning_msgs::msg::Maneuver::INTERSECTION_TRANSIT_STRAIGHT:
-          return mvr.intersection_transit_straight_maneuver.end_speed;
-      case carma_planning_msgs::msg::Maneuver::INTERSECTION_TRANSIT_LEFT_TURN:
-          return mvr.intersection_transit_left_turn_maneuver.end_speed;
-      case carma_planning_msgs::msg::Maneuver::INTERSECTION_TRANSIT_RIGHT_TURN:
-          return mvr.intersection_transit_right_turn_maneuver.end_speed;
       case carma_planning_msgs::msg::Maneuver::STOP_AND_WAIT:
           return 0;
       default:
@@ -75,12 +63,9 @@ StopAndDwellStrategicPlugin::StopAndDwellStrategicPlugin(const rclcpp::NodeOptio
   config_.vehicle_accel_limit_multiplier = declare_parameter<double>("vehicle_accel_limit_multiplier",   config_.vehicle_accel_limit_multiplier);
   config_.stop_line_buffer = declare_parameter<double>("stop_line_buffer",   config_.stop_line_buffer);
   config_.delta_t = declare_parameter<double>("delta_t",   config_.delta_t);
-  config_.min_gap = declare_parameter<double>("min_gap",   config_.min_gap);
-  config_.reaction_time = declare_parameter<double>("reaction_time",   config_.reaction_time);
-  config_.intersection_exit_zone_length = declare_parameter<double>("intersection_exit_zone_length",   config_.intersection_exit_zone_length);
+  config_.bus_line_exit_zone_length = declare_parameter<double>("bus_line_exit_zone_length",   config_.bus_line_exit_zone_length);
   config_.strategic_plugin_name = declare_parameter<std::string>("strategic_plugin_name",            config_.strategic_plugin_name);
   config_.lane_following_plugin_name = declare_parameter<std::string>("lane_following_plugin_name",       config_.lane_following_plugin_name);
-  config_.intersection_transit_plugin_name = declare_parameter<std::string>("intersection_transit_plugin_name", config_.intersection_transit_plugin_name);
   config_.vehicle_id = declare_parameter<std::string>("vehicle_id", config_.vehicle_id);
   config_.veh_length = declare_parameter<double>("vehicle_length", config_.veh_length);
   config_.vehicle_decel_limit = declare_parameter<double>("vehicle_deceleration_limit", config_.vehicle_decel_limit);
@@ -97,12 +82,9 @@ carma_ros2_utils::CallbackReturn StopAndDwellStrategicPlugin::on_configure_plugi
   get_parameter<double>("vehicle_accel_limit_multiplier",   config_.vehicle_accel_limit_multiplier);
   get_parameter<double>("stop_line_buffer",   config_.stop_line_buffer);
   get_parameter<double>("delta_t",   config_.delta_t);
-  get_parameter<double>("min_gap",   config_.min_gap);
-  get_parameter<double>("reaction_time",   config_.reaction_time);
-  get_parameter<double>("intersection_exit_zone_length",   config_.intersection_exit_zone_length);
+  get_parameter<double>("bus_line_exit_zone_length",   config_.bus_line_exit_zone_length);
   get_parameter<std::string>("strategic_plugin_name",            config_.strategic_plugin_name);
   get_parameter<std::string>("lane_following_plugin_name",       config_.lane_following_plugin_name);
-  get_parameter<std::string>("intersection_transit_plugin_name", config_.intersection_transit_plugin_name);
   get_parameter<std::string>("vehicle_id", config_.vehicle_id);
   get_parameter<double>("vehicle_length", config_.veh_length);
   get_parameter<double>("vehicle_deceleration_limit", config_.vehicle_decel_limit);
@@ -135,9 +117,7 @@ rcl_interfaces::msg::SetParametersResult StopAndDwellStrategicPlugin::parameter_
     {"vehicle_accel_limit_multiplier", config_.vehicle_accel_limit_multiplier},
     {"stop_line_buffer", config_.stop_line_buffer},
     {"delta_t", config_.delta_t},
-    {"min_gap", config_.min_gap},
-    {"reaction_time", config_.reaction_time},
-    {"intersection_exit_zone_length", config_.intersection_exit_zone_length}
+    {"bus_line_exit_zone_length", config_.bus_line_exit_zone_length}
   }, parameters); // vehicle_acceleration_limit not updated as it's global param
 
   rcl_interfaces::msg::SetParametersResult result;
