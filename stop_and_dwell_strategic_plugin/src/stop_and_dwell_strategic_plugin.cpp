@@ -217,8 +217,7 @@ carma_planning_msgs::msg::Maneuver StopAndDwellStrategicPlugin::composeLaneFollo
   maneuver_msg.type = carma_planning_msgs::msg::Maneuver::LANE_FOLLOWING;
   maneuver_msg.lane_following_maneuver.parameters.planning_strategic_plugin = config_.strategic_plugin_name;
   maneuver_msg.lane_following_maneuver.parameters.presence_vector = 
-  carma_planning_msgs::msg::ManeuverParameters::HAS_TACTICAL_PLUGIN | carma_planning_msgs::msg::ManeuverParameters::HAS_INT_META_DATA | 
-  carma_planning_msgs::msg::ManeuverParameters::HAS_FLOAT_META_DATA | carma_planning_msgs::msg::ManeuverParameters::HAS_STRING_META_DATA;
+  carma_planning_msgs::msg::ManeuverParameters::HAS_TACTICAL_PLUGIN;
   maneuver_msg.lane_following_maneuver.parameters.negotiation_type = carma_planning_msgs::msg::ManeuverParameters::NO_NEGOTIATION;
   maneuver_msg.lane_following_maneuver.parameters.planning_tactical_plugin = config_.lane_following_plugin_name;
   maneuver_msg.lane_following_maneuver.start_dist = start_dist;
@@ -231,7 +230,7 @@ carma_planning_msgs::msg::Maneuver StopAndDwellStrategicPlugin::composeLaneFollo
       lanelet::utils::transform(lane_ids, [](auto id) { return std::to_string(id); });
 
   RCLCPP_INFO_STREAM(rclcpp::get_logger("stop_and_dwell_strategic_plugin"), "Creating lane follow start dist: " << start_dist << " end dist: " << end_dist);
-
+return maneuver_msg;
 }
 
 

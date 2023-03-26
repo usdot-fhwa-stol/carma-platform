@@ -25,7 +25,7 @@
 // Unit tests for strategic plugin helper methods
 namespace stop_and_dwell_strategic_plugin
 {
-/*
+
 TEST(StopAndDwellStrategicPluginTest, composeLaneFollowingManeuverMessage)
 {
   auto sd_node = std::make_shared<stop_and_dwell_strategic_plugin::StopAndDwellStrategicPlugin>(rclcpp::NodeOptions());
@@ -37,8 +37,7 @@ TEST(StopAndDwellStrategicPluginTest, composeLaneFollowingManeuverMessage)
 
   ASSERT_EQ(carma_planning_msgs::msg::Maneuver::LANE_FOLLOWING, result.type);
   ASSERT_EQ(carma_planning_msgs::msg::ManeuverParameters::NO_NEGOTIATION, result.lane_following_maneuver.parameters.negotiation_type);
-  ASSERT_EQ(carma_planning_msgs::msg::ManeuverParameters::HAS_TACTICAL_PLUGIN | carma_planning_msgs::msg::ManeuverParameters::HAS_INT_META_DATA | 
-  carma_planning_msgs::msg::ManeuverParameters::HAS_FLOAT_META_DATA | carma_planning_msgs::msg::ManeuverParameters::HAS_STRING_META_DATA,
+  ASSERT_EQ(carma_planning_msgs::msg::ManeuverParameters::HAS_TACTICAL_PLUGIN,
             result.lane_following_maneuver.parameters.presence_vector);
   ASSERT_TRUE(config.lane_following_plugin_name.compare(
                   result.lane_following_maneuver.parameters.planning_tactical_plugin) == 0);
@@ -54,8 +53,7 @@ TEST(StopAndDwellStrategicPluginTest, composeLaneFollowingManeuverMessage)
   ASSERT_EQ(2, result.lane_following_maneuver.lane_ids.size());
   ASSERT_TRUE(result.lane_following_maneuver.lane_ids[0].compare("1200") == 0);
   ASSERT_TRUE(result.lane_following_maneuver.lane_ids[1].compare("1201") == 0);
-  ASSERT_TRUE(result.lane_following_maneuver.parameters.int_valued_meta_data[0] == 1);
-}*/
+}
 
 TEST(StopAndDwellStrategicPluginTest, composeStopAndWaitManeuverMessage)
 {
