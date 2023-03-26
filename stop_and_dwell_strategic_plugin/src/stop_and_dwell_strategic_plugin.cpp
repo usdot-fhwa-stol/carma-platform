@@ -62,7 +62,6 @@ StopAndDwellStrategicPlugin::StopAndDwellStrategicPlugin(const rclcpp::NodeOptio
   config_.vehicle_decel_limit_multiplier = declare_parameter<double>("vehicle_decel_limit_multiplier",   config_.vehicle_decel_limit_multiplier);
   config_.vehicle_accel_limit_multiplier = declare_parameter<double>("vehicle_accel_limit_multiplier",   config_.vehicle_accel_limit_multiplier);
   config_.stop_line_buffer = declare_parameter<double>("stop_line_buffer",   config_.stop_line_buffer);
-  config_.delta_t = declare_parameter<double>("delta_t",   config_.delta_t);
   config_.bus_line_exit_zone_length = declare_parameter<double>("bus_line_exit_zone_length",   config_.bus_line_exit_zone_length);
   config_.strategic_plugin_name = declare_parameter<std::string>("strategic_plugin_name",            config_.strategic_plugin_name);
   config_.lane_following_plugin_name = declare_parameter<std::string>("lane_following_plugin_name",       config_.lane_following_plugin_name);
@@ -81,7 +80,6 @@ carma_ros2_utils::CallbackReturn StopAndDwellStrategicPlugin::on_configure_plugi
   get_parameter<double>("vehicle_decel_limit_multiplier",   config_.vehicle_decel_limit_multiplier);
   get_parameter<double>("vehicle_accel_limit_multiplier",   config_.vehicle_accel_limit_multiplier);
   get_parameter<double>("stop_line_buffer",   config_.stop_line_buffer);
-  get_parameter<double>("delta_t",   config_.delta_t);
   get_parameter<double>("bus_line_exit_zone_length",   config_.bus_line_exit_zone_length);
   get_parameter<std::string>("strategic_plugin_name",            config_.strategic_plugin_name);
   get_parameter<std::string>("lane_following_plugin_name",       config_.lane_following_plugin_name);
@@ -116,7 +114,6 @@ rcl_interfaces::msg::SetParametersResult StopAndDwellStrategicPlugin::parameter_
     {"vehicle_decel_limit_multiplier", config_.vehicle_decel_limit_multiplier},
     {"vehicle_accel_limit_multiplier", config_.vehicle_accel_limit_multiplier},
     {"stop_line_buffer", config_.stop_line_buffer},
-    {"delta_t", config_.delta_t},
     {"bus_line_exit_zone_length", config_.bus_line_exit_zone_length}
   }, parameters); // vehicle_acceleration_limit not updated as it's global param
 

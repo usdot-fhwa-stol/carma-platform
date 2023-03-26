@@ -40,9 +40,6 @@ struct StopAndDwellStrategicPluginConfig
   //! The minimum period in seconds which a maneuver plan must cover if the plugin wishes to control the whole plan
   double min_maneuver_planning_period = 15.1;
 
-  // Double: Approximate update time interval of carma streets
-  double delta_t = 1.0;
-
   // Double: Length od the vehicle
   double veh_length = 4.0;
 
@@ -71,7 +68,6 @@ struct StopAndDwellStrategicPluginConfig
           << "vehicle_accel_limit_multiplier: " << c.vehicle_accel_limit_multiplier << std::endl
           << "stop_line_buffer: " << c.stop_line_buffer << std::endl
           << "min_maneuver_planning_period: " << c.min_maneuver_planning_period << std::endl
-          << "delta_t: " << c.delta_t << std::endl
           << "veh_length: " << c.veh_length << std::endl
           << "bus_line_exit_zone_length: " << c.bus_line_exit_zone_length << std::endl
           << "strategic_plugin_name: " << c.strategic_plugin_name << std::endl
