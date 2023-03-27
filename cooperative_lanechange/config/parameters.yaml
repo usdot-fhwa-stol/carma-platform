@@ -74,7 +74,7 @@ min_timestep : 0.1
 
 # Double:  The range from the start from which the plugin can start working
 # Units: meters
-starting_downtrack_range : 25.0
+starting_downtrack_range : 10.0
 
 # Double: Fraction of the maneuver that has been completed. Starting fraction specifies a higher urgency of in the request to lane change
 starting_fraction : 0.2
