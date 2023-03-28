@@ -1,6 +1,6 @@
 
 /*
- * Copyright (C) 2022 LEIDOS.
+ * Copyright (C) 2023 LEIDOS.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -14,8 +14,8 @@
  * License for the specific language governing permissions and limitations under
  * the License.
  */
-#include <ros/console.h>
-#include "lci_strategic_plugin/lci_state_transition_table.h"
+#include "lci_strategic_plugin/lci_state_transition_table.hpp"
+#include <rclcpp/rclcpp.hpp>
 
 namespace lci_strategic_plugin
 {
@@ -117,7 +117,7 @@ void LCIStrategicStateTransitionTable::signalWhenDEPARTING(TransitEvent signal)
 
 void LCIStrategicStateTransitionTable::logDebugSignal(TransitEvent signal) const
 {
-  ROS_DEBUG_STREAM("LCIStrategicStateTransitionTable received unsupported signal of " << signal << " while in state "
+  RCLCPP_DEBUG_STREAM(rclcpp::get_logger("lci_strategic_plugin"), "LCIStrategicStateTransitionTable received unsupported signal of " << signal << " while in state "
                                                                                   << state_);
 }
 
@@ -128,7 +128,7 @@ void LCIStrategicStateTransitionTable::setAndLogState(TransitState new_state, Tr
     return;  // State was unchanged no need to log or trigger callbacks
   }
 
-  ROS_INFO_STREAM("LCIStrategicStateTransitionTable changed LCIStrategic Strategic Plugin state from "
+  RCLCPP_INFO_STREAM(rclcpp::get_logger("lci_strategic_plugin"), "LCIStrategicStateTransitionTable changed LCIStrategic Strategic Plugin state from "
                   << state_ << " to " << new_state << " because of signal " << source_signal);
  
   TransitState prev_state = state_;

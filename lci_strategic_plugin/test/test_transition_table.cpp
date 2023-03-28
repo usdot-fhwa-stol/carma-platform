@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022 LEIDOS.
+ * Copyright (C) 2023 LEIDOS.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -15,9 +15,9 @@
  */
 
 #include <gtest/gtest.h>
-#include <ros/console.h>
-#include "test_fixture.h"
-#include "lci_strategic_plugin/lci_state_transition_table.h"
+
+#include "test_fixture.hpp"
+#include "lci_strategic_plugin/lci_state_transition_table.hpp"
 
 // Unit tests for transition table
 namespace lci_strategic_plugin
