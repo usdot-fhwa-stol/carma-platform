@@ -1205,14 +1205,14 @@ namespace basic_autonomy
 
         autoware_auto_msgs::msg::Trajectory process_trajectory_plan(const carma_planning_msgs::msg::TrajectoryPlan& tp, double vehicle_response_lag )
         {
-            RCLCPP_ERROR_STREAM(rclcpp::get_logger(BASIC_AUTONOMY_LOGGER), "Processing latest TrajectoryPlan message");
+            RCLCPP_DEBUG_STREAM(rclcpp::get_logger(BASIC_AUTONOMY_LOGGER), "Processing latest TrajectoryPlan message");
 
             std::vector<double> times;
             std::vector<double> downtracks;
 
             std::vector<carma_planning_msgs::msg::TrajectoryPlanPoint> trajectory_points = tp.trajectory_points;
 
-            RCLCPP_ERROR_STREAM(rclcpp::get_logger(BASIC_AUTONOMY_LOGGER), "Original Trajectory size:"<<trajectory_points.size());
+            RCLCPP_DEBUG_STREAM(rclcpp::get_logger(BASIC_AUTONOMY_LOGGER), "Original Trajectory size:"<<trajectory_points.size());
 
 
             trajectory_utils::conversions::trajectory_to_downtrack_time(trajectory_points, &downtracks, &times);
@@ -1223,8 +1223,8 @@ namespace basic_autonomy
             {
                 if (times[i] == times[i - 1]) //if exactly same, it is stopping case
                 {
-                    RCLCPP_ERROR_STREAM(rclcpp::get_logger(BASIC_AUTONOMY_LOGGER), "Detected a stopping case where times is exactly equal: " << times[i-1]);
-                    RCLCPP_ERROR_STREAM(rclcpp::get_logger(BASIC_AUTONOMY_LOGGER), "And index of that is: " << i << ", where size is: " << times.size());
+                    RCLCPP_DEBUG_STREAM(rclcpp::get_logger(BASIC_AUTONOMY_LOGGER), "Detected a stopping case where times is exactly equal: " << times[i-1]);
+                    RCLCPP_DEBUG_STREAM(rclcpp::get_logger(BASIC_AUTONOMY_LOGGER), "And index of that is: " << i << ", where size is: " << times.size());
                     stopping_index = i;
                     break;
                 }
@@ -1241,7 +1241,7 @@ namespace basic_autonomy
             for (size_t i = 0; i < speeds.size(); i++) { // Ensure 0 is min speed
                 if (stopping_index != 0 && i >= stopping_index - 1)
                 {
-                    RCLCPP_ERROR_STREAM(rclcpp::get_logger(BASIC_AUTONOMY_LOGGER), "Made it to 0, i: " << i);
+                    RCLCPP_DEBUG_STREAM(rclcpp::get_logger(BASIC_AUTONOMY_LOGGER), "Made it to 0, i: " << i);
                     
                     speeds[i] = 0.0;  //stopping case
                 }
@@ -1269,7 +1269,7 @@ namespace basic_autonomy
                 autoware_point.longitudinal_velocity_mps = lag_speeds[i];
 
                 autoware_point.time_from_start = rclcpp::Duration(times[i] * 1e9);
-                RCLCPP_ERROR_STREAM(rclcpp::get_logger(BASIC_AUTONOMY_LOGGER), "Setting waypoint idx: " << i <<", with planner: << " << trajectory_points[i].planner_plugin_name << ", x: " << trajectory_points[i].x << 
+                RCLCPP_DEBUG_STREAM(rclcpp::get_logger(BASIC_AUTONOMY_LOGGER), "Setting waypoint idx: " << i <<", with planner: << " << trajectory_points[i].planner_plugin_name << ", x: " << trajectory_points[i].x << 
                                         ", y: " << trajectory_points[i].y <<
                                         ", speed: " << lag_speeds[i]* 2.23694 << "mph");
                 autoware_trajectory.points.push_back(autoware_point);

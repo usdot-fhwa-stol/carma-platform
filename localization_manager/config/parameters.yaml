@@ -26,7 +26,7 @@ gnss_only_operation_timeout: 20000
 
 # Integer: GNSS Data timeout. If exceeded the system will assume the GNSS is no longer functional. 
 # Units: ms
-gnss_data_timeout: 500
+gnss_data_timeout: 1000 #500
 
 # Integer: Maximum allowed number of sequential timesteps to let lidar initialize before switching to GPS only mode
 # NOTE: Only used in GNSS only with NDT initialization mode

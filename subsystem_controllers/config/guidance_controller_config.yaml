@@ -47,7 +47,7 @@
     auto_activated_plugins:
       - /guidance/plugins/lci_strategic_plugin
       - /guidance/plugins/intersection_transit_maneuvering
-      #- /guidance/plugins/light_controlled_intersection_tactical_plugin
+      - /guidance/plugins/light_controlled_intersection_tactical_plugin
       - /guidance/plugins/stop_and_wait_plugin
       - /guidance/plugins/sci_strategic_plugin
       - /guidance/plugins/stop_controlled_intersection_tactical_plugin
@@ -61,7 +61,7 @@
     ros2_initial_plugins:
       - /guidance/plugins/inlanecruising_plugin
       - /guidance/plugins/yield_plugin
-      #- /guidance/plugins/light_controlled_intersection_tactical_plugin
+      - /guidance/plugins/light_controlled_intersection_tactical_plugin
       - /guidance/plugins/platooning_tactical_plugin_node
       - /guidance/plugins/sci_strategic_plugin
       - /guidance/plugins/cooperative_lanechange

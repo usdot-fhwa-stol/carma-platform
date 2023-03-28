@@ -51,7 +51,7 @@ namespace arbitrator
 
         config_.plugin_priorities = plugin_priorities_map_from_json(json_string);
 
-        RCLCPP_INFO_STREAM(rclcpp::get_logger("arbitrator"), "Arbitrator Loaded Params: " << config_);
+        RCLCPP_ERROR_STREAM(rclcpp::get_logger("arbitrator"), "Arbitrator Loaded Params: " << config_);
 
         std::shared_ptr<arbitrator::CostFunction> cf;
         arbitrator::CostSystemCostFunction cscf = arbitrator::CostSystemCostFunction();
