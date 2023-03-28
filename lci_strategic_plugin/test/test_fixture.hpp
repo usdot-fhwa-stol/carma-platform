@@ -16,8 +16,15 @@
  */
 
 #include <gmock/gmock.h>
-#include <carma_wm_ros2/CARMAWorldModel.h>
-#include <carma_wm_ros2/WMTestLibForGuidance.h>
+#include <carma_wm_ros2/CARMAWorldModel.hpp>
+#include <carma_wm_ros2/WMTestLibForGuidance.hpp>
+
+using ::testing::A;
+using ::testing::_;
+using ::testing::DoAll;
+using ::testing::Return;
+using ::testing::ReturnArg;
+using ::testing::InSequence;
 
 // Unit tests for transition table
 namespace lci_strategic_plugin

@@ -805,21 +805,24 @@ private:
   FRIEND_TEST(LCIStrategicTestFixture, composeStopAndWaitManeuverMessage);
   FRIEND_TEST(LCIStrategicTestFixture, composeIntersectionTransitMessage);
   FRIEND_TEST(LCIStrategicTestFixture, composeTrajectorySmoothingManeuverMessage);
-  FRIEND_TEST(LCIStrategicTestFixture, findSpeedLimit);
   FRIEND_TEST(LCIStrategicTestFixture, handleFailureCaseHelper);
   FRIEND_TEST(LCIStrategicTestFixture, planWhenETInTBD);
   
   // Algo Unit Tests
   FRIEND_TEST(LCIStrategicTestFixture, calc_estimated_entry_time_left);
-  FRIEND_TEST(LCIStrategicTestFixture, estimate_distance_to_stop);
-  FRIEND_TEST(LCIStrategicTestFixture, estimate_time_to_stop);
   FRIEND_TEST(LCIStrategicTestFixture, get_distance_to_accel_or_decel_twice);
   FRIEND_TEST(LCIStrategicTestFixture, get_distance_to_accel_or_decel_once);
   FRIEND_TEST(LCIStrategicTestFixture, get_nearest_green_entry_time);
   FRIEND_TEST(LCIStrategicTestFixture, get_earliest_entry_time);
-  FRIEND_TEST(LCIStrategicTestFixture, calc_estimated_entry_time_left);
   FRIEND_TEST(LCIStrategicTestFixture, handleFailureCase);
   FRIEND_TEST(LCIStrategicTestFixture, handleStopping);
+  FRIEND_TEST(LCIStrategicTestFixture, planManeuverCb);
+  FRIEND_TEST(LCIStrategicPluginTest, parseStrategyParamstest);
+  FRIEND_TEST(LCIStrategicPluginTest, moboperationcbtest);
+  FRIEND_TEST(LCIStrategicTestFixture, findSpeedLimit);
+
+
+
 
 };
 }  // namespace lci_strategic_plugin

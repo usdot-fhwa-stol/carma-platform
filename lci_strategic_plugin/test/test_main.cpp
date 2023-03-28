@@ -14,17 +14,24 @@
  * the License.
  */
 
-#include <gmock/gmock.h>
+#include <gtest/gtest.h>
 #include <rclcpp/rclcpp.hpp>
 
-int main(int argc, char **argv)
-{
-    testing::InitGoogleTest(&argc, argv);
-    rclcpp::Time::init();
-    ROSCONSOLE_AUTOINIT;
-    if( ros::console::set_logger_level(ROSCONSOLE_DEFAULT_NAME, ros::console::levels::Debug) ) {
-      ros::console::notifyLoggerLevelsChanged();
-    }
-    auto res = RUN_ALL_TESTS();
-    return res;
+/*!
+* \brief Main entrypoint for unit tests
+*/
+int main (int argc, char **argv) {
+  ::testing::InitGoogleTest(&argc, argv);
+
+  //Initialize ROS
+  rclcpp::init(argc, argv);
+  auto ret = rcutils_logging_set_logger_level(
+          rclcpp::get_logger("lci_strategic_plugin").get_name(), RCUTILS_LOG_SEVERITY_DEBUG);
+
+  bool success = RUN_ALL_TESTS();
+
+  //shutdown ROS
+  rclcpp::shutdown();
+
+  return success;
 }

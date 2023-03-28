@@ -64,17 +64,23 @@ target_link_libraries(${node_exec}
         ${node_lib}
 )
 
-# Testing TODO
-#if(BUILD_TESTING)  
-#
-#  find_package(ament_lint_auto REQUIRED)
-#  ament_lint_auto_find_test_dependencies() # This populates the ${${PROJECT_NAME}_FOUND_TEST_DEPENDS} variable
-#
-#  ament_add_gtest(test_lci_strategic_plugin test/test_strategic_plugin.cpp test/test_lci_strategic_plugin.cpp test/test_main.cpp)
-#  ament_target_dependencies(test_lci_strategic_plugin ${${PROJECT_NAME}_FOUND_TEST_DEPENDS})
-#  target_link_libraries(test_lci_strategic_plugin ${node_lib})
-#
-#endif()
+# Testing
+if(BUILD_TESTING)  
+
+  find_package(ament_lint_auto REQUIRED)
+  ament_lint_auto_find_test_dependencies() # This populates the ${${PROJECT_NAME}_FOUND_TEST_DEPENDS} variable
+  
+  ament_add_gmock(test_lci_strategic_plugin 
+  test/test_transition_table.cpp 
+  test/test_strategic_plugin.cpp 
+  test/test_strategic_plugin_helpers.cpp 
+  test/test_main.cpp
+  )
+
+  ament_target_dependencies(test_lci_strategic_plugin ${${PROJECT_NAME}_FOUND_TEST_DEPENDS})
+  target_link_libraries(test_lci_strategic_plugin ${node_lib})
+
+endif()
 
 # Install
 ament_auto_package(
