@@ -25,3 +25,10 @@ min_speed: 2.2352
 # Double: If an upcoming lane change will begin in under this time threshold, a turn signal activation command will be published.
 # Units: Seconds
 duration_to_signal_before_lane_change: 2.5
+
+# Int: The maximum duration that Plan Delegator will wait after calling a tactical plugin's trajectory planning service; if trajectory 
+# generation takes longer than this, then trajectory planning will immediately end for the current trajectory planning iteration.
+# NOTE: It is highly desirable to maintain a timeout of 100 ms or less, but trajectory generation success cannot be guaranteed with this duration
+#       for tactical plugins (primarily cooperative_lanechange) in all test scenarios at this time.
+# Units: Milliseconds
+tactical_plugin_service_call_timeout: 100

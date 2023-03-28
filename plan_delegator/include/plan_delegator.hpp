@@ -76,6 +76,8 @@ namespace plan_delegator
         double max_trajectory_duration = 6.0;
         double min_crawl_speed = 2.2352; // Min crawl speed in m/s
         double duration_to_signal_before_lane_change = 2.5; // (Seconds) If an upcoming lane change will begin in under this time threshold, a turn signal activation command will be published.
+        int tactical_plugin_service_call_timeout = 100; // (Milliseconds) The maximum duration that Plan Delegator will wait after calling a tactical plugin's trajectory planning service; if trajectory 
+                                                        // generation takes longer than this, then planning will immediately end for the current trajectory planning iteration.
         
         // Stream operator for this config
         friend std::ostream &operator<<(std::ostream &output, const Config &c)

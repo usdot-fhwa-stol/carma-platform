@@ -142,6 +142,7 @@ namespace plan_delegator
         config_.max_trajectory_duration = declare_parameter<double>("trajectory_duration_threshold", config_.max_trajectory_duration);
         config_.min_crawl_speed = declare_parameter<double>("min_speed", config_.min_crawl_speed);
         config_.duration_to_signal_before_lane_change = declare_parameter<double>("duration_to_signal_before_lane_change", config_.duration_to_signal_before_lane_change);
+        config_.tactical_plugin_service_call_timeout = declare_parameter<int>("tactical_plugin_service_call_timeout", config_.tactical_plugin_service_call_timeout);
     }
 
     carma_ros2_utils::CallbackReturn PlanDelegator::handle_on_configure(const rclcpp_lifecycle::State &)
@@ -155,6 +156,7 @@ namespace plan_delegator
         get_parameter<double>("trajectory_duration_threshold", config_.max_trajectory_duration);
         get_parameter<double>("min_speed", config_.min_crawl_speed);
         get_parameter<double>("duration_to_signal_before_lane_change", config_.duration_to_signal_before_lane_change);
+        get_parameter<int>("tactical_plugin_service_call_timeout", config_.tactical_plugin_service_call_timeout);
 
         RCLCPP_INFO_STREAM(rclcpp::get_logger("plan_delegator"),"Done loading parameters: " << config_);
 
@@ -604,7 +606,7 @@ namespace plan_delegator
             
             auto plan_response = client->async_send_request(plan_req);
             
-            auto future_status = plan_response.wait_for(std::chrono::milliseconds(100));
+            auto future_status = plan_response.wait_for(std::chrono::milliseconds(config_.tactical_plugin_service_call_timeout));
 
             // Wait for the result.
             if (future_status == std::future_status::ready)

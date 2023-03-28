@@ -409,16 +409,7 @@ namespace basic_autonomy
             downsampled_target_centerline.reserve(400);
             downsampled_target_centerline = carma_utils::containers::downsample_vector(target_lane_centerline, downsample_ratio);
 
-            //If points are not the same size - resample to ensure same size along both centerlines
-            if(downsampled_starting_centerline.size() != downsampled_target_centerline.size())
-            {
-                auto centerlines = resample_linestring_pair_to_same_size(downsampled_starting_centerline, downsampled_target_centerline);
-                downsampled_starting_centerline = centerlines[0];
-                downsampled_target_centerline = centerlines[1];
-
-            }
-
-            //Constrain to starting and ending downtrack
+            // Constrain centerlines to starting and ending downtrack
             int start_index_starting_centerline = waypoint_generation::get_nearest_index_by_downtrack(downsampled_starting_centerline, wm, starting_downtrack);
             cav_msgs::VehicleState start_state;
             start_state.x_pos_global = downsampled_starting_centerline[start_index_starting_centerline].x();
@@ -433,6 +424,15 @@ namespace basic_autonomy
 
             std::vector<lanelet::BasicPoint2d> constrained_start_centerline(downsampled_starting_centerline.begin() + start_index_starting_centerline, downsampled_starting_centerline.begin() + end_index_starting_centerline);
             std::vector<lanelet::BasicPoint2d> constrained_target_centerline(downsampled_target_centerline.begin() + start_index_target_centerline, downsampled_target_centerline.begin() + end_index_target_centerline);
+
+            // If constrained centerlines are not the same size - resample to ensure same size along both centerlines
+            if(constrained_start_centerline.size() != constrained_target_centerline.size())
+            {
+                auto centerlines = resample_linestring_pair_to_same_size(constrained_start_centerline, constrained_target_centerline);
+                constrained_start_centerline = centerlines[0];
+                constrained_target_centerline = centerlines[1];
+
+            }
 
             //Create Trajectory geometry
             double delta_step = 1.0 / constrained_start_centerline.size();
