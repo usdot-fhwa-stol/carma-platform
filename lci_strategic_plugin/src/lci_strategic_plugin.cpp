@@ -134,14 +134,25 @@ carma_ros2_utils::CallbackReturn LCIStrategicPlugin::on_configure_plugin()
 
 rcl_interfaces::msg::SetParametersResult LCIStrategicPlugin::parameter_update_callback(const std::vector<rclcpp::Parameter> &parameters)
 {
-  //auto error_double = update_params<double>({
-  //  {"vehicle_decel_limit_multiplier", config_.vehicle_decel_limit_multiplier},
-  //  {"vehicle_accel_limit_multiplier", config_.vehicle_accel_limit_multiplier},
-  //}, parameters); // vehicle_acceleration_limit not updated as it's global param
+  auto error_double = update_params<double>({
+    {"vehicle_acceleration_limit", config_.vehicle_accel_limit},
+    {"vehicle_deceleration_limit", config_.vehicle_decel_limit},
+    {"vehicle_decel_limit_multiplier", config_.vehicle_decel_limit_multiplier},
+    {"vehicle_accel_limit_multiplier", config_.vehicle_accel_limit_multiplier},
+    {"min_approach_distance", config_.min_approach_distance},
+    {"trajectory_smoothing_activation_distance", config_.trajectory_smoothing_activation_distance},
+    {"stopping_location_buffer", config_.stopping_location_buffer},
+    {"green_light_time_buffer", config_.green_light_time_buffer},
+    {"algo_minimum_speed", config_.algo_minimum_speed},
+    {"deceleration_fraction", config_.deceleration_fraction},
+    {"desired_distance_to_stop_buffer", config_.desired_distance_to_stop_buffer},
+    {"min_maneuver_planning_period", config_.min_maneuver_planning_period},
+    {"mobility_rate", config_.mobility_rate},
+  }, parameters);
 
   rcl_interfaces::msg::SetParametersResult result;
 
-  //result.successful = !error_double;
+  result.successful = !error_double;
 
   return result;
 }
