@@ -262,9 +262,16 @@ namespace approaching_emergency_vehicle_plugin{
         ASSERT_FALSE(worker_node->has_tracked_erv_);
 
         // Increase ERV's speed to twice the ego vehicle speed so that the ERV is considered to be approaching the ego vehicle
+        // NOTE: ERV should not be tracked since guidance has not been engaged (set with worker_node->is_guidance_engaged_ flag)
         erv_bsm.core_data.speed = 20.0;
         std::unique_ptr<carma_v2x_msgs::msg::BSM> erv_bsm_ptr2 = std::make_unique<carma_v2x_msgs::msg::BSM>(erv_bsm);
         worker_node->incomingBsmCallback(std::move(erv_bsm_ptr2)); 
+        ASSERT_FALSE(worker_node->has_tracked_erv_);
+
+        // Set is_guidance_engaged_ flag to true to enable incomingBsmCallback to fully process the incoming BSM
+        worker_node->is_guidance_engaged_ = true;
+        std::unique_ptr<carma_v2x_msgs::msg::BSM> erv_bsm_ptr3 = std::make_unique<carma_v2x_msgs::msg::BSM>(erv_bsm);
+        worker_node->incomingBsmCallback(std::move(erv_bsm_ptr3)); 
         ASSERT_TRUE(worker_node->has_tracked_erv_);
 
         // Update timestamp of ERV BSM to a time that does not satisfy config_.bsm_processing_frequency and verify that tracked_erv_ doesn't update
@@ -272,14 +279,14 @@ namespace approaching_emergency_vehicle_plugin{
         worker_node->config_.bsm_processing_frequency = 0.5; // (Hz) Only process ERV BSMs that are at least 2 seconds apart
         
         erv_bsm.header.stamp = rclcpp::Time(1, 0);
-        std::unique_ptr<carma_v2x_msgs::msg::BSM> erv_bsm_ptr3 = std::make_unique<carma_v2x_msgs::msg::BSM>(erv_bsm);
-        worker_node->incomingBsmCallback(std::move(erv_bsm_ptr3)); 
+        std::unique_ptr<carma_v2x_msgs::msg::BSM> erv_bsm_ptr4 = std::make_unique<carma_v2x_msgs::msg::BSM>(erv_bsm);
+        worker_node->incomingBsmCallback(std::move(erv_bsm_ptr4)); 
         ASSERT_EQ(worker_node->tracked_erv_.latest_bsm_timestamp, rclcpp::Time(0, 0, worker_node->get_clock()->get_clock_type()));
 
         // Update timestamp of ERV BSM to a time that does satisfy config_.bsm_processing_frequency and verify that tracked_erv_ updates
         erv_bsm.header.stamp = rclcpp::Time(2, 50);
-        std::unique_ptr<carma_v2x_msgs::msg::BSM> erv_bsm_ptr4 = std::make_unique<carma_v2x_msgs::msg::BSM>(erv_bsm);
-        worker_node->incomingBsmCallback(std::move(erv_bsm_ptr4)); 
+        std::unique_ptr<carma_v2x_msgs::msg::BSM> erv_bsm_ptr5 = std::make_unique<carma_v2x_msgs::msg::BSM>(erv_bsm);
+        worker_node->incomingBsmCallback(std::move(erv_bsm_ptr5)); 
         ASSERT_EQ(worker_node->tracked_erv_.latest_bsm_timestamp, rclcpp::Time(2, 50, worker_node->get_clock()->get_clock_type()));
 
         worker_node->config_.timeout_duration = 2.0; //(Seconds) Update timeout duration to decrease time of this unit test

@@ -167,6 +167,9 @@ namespace approaching_emergency_vehicle_plugin
 
     incoming_emergency_vehicle_ack_sub_ = create_subscription<carma_v2x_msgs::msg::EmergencyVehicleAck>("incoming_emergency_vehicle_ack", 10,
                                                               std::bind(&ApproachingEmergencyVehiclePlugin::incomingEmergencyVehicleAckCallback, this, std_ph::_1));
+
+    guidance_state_sub_ = create_subscription<carma_planning_msgs::msg::GuidanceState>("state", 1,
+                                          std::bind(&ApproachingEmergencyVehiclePlugin::guidanceStateCallback, this, std_ph::_1));
     
     RCLCPP_ERROR_STREAM(rclcpp::get_logger(logger_name), "ApproachingEmergencyVehiclePlugin 3");
 
@@ -619,6 +622,10 @@ namespace approaching_emergency_vehicle_plugin
 
   void ApproachingEmergencyVehiclePlugin::incomingBsmCallback(carma_v2x_msgs::msg::BSM::UniquePtr msg)
   {
+    // Only process incoming BSMs if guidance is currently engaged
+    if(!is_guidance_engaged_){
+      return;
+    }
 
     // If there is already an ERV approaching the ego vehicle, only process this BSM futher if enough time has passed since the previously processed BSM
     if(has_tracked_erv_){
@@ -751,6 +758,15 @@ namespace approaching_emergency_vehicle_plugin
 
   void ApproachingEmergencyVehiclePlugin::twistCallback(geometry_msgs::msg::TwistStamped::UniquePtr msg){
     current_speed_ = msg->twist.linear.x;
+  }
+
+  void ApproachingEmergencyVehiclePlugin::guidanceStateCallback(carma_planning_msgs::msg::GuidanceState::UniquePtr msg){
+    if(msg->state == carma_planning_msgs::msg::GuidanceState::ENGAGED){
+      is_guidance_engaged_ = true;
+    }
+    else{
+      is_guidance_engaged_ = false;
+    }
   }
 
   double ApproachingEmergencyVehiclePlugin::getLaneletSpeedLimit(const lanelet::ConstLanelet& lanelet)

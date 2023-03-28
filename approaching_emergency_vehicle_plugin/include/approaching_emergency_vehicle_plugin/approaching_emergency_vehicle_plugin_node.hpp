@@ -23,6 +23,7 @@
 #include <carma_planning_msgs/msg/plugin.hpp>
 #include <carma_planning_msgs/msg/upcoming_lane_change_status.hpp>
 #include <carma_planning_msgs/msg/route_state.hpp>
+#include <carma_planning_msgs/msg/guidance_state.hpp>
 #include <carma_v2x_msgs/msg/bsm.hpp>
 #include <carma_v2x_msgs/msg/emergency_vehicle_response.hpp>
 #include <carma_v2x_msgs/msg/bsm.hpp>
@@ -116,6 +117,8 @@ namespace approaching_emergency_vehicle_plugin
     carma_ros2_utils::SubPtr<geometry_msgs::msg::TwistStamped> twist_sub_;
 
     carma_ros2_utils::SubPtr<carma_v2x_msgs::msg::EmergencyVehicleAck> incoming_emergency_vehicle_ack_sub_;
+
+    carma_ros2_utils::SubPtr<carma_planning_msgs::msg::GuidanceState> guidance_state_sub_;
 
     // Publishers
     carma_ros2_utils::PubPtr<carma_planning_msgs::msg::Plugin> plugin_discovery_pub_;
@@ -378,7 +381,10 @@ namespace approaching_emergency_vehicle_plugin
 
     // Boolean flag to indicate that this plugin has planned an upcoming lane change, and those same lane change maneuver
     //        parameters should be used for the next generated maneuver plan as well
-    bool has_planned_upcoming_lc_;
+    bool has_planned_upcoming_lc_ = false;
+
+    // Boolean flag to indicate whether guidance is currently engaged
+    bool is_guidance_engaged_ = false;
 
     // Pointer for map projector
     boost::optional<std::string> map_projector_;
@@ -455,6 +461,11 @@ namespace approaching_emergency_vehicle_plugin
       * \param msg Latest twist message
       */
     void twistCallback(geometry_msgs::msg::TwistStamped::UniquePtr msg);
+
+    /**
+    * \brief Subscription callback to process the latest guidance state and update the is_guidance_engaged_ flag accordingly.
+    */
+    void guidanceStateCallback(const carma_planning_msgs::msg::GuidanceState::UniquePtr msg);
 
     ////
     // Overrides
