@@ -123,10 +123,10 @@ carma_ros2_utils::CallbackReturn LCIStrategicPlugin::on_configure_plugin()
   
   // Setup publishers
   mobility_operation_pub_ = create_publisher<carma_v2x_msgs::msg::MobilityOperation>("outgoing_mobility_operation", 1);
-  case_pub_ = create_publisher<std_msgs::msg::Int8>("ts_case_num", 1);
-  tf_distance_pub_ = create_publisher<std_msgs::msg::Float64>("distance_remaining_to_tf", 1);
-  earliest_et_pub_ = create_publisher<std_msgs::msg::Float64>("earliest_entry_time", 1);
-  et_pub_ = create_publisher<std_msgs::msg::Float64>("scheduled_entry_time", 1);
+  case_pub_ = create_publisher<std_msgs::msg::Int8>("lci_strategic_plugin/ts_case_num", 1);
+  tf_distance_pub_ = create_publisher<std_msgs::msg::Float64>("lci_strategic_plugin/distance_remaining_to_tf", 1);
+  earliest_et_pub_ = create_publisher<std_msgs::msg::Float64>("lci_strategic_plugin/earliest_entry_time", 1);
+  et_pub_ = create_publisher<std_msgs::msg::Float64>("lci_strategic_plugin/scheduled_entry_time", 1);
 
   // Return success if everything initialized successfully
   return CallbackReturn::SUCCESS;
