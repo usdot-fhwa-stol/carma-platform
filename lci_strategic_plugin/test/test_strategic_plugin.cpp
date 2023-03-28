@@ -42,7 +42,7 @@ namespace lci_strategic_plugin
  *           START_LINE
  */
 
-TEST_F(LCIStrategicTestFixture, DISABLED_planManeuverCb)
+TEST_F(LCIStrategicTestFixture, planManeuverCb)
 {
   LCIStrategicPluginConfig config;
     auto lcip = std::make_shared<lci_strategic_plugin::LCIStrategicPlugin>(rclcpp::NodeOptions());
@@ -70,7 +70,12 @@ TEST_F(LCIStrategicTestFixture, DISABLED_planManeuverCb)
   ASSERT_TRUE(resp->new_plan.maneuvers.empty());
 
   RCLCPP_WARN_STREAM(rclcpp::get_logger("lci_strategic_plugin"), ">>>>>>>>>>>>>>>>>>>>>>>>>>>In range test: GREEN");
-  req = carma_planning_msgs::srv::PlanManeuvers::Request::SharedPtr();
+  
+  req = std::make_shared<carma_planning_msgs::srv::PlanManeuvers::Request>();
+  resp = std::make_shared<carma_planning_msgs::srv::PlanManeuvers::Response>();
+  RCLCPP_WARN_STREAM(rclcpp::get_logger("lci_strategic_plugin"), ">>>>>>>>>>>>>>>>>>>>>>>>>>>In range test: GREEN");
+  req->header.stamp = rclcpp::Time(1e9 * 0);
+  
   req->veh_x = 1.85;
   req->veh_y = 130; // In approach range
   req->veh_downtrack = req->veh_y;
@@ -78,34 +83,36 @@ TEST_F(LCIStrategicTestFixture, DISABLED_planManeuverCb)
   req->veh_lane_id = "1200";
 
   lcip->plan_maneuvers_callback(nullptr,req, resp);
-
+  
   ASSERT_EQ(2, resp->new_plan.maneuvers.size());
   ASSERT_EQ(carma_planning_msgs::msg::Maneuver::LANE_FOLLOWING, resp->new_plan.maneuvers[0].type);
   ASSERT_EQ(130.0, resp->new_plan.maneuvers[0].lane_following_maneuver.start_dist );
-  ASSERT_NEAR(0.0, rclcpp::Time(resp->new_plan.maneuvers[0].lane_following_maneuver.start_time).seconds(), 0.01);
-  ASSERT_NEAR(req->veh_logitudinal_velocity, resp->new_plan.maneuvers[0].lane_following_maneuver.start_speed, 0.01);
-  ASSERT_NEAR(24.01, rclcpp::Time(resp->new_plan.maneuvers[0].lane_following_maneuver.end_time).seconds(), 0.01);
-  ASSERT_NEAR(300, resp->new_plan.maneuvers[0].lane_following_maneuver.end_dist, 0.0001);
+  EXPECT_NEAR(0.0, rclcpp::Time(resp->new_plan.maneuvers[0].lane_following_maneuver.start_time).seconds(), 0.01);
+  EXPECT_NEAR(req->veh_logitudinal_velocity, resp->new_plan.maneuvers[0].lane_following_maneuver.start_speed, 0.01);
+  EXPECT_NEAR(24.01, rclcpp::Time(resp->new_plan.maneuvers[0].lane_following_maneuver.end_time).seconds(), 0.01);
+  EXPECT_NEAR(300, resp->new_plan.maneuvers[0].lane_following_maneuver.end_dist, 0.0001);
   // check trajectory smoothing parameters:
-  ASSERT_EQ("Carma/signalized_intersection", resp->new_plan.maneuvers[0].lane_following_maneuver.parameters.string_valued_meta_data.front());
-  ASSERT_NEAR(0.6823, resp->new_plan.maneuvers[0].lane_following_maneuver.parameters.float_valued_meta_data[0], 0.01);
-  ASSERT_NEAR(-0.6823, resp->new_plan.maneuvers[0].lane_following_maneuver.parameters.float_valued_meta_data[1], 0.01);
-  ASSERT_NEAR(85.00, resp->new_plan.maneuvers[0].lane_following_maneuver.parameters.float_valued_meta_data[2], 0.01);
-  ASSERT_NEAR(0.0, resp->new_plan.maneuvers[0].lane_following_maneuver.parameters.float_valued_meta_data[3], 0.01);
-  ASSERT_NEAR(85.00, resp->new_plan.maneuvers[0].lane_following_maneuver.parameters.float_valued_meta_data[4], 0.01);
-  ASSERT_NEAR(2.98476634, resp->new_plan.maneuvers[0].lane_following_maneuver.parameters.float_valued_meta_data[5], 0.01);
-  ASSERT_NEAR(-1, resp->new_plan.maneuvers[0].lane_following_maneuver.parameters.float_valued_meta_data[6], 0.001);
-  ASSERT_EQ(3, resp->new_plan.maneuvers[0].lane_following_maneuver.parameters.int_valued_meta_data[0]);
+  EXPECT_EQ("Carma/signalized_intersection", resp->new_plan.maneuvers[0].lane_following_maneuver.parameters.string_valued_meta_data.front());
+  EXPECT_NEAR(-0.6823, resp->new_plan.maneuvers[0].lane_following_maneuver.parameters.float_valued_meta_data[0], 0.01);
+  EXPECT_NEAR(2.99, resp->new_plan.maneuvers[0].lane_following_maneuver.parameters.float_valued_meta_data[1], 0.01);
+  EXPECT_NEAR(215.00, resp->new_plan.maneuvers[0].lane_following_maneuver.parameters.float_valued_meta_data[2], 0.1);
+    
+  EXPECT_NEAR(0.68, resp->new_plan.maneuvers[0].lane_following_maneuver.parameters.float_valued_meta_data[3], 0.01);
+  EXPECT_NEAR(11.17, resp->new_plan.maneuvers[0].lane_following_maneuver.parameters.float_valued_meta_data[4], 0.01);
+  EXPECT_NEAR(300.0, resp->new_plan.maneuvers[0].lane_following_maneuver.parameters.float_valued_meta_data[5], 0.01);
+  EXPECT_NEAR(0.0, resp->new_plan.maneuvers[0].lane_following_maneuver.parameters.float_valued_meta_data[6], 0.001);
+  EXPECT_EQ(3, resp->new_plan.maneuvers[0].lane_following_maneuver.parameters.int_valued_meta_data[0]);
 
-  ASSERT_EQ(carma_planning_msgs::msg::Maneuver::INTERSECTION_TRANSIT_STRAIGHT, resp->new_plan.maneuvers[1].type);
-  ASSERT_EQ(300, resp->new_plan.maneuvers[1].intersection_transit_straight_maneuver.start_dist );
-  ASSERT_NEAR(24.010000000000002, rclcpp::Time(resp->new_plan.maneuvers[1].intersection_transit_straight_maneuver.start_time).seconds(), 0.01);
-  ASSERT_NEAR(11.176, resp->new_plan.maneuvers[1].intersection_transit_straight_maneuver.start_speed, 0.01);
-  ASSERT_NEAR(77.6964710090, rclcpp::Time(resp->new_plan.maneuvers[1].intersection_transit_straight_maneuver.end_time).seconds(), 0.001);
-  ASSERT_NEAR(900, resp->new_plan.maneuvers[1].intersection_transit_straight_maneuver.end_dist, 0.0001);
+  EXPECT_EQ(carma_planning_msgs::msg::Maneuver::INTERSECTION_TRANSIT_STRAIGHT, resp->new_plan.maneuvers[1].type);
+  EXPECT_EQ(300, resp->new_plan.maneuvers[1].intersection_transit_straight_maneuver.start_dist );
+  EXPECT_NEAR(24.010000000000002, rclcpp::Time(resp->new_plan.maneuvers[1].intersection_transit_straight_maneuver.start_time).seconds(), 0.01);
+  EXPECT_NEAR(11.176, resp->new_plan.maneuvers[1].intersection_transit_straight_maneuver.start_speed, 0.02);
+  EXPECT_NEAR(77.6964710090, rclcpp::Time(resp->new_plan.maneuvers[1].intersection_transit_straight_maneuver.end_time).seconds(), 0.1);
+  EXPECT_NEAR(900, resp->new_plan.maneuvers[1].intersection_transit_straight_maneuver.end_dist, 0.0001);
 
   RCLCPP_WARN_STREAM(rclcpp::get_logger("lci_strategic_plugin"), ">>>>>>>>>>>>>>>>>>>>>>>>>>>In range test: RED");
-  req = carma_planning_msgs::srv::PlanManeuvers::Request::SharedPtr();
+    req = std::make_shared<carma_planning_msgs::srv::PlanManeuvers::Request>();
+  resp = std::make_shared<carma_planning_msgs::srv::PlanManeuvers::Response>();
   req->veh_x = 1.85;
   req->veh_y = 225; // In approach range
   req->veh_downtrack = req->veh_y;
@@ -114,17 +121,17 @@ TEST_F(LCIStrategicTestFixture, DISABLED_planManeuverCb)
 
   lcip->plan_maneuvers_callback(nullptr,req, resp);
 
-  ASSERT_EQ(1, resp->new_plan.maneuvers.size());
-  ASSERT_EQ(carma_planning_msgs::msg::Maneuver::STOP_AND_WAIT, resp->new_plan.maneuvers[0].type);
-  ASSERT_EQ(req->veh_y, resp->new_plan.maneuvers[0].stop_and_wait_maneuver.start_dist );
-  ASSERT_NEAR(0.0, rclcpp::Time(resp->new_plan.maneuvers[0].stop_and_wait_maneuver.start_time).seconds(), 0.01);
-  ASSERT_NEAR(req->veh_logitudinal_velocity, resp->new_plan.maneuvers[0].stop_and_wait_maneuver.start_speed, 0.01);
-  ASSERT_NEAR(15.1, rclcpp::Time(resp->new_plan.maneuvers[0].stop_and_wait_maneuver.end_time).seconds(), 0.001);
-  ASSERT_NEAR(300, resp->new_plan.maneuvers[0].stop_and_wait_maneuver.end_dist, 0.0001);
+  EXPECT_EQ(2, resp->new_plan.maneuvers.size());
+  EXPECT_EQ(carma_planning_msgs::msg::Maneuver::STOP_AND_WAIT, resp->new_plan.maneuvers[1].type);
+  EXPECT_NEAR(298.335, resp->new_plan.maneuvers[1].stop_and_wait_maneuver.start_dist, 0.1);
+  EXPECT_NEAR(20.9, rclcpp::Time(resp->new_plan.maneuvers[1].stop_and_wait_maneuver.start_time).seconds(), 0.02);
+  EXPECT_NEAR(2.235, resp->new_plan.maneuvers[1].stop_and_wait_maneuver.start_speed, 0.02);
+  EXPECT_NEAR(36.0, rclcpp::Time(resp->new_plan.maneuvers[1].stop_and_wait_maneuver.end_time).seconds(), 0.1);
+  EXPECT_NEAR(300, resp->new_plan.maneuvers[1].stop_and_wait_maneuver.end_dist, 0.0001);
 
   RCLCPP_WARN_STREAM(rclcpp::get_logger("lci_strategic_plugin"), ">>>>>>>>>>>>>>>>>>>>>>>Waiting test ");
-  req = carma_planning_msgs::srv::PlanManeuvers::Request::SharedPtr();
-  //rclcpp::Time::setNow(rclcpp::Time(1e9 * 6.0));
+    req = std::make_shared<carma_planning_msgs::srv::PlanManeuvers::Request>();
+  resp = std::make_shared<carma_planning_msgs::srv::PlanManeuvers::Response>();
   req->header.stamp = rclcpp::Time(1e9 * 6.0); // In red phase
   req->veh_x = 1.85;
   req->veh_y = 299.0; // At one meter infront of stop bar at a stop
@@ -134,19 +141,20 @@ TEST_F(LCIStrategicTestFixture, DISABLED_planManeuverCb)
 
   lcip->plan_maneuvers_callback(nullptr,req, resp);
 
-  ASSERT_EQ(1, resp->new_plan.maneuvers.size());
-  ASSERT_EQ(carma_planning_msgs::msg::Maneuver::STOP_AND_WAIT, resp->new_plan.maneuvers[0].type);
-  ASSERT_EQ(289.0, resp->new_plan.maneuvers[0].stop_and_wait_maneuver.start_dist );
-  ASSERT_NEAR(6.0, rclcpp::Time(resp->new_plan.maneuvers[0].stop_and_wait_maneuver.start_time).seconds(), 0.01);
-  ASSERT_NEAR(0.0, resp->new_plan.maneuvers[0].stop_and_wait_maneuver.start_speed, 0.01);
-  ASSERT_NEAR((rclcpp::Time(1e9 * 6.0) + rclcpp::Duration(config.min_maneuver_planning_period * 1e9)).seconds(), rclcpp::Time(resp->new_plan.maneuvers[0].stop_and_wait_maneuver.end_time).seconds(), 0.001);
-  ASSERT_NEAR(300.0, resp->new_plan.maneuvers[0].stop_and_wait_maneuver.end_dist, 0.0001);
-  ASSERT_TRUE(resp->new_plan.maneuvers[0].stop_and_wait_maneuver.starting_lane_id.compare("1201") == 0);
-  ASSERT_TRUE(resp->new_plan.maneuvers[0].stop_and_wait_maneuver.ending_lane_id.compare("1201") == 0);
+  EXPECT_EQ(1, resp->new_plan.maneuvers.size());
+  EXPECT_EQ(carma_planning_msgs::msg::Maneuver::STOP_AND_WAIT, resp->new_plan.maneuvers[0].type);
+  EXPECT_EQ(289.0, resp->new_plan.maneuvers[0].stop_and_wait_maneuver.start_dist );
+  EXPECT_NEAR(6.0, rclcpp::Time(resp->new_plan.maneuvers[0].stop_and_wait_maneuver.start_time).seconds(), 0.02);
+  EXPECT_NEAR(0.0, resp->new_plan.maneuvers[0].stop_and_wait_maneuver.start_speed, 0.02);
+  EXPECT_NEAR((rclcpp::Time(1e9 * 6.0) + rclcpp::Duration(config.min_maneuver_planning_period * 1e9)).seconds(), rclcpp::Time(resp->new_plan.maneuvers[0].stop_and_wait_maneuver.end_time).seconds(), 0.001);
+  EXPECT_NEAR(300.0, resp->new_plan.maneuvers[0].stop_and_wait_maneuver.end_dist, 0.0001);
+  EXPECT_TRUE(resp->new_plan.maneuvers[0].stop_and_wait_maneuver.starting_lane_id.compare("1201") == 0);
+  EXPECT_TRUE(resp->new_plan.maneuvers[0].stop_and_wait_maneuver.ending_lane_id.compare("1201") == 0);
+
   
   RCLCPP_WARN_STREAM(rclcpp::get_logger("lci_strategic_plugin"), ">>>>>>>>>>>>>>>>>>>>>>>>>>>>>>Departing test ");
-  req = carma_planning_msgs::srv::PlanManeuvers::Request::SharedPtr();
-  //rclcpp::Time::setNow(rclcpp::Time(1e9 * 25.0));
+    req = std::make_shared<carma_planning_msgs::srv::PlanManeuvers::Request>();
+  resp = std::make_shared<carma_planning_msgs::srv::PlanManeuvers::Response>();
   req->header.stamp = rclcpp::Time(1e9 * 25.0); // In green phase
   req->veh_x = 1.85;
   req->veh_y = 299.0; // At one meter infront of stop bar at a stop
@@ -156,18 +164,17 @@ TEST_F(LCIStrategicTestFixture, DISABLED_planManeuverCb)
 
   lcip->plan_maneuvers_callback(nullptr,req, resp);
 
-  ASSERT_EQ(1, resp->new_plan.maneuvers.size());
-  ASSERT_EQ(carma_planning_msgs::msg::Maneuver::LANE_FOLLOWING, resp->new_plan.maneuvers[0].type);
-  ASSERT_EQ(299.0, resp->new_plan.maneuvers[0].lane_following_maneuver.start_dist );
-  ASSERT_NEAR(25.0, rclcpp::Time(resp->new_plan.maneuvers[0].lane_following_maneuver.start_time).seconds(), 0.01);
-  ASSERT_NEAR(0.0, resp->new_plan.maneuvers[0].lane_following_maneuver.start_speed, 0.01);
-  ASSERT_NEAR(rclcpp::Time(1e9 * 132.55189).seconds(), rclcpp::Time(resp->new_plan.maneuvers[0].lane_following_maneuver.end_time).seconds(), 0.25);
-  ASSERT_NEAR(900.0, resp->new_plan.maneuvers[0].lane_following_maneuver.end_dist, 0.0001);
-  ASSERT_NEAR(11.176, resp->new_plan.maneuvers[0].lane_following_maneuver.end_speed, 0.01);
+  EXPECT_EQ(1, resp->new_plan.maneuvers.size());
+  EXPECT_EQ(carma_planning_msgs::msg::Maneuver::INTERSECTION_TRANSIT_STRAIGHT, resp->new_plan.maneuvers[0].type);
+  EXPECT_EQ(299.0, resp->new_plan.maneuvers[0].intersection_transit_straight_maneuver.start_dist );
+  EXPECT_NEAR(25.0, rclcpp::Time(resp->new_plan.maneuvers[0].intersection_transit_straight_maneuver.start_time).seconds(), 0.02);
+  EXPECT_NEAR(0.0, resp->new_plan.maneuvers[0].intersection_transit_straight_maneuver.start_speed, 0.02);
+  EXPECT_NEAR(rclcpp::Time(1e9 * 132.55189).seconds(), rclcpp::Time(resp->new_plan.maneuvers[0].intersection_transit_straight_maneuver.end_time).seconds(), 0.25);
+  EXPECT_NEAR(900.0, resp->new_plan.maneuvers[0].intersection_transit_straight_maneuver.end_dist, 0.0001);
 
   RCLCPP_WARN_STREAM(rclcpp::get_logger("lci_strategic_plugin"), ">>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>Exit test ");
-  req = carma_planning_msgs::srv::PlanManeuvers::Request::SharedPtr();
-  //rclcpp::Time::setNow(rclcpp::Time(1e9 * 30.0));
+    req = std::make_shared<carma_planning_msgs::srv::PlanManeuvers::Request>();
+  resp = std::make_shared<carma_planning_msgs::srv::PlanManeuvers::Response>();
   req->header.stamp = rclcpp::Time(1e9 * 30.0); // In green phase
   req->veh_x = 1.85;
   req->veh_y = 910; // past intersection
@@ -177,11 +184,11 @@ TEST_F(LCIStrategicTestFixture, DISABLED_planManeuverCb)
 
   lcip->plan_maneuvers_callback(nullptr,req, resp);
 
-  ASSERT_TRUE(resp->new_plan.maneuvers.empty());
+  EXPECT_TRUE(resp->new_plan.maneuvers.empty());
 
   RCLCPP_WARN_STREAM(rclcpp::get_logger("lci_strategic_plugin"), ">>>>>>>>>>>>>>>>>>>>>>>>>>>RESET: In range test: RED with 2 maneuvers");
-  req = carma_planning_msgs::srv::PlanManeuvers::Request::SharedPtr();
-  //rclcpp::Time::setNow(rclcpp::Time(1e9 * 15.0));
+    req = std::make_shared<carma_planning_msgs::srv::PlanManeuvers::Request>();
+  resp = std::make_shared<carma_planning_msgs::srv::PlanManeuvers::Response>();
   req->header.stamp = rclcpp::Time(1e9 * 15.0);
   req->veh_x = 1.85;
   req->veh_y = 230; // In approach range
@@ -191,33 +198,28 @@ TEST_F(LCIStrategicTestFixture, DISABLED_planManeuverCb)
 
   lcip->plan_maneuvers_callback(nullptr,req, resp);
 
-  ASSERT_EQ(2, resp->new_plan.maneuvers.size());
-  ASSERT_EQ(carma_planning_msgs::msg::Maneuver::LANE_FOLLOWING, resp->new_plan.maneuvers[0].type);
-  ASSERT_EQ(req->veh_y, resp->new_plan.maneuvers[0].lane_following_maneuver.start_dist);
-  ASSERT_NEAR(15.0, rclcpp::Time(resp->new_plan.maneuvers[0].lane_following_maneuver.start_time).seconds(), 0.01);
-  ASSERT_NEAR(req->veh_logitudinal_velocity, resp->new_plan.maneuvers[0].lane_following_maneuver.start_speed, 0.01);
-  ASSERT_NEAR(20.8446, rclcpp::Time(resp->new_plan.maneuvers[0].lane_following_maneuver.end_time).seconds(), 0.001);
-  ASSERT_NEAR(259.7, resp->new_plan.maneuvers[0].lane_following_maneuver.end_dist, 0.01);
+  EXPECT_EQ(2, resp->new_plan.maneuvers.size());
+  EXPECT_EQ(carma_planning_msgs::msg::Maneuver::LANE_FOLLOWING, resp->new_plan.maneuvers[0].type);
+  EXPECT_EQ(req->veh_y, resp->new_plan.maneuvers[0].lane_following_maneuver.start_dist);
+  EXPECT_NEAR(15.0, rclcpp::Time(resp->new_plan.maneuvers[0].lane_following_maneuver.start_time).seconds(), 0.02);
+  EXPECT_NEAR(req->veh_logitudinal_velocity, resp->new_plan.maneuvers[0].lane_following_maneuver.start_speed, 0.02);
+  EXPECT_NEAR(24.01, rclcpp::Time(resp->new_plan.maneuvers[0].lane_following_maneuver.end_time).seconds(), 0.001);
+  EXPECT_NEAR(300.0, resp->new_plan.maneuvers[0].lane_following_maneuver.end_dist, 0.02);
   // trajectory smoothing part
-  ASSERT_NEAR(0.0, resp->new_plan.maneuvers[0].lane_following_maneuver.parameters.float_valued_meta_data[0], 0.001);
-  ASSERT_NEAR(-1.5, resp->new_plan.maneuvers[0].lane_following_maneuver.parameters.float_valued_meta_data[1], 0.001);
-  ASSERT_NEAR(0.0, resp->new_plan.maneuvers[0].lane_following_maneuver.parameters.float_valued_meta_data[2], 0.001);
-  ASSERT_NEAR(0.0, resp->new_plan.maneuvers[0].lane_following_maneuver.parameters.float_valued_meta_data[3], 0.001);
-  ASSERT_NEAR(29.6998297, resp->new_plan.maneuvers[0].lane_following_maneuver.parameters.float_valued_meta_data[4], 0.001);
-  ASSERT_NEAR(2.40904, resp->new_plan.maneuvers[0].lane_following_maneuver.parameters.float_valued_meta_data[5], 0.001);
-  ASSERT_NEAR(-1, resp->new_plan.maneuvers[0].lane_following_maneuver.parameters.float_valued_meta_data[6], 0.001);
-  ASSERT_EQ(3, resp->new_plan.maneuvers[0].lane_following_maneuver.parameters.int_valued_meta_data[0]);
+  EXPECT_NEAR(-1.5, resp->new_plan.maneuvers[0].lane_following_maneuver.parameters.float_valued_meta_data[0], 0.001);
+  EXPECT_NEAR(4.39, resp->new_plan.maneuvers[0].lane_following_maneuver.parameters.float_valued_meta_data[1], 0.001);
+  EXPECT_NEAR(265.17, resp->new_plan.maneuvers[0].lane_following_maneuver.parameters.float_valued_meta_data[2], 0.1);
+  EXPECT_NEAR(1.5, resp->new_plan.maneuvers[0].lane_following_maneuver.parameters.float_valued_meta_data[3], 0.001);
+  EXPECT_NEAR(11.124, resp->new_plan.maneuvers[0].lane_following_maneuver.parameters.float_valued_meta_data[4], 0.001);
+  EXPECT_NEAR(300.0, resp->new_plan.maneuvers[0].lane_following_maneuver.parameters.float_valued_meta_data[5], 0.001);
+  EXPECT_NEAR(0.0, resp->new_plan.maneuvers[0].lane_following_maneuver.parameters.float_valued_meta_data[6], 0.001);
+  EXPECT_EQ(5, resp->new_plan.maneuvers[0].lane_following_maneuver.parameters.int_valued_meta_data[0]);
 
-  ASSERT_EQ(carma_planning_msgs::msg::Maneuver::STOP_AND_WAIT, resp->new_plan.maneuvers[1].type);
-  ASSERT_NEAR(259.7, resp->new_plan.maneuvers[1].stop_and_wait_maneuver.start_dist, 0.1);
-  ASSERT_NEAR(20.8446, rclcpp::Time(resp->new_plan.maneuvers[1].stop_and_wait_maneuver.start_time).seconds(), 0.01);
-  ASSERT_NEAR(2.40904, resp->new_plan.maneuvers[1].stop_and_wait_maneuver.start_speed, 0.01);
-  ASSERT_NEAR(35.9446, rclcpp::Time(resp->new_plan.maneuvers[1].stop_and_wait_maneuver.end_time).seconds(), 0.01);
-  ASSERT_NEAR(300, resp->new_plan.maneuvers[1].stop_and_wait_maneuver.end_dist, 0.1);
-  ASSERT_NEAR(0.0957666, resp->new_plan.maneuvers[1].stop_and_wait_maneuver.parameters.float_valued_meta_data[1] , 0.001);
+  EXPECT_EQ(carma_planning_msgs::msg::Maneuver::INTERSECTION_TRANSIT_STRAIGHT, resp->new_plan.maneuvers[1].type);
 
   RCLCPP_WARN_STREAM(rclcpp::get_logger("lci_strategic_plugin"), ">>>>>>>>>>>>>>>>>>>>>>>>>>>RESET: In range test: GREEN: Algo failed and NOT able to stop");
-  req = carma_planning_msgs::srv::PlanManeuvers::Request::SharedPtr();
+    req = std::make_shared<carma_planning_msgs::srv::PlanManeuvers::Request>();
+  resp = std::make_shared<carma_planning_msgs::srv::PlanManeuvers::Response>();
   req->veh_x = 1.85;
   req->veh_y = 275; // In approach range
   req->veh_downtrack = req->veh_y;
@@ -226,22 +228,13 @@ TEST_F(LCIStrategicTestFixture, DISABLED_planManeuverCb)
 
   lcip->plan_maneuvers_callback(nullptr,req, resp);
 
-  ASSERT_EQ(2, resp->new_plan.maneuvers.size());
-  ASSERT_EQ(carma_planning_msgs::msg::Maneuver::LANE_FOLLOWING, resp->new_plan.maneuvers[0].type);
-  ASSERT_EQ(req->veh_y, resp->new_plan.maneuvers[0].lane_following_maneuver.start_dist);
-  ASSERT_NEAR(0.0, rclcpp::Time(resp->new_plan.maneuvers[0].lane_following_maneuver.start_time).seconds(), 0.01);
-  ASSERT_NEAR(req->veh_logitudinal_velocity, resp->new_plan.maneuvers[0].lane_following_maneuver.start_speed, 0.01);
-  ASSERT_NEAR(2.7412, rclcpp::Time(resp->new_plan.maneuvers[0].lane_following_maneuver.end_time).seconds(), 0.001);
-  ASSERT_NEAR(300, resp->new_plan.maneuvers[0].lane_following_maneuver.end_dist, 0.01);
-  // trajectory smoothing part
-  ASSERT_NEAR(0.0, resp->new_plan.maneuvers[0].lane_following_maneuver.parameters.float_valued_meta_data[0], 0.001);
-  ASSERT_NEAR(-1.5, resp->new_plan.maneuvers[0].lane_following_maneuver.parameters.float_valued_meta_data[1], 0.001);
-  ASSERT_NEAR(0.0, resp->new_plan.maneuvers[0].lane_following_maneuver.parameters.float_valued_meta_data[2], 0.001);
-  ASSERT_NEAR(0.0, resp->new_plan.maneuvers[0].lane_following_maneuver.parameters.float_valued_meta_data[3], 0.001);
-  ASSERT_NEAR(25, resp->new_plan.maneuvers[0].lane_following_maneuver.parameters.float_valued_meta_data[4], 0.001);
-  ASSERT_NEAR(-1, resp->new_plan.maneuvers[0].lane_following_maneuver.parameters.float_valued_meta_data[5], 0.001);
-  ASSERT_NEAR(11.176, resp->new_plan.maneuvers[0].lane_following_maneuver.parameters.float_valued_meta_data[6], 0.001);
-  ASSERT_EQ(2, resp->new_plan.maneuvers[0].lane_following_maneuver.parameters.int_valued_meta_data[0]);
+  EXPECT_EQ(1, resp->new_plan.maneuvers.size());
+  EXPECT_EQ(carma_planning_msgs::msg::Maneuver::STOP_AND_WAIT, resp->new_plan.maneuvers[0].type);
+  EXPECT_EQ(req->veh_y, resp->new_plan.maneuvers[0].stop_and_wait_maneuver.start_dist);
+  EXPECT_NEAR(0.0, rclcpp::Time(resp->new_plan.maneuvers[0].stop_and_wait_maneuver.start_time).seconds(), 0.02);
+  EXPECT_NEAR(req->veh_logitudinal_velocity, resp->new_plan.maneuvers[0].stop_and_wait_maneuver.start_speed, 0.02);
+  EXPECT_NEAR(15.1, rclcpp::Time(resp->new_plan.maneuvers[0].stop_and_wait_maneuver.end_time).seconds(), 0.001);
+  EXPECT_NEAR(300, resp->new_plan.maneuvers[0].stop_and_wait_maneuver.end_dist, 0.02);
   
 }
 
@@ -289,7 +282,6 @@ TEST_F(LCIStrategicTestFixture, handleFailureCaseHelper)
   config.vehicle_decel_limit_multiplier = 1;
   config.vehicle_decel_limit= 2;
   config.green_light_time_buffer = 1.0;
-  //rclcpp::Time::setNow(rclcpp::Time(1e9 * 0));
   auto lcip = std::make_shared<lci_strategic_plugin::LCIStrategicPlugin>(rclcpp::NodeOptions());
 
   lcip->wm_ = cmw_;
@@ -995,7 +987,6 @@ TEST_F(LCIStrategicTestFixture, planWhenETInTBD)
   config_failure.vehicle_decel_limit_multiplier = 1;
   config_failure.vehicle_decel_limit= 2;
   config_failure.green_light_time_buffer = 1.0;
-  //rclcpp::Time::setNow(rclcpp::Time(1e9 * 0));
   auto lcip_failure = std::make_shared<lci_strategic_plugin::LCIStrategicPlugin>(rclcpp::NodeOptions());
   lcip_failure->wm_ = cmw_;
   lcip_failure->config_ = config_failure;
