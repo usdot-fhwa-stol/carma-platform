@@ -63,7 +63,7 @@ LCIStrategicPlugin::LCIStrategicPlugin(const rclcpp::NodeOptions &options)
   config_.enable_carma_streets_connection = declare_parameter<bool>("enable_carma_streets_connection",config_.enable_carma_streets_connection);
   config_.mobility_rate = declare_parameter<double>("mobility_rate", config_.mobility_rate);
   config_.vehicle_id = declare_parameter("vehicle_id", config_.vehicle_id);
-  
+
   max_comfort_accel_ = config_.vehicle_accel_limit * config_.vehicle_accel_limit_multiplier;
   max_comfort_decel_ = -1 * config_.vehicle_decel_limit * config_.vehicle_decel_limit_multiplier;
   max_comfort_decel_norm_ = config_.vehicle_decel_limit * config_.vehicle_decel_limit_multiplier;
@@ -95,6 +95,12 @@ carma_ros2_utils::CallbackReturn LCIStrategicPlugin::on_configure_plugin()
   get_parameter<bool>("enable_carma_streets_connection", config_.enable_carma_streets_connection);
   get_parameter<double>("mobility_rate", config_.mobility_rate);
   get_parameter<std::string>("vehicle_id", config_.vehicle_id);
+
+  max_comfort_accel_ = config_.vehicle_accel_limit * config_.vehicle_accel_limit_multiplier;
+  max_comfort_decel_ = -1 * config_.vehicle_decel_limit * config_.vehicle_decel_limit_multiplier;
+  max_comfort_decel_norm_ = config_.vehicle_decel_limit * config_.vehicle_decel_limit_multiplier;
+  emergency_decel_norm_ = 2 * config_.vehicle_decel_limit * config_.vehicle_decel_limit_multiplier;
+
   // clang-format on
 
   // Register runtime parameter update callback
@@ -231,7 +237,7 @@ LCIStrategicPlugin::VehicleState LCIStrategicPlugin::extractInitialState(carma_p
   {
     RCLCPP_DEBUG_STREAM(rclcpp::get_logger("lci_strategic_plugin"), "No initial plan provided...");
     
-    state.stamp = rclcpp::Time(req->header.stamp);
+    state.stamp = rclcpp::Time(req->header.stamp, RCL_SYSTEM_TIME);
     state.downtrack = req->veh_downtrack;
     state.speed = req->veh_logitudinal_velocity;
     state.lane_id = stoi(req->veh_lane_id);
@@ -470,7 +476,7 @@ void LCIStrategicPlugin::handleGreenSignalScenario(carma_planning_msgs::srv::Pla
   }
 
   rclcpp::Time light_arrival_time_by_algo = rclcpp::Time(ts_params.t3_ * 1e9);
-  double remaining_time = light_arrival_time_by_algo.seconds() - rclcpp::Time(req->header.stamp).seconds();
+  double remaining_time = light_arrival_time_by_algo.seconds() - rclcpp::Time(req->header.stamp, RCL_SYSTEM_TIME).seconds();
   RCLCPP_DEBUG_STREAM(rclcpp::get_logger("lci_strategic_plugin"), "Algo initially successful: New light_arrival_time_by_algo: " << std::to_string(light_arrival_time_by_algo.seconds()) << ", with remaining_time: " << std::to_string(remaining_time));
   auto can_make_green_optional = canArriveAtGreenWithCertainty(light_arrival_time_by_algo, traffic_light);
 
@@ -904,9 +910,9 @@ void LCIStrategicPlugin::planWhenAPPROACHING(carma_planning_msgs::srv::PlanManeu
   auto boundary_distances = get_delta_x(current_state_speed, intersection_speed_.get(), speed_limit, config_.algo_minimum_speed, max_comfort_accel_, max_comfort_decel_);
   print_boundary_distances(boundary_distances); //debug
 
-  auto boundary_traj_params = get_boundary_traj_params(rclcpp::Time(req->header.stamp).seconds(), current_state_speed, intersection_speed_.get(), speed_limit, config_.algo_minimum_speed, max_comfort_accel_, max_comfort_decel_, current_state.downtrack, traffic_light_down_track, distance_remaining_to_traffic_light, boundary_distances);
+  auto boundary_traj_params = get_boundary_traj_params(rclcpp::Time(req->header.stamp, RCL_SYSTEM_TIME).seconds(), current_state_speed, intersection_speed_.get(), speed_limit, config_.algo_minimum_speed, max_comfort_accel_, max_comfort_decel_, current_state.downtrack, traffic_light_down_track, distance_remaining_to_traffic_light, boundary_distances);
 
-  TrajectoryParams ts_params = get_ts_case(rclcpp::Time(req->header.stamp).seconds(), nearest_green_entry_time.seconds(), current_state_speed, intersection_speed_.get(), speed_limit, config_.algo_minimum_speed, max_comfort_accel_, max_comfort_decel_, current_state.downtrack, traffic_light_down_track, distance_remaining_to_traffic_light, boundary_distances, boundary_traj_params);
+  TrajectoryParams ts_params = get_ts_case(rclcpp::Time(req->header.stamp, RCL_SYSTEM_TIME).seconds(), nearest_green_entry_time.seconds(), current_state_speed, intersection_speed_.get(), speed_limit, config_.algo_minimum_speed, max_comfort_accel_, max_comfort_decel_, current_state.downtrack, traffic_light_down_track, distance_remaining_to_traffic_light, boundary_distances, boundary_traj_params);
   print_params(ts_params);
 
   RCLCPP_DEBUG_STREAM(rclcpp::get_logger("lci_strategic_plugin"), "SPEED PROFILE CASE:" << ts_params.case_num);
@@ -1062,7 +1068,7 @@ void LCIStrategicPlugin::planWhenWAITING(carma_planning_msgs::srv::PlanManeuvers
   
   auto current_light_state_optional = traffic_light->predictState(lanelet::time::timeFromSec(entering_time));
 
-  RCLCPP_DEBUG_STREAM(rclcpp::get_logger("lci_strategic_plugin"), "WAITING STATE: requested time to rclcpp::Time(req->header.stamp) check: " << std::to_string(rclcpp::Time(req->header.stamp).seconds()));
+  RCLCPP_DEBUG_STREAM(rclcpp::get_logger("lci_strategic_plugin"), "WAITING STATE: requested time to rclcpp::Time(req->header.stamp, RCL_SYSTEM_TIME) check: " << std::to_string(rclcpp::Time(req->header.stamp, RCL_SYSTEM_TIME).seconds()));
   RCLCPP_DEBUG_STREAM(rclcpp::get_logger("lci_strategic_plugin"), "WAITING STATE: requested time to CURRENT STATE check: " << std::to_string(entering_time));
   
   if (!validLightState(current_light_state_optional, rclcpp::Time(entering_time * 1e9)))

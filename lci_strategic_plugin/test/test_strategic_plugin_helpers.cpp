@@ -27,7 +27,8 @@ namespace lci_strategic_plugin
 TEST_F(LCIStrategicTestFixture, supportedLightState)
 {
   LCIStrategicPluginConfig config;
-  auto lcip = std::make_shared<lci_strategic_plugin::LCIStrategicPlugin>(rclcpp::NodeOptions());
+    auto lcip = std::make_shared<lci_strategic_plugin::LCIStrategicPlugin>(rclcpp::NodeOptions());
+
   lcip->wm_ = cmw_;
   lcip->config_ = config;
 
@@ -47,7 +48,8 @@ TEST_F(LCIStrategicTestFixture, supportedLightState)
 TEST_F(LCIStrategicTestFixture, estimate_distance_to_stop)
 {
   LCIStrategicPluginConfig config;
-    auto lcip = std::make_shared<lci_strategic_plugin::LCIStrategicPlugin>(rclcpp::NodeOptions());
+      auto lcip = std::make_shared<lci_strategic_plugin::LCIStrategicPlugin>(rclcpp::NodeOptions());
+
   lcip->wm_ = cmw_;
   lcip->config_ = config;
 
@@ -57,7 +59,8 @@ TEST_F(LCIStrategicTestFixture, estimate_distance_to_stop)
 TEST_F(LCIStrategicTestFixture, estimate_time_to_stop)
 {
   LCIStrategicPluginConfig config;
-    auto lcip = std::make_shared<lci_strategic_plugin::LCIStrategicPlugin>(rclcpp::NodeOptions());
+      auto lcip = std::make_shared<lci_strategic_plugin::LCIStrategicPlugin>(rclcpp::NodeOptions());
+
   lcip->wm_ = cmw_;
   lcip->config_ = config;
 
@@ -67,11 +70,12 @@ TEST_F(LCIStrategicTestFixture, estimate_time_to_stop)
 TEST_F(LCIStrategicTestFixture, extractInitialState)
 {
   LCIStrategicPluginConfig config;
-    auto lcip = std::make_shared<lci_strategic_plugin::LCIStrategicPlugin>(rclcpp::NodeOptions());
+  auto lcip = std::make_shared<lci_strategic_plugin::LCIStrategicPlugin>(rclcpp::NodeOptions());
+
   lcip->wm_ = cmw_;
   lcip->config_ = config;
 
-  carma_planning_msgs::srv::PlanManeuvers::Request::SharedPtr req;
+  carma_planning_msgs::srv::PlanManeuvers::Request::SharedPtr req = std::make_shared<carma_planning_msgs::srv::PlanManeuvers::Request>();
   req->header.stamp = rclcpp::Time(1e9 * 5.0);
   req->veh_downtrack = 23.5;
   req->veh_logitudinal_velocity = 10.2;
@@ -79,7 +83,7 @@ TEST_F(LCIStrategicTestFixture, extractInitialState)
 
   LCIStrategicPlugin::VehicleState result = lcip->extractInitialState(req);
 
-  ASSERT_EQ(rclcpp::Time(req->header.stamp).seconds(), rclcpp::Time(result.stamp).seconds());
+  ASSERT_EQ(rclcpp::Time(req->header.stamp, RCL_SYSTEM_TIME).seconds(), rclcpp::Time(result.stamp).seconds());
   ASSERT_EQ(req->veh_downtrack, result.downtrack);
   ASSERT_EQ(req->veh_logitudinal_velocity, result.speed);
   ASSERT_TRUE(req->veh_lane_id.compare(std::to_string(result.lane_id)) == 0);
@@ -88,7 +92,8 @@ TEST_F(LCIStrategicTestFixture, extractInitialState)
 TEST_F(LCIStrategicTestFixture, validLightState)
 {
   LCIStrategicPluginConfig config;
-    auto lcip = std::make_shared<lci_strategic_plugin::LCIStrategicPlugin>(rclcpp::NodeOptions());
+      auto lcip = std::make_shared<lci_strategic_plugin::LCIStrategicPlugin>(rclcpp::NodeOptions());
+
   lcip->wm_ = cmw_;
   lcip->config_ = config;
   boost::posix_time::ptime dummy_time;
@@ -109,7 +114,8 @@ TEST_F(LCIStrategicTestFixture, validLightState)
 TEST_F(LCIStrategicTestFixture, getLaneletsBetweenWithException)
 {
   LCIStrategicPluginConfig config;
-    auto lcip = std::make_shared<lci_strategic_plugin::LCIStrategicPlugin>(rclcpp::NodeOptions());
+      auto lcip = std::make_shared<lci_strategic_plugin::LCIStrategicPlugin>(rclcpp::NodeOptions());
+
   lcip->wm_ = cmw_;
   lcip->config_ = config;
 
@@ -130,7 +136,8 @@ TEST_F(LCIStrategicTestFixture, getLaneletsBetweenWithException)
 TEST_F(LCIStrategicTestFixture, composeTrajectorySmoothingManeuverMessage)
 {
   LCIStrategicPluginConfig config;
-    auto lcip = std::make_shared<lci_strategic_plugin::LCIStrategicPlugin>(rclcpp::NodeOptions());
+      auto lcip = std::make_shared<lci_strategic_plugin::LCIStrategicPlugin>(rclcpp::NodeOptions());
+
   lcip->wm_ = cmw_;
   lcip->config_ = config;
   TrajectoryParams tsp;
@@ -138,27 +145,28 @@ TEST_F(LCIStrategicTestFixture, composeTrajectorySmoothingManeuverMessage)
   auto result =
       lcip->composeTrajectorySmoothingManeuverMessage(10.2, 20.4, {}, 5, 10, rclcpp::Time(1e9 * 1.2), rclcpp::Time(1e9 * 2.2), tsp);
 
-  ASSERT_EQ(carma_planning_msgs::msg::Maneuver::INTERSECTION_TRANSIT_STRAIGHT, result.type);
-  ASSERT_EQ(carma_planning_msgs::msg::ManeuverParameters::NO_NEGOTIATION, result.intersection_transit_straight_maneuver.parameters.negotiation_type);
-  ASSERT_EQ(carma_planning_msgs::msg::ManeuverParameters::HAS_TACTICAL_PLUGIN,
-            result.intersection_transit_straight_maneuver.parameters.presence_vector);
+  ASSERT_EQ(carma_planning_msgs::msg::Maneuver::LANE_FOLLOWING, result.type);
+  ASSERT_EQ(carma_planning_msgs::msg::ManeuverParameters::NO_NEGOTIATION, result.lane_following_maneuver.parameters.negotiation_type);
+  ASSERT_EQ(carma_planning_msgs::msg::ManeuverParameters::HAS_TACTICAL_PLUGIN | carma_planning_msgs::msg::ManeuverParameters::HAS_FLOAT_META_DATA | carma_planning_msgs::msg::ManeuverParameters::HAS_INT_META_DATA,
+            result.lane_following_maneuver.parameters.presence_vector);
   ASSERT_TRUE(config.lane_following_plugin_name.compare(
-                  result.intersection_transit_straight_maneuver.parameters.planning_tactical_plugin) == 0);
+                  result.lane_following_maneuver.parameters.planning_tactical_plugin) == 0);
   ASSERT_TRUE(
-      config.strategic_plugin_name.compare(result.intersection_transit_straight_maneuver.parameters.planning_strategic_plugin) == 0);
+      config.strategic_plugin_name.compare(result.lane_following_maneuver.parameters.planning_strategic_plugin) == 0);
 
-  ASSERT_EQ(10.2, result.intersection_transit_straight_maneuver.start_dist);
-  ASSERT_EQ(20.4, result.intersection_transit_straight_maneuver.end_dist);
-  ASSERT_EQ(5, result.intersection_transit_straight_maneuver.start_speed);
-  ASSERT_EQ(10, result.intersection_transit_straight_maneuver.end_speed);
-  ASSERT_EQ(rclcpp::Time(1e9 * 1.2), result.intersection_transit_straight_maneuver.start_time);
-  ASSERT_EQ(rclcpp::Time(1e9 * 2.2), result.intersection_transit_straight_maneuver.end_time);
+  ASSERT_EQ(10.2, result.lane_following_maneuver.start_dist);
+  ASSERT_EQ(20.4, result.lane_following_maneuver.end_dist);
+  ASSERT_EQ(5, result.lane_following_maneuver.start_speed);
+  ASSERT_EQ(10, result.lane_following_maneuver.end_speed);
+  ASSERT_EQ(rclcpp::Time(1e9 * 1.2, RCL_ROS_TIME), rclcpp::Time(result.lane_following_maneuver.start_time, RCL_ROS_TIME));
+  ASSERT_EQ(rclcpp::Time(1e9 * 2.2, RCL_ROS_TIME), rclcpp::Time(result.lane_following_maneuver.end_time, RCL_ROS_TIME));
 }
 
 TEST_F(LCIStrategicTestFixture, composeStopAndWaitManeuverMessage)
 {
   LCIStrategicPluginConfig config;
-    auto lcip = std::make_shared<lci_strategic_plugin::LCIStrategicPlugin>(rclcpp::NodeOptions());
+      auto lcip = std::make_shared<lci_strategic_plugin::LCIStrategicPlugin>(rclcpp::NodeOptions());
+
   lcip->wm_ = cmw_;
   lcip->config_ = config;
 
@@ -177,8 +185,8 @@ TEST_F(LCIStrategicTestFixture, composeStopAndWaitManeuverMessage)
   ASSERT_EQ(10.2, result.stop_and_wait_maneuver.start_dist);
   ASSERT_EQ(20.4, result.stop_and_wait_maneuver.end_dist);
   ASSERT_EQ(5, result.stop_and_wait_maneuver.start_speed);
-  ASSERT_EQ(rclcpp::Time(1e9 * 1.2), result.stop_and_wait_maneuver.start_time);
-  ASSERT_EQ(rclcpp::Time(1e9 * 2.2), result.stop_and_wait_maneuver.end_time);
+  ASSERT_EQ(rclcpp::Time(1e9 * 1.2, RCL_ROS_TIME), rclcpp::Time(result.stop_and_wait_maneuver.start_time,  RCL_ROS_TIME));
+  ASSERT_EQ(rclcpp::Time(1e9 * 2.2, RCL_ROS_TIME), rclcpp::Time(result.stop_and_wait_maneuver.end_time,  RCL_ROS_TIME));
   ASSERT_TRUE(result.stop_and_wait_maneuver.starting_lane_id.compare("1200") == 0);
   ASSERT_TRUE(result.stop_and_wait_maneuver.ending_lane_id.compare("1201") == 0);
 }
@@ -186,7 +194,8 @@ TEST_F(LCIStrategicTestFixture, composeStopAndWaitManeuverMessage)
 TEST_F(LCIStrategicTestFixture, composeIntersectionTransitMessage)
 {
   LCIStrategicPluginConfig config;
-    auto lcip = std::make_shared<lci_strategic_plugin::LCIStrategicPlugin>(rclcpp::NodeOptions());
+      auto lcip = std::make_shared<lci_strategic_plugin::LCIStrategicPlugin>(rclcpp::NodeOptions());
+
   lcip->wm_ = cmw_;
   lcip->config_ = config;
 
@@ -206,8 +215,8 @@ TEST_F(LCIStrategicTestFixture, composeIntersectionTransitMessage)
   ASSERT_EQ(20.4, result.intersection_transit_straight_maneuver.end_dist);
   ASSERT_EQ(5, result.intersection_transit_straight_maneuver.start_speed);
   ASSERT_EQ(10, result.intersection_transit_straight_maneuver.end_speed);
-  ASSERT_EQ(rclcpp::Time(1e9 * 1.2), result.intersection_transit_straight_maneuver.start_time);
-  ASSERT_EQ(rclcpp::Time(1e9 * 2.2), result.intersection_transit_straight_maneuver.end_time);
+  ASSERT_EQ(rclcpp::Time(1e9 * 1.2, RCL_ROS_TIME), rclcpp::Time(result.intersection_transit_straight_maneuver.start_time, RCL_ROS_TIME));
+  ASSERT_EQ(rclcpp::Time(1e9 * 2.2, RCL_ROS_TIME), rclcpp::Time(result.intersection_transit_straight_maneuver.end_time, RCL_ROS_TIME));
   ASSERT_TRUE(result.intersection_transit_straight_maneuver.starting_lane_id.compare("1200") == 0);
   ASSERT_TRUE(result.intersection_transit_straight_maneuver.ending_lane_id.compare("1201") == 0);
 }
@@ -215,7 +224,8 @@ TEST_F(LCIStrategicTestFixture, composeIntersectionTransitMessage)
 TEST_F(LCIStrategicTestFixture, findSpeedLimit)
 {
   LCIStrategicPluginConfig config;
-    auto lcip = std::make_shared<lci_strategic_plugin::LCIStrategicPlugin>(rclcpp::NodeOptions());
+      auto lcip = std::make_shared<lci_strategic_plugin::LCIStrategicPlugin>(rclcpp::NodeOptions());
+
   lcip->wm_ = cmw_;
   lcip->config_ = config;
 

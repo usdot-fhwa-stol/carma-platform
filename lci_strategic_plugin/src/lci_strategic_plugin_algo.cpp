@@ -265,6 +265,8 @@ std::tuple<rclcpp::Time, bool, bool> LCIStrategicPlugin::get_final_entry_time_an
     }
 
   }
+  RCLCPP_DEBUG_STREAM(rclcpp::get_logger("lci_strategic_plugin"), "nearest_green_entry_time: " << nearest_green_entry_time.get_clock_type());
+  RCLCPP_DEBUG_STREAM(rclcpp::get_logger("lci_strategic_plugin"), "current_state.stamp: " << current_state.stamp.get_clock_type());
 
   RCLCPP_DEBUG_STREAM(rclcpp::get_logger("lci_strategic_plugin"), "nearest_green_entry_time: " << std::to_string(nearest_green_entry_time.seconds()) << ", with : " << std::to_string((nearest_green_entry_time - current_state.stamp).seconds())  << " seconds left at: " << std::to_string(current_state.stamp.seconds()));
   

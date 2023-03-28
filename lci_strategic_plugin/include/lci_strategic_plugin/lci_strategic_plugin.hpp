@@ -800,6 +800,8 @@ private:
   FRIEND_TEST(LCIStrategicTestFixture, estimate_distance_to_stop);
   FRIEND_TEST(LCIStrategicTestFixture, estimate_time_to_stop);
   FRIEND_TEST(LCIStrategicTestFixture, extractInitialState);
+  FRIEND_TEST(LCIStrategicTestFixture, DISABLED_extractInitialState);
+
   FRIEND_TEST(LCIStrategicTestFixture, validLightState);
   FRIEND_TEST(LCIStrategicTestFixture, getLaneletsBetweenWithException);
   FRIEND_TEST(LCIStrategicTestFixture, composeStopAndWaitManeuverMessage);
@@ -817,9 +819,13 @@ private:
   FRIEND_TEST(LCIStrategicTestFixture, handleFailureCase);
   FRIEND_TEST(LCIStrategicTestFixture, handleStopping);
   FRIEND_TEST(LCIStrategicTestFixture, planManeuverCb);
+  FRIEND_TEST(LCIStrategicTestFixture, DISABLED_planManeuverCb);
+
   FRIEND_TEST(LCIStrategicPluginTest, parseStrategyParamstest);
   FRIEND_TEST(LCIStrategicPluginTest, moboperationcbtest);
   FRIEND_TEST(LCIStrategicTestFixture, findSpeedLimit);
+  FRIEND_TEST(LCIStrategicTestFixture, DISABLED_planWhenETInTBD);
+
 
 
 
