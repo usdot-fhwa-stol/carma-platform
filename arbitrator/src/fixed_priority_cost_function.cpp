@@ -38,7 +38,7 @@ namespace arbitrator
         for (auto it = plugin_priorities.begin(); it != plugin_priorities.end(); it++)
         {
             plugin_costs_[it->first] = 1.0 - (it->second / max_priority);
-            RCLCPP_INFO_STREAM(rclcpp::get_logger("arbitrator"), "FixedPriorityCostFunction: " << "Plugin: " << it->first << " Normalized Cost: " << plugin_costs_[it->first]);
+            RCLCPP_ERROR_STREAM(rclcpp::get_logger("arbitrator"), "FixedPriorityCostFunction: " << "Plugin: " << it->first << " Normalized Cost: " << plugin_costs_[it->first]);
         }
     }
 
@@ -48,6 +48,7 @@ namespace arbitrator
         for (auto it = plan.maneuvers.begin(); it != plan.maneuvers.end(); it++)
         {
             std::string planning_plugin = GET_MANEUVER_PROPERTY(*it, parameters).planning_strategic_plugin;
+            RCLCPP_ERROR_STREAM("Generating cost for maneuver from planning_strategic_plugin " << planning_plugin);
             total_cost += (arbitrator_utils::get_maneuver_end_distance(*it) - arbitrator_utils::get_maneuver_start_distance(*it)) *
                 plugin_costs_.at(planning_plugin);
         }

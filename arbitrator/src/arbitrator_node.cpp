@@ -51,11 +51,12 @@ namespace arbitrator
 
         config_.plugin_priorities = plugin_priorities_map_from_json(json_string);
 
-        RCLCPP_INFO_STREAM(rclcpp::get_logger("arbitrator"), "Arbitrator Loaded Params: " << config_);
+        RCLCPP_ERROR_STREAM(rclcpp::get_logger("arbitrator"), "Arbitrator Loaded Params: " << config_);
 
         std::shared_ptr<arbitrator::CostFunction> cf;
         arbitrator::CostSystemCostFunction cscf = arbitrator::CostSystemCostFunction();
-
+        
+        RCLCPP_ERROR_STREAM(rclcpp::get_logger("arbitrator"), "Now setting up FixedPriorityCostFunction");
         arbitrator::FixedPriorityCostFunction fpcf(config_.plugin_priorities);
         if (config_.use_fixed_costs) {
             cf = std::make_shared<arbitrator::FixedPriorityCostFunction>(fpcf);
