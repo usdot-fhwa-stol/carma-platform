@@ -115,7 +115,7 @@ void setManeuverLaneletIds(carma_planning_msgs::msg::Maneuver& mvr, lanelet::Id 
     get_parameter<double>("stopping_accel_limit_multiplier", config_.stopping_accel_limit_multiplier_);
     get_parameter<double>("min_maneuver_length", config_.min_maneuver_length_);
     
-    RCLCPP_INFO_STREAM(rclcpp::get_logger("route_following_plugin"), "RouteFollowingPlugin Config: " << config_);
+    RCLCPP_ERROR_STREAM(rclcpp::get_logger("route_following_plugin"), "RouteFollowingPlugin Config: " << config_);
 
     // Setup subscribers
     twist_sub_ = create_subscription<geometry_msgs::msg::TwistStamped>("current_velocity", 50,
@@ -130,13 +130,13 @@ void setManeuverLaneletIds(carma_planning_msgs::msg::Maneuver& mvr, lanelet::Id 
 
     //set a route callback to update route and calculate maneuver
     wml_->setRouteCallback([this]() {
-        RCLCPP_INFO_STREAM(get_logger(),"Recomputing maneuvers due to a route update");
+        RCLCPP_ERROR_STREAM(get_logger(),"Recomputing maneuvers due to a route update");
         this->latest_maneuver_plan_ = routeCb(wm_->getRoute()->shortestPath());
     });
 
     wml_->setMapCallback([this]() {
         if (wm_->getRoute()) { // If this map update occured after a route was provided we need to regenerate maneuvers
-            RCLCPP_INFO_STREAM(get_logger(),"Recomputing maneuvers due to map update");
+            RCLCPP_ERROR_STREAM(get_logger(),"Recomputing maneuvers due to map update");
             this->latest_maneuver_plan_ = routeCb(wm_->getRoute()->shortestPath());
         }
     });
@@ -166,7 +166,7 @@ void setManeuverLaneletIds(carma_planning_msgs::msg::Maneuver& mvr, lanelet::Id 
         }
         std::vector<carma_planning_msgs::msg::Maneuver> maneuvers;
         //This function calculates the maneuver plan every time the route is set
-        RCLCPP_DEBUG_STREAM(get_logger(),"New route created");
+        RCLCPP_ERROR_STREAM(get_logger(),"New route created");
 
         //Go through entire route - identify lane changes and fill in the spaces with lane following
         auto nearest_lanelets = lanelet::geometry::findNearest(wm_->getMap()->laneletLayer, current_loc_, 10); //Return 10 nearest lanelets
@@ -188,22 +188,22 @@ void setManeuverLaneletIds(carma_planning_msgs::msg::Maneuver& mvr, lanelet::Id 
         //Find lane changes in path - up to the second to last lanelet in path (till lane change is possible)
         for (shortest_path_index = 0; shortest_path_index < route_shortest_path.size() - 1; ++shortest_path_index)
         {
-            RCLCPP_DEBUG_STREAM(get_logger(),"current shortest_path_index:" << shortest_path_index);
+            RCLCPP_ERROR_STREAM(get_logger(),"current shortest_path_index:" << shortest_path_index);
 
             auto following_lanelets = wm_->getRoute()->followingRelations(route_shortest_path[shortest_path_index]);
-            RCLCPP_DEBUG_STREAM(get_logger(),"following_lanelets.size():" << following_lanelets.size());
+            RCLCPP_ERROR_STREAM(get_logger(),"following_lanelets.size():" << following_lanelets.size());
 
             double target_speed_in_lanelet = findSpeedLimit(route_shortest_path[shortest_path_index]);
 
             //update start distance and start speed from previous maneuver if it exists
             start_dist = (maneuvers.empty()) ? wm_->routeTrackPos(route_shortest_path[shortest_path_index].centerline2d().front()).downtrack : GET_MANEUVER_PROPERTY(maneuvers.back(), end_dist); // TODO_REFAC if there is no initial maneuver start distance and start speed should be derived from current state. Current state ought to be provided in planning request
             start_speed = (maneuvers.empty()) ? 0.0 : getManeuverEndSpeed(maneuvers.back());
-            RCLCPP_DEBUG_STREAM(get_logger(),"start_dist:" << start_dist << ", start_speed:" << start_speed);
+            RCLCPP_ERROR_STREAM(get_logger(),"start_dist:" << start_dist << ", start_speed:" << start_speed);
 
             end_dist = wm_->routeTrackPos(route_shortest_path[shortest_path_index].centerline2d().back()).downtrack;
-            RCLCPP_DEBUG_STREAM(get_logger(),"end_dist:" << end_dist);
+            RCLCPP_ERROR_STREAM(get_logger(),"end_dist:" << end_dist);
             end_dist = std::min(end_dist, route_length);
-            RCLCPP_DEBUG_STREAM(get_logger(),"min end_dist:" << end_dist);
+            RCLCPP_ERROR_STREAM(get_logger(),"min end_dist:" << end_dist);
 
             if (std::fabs(start_dist - end_dist) < 0.1) //TODO: edge case that was not recreatable. Sometimes start and end dist was same which crashes inlanecruising
             {
@@ -216,10 +216,10 @@ void setManeuverLaneletIds(carma_planning_msgs::msg::Maneuver& mvr, lanelet::Id 
 
             if (isLaneChangeNeeded(following_lanelets, route_shortest_path[shortest_path_index + 1].id()))
             {
-                RCLCPP_DEBUG_STREAM(get_logger(),"LaneChangeNeeded");
+                RCLCPP_ERROR_STREAM(get_logger(),"LaneChangeNeeded");
     
                 // Determine the Lane Change Status
-                RCLCPP_DEBUG_STREAM(get_logger(),"Recording lanechange start_dist <<" << start_dist  << ", from llt id:" << route_shortest_path[shortest_path_index].id() << " to llt id: " << 
+                RCLCPP_ERROR_STREAM(get_logger(),"Recording lanechange start_dist <<" << start_dist  << ", from llt id:" << route_shortest_path[shortest_path_index].id() << " to llt id: " << 
                     route_shortest_path[shortest_path_index+ 1].id());
 
                 maneuvers.push_back(composeLaneChangeManeuverMessage(start_dist, end_dist, start_speed, target_speed_in_lanelet, route_shortest_path[shortest_path_index].id(), route_shortest_path[shortest_path_index + 1].id()));
@@ -228,7 +228,7 @@ void setManeuverLaneletIds(carma_planning_msgs::msg::Maneuver& mvr, lanelet::Id 
             }
             else
             {
-                RCLCPP_DEBUG_STREAM(get_logger(),"Lanechange NOT Needed ");
+                RCLCPP_ERROR_STREAM(get_logger(),"Lanechange NOT Needed ");
                 maneuvers.push_back(composeLaneFollowingManeuverMessage(start_dist, end_dist, start_speed, target_speed_in_lanelet, { route_shortest_path[shortest_path_index].id() } ));
             }
         }
@@ -248,7 +248,7 @@ void setManeuverLaneletIds(carma_planning_msgs::msg::Maneuver& mvr, lanelet::Id 
         
         }
         ////------------------
-        RCLCPP_DEBUG_STREAM(get_logger(),"Maneuver plan along route successfully generated");
+        RCLCPP_ERROR_STREAM(get_logger(),"Maneuver plan along route successfully generated");
         return maneuvers;
     }
 
@@ -258,7 +258,7 @@ void setManeuverLaneletIds(carma_planning_msgs::msg::Maneuver& mvr, lanelet::Id 
         double lateral_accel_limit, double min_maneuver_length
     ) const
     {
-        RCLCPP_INFO_STREAM(get_logger(),"Attempting to plan Stop and Wait Maneuver");
+        RCLCPP_ERROR_STREAM(get_logger(),"Attempting to plan Stop and Wait Maneuver");
         /**
          * Alogirthm in this block is as follows
          * 1. Compute distance to slowdown to stop at acceleration limit
@@ -318,7 +318,7 @@ void setManeuverLaneletIds(carma_planning_msgs::msg::Maneuver& mvr, lanelet::Id 
                     // Update last maneuver end downtrack so the stop and wait maneuver can be properly formulated
                     last_maneuver_end_downtrack = required_start_downtrack; 
                 } else {
-                    RCLCPP_DEBUG_STREAM(get_logger(),"Stop and wait maneuver being extended to nearest maneuver which is closer than the minimum maneuver length");
+                    RCLCPP_ERROR_STREAM(get_logger(),"Stop and wait maneuver being extended to nearest maneuver which is closer than the minimum maneuver length");
                 }
 
             } else { // If our stopping maneuver intersects with existing maneuvers
@@ -417,12 +417,12 @@ void setManeuverLaneletIds(carma_planning_msgs::msg::Maneuver& mvr, lanelet::Id 
         if (!req->prior_plan.maneuvers.empty())
         {
             current_downtrack = GET_MANEUVER_PROPERTY(req->prior_plan.maneuvers.back(), end_dist);
-            RCLCPP_DEBUG_STREAM(get_logger(),"Detected a prior plan! Using back maneuver's end_dist:"<< current_downtrack);            
+            RCLCPP_ERROR_STREAM(get_logger(),"Detected a prior plan! Using back maneuver's end_dist:"<< current_downtrack);            
         }
         else
         {
             current_downtrack = req->veh_downtrack;
-            RCLCPP_DEBUG_STREAM(get_logger(),"Detected NO prior plan! Using req.veh_downtrack: "<< current_downtrack);
+            RCLCPP_ERROR_STREAM(get_logger(),"Detected NO prior plan! Using req.veh_downtrack: "<< current_downtrack);
         }
         
         //Return the set of maneuvers which intersect with min_plan_duration
@@ -433,11 +433,11 @@ void setManeuverLaneletIds(carma_planning_msgs::msg::Maneuver& mvr, lanelet::Id 
 
         while (planned_time < config_.min_plan_duration_ && i < latest_maneuver_plan_.size())
         {
-            RCLCPP_DEBUG_STREAM(get_logger(),"Checking maneuver id " << i);
+            RCLCPP_ERROR_STREAM(get_logger(),"Checking maneuver id " << i);
             //Ignore plans for distance already covered
             if (GET_MANEUVER_PROPERTY(latest_maneuver_plan_[i], end_dist) <= current_downtrack)
             {
-                RCLCPP_DEBUG_STREAM(get_logger(),"Skipping maneuver id " << i);
+                RCLCPP_ERROR_STREAM(get_logger(),"Skipping maneuver id " << i);
 
                 ++i;
                 continue;
@@ -462,13 +462,13 @@ void setManeuverLaneletIds(carma_planning_msgs::msg::Maneuver& mvr, lanelet::Id 
         if (!req->prior_plan.maneuvers.empty())
         {
             updateTimeProgress(new_maneuvers, GET_MANEUVER_PROPERTY(req->prior_plan.maneuvers.back(), end_time));
-           RCLCPP_DEBUG_STREAM(get_logger(),"Detected a prior plan! Using back maneuver's end time:"<< std::to_string(rclcpp::Time(GET_MANEUVER_PROPERTY(req->prior_plan.maneuvers.back(), end_time)).seconds()));    
-           RCLCPP_DEBUG_STREAM(get_logger(),"Where plan_completion_time was:"<< std::to_string(rclcpp::Time(req->prior_plan.planning_completion_time).seconds()));            
+           RCLCPP_ERROR_STREAM(get_logger(),"Detected a prior plan! Using back maneuver's end time:"<< std::to_string(rclcpp::Time(GET_MANEUVER_PROPERTY(req->prior_plan.maneuvers.back(), end_time)).seconds()));    
+           RCLCPP_ERROR_STREAM(get_logger(),"Where plan_completion_time was:"<< std::to_string(rclcpp::Time(req->prior_plan.planning_completion_time).seconds()));            
         }
         else
         {
             updateTimeProgress(new_maneuvers, rclcpp::Time(req->header.stamp));
-           RCLCPP_DEBUG_STREAM(get_logger(),"Detected NO prior plan! Using this->now():"<< std::to_string(this->now().seconds()));   
+           RCLCPP_ERROR_STREAM(get_logger(),"Detected NO prior plan! Using this->now():"<< std::to_string(this->now().seconds()));   
         }
 
         //update starting speed of first maneuver
@@ -497,22 +497,22 @@ void setManeuverLaneletIds(carma_planning_msgs::msg::Maneuver& mvr, lanelet::Id 
             }
             
             updateStartingSpeed(new_maneuvers.front(), start_speed);
-            RCLCPP_DEBUG_STREAM(get_logger(),"Detected a prior plan! Using back maneuver's end speed:"<< start_speed);    
+            RCLCPP_ERROR_STREAM(get_logger(),"Detected a prior plan! Using back maneuver's end speed:"<< start_speed);    
         }
         else 
         {
             updateStartingSpeed(new_maneuvers.front(), req->veh_logitudinal_velocity);
-            RCLCPP_DEBUG_STREAM(get_logger(),"Detected NO prior plan! Using req->veh_logitudinal_velocity:"<< req->veh_logitudinal_velocity);    
+            RCLCPP_ERROR_STREAM(get_logger(),"Detected NO prior plan! Using req->veh_logitudinal_velocity:"<< req->veh_logitudinal_velocity);    
         }
         //update plan
         resp->new_plan = req->prior_plan;
-        RCLCPP_DEBUG_STREAM(get_logger(),"Updating maneuvers before returning... Prior plan size:" << req->prior_plan.maneuvers.size());
+        RCLCPP_ERROR_STREAM(get_logger(),"Updating maneuvers before returning... Prior plan size:" << req->prior_plan.maneuvers.size());
         for (const auto& mvr : new_maneuvers)
         {
             resp->new_plan.maneuvers.push_back(mvr);
         }
 
-        RCLCPP_DEBUG_STREAM(get_logger(),"Returning total of maneuver size: " << resp->new_plan.maneuvers.size());
+        RCLCPP_ERROR_STREAM(get_logger(),"Returning total of maneuver size: " << resp->new_plan.maneuvers.size());
         resp->new_plan.planning_completion_time = this->now();
 
         return;
@@ -520,9 +520,9 @@ void setManeuverLaneletIds(carma_planning_msgs::msg::Maneuver& mvr, lanelet::Id 
 
     void RouteFollowingPlugin::bumper_pose_cb()
     {
-        RCLCPP_DEBUG_STREAM(get_logger(),"Entering pose_cb");
+        RCLCPP_ERROR_STREAM(get_logger(),"Entering pose_cb");
 
-        RCLCPP_DEBUG_STREAM(get_logger(),"Looking up front bumper pose...");
+        RCLCPP_ERROR_STREAM(get_logger(),"Looking up front bumper pose...");
         
         try
         {
@@ -545,7 +545,7 @@ void setManeuverLaneletIds(carma_planning_msgs::msg::Maneuver& mvr, lanelet::Id 
         current_loc_ = current_loc;
         double current_progress = wm_->routeTrackPos(current_loc).downtrack;
         
-        RCLCPP_DEBUG_STREAM(get_logger(),"pose_cb : current_progress" << current_progress);
+        RCLCPP_ERROR_STREAM(get_logger(),"pose_cb : current_progress" << current_progress);
         
         // Check if we need to return to route shortest path.
         // Step 1. Check if another plugin aside from RFP has been in control
@@ -578,6 +578,7 @@ void setManeuverLaneletIds(carma_planning_msgs::msg::Maneuver& mvr, lanelet::Id 
             // if the current lanelet is not on the shortest path
             if (shortest_path_set_.find(current_lanelet.id()) == shortest_path_set_.end())
             {
+                RCLCPP_ERROR_STREAM(get_logger(),"Vehicle is not on the shortest path, calling returnToShortestPath!");
                 returnToShortestPath(current_lanelet);
     
             }
@@ -596,7 +597,7 @@ void setManeuverLaneletIds(carma_planning_msgs::msg::Maneuver& mvr, lanelet::Id 
         double maneuver_start_dist = GET_MANEUVER_PROPERTY(maneuver, start_dist);
         double maneuver_end_dist = GET_MANEUVER_PROPERTY(maneuver, end_dist);
 
-        RCLCPP_DEBUG_STREAM(get_logger(),"maneuver_end_dist: " << maneuver_end_dist << ", maneuver_start_dist: " << maneuver_start_dist << ", cur_plus_target: " << cur_plus_target);
+        RCLCPP_ERROR_STREAM(get_logger(),"maneuver_end_dist: " << maneuver_end_dist << ", maneuver_start_dist: " << maneuver_start_dist << ", cur_plus_target: " << cur_plus_target);
 
         duration = rclcpp::Duration((maneuver_end_dist - maneuver_start_dist) / (0.5 * cur_plus_target) * 1e9);
 
@@ -722,7 +723,7 @@ void setManeuverLaneletIds(carma_planning_msgs::msg::Maneuver& mvr, lanelet::Id 
         for (const auto& id : maneuver_msg.lane_following_maneuver.lane_ids)
             ss << " " << id;
 
-        RCLCPP_DEBUG_STREAM(get_logger(),"Creating lane follow id: " << maneuver_msg.lane_following_maneuver.parameters.maneuver_id 
+        RCLCPP_ERROR_STREAM(get_logger(),"Creating lane follow id: " << maneuver_msg.lane_following_maneuver.parameters.maneuver_id 
                         << " start dist: " << start_dist << " end dist: " << end_dist << "lane_ids: " << ss.str());
         
         return maneuver_msg;
@@ -748,7 +749,7 @@ void setManeuverLaneletIds(carma_planning_msgs::msg::Maneuver& mvr, lanelet::Id 
         //       If maneuvers were not generated only on route updates we would want to preserve the ids across plans
         maneuver_msg.lane_change_maneuver.parameters.maneuver_id = getNewManeuverId();
 
-        RCLCPP_DEBUG_STREAM(get_logger(),"Creating lane change id: "  << maneuver_msg.lane_change_maneuver.parameters.maneuver_id << "start dist: " << start_dist << " end dist: " << end_dist << " Starting llt: " << starting_lane_id << " Ending llt: " << ending_lane_id);
+        RCLCPP_ERROR_STREAM(get_logger(),"Creating lane change id: "  << maneuver_msg.lane_change_maneuver.parameters.maneuver_id << "start dist: " << start_dist << " end dist: " << end_dist << " Starting llt: " << starting_lane_id << " Ending llt: " << ending_lane_id);
 
         return maneuver_msg;
     }
@@ -783,7 +784,7 @@ void setManeuverLaneletIds(carma_planning_msgs::msg::Maneuver& mvr, lanelet::Id 
         //       If maneuvers were not generated only on route updates we would want to preserve the ids across plans
         maneuver_msg.stop_and_wait_maneuver.parameters.maneuver_id = getNewManeuverId();
 
-        RCLCPP_DEBUG_STREAM(get_logger(),"Creating stop and wait maneuver id:" << maneuver_msg.stop_and_wait_maneuver.parameters.maneuver_id << "start dist: " << start_dist << " end dist: " << end_dist << " start_speed: " << start_speed << " Starting llt: " << starting_lane_id << " Ending llt: " << ending_lane_id);
+        RCLCPP_ERROR_STREAM(get_logger(),"Creating stop and wait maneuver id:" << maneuver_msg.stop_and_wait_maneuver.parameters.maneuver_id << "start dist: " << start_dist << " end dist: " << end_dist << " start_speed: " << start_speed << " Starting llt: " << starting_lane_id << " Ending llt: " << ending_lane_id);
 
         return maneuver_msg;
     }
@@ -823,7 +824,7 @@ void setManeuverLaneletIds(carma_planning_msgs::msg::Maneuver& mvr, lanelet::Id 
     void RouteFollowingPlugin::returnToShortestPath(const lanelet::ConstLanelet &current_lanelet)
     {
         auto original_shortestpath = wm_->getRoute()->shortestPath();
-        RCLCPP_DEBUG_STREAM(get_logger(),"The vehicle has left the shortest path");
+        RCLCPP_ERROR_STREAM(get_logger(),"The vehicle has left the shortest path");
         auto routing_graph = wm_->getMapRoutingGraph();
 
         // In order to return to the shortest path, the closest future lanelet on the shortest path needs to be found.
@@ -837,12 +838,12 @@ void setManeuverLaneletIds(carma_planning_msgs::msg::Maneuver& mvr, lanelet::Id 
                 {
                     auto following_lanelets = routing_graph->following(adjacent);
                     const auto& target_following_lanelet = following_lanelets[0];
-                    RCLCPP_DEBUG_STREAM(get_logger(),"The target_following_lanelet id is: " << target_following_lanelet.id());
+                    RCLCPP_ERROR_STREAM(get_logger(),"The target_following_lanelet id is: " << target_following_lanelet.id());
                     lanelet::ConstLanelets interm;
                     interm.push_back(static_cast<lanelet::ConstLanelet>(target_following_lanelet));
                     // a new shortest path, via the target_following_lanelet is calculated and used an alternative shortest path
                     auto new_shortestpath = routing_graph->shortestPathVia(current_lanelet, interm, original_shortestpath.back());
-                    RCLCPP_DEBUG_STREAM(get_logger(),"a new shortestpath is generated to return to original shortestpath");
+                    RCLCPP_ERROR_STREAM(get_logger(),"a new shortestpath is generated to return to original shortestpath");
                     // routeCb is called to update latest_maneuver_plan_
                     if (new_shortestpath) this->latest_maneuver_plan_ = routeCb(new_shortestpath.get());
                     break;
@@ -853,7 +854,7 @@ void setManeuverLaneletIds(carma_planning_msgs::msg::Maneuver& mvr, lanelet::Id 
                     lanelet::ConstLanelets new_interm;
                     new_interm.push_back(static_cast<lanelet::ConstLanelet>(current_lanelet));
                     auto new_shortestpath = routing_graph->shortestPathVia(current_lanelet, new_interm, original_shortestpath.back());
-                    RCLCPP_DEBUG_STREAM(get_logger(),"Cannot return to the original shortestpath from adjacent lanes, so a new shortestpath is generated");
+                    RCLCPP_ERROR_STREAM(get_logger(),"Cannot return to the original shortestpath from adjacent lanes, so a new shortestpath is generated");
                     // routeCb is called to update latest_maneuver_plan_
                     if (new_shortestpath) this->latest_maneuver_plan_ = routeCb(new_shortestpath.get());
                 }
