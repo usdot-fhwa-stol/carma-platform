@@ -109,12 +109,6 @@
       <include file = "$(find intersection_transit_maneuvering)/launch/intersection_transit_maneuvering.launch"/>
     </group>
 
-    <!-- Light Controlled Intersection Strategic Plugin -->
-    <group>
-      <remap from="incoming_mobility_operation" to="$(optenv CARMA_MSG_NS)/incoming_mobility_operation"/>
-      <include file="$(find lci_strategic_plugin)/launch/lci_strategic_plugin.launch" />
-    </group>
-
   </group>
   
   <!-- Guidance Plugin Validator -->

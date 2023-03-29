@@ -1,6 +1,6 @@
 #pragma once
 /*
- * Copyright (C) 2022 LEIDOS.
+ * Copyright (C) 2023 LEIDOS.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -46,9 +46,6 @@ struct LCIStrategicPluginConfig
   //! A buffer in seconds around the green phase which will reduce the phase length such that vehicle still considers it non-green
   double green_light_time_buffer = 0.0;
 
-  //! Double: A buffer in seconds starting green phase which is still considered valid stop if safety requires it
-  double stop_light_time_buffer = 0.0;
-
   //! Minimum allowable speed TS algorithm in m/s
   double algo_minimum_speed = 2.2352;
 
@@ -62,9 +59,6 @@ struct LCIStrategicPluginConfig
   //! The minimum period in seconds which a maneuver plan must cover if the plugin wishes to control the whole plan
   double min_maneuver_planning_period = 15.1;
 
-  //! Double: Approximate update time interval of carma streets
-  double carma_streets_update_interval = 1.0;
-  
   //! Double: Vehicle reaction time to a received schedule in seconds (approximate value, only used for communication with the schedule)
   double reaction_time = 2.0;
 
@@ -93,5 +87,34 @@ struct LCIStrategicPluginConfig
   //! The name of the plugin to use for intersection transit trajectory planning
   //! This plugin is used to travel INSIDE the intersection where there is no trajectory smoothing algorithm active
   std::string intersection_transit_plugin_name = "intersection_transit_maneuvering";
+
+  // Stream operator for this config
+  friend std::ostream &operator<<(std::ostream &output, const LCIStrategicPluginConfig &c)
+  {
+    output << "LCIStrategicPluginConfig { " << std::endl
+          << "vehicle_decel_limit: " << c.vehicle_decel_limit << std::endl
+          << "vehicle_decel_limit_multiplier: " << c.vehicle_decel_limit_multiplier << std::endl
+          << "vehicle_accel_limit: " << c.vehicle_accel_limit << std::endl
+          << "vehicle_accel_limit_multiplier: " << c.vehicle_accel_limit_multiplier << std::endl
+          << "min_approach_distance: " << c.min_approach_distance << std::endl
+          << "trajectory_smoothing_activation_distance: " << c.trajectory_smoothing_activation_distance << std::endl
+          << "stopping_location_buffer: " << c.stopping_location_buffer << std::endl
+          << "green_light_time_buffer: " << c.green_light_time_buffer << std::endl
+          << "algo_minimum_speed: " << c.algo_minimum_speed << std::endl
+          << "deceleration_fraction: " << c.deceleration_fraction << std::endl
+          << "desired_distance_to_stop_buffer: " << c.desired_distance_to_stop_buffer << std::endl
+          << "min_maneuver_planning_period: " << c.min_maneuver_planning_period << std::endl
+          << "reaction_time: " << c.reaction_time << std::endl
+          << "min_gap: " << c.min_gap << std::endl
+          << "enable_carma_streets_connection: " << c.enable_carma_streets_connection << std::endl
+          << "mobility_rate: " << c.mobility_rate << std::endl
+          << "vehicle_id: " << c.vehicle_id << std::endl
+          << "strategic_plugin_name: " << c.strategic_plugin_name << std::endl
+          << "lane_following_plugin_name: " << c.lane_following_plugin_name << std::endl
+          << "stop_and_wait_plugin_name: " << c.stop_and_wait_plugin_name << std::endl
+          << "intersection_transit_plugin_name: " << c.intersection_transit_plugin_name << std::endl
+          << "}" << std::endl;
+    return output;
+  }
 };
 }  // namespace localizer

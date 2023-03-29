@@ -1,7 +1,7 @@
 #pragma once
 
 /*
- * Copyright (C)2022 LEIDOS.
+ * Copyright (C)2023 LEIDOS.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -16,41 +16,43 @@
  * the License.
  */
 
-#include <ros/ros.h>
+#include <rclcpp/rclcpp.hpp>
 #include <string>
-#include <cav_srvs/PlanManeuvers.h>
-#include <cav_msgs/Plugin.h>
-#include <cav_msgs/MobilityOperation.h>
-#include <cav_msgs/BSM.h>
-#include <carma_wm/WMListener.h>
-#include <carma_wm/WorldModel.h>
-#include <carma_utils/CARMAUtils.h>
+#include <carma_planning_msgs/srv/plan_maneuvers.hpp>
+#include <carma_v2x_msgs/msg/mobility_operation.hpp>
+#include <carma_v2x_msgs/msg/bsm.hpp>
+#include <carma_wm_ros2/WMListener.hpp>
+#include <carma_wm_ros2/WorldModel.hpp>
+
 #include <bsm_helper/bsm_helper.h>
-#include <carma_wm/Geometry.h>
+#include <carma_wm_ros2/Geometry.hpp>
 #include <lanelet2_core/Forward.h>
 #include <gtest/gtest_prod.h>
 
 #include <lanelet2_extension/regulatory_elements/CarmaTrafficSignal.h>
-#include "lci_strategic_plugin/lci_state_transition_table.h"
-#include "lci_strategic_plugin/lci_strategic_plugin_config.h"
-#include "lci_strategic_plugin/lci_states.h"
+#include "lci_strategic_plugin/lci_state_transition_table.hpp"
+#include "lci_strategic_plugin/lci_strategic_plugin_config.hpp"
+#include "lci_strategic_plugin/lci_states.hpp"
 
 #include <tf2_ros/transform_listener.h>
 #include <tf2/LinearMath/Transform.h>
 #include <tf2_geometry_msgs/tf2_geometry_msgs.h>
-#include <std_msgs/Int8.h>
-#include <std_msgs/Float64.h>
+#include <std_msgs/msg/int8.hpp>
+#include <std_msgs/msg/float64.hpp>
 #include <math.h>
 #include <algorithm>
+#include <carma_guidance_plugins/strategic_plugin.hpp>
+#include <carma_ros2_utils/carma_lifecycle_node.hpp>
+
 
 namespace lci_strategic_plugin
 {
 
-  enum class TurnDirection {
-            Straight,
-            Right,
-            Left
-    };
+enum class TurnDirection {
+  Straight,
+  Right,
+  Left
+};
 
 /**
  * \brief Struct representing trajectory smoothing algorithm parameters using distance and acceleration
@@ -107,48 +109,55 @@ struct BoundaryDistances
   double dx5 = 0.0;
 };
 
-class LCIStrategicPlugin
+class LCIStrategicPlugin : public carma_guidance_plugins::StrategicPlugin
 {
 public:
+  
   /**
-   * \brief Constructor
-   *
-   * \param wm Pointer to intialized instance of the carma world model for accessing semantic map data
-   * \param config The configuration to be used for this object
-   */
-  LCIStrategicPlugin(carma_wm::WorldModelConstPtr wm, LCIStrategicPluginConfig config);
-
+     * \brief Default constructor for RouteFollowingPlugin class
+     */
+  explicit LCIStrategicPlugin(const rclcpp::NodeOptions &);
+  
   /**
    * \brief Service callback for arbitrator maneuver planning
    * \param req Plan maneuver request
-   * \param[out] resp Plan maneuver response with a list of maneuver plan
+   * \param resp Plan maneuver response with a list of maneuver plan
    * \return If service call successed
    */
-  bool planManeuverCb(cav_srvs::PlanManeuversRequest& req, cav_srvs::PlanManeuversResponse& resp);
+  void plan_maneuvers_callback(
+    std::shared_ptr<rmw_request_id_t> srv_header, 
+    carma_planning_msgs::srv::PlanManeuvers::Request::SharedPtr req, 
+    carma_planning_msgs::srv::PlanManeuvers::Response::SharedPtr resp);
 
   /**
-   * \brief Returns the current plugin discovery message reflecting system status
-   *
-   * \return cav_msgs::Plugin The plugin discovery message
+   * \brief Callback for dynamic parameter updates
    */
-  cav_msgs::Plugin getDiscoveryMsg() const;
+  rcl_interfaces::msg::SetParametersResult 
+  parameter_update_callback(const std::vector<rclcpp::Parameter> &parameters);
+
+  ////////// OVERRIDES ///////////
+  carma_ros2_utils::CallbackReturn on_configure_plugin();
+  carma_ros2_utils::CallbackReturn on_activate_plugin();
+
+  bool get_availability();
+  std::string get_version_id();
 
   /**
    * \brief Lookup transfrom from front bumper to base link
    */
   void lookupFrontBumperTransform();
-////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
   /**
    * \brief callback function for mobility operation
    * 
    * \param msg input mobility operation msg
    */
-  void mobilityOperationCb(const cav_msgs::MobilityOperationConstPtr& msg);
+  void mobilityOperationCb(carma_v2x_msgs::msg::MobilityOperation::UniquePtr msg);
 
   /**
    * \brief BSM callback function
    */
-  void BSMCb(const cav_msgs::BSMConstPtr& msg);
+  void BSMCb(carma_v2x_msgs::msg::BSM::UniquePtr msg);
 
  /**
    * \brief parse strategy parameters
@@ -162,7 +171,7 @@ public:
    *
    * \return mobility operation msg for status and intent
    */
-  cav_msgs::MobilityOperation generateMobilityOperation();
+  carma_v2x_msgs::msg::MobilityOperation generateMobilityOperation();
 
   /**
    * \brief Determine the turn direction at intersection
@@ -175,34 +184,39 @@ public:
   TurnDirection getTurnDirectionAtIntersection(std::vector<lanelet::ConstLanelet> lanelets_list);
 
   /**
-   * \brief Method to call at fixed rate in execution loop. Will publish plugin discovery and mobility operation msgs.
-   * 
-   * \return True if the node should continue running. False otherwise
+   * \brief Publish mobility operation at a fixed rate
    */ 
-  bool mobilityPubSpin();
+  void publishMobilityOperation();
 
+  /**
+   * \brief Publish trajectory smoothing info at a fixed rate
+   */ 
+  void publishTrajectorySmoothingInfo();
 
-  ros::Publisher mobility_operation_pub;
-  
-  
+private:
+
   ////////// VARIABLES ///////////
-
-  TurnDirection intersection_turn_direction_ = TurnDirection::Straight;
-  bool approaching_light_controlled_intersection_ = false; 
-
-  // CARMA Streets Variakes
+  // CARMA Streets Variables
   // timestamp for msg received from carma streets
   unsigned long long street_msg_timestamp_ = 0;
   // scheduled enter time
   unsigned long long scheduled_enter_time_ = 0;
-  
+  std::string previous_strategy_params_ = "";  
+  std::string upcoming_id_ = "";
+
   //BSM
   std::string bsm_id_ = "default_bsm_id";
   uint8_t bsm_msg_count_ = 0;
   uint16_t bsm_sec_mark_ = 0;
 
-/////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-   /**
+  // TS planning related variables
+  double max_comfort_accel_ = 2.0;  // acceleration rates after applying miltiplier
+  double max_comfort_decel_ = -2.0; 
+  double max_comfort_decel_norm_ = -1 * max_comfort_decel_;
+  double emergency_decel_norm_ = -2 * max_comfort_decel_;
+
+  boost::optional<rclcpp::Time> nearest_green_entry_time_cached_;
+  /**
    * \brief Useful metrics for LCI Plugin
    * \param last_case_num_ Current speed profile case generated
    * \param distance_remaining_to_tf_ distance_remaining_to_traffic signal meters
@@ -215,13 +229,53 @@ public:
   double earliest_entry_time_ = 0.0;
   double scheduled_entry_time_ = 0.0;
 
-private:
+  TurnDirection intersection_turn_direction_ = TurnDirection::Straight;
+  bool approaching_light_controlled_intersection_ = false; 
+
+  //! Config containing configurable algorithm parameters
+  LCIStrategicPluginConfig config_;
+
+  //! State Machine Transition table
+  LCIStrategicStateTransitionTable transition_table_;
+
+  //! Cache variables for storing the current intersection state between state machine transitions
+  boost::optional<double> intersection_speed_;
+  boost::optional<double> intersection_end_downtrack_;
+  std::string light_controlled_intersection_strategy_ = "Carma/signalized_intersection"; // Strategy carma-streets is sending. Could be more verbose but needs to be changed on both ends
+  
+  // TF listenser
+  tf2_ros::Buffer tf2_buffer_;
+  std::unique_ptr<tf2_ros::TransformListener> tf2_listener_;
+  tf2::Stamped<tf2::Transform> frontbumper_transform_;
+  double length_to_front_bumper_ = 3.0;
+
+  double epsilon_ = 0.001; //Small constant to compare (double) 0.0 with
+  double accel_epsilon_ = 0.0001; //Small constant to compare (double) 0.0 with
+
+  //! World Model pointer
+  carma_wm::WorldModelConstPtr wm_;
+
+  // Timers
+  rclcpp::TimerBase::SharedPtr mob_op_pub_timer_;
+  rclcpp::TimerBase::SharedPtr ts_info_pub_timer_;
+
+  // Create subscribers
+  carma_ros2_utils::SubPtr<carma_v2x_msgs::msg::MobilityOperation> mob_operation_sub_;
+  carma_ros2_utils::SubPtr<carma_v2x_msgs::msg::BSM> bsm_sub_;
+
+  // Create publishers
+  carma_ros2_utils::PubPtr<carma_v2x_msgs::msg::MobilityOperation> mobility_operation_pub_;
+  carma_ros2_utils::PubPtr<std_msgs::msg::Int8> case_pub_;
+  carma_ros2_utils::PubPtr<std_msgs::msg::Float64> tf_distance_pub_;
+  carma_ros2_utils::PubPtr<std_msgs::msg::Float64> earliest_et_pub_;
+  carma_ros2_utils::PubPtr<std_msgs::msg::Float64> et_pub_;
+
   /**
    * \brief Struct representing a vehicle state for the purposes of planning
    */
   struct VehicleState
   {
-    ros::Time stamp;      // Timestamp of this state data
+    rclcpp::Time stamp;      // Timestamp of this state data
     double downtrack;     // The downtrack of the vehicle along the route at time stamp
     double speed;         // The speed of the vehicle at time stamp
     lanelet::Id lane_id;  // The current lane id of the vehicle at time stamp
@@ -241,7 +295,8 @@ private:
    * \throws if given entry_lanelet doesn't have stop_line
    * NOTE: returns empty if the given traffic light is empty
    */
-  void planWhenUNAVAILABLE(const cav_srvs::PlanManeuversRequest& req, cav_srvs::PlanManeuversResponse& resp,
+  void planWhenUNAVAILABLE(carma_planning_msgs::srv::PlanManeuvers::Request::SharedPtr req, 
+                           carma_planning_msgs::srv::PlanManeuvers::Response::SharedPtr resp,
                            const VehicleState& current_state,
                            const lanelet::CarmaTrafficSignalPtr& traffic_light,
                            const lanelet::ConstLanelet& entry_lanelet,
@@ -263,7 +318,8 @@ private:
    * \throws if given entry_lanelet doesn't have stop_line or speed profile case number was failed to be calculated
    * NOTE: if there is empty traffic_light, it signals that the vehicle has crossed the bar, or if invalid light state is given
    */
-  void planWhenAPPROACHING(const cav_srvs::PlanManeuversRequest& req, cav_srvs::PlanManeuversResponse& resp,
+  void planWhenAPPROACHING(carma_planning_msgs::srv::PlanManeuvers::Request::SharedPtr req, 
+                           carma_planning_msgs::srv::PlanManeuvers::Response::SharedPtr resp,
                            const VehicleState& current_state,
                            const lanelet::CarmaTrafficSignalPtr& traffic_light,
                            const lanelet::ConstLanelet& entry_lanelet,
@@ -283,7 +339,8 @@ private:
    * \param current_lanelet The current lanelet the vehicle's state is on
    * NOTE: returns empty if the given traffic light is empty
    */
-  void planWhenWAITING(const cav_srvs::PlanManeuversRequest& req, cav_srvs::PlanManeuversResponse& resp,
+  void planWhenWAITING(carma_planning_msgs::srv::PlanManeuvers::Request::SharedPtr req, 
+                       carma_planning_msgs::srv::PlanManeuvers::Response::SharedPtr resp,
                        const VehicleState& current_state,
                        const lanelet::CarmaTrafficSignalPtr& traffic_light,
                        const lanelet::ConstLanelet& entry_lanelet,
@@ -301,7 +358,8 @@ private:
    * \param intersection_speed_limit The speed limit of the current intersection
    *
    */
-  void planWhenDEPARTING(const cav_srvs::PlanManeuversRequest& req, cav_srvs::PlanManeuversResponse& resp,
+  void planWhenDEPARTING(carma_planning_msgs::srv::PlanManeuvers::Request::SharedPtr req, 
+                         carma_planning_msgs::srv::PlanManeuvers::Response::SharedPtr resp,
                          const VehicleState& current_state, double intersection_end_downtrack,
                          double intersection_speed_limit);
   
@@ -316,7 +374,7 @@ private:
    * NOTE: internally uses config_.green_light_time_buffer
    * NOTE: boost::none optional if any of the light state was invalid
    */
-  boost::optional<bool> canArriveAtGreenWithCertainty(const ros::Time& light_arrival_time_by_algo, const lanelet::CarmaTrafficSignalPtr& traffic_light, bool check_late, bool check_early) const;
+  boost::optional<bool> canArriveAtGreenWithCertainty(const rclcpp::Time& light_arrival_time_by_algo, const lanelet::CarmaTrafficSignalPtr& traffic_light, bool check_late, bool check_early) const;
 
   /**
    * \brief Compose a trajectory smoothing maneuver msg (sent as transit maneuver message)
@@ -331,8 +389,8 @@ private:
    *
    * \return A transift maneuver message specifically designed for light controlled intersection tactical plugin
    */
-  cav_msgs::Maneuver composeTrajectorySmoothingManeuverMessage(double start_dist, double end_dist, const std::vector<lanelet::ConstLanelet>& crossed_lanelets, double start_speed,
-                                                       double target_speed, ros::Time start_time, ros::Time end_time,
+  carma_planning_msgs::msg::Maneuver composeTrajectorySmoothingManeuverMessage(double start_dist, double end_dist, const std::vector<lanelet::ConstLanelet>& crossed_lanelets, double start_speed,
+                                                       double target_speed, rclcpp::Time start_time, rclcpp::Time end_time,
                                                        const TrajectoryParams& tsp) const;
   
   /**
@@ -349,10 +407,10 @@ private:
    *
    * \return A stop and wait maneuver message which is ready to be published
    */
-  cav_msgs::Maneuver composeStopAndWaitManeuverMessage(double current_dist, double end_dist, double start_speed,
+  carma_planning_msgs::msg::Maneuver composeStopAndWaitManeuverMessage(double current_dist, double end_dist, double start_speed,
                                                        const lanelet::Id& starting_lane_id,
-                                                       const lanelet::Id& ending_lane_id, ros::Time start_time,
-                                                       ros::Time end_time, double stopping_accel) const;
+                                                       const lanelet::Id& ending_lane_id, rclcpp::Time start_time,
+                                                       rclcpp::Time end_time, double stopping_accel) const;
 
   /**
    * \brief Compose a intersection transit maneuver message based on input params
@@ -368,8 +426,8 @@ private:
    *
    * \return A intersection transit maneuver maneuver message which is ready to be published
    */
-  cav_msgs::Maneuver composeIntersectionTransitMessage(double start_dist, double end_dist, double start_speed,
-                                                       double target_speed, ros::Time start_time, ros::Time end_time,
+  carma_planning_msgs::msg::Maneuver composeIntersectionTransitMessage(double start_dist, double end_dist, double start_speed,
+                                                       double target_speed, rclcpp::Time start_time, rclcpp::Time end_time,
                                                        const lanelet::Id& starting_lane_id,
                                                        const lanelet::Id& ending_lane_id) const;
 
@@ -389,7 +447,8 @@ private:
    *
    * \return void. if successful, resp is non-empty
    */
-  void handleStopping(const cav_srvs::PlanManeuversRequest& req, cav_srvs::PlanManeuversResponse& resp, 
+  void handleStopping(carma_planning_msgs::srv::PlanManeuvers::Request::SharedPtr req, 
+  carma_planning_msgs::srv::PlanManeuvers::Response::SharedPtr resp, 
                                         const VehicleState& current_state, 
                                         const lanelet::CarmaTrafficSignalPtr& traffic_light,
                                         const lanelet::ConstLanelet& entry_lanelet, const lanelet::ConstLanelet& exit_lanelet, const lanelet::ConstLanelet& current_lanelet,
@@ -411,7 +470,8 @@ private:
    *
    * \return void. if successful, resp is non-empty. Resp is empty if not able to make it with certainty or ts_params.is_successful is false
    */
-  void handleGreenSignalScenario(const cav_srvs::PlanManeuversRequest& req, cav_srvs::PlanManeuversResponse& resp, 
+  void handleGreenSignalScenario(carma_planning_msgs::srv::PlanManeuvers::Request::SharedPtr req, 
+  carma_planning_msgs::srv::PlanManeuvers::Response::SharedPtr resp, 
                                         const VehicleState& current_state, 
                                         double current_state_speed,
                                         const lanelet::CarmaTrafficSignalPtr& traffic_light,
@@ -430,7 +490,8 @@ private:
    *
    * \return void. if successful, resp is non-empty. Resp is empty if not able to make it with certainty or ts_params.is_successful is false
    */
-  void handleCruisingUntilStop(const cav_srvs::PlanManeuversRequest& req, cav_srvs::PlanManeuversResponse& resp, 
+  void handleCruisingUntilStop(carma_planning_msgs::srv::PlanManeuvers::Request::SharedPtr req, 
+  carma_planning_msgs::srv::PlanManeuvers::Response::SharedPtr resp, 
                                         const VehicleState& current_state, 
                                         double current_state_speed,
                                         const lanelet::CarmaTrafficSignalPtr& traffic_light,
@@ -453,7 +514,8 @@ private:
    *
    * \return void. if successful, resp is non-empty. Resp is empty if not able to make it with certainty or ts_params.is_successful is false
    */
-  void handleFailureCase(const cav_srvs::PlanManeuversRequest& req, cav_srvs::PlanManeuversResponse& resp, 
+  void handleFailureCase(carma_planning_msgs::srv::PlanManeuvers::Request::SharedPtr req, 
+  carma_planning_msgs::srv::PlanManeuvers::Response::SharedPtr resp, 
                                         const VehicleState& current_state, 
                                         double current_state_speed,
                                         double speed_limit,
@@ -493,7 +555,7 @@ private:
    * \return True if the optional is set and the contained state signal is supported. False otherwise
    */
   bool validLightState(const boost::optional<std::pair<boost::posix_time::ptime, lanelet::CarmaTrafficSignalState>>& optional_state,
-                       const ros::Time& source_time) const;
+                       const rclcpp::Time& source_time) const;
 
   /**
    * \brief Helper method to extract the initial vehicle state from the planning request method based on if the
@@ -503,7 +565,7 @@ private:
    *
    * \return The extracted VehicleState
    */
-  VehicleState extractInitialState(const cav_srvs::PlanManeuversRequest& req) const;
+  VehicleState extractInitialState(carma_planning_msgs::srv::PlanManeuvers::Request::SharedPtr req) const;
 
   /**
    * \brief Helper method which calls carma_wm::WorldModel::getLaneletsBetween(start_downtrack, end_downtrack, shortest_path_only,
@@ -524,8 +586,8 @@ private:
    *         is_entry_time_within_green_or_tbd: true if ET is in green or TBD (related to UC3, always set to true in UC2),
    *         in_tbd: true if ET is in TBD (false if in UC2)>
   */
-  std::tuple<ros::Time, bool, bool> get_final_entry_time_and_conditions(const VehicleState& current_state, 
-                                                const ros::Time& earliest_entry_time, 
+  std::tuple<rclcpp::Time, bool, bool> get_final_entry_time_and_conditions(const VehicleState& current_state, 
+                                                const rclcpp::Time& earliest_entry_time, 
                                                 lanelet::CarmaTrafficSignalPtr traffic_light);
 
   /**
@@ -541,7 +603,7 @@ private:
    * NOTE: TSMO UC2: Algorithm 2. Entering time estimation algorithm for EVs in cooperation Class A when the SPaT plan is fixed-time (defined for C-ADS-equipped vehicles)
    */
 
-  ros::Time get_nearest_green_entry_time(const ros::Time& current_time, const ros::Time& earliest_entry_time, lanelet::CarmaTrafficSignalPtr signal, double minimum_required_green_time = 0.0) const;
+  rclcpp::Time get_nearest_green_entry_time(const rclcpp::Time& current_time, const rclcpp::Time& earliest_entry_time, lanelet::CarmaTrafficSignalPtr signal, double minimum_required_green_time = 0.0) const;
 
   /**
    * \brief Gets the earliest entry time into the intersection that is kinematically possible for the vehicle.
@@ -558,7 +620,7 @@ private:
    * NOTE: TSMO UC2: Algorithm 1. Earliest entering time estimation algorithm for EVs in all cooperation classes (defined for C-ADS-equipped vehicles)
    */
 
-  ros::Duration get_earliest_entry_time(double remaining_distance, double free_flow_speed, double current_speed, double departure_speed, double max_accel, double max_decel) const;
+  rclcpp::Duration get_earliest_entry_time(double remaining_distance, double free_flow_speed, double current_speed, double departure_speed, double max_accel, double max_decel) const;
 
   /**
    * \brief Gets maximum distance (nearest downtrack) the trajectory smoothing algorithm makes difference than simple lane following
@@ -732,71 +794,37 @@ private:
   
   TrajectoryParams get_ts_case(double t, double et, double v0, double v1, double v_max, double v_min, double a_max, double a_min, double x0, double x_end, double dx, BoundaryDistances boundary_distances, std::vector<TrajectoryParams> params);
   
-  ////////// VARIABLES ///////////
-  
-  std::string previous_strategy_params_ = "";  
-  std::string upcoming_id_ = "";
-
-  double max_comfort_accel_ = 2.0;  // acceleration rates after applying miltiplier
-  double max_comfort_decel_ = -2.0; 
-  double max_comfort_decel_norm_ = -1 * max_comfort_decel_;
-  double emergency_decel_norm_ = -2 * max_comfort_decel_;
-
-  boost::optional<ros::Time> nearest_green_entry_time_cached_;
-
-  //! World Model pointer
-  carma_wm::WorldModelConstPtr wm_;
-
-  //! Config containing configurable algorithm parameters
-  LCIStrategicPluginConfig config_;
-
-  //! State Machine Transition table
-  LCIStrategicStateTransitionTable transition_table_;
-
-  //! Plugin discovery message
-  cav_msgs::Plugin plugin_discovery_msg_;
-
-  //! Cache variables for storing the current intersection state between state machine transitions
-  boost::optional<double> intersection_speed_;
-  boost::optional<double> intersection_end_downtrack_;
-  std::string light_controlled_intersection_strategy_ = "Carma/signalized_intersection"; // Strategy carma-streets is sending. Could be more verbose but needs to be changed on both ends
-  
-  // TF listenser
-  tf2_ros::Buffer tf2_buffer_;
-  std::unique_ptr<tf2_ros::TransformListener> tf2_listener_;
-  tf2::Stamped<tf2::Transform> frontbumper_transform_;
-  double length_to_front_bumper_ = 3.0;
-
-  double epsilon_ = 0.001; //Small constant to compare (double) 0.0 with
-  double accel_epsilon_ = 0.0001; //Small constant to compare (double) 0.0 with
-
   //Unit Tests
   FRIEND_TEST(LCIStrategicTestFixture, getDiscoveryMsg);
   FRIEND_TEST(LCIStrategicTestFixture, supportedLightState);
   FRIEND_TEST(LCIStrategicTestFixture, estimate_distance_to_stop);
   FRIEND_TEST(LCIStrategicTestFixture, estimate_time_to_stop);
   FRIEND_TEST(LCIStrategicTestFixture, extractInitialState);
+  FRIEND_TEST(LCIStrategicTestFixture, DISABLED_extractInitialState);
+
   FRIEND_TEST(LCIStrategicTestFixture, validLightState);
   FRIEND_TEST(LCIStrategicTestFixture, getLaneletsBetweenWithException);
   FRIEND_TEST(LCIStrategicTestFixture, composeStopAndWaitManeuverMessage);
   FRIEND_TEST(LCIStrategicTestFixture, composeIntersectionTransitMessage);
   FRIEND_TEST(LCIStrategicTestFixture, composeTrajectorySmoothingManeuverMessage);
-  FRIEND_TEST(LCIStrategicTestFixture, findSpeedLimit);
   FRIEND_TEST(LCIStrategicTestFixture, handleFailureCaseHelper);
   FRIEND_TEST(LCIStrategicTestFixture, planWhenETInTBD);
   
   // Algo Unit Tests
   FRIEND_TEST(LCIStrategicTestFixture, calc_estimated_entry_time_left);
-  FRIEND_TEST(LCIStrategicTestFixture, estimate_distance_to_stop);
-  FRIEND_TEST(LCIStrategicTestFixture, estimate_time_to_stop);
   FRIEND_TEST(LCIStrategicTestFixture, get_distance_to_accel_or_decel_twice);
   FRIEND_TEST(LCIStrategicTestFixture, get_distance_to_accel_or_decel_once);
   FRIEND_TEST(LCIStrategicTestFixture, get_nearest_green_entry_time);
   FRIEND_TEST(LCIStrategicTestFixture, get_earliest_entry_time);
-  FRIEND_TEST(LCIStrategicTestFixture, calc_estimated_entry_time_left);
   FRIEND_TEST(LCIStrategicTestFixture, handleFailureCase);
   FRIEND_TEST(LCIStrategicTestFixture, handleStopping);
+  FRIEND_TEST(LCIStrategicTestFixture, planManeuverCb);
+  FRIEND_TEST(LCIStrategicTestFixture, DISABLED_planManeuverCb);
 
+  FRIEND_TEST(LCIStrategicPluginTest, parseStrategyParamstest);
+  FRIEND_TEST(LCIStrategicPluginTest, moboperationcbtest);
+  FRIEND_TEST(LCIStrategicTestFixture, findSpeedLimit);
+  FRIEND_TEST(LCIStrategicTestFixture, DISABLED_planWhenETInTBD);
 
 
 

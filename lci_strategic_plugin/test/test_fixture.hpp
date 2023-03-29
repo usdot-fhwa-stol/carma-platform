@@ -1,6 +1,6 @@
 #pragma once
 /*
- * Copyright (C) 2022 LEIDOS.
+ * Copyright (C) 2023 LEIDOS.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -16,9 +16,15 @@
  */
 
 #include <gmock/gmock.h>
-#include <ros/console.h>
-#include <carma_wm/CARMAWorldModel.h>
-#include <carma_wm/WMTestLibForGuidance.h>
+#include <carma_wm_ros2/CARMAWorldModel.hpp>
+#include <carma_wm_ros2/WMTestLibForGuidance.hpp>
+
+using ::testing::A;
+using ::testing::_;
+using ::testing::DoAll;
+using ::testing::Return;
+using ::testing::ReturnArg;
+using ::testing::InSequence;
 
 // Unit tests for transition table
 namespace lci_strategic_plugin
