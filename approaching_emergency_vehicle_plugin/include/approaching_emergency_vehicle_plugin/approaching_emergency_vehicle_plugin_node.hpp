@@ -121,7 +121,7 @@ namespace approaching_emergency_vehicle_plugin
     carma_ros2_utils::SubPtr<carma_planning_msgs::msg::GuidanceState> guidance_state_sub_;
 
     // Publishers
-    carma_ros2_utils::PubPtr<carma_planning_msgs::msg::Plugin> plugin_discovery_pub_;
+    // carma_ros2_utils::PubPtr<carma_planning_msgs::msg::Plugin> plugin_discovery_pub_;
 
     carma_ros2_utils::PubPtr<carma_v2x_msgs::msg::EmergencyVehicleResponse> outgoing_emergency_vehicle_response_pub_;
 

@@ -44,17 +44,17 @@ reduced_speed_buffer : 1.1176 # NOTE: 1.1176 m/s to 2.5 mph
 
 # Double: The frequency at which this plugin will check whether a timeout has occurred for the currently-tracked ERV.
 # Units: Hz
-timeout_check_frequency : 2.0
+timeout_check_frequency : 5.0
 
 # Double: If no BSM has been received from the currently-tracked ERV, than the ERV will no longer be tracked by
 #         this plugin. 
 # Units: Seconds
-timeout_duration : 5.0
+timeout_duration : 1.0
 
 # Double: The frequency at which this plugin will publish status updates to the Web UI that describe the estimated time until an approaching ERV
 #         passes the ego vehicle, and a description of the ego vehicle's path plan in response to the approaching ERV. 
 # Units: Hz
-approaching_erv_status_publication_frequency : 1.0
+approaching_erv_status_publication_frequency : 3.0
 
 # Double: The frequency at which this plugin will broadcast EmergencyVehicleResponse warning messages to the currently-tracked ERV
 #         when the ego vehicle is in the approaching ERV's path but is unable to change lanes.

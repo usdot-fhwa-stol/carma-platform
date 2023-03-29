@@ -32,7 +32,7 @@ plugin_priorities: '
   {
  	  "plugin_priorities": 
       {
-        "approaching_emergency_vehicle_plugin": 6.0,
+        "/guidance/plugins/approaching_emergency_vehicle_plugin": 6.0,
  			  "platoon_strategic_ihp": 4.0,
         "lci_strategic_plugin": 3.0,
         "sci_strategic_plugin": 2.0,
