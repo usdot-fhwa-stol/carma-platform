@@ -377,7 +377,7 @@ namespace approaching_emergency_vehicle_plugin
     RCLCPP_ERROR_STREAM(rclcpp::get_logger(logger_name), "BSM is from " << erv_information.vehicle_id);
 
     // Get timestamp from BSM
-    erv_information.latest_bsm_timestamp = msg->header.stamp; //rclcpp::Time(msg->header.stamp, this->get_clock()->get_clock_type());
+    erv_information.latest_bsm_timestamp = this->now(); //msg->header.stamp; //rclcpp::Time(msg->header.stamp, this->get_clock()->get_clock_type());
 
     // Check whether vehicle's lights and sirens are active
     bool has_active_lights_and_sirens = false;
@@ -672,7 +672,7 @@ namespace approaching_emergency_vehicle_plugin
       RCLCPP_ERROR_STREAM(rclcpp::get_logger(logger_name), "Received BSM from " << erv_vehicle_id << " and we are tracking " << tracked_erv_.vehicle_id);
       if(erv_vehicle_id == tracked_erv_.vehicle_id){
         RCLCPP_ERROR_STREAM(rclcpp::get_logger(logger_name), "Received BSM is from the currently-tracked ERV!");
-        rclcpp::Time current_bsm_timestamp = msg->header.stamp; //rclcpp::Time(msg->header.stamp, this->get_clock()->get_clock_type());
+        rclcpp::Time current_bsm_timestamp = this->now(); //msg->header.stamp; //rclcpp::Time(msg->header.stamp, this->get_clock()->get_clock_type());
         double seconds_since_prev_bsm = (current_bsm_timestamp - tracked_erv_.latest_bsm_timestamp).seconds();
 
         if(seconds_since_prev_bsm < (1.0 / config_.bsm_processing_frequency)){
@@ -1006,10 +1006,12 @@ namespace approaching_emergency_vehicle_plugin
 
     // Reduce target_speed if an ERV is actively passing the ego vehicle
     if(is_slowing_down_for_erv){
-      double reduced_speed_limit = std::max((target_speed - config_.speed_limit_reduction_during_passing), config_.minimum_reduced_speed_limit);
+      double reduced_speed_limit = std::max((getLaneletSpeedLimit(current_lanelet) - config_.speed_limit_reduction_during_passing), config_.minimum_reduced_speed_limit);
+      RCLCPP_ERROR_STREAM(rclcpp::get_logger(logger_name), "Reduced speed limit is " << reduced_speed_limit);
 
       // If the vehicle's current speed is below the reduced speed limit, set target_speed to maintain the current speed
       target_speed = std::min(speed_progress, reduced_speed_limit);
+      RCLCPP_ERROR_STREAM(rclcpp::get_logger(logger_name), "Final target speed for reduced speed behavior is " << target_speed);
     }
 
     double maneuver_plan_ending_downtrack = downtrack_progress + config_.minimal_plan_duration * target_speed;
@@ -1116,16 +1118,19 @@ namespace approaching_emergency_vehicle_plugin
         }
         else{
           // Plan lane change maneuver if current downtrack progress is between the starting and ending downtracks of the planned upcoming lane change, otherwise plan lane follow maneuver
-          if((upcoming_lc_params_.start_dist < downtrack_progress) && (downtrack_progress < upcoming_lc_params_.end_dist)){
+          if(((upcoming_lc_params_.start_dist - epsilon_) <= downtrack_progress) && (downtrack_progress < (upcoming_lc_params_.end_dist - epsilon_))){
+
+            RCLCPP_ERROR_STREAM(rclcpp::get_logger(logger_name), "downtrack_progress " << downtrack_progress << " is >= " << (upcoming_lc_params_.start_dist-epsilon_) << " and <" << (upcoming_lc_params_.end_dist-epsilon_));
             resp->new_plan.maneuvers.push_back(composeLaneChangeManeuverMessage(upcoming_lc_params_.start_dist, upcoming_lc_params_.end_dist,  
                                       upcoming_lc_params_.start_speed, upcoming_lc_params_.end_speed, upcoming_lc_params_.starting_lanelet.id(), upcoming_lc_params_.ending_lanelet.id(), time_progress));
             
             current_lanelet = upcoming_lc_params_.ending_lanelet;
           }
           else{
+            RCLCPP_ERROR_STREAM(rclcpp::get_logger(logger_name), "downtrack_progress " << downtrack_progress << " is not >= " << (upcoming_lc_params_.start_dist-epsilon_) << " and <" << (upcoming_lc_params_.end_dist-epsilon_));
             resp->new_plan.maneuvers.push_back(composeLaneFollowingManeuverMessage(downtrack_progress, current_lanelet_ending_downtrack,  
                                       speed_progress, target_speed, current_lanelet.id(), time_progress));
-          }          
+          }   
         
           // Get the next lanelet in the current lane if it exists
           if(!wm_->getMapRoutingGraph()->following(current_lanelet, false).empty())

@@ -48,7 +48,7 @@ namespace arbitrator
         for (auto it = plan.maneuvers.begin(); it != plan.maneuvers.end(); it++)
         {
             std::string planning_plugin = GET_MANEUVER_PROPERTY(*it, parameters).planning_strategic_plugin;
-            RCLCPP_ERROR_STREAM("Generating cost for maneuver from planning_strategic_plugin " << planning_plugin);
+            RCLCPP_ERROR_STREAM(rclcpp::get_logger("arbitrator"), "Generating cost for maneuver from planning_strategic_plugin " << planning_plugin);
             total_cost += (arbitrator_utils::get_maneuver_end_distance(*it) - arbitrator_utils::get_maneuver_start_distance(*it)) *
                 plugin_costs_.at(planning_plugin);
         }
