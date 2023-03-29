@@ -21,9 +21,9 @@
 #include <future>
 #include <ament_index_cpp/get_package_share_directory.hpp>
 
-#include <carma_wm_ros2/CARMAWorldModel.hpp>
-#include <carma_wm_ros2/WMTestLibForGuidance.hpp>
-#include <carma_wm_ros2/TrafficControl.hpp>
+#include <carma_wm/CARMAWorldModel.hpp>
+#include <carma_wm/WMTestLibForGuidance.hpp>
+#include <carma_wm/TrafficControl.hpp>
 
 #include <lanelet2_io/Io.h>
 #include <lanelet2_io/io_handlers/Factory.h>

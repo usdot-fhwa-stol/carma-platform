@@ -33,7 +33,7 @@
   <depend>carma_debug_ros2_msgs</depend>
   <depend>lanelet2_core</depend>
   <depend>trajectory_utils_ros2</depend>
-  <depend>carma_wm_ros2</depend>
+  <depend>carma_wm</depend>
   <depend>autoware_msgs</depend>
   <depend>tf2</depend>
   <depend>autoware_auto_msgs</depend>

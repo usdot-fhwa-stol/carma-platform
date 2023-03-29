@@ -36,7 +36,7 @@
   <depend>carma_planning_msgs</depend>
   <depend>rclcpp</depend>
   <depend>lanelet2_core</depend>
-  <depend>carma_wm_ros2</depend>
+  <depend>carma_wm</depend>
   <depend>tf</depend>
   <depend>tf2</depend>
   <depend>tf2_geometry_msgs</depend> 

@@ -32,27 +32,27 @@
 #include <carma_wm_ctrl/GeofenceScheduler.hpp>
 #include <lanelet2_core/geometry/BoundingBox.h>
 #include <lanelet2_core/primitives/BoundingBox.h>
-#include <carma_wm_ros2/WMListener.hpp>
+#include <carma_wm/WMListener.hpp>
 #include <carma_planning_msgs/msg/route.hpp>
 #include <carma_v2x_msgs/msg/traffic_control_request.hpp>
 #include <carma_v2x_msgs/msg/traffic_control_bounds.hpp>
 #include <lanelet2_routing/RoutingGraph.h>
 #include <geometry_msgs/msg/pose_stamped.h>
 
-#include <carma_wm_ros2/MapConformer.hpp>
+#include <carma_wm/MapConformer.hpp>
 
 #include <lanelet2_extension/traffic_rules/CarmaUSTrafficRules.h>
 #include <lanelet2_core/utility/Units.h>
 #include <carma_perception_msgs/msg/check_active_geofence.hpp>
-#include <carma_wm_ros2/TrafficControl.hpp>
+#include <carma_wm/TrafficControl.hpp>
 #include <std_msgs/msg/string.hpp>
 #include <unordered_set>
 #include <visualization_msgs/msg/marker_array.hpp>
 #include <carma_v2x_msgs/msg/traffic_control_request_polygon.hpp>
-#include <carma_wm_ros2/WorldModelUtils.hpp>
+#include <carma_wm/WorldModelUtils.hpp>
 #include <std_msgs/msg/int32_multi_array.hpp>
 #include <carma_v2x_msgs/msg/map_data.hpp>
-#include <carma_wm_ros2/SignalizedIntersectionManager.hpp>
+#include <carma_wm/SignalizedIntersectionManager.hpp>
 #include <carma_v2x_msgs/msg/mobility_operation.hpp>
 
 

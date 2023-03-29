@@ -16,9 +16,9 @@
 
 #include "traffic_incident_parser/traffic_incident_parser_worker.hpp"
 #include <gtest/gtest.h>
-#include <carma_wm_ros2/CARMAWorldModel.hpp>
-#include <carma_wm_ros2/WMTestLibForGuidance.hpp>
-#include <carma_wm_ros2/TrafficControl.hpp>
+#include <carma_wm/CARMAWorldModel.hpp>
+#include <carma_wm/WMTestLibForGuidance.hpp>
+#include <carma_wm/TrafficControl.hpp>
 #include <lanelet2_io/Io.h>
 #include <lanelet2_io/io_handlers/Factory.h>
 #include <lanelet2_io/io_handlers/Writer.h>

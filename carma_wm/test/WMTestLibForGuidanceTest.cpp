@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2021 LEIDOS.
+ * Copyright (C) 2022 LEIDOS.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -14,24 +14,17 @@
  * the License.
  */
 
-#include <gmock/gmock.h>
+#include <gtest/gtest.h>
 #include <iostream>
-#include <carma_wm/CARMAWorldModel.h>
+#include <carma_wm/CARMAWorldModel.hpp>
 #include <lanelet2_core/geometry/LineString.h>
 #include <lanelet2_traffic_rules/TrafficRulesFactory.h>
 #include <lanelet2_core/Attribute.h>
 #include <tf2/LinearMath/Quaternion.h>
-#include "TestHelpers.h"
+#include "TestHelpers.hpp"
 #include <lanelet2_extension/regulatory_elements/PassingControlLine.h>
-#include <carma_wm/WMTestLibForGuidance.h>
-#include <ros/ros.h>
-
-using ::testing::_;
-using ::testing::A;
-using ::testing::DoAll;
-using ::testing::InSequence;
-using ::testing::Return;
-using ::testing::ReturnArg;
+#include <carma_wm/WMTestLibForGuidance.hpp>
+#include <rclcpp/rclcpp.hpp>
 
 namespace carma_wm
 {
@@ -103,10 +96,10 @@ TEST(WMTestLibForGuidanceTest, addObstacle)
 
     // predicted raw values
     ASSERT_EQ(cmw->getRoadwayObjects()[1].object.predictions.size(), 2);
-    ASSERT_EQ(cmw->getRoadwayObjects()[1].object.predictions[0].header.stamp.nsec, 1e8);
-    ASSERT_EQ(cmw->getRoadwayObjects()[1].object.predictions[1].header.stamp.nsec, 2e8);
+    ASSERT_EQ(cmw->getRoadwayObjects()[1].object.predictions[0].header.stamp.nanosec, 1e8);
+    ASSERT_EQ(cmw->getRoadwayObjects()[1].object.predictions[1].header.stamp.nanosec, 2e8);
     ASSERT_EQ(cmw->getRoadwayObjects()[1].object.predictions[0].predicted_position.position.y, 1.5);
-    ASSERT_EQ(cmw->getRoadwayObjects()[1].object.predictions[0].header.stamp.nsec, 1e8);
+    ASSERT_EQ(cmw->getRoadwayObjects()[1].object.predictions[0].header.stamp.nanosec, 1e8);
 
     // check calculated values
     ASSERT_EQ(cmw->getRoadwayObjects()[1].lanelet_id, 1200);

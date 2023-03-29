@@ -21,8 +21,8 @@
 #include <carma_ros2_utils/carma_lifecycle_node.hpp>
 #include <geometry_msgs/msg/pose_stamped.hpp>
 #include <geometry_msgs/msg/twist_stamped.hpp>
-#include <carma_wm_ros2/WMListener.hpp>
-#include <carma_wm_ros2/WorldModel.hpp>
+#include <carma_wm/WMListener.hpp>
+#include <carma_wm/WorldModel.hpp>
 #include <carma_planning_msgs/srv/plan_maneuvers.hpp>
 #include <carma_planning_msgs/msg/trajectory_plan.hpp>
 #include <gtest/gtest_prod.h>

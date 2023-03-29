@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2019-2021 LEIDOS.
+ * Copyright (C) 2022 LEIDOS.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -14,18 +14,12 @@
  * the License.
  */
 
-#include <gmock/gmock.h>
+#include <gtest/gtest.h>
 #include <iostream>
-#include <carma_wm/CARMAWorldModel.h>
+#include <carma_wm/CARMAWorldModel.hpp>
 #include <lanelet2_core/geometry/LineString.h>
-#include "TestHelpers.h"
+#include "TestHelpers.hpp"
 
-using ::testing::_;
-using ::testing::A;
-using ::testing::DoAll;
-using ::testing::InSequence;
-using ::testing::Return;
-using ::testing::ReturnArg;
 
 namespace carma_wm
 {

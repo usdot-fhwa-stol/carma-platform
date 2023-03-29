@@ -29,12 +29,12 @@
 #include <carma_v2x_msgs/msg/emergency_vehicle_ack.hpp>
 #include <carma_msgs/msg/ui_instructions.hpp>
 #include <geometry_msgs/msg/twist_stamped.hpp>
-#include <carma_wm_ros2/WMListener.hpp>
-#include <carma_wm_ros2/WorldModel.hpp>
+#include <carma_wm/WMListener.hpp>
+#include <carma_wm/WorldModel.hpp>
 #include <lanelet2_core/geometry/Lanelet.h>
 #include <lanelet2_extension/projection/local_frame_projector.h>
 #include <lanelet2_extension/io/autoware_osm_parser.h>
-#include <carma_wm_ros2/CARMAWorldModel.hpp>
+#include <carma_wm/CARMAWorldModel.hpp>
 #include <boost/format.hpp>
 
 #include <carma_guidance_plugins/strategic_plugin.hpp>

@@ -17,10 +17,10 @@
 #include <basic_autonomy/basic_autonomy.hpp>
 #include <basic_autonomy/helper_functions.hpp>
 #include <gtest/gtest.h>
-#include <carma_wm_ros2/CARMAWorldModel.hpp>
+#include <carma_wm/CARMAWorldModel.hpp>
 #include <math.h>
 #include <tf2/LinearMath/Transform.h>
-#include <carma_wm_ros2/WMTestLibForGuidance.hpp>
+#include <carma_wm/WMTestLibForGuidance.hpp>
 #include <lanelet2_routing/RoutingGraph.h>
 #include <lanelet2_io/Io.h>
 #include <lanelet2_io/io_handlers/Factory.h>

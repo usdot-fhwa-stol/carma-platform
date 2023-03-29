@@ -20,9 +20,9 @@
 #include "platoon_strategic_ihp/platoon_strategic_ihp.h"
 #include "platoon_strategic_ihp/platoon_config_ihp.h"
 #include <gtest/gtest.h>
-#include <carma_wm_ros2/WMListener.hpp>
-#include <carma_wm_ros2/WorldModel.hpp>
-#include <carma_wm_ros2/CARMAWorldModel.hpp>
+#include <carma_wm/WMListener.hpp>
+#include <carma_wm/WorldModel.hpp>
+#include <carma_wm/CARMAWorldModel.hpp>
 #include <carma_ros2_utils/timers/testing/TestTimerFactory.hpp>
 
 using namespace platoon_strategic_ihp;

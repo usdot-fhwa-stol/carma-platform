@@ -19,7 +19,7 @@
 #include <rclcpp/rclcpp.hpp>
 #include <thread>
 #include <chrono>
-#include <carma_wm_ros2/WMTestLibForGuidance.hpp>
+#include <carma_wm/WMTestLibForGuidance.hpp>
 #include <lanelet2_traffic_rules/TrafficRulesFactory.h>
 #include <lanelet2_extension/traffic_rules/CarmaUSTrafficRules.h>
 #include <lanelet2_core/primitives/Lanelet.h>

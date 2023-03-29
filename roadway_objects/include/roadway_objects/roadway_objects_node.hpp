@@ -18,8 +18,8 @@
 
 #include <rclcpp/rclcpp.hpp>
 #include <functional>
-#include <carma_wm_ros2/WMListener.hpp>
-#include <carma_wm_ros2/WorldModel.hpp>
+#include <carma_wm/WMListener.hpp>
+#include <carma_wm/WorldModel.hpp>
 #include <carma_perception_msgs/msg/roadway_obstacle_list.hpp>
 #include <functional>
 

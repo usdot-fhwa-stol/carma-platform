@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2019-2021 LEIDOS.
+ * Copyright (C) 2022 LEIDOS.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -14,11 +14,11 @@
  * the License.
  */
 
-#include <carma_wm/Geometry.h>
+#include <carma_wm/Geometry.hpp>
 #include <lanelet2_core/geometry/Point.h>
 #include <tf2/LinearMath/Transform.h>
 #include <tf2_geometry_msgs/tf2_geometry_msgs.h>
-#include <tf/transform_datatypes.h>
+#include <tf2/transform_datatypes.h>
 
 namespace carma_wm
 {
@@ -55,7 +55,7 @@ void rpyFromQuaternion(const tf2::Quaternion& q, double& roll, double& pitch, do
   mat.getRPY(roll, pitch, yaw);
 }
 
-void rpyFromQuaternion(const geometry_msgs::Quaternion& q_msg, double& roll, double& pitch, double& yaw)
+void rpyFromQuaternion(const geometry_msgs::msg::Quaternion& q_msg, double& roll, double& pitch, double& yaw)
 {
   tf2::Quaternion quat;
   tf2::convert(q_msg, quat);
@@ -286,7 +286,7 @@ double computeCurvature(const lanelet::BasicPoint2d& p1, const lanelet::BasicPoi
   return static_cast<double>((ddp.y() * dp.x() - dp.y() * ddp.x()) / denom);
 }
 
-lanelet::BasicPolygon2d objectToMapPolygon(const geometry_msgs::Pose& pose, const geometry_msgs::Vector3& size)
+lanelet::BasicPolygon2d objectToMapPolygon(const geometry_msgs::msg::Pose& pose, const geometry_msgs::msg::Vector3& size)
 {
   tf2::Transform object_tf;
   tf2::fromMsg(pose, object_tf);
@@ -539,7 +539,7 @@ compute_templated_tangent_orientations(const std::vector<P,A>& centerline)
 
   for (auto tangent : tangents)
   {
-    geometry_msgs::Quaternion q;
+    geometry_msgs::msg::Quaternion q;
 
     // Derive angle by cos theta = (u . v)/(||u| * ||v||)
     double yaw = 0;

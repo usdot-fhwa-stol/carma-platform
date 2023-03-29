@@ -30,9 +30,9 @@
 #include <tf2_ros/transform_listener.h>
 #include <tf2/LinearMath/Transform.h>
 #include <tf2_geometry_msgs/tf2_geometry_msgs.h>
-#include <carma_wm_ros2/WMListener.hpp>
-#include <carma_wm_ros2/WorldModel.hpp>
-#include <carma_wm_ros2/Geometry.hpp>
+#include <carma_wm/WMListener.hpp>
+#include <carma_wm/WorldModel.hpp>
+#include <carma_wm/Geometry.hpp>
 #include <string>
 
 // TODO Replace this Macro if possible

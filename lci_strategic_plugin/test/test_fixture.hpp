@@ -16,8 +16,8 @@
  */
 
 #include <gmock/gmock.h>
-#include <carma_wm_ros2/CARMAWorldModel.hpp>
-#include <carma_wm_ros2/WMTestLibForGuidance.hpp>
+#include <carma_wm/CARMAWorldModel.hpp>
+#include <carma_wm/WMTestLibForGuidance.hpp>
 
 using ::testing::A;
 using ::testing::_;

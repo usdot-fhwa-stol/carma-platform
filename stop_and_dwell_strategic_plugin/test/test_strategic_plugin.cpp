@@ -18,8 +18,8 @@
 #include <rclcpp/rclcpp.hpp>
 #include "stop_and_dwell_strategic_plugin.hpp"
 #include "stop_and_dwell_strategic_plugin_config.hpp"
-#include <carma_wm_ros2/CARMAWorldModel.hpp>
-#include <carma_wm_ros2/WMTestLibForGuidance.hpp>
+#include <carma_wm/CARMAWorldModel.hpp>
+#include <carma_wm/WMTestLibForGuidance.hpp>
 
 
 // Unit tests for strategic plugin helper methods

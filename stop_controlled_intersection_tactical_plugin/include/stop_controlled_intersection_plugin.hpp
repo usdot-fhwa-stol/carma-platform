@@ -24,9 +24,9 @@
 #include <boost/shared_ptr.hpp>
 #include <boost/geometry.hpp>
 #include <carma_ros2_utils/carma_lifecycle_node.hpp>
-#include <carma_wm_ros2/Geometry.hpp>
+#include <carma_wm/Geometry.hpp>
 #include <carma_planning_msgs/srv/plan_trajectory.hpp>
-#include <carma_wm_ros2/WMListener.hpp>
+#include <carma_wm/WMListener.hpp>
 #include <functional>
 #include "stop_controlled_intersection_config.hpp"
 #include <unordered_set>

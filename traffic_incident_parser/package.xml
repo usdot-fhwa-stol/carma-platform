@@ -31,7 +31,7 @@
   <depend>rclcpp_components</depend>
   <depend>carma_v2x_msgs</depend>
   <depend>j2735_v2x_msgs</depend>
-  <depend>carma_wm_ros2</depend>
+  <depend>carma_wm</depend>
   <depend>lanelet2_extension</depend>
   <depend>lanelet2_core</depend>
   <depend>lanelet2_routing</depend>
