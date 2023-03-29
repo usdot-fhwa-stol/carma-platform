@@ -33,9 +33,9 @@
 #include <autoware_msgs/msg/lane.hpp>
 #include <rclcpp/rclcpp.hpp>
 #include <carma_planning_msgs/msg/maneuver.hpp>
-#include <basic_autonomy_ros2/basic_autonomy.hpp>
-#include <basic_autonomy_ros2/helper_functions.hpp>
-#include <basic_autonomy_ros2/log/log.hpp>
+#include <basic_autonomy/basic_autonomy.hpp>
+#include <basic_autonomy/helper_functions.hpp>
+#include <basic_autonomy/log/log.hpp>
 #include <gtest/gtest_prod.h>
 
 /**

@@ -34,7 +34,7 @@
   <depend>lanelet2_core</depend>
   <depend>carma_v2x_msgs</depend>
   <depend>carma_planning_msgs</depend>
-  <depend>basic_autonomy_ros2</depend>
+  <depend>basic_autonomy</depend>
   <depend>std_msgs</depend>
   <depend>lanelet2_extension</depend>
   <depend>carma_perception_msgs</depend>

@@ -20,8 +20,8 @@
 #include <carma_planning_msgs/msg/trajectory_plan.hpp>
 #include <boost/optional.hpp>
 #include "stop_and_wait_config.hpp"
-#include "basic_autonomy_ros2/basic_autonomy.hpp"
-#include "basic_autonomy_ros2/helper_functions.hpp"
+#include "basic_autonomy/basic_autonomy.hpp"
+#include "basic_autonomy/helper_functions.hpp"
 #include <boost/shared_ptr.hpp>
 #include <carma_wm_ros2/CARMAWorldModel.hpp>
 #include <carma_wm_ros2/WMListener.hpp>

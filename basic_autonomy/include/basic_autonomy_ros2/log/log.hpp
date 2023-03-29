@@ -15,7 +15,7 @@
 ------------------------------------------------------------------------------*/
 
 #include <sstream>
-#include <basic_autonomy_ros2/basic_autonomy.hpp>
+#include <basic_autonomy/basic_autonomy.hpp>
 
 namespace basic_autonomy
 {

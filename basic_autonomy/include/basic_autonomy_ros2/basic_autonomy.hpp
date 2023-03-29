@@ -34,9 +34,9 @@
 #include <unordered_set>
 #include <autoware_msgs/msg/lane.h>
 #include <lanelet2_core/geometry/Point.h>
-#include <basic_autonomy_ros2/smoothing/SplineI.hpp>
-#include <basic_autonomy_ros2/smoothing/BSpline.hpp>
-#include <basic_autonomy_ros2/smoothing/filters.hpp>
+#include <basic_autonomy/smoothing/SplineI.hpp>
+#include <basic_autonomy/smoothing/BSpline.hpp>
+#include <basic_autonomy/smoothing/filters.hpp>
 #include <carma_debug_ros2_msgs/msg/trajectory_curvature_speeds.hpp>
 #include <autoware_auto_msgs/msg/trajectory.hpp>
 
@@ -369,4 +369,4 @@ namespace basic_autonomy
         std::vector<double> apply_response_lag(const std::vector<double>& speeds, const std::vector<double> downtracks, double response_lag);
     }
 
-} // basic_autonomy_ros2
+} // basic_autonomy

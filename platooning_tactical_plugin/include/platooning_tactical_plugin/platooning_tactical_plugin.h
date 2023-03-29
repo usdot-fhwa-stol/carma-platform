@@ -26,7 +26,7 @@
 #include <functional>
 #include <unordered_set>
 #include <carma_debug_ros2_msgs/msg/trajectory_curvature_speeds.hpp>
-#include <basic_autonomy_ros2/basic_autonomy.hpp>
+#include <basic_autonomy/basic_autonomy.hpp>
 #include <carma_ros2_utils/timers/TimerFactory.hpp>
 
 #include "platooning_tactical_plugin_config.h"

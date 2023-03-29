@@ -33,7 +33,7 @@
   <depend>carma_guidance_plugins</depend>
   <depend>carma_debug_ros2_msgs</depend>
   <depend>lanelet2_core</depend>
-  <depend>basic_autonomy_ros2</depend>
+  <depend>basic_autonomy</depend>
 
   <test_depend>ament_lint_auto</test_depend>
   <test_depend>ament_cmake_gtest</test_depend>

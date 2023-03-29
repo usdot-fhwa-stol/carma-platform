@@ -36,7 +36,7 @@ Copyright (C) 2018-2022 LEIDOS.
   <depend>tf2_geometry_msgs</depend> 
   <depend>trajectory_utils_ros2</depend>
   <depend>roslib</depend>
-  <depend>basic_autonomy_ros2</depend> 
+  <depend>basic_autonomy</depend> 
   <depend>carma_guidance_plugins</depend>
   <depend>carma_planning_msgs</depend>
   

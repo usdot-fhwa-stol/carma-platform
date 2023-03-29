@@ -298,18 +298,40 @@ namespace localization_manager
         // Publish current pose message if available
         if (current_pose_)
         {
-            auto pose_to_publish = *current_pose_;
-            if (static_cast<LocalizerMode>(config_.localization_mode) == LocalizerMode::GNSS_WITH_FIXED_OFFSET)
+            // apply offsets in the config before publishing if localization mode is in GNSS_WITH_FIXED_OFFSET by creating new variable to avoid modifying the current_pose_ variable
+            // static cast config_.localization_mode to avoid compiler warning
+            if (static_cast<int>(config_.localization_mode) == 1)
             {
-                pose_to_publish.pose.position.x += config_.x_offset;
-                pose_to_publish.pose.position.y += config_.y_offset;
-                pose_to_publish.pose.position.z += config_.z_offset;
+                geometry_msgs::msg::PoseStamped pose_msg;
+                pose_msg.header.frame_id = "map";
+                pose_msg.header.stamp = timer_factory_->now();
+                pose_msg.pose = current_pose_.get();
+
+                // apply offsets in the config before publishing
+                pose_msg.pose.position.x += config_.gnss_fixed_offset_x;
+                pose_msg.pose.position.y += config_.gnss_fixed_offset_y;
+                pose_msg.pose.position.z += config_.gnss_fixed_offset_z;
+
+                pose_pub_(pose_msg);
             }
-            pose_pub_(pose_to_publish);
-        }
+            else
+            {
+                geometry_msgs::msg::PoseStamped pose_msg;
+                pose_msg.header.frame_id = "map";
+                pose_msg.header.stamp = timer_factory_->now();
+                pose_msg.pose = current_pose_.get();
+
+                pose_pub_(pose_msg);
+            }
+
+        }        
 
         // Create and publish status report message
         carma_localization_msgs::msg::LocalizationStatusReport msg = stateToMsg(transition_table_.getState(), timer_factory_->now());
+
+        // Print all fields in the msg variable using the RCLCPP_DEBUG_STREAM logging
+        RCLCPP_DEBUG_STREAM(rclcpp::get_logger("localization_manager"), "LocalizationStatusReport: " << msg);
+
         state_pub_(msg);
     }
 
