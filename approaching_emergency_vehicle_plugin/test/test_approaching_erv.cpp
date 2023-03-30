@@ -273,6 +273,7 @@ namespace approaching_emergency_vehicle_plugin{
         std::unique_ptr<carma_v2x_msgs::msg::BSM> erv_bsm_ptr3 = std::make_unique<carma_v2x_msgs::msg::BSM>(erv_bsm);
         worker_node->incomingBsmCallback(std::move(erv_bsm_ptr3)); 
         ASSERT_TRUE(worker_node->has_tracked_erv_);
+        ASSERT_TRUE(worker_node->tracked_erv_.in_rightmost_lane);
 
         // Update timestamp of ERV BSM to a time that does not satisfy config_.bsm_processing_frequency and verify that tracked_erv_ doesn't update
         ASSERT_EQ(worker_node->tracked_erv_.latest_bsm_timestamp, rclcpp::Time(0, 0, worker_node->get_clock()->get_clock_type()));

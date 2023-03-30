@@ -453,6 +453,26 @@ namespace approaching_emergency_vehicle_plugin
       return boost::optional<ErvInformation>();
     }
 
+    // Determine whether ERV is currently in the rightmost lane
+    // Note: For 'lane index', 0 is rightmost lane, 1 is second rightmost, etc.; Only the current travel direction is considered
+    if(!erv_future_route.get().shortestPath().empty()){
+      lanelet::ConstLanelet erv_current_lanelet = erv_future_route.get().shortestPath()[0];
+      int lane_index = wm_->getMapRoutingGraph()->rights(erv_current_lanelet).size();
+      RCLCPP_DEBUG_STREAM(rclcpp::get_logger(logger_name), "ERV's lane index is " << lane_index);
+
+      if(lane_index == 0){
+        RCLCPP_DEBUG_STREAM(rclcpp::get_logger(logger_name), "ERV is in the rightmost lane");
+        erv_information.in_rightmost_lane = true;
+      }
+      else{
+        RCLCPP_DEBUG_STREAM(rclcpp::get_logger(logger_name), "ERV is NOT in the rightmost lane");
+        erv_information.in_rightmost_lane = false;
+      }
+    }
+    else{
+      RCLCPP_DEBUG_STREAM(rclcpp::get_logger(logger_name), "ERV's shortest path is empty!");
+    }
+
     // Get intersecting lanelet between ERV's future route and ego vehicle's future shortest path
     boost::optional<lanelet::ConstLanelet> intersecting_lanelet = getRouteIntersectingLanelet(erv_future_route.get());
 
@@ -484,20 +504,6 @@ namespace approaching_emergency_vehicle_plugin
 
       // ERV will not be tracked since it is not considered to be approaching the ego vehicle; return an empty object
       return boost::optional<ErvInformation>();
-    }
-
-    // Determine whether ERV is currently in the rightmost lane
-    // Note: For 'lane index', 0 is rightmost lane, 1 is second rightmost, etc.; Only the current travel direction is considered
-    if(!erv_future_route->shortestPath().empty()){
-      lanelet::ConstLanelet erv_current_lanelet = erv_future_route->shortestPath()[0];
-      int lane_index = wm_->getMapRoutingGraph()->rights(erv_current_lanelet).size();
-
-      if(lane_index == 0){
-        erv_information.in_rightmost_lane = true;
-      }
-      else{
-        erv_information.in_rightmost_lane = false;
-      }
     }
 
     return erv_information;
