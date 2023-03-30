@@ -489,8 +489,7 @@ namespace approaching_emergency_vehicle_plugin
      */ 
     carma_ros2_utils::CallbackReturn on_activate_plugin();
 
-    // wm listener pointer and pointer to the actual wm object
-    std::shared_ptr<carma_wm::WMListener> wml_;
+    // World Model pointer
     carma_wm::WorldModelConstPtr wm_;
 
   };

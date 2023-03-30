@@ -174,9 +174,6 @@ namespace approaching_emergency_vehicle_plugin
 
     approaching_erv_status_pub_ = create_publisher<carma_msgs::msg::UIInstructions>("approaching_erv_status", 10);
 
-    // set world model pointer from wm listener
-    wml_ = get_world_model_listener();
-
     wm_ = get_world_model();
 
     // Return success if everything initialized successfully
