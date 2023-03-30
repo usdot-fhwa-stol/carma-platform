@@ -738,6 +738,7 @@ namespace approaching_emergency_vehicle_plugin
       else{
         // This ERV is actively passing the ego vehicle until its distance in front of the ego vehicle is at least config_.finished_passing_threshold
         if((ego_dist_to_lanelet - erv_dist_to_lanelet) < config_.finished_passing_threshold){
+          RCLCPP_ERROR_STREAM(rclcpp::get_logger(logger_name), "ERV has passed CMV and is " << (ego_dist_to_lanelet - erv_dist_to_lanelet) << " meters ahead");
           // Return zero to indicate that the ERV is currently passing the ego vehicle
           return 0.0;
         }
@@ -1006,11 +1007,11 @@ namespace approaching_emergency_vehicle_plugin
 
     // Reduce target_speed if an ERV is actively passing the ego vehicle
     if(is_slowing_down_for_erv){
-      double reduced_speed_limit = std::max((getLaneletSpeedLimit(current_lanelet) - config_.speed_limit_reduction_during_passing), config_.minimum_reduced_speed_limit);
-      RCLCPP_ERROR_STREAM(rclcpp::get_logger(logger_name), "Reduced speed limit is " << reduced_speed_limit);
+      target_speed = std::max((getLaneletSpeedLimit(current_lanelet) - config_.speed_limit_reduction_during_passing), config_.minimum_reduced_speed_limit);
+      RCLCPP_ERROR_STREAM(rclcpp::get_logger(logger_name), "Reduced speed limit is " << target_speed);
 
       // If the vehicle's current speed is below the reduced speed limit, set target_speed to maintain the current speed
-      target_speed = std::min(speed_progress, reduced_speed_limit);
+      //target_speed = std::min(speed_progress, reduced_speed_limit);
       RCLCPP_ERROR_STREAM(rclcpp::get_logger(logger_name), "Final target speed for reduced speed behavior is " << target_speed);
     }
 
@@ -1071,10 +1072,10 @@ namespace approaching_emergency_vehicle_plugin
 
         // Reduce target_speed if an ERV is actively passing the ego vehicle
         if(is_slowing_down_for_erv){
-          double reduced_speed_limit = std::max((target_speed - config_.speed_limit_reduction_during_passing), config_.minimum_reduced_speed_limit);
+          target_speed = std::max((target_speed - config_.speed_limit_reduction_during_passing), config_.minimum_reduced_speed_limit);
 
           // If the vehicle's current speed is below the reduced speed limit, set target_speed to maintain the current speed
-          target_speed = std::min(speed_progress, reduced_speed_limit);
+          //target_speed = std::min(speed_progress, reduced_speed_limit);
         }
 
         time_progress += getManeuverDuration(resp->new_plan.maneuvers.back(), epsilon_);
