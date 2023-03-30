@@ -168,8 +168,6 @@ namespace approaching_emergency_vehicle_plugin
                                           std::bind(&ApproachingEmergencyVehiclePlugin::guidanceStateCallback, this, std_ph::_1));
 
     // Setup publishers
-    plugin_discovery_pub_ = create_publisher<carma_planning_msgs::msg::Plugin>("plugin_discovery", 10);
-
     outgoing_emergency_vehicle_response_pub_ = create_publisher<carma_v2x_msgs::msg::EmergencyVehicleResponse>("outgoing_emergency_vehicle_response", 10);
 
     approaching_erv_status_pub_ = create_publisher<carma_msgs::msg::UIInstructions>("approaching_erv_status", 10);
