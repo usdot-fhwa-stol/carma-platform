@@ -564,10 +564,31 @@ void setManeuverLaneletIds(carma_planning_msgs::msg::Maneuver& mvr, lanelet::Id 
             GET_MANEUVER_PROPERTY(current_maneuver_plan_->maneuvers[0], parameters.planning_strategic_plugin) \
             != planning_strategic_plugin_) {
             // If another plugin may have brought us off shortest path, check our current lanelet
-            auto llts = wm_->getLaneletsFromPoint(current_loc, 10);                                          
+            auto llts = wm_->getLaneletsFromPoint(current_loc, 10);     
+            RCLCPP_ERROR_STREAM(get_logger(),"Original llts.size(): " << llts.size());
+            for(const auto& id : llts){
+                RCLCPP_ERROR_STREAM(get_logger(),"llts contains lanelet " << id.id());
+            }
+
             // Remove any candidate lanelets not on the route
             llts.erase(std::remove_if(llts.begin(), llts.end(),
-                [&](auto lanelet) -> bool { return !wm_->getRoute()->contains(lanelet); }));
+                [&](auto lanelet) -> bool { 
+                    RCLCPP_ERROR_STREAM(get_logger(),"Checking lanelet " << lanelet.id());
+                    if(wm_->getRoute()->contains(lanelet)){
+                        RCLCPP_ERROR_STREAM(get_logger(), "In route!");
+                        return false;
+                    }
+                    else{
+                        RCLCPP_ERROR_STREAM(get_logger(), "NOT in route!");
+                        return true;
+                    }
+                    }),
+                    llts.end());
+
+            RCLCPP_ERROR_STREAM(get_logger(),"After removing non-route lanelets, llts.size(): " << llts.size());
+            for(const auto& id : llts){
+                RCLCPP_ERROR_STREAM(get_logger(),"llts contains lanelet " << id.id());
+            }
 
             // !!! ASSUMPTION !!!:
             // Once non-route lanelets have been removed, it is assumed that our actual current lanelet is the only one that can remain.
