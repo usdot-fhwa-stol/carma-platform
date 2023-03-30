@@ -264,8 +264,16 @@ namespace approaching_emergency_vehicle_plugin
       */
     boost::format fmter(APPROACHING_ERV_STATUS_PARAMS);
     
-    fmter %has_tracked_erv_; // Index 0 of formatted string; indicates whether the ego vehicle is tracking an approaching ERV
-    fmter %tracked_erv_.seconds_until_passing; // Index 1 of formatted string; indicates estimated time until tracked ERV passes the ego vehicle
+    // Index 0 of formatted string; indicates whether an ERV that is approaching the ego vehicle is being tracked
+    if(has_tracked_erv_ && tracked_erv_.seconds_until_passing <= config_.approaching_threshold){
+      fmter %true;
+    }
+    else{
+      fmter %false;
+    }
+
+    // Index 1 of formatted string; indicates estimated time until tracked ERV passes the ego vehicle
+    fmter %tracked_erv_.seconds_until_passing;
 
     // Add Index 2 of formatted string based on this plugin's current ApproachingEmergencyVehicleState
     switch (transition_table_.getState())
@@ -488,16 +496,8 @@ namespace approaching_emergency_vehicle_plugin
     boost::optional<double> seconds_until_passing = getSecondsUntilPassing(erv_future_route, erv_information.current_position_in_map, erv_information.current_speed, erv_information.intersecting_lanelet);
 
     if(seconds_until_passing){
-      if((0.0 <= seconds_until_passing.get()) && (seconds_until_passing.get() <= config_.approaching_threshold)){
-        RCLCPP_DEBUG_STREAM(rclcpp::get_logger(logger_name), "Detected approaching ERV; passing ego vehicle in " << seconds_until_passing.get() << " seconds");
-        erv_information.seconds_until_passing = seconds_until_passing.get();
-      }
-      else{
-        RCLCPP_DEBUG_STREAM(rclcpp::get_logger(logger_name), "Detected ERV will not pass ego vehicle for " << seconds_until_passing.get() << " seconds, and is not considered approaching");
-
-        // ERV will not be tracked since it is not considered to be approaching the ego vehicle; return an empty object
-        return boost::optional<ErvInformation>();
-      }
+      erv_information.seconds_until_passing = seconds_until_passing.get();
+      RCLCPP_ERROR_STREAM(rclcpp::get_logger(logger_name), "Detected approaching ERV that is passing ego vehicle in " << seconds_until_passing.get() << " seconds");
     }
     else{
       RCLCPP_DEBUG_STREAM(rclcpp::get_logger(logger_name), "Detected ERV is not approaching the ego vehicle");

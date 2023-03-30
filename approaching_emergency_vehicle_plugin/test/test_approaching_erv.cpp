@@ -955,12 +955,15 @@ namespace approaching_emergency_vehicle_plugin{
         worker_node->configure(); //Call configure state transition
         worker_node->activate();  //Call activate state transition to get not read for runtime
 
+        // Explicitly set the "approaching_threshold" parameter for these unit tests
+        worker_node->config_.approaching_threshold = 20.0;
+
         // Generate status message after initial node activation (no ERV is being tracked) and verify the output
         carma_msgs::msg::UIInstructions status_msg = worker_node->generateApproachingErvStatusMessage();
         ASSERT_EQ(status_msg.type, carma_msgs::msg::UIInstructions::INFO);
         ASSERT_EQ(status_msg.msg.substr(0,22), "HAS_APPROACHING_ERV:0,");
 
-        // Generate status message when an ERV is being tracked in state MOVING_OVER_FOR_APPROACHING_ERV (left lane change) and verify the output
+        // Generate status message when an approaching ERV is being tracked in state MOVING_OVER_FOR_APPROACHING_ERV (left lane change) and verify the output
         worker_node->has_tracked_erv_ = true;
         worker_node->tracked_erv_.seconds_until_passing = 11.56342;
         worker_node->transition_table_.event(ApproachingEmergencyVehicleEvent::APPROACHING_ERV_IN_PATH);
@@ -971,7 +974,15 @@ namespace approaching_emergency_vehicle_plugin{
         ASSERT_EQ(status_msg.type, carma_msgs::msg::UIInstructions::INFO);
         ASSERT_EQ(status_msg.msg, "HAS_APPROACHING_ERV:1,TIME_UNTIL_PASSING:11.6,EGO_VEHICLE_ACTION:Changing lanes to the left.");
 
-        // Generate status message when an ERV is being tracked in state MOVING_OVER_FOR_APPROACHING_ERV (right lane change) and verify the output
+        // Generate status message when an ERV is being tracked with "time_until_passing" greater than config_.approaching_threshold
+        worker_node->tracked_erv_.seconds_until_passing = 25.0;
+
+        status_msg = worker_node->generateApproachingErvStatusMessage();
+        ASSERT_EQ(status_msg.type, carma_msgs::msg::UIInstructions::INFO);
+        ASSERT_EQ(status_msg.msg.substr(0,22), "HAS_APPROACHING_ERV:0,");
+
+        // Generate status message when an approaching ERV is being tracked in state MOVING_OVER_FOR_APPROACHING_ERV (right lane change) and verify the output
+        worker_node->tracked_erv_.seconds_until_passing = 11.56342;
         worker_node->has_planned_upcoming_lc_ = true;
         worker_node->upcoming_lc_params_.is_right_lane_change = true;
 
@@ -979,7 +990,7 @@ namespace approaching_emergency_vehicle_plugin{
         ASSERT_EQ(status_msg.type, carma_msgs::msg::UIInstructions::INFO);
         ASSERT_EQ(status_msg.msg, "HAS_APPROACHING_ERV:1,TIME_UNTIL_PASSING:11.6,EGO_VEHICLE_ACTION:Changing lanes to the right.");
 
-        // Generate status message when an ERV is being tracked in state WAITING_FOR_APPROACHING_ERV and verify the output
+        // Generate status message when an approaching ERV is being tracked in state WAITING_FOR_APPROACHING_ERV and verify the output
         worker_node->has_tracked_erv_ = true;
         worker_node->tracked_erv_.seconds_until_passing = 11.563429203;
         worker_node->transition_table_.event(ApproachingEmergencyVehicleEvent::ERV_ABOUT_TO_PASS_IN_PATH);
@@ -988,7 +999,7 @@ namespace approaching_emergency_vehicle_plugin{
         ASSERT_EQ(status_msg.type, carma_msgs::msg::UIInstructions::INFO);
         ASSERT_EQ(status_msg.msg, "HAS_APPROACHING_ERV:1,TIME_UNTIL_PASSING:11.6,EGO_VEHICLE_ACTION:Remaining in the current lane at the speed limit.");
 
-        // Generate status message when an ERV is being tracked in state SLOWING_DOWN_FOR_ERV with ego vehicle travelling significantly above the target reduced speed, and verify the output
+        // Generate status message when an approaching ERV is being tracked in state SLOWING_DOWN_FOR_ERV with ego vehicle travelling significantly above the target reduced speed, and verify the output
         worker_node->transition_table_.event(ApproachingEmergencyVehicleEvent::ERV_PASSING_IN_PATH);
         worker_node->tracked_erv_.seconds_until_passing = 1.578;
 
@@ -1005,14 +1016,14 @@ namespace approaching_emergency_vehicle_plugin{
         ASSERT_EQ(status_msg.type, carma_msgs::msg::UIInstructions::INFO);
         ASSERT_EQ(status_msg.msg, "HAS_APPROACHING_ERV:1,TIME_UNTIL_PASSING:1.6,EGO_VEHICLE_ACTION:Remaining in the current lane and slowing down to a reduced speed of 15 mph.");
 
-        // Generate status message when an ERV is being tracked in state SLOWING_DOWN_FOR_ERV with ego vehicle travelling near the the target reduced speed, and verify the output
+        // Generate status message when an approaching ERV is being tracked in state SLOWING_DOWN_FOR_ERV with ego vehicle travelling near the the target reduced speed, and verify the output
         worker_node->current_speed_ = 6.8; // (m/s), within threshold (config_.reduced_speed_buffer) of first maneuver's target speed (end_speed)
 
         status_msg = worker_node->generateApproachingErvStatusMessage();
         ASSERT_EQ(status_msg.type, carma_msgs::msg::UIInstructions::INFO);
         ASSERT_EQ(status_msg.msg, "HAS_APPROACHING_ERV:1,TIME_UNTIL_PASSING:1.6,EGO_VEHICLE_ACTION:Remaining in the current lane at a reduced speed of 15 mph.");
 
-        // Generate status message when an ERV is being tracked in state SLOWING_DOWN_FOR_ERV without a generated maneuver plan, and verify an exception is thrown
+        // Generate status message when an approaching ERV is being tracked in state SLOWING_DOWN_FOR_ERV without a generated maneuver plan, and verify an exception is thrown
         carma_planning_msgs::msg::ManeuverPlan empty_maneuver_plan;
         worker_node->latest_maneuver_plan_ = empty_maneuver_plan;
 
