@@ -85,67 +85,78 @@ void setManeuverLaneletIds(carma_planning_msgs::msg::Maneuver& mvr, lanelet::Id 
 
 }
 
-  RouteFollowingPlugin::RouteFollowingPlugin(const rclcpp::NodeOptions &options)
-      : carma_guidance_plugins::StrategicPlugin(options), tf2_buffer_(get_clock()), config_(Config())
-  {
-    // Declare parameters
-    config_.min_plan_duration_ = declare_parameter<double>("minimal_plan_duration", config_.min_plan_duration_);
-    config_.lane_change_plugin_= declare_parameter<std::string>("lane_change_plugin", config_.lane_change_plugin_);
-    config_.stop_and_wait_plugin_ = declare_parameter<std::string>("stop_and_wait_plugin", config_.stop_and_wait_plugin_);
-    config_.lanefollow_planning_tactical_plugin_ = declare_parameter<std::string>("lane_following_plugin", config_.lanefollow_planning_tactical_plugin_);
-    config_.route_end_point_buffer_ = declare_parameter<double>("guidance/route/destination_downtrack_range", config_.route_end_point_buffer_);
-    config_.accel_limit_ = declare_parameter<double>("vehicle_acceleration_limit", config_.accel_limit_);
-    config_.lateral_accel_limit_ = declare_parameter<double>("vehicle_lateral_accel_limit", config_.lateral_accel_limit_);
-    config_.stopping_accel_limit_multiplier_ = declare_parameter<double>("stopping_accel_limit_multiplier", config_.stopping_accel_limit_multiplier_);
-    config_.vehicle_id = declare_parameter<std::string>("vehicle_id", config_.vehicle_id);
-    config_.min_maneuver_length_ = declare_parameter<double>("min_maneuver_length", config_.min_maneuver_length_);
-  }
 
-  carma_ros2_utils::CallbackReturn RouteFollowingPlugin::on_configure_plugin()
-  {
-    config_ = Config();
+    RouteFollowingPlugin::RouteFollowingPlugin(const rclcpp::NodeOptions &options)
+        : carma_guidance_plugins::StrategicPlugin(options), tf2_buffer_(get_clock()), config_(Config())
+    {
+        // Declare parameters
+        config_.min_plan_duration_ = declare_parameter<double>("minimal_plan_duration", config_.min_plan_duration_);
+        config_.lane_change_plugin_= declare_parameter<std::string>("lane_change_plugin", config_.lane_change_plugin_);
+        config_.stop_and_wait_plugin_ = declare_parameter<std::string>("stop_and_wait_plugin", config_.stop_and_wait_plugin_);
+        config_.lanefollow_planning_tactical_plugin_ = declare_parameter<std::string>("lane_following_plugin", config_.lanefollow_planning_tactical_plugin_);
+        config_.route_end_point_buffer_ = declare_parameter<double>("guidance/route/destination_downtrack_range", config_.route_end_point_buffer_);
+        config_.accel_limit_ = declare_parameter<double>("vehicle_acceleration_limit", config_.accel_limit_);
+        config_.lateral_accel_limit_ = declare_parameter<double>("vehicle_lateral_accel_limit", config_.lateral_accel_limit_);
+        config_.stopping_accel_limit_multiplier_ = declare_parameter<double>("stopping_accel_limit_multiplier", config_.stopping_accel_limit_multiplier_);
+        config_.vehicle_id = declare_parameter<std::string>("vehicle_id", config_.vehicle_id);
+        config_.min_maneuver_length_ = declare_parameter<double>("min_maneuver_length", config_.min_maneuver_length_);
+    }
 
-    get_parameter<double>("minimal_plan_duration", config_.min_plan_duration_);
-    get_parameter<std::string>("lane_change_plugin", config_.lane_change_plugin_);
-    get_parameter<std::string>("stop_and_wait_plugin", config_.stop_and_wait_plugin_);
-    get_parameter<std::string>("lane_following_plugin", config_.lanefollow_planning_tactical_plugin_);
-    get_parameter<double>("guidance/route/destination_downtrack_range", config_.route_end_point_buffer_);
-    get_parameter<double>("vehicle_acceleration_limit", config_.accel_limit_);
-    get_parameter<double>("vehicle_lateral_accel_limit", config_.lateral_accel_limit_);
-    get_parameter<double>("stopping_accel_limit_multiplier", config_.stopping_accel_limit_multiplier_);
-    get_parameter<double>("min_maneuver_length", config_.min_maneuver_length_);
-    
-    RCLCPP_ERROR_STREAM(rclcpp::get_logger("route_following_plugin"), "RouteFollowingPlugin Config: " << config_);
+    carma_ros2_utils::CallbackReturn RouteFollowingPlugin::on_configure_plugin()
+    {
+        config_ = Config();
 
-    // Setup subscribers
-    twist_sub_ = create_subscription<geometry_msgs::msg::TwistStamped>("current_velocity", 50,
-                                                              std::bind(&RouteFollowingPlugin::twist_cb,this,std_ph::_1));
-    current_maneuver_plan_sub_ = create_subscription<carma_planning_msgs::msg::ManeuverPlan>("maneuver_plan", 50,
-                                                              std::bind(&RouteFollowingPlugin::current_maneuver_plan_cb,this,std_ph::_1));
-    
-    // set world model point form wm listener
-    wml_ = get_world_model_listener();
+        get_parameter<double>("minimal_plan_duration", config_.min_plan_duration_);
+        get_parameter<std::string>("lane_change_plugin", config_.lane_change_plugin_);
+        get_parameter<std::string>("stop_and_wait_plugin", config_.stop_and_wait_plugin_);
+        get_parameter<std::string>("lane_following_plugin", config_.lanefollow_planning_tactical_plugin_);
+        get_parameter<double>("guidance/route/destination_downtrack_range", config_.route_end_point_buffer_);
+        get_parameter<double>("vehicle_acceleration_limit", config_.accel_limit_);
+        get_parameter<double>("vehicle_lateral_accel_limit", config_.lateral_accel_limit_);
+        get_parameter<double>("stopping_accel_limit_multiplier", config_.stopping_accel_limit_multiplier_);
+        get_parameter<double>("min_maneuver_length", config_.min_maneuver_length_);
+        
+        RCLCPP_ERROR_STREAM(rclcpp::get_logger("route_following_plugin"), "RouteFollowingPlugin Config: " << config_);
 
-    wm_ = get_world_model();
+        // Setup subscribers
+        twist_sub_ = create_subscription<geometry_msgs::msg::TwistStamped>("current_velocity", 50,
+                                                                std::bind(&RouteFollowingPlugin::twist_cb,this,std_ph::_1));
+        current_maneuver_plan_sub_ = create_subscription<carma_planning_msgs::msg::ManeuverPlan>("maneuver_plan", 50,
+                                                                std::bind(&RouteFollowingPlugin::current_maneuver_plan_cb,this,std_ph::_1));
+        
+        // set world model point form wm listener
+        wml_ = get_world_model_listener();
 
-    //set a route callback to update route and calculate maneuver
-    wml_->setRouteCallback([this]() {
-        RCLCPP_ERROR_STREAM(get_logger(),"Recomputing maneuvers due to a route update");
-        this->latest_maneuver_plan_ = routeCb(wm_->getRoute()->shortestPath());
-    });
+        wm_ = get_world_model();
 
-    wml_->setMapCallback([this]() {
-        if (wm_->getRoute()) { // If this map update occured after a route was provided we need to regenerate maneuvers
-            RCLCPP_ERROR_STREAM(get_logger(),"Recomputing maneuvers due to map update");
+        //set a route callback to update route and calculate maneuver
+        wml_->setRouteCallback([this]() {
+            RCLCPP_ERROR_STREAM(get_logger(),"Recomputing maneuvers due to a route update");
             this->latest_maneuver_plan_ = routeCb(wm_->getRoute()->shortestPath());
-        }
-    });
+        });
 
-    initializeBumperTransformLookup();
-    
-    // Return success if everthing initialized successfully
-    return CallbackReturn::SUCCESS;
-  }
+        wml_->setMapCallback([this]() {
+            if (wm_->getRoute()) { // If this map update occured after a route was provided we need to regenerate maneuvers
+                RCLCPP_ERROR_STREAM(get_logger(),"Recomputing maneuvers due to map update");
+                this->latest_maneuver_plan_ = routeCb(wm_->getRoute()->shortestPath());
+            }
+        });
+
+        initializeBumperTransformLookup();
+        
+        // Return success if everthing initialized successfully
+        return CallbackReturn::SUCCESS;
+    }
+
+    carma_ros2_utils::CallbackReturn RouteFollowingPlugin::on_activate_plugin()
+    {
+        bumper_pose_timer_ = create_timer(get_clock(),
+            std::chrono::milliseconds(100),
+            std::bind(&RouteFollowingPlugin::bumper_pose_cb, this));
+        
+        // Return success if everthing initialized successfully
+        return CallbackReturn::SUCCESS;
+    }
 
     void RouteFollowingPlugin::twist_cb(geometry_msgs::msg::TwistStamped::UniquePtr msg)
     {
