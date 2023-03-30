@@ -1389,7 +1389,7 @@ namespace approaching_emergency_vehicle_plugin
   }
 
   bool ApproachingEmergencyVehiclePlugin::get_availability() {
-    return false;
+    return true;
   }
 
   std::string ApproachingEmergencyVehiclePlugin::get_version_id() {
