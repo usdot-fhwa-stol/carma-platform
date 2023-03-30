@@ -408,6 +408,11 @@ namespace approaching_emergency_vehicle_plugin
       return boost::optional<ErvInformation>();
     }
 
+    if(erv_information.current_speed <= current_speed_){
+      RCLCPP_DEBUG_STREAM(rclcpp::get_logger(logger_name), "Ignoring received BSM since ERV speed of " << erv_information.current_speed << " is less than ego speed of " << current_speed_);
+      return boost::optional<ErvInformation>();
+    }
+
     // Get vehicle's current latitude from the BSM
     if(msg->core_data.presence_vector & carma_v2x_msgs::msg::BSMCoreData::LATITUDE_AVAILABLE){
       erv_information.current_latitude = msg->core_data.latitude;
