@@ -1067,7 +1067,7 @@ namespace approaching_emergency_vehicle_plugin
         }
         else{
           // Plan lane change maneuver if current downtrack progress is between the starting and ending downtracks of the planned upcoming lane change, otherwise plan lane follow maneuver
-          if((upcoming_lc_params_.start_dist < downtrack_progress) && (downtrack_progress < upcoming_lc_params_.end_dist)){
+          if(((upcoming_lc_params_.start_dist - epsilon_) <= downtrack_progress) && (downtrack_progress < (upcoming_lc_params_.end_dist - epsilon_))){
             resp->new_plan.maneuvers.push_back(composeLaneChangeManeuverMessage(upcoming_lc_params_.start_dist, upcoming_lc_params_.end_dist,  
                                       upcoming_lc_params_.start_speed, upcoming_lc_params_.end_speed, upcoming_lc_params_.starting_lanelet.id(), upcoming_lc_params_.ending_lanelet.id(), time_progress));
             
