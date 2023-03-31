@@ -961,10 +961,8 @@ namespace approaching_emergency_vehicle_plugin
 
     // Reduce target_speed if an ERV is actively passing the ego vehicle
     if(is_slowing_down_for_erv){
-      double reduced_speed_limit = std::max((target_speed - config_.speed_limit_reduction_during_passing), config_.minimum_reduced_speed_limit);
-
-      // If the vehicle's current speed is below the reduced speed limit, set target_speed to maintain the current speed
-      target_speed = std::min(speed_progress, reduced_speed_limit);
+      target_speed = std::max((target_speed - config_.speed_limit_reduction_during_passing), config_.minimum_reduced_speed_limit);
+      RCLCPP_DEBUG_STREAM(rclcpp::get_logger(logger_name), "Maneuver target speed reduced to " << target_speed);
     }
 
     double maneuver_plan_ending_downtrack = downtrack_progress + config_.minimal_plan_duration * target_speed;
@@ -1024,10 +1022,8 @@ namespace approaching_emergency_vehicle_plugin
 
         // Reduce target_speed if an ERV is actively passing the ego vehicle
         if(is_slowing_down_for_erv){
-          double reduced_speed_limit = std::max((target_speed - config_.speed_limit_reduction_during_passing), config_.minimum_reduced_speed_limit);
-
-          // If the vehicle's current speed is below the reduced speed limit, set target_speed to maintain the current speed
-          target_speed = std::min(speed_progress, reduced_speed_limit);
+          target_speed = std::max((target_speed - config_.speed_limit_reduction_during_passing), config_.minimum_reduced_speed_limit);
+          RCLCPP_DEBUG_STREAM(rclcpp::get_logger(logger_name), "Maneuver target speed reduced to " << target_speed);
         }
 
         time_progress += getManeuverDuration(resp->new_plan.maneuvers.back(), epsilon_);
