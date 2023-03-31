@@ -74,7 +74,6 @@ namespace approaching_emergency_vehicle_plugin
     double seconds_until_passing;      // The estimated duration (seconds) until the ERV will pass the ego vehicle
                                        //     based on their current positions and current speeds
     bool in_rightmost_lane = false;    // Flag to indicate whether ERV is located in the rightmost lane
-    rclcpp::Time latest_bsm_timestamp; // The timestamp of the latest BSM that triggered an update to this object
     rclcpp::Time latest_update_time;   // The timestamp (from this node's clock) associated with the last update of this object
     bool has_triggered_warning_messages = false; // Flag to indicate whether ERV has triggered this plugin to broadcast EmergencyVehicleResponse warning messages
   };

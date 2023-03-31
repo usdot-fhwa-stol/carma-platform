@@ -159,6 +159,10 @@ namespace approaching_emergency_vehicle_plugin{
         worker_node->configure(); //Call configure state transition
         worker_node->activate();  //Call activate state transition to get not read for runtime
 
+        // Add Node to an executor and spin it to trigger timer callbacks
+        rclcpp::executors::MultiThreadedExecutor executor;
+        executor.add_node(worker_node->get_node_base_interface());
+
         // Verify that plugin is not currently tracking an ERV
         ASSERT_EQ(worker_node->has_tracked_erv_, false);
 
@@ -256,48 +260,58 @@ namespace approaching_emergency_vehicle_plugin{
         regional_ext.route_destination_points.push_back(position2);
         erv_bsm.regional.push_back(regional_ext);
         
-        // Verify that ego vehicle does not determine that ERV is approaching since both vehicles are travelling the same speed (10 m/s)
+        // Verify that ego vehicle does not determine that ERV is approaching since ego vehicle is not engaged (BSM is not processed)
         std::unique_ptr<carma_v2x_msgs::msg::BSM> erv_bsm_ptr = std::make_unique<carma_v2x_msgs::msg::BSM>(erv_bsm);
         worker_node->incomingBsmCallback(std::move(erv_bsm_ptr)); 
         ASSERT_FALSE(worker_node->has_tracked_erv_);
 
-        // Increase ERV's speed to twice the ego vehicle speed so that the ERV is considered to be approaching the ego vehicle
-        // NOTE: ERV should not be tracked since guidance has not been engaged (set with worker_node->is_guidance_engaged_ flag)
-        erv_bsm.core_data.speed = 20.0;
+        // Set is_guidance_engaged_ flag to true to enable incomingBsmCallback to fully process the incoming BSM
+        worker_node->is_guidance_engaged_ = true;
+
+        // Verify that ego vehicle still does not determine that ERV is approaching since both vehicles are travelling the same speed (10 m/s)
         std::unique_ptr<carma_v2x_msgs::msg::BSM> erv_bsm_ptr2 = std::make_unique<carma_v2x_msgs::msg::BSM>(erv_bsm);
         worker_node->incomingBsmCallback(std::move(erv_bsm_ptr2)); 
         ASSERT_FALSE(worker_node->has_tracked_erv_);
 
-        // Set is_guidance_engaged_ flag to true to enable incomingBsmCallback to fully process the incoming BSM
-        worker_node->is_guidance_engaged_ = true;
+        // Increase ERV's speed to twice the ego vehicle speed so that the BSM is processed and the ERV is tracked by this plugin
+        erv_bsm.core_data.speed = 20.0;
         std::unique_ptr<carma_v2x_msgs::msg::BSM> erv_bsm_ptr3 = std::make_unique<carma_v2x_msgs::msg::BSM>(erv_bsm);
         worker_node->incomingBsmCallback(std::move(erv_bsm_ptr3)); 
         ASSERT_TRUE(worker_node->has_tracked_erv_);
         ASSERT_TRUE(worker_node->tracked_erv_.in_rightmost_lane);
+        ASSERT_NEAR(worker_node->tracked_erv_.current_speed, 20.0, 0.001);
 
-        // Update timestamp of ERV BSM to a time that does not satisfy config_.bsm_processing_frequency and verify that tracked_erv_ doesn't update
-        ASSERT_EQ(worker_node->tracked_erv_.latest_bsm_timestamp, rclcpp::Time(0, 0, worker_node->get_clock()->get_clock_type()));
+        // Set BSM processing frequency to 0.5 Hz 
         worker_node->config_.bsm_processing_frequency = 0.5; // (Hz) Only process ERV BSMs that are at least 2 seconds apart
+
+        // Spin executor for 1 second
+        auto end_time = std::chrono::system_clock::now() + std::chrono::seconds(1);
+        while(std::chrono::system_clock::now() < end_time){
+            executor.spin_once();
+        }
         
-        erv_bsm.header.stamp = rclcpp::Time(1, 0);
+        // Verify that worker_node->tracked_erv_ is not updated since 2 seconds has not passed since previously processed BSM
+        erv_bsm.core_data.speed = 25.0;
         std::unique_ptr<carma_v2x_msgs::msg::BSM> erv_bsm_ptr4 = std::make_unique<carma_v2x_msgs::msg::BSM>(erv_bsm);
         worker_node->incomingBsmCallback(std::move(erv_bsm_ptr4)); 
-        ASSERT_EQ(worker_node->tracked_erv_.latest_bsm_timestamp, rclcpp::Time(0, 0, worker_node->get_clock()->get_clock_type()));
+        ASSERT_NEAR(worker_node->tracked_erv_.current_speed, 20.0, 0.001);
 
-        // Update timestamp of ERV BSM to a time that does satisfy config_.bsm_processing_frequency and verify that tracked_erv_ updates
-        erv_bsm.header.stamp = rclcpp::Time(2, 50);
+        // Spin executor for 2 seconds
+        end_time = std::chrono::system_clock::now() + std::chrono::seconds(2);
+        while(std::chrono::system_clock::now() < end_time){
+            executor.spin_once();
+        }
+
+        // Verify that worker_node->tracked_erv_ is updated since more than 2 seconds have passed since the previously processed BSM
         std::unique_ptr<carma_v2x_msgs::msg::BSM> erv_bsm_ptr5 = std::make_unique<carma_v2x_msgs::msg::BSM>(erv_bsm);
         worker_node->incomingBsmCallback(std::move(erv_bsm_ptr5)); 
-        ASSERT_EQ(worker_node->tracked_erv_.latest_bsm_timestamp, rclcpp::Time(2, 50, worker_node->get_clock()->get_clock_type()));
+        ASSERT_TRUE(worker_node->has_tracked_erv_);
+        ASSERT_NEAR(worker_node->tracked_erv_.current_speed, 25.0, 0.001);
 
-        worker_node->config_.timeout_duration = 2.0; //(Seconds) Update timeout duration to decrease time of this unit test
+        worker_node->config_.timeout_duration = 2.0; // (Seconds) Update timeout duration to decrease time of this unit test
 
-        // Add Node to an executor and spin it to trigger timer callbacks
-        rclcpp::executors::MultiThreadedExecutor executor;
-        executor.add_node(worker_node->get_node_base_interface());
-
-        // Spin executor for 10 seconds
-        auto end_time = std::chrono::system_clock::now() + std::chrono::seconds(3);
+        // Spin executor for 3 seconds
+        end_time = std::chrono::system_clock::now() + std::chrono::seconds(3);
         while(std::chrono::system_clock::now() < end_time){
             executor.spin_once();
         }

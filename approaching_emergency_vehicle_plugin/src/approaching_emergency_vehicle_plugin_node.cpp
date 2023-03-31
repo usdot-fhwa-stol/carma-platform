@@ -366,9 +366,6 @@ namespace approaching_emergency_vehicle_plugin
     }
     erv_information.vehicle_id = ss.str();
 
-    // Get timestamp from BSM
-    erv_information.latest_bsm_timestamp = rclcpp::Time(msg->header.stamp, this->get_clock()->get_clock_type());
-
     // Check whether vehicle's lights and sirens are active
     bool has_active_lights_and_sirens = false;
     if(msg->presence_vector & carma_v2x_msgs::msg::BSM::HAS_PART_II){
@@ -632,8 +629,7 @@ namespace approaching_emergency_vehicle_plugin
       std::string erv_vehicle_id = ss.str();
 
       if(erv_vehicle_id == tracked_erv_.vehicle_id){
-        rclcpp::Time current_bsm_timestamp = rclcpp::Time(msg->header.stamp, this->get_clock()->get_clock_type());
-        double seconds_since_prev_bsm = (current_bsm_timestamp - tracked_erv_.latest_bsm_timestamp).seconds();
+        double seconds_since_prev_bsm = (this->now() - tracked_erv_.latest_update_time).seconds();
 
         if(seconds_since_prev_bsm < (1.0 / config_.bsm_processing_frequency)){
           // Do not process ERV's BSM further since not enough time has passed since its previously processed BSM
@@ -655,7 +651,7 @@ namespace approaching_emergency_vehicle_plugin
     else{
       // Update tracked ERV information since this is an active ERV that is approaching the ego vehicle
       tracked_erv_ = *erv_information;
-      tracked_erv_.latest_update_time = this->get_clock()->now();
+      tracked_erv_.latest_update_time = this->now();
 
       if(!has_tracked_erv_){
         has_tracked_erv_ = true;
