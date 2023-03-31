@@ -147,6 +147,16 @@ void setManeuverLaneletIds(carma_planning_msgs::msg::Maneuver& mvr, lanelet::Id 
     return CallbackReturn::SUCCESS;
   }
 
+    carma_ros2_utils::CallbackReturn RouteFollowingPlugin::on_activate_plugin()
+    {
+        bumper_pose_timer_ = create_timer(get_clock(),
+            std::chrono::milliseconds(100),
+            std::bind(&RouteFollowingPlugin::bumper_pose_cb, this));
+
+        // Return success if everthing initialized successfully
+        return CallbackReturn::SUCCESS;
+    }
+    
     void RouteFollowingPlugin::twist_cb(geometry_msgs::msg::TwistStamped::UniquePtr msg)
     {
         current_speed_ = msg->twist.linear.x;
@@ -556,7 +566,8 @@ void setManeuverLaneletIds(carma_planning_msgs::msg::Maneuver& mvr, lanelet::Id 
             auto llts = wm_->getLaneletsFromPoint(current_loc, 10);                                          
             // Remove any candidate lanelets not on the route
             llts.erase(std::remove_if(llts.begin(), llts.end(),
-                [&](auto lanelet) -> bool { return !wm_->getRoute()->contains(lanelet); }));
+                [&](auto lanelet) -> bool { return !wm_->getRoute()->contains(lanelet); }),
+                llts.end());
 
             // !!! ASSUMPTION !!!:
             // Once non-route lanelets have been removed, it is assumed that our actual current lanelet is the only one that can remain.
