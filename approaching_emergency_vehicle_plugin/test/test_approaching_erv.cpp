@@ -278,7 +278,7 @@ namespace approaching_emergency_vehicle_plugin{
         std::unique_ptr<carma_v2x_msgs::msg::BSM> erv_bsm_ptr3 = std::make_unique<carma_v2x_msgs::msg::BSM>(erv_bsm);
         worker_node->incomingBsmCallback(std::move(erv_bsm_ptr3)); 
         ASSERT_TRUE(worker_node->has_tracked_erv_);
-        ASSERT_TRUE(worker_node->tracked_erv_.in_rightmost_lane);
+        ASSERT_EQ(worker_node->tracked_erv_.lane_index, 0);
         ASSERT_NEAR(worker_node->tracked_erv_.current_speed, 20.0, 0.001);
 
         // Set BSM processing frequency to 0.5 Hz 
@@ -394,6 +394,8 @@ namespace approaching_emergency_vehicle_plugin{
         auto resp = std::make_shared<carma_planning_msgs::srv::PlanManeuvers::Response>();
         auto header_srv = std::make_shared<rmw_request_id_t>();
         worker_node->plan_maneuvers_callback(header_srv, req, resp);
+
+        ASSERT_EQ(worker_node->transition_table_.getState(), ApproachingEmergencyVehicleState::WAITING_FOR_APPROACHING_ERV);
 
         ASSERT_EQ(resp->new_plan.maneuvers.size(), 3);
 
@@ -528,7 +530,7 @@ namespace approaching_emergency_vehicle_plugin{
 
         //**********************//
         // TEST 1: Verify correct ego vehicle lane-following maneuver plan in non-shortest-path lanelets on route when in 
-        //         WAITING_FOR_APPROACHING_ERV state.
+        //         SLOWING_DOWN_FOR_ERV state.
         //**********************//
 
         // Create plan maneuvers service request for worker_node
@@ -545,6 +547,8 @@ namespace approaching_emergency_vehicle_plugin{
         auto resp = std::make_shared<carma_planning_msgs::srv::PlanManeuvers::Response>();
         auto header_srv = std::make_shared<rmw_request_id_t>();
         worker_node->plan_maneuvers_callback(header_srv, req, resp);
+
+        ASSERT_EQ(worker_node->transition_table_.getState(), ApproachingEmergencyVehicleState::SLOWING_DOWN_FOR_ERV);
 
         ASSERT_EQ(resp->new_plan.maneuvers.size(), 3);
 
@@ -651,7 +655,7 @@ namespace approaching_emergency_vehicle_plugin{
         // Create plan maneuvers service request for worker_node
         auto req = std::make_shared<carma_planning_msgs::srv::PlanManeuvers::Request>();
         
-        worker_node->tracked_erv_.in_rightmost_lane = true;
+        worker_node->tracked_erv_.lane_index = 0; // ERV is in rightmost lane
 
         // Set maneuver plan service request's vehicle state parameters to place ego vehicle in right lane to verify that it can remain off its
         //     shortest path (but still on its route) when generating a plan that keeps the ego vehicle in its lane.
@@ -665,7 +669,10 @@ namespace approaching_emergency_vehicle_plugin{
         auto header_srv = std::make_shared<rmw_request_id_t>();
         worker_node->plan_maneuvers_callback(header_srv, req, resp);    
 
+        ASSERT_EQ(worker_node->transition_table_.getState(), ApproachingEmergencyVehicleState::MOVING_OVER_FOR_APPROACHING_ERV);
+
         ASSERT_TRUE(worker_node->has_planned_upcoming_lc_);
+        ASSERT_FALSE(worker_node->upcoming_lc_params_.is_right_lane_change);
 
         // Verify Maneuver 0 lane following parameters in lanelet 167
         ASSERT_EQ(resp->new_plan.maneuvers[0].type, carma_planning_msgs::msg::Maneuver::LANE_FOLLOWING);
@@ -723,6 +730,8 @@ namespace approaching_emergency_vehicle_plugin{
 
         auto resp2 = std::make_shared<carma_planning_msgs::srv::PlanManeuvers::Response>();
         worker_node->plan_maneuvers_callback(header_srv, req, resp2); 
+
+        ASSERT_EQ(worker_node->transition_table_.getState(), ApproachingEmergencyVehicleState::MOVING_OVER_FOR_APPROACHING_ERV);
 
         ASSERT_EQ(resp2->new_plan.maneuvers.size(), 5);
 
@@ -801,6 +810,7 @@ namespace approaching_emergency_vehicle_plugin{
         ASSERT_EQ(resp2->new_plan.maneuvers[4].stop_and_wait_maneuver.parameters.planning_tactical_plugin, "stop_and_wait_plugin");
 
         ASSERT_EQ(worker_node->has_planned_upcoming_lc_, true);
+        ASSERT_EQ(worker_node->upcoming_lc_params_.is_right_lane_change, false);
 
         //**********************//
         // TEST 3: Set maneuver plan service request that begins with ego vehicle positioned after its lane change. Check that first maneuver is
@@ -814,6 +824,8 @@ namespace approaching_emergency_vehicle_plugin{
 
         auto resp3 = std::make_shared<carma_planning_msgs::srv::PlanManeuvers::Response>();
         worker_node->plan_maneuvers_callback(header_srv, req, resp3); 
+
+        ASSERT_EQ(worker_node->transition_table_.getState(), ApproachingEmergencyVehicleState::WAITING_FOR_APPROACHING_ERV);
 
         // Verify that node no longer has a planned upcoming lane change
         ASSERT_FALSE(worker_node->has_planned_upcoming_lc_);
@@ -910,7 +922,7 @@ namespace approaching_emergency_vehicle_plugin{
         worker_node->config_.max_warning_broadcasts = 3;
 
         worker_node->has_tracked_erv_ = true;
-        worker_node->tracked_erv_.in_rightmost_lane = true; // Plan maneuvers request will place ego vehicle in rightmost lane as well
+        worker_node->tracked_erv_.lane_index = 0; // Plan maneuvers request will place ego vehicle in rightmost lane as well
         worker_node->tracked_erv_.seconds_until_passing = 10.0;
 
         // Create plan maneuvers service request for worker_node
@@ -927,6 +939,8 @@ namespace approaching_emergency_vehicle_plugin{
         auto resp = std::make_shared<carma_planning_msgs::srv::PlanManeuvers::Response>();
         auto header_srv = std::make_shared<rmw_request_id_t>();
         worker_node->plan_maneuvers_callback(header_srv, req, resp);   
+
+        ASSERT_EQ(worker_node->transition_table_.getState(), ApproachingEmergencyVehicleState::WAITING_FOR_APPROACHING_ERV);
 
         // Set parameters so that ERV remains tracked throughout this unit test
         worker_node->tracked_erv_.latest_update_time = worker_node->now(); 

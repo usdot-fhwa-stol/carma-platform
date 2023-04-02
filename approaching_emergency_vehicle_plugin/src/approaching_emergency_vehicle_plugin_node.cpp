@@ -461,21 +461,12 @@ namespace approaching_emergency_vehicle_plugin
       return boost::optional<ErvInformation>();
     }
 
-    // Determine whether ERV is currently in the rightmost lane
+    // Determine the ERV's current lane index
     // Note: For 'lane index', 0 is rightmost lane, 1 is second rightmost, etc.; Only the current travel direction is considered
     if(!erv_future_route.get().shortestPath().empty()){
       lanelet::ConstLanelet erv_current_lanelet = erv_future_route.get().shortestPath()[0];
-      int lane_index = wm_->getMapRoutingGraph()->rights(erv_current_lanelet).size();
-      RCLCPP_DEBUG_STREAM(rclcpp::get_logger(logger_name), "ERV's lane index is " << lane_index);
-
-      if(lane_index == 0){
-        RCLCPP_DEBUG_STREAM(rclcpp::get_logger(logger_name), "ERV is in the rightmost lane");
-        erv_information.in_rightmost_lane = true;
-      }
-      else{
-        RCLCPP_DEBUG_STREAM(rclcpp::get_logger(logger_name), "ERV is NOT in the rightmost lane");
-        erv_information.in_rightmost_lane = false;
-      }
+      erv_information.lane_index = wm_->getMapRoutingGraph()->rights(erv_current_lanelet).size();
+      RCLCPP_DEBUG_STREAM(rclcpp::get_logger(logger_name), "ERV's lane index is " << erv_information.lane_index);
     }
     else{
       RCLCPP_DEBUG_STREAM(rclcpp::get_logger(logger_name), "ERV's shortest path is empty!");
@@ -1032,7 +1023,7 @@ namespace approaching_emergency_vehicle_plugin
   void ApproachingEmergencyVehiclePlugin::generateMoveOverManeuverPlan(
     carma_planning_msgs::srv::PlanManeuvers::Response::SharedPtr resp,
     lanelet::ConstLanelet current_lanelet, double downtrack_progress, double current_lanelet_ending_downtrack,
-    double speed_progress, double target_speed, rclcpp::Time time_progress)
+    double speed_progress, double target_speed, rclcpp::Time time_progress, int ego_lane_index, int erv_lane_index)
   {
     RCLCPP_DEBUG_STREAM(rclcpp::get_logger(logger_name), "Generating move-over maneuver plan");
 
@@ -1127,30 +1118,24 @@ namespace approaching_emergency_vehicle_plugin
               // Initialize UpcomingLaneChangeParameters object to store information regarding the planned lane change maneuver
               UpcomingLaneChangeParameters new_lc_params;
 
-              // Determine if the ego vehicle's current lanelet is in the rightmost lane
-              bool ego_in_rightmost_lane = false;
-              if(wm_->getMapRoutingGraph()->rights(current_lanelet).size() == 0){
-                ego_in_rightmost_lane = true;
-              }
-
               // Determine if left lane change or right lane change required, and get the target lanelet
               lanelet::Optional<lanelet::ConstLanelet> target_lanelet;
-              if(!ego_in_rightmost_lane && !tracked_erv_.in_rightmost_lane){
-                // Get right target lanelet
-                target_lanelet = wm_->getMapRoutingGraph()->right(current_lanelet);
-                RCLCPP_DEBUG_STREAM(rclcpp::get_logger(logger_name), "Composing a right lane change maneuver from lanelet " << current_lanelet.id());
-                new_lc_params.is_right_lane_change = true;
-              }
-              else if(ego_in_rightmost_lane && tracked_erv_.in_rightmost_lane){
-                // Get left target lanelet
-                target_lanelet = wm_->getMapRoutingGraph()->left(current_lanelet);   
-                RCLCPP_DEBUG_STREAM(rclcpp::get_logger(logger_name), "Composing a left lane change maneuver from lanelet " << current_lanelet.id());
-                new_lc_params.is_right_lane_change = false;
-              }
-              else{
+              if(ego_lane_index != erv_lane_index){
                 RCLCPP_WARN_STREAM(rclcpp::get_logger(logger_name), "Planning a move-over maneuver plan when the ego vehicle is not in the ERV's path! Returning an empty maneuver plan");
                 resp->new_plan.maneuvers = {};
-                return;
+                return;              
+              }
+              else if((ego_lane_index == 0) && (erv_lane_index == 0)){
+                // Ego vehicle and ERV are both in the rightmost lane so a left lane change is required
+                new_lc_params.is_right_lane_change = false;
+                target_lanelet = wm_->getMapRoutingGraph()->left(current_lanelet);   
+                RCLCPP_DEBUG_STREAM(rclcpp::get_logger(logger_name), "Composing a left lane change maneuver from lanelet " << current_lanelet.id());
+              }
+              else{
+                // A right lane change is required
+                new_lc_params.is_right_lane_change = true;
+                target_lanelet = wm_->getMapRoutingGraph()->right(current_lanelet);
+                RCLCPP_DEBUG_STREAM(rclcpp::get_logger(logger_name), "Composing a right lane change maneuver from lanelet " << current_lanelet.id());
               }
 
               // Only compose lane change maneuver if the target lanelet exists, otherwise compose lane follow maneuver
@@ -1268,20 +1253,15 @@ namespace approaching_emergency_vehicle_plugin
       return;
     }
 
-    // Update state machine if there is currently an ERV being tracked and if vehicle is not currently in the middle of a lane change
+    // Get ego vehicle's current lane index
+    // Note: For 'lane index', 0 is rightmost lane, 1 is second rightmost, etc.; Only the current travel direction is considered
+    int ego_lane_index = wm_->getMapRoutingGraph()->rights(ego_current_lanelet_optional.get()).size();
+
+    // Update state machine if there is currently an ERV being tracked and if ego vehicle is not currently in the middle of a lane change
     if(has_tracked_erv_ && !is_currently_lane_changing){
-      // Get ego vehicle's current lane index
-      // Note: For 'lane index', 0 is rightmost lane, 1 is second rightmost, etc.; Only the current travel direction is considered
-      int ego_lane_index = wm_->getMapRoutingGraph()->rights(ego_current_lanelet_optional.get()).size();
-
-      bool ego_in_rightmost_lane = false;
-      if(ego_lane_index == 0){
-        ego_in_rightmost_lane = true;
-      }
-
-      if((!ego_in_rightmost_lane && !tracked_erv_.in_rightmost_lane) || (ego_in_rightmost_lane && tracked_erv_.in_rightmost_lane)){
+      if(ego_lane_index == tracked_erv_.lane_index){
         // Trigger state machine transition for case in which the ego vehicle is in the ERV's path
-        RCLCPP_DEBUG_STREAM(rclcpp::get_logger(logger_name), "Ego vehicle is in ERV's path");
+        RCLCPP_DEBUG_STREAM(rclcpp::get_logger(logger_name), "Ego vehicle and ERV are both in lane index " << ego_lane_index);
 
         if(tracked_erv_.seconds_until_passing >= config_.approaching_threshold){
           transition_table_.event(ApproachingEmergencyVehicleEvent::NO_APPROACHING_ERV);
@@ -1356,7 +1336,7 @@ namespace approaching_emergency_vehicle_plugin
 
       case ApproachingEmergencyVehicleState::MOVING_OVER_FOR_APPROACHING_ERV:
         generateMoveOverManeuverPlan(resp, ego_current_lanelet_optional.get(), downtrack_progress, current_lanelet_ending_downtrack, speed_progress,
-                                        target_speed, time_progress);
+                                        target_speed, time_progress, ego_lane_index, tracked_erv_.lane_index);
         break;
 
       case ApproachingEmergencyVehicleState::WAITING_FOR_APPROACHING_ERV:
