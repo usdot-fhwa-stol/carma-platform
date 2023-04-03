@@ -10,12 +10,12 @@ planning_topic_suffix: /plan_trajectory
 
 # Double: The trajectory planning frequency
 # Units: Hz
-trajectory_planning_rate: 10.0
+trajectory_planning_rate: 5.0 #10.0
 
 # Double: Plan delegator will stop generating new trajectories
 # if the current plan is already over this threshold
 # Units: Second
-trajectory_duration_threshold: 6.0
+trajectory_duration_threshold: 10.0
 
 # Minimum crawl speed
 # Double: The minimum speed the vehicle will say it is moving in order to support accelerations
@@ -31,4 +31,4 @@ duration_to_signal_before_lane_change: 2.5
 # NOTE: It is highly desirable to maintain a timeout of 100 ms or less, but trajectory generation success cannot be guaranteed with this duration
 #       for tactical plugins (primarily cooperative_lanechange) in all test scenarios at this time.
 # Units: Milliseconds
-tactical_plugin_service_call_timeout: 100
+tactical_plugin_service_call_timeout: 200 #100
