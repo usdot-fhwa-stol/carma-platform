@@ -383,6 +383,21 @@ namespace approaching_emergency_vehicle_plugin
     //        parameters should be used for the next generated maneuver plan as well
     bool has_planned_upcoming_lc_ = false;
 
+    // (Seconds) A threshold; if the estimated duration until an ERV passes the ego vehicle is below this and the
+    //           ego vehicle is in the same lane as the ERV, then the ego vehicle will not reduce its speed, because
+    //           doing so could cause a safety hazard.
+    // NOTE: This value is not configurable because it is considered to be a safety threshold.
+    const double MAINTAIN_SPEED_THRESHOLD = 8.0;
+
+    // Boolean flag to indicate that transition_table_ is in the 'SLOWING_DOWN_FOR_ERV' state, but the ego vehicle will maintain a non-reduced speed since the
+    // ERV is in the same lane as the ego vehicle and is estimated to pass the ego vehicle in less than the 'MAINTAIN_SPEED_THRESHOLD' time threshold.
+    bool is_maintaining_non_reduced_speed_ = false;
+
+    // (m/s) The target speed that the ego vehicle shall maintain when the 'is_maintaining_non_reduced_speed_' flag is true. Set to the latest ego vehicle
+    //       speed at the moment transition_table_ most recently received the 'ERV_PASSING_IN_PATH' event and the ERV was estimated to pass the ego 
+    //       vehicle in less than the 'MAINTAIN_SPEED_THERSHOLD' time threshold.
+    double non_reduced_speed_to_maintain_ = 4.4704; // Default is 4.4704 m/s or 10 mph 
+
     // Boolean flag to indicate whether guidance is currently engaged
     bool is_guidance_engaged_ = false;
 

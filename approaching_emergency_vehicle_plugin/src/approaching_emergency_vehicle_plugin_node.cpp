@@ -946,8 +946,13 @@ namespace approaching_emergency_vehicle_plugin
     // Reset planned lane change flag since plugin will not be planning for an upcoming lane change
     has_planned_upcoming_lc_ = false;
 
-    // Reduce target_speed if an ERV is actively passing the ego vehicle
-    if(is_slowing_down_for_erv){
+    // Adjust maneuver target speed if in 'SLOWING_DOWN_FOR_ERV' state
+    if(is_maintaining_non_reduced_speed_ && (transition_table_.getState() == ApproachingEmergencyVehicleState::SLOWING_DOWN_FOR_ERV)){
+      // ERV is close enough that if the ego vehicle slows down it could cause a safety hazard; set target speed to maintain a non-reduced speed
+      target_speed = non_reduced_speed_to_maintain_;
+    }
+    else if(is_slowing_down_for_erv && (transition_table_.getState() == ApproachingEmergencyVehicleState::SLOWING_DOWN_FOR_ERV)){
+      // Reduce target_speed if an ERV is actively passing the ego vehicle
       target_speed = std::max((target_speed - config_.speed_limit_reduction_during_passing), config_.minimum_reduced_speed_limit);
       RCLCPP_DEBUG_STREAM(rclcpp::get_logger(logger_name), "Maneuver target speed reduced to " << target_speed);
     }
@@ -1007,8 +1012,13 @@ namespace approaching_emergency_vehicle_plugin
         speed_progress = getManeuverEndSpeed(resp->new_plan.maneuvers.back());
         target_speed = getLaneletSpeedLimit(current_lanelet);
 
-        // Reduce target_speed if an ERV is actively passing the ego vehicle
-        if(is_slowing_down_for_erv){
+        // Adjust maneuver target speed if in 'SLOWING_DOWN_FOR_ERV' state
+        if(is_maintaining_non_reduced_speed_ && (transition_table_.getState() == ApproachingEmergencyVehicleState::SLOWING_DOWN_FOR_ERV)){
+          // ERV is close enough that if the ego vehicle slows down it could cause a safety hazard; set target speed to maintain a non-reduced speed
+          target_speed = non_reduced_speed_to_maintain_;
+        }
+        else if(is_slowing_down_for_erv && (transition_table_.getState() == ApproachingEmergencyVehicleState::SLOWING_DOWN_FOR_ERV)){
+          // Reduce target_speed if an ERV is actively passing the ego vehicle
           target_speed = std::max((target_speed - config_.speed_limit_reduction_during_passing), config_.minimum_reduced_speed_limit);
           RCLCPP_DEBUG_STREAM(rclcpp::get_logger(logger_name), "Maneuver target speed reduced to " << target_speed);
         }
@@ -1257,6 +1267,9 @@ namespace approaching_emergency_vehicle_plugin
     // Note: For 'lane index', 0 is rightmost lane, 1 is second rightmost, etc.; Only the current travel direction is considered
     int ego_lane_index = wm_->getMapRoutingGraph()->rights(ego_current_lanelet_optional.get()).size();
 
+    // Flag to indicate whether the maneuver plan must target reduced speeds due to an ERV actively passing the ego vehicle
+    bool is_slowing_down_for_erv = false;
+
     // Update state machine if there is currently an ERV being tracked and if ego vehicle is not currently in the middle of a lane change
     if(has_tracked_erv_ && !is_currently_lane_changing){
       if(ego_lane_index == tracked_erv_.lane_index){
@@ -1281,6 +1294,19 @@ namespace approaching_emergency_vehicle_plugin
         }
         else if((0.0 <= tracked_erv_.seconds_until_passing) && (tracked_erv_.seconds_until_passing < config_.passing_threshold)){
           transition_table_.event(ApproachingEmergencyVehicleEvent::ERV_PASSING_IN_PATH);
+          
+          if(tracked_erv_.seconds_until_passing >= MAINTAIN_SPEED_THRESHOLD){
+            // Ego vehicle should slow down since the ERV is considered to be actively passing
+            is_slowing_down_for_erv = true;
+            is_maintaining_non_reduced_speed_ = false;
+          }
+          else{
+            // ERV is close enough (in the same lane) that if the ego vehicle slows down it could cause a safety hazard; set internal members for ego vehicle to maintain its current speed
+            if(!is_maintaining_non_reduced_speed_){
+              is_maintaining_non_reduced_speed_ = true;
+              non_reduced_speed_to_maintain_ = req->veh_logitudinal_velocity;
+            }
+          }
 
           // Set flag to broadcast EmergencyVehicleResponse warning messages to ERV if they have not already been broadcasted
           if(!tracked_erv_.has_triggered_warning_messages){
@@ -1332,23 +1358,28 @@ namespace approaching_emergency_vehicle_plugin
       case ApproachingEmergencyVehicleState::NO_APPROACHING_ERV:
         resp->new_plan.maneuvers = {};
         RCLCPP_DEBUG_STREAM(rclcpp::get_logger(logger_name), "No approaching ERV. Returning empty maneuver plan");
+        is_maintaining_non_reduced_speed_ = false; // Reset flag since ego vehicle does not need to maintain a non-reduced speed
         break;
 
       case ApproachingEmergencyVehicleState::MOVING_OVER_FOR_APPROACHING_ERV:
+        is_maintaining_non_reduced_speed_ = false; // Reset flag since ego vehicle does not need to maintain a non-reduced speed
+
         generateMoveOverManeuverPlan(resp, ego_current_lanelet_optional.get(), downtrack_progress, current_lanelet_ending_downtrack, speed_progress,
                                         target_speed, time_progress, ego_lane_index, tracked_erv_.lane_index);
         break;
 
       case ApproachingEmergencyVehicleState::WAITING_FOR_APPROACHING_ERV:
+        is_maintaining_non_reduced_speed_ = false; // Reset flag since ego vehicle does not need to maintain a non-reduced speed
+
         // Generate a maneuver plan consisting of only lane-following maneuvers at the speed limit
         generateRemainInLaneManeuverPlan(resp, ego_current_lanelet_optional.get(), downtrack_progress, current_lanelet_ending_downtrack, speed_progress,
-                                        target_speed, time_progress, false);
+                                        target_speed, time_progress, is_slowing_down_for_erv);
         break;
 
       case ApproachingEmergencyVehicleState::SLOWING_DOWN_FOR_ERV:
         // Generate a maneuver plan consisting of only lane-following maneuvers at a reduced speed since the ERV is actively passing the ego vehicle
         generateRemainInLaneManeuverPlan(resp, ego_current_lanelet_optional.get(), downtrack_progress, current_lanelet_ending_downtrack, speed_progress,
-                                        target_speed, time_progress, true);
+                                        target_speed, time_progress, is_slowing_down_for_erv);
         break;
 
       default:

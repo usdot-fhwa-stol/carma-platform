@@ -482,12 +482,6 @@ namespace approaching_emergency_vehicle_plugin{
         // Verify that initial state is NO_APPROACHING_ERV
         ASSERT_EQ(worker_node->transition_table_.getState(), ApproachingEmergencyVehicleState::NO_APPROACHING_ERV);
 
-        worker_node->has_tracked_erv_ = true;
-        worker_node->tracked_erv_.seconds_until_passing = 10.0; // Set value to trigger state machine transition to 'SLOWING_DOWN_FOR_ERV' state
-        worker_node->config_.minimal_plan_duration = 25.0; // (Seconds) Maneuver plan shall be at least 25.0 seconds long to enable multiple maneuvers for this test case
-        worker_node->config_.speed_limit_reduction_during_passing = 10.0; // (m/s) Amount to reduce maneuver target speed by when in 'SLOWING_DOWN_FOR_ERV' state
-        worker_node->config_.minimum_reduced_speed_limit = 5.0; // (m/s) Minimum target speed when in 'SLOWING_DOWN_FOR_ERV' state
-
         // Set georeference for worker_node so that it can convert ERV BSM lat/lon coordinates to map coordinates
         std::string proj = "+proj=tmerc +lat_0=0 +lon_0=0 +k=1 +x_0=0 +y_0=0 +datum=WGS84 +units=m +geoidgrids=egm96_15.gtx +vunits=m +no_defs";
         std_msgs::msg::String str_msg;
@@ -533,6 +527,13 @@ namespace approaching_emergency_vehicle_plugin{
         //         SLOWING_DOWN_FOR_ERV state.
         //**********************//
 
+        worker_node->has_tracked_erv_ = true;
+        worker_node->tracked_erv_.lane_index = 0; // ERV is in rightmost lane 
+        worker_node->tracked_erv_.seconds_until_passing = 10.0; // Set value to trigger state machine transition to 'SLOWING_DOWN_FOR_ERV' state
+        worker_node->config_.minimal_plan_duration = 25.0; // (Seconds) Maneuver plan shall be at least 25.0 seconds long to enable multiple maneuvers for this test case
+        worker_node->config_.speed_limit_reduction_during_passing = 10.0; // (m/s) Amount to reduce maneuver target speed by when in 'SLOWING_DOWN_FOR_ERV' state
+        worker_node->config_.minimum_reduced_speed_limit = 5.0; // (m/s) Minimum target speed when in 'SLOWING_DOWN_FOR_ERV' state
+
         // Create plan maneuvers service request for worker_node
         auto req = std::make_shared<carma_planning_msgs::srv::PlanManeuvers::Request>();
 
@@ -549,11 +550,13 @@ namespace approaching_emergency_vehicle_plugin{
         worker_node->plan_maneuvers_callback(header_srv, req, resp);
 
         ASSERT_EQ(worker_node->transition_table_.getState(), ApproachingEmergencyVehicleState::SLOWING_DOWN_FOR_ERV);
+        ASSERT_EQ(worker_node->is_maintaining_non_reduced_speed_, false);
 
         ASSERT_EQ(resp->new_plan.maneuvers.size(), 3);
 
         // Verify Maneuver 0 lane following parameters in lanelet 167
         ASSERT_EQ(resp->new_plan.maneuvers[0].type, carma_planning_msgs::msg::Maneuver::LANE_FOLLOWING);
+        ASSERT_NEAR(resp->new_plan.maneuvers[0].lane_following_maneuver.start_speed, 10.0, 0.01); 
         ASSERT_NEAR(rclcpp::Time(resp->new_plan.maneuvers[0].lane_following_maneuver.start_time).seconds(), 0.0, 0.01); 
         ASSERT_NEAR(resp->new_plan.maneuvers[0].lane_following_maneuver.end_dist, 190.243, 0.01);
         ASSERT_NEAR(resp->new_plan.maneuvers[0].lane_following_maneuver.end_speed, 5.0, 0.01); 
@@ -567,6 +570,7 @@ namespace approaching_emergency_vehicle_plugin{
 
         // Verify Maneuver 1 lane following parameters in lanelet 169
         ASSERT_EQ(resp->new_plan.maneuvers[1].type, carma_planning_msgs::msg::Maneuver::LANE_FOLLOWING);
+        ASSERT_NEAR(resp->new_plan.maneuvers[1].lane_following_maneuver.start_speed, 5.0, 0.01); 
         ASSERT_NEAR(rclcpp::Time(resp->new_plan.maneuvers[1].lane_following_maneuver.start_time).seconds(), 13.6167, 0.01); 
         ASSERT_NEAR(resp->new_plan.maneuvers[1].lane_following_maneuver.end_dist, 206.164, 0.01);
         ASSERT_NEAR(resp->new_plan.maneuvers[1].lane_following_maneuver.end_speed, 5.0, 0.01); 
@@ -580,6 +584,7 @@ namespace approaching_emergency_vehicle_plugin{
 
         // Verify Maneuver 2 lane following parameters in lanelet 168
         ASSERT_EQ(resp->new_plan.maneuvers[2].type, carma_planning_msgs::msg::Maneuver::LANE_FOLLOWING);
+        ASSERT_NEAR(resp->new_plan.maneuvers[2].lane_following_maneuver.start_speed, 5.0, 0.01); 
         ASSERT_NEAR(rclcpp::Time(resp->new_plan.maneuvers[2].lane_following_maneuver.start_time).seconds(), 16.8008, 0.01); 
         ASSERT_NEAR(resp->new_plan.maneuvers[2].lane_following_maneuver.end_dist, 240.438, 0.01);
         ASSERT_NEAR(resp->new_plan.maneuvers[2].lane_following_maneuver.end_speed, 5.0, 0.01); 
@@ -590,6 +595,81 @@ namespace approaching_emergency_vehicle_plugin{
         ASSERT_EQ(resp->new_plan.maneuvers[2].lane_following_maneuver.parameters.planning_strategic_plugin, "approaching_emergency_vehicle_plugin");
         ASSERT_EQ(resp->new_plan.maneuvers[2].lane_following_maneuver.parameters.presence_vector, carma_planning_msgs::msg::ManeuverParameters::HAS_TACTICAL_PLUGIN);
         ASSERT_EQ(resp->new_plan.maneuvers[2].lane_following_maneuver.parameters.planning_tactical_plugin, "inlanecruising_plugin");
+
+        //**********************//
+        // TEST 2: Verify that plugin generates maneuver plan that maintains the ego vehicle's current lane and speed when 
+        //         the ERV is in the same lane and its seconds_until_passing is less than MAINTAIN_SPEED_THRESHOLD and transition_table_
+        //         is in the SLOWING_DOWN_FOR_ERV state.
+        //**********************//
+
+        worker_node->tracked_erv_.seconds_until_passing = 6.0; // Set value that is lower than MAINTAIN_SPEED_THRESHOLD and will trigger state machine event 'ERV_PASSING_IN_PATH'
+
+        req->veh_logitudinal_velocity = 7.0; // (m/s); this speed should be maintained in the generated maneuver plan
+        auto resp2 = std::make_shared<carma_planning_msgs::srv::PlanManeuvers::Response>();
+        worker_node->plan_maneuvers_callback(header_srv, req, resp2);
+
+        ASSERT_EQ(worker_node->transition_table_.getState(), ApproachingEmergencyVehicleState::SLOWING_DOWN_FOR_ERV);
+        ASSERT_EQ(worker_node->is_maintaining_non_reduced_speed_, true);
+        ASSERT_EQ(worker_node->non_reduced_speed_to_maintain_, 7.0);
+
+        ASSERT_EQ(resp2->new_plan.maneuvers.size(), 6);
+
+        // Verify Maneuver 0 lane following parameters in lanelet 167 (most importantly we are verifying end speed here)
+        ASSERT_EQ(resp2->new_plan.maneuvers[0].type, carma_planning_msgs::msg::Maneuver::LANE_FOLLOWING);
+        ASSERT_NEAR(resp2->new_plan.maneuvers[0].lane_following_maneuver.start_speed, 7.0, 0.01); 
+        ASSERT_NEAR(rclcpp::Time(resp2->new_plan.maneuvers[0].lane_following_maneuver.start_time).seconds(), 0.0, 0.01); 
+        ASSERT_NEAR(resp2->new_plan.maneuvers[0].lane_following_maneuver.end_dist, 190.243, 0.01);
+        ASSERT_NEAR(resp2->new_plan.maneuvers[0].lane_following_maneuver.end_speed, 7.0, 0.01); 
+        ASSERT_NEAR(rclcpp::Time(resp2->new_plan.maneuvers[0].lane_following_maneuver.end_time).seconds(), 14.589, 0.01); 
+        ASSERT_EQ(resp2->new_plan.maneuvers[0].lane_following_maneuver.lane_ids, maneuver_0_lane_id); 
+        ASSERT_EQ(resp2->new_plan.maneuvers[0].lane_following_maneuver.parameters.negotiation_type, carma_planning_msgs::msg::ManeuverParameters::NO_NEGOTIATION);
+        ASSERT_EQ(resp2->new_plan.maneuvers[0].lane_following_maneuver.parameters.planning_strategic_plugin, "approaching_emergency_vehicle_plugin");
+        ASSERT_EQ(resp2->new_plan.maneuvers[0].lane_following_maneuver.parameters.presence_vector, carma_planning_msgs::msg::ManeuverParameters::HAS_TACTICAL_PLUGIN);
+        ASSERT_EQ(resp2->new_plan.maneuvers[0].lane_following_maneuver.parameters.planning_tactical_plugin, "inlanecruising_plugin");
+
+        // Verify Maneuver 1 lane following parameters in lanelet 169 (most importantly we are verifying start and end speed here)
+        ASSERT_EQ(resp2->new_plan.maneuvers[1].type, carma_planning_msgs::msg::Maneuver::LANE_FOLLOWING);
+        ASSERT_NEAR(resp2->new_plan.maneuvers[1].lane_following_maneuver.start_speed, 7.0, 0.01); 
+        ASSERT_NEAR(resp2->new_plan.maneuvers[1].lane_following_maneuver.end_dist, 206.164, 0.01);
+        ASSERT_NEAR(resp2->new_plan.maneuvers[1].lane_following_maneuver.end_speed, 7.0, 0.01); 
+        ASSERT_EQ(resp2->new_plan.maneuvers[1].lane_following_maneuver.lane_ids, maneuver_1_lane_id); 
+
+        // Verify Maneuver 2 lane following parameters in lanelet 168 (most importantly we are verifying start and end speed here)
+        ASSERT_EQ(resp2->new_plan.maneuvers[2].type, carma_planning_msgs::msg::Maneuver::LANE_FOLLOWING);
+        ASSERT_NEAR(resp2->new_plan.maneuvers[2].lane_following_maneuver.start_speed, 7.0, 0.01); 
+        ASSERT_NEAR(resp2->new_plan.maneuvers[2].lane_following_maneuver.end_dist, 240.438, 0.01);
+        ASSERT_NEAR(resp2->new_plan.maneuvers[2].lane_following_maneuver.end_speed, 7.0, 0.01); 
+        ASSERT_EQ(resp2->new_plan.maneuvers[2].lane_following_maneuver.lane_ids, maneuver_2_lane_id); 
+
+        // Change vehicle's current speed (to mimic speed fluctuation/noise) and verify the original 7.0 m/s is still maintained
+        req->veh_logitudinal_velocity = 6.7; // (m/s)
+        auto resp3 = std::make_shared<carma_planning_msgs::srv::PlanManeuvers::Response>();
+        worker_node->plan_maneuvers_callback(header_srv, req, resp3);
+
+        ASSERT_EQ(worker_node->transition_table_.getState(), ApproachingEmergencyVehicleState::SLOWING_DOWN_FOR_ERV);
+        ASSERT_EQ(worker_node->is_maintaining_non_reduced_speed_, true);
+        ASSERT_EQ(worker_node->non_reduced_speed_to_maintain_, 7.0);
+
+        // Change the time until ERV passes the ego vehicle to a value above MAINTAIN_SPEED_THRESHOLD and check that 'is_maintaining_non_reduced_speed_' flag is false
+        // and that maneuver end speeds match the expected reduced speed value
+        worker_node->tracked_erv_.seconds_until_passing = 10.0; // Set value to trigger state machine transition to 'SLOWING_DOWN_FOR_ERV' state
+        auto resp4 = std::make_shared<carma_planning_msgs::srv::PlanManeuvers::Response>();
+        worker_node->plan_maneuvers_callback(header_srv, req, resp4);
+
+        ASSERT_EQ(worker_node->transition_table_.getState(), ApproachingEmergencyVehicleState::SLOWING_DOWN_FOR_ERV);
+        ASSERT_EQ(worker_node->is_maintaining_non_reduced_speed_, false);
+
+        ASSERT_EQ(resp4->new_plan.maneuvers.size(), 3);
+
+        // Verify Maneuver 0 lane following parameters in lanelet 167 (most importantly we are verifying start and end speed here)
+        ASSERT_EQ(resp4->new_plan.maneuvers[0].type, carma_planning_msgs::msg::Maneuver::LANE_FOLLOWING);
+        ASSERT_NEAR(resp4->new_plan.maneuvers[0].lane_following_maneuver.start_speed, 6.7, 0.01); 
+        ASSERT_NEAR(resp4->new_plan.maneuvers[0].lane_following_maneuver.end_speed, 5.0, 0.01); 
+
+        // Verify Maneuver 1 lane following parameters in lanelet 169 (most importantly we are verifying start and end speed here)
+        ASSERT_EQ(resp4->new_plan.maneuvers[1].type, carma_planning_msgs::msg::Maneuver::LANE_FOLLOWING);
+        ASSERT_NEAR(resp4->new_plan.maneuvers[1].lane_following_maneuver.start_speed, 5.0, 0.01); 
+        ASSERT_NEAR(resp4->new_plan.maneuvers[1].lane_following_maneuver.end_speed, 5.0, 0.01); 
     }
 
     TEST(Testapproaching_emergency_vehicle_plugin, testManeuverPlanWhenMovingOverForErv){
