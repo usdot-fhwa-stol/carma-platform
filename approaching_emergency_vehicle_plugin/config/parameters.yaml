@@ -18,6 +18,11 @@ approaching_threshold : 60.0
 # Units: Meters
 finished_passing_threshold : 152.4
 
+# Double: The minimum duration of lane following that must be planned before a lane change when in the 
+#         MOVING_OVER_FOR_APPROACHING_ERV state.
+# Units: Seconds
+min_lane_following_duration_before_lane_change : 3.0
+
 # Double: The rate that incoming BSMs from a specific ERV will be processed by this plugin. All received 
 #         BSMs from an ERV between processed BSMs will be dropped.
 # Units: Hz

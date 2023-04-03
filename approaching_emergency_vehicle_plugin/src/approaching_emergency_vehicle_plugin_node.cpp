@@ -49,6 +49,7 @@ namespace approaching_emergency_vehicle_plugin
     config_.do_not_move_over_threshold = declare_parameter<double>("do_not_move_over_threshold", config_.do_not_move_over_threshold);
     config_.approaching_threshold = declare_parameter<double>("approaching_threshold", config_.approaching_threshold);
     config_.finished_passing_threshold = declare_parameter<double>("finished_passing_threshold", config_.finished_passing_threshold);
+    config_.min_lane_following_duration_before_lane_change = declare_parameter<double>("min_lane_following_duration_before_lane_change", config_.min_lane_following_duration_before_lane_change);
     config_.bsm_processing_frequency = declare_parameter<double>("bsm_processing_frequency", config_.bsm_processing_frequency);
     config_.speed_limit_reduction_during_passing = declare_parameter<double>("speed_limit_reduction_during_passing", config_.speed_limit_reduction_during_passing);
     config_.minimum_reduced_speed_limit = declare_parameter<double>("minimum_reduced_speed_limit", config_.minimum_reduced_speed_limit);
@@ -78,6 +79,7 @@ namespace approaching_emergency_vehicle_plugin
         {"do_not_move_over_threshold", config_.do_not_move_over_threshold},
         {"approaching_threshold", config_.approaching_threshold},
         {"finished_passing_threshold", config_.finished_passing_threshold},
+        {"min_lane_following_duration_before_lane_change", config_.min_lane_following_duration_before_lane_change},
         {"bsm_processing_frequency", config_.bsm_processing_frequency},
         {"speed_limit_reduction_during_passing", config_.speed_limit_reduction_during_passing},
         {"minimum_reduced_speed_limit", config_.minimum_reduced_speed_limit},
@@ -124,6 +126,7 @@ namespace approaching_emergency_vehicle_plugin
     get_parameter<double>("do_not_move_over_threshold", config_.do_not_move_over_threshold);
     get_parameter<double>("approaching_threshold", config_.approaching_threshold);
     get_parameter<double>("finished_passing_threshold", config_.finished_passing_threshold);
+    get_parameter<double>("min_lane_following_duration_before_lane_change", config_.min_lane_following_duration_before_lane_change);
     get_parameter<double>("bsm_processing_frequency", config_.bsm_processing_frequency);
     get_parameter<double>("speed_limit_reduction_during_passing", config_.speed_limit_reduction_during_passing);
     get_parameter<double>("minimum_reduced_speed_limit", config_.minimum_reduced_speed_limit);
@@ -1106,7 +1109,9 @@ namespace approaching_emergency_vehicle_plugin
       }
     }
     else{
-      bool first_maneuver = true;
+      bool completed_initial_lane_following = false; // Flag to indicate whether sufficient lane following has been planned before the lane change
+      double initial_lane_following_duration = 0.0; // Object to store the duration of lane following planned before the lane change
+
       while(downtrack_progress < maneuver_plan_ending_downtrack){
 
         if(begin_stopping_downtrack <= current_lanelet_ending_downtrack){
@@ -1116,11 +1121,18 @@ namespace approaching_emergency_vehicle_plugin
           return;
         }
         else{
-          // First maneuver is lane-following to enable sufficient time to activate turn signals before conducting lane change
-          if(first_maneuver){
+          // First maneuver(s) are lane-following to enable sufficient time to activate turn signals before conducting lane change
+          if(!completed_initial_lane_following){
             resp->new_plan.maneuvers.push_back(composeLaneFollowingManeuverMessage(downtrack_progress, current_lanelet_ending_downtrack,  
                                     speed_progress, target_speed, current_lanelet.id(), time_progress));
-            first_maneuver = false;
+
+            initial_lane_following_duration += getManeuverDuration(resp->new_plan.maneuvers.back(), epsilon_).seconds();
+            RCLCPP_DEBUG_STREAM(rclcpp::get_logger(logger_name), "Seconds of lane following before lane change: " << initial_lane_following_duration);
+
+            if(initial_lane_following_duration >= config_.min_lane_following_duration_before_lane_change){
+              RCLCPP_DEBUG_STREAM(rclcpp::get_logger(logger_name), "Minimum lane following duration before lane change satisfied.");
+              completed_initial_lane_following = true;
+            }
           }
           else{
 

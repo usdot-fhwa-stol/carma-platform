@@ -39,6 +39,9 @@ namespace approaching_emergency_vehicle_plugin
     double finished_passing_threshold = 152.4;     // (Meters) A threshold; an actively-passing ERV is considered to have completed passing the ego vehicle when
                                                    // its distance in front of the ego vehicle reaches this value.
 
+    double min_lane_following_duration_before_lane_change = 3.0; // (Seconds) The minimum duration of lane following that must be planned before a lane change when in the 
+                                                                 // MOVING_OVER_FOR_APPROACHING_ERV state.
+
     double bsm_processing_frequency = 1.0;         // (Hz) The rate that incoming BSMs from a specific ERV will be processed by this plugin.
 
     double speed_limit_reduction_during_passing = 4.4704; // (m/s) The amount that the speed limit of a lanelet will be reduced by when planning a maneuver when an
@@ -94,6 +97,7 @@ namespace approaching_emergency_vehicle_plugin
            << "do_not_move_over_threshold: " << c.do_not_move_over_threshold << std::endl
            << "approaching_threshold: " << c.approaching_threshold << std::endl
            << "finished_passing_threshold: " << c.finished_passing_threshold << std::endl
+           << "min_lane_following_duration_before_lane_change: " << c.min_lane_following_duration_before_lane_change << std::endl
            << "bsm_processing_frequency: " << c.bsm_processing_frequency << std::endl
            << "speed_limit_reduction_during_passing: " << c.speed_limit_reduction_during_passing << std::endl
            << "minimum_reduced_speed_limit: " << c.minimum_reduced_speed_limit << std::endl
