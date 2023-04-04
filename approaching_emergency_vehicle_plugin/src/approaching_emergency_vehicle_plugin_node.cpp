@@ -1347,6 +1347,9 @@ namespace approaching_emergency_vehicle_plugin
           transition_table_.event(ApproachingEmergencyVehicleEvent::ERV_ABOUT_TO_PASS_NOT_IN_PATH);
         }
         else if((0.0 <= tracked_erv_.seconds_until_passing) && (tracked_erv_.seconds_until_passing <= config_.passing_threshold)){
+          // Ego vehicle should slow down since the ERV is considered to be actively passing
+          is_slowing_down_for_erv = true;
+          
           transition_table_.event(ApproachingEmergencyVehicleEvent::ERV_PASSING_NOT_IN_PATH);
         }
         else{
