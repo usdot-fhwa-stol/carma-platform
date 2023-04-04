@@ -30,8 +30,8 @@ namespace approaching_emergency_vehicle_plugin
     double passing_threshold = 15.0;               // (Seconds) If the estimated duration until an ERV passes the ego vehicle is below this, the
                                                    // ERV is considered to be actively passing the ego vehicle.
 
-    double do_not_move_over_threshold = 20.0;      // (Seconds) If the estimated duration until an ERV passes the ego vehicle is below this, the
-                                                   // ERV will no longer attempt to change lanes in reaction to the approaching ERV
+    // double do_not_move_over_threshold = 20.0;      // (Seconds) If the estimated duration until an ERV passes the ego vehicle is below this, the
+    //                                                // ERV will no longer attempt to change lanes in reaction to the approaching ERV
 
     double approaching_threshold = 60.0;           // (Seconds) If the estimated duration until an ERV passes the ego vehicle is below this, the
                                                    // ERV is considered to be approaching the ego vehicle.
@@ -94,7 +94,7 @@ namespace approaching_emergency_vehicle_plugin
     {
       output << "approaching_emergency_vehicle_plugin::Config { " << std::endl
            << "passing_threshold: " << c.passing_threshold << std::endl
-           << "do_not_move_over_threshold: " << c.do_not_move_over_threshold << std::endl
+          //  << "do_not_move_over_threshold: " << c.do_not_move_over_threshold << std::endl
            << "approaching_threshold: " << c.approaching_threshold << std::endl
            << "finished_passing_threshold: " << c.finished_passing_threshold << std::endl
            << "min_lane_following_duration_before_lane_change: " << c.min_lane_following_duration_before_lane_change << std::endl

@@ -308,7 +308,7 @@ namespace approaching_emergency_vehicle_plugin
      * \return None; but function updates the provided 'resp', which is the service response for the Plan Maneuvers service. The maneuver plan in this response will
      * be updated to contain all lane following maneuvers. A stop and wait maneuver will be included at the end if the maneuver plan reaches the end of the route.
      */
-    void generateRemainInLaneManeuverPlan(carma_planning_msgs::srv::PlanManeuvers::Response::SharedPtr resp,
+    void generateReducedSpeedLaneFollowingeManeuverPlan(carma_planning_msgs::srv::PlanManeuvers::Response::SharedPtr resp,
                                 lanelet::ConstLanelet current_lanelet, double downtrack_progress, double current_lanelet_ending_downtrack,
                                 double speed_progress, double target_speed, rclcpp::Time time_progress, bool is_slowing_down_for_erv);
 
@@ -426,7 +426,6 @@ namespace approaching_emergency_vehicle_plugin
     FRIEND_TEST(Testapproaching_emergency_vehicle_plugin, testStateMachineTransitions);
     FRIEND_TEST(Testapproaching_emergency_vehicle_plugin, testBSMProcessing);
     FRIEND_TEST(Testapproaching_emergency_vehicle_plugin, testRouteConflict);
-    FRIEND_TEST(Testapproaching_emergency_vehicle_plugin, testManeuverPlanWhenWaitingForApproachingErv);
     FRIEND_TEST(Testapproaching_emergency_vehicle_plugin, testManeuverPlanWhenSlowingDownForErv);
     FRIEND_TEST(Testapproaching_emergency_vehicle_plugin, testManeuverPlanWhenMovingOverForErv);
     FRIEND_TEST(Testapproaching_emergency_vehicle_plugin, testWarningBroadcast);

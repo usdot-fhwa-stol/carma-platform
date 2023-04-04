@@ -25,7 +25,6 @@ std::ostream& operator<<(std::ostream& os, ApproachingEmergencyVehicleState stat
   {  // clang-format off
     case ApproachingEmergencyVehicleState::NO_APPROACHING_ERV   : os << "NO_APPROACHING_ERV"; break;
     case ApproachingEmergencyVehicleState::MOVING_OVER_FOR_APPROACHING_ERV: os << "MOVING_OVER_FOR_APPROACHING_ERV"; break;
-    case ApproachingEmergencyVehicleState::WAITING_FOR_APPROACHING_ERV : os << "WAITING_FOR_APPROACHING_ERV"; break;
     case ApproachingEmergencyVehicleState::SLOWING_DOWN_FOR_ERV  : os << "SLOWING_DOWN_FOR_ERV"; break;
     default: os.setstate(std::ios_base::failbit);
   }  // clang-format on
@@ -41,10 +40,7 @@ std::ostream& operator<<(std::ostream& os, ApproachingEmergencyVehicleEvent even
     case ApproachingEmergencyVehicleEvent::NO_APPROACHING_ERV: os << "NO_APPROACHING_ERV"; break;
     case ApproachingEmergencyVehicleEvent::APPROACHING_ERV_IN_PATH : os << "APPROACHING_ERV_IN_PATH"; break;
     case ApproachingEmergencyVehicleEvent::APPROACHING_ERV_NOT_IN_PATH  : os << "APPROACHING_ERV_NOT_IN_PATH"; break;
-    case ApproachingEmergencyVehicleEvent::ERV_ABOUT_TO_PASS_IN_PATH  : os << "ERV_ABOUT_TO_PASS_IN_PATH"; break;
-    case ApproachingEmergencyVehicleEvent::ERV_ABOUT_TO_PASS_NOT_IN_PATH  : os << "ERV_ABOUT_TO_PASS_NOT_IN_PATH"; break;
     case ApproachingEmergencyVehicleEvent::ERV_PASSING_IN_PATH  : os << "ERV_PASSING_IN_PATH"; break;
-    case ApproachingEmergencyVehicleEvent::ERV_PASSING_NOT_IN_PATH  : os << "ERV_PASSING_NOT_IN_PATH"; break;
     case ApproachingEmergencyVehicleEvent::ERV_PASSED  : os << "ERV_PASSED"; break;
 
     default: os.setstate(std::ios_base::failbit);

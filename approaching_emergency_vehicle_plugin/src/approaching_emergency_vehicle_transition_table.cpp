@@ -36,10 +36,6 @@ void ApproachingEmergencyVehicleTransitionTable::event(ApproachingEmergencyVehic
       eventWhenMOVING_OVER_FOR_APPROACHING_ERV(event);
       break;
 
-    case ApproachingEmergencyVehicleState::WAITING_FOR_APPROACHING_ERV:
-      eventWhenWAITING_FOR_APPROACHING_ERV(event);
-      break;
-
     case ApproachingEmergencyVehicleState::SLOWING_DOWN_FOR_ERV:
       eventWhenSLOWING_DOWN_FOR_ERV(event);
       break;
@@ -67,22 +63,10 @@ void ApproachingEmergencyVehicleTransitionTable::eventWhenNO_APPROACHING_ERV(App
       break;
 
     case ApproachingEmergencyVehicleEvent::APPROACHING_ERV_NOT_IN_PATH:
-      setAndLogState(ApproachingEmergencyVehicleState::WAITING_FOR_APPROACHING_ERV, event);
-      break;
-
-    case ApproachingEmergencyVehicleEvent::ERV_ABOUT_TO_PASS_IN_PATH:
-      setAndLogState(ApproachingEmergencyVehicleState::WAITING_FOR_APPROACHING_ERV, event);
-      break;
-
-    case ApproachingEmergencyVehicleEvent::ERV_ABOUT_TO_PASS_NOT_IN_PATH:
-      setAndLogState(ApproachingEmergencyVehicleState::WAITING_FOR_APPROACHING_ERV, event);
-      break;
-
-    case ApproachingEmergencyVehicleEvent::ERV_PASSING_IN_PATH:
       setAndLogState(ApproachingEmergencyVehicleState::SLOWING_DOWN_FOR_ERV, event);
       break;
 
-    case ApproachingEmergencyVehicleEvent::ERV_PASSING_NOT_IN_PATH:
+    case ApproachingEmergencyVehicleEvent::ERV_PASSING_IN_PATH:
       setAndLogState(ApproachingEmergencyVehicleState::SLOWING_DOWN_FOR_ERV, event);
       break;
 
@@ -109,64 +93,10 @@ void ApproachingEmergencyVehicleTransitionTable::eventWhenMOVING_OVER_FOR_APPROA
       break;
 
     case ApproachingEmergencyVehicleEvent::APPROACHING_ERV_NOT_IN_PATH:
-      setAndLogState(ApproachingEmergencyVehicleState::WAITING_FOR_APPROACHING_ERV, event);
-      break;
-
-    case ApproachingEmergencyVehicleEvent::ERV_ABOUT_TO_PASS_IN_PATH:
-      setAndLogState(ApproachingEmergencyVehicleState::WAITING_FOR_APPROACHING_ERV, event);
-      break;
-
-    case ApproachingEmergencyVehicleEvent::ERV_ABOUT_TO_PASS_NOT_IN_PATH:
-      setAndLogState(ApproachingEmergencyVehicleState::WAITING_FOR_APPROACHING_ERV, event);
+      setAndLogState(ApproachingEmergencyVehicleState::SLOWING_DOWN_FOR_ERV, event);
       break;
 
     case ApproachingEmergencyVehicleEvent::ERV_PASSING_IN_PATH:
-      setAndLogState(ApproachingEmergencyVehicleState::SLOWING_DOWN_FOR_ERV, event);
-      break;
-
-    case ApproachingEmergencyVehicleEvent::ERV_PASSING_NOT_IN_PATH:
-      setAndLogState(ApproachingEmergencyVehicleState::SLOWING_DOWN_FOR_ERV, event);
-      break;
-
-    default:
-      logDebugEvent(event);
-      break;
-  }
-}
-
-void ApproachingEmergencyVehicleTransitionTable::eventWhenWAITING_FOR_APPROACHING_ERV(ApproachingEmergencyVehicleEvent event)
-{
-  switch (event)
-  {
-    case ApproachingEmergencyVehicleEvent::ERV_UPDATE_TIMEOUT:
-      setAndLogState(ApproachingEmergencyVehicleState::NO_APPROACHING_ERV, event);
-      break;
-
-    case ApproachingEmergencyVehicleEvent::NO_APPROACHING_ERV:
-      setAndLogState(ApproachingEmergencyVehicleState::NO_APPROACHING_ERV, event);
-      break;
-
-    case ApproachingEmergencyVehicleEvent::APPROACHING_ERV_IN_PATH:
-      setAndLogState(ApproachingEmergencyVehicleState::MOVING_OVER_FOR_APPROACHING_ERV, event);
-      break;
-
-    case ApproachingEmergencyVehicleEvent::APPROACHING_ERV_NOT_IN_PATH:
-      setAndLogState(ApproachingEmergencyVehicleState::WAITING_FOR_APPROACHING_ERV, event);
-      break;
-
-    case ApproachingEmergencyVehicleEvent::ERV_ABOUT_TO_PASS_IN_PATH:
-      setAndLogState(ApproachingEmergencyVehicleState::WAITING_FOR_APPROACHING_ERV, event);
-      break;
-
-    case ApproachingEmergencyVehicleEvent::ERV_ABOUT_TO_PASS_NOT_IN_PATH:
-      setAndLogState(ApproachingEmergencyVehicleState::WAITING_FOR_APPROACHING_ERV, event);
-      break;
-
-    case ApproachingEmergencyVehicleEvent::ERV_PASSING_IN_PATH:
-      setAndLogState(ApproachingEmergencyVehicleState::SLOWING_DOWN_FOR_ERV, event);
-      break;
-
-    case ApproachingEmergencyVehicleEvent::ERV_PASSING_NOT_IN_PATH:
       setAndLogState(ApproachingEmergencyVehicleState::SLOWING_DOWN_FOR_ERV, event);
       break;
 

@@ -6,7 +6,7 @@ passing_threshold : 15.0
 # Double: A threshold; if the estimated duration until an ERV passes the ego vehicle is below this, the
 #         ERV will no longer attempt to change lanes in reaction to an approaching ERV.
 # Units: Seconds
-do_not_move_over_threshold : 20.0
+# do_not_move_over_threshold : 20.0
 
 # Double: A threshold; if the estimated duration until an ERV passes the ego vehicle is below this, the
 #         ERV will no longer attempt to change lanes in reaction to an approaching ERV.
