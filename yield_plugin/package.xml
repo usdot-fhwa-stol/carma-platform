@@ -35,7 +35,7 @@
   <depend>autoware_msgs</depend>
   <depend>carma_planning_msgs</depend>
   <depend>carma_v2x_msgs</depend>
-  <depend>carma_wm_ros2</depend>
+  <depend>carma_wm</depend>
   <depend>trajectory_utils_ros2</depend> 
   <depend>lanelet2_extension</depend>
   <depend>carma_perception_msgs</depend>

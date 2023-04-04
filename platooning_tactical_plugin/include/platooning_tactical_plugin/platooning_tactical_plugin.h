@@ -20,13 +20,13 @@
 #include <vector>
 #include <carma_planning_msgs/msg/trajectory_plan.hpp>
 #include <carma_planning_msgs/msg/trajectory_plan_point.hpp>
-#include <carma_wm_ros2/Geometry.hpp>
+#include <carma_wm/Geometry.hpp>
 #include <carma_planning_msgs/srv/plan_trajectory.hpp>
-#include <carma_wm_ros2/WMListener.hpp>
+#include <carma_wm/WMListener.hpp>
 #include <functional>
 #include <unordered_set>
 #include <carma_debug_ros2_msgs/msg/trajectory_curvature_speeds.hpp>
-#include <basic_autonomy_ros2/basic_autonomy.hpp>
+#include <basic_autonomy/basic_autonomy.hpp>
 #include <carma_ros2_utils/timers/TimerFactory.hpp>
 
 #include "platooning_tactical_plugin_config.h"

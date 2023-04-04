@@ -23,8 +23,8 @@
 #include <memory>
 #include <map>
 #include <string>
-#include <carma_wm_ros2/WorldModel.hpp>
-#include <carma_wm_ros2/WMListener.hpp>
+#include <carma_wm/WorldModel.hpp>
+#include <carma_wm/WMListener.hpp>
 #include <rapidjson/document.h>
 
 #include "arbitrator.hpp"

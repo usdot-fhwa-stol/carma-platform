@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2019-2021 LEIDOS.
+ * Copyright (C) 2022 LEIDOS.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -14,25 +14,20 @@
  * the License.
  */
 
-#include <gmock/gmock.h>
+#include <gtest/gtest.h>
 #include <iostream>
-#include <carma_wm/Geometry.h>
+#include <carma_wm/Geometry.hpp>
 #include <lanelet2_core/geometry/LineString.h>
 #include <lanelet2_traffic_rules/TrafficRulesFactory.h>
-#include <autoware_lanelet2_ros_interface/utility/utilities.h>
+#include <autoware_lanelet2_ros2_interface/utility/utilities.hpp>
 #include <lanelet2_core/Attribute.h>
 #include <tf2/LinearMath/Transform.h>
 #include <tf2/LinearMath/Quaternion.h>
 #include <tf2_geometry_msgs/tf2_geometry_msgs.h>
-#include <carma_wm/WMTestLibForGuidance.h>
-#include "TestHelpers.h"
+#include <carma_wm/WMTestLibForGuidance.hpp>
+#include "TestHelpers.hpp"
 
-using ::testing::_;
-using ::testing::A;
-using ::testing::DoAll;
-using ::testing::InSequence;
-using ::testing::Return;
-using ::testing::ReturnArg;
+
 using namespace lanelet::units::literals;
 
 namespace carma_wm
@@ -564,7 +559,7 @@ TEST(GeometryTest, trackPos_line_string)
 
 TEST(Geometry, objectToMapPolygon)
 {
-  geometry_msgs::Pose pose;
+  geometry_msgs::msg::Pose pose;
   pose.position.x = 6;
   pose.position.y = 5;
   pose.position.z = 0;
@@ -577,7 +572,7 @@ TEST(Geometry, objectToMapPolygon)
   pose.orientation.z = tf_orientation.getZ();
   pose.orientation.w = tf_orientation.getW();
 
-  geometry_msgs::Vector3 size;
+  geometry_msgs::msg::Vector3 size;
   size.x = 4;
   size.y = 2;
   size.z = 1;
@@ -597,7 +592,7 @@ TEST(Geometry, objectToMapPolygon)
   ASSERT_NEAR(result[3][1], 3.0, 0.00001);
 }
 
-void rpyFromQuatMsg(const geometry_msgs::Quaternion& q_msg, double& roll, double& pitch, double& yaw)
+void rpyFromQuatMsg(const geometry_msgs::msg::Quaternion& q_msg, double& roll, double& pitch, double& yaw)
 {
   tf2::Quaternion quat;
   tf2::convert(q_msg, quat);

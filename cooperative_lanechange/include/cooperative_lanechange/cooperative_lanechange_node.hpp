@@ -36,7 +36,7 @@
 #include <carma_planning_msgs/msg/trajectory_plan.hpp>
 #include <carma_planning_msgs/msg/lane_change_status.hpp>
 #include <carma_perception_msgs/msg/roadway_obstacle.hpp>
-#include <basic_autonomy_ros2/basic_autonomy.hpp>
+#include <basic_autonomy/basic_autonomy.hpp>
 #include <lanelet2_extension/projection/local_frame_projector.h>
 #include <std_msgs/msg/string.hpp>
 

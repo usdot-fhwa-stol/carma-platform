@@ -30,9 +30,9 @@
 #include <carma_planning_msgs/srv/set_active_route.hpp>
 #include <carma_planning_msgs/srv/abort_active_route.hpp>
 
-#include <carma_wm_ros2/WMListener.hpp>
-#include <carma_wm_ros2/WorldModel.hpp>
-#include <carma_wm_ros2/Geometry.hpp>
+#include <carma_wm/WMListener.hpp>
+#include <carma_wm/WorldModel.hpp>
+#include <carma_wm/Geometry.hpp>
 
 #include <lanelet2_core/geometry/Lanelet.h>
 #include <lanelet2_core/primitives/Lanelet.h>

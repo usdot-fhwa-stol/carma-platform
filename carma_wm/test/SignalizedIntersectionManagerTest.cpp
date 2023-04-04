@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021 LEIDOS.
+ * Copyright (C) 2022 LEIDOS.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -14,25 +14,19 @@
  * the License.
  */
 
-#include <gmock/gmock.h>
-#include <carma_wm/TrafficControl.h>
-#include <carma_wm/SignalizedIntersectionManager.h>
-#include <autoware_lanelet2_ros_interface/utility/message_conversion.h>
+#include <gtest/gtest.h>
+#include <carma_wm/TrafficControl.hpp>
+#include <carma_wm/SignalizedIntersectionManager.hpp>
+#include <autoware_lanelet2_ros2_interface/utility/message_conversion.hpp>
 #include <memory>
 #include <chrono>
 #include <ctime>
 #include <atomic>
-#include "TestHelpers.h"
+#include "TestHelpers.hpp"
 
-#include <cav_msgs/TrafficControlMessage.h>
-#include <carma_wm/WMTestLibForGuidance.h>
+#include <carma_v2x_msgs/msg/traffic_control_message.hpp>
+#include <carma_wm/WMTestLibForGuidance.hpp>
 
-using ::testing::_;
-using ::testing::A;
-using ::testing::DoAll;
-using ::testing::InSequence;
-using ::testing::Return;
-using ::testing::ReturnArg;
 
 namespace carma_wm
 
@@ -65,19 +59,19 @@ TEST(SignalizedIntersectionManger, convertLaneToLaneletId)
   std::unordered_map<uint8_t, lanelet::Id> entry;
   std::unordered_map<uint8_t, lanelet::Id> exit;
 
-  cav_msgs::IntersectionGeometry intersection; //ref_point lat, lon, el = 0;
+  carma_v2x_msgs::msg::IntersectionGeometry intersection; //ref_point lat, lon, el = 0;
   intersection.id.id = 9001;
 
-  cav_msgs::GenericLane lane;
+  carma_v2x_msgs::msg::GenericLane lane;
   lane.lane_id = (uint8_t)1210;
   lane.lane_attributes.directional_use.lane_direction = 2u; //ingress
-  j2735_msgs::Connection connection;
+  j2735_v2x_msgs::msg::Connection connection;
   connection.signal_group = 1;
   connection.connecting_lane.lane = 1211;
 
   lane.connect_to_list.push_back(connection);
 
-  cav_msgs::NodeXY node;
+  carma_v2x_msgs::msg::NodeXY node;
   node.delta.x = 7.5;
   node.delta.y = 25.0;
 
@@ -93,7 +87,7 @@ TEST(SignalizedIntersectionManger, convertLaneToLaneletId)
   lane.lane_id = (uint8_t)1211;
   lane.lane_attributes.directional_use.lane_direction = 1u; // egress imagining intersection 
                                                             // entering 1210 from left and out through 1220
-  lane.node_list = {};
+  lane.node_list = carma_v2x_msgs::msg::NodeListXY();
   lane.connect_to_list = {};
 
   node.delta.x = 7.5;
@@ -109,13 +103,13 @@ TEST(SignalizedIntersectionManger, convertLaneToLaneletId)
 
   sim.convertLaneToLaneletId(entry, exit, intersection, lanelet_map, cwm->getMapRoutingGraph());
 
-  EXPECT_EQ(sim.signal_group_to_entry_lanelet_ids_.size(), 1);
-  EXPECT_EQ(sim.signal_group_to_exit_lanelet_ids_.size(), 1);
+  EXPECT_EQ(sim.signal_group_to_entry_lanelet_ids_.size(), 1u);
+  EXPECT_EQ(sim.signal_group_to_exit_lanelet_ids_.size(), 1u);
 
-  EXPECT_EQ(sim.signal_group_to_entry_lanelet_ids_[1].size(), 1);
-  EXPECT_EQ(sim.signal_group_to_exit_lanelet_ids_[1].size(), 1);
-  EXPECT_EQ(entry.size(), 1);
-  EXPECT_EQ(exit.size(), 1);
+  EXPECT_EQ(sim.signal_group_to_entry_lanelet_ids_[1].size(), 1u);
+  EXPECT_EQ(sim.signal_group_to_exit_lanelet_ids_[1].size(), 1u);
+  EXPECT_EQ(entry.size(), 1u);
+  EXPECT_EQ(exit.size(), 1u);
 }
 
 TEST(SignalizedIntersectionManger, createIntersectionFromMapMsg)
@@ -141,20 +135,20 @@ TEST(SignalizedIntersectionManger, createIntersectionFromMapMsg)
   std::string georeference = "+proj=tmerc +lat_0=0 +lon_0=0 +k=1 +x_0=0 +y_0=0 +datum=WGS84 +units=m +vunits=m +no_defs";
   sim.setTargetFrame(georeference);
     
-  cav_msgs::MapData map_msg;
-  cav_msgs::IntersectionGeometry intersection; //ref_point lat, lon, el = 0;
+  carma_v2x_msgs::msg::MapData map_msg;
+  carma_v2x_msgs::msg::IntersectionGeometry intersection; //ref_point lat, lon, el = 0;
   intersection.id.id = 9001;
 
-  cav_msgs::GenericLane lane;
+  carma_v2x_msgs::msg::GenericLane lane;
   lane.lane_id = (uint8_t)1210;
   lane.lane_attributes.directional_use.lane_direction = 2u; //ingress
-  j2735_msgs::Connection connection;
+  j2735_v2x_msgs::msg::Connection connection;
   connection.signal_group = 1;
   connection.connecting_lane.lane = 1220;
 
   lane.connect_to_list.push_back(connection);
 
-  cav_msgs::NodeXY node;
+  carma_v2x_msgs::msg::NodeXY node;
   node.delta.x = 7.5;
   node.delta.y = 12.5;
 
@@ -170,7 +164,7 @@ TEST(SignalizedIntersectionManger, createIntersectionFromMapMsg)
   lane.lane_id = (uint8_t)1220;
   lane.lane_attributes.directional_use.lane_direction = 1u; // egress imagining intersection 
                                                             // entering 1210 from left and out through 1220
-  lane.node_list = {};
+  lane.node_list = carma_v2x_msgs::msg::NodeListXY();
   lane.connect_to_list = {};
 
   node.delta.x = 12.5;
@@ -190,15 +184,15 @@ TEST(SignalizedIntersectionManger, createIntersectionFromMapMsg)
 
   sim.createIntersectionFromMapMsg(intersections, traffic_signals, map_msg, lanelet_map, cwm->getMapRoutingGraph());
 
-  EXPECT_EQ(sim.signal_group_to_entry_lanelet_ids_.size(), 1);
-  EXPECT_EQ(sim.signal_group_to_exit_lanelet_ids_.size(), 1);
+  EXPECT_EQ(sim.signal_group_to_entry_lanelet_ids_.size(), 1u);
+  EXPECT_EQ(sim.signal_group_to_exit_lanelet_ids_.size(), 1u);
 
   EXPECT_EQ(*sim.signal_group_to_entry_lanelet_ids_[1].begin(), 1210);
   EXPECT_EQ(*sim.signal_group_to_exit_lanelet_ids_[1].begin(), 1220);
   EXPECT_EQ(sim.signal_group_to_traffic_light_id_[1], traffic_signals.front()->id());
-  EXPECT_EQ(sim.intersection_id_to_regem_id_.size(), 1);
-  EXPECT_EQ(intersections.size(), 1);
-  EXPECT_EQ(traffic_signals.size(), 1);
+  EXPECT_EQ(sim.intersection_id_to_regem_id_.size(), 1u);
+  EXPECT_EQ(intersections.size(), 1u);
+  EXPECT_EQ(traffic_signals.size(), 1u);
   
 }
 
@@ -256,8 +250,8 @@ TEST(SignalizedIntersectionManger, createTrafficSignalUsingSGID)
   
   auto signal = sim.createTrafficSignalUsingSGID(1, {lanelet_map->laneletLayer.get(1210)}, {lanelet_map->laneletLayer.get(1220)});
 
-  EXPECT_EQ(sim.signal_group_to_entry_lanelet_ids_.size(), 1);
-  EXPECT_EQ(sim.signal_group_to_exit_lanelet_ids_.size(), 1);
+  EXPECT_EQ(sim.signal_group_to_entry_lanelet_ids_.size(), 1u);
+  EXPECT_EQ(sim.signal_group_to_exit_lanelet_ids_.size(), 1u);
   EXPECT_EQ(sim.signal_group_to_traffic_light_id_[1], signal->id());
 }
 TEST(SignalizedIntersectionManger, identifyInteriorLanelets)
@@ -282,7 +276,7 @@ TEST(SignalizedIntersectionManger, identifyInteriorLanelets)
   
   auto interior = sim.identifyInteriorLanelets({lanelet_map->laneletLayer.get(1203),lanelet_map->laneletLayer.get(1211), lanelet_map->laneletLayer.get(1223)}, lanelet_map);
 
-  EXPECT_EQ(interior.size(), 4);
+  EXPECT_EQ(interior.size(), 4u);
 
 
 }

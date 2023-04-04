@@ -18,7 +18,7 @@
 #include <chrono>
 #include <carma_planning_msgs/msg/maneuver_plan.hpp>
 #include <carma_planning_msgs/srv/plan_trajectory.hpp>
-#include <carma_wm_ros2/WMTestLibForGuidance.hpp>
+#include <carma_wm/WMTestLibForGuidance.hpp>
 #include <gtest/gtest.h>
 #include <rclcpp/rclcpp.hpp>
 #include "plan_delegator.hpp"

@@ -17,9 +17,9 @@
 #include "route_following_plugin.hpp"
 #include <gtest/gtest.h>
 #include <rclcpp/rclcpp.hpp>
-#include <carma_wm_ros2/WMTestLibForGuidance.hpp>
-#include <carma_wm_ros2/WMTestLibForGuidance.hpp>
-#include <carma_wm_ros2/CARMAWorldModel.hpp>
+#include <carma_wm/WMTestLibForGuidance.hpp>
+#include <carma_wm/WMTestLibForGuidance.hpp>
+#include <carma_wm/CARMAWorldModel.hpp>
 #include <lanelet2_core/LaneletMap.h>
 #include <string>
 

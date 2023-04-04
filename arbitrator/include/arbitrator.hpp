@@ -20,7 +20,7 @@
 #include <rclcpp/rclcpp.hpp>
 #include <carma_ros2_utils/carma_lifecycle_node.hpp>
 #include <carma_planning_msgs/msg/guidance_state.hpp>
-#include <carma_wm_ros2/WorldModel.hpp>
+#include <carma_wm/WorldModel.hpp>
 #include <geometry_msgs/msg/pose_stamped.hpp>
 #include <geometry_msgs/msg/twist_stamped.hpp>
 #include <tf2_ros/transform_listener.h>

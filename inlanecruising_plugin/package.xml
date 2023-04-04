@@ -33,8 +33,8 @@
   <depend>rclcpp_components</depend>
   <depend>carma_planning_msgs</depend>
   <depend>carma_guidance_plugins</depend>
-  <depend>carma_wm_ros2</depend>
-  <depend>basic_autonomy_ros2</depend>
+  <depend>carma_wm</depend>
+  <depend>basic_autonomy</depend>
   <depend>tf2</depend>
   <depend>tf2_geometry_msgs</depend> 
   <depend>trajectory_utils</depend>   

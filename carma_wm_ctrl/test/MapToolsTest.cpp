@@ -19,7 +19,7 @@
  */
 
 #include <gtest/gtest.h>
-#include <carma_wm_ros2/MapConformer.hpp>
+#include <carma_wm/MapConformer.hpp>
 #include <lanelet2_io/Io.h>
 #include <lanelet2_io/io_handlers/Factory.h>
 #include <lanelet2_io/io_handlers/Writer.h>
@@ -28,7 +28,7 @@
 #include <autoware_lanelet2_ros2_interface/utility/utilities.hpp>
 #include <lanelet2_extension/projection/local_frame_projector.h>
 #include <lanelet2_extension/io/autoware_osm_parser.h>
-#include <carma_wm_ros2/CARMAWorldModel.hpp>
+#include <carma_wm/CARMAWorldModel.hpp>
 #include <unordered_set>
 #include "TestHelpers.hpp"
 #include <iostream>

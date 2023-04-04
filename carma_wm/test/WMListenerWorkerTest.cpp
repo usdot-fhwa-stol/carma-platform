@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2019-2021 LEIDOS.
+ * Copyright (C) 2022 LEIDOS.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -14,34 +14,28 @@
  * the License.
  */
 
-#include <gmock/gmock.h>
+#include <gtest/gtest.h>
 #include <iostream>
-#include <autoware_lanelet2_ros_interface/utility/message_conversion.h>
-#include <../src/WMListenerWorker.h>
-#include <carma_wm/CARMAWorldModel.h>
+#include <autoware_lanelet2_ros2_interface/utility/message_conversion.hpp>
+#include <../src/WMListenerWorker.hpp>
+#include <carma_wm/CARMAWorldModel.hpp>
 #include <lanelet2_core/geometry/LineString.h>
 #include <lanelet2_traffic_rules/TrafficRulesFactory.h>
 #include <lanelet2_core/Attribute.h>
 #include <boost/archive/binary_oarchive.hpp>
 #include <sstream>
 #include <string>
-#include "TestHelpers.h"
-#include <carma_wm/MapConformer.h>
+#include "TestHelpers.hpp"
+#include <carma_wm/MapConformer.hpp>
 #include <lanelet2_io/Io.h>
 #include <lanelet2_io/io_handlers/Factory.h>
 #include <lanelet2_io/io_handlers/Writer.h>
 #include <lanelet2_extension/traffic_rules/CarmaUSTrafficRules.h>
-#include <autoware_lanelet2_ros_interface/utility/query.h>
-#include <autoware_lanelet2_ros_interface/utility/utilities.h>
+#include <autoware_lanelet2_ros2_interface/utility/query.hpp>
+#include <autoware_lanelet2_ros2_interface/utility/utilities.hpp>
 #include <lanelet2_extension/projection/local_frame_projector.h>
 #include <lanelet2_extension/io/autoware_osm_parser.h>
 
-using ::testing::_;
-using ::testing::A;
-using ::testing::DoAll;
-using ::testing::InSequence;
-using ::testing::Return;
-using ::testing::ReturnArg;
 
 namespace carma_wm
 {
@@ -64,10 +58,8 @@ TEST(WMListenerWorkerTest, mapCallback)
 
   auto map_ptr = lanelet::utils::removeConst(cwm.getMap());
 
-  autoware_lanelet2_msgs::MapBin msg;
+  autoware_lanelet2_msgs::msg::MapBin msg;
   lanelet::utils::conversion::toBinMsg(map_ptr, &msg);
-
-  autoware_lanelet2_msgs::MapBinConstPtr map_msg_ptr(new autoware_lanelet2_msgs::MapBin(msg));
 
   WMListenerWorker wmlw;
 
@@ -75,7 +67,7 @@ TEST(WMListenerWorkerTest, mapCallback)
   ASSERT_FALSE((bool)(wmlw.getWorldModel()->getMap()));
 
   ///// Test Map callback without user callback
-  wmlw.mapCallback(map_msg_ptr);
+  wmlw.mapCallback(std::make_unique<autoware_lanelet2_msgs::msg::MapBin>(msg));
   ASSERT_TRUE((bool)(wmlw.getWorldModel()->getMap()));
 
   ///// Test user defined callback
@@ -84,7 +76,7 @@ TEST(WMListenerWorkerTest, mapCallback)
 
   wmlw.setMapCallback([&flag]() { flag = true; });
 
-  wmlw.mapCallback(map_msg_ptr);
+  wmlw.mapCallback(std::make_unique<autoware_lanelet2_msgs::msg::MapBin>(msg));
 
   ASSERT_TRUE(flag);
 }
@@ -103,46 +95,42 @@ TEST(WMListenerWorkerTest, routeCallback)
 
   auto map_ptr = lanelet::utils::removeConst(cwm.getMap());
 
-  autoware_lanelet2_msgs::MapBin msg;
+  autoware_lanelet2_msgs::msg::MapBin msg;
   lanelet::utils::conversion::toBinMsg(map_ptr, &msg);
 
-  autoware_lanelet2_msgs::MapBinConstPtr map_msg_ptr(new autoware_lanelet2_msgs::MapBin(msg));
-
-  cav_msgs::Route route_msg;
+  carma_planning_msgs::msg::Route route_msg;
   route_msg.shortest_path_lanelet_ids.push_back(cwm.getRoute()->shortestPath()[0].id());
   route_msg.shortest_path_lanelet_ids.push_back(cwm.getRoute()->shortestPath()[1].id());
-  cav_msgs::RouteConstPtr rpt(new cav_msgs::Route(route_msg));
 
   //// Test route callback without map to verify no crash
-  wmlw.routeCallback(rpt);
+  wmlw.routeCallback(std::make_unique<carma_planning_msgs::msg::Route>(route_msg));
 
-  wmlw.mapCallback(map_msg_ptr);
+  wmlw.mapCallback(std::make_unique<autoware_lanelet2_msgs::msg::MapBin>(msg));
 
   ///// Test without user defined route callback
-  wmlw.routeCallback(rpt);
+  wmlw.routeCallback(std::make_unique<carma_planning_msgs::msg::Route>(route_msg));
 
   bool flag = false;
 
   ///// Test without user defined route callback
-  wmlw.routeCallback(rpt);
+  wmlw.routeCallback(std::make_unique<carma_planning_msgs::msg::Route>(route_msg));
 
   ASSERT_FALSE(flag);
 
   ///// Test with user defined route callback
   wmlw.setRouteCallback([&flag]() { flag = true; });
 
-  wmlw.routeCallback(rpt);
+  wmlw.routeCallback(std::make_unique<carma_planning_msgs::msg::Route>(route_msg));
 
   ASSERT_TRUE(flag);
 
   ///test route_node_flag_ and rerouting_flag_
-  autoware_lanelet2_msgs::MapBin geofence_msg;
+  autoware_lanelet2_msgs::msg::MapBin geofence_msg;
   geofence_msg.invalidates_route=true;
-  autoware_lanelet2_msgs::MapBinPtr geo_ptr(new autoware_lanelet2_msgs::MapBin(geofence_msg));
 
-  wmlw.mapUpdateCallback(geo_ptr);
+  wmlw.mapUpdateCallback(std::make_unique<autoware_lanelet2_msgs::msg::MapBin>(geofence_msg));
   wmlw.enableUpdatesWithoutRoute();
-  wmlw.routeCallback(rpt);
+  wmlw.routeCallback(std::make_unique<carma_planning_msgs::msg::Route>(route_msg));
   
 }
 
@@ -176,7 +164,7 @@ TEST(WMListenerWorkerTest, mapUpdateCallback)
   gf_ptr->update_list_.push_back(std::make_pair(ll_1.id(), speed_limit_new));
 
   // from broadcaster
-  autoware_lanelet2_msgs::MapBin gf_obj_msg;
+  autoware_lanelet2_msgs::msg::MapBin gf_obj_msg;
   auto received_data = std::make_shared<carma_wm::TrafficControl>(carma_wm::TrafficControl(gf_ptr->id_, gf_ptr->update_list_, gf_ptr->remove_list_, {ll_2}));
   carma_wm::toBinMsg(received_data, &gf_obj_msg);
 
@@ -185,10 +173,10 @@ TEST(WMListenerWorkerTest, mapUpdateCallback)
   // create basic map
   ll_1.addRegulatoryElement(speed_limit_old);
   lanelet::LaneletMapPtr map = lanelet::utils::createMap({ ll_1 }, { });
-  autoware_lanelet2_msgs::MapBin map_msg;
+  autoware_lanelet2_msgs::msg::MapBin map_msg;
   lanelet::utils::conversion::toBinMsg(map, &map_msg);
-  autoware_lanelet2_msgs::MapBinConstPtr map_msg_ptr(new autoware_lanelet2_msgs::MapBin(map_msg));
-  wmlw.mapCallback(map_msg_ptr);
+
+  wmlw.mapCallback(std::make_unique<autoware_lanelet2_msgs::msg::MapBin>(map_msg));
 
   // make sure it had old speed limit before
   auto regems = wmlw.getWorldModel()->getMap()->laneletLayer.get(ll_1.id()).regulatoryElements();
@@ -198,8 +186,7 @@ TEST(WMListenerWorkerTest, mapUpdateCallback)
             wmlw.getWorldModel()->getMap()->regulatoryElementLayer.end());
 
   // test the MapUpdateCallback
-  auto gf_msg_ptr =  boost::make_shared<autoware_lanelet2_msgs::MapBin>(gf_obj_msg);
-  wmlw.mapUpdateCallback(gf_msg_ptr);
+  wmlw.mapUpdateCallback(std::make_unique<autoware_lanelet2_msgs::msg::MapBin>(gf_obj_msg));
   
   // check if the map has the new speed limit now
   regems = wmlw.getWorldModel()->getMap()->laneletLayer.get(ll_1.id()).regulatoryElements();
@@ -231,31 +218,31 @@ TEST(WMListenerWorkerTest, mapUpdateCallback)
   gf_ptr->remove_list_.push_back(std::make_pair(ll_1.id(), speed_limit_new));
 
   // reverse ros msg from broadcaster
-  autoware_lanelet2_msgs::MapBin gf_reverse_msg;
+  autoware_lanelet2_msgs::msg::MapBin gf_reverse_msg;
   auto reverse_data = std::make_shared<carma_wm::TrafficControl>(carma_wm::TrafficControl(gf_ptr->id_, gf_ptr->update_list_, gf_ptr->remove_list_, {}));
   carma_wm::toBinMsg(reverse_data, &gf_reverse_msg);
   gf_reverse_msg.seq_id +=2;
 
   // test the MapUpdateCallback reverse
-  auto gf_rev_msg_ptr =  boost::make_shared<autoware_lanelet2_msgs::MapBin>(gf_reverse_msg);
+  auto gf_rev_msg_ptr =  boost::make_shared<autoware_lanelet2_msgs::msg::MapBin>(gf_reverse_msg);
   gf_obj_msg.seq_id ++;
-  gf_msg_ptr =  boost::make_shared<autoware_lanelet2_msgs::MapBin>(gf_obj_msg);
-  EXPECT_THROW(wmlw.mapUpdateCallback(gf_msg_ptr), lanelet::InvalidInputError); // because we are trying update the exact same llt and regem relationship again
-  wmlw.mapUpdateCallback(gf_rev_msg_ptr);
+  EXPECT_THROW(wmlw.mapUpdateCallback(std::make_unique<autoware_lanelet2_msgs::msg::MapBin>(gf_obj_msg)), lanelet::InvalidInputError); // because we are trying update the exact same llt and regem relationship again
+  wmlw.mapUpdateCallback(std::make_unique<autoware_lanelet2_msgs::msg::MapBin>(gf_reverse_msg));
 
   // check above conditions again on old speed
   regems = wmlw.getWorldModel()->getMap()->laneletLayer.get(ll_1.id()).regulatoryElements();
   ASSERT_EQ(regems.size(), 1);
-  ASSERT_EQ(regems[0]->id(), speed_limit_old->id());
+  ASSERT_EQ(regems[0]->id(), speed_limit_old->id()); //TODO- fix
   // and it is queryable:
   ASSERT_NE(wmlw.getWorldModel()->getMap()->regulatoryElementLayer.find(speed_limit_old->id()), 
             wmlw.getWorldModel()->getMap()->regulatoryElementLayer.end());
 
   // old_speed_limit's data is also stored at a different address from the one we created locally because
   // we serialized the whole map and deserialized before setting the map.
-  ASSERT_EQ(wmlw.getWorldModel()->getMap()->regulatoryElementLayer.get(speed_limit_old->id()), regem_old_correct_data);
+  ASSERT_EQ(wmlw.getWorldModel()->getMap()->regulatoryElementLayer.get(speed_limit_old->id()), regem_old_correct_data); //TODO- fix
   ASSERT_EQ(wmlw.getWorldModel()->getMap()->laneletLayer.findUsages(regem_old_correct_data).size(), 1);
-  ASSERT_EQ(wmlw.getWorldModel()->getMap()->laneletLayer.findUsages(regem_old_correct_data)[0].id(), ll_1.id());
+  ASSERT_EQ(wmlw.getWorldModel()->getMap()->laneletLayer.findUsages(regem_old_correct_data)[0].id(), ll_1.id()); //TODO- fix
+  
 }
 
 TEST(WMListenerWorkerTest, setConfigSpeedLimitTest)
@@ -271,7 +258,7 @@ TEST(WMListenerWorkerTest, setConfigSpeedLimitTest)
   current_cl = wmlw.getConfigSpeedLimit();
 
   ASSERT_EQ(cL, current_cl);
-  ROS_INFO_STREAM("config_speed_limit = "<< current_cl);
+  RCLCPP_INFO_STREAM(rclcpp::get_logger("WMListenerWorkerTest"), "config_speed_limit = "<< current_cl);
 }
 
 TEST(WMListenerWorkerTest, getVehicleParticipationTypeTest)
@@ -287,7 +274,7 @@ TEST(WMListenerWorkerTest, getVehicleParticipationTypeTest)
   current_pt = wmlw.getVehicleParticipationType();
 
   ASSERT_EQ(pt, current_pt);
-  ROS_INFO_STREAM("Participant = "<< current_pt);
+  RCLCPP_INFO_STREAM(rclcpp::get_logger("WMListenerWorkerTest"),"Participant = "<< current_pt);
 }
 
 TEST(WMListenerWorkerTest, checkIfReRoutingNeeded1)
@@ -305,23 +292,20 @@ TEST(WMListenerWorkerTest, checkIfReRoutingNeeded2)
 
   auto map_ptr = lanelet::utils::removeConst(cwm.getMap());
 
-  autoware_lanelet2_msgs::MapBin msg;
+  autoware_lanelet2_msgs::msg::MapBin msg;
   lanelet::utils::conversion::toBinMsg(map_ptr, &msg);
 
-  autoware_lanelet2_msgs::MapBinConstPtr map_msg_ptr(new autoware_lanelet2_msgs::MapBin(msg));
+  wmlw.mapCallback(std::make_unique<autoware_lanelet2_msgs::msg::MapBin>(msg));
 
-  wmlw.mapCallback(map_msg_ptr);
-
-  cav_msgs::Route route_msg;
+  carma_planning_msgs::msg::Route route_msg;
   route_msg.shortest_path_lanelet_ids.push_back(cwm.getRoute()->shortestPath()[0].id());
   route_msg.shortest_path_lanelet_ids.push_back(cwm.getRoute()->shortestPath()[1].id());
-  cav_msgs::RouteConstPtr rpt(new cav_msgs::Route(route_msg));
-  wmlw.routeCallback(rpt);
+  wmlw.routeCallback(std::make_unique<carma_planning_msgs::msg::Route>(route_msg));
 
-  autoware_lanelet2_msgs::MapBin geofence_msg;
+  autoware_lanelet2_msgs::msg::MapBin geofence_msg;
   geofence_msg.invalidates_route=true;
-  autoware_lanelet2_msgs::MapBinPtr geo_ptr(new autoware_lanelet2_msgs::MapBin(geofence_msg));
-  wmlw.mapUpdateCallback(geo_ptr);
+
+  wmlw.mapUpdateCallback(std::make_unique<autoware_lanelet2_msgs::msg::MapBin>(geofence_msg));
   ASSERT_EQ(true, wmlw.checkIfReRoutingNeeded());
 }
 

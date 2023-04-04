@@ -152,7 +152,7 @@ Carma Platform:
 
 Enhancements in this release:
 
-- Issue 1766: Updated port the Traffic Incident Parser node to ROS2 and updated several subscribers and publishers created within carma_wm_ros2 in order to support publishers being able to re-publish earlier messages to late-joining subscribers.
+- Issue 1766: Updated port the Traffic Incident Parser node to ROS2 and updated several subscribers and publishers created within carma_wm in order to support publishers being able to re-publish earlier messages to late-joining subscribers.
 - Issue 1762: Updated LCI (Light Controlled Intersection) Strategic Plugin so that it uses the scheduled message from the intersection for setting its ET algorithm parameters instead of computing them based on SPAT if the message is available.
 - Issue 1793: Updated Carma wm_ctrl timer classes to Ros2 and changed bridge map directions to 2 to 1 in Carma-config.
 - Issue 1812: Updated Configuration parameters in Platooning Strategic IHP logic for enable/disable Front& Rear cut-in join functionality.

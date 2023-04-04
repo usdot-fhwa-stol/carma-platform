@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2021 LEIDOS.
+ * Copyright (C) 2022 LEIDOS.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -16,16 +16,16 @@
 
 #include <boost/archive/binary_iarchive.hpp>
 #include <boost/archive/binary_oarchive.hpp>
-#include <carma_wm/TrafficControl.h>
+#include <carma_wm/TrafficControl.hpp>
 
 namespace carma_wm
 {
 
-void toBinMsg(std::shared_ptr<carma_wm::TrafficControl> gf_ptr, autoware_lanelet2_msgs::MapBin* msg)
+void toBinMsg(std::shared_ptr<carma_wm::TrafficControl> gf_ptr, autoware_lanelet2_msgs::msg::MapBin* msg)
 {
   if (msg == nullptr)
   {
-    ROS_ERROR_STREAM(__FUNCTION__ << ": msg is null pointer!");
+    RCLCPP_ERROR_STREAM(rclcpp::get_logger("carma_wm::TrafficControl"), __FUNCTION__ << ": msg is null pointer!");
     return;
   }
   std::stringstream ss;
@@ -37,11 +37,11 @@ void toBinMsg(std::shared_ptr<carma_wm::TrafficControl> gf_ptr, autoware_lanelet
   msg->data.assign(data_str.begin(), data_str.end());
 }
 
-void fromBinMsg(const autoware_lanelet2_msgs::MapBin& msg, std::shared_ptr<carma_wm::TrafficControl> gf_ptr, lanelet::LaneletMapPtr lanelet_map)
+void fromBinMsg(const autoware_lanelet2_msgs::msg::MapBin& msg, std::shared_ptr<carma_wm::TrafficControl> gf_ptr, lanelet::LaneletMapPtr lanelet_map)
 {
   if (!gf_ptr)
   {
-    ROS_ERROR_STREAM(__FUNCTION__ << ": gf_ptr is null pointer!");
+    RCLCPP_ERROR_STREAM(rclcpp::get_logger("carma_wm::TrafficControl"), __FUNCTION__ << ": gf_ptr is null pointer!");
     return;
   }
 
@@ -57,7 +57,7 @@ void fromBinMsg(const autoware_lanelet2_msgs::MapBin& msg, std::shared_ptr<carma
   if (!lanelet_map)
     return;
   
-  ROS_DEBUG_STREAM("Lanelet Map is provided to match memory addresses of received binary map update");
+  RCLCPP_DEBUG_STREAM(rclcpp::get_logger("carma_wm::TrafficControl"), "Lanelet Map is provided to match memory addresses of received binary map update");
  
   lanelet::utils::OverwriteParameterVisitor memory_visitor(lanelet_map);
   // It is sufficient to check single regem as carma_wm_ctrl sends only one type of regem in each list
@@ -66,7 +66,7 @@ void fromBinMsg(const autoware_lanelet2_msgs::MapBin& msg, std::shared_ptr<carma
   if (!gf_ptr->remove_list_.empty())
     gf_ptr->remove_list_.front().second->applyVisitor(memory_visitor);
   
-  ROS_DEBUG_STREAM("Done resolving memory addresses of received regulatory elements!");
+  RCLCPP_DEBUG_STREAM(rclcpp::get_logger("carma_wm::TrafficControl"), "Done resolving memory addresses of received regulatory elements!");
 }
 
 }  // namespace carma_wm

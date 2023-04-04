@@ -30,7 +30,7 @@
   <depend>carma_ros2_utils</depend>
   <depend>carma_planning_msgs</depend>
   <depend>autoware_msgs</depend>
-  <depend>carma_wm_ros2</depend>
+  <depend>carma_wm</depend>
 
   <test_depend>ament_lint_auto</test_depend>
   <test_depend>ament_cmake_gtest</test_depend>
