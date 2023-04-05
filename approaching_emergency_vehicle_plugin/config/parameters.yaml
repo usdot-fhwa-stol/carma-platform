@@ -6,11 +6,6 @@ passing_threshold : 15.0
 # Double: A threshold; if the estimated duration until an ERV passes the ego vehicle is below this, the
 #         ERV will no longer attempt to change lanes in reaction to an approaching ERV.
 # Units: Seconds
-# do_not_move_over_threshold : 20.0
-
-# Double: A threshold; if the estimated duration until an ERV passes the ego vehicle is below this, the
-#         ERV will no longer attempt to change lanes in reaction to an approaching ERV.
-# Units: Seconds
 approaching_threshold : 60.0
 
 # Double: A threshold; an actively-passing ERV is considered to have completed passing the ego vehicle when
@@ -79,14 +74,18 @@ minimal_plan_duration : 15.0
 # Units: Meters
 buffer_distance_before_stopping : 45.0
 
-# Multiplier for the acceleration limit which will be used for formulating the stopping maneuver
+# Double: Multiplier for the acceleration limit which will be used for formulating the stopping maneuver
 # NOTE: This multiplier should be lower than the value used by the plugin that will be used to bring the vehicle to a stop to provide buffer in planning
 # Units: m/s^2
 stopping_accel_limit_multiplier : 0.5
 
-# The distance from the route end point in which the trajectory planner will attempt to stop the ego vehicle for a stop and wait maneuver.
+# Double: The distance from the route end point in which the trajectory planner will attempt to stop the ego vehicle for a stop and wait maneuver.
 # Units: Meters
 route_end_point_buffer : 10.0
+
+# Double: he length of the host vehicle from its front bumper to its rear bumper.
+# Units: Meters
+vehicle_length : 4.0
 
 # String : The tactical plugin being used for lane following.
 # Units: N/A

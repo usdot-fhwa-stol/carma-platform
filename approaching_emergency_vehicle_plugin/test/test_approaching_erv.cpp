@@ -83,6 +83,8 @@ namespace approaching_emergency_vehicle_plugin{
         worker_node->configure(); //Call configure state transition
         worker_node->activate();  //Call activate state transition to get not read for runtime
 
+        worker_node->config_.vehicle_length = 4.0; // Set vehicle length since the 'seconds until passing' provides the value with regards to the ego vehicle's rear bumper
+
         // create semantic map with lane width 3.7 meters and lanelet length 25.0 meters (3 adjacent lanes; each 4 lanelets long)
         lanelet::LaneletMapPtr map = carma_wm::test::buildGuidanceTestMap(3.7, 25.0);
 
@@ -124,7 +126,7 @@ namespace approaching_emergency_vehicle_plugin{
         // Verify that ERV will pass ego vehicle in ~5 seconds (ERV is 50 meters behind ego vehicle and travelling 10 m/s faster)
         boost::optional<double> seconds_until_passing = worker_node->getSecondsUntilPassing(erv_future_route, erv_current_position_in_map, erv_speed, *intersecting_lanelet);
         ASSERT_TRUE(seconds_until_passing);
-        ASSERT_NEAR(seconds_until_passing.get(), 5.0, 0.01);
+        ASSERT_NEAR(seconds_until_passing.get(), 4.59, 0.01);
     }
 
     TEST(Testapproaching_emergency_vehicle_plugin, testBSMProcessing){
@@ -809,7 +811,7 @@ namespace approaching_emergency_vehicle_plugin{
         
         // Set configuration parameters relevant to this unit test
         worker_node->config_.passing_threshold = 10.0; // Seconds
-        worker_node->config_.warning_broadcast_frequency = 1; // Hz
+        worker_node->config_.warning_broadcast_frequency = 1.1; // Hz
         worker_node->config_.max_warning_broadcasts = 3;
 
         //**********************//

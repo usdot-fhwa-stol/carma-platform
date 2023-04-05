@@ -30,9 +30,6 @@ namespace approaching_emergency_vehicle_plugin
     double passing_threshold = 15.0;               // (Seconds) If the estimated duration until an ERV passes the ego vehicle is below this, the
                                                    // ERV is considered to be actively passing the ego vehicle.
 
-    // double do_not_move_over_threshold = 20.0;      // (Seconds) If the estimated duration until an ERV passes the ego vehicle is below this, the
-    //                                                // ERV will no longer attempt to change lanes in reaction to the approaching ERV
-
     double approaching_threshold = 60.0;           // (Seconds) If the estimated duration until an ERV passes the ego vehicle is below this, the
                                                    // ERV is considered to be approaching the ego vehicle.
 
@@ -80,6 +77,8 @@ namespace approaching_emergency_vehicle_plugin
 
     int max_warning_broadcasts = 5;                // The maximum number of times that an EmergencyVehicleResponse warning message will be broadcasted to an ERV if an
                                                    // EmergencyVehicleAck message is not received from the ERV.
+
+    double vehicle_length = 4.0;                   // (Meters) The length of the host vehicle from its front bumper to its rear bumper.
 
     std::string lane_following_plugin = "inlanecruising_plugin"; // (No Units) The tactical plugin being used for lane following.
 

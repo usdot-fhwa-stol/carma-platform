@@ -64,6 +64,7 @@ namespace approaching_emergency_vehicle_plugin
     config_.approaching_erv_status_publication_frequency = declare_parameter<double>("approaching_erv_status_publication_frequency", config_.approaching_erv_status_publication_frequency);
     config_.warning_broadcast_frequency = declare_parameter<double>("warning_broadcast_frequency", config_.warning_broadcast_frequency);
     config_.max_warning_broadcasts = declare_parameter<int>("max_warning_broadcasts", config_.max_warning_broadcasts);
+    config_.vehicle_length = declare_parameter<double>("vehicle_length", config_.vehicle_length);
     config_.lane_following_plugin = declare_parameter<std::string>("lane_following_plugin", config_.lane_following_plugin);
     config_.lane_change_plugin = declare_parameter<std::string>("lane_change_plugin", config_.lane_change_plugin);
     config_.vehicle_id = declare_parameter<std::string>("vehicle_id", config_.vehicle_id);
@@ -91,7 +92,8 @@ namespace approaching_emergency_vehicle_plugin
         {"vehicle_acceleration_limit", config_.vehicle_acceleration_limit},
         {"route_end_point_buffer", config_.route_end_point_buffer},
         {"approaching_erv_status_publication_frequency", config_.approaching_erv_status_publication_frequency},
-        {"warning_broadcast_frequency", config_.warning_broadcast_frequency}
+        {"warning_broadcast_frequency", config_.warning_broadcast_frequency},
+        {"vehicle_length", config_.vehicle_length}
     }, parameters);
 
     auto error_2 = update_params<int>({
@@ -138,6 +140,7 @@ namespace approaching_emergency_vehicle_plugin
     get_parameter<double>("route_end_point_buffer", config_.route_end_point_buffer);
     get_parameter<double>("approaching_erv_status_publication_frequency", config_.approaching_erv_status_publication_frequency);
     get_parameter<double>("warning_broadcast_frequency", config_.warning_broadcast_frequency);
+    get_parameter<double>("vehicle_length", config_.vehicle_length);
     get_parameter<int>("max_warning_broadcasts", config_.max_warning_broadcasts);
     get_parameter<std::string>("lane_following_plugin", config_.lane_following_plugin);
     get_parameter<std::string>("lane_change_plugin", config_.lane_change_plugin);
@@ -655,8 +658,8 @@ namespace approaching_emergency_vehicle_plugin
     lanelet::ConstLineString2d intersecting_centerline = lanelet::utils::to2D(intersecting_lanelet.centerline());
     lanelet::BasicPoint2d intersecting_end_point = intersecting_centerline.back();
 
-    // Get ego vehicle's distance to the intersecting lanelet's centerline endpoint
-    double ego_dist_to_lanelet = wm_->routeTrackPos(intersecting_end_point).downtrack - latest_route_state_.down_track;
+    // Get ego vehicle's (its rear bumper) distance to the intersecting lanelet's centerline endpoint
+    double ego_dist_to_lanelet = wm_->routeTrackPos(intersecting_end_point).downtrack - (latest_route_state_.down_track - config_.vehicle_length);
 
     // Set erv_world_model_ route to the erv_future_route
     lanelet::routing::Route route = std::move(*erv_future_route);
