@@ -1300,9 +1300,9 @@ namespace approaching_emergency_vehicle_plugin
           }
 
           // Set flag to broadcast EmergencyVehicleResponse warning messages to ERV if they have not already been broadcasted
-          if(!tracked_erv_.has_triggered_warning_messages){
+          if(!has_broadcasted_warning_messages_){
             should_broadcast_warnings_ = true;
-            tracked_erv_.has_triggered_warning_messages = true;
+            has_broadcasted_warning_messages_ = true;
           }
         }
         else{

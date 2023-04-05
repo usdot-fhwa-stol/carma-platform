@@ -812,9 +812,19 @@ namespace approaching_emergency_vehicle_plugin{
         worker_node->config_.warning_broadcast_frequency = 1; // Hz
         worker_node->config_.max_warning_broadcasts = 3;
 
+        //**********************//
+        // TEST 1: The plugin transitions to the SLOWING_DOWN_FOR_ERV state when the ego vehicle is in the same lane as the approaching 
+        //         ERV. As a result, the ego vehicle will broadcast warning messages until the maximum amount has been broadcasted.
+        //**********************//
+
         worker_node->has_tracked_erv_ = true;
         worker_node->tracked_erv_.lane_index = 0; // Plan maneuvers request will place ego vehicle in rightmost lane as well
         worker_node->tracked_erv_.seconds_until_passing = 9.0;
+
+        // Verify the correct default values of the plugin's internal data members related to broadcasted warning messages
+        ASSERT_EQ(worker_node->num_warnings_broadcasted_, 0);
+        ASSERT_FALSE(worker_node->should_broadcast_warnings_);
+        ASSERT_FALSE(worker_node->has_broadcasted_warning_messages_);
 
         // Create plan maneuvers service request for worker_node
         auto req = std::make_shared<carma_planning_msgs::srv::PlanManeuvers::Request>();
@@ -840,6 +850,7 @@ namespace approaching_emergency_vehicle_plugin{
         // Verify that the state transition resulting from the plan maneuvers request triggers the node to set should_broadcast_warnings to true
         ASSERT_EQ(worker_node->num_warnings_broadcasted_, 0);
         ASSERT_TRUE(worker_node->should_broadcast_warnings_);
+        ASSERT_TRUE(worker_node->has_broadcasted_warning_messages_);
 
         // Add Node to an executor and spin it to trigger timer callbacks
         rclcpp::executors::MultiThreadedExecutor executor;
@@ -863,6 +874,51 @@ namespace approaching_emergency_vehicle_plugin{
         // Verify that node has broadcasted all warning messages and counter has been reset to 0
         ASSERT_EQ(worker_node->num_warnings_broadcasted_, 0);
         ASSERT_FALSE(worker_node->should_broadcast_warnings_); // Node should no longer be broadcasting warnings since all have been broadcasted
+        
+        //**********************//
+        // TEST 2: The plugin transitions to the SLOWING_DOWN_FOR_ERV state when the ego vehicle is in the same lane as the approaching 
+        //         ERV. As a result, the ego vehicle will broadcast warning messages until a proper EmergencyVehicleAck message is received.
+        //**********************//
+
+        // Reset the internal data members related to broadcasted warning messages to their default values
+        worker_node->num_warnings_broadcasted_ = 0;
+        worker_node->should_broadcast_warnings_ = false;
+        worker_node->has_broadcasted_warning_messages_ = false;
+
+        // Set configuration parameters relevant to this unit test
+        worker_node->config_.passing_threshold = 10.0; // Seconds
+        worker_node->config_.warning_broadcast_frequency = 1; // Hz
+        worker_node->config_.max_warning_broadcasts = 3;
+
+        auto resp2 = std::make_shared<carma_planning_msgs::srv::PlanManeuvers::Response>();
+        worker_node->plan_maneuvers_callback(header_srv, req, resp2);   
+
+        ASSERT_EQ(worker_node->transition_table_.getState(), ApproachingEmergencyVehicleState::SLOWING_DOWN_FOR_ERV);
+
+        // Spin executor for 1 second
+        end_time = std::chrono::system_clock::now() + std::chrono::seconds(1);
+        while(std::chrono::system_clock::now() < end_time){
+            executor.spin_once();
+        }
+
+        // Verify that node has broadcasted 2 (of 3) warning messages
+        ASSERT_EQ(worker_node->num_warnings_broadcasted_, 2);
+
+        // Set the internal data members of the plugin to match the incoming EmergencyVehicleAck message contents
+        worker_node->tracked_erv_.vehicle_id = "ERV";
+        worker_node->config_.vehicle_id = "HOST_VEHICLE";
+
+        // Create mock EmergencyVehicleAck message that would be sent by the ERV
+        carma_v2x_msgs::msg::EmergencyVehicleAck ack_msg;
+        ack_msg.m_header.sender_id = "ERV";
+        ack_msg.m_header.recipient_id = "HOST_VEHICLE";
+
+        std::unique_ptr<carma_v2x_msgs::msg::EmergencyVehicleAck> ack_msg_ptr = std::make_unique<carma_v2x_msgs::msg::EmergencyVehicleAck>(ack_msg);
+        worker_node->incomingEmergencyVehicleAckCallback(std::move(ack_msg_ptr)); 
+
+        ASSERT_EQ(worker_node->num_warnings_broadcasted_, 0);
+        ASSERT_FALSE(worker_node->should_broadcast_warnings_); // Node should no longer be broadcasting warnings since an EmergencyVehicleAck was received
+        ASSERT_TRUE(worker_node->has_broadcasted_warning_messages_);         
     }
 
     TEST(Testapproaching_emergency_vehicle_plugin, testApproachingErvStatusMessage){

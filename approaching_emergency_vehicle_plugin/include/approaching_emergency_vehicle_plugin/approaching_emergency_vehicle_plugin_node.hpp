@@ -75,7 +75,6 @@ namespace approaching_emergency_vehicle_plugin
                                        //     based on their current positions and current speeds
     int lane_index = 0;                // The ERV's current lane index (NOTE: For 'lane index', 0 is rightmost lane, 1 is second rightmost, etc.; Only the current travel direction is considered)
     rclcpp::Time latest_update_time;   // The timestamp (from this node's clock) associated with the last update of this object
-    bool has_triggered_warning_messages = false; // Flag to indicate whether ERV has triggered this plugin to broadcast EmergencyVehicleResponse warning messages
   };
 
   /**
@@ -361,6 +360,9 @@ namespace approaching_emergency_vehicle_plugin
 
     // Timer used to check whether a timeout has occurred with the currently-tracked ERV
     rclcpp::TimerBase::SharedPtr erv_timeout_timer_;
+
+    // Boolean flag to indicate whether the ego vehicle has broadcasted EmergencyVehicleResponse warning message(s) to an approaching ERV
+    bool has_broadcasted_warning_messages_ = false;
 
     // Boolean flag to indicate that EmergencyVehicleResponse warning message(s) should be broadcasted to the currently-tracked ERV
     // Note: These are broadcasted when the ego vehicle is in the ERV's path but is unable to change lanes
