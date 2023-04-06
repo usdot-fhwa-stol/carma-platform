@@ -286,10 +286,10 @@ namespace approaching_emergency_vehicle_plugin
       case ApproachingEmergencyVehicleState::MOVING_OVER_FOR_APPROACHING_ERV:
         // Add ego vehicle action based on the direction of the upcoming lane change
         if(upcoming_lc_params_.is_right_lane_change){
-          fmter %"Changing lanes to the right.";
+          fmter %"Approaching ERV is in our lane. Attempting to change lanes to the right.";
         }
         else{
-          fmter %"Changing lanes to the left.";
+          fmter %"Approaching ERV is in our lane. Attempting to change lanes to the left.";
         }
 
         break;
@@ -302,10 +302,20 @@ namespace approaching_emergency_vehicle_plugin
           int target_speed_mph = std::round(target_speed_ms * METERS_PER_SEC_TO_MILES_PER_HOUR);
 
           if(abs(current_speed_ - target_speed_ms) <= config_.reduced_speed_buffer){
-            fmter %("Remaining in the current lane at a reduced speed of " + std::to_string(target_speed_mph) + " mph.");
+            if(ego_lane_index_ == tracked_erv_.lane_index){
+              fmter %("Approaching ERV is in our lane. Remaining in the current lane at a reduced speed of " + std::to_string(target_speed_mph) + " mph.");
+            }
+            else{
+              fmter %("Approaching ERV is in adjacent lane. Remaining in the current lane at a reduced speed of " + std::to_string(target_speed_mph) + " mph.");
+            }
           }
           else{
-            fmter %("Remaining in the current lane and slowing down to a reduced speed of " + std::to_string(target_speed_mph) + " mph.");
+            if(ego_lane_index_ == tracked_erv_.lane_index){
+              fmter %("Approaching ERV is in our lane. Remaining in the current lane and slowing down to a reduced speed of " + std::to_string(target_speed_mph) + " mph.");
+            }
+            else{
+              fmter %("Approaching ERV is in adjacent lane. Remaining in the current lane and slowing down to a reduced speed of " + std::to_string(target_speed_mph) + " mph.");
+            }
           }
         }
         else{
@@ -1273,13 +1283,13 @@ namespace approaching_emergency_vehicle_plugin
 
     // Get ego vehicle's current lane index
     // Note: For 'lane index', 0 is rightmost lane, 1 is second rightmost, etc.; Only the current travel direction is considered
-    int ego_lane_index = wm_->getMapRoutingGraph()->rights(ego_current_lanelet_optional.get()).size();
+    ego_lane_index_ = wm_->getMapRoutingGraph()->rights(ego_current_lanelet_optional.get()).size();
 
     // Update state machine if there is currently an ERV being tracked and if ego vehicle is not currently in the middle of a lane change
     if(has_tracked_erv_ && !is_currently_lane_changing){
-      if(ego_lane_index == tracked_erv_.lane_index){
+      if(ego_lane_index_ == tracked_erv_.lane_index){
         // Trigger state machine transition for case in which the ego vehicle is in the ERV's path
-        RCLCPP_DEBUG_STREAM(rclcpp::get_logger(logger_name), "Ego vehicle and ERV are both in lane index " << ego_lane_index);
+        RCLCPP_DEBUG_STREAM(rclcpp::get_logger(logger_name), "Ego vehicle and ERV are both in lane index " << ego_lane_index_);
 
         if(tracked_erv_.seconds_until_passing >= config_.approaching_threshold){
           transition_table_.event(ApproachingEmergencyVehicleEvent::NO_APPROACHING_ERV);
@@ -1353,7 +1363,7 @@ namespace approaching_emergency_vehicle_plugin
         is_maintaining_non_reduced_speed_ = false; // Reset flag since ego vehicle does not need to maintain a non-reduced speed
 
         generateMoveOverManeuverPlan(resp, ego_current_lanelet_optional.get(), downtrack_progress, current_lanelet_ending_downtrack, speed_progress,
-                                        target_speed, time_progress, ego_lane_index, tracked_erv_.lane_index);
+                                        target_speed, time_progress, ego_lane_index_, tracked_erv_.lane_index);
         break;
 
       case ApproachingEmergencyVehicleState::SLOWING_DOWN_FOR_ERV:
