@@ -30,14 +30,14 @@ namespace approaching_emergency_vehicle_plugin
     double passing_threshold = 15.0;               // (Seconds) If the estimated duration until an ERV passes the ego vehicle is below this, the
                                                    // ERV is considered to be actively passing the ego vehicle.
 
-    double do_not_move_over_threshold = 20.0;      // (Seconds) If the estimated duration until an ERV passes the ego vehicle is below this, the
-                                                   // ERV will no longer attempt to change lanes in reaction to the approaching ERV
-
     double approaching_threshold = 60.0;           // (Seconds) If the estimated duration until an ERV passes the ego vehicle is below this, the
                                                    // ERV is considered to be approaching the ego vehicle.
 
     double finished_passing_threshold = 152.4;     // (Meters) A threshold; an actively-passing ERV is considered to have completed passing the ego vehicle when
                                                    // its distance in front of the ego vehicle reaches this value.
+
+    double min_lane_following_duration_before_lane_change = 3.0; // (Seconds) The minimum duration of lane following that must be planned before a lane change when in the 
+                                                                 // MOVING_OVER_FOR_APPROACHING_ERV state.
 
     double bsm_processing_frequency = 1.0;         // (Hz) The rate that incoming BSMs from a specific ERV will be processed by this plugin.
 
@@ -78,6 +78,8 @@ namespace approaching_emergency_vehicle_plugin
     int max_warning_broadcasts = 5;                // The maximum number of times that an EmergencyVehicleResponse warning message will be broadcasted to an ERV if an
                                                    // EmergencyVehicleAck message is not received from the ERV.
 
+    double vehicle_length = 4.0;                   // (Meters) The length of the host vehicle from its front bumper to its rear bumper.
+
     std::string lane_following_plugin = "inlanecruising_plugin"; // (No Units) The tactical plugin being used for lane following.
 
     std::string lane_change_plugin = "cooperative_lanechange";   // (No Units) The tactical plugin being used for lane changes.
@@ -91,9 +93,10 @@ namespace approaching_emergency_vehicle_plugin
     {
       output << "approaching_emergency_vehicle_plugin::Config { " << std::endl
            << "passing_threshold: " << c.passing_threshold << std::endl
-           << "do_not_move_over_threshold: " << c.do_not_move_over_threshold << std::endl
+          //  << "do_not_move_over_threshold: " << c.do_not_move_over_threshold << std::endl
            << "approaching_threshold: " << c.approaching_threshold << std::endl
            << "finished_passing_threshold: " << c.finished_passing_threshold << std::endl
+           << "min_lane_following_duration_before_lane_change: " << c.min_lane_following_duration_before_lane_change << std::endl
            << "bsm_processing_frequency: " << c.bsm_processing_frequency << std::endl
            << "speed_limit_reduction_during_passing: " << c.speed_limit_reduction_during_passing << std::endl
            << "minimum_reduced_speed_limit: " << c.minimum_reduced_speed_limit << std::endl

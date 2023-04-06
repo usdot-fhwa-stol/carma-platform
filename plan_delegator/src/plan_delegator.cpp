@@ -261,20 +261,44 @@ namespace plan_delegator
         lanelet::ConstLanelet starting_lanelet = wm_->getMap()->laneletLayer.get(std::stoi(lane_change_maneuver.lane_change_maneuver.starting_lane_id));
         lanelet::ConstLanelet ending_lanelet = wm_->getMap()->laneletLayer.get(std::stoi(lane_change_maneuver.lane_change_maneuver.ending_lane_id));
 
-        // Compare the lane indexes of the starting and ending lanelets to determine if this is a left or right lane change
-        // NOTE: For 'lane index', 0 is rightmost lane, 1 is second rightmost, etc.; Only the current travel direction is considered
-        int starting_lanelet_index = wm_->getMapRoutingGraph()->rights(starting_lanelet).size();
-        int ending_lanelet_index = wm_->getMapRoutingGraph()->rights(ending_lanelet).size();
+        // Determine if lane change is a left or right lane change and update lane_change_information accordingly
+        bool shared_boundary_found = false;
 
-        if(starting_lanelet_index > ending_lanelet_index){
-            lane_change_information.is_right_lane_change = true;
-        }
-        else if(starting_lanelet_index > ending_lanelet_index){
-            lane_change_information.is_right_lane_change = false;
-        }
-        else{
-            RCLCPP_WARN_STREAM(get_logger(), "Lane change starting lanelet and ending lanelet have the same lane index!");
-            throw std::invalid_argument("Lane change starting lanelet and ending lanelet have the same lane index!");
+        lanelet::ConstLanelet current_lanelet = starting_lanelet;
+
+        RCLCPP_DEBUG_STREAM(rclcpp::get_logger("plan_delegator"), "Searching for shared boundary with starting lanechange lanelet " << std::to_string(current_lanelet.id()) << " and ending lanelet " << std::to_string(ending_lanelet.id()));
+        while(!shared_boundary_found){
+            // Assumption: Adjacent lanelets share lane boundary
+
+            if(current_lanelet.leftBound() == ending_lanelet.rightBound()){   
+                // If current lanelet's left lane boundary matches the ending lanelet's right lane boundary, it is a left lane change
+                RCLCPP_DEBUG_STREAM(rclcpp::get_logger("plan_delegator"), "Lanelet " << std::to_string(current_lanelet.id()) << " shares left boundary with " << std::to_string(ending_lanelet.id()));
+                lane_change_information.is_right_lane_change = false;
+                shared_boundary_found = true;
+            }
+            else if(current_lanelet.rightBound() == ending_lanelet.leftBound()){
+                // If current lanelet's right lane boundary matches the ending lanelet's left lane boundary, it is a right lane change
+                RCLCPP_DEBUG_STREAM(rclcpp::get_logger("plan_delegator"), "Lanelet " << std::to_string(current_lanelet.id()) << " shares right boundary with " << std::to_string(ending_lanelet.id()));
+                lane_change_information.is_right_lane_change = true;
+                shared_boundary_found = true;
+            }
+            else{
+                // If there are no following lanelets on route, lanechange should be completing before reaching it
+                if(wm_->getMapRoutingGraph()->following(current_lanelet, false).empty())
+                {
+                    // Maneuver requires we travel further before completing lane change, but there is no routable lanelet directly ahead;
+                    // in this case we have reached a lanelet which does not have a routable lanelet ahead and isn't adjacent to the lanelet where lane change ends.
+                    // A lane change should have already happened at this point
+                    throw(std::invalid_argument("No following lanelets from current lanelet reachable without a lane change, incorrectly chosen end lanelet"));
+                }
+
+                current_lanelet = wm_->getMapRoutingGraph()->following(current_lanelet, false).front(); 
+                if(current_lanelet.id() == starting_lanelet.id()){
+                    //Looped back to starting lanelet
+                    throw(std::invalid_argument("No lane change in path"));
+                }
+                RCLCPP_DEBUG_STREAM(rclcpp::get_logger("plan_delegator"), "Now checking for shared lane boundary with lanelet " << std::to_string(current_lanelet.id()) << " and ending lanelet " << std::to_string(ending_lanelet.id()));
+            }
         }
 
         return lane_change_information;
