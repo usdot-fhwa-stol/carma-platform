@@ -114,6 +114,22 @@ void ApproachingEmergencyVehicleTransitionTable::eventWhenSLOWING_DOWN_FOR_ERV(A
       setAndLogState(ApproachingEmergencyVehicleState::NO_APPROACHING_ERV, event);
       break;
 
+    case ApproachingEmergencyVehicleEvent::NO_APPROACHING_ERV:
+      setAndLogState(ApproachingEmergencyVehicleState::NO_APPROACHING_ERV, event);
+      break;
+
+    case ApproachingEmergencyVehicleEvent::APPROACHING_ERV_IN_PATH:
+      setAndLogState(ApproachingEmergencyVehicleState::MOVING_OVER_FOR_APPROACHING_ERV, event);
+      break;
+
+    case ApproachingEmergencyVehicleEvent::APPROACHING_ERV_NOT_IN_PATH:
+      setAndLogState(ApproachingEmergencyVehicleState::SLOWING_DOWN_FOR_ERV, event);
+      break;
+
+    case ApproachingEmergencyVehicleEvent::ERV_PASSING_IN_PATH:
+      setAndLogState(ApproachingEmergencyVehicleState::SLOWING_DOWN_FOR_ERV, event);
+      break;
+
     case ApproachingEmergencyVehicleEvent::ERV_PASSED:
       setAndLogState(ApproachingEmergencyVehicleState::NO_APPROACHING_ERV, event);
       break;
