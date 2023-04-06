@@ -39,34 +39,41 @@ Once the user decides they need to access map or route information, they will do
 #### Single Threaded Example Code
 
 ```c++
-#include <ros/ros.h>
-#include <carma_wm/WMListener.h>
-#include <carma_wm/WorldModel.h>
+#include <rclcpp/rclcpp.hpp>
+#include <carma_wm/WMListener.hpp>
+#include <carma_wm/WorldModel.hpp>
 int main(int argc, char **argv)
 {
-  ros::init(argc, argv, "map_user");
+    rclcpp::init(argc, argv, "map_user");
 
-  // Create WMListener after initializing ros
-  // It is recommended only one instance be created per node
-  carma_wm::WMListener wml; // Create single threaded listener instance. Equivalent to carma_wm::WMListener wml(false);
+    // Create WMListener after initializing ros
+    // It is recommended only one instance be created per node
 
-  carma_wm::WorldModelConstPtr wm = wml.getWorldModel(); // Get pointer to WorldModel
+    auto node = std::make_shared<rclcpp::Node>("base_node");
 
-  ros::Rate loop_rate(10);
-  while (ros::ok())
-  {
+    //Extract node interfaces from base node
+    rclcpp::node_interfaces::NodeBaseInterface::SharedPtr node_base = node->get_node_base_interface(); 
+    rclcpp::node_interfaces::NodeLoggingInterface::SharedPtr node_logging = node->get_node_logging_interface();)
+    rclcpp::node_interfaces::NodeTopicsInterface::SharedPtr node_topics = node->get_node_topics_interface();
+    rclcpp::node_interfaces::NodeParametersInterface::SharedPtr node_params_ = node->get_node_parameters_interface();
+    
+    auto wml = std::make_shared<carma_wm::WMListener>(rclcpp::NodeOptions(), node_base, node_logging, node_topics, node_params_); // Create single threaded listener instance. Equivalent to carma_wm::WMListener wm (rclcpp::NodeOptions(), node_base, node_logging, node_topics,false);
+
+    carma_wm::WorldModelConstPtr wm = wml.getWorldModel(); // Get pointer to WorldModel
+
 
     if (wml.getRoute()) { // Route object provided a shared_ptr so you can use it to check for availability
-      lanelet::Point3d pt;
+        lanelet::Point3d pt;
 
-      carma_wm::TrackPos tc = wm->routeTrackPos(pt); // Get the downtrack and crosstrack position of the provided point on the route
+        carma_wm::TrackPos tc = wm->routeTrackPos(pt); // Get the downtrack and crosstrack position of the provided point on the route
     }
-    ros::spinOnce();
+    
+    rclcpp::executors::MultiThreadedExecutor executor;
+    executor.add_node(node->get_node_base_interface());
+    executor.spin();
 
-    loop_rate.sleep();
-  }
-
-  return 0;
+    rclcpp::shutdown();
+    return 0;
 }
 
 ```
@@ -74,40 +81,47 @@ int main(int argc, char **argv)
 #### Multi-Threaded Example Code
 
 ```c++
-#include <ros/ros.h>
+#include <rclcpp/rclcpp.hpp>
 #include <atomic>
-#include <carma_wm/WMListener.h>
-#include <carma_wm/WorldModel.h>
+#include <carma_wm/WMListener.hpp>
+#include <carma_wm/WorldModel.hpp>
 int main(int argc, char **argv)
 {
-  ros::init(argc, argv, "map_user");
+    rclcpp::init(argc, argv, "map_user");
 
-  // Create WMListener after initializing ros
-  // It is recommended only one instance be created per node
-  carma_wm::WMListener wml(true); // Create multi-threaded listener instance by passing true constructor parameter
+    auto node = std::make_shared<rclcpp::Node>("base_node");
 
-  carma_wm::WorldModelConstPtr wm = wml.getWorldModel(); // Get pointer to WorldModel
+    //Extract node interfaces from base node
+    rclcpp::node_interfaces::NodeBaseInterface::SharedPtr node_base = node->get_node_base_interface(); 
+    rclcpp::node_interfaces::NodeLoggingInterface::SharedPtr node_logging = node->get_node_logging_interface();)
+    rclcpp::node_interfaces::NodeTopicsInterface::SharedPtr node_topics = node->get_node_topics_interface();
+    rclcpp::node_interfaces::NodeParametersInterface::SharedPtr node_params_ = node->get_node_parameters_interface();
 
-  std::atomic<bool> routeReady(false);
-  wml.setRouteCallback([&]() { // User can set callback to trigger when a new route or map is received. Works in single threaded case as well
-   routeReady.store(true);
-  });
+    // Create WMListener after initializing ros
+    // It is recommended only one instance be created per node
+    auto wml = std::make_shared<carma_wm::WMListener>(rclcpp::NodeOptions(), node_base, node_logging, node_topics, node_params_, true); // Create multi-threaded listener instance by passing true constructor parameter
 
-  ros::Rate loop_rate(10);
-  while (ros::ok())
-  {
+    carma_wm::WorldModelConstPtr wm = wml.getWorldModel(); // Get pointer to WorldModel
+
+    std::atomic<bool> routeReady(false);
+    wml.setRouteCallback([&]() { // User can set callback to trigger when a new route or map is received. Works in single threaded case as well
+        routeReady.store(true);
+    });
+
 
     auto lock = wml.getLock(); // Acquire lock. Now user can safely access map and route data
     if (routeReady) { 
-      lanelet::Point3d pt;
-      carma_wm::TrackPos tc = wm->routeTrackPos(pt); // Get the downtrack and crosstrack position of the provided point on the route
+        lanelet::Point3d pt;
+        carma_wm::TrackPos tc = wm->routeTrackPos(pt); // Get the downtrack and crosstrack position of the provided point on the route
     }
-    ros::spinOnce();
+    
+    rclcpp::executors::MultiThreadedExecutor executor;
+    executor.add_node(node->get_node_base_interface());
+    executor.spin();
 
-    loop_rate.sleep();
-  }
-
-  return 0;
+    rclcpp::shutdown();
+  
+    return 0;
 }
 
 ```
@@ -212,16 +226,13 @@ TEST(UserTest, someTest)
   // overwrite all the speed limit of the entire road
   setSpeedLimit(25_mph, cmw);
 }
-
 ```
  * add traffic light into the map
 ```c++
 using namespace carma_wm::test
-
 TEST(UserTest, someTest)
 {
   auto cmw = getGuidanceTestMap(mp);
-
   // Light with default signal timers will be located on lanelet 1200 (entry) and exit at 1203.
   // Notice that multiple entry and exit lanelets can be given.
   lanelet::Id traffic_light_id = lanelet::utils::getId();
@@ -235,10 +246,8 @@ TEST(UserTest, someTest)
     std::make_pair<boost::posix_time::ptime, lanelet::CarmaTrafficSignalState>(lanelet::time::timeFromSec(17.0), lanelet::CarmaTrafficSignalState::STOP_AND_REMAIN), // 15 sec red
     std::make_pair<boost::posix_time::ptime, lanelet::CarmaTrafficSignalState>(lanelet::time::timeFromSec(32.0), lanelet::CarmaTrafficSignalState::PROTECTED_MOVEMENT_ALLOWED) // 15 sec green
   }
-
   lanelet::Id traffic_light_id = lanelet::utils::getId();
   carma_wm::test::addTrafficLight(cmw, traffic_light_id, {1200}, { 1203 }, timing_plan);
-
 }
 ```
 

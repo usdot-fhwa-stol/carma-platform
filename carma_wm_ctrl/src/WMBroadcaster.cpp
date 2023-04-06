@@ -17,8 +17,8 @@
 #include <functional>
 #include <mutex>
 #include <carma_wm_ctrl/WMBroadcaster.hpp>
-#include <carma_wm_ros2/Geometry.hpp>
-#include <carma_wm_ros2/MapConformer.hpp>
+#include <carma_wm/Geometry.hpp>
+#include <carma_wm/MapConformer.hpp>
 #include <autoware_lanelet2_ros2_interface/utility/message_conversion.hpp>
 #include <lanelet2_extension/projection/local_frame_projector.h>
 #include <lanelet2_core/primitives/Lanelet.h>
@@ -35,7 +35,7 @@
 #include <autoware_lanelet2_ros2_interface/utility/utilities.hpp>
 #include <algorithm>
 #include <limits>
-#include <carma_wm_ros2/Geometry.hpp>
+#include <carma_wm/Geometry.hpp>
 #include <math.h>
 #include <boost/date_time/date_defs.hpp>
 #include "RoutingGraphAccessor.hpp"

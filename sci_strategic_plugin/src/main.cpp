@@ -16,8 +16,8 @@
 
 #include <rclcpp/rclcpp.hpp>
 #include <carma_ros2_utils/carma_lifecycle_node.hpp>
-#include <carma_wm_ros2/WorldModel.hpp>
-#include <carma_wm_ros2/WMListener.hpp>
+#include <carma_wm/WorldModel.hpp>
+#include <carma_wm/WMListener.hpp>
 #include "sci_strategic_plugin.hpp"
 #include "sci_strategic_plugin_config.hpp"
 

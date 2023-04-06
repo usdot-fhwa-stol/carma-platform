@@ -34,7 +34,7 @@
 #include <carma_v2x_msgs/msg/mobility_operation.hpp>
 #include <carma_planning_msgs/msg/platooning_info.hpp>
 #include <std_msgs/msg/string.hpp>
-#include <carma_wm_ros2/WMListener.hpp>
+#include <carma_wm/WMListener.hpp>
 #include <functional>
 
 #include <carma_guidance_plugins/strategic_plugin.hpp>

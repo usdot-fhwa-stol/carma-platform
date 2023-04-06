@@ -38,11 +38,11 @@
 #include <vector>
 #include <lanelet2_core/primitives/Lanelet.h>
 #include <lanelet2_core/geometry/LineString.h>
-#include <carma_wm_ros2/CARMAWorldModel.hpp>
+#include <carma_wm/CARMAWorldModel.hpp>
 #include <math.h>
 #include <std_msgs/msg/float64.hpp>
 #include <carma_planning_msgs/msg/stop_and_wait_maneuver.hpp>
-#include <carma_wm_ros2/Geometry.hpp>
+#include <carma_wm/Geometry.hpp>
 #include <carma_planning_msgs/msg/trajectory_plan_point.hpp>
 #include <carma_planning_msgs/msg/trajectory_plan.hpp>
 

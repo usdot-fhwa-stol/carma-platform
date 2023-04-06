@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2019-2020 LEIDOS.
+ * Copyright (C) 2019-2022 LEIDOS.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -14,14 +14,13 @@
  * the License.
  */
 
-#include <basic_autonomy/basic_autonomy.h>
-#include <basic_autonomy/helper_functions.h>
+#include <basic_autonomy/basic_autonomy.hpp>
+#include <basic_autonomy/helper_functions.hpp>
 #include <gtest/gtest.h>
-#include <ros/ros.h>
-#include <carma_wm/CARMAWorldModel.h>
+#include <carma_wm/CARMAWorldModel.hpp>
 #include <math.h>
-#include <tf/LinearMath/Vector3.h>
-#include <carma_wm/WMTestLibForGuidance.h>
+#include <tf2/LinearMath/Transform.h>
+#include <carma_wm/WMTestLibForGuidance.hpp>
 #include <lanelet2_routing/RoutingGraph.h>
 #include <lanelet2_io/Io.h>
 #include <lanelet2_io/io_handlers/Factory.h>
@@ -31,14 +30,14 @@
 #include <lanelet2_extension/io/autoware_osm_parser.h>
 #include <string>
 #include <sstream>
-#include <ros/package.h>
-#include <cav_msgs/Maneuver.h>
-#include <cav_msgs/VehicleState.h>
+#include <carma_planning_msgs/msg/maneuver.hpp>
+#include <carma_planning_msgs/msg/vehicle_state.hpp>
+#include <ament_index_cpp/get_package_share_directory.hpp>
 
 namespace basic_autonomy
 {
 
-// Test to ensure Eigen::Isometry2d behaves like tf2::Transform
+    // Test to ensure Eigen::Isometry2d behaves like tf2::Transform
     TEST(BasicAutonomyTest, validate_eigen)
     {
         Eigen::Rotation2Dd frame_rot(M_PI_2);
@@ -81,15 +80,15 @@ namespace basic_autonomy
 
         std::vector<double> times = {0, 2, 4, 8};
         std::vector<double> yaws = {0.2, 0.5, 0.6, 1.0};
-        ros::Time startTime(1.0);
-        std::vector<cav_msgs::TrajectoryPlanPoint> traj_points =
+        rclcpp::Time startTime(1.0 * 1e9); // Arbitrarily selected 1 second, converted to nanoseconds
+        std::vector<carma_planning_msgs::msg::TrajectoryPlanPoint> traj_points =
             basic_autonomy::waypoint_generation::trajectory_from_points_times_orientations(points, times, yaws, startTime, "default");
 
         ASSERT_EQ(4, traj_points.size());
-        ASSERT_NEAR(1.0, traj_points[0].target_time.toSec(), 0.0000001);
-        ASSERT_NEAR(3.0, traj_points[1].target_time.toSec(), 0.0000001);
-        ASSERT_NEAR(5.0, traj_points[2].target_time.toSec(), 0.0000001);
-        ASSERT_NEAR(9.0, traj_points[3].target_time.toSec(), 0.0000001);
+        ASSERT_NEAR(1.0, rclcpp::Time(traj_points[0].target_time).seconds(), 0.0000001);
+        ASSERT_NEAR(3.0, rclcpp::Time(traj_points[1].target_time).seconds(), 0.0000001);
+        ASSERT_NEAR(5.0, rclcpp::Time(traj_points[2].target_time).seconds(), 0.0000001);
+        ASSERT_NEAR(9.0, rclcpp::Time(traj_points[3].target_time).seconds(), 0.0000001);
 
         ASSERT_NEAR(0.0, traj_points[0].x, 0.0000001);
         ASSERT_NEAR(2.0, traj_points[1].x, 0.0000001);
@@ -194,7 +193,7 @@ namespace basic_autonomy
         points.push_back(p);
         basic_points.push_back(p.point);
 
-        cav_msgs::VehicleState state;
+        carma_planning_msgs::msg::VehicleState state;
         state.x_pos_global = 3.3;
         state.y_pos_global = 3.3;
 
@@ -202,7 +201,7 @@ namespace basic_autonomy
         ASSERT_EQ(3, waypoint_generation::get_nearest_point_index(points, state));
     }
 
-    TEST(BasicAutonomyTest, get_nearest_basic_point_index)
+TEST(BasicAutonomyTest, get_nearest_basic_point_index)
     {
         std::vector<waypoint_generation::PointSpeedPair> points;
 
@@ -225,7 +224,7 @@ namespace basic_autonomy
         p.point = lanelet::BasicPoint2d(7, 7);
         points.push_back(p);
 
-        cav_msgs::VehicleState state;
+        carma_planning_msgs::msg::VehicleState state;
         state.x_pos_global = 3.3;
         state.y_pos_global = 3.3;
 
@@ -310,20 +309,20 @@ namespace basic_autonomy
 
         ASSERT_EQ(spline_points.size(), points.size());
 
-        tf::Vector3 original_vector_1(points[1].x() - points[0].x(),
+        tf2::Vector3 original_vector_1(points[1].x() - points[0].x(),
                                       points[1].y() - points[0].y(), 0);
         original_vector_1.setZ(0);
-        tf::Vector3 spline_vector_1(spline_points[1].x() - spline_points[0].x(),
+        tf2::Vector3 spline_vector_1(spline_points[1].x() - spline_points[0].x(),
                                     spline_points[1].y() - spline_points[0].y(), 0);
         spline_vector_1.setZ(0);
-        tf::Vector3 original_vector_2(points[2].x() - points[1].x(),
+        tf2::Vector3 original_vector_2(points[2].x() - points[1].x(),
                                       points[2].y() - points[1].y(), 0);
         original_vector_2.setZ(0);
-        tf::Vector3 spline_vector_2(spline_points[2].x() - spline_points[1].x(),
+        tf2::Vector3 spline_vector_2(spline_points[2].x() - spline_points[1].x(),
                                     spline_points[2].y() - spline_points[1].y(), 0);
         spline_vector_2.setZ(0);
-        double angle_in_rad_1 = std::fabs(tf::tfAngle(original_vector_1, spline_vector_1));
-        double angle_in_rad_2 = std::fabs(tf::tfAngle(original_vector_2, spline_vector_2));
+        double angle_in_rad_1 = std::fabs(tf2::tf2Angle(original_vector_1, spline_vector_1));
+        double angle_in_rad_2 = std::fabs(tf2::tf2Angle(original_vector_2, spline_vector_2));
 
         ASSERT_NEAR(angle_in_rad_1, 0.0, 0.0001);
         ASSERT_NEAR(angle_in_rad_2, 0.0, 0.0001);
@@ -593,7 +592,7 @@ namespace basic_autonomy
     TEST(BasicAutonomyTest, test_lanechange_trajectory)
     {
         //Case 1: Lane change from start to end of adjacent lanelets
-        std::string path = ros::package::getPath("basic_autonomy");
+        std::string path = ament_index_cpp::get_package_share_directory("basic_autonomy");
         std::string file = "/resource/map/town01_vector_map_lane_change.osm";
         file = path.append(file);
         int projector_type = 0;
@@ -621,23 +620,23 @@ namespace basic_autonomy
         double ending_downtrack = cwm->routeTrackPos(shortest_path.back().centerline2d().back()).downtrack;
 
         //Arguments for create geometry profile function-
-        cav_msgs::Maneuver maneuver;
-        maneuver.type = cav_msgs::Maneuver::LANE_CHANGE;
+        carma_planning_msgs::msg::Maneuver maneuver;
+        maneuver.type = carma_planning_msgs::msg::Maneuver::LANE_CHANGE;
         maneuver.lane_change_maneuver.start_dist = starting_downtrack;
         maneuver.lane_change_maneuver.end_dist = ending_downtrack;
         maneuver.lane_change_maneuver.start_speed = 5.0;
-        maneuver.lane_change_maneuver.start_time = ros::Time::now();
+        maneuver.lane_change_maneuver.start_time = rclcpp::Time(10.0 * 1e9); // Arbitrarily selected 10 seconds, converted to nanoseconds
         //calculate end_time assuming constant acceleration
         double acc = pow(maneuver.lane_change_maneuver.start_speed, 2) / (2 * (ending_downtrack - starting_downtrack));
         double end_time = maneuver.lane_change_maneuver.start_speed / acc;
         maneuver.lane_change_maneuver.end_speed = 25.0;
-        maneuver.lane_change_maneuver.end_time = ros::Time(end_time + 10.0);
+        maneuver.lane_change_maneuver.end_time = rclcpp::Time((end_time + 10.0) * 1e9); // Add 10 seconds and convert to nanoseconds
         maneuver.lane_change_maneuver.starting_lane_id = std::to_string(start_id);
         maneuver.lane_change_maneuver.ending_lane_id = std::to_string(end_id);
 
-        std::vector<cav_msgs::Maneuver> maneuvers;
+        std::vector<carma_planning_msgs::msg::Maneuver> maneuvers;
         maneuvers.push_back(maneuver);
-        cav_msgs::VehicleState state;
+        carma_planning_msgs::msg::VehicleState state;
         state.x_pos_global = veh_pos.x();
         state.y_pos_global = veh_pos.y();
         state.longitudinal_vel = 8.0;
@@ -645,7 +644,7 @@ namespace basic_autonomy
         std::string trajectory_type = "cooperative_lanechange";
         waypoint_generation::GeneralTrajConfig general_config = waypoint_generation::compose_general_trajectory_config(trajectory_type, 1, 1);
         const waypoint_generation::DetailedTrajConfig config = waypoint_generation::compose_detailed_trajectory_config(0, 0, 0, 0, 0, 5, 0, 0, 20);
-        cav_msgs::VehicleState ending_state;
+        carma_planning_msgs::msg::VehicleState ending_state;
         
         std::vector<basic_autonomy::waypoint_generation::PointSpeedPair> points = basic_autonomy::waypoint_generation::create_geometry_profile(maneuvers, 
                                                                                     starting_downtrack, cwm, ending_state, state, general_config, config);
@@ -680,7 +679,7 @@ namespace basic_autonomy
     TEST(BasicAutonomyTest, maneuvers_to_lanechange_points)
     {
 
-        std::string path = ros::package::getPath("basic_autonomy");
+        std::string path = ament_index_cpp::get_package_share_directory("basic_autonomy");
         std::string file = "/resource/map/town01_vector_map_lane_change.osm";
         file = path.append(file);
         int projector_type = 0;
@@ -708,23 +707,23 @@ namespace basic_autonomy
 
         //Testing maneuvers to points lanechange
         //Arguments for function-
-        cav_msgs::Maneuver maneuver;
-        maneuver.type = cav_msgs::Maneuver::LANE_CHANGE;
+        carma_planning_msgs::msg::Maneuver maneuver;
+        maneuver.type = carma_planning_msgs::msg::Maneuver::LANE_CHANGE;
         maneuver.lane_change_maneuver.start_dist = starting_downtrack;
         maneuver.lane_change_maneuver.end_dist = ending_downtrack;
         maneuver.lane_change_maneuver.start_speed = 5.0;
-        maneuver.lane_change_maneuver.start_time = ros::Time::now();
+        maneuver.lane_change_maneuver.start_time = rclcpp::Time(10.0 * 1e9); // 10 seconds converted to nanoseconds
         //calculate end_time assuming constant acceleration
         double acc = pow(maneuver.lane_change_maneuver.start_speed, 2) / (2 * (ending_downtrack - starting_downtrack));
         double end_time = maneuver.lane_change_maneuver.start_speed / acc;
         maneuver.lane_change_maneuver.end_speed = 25.0;
-        maneuver.lane_change_maneuver.end_time = ros::Time(end_time + 10.0);
+        maneuver.lane_change_maneuver.end_time = rclcpp::Time((end_time + 10.0) * 1e9); // Add 10 seconds and convert to nanoseconds
         maneuver.lane_change_maneuver.starting_lane_id = std::to_string(start_id);
         maneuver.lane_change_maneuver.ending_lane_id = std::to_string(end_id);
 
-        std::vector<cav_msgs::Maneuver> maneuvers;
+        std::vector<carma_planning_msgs::msg::Maneuver> maneuvers;
         maneuvers.push_back(maneuver);
-        cav_msgs::VehicleState state;
+        carma_planning_msgs::msg::VehicleState state;
         state.x_pos_global = veh_pos.x();
         state.y_pos_global = veh_pos.y();
         state.longitudinal_vel = 8.0;
@@ -732,23 +731,23 @@ namespace basic_autonomy
         std::string trajectory_type = "cooperative_lanechange";
         waypoint_generation::GeneralTrajConfig general_config = waypoint_generation::compose_general_trajectory_config(trajectory_type, 1, 1);
         const waypoint_generation::DetailedTrajConfig config = waypoint_generation::compose_detailed_trajectory_config(0, 1, 0, 0, 0, 5, 0, 0, 20);
-        cav_msgs::VehicleState ending_state;
+        carma_planning_msgs::msg::VehicleState ending_state;
         
         std::vector<basic_autonomy::waypoint_generation::PointSpeedPair> points = basic_autonomy::waypoint_generation::create_geometry_profile(maneuvers, 
                                                                                     starting_downtrack, cmw, ending_state, state, general_config, config);
-        ros::Time state_time = ros::Time::now();
+        rclcpp::Time state_time(10 * 1e9); // Arbitrarily selected 10 seconds (converted to nanoseconds)
         EXPECT_EQ(points.back().speed, state.longitudinal_vel);
-        std::vector<cav_msgs::TrajectoryPlanPoint> trajectory_points = basic_autonomy::waypoint_generation::compose_lanechange_trajectory_from_path(points,
+        std::vector<carma_planning_msgs::msg::TrajectoryPlanPoint> trajectory_points = basic_autonomy::waypoint_generation::compose_lanechange_trajectory_from_path(points,
                                                                                                                                                           state, state_time, cmw, ending_state, config);
         EXPECT_TRUE(trajectory_points.size() > 2);
         basic_autonomy::waypoint_generation::create_lanechange_geometry(start_id, end_id,starting_downtrack, ending_downtrack, cmw, 1, 5);
-    } 
+    }
 
     TEST(BasicAutonomyTest, lanefollow_geometry_visited_lanelets)
     {
 
         double starting_downtrack = 0;
-        cav_msgs::VehicleState ending_state;
+        carma_planning_msgs::msg::VehicleState ending_state;
         std::string trajectory_type = "lane_follow";
         waypoint_generation::GeneralTrajConfig general_config = waypoint_generation::compose_general_trajectory_config(trajectory_type, 0, 0);
         waypoint_generation::DetailedTrajConfig detailed_config = waypoint_generation::compose_detailed_trajectory_config(0, 0, 0, 0, 0, 5, 0, 0, 20);
@@ -763,16 +762,16 @@ namespace basic_autonomy
 
         carma_wm::test::setRouteByIds({ 1200, 1201, 1202, 1203 }, wm);
 
-        cav_msgs::Maneuver maneuver;
-        maneuver.type = cav_msgs::Maneuver::LANE_FOLLOWING;
+        carma_planning_msgs::msg::Maneuver maneuver;
+        maneuver.type = carma_planning_msgs::msg::Maneuver::LANE_FOLLOWING;
         maneuver.lane_following_maneuver.lane_ids.push_back(std::to_string(1200));
         maneuver.lane_following_maneuver.start_dist = 5.0;
-        maneuver.lane_following_maneuver.start_time = ros::Time(0.0);
+        maneuver.lane_following_maneuver.start_time = rclcpp::Time(0.0);
         maneuver.lane_following_maneuver.start_speed = 0.0;
 
         maneuver.lane_following_maneuver.end_dist = 14.98835712;
         maneuver.lane_following_maneuver.end_speed = 6.7056;
-        maneuver.lane_following_maneuver.end_time = ros::Time(4.4704);
+        maneuver.lane_following_maneuver.end_time = rclcpp::Time(4.4704*1e9); // 4.4704 seconds converted to nanoseconds
 
         
 
@@ -789,7 +788,7 @@ namespace basic_autonomy
     {
 
         double starting_downtrack = 0;
-        cav_msgs::VehicleState ending_state;
+        carma_planning_msgs::msg::VehicleState ending_state;
         std::string trajectory_type = "lane_follow";
         waypoint_generation::GeneralTrajConfig general_config = waypoint_generation::compose_general_trajectory_config(trajectory_type, 0, 0);
         waypoint_generation::DetailedTrajConfig detailed_config = waypoint_generation::compose_detailed_trajectory_config(0, 0, 0, 0, 0, 5, 0, 0, 20);
@@ -804,16 +803,16 @@ namespace basic_autonomy
 
         carma_wm::test::setRouteByIds({ 1200, 1201, 1202, 1203 }, wm);
 
-        cav_msgs::Maneuver maneuver;
-        maneuver.type = cav_msgs::Maneuver::LANE_FOLLOWING;
+        carma_planning_msgs::msg::Maneuver maneuver;
+        maneuver.type = carma_planning_msgs::msg::Maneuver::LANE_FOLLOWING;
         maneuver.lane_following_maneuver.lane_ids = {};
         maneuver.lane_following_maneuver.start_dist = 5.0;
-        maneuver.lane_following_maneuver.start_time = ros::Time(0.0);
+        maneuver.lane_following_maneuver.start_time = rclcpp::Time(0.0);
         maneuver.lane_following_maneuver.start_speed = 0.0;
 
         maneuver.lane_following_maneuver.end_dist = 14.98835712;
         maneuver.lane_following_maneuver.end_speed = 6.7056;
-        maneuver.lane_following_maneuver.end_time = ros::Time(4.4704);
+        maneuver.lane_following_maneuver.end_time = rclcpp::Time(4.4704*1e9); // 4.4704 seconds converted to nanoseconds
 
         // No defined lanelet ids in the maneuver msg
         EXPECT_THROW(basic_autonomy::waypoint_generation::create_lanefollow_geometry(maneuver, 
@@ -823,7 +822,7 @@ namespace basic_autonomy
         maneuver.lane_following_maneuver.lane_ids.push_back(std::to_string(1200));
         std::vector<basic_autonomy::waypoint_generation::PointSpeedPair> points = basic_autonomy::waypoint_generation::create_lanefollow_geometry(maneuver, 
                                                                                     starting_downtrack, wm, general_config, detailed_config, visited_lanelets);
-        EXPECT_EQ(visited_lanelets.size(), 2);
+        EXPECT_EQ(visited_lanelets.size(), 3);
         EXPECT_TRUE(visited_lanelets.find(id1) != visited_lanelets.end()); // the lanelet previously in the visited lanelet set
         EXPECT_TRUE(visited_lanelets.find(1200) != visited_lanelets.end()); // new lanelets added to the set with the new maneuver
 
@@ -834,16 +833,20 @@ namespace basic_autonomy
                                                                                     detailed_config, visited_lanelets), std::invalid_argument);
     }
 
-} //basic_autonomy namespace
+} // namespace basic_autonomy
 
 // Run all the tests
-int main(int argc, char **argv)
+int main(int argc, char ** argv)
 {
-    testing::InitGoogleTest(&argc, argv);
-    ros::Time::init();
-    ROSCONSOLE_AUTOINIT;
-    if( ros::console::set_logger_level(ROSCONSOLE_DEFAULT_NAME, ros::console::levels::Debug) ) {
-      ros::console::notifyLoggerLevelsChanged();
-    }
-    return RUN_ALL_TESTS();
-}
+    ::testing::InitGoogleTest(&argc, argv);
+
+    //Initialize ROS
+    rclcpp::init(argc, argv);
+
+    bool success = RUN_ALL_TESTS();
+
+    //shutdown ROS
+    rclcpp::shutdown();
+
+    return success;
+} 

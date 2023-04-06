@@ -33,7 +33,7 @@
   <depend>carma_planning_msgs</depend>
   <depend>carma_v2x_msgs</depend>
   <depend>visualization_msgs</depend>
-  <depend>carma_wm_ros2</depend>
+  <depend>carma_wm</depend>
   <depend>wgs84_utils</depend>
   <depend>lanelet2_core</depend>
   <depend>lanelet2_extension</depend>

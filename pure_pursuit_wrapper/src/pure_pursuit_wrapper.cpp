@@ -16,7 +16,7 @@
 
 #include <pure_pursuit_wrapper/pure_pursuit_wrapper.hpp>
 #include <trajectory_utils/conversions/conversions.hpp>
-#include <carma_wm_ros2/Geometry.hpp>
+#include <carma_wm/Geometry.hpp>
 #include <algorithm>
 
 

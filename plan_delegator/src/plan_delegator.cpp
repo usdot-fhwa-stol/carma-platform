@@ -15,7 +15,7 @@
  */
 
 #include <stdexcept>
-#include <carma_wm_ros2/Geometry.hpp>
+#include <carma_wm/Geometry.hpp>
 #include "plan_delegator.hpp"
 
 namespace plan_delegator

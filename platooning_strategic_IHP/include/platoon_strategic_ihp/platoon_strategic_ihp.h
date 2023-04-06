@@ -42,7 +42,7 @@
 #include <carma_v2x_msgs/msg/mobility_response.hpp>
 #include <carma_planning_msgs/msg/platooning_info.hpp>
 #include <carma_v2x_msgs/msg/plan_type.hpp>
-#include <carma_wm_ros2/WorldModel.hpp>
+#include <carma_wm/WorldModel.hpp>
 #include <lanelet2_core/geometry/Lanelet.h>
 #include <lanelet2_core/geometry/BoundingBox.h>
 #include <lanelet2_extension/traffic_rules/CarmaUSTrafficRules.h>

@@ -17,10 +17,10 @@
 #include <yield_plugin/yield_plugin.hpp>
 #include <yield_plugin/yield_plugin_node.hpp>
 #include <rclcpp/rclcpp.hpp>
-#include <carma_wm_ros2/CARMAWorldModel.hpp>
+#include <carma_wm/CARMAWorldModel.hpp>
 #include <math.h>
 #include <boost/property_tree/json_parser.hpp>
-#include <carma_wm_ros2/WMTestLibForGuidance.hpp>
+#include <carma_wm/WMTestLibForGuidance.hpp>
 
 #include <lanelet2_core/primitives/Lanelet.h>
 #include <lanelet2_io/Io.h>
@@ -33,7 +33,7 @@
 #include <lanelet2_extension/traffic_rules/CarmaUSTrafficRules.h>
 #include <lanelet2_extension/projection/local_frame_projector.h>
 #include <lanelet2_extension/io/autoware_osm_parser.h>
-#include <carma_wm_ros2/MapConformer.hpp>
+#include <carma_wm/MapConformer.hpp>
 #include <unsupported/Eigen/Splines>
 #include <tf2/LinearMath/Vector3.h>
 #include <carma_ros2_utils/carma_lifecycle_node.hpp>

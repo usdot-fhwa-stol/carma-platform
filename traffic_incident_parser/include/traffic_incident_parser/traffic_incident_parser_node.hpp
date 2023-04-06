@@ -19,8 +19,8 @@
 #include <rclcpp/rclcpp.hpp>
 #include <functional>
 #include <string>
-#include <carma_wm_ros2/WMListener.hpp>
-#include <carma_wm_ros2/WorldModel.hpp>
+#include <carma_wm/WMListener.hpp>
+#include <carma_wm/WorldModel.hpp>
 #include "traffic_incident_parser_worker.hpp"
 
 #include <carma_ros2_utils/carma_lifecycle_node.hpp>

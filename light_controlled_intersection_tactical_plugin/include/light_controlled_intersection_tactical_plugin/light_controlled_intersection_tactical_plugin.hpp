@@ -31,8 +31,8 @@
 #include <carma_planning_msgs/msg/maneuver.hpp>
 #include <autoware_msgs/msg/lane.hpp>
 #include <carma_debug_ros2_msgs/msg/trajectory_curvature_speeds.hpp>
-#include <basic_autonomy_ros2/basic_autonomy.hpp>
-#include <basic_autonomy_ros2/helper_functions.hpp>
+#include <basic_autonomy/basic_autonomy.hpp>
+#include <basic_autonomy/helper_functions.hpp>
 
 #include "light_controlled_intersection_tactical_plugin/light_controlled_intersection_tactical_plugin_node.hpp"
 

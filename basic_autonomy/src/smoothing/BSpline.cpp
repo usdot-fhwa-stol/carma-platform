@@ -1,6 +1,5 @@
-
 /*
- * Copyright (C) 2021 LEIDOS.
+ * Copyright (C) 2021-2022 LEIDOS.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -16,7 +15,7 @@
  */
 
 
-#include <basic_autonomy/smoothing/BSpline.h>
+#include <basic_autonomy/smoothing/BSpline.hpp>
 
 namespace basic_autonomy
 {

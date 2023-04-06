@@ -22,8 +22,8 @@
 #include <chrono>
 #include <carma_planning_msgs/srv/plan_trajectory.hpp>
 #include "helper.hpp"
-#include <carma_wm_ros2/CARMAWorldModel.hpp>
-#include <carma_wm_ros2/WMTestLibForGuidance.hpp>
+#include <carma_wm/CARMAWorldModel.hpp>
+#include <carma_wm/WMTestLibForGuidance.hpp>
 
 
 namespace inlanecruising_plugin

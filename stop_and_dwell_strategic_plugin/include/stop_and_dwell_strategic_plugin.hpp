@@ -21,10 +21,10 @@
 #include <carma_planning_msgs/srv/plan_maneuvers.hpp>
 #include <carma_planning_msgs/msg/plugin.hpp>
 #include <carma_planning_msgs/msg/guidance_state.hpp>
-#include <carma_wm_ros2/WMListener.hpp>
-#include <carma_wm_ros2/WorldModel.hpp>
+#include <carma_wm/WMListener.hpp>
+#include <carma_wm/WorldModel.hpp>
 #include <carma_ros2_utils/carma_lifecycle_node.hpp>
-#include <carma_wm_ros2/Geometry.hpp>
+#include <carma_wm/Geometry.hpp>
 #include <lanelet2_core/Forward.h>
 #include <gtest/gtest_prod.h>
 #include <boost/property_tree/ptree.hpp>
