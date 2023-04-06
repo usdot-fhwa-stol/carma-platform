@@ -998,6 +998,22 @@ namespace approaching_emergency_vehicle_plugin{
         ASSERT_EQ(status_msg.type, carma_msgs::msg::UIInstructions::INFO);
         ASSERT_EQ(status_msg.msg, "HAS_APPROACHING_ERV:1,TIME_UNTIL_PASSING:9.6,EGO_VEHICLE_ACTION:Approaching ERV is in adjacent lane. Remaining in the current lane at a reduced speed of 15 mph.");
 
+        // Generate a status message when an approaching ERV is in the same lane as the ego vehicle, but its passing in less than config_.passing_threshold and more than MAINTAIN_SPEED_THRESHOLD
+        worker_node->tracked_erv_.lane_index = 0;
+        worker_node->ego_lane_index_ = 0;
+
+        status_msg = worker_node->generateApproachingErvStatusMessage();
+        ASSERT_EQ(status_msg.type, carma_msgs::msg::UIInstructions::INFO);
+        ASSERT_EQ(status_msg.msg, "HAS_APPROACHING_ERV:1,TIME_UNTIL_PASSING:9.6,EGO_VEHICLE_ACTION:Approaching ERV is in our lane and a lane change is not possible. Remaining in the current lane at a reduced speed of 15 mph.");
+
+        // Generate a status message when an approaching ERV is in the same lane as the ego vehicle, but its passing in less than MAINTAIN_SPEED_THRESHOLD
+        worker_node->is_maintaining_non_reduced_speed_ = true;
+        worker_node->non_reduced_speed_to_maintain_ = 6.25856; // (m/s); equates to 14 mph
+
+        status_msg = worker_node->generateApproachingErvStatusMessage();
+        ASSERT_EQ(status_msg.type, carma_msgs::msg::UIInstructions::INFO);
+        ASSERT_EQ(status_msg.msg, "HAS_APPROACHING_ERV:1,TIME_UNTIL_PASSING:9.6,EGO_VEHICLE_ACTION:Approaching ERV is in our lane and a lane change is not possible. Remaining in the current lane and maintaining a speed of 14 mph.");
+        
         // Generate status message when an approaching ERV is being tracked in state SLOWING_DOWN_FOR_ERV without a generated maneuver plan, and verify an exception is thrown
         carma_planning_msgs::msg::ManeuverPlan empty_maneuver_plan;
         worker_node->latest_maneuver_plan_ = empty_maneuver_plan;

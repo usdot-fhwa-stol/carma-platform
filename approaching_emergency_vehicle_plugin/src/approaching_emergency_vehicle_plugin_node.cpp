@@ -301,17 +301,23 @@ namespace approaching_emergency_vehicle_plugin
           double target_speed_ms = getManeuverEndSpeed(latest_maneuver_plan_.maneuvers[0]);
           int target_speed_mph = std::round(target_speed_ms * METERS_PER_SEC_TO_MILES_PER_HOUR);
 
-          if(abs(current_speed_ - target_speed_ms) <= config_.reduced_speed_buffer){
-            if(ego_lane_index_ == tracked_erv_.lane_index){
-              fmter %("Approaching ERV is in our lane. Remaining in the current lane at a reduced speed of " + std::to_string(target_speed_mph) + " mph.");
+          if(ego_lane_index_ == tracked_erv_.lane_index){
+            if(!is_maintaining_non_reduced_speed_){
+              if(abs(current_speed_ - target_speed_ms) <= config_.reduced_speed_buffer){
+                fmter %("Approaching ERV is in our lane and a lane change is not possible. Remaining in the current lane at a reduced speed of " + std::to_string(target_speed_mph) + " mph.");
+              }
+              else{
+                fmter %("Approaching ERV is in our lane and a lane change is not possible. Remaining in the current lane and slowing down to a reduced speed of " + std::to_string(target_speed_mph) + " mph.");
+              }
             }
             else{
-              fmter %("Approaching ERV is in adjacent lane. Remaining in the current lane at a reduced speed of " + std::to_string(target_speed_mph) + " mph.");
+              int non_reduced_speed_to_maintain_mph = std::round(non_reduced_speed_to_maintain_ * METERS_PER_SEC_TO_MILES_PER_HOUR);
+              fmter %("Approaching ERV is in our lane and a lane change is not possible. Remaining in the current lane and maintaining a speed of " + std::to_string(non_reduced_speed_to_maintain_mph) + " mph.");
             }
           }
           else{
-            if(ego_lane_index_ == tracked_erv_.lane_index){
-              fmter %("Approaching ERV is in our lane. Remaining in the current lane and slowing down to a reduced speed of " + std::to_string(target_speed_mph) + " mph.");
+            if(abs(current_speed_ - target_speed_ms) <= config_.reduced_speed_buffer){
+              fmter %("Approaching ERV is in adjacent lane. Remaining in the current lane at a reduced speed of " + std::to_string(target_speed_mph) + " mph.");
             }
             else{
               fmter %("Approaching ERV is in adjacent lane. Remaining in the current lane and slowing down to a reduced speed of " + std::to_string(target_speed_mph) + " mph.");
