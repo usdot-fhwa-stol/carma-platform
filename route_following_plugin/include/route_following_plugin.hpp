@@ -68,7 +68,9 @@ namespace route_following_plugin
          */
         explicit RouteFollowingPlugin(const rclcpp::NodeOptions &);
         
+        ////////// OVERRIDES ///////////
         carma_ros2_utils::CallbackReturn on_configure_plugin();
+        carma_ros2_utils::CallbackReturn on_activate_plugin();
 
         // wm listener pointer and pointer to the actual wm object
         std::shared_ptr<carma_wm::WMListener> wml_;
@@ -258,6 +260,9 @@ namespace route_following_plugin
         std::string planning_strategic_plugin_ = "route_following_plugin";
         std::string lanefollow_planning_tactical_plugin_ = "inlanecruising_plugin"; 
    
+        // Timer used to update the front bumper pose
+        rclcpp::TimerBase::SharedPtr bumper_pose_timer_;
+        
         /**
          * \brief Callback for the front bumper pose transform
          */

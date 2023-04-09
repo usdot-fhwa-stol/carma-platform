@@ -313,6 +313,8 @@ namespace route_following_plugin
         cmw->carma_wm::CARMAWorldModel::setMap(map);
         worker->wm_ = cmw;
 
+        worker->config_.stopping_accel_limit_multiplier_ = 3.0; // Set high multiplier so that plugin can plan a stop_and_wait maneuver at the end of the route without re-planning a lane change
+
         //RouteFollowing plan maneuver callback
         auto shortest_path = cmw->getRoute()->shortestPath();
 
@@ -320,6 +322,7 @@ namespace route_following_plugin
 
         // If the vehicle remains on the shortest path, the next maneuver is lane following
         ASSERT_EQ(worker->latest_maneuver_plan_[0].type, carma_planning_msgs::msg::Maneuver::LANE_FOLLOWING);
+        ASSERT_EQ(worker->latest_maneuver_plan_[1].type, carma_planning_msgs::msg::Maneuver::LANE_FOLLOWING);
 
         for (auto ll:route->shortestPath())
         {
@@ -331,7 +334,8 @@ namespace route_following_plugin
         worker->returnToShortestPath(current_lanelet);
 
         // Since the vehicle is not on the shortest path, the first maneuver is lane change
-        ASSERT_EQ(worker->latest_maneuver_plan_[0].type, carma_planning_msgs::msg::Maneuver::LANE_CHANGE);
+        ASSERT_EQ(worker->latest_maneuver_plan_[0].type, carma_planning_msgs::msg::Maneuver::LANE_FOLLOWING);
+        ASSERT_EQ(worker->latest_maneuver_plan_[1].type, carma_planning_msgs::msg::Maneuver::LANE_CHANGE);
     }
 } // namespace route_following_plugin
 
