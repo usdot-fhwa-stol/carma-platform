@@ -35,6 +35,8 @@
 #include <lanelet2_extension/regulatory_elements/SignalizedIntersection.h>
 #include <lanelet2_core/primitives/BasicRegulatoryElements.h>
 #include "carma_wm/TrackPos.hpp"
+#include <lanelet2_extension/regulatory_elements/BusStopRule.h>
+
 
 namespace carma_wm
 {
@@ -263,6 +265,18 @@ class WorldModel
 
     virtual lanelet::Optional<lanelet::Lanelet> getIntersectingLanelet(const carma_perception_msgs::msg::ExternalObject& object) const = 0;
 
+     /**
+     * \brief  Return a list of bus stop along the current route.  
+     * The bus stop along a route and the next bus stop ahead of us on the route specifically, 
+     * so a sorted list (by downtrack distance) of bus stop on the route ahead of us thus eliminating those behind the vehicle.
+     *
+     * \param loc location
+     * \throw std::invalid_argument if the map is not set, contains no lanelets, or route is not set
+     *
+     * \return list of bus stop along the current route
+   */
+    virtual std::vector<lanelet::BusStopRulePtr> getBusStopsAlongRoute(const lanelet::BasicPoint2d& loc) const = 0;
+    
     /**
      * \brief Gets all roadway objects currently in the same lane as the given lanelet
      *
