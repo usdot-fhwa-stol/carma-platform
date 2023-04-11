@@ -26,7 +26,7 @@ bsm_processing_frequency : 1.0
 # Double: The amount that the speed limit of a lanelet will be reduced by when planning a maneuver when an
 #         ERV is actively passing the ego vehicle.
 # Units: m/s
-speed_limit_reduction_during_passing : 2.235 # NOTE: 4.4704 m/s is 10 mph
+speed_limit_reduction_during_passing : 8.94 # NOTE: 4.4704 m/s is 10 mph
 
 # Double: The minimum speed limit that a lanelet's speed limit will be reduced to when an ERV is actively passing
 #         the ego vehicle.

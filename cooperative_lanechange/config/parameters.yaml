@@ -104,4 +104,4 @@ back_distance: 0.0
 
 # Double: Additional distance beyond ending downtrack to ensure sufficient points
 # Units: meters
-buffer_ending_downtrack: 15.0
+buffer_ending_downtrack: 20.0
