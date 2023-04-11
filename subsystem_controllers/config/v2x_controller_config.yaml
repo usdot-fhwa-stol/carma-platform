@@ -2,11 +2,11 @@
   ros__parameters:
     # Long: Timeout for each service to be detected as available in milliseconds
     # Units: milliseconds
-    service_timeout_ms : 200
+    service_timeout_ms : 2000
 
     # Long: Timeout for each service call in milliseconds
     # Units: milliseconds
-    call_timeout_ms : 1000
+    call_timeout_ms : 10000
 
     # String: The namespace for nodes in this subsystem. All nodes under this namespace will have their lifecycle's managed by this controller
     subsystem_namespace: /message
