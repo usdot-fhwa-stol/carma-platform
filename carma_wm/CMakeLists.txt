@@ -1,5 +1,5 @@
 
-# Copyright (C) 2019-2021 LEIDOS.
+# Copyright (C) 2022 LEIDOS.
 #
 # Licensed under the Apache License, Version 2.0 (the "License"); you may not
 # use this file except in compliance with the License. You may obtain a copy of
@@ -13,150 +13,88 @@
 # License for the specific language governing permissions and limitations under
 # the License.
 
-cmake_minimum_required(VERSION 3.0.2)
+cmake_minimum_required(VERSION 3.5)
 project(carma_wm)
 
+# Declare carma package and check ROS version
 find_package(carma_cmake_common REQUIRED)
-carma_check_ros_version(1)
+carma_check_ros_version(2)
 carma_package()
 
-## Set catkin dependencies
-set ( PKG_CATKIN_DEPS 
-  autoware_lanelet2_msgs
-  lanelet2_core
-  lanelet2_maps
-  lanelet2_routing
-  lanelet2_traffic_rules
-  lanelet2_extension
-  carma_utils
-  cav_msgs
-  carma_debug_msgs
-  roscpp
-  tf2
-  tf2_geometry_msgs
-  autoware_lanelet2_ros_interface
-)
+## Find dependencies using ament auto
+find_package(ament_cmake_auto REQUIRED)
+ament_auto_find_build_dependencies()
 
-## Find required catkin packages
-find_package(catkin REQUIRED COMPONENTS
-  ${PKG_CATKIN_DEPS}
-)
-
-## System dependencies are found with CMake's conventions
 find_package(Boost REQUIRED)
-find_package(Eigen3 REQUIRED)
 
-## Catkin export configuration
-catkin_package(
-  INCLUDE_DIRS include
-  LIBRARIES ${PROJECT_NAME}
-  CATKIN_DEPENDS ${PKG_CATKIN_DEPS}
-  DEPENDS Boost EIGEN3
-)
+# Name build targets
+set(node_lib carma_wm_lib)
 
-###########
-## Build ##
-###########
-
-## Specify additional locations of header files
+# Includes
 include_directories(
   include
-  ${catkin_INCLUDE_DIRS}
-  ${EIGEN3_INCLUDE_DIRS}
-  ${Boost_INCLUDE_DIRS}
 )
 
-## Declare C++ library
-add_library(
-  ${PROJECT_NAME}
-  src/MapConformer.cpp
-  src/CARMAWorldModel.cpp
-  src/WMListener.cpp
-  src/WMListenerWorker.cpp
-  src/Geometry.cpp
-  src/WorldModelUtils.cpp
-  src/TrafficControl.cpp
-  src/IndexedDistanceMap.cpp
-  src/collision_detection.cpp
-  src/SignalizedIntersectionManager.cpp
-)
-
-## Add cmake target dependencies of the library
-add_dependencies(
-  ${PROJECT_NAME} 
-  ${${PROJECT_NAME}_EXPORTED_TARGETS} 
-  ${catkin_EXPORTED_TARGETS}
-)
-
-## Specify libraries to link a library or executable target against
-target_link_libraries(
-  ${PROJECT_NAME}
-  ${catkin_LIBRARIES}
-  ${Boost_LIBRARIES}
-)
-
-add_executable(
-  map_update_logger_node
-  src/MapUpdateLoggerNode.cpp
+# Build
+ament_auto_add_library(${node_lib} SHARED
+        src/MapConformer.cpp
+        src/CARMAWorldModel.cpp
+        src/WMListener.cpp
+        src/WMListenerWorker.cpp
+        src/Geometry.cpp
+        src/WorldModelUtils.cpp
+        src/TrafficControl.cpp
+        src/IndexedDistanceMap.cpp
+        src/collision_detection.cpp
+        src/SignalizedIntersectionManager.cpp
 )
 
 target_link_libraries(
-  map_update_logger_node
-  ${PROJECT_NAME}
-  ${catkin_LIBRARIES}
-  ${Boost_LIBRARIES}
+        ${node_lib}
+        ${Boost_LIBRARIES}
 )
 
-add_dependencies(
-  map_update_logger_node
-  ${catkin_EXPORTED_TARGETS}
+ament_auto_add_executable(map_update_logger_node 
+        src/MapUpdateLoggerNode.cpp 
+)
+# Register component
+rclcpp_components_register_nodes(${node_lib} "MapUpdateLogger")
+target_link_libraries(map_update_logger_node
+        ${node_lib}
+        ${Boost_LIBRARIES}
 )
 
-#############
-## Install ##
-#############
+# Testing
+if(BUILD_TESTING)  
 
-# Mark libraries for installation
-# See http://docs.ros.org/melodic/api/catkin/html/howto/format1/building_libraries.html
-install(TARGETS ${PROJECT_NAME} #map_update_logger_node
-  ARCHIVE DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
-  LIBRARY DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
-  RUNTIME DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}
-)
+  find_package(ament_lint_auto REQUIRED)
+  ament_lint_auto_find_test_dependencies() # This populates the ${${PROJECT_NAME}_FOUND_TEST_DEPENDS} variable
 
-# Mark cpp header files for installation
-install(DIRECTORY include/${PROJECT_NAME}/
-  DESTINATION ${CATKIN_PACKAGE_INCLUDE_DESTINATION}
-)
+  ament_add_gtest(test_carma_wm 
+    test/GeometryTest.cpp
+    test/CARMAWorldModelTest.cpp
+    test/WMListenerWorkerTest.cpp
+    test/SignalizedIntersectionManagerTest.cpp
+    test/CollisionDetectionTest.cpp
+    test/IndexedDistanceMapTest.cpp
+    test/MapConformerTest.cpp
+    test/TrafficControlTest.cpp
+    test/WMTestLibForGuidanceTest.cpp
+    test/WorldModelUtilsTest.cpp
+  )
+  ament_target_dependencies(test_carma_wm ${${PROJECT_NAME}_FOUND_TEST_DEPENDS})
+  target_link_libraries(test_carma_wm ${node_lib})
 
-#############
-## Testing ##
-#############
+  ament_add_gtest(segfault
+        test/SegFaultTest.cpp
+  )
+  ament_target_dependencies(segfault ${${PROJECT_NAME}_FOUND_TEST_DEPENDS})
+  target_link_libraries(segfault ${node_lib})
 
-catkin_add_gmock(${PROJECT_NAME}-test
-  test/GeometryTest.cpp
-  test/TestMain.cpp
-  test/CARMAWorldModelTest.cpp
-  test/WMListenerWorkerTest.cpp
-  test/SignalizedIntersectionManagerTest.cpp
-  test/CollisionDetectionTest.cpp
-  test/IndexedDistanceMapTest.cpp
-  test/MapConformerTest.cpp
-  test/TrafficControlTest.cpp
-  test/WMTestLibForGuidanceTest.cpp
-  test/WorldModelUtilsTest.cpp
-  WORKING_DIRECTORY ${PROJECT_SOURCE_DIR}/test # Add test directory as working directory for unit tests
-)
-
-catkin_add_gmock(segfault
- test/TestMain.cpp
- test/SegFaultTest.cpp
- WORKING_DIRECTORY ${PROJECT_SOURCE_DIR}/test # Add test directory as working directory for unit tests
-)
-if(TARGET segfault)
- target_link_libraries(segfault ${PROJECT_NAME} ${catkin_LIBRARIES})
 endif()
 
-if(TARGET ${PROJECT_NAME}-test)
-  target_link_libraries(${PROJECT_NAME}-test ${PROJECT_NAME} ${catkin_LIBRARIES})
-endif()
+
+# Install
+ament_auto_package(
+        INSTALL_TO_SHARE 
+)

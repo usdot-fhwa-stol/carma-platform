@@ -32,7 +32,7 @@
   <depend>carma_ros2_utils</depend>
   <depend>rclcpp_components</depend>
   <depend>std_msgs</depend>
-  <depend>carma_wm_ros2</depend>
+  <depend>carma_wm</depend>
   <depend>tf2</depend>
   <depend>tf2_geometry_msgs</depend> 
   <depend>carma_planning_msgs</depend>

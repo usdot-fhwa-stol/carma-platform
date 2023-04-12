@@ -1,6 +1,5 @@
-
 /*
- * Copyright (C) 2021 LEIDOS.
+ * Copyright (C) 2021-2022 LEIDOS.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -15,7 +14,7 @@
  * the License.
  */
 
-#include <basic_autonomy/log/log.h>
+#include <basic_autonomy/log/log.hpp>
 
 namespace basic_autonomy
 {
@@ -47,7 +46,7 @@ void printDoublesPerLineWithPrefix(const std::string& prefix, const std::vector<
 {
   for (const auto& value : values)
   {
-    ROS_DEBUG_STREAM(prefix << value);
+    RCLCPP_DEBUG_STREAM(rclcpp::get_logger(BASIC_AUTONOMY_LOGGER), prefix << value);
   }
 }
 

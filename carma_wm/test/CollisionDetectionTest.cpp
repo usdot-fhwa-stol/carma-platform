@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2019-2021 LEIDOS.dev
+ * Copyright (C) 2022 LEIDOS.dev
  * 
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
@@ -15,24 +15,18 @@
  * the License.
  */
 
-#include <gmock/gmock.h>
+#include <gtest/gtest.h>
 #include <iostream>
-#include <carma_wm/Geometry.h>
-#include <carma_wm/collision_detection.h>
+#include <carma_wm/Geometry.hpp>
+#include <carma_wm/collision_detection.hpp>
 #include <lanelet2_core/geometry/LineString.h>
 #include <lanelet2_core/Attribute.h>
 #include <tf2/LinearMath/Transform.h>
 #include <tf2/LinearMath/Quaternion.h>
 #include <tf2_geometry_msgs/tf2_geometry_msgs.h>
 
-#include "TestHelpers.h"
+#include "TestHelpers.hpp"
 
-using ::testing::_;
-using ::testing::A;
-using ::testing::DoAll;
-using ::testing::InSequence;
-using ::testing::Return;
-using ::testing::ReturnArg;
 
 namespace carma_wm
 {
@@ -40,7 +34,7 @@ namespace carma_wm
   TEST(CollisionDetectionTest, CheckPolygonIntersection)
   {
 
-    geometry_msgs::Vector3 linear_velocity;
+    geometry_msgs::msg::Vector3 linear_velocity;
     linear_velocity.x = 0;
     linear_velocity.y = 0;
 
@@ -76,7 +70,7 @@ namespace carma_wm
 
   TEST(CollisionDetectionTest, ObjectToBoostPolygon)
   {
-    geometry_msgs::Pose pose;
+    geometry_msgs::msg::Pose pose;
     pose.position.x = 6;
     pose.position.y = 5;
     pose.position.z = 0;
@@ -89,7 +83,7 @@ namespace carma_wm
     pose.orientation.z = tf_orientation.getZ();
     pose.orientation.w = tf_orientation.getW();
 
-    geometry_msgs::Vector3 size;
+    geometry_msgs::msg::Vector3 size;
     size.x = 4;
     size.y = 2;
     size.z = 1;
@@ -115,7 +109,7 @@ namespace carma_wm
   TEST(CollisionDetectionTest, PredictObjectPosition)
   {
 
-    geometry_msgs::Vector3 linear_velocity;
+    geometry_msgs::msg::Vector3 linear_velocity;
     linear_velocity.x = 0;
     linear_velocity.y = 0;
 
@@ -182,7 +176,7 @@ namespace carma_wm
   TEST(CollisionDetectionTest, DetectCollision)
   {
 
-    geometry_msgs::Vector3 linear_velocity;
+    geometry_msgs::msg::Vector3 linear_velocity;
     linear_velocity.x = 0;
     linear_velocity.y = 0;
 
@@ -269,58 +263,58 @@ namespace carma_wm
   TEST(CollisionDetectionTest, WorldCollisionDetection)
   {
 
-    cav_msgs::RoadwayObstacleList rwol;
-    cav_msgs::TrajectoryPlan tp;
+    carma_perception_msgs::msg::RoadwayObstacleList rwol;
+    carma_planning_msgs::msg::TrajectoryPlan tp;
 
     
-    geometry_msgs::Twist velocity;
+    geometry_msgs::msg::Twist velocity;
 
-    geometry_msgs::Vector3 linear_velocity;
+    geometry_msgs::msg::Vector3 linear_velocity;
     linear_velocity.x = 0;
     linear_velocity.y = 0;
 
     velocity.linear = linear_velocity;
 
     
-    geometry_msgs::Vector3 size;
+    geometry_msgs::msg::Vector3 size;
     size.x = 4;
     size.y = 2;
     size.z = 1;
 
 
-    cav_msgs::TrajectoryPlanPoint trajectory_point_1;
-    cav_msgs::TrajectoryPlanPoint trajectory_point_2;
-    cav_msgs::TrajectoryPlanPoint trajectory_point_3;
-    cav_msgs::TrajectoryPlanPoint trajectory_point_4;
-    cav_msgs::TrajectoryPlanPoint trajectory_point_5;
+    carma_planning_msgs::msg::TrajectoryPlanPoint trajectory_point_1;
+    carma_planning_msgs::msg::TrajectoryPlanPoint trajectory_point_2;
+    carma_planning_msgs::msg::TrajectoryPlanPoint trajectory_point_3;
+    carma_planning_msgs::msg::TrajectoryPlanPoint trajectory_point_4;
+    carma_planning_msgs::msg::TrajectoryPlanPoint trajectory_point_5;
 
     trajectory_point_1.x = 1.0;
     trajectory_point_1.y = 1.0;
-    trajectory_point_1.target_time = ros::Time(0, 0);
+    trajectory_point_1.target_time = rclcpp::Time(0, 0);
 
     trajectory_point_2.x = 1.0;
     trajectory_point_2.y = 2.0;
-    trajectory_point_2.target_time = ros::Time(0, 1);
+    trajectory_point_2.target_time = rclcpp::Time(0, 1);
 
     trajectory_point_3.x = 1.0;
     trajectory_point_3.y = 3.0;
-    trajectory_point_3.target_time = ros::Time(0, 2);
+    trajectory_point_3.target_time = rclcpp::Time(0, 2);
 
     trajectory_point_4.x = 1.0;
     trajectory_point_4.y = 4.0;
-    trajectory_point_4.target_time = ros::Time(0, 3);
+    trajectory_point_4.target_time = rclcpp::Time(0, 3);
 
     trajectory_point_5.x = 1.0;
     trajectory_point_5.y = 5.0;
-    trajectory_point_5.target_time = ros::Time(0, 4);
+    trajectory_point_5.target_time = rclcpp::Time(0, 4);
 
     tp.trajectory_points = {trajectory_point_1, trajectory_point_2, trajectory_point_3, trajectory_point_4, trajectory_point_5};
 
-    cav_msgs::RoadwayObstacle rwo_1;
-    cav_msgs::RoadwayObstacle rwo_2;
-    cav_msgs::RoadwayObstacle rwo_3;
-    cav_msgs::RoadwayObstacle rwo_4;
-    cav_msgs::RoadwayObstacle rwo_5;
+    carma_perception_msgs::msg::RoadwayObstacle rwo_1;
+    carma_perception_msgs::msg::RoadwayObstacle rwo_2;
+    carma_perception_msgs::msg::RoadwayObstacle rwo_3;
+    carma_perception_msgs::msg::RoadwayObstacle rwo_4;
+    carma_perception_msgs::msg::RoadwayObstacle rwo_5;
 
     tf2::Quaternion tf_orientation;
     tf_orientation.setRPY(0, 0, 1.5708);
@@ -341,8 +335,8 @@ namespace carma_wm
     rwo_1.object.size.y = 1;
     rwo_1.object.size.z = 1;
 
-    cav_msgs::PredictedState ps_1;
-    ps_1.header.stamp.nsec = 1000;
+    carma_perception_msgs::msg::PredictedState ps_1;
+    ps_1.header.stamp.nanosec = 1000;
 
     ps_1.predicted_position.position.x = 1;
     ps_1.predicted_position.position.y = 1;
@@ -353,8 +347,8 @@ namespace carma_wm
     ps_1.predicted_position.orientation.z = tf_orientation.getZ();
     ps_1.predicted_position.orientation.w = tf_orientation.getW();
 
-    cav_msgs::PredictedState ps_2;
-    ps_2.header.stamp.nsec = 2000;
+    carma_perception_msgs::msg::PredictedState ps_2;
+    ps_2.header.stamp.nanosec = 2000;
 
     ps_2.predicted_position.position.x = 1;
     ps_2.predicted_position.position.y = 2;
@@ -365,8 +359,8 @@ namespace carma_wm
     ps_2.predicted_position.orientation.z = tf_orientation.getZ();
     ps_2.predicted_position.orientation.w = tf_orientation.getW();
 
-    cav_msgs::PredictedState ps_3;
-    ps_3.header.stamp.nsec = 3000;
+    carma_perception_msgs::msg::PredictedState ps_3;
+    ps_3.header.stamp.nanosec = 3000;
 
     ps_3.predicted_position.position.x = 1;
     ps_3.predicted_position.position.y = 3;
@@ -381,7 +375,7 @@ namespace carma_wm
 
     rwol.roadway_obstacles = {rwo_1};
 
-    std::vector<cav_msgs::RoadwayObstacle> result = collision_detection::WorldCollisionDetection(rwol, tp, size, velocity);
+    std::vector<carma_perception_msgs::msg::RoadwayObstacle> result = collision_detection::WorldCollisionDetection(rwol, tp, size, velocity);
 
     ASSERT_EQ(result.size(),1);
 
@@ -390,55 +384,55 @@ namespace carma_wm
   TEST(CollisionDetectionFalseTest, WorldCollisionDetection)
   {
 
-    cav_msgs::RoadwayObstacleList rwol;
-    cav_msgs::TrajectoryPlan tp;
+    carma_perception_msgs::msg::RoadwayObstacleList rwol;
+    carma_planning_msgs::msg::TrajectoryPlan tp;
 
-    geometry_msgs::Twist velocity;
+    geometry_msgs::msg::Twist velocity;
 
-    geometry_msgs::Vector3 linear_velocity;
+    geometry_msgs::msg::Vector3 linear_velocity;
     linear_velocity.x = 0;
     linear_velocity.y = 1;
 
     velocity.linear = linear_velocity;
 
-    geometry_msgs::Vector3 size;
+    geometry_msgs::msg::Vector3 size;
     size.x = 1;
     size.y = 2;
     size.z = 1;
 
-    cav_msgs::TrajectoryPlanPoint trajectory_point_1;
-    cav_msgs::TrajectoryPlanPoint trajectory_point_2;
-    cav_msgs::TrajectoryPlanPoint trajectory_point_3;
-    cav_msgs::TrajectoryPlanPoint trajectory_point_4;
-    cav_msgs::TrajectoryPlanPoint trajectory_point_5;
+    carma_planning_msgs::msg::TrajectoryPlanPoint trajectory_point_1;
+    carma_planning_msgs::msg::TrajectoryPlanPoint trajectory_point_2;
+    carma_planning_msgs::msg::TrajectoryPlanPoint trajectory_point_3;
+    carma_planning_msgs::msg::TrajectoryPlanPoint trajectory_point_4;
+    carma_planning_msgs::msg::TrajectoryPlanPoint trajectory_point_5;
 
     trajectory_point_1.x = 1.0;
     trajectory_point_1.y = 1.0;
-    trajectory_point_1.target_time = ros::Time(0, 0);
+    trajectory_point_1.target_time = rclcpp::Time(0, 0);
 
     trajectory_point_2.x = 1.0;
     trajectory_point_2.y = 2.0;
-    trajectory_point_2.target_time = ros::Time(0, 1);
+    trajectory_point_2.target_time = rclcpp::Time(0, 1);
 
     trajectory_point_3.x = 1.0;
     trajectory_point_3.y = 3.0;
-    trajectory_point_3.target_time = ros::Time(0, 2);
+    trajectory_point_3.target_time = rclcpp::Time(0, 2);
 
     trajectory_point_4.x = 1.0;
     trajectory_point_4.y = 4.0;
-    trajectory_point_4.target_time = ros::Time(0, 3);
+    trajectory_point_4.target_time = rclcpp::Time(0, 3);
 
     trajectory_point_5.x = 1.0;
     trajectory_point_5.y = 5.0;
-    trajectory_point_5.target_time = ros::Time(0, 4);
+    trajectory_point_5.target_time = rclcpp::Time(0, 4);
 
     tp.trajectory_points = {trajectory_point_1, trajectory_point_2, trajectory_point_3, trajectory_point_4, trajectory_point_5};
 
-    cav_msgs::RoadwayObstacle rwo_1;
-    cav_msgs::RoadwayObstacle rwo_2;
-    cav_msgs::RoadwayObstacle rwo_3;
-    cav_msgs::RoadwayObstacle rwo_4;
-    cav_msgs::RoadwayObstacle rwo_5;
+    carma_perception_msgs::msg::RoadwayObstacle rwo_1;
+    carma_perception_msgs::msg::RoadwayObstacle rwo_2;
+    carma_perception_msgs::msg::RoadwayObstacle rwo_3;
+    carma_perception_msgs::msg::RoadwayObstacle rwo_4;
+    carma_perception_msgs::msg::RoadwayObstacle rwo_5;
 
     tf2::Quaternion tf_orientation;
     tf_orientation.setRPY(0, 0, 1.5708);
@@ -455,8 +449,8 @@ namespace carma_wm
     rwo_1.object.size.y = 1;
     rwo_1.object.size.z = 1;
 
-    cav_msgs::PredictedState ps_1;
-    ps_1.header.stamp.nsec = 1000;
+    carma_perception_msgs::msg::PredictedState ps_1;
+    ps_1.header.stamp.nanosec = 1000;
 
     ps_1.predicted_position.position.x = 7;
     ps_1.predicted_position.position.y = 8;
@@ -467,8 +461,8 @@ namespace carma_wm
     ps_1.predicted_position.orientation.z = tf_orientation.getZ();
     ps_1.predicted_position.orientation.w = tf_orientation.getW();
 
-    cav_msgs::PredictedState ps_2;
-    ps_2.header.stamp.nsec = 2000;
+    carma_perception_msgs::msg::PredictedState ps_2;
+    ps_2.header.stamp.nanosec = 2000;
 
     ps_2.predicted_position.position.x = 9;
     ps_2.predicted_position.position.y = 10;
@@ -479,8 +473,8 @@ namespace carma_wm
     ps_2.predicted_position.orientation.z = tf_orientation.getZ();
     ps_2.predicted_position.orientation.w = tf_orientation.getW();
 
-    cav_msgs::PredictedState ps_3;
-    ps_3.header.stamp.nsec = 3000;
+    carma_perception_msgs::msg::PredictedState ps_3;
+    ps_3.header.stamp.nanosec = 3000;
 
     ps_3.predicted_position.position.x = 11;
     ps_3.predicted_position.position.y = 12;
@@ -495,7 +489,7 @@ namespace carma_wm
 
     rwol.roadway_obstacles = {rwo_1};
 
-    std::vector<cav_msgs::RoadwayObstacle> result = collision_detection::WorldCollisionDetection(rwol, tp, size, velocity);
+    std::vector<carma_perception_msgs::msg::RoadwayObstacle> result = collision_detection::WorldCollisionDetection(rwol, tp, size, velocity);
 
     ASSERT_EQ(result.size(),0);
 

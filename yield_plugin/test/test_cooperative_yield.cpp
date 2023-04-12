@@ -18,11 +18,11 @@
 #include <yield_plugin/yield_plugin_node.hpp>
 #include <gtest/gtest.h>
 #include <rclcpp/rclcpp.hpp>
-#include <carma_wm_ros2/CARMAWorldModel.hpp>
+#include <carma_wm/CARMAWorldModel.hpp>
 #include <math.h>
 #include <tf2/LinearMath/Vector3.h>
 #include <boost/property_tree/json_parser.hpp>
-#include <carma_wm_ros2/WMTestLibForGuidance.hpp>
+#include <carma_wm/WMTestLibForGuidance.hpp>
 
 using namespace yield_plugin;
 

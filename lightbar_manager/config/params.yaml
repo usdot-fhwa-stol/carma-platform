@@ -1,4 +1,4 @@
-# Copyright (C) 2018-2021 LEIDOS.
+# Copyright (C) 2023 LEIDOS.
 #
 # Licensed under the Apache License, Version 2.0 (the "License"); you may not
 # use this file except in compliance with the License. You may obtain a copy of
@@ -12,7 +12,11 @@
 # License for the specific language governing permissions and limitations under
 # the License.
 
-# Integer: The rate at which the LightBarManager Node will process message
+# Hz: The rate at which the LightBarManager Node will process message
+spin_rate_hz: 10.0
+
+# Operation mode: if false, other plugins are able to take control of the lightbar status
+normal_operation: true
 
 # Indicator IDs
 # GREEN_SOLID
@@ -30,17 +34,14 @@
 # TypeC
 # TypeD
 
-# Testers are for unit testing. Keep it there.
-lightbar_priorities: 
-  - 'lightbar_manager'
+# Priority in descending order. Higher priority takes over lightbar
+lightbar_priorities: ['lightbar_manager']
 
+# Keys for lightbar_cda_to_ind_table, 1-to-1 with lightbar_ind_table
+lightbar_cda_table: ['TypeA', 'TypeB', 'TypeC', 'TypeD']
 
-
-lightbar_cda_to_ind_table:
-  - TypeA : 'YELLOW_DIM'  
-  - TypeB : 'YELLOW_DIM'
-  - TypeC : 'YELLOW_FLASH'
-  - TypeD : 'YELLOW_SIDES'
+# Values for lightbar_cda_to_ind_table, 1-to-1 with lightbar_cda_table
+lightbar_ind_table: ['YELLOW_DIM','YELLOW_DIM','YELLOW_FLASH','YELLOW_SIDES']
 
 
 

@@ -26,8 +26,7 @@ enum class ApproachingEmergencyVehicleState
     NO_APPROACHING_ERV, // State representing that an ERV is not passing the ego vehicle within the duration defined by 
                         // the "approaching_threshold" configurable parameter.
     MOVING_OVER_FOR_APPROACHING_ERV, // State representing that the ego vehicle must change lanes in response to an approaching ERV.
-    WAITING_FOR_APPROACHING_ERV, // State representing that an ERV is approaching the ego vehicle, but that the ego vehicle will not attempt
-                                 // to change lanes since the ERV is too close.
+
     SLOWING_DOWN_FOR_ERV  // State representing that the ERV is actively passing the ego vehicle, so the ego vehicle should remain in its 
                           // current lane and slow down if necessary.
 };
@@ -52,15 +51,8 @@ enum class ApproachingEmergencyVehicleEvent
     APPROACHING_ERV_NOT_IN_PATH, // Event representing that an ERV is approaching the ego vehicle and the ego vehicle is either in the
                                  // rightmost lane, or is in a lane adjacent to the rightmost lane if the ERV is in the rightmost lane.
 
-    ERV_ABOUT_TO_PASS_IN_PATH, // Event representing that and ERV is about to pass the ego vehicle, and the ego vehicle is either
-                               // in the same lane as the ERV or the ego vehicle is not in the rightmost lane.
-    ERV_ABOUT_TO_PASS_NOT_IN_PATH, // Event representing that and ERV is about to pass the ego vehicle, and the ego vehicle is either in the
-                                   // rightmost lane, or is in a lane adjacent to the rightmost lane if the ERV is in the rightmost lane.
-
     ERV_PASSING_IN_PATH, // Event representing that the ERV is actively passing the ego vehicle, and the ego vehicle is either
                          // in the same lane as the ERV or the ego vehicle is not in the rightmost lane.
-    ERV_PASSING_NOT_IN_PATH,  // Event representing that the ERV is actively passing the ego vehicle, and the ego vehicle is either in the
-                             // rightmost lane, or is in a lane adjacent to the rightmost lane if the ERV is in the rightmost lane.
 
     ERV_PASSED  // Event representing that the ERV has fully passed the ego vehicle.
 };

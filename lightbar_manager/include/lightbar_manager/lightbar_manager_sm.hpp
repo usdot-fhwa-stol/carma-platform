@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2021 LEIDOS.
+ * Copyright (C) 2023 LEIDOS.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -14,12 +14,15 @@
  * the License.
  */
 
-#ifndef _LIGHTBAR_MANAGER_SM_H
-#define _LIGHTBAR_MANAGER_SM_H
+#pragma once
 
-#include <ros/ros.h>
-#include <cav_msgs/GuidanceState.h>
+#include <rclcpp/rclcpp.hpp>
+#include <carma_planning_msgs/msg/guidance_state.hpp>
+#include <carma_ros2_utils/carma_lifecycle_node.hpp>
 
+#include <carma_msgs/srv/request_indicator_control.hpp>
+#include <carma_msgs/srv/release_indicator_control.hpp>
+#include <carma_driver_msgs/srv/set_light_bar_indicator.hpp>
 
 namespace lightbar_manager
 {
@@ -70,7 +73,7 @@ class LightBarManagerStateMachine
     * \brief This function triggers the transitioning to the next state in LightBarStateMachine
     * based on the guidance state change
     */
-    void handleStateChange(const cav_msgs::GuidanceStateConstPtr& msg_ptr);
+    void handleStateChange(const carma_planning_msgs::msg::GuidanceState& msg);
 
     private:
 
@@ -80,12 +83,12 @@ class LightBarManagerStateMachine
     void onEngage();
 
     // Guidance state local copy for checking any change in state
-    uint8_t guidance_state_ = cav_msgs::GuidanceState::SHUTDOWN;
+    uint8_t guidance_state_ = carma_planning_msgs::msg::GuidanceState::SHUTDOWN;
 
     // ROS Service 
-    ros::ServiceClient request_control_client_;
-    ros::ServiceClient release_control_client_;
-    ros::ServiceClient set_indicator_client_;
+    carma_ros2_utils::ClientPtr<carma_msgs::srv::ReleaseIndicatorControl> request_control_client_;
+    carma_ros2_utils::ClientPtr<carma_msgs::srv::RequestIndicatorControl> release_control_client_;
+    carma_ros2_utils::ClientPtr<carma_driver_msgs::srv::SetLightBarIndicator> set_indicator_client_;
     
     // a local variable keeps the current state machine state
     LightBarState current_state_ = DISENGAGED;
@@ -93,5 +96,3 @@ class LightBarManagerStateMachine
 };
 
 } //namespace lightbar_manager
-
-#endif // LIGHTBAR_MANAGER_SM_H

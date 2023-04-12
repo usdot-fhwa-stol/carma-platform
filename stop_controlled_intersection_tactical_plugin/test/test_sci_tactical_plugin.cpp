@@ -15,10 +15,10 @@
  */
 
 #include <stop_controlled_intersection_plugin.hpp>
-#include <carma_wm_ros2/WMTestLibForGuidance.hpp>
+#include <carma_wm/WMTestLibForGuidance.hpp>
 #include <gtest/gtest.h>
 #include <rclcpp/rclcpp.hpp>
-#include <carma_wm_ros2/CARMAWorldModel.hpp>
+#include <carma_wm/CARMAWorldModel.hpp>
 #include <carma_planning_msgs/msg/lane_following_maneuver.hpp>
 #include <carma_planning_msgs/msg/vehicle_state.hpp>
 #include <carma_planning_msgs/srv/plan_maneuvers.hpp>

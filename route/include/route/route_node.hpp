@@ -28,8 +28,8 @@
 #include <carma_planning_msgs/srv/abort_active_route.hpp>
 #include <geometry_msgs/msg/twist_stamped.hpp>
 
-#include <carma_wm_ros2/WMListener.hpp>
-#include <carma_wm_ros2/WorldModel.hpp>
+#include <carma_wm/WMListener.hpp>
+#include <carma_wm/WorldModel.hpp>
 #include <tf2_ros/transform_listener.h>
 
 #include <carma_ros2_utils/carma_lifecycle_node.hpp>

@@ -34,9 +34,9 @@
 #include <lanelet2_extension/projection/local_frame_projector.h>
 #include <lanelet2_core/geometry/Lanelet.h>
 #include <lanelet2_routing/RoutingGraph.h>
-#include <carma_wm_ros2/WorldModel.hpp>
+#include <carma_wm/WorldModel.hpp>
 #include <std_msgs/msg/string.h>
-#include <carma_wm_ros2/Geometry.hpp>
+#include <carma_wm/Geometry.hpp>
 
 namespace traffic_incident_parser{
 

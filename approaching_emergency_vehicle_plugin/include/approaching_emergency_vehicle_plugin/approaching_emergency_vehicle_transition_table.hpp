@@ -69,7 +69,6 @@ namespace approaching_emergency_vehicle_plugin
         // Helper functions for processing each the provided events based on the current state
         void eventWhenNO_APPROACHING_ERV(ApproachingEmergencyVehicleEvent event);
         void eventWhenMOVING_OVER_FOR_APPROACHING_ERV(ApproachingEmergencyVehicleEvent event);
-        void eventWhenWAITING_FOR_APPROACHING_ERV(ApproachingEmergencyVehicleEvent event);
         void eventWhenSLOWING_DOWN_FOR_ERV(ApproachingEmergencyVehicleEvent event);
 
         /**

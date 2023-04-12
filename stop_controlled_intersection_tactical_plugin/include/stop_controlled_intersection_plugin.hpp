@@ -24,18 +24,18 @@
 #include <boost/shared_ptr.hpp>
 #include <boost/geometry.hpp>
 #include <carma_ros2_utils/carma_lifecycle_node.hpp>
-#include <carma_wm_ros2/Geometry.hpp>
+#include <carma_wm/Geometry.hpp>
 #include <carma_planning_msgs/srv/plan_trajectory.hpp>
-#include <carma_wm_ros2/WMListener.hpp>
+#include <carma_wm/WMListener.hpp>
 #include <functional>
 #include "stop_controlled_intersection_config.hpp"
 #include <unordered_set>
 #include <autoware_msgs/msg/lane.hpp>
 #include <rclcpp/rclcpp.hpp>
 #include <carma_planning_msgs/msg/maneuver.hpp>
-#include <basic_autonomy_ros2/basic_autonomy.hpp>
-#include <basic_autonomy_ros2/helper_functions.hpp>
-#include <basic_autonomy_ros2/log/log.hpp>
+#include <basic_autonomy/basic_autonomy.hpp>
+#include <basic_autonomy/helper_functions.hpp>
+#include <basic_autonomy/log/log.hpp>
 #include <gtest/gtest_prod.h>
 
 /**

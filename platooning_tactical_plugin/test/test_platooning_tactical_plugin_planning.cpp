@@ -15,7 +15,7 @@
  */
 
 #include <platooning_tactical_plugin/platooning_tactical_plugin.h>
-#include <carma_wm_ros2/WMTestLibForGuidance.hpp>
+#include <carma_wm/WMTestLibForGuidance.hpp>
 #include <gtest/gtest.h>
 #include <lanelet2_core/primitives/Lanelet.h>
 #include <lanelet2_io/Io.h>
@@ -28,8 +28,8 @@
 #include <lanelet2_extension/traffic_rules/CarmaUSTrafficRules.h>
 #include <lanelet2_extension/projection/local_frame_projector.h>
 #include <lanelet2_extension/io/autoware_osm_parser.h>
-#include <carma_wm_ros2/MapConformer.hpp>
-#include <carma_wm_ros2/CARMAWorldModel.hpp>
+#include <carma_wm/MapConformer.hpp>
+#include <carma_wm/CARMAWorldModel.hpp>
 #include <unsupported/Eigen/Splines>
 #include <carma_ros2_utils/containers/containers.hpp>
 #include <carma_ros2_utils/timers/testing/TestTimerFactory.hpp>

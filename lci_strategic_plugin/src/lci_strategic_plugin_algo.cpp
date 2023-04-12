@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022 LEIDOS.
+ * Copyright (C) 2023 LEIDOS.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -13,11 +13,13 @@
  * License for the specific language governing permissions and limitations under
  * the License.
  */
-#include "lci_strategic_plugin/lci_strategic_plugin.h"
-#include "lci_strategic_plugin/lci_states.h"
+#include "lci_strategic_plugin/lci_strategic_plugin.hpp"
+#include "lci_strategic_plugin/lci_states.hpp"
 
 namespace lci_strategic_plugin
 {
+
+#define EPSILON 0.01
 
 double LCIStrategicPlugin::estimate_distance_to_stop(double v, double a) const
 {
@@ -47,11 +49,11 @@ double LCIStrategicPlugin::get_distance_to_accel_or_decel_once (double current_s
   }
 }
 
-ros::Time LCIStrategicPlugin::get_nearest_green_entry_time(const ros::Time& current_time, const ros::Time& earliest_entry_time, lanelet::CarmaTrafficSignalPtr signal, double minimum_required_green_time) const
+rclcpp::Time LCIStrategicPlugin::get_nearest_green_entry_time(const rclcpp::Time& current_time, const rclcpp::Time& earliest_entry_time, lanelet::CarmaTrafficSignalPtr signal, double minimum_required_green_time) const
 {
   boost::posix_time::time_duration g =  lanelet::time::durationFromSec(minimum_required_green_time);         // provided by considering min headways of vehicles in front
-  boost::posix_time::ptime t = lanelet::time::timeFromSec(current_time.toSec());                        // time variable
-  boost::posix_time::ptime eet = lanelet::time::timeFromSec(earliest_entry_time.toSec());                        // earliest entry time
+  boost::posix_time::ptime t = lanelet::time::timeFromSec(current_time.seconds());                        // time variable
+  boost::posix_time::ptime eet = lanelet::time::timeFromSec(earliest_entry_time.seconds());                        // earliest entry time
 
   auto curr_pair = signal->predictState(t);
   if (!curr_pair)
@@ -114,7 +116,7 @@ ros::Time LCIStrategicPlugin::get_nearest_green_entry_time(const ros::Time& curr
     }
   }
 
-  return ros::Time(lanelet::time::toSec(t));
+  return rclcpp::Time(lanelet::time::toSec(t) * 1e9);
 }
 
 double LCIStrategicPlugin::get_trajectory_smoothing_activation_distance(double time_remaining_at_free_flow, double full_cycle_duration, double current_speed, double speed_limit, double departure_speed, double max_accel, double max_decel) const
@@ -123,7 +125,7 @@ double LCIStrategicPlugin::get_trajectory_smoothing_activation_distance(double t
   double accel_ratio = max_accel / max_decel;
   double remaining_time = time_remaining_at_free_flow - full_cycle_duration / 2;
   double inflection_speed = (max_accel * remaining_time - accel_ratio * departure_speed + current_speed)/ (1 - accel_ratio);
-  ROS_DEBUG_STREAM("ENTER TRAJ CALC: time_remaining_at_free_flow: " << time_remaining_at_free_flow << ", full_cycle_duration: " << full_cycle_duration << ", inflection_speed: " << inflection_speed);
+  RCLCPP_DEBUG_STREAM(rclcpp::get_logger("lci_strategic_plugin"), "ENTER TRAJ CALC: time_remaining_at_free_flow: " << time_remaining_at_free_flow << ", full_cycle_duration: " << full_cycle_duration << ", inflection_speed: " << inflection_speed);
 
   if (remaining_time < 0)
     return -1;
@@ -133,7 +135,7 @@ double LCIStrategicPlugin::get_trajectory_smoothing_activation_distance(double t
     // kinematic equation to find distance of acceleration + deceleration
     // (vf^2 - vi^2)/2a = d
     double d = (std::pow(inflection_speed, 2) - std::pow (current_speed, 2)) / (2 * max_accel) +  (std::pow(departure_speed, 2) - std::pow(inflection_speed, 2)) / (2 * max_decel);
-    ROS_DEBUG_STREAM("calculated distance WITHOUT cruising: " << d);
+    RCLCPP_DEBUG_STREAM(rclcpp::get_logger("lci_strategic_plugin"), "calculated distance WITHOUT cruising: " << d);
     return d;
   }
   else //there must be cruising
@@ -143,74 +145,229 @@ double LCIStrategicPlugin::get_trajectory_smoothing_activation_distance(double t
     double decel_time = (current_speed - speed_limit) / max_decel;
     double accel_time = (speed_limit - current_speed) / max_accel;
     double cruising_time = remaining_time - decel_time - accel_time;
-    ROS_DEBUG_STREAM("decel_time: " << decel_time << ", accel_time: " << accel_time << ", cruising_time: " << cruising_time);
+    RCLCPP_DEBUG_STREAM(rclcpp::get_logger("lci_strategic_plugin"), "decel_time: " << decel_time << ", accel_time: " << accel_time << ", cruising_time: " << cruising_time);
     double d = (std::pow(speed_limit, 2) - std::pow (current_speed, 2)) / (2 * max_accel) +  (std::pow(departure_speed, 2) - std::pow(speed_limit, 2)) / (2 * max_decel) + cruising_time * speed_limit;
-    ROS_DEBUG_STREAM("calculated distance with cruising: " <<  d << ", accel_seg: " << (std::pow(speed_limit, 2) - std::pow (current_speed, 2)) / (2 * max_accel) << 
+    RCLCPP_DEBUG_STREAM(rclcpp::get_logger("lci_strategic_plugin"), "calculated distance with cruising: " <<  d << ", accel_seg: " << (std::pow(speed_limit, 2) - std::pow (current_speed, 2)) / (2 * max_accel) << 
                       ", cruising: " << + cruising_time * speed_limit << ", decel_seg:" << (std::pow(departure_speed, 2) - std::pow(speed_limit, 2)) / (2 * max_decel));
     return d;
   }
 }
 
-ros::Duration LCIStrategicPlugin::get_earliest_entry_time(double remaining_distance, double free_flow_speed, double current_speed, double departure_speed, double max_accel, double max_decel) const
+rclcpp::Duration LCIStrategicPlugin::get_earliest_entry_time(double remaining_distance, double free_flow_speed, double current_speed, double departure_speed, double max_accel, double max_decel) const
 {
   double x = remaining_distance;
   double x2 = get_distance_to_accel_or_decel_once(current_speed, departure_speed, max_accel, max_decel);
   double x1 = get_distance_to_accel_or_decel_twice(free_flow_speed, current_speed, departure_speed, max_accel, max_decel);
   double v_hat = get_inflection_speed_value(x, x1, x2, free_flow_speed, current_speed, departure_speed, max_accel, max_decel);
   
-  ROS_DEBUG_STREAM("x: " << x << ", x2: " << x2 << ", x1: " << x1 << ", v_hat: " << v_hat);
+  RCLCPP_DEBUG_STREAM(rclcpp::get_logger("lci_strategic_plugin"), "x: " << x << ", x2: " << x2 << ", x1: " << x1 << ", v_hat: " << v_hat);
 
   if (v_hat <= config_.algo_minimum_speed - epsilon_ || isnan(v_hat))
   {
-    ROS_DEBUG_STREAM("Detected that v_hat is smaller than allowed!!!: " << v_hat);
+    RCLCPP_DEBUG_STREAM(rclcpp::get_logger("lci_strategic_plugin"), "Detected that v_hat is smaller than allowed!!!: " << v_hat);
     v_hat = config_.algo_minimum_speed;
   }
 
   if (v_hat >= free_flow_speed + epsilon_)
   {
-    ROS_DEBUG_STREAM("Detected that v_hat is Bigger than allowed!!!: " << v_hat);    
+    RCLCPP_DEBUG_STREAM(rclcpp::get_logger("lci_strategic_plugin"), "Detected that v_hat is Bigger than allowed!!!: " << v_hat);    
     v_hat = free_flow_speed;
   }
 
-  ros::Duration t_accel;
+  rclcpp::Duration t_accel(0,0);
   if ( x < x2 && current_speed > departure_speed)
   {
-    t_accel = ros::Duration(0.0);
+    t_accel = rclcpp::Duration(0.0);
   }
   else
   {
-    t_accel = ros::Duration(std::max((v_hat - current_speed) / max_accel, 0.0));
+    t_accel = rclcpp::Duration(std::max((v_hat - current_speed) / max_accel, 0.0) * 1e9);
   }
-  ros::Duration t_decel;
+  rclcpp::Duration t_decel(0,0);
   if ( x < x2 && current_speed < departure_speed)
   {
-    t_decel = ros::Duration(0.0);
+    t_decel = rclcpp::Duration(0.0);
   }
   else
   {
     if (x < x2)
     {
-      t_decel = ros::Duration(std::max((v_hat - current_speed) / max_decel, 0.0));
+      t_decel = rclcpp::Duration(std::max((v_hat - current_speed) / max_decel, 0.0) * 1e9);
 
     }
     else
     {
-      t_decel = ros::Duration(std::max((departure_speed - v_hat) / max_decel, 0.0));
+      t_decel = rclcpp::Duration(std::max((departure_speed - v_hat) / max_decel, 0.0) * 1e9);
     }
   }
 
-  ros::Duration t_cruise;
+  rclcpp::Duration t_cruise(0,0);
   if (x1 <= x)
   {
-    t_cruise = ros::Duration(std::max((x - x1)/v_hat, 0.0));
+    t_cruise = rclcpp::Duration(std::max((x - x1)/v_hat, 0.0) * 1e9);
   }
   else
   {
-    t_cruise = ros::Duration(0.0);
+    t_cruise = rclcpp::Duration(0.0);
   }
-  ROS_DEBUG_STREAM("t_accel: " <<  t_accel << ", t_cruise: " << t_cruise << ", t_decel: " << t_decel);
+  RCLCPP_DEBUG_STREAM(rclcpp::get_logger("lci_strategic_plugin"), "t_accel: " <<  t_accel.seconds() << ", t_cruise: " << t_cruise.seconds() << ", t_decel: " << t_decel.seconds());
   return t_accel + t_cruise + t_decel;
 
+}
+
+std::tuple<rclcpp::Time, bool, bool> LCIStrategicPlugin::get_final_entry_time_and_conditions(const VehicleState& current_state, const rclcpp::Time& earliest_entry_time, lanelet::CarmaTrafficSignalPtr traffic_light)
+{
+  rclcpp::Time nearest_green_entry_time = rclcpp::Time(0);
+  bool is_entry_time_within_green_or_tbd = false;
+  bool in_tbd = true;
+
+  if (config_.enable_carma_streets_connection ==false || scheduled_enter_time_ == 0) //UC2
+  {
+    nearest_green_entry_time = get_nearest_green_entry_time(current_state.stamp, earliest_entry_time, traffic_light) 
+                                          + rclcpp::Duration(EPSILON * 1e9); //0.01sec more buffer since green_light algorithm's timestamp picks the previous signal - Vehicle Estimation
+    is_entry_time_within_green_or_tbd = true; 
+  }
+  else if(config_.enable_carma_streets_connection ==true && scheduled_enter_time_ != 0 ) // UC3
+  {
+    nearest_green_entry_time = rclcpp::Time(std::max(earliest_entry_time.seconds(), (scheduled_enter_time_)/1000.0) * 1e9) + rclcpp::Duration(EPSILON * 1e9); //Carma Street 
+    
+    // check if scheduled_enter_time_ is inside the available states interval
+    size_t i = 0;
+    
+
+    for (auto pair : traffic_light->recorded_time_stamps)
+    {
+      if (lanelet::time::timeFromSec(nearest_green_entry_time.seconds()) < pair.first)
+      {
+        if (pair.second == lanelet::CarmaTrafficSignalState::PROTECTED_MOVEMENT_ALLOWED) 
+        {
+          RCLCPP_DEBUG_STREAM(rclcpp::get_logger("lci_strategic_plugin"), "ET is inside the GREEN phase! where starting time: " << std::to_string(lanelet::time::toSec(traffic_light->recorded_start_time_stamps[i])) 
+            << ", ending time of that green signal is: " << std::to_string(lanelet::time::toSec(pair.first)));
+          is_entry_time_within_green_or_tbd = true;
+        }
+        else
+        {
+          RCLCPP_ERROR_STREAM(rclcpp::get_logger("lci_strategic_plugin"), "Vehicle should plan cruise and stop as ET is inside the RED or YELLOW phase! where starting time: " << std::to_string(lanelet::time::toSec(traffic_light->recorded_start_time_stamps[i])) 
+            << ", ending time of that green signal is: " << std::to_string(lanelet::time::toSec(pair.first)));
+          is_entry_time_within_green_or_tbd = false;
+        }
+
+        in_tbd = false;
+        break;
+      }
+      i++;
+    }
+
+    if (in_tbd)
+    {
+      RCLCPP_DEBUG_STREAM(rclcpp::get_logger("lci_strategic_plugin"), "ET is inside TBD phase! where starting time: " << std::to_string(lanelet::time::toSec(traffic_light->recorded_time_stamps.back().first)));
+      is_entry_time_within_green_or_tbd = true;
+    }
+
+  }
+  RCLCPP_DEBUG_STREAM(rclcpp::get_logger("lci_strategic_plugin"), "nearest_green_entry_time: " << nearest_green_entry_time.get_clock_type());
+  RCLCPP_DEBUG_STREAM(rclcpp::get_logger("lci_strategic_plugin"), "current_state.stamp: " << current_state.stamp.get_clock_type());
+
+  RCLCPP_DEBUG_STREAM(rclcpp::get_logger("lci_strategic_plugin"), "nearest_green_entry_time: " << std::to_string(nearest_green_entry_time.seconds()) << ", with : " << std::to_string((nearest_green_entry_time - current_state.stamp).seconds())  << " seconds left at: " << std::to_string(current_state.stamp.seconds()));
+  
+  if (nearest_green_entry_time_cached_) 
+  { // always pick later of buffered green entry time, or earliest entry time
+    nearest_green_entry_time = rclcpp::Time(std::max(nearest_green_entry_time.seconds(), nearest_green_entry_time_cached_.get().seconds()) * 1e9);
+  }
+
+  RCLCPP_DEBUG_STREAM(rclcpp::get_logger("lci_strategic_plugin"), "After accounting for cached - nearest_green_entry_time: " << std::to_string(nearest_green_entry_time.seconds()) << ", with : " << std::to_string((nearest_green_entry_time - current_state.stamp).seconds())  << " seconds left at: " << std::to_string(current_state.stamp.seconds()));
+  
+  if (!nearest_green_entry_time_cached_ && is_entry_time_within_green_or_tbd) 
+  {
+    RCLCPP_DEBUG_STREAM(rclcpp::get_logger("lci_strategic_plugin"), "Applying green_light_buffer for the first time and caching! nearest_green_entry_time (without buffer):" << std::to_string(nearest_green_entry_time.seconds()) << ", and earliest_entry_time: " << std::to_string(earliest_entry_time.seconds()));
+    // save first calculated nearest_green_entry_time + buffer to compare against in the future as nearest_green_entry_time changes with earliest_entry_time
+    
+    // check if it needs buffer below:
+    rclcpp::Time early_arrival_time_green_et =
+        nearest_green_entry_time - rclcpp::Duration(config_.green_light_time_buffer * 1e9);
+
+    RCLCPP_DEBUG_STREAM(rclcpp::get_logger("lci_strategic_plugin"), "early_arrival_time_green_et: " << std::to_string(early_arrival_time_green_et.seconds()));
+
+    auto early_arrival_state_green_et_optional = traffic_light->predictState(lanelet::time::timeFromSec(early_arrival_time_green_et.seconds()));
+
+    if (!validLightState(early_arrival_state_green_et_optional, early_arrival_time_green_et))
+    {
+      RCLCPP_ERROR_STREAM(rclcpp::get_logger("lci_strategic_plugin"), "Unable to resolve give signal...");
+      return std::make_tuple(rclcpp::Time(0), is_entry_time_within_green_or_tbd, in_tbd);
+    }
+
+    RCLCPP_DEBUG_STREAM(rclcpp::get_logger("lci_strategic_plugin"), "early_arrival_state_green_et: " << early_arrival_state_green_et_optional.get().second);
+
+    bool can_make_early_arrival  = (early_arrival_state_green_et_optional.get().second == lanelet::CarmaTrafficSignalState::PROTECTED_MOVEMENT_ALLOWED);
+   
+    // nearest_green_entry_time is by definition on green, so only check early_arrival
+    if (can_make_early_arrival)  // Green light with Certainty
+    {
+      nearest_green_entry_time_cached_ = nearest_green_entry_time;  //don't apply buffer if ET is in green
+    }  
+    else //buffer is needed
+    {
+      // below logic stores correct buffered timestamp into nearest_green_entry_time_cached_ to be used later
+      
+      rclcpp::Time nearest_green_signal_start_time = rclcpp::Time(0);
+      if (traffic_light->fixed_cycle_duration.total_milliseconds()/1000.0 > 1.0) // UC2
+      {
+        RCLCPP_DEBUG_STREAM(rclcpp::get_logger("lci_strategic_plugin"), "UC2 Handling");
+        auto normal_arrival_state_green_et_optional = traffic_light->predictState(lanelet::time::timeFromSec(nearest_green_entry_time.seconds()));
+
+        if (!validLightState(normal_arrival_state_green_et_optional, nearest_green_entry_time))
+        {
+          RCLCPP_ERROR_STREAM(rclcpp::get_logger("lci_strategic_plugin"), "Unable to resolve give signal...");
+          return std::make_tuple(rclcpp::Time(0), is_entry_time_within_green_or_tbd, in_tbd);
+        }
+
+        RCLCPP_DEBUG_STREAM(rclcpp::get_logger("lci_strategic_plugin"), "normal_arrival_signal_end_time: " << std::to_string(lanelet::time::toSec(normal_arrival_state_green_et_optional.get().first)));
+        
+        // nearest_green_signal_start_time = normal_arrival_signal_end_time (green guaranteed) - green_signal_duration
+        nearest_green_signal_start_time = rclcpp::Time(lanelet::time::toSec(normal_arrival_state_green_et_optional.get().first - traffic_light->signal_durations[lanelet::CarmaTrafficSignalState::PROTECTED_MOVEMENT_ALLOWED]) * 1e9);
+      }
+      else  // UC3
+      {
+        RCLCPP_DEBUG_STREAM(rclcpp::get_logger("lci_strategic_plugin"), "UC3 Handling");
+        
+        for (size_t i = 0; i < traffic_light->recorded_start_time_stamps.size(); i++)
+        {
+          if (traffic_light->recorded_time_stamps[i].second == lanelet::CarmaTrafficSignalState::PROTECTED_MOVEMENT_ALLOWED && 
+            lanelet::time::timeFromSec(nearest_green_entry_time.seconds()) < traffic_light->recorded_time_stamps[i].first ) // Make sure it is in correct GREEN phase there are multiple
+          {
+            nearest_green_signal_start_time = rclcpp::Time(lanelet::time::toSec(traffic_light->recorded_start_time_stamps[i]) * 1e9); 
+            break;
+          }
+        }
+
+        if (nearest_green_signal_start_time == rclcpp::Time(0)) //in tdb
+        {
+          nearest_green_signal_start_time = rclcpp::Time(lanelet::time::toSec(traffic_light->recorded_time_stamps.back().first) * 1e9); 
+        }
+      }
+
+      // If ET is within green or TBD, it should always aim for at least minimum of "start_time of green or tdb + green_buffer" for safety
+  
+      nearest_green_entry_time_cached_ = nearest_green_signal_start_time + rclcpp::Duration((config_.green_light_time_buffer + EPSILON) * 1e9);
+      
+      // EPSILON=0.01 is there because if predictState's input exactly falls on ending_time it picks the previous state.
+      //For example, if 0 - 10s is GREEN, and 10 - 12s is YELLOW, checking exactly 10.0s will return GREEN,
+      //but 10.01s will return YELLOW. This 0.01 convention is used throughout the file, so thought it is better
+      //to keep it consistent and probably too detailed for the user to think about, which is why it is not included in the buffer.
+      //Actually including in the buffer doesn't work because it uses that same buffer to check early and late. If buffer is 2s and 
+      //green starts at 10s, it will check +/-2s from 12s. If the buffer was 2.01s and green starts at 10s again, it checks +/-2.01 
+      //from 12.01, so both checks 10s.
+      
+    }
+
+    nearest_green_entry_time = rclcpp::Time(std::max(nearest_green_entry_time.seconds(), nearest_green_entry_time_cached_.get().seconds()) * 1e9);
+  }
+
+  if (nearest_green_entry_time_cached_ && nearest_green_entry_time > nearest_green_entry_time_cached_.get())
+  {
+    RCLCPP_DEBUG_STREAM(rclcpp::get_logger("lci_strategic_plugin"), "Earliest entry time... has gone past the cashed entering time. nearest_green_entry_time_cached_ (which can also be TBD):" << std::to_string(nearest_green_entry_time_cached_.get().seconds()) << ", and earliest_entry_time: " << std::to_string(earliest_entry_time.seconds()));
+  }
+  return std::make_tuple(nearest_green_entry_time, is_entry_time_within_green_or_tbd, in_tbd);
 }
 
 double LCIStrategicPlugin::get_inflection_speed_value(double x, double x1, double x2, double free_flow_speed, double current_speed, double departure_speed, double max_accel, double max_decel) const
@@ -266,37 +423,37 @@ BoundaryDistances LCIStrategicPlugin::get_delta_x(double v0, double v1, double v
 
 void LCIStrategicPlugin::print_params(TrajectoryParams params)
 {
-  ROS_DEBUG_STREAM("\n");
-  ROS_DEBUG_STREAM("t0: " << std::to_string(params.t0_));
-  ROS_DEBUG_STREAM("v0: " << params.v0_);
-  ROS_DEBUG_STREAM("x0: " << params.x0_);
+  RCLCPP_DEBUG_STREAM(rclcpp::get_logger("lci_strategic_plugin"), "\n");
+  RCLCPP_DEBUG_STREAM(rclcpp::get_logger("lci_strategic_plugin"), "t0: " << std::to_string(params.t0_));
+  RCLCPP_DEBUG_STREAM(rclcpp::get_logger("lci_strategic_plugin"), "v0: " << params.v0_);
+  RCLCPP_DEBUG_STREAM(rclcpp::get_logger("lci_strategic_plugin"), "x0: " << params.x0_);
 
-  ROS_DEBUG_STREAM("t1: " << std::to_string(params.t1_));
-  ROS_DEBUG_STREAM("v1: " << params.v1_);
-  ROS_DEBUG_STREAM("x1: " << params.x1_);
-  ROS_DEBUG_STREAM("a1: " << params.a1_);
+  RCLCPP_DEBUG_STREAM(rclcpp::get_logger("lci_strategic_plugin"), "t1: " << std::to_string(params.t1_));
+  RCLCPP_DEBUG_STREAM(rclcpp::get_logger("lci_strategic_plugin"), "v1: " << params.v1_);
+  RCLCPP_DEBUG_STREAM(rclcpp::get_logger("lci_strategic_plugin"), "x1: " << params.x1_);
+  RCLCPP_DEBUG_STREAM(rclcpp::get_logger("lci_strategic_plugin"), "a1: " << params.a1_);
 
-  ROS_DEBUG_STREAM("t2: " << std::to_string(params.t2_));
-  ROS_DEBUG_STREAM("v2: " << params.v2_);
-  ROS_DEBUG_STREAM("x2: " << params.x2_);
-  ROS_DEBUG_STREAM("a2: " << params.a2_);
+  RCLCPP_DEBUG_STREAM(rclcpp::get_logger("lci_strategic_plugin"), "t2: " << std::to_string(params.t2_));
+  RCLCPP_DEBUG_STREAM(rclcpp::get_logger("lci_strategic_plugin"), "v2: " << params.v2_);
+  RCLCPP_DEBUG_STREAM(rclcpp::get_logger("lci_strategic_plugin"), "x2: " << params.x2_);
+  RCLCPP_DEBUG_STREAM(rclcpp::get_logger("lci_strategic_plugin"), "a2: " << params.a2_);
 
-  ROS_DEBUG_STREAM("t3: " << std::to_string(params.t3_));
-  ROS_DEBUG_STREAM("v3: " << params.v3_);
-  ROS_DEBUG_STREAM("x3: " << params.x3_);
-  ROS_DEBUG_STREAM("a3: " << params.a3_);
+  RCLCPP_DEBUG_STREAM(rclcpp::get_logger("lci_strategic_plugin"), "t3: " << std::to_string(params.t3_));
+  RCLCPP_DEBUG_STREAM(rclcpp::get_logger("lci_strategic_plugin"), "v3: " << params.v3_);
+  RCLCPP_DEBUG_STREAM(rclcpp::get_logger("lci_strategic_plugin"), "x3: " << params.x3_);
+  RCLCPP_DEBUG_STREAM(rclcpp::get_logger("lci_strategic_plugin"), "a3: " << params.a3_);
 
-  ROS_DEBUG_STREAM("\n");
+  RCLCPP_DEBUG_STREAM(rclcpp::get_logger("lci_strategic_plugin"), "\n");
 }
 
 void LCIStrategicPlugin::print_boundary_distances(BoundaryDistances delta_xs)
 {
-  ROS_DEBUG_STREAM("\n");
-  ROS_DEBUG_STREAM("dx1: " << delta_xs.dx1);
-  ROS_DEBUG_STREAM("dx2: " << delta_xs.dx2);
-  ROS_DEBUG_STREAM("dx3: " << delta_xs.dx3);
-  ROS_DEBUG_STREAM("dx4: " << delta_xs.dx4);
-  ROS_DEBUG_STREAM("dx5: " << delta_xs.dx5 << "\n");
+  RCLCPP_DEBUG_STREAM(rclcpp::get_logger("lci_strategic_plugin"), "\n");
+  RCLCPP_DEBUG_STREAM(rclcpp::get_logger("lci_strategic_plugin"), "dx1: " << delta_xs.dx1);
+  RCLCPP_DEBUG_STREAM(rclcpp::get_logger("lci_strategic_plugin"), "dx2: " << delta_xs.dx2);
+  RCLCPP_DEBUG_STREAM(rclcpp::get_logger("lci_strategic_plugin"), "dx3: " << delta_xs.dx3);
+  RCLCPP_DEBUG_STREAM(rclcpp::get_logger("lci_strategic_plugin"), "dx4: " << delta_xs.dx4);
+  RCLCPP_DEBUG_STREAM(rclcpp::get_logger("lci_strategic_plugin"), "dx5: " << delta_xs.dx5 << "\n");
 }
 
 std::vector<TrajectoryParams> LCIStrategicPlugin::get_boundary_traj_params(double t, double v0, double v1, double v_max, double v_min, double a_max, double a_min, double x0, double x_end, double dx, BoundaryDistances boundary_distances)
@@ -400,49 +557,49 @@ TrajectoryParams LCIStrategicPlugin::get_ts_case(double t, double et, double v0,
 
   if (traj1.t3_ <= et && et < traj2.t3_)
   {
-    ROS_DEBUG_STREAM("CALCULATED: case 1");
+    RCLCPP_DEBUG_STREAM(rclcpp::get_logger("lci_strategic_plugin"), "CALCULATED: case 1");
     veh_traj = ts_case1(t, et, v0, v1, v_max, a_max, a_min, x0, x_end, dx);
     veh_traj.case_num = CASE_1;
   }
   else if (traj2.t3_ <= et && et < traj3.t3_)
   {
-    ROS_DEBUG_STREAM("CALCULATED: case 2");
+    RCLCPP_DEBUG_STREAM(rclcpp::get_logger("lci_strategic_plugin"), "CALCULATED: case 2");
     veh_traj = ts_case2(t, et, v0, v1, a_max, a_min, x0, x_end, dx);
     veh_traj.case_num = CASE_2;
   }
   else if (traj3.t3_ <= et && et < traj4.t3_)
   {
-    ROS_DEBUG_STREAM("CALCULATED: case 3");
+    RCLCPP_DEBUG_STREAM(rclcpp::get_logger("lci_strategic_plugin"), "CALCULATED: case 3");
     veh_traj = ts_case3(t, et, v0, v1, a_max, a_min, x0, x_end, dx);
     veh_traj.case_num = CASE_3;
   }
   else if (traj4.t3_ <= et && et < traj5.t3_)
   {
-    ROS_DEBUG_STREAM("CALCULATED: case 4");
+    RCLCPP_DEBUG_STREAM(rclcpp::get_logger("lci_strategic_plugin"), "CALCULATED: case 4");
     veh_traj = ts_case4(t, et, v0, v1, v_min, a_max, a_min, x0, x_end, dx);
     veh_traj.case_num = CASE_4;
   }
   else if (traj5.t3_ <= et && et < traj6.t3_)
   {
-    ROS_DEBUG_STREAM("CALCULATED: case 5");
+    RCLCPP_DEBUG_STREAM(rclcpp::get_logger("lci_strategic_plugin"), "CALCULATED: case 5");
     veh_traj = ts_case5(t, et, v0, a_max, a_min, x0, x_end, dx);
     veh_traj.case_num = CASE_5;
   }
   else if (traj6.t3_ <= et && et < traj7.t3_)
   {
-    ROS_DEBUG_STREAM("CALCULATED: case 6");
+    RCLCPP_DEBUG_STREAM(rclcpp::get_logger("lci_strategic_plugin"), "CALCULATED: case 6");
     veh_traj = ts_case6(t, et, v0, v_min, a_min, x0, x_end, dx, dx3, traj6);
     veh_traj.case_num = CASE_6;
   }
   else if (traj7.t3_ <= et && et <= traj8.t3_)
   {
-    ROS_DEBUG_STREAM("CALCULATED: case 7");
+    RCLCPP_DEBUG_STREAM(rclcpp::get_logger("lci_strategic_plugin"), "CALCULATED: case 7");
     veh_traj = ts_case7(t, et, v0, v_min, a_min, x0, x_end, dx);
     veh_traj.case_num = CASE_7;
   }
   else
   {
-    ROS_DEBUG_STREAM("CALCULATED: case 8");
+    RCLCPP_DEBUG_STREAM(rclcpp::get_logger("lci_strategic_plugin"), "CALCULATED: case 8");
     veh_traj = ts_case8(dx, dx5, traj8);
     veh_traj.case_num = CASE_8;
   }
@@ -478,7 +635,7 @@ TrajectoryParams LCIStrategicPlugin::ts_case1(double t, double et, double v0, do
 
   if (traj.a1_ <= accel_epsilon_ && traj.a1_ >= -accel_epsilon_)
   {
-    ROS_DEBUG_STREAM("CASE1: Received traj.a1_ near zero...");
+    RCLCPP_DEBUG_STREAM(rclcpp::get_logger("lci_strategic_plugin"), "CASE1: Received traj.a1_ near zero...");
     traj.t1_ = traj.t0_ + ((dt - tc) * (a_max / (a_min + a_max)));
     traj.x1_ = traj.x0_ + (v_max * (traj.t1_ - traj.t0_));    
   }
@@ -522,7 +679,7 @@ TrajectoryParams LCIStrategicPlugin::ts_case2(double t, double et, double v0, do
 
   if (traj.a1_ <= accel_epsilon_ && traj.a1_ >= -accel_epsilon_)
   {
-    ROS_DEBUG_STREAM("CASE2: Received traj.a1_ near zero...");
+    RCLCPP_DEBUG_STREAM(rclcpp::get_logger("lci_strategic_plugin"), "CASE2: Received traj.a1_ near zero...");
     traj.t1_ = traj.t0_ + (dt * (a_max / (a_min + a_max)));
     traj.x1_ = traj.x0_ + (v_hat * (traj.t1_ - traj.t0_));        
   }
@@ -537,7 +694,7 @@ TrajectoryParams LCIStrategicPlugin::ts_case2(double t, double et, double v0, do
 
   if (traj.a2_ <= accel_epsilon_ && traj.a2_ >= -accel_epsilon_)
   {
-    ROS_DEBUG_STREAM("CASE2: Received traj.a2_ near zero...");
+    RCLCPP_DEBUG_STREAM(rclcpp::get_logger("lci_strategic_plugin"), "CASE2: Received traj.a2_ near zero...");
     traj.t2_ = traj.t1_ + (dt * (a_min / (a_min + a_max)));
     traj.x2_ = traj.x1_ + (v_hat * (traj.t2_ - traj.t1_));    
   }
@@ -576,7 +733,7 @@ TrajectoryParams LCIStrategicPlugin::ts_case3(double t, double et, double v0, do
   
   if (traj.a1_ <= accel_epsilon_ && traj.a1_ >= -accel_epsilon_)
   {
-    ROS_DEBUG_STREAM("CASE3: Received traj.a1_ near zero...");
+    RCLCPP_DEBUG_STREAM(rclcpp::get_logger("lci_strategic_plugin"), "CASE3: Received traj.a1_ near zero...");
     traj.t1_ = traj.t0_ + (dt * (a_max / (a_min + a_max)));
     traj.x1_ = traj.x0_ + (v_hat * (traj.t1_ - traj.t0_));    
   }
@@ -625,7 +782,7 @@ TrajectoryParams LCIStrategicPlugin::ts_case4(double t, double et, double v0, do
 
   if (traj.a1_ <= accel_epsilon_ && traj.a1_ >= -accel_epsilon_)
   {
-    ROS_DEBUG_STREAM("CASE4: Received traj.a1_ near zero...");
+    RCLCPP_DEBUG_STREAM(rclcpp::get_logger("lci_strategic_plugin"), "CASE4: Received traj.a1_ near zero...");
     traj.t1_ = traj.t0_ + ((dt - tc) * (a_min / (a_min + a_max)));
     traj.x1_ = traj.x0_ + (v_min * (traj.t1_ - traj.t0_));    
   }
@@ -763,7 +920,7 @@ TrajectoryParams LCIStrategicPlugin::ts_case8(double dx, double dx5, TrajectoryP
   if (dx < dx5)
   { 
     traj.is_algorithm_successful = false;
-    ROS_DEBUG_STREAM("CASE8: Not within safe stopping distance originally planned!");
+    RCLCPP_DEBUG_STREAM(rclcpp::get_logger("lci_strategic_plugin"), "CASE8: Not within safe stopping distance originally planned!");
   }
   return traj;
 }
@@ -900,7 +1057,7 @@ TrajectoryParams LCIStrategicPlugin::boundary_accel_nocruise_maxspeed_decel(doub
 
   if (traj.a1_ <= accel_epsilon_ && traj.a1_ >= -accel_epsilon_)
   {
-    ROS_DEBUG_STREAM("boundary_accel_nocruise_maxspeed_decel: Received traj.a1_ near zero...");
+    RCLCPP_DEBUG_STREAM(rclcpp::get_logger("lci_strategic_plugin"), "boundary_accel_nocruise_maxspeed_decel: Received traj.a1_ near zero...");
     traj.t1_ = traj.t0_ + (dt * (a_max / (a_min + a_max)));
     traj.x1_ = traj.x0_ + (v_max * (traj.t1_ - traj.t0_));    
   }

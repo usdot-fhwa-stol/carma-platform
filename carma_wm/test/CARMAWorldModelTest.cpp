@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2019-2021 LEIDOS.
+ * Copyright (C) 2022 LEIDOS.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -14,29 +14,23 @@
  * the License.
  */
 
-#include <gmock/gmock.h>
+#include <gtest/gtest.h>
 #include <iostream>
-#include <carma_wm/CARMAWorldModel.h>
+#include <carma_wm/CARMAWorldModel.hpp>
 #include <lanelet2_core/geometry/LineString.h>
 #include <lanelet2_traffic_rules/TrafficRulesFactory.h>
 #include <lanelet2_core/Attribute.h>
 #include <tf2/LinearMath/Quaternion.h>
-#include "TestHelpers.h"
+#include "TestHelpers.hpp"
 #include <lanelet2_extension/regulatory_elements/PassingControlLine.h>
-#include <carma_wm/WMTestLibForGuidance.h>
-#include <ros/ros.h>
+#include <carma_wm/WMTestLibForGuidance.hpp>
+#include <rclcpp/rclcpp.hpp>
 
-using ::testing::_;
-using ::testing::A;
-using ::testing::DoAll;
-using ::testing::InSequence;
-using ::testing::Return;
-using ::testing::ReturnArg;
 
 namespace carma_wm
 {
 
-void createTestingWorld(std::vector<lanelet::Lanelet>& llts, lanelet::LaneletMapPtr& map, std::vector<cav_msgs::ExternalObject>& obstacles)
+void createTestingWorld(std::vector<lanelet::Lanelet>& llts, lanelet::LaneletMapPtr& map, std::vector<carma_perception_msgs::msg::ExternalObject>& obstacles)
 {
   //Note: all params are outputs provided by this function.
   
@@ -111,14 +105,14 @@ void createTestingWorld(std::vector<lanelet::Lanelet>& llts, lanelet::LaneletMap
   std::vector<double> y_offsets = {9,  9.3033,    4,    14, 20};
   std::vector<double> orients = {0, 0.785, 0, 1.5708, 0}; // 0, 45, 0, 90 degs
   // all objects are same sizes
-  geometry_msgs::Vector3 size;
+  geometry_msgs::msg::Vector3 size;
   size.x = 6;
   size.y = 2;
   size.z = 1;
 
   for (size_t i = 0; i < x_offsets.size(); i++)
   {
-      geometry_msgs::Pose pose;
+      geometry_msgs::msg::Pose pose;
       pose.position.x = x_offsets[i];
       pose.position.y = y_offsets[i];
       pose.position.z = 0;
@@ -131,14 +125,14 @@ void createTestingWorld(std::vector<lanelet::Lanelet>& llts, lanelet::LaneletMap
       pose.orientation.z = tf_orientation.getZ();
       pose.orientation.w = tf_orientation.getW();
 
-      cav_msgs::ExternalObject obj;
+      carma_perception_msgs::msg::ExternalObject obj;
       obj.id = i;
-      obj.object_type = cav_msgs::ExternalObject::SMALL_VEHICLE;
+      obj.object_type = carma_perception_msgs::msg::ExternalObject::SMALL_VEHICLE;
       obj.pose.pose = pose;
       obj.velocity.twist.linear.x = 1.0;
       obj.size = size;
 
-      cav_msgs::PredictedState pred;
+      carma_perception_msgs::msg::PredictedState pred;
       auto pred_pose = obj.pose.pose;
       pred_pose.position.y += 1;
       pred.predicted_position = pred_pose;
@@ -160,7 +154,7 @@ TEST(CARMAWorldModelTest, getLane)
   carma_wm::CARMAWorldModel cmw;
   std::vector<lanelet::Lanelet> llts;
   lanelet::LaneletMapPtr map;
-  std::vector<cav_msgs::ExternalObject> obstacles;
+  std::vector<carma_perception_msgs::msg::ExternalObject> obstacles;
 
   createTestingWorld(llts, map, obstacles);
 
@@ -174,23 +168,23 @@ TEST(CARMAWorldModelTest, getLane)
   cmw.setMap(map); 
 
   // Convert to RoadwayObstacle format
-  std::vector<cav_msgs::RoadwayObstacle> roadway_objects;
+  std::vector<carma_perception_msgs::msg::RoadwayObstacle> roadway_objects;
   for (auto obj : obstacles)
   {
     roadway_objects.push_back(cmw.toRoadwayObstacle(obj).get());
   }
 
   // Test left lane
-  ASSERT_EQ(cmw.getLane(llts[0], LANE_FULL).size(), 3);
+  ASSERT_EQ(cmw.getLane(llts[0], LANE_FULL).size(), 3u);
 
   // Test right lane
-  ASSERT_EQ(cmw.getLane(llts[3], LANE_FULL).size(), 3);
+  ASSERT_EQ(cmw.getLane(llts[3], LANE_FULL).size(), 3u);
 
   // Test lane ahead (always inclde itself)
-  ASSERT_EQ(cmw.getLane(llts[2], LANE_AHEAD).size(), 1);
+  ASSERT_EQ(cmw.getLane(llts[2], LANE_AHEAD).size(), 1u);
 
   // Test lane behind
-  ASSERT_EQ(cmw.getLane(llts[5], LANE_BEHIND).size(), 3);
+  ASSERT_EQ(cmw.getLane(llts[5], LANE_BEHIND).size(), 3u);
 
 }
 
@@ -203,7 +197,7 @@ TEST(CARMAWorldModelTest, getNearestObjInLane)
   carma_wm::CARMAWorldModel cmw;
   std::vector<lanelet::Lanelet> llts;
   lanelet::LaneletMapPtr map;
-  std::vector<cav_msgs::ExternalObject> obstacles;
+  std::vector<carma_perception_msgs::msg::ExternalObject> obstacles;
 
   createTestingWorld(llts, map, obstacles);
 
@@ -217,7 +211,7 @@ TEST(CARMAWorldModelTest, getNearestObjInLane)
   cmw.setMap(map); 
 
   // Convert to RoadwayObstacle format
-  std::vector<cav_msgs::RoadwayObstacle> roadway_objects;
+  std::vector<carma_perception_msgs::msg::RoadwayObstacle> roadway_objects;
   for (auto obj : obstacles)
   {
     roadway_objects.push_back(cmw.toRoadwayObstacle(obj).get());
@@ -264,7 +258,7 @@ TEST(CARMAWorldModelTest, nearestObjectBehindInLane)
   carma_wm::CARMAWorldModel cmw;
   std::vector<lanelet::Lanelet> llts;
   lanelet::LaneletMapPtr map;
-  std::vector<cav_msgs::ExternalObject> obstacles;
+  std::vector<carma_perception_msgs::msg::ExternalObject> obstacles;
   createTestingWorld(llts, map, obstacles);
 
   /*
@@ -277,7 +271,7 @@ TEST(CARMAWorldModelTest, nearestObjectBehindInLane)
   cmw.setMap(map); 
 
   // Convert to RoadwayObstacle format
-  std::vector<cav_msgs::RoadwayObstacle> roadway_objects;
+  std::vector<carma_perception_msgs::msg::RoadwayObstacle> roadway_objects;
   for (auto obj : obstacles)
   {
     roadway_objects.push_back(cmw.toRoadwayObstacle(obj).get());
@@ -309,7 +303,7 @@ TEST(CARMAWorldModelTest, nearestObjectAheadInLane)
   carma_wm::CARMAWorldModel cmw;
   std::vector<lanelet::Lanelet> llts;
   lanelet::LaneletMapPtr map;
-  std::vector<cav_msgs::ExternalObject> obstacles;
+  std::vector<carma_perception_msgs::msg::ExternalObject> obstacles;
 
   createTestingWorld(llts, map, obstacles);
 
@@ -323,7 +317,7 @@ TEST(CARMAWorldModelTest, nearestObjectAheadInLane)
   cmw.setMap(map); 
 
   // Convert to RoadwayObstacle format
-  std::vector<cav_msgs::RoadwayObstacle> roadway_objects;
+  std::vector<carma_perception_msgs::msg::RoadwayObstacle> roadway_objects;
   for (auto obj : obstacles)
   {
     roadway_objects.push_back(cmw.toRoadwayObstacle(obj).get());
@@ -358,7 +352,7 @@ TEST(CARMAWorldModelTest, getInLaneObjects)
   carma_wm::CARMAWorldModel cmw;
   std::vector<lanelet::Lanelet> llts;
   lanelet::LaneletMapPtr map;
-  std::vector<cav_msgs::ExternalObject> obstacles;
+  std::vector<carma_perception_msgs::msg::ExternalObject> obstacles;
 
   createTestingWorld(llts, map, obstacles);
 
@@ -373,17 +367,17 @@ TEST(CARMAWorldModelTest, getInLaneObjects)
   cmw.setMap(map);
 
   // Convert to RoadwayObstacle format
-  std::vector<cav_msgs::RoadwayObstacle> roadway_objects;
+  std::vector<carma_perception_msgs::msg::RoadwayObstacle> roadway_objects;
   for (auto obj : obstacles)
   {
     roadway_objects.push_back(cmw.toRoadwayObstacle(obj).get());
   }
 
   // Test with no roadway objects set
-  std::vector<cav_msgs::RoadwayObstacle> in_lane_objects;
+  std::vector<carma_perception_msgs::msg::RoadwayObstacle> in_lane_objects;
   in_lane_objects = cmw.getInLaneObjects(llts[0], LANE_FULL);
 
-  ASSERT_EQ(in_lane_objects.size(), 0);
+  ASSERT_EQ(in_lane_objects.size(), 0u);
 
   // Set roadway objects
   cmw.setRoadwayObjects(roadway_objects);
@@ -402,18 +396,18 @@ TEST(CARMAWorldModelTest, getInLaneObjects)
   // check left lane, all should return 2 objects as they are on one lane
   for (int i = 0; i < 3; i++)
   {
-    ASSERT_EQ(cmw.getInLaneObjects(llts[i], LANE_FULL).size(), 2);
+    ASSERT_EQ(cmw.getInLaneObjects(llts[i], LANE_FULL).size(), 2u);
   }
   // check right lane, all should return 3 objects as 1 is across linestring
   for (int i = 3; i < 6; i++)
   {
-    ASSERT_EQ(cmw.getInLaneObjects(llts[i], LANE_FULL).size(), 4);
+    ASSERT_EQ(cmw.getInLaneObjects(llts[i], LANE_FULL).size(), 4u);
   }
   // check right lane ahead of middle section
-  ASSERT_EQ(cmw.getInLaneObjects(llts[4], LANE_AHEAD).size(), 3);
+  ASSERT_EQ(cmw.getInLaneObjects(llts[4], LANE_AHEAD).size(), 3u);
 
   // check right lane behind of middle section
-  ASSERT_EQ(cmw.getInLaneObjects(llts[4], LANE_BEHIND).size(), 3);
+  ASSERT_EQ(cmw.getInLaneObjects(llts[4], LANE_BEHIND).size(), 3u);
 
 }
 
@@ -426,7 +420,7 @@ TEST(CARMAWorldModelTest, distToNearestObjInLane)
   carma_wm::CARMAWorldModel cmw;
   std::vector<lanelet::Lanelet> llts;
   lanelet::LaneletMapPtr map;
-  std::vector<cav_msgs::ExternalObject> obstacles;
+  std::vector<carma_perception_msgs::msg::ExternalObject> obstacles;
 
   createTestingWorld(llts, map, obstacles);
 
@@ -443,7 +437,7 @@ TEST(CARMAWorldModelTest, distToNearestObjInLane)
   cmw.setMap(map);
 
   // Convert to RoadwayObstacle format
-  std::vector<cav_msgs::RoadwayObstacle> roadway_objects;
+  std::vector<carma_perception_msgs::msg::RoadwayObstacle> roadway_objects;
   for (auto obj : obstacles)
   {
     roadway_objects.push_back(cmw.toRoadwayObstacle(obj).get());
@@ -463,7 +457,7 @@ TEST(CARMAWorldModelTest, distToNearestObjInLane)
   ASSERT_EQ(result, 4);
 
   // remove the closest point to get a new closest dist, the 45deg obj
-  cmw.setRoadwayObjects(std::vector<cav_msgs::RoadwayObstacle>{roadway_objects.begin() + 1, roadway_objects.end()});
+  cmw.setRoadwayObjects(std::vector<carma_perception_msgs::msg::RoadwayObstacle>{roadway_objects.begin() + 1, roadway_objects.end()});
   result = cmw.distToNearestObjInLane(car_pose).get();
   ASSERT_NEAR(result, 4.5, 0.00001);
 
@@ -473,7 +467,7 @@ TEST(CARMAWorldModelTest, distToNearestObjInLane)
   ASSERT_EQ(result, 2);
 
   // Check if no object is on current lane
-  cmw.setRoadwayObjects(std::vector<cav_msgs::RoadwayObstacle>{roadway_objects[roadway_objects.size() - 1]});
+  cmw.setRoadwayObjects(std::vector<carma_perception_msgs::msg::RoadwayObstacle>{roadway_objects[roadway_objects.size() - 1]});
   car_pose = {5,4};
   ASSERT_FALSE(!! cmw.distToNearestObjInLane(car_pose));
 
@@ -492,7 +486,7 @@ TEST(CARMAWorldModelTest, getIntersectingLanelet)
   auto ll_1 = getLanelet(left_ls_1, right_ls_1);
   lanelet::LaneletMapPtr map = lanelet::utils::createMap({ ll_1 }, {});
 
-  geometry_msgs::Pose pose;
+  geometry_msgs::msg::Pose pose;
   pose.position.x = 9.9;
   pose.position.y = 5;
   pose.position.z = 0;
@@ -506,19 +500,19 @@ TEST(CARMAWorldModelTest, getIntersectingLanelet)
   pose.orientation.w = tf_orientation.getW();
 
   // very wide car that is little off the road to right
-  geometry_msgs::Vector3 size;
+  geometry_msgs::msg::Vector3 size;
   size.x = 4; 
   size.y = 1.8; // Right on the edge, touching the linestring
   size.z = 1;
 
-  cav_msgs::ExternalObject obj;
+  carma_perception_msgs::msg::ExternalObject obj;
   obj.id = 1;
-  obj.object_type = cav_msgs::ExternalObject::SMALL_VEHICLE;
+  obj.object_type = carma_perception_msgs::msg::ExternalObject::SMALL_VEHICLE;
   obj.pose.pose = pose;
   obj.velocity.twist.linear.x = 1.0;
   obj.size = size;
 
-  cav_msgs::PredictedState pred;
+  carma_perception_msgs::msg::PredictedState pred;
   auto pred_pose = obj.pose.pose;
   pred_pose.position.y += 1;
   pred.predicted_position = pred_pose;
@@ -814,36 +808,36 @@ TEST(CARMAWorldModelTest, getLaneletsBetween) // HERE
   ASSERT_TRUE((bool)cmw.getRoute());
   ASSERT_TRUE((bool)cmw.getMapRoutingGraph());
 
-  ASSERT_EQ(2, cmw.getMap()->laneletLayer.size());
-  ASSERT_EQ(2, cmw.getRoute()->laneletMap()->laneletLayer.size());
+  ASSERT_EQ(2u, cmw.getMap()->laneletLayer.size());
+  ASSERT_EQ(2u, cmw.getRoute()->laneletMap()->laneletLayer.size());
 
   ///// Test 0 range
   auto result = cmw.getLaneletsBetween(0, 0);
-  ASSERT_EQ(1, result.size());
+  ASSERT_EQ(1u, result.size());
   ASSERT_EQ(result[0].id(), cmw.getRoute()->shortestPath().begin()->id());
 
   result = cmw.getLaneletsBetween(0, 0, true, true);
-  ASSERT_EQ(1, result.size());
+  ASSERT_EQ(1u, result.size());
   ASSERT_EQ(result[0].id(), cmw.getRoute()->shortestPath().begin()->id());
 
   result = cmw.getLaneletsBetween(0, 0, false, true);
-  ASSERT_EQ(1, result.size());
+  ASSERT_EQ(1u, result.size());
   ASSERT_EQ(result[0].id(), cmw.getRoute()->shortestPath().begin()->id());
 
   result = cmw.getLaneletsBetween(1.0, 1.0, false, true);
-  ASSERT_EQ(2, result.size());
+  ASSERT_EQ(2u, result.size());
   ASSERT_EQ(result[0].id(), cmw.getRoute()->shortestPath().begin()->id());
   ASSERT_EQ(result[1].id(),(cmw.getRoute()->shortestPath().begin() + 1)->id());
 
   result = cmw.getLaneletsBetween(1.0, 1.0, true, false);
-  ASSERT_EQ(0, result.size());
+  ASSERT_EQ(0u, result.size());
   
   result = cmw.getLaneletsBetween(0.1, 0.2, false, false); // FAIL This fails when the bounds are not inclusive
-  ASSERT_EQ(1, result.size());
+  ASSERT_EQ(1u, result.size());
   ASSERT_EQ(result[0].id(), cmw.getRoute()->shortestPath().begin()->id());
 
   result = cmw.getLaneletsBetween(0.1, 0.2, true, false); // FAIL
-  ASSERT_EQ(1, result.size());
+  ASSERT_EQ(1u, result.size());
   ASSERT_EQ(result[0].id(), cmw.getRoute()->shortestPath().begin()->id());
 
   ///// Test negative range
@@ -851,31 +845,31 @@ TEST(CARMAWorldModelTest, getLaneletsBetween) // HERE
 
   ///// Test lanelet after range
   result = cmw.getLaneletsBetween(2.5, 3.1);
-  ASSERT_EQ(0, result.size());
+  ASSERT_EQ(0u, result.size());
 
   ///// Test lanelet before range
   result = cmw.getLaneletsBetween(-1.0, -0.1);
-  ASSERT_EQ(0, result.size());
+  ASSERT_EQ(0u, result.size());
 
   ///// Test 1 lanelet in range
   result = cmw.getLaneletsBetween(-1.0, 0.5);
-  ASSERT_EQ(1, result.size());
+  ASSERT_EQ(1u, result.size());
   ASSERT_NEAR(result[0].id(), cmw.getRoute()->shortestPath().begin()->id(), 0.000001);
 
   ///// Test both lanelets in range
   result = cmw.getLaneletsBetween(-1.0, 1.5);
-  ASSERT_EQ(2, result.size());
+  ASSERT_EQ(2u, result.size());
   ASSERT_NEAR(result[0].id(), cmw.getRoute()->shortestPath().begin()->id(), 0.000001);
   ASSERT_NEAR(result[1].id(), (cmw.getRoute()->shortestPath().begin() + 1)->id(), 0.000001);
 
   ///// Test 1 point overlap front
   result = cmw.getLaneletsBetween(-1.0, 0.0);
-  ASSERT_EQ(1, result.size());
+  ASSERT_EQ(1u, result.size());
   ASSERT_NEAR(result[0].id(), cmw.getRoute()->shortestPath().begin()->id(), 0.000001);
 
   ///// Test 1 point overlap back
   result = cmw.getLaneletsBetween(2.0, 2.5);
-  ASSERT_EQ(1, result.size());
+  ASSERT_EQ(1u, result.size());
   ASSERT_NEAR(result[0].id(), (cmw.getRoute()->shortestPath().begin() + 1)->id(), 0.000001);
 }
 
@@ -954,7 +948,7 @@ TEST(CARMAWorldModelTest, toRoadwayObstacle)
   auto ll_1 = getLanelet(left_ls_1, right_ls_1);
   lanelet::LaneletMapPtr map = lanelet::utils::createMap({ ll_1 }, {});
 
-  geometry_msgs::Pose pose;
+  geometry_msgs::msg::Pose pose;
   pose.position.x = 6;
   pose.position.y = 5;
   pose.position.z = 0;
@@ -967,19 +961,19 @@ TEST(CARMAWorldModelTest, toRoadwayObstacle)
   pose.orientation.z = tf_orientation.getZ();
   pose.orientation.w = tf_orientation.getW();
 
-  geometry_msgs::Vector3 size;
+  geometry_msgs::msg::Vector3 size;
   size.x = 4;
   size.y = 2;
   size.z = 1;
 
-  cav_msgs::ExternalObject obj;
+  carma_perception_msgs::msg::ExternalObject obj;
   obj.id = 1;
-  obj.object_type = cav_msgs::ExternalObject::SMALL_VEHICLE;
+  obj.object_type = carma_perception_msgs::msg::ExternalObject::SMALL_VEHICLE;
   obj.pose.pose = pose;
   obj.velocity.twist.linear.x = 1.0;
   obj.size = size;
 
-  cav_msgs::PredictedState pred;
+  carma_perception_msgs::msg::PredictedState pred;
   auto pred_pose = obj.pose.pose;
   pred_pose.position.y += 1;
   pred.predicted_position = pred_pose;
@@ -994,37 +988,37 @@ TEST(CARMAWorldModelTest, toRoadwayObstacle)
   cmw.setMap(map);
 
   // Test object on lanelet
-  lanelet::Optional<cav_msgs::RoadwayObstacle> result = cmw.toRoadwayObstacle(obj);
+  lanelet::Optional<carma_perception_msgs::msg::RoadwayObstacle> result = cmw.toRoadwayObstacle(obj);
 
   ASSERT_TRUE(!!result);
-  cav_msgs::RoadwayObstacle obs = result.get();
+  carma_perception_msgs::msg::RoadwayObstacle obs = result.get();
 
   ASSERT_EQ(obs.object.id, obj.id);  // Check that the object was coppied
 
   ASSERT_EQ(obs.lanelet_id, ll_1.id());
 
-  ASSERT_EQ(obs.connected_vehicle_type.type, cav_msgs::ConnectedVehicleType::NOT_CONNECTED);
+  ASSERT_EQ(obs.connected_vehicle_type.type, carma_perception_msgs::msg::ConnectedVehicleType::NOT_CONNECTED);
 
   ASSERT_NEAR(obs.cross_track, 0.5, 0.00001);
 
   ASSERT_NEAR(obs.down_track, 5.0, 0.00001);
 
-  ASSERT_EQ(obs.predicted_lanelet_ids.size(), 1);
+  ASSERT_EQ(obs.predicted_lanelet_ids.size(), 1u);
   ASSERT_EQ(obs.predicted_lanelet_ids[0], ll_1.id());
 
-  ASSERT_EQ(obs.predicted_lanelet_id_confidences.size(), 1);
+  ASSERT_EQ(obs.predicted_lanelet_id_confidences.size(), 1u);
   ASSERT_NEAR(obs.predicted_lanelet_id_confidences[0], 0.9, 0.00001);
 
-  ASSERT_EQ(obs.predicted_cross_tracks.size(), 1);
+  ASSERT_EQ(obs.predicted_cross_tracks.size(), 1u);
   ASSERT_NEAR(obs.predicted_cross_tracks[0], 0.5, 0.00001);
 
-  ASSERT_EQ(obs.predicted_cross_track_confidences.size(), 1);
+  ASSERT_EQ(obs.predicted_cross_track_confidences.size(), 1u);
   ASSERT_NEAR(obs.predicted_cross_track_confidences[0], 0.9, 0.00001);
 
-  ASSERT_EQ(obs.predicted_down_tracks.size(), 1);
+  ASSERT_EQ(obs.predicted_down_tracks.size(), 1u);
   ASSERT_NEAR(obs.predicted_down_tracks[0], 6.0, 0.00001);
 
-  ASSERT_EQ(obs.predicted_down_track_confidences.size(), 1);
+  ASSERT_EQ(obs.predicted_down_track_confidences.size(), 1u);
   ASSERT_NEAR(obs.predicted_down_track_confidences[0], 0.9, 0.00001);
 
   // Alternate object off the roadway
@@ -1042,7 +1036,7 @@ TEST(CARMAWorldModelTest, getLaneletsFromPoint)
   carma_wm::CARMAWorldModel cmw;
   std::vector<lanelet::Lanelet> llts;
   lanelet::LaneletMapPtr map;
-  std::vector<cav_msgs::ExternalObject> obstacles;
+  std::vector<carma_perception_msgs::msg::ExternalObject> obstacles;
 
   createTestingWorld(llts, map, obstacles);
   // Test no map set
@@ -1051,14 +1045,14 @@ TEST(CARMAWorldModelTest, getLaneletsFromPoint)
   test::MapOptions mp(1,1);
   auto cmw_ptr = test::getGuidanceTestMap(mp);
   auto underlyings = cmw_ptr->getLaneletsFromPoint({0.5,0.5});
-  ASSERT_EQ(underlyings.size(), 1);
+  ASSERT_EQ(underlyings.size(), 1u);
   ASSERT_EQ(underlyings.front().id(), 1200);
 
   auto ll_1500 = test::getLanelet(1500, {getPoint(0.0,0.1, 0),getPoint(0.0,1.1, 0)}, 
                          {getPoint(1.0,0.1, 0),getPoint(1.0,1.1, 0)}); // another lanelet the point is in
   cmw_ptr->getMutableMap()->add(ll_1500);
   underlyings = cmw_ptr->getLaneletsFromPoint({0.5,0.5});
-  ASSERT_EQ(underlyings.size(), 2);
+  ASSERT_EQ(underlyings.size(), 2u);
   ASSERT_EQ(underlyings.front().id(), 1500);
   ASSERT_EQ(underlyings.back().id(), 1200);
 }
@@ -1076,8 +1070,6 @@ TEST(CARMAWorldModelTest, setConfigSpeedLimitTest)
   ASSERT_FALSE(flag);
 
 }
-
-
 
 TEST(CARMAWorldModelTest, pointFromRouteTrackPos)
 {
@@ -1136,9 +1128,13 @@ TEST(CARMAWorldModelTest, pointFromRouteTrackPos)
   if (!point) {
     FAIL() << "No point returned";
   }
+  auto alt_point = wm->routeTrackPos(*point); // Verify the output is equivalent to the inverse function
   lanelet = map->laneletLayer.get(1200);
   ASSERT_NEAR((*point).x(), lanelet.centerline().back().x(), 0.001);
   ASSERT_NEAR((*point).y(), lanelet.centerline().back().y(), 0.001);
+
+  ASSERT_NEAR(alt_point.downtrack, pos.downtrack, 0.001);
+  ASSERT_NEAR(alt_point.crosstrack, pos.crosstrack, 0.001);
   
   pos.downtrack = 20.0;
   point = wm->pointFromRouteTrackPos(pos); // Test lanelet connection point
@@ -1185,13 +1181,9 @@ TEST(CARMAWorldModelTest, pointFromRouteTrackPos)
   if (!point) {
     FAIL() << "No point returned";
   }
-  auto alt_point = wm->routeTrackPos(*point); // Verify the output is equivalent to the inverse function
   lanelet = map->laneletLayer.get(1200);
   ASSERT_NEAR((*point).x(), lanelet.centerline().back().x() + 1.0, 0.001);
   ASSERT_NEAR((*point).y(), lanelet.centerline().back().y(), 0.001);
-
-  ASSERT_NEAR(alt_point.downtrack, pos.downtrack, 0.001);
-  ASSERT_NEAR(alt_point.crosstrack, pos.crosstrack, 0.001);
   
   pos.downtrack = 20.0;
   point = wm->pointFromRouteTrackPos(pos); // Test lanelet connection point
@@ -1302,110 +1294,6 @@ TEST(CARMAWorldModelTest, getTrafficSignalId)
   EXPECT_EQ(cmw.getTrafficSignalId(intersection_id, signal_group_id), 1000); 
 }
 
-TEST(CARMAWorldModelTest, processSpatFromMsgDynamic)
-{
-  ros::Time::init();
-  CARMAWorldModel cmw;
-  auto pl1 = carma_wm::getPoint(0, 0, 0);
-  auto pl2 = carma_wm::getPoint(0, 1, 0);
-  auto pl3 = carma_wm::getPoint(0, 2, 0);
-  auto pr1 = carma_wm::getPoint(1, 0, 0);
-  auto pr2 = carma_wm::getPoint(1, 1, 0);
-  auto pr3 = carma_wm::getPoint(1, 2, 0);
-  std::vector<lanelet::Point3d> left_1 = { pl1, pl2, pl3 };
-  std::vector<lanelet::Point3d> right_1 = { pr1, pr2, pr3 };
-  auto ll_1 = carma_wm::getLanelet(left_1, right_1, lanelet::AttributeValueString::SolidDashed,lanelet::AttributeValueString::Dashed);
-  lanelet::Id traffic_light_id = lanelet::utils::getId();
-  lanelet::LineString3d virtual_stop_line(lanelet::utils::getId(), {pl2, pr2});
-  // Creat passing control line for solid dashed line
-  std::shared_ptr<lanelet::CarmaTrafficSignal> traffic_light(new lanelet::CarmaTrafficSignal(lanelet::CarmaTrafficSignal::buildData(traffic_light_id, { virtual_stop_line }, { ll_1 }, { ll_1 })));
-  traffic_light->revision_ = 0;
-  ll_1.addRegulatoryElement(traffic_light);
-  auto map = lanelet::utils::createMap({ ll_1 }, {});
-  map->add(traffic_light);
-  cmw.setMap(std::move(map));
-
-  // create sample SPAT.msg and fill its entries
-  cav_msgs::SPAT spat;
-  cav_msgs::IntersectionState state;
-  state.id.id = 1;
-  state.revision = 0;
-  cav_msgs::MovementState movement;
-  movement.signal_group = 1;
-  cav_msgs::MovementEvent event;
-  cmw.sim_.intersection_id_to_regem_id_[state.id.id] = 1; //dummy lanelet id
-  cmw.sim_.signal_group_to_traffic_light_id_[movement.signal_group] = traffic_light_id;
-
-
-  // call with cycle with 2 future events
-  ros::Time::setNow(ros::Time(0.0));
-  event.event_state.movement_phase_state = 5;
-  event.timing.start_time = 0;
-  event.timing.min_end_time = 2;
-  movement.movement_event_list.push_back(event);
-  event.event_state.movement_phase_state = 8;
-  event.timing.start_time = 2;
-  event.timing.min_end_time = 4;
-  movement.movement_event_list.push_back(event);
-
-  state.movement_list.push_back(movement);
-  spat.intersection_state_list.push_back(state);
-  cmw.processSpatFromMsg(spat);
-  auto lights1 = cmw.getMutableMap()->laneletLayer.get(ll_1.id()).regulatoryElementsAs<lanelet::CarmaTrafficSignal>();
-  // TEST 1. default
-  EXPECT_EQ(lanelet::time::durationFromSec(0), lights1[0]->fixed_cycle_duration); //since it is dynamic, fixed_cycle_duration is 0
-  ASSERT_EQ(lights1[0]->recorded_time_stamps.size(), 2);
-  double start_time = lanelet::time::toSec(lights1[0]->recorded_start_time_stamps.front());
-  double end_time = lanelet::time::toSec(lights1[0]->recorded_time_stamps.back().first);
-  EXPECT_NEAR(end_time - start_time, movement.movement_event_list.back().timing.min_end_time - 
-                                      movement.movement_event_list.front().timing.start_time, 0.001);
-
-  // TEST 2. call again with same msg
-  cmw.processSpatFromMsg(spat);
-  lights1 = cmw.getMutableMap()->laneletLayer.get(ll_1.id()).regulatoryElementsAs<lanelet::CarmaTrafficSignal>();
-
-  // everything should be same
-  EXPECT_EQ(lanelet::time::durationFromSec(0), lights1[0]->fixed_cycle_duration); //since it is dynamic, fixed_cycle_duration is 0
-  ASSERT_EQ(lights1[0]->recorded_time_stamps.size(), 2);
-  start_time = lanelet::time::toSec(lights1[0]->recorded_start_time_stamps.front());
-  end_time = lanelet::time::toSec(lights1[0]->recorded_time_stamps.back().first);
-  EXPECT_NEAR(end_time - start_time, movement.movement_event_list.back().timing.min_end_time - 
-                                      movement.movement_event_list.front().timing.start_time, 0.001);
-  
-  // TEST 3. call again with same cycle but different msg
-  ros::Time::setNow(ros::Time(4.1));
-  movement.movement_event_list = {};
-  state.movement_list = {};
-  spat.intersection_state_list = {};
-
-  event.event_state.movement_phase_state = 5;
-  event.timing.start_time = 4;
-  event.timing.min_end_time = 6;
-  movement.movement_event_list.push_back(event);
-  event.event_state.movement_phase_state = 8;
-  event.timing.start_time = 6;
-  event.timing.min_end_time = 8;
-  movement.movement_event_list.push_back(event);
-
-  state.movement_list.push_back(movement);
-  spat.intersection_state_list.push_back(state);
-  cmw.processSpatFromMsg(spat);
-
-  lights1 = cmw.getMutableMap()->laneletLayer.get(ll_1.id()).regulatoryElementsAs<lanelet::CarmaTrafficSignal>();
-
-  // everything should still be same
-  EXPECT_EQ(lanelet::time::durationFromSec(0), lights1[0]->fixed_cycle_duration); //since it is dynamic, fixed_cycle_duration is 0
-  ASSERT_EQ(lights1[0]->recorded_time_stamps.size(), 2);
-  start_time = lanelet::time::toSec(lights1[0]->recorded_start_time_stamps.front());
-  end_time = lanelet::time::toSec(lights1[0]->recorded_time_stamps.back().first);
-  EXPECT_NEAR(end_time - start_time, movement.movement_event_list.back().timing.min_end_time - 
-                                      movement.movement_event_list.front().timing.start_time, 0.001);
-
-  // TEST 4. check if signalized_manager is being updated correctly
-  ASSERT_EQ(cmw.sim_.traffic_signal_states_[1][1].size(), 2);
-  
-}
-
 TEST(CARMAWorldModelTest, processSpatFromMsg)
 {
   CARMAWorldModel cmw;
@@ -1434,13 +1322,13 @@ TEST(CARMAWorldModelTest, processSpatFromMsg)
   cmw.sim_.signal_group_to_traffic_light_id_[signal_group_id] = traffic_light_id;
 
   // create sample SPAT.msg and fill its entries
-  cav_msgs::SPAT spat;
-  cav_msgs::IntersectionState state;
+  carma_v2x_msgs::msg::SPAT spat;
+  carma_v2x_msgs::msg::IntersectionState state;
   state.id.id = 1;
   state.revision = 0;
-  cav_msgs::MovementState movement;
+  carma_v2x_msgs::msg::MovementState movement;
   movement.signal_group = 1;
-  cav_msgs::MovementEvent event;
+  carma_v2x_msgs::msg::MovementEvent event;
 
   // call the processSpatFromMsg with that msg 1
   event.event_state.movement_phase_state = 5;
@@ -1495,7 +1383,7 @@ TEST(CARMAWorldModelTest, processSpatFromMsg)
   cmw.processSpatFromMsg(spat);
   lights1 = cmw.getMutableMap()->laneletLayer.get(ll_1.id()).regulatoryElementsAs<lanelet::CarmaTrafficSignal>();
   // partial state 3
-  EXPECT_EQ(lanelet::time::durationFromSec(44.5), lights1[0]->fixed_cycle_duration); // NOTE: 44.5 hear instead of 45 because of the intentional subtraction of 0.5s inside the implementation
+  EXPECT_EQ(lanelet::time::durationFromSec(44.5), lights1[0]->fixed_cycle_duration); // NOTE: 44.5 here instead of 45 because of the intentional subtraction of 0.5s inside the implementation
   
   // call the processSpatFromMsg with that msg 4.b
   event.event_state.movement_phase_state = 5;
@@ -1503,11 +1391,11 @@ TEST(CARMAWorldModelTest, processSpatFromMsg)
   movement.movement_event_list[0] = event;
   state.movement_list[0] = movement;
   spat.intersection_state_list[0] = state;
-  ROS_DEBUG_STREAM("Input: Duplicate, so ignore");
+  RCLCPP_DEBUG_STREAM(rclcpp::get_logger("carma_wm"), "Input: Duplicate, so ignore");
   cmw.processSpatFromMsg(spat);
   lights1 = cmw.getMutableMap()->laneletLayer.get(ll_1.id()).regulatoryElementsAs<lanelet::CarmaTrafficSignal>();
   // and query the regem again to check if its entries are updated, by checking revision or getState or predictState etc
-  EXPECT_EQ(lanelet::time::durationFromSec(44.5), lights1[0]->fixed_cycle_duration); // NOTE: 44.5 hear instead of 45 because of the intentional subtraction of 0.5s inside the implementation
+  EXPECT_EQ(lanelet::time::durationFromSec(44.5), lights1[0]->fixed_cycle_duration); // NOTE: 44.5 here instead of 45 because of the intentional subtraction of 0.5s inside the implementation
 
   // call the processSpatFromMsg with that msg 5
   event.event_state.movement_phase_state = 3;
@@ -1515,7 +1403,7 @@ TEST(CARMAWorldModelTest, processSpatFromMsg)
   movement.movement_event_list[0] = event;
   state.movement_list[0] = movement;
   spat.intersection_state_list[0] = state;
-  ROS_DEBUG_STREAM("Input: First cycle set. This is technically new cycle, but this info is not counted towards it due to inconvenience");
+  RCLCPP_DEBUG_STREAM(rclcpp::get_logger("carma_wm"), "Input: First cycle set. This is technically new cycle, but this info is not counted towards it due to inconvenience");
   cmw.processSpatFromMsg(spat);
   lights1 = cmw.getMutableMap()->laneletLayer.get(ll_1.id()).regulatoryElementsAs<lanelet::CarmaTrafficSignal>();
   // same duration, but counter set to 0
@@ -1528,7 +1416,7 @@ TEST(CARMAWorldModelTest, processSpatFromMsg)
   movement.movement_event_list[0] = event;
   state.movement_list[0] = movement;
   spat.intersection_state_list[0] = state;
-  ROS_DEBUG_STREAM("Input: New cycle, but cycle duration is same due to shifting");
+  RCLCPP_DEBUG_STREAM(rclcpp::get_logger("carma_wm"), "Input: New cycle, but cycle duration is same due to shifting");
   cmw.processSpatFromMsg(spat);
   lights1 = cmw.getMutableMap()->laneletLayer.get(ll_1.id()).regulatoryElementsAs<lanelet::CarmaTrafficSignal>();
 
@@ -1540,7 +1428,7 @@ TEST(CARMAWorldModelTest, processSpatFromMsg)
   movement.movement_event_list[0] = event;
   state.movement_list[0] = movement;
   spat.intersection_state_list[0] = state;
-  ROS_DEBUG_STREAM("Input: New partial cycle, yellow reduced");
+  RCLCPP_DEBUG_STREAM(rclcpp::get_logger("carma_wm"),"Input: New partial cycle, yellow reduced");
   cmw.processSpatFromMsg(spat);
   lights1 = cmw.getMutableMap()->laneletLayer.get(ll_1.id()).regulatoryElementsAs<lanelet::CarmaTrafficSignal>();
   // and query the regem again to check if its entries are updated, by checking revision or getState or predictState etc
@@ -1552,7 +1440,7 @@ TEST(CARMAWorldModelTest, processSpatFromMsg)
   movement.movement_event_list[0] = event;
   state.movement_list[0] = movement;
   spat.intersection_state_list[0] = state;
-  ROS_DEBUG_STREAM("Input: New partial cycle, green reduced");
+  RCLCPP_DEBUG_STREAM(rclcpp::get_logger("carma_wm"), "Input: New partial cycle, green reduced");
   cmw.processSpatFromMsg(spat);
   lights1 = cmw.getMutableMap()->laneletLayer.get(ll_1.id()).regulatoryElementsAs<lanelet::CarmaTrafficSignal>();
   // and query the regem again to check if its entries are updated, by checking revision or getState or predictState etc
@@ -1564,7 +1452,7 @@ TEST(CARMAWorldModelTest, processSpatFromMsg)
   movement.movement_event_list[0] = event;
   state.movement_list[0] = movement;
   spat.intersection_state_list[0] = state;
-  ROS_DEBUG_STREAM("Input: New full cycle, yellow reduced");
+  RCLCPP_DEBUG_STREAM(rclcpp::get_logger("carma_wm"), "Input: New full cycle, yellow reduced");
   cmw.processSpatFromMsg(spat);
   lights1 = cmw.getMutableMap()->laneletLayer.get(ll_1.id()).regulatoryElementsAs<lanelet::CarmaTrafficSignal>();
   // and query the regem again to check if its entries are updated, by checking revision or getState or predictState etc
@@ -1576,7 +1464,7 @@ TEST(CARMAWorldModelTest, processSpatFromMsg)
   movement.movement_event_list[0] = event;
   state.movement_list[0] = movement;
   spat.intersection_state_list[0] = state;
-  ROS_DEBUG_STREAM("Input: New full cycle, red reduced");
+  RCLCPP_DEBUG_STREAM(rclcpp::get_logger("carma_wm"), "Input: New full cycle, red reduced");
   cmw.processSpatFromMsg(spat);
   lights1 = cmw.getMutableMap()->laneletLayer.get(ll_1.id()).regulatoryElementsAs<lanelet::CarmaTrafficSignal>();
   // and query the regem again to check if its entries are updated, by checking revision or getState or predictState etc
@@ -1610,7 +1498,7 @@ TEST(CARMAWorldModelTest, getSignalsAlongRoute)
 
   auto lights = cmw_ptr->getSignalsAlongRoute({0.5, 0});
   
-  EXPECT_EQ(lights.size(), 2);
+  EXPECT_EQ(lights.size(), 2u);
   EXPECT_EQ(lights[0]->id(), traffic_light_id1);
   EXPECT_EQ(lights[1]->id(), traffic_light_id2);
 
@@ -1652,7 +1540,7 @@ TEST(CARMAWorldModelTest, getIntersectionAlongRoute)
 
   auto ints = cmw_ptr->getIntersectionsAlongRoute({0.5, 0});
   
-  EXPECT_EQ(ints.size(), 1);
+  EXPECT_EQ(ints.size(), 1u);
   EXPECT_EQ(ints[0]->id(), int_id);
 
 }
@@ -1660,47 +1548,23 @@ TEST(CARMAWorldModelTest, getIntersectionAlongRoute)
 TEST(CARMAWorldModelTest, checkIfSeenBeforeMovementState)
 {
   carma_wm::CARMAWorldModel cmw;
-  ros::Time::init();
-  ros::Time::setNow(ros::Time(0.0));
-  cmw.sim_.traffic_signal_states_[13][15].push_back(std::make_pair(boost::posix_time::time_from_string("1970-01-01 00:00:01.000"), lanelet::CarmaTrafficSignalState::STOP_AND_REMAIN));
-  cmw.sim_.traffic_signal_start_times_[13][15].push_back(boost::posix_time::time_from_string("1970-01-01 00:00:00.000"));
+  auto system_now = std::chrono::duration<double>(std::chrono::system_clock::now().time_since_epoch()).count() + 1.0;
 
-  boost::posix_time::ptime min_end_time_dynamic = boost::posix_time::time_from_string("1970-01-01 00:00:01.000");
+  cmw.sim_.traffic_signal_states_[13][15].push_back(std::make_pair(lanelet::time::timeFromSec(system_now + 1.0), lanelet::CarmaTrafficSignalState::STOP_AND_REMAIN));
+  cmw.sim_.traffic_signal_start_times_[13][15].push_back(lanelet::time::timeFromSec(system_now));
+
+  boost::posix_time::ptime min_end_time_dynamic = lanelet::time::timeFromSec(system_now + 1.0);
   auto received_state_dynamic=lanelet::CarmaTrafficSignalState::STOP_AND_REMAIN;
   int mov_id=13;
   int mov_signal_group=15;
- 
+
   ASSERT_EQ(cmw.check_if_seen_before_movement_state(min_end_time_dynamic,received_state_dynamic,mov_id,mov_signal_group), 1);
 
-  min_end_time_dynamic=boost::posix_time::time_from_string("1970-01-01 00:00:01.000");
+  min_end_time_dynamic=lanelet::time::timeFromSec(system_now);
   received_state_dynamic= lanelet::CarmaTrafficSignalState::PROTECTED_CLEARANCE;
   mov_id=13;
   mov_signal_group=15;
 
   ASSERT_EQ(cmw.check_if_seen_before_movement_state(min_end_time_dynamic,received_state_dynamic,mov_id,mov_signal_group), 0);
 }
-
-TEST(CARMAWorldModelTest, minEndTimeConverterMinuteOfYear)
-{
-  carma_wm::CARMAWorldModel cmw;
-  boost::posix_time::ptime min_end_time=boost::posix_time::time_from_string("1970-01-01 00:00:00.000");
-  bool moy_exists=1;
-  double moy=1;
-  ros::Time::setNow(ros::Time(1));
-    
-  ASSERT_EQ(cmw.min_end_time_converter_minute_of_year(min_end_time,moy_exists,moy), boost::posix_time::time_from_string("1970-01-01 00:00:00.000"));
-
-  min_end_time=boost::posix_time::time_from_string("1970-01-01 01:00:01.000");
-  moy_exists=1;
-  ros::Time::setNow(ros::Time(3601));
-    
-  ASSERT_EQ(cmw.min_end_time_converter_minute_of_year(min_end_time,moy_exists,moy), boost::posix_time::time_from_string("1970-01-01 01:00:01.000"));
-
-  min_end_time=boost::posix_time::time_from_string("1970-01-01 00:00:00.000");
-  moy_exists=0;
-  ros::Time::setNow(ros::Time(0));
-
-  ASSERT_EQ(cmw.min_end_time_converter_minute_of_year(min_end_time,moy_exists,moy), boost::posix_time::time_from_string("1970-01-01 00:00:00.000"));
-}
-
 }  // namespace carma_wm

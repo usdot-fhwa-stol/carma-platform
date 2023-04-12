@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2019-2021 LEIDOS.
+ * Copyright (C) 2022 LEIDOS.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -13,11 +13,11 @@
  * License for the specific language governing permissions and limitations under
  * the License.
  */
-#include <ros/ros.h>
+#include <rclcpp/rclcpp.hpp>
 #include <tuple>
 #include <algorithm>
 #include <assert.h>
-#include <carma_wm/CARMAWorldModel.h>
+#include "carma_wm/CARMAWorldModel.hpp"
 #include <lanelet2_routing/RoutingGraph.h>
 #include <lanelet2_traffic_rules/TrafficRulesFactory.h>
 #include <lanelet2_core/Attribute.h>
@@ -29,9 +29,10 @@
 #include <lanelet2_core/geometry/Polygon.h>
 #include <boost/geometry.hpp>
 #include <boost/geometry/geometries/polygon.hpp>
-#include <carma_wm/Geometry.h>
+#include "carma_wm/Geometry.hpp"
 #include <queue>
 #include <boost/math/special_functions/sign.hpp>
+#include <boost/date_time/posix_time/conversion.hpp>
 
 namespace carma_wm
 {
@@ -341,7 +342,7 @@ namespace carma_wm
     std::vector<lanelet::BasicPoint2d> output;
     if (!route_)
     {
-      ROS_WARN_STREAM("Route has not yet been loaded");
+      RCLCPP_WARN_STREAM(rclcpp::get_logger("carma_wm"), "Route has not yet been loaded");
       return output;
     }
 
@@ -350,7 +351,7 @@ namespace carma_wm
     if (start_downtrack < 0 || start_downtrack > route_end || end_downtrack < 0 || end_downtrack > route_end ||
         start_downtrack > end_downtrack)
     {
-      ROS_WARN_STREAM("Invalid input downtracks");
+      RCLCPP_WARN_STREAM(rclcpp::get_logger("carma_wm"), "Invalid input downtracks");
       return output;
     }
 
@@ -383,13 +384,13 @@ namespace carma_wm
 
     if (!route_)
     {
-      ROS_DEBUG_STREAM("Route has not yet been loaded");
+      RCLCPP_DEBUG_STREAM(rclcpp::get_logger("carma_wm"), "Route has not yet been loaded");
       return boost::none;
     }
 
     if (downtrack < 0 || downtrack > getRouteEndTrackPos().downtrack)
     {
-      ROS_DEBUG_STREAM("Tried to convert a downtrack of: " << downtrack
+      RCLCPP_DEBUG_STREAM(rclcpp::get_logger("carma_wm"), "Tried to convert a downtrack of: " << downtrack
                                                            << " to map point, but it did not fit in route bounds of "
                                                            << getRouteEndTrackPos().downtrack);
       return boost::none;
@@ -449,7 +450,7 @@ namespace carma_wm
       double sigma = geometry::point_to_point_yaw(prior_point, next_point); // Angle between route segment and x-axis
       double theta = sigma + M_PI_2;                                        // M_PI_2 is 90 deg. Theta is the angle to the vector from the route projected point
                                                                             // to the target point
-      double delta_x = cos(theta) * -crosstrack; // Sign of cross track must be flipped since map frame is right handed but TrackPos frame is left handed
+      double delta_x = cos(theta) * -crosstrack;
       double delta_y = sin(theta) * -crosstrack;
 
       return lanelet::BasicPoint2d(x + delta_x, y + delta_y);
@@ -483,7 +484,7 @@ namespace carma_wm
       double sigma = geometry::point_to_point_yaw(prior_point, next_point); // Angle between route segment and x-axis
       double theta = sigma + M_PI_2;                                        // M_PI_2 is 90 deg. Theta is the angle to the vector from the route projected point
                                                                             // to the target point
-      double delta_x = cos(theta) * -crosstrack; // Sign of cross track must be flipped since map frame is right handed but TrackPos frame is left handed
+      double delta_x = cos(theta) * -crosstrack;
       double delta_y = sin(theta) * -crosstrack;
 
       x += delta_x; // Adjust x and y of target point to account for crosstrack
@@ -515,7 +516,7 @@ namespace carma_wm
     if (!semantic_map_)
     {
 
-      ROS_INFO_STREAM("First time map is set in carma_wm. Routing graph will be recomputed reguardless of method inputs.");
+      RCLCPP_INFO_STREAM(rclcpp::get_logger("carma_wm"), "First time map is set in carma_wm. Routing graph will be recomputed reguardless of method inputs.");
 
       recompute_routing_graph = true;
     }
@@ -527,20 +528,27 @@ namespace carma_wm
     if (recompute_routing_graph)
     {
 
-      ROS_INFO_STREAM("Building routing graph");
+      RCLCPP_INFO_STREAM(rclcpp::get_logger("carma_wm"), "Building routing graph");
 
-      TrafficRulesConstPtr traffic_rules = *(getTrafficRules(participant_type_));
+      auto tr = getTrafficRules(participant_type_);
+
+      if (!tr)
+      {
+        throw std::invalid_argument("Could not construct traffic rules for participant");
+      }
+
+      TrafficRulesConstPtr traffic_rules = *tr;
 
       lanelet::routing::RoutingGraphUPtr map_graph = lanelet::routing::RoutingGraph::build(*semantic_map_, *traffic_rules);
       map_routing_graph_ = std::move(map_graph);
 
-      ROS_INFO_STREAM("Done building routing graph");
+      RCLCPP_INFO_STREAM(rclcpp::get_logger("carma_wm"), "Done building routing graph");
     }
   }
 
   void CARMAWorldModel::setRoutingGraph(LaneletRoutingGraphPtr graph) {
 
-    ROS_INFO_STREAM("Setting the routing graph with user or listener provided graph");
+    RCLCPP_INFO_STREAM(rclcpp::get_logger("carma_wm"), "Setting the routing graph with user or listener provided graph");
 
     map_routing_graph_ = graph;
   }
@@ -722,8 +730,8 @@ namespace carma_wm
     return getTrafficRules(participant_type_);
   }
 
-  lanelet::Optional<cav_msgs::RoadwayObstacle>
-  CARMAWorldModel::toRoadwayObstacle(const cav_msgs::ExternalObject& object) const
+  lanelet::Optional<carma_perception_msgs::msg::RoadwayObstacle>
+  CARMAWorldModel::toRoadwayObstacle(const carma_perception_msgs::msg::ExternalObject& object) const
   {
     if (!semantic_map_ || semantic_map_->laneletLayer.size() == 0)
     {
@@ -739,10 +747,10 @@ namespace carma_wm
 
     lanelet::Lanelet nearestLanelet = nearestLaneletBoost.get();
 
-    cav_msgs::RoadwayObstacle obs;
+    carma_perception_msgs::msg::RoadwayObstacle obs;
     obs.object = object;
     obs.connected_vehicle_type.type =
-        cav_msgs::ConnectedVehicleType::NOT_CONNECTED;  // TODO No clear way to determine automation state at this time
+        carma_perception_msgs::msg::ConnectedVehicleType::NOT_CONNECTED;  // TODO No clear way to determine automation state at this time
     obs.lanelet_id = nearestLanelet.id();
 
     carma_wm::TrackPos obj_track_pos = geometry::trackPos(nearestLanelet, object_center);
@@ -775,17 +783,17 @@ namespace carma_wm
     return obs;
   }
 
-  void CARMAWorldModel::setRoadwayObjects(const std::vector<cav_msgs::RoadwayObstacle>& rw_objs)
+  void CARMAWorldModel::setRoadwayObjects(const std::vector<carma_perception_msgs::msg::RoadwayObstacle>& rw_objs)
   {
     roadway_objects_ = rw_objs;
   }
 
-  std::vector<cav_msgs::RoadwayObstacle> CARMAWorldModel::getRoadwayObjects() const
+  std::vector<carma_perception_msgs::msg::RoadwayObstacle> CARMAWorldModel::getRoadwayObjects() const
   {
     return roadway_objects_;
   }
 
-  std::vector<cav_msgs::RoadwayObstacle> CARMAWorldModel::getInLaneObjects(const lanelet::ConstLanelet& lanelet,
+  std::vector<carma_perception_msgs::msg::RoadwayObstacle> CARMAWorldModel::getInLaneObjects(const lanelet::ConstLanelet& lanelet,
                                                                            const LaneSection& section) const
   {
     // Get all lanelets on current lane section
@@ -794,11 +802,11 @@ namespace carma_wm
     // Check if any roadway object is registered
     if (roadway_objects_.size() == 0)
     {
-      return std::vector<cav_msgs::RoadwayObstacle>{};
+      return std::vector<carma_perception_msgs::msg::RoadwayObstacle>{};
     }
 
     // Initialize useful variables
-    std::vector<cav_msgs::RoadwayObstacle> lane_objects, roadway_objects_copy = roadway_objects_;
+    std::vector<carma_perception_msgs::msg::RoadwayObstacle> lane_objects, roadway_objects_copy = roadway_objects_;
 
     /*
    * Get all in lane objects
@@ -856,7 +864,7 @@ namespace carma_wm
   }
 
   lanelet::Optional<lanelet::Lanelet>
-  CARMAWorldModel::getIntersectingLanelet(const cav_msgs::ExternalObject& object) const
+  CARMAWorldModel::getIntersectingLanelet(const carma_perception_msgs::msg::ExternalObject& object) const
   {
     // Check if the map is loaded yet
     if (!semantic_map_ || semantic_map_->laneletLayer.size() == 0)
@@ -898,7 +906,7 @@ namespace carma_wm
     if (!boost::geometry::within(object_center, curr_lanelet.polygon2d().basicPolygon()))
       throw std::invalid_argument("Given point is not within any lanelet");
 
-    std::vector<cav_msgs::RoadwayObstacle> lane_objects = getInLaneObjects(curr_lanelet);
+    std::vector<carma_perception_msgs::msg::RoadwayObstacle> lane_objects = getInLaneObjects(curr_lanelet);
 
     // return empty if there is no object in the lane
     if (lane_objects.size() == 0)
@@ -920,7 +928,7 @@ namespace carma_wm
     return min_dist;
   }
 
-  lanelet::Optional<std::tuple<TrackPos, cav_msgs::RoadwayObstacle>>
+  lanelet::Optional<std::tuple<TrackPos, carma_perception_msgs::msg::RoadwayObstacle>>
   CARMAWorldModel::getNearestObjInLane(const lanelet::BasicPoint2d& object_center, const LaneSection& section) const
   {
     // Check if the map is loaded yet
@@ -941,7 +949,7 @@ namespace carma_wm
       throw std::invalid_argument("Given point is not within any lanelet");
 
     // Get objects that are in the lane
-    std::vector<cav_msgs::RoadwayObstacle> lane_objects = getInLaneObjects(curr_lanelet, section);
+    std::vector<carma_perception_msgs::msg::RoadwayObstacle> lane_objects = getInLaneObjects(curr_lanelet, section);
 
     // return empty if there is no object in the lane
     if (lane_objects.size() == 0)
@@ -1028,19 +1036,19 @@ namespace carma_wm
 
     // if before the parallel line with the start of the llt that crosses given object_center, neg downtrack.
     // if left to the parallel line with the centerline of the llt that crosses given object_center, pos crosstrack
-    return std::tuple<TrackPos, cav_msgs::RoadwayObstacle>(
+    return std::tuple<TrackPos, carma_perception_msgs::msg::RoadwayObstacle>(
         TrackPos(object_downtracks[min_idx] - input_obj_downtrack,
                  object_crosstracks[min_idx] - geometry::trackPos(curr_lanelet, object_center).crosstrack),
         lane_objects[object_idxs[min_idx]]);
   }
 
-  lanelet::Optional<std::tuple<TrackPos, cav_msgs::RoadwayObstacle>>
+  lanelet::Optional<std::tuple<TrackPos, carma_perception_msgs::msg::RoadwayObstacle>>
   CARMAWorldModel::nearestObjectAheadInLane(const lanelet::BasicPoint2d& object_center) const
   {
     return getNearestObjInLane(object_center, LANE_AHEAD);
   }
 
-  lanelet::Optional<std::tuple<TrackPos, cav_msgs::RoadwayObstacle>>
+  lanelet::Optional<std::tuple<TrackPos, carma_perception_msgs::msg::RoadwayObstacle>>
   CARMAWorldModel::nearestObjectBehindInLane(const lanelet::BasicPoint2d& object_center) const
   {
     return getNearestObjInLane(object_center, LANE_BEHIND);
@@ -1152,13 +1160,13 @@ namespace carma_wm
     // Check if the map is loaded yet
     if (!semantic_map_ || semantic_map_->laneletLayer.empty())
     {
-      ROS_ERROR_STREAM("Map is not set or does not contain lanelets");
+      RCLCPP_ERROR_STREAM(rclcpp::get_logger("carma_wm"), "Map is not set or does not contain lanelets");
       return {};
     }
     // Check if the route was loaded yet
     if (!route_)
     {
-      ROS_ERROR_STREAM("Route has not yet been loaded");
+      RCLCPP_ERROR_STREAM(rclcpp::get_logger("carma_wm"), "Route has not yet been loaded");
       return {};
     }
     std::vector<lanelet::CarmaTrafficSignalPtr> light_list;
@@ -1178,7 +1186,7 @@ namespace carma_wm
         auto stop_line = light->getStopLine(ll);
         if (!stop_line)
         {
-          ROS_WARN_STREAM("No stop line");
+          RCLCPP_ERROR_STREAM(rclcpp::get_logger("carma_wm"), "No stop line");
           continue;
         }
         else
@@ -1252,13 +1260,13 @@ namespace carma_wm
     // Check if the map is loaded yet
     if (!semantic_map_ || semantic_map_->laneletLayer.empty())
     {
-      ROS_ERROR_STREAM("Map is not set or does not contain lanelets");
+      RCLCPP_ERROR_STREAM(rclcpp::get_logger("carma_wm"), "Map is not set or does not contain lanelets");
       return {};
     }
     // Check if the route was loaded yet
     if (!route_)
     {
-      ROS_ERROR_STREAM("Route has not yet been loaded");
+      RCLCPP_ERROR_STREAM(rclcpp::get_logger("carma_wm"), "Route has not yet been loaded");
       return {};
     }
     std::vector<std::shared_ptr<lanelet::AllWayStop>> intersection_list;
@@ -1289,13 +1297,13 @@ namespace carma_wm
     // Check if the map is loaded yet
     if (!semantic_map_ || semantic_map_->laneletLayer.empty())
     {
-      ROS_ERROR_STREAM("Map is not set or does not contain lanelets");
+      RCLCPP_ERROR_STREAM(rclcpp::get_logger("carma_wm"), "Map is not set or does not contain lanelets");
       return {};
     }
     // Check if the route was loaded yet
     if (!route_)
     {
-      ROS_ERROR_STREAM("Route has not yet been loaded");
+      RCLCPP_ERROR_STREAM(rclcpp::get_logger("carma_wm"), "Route has not yet been loaded");
       return {};
     }
     std::vector<lanelet::SignalizedIntersectionPtr> intersection_list;
@@ -1322,21 +1330,20 @@ namespace carma_wm
   }
 
   lanelet::CarmaTrafficSignalPtr CARMAWorldModel::getTrafficSignal(const lanelet::Id& id) const
-  {
+  {    
     auto general_regem = semantic_map_->regulatoryElementLayer.get(id);
 
     auto lanelets_general = semantic_map_->laneletLayer.findUsages(general_regem);
     if (lanelets_general.empty())
     {
-      ROS_WARN_STREAM("There was an error querying lanelet for traffic light with id: " << id);
-      return nullptr;
+      RCLCPP_WARN_STREAM(rclcpp::get_logger("carma_wm"), "There was an error querying lanelet for traffic light with id: " << id);
     }
 
     auto curr_light_list = lanelets_general[0].regulatoryElementsAs<lanelet::CarmaTrafficSignal>();
 
     if (curr_light_list.empty())
     {
-      ROS_WARN_STREAM("There was an error querying traffic light with id: " << id);
+      RCLCPP_WARN_STREAM(rclcpp::get_logger("carma_wm"), "There was an error querying traffic light with id: " << id);
       return nullptr;
     }
 
@@ -1353,99 +1360,99 @@ namespace carma_wm
 
     if (!curr_light)
     {
-      ROS_WARN_STREAM("Was not able to find traffic signal with id: " << id << ", ignoring...");
+      RCLCPP_WARN_STREAM(rclcpp::get_logger("carma_wm"), "Was not able to find traffic signal with id: " << id << ", ignoring...");
       return nullptr;
     }
 
     return curr_light;
   }
 
-   bool CARMAWorldModel::check_if_seen_before_movement_state(boost::posix_time::ptime min_end_time_dynamic,lanelet::CarmaTrafficSignalState received_state_dynamic,uint16_t mov_id, uint8_t mov_signal_group)
-    {
+  bool CARMAWorldModel::check_if_seen_before_movement_state(boost::posix_time::ptime min_end_time_dynamic,lanelet::CarmaTrafficSignalState received_state_dynamic,uint16_t mov_id, uint8_t mov_signal_group)
+  {
 
-      if(sim_.traffic_signal_states_[mov_id][mov_signal_group].empty())
+    if(sim_.traffic_signal_states_[mov_id][mov_signal_group].empty())
+    {      
+      return false;
+    }
+
+    // temp states that does not include outdated states
+    std::vector<std::pair<boost::posix_time::ptime, lanelet::CarmaTrafficSignalState>> temp_signal_states;
+    std::vector<boost::posix_time::ptime> temp_start_times;
+
+    int i = 0;
+    for(auto mov_check:sim_.traffic_signal_states_[mov_id][mov_signal_group])
+    {
+      if (lanelet::time::timeFromSec(std::chrono::duration<double>(std::chrono::system_clock::now().time_since_epoch()).count()) < mov_check.first)
       {
-          return false;
+        temp_signal_states.push_back(std::make_pair(mov_check.first, mov_check.second ));
+        temp_start_times.push_back(sim_.traffic_signal_start_times_[mov_id][mov_signal_group][i]);
+      }
+      else
+      {
+        i++;
+        continue;
       }
 
-      // temporary states to save up to date states
-      std::vector<std::pair<boost::posix_time::ptime, lanelet::CarmaTrafficSignalState>> temp_signal_states;
-      std::vector<boost::posix_time::ptime> temp_start_times;
-
-      int i = 0;
-      for(auto mov_check:sim_.traffic_signal_states_[mov_id][mov_signal_group])
-      {
-        if (lanelet::time::timeFromSec(ros::Time::now().toSec()) < mov_check.first) // filter outdated states
-        {
-          temp_signal_states.push_back(std::make_pair(mov_check.first, mov_check.second ));
-          temp_start_times.push_back(sim_.traffic_signal_start_times_[mov_id][mov_signal_group][i]);
-        }
-        else
-        {
-          i++;
-          continue;
-        }
-
-        auto last_time_difference = mov_check.first - min_end_time_dynamic;  
-        bool is_duplicate = last_time_difference.total_milliseconds() >= -500 && last_time_difference.total_milliseconds() <= 500;
-
-        if(received_state_dynamic == mov_check.second && is_duplicate)
-        {
-          return true;
-        }
-        i++;
-      } 
-      sim_.traffic_signal_states_[mov_id][mov_signal_group]=temp_signal_states;
-      sim_.traffic_signal_start_times_[mov_id][mov_signal_group] = temp_start_times;
-      return false;
+      auto last_time_difference = mov_check.first - min_end_time_dynamic;  
+      bool is_duplicate = last_time_difference.total_milliseconds() >= -500 && last_time_difference.total_milliseconds() <= 500;
       
-    }
+      if(received_state_dynamic == mov_check.second && is_duplicate)
+      {
+        return true;
+      }
+      i++;
+    } 
+    sim_.traffic_signal_states_[mov_id][mov_signal_group]=temp_signal_states;
+    sim_.traffic_signal_start_times_[mov_id][mov_signal_group] = temp_start_times;
+    return false;
 
-    boost::posix_time::ptime CARMAWorldModel::min_end_time_converter_minute_of_year(boost::posix_time::ptime min_end_time,bool moy_exists,uint32_t moy)
+  }
+
+  boost::posix_time::ptime CARMAWorldModel::min_end_time_converter_minute_of_year(boost::posix_time::ptime min_end_time,bool moy_exists,uint32_t moy)
+  {
+    if (moy_exists) //account for minute of the year
     {
-        if (moy_exists) //account for minute of the year
-        {
-          auto inception_boost(boost::posix_time::time_from_string("1970-01-01 00:00:00.000")); // inception of epoch
-          auto duration_since_inception(lanelet::time::durationFromSec(ros::Time::now().toSec()));
-          auto curr_time_boost = inception_boost + duration_since_inception;
+      auto inception_boost(boost::posix_time::time_from_string("1970-01-01 00:00:00.000")); // inception of epoch
+      auto duration_since_inception(lanelet::time::durationFromSec(std::chrono::duration<double>(std::chrono::system_clock::now().time_since_epoch()).count()));
+      auto curr_time_boost = inception_boost + duration_since_inception;
 
-          int curr_year = curr_time_boost.date().year();
-          auto curr_year_start_boost(boost::posix_time::time_from_string(std::to_string(curr_year)+ "-01-01 00:00:00.000"));
+      int curr_year = curr_time_boost.date().year();
+      auto curr_year_start_boost(boost::posix_time::time_from_string(std::to_string(curr_year)+ "-01-01 00:00:00.000"));
 
-          auto curr_minute_stamp_boost = curr_year_start_boost + boost::posix_time::minutes((int)moy);
+      auto curr_minute_stamp_boost = curr_year_start_boost + boost::posix_time::minutes((int)moy);
 
-          int hours_of_day = curr_minute_stamp_boost.time_of_day().hours();
-          int curr_month = curr_minute_stamp_boost.date().month();
-          int curr_day = curr_minute_stamp_boost.date().day();
+      int hours_of_day = curr_minute_stamp_boost.time_of_day().hours();
+      int curr_month = curr_minute_stamp_boost.date().month();
+      int curr_day = curr_minute_stamp_boost.date().day();
 
-          auto curr_day_boost(boost::posix_time::time_from_string(std::to_string(curr_year) + "/" + std::to_string(curr_month) + "/" + std::to_string(curr_day) +" 00:00:00.000")); // GMT is the standard
-          auto curr_hour_boost = curr_day_boost + boost::posix_time::hours(hours_of_day);
+      auto curr_day_boost(boost::posix_time::time_from_string(std::to_string(curr_year) + "/" + std::to_string(curr_month) + "/" + std::to_string(curr_day) +" 00:00:00.000")); // GMT is the standard
+      auto curr_hour_boost = curr_day_boost + boost::posix_time::hours(hours_of_day);
 
-          min_end_time += lanelet::time::durationFromSec(lanelet::time::toSec(curr_hour_boost));
-          return min_end_time;
-        }
-        else
-        {
-          return min_end_time; // return unchanged
-        }
+      min_end_time += lanelet::time::durationFromSec(lanelet::time::toSec(curr_hour_boost));
+      return min_end_time;
     }
+    else
+    {
+      return min_end_time; // return unchanged
+    }
+  }
 
-  void CARMAWorldModel::processSpatFromMsg(const cav_msgs::SPAT &spat_msg)
+  void CARMAWorldModel::processSpatFromMsg(const carma_v2x_msgs::msg::SPAT &spat_msg)
   {
     if (!semantic_map_)
     {
-      ROS_INFO_STREAM("Map is not set yet.");
+      RCLCPP_INFO_STREAM(rclcpp::get_logger("carma_wm"), "Map is not set yet.");
       return;
     }
 
     if (spat_msg.intersection_state_list.empty())
     {
-      ROS_WARN_STREAM("No intersection_state_list in the newly received SPAT msg. Returning...");
+      RCLCPP_WARN_STREAM(rclcpp::get_logger("carma_wm"), "No intersection_state_list in the newly received SPAT msg. Returning...");
       return;
     }
-  
+    
     for (const auto& curr_intersection : spat_msg.intersection_state_list)
-    {
+    {      
       bool is_dynamic_spat = false;
 
       for (const auto& current_movement_state : curr_intersection.movement_list)
@@ -1456,7 +1463,7 @@ namespace carma_wm
           break;
         }
       }
-      
+
       for (const auto& current_movement_state : curr_intersection.movement_list)
       {
         lanelet::Id curr_light_id = getTrafficSignalId(curr_intersection.id.id, current_movement_state.signal_group);
@@ -1476,29 +1483,34 @@ namespace carma_wm
         // reset states if the intersection's geometry changed
         if (curr_light->revision_ != curr_intersection.revision)
         {
-          ROS_DEBUG_STREAM("Received a new intersection geometry. intersection_id: " << (int)curr_intersection.id.id << ", and signal_group_id: " << (int)current_movement_state.signal_group);
+          RCLCPP_DEBUG_STREAM(rclcpp::get_logger("carma_wm"), "Received a new intersection geometry. intersection_id: " << (int)curr_intersection.id.id << ", and signal_group_id: " << (int)current_movement_state.signal_group);
           sim_.traffic_signal_states_[curr_intersection.id.id][current_movement_state.signal_group].clear();
-          
         }
 
         // all maneuver types in same signal group is currently expected to share signal timing, so only 0th index is used when setting states
         if (current_movement_state.movement_event_list.empty())
         {
-          ROS_DEBUG_STREAM("Movement_event_list is empty . intersection_id: " << (int)curr_intersection.id.id << ", and signal_group_id: " << (int)current_movement_state.signal_group);
+          RCLCPP_DEBUG_STREAM(rclcpp::get_logger("carma_wm"), "Movement_event_list is empty . intersection_id: " << (int)curr_intersection.id.id << ", and signal_group_id: " << (int)current_movement_state.signal_group);
           continue;
+        }
+        else
+        {
+          RCLCPP_DEBUG_STREAM(rclcpp::get_logger("carma_wm"), "Movement_event_list size: " << current_movement_state.movement_event_list.size() << " . intersection_id: " << (int)curr_intersection.id.id << ", and signal_group_id: " << (int)current_movement_state.signal_group);
         }
 
         curr_light->revision_ = curr_intersection.revision; // valid SPAT msg
-      
+
         if(is_dynamic_spat) // Dynamic Spat Processing with future phases
-        {  sim_.traffic_signal_states_[curr_intersection.id.id][current_movement_state.signal_group]={};
-           sim_.traffic_signal_start_times_[curr_intersection.id.id][current_movement_state.signal_group]={};
-          
+        {
+          sim_.traffic_signal_states_[curr_intersection.id.id][current_movement_state.signal_group]={};
+          sim_.traffic_signal_start_times_[curr_intersection.id.id][current_movement_state.signal_group]={};
+
           for(auto current_movement_event:current_movement_state.movement_event_list)
           {
             // raw min_end_time in seconds measured from the most recent full hour
             boost::posix_time::ptime min_end_time_dynamic = lanelet::time::timeFromSec(current_movement_event.timing.min_end_time);
             boost::posix_time::ptime start_time_dynamic = lanelet::time::timeFromSec(current_movement_event.timing.start_time);
+
             min_end_time_dynamic=min_end_time_converter_minute_of_year(min_end_time_dynamic,curr_intersection.moy_exists,curr_intersection.moy); // Accounting minute of the year
             start_time_dynamic=min_end_time_converter_minute_of_year(start_time_dynamic,curr_intersection.moy_exists,curr_intersection.moy); // Accounting minute of the year
 
@@ -1506,159 +1518,157 @@ namespace carma_wm
             
             //bool recorded = check_if_seen_before_movement_state(min_end_time_dynamic,received_state_dynamic,curr_intersection.id.id,current_movement_state.signal_group);
                         
-            sim_.traffic_signal_states_[curr_intersection.id.id][current_movement_state.signal_group].push_back(
-                                std::make_pair(min_end_time_dynamic, received_state_dynamic));
+            sim_.traffic_signal_states_[curr_intersection.id.id][current_movement_state.signal_group].push_back(std::make_pair(min_end_time_dynamic, received_state_dynamic));
             sim_.traffic_signal_start_times_[curr_intersection.id.id][current_movement_state.signal_group].push_back(
-                                start_time_dynamic); 
-            ROS_DEBUG_STREAM("intersection id: " << (int)curr_intersection.id.id << ", signal: " << (int)current_movement_state.signal_group 
+                                start_time_dynamic);
+              
+            RCLCPP_DEBUG_STREAM(rclcpp::get_logger("carma_wm"), "intersection id: " << (int)curr_intersection.id.id << ", signal: " << (int)current_movement_state.signal_group
              << ", start_time: " << std::to_string(lanelet::time::toSec(start_time_dynamic))
              << ", end_time: " << std::to_string(lanelet::time::toSec(min_end_time_dynamic))
              << ", state: " << received_state_dynamic);
           }
           curr_light->recorded_time_stamps = sim_.traffic_signal_states_[curr_intersection.id.id][current_movement_state.signal_group];
-          curr_light->recorded_start_time_stamps = sim_.traffic_signal_start_times_[curr_intersection.id.id][current_movement_state.signal_group];
-        } 
+          curr_light->recorded_start_time_stamps  = sim_.traffic_signal_start_times_[curr_intersection.id.id][current_movement_state.signal_group];
+        }                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                            
         else // Fixed Spat Processing without future phases
         {
-          ROS_DEBUG_STREAM("Detected fixed cycle as there was no more than 1 future phases! for inter id: " << (int)curr_intersection.id.id << ", signal: " << (int)current_movement_state.signal_group);
-        // raw min_end_time in seconds measured from the most recent full hour
-        boost::posix_time::ptime min_end_time = lanelet::time::timeFromSec(current_movement_state.movement_event_list[0].timing.min_end_time);
-        auto received_state = static_cast<lanelet::CarmaTrafficSignalState>(current_movement_state.movement_event_list[0].event_state.movement_phase_state);
-        
-        min_end_time=min_end_time_converter_minute_of_year(min_end_time,curr_intersection.moy_exists,curr_intersection.moy);
-
-        auto last_time_difference = sim_.last_seen_state_[curr_intersection.id.id][current_movement_state.signal_group].first - min_end_time;  
-        bool is_duplicate = last_time_difference.total_milliseconds() >= -500 && last_time_difference.total_milliseconds() <= 500;
-
-        //if same data as last time (duplicate or outdated message):
-        //where state is same and timestamp is equal or less, skip
-        if (sim_.last_seen_state_.find(curr_intersection.id.id) !=  sim_.last_seen_state_.end() && 
-            sim_.last_seen_state_[curr_intersection.id.id].find(current_movement_state.signal_group) != sim_.last_seen_state_[curr_intersection.id.id].end() && 
-            is_duplicate)
-        {
-          ROS_DEBUG_STREAM("Duplicate as last time! : id: " << curr_light->id() << ", time: " << std::to_string(lanelet::time::toSec(min_end_time)));
-          continue;
-        }
-
-        // if received same state as last time, but with new time_stamp in the future, combine the info with last state
-        // also skip setting state until received a new state that is different from last recorded one
-        if ( sim_.last_seen_state_.find(curr_intersection.id.id) !=  sim_.last_seen_state_.end() && 
-            sim_.last_seen_state_[curr_intersection.id.id].find(current_movement_state.signal_group) != sim_.last_seen_state_[curr_intersection.id.id].end() && 
-            sim_.last_seen_state_[curr_intersection.id.id][current_movement_state.signal_group].second == received_state &&
-            sim_.last_seen_state_[curr_intersection.id.id][current_movement_state.signal_group].first < min_end_time)
-        {
-          ROS_DEBUG_STREAM("Updated time for id: " << curr_light->id()  << " with state: " << received_state << ", with time: "
-                                                      << std::to_string(lanelet::time::toSec(min_end_time)));
-          sim_.traffic_signal_states_[curr_intersection.id.id][current_movement_state.signal_group].back().first = min_end_time;
-          continue;
-        }
-
-         // detected that new state received; therefore, set the last recorded state (not new one received)
-        ROS_DEBUG_STREAM("Received new state for light: " << curr_light_id << ", with state: " << received_state << ", time: " << ros::Time::fromBoost(min_end_time));
-
-        // update last seen signal state
-        sim_.last_seen_state_[curr_intersection.id.id][current_movement_state.signal_group] = {min_end_time, received_state};
-        
-        if (!curr_light->recorded_time_stamps.empty())
-        {
-          boost::posix_time::time_duration time_difference = curr_light->predictState(min_end_time - lanelet::time::durationFromSec(0.5)).get().first - min_end_time; //0.5s to account for error
-          ROS_DEBUG_STREAM("Initial time_difference: " << (double)(time_difference.total_milliseconds() / 1000.0));
+          RCLCPP_DEBUG_STREAM(rclcpp::get_logger("carma_wm"), "Detected fixed cycle as there was no more than 1 future phases! for inter id: " << (int)curr_intersection.id.id << ", signal: " << (int)current_movement_state.signal_group);
           
-          if (curr_light->predictState(min_end_time - lanelet::time::durationFromSec(0.5)).get().second !=  received_state)
+          // raw min_end_time in seconds measured from the most recent full hour
+          boost::posix_time::ptime min_end_time = lanelet::time::timeFromSec(current_movement_state.movement_event_list[0].timing.min_end_time);
+          auto received_state = static_cast<lanelet::CarmaTrafficSignalState>(current_movement_state.movement_event_list[0].event_state.movement_phase_state);
+
+          min_end_time=min_end_time_converter_minute_of_year(min_end_time,curr_intersection.moy_exists,curr_intersection.moy);
+
+          auto last_time_difference = sim_.last_seen_state_[curr_intersection.id.id][current_movement_state.signal_group].first - min_end_time;  
+          bool is_duplicate = last_time_difference.total_milliseconds() >= -500 && last_time_difference.total_milliseconds() <= 500;
+
+          //if same data as last time (duplicate or outdated message):
+          //where state is same and timestamp is equal or less, skip
+          if (sim_.last_seen_state_.find(curr_intersection.id.id) !=  sim_.last_seen_state_.end() && 
+              sim_.last_seen_state_[curr_intersection.id.id].find(current_movement_state.signal_group) != sim_.last_seen_state_[curr_intersection.id.id].end() && 
+              is_duplicate)
           {
-            // shift to same state's end
-            boost::posix_time::time_duration shift_to_match_state = curr_light->fixed_cycle_duration - curr_light->signal_durations[received_state];
-            time_difference += shift_to_match_state;
-            ROS_DEBUG_STREAM("Time_difference new: " << (double)(time_difference.total_milliseconds() / 1000.0));
-          }
-          
-          // if |time difference| is less than 0.5 sec
-          bool same_time_stamp_as_last = time_difference.total_milliseconds() >= -500 && time_difference.total_milliseconds() <= 500;
-        
-          // Received same cycle info while signal already has full cycle, then skip
-          if (curr_light->predictState(min_end_time - lanelet::time::durationFromSec(0.5)).get().second == received_state &&
-              same_time_stamp_as_last &&
-              sim_.signal_state_counter_[curr_intersection.id.id][current_movement_state.signal_group] > 4 )  // checking >4 because: 3 unique + 1 more state to 
-                                                                                                              // complete cycle. And last state (e.g. 4th) is updated on next (e.g 5th)
-          {
-            ROS_DEBUG_STREAM("Received same cycle info, ignoring : " << std::to_string(lanelet::time::toSec(min_end_time)));
+            RCLCPP_DEBUG_STREAM(rclcpp::get_logger("carma_wm"), "Duplicate as last time! : id: " << curr_light->id() << ", time: " << std::to_string(lanelet::time::toSec(min_end_time)));
             continue;
           }
-          // Received new cycle info after full cycle was set
-          else if(sim_.signal_state_counter_[curr_intersection.id.id][current_movement_state.signal_group] > 4)
+
+          // if received same state as last time, but with new time_stamp in the future, combine the info with last state
+          // also skip setting state until received a new state that is different from last recorded one
+          if ( sim_.last_seen_state_.find(curr_intersection.id.id) !=  sim_.last_seen_state_.end() && 
+              sim_.last_seen_state_[curr_intersection.id.id].find(current_movement_state.signal_group) != sim_.last_seen_state_[curr_intersection.id.id].end() && 
+              sim_.last_seen_state_[curr_intersection.id.id][current_movement_state.signal_group].second == received_state &&
+              sim_.last_seen_state_[curr_intersection.id.id][current_movement_state.signal_group].first < min_end_time)
           {
-            for ( auto pair : sim_.traffic_signal_states_[curr_intersection.id.id][current_movement_state.signal_group])
+            RCLCPP_DEBUG_STREAM(rclcpp::get_logger("carma_wm"), "Updated time for id: " << curr_light->id()  << " with state: " << received_state << ", with time: "
+                                                        << std::to_string(lanelet::time::toSec(min_end_time)));
+            sim_.traffic_signal_states_[curr_intersection.id.id][current_movement_state.signal_group].back().first = min_end_time;
+            continue;
+          }
+
+          // detected that new state received; therefore, set the last recorded state (not new one received)
+          RCLCPP_DEBUG_STREAM(rclcpp::get_logger("carma_wm"), "Received new state for light: " << curr_light_id << ", with state: " << received_state << ", time: " << rclcpp::Time(boost::posix_time::to_time_t(min_end_time), 0.0).seconds());
+
+          // update last seen signal state
+          sim_.last_seen_state_[curr_intersection.id.id][current_movement_state.signal_group] = {min_end_time, received_state};
+          
+          if (!curr_light->recorded_time_stamps.empty())
+          {
+            boost::posix_time::time_duration time_difference = curr_light->predictState(min_end_time - lanelet::time::durationFromSec(0.5)).get().first - min_end_time; //0.5s to account for error
+            RCLCPP_DEBUG_STREAM(rclcpp::get_logger("carma_wm"), "Initial time_difference: " << (double)(time_difference.total_milliseconds() / 1000.0));
+            
+            if (curr_light->predictState(min_end_time - lanelet::time::durationFromSec(0.5)).get().second !=  received_state)
             {
-              pair.first = pair.first - time_difference ;
+              // shift to same state's end
+              boost::posix_time::time_duration shift_to_match_state = curr_light->fixed_cycle_duration - curr_light->signal_durations[received_state];
+              time_difference += shift_to_match_state;
+              RCLCPP_DEBUG_STREAM(rclcpp::get_logger("carma_wm"), "Time_difference new: " << (double)(time_difference.total_milliseconds() / 1000.0));
             }
             
-            sim_.traffic_signal_states_[curr_intersection.id.id][current_movement_state.signal_group] = {};
-            sim_.traffic_signal_states_[curr_intersection.id.id][current_movement_state.signal_group].push_back(std::make_pair(min_end_time, received_state));
-            sim_.signal_state_counter_[curr_intersection.id.id][current_movement_state.signal_group] = 1;
-            ROS_DEBUG_STREAM("Detected new cycle info! Shifted everything! : " << std::to_string(lanelet::time::toSec(min_end_time)) << ", time_difference sec:" << time_difference.total_seconds());
-            
-            continue;
-          }
-        }
-        if (sim_.traffic_signal_states_[curr_intersection.id.id][current_movement_state.signal_group].size() >= 2 && sim_.traffic_signal_states_[curr_intersection.id.id][current_movement_state.signal_group].front().second ==
-                                                                                                                          sim_.traffic_signal_states_[curr_intersection.id.id][current_movement_state.signal_group].back().second)
-        {
-          ROS_DEBUG_STREAM("Setting last recorded state for light: " << curr_light_id << ", with state: " << sim_.traffic_signal_states_[curr_intersection.id.id][current_movement_state.signal_group].back().second << ", time: " << sim_.traffic_signal_states_[curr_intersection.id.id][current_movement_state.signal_group].back().first);
-          curr_light->setStates(sim_.traffic_signal_states_[curr_intersection.id.id][current_movement_state.signal_group], curr_intersection.revision);
-          ROS_DEBUG_STREAM("SUCCESS!: Set new cycle of total seconds: " << lanelet::time::toSec(curr_light->fixed_cycle_duration));
-        }
-        else if (curr_light->recorded_time_stamps.empty()) // if it was never initialized, do its best to plan with the current state until the future state is also received.
-        {
-          std::vector<std::pair<boost::posix_time::ptime, lanelet::CarmaTrafficSignalState>> default_state;
-          // green 20sec, yellow 3sec, red 20sec, back to green 20sec etc...
-          default_state.push_back(std::make_pair<boost::posix_time::ptime, lanelet::CarmaTrafficSignalState>(boost::posix_time::from_time_t(0), lanelet::CarmaTrafficSignalState::PROTECTED_MOVEMENT_ALLOWED));
-          default_state.push_back(std::make_pair<boost::posix_time::ptime, lanelet::CarmaTrafficSignalState>(default_state.back().first + lanelet::time::durationFromSec(YELLOW_LIGHT_DURATION), lanelet::CarmaTrafficSignalState::PROTECTED_CLEARANCE));
-          default_state.push_back(std::make_pair<boost::posix_time::ptime, lanelet::CarmaTrafficSignalState>(default_state.back().first + lanelet::time::durationFromSec(RED_LIGHT_DURATION), lanelet::CarmaTrafficSignalState::STOP_AND_REMAIN));
-          default_state.push_back(std::make_pair<boost::posix_time::ptime, lanelet::CarmaTrafficSignalState>(default_state.back().first + lanelet::time::durationFromSec(GREEN_LIGHT_DURATION), lanelet::CarmaTrafficSignalState::PROTECTED_MOVEMENT_ALLOWED));
+            // if |time difference| is less than 0.5 sec
+            bool same_time_stamp_as_last = time_difference.total_milliseconds() >= -500 && time_difference.total_milliseconds() <= 500;
           
-          curr_light->setStates(default_state, curr_intersection.revision);
-          ROS_DEBUG_STREAM("Set default cycle of total seconds: " << lanelet::time::toSec(curr_light->fixed_cycle_duration));
-        }
-        else if (sim_.traffic_signal_states_[curr_intersection.id.id][current_movement_state.signal_group].size() >= 1)
-        {
-          auto green_light_duration = lanelet::time::durationFromSec(GREEN_LIGHT_DURATION);
-          auto yellow_light_duration = lanelet::time::durationFromSec(YELLOW_LIGHT_DURATION);
-          auto red_light_duration = lanelet::time::durationFromSec(RED_LIGHT_DURATION);
-
-          std::vector<std::pair<boost::posix_time::ptime, lanelet::CarmaTrafficSignalState>> partial_states;
-          // set the partial cycle.
-          ROS_DEBUG_STREAM("Setting last recorded state for light: " << curr_light_id << ", with state: " << sim_.traffic_signal_states_[curr_intersection.id.id][current_movement_state.signal_group].back().second << ", time: " << sim_.traffic_signal_states_[curr_intersection.id.id][current_movement_state.signal_group].back().first);
-          for (size_t i = 0; i < sim_.traffic_signal_states_[curr_intersection.id.id][current_movement_state.signal_group].size() - 1; i++)
+            // Received same cycle info while signal already has full cycle, then skip
+            if (curr_light->predictState(min_end_time - lanelet::time::durationFromSec(0.5)).get().second == received_state &&
+                same_time_stamp_as_last &&
+                sim_.signal_state_counter_[curr_intersection.id.id][current_movement_state.signal_group] > 4 )  // checking >4 because: 3 unique + 1 more state to 
+                                                                                                                // complete cycle. And last state (e.g. 4th) is updated on next (e.g 5th)
+            {
+              RCLCPP_DEBUG_STREAM(rclcpp::get_logger("carma_wm"), "Received same cycle info, ignoring : " << std::to_string(lanelet::time::toSec(min_end_time)));
+              continue;
+            }
+            // Received new cycle info after full cycle was set
+            else if(sim_.signal_state_counter_[curr_intersection.id.id][current_movement_state.signal_group] > 4)
+            {
+              for ( auto pair : sim_.traffic_signal_states_[curr_intersection.id.id][current_movement_state.signal_group])
+              {
+                pair.first = pair.first - time_difference;
+              }
+              
+              sim_.traffic_signal_states_[curr_intersection.id.id][current_movement_state.signal_group] = {};
+              sim_.traffic_signal_states_[curr_intersection.id.id][current_movement_state.signal_group].push_back(std::make_pair(min_end_time, received_state));
+              sim_.signal_state_counter_[curr_intersection.id.id][current_movement_state.signal_group] = 1;
+              RCLCPP_DEBUG_STREAM(rclcpp::get_logger("carma_wm"), "Detected new cycle info! Shifted everything! : " << std::to_string(lanelet::time::toSec(min_end_time)) << ", time_difference sec:" << time_difference.total_seconds());
+              continue;
+            }
+          }
+          if (sim_.traffic_signal_states_[curr_intersection.id.id][current_movement_state.signal_group].size() >= 2 && sim_.traffic_signal_states_[curr_intersection.id.id][current_movement_state.signal_group].front().second ==
+                                                                                                                            sim_.traffic_signal_states_[curr_intersection.id.id][current_movement_state.signal_group].back().second)
           {
-            auto light_state = sim_.traffic_signal_states_[curr_intersection.id.id][current_movement_state.signal_group][i + 1].second;
+            RCLCPP_DEBUG_STREAM(rclcpp::get_logger("carma_wm"), "Setting last recorded state for light: " << curr_light_id << ", with state: " << sim_.traffic_signal_states_[curr_intersection.id.id][current_movement_state.signal_group].back().second << ", time: " << sim_.traffic_signal_states_[curr_intersection.id.id][current_movement_state.signal_group].back().first);
+            curr_light->setStates(sim_.traffic_signal_states_[curr_intersection.id.id][current_movement_state.signal_group], curr_intersection.revision);
+            RCLCPP_DEBUG_STREAM(rclcpp::get_logger("carma_wm"), "SUCCESS!: Set new cycle of total seconds: " << lanelet::time::toSec(curr_light->fixed_cycle_duration));
+          }
+          else if (curr_light->recorded_time_stamps.empty()) // if it was never initialized, do its best to plan with the current state until the future state is also received.
+          {
+            std::vector<std::pair<boost::posix_time::ptime, lanelet::CarmaTrafficSignalState>> default_state;
+            // green 20sec, yellow 3sec, red 20sec, back to green 20sec etc...
+            default_state.push_back(std::make_pair<boost::posix_time::ptime, lanelet::CarmaTrafficSignalState>(boost::posix_time::from_time_t(0), lanelet::CarmaTrafficSignalState::PROTECTED_MOVEMENT_ALLOWED));
+            default_state.push_back(std::make_pair<boost::posix_time::ptime, lanelet::CarmaTrafficSignalState>(default_state.back().first + lanelet::time::durationFromSec(YELLOW_LIGHT_DURATION), lanelet::CarmaTrafficSignalState::PROTECTED_CLEARANCE));
+            default_state.push_back(std::make_pair<boost::posix_time::ptime, lanelet::CarmaTrafficSignalState>(default_state.back().first + lanelet::time::durationFromSec(RED_LIGHT_DURATION), lanelet::CarmaTrafficSignalState::STOP_AND_REMAIN));
+            default_state.push_back(std::make_pair<boost::posix_time::ptime, lanelet::CarmaTrafficSignalState>(default_state.back().first + lanelet::time::durationFromSec(GREEN_LIGHT_DURATION), lanelet::CarmaTrafficSignalState::PROTECTED_MOVEMENT_ALLOWED));
+            
+            curr_light->setStates(default_state, curr_intersection.revision);
+            RCLCPP_DEBUG_STREAM(rclcpp::get_logger("carma_wm"), "Set default cycle of total seconds: " << lanelet::time::toSec(curr_light->fixed_cycle_duration));
+          }
+          else if (sim_.traffic_signal_states_[curr_intersection.id.id][current_movement_state.signal_group].size() >= 1)
+          {
+            auto green_light_duration = lanelet::time::durationFromSec(GREEN_LIGHT_DURATION);
+            auto yellow_light_duration = lanelet::time::durationFromSec(YELLOW_LIGHT_DURATION);
+            auto red_light_duration = lanelet::time::durationFromSec(RED_LIGHT_DURATION);
 
-            if (light_state == lanelet::CarmaTrafficSignalState::STOP_AND_REMAIN || light_state == lanelet::CarmaTrafficSignalState::STOP_THEN_PROCEED)
-              red_light_duration = sim_.traffic_signal_states_[curr_intersection.id.id][current_movement_state.signal_group][i + 1].first - sim_.traffic_signal_states_[curr_intersection.id.id][current_movement_state.signal_group][i].first;
+            std::vector<std::pair<boost::posix_time::ptime, lanelet::CarmaTrafficSignalState>> partial_states;
+            // set the partial cycle.
+            RCLCPP_DEBUG_STREAM(rclcpp::get_logger("carma_wm"), "Setting last recorded state for light: " << curr_light_id << ", with state: " << sim_.traffic_signal_states_[curr_intersection.id.id][current_movement_state.signal_group].back().second << ", time: " << sim_.traffic_signal_states_[curr_intersection.id.id][current_movement_state.signal_group].back().first);
+            for (size_t i = 0; i < sim_.traffic_signal_states_[curr_intersection.id.id][current_movement_state.signal_group].size() - 1; i++)
+            {
+              auto light_state = sim_.traffic_signal_states_[curr_intersection.id.id][current_movement_state.signal_group][i + 1].second;
 
-            else if (light_state == lanelet::CarmaTrafficSignalState::PERMISSIVE_MOVEMENT_ALLOWED || light_state == lanelet::CarmaTrafficSignalState::PROTECTED_MOVEMENT_ALLOWED)
-              green_light_duration = sim_.traffic_signal_states_[curr_intersection.id.id][current_movement_state.signal_group][i + 1].first - sim_.traffic_signal_states_[curr_intersection.id.id][current_movement_state.signal_group][i].first;
+              if (light_state == lanelet::CarmaTrafficSignalState::STOP_AND_REMAIN || light_state == lanelet::CarmaTrafficSignalState::STOP_THEN_PROCEED)
+                red_light_duration = sim_.traffic_signal_states_[curr_intersection.id.id][current_movement_state.signal_group][i + 1].first - sim_.traffic_signal_states_[curr_intersection.id.id][current_movement_state.signal_group][i].first;
 
-            else if (light_state == lanelet::CarmaTrafficSignalState::PERMISSIVE_CLEARANCE || light_state == lanelet::CarmaTrafficSignalState::PROTECTED_CLEARANCE)
-              yellow_light_duration = sim_.traffic_signal_states_[curr_intersection.id.id][current_movement_state.signal_group][i + 1].first - sim_.traffic_signal_states_[curr_intersection.id.id][current_movement_state.signal_group][i].first;
+              else if (light_state == lanelet::CarmaTrafficSignalState::PERMISSIVE_MOVEMENT_ALLOWED || light_state == lanelet::CarmaTrafficSignalState::PROTECTED_MOVEMENT_ALLOWED)
+                green_light_duration = sim_.traffic_signal_states_[curr_intersection.id.id][current_movement_state.signal_group][i + 1].first - sim_.traffic_signal_states_[curr_intersection.id.id][current_movement_state.signal_group][i].first;
+
+              else if (light_state == lanelet::CarmaTrafficSignalState::PERMISSIVE_CLEARANCE || light_state == lanelet::CarmaTrafficSignalState::PROTECTED_CLEARANCE)
+                yellow_light_duration = sim_.traffic_signal_states_[curr_intersection.id.id][current_movement_state.signal_group][i + 1].first - sim_.traffic_signal_states_[curr_intersection.id.id][current_movement_state.signal_group][i].first;
+            }
+
+            partial_states.push_back(std::make_pair<boost::posix_time::ptime, lanelet::CarmaTrafficSignalState>(boost::posix_time::from_time_t(0), lanelet::CarmaTrafficSignalState::PROTECTED_MOVEMENT_ALLOWED));
+            partial_states.push_back(std::make_pair<boost::posix_time::ptime, lanelet::CarmaTrafficSignalState>(partial_states.back().first + yellow_light_duration, lanelet::CarmaTrafficSignalState::PROTECTED_CLEARANCE));
+            partial_states.push_back(std::make_pair<boost::posix_time::ptime, lanelet::CarmaTrafficSignalState>(partial_states.back().first + red_light_duration, lanelet::CarmaTrafficSignalState::STOP_AND_REMAIN));
+            partial_states.push_back(std::make_pair<boost::posix_time::ptime, lanelet::CarmaTrafficSignalState>(partial_states.back().first + green_light_duration, lanelet::CarmaTrafficSignalState::PROTECTED_MOVEMENT_ALLOWED));
+            curr_light->setStates(partial_states, curr_intersection.revision);
+            RCLCPP_DEBUG_STREAM(rclcpp::get_logger("carma_wm"), "Set new partial cycle of total seconds: " << lanelet::time::toSec(curr_light->fixed_cycle_duration) << ", for id: "<< curr_light_id << ", " << partial_states.front().second << ", " << partial_states.back().second);
           }
 
-          partial_states.push_back(std::make_pair<boost::posix_time::ptime, lanelet::CarmaTrafficSignalState>(boost::posix_time::from_time_t(0), lanelet::CarmaTrafficSignalState::PROTECTED_MOVEMENT_ALLOWED));
-          partial_states.push_back(std::make_pair<boost::posix_time::ptime, lanelet::CarmaTrafficSignalState>(partial_states.back().first + yellow_light_duration, lanelet::CarmaTrafficSignalState::PROTECTED_CLEARANCE));
-          partial_states.push_back(std::make_pair<boost::posix_time::ptime, lanelet::CarmaTrafficSignalState>(partial_states.back().first + red_light_duration, lanelet::CarmaTrafficSignalState::STOP_AND_REMAIN));
-          partial_states.push_back(std::make_pair<boost::posix_time::ptime, lanelet::CarmaTrafficSignalState>(partial_states.back().first + green_light_duration, lanelet::CarmaTrafficSignalState::PROTECTED_MOVEMENT_ALLOWED));
-          curr_light->setStates(partial_states, curr_intersection.revision);
-          ROS_DEBUG_STREAM("Set new partial cycle of total seconds: " << lanelet::time::toSec(curr_light->fixed_cycle_duration) << ", for id: "<< curr_light_id << ", " << partial_states.front().second << ", " << partial_states.back().second);
-        }
-
-        // record the new state received
-        sim_.traffic_signal_states_[curr_intersection.id.id][current_movement_state.signal_group].push_back(std::make_pair(min_end_time, received_state));
-        sim_.signal_state_counter_[curr_intersection.id.id][current_movement_state.signal_group]++;
-        ROS_DEBUG_STREAM("Counter now: " << sim_.signal_state_counter_[curr_intersection.id.id][current_movement_state.signal_group] << ", for id: "<< curr_light_id);
-        
+          // record the new state received
+          sim_.traffic_signal_states_[curr_intersection.id.id][current_movement_state.signal_group].push_back(std::make_pair(min_end_time, received_state));
+          sim_.signal_state_counter_[curr_intersection.id.id][current_movement_state.signal_group]++;
+          RCLCPP_DEBUG_STREAM(rclcpp::get_logger("carma_wm"), "Counter now: " << sim_.signal_state_counter_[curr_intersection.id.id][current_movement_state.signal_group] << ", for id: "<< curr_light_id);
         }  
       }
     }
-
   }
 
 } // namespace carma_wm
