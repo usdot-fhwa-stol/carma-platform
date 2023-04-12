@@ -37,6 +37,7 @@
 #include <lanelet2_extension/io/autoware_osm_parser.h>
 #include <carma_wm/CARMAWorldModel.hpp>
 #include <boost/format.hpp>
+#include <std_msgs/msg/bool.hpp>
 
 #include <carma_guidance_plugins/strategic_plugin.hpp>
 #include "approaching_emergency_vehicle_plugin/approaching_emergency_vehicle_plugin_config.hpp"
@@ -123,6 +124,8 @@ namespace approaching_emergency_vehicle_plugin
 
     carma_ros2_utils::PubPtr<carma_msgs::msg::UIInstructions> approaching_erv_status_pub_;
 
+    carma_ros2_utils::PubPtr<std_msgs::msg::Bool> hazard_light_cmd_pub_;
+
     /**
      * \brief Helper function to obtain an ERV's position in the map frame from its current latitude and longitude. 
      * \param current_latitude The current latitude of the ERV.
@@ -197,6 +200,11 @@ namespace approaching_emergency_vehicle_plugin
      * publishes the generated message to approaching_erv_status_pub_.
      */
     void publishApproachingErvStatus();
+
+    /**
+     * \brief This is a callback function for publishing turn ON/OFF (true/false) hazard light command to the ssc driver
+     */
+    void publishHazardLightStatus();
 
     /**
      * \brief Function to generate a carma_msgs::msg::UIInstructions message that describes whether there is currently an approaching ERV that is 
@@ -382,6 +390,9 @@ namespace approaching_emergency_vehicle_plugin
     // Timer used to trigger the publication of a message describing the status of this plugin and the ego vehicle's current action in response to an approaching ERV
     rclcpp::TimerBase::SharedPtr approaching_emergency_vehicle_status_timer_;
 
+    // Timer used to command the hazard lights to turn ON/OFF (true/false) 
+    rclcpp::TimerBase::SharedPtr hazard_light_timer_;
+
     // Object to store the parameters of an upcoming lane change maneuver so that the same parameters are used when the
     //        maneuver plan is regenerated
     UpcomingLaneChangeParameters upcoming_lc_params_;
@@ -389,6 +400,9 @@ namespace approaching_emergency_vehicle_plugin
     // Boolean flag to indicate that this plugin has planned an upcoming lane change, and those same lane change maneuver
     //        parameters should be used for the next generated maneuver plan as well
     bool has_planned_upcoming_lc_ = false;
+
+    // Boolean flag to command turning ON/OFF (true/false) the hazard lights
+    bool hazard_light_cmd_ = false;
 
     // (Seconds) A threshold; if the estimated duration until an ERV passes the ego vehicle is below this and the
     //           ego vehicle is in the same lane as the ERV, then the ego vehicle will not reduce its speed, because

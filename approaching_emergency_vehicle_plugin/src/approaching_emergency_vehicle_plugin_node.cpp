@@ -175,6 +175,8 @@ namespace approaching_emergency_vehicle_plugin
 
     approaching_erv_status_pub_ = create_publisher<carma_msgs::msg::UIInstructions>("approaching_erv_status", 10);
 
+    hazard_light_cmd_pub_ = create_publisher<std_msgs::msg::Bool>("hazard_light_status", 10);
+
     wm_ = get_world_model();
 
     // Return success if everything initialized successfully
@@ -201,7 +203,30 @@ namespace approaching_emergency_vehicle_plugin
                           std::chrono::milliseconds(approaching_erv_status_period_ms),
                           std::bind(&ApproachingEmergencyVehiclePlugin::publishApproachingErvStatus, this));
 
+    // Timer setup for publishing hazard light ON/OFF status boolean
+    int hazard_light_status_ms = (1 / 30) * 1000; // Conversion from frequency 30(Hz) to milliseconds time period
+    hazard_light_timer_ = create_timer(get_clock(),
+                          std::chrono::milliseconds(hazard_light_status_ms),
+                          std::bind(&ApproachingEmergencyVehiclePlugin::publishHazardLightStatus, this));
+
     return CallbackReturn::SUCCESS;
+  }
+
+  void ApproachingEmergencyVehiclePlugin::publishHazardLightStatus()
+  {
+    if (transition_table_.getState() == ApproachingEmergencyVehicleState::SLOWING_DOWN_FOR_ERV &&
+    has_tracked_erv_ &&
+    tracked_erv_.lane_index == ego_lane_index_)
+    {
+      hazard_light_cmd_ = true;
+    }
+    else
+    {
+      hazard_light_cmd_ = false;
+    }
+    std_msgs::msg::Bool msg;
+    msg.data = hazard_light_cmd_;
+    hazard_light_cmd_pub_->publish(msg);
   }
 
   void ApproachingEmergencyVehiclePlugin::checkForErvTimeout(){
@@ -271,6 +296,7 @@ namespace approaching_emergency_vehicle_plugin
     }
     else{
       fmter %false;
+      tracked_erv_.seconds_until_passing = 0.0;
     }
 
     // Index 1 of formatted string; indicates estimated time until tracked ERV passes the ego vehicle
