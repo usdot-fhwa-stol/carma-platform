@@ -271,6 +271,7 @@ namespace approaching_emergency_vehicle_plugin
     }
     else{
       fmter %false;
+      tracked_erv_.seconds_until_passing = 0.0;
     }
 
     // Index 1 of formatted string; indicates estimated time until tracked ERV passes the ego vehicle
