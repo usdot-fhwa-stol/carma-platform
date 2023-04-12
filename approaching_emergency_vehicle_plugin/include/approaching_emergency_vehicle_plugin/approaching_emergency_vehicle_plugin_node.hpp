@@ -432,7 +432,7 @@ namespace approaching_emergency_vehicle_plugin
     double current_speed_;
 
     // Logger name for this plugin
-    std::string logger_name = "ApproachingEmergencyVehiclePlugin";
+    std::string logger_name = "approaching_emergency_vehicle_plugin";
 
     // The name of this strategic plugin
     std::string strategic_plugin_name_ = "approaching_emergency_vehicle_plugin";

@@ -147,6 +147,8 @@ namespace approaching_emergency_vehicle_plugin
     get_parameter<std::string>("vehicle_id", config_.vehicle_id);
 
     RCLCPP_INFO_STREAM(rclcpp::get_logger(logger_name), "ApproachingEmergencyVehiclePlugin Config: " << config_);
+    RCLCPP_DEBUG_STREAM(rclcpp::get_logger(logger_name), "ApproachingEmergencyVehiclePlugin Config: " << config_);
+
 
     // Register runtime parameter update callback
     add_on_set_parameters_callback(std::bind(&ApproachingEmergencyVehiclePlugin::parameter_update_callback, this, std_ph::_1));
