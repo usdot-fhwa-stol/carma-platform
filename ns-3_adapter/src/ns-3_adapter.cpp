@@ -3,6 +3,8 @@
 #include <rapidjson/document.h>
 #include <rapidjson/istreamwrapper.h>
 #include <rapidjson/schema.h>
+#include <rapidjson/stringbuffer.h>
+#include <rapidjson/writer.h>
 #include <cav_msgs/ByteArray.h>
 #include <fstream>
 
@@ -40,6 +42,16 @@ void NS3Adapter::initialize() {
     //dyn_cfg_server_->updateConfig(config_);
     //dyn_cfg_server_->setCallback([this](dsrc::DSRCConfig & cfg, uint32_t level) { dynReconfigCB(cfg, level); });
 
+    // Start the handshake
+    pnh_->getParam("vehicle_id", vehicle_id_);  
+    pnh_->getParam("carla/ego_vehicle/role_name", role_id_);
+    pnh.param<std::string>("ns-3_address", ns3_address_, "192.168.88.40");
+    pnh.param<int>("ns-3_registration_port", ns3_registration_port_, 1000);
+    std::string handshake_msg = compose_handshake_msg(vehicle_id_, role_id_, port_, host_ip_);
+    
+    broadcastHandshakemsg(handshake_msg);
+
+
     //Setup connection handlers
     ns3_client_error_.clear();
     ns3_client_.onConnect.connect([this]() { onConnectHandler(); });
@@ -65,10 +77,11 @@ void NS3Adapter::initialize() {
 
     pose_sub_ = pnh_->subscribe("current_pose", 1, &NS3Adapter::pose_cb, this);
 
-    pnh_->getParam("vehicle_id", vehicle_id_);
-
+    
 
     ns3_client_.onMessageReceived.connect([this](std::vector<uint8_t> const &msg, uint16_t id) {onMessageReceivedHandler(msg, id); });
+
+    
     
     spin_rate = 50;
 }
@@ -405,6 +418,62 @@ void NS3Adapter::pose_cb(geometry_msgs::PoseStamped pose_msg)
     pose_msg_ = pose_msg;
 
     /*TODO: Add Pose Functionality*/
+}
+
+std::string NS3Adapter::compose_handshake_msg(std::string veh_id, std::string role_id, std::string port, std::string ip)
+{
+    // document is the root of a json message
+	rapidjson::Document document;
+ 
+	// define the document as an object rather than an array
+	document.SetObject();
+ 
+	// create a rapidjson array type with similar syntax to std::vector
+	rapidjson::Value array(rapidjson::kArrayType);
+ 
+	// must pass an allocator when the object may need to allocate memory
+	rapidjson::Document::AllocatorType& allocator = document.GetAllocator();
+
+    rapidjson::Value idtextPart;
+	idtextPart.SetString(veh_id.c_str(), allocator);
+    document.AddMember("vehicle_id", idtextPart, allocator);
+
+    rapidjson::Value roletextPart;
+	roletextPart.SetString(role_id.c_str(), allocator);
+    document.AddMember("role_id", roletextPart, allocator);
+
+    rapidjson::Value porttextPart;
+	porttextPart.SetString(port.c_str(), allocator);
+    document.AddMember("port", porttextPart, allocator);
+
+    rapidjson::Value iptextPart;
+	iptextPart.SetString(ip.c_str(), allocator);
+    document.AddMember("host_ip", iptextPart, allocator);
+
+    rapidjson::StringBuffer strbuf;
+	rapidjson::Writer<rapidjson::StringBuffer> writer(strbuf);
+	document.Accept(writer);
+
+    std::string strbufstring = strbuf.GetString();
+
+    return strbufstring;
+}
+
+void NS3Adapter::broadcastHandshakemsg(const std::string& msg_string)
+{
+    auto msg_vector = std::vector<uint8_t>(msg_string.begin(), msg_string.end());
+    std::shared_ptr<std::vector<uint8_t>> message_content = std::make_shared<std::vector<uint8_t>>(std::move(msg_vector));
+
+    std::string addres;
+    unsigned short remote_port;
+    
+    bool success = ns3_client_.registermsg(message_content, ns3_address_, ns3_registration_port_, ns3_registration_port_);
+    if (!success) {
+        ROS_WARN_STREAM("Handshake Message send failed");
+    }
+    else {
+        ROS_DEBUG("Handshake Message successfully");
+    }
 }
 
 cav_msgs::DriverStatus NS3Adapter::getDriverStatus()
