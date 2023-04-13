@@ -566,36 +566,6 @@ namespace approaching_emergency_vehicle_plugin
         return boost::optional<ErvInformation>(); // if opposite direction, do not track
       }
 
-
-
-
-      erv_information.lane_index = wm_->getMapRoutingGraph()->rights(erv_current_lanelet).size();
-
-     
-      RCLCPP_ERROR_STREAM(rclcpp::get_logger(logger_name), "ERV's lane index is " << erv_information.lane_index);
-
-
-      if (is_same_direction_.find(erv_information.vehicle_id) == is_same_direction_.end()) // no need to check again if direction is set already
-      {
-        is_same_direction_[erv_information.vehicle_id] = false;
-        for (auto llt: erv_future_route.get().shortestPath()) // checks if ERV is on the same path assuming CMV got all of its planned route when detected
-        {
-          if (wm_->getRoute()->contains(llt))
-          {
-            is_same_direction_[erv_information.vehicle_id] = true;
-
-            RCLCPP_ERROR_STREAM(rclcpp::get_logger(logger_name), "Detected that ERV: " << erv_information.vehicle_id << " and CMV are on the SAME direction");
-            break;
-          }
-        }
-      }
-
-      if (!is_same_direction_[erv_information.vehicle_id])  // opposite direction
-      {
-        RCLCPP_ERROR_STREAM(rclcpp::get_logger(logger_name), "Detected that ERV and CMV are on the DIFFERENT direction");
-        return boost::optional<ErvInformation>(); // if opposite direction, do not track
-      }
-
       erv_information.lane_index = wm_->getMapRoutingGraph()->rights(erv_current_lanelet).size();
 
      
