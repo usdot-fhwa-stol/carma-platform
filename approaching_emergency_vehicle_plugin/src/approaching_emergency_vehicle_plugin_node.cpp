@@ -554,7 +554,7 @@ namespace approaching_emergency_vehicle_plugin
           {
             is_same_direction_[erv_information.vehicle_id] = true;
 
-            RCLCPP_DEBUG_STREAM(rclcpp::get_logger(logger_name), "Detected that ERV: " << erv_information.vehicle_id << " and CMV are on the SAME direction");
+            RCLCPP_ERROR_STREAM(rclcpp::get_logger(logger_name), "Detected that ERV: " << erv_information.vehicle_id << " and CMV are on the SAME direction");
             break;
           }
         }
@@ -562,7 +562,7 @@ namespace approaching_emergency_vehicle_plugin
 
       if (!is_same_direction_[erv_information.vehicle_id])  // opposite direction
       {
-        RCLCPP_DEBUG_STREAM(rclcpp::get_logger(logger_name), "Detected that ERV and CMV are on the DIFFERENT direction");
+        RCLCPP_ERROR_STREAM(rclcpp::get_logger(logger_name), "Detected that ERV and CMV are on the DIFFERENT direction");
         return boost::optional<ErvInformation>(); // if opposite direction, do not track
       }
 
