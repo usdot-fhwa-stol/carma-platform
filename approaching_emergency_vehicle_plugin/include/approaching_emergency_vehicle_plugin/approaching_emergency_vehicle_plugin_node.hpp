@@ -38,6 +38,7 @@
 #include <carma_wm/CARMAWorldModel.hpp>
 #include <boost/format.hpp>
 #include <std_msgs/msg/bool.hpp>
+#include <unordered_map>
 
 #include <carma_guidance_plugins/strategic_plugin.hpp>
 #include "approaching_emergency_vehicle_plugin/approaching_emergency_vehicle_plugin_config.hpp"
@@ -421,6 +422,9 @@ namespace approaching_emergency_vehicle_plugin
 
     // Boolean flag to indicate whether guidance is currently engaged
     bool is_guidance_engaged_ = false;
+
+    // Boolean flag to indicate whether if each ERV and CMV are going on same direction
+    std::unordered_map<std::string, bool> is_same_direction_;
 
     // Pointer for map projector
     boost::optional<std::string> map_projector_;

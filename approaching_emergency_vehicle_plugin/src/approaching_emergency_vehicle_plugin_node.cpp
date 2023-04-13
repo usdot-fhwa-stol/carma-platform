@@ -220,11 +220,18 @@ namespace approaching_emergency_vehicle_plugin
     has_tracked_erv_ &&
     tracked_erv_.lane_index == ego_lane_index_)
     {
+      
+      RCLCPP_DEBUG_STREAM(rclcpp::get_logger(logger_name), "hazard light is TRUE!");
       hazard_light_cmd_ = true;
     }
     else
     {
       hazard_light_cmd_ = false;
+      RCLCPP_DEBUG_STREAM(rclcpp::get_logger(logger_name), "Hazard FALSE: Current state: " << transition_table_.getState());
+      RCLCPP_DEBUG_STREAM(rclcpp::get_logger(logger_name), "has_tracked_erv_: " << has_tracked_erv_);
+      RCLCPP_DEBUG_STREAM(rclcpp::get_logger(logger_name), "tracked_erv_.lane_index : " << tracked_erv_.lane_index);
+      RCLCPP_DEBUG_STREAM(rclcpp::get_logger(logger_name), "ego_lane_index_: " << ego_lane_index_);
+
     }
     std_msgs::msg::Bool msg;
     msg.data = hazard_light_cmd_;
@@ -503,16 +510,40 @@ namespace approaching_emergency_vehicle_plugin
       // ERV cannot be tracked since its route could not be generated; return an empty object
       return boost::optional<ErvInformation>();
     }
-
+    
     // Determine the ERV's current lane index
     // Note: For 'lane index', 0 is rightmost lane, 1 is second rightmost, etc.; Only the current travel direction is considered
     if(!erv_future_route.get().shortestPath().empty()){
       lanelet::ConstLanelet erv_current_lanelet = erv_future_route.get().shortestPath()[0];
+
+      if (is_same_direction_.find(erv_information.vehicle_id) == is_same_direction_.end()) // no need to check again if direction is set already
+      {
+        is_same_direction_[erv_information.vehicle_id] = false;
+        for (auto llt: erv_future_route.get().shortestPath()) // checks if ERV is on the same path assuming CMV got all of its planned route when detected
+        {
+          if (wm_->getRoute()->contains(llt))
+          {
+            is_same_direction_[erv_information.vehicle_id] = true;
+
+            RCLCPP_DEBUG_STREAM(rclcpp::get_logger(logger_name), "Detected that ERV: " << erv_information.vehicle_id << " and CMV are on the SAME direction");
+            break;
+          }
+        }
+      }
+
+      if (!is_same_direction_[erv_information.vehicle_id])  // opposite direction
+      {
+        RCLCPP_DEBUG_STREAM(rclcpp::get_logger(logger_name), "Detected that ERV and CMV are on the DIFFERENT direction");
+        return boost::optional<ErvInformation>(); // if opposite direction, do not track
+      }
+
       erv_information.lane_index = wm_->getMapRoutingGraph()->rights(erv_current_lanelet).size();
+
+     
       RCLCPP_DEBUG_STREAM(rclcpp::get_logger(logger_name), "ERV's lane index is " << erv_information.lane_index);
     }
     else{
-      RCLCPP_DEBUG_STREAM(rclcpp::get_logger(logger_name), "ERV's shortest path is empty!");
+      RCLCPP_ERROR_STREAM(rclcpp::get_logger(logger_name), "ERV's shortest path is empty!");
     }
 
     // Get intersecting lanelet between ERV's future route and ego vehicle's future shortest path
