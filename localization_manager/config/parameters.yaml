@@ -31,7 +31,7 @@ gnss_data_timeout: 1000
 # Integer: Maximum allowed number of sequential timesteps to let lidar initialize before switching to GPS only mode
 # NOTE: Only used in GNSS only with NDT initialization mode
 # Units: Int
-sequential_timesteps_until_gps_operation: 5
+sequential_timesteps_until_gps_operation: 3
 
 # Integer Enum: Localization mode for the platform
 # 0 - NDT only
