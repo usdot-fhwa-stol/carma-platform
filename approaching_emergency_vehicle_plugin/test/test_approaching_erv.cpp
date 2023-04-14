@@ -128,6 +128,42 @@ namespace approaching_emergency_vehicle_plugin{
         ASSERT_TRUE(seconds_until_passing);
         ASSERT_NEAR(seconds_until_passing.get(), 4.59, 0.01);
     }
+    
+    TEST(Testapproaching_emergency_vehicle_plugin, filter_points_ahead){
+        std::vector<lanelet::BasicPoint2d> points;
+        rclcpp::NodeOptions options;
+        auto worker_node = std::make_shared<approaching_emergency_vehicle_plugin::ApproachingEmergencyVehiclePlugin>(options);
+
+        points.push_back({1,2});
+        points.push_back({2,3});
+        points.push_back({3,4});
+        points.push_back({2,5});
+        points.push_back({2,6});
+        points.push_back({4,7});
+        points.push_back({6,6});
+        points.push_back({7,4});
+
+        lanelet::BasicPoint2d reference_point = {1,1};
+        ASSERT_EQ(worker_node->filter_points_ahead(reference_point, points).size(), 8);
+
+        lanelet::BasicPoint2d reference_point1 = {3,3.1};
+        ASSERT_EQ(worker_node->filter_points_ahead(reference_point1, points).size(), 6);
+
+        lanelet::BasicPoint2d reference_point2 = {1.5,4.75};
+        ASSERT_EQ(worker_node->filter_points_ahead(reference_point2, points).size(), 5);
+
+        lanelet::BasicPoint2d reference_point3 = {5,7};
+        ASSERT_EQ(worker_node->filter_points_ahead(reference_point3, points).size(), 2);
+
+        lanelet::BasicPoint2d reference_point4 = {8,5.5};
+        ASSERT_EQ(worker_node->filter_points_ahead(reference_point4, points).size(), 1);
+
+        lanelet::BasicPoint2d reference_point5 = {8,3.5};
+        ASSERT_EQ(worker_node->filter_points_ahead(reference_point5, points).size(), 0);
+
+        lanelet::BasicPoint2d reference_point6 = {8,3.5};
+        ASSERT_EQ(worker_node->filter_points_ahead(reference_point6, {points.back()}).size(), 1);
+    }
 
     TEST(Testapproaching_emergency_vehicle_plugin, testBSMProcessing){
 
@@ -179,7 +215,7 @@ namespace approaching_emergency_vehicle_plugin{
 
         // Set ego vehicle's route 
         lanelet::ConstLanelet starting_lanelet = cmw->getMap()->laneletLayer.get(168);
-        lanelet::ConstLanelet ending_lanelet = cmw->getMap()->laneletLayer.get(111);
+        lanelet::ConstLanelet ending_lanelet = cmw->getMap()->laneletLayer.get(100);
         lanelet::Optional<lanelet::routing::Route> optional_route = map_graph->getRoute(starting_lanelet, ending_lanelet);
         lanelet::routing::Route route = std::move(*optional_route);
         carma_wm::LaneletRoutePtr route_ptr = std::make_shared<lanelet::routing::Route>(std::move(route));
@@ -188,9 +224,9 @@ namespace approaching_emergency_vehicle_plugin{
         // Set worker_node's world model to cmw
         worker_node->wm_ = cmw;
 
-        // Verify that worker_node's shortest path is 168->178->111
+        // Verify that worker_node's shortest path is 168->178->111->101>100
         auto ego_shortest_path = worker_node->wm_->getRoute()->shortestPath();
-        ASSERT_EQ(ego_shortest_path.size(), 3);
+        ASSERT_EQ(ego_shortest_path.size(), 5);
         ASSERT_EQ(ego_shortest_path[0].id(), 168);
         ASSERT_EQ(ego_shortest_path[1].id(), 170);
         ASSERT_EQ(ego_shortest_path[2].id(), 111);
@@ -284,6 +320,8 @@ namespace approaching_emergency_vehicle_plugin{
         // Verify that worker_node->tracked_erv_ is updated since more than 2 seconds have passed since the previously processed BSM
         std::unique_ptr<carma_v2x_msgs::msg::BSM> erv_bsm_ptr5 = std::make_unique<carma_v2x_msgs::msg::BSM>(erv_bsm);
         worker_node->incomingBsmCallback(std::move(erv_bsm_ptr5)); 
+        EXPECT_EQ(worker_node->is_same_direction_.size(), 1);
+        EXPECT_TRUE(worker_node->is_same_direction_.begin()->second); // same direction
         ASSERT_TRUE(worker_node->has_tracked_erv_);
         ASSERT_NEAR(worker_node->tracked_erv_.current_speed, 25.0, 0.001);
 
@@ -297,6 +335,41 @@ namespace approaching_emergency_vehicle_plugin{
 
         // Verify that the plugin no longer has an approaching ERV
         ASSERT_FALSE(worker_node->has_tracked_erv_);
+
+        // reposition to different lanelet with opposing direction
+        carma_v2x_msgs::msg::BSM erv_bsm_opposing = erv_bsm;
+        erv_bsm_opposing.header.stamp = rclcpp::Time(0,0);
+        erv_bsm_opposing.core_data.id = {1,2,3,4};
+        erv_bsm_opposing.core_data.presence_vector |= carma_v2x_msgs::msg::BSMCoreData::LATITUDE_AVAILABLE;
+        erv_bsm_opposing.core_data.latitude = 48.997297536258266; 
+        erv_bsm_opposing.core_data.presence_vector |= carma_v2x_msgs::msg::BSMCoreData::LONGITUDE_AVAILABLE;
+        erv_bsm_opposing.core_data.longitude = 8.000461808604163;
+        erv_bsm_opposing.core_data.presence_vector |= carma_v2x_msgs::msg::BSMCoreData::SPEED_AVAILABLE;
+        erv_bsm_opposing.core_data.speed = 10.0;
+
+        // Check that ERV is NOT tracked if it is on opposite direction of CMV
+        position1.latitude = 48.997833474604946;
+        position1.longitude = 7.999980291267556;
+
+        regional_ext.route_destination_points = {};
+        regional_ext.route_destination_points.push_back(position1);
+        erv_bsm_opposing.regional = {};
+        erv_bsm_opposing.regional.push_back(regional_ext);
+        
+        erv_bsm_opposing.core_data.speed = 20.0;
+        worker_node->is_same_direction_.clear();
+
+        // Spin executor for 2 seconds
+        end_time = std::chrono::system_clock::now() + std::chrono::seconds(2);
+        while(std::chrono::system_clock::now() < end_time){
+            executor.spin_once();
+        }
+
+        std::unique_ptr<carma_v2x_msgs::msg::BSM> erv_bsm_ptr6 = std::make_unique<carma_v2x_msgs::msg::BSM>(erv_bsm_opposing);
+        worker_node->incomingBsmCallback(std::move(erv_bsm_ptr6)); 
+        EXPECT_EQ(worker_node->is_same_direction_.size(), 1);
+        EXPECT_FALSE(worker_node->is_same_direction_.begin()->second); // not on same direction
+        EXPECT_FALSE(worker_node->has_tracked_erv_);
     }
 
     TEST(Testapproaching_emergency_vehicle_plugin, testManeuverPlanWhenSlowingDownForErv){

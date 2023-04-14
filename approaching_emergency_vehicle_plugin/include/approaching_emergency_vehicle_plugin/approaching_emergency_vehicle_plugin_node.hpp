@@ -37,6 +37,8 @@
 #include <lanelet2_extension/io/autoware_osm_parser.h>
 #include <carma_wm/CARMAWorldModel.hpp>
 #include <boost/format.hpp>
+#include <std_msgs/msg/bool.hpp>
+#include <unordered_map>
 
 #include <carma_guidance_plugins/strategic_plugin.hpp>
 #include "approaching_emergency_vehicle_plugin/approaching_emergency_vehicle_plugin_config.hpp"
@@ -123,6 +125,8 @@ namespace approaching_emergency_vehicle_plugin
 
     carma_ros2_utils::PubPtr<carma_msgs::msg::UIInstructions> approaching_erv_status_pub_;
 
+    carma_ros2_utils::PubPtr<std_msgs::msg::Bool> hazard_light_cmd_pub_;
+
     /**
      * \brief Helper function to obtain an ERV's position in the map frame from its current latitude and longitude. 
      * \param current_latitude The current latitude of the ERV.
@@ -197,6 +201,11 @@ namespace approaching_emergency_vehicle_plugin
      * publishes the generated message to approaching_erv_status_pub_.
      */
     void publishApproachingErvStatus();
+
+    /**
+     * \brief This is a callback function for publishing turn ON/OFF (true/false) hazard light command to the ssc driver
+     */
+    void publishHazardLightStatus();
 
     /**
      * \brief Function to generate a carma_msgs::msg::UIInstructions message that describes whether there is currently an approaching ERV that is 
@@ -334,6 +343,17 @@ namespace approaching_emergency_vehicle_plugin
                                   double speed_progress, double target_speed, rclcpp::Time time_progress,
                                   int ego_lane_index, int erv_lane_index);
 
+     /**
+     * \brief Helper function that return points ahead of the given reference point accounting for the list of point's direction (idx 0 is the beginning).
+     *        Used for getting route destination points ahead of the ERV 
+     * \param reference_point Reference point to check against the list of points
+     * \param original_points List of points.
+     * 
+     * \return Points ahead of the reference_point. Empty if the point is determined to have passed the destination points.
+     *         NOTE: if the list only has 1 point, it returns it as it is not possible to determine direction.
+     */
+    std::vector<lanelet::BasicPoint2d> filter_points_ahead(const lanelet::BasicPoint2d& reference_point, const std::vector<lanelet::BasicPoint2d>& original_points) const;
+
     // ApproachingEmergencyVehiclePlugin configuration
     Config config_;
 
@@ -382,6 +402,9 @@ namespace approaching_emergency_vehicle_plugin
     // Timer used to trigger the publication of a message describing the status of this plugin and the ego vehicle's current action in response to an approaching ERV
     rclcpp::TimerBase::SharedPtr approaching_emergency_vehicle_status_timer_;
 
+    // Timer used to command the hazard lights to turn ON/OFF (true/false) 
+    rclcpp::TimerBase::SharedPtr hazard_light_timer_;
+
     // Object to store the parameters of an upcoming lane change maneuver so that the same parameters are used when the
     //        maneuver plan is regenerated
     UpcomingLaneChangeParameters upcoming_lc_params_;
@@ -389,6 +412,9 @@ namespace approaching_emergency_vehicle_plugin
     // Boolean flag to indicate that this plugin has planned an upcoming lane change, and those same lane change maneuver
     //        parameters should be used for the next generated maneuver plan as well
     bool has_planned_upcoming_lc_ = false;
+
+    // Boolean flag to command turning ON/OFF (true/false) the hazard lights
+    bool hazard_light_cmd_ = false;
 
     // (Seconds) A threshold; if the estimated duration until an ERV passes the ego vehicle is below this and the
     //           ego vehicle is in the same lane as the ERV, then the ego vehicle will not reduce its speed, because
@@ -408,6 +434,9 @@ namespace approaching_emergency_vehicle_plugin
     // Boolean flag to indicate whether guidance is currently engaged
     bool is_guidance_engaged_ = false;
 
+    // Boolean flag to indicate whether if each ERV and CMV are going on same direction
+    std::unordered_map<std::string, bool> is_same_direction_;
+
     // Pointer for map projector
     boost::optional<std::string> map_projector_;
 
@@ -418,7 +447,7 @@ namespace approaching_emergency_vehicle_plugin
     double current_speed_;
 
     // Logger name for this plugin
-    std::string logger_name = "ApproachingEmergencyVehiclePlugin";
+    std::string logger_name = "approaching_emergency_vehicle_plugin";
 
     // The name of this strategic plugin
     std::string strategic_plugin_name_ = "approaching_emergency_vehicle_plugin";
@@ -437,6 +466,7 @@ namespace approaching_emergency_vehicle_plugin
     FRIEND_TEST(Testapproaching_emergency_vehicle_plugin, testManeuverPlanWhenMovingOverForErv);
     FRIEND_TEST(Testapproaching_emergency_vehicle_plugin, testWarningBroadcast);
     FRIEND_TEST(Testapproaching_emergency_vehicle_plugin, testApproachingErvStatusMessage);
+    FRIEND_TEST(Testapproaching_emergency_vehicle_plugin, filter_points_ahead);
 
   public:
     /**
