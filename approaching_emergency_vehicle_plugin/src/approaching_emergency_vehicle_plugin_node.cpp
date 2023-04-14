@@ -644,7 +644,7 @@ namespace approaching_emergency_vehicle_plugin
     current_erv_location.lat = current_latitude;
     current_erv_location.lon = current_longitude;
 
-    erv_destination_points_projected.emplace_back(projector.forward(current_erv_location));
+   
 
     // Add ERV's future destination points to erv_destination_points
     if(erv_destination_points.size() > 0){
@@ -666,12 +666,23 @@ namespace approaching_emergency_vehicle_plugin
     // Convert ERV destination points to map frame
     auto erv_destination_points_in_map = lanelet::utils::transform(erv_destination_points_projected, [](auto a) { return lanelet::traits::to2D(a); });
 
+    auto cmv_location = lanelet::traits::to2D(projector.forward(current_erv_location));
+    auto shortened_erv_destination_points_in_map = filter_points_behind(cmv_location, erv_destination_points_in_map);
+
+    if(shortened_erv_destination_points_in_map.empty())
+    {
+        RCLCPP_ERROR_STREAM(rclcpp::get_logger(logger_name), "Passed all the destination points!");
+
+        // Return empty route
+        return lanelet::Optional<lanelet::routing::Route>();
+    }
+
     // Verify that ERV destination points are geometrically in the map
-    for(size_t i = 0; i < erv_destination_points_in_map.size(); ++i){
-      auto pt = erv_destination_points_in_map[i];
+    for(size_t i = 0; i < shortened_erv_destination_points_in_map.size(); ++i){
+      auto pt = shortened_erv_destination_points_in_map[i];
 
       // Return empty route if a destination point is not contained within the map
-      if((wm_->getLaneletsFromPoint(erv_destination_points_in_map[i])).empty()){
+      if((wm_->getLaneletsFromPoint(shortened_erv_destination_points_in_map[i])).empty()){
         RCLCPP_ERROR_STREAM(rclcpp::get_logger(logger_name), "ERV destination point " << i 
                 << " is not contained in a lanelet map; x: " << pt.x() << " y: " << pt.y());
 
@@ -680,7 +691,7 @@ namespace approaching_emergency_vehicle_plugin
     }
 
     // Obtain ERV's starting lanelet
-    auto starting_lanelet_vector = lanelet::geometry::findNearest(wm_->getMap()->laneletLayer, erv_destination_points_in_map.front(), 1);
+    auto starting_lanelet_vector = lanelet::geometry::findNearest(wm_->getMap()->laneletLayer, cmv_location, 1);
     if(starting_lanelet_vector.empty())
     {
         RCLCPP_ERROR_STREAM(rclcpp::get_logger(logger_name), "Found no lanelets in the map. ERV routing cannot be completed.");
@@ -691,15 +702,21 @@ namespace approaching_emergency_vehicle_plugin
     auto starting_lanelet = lanelet::ConstLanelet(starting_lanelet_vector[0].second.constData());
 
     // Obtain ERV's ending lanelet
-    auto ending_lanelet_vector = lanelet::geometry::findNearest(wm_->getMap()->laneletLayer, erv_destination_points_in_map.back(), 1);
+    auto ending_lanelet_vector = lanelet::geometry::findNearest(wm_->getMap()->laneletLayer, shortened_erv_destination_points_in_map.back(), 1);
     auto ending_lanelet = lanelet::ConstLanelet(ending_lanelet_vector[0].second.constData());
 
     // Obtain ERV's via lanelets
-    std::vector<lanelet::BasicPoint2d> via = std::vector<lanelet::BasicPoint2d>(erv_destination_points_in_map.begin() + 1, erv_destination_points_in_map.end() - 1);
+    std::vector<lanelet::BasicPoint2d> via = std::vector<lanelet::BasicPoint2d>(shortened_erv_destination_points_in_map.begin(), shortened_erv_destination_points_in_map.end() - 1);
     lanelet::ConstLanelets via_lanelets_vector;
     for(const auto& point : via){
       auto lanelet_vector = lanelet::geometry::findNearest(wm_->getMap()->laneletLayer, point, 1);
-      via_lanelets_vector.emplace_back(lanelet::ConstLanelet(lanelet_vector[0].second.constData()));
+      auto chosen_lanelet_to_emplace = lanelet::ConstLanelet(lanelet_vector[0].second.constData());
+      if (chosen_lanelet_to_emplace.id() != starting_lanelet.id())  // if id is same, it fails to route
+        via_lanelets_vector.emplace_back(chosen_lanelet_to_emplace);
+      else
+      {
+        RCLCPP_ERROR_STREAM(rclcpp::get_logger(logger_name), "======> id was found same: " << chosen_lanelet_to_emplace.id());
+      }
     }
 
     // Generate the ERV's route
@@ -708,6 +725,79 @@ namespace approaching_emergency_vehicle_plugin
     return erv_route;
   }
 
+  std::vector<lanelet::BasicPoint2d> ApproachingEmergencyVehiclePlugin::filter_points_behind(const lanelet::BasicPoint2d& reference_point, const std::vector<lanelet::BasicPoint2d>& original_points) const
+  {
+    if (original_points.size() <= 1)
+    {
+      return original_points;
+    }
+    
+    // extend the list by extrapolating last two points
+    auto extended_points = original_points;
+    double last_dx = (original_points.end() - 1 ) ->x() - (original_points.end() - 2 ) ->x();
+    double last_dy = (original_points.end() - 1 ) ->y() - (original_points.end() - 2 ) ->y();
+    lanelet::BasicPoint2d extended_point = {(original_points.end() - 1 ) ->x() + last_dx, (original_points.end() - 1 ) ->y() + last_dy};
+    extended_points.push_back(extended_point);
+
+    size_t i = 0;
+    size_t closest_idx;
+    double closest_dist = DBL_MAX;
+    std::cerr << "here original size: " << original_points.size() <<std::endl;
+    while (i < extended_points.size() - 1)
+    {
+      std::cerr << "here: " << i <<std::endl;
+      // Calculate vectors
+      double v1x = reference_point.x() - extended_points[i].x();
+      std::cerr << "Now processing x: " << extended_points[i].x() << ", y:" << extended_points[i].y() << ", ref x: " << reference_point.x() << ", y: " << reference_point.y() <<std::endl;
+
+      double v1y = reference_point.y() - extended_points[i].y();
+      double v2x = extended_points[i+1].x() - extended_points[i].x();
+      double v2y = extended_points[i+1].y() - extended_points[i].y();
+
+       std::cerr << "hereb: " << i <<std::endl;
+
+      // Calculate dot product
+      double dotProduct = v1x * v2x + v1y * v2y;
+
+      // Calculate magnitudes
+      double v1Mag = sqrt(v1x * v1x + v1y * v1y);
+      double v2Mag = sqrt(v2x * v2x + v2y * v2y);
+
+      // Calculate angle in radians
+      double angleRad = acos(dotProduct / (v1Mag * v2Mag));
+
+      // Angle between the vectors above 90 degrees means the point i is ahead
+      if (angleRad >= M_PI / 2) 
+      {
+        double dx = reference_point.x() - extended_points[i].x(); 
+        double dy = reference_point.y() - extended_points[i].y();
+        double distance = sqrt (dx * dx + dy * dy);
+        std::cerr << "herec: " << i <<std::endl;
+        if (distance < closest_dist) // get closest point to the reference point from the multiple possible points 
+        {
+          closest_dist = distance;
+          closest_idx = i;
+        }
+      }
+      i ++;
+    }
+    std::cerr << "here last " <<std::endl;
+
+    double dx = reference_point.x() - original_points.back().x(); 
+    double dy = reference_point.y() - original_points.back().y();
+    double distance = sqrt (dx * dx + dy * dy);
+    std::cerr << "herec: " << i <<std::endl;
+
+    // last point is still closer to the reference point, all points have passed
+    // note that if the optimal point is the last one, this check fails as intended
+    if (distance < closest_dist) 
+    {
+      std::cerr << "hered: " << i <<std::endl;
+      return {};
+    }
+
+    return std::vector<lanelet::BasicPoint2d>(original_points.begin() + closest_idx, original_points.end());
+  }
   void ApproachingEmergencyVehiclePlugin::incomingBsmCallback(carma_v2x_msgs::msg::BSM::UniquePtr msg)
   {
     // Only process incoming BSMs if guidance is currently engaged

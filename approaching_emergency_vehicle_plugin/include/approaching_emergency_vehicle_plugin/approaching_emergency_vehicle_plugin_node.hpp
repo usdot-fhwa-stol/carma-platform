@@ -462,6 +462,9 @@ namespace approaching_emergency_vehicle_plugin
      */
     explicit ApproachingEmergencyVehiclePlugin(const rclcpp::NodeOptions &);
 
+    //TODO
+    std::vector<lanelet::BasicPoint2d> filter_points_behind(const lanelet::BasicPoint2d& reference_point, const std::vector<lanelet::BasicPoint2d>& original_points) const;
+
     /**
      * \brief Callback for dynamic parameter updates
      */
