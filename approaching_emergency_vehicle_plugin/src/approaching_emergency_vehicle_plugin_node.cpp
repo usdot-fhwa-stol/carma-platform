@@ -690,6 +690,8 @@ namespace approaching_emergency_vehicle_plugin
     // Obtain ERV's ending lanelet
     auto ending_lanelet_vector = lanelet::geometry::findNearest(wm_->getMap()->laneletLayer, shortened_erv_destination_points_in_map.back(), 1);
     auto ending_lanelet = lanelet::ConstLanelet(ending_lanelet_vector[0].second.constData());
+    RCLCPP_ERROR_STREAM(rclcpp::get_logger(logger_name), "ending_lanelet: " << ending_lanelet.id());
+    RCLCPP_ERROR_STREAM(rclcpp::get_logger(logger_name), "starting_lanelet: " << starting_lanelet.id());
 
     // Obtain ERV's via lanelets
     std::vector<lanelet::BasicPoint2d> via = std::vector<lanelet::BasicPoint2d>(shortened_erv_destination_points_in_map.begin(), shortened_erv_destination_points_in_map.end() - 1);
@@ -697,6 +699,8 @@ namespace approaching_emergency_vehicle_plugin
     for(const auto& point : via){
       auto lanelet_vector = lanelet::geometry::findNearest(wm_->getMap()->laneletLayer, point, 1);
       auto chosen_lanelet_to_emplace = lanelet::ConstLanelet(lanelet_vector[0].second.constData());
+      RCLCPP_ERROR_STREAM(rclcpp::get_logger(logger_name), "chosen_lanelet_to_emplace: " << chosen_lanelet_to_emplace.id());
+
       if (chosen_lanelet_to_emplace.id() != starting_lanelet.id())  // if id is same, it fails to route
         via_lanelets_vector.emplace_back(chosen_lanelet_to_emplace);
       else
@@ -737,6 +741,9 @@ namespace approaching_emergency_vehicle_plugin
       double v2x = extended_points[i+1].x() - extended_points[i].x();
       double v2y = extended_points[i+1].y() - extended_points[i].y();
 
+      RCLCPP_ERROR_STREAM(rclcpp::get_logger(logger_name), "reference_point x: " << reference_point.x() << ", y: " << reference_point.y());
+      RCLCPP_ERROR_STREAM(rclcpp::get_logger(logger_name), "extended_points x: " << extended_points[i].x() << ", y: " << extended_points[i].y());
+
 
       // Calculate dot product
       double dotProduct = v1x * v2x + v1y * v2y;
@@ -758,6 +765,8 @@ namespace approaching_emergency_vehicle_plugin
         {
           closest_dist = distance;
           closest_idx = i;
+          RCLCPP_ERROR_STREAM(rclcpp::get_logger(logger_name), "closest_dist: " << closest_dist << ", closest_idx" << closest_idx);
+
         }
       }
       i ++;
@@ -771,6 +780,8 @@ namespace approaching_emergency_vehicle_plugin
     // note that if the optimal point is the last one, this check fails as intended
     if (distance < closest_dist) 
     {
+      RCLCPP_ERROR_STREAM(rclcpp::get_logger(logger_name), "Returning empty here");
+      
       return {};
     }
 
