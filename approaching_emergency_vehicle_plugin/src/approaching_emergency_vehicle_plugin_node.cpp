@@ -148,11 +148,6 @@ namespace approaching_emergency_vehicle_plugin
 
     RCLCPP_INFO_STREAM(rclcpp::get_logger(logger_name), "ApproachingEmergencyVehiclePlugin Config: " << config_);
 
-    RCLCPP_ERROR_STREAM(rclcpp::get_logger(logger_name), "ApproachingEmergencyVehiclePlugin Config: " << config_);
-
-
-
-
     // Register runtime parameter update callback
     add_on_set_parameters_callback(std::bind(&ApproachingEmergencyVehiclePlugin::parameter_update_callback, this, std_ph::_1));
 
@@ -228,21 +223,11 @@ namespace approaching_emergency_vehicle_plugin
     has_tracked_erv_ &&
     tracked_erv_.lane_index == ego_lane_index_)
     {
-      
-      //RCLCPP_ERROR_STREAM(rclcpp::get_logger(logger_name), "hazard light is TRUE!");
-
       hazard_light_cmd_ = true;
     }
     else
     {
       hazard_light_cmd_ = false;
-
-      //RCLCPP_ERROR_STREAM(rclcpp::get_logger(logger_name), "Hazard FALSE: Current state: " << transition_table_.getState());
-      //RCLCPP_ERROR_STREAM(rclcpp::get_logger(logger_name), "has_tracked_erv_: " << has_tracked_erv_);
-      //RCLCPP_ERROR_STREAM(rclcpp::get_logger(logger_name), "tracked_erv_.lane_index : " << tracked_erv_.lane_index);
-      //RCLCPP_ERROR_STREAM(rclcpp::get_logger(logger_name), "ego_lane_index_: " << ego_lane_index_);
-
-
     }
     std_msgs::msg::Bool msg;
     msg.data = hazard_light_cmd_;
@@ -544,8 +529,9 @@ namespace approaching_emergency_vehicle_plugin
     if(!erv_future_route.get().shortestPath().empty()){
       lanelet::ConstLanelet erv_current_lanelet = erv_future_route.get().shortestPath()[0];
 
-
-      if (is_same_direction_.find(erv_information.vehicle_id) == is_same_direction_.end()) // no need to check again if direction is set already
+      // NOTE: this logic checks if the ERV and CMV are on a same direction or not. 
+      // Currently this check is sufficient to happen only once due to the use case scenarios
+      if (is_same_direction_.find(erv_information.vehicle_id) == is_same_direction_.end()) 
       {
         is_same_direction_[erv_information.vehicle_id] = false;
         for (auto llt: erv_future_route.get().shortestPath()) // checks if ERV is on the same path assuming CMV got all of its planned route when detected
@@ -742,19 +728,15 @@ namespace approaching_emergency_vehicle_plugin
     size_t i = 0;
     size_t closest_idx;
     double closest_dist = DBL_MAX;
-    std::cerr << "here original size: " << original_points.size() <<std::endl;
     while (i < extended_points.size() - 1)
     {
-      std::cerr << "here: " << i <<std::endl;
       // Calculate vectors
       double v1x = reference_point.x() - extended_points[i].x();
-      std::cerr << "Now processing x: " << extended_points[i].x() << ", y:" << extended_points[i].y() << ", ref x: " << reference_point.x() << ", y: " << reference_point.y() <<std::endl;
 
       double v1y = reference_point.y() - extended_points[i].y();
       double v2x = extended_points[i+1].x() - extended_points[i].x();
       double v2y = extended_points[i+1].y() - extended_points[i].y();
 
-       std::cerr << "hereb: " << i <<std::endl;
 
       // Calculate dot product
       double dotProduct = v1x * v2x + v1y * v2y;
@@ -772,7 +754,6 @@ namespace approaching_emergency_vehicle_plugin
         double dx = reference_point.x() - extended_points[i].x(); 
         double dy = reference_point.y() - extended_points[i].y();
         double distance = sqrt (dx * dx + dy * dy);
-        std::cerr << "herec: " << i <<std::endl;
         if (distance < closest_dist) // get closest point to the reference point from the multiple possible points 
         {
           closest_dist = distance;
@@ -781,18 +762,15 @@ namespace approaching_emergency_vehicle_plugin
       }
       i ++;
     }
-    std::cerr << "here last " <<std::endl;
 
     double dx = reference_point.x() - original_points.back().x(); 
     double dy = reference_point.y() - original_points.back().y();
     double distance = sqrt (dx * dx + dy * dy);
-    std::cerr << "herec: " << i <<std::endl;
 
     // last point is still closer to the reference point, all points have passed
     // note that if the optimal point is the last one, this check fails as intended
     if (distance < closest_dist) 
     {
-      std::cerr << "hered: " << i <<std::endl;
       return {};
     }
 
