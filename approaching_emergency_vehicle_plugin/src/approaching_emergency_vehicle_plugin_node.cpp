@@ -653,7 +653,7 @@ namespace approaching_emergency_vehicle_plugin
     auto erv_destination_points_in_map = lanelet::utils::transform(erv_destination_points_projected, [](auto a) { return lanelet::traits::to2D(a); });
 
     auto cmv_location = lanelet::traits::to2D(projector.forward(current_erv_location));
-    auto shortened_erv_destination_points_in_map = filter_points_behind(cmv_location, erv_destination_points_in_map);
+    auto shortened_erv_destination_points_in_map = filter_points_ahead(cmv_location, erv_destination_points_in_map);
 
     if(shortened_erv_destination_points_in_map.empty())
     {
@@ -711,7 +711,7 @@ namespace approaching_emergency_vehicle_plugin
     return erv_route;
   }
 
-  std::vector<lanelet::BasicPoint2d> ApproachingEmergencyVehiclePlugin::filter_points_behind(const lanelet::BasicPoint2d& reference_point, const std::vector<lanelet::BasicPoint2d>& original_points) const
+  std::vector<lanelet::BasicPoint2d> ApproachingEmergencyVehiclePlugin::filter_points_ahead(const lanelet::BasicPoint2d& reference_point, const std::vector<lanelet::BasicPoint2d>& original_points) const
   {
     if (original_points.size() <= 1)
     {

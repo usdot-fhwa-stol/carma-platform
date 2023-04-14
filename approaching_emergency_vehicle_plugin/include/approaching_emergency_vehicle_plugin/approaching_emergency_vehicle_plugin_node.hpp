@@ -343,6 +343,17 @@ namespace approaching_emergency_vehicle_plugin
                                   double speed_progress, double target_speed, rclcpp::Time time_progress,
                                   int ego_lane_index, int erv_lane_index);
 
+     /**
+     * \brief Helper function that return points ahead of the given reference point accounting for the list of point's direction (idx 0 is the beginning).
+     *        Used for getting route destination points ahead of the ERV 
+     * \param reference_point Reference point to check against the list of points
+     * \param original_points List of points.
+     * 
+     * \return Points ahead of the reference_point. Empty if the point is determined to have passed the destination points.
+     *         NOTE: if the list only has 1 point, it returns it as it is not possible to determine direction.
+     */
+    std::vector<lanelet::BasicPoint2d> filter_points_ahead(const lanelet::BasicPoint2d& reference_point, const std::vector<lanelet::BasicPoint2d>& original_points) const;
+
     // ApproachingEmergencyVehiclePlugin configuration
     Config config_;
 
@@ -455,15 +466,13 @@ namespace approaching_emergency_vehicle_plugin
     FRIEND_TEST(Testapproaching_emergency_vehicle_plugin, testManeuverPlanWhenMovingOverForErv);
     FRIEND_TEST(Testapproaching_emergency_vehicle_plugin, testWarningBroadcast);
     FRIEND_TEST(Testapproaching_emergency_vehicle_plugin, testApproachingErvStatusMessage);
+    FRIEND_TEST(Testapproaching_emergency_vehicle_plugin, filter_points_ahead);
 
   public:
     /**
      * \brief ApproachingEmergencyVehiclePlugin constructor
      */
     explicit ApproachingEmergencyVehiclePlugin(const rclcpp::NodeOptions &);
-
-    //TODO
-    std::vector<lanelet::BasicPoint2d> filter_points_behind(const lanelet::BasicPoint2d& reference_point, const std::vector<lanelet::BasicPoint2d>& original_points) const;
 
     /**
      * \brief Callback for dynamic parameter updates

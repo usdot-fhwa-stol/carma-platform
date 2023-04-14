@@ -129,7 +129,7 @@ namespace approaching_emergency_vehicle_plugin{
         ASSERT_NEAR(seconds_until_passing.get(), 4.59, 0.01);
     }
     
-    TEST(Testapproaching_emergency_vehicle_plugin, filter_points_behind){
+    TEST(Testapproaching_emergency_vehicle_plugin, filter_points_ahead){
         std::vector<lanelet::BasicPoint2d> points;
         rclcpp::NodeOptions options;
         auto worker_node = std::make_shared<approaching_emergency_vehicle_plugin::ApproachingEmergencyVehiclePlugin>(options);
@@ -144,22 +144,25 @@ namespace approaching_emergency_vehicle_plugin{
         points.push_back({7,4});
 
         lanelet::BasicPoint2d reference_point = {1,1};
-        ASSERT_EQ(worker_node->filter_points_behind(reference_point, points).size(), 8);
+        ASSERT_EQ(worker_node->filter_points_ahead(reference_point, points).size(), 8);
 
         lanelet::BasicPoint2d reference_point1 = {3,3.1};
-        ASSERT_EQ(worker_node->filter_points_behind(reference_point1, points).size(), 6);
+        ASSERT_EQ(worker_node->filter_points_ahead(reference_point1, points).size(), 6);
 
         lanelet::BasicPoint2d reference_point2 = {1.5,4.75};
-        ASSERT_EQ(worker_node->filter_points_behind(reference_point2, points).size(), 5);
+        ASSERT_EQ(worker_node->filter_points_ahead(reference_point2, points).size(), 5);
 
         lanelet::BasicPoint2d reference_point3 = {5,7};
-        ASSERT_EQ(worker_node->filter_points_behind(reference_point3, points).size(), 2);
+        ASSERT_EQ(worker_node->filter_points_ahead(reference_point3, points).size(), 2);
 
-        lanelet::BasicPoint2d reference_point4 = {8,3.5};
-        ASSERT_EQ(worker_node->filter_points_behind(reference_point4, points).size(), 0);
+        lanelet::BasicPoint2d reference_point4 = {8,5.5};
+        ASSERT_EQ(worker_node->filter_points_ahead(reference_point4, points).size(), 1);
 
         lanelet::BasicPoint2d reference_point5 = {8,3.5};
-        ASSERT_EQ(worker_node->filter_points_behind(reference_point5, {points.back()}).size(), 1);
+        ASSERT_EQ(worker_node->filter_points_ahead(reference_point5, points).size(), 0);
+
+        lanelet::BasicPoint2d reference_point6 = {8,3.5};
+        ASSERT_EQ(worker_node->filter_points_ahead(reference_point6, {points.back()}).size(), 1);
     }
 
     TEST(Testapproaching_emergency_vehicle_plugin, testBSMProcessing){
