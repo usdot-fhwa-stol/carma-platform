@@ -530,7 +530,7 @@ def generate_launch_description():
         composable_node_descriptions=[
             ComposableNode(
                 package='stop_and_dwell_strategic_plugin',
-                plugin='stop_and_dwell_strategic_plugin::SCIStrategicPlugin',
+                plugin='stop_and_dwell_strategic_plugin::StopAndDwellStrategicPlugin',
                 name='stop_and_dwell_strategic_plugin',
                 extra_arguments=[
                     {'use_intra_process_comms': True}, 
@@ -544,9 +544,7 @@ def generate_launch_description():
                     ("plugin_discovery", [ EnvironmentVariable('CARMA_GUIDE_NS', default_value=''), "/plugin_discovery" ] ),
                     ("route", [ EnvironmentVariable('CARMA_GUIDE_NS', default_value=''), "/route" ] ),
                     ("maneuver_plan", [ EnvironmentVariable('CARMA_GUIDE_NS', default_value=''), "/final_maneuver_plan" ] ),
-                    ("outgoing_mobility_operation", [ EnvironmentVariable('CARMA_MSG_NS', default_value=''), "/outgoing_mobility_operation" ] ),
-                    ("incoming_mobility_operation", [ EnvironmentVariable('CARMA_MSG_NS', default_value=''), "/incoming_mobility_operation" ] ),
-                    ("bsm_outbound", [ EnvironmentVariable('CARMA_MSG_NS', default_value=''), "/bsm_outbound" ] ),
+                    ("state", [ EnvironmentVariable('CARMA_GUIDE_NS', default_value=''), "/state" ] ),
                     ("current_pose", [ EnvironmentVariable('CARMA_LOCZ_NS', default_value=''), "/current_pose" ] ),
                 ],
                 parameters=[
