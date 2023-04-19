@@ -12,21 +12,33 @@
  * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
  * License for the specific language governing permissions and limitations under
  * the License.
+ *
  */
-
+#include <gtest/gtest.h>
+#include "call_test.hpp"
 #include <rclcpp/rclcpp.hpp>
-#include "intersection_transit_maneuvering/intersection_transit_maneuvering_node.hpp"
 
-int main(int argc, char** argv)
+namespace call_test
 {
-  rclcpp::init(argc, argv);
 
-  auto node = std::make_shared<intersection_transit_maneuvering::IntersectionTransitManeuveringNode>(rclcpp::NodeOptions());
-  
-  rclcpp::executors::MultiThreadedExecutor executor;
-  executor.add_node(node->get_node_base_interface());
-  executor.spin();
-  rclcpp::shutdown();
+    void CallTest::call(carma_planning_msgs::srv::PlanTrajectory::Request::SharedPtr req, carma_planning_msgs::srv::PlanTrajectory::Response::SharedPtr resp)
+    {
+        request = req;
+        response = resp;
+        
+        return;
+    }
 
-  return 0;
-};
+    carma_planning_msgs::srv::PlanTrajectory::Request::SharedPtr CallTest::getRequest()
+    {
+        return request;
+    }
+    
+    carma_planning_msgs::srv::PlanTrajectory::Response::SharedPtr CallTest::getResponse()
+    {
+        return response;
+    }
+
+
+
+}

@@ -555,6 +555,26 @@ def generate_launch_description():
         ]
     )
 
+    intersection_transit_maneuvering_container = ComposableNodeContainer(
+        package='carma_ros2_utils',
+        name='intersection_transit_maneuvering_container',
+        executable='carma_component_container_mt',
+        namespace=GetCurrentNamespace(),
+        composable_node_descriptions=[
+            ComposableNode(
+                package='intersection_transit_maneuvering',
+                plugin='intersection_transit_maneuvering::IntersectionTransitManeuveringNode',
+                name='intersection_transit_maneuvering',
+                extra_arguments=[
+                    {'use_intra_process_comms': True}, 
+                    {'--log-level' : GetLogLevel('intersection_transit_maneuvering', env_log_levels) }
+                ],
+                remappings = [],
+                parameters=[]     
+            ),
+        ]
+    )
+
     return LaunchDescription([    
         carma_inlanecruising_plugin_container, 
         carma_route_following_plugin_container, 
@@ -569,5 +589,7 @@ def generate_launch_description():
         carma_light_controlled_intersection_plugins_container, 
         carma_pure_pursuit_wrapper_container, 
         #platooning_strategic_plugin_container, 
-        platooning_tactical_plugin_container
+        platooning_tactical_plugin_container,
+        intersection_transit_maneuvering_container
+
     ])

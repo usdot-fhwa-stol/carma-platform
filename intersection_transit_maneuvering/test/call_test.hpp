@@ -1,6 +1,6 @@
 #pragma once
 /*
- * Copyright (C) 2021 LEIDOS.
+ * Copyright (C) 2023 LEIDOS.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -14,19 +14,18 @@
  * License for the specific language governing permissions and limitations under
  * the License.
  */
-
-#include <ros/ros.h>
+#include <gtest/gtest.h>
+#include <rclcpp/rclcpp.hpp>
 #include <vector>
-#include <cav_msgs/TrajectoryPlan.h>
-#include <cav_msgs/TrajectoryPlanPoint.h>
-#include <cav_msgs/Maneuver.h>
-#include <cav_msgs/Plugin.h>
+#include <carma_planning_msgs/msg/trajectory_plan.hpp>
+#include <carma_planning_msgs/msg/trajectory_plan_point.hpp>
+#include <carma_planning_msgs/msg/plugin.hpp>
+#include <carma_planning_msgs/msg/maneuver.hpp>
 #include <boost/shared_ptr.hpp>
-#include <carma_utils/CARMAUtils.h>
+#include <carma_ros2_utils/carma_lifecycle_node.hpp>
 #include <boost/geometry.hpp>
-#include <cav_srvs/PlanTrajectory.h>
-#include <call_interface.h>
-
+#include <carma_planning_msgs/srv/plan_trajectory.hpp>
+#include <intersection_transit_maneuvering//call_interface.hpp>
 
 namespace call_test
 {
@@ -46,26 +45,28 @@ class CallTest: public CallInterface
          * @param resp Incoming PlanTrajectory service response
          * @return true if method successfully completes, otherwise false
          */
-        bool call(cav_srvs::PlanTrajectoryRequest& req, cav_srvs::PlanTrajectoryResponse& resp);
+        void call(carma_planning_msgs::srv::PlanTrajectory::Request::SharedPtr req, carma_planning_msgs::srv::PlanTrajectory::Response::SharedPtr resp);
 
         /**
          * @brief Get the Request object
          * 
          * @return cav_srvs::PlanTrajectoryRequest object
          */
-        cav_srvs::PlanTrajectoryRequest getRequest();
+        carma_planning_msgs::srv::PlanTrajectory::Request::SharedPtr getRequest();
 
         /**
          * @brief Get the Response object
          * 
          * @return cav_srvs::PlanTrajectoryResponse object
          */
-        cav_srvs::PlanTrajectoryResponse getResponse();
+        carma_planning_msgs::srv::PlanTrajectory::Response::SharedPtr getResponse();
+
+        void set_client(carma_ros2_utils::ClientPtr<carma_planning_msgs::srv::PlanTrajectory> srv_client) {};
 
 
     private:
-        cav_srvs::PlanTrajectoryRequest request;
-        cav_srvs::PlanTrajectoryResponse response;
+        carma_planning_msgs::srv::PlanTrajectory::Request::SharedPtr request = std::make_shared<carma_planning_msgs::srv::PlanTrajectory::Request> ();;
+        carma_planning_msgs::srv::PlanTrajectory::Response::SharedPtr response = std::make_shared<carma_planning_msgs::srv::PlanTrajectory::Response> ();;
     
 
 
