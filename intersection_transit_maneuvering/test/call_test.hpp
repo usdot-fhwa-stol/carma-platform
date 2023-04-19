@@ -14,7 +14,7 @@
  * License for the specific language governing permissions and limitations under
  * the License.
  */
-
+#include <gtest/gtest.h>
 #include <rclcpp/rclcpp.hpp>
 #include <vector>
 #include <carma_planning_msgs/msg/trajectory_plan.hpp>
@@ -60,6 +60,8 @@ class CallTest: public CallInterface
          * @return cav_srvs::PlanTrajectoryResponse object
          */
         carma_planning_msgs::srv::PlanTrajectory::Response::SharedPtr getResponse();
+
+        void set_client(carma_ros2_utils::ClientPtr<carma_planning_msgs::srv::PlanTrajectory> srv_client) {};
 
 
     private:

@@ -13,7 +13,7 @@
  * License for the specific language governing permissions and limitations under
  * the License.
  */
-
+#include <gtest/gtest.h>
 #include <rclcpp/rclcpp.hpp>
 #include <carma_planning_msgs/msg/maneuver.hpp>
 #include <chrono>
@@ -42,7 +42,7 @@ namespace intersection_transit_maneuvering
     std::shared_ptr<CallInterface> obj = object;
         
     auto itm_node = std::make_shared<intersection_transit_maneuvering::IntersectionTransitManeuveringNode>(rclcpp::NodeOptions());
-    itm_node->client = obj;
+    itm_node->object_ = obj;
 
     carma_planning_msgs::msg::Maneuver man0, man1;
     std::vector<carma_planning_msgs::msg::TrajectoryPlanPoint> points; 
@@ -90,7 +90,7 @@ namespace intersection_transit_maneuvering
     std::shared_ptr<rmw_request_id_t> id;
 
     /*Test that the operation will throw an invalid argrument error statement due to no maneuvers being available for conversion*/
-    EXPECT_THROW(itm_node->plan_trajectory_cb(id, req, resp), std::invalid_argument);
+    EXPECT_THROW(itm_node->plan_trajectory_callback(id, req, resp), std::invalid_argument);
     ASSERT_EQ(0, resp->maneuver_status.size());
 
 
@@ -107,7 +107,7 @@ namespace intersection_transit_maneuvering
 
     req->maneuver_plan.maneuvers.push_back(man1);
     
-    auto plan = itm_node->plan_trajectory_cb(id,req, resp);
+    itm_node->plan_trajectory_callback(id,req, resp);
 
     /*Get req and resp values from the test call() function*/
     auto test_req = object->getRequest();
@@ -130,9 +130,9 @@ namespace intersection_transit_maneuvering
     }
 
     /*Assert that the maneuver status will be updated after the callback function*/
-    ASSERT_EQ(0, test_resp.maneuver_status.size());
+    ASSERT_EQ(0, test_resp->maneuver_status.size());
     ASSERT_EQ(1, resp->maneuver_status.size());
-    ASSERT_EQ(carma_planning_msgs::msg::PlanTrajectory::Response::MANEUVER_IN_PROGRESS, resp->maneuver_status.back());
+    ASSERT_EQ(carma_planning_msgs::srv::PlanTrajectory::Response::MANEUVER_IN_PROGRESS, resp->maneuver_status.back());
 
   }//End Test Case
 
@@ -141,7 +141,7 @@ namespace intersection_transit_maneuvering
     std::shared_ptr<CallInterface> obj;
     
     auto itm_node = std::make_shared<intersection_transit_maneuvering::IntersectionTransitManeuveringNode>(rclcpp::NodeOptions());
-    itm_node->client = obj;
+    itm_node->object_ = obj;
 
     std::vector<carma_planning_msgs::msg::Maneuver> maneuvers;
 

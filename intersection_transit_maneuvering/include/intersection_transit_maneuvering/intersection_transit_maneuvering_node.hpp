@@ -35,12 +35,12 @@ class IntersectionTransitManeuveringNode : public carma_guidance_plugins::Tactic
     private:    
 
     // Worker object
-    std::shared_ptr<CallInterface> object_;
+    
     std::vector<carma_planning_msgs::msg::Maneuver> converted_maneuvers_;
     carma_planning_msgs::msg::VehicleState vehicle_state_;
     
     public:
-
+    std::shared_ptr<CallInterface> object_;
     /**
      * \brief IntersectionTransitManeuveringNode constructor 
      */
