@@ -256,6 +256,8 @@ public:
 
   std::vector<lanelet::CarmaTrafficSignalPtr> getSignalsAlongRoute(const lanelet::BasicPoint2d& loc) const override;
 
+  std::vector<lanelet::BusStopRulePtr> getBusStopsAlongRoute(const lanelet::BasicPoint2d& loc) const override;
+  
   boost::optional<std::pair<lanelet::ConstLanelet, lanelet::ConstLanelet>> getEntryExitOfSignalAlongRoute(const lanelet::CarmaTrafficSignalPtr& traffic_signal) const override;
   
   std::vector<std::shared_ptr<lanelet::AllWayStop>> getIntersectionsAlongRoute(const lanelet::BasicPoint2d& loc) const override;

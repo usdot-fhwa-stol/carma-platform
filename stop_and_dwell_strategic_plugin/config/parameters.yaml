@@ -15,3 +15,36 @@ lane_following_plugin_name : inlanecruising_plugin
 
 # String: The name of the plugin to use for stop and wait trajectory planning
 stop_and_wait_plugin_name : stop_and_wait_plugin
+
+# Double: Activation distance of stop and dwell plugin
+activation_distance : 200.0
+
+# Double: Dwell time is the time to stop at the bus stop
+dwell_time : 5.0
+
+# Double: Safety multiplier (must be less than 1.0) of planned allowable vehicle deceleration to use when stopping. This new deceleration makes vehicle decelerate earlier distance.
+#         NOTE: Stacks on vehicle_decel_limit_multiplier and stopping uses max_decel; this distance is only used for calculating earlier downtrack
+deceleration_fraction : 0.7
+
+# Double: Desired distance to stop buffer in meters
+desired_distance_to_stop_buffer : 15.0
+
+# Double: The maximum allowable vehicle deceleration limit in m/s
+vehicle_decel_limit : 2.0
+
+
+# Double: The maximum allowable vehicle acceleration limit in m/s
+vehicle_accel_limit : 2.0
+
+
+# Double: The minimum period in seconds which a maneuver plan must cover if the plugin wishes to control the whole plan
+min_maneuver_planning_period : 15.1
+
+
+# Double: The distance bus drives to be considered out of bus stop
+bus_line_exit_zone_length : 15.0
+
+
+# Double: License plate of the vehicle.
+vehicle_id : "default_id"
+

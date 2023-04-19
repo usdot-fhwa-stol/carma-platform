@@ -58,6 +58,20 @@ struct StopAndDwellStrategicPluginConfig
   //! License plate of the vehicle.
   std::string vehicle_id = "default_id";
 
+  //! Activation distance of stop and dwell plugin
+  double activation_distance = 200.0;
+
+  //! Dwell time is the time to stop at the bus stop
+  double dwell_time = 0.0;
+
+  //! Double: Safety multiplier (must be less than 1.0) of planned allowable vehicle deceleration to use when stopping. This new deceleration makes vehicle decelerate earlier distance.
+  double deceleration_fraction = 0.7;
+
+  //! Double: Desired distance to stop buffer in meters
+  double desired_distance_to_stop_buffer = 15.0;
+
+  
+
   // Stream operator for this config
   friend std::ostream &operator<<(std::ostream &output, const StopAndDwellStrategicPluginConfig &c)
   {
@@ -74,6 +88,10 @@ struct StopAndDwellStrategicPluginConfig
           << "lane_following_plugin_name: " << c.lane_following_plugin_name << std::endl
           << "stop_and_wait_plugin_name: " << c.stop_and_wait_plugin_name << std::endl
           << "vehicle_id: " << c.vehicle_id << std::endl
+          << "activation_distance: " << c.activation_distance << std::endl
+          << "dwell_time: " << c.dwell_time << std::endl
+          << "deceleration_fraction: " << c.deceleration_fraction << std::endl
+          << "desired_distance_to_stop_buffer: " << c.desired_distance_to_stop_buffer << std::endl
           << "}" << std::endl;
     return output;
   }
