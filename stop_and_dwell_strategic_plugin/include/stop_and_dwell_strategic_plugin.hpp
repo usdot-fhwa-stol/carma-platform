@@ -37,10 +37,7 @@
 namespace stop_and_dwell_strategic_plugin
 {
 
-class StopAndDwellStrategicPlugin : public carma_guidance_plugins::StrategicPlugin
-{
-public:
-  /**
+    /**
    * \brief Struct representing a vehicle state for the purposes of planning
    */
   struct VehicleState
@@ -51,7 +48,10 @@ public:
     lanelet::Id lane_id;  // The current lane id of the vehicle at time stamp
   };
 
-  
+class StopAndDwellStrategicPlugin : public carma_guidance_plugins::StrategicPlugin
+{
+public:
+ 
   /**
      * \brief Default constructor for RouteFollowingPlugin class
      */
@@ -94,7 +94,7 @@ public:
    *
    * \return A lane keeping maneuver message which is ready to be published
    */
-  carma_planning_msgs::msg::Maneuver composeLaneFollowingManeuverMessage(int case_num, double start_dist, double end_dist, double start_speed,
+  carma_planning_msgs::msg::Maneuver composeLaneFollowingManeuverMessage(double start_dist, double end_dist, double start_speed,
                                                          double target_speed, rclcpp::Time start_time, double time_to_stop,
                                                          std::vector<lanelet::Id> lane_ids);
 
@@ -139,6 +139,16 @@ public:
    * \param msg Latest GuidanceState message
    */
   void guidance_state_cb(const carma_planning_msgs::msg::GuidanceState::UniquePtr msg);
+
+  /**
+   * \brief Helper method to extract the initial vehicle state from the planning request method based on if the
+   * prior_plan was set or not.
+   *
+   * \param req The maneuver planning request to extract the vehicle state from
+   *
+   * \return The extracted VehicleState
+   */
+  VehicleState extractInitialState(carma_planning_msgs::srv::PlanManeuvers::Request::SharedPtr req) const;
  
   ////////// OVERRIDES ///////////
   carma_ros2_utils::CallbackReturn on_configure_plugin();
@@ -157,7 +167,16 @@ public:
 
   // downtrack of host vehicle
   double current_downtrack_ = 0.0;
+  // downtrack of bus stop
+  double bus_stop_downtrack_ = 0.0;
+  bool first_stop_ = true;
+  rclcpp::Time time_to_move_;
+  std::string logger_name_="stop_and_dwell_strategic_plugin";
 
+  double max_comfort_accel_ = 2.0;  // acceleration rates after applying miltiplier
+  double max_comfort_decel_ = -2.0; 
+  double max_comfort_decel_norm_ = -1 * max_comfort_decel_;
+ 
   bool approaching_stop_controlled_interction_ = false;
 
   private:

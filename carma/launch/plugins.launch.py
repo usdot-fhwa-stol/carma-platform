@@ -67,7 +67,10 @@ def generate_launch_description():
         get_package_share_directory('sci_strategic_plugin'), 'config/parameters.yaml')     
 
     lci_strategic_plugin_file_path = os.path.join(
-        get_package_share_directory('lci_strategic_plugin'), 'config/parameters.yaml')    
+        get_package_share_directory('lci_strategic_plugin'), 'config/parameters.yaml')   
+
+    stop_and_dwell_strategic_plugin_container_file_path = os.path.join(
+        get_package_share_directory('stop_and_dwell_strategic_plugin'), 'config/parameters.yaml')  
     
     yield_plugin_file_path = os.path.join(
         get_package_share_directory('yield_plugin'), 'config/parameters.yaml')        
@@ -519,12 +522,46 @@ def generate_launch_description():
         ]
     )
 
+    carma_stop_and_dwell_strategic_plugin_container = ComposableNodeContainer(
+        package='carma_ros2_utils',
+        name='carma_stop_and_dwell_strategic_plugin_container',
+        executable='carma_component_container_mt',
+        namespace=GetCurrentNamespace(),
+        composable_node_descriptions=[
+            ComposableNode(
+                package='stop_and_dwell_strategic_plugin',
+                plugin='stop_and_dwell_strategic_plugin::StopAndDwellStrategicPlugin',
+                name='stop_and_dwell_strategic_plugin',
+                extra_arguments=[
+                    {'use_intra_process_comms': True}, 
+                    {'--log-level' : GetLogLevel('stop_and_dwell_strategic_plugin', env_log_levels) }
+                ],
+                remappings = [
+                    ("semantic_map", [ EnvironmentVariable('CARMA_ENV_NS', default_value=''), "/semantic_map" ] ),
+                    ("map_update", [ EnvironmentVariable('CARMA_ENV_NS', default_value=''), "/map_update" ] ),
+                    ("roadway_objects", [ EnvironmentVariable('CARMA_ENV_NS', default_value=''), "/roadway_objects" ] ),
+                    ("incoming_spat", [ EnvironmentVariable('CARMA_MSG_NS', default_value=''), "/incoming_spat" ] ),
+                    ("plugin_discovery", [ EnvironmentVariable('CARMA_GUIDE_NS', default_value=''), "/plugin_discovery" ] ),
+                    ("route", [ EnvironmentVariable('CARMA_GUIDE_NS', default_value=''), "/route" ] ),
+                    ("maneuver_plan", [ EnvironmentVariable('CARMA_GUIDE_NS', default_value=''), "/final_maneuver_plan" ] ),
+                    ("state", [ EnvironmentVariable('CARMA_GUIDE_NS', default_value=''), "/state" ] ),
+                    ("current_pose", [ EnvironmentVariable('CARMA_LOCZ_NS', default_value=''), "/current_pose" ] ),
+                ],
+                parameters=[
+                    stop_and_dwell_strategic_plugin_container_file_path,
+                    vehicle_config_param_file
+                ]
+            ),
+        ]
+    )
+
     return LaunchDescription([    
         carma_inlanecruising_plugin_container, 
         carma_route_following_plugin_container, 
         carma_approaching_emergency_vehicle_plugin_container,
         carma_stop_and_wait_plugin_container, 
         carma_sci_strategic_plugin_container, 
+        carma_stop_and_dwell_strategic_plugin_container,
         carma_lci_strategic_plugin_container, 
         carma_stop_controlled_intersection_tactical_plugin_container, 
         carma_cooperative_lanechange_plugins_container, 
