@@ -75,7 +75,11 @@ namespace approaching_emergency_vehicle_plugin
     lanelet::ConstLanelet intersecting_lanelet;    // The first intersecting lanelet between ERV's future route and CMV's future shortest path
     double seconds_until_passing;      // The estimated duration (seconds) until the ERV will pass the ego vehicle
                                        //     based on their current positions and current speeds
-    int lane_index = 0;                // The ERV's current lane index (NOTE: For 'lane index', 0 is rightmost lane, 1 is second rightmost, etc.; Only the current travel direction is considered)
+    int previous_lane_index;           // The lane index of the 
+    int lane_index = 0;                // The ERV's current lane index 
+                                       //     NOTE 1: For 'lane index', 0 is rightmost lane, 1 is second rightmost, etc.; Only the current travel direction is considered
+                                       //     NOTE 2: To prevent "noisy" lane index calculations from the ERV, this value is only updated when the lane index of the ERV (according to a processed BSM) matches
+                                       //                previous_lane_index, which was obtained from the previously processed BSM.
     rclcpp::Time latest_update_time;   // The timestamp (from this node's clock) associated with the last update of this object
   };
 
@@ -446,6 +450,9 @@ namespace approaching_emergency_vehicle_plugin
     // Ego vehicle's current speed
     double current_speed_;
 
+    // Boolean flag to indicate whether this node has received a Route State message in routeStateCallback()
+    bool has_received_route_state_ = false;
+    
     // Logger name for this plugin
     std::string logger_name = "approaching_emergency_vehicle_plugin";
 

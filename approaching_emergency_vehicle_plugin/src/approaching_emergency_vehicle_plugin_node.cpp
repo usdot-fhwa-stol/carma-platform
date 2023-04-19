@@ -552,7 +552,24 @@ namespace approaching_emergency_vehicle_plugin
         return boost::optional<ErvInformation>(); // if opposite direction, do not track
       }
 
-      erv_information.lane_index = wm_->getMapRoutingGraph()->rights(erv_current_lanelet).size();
+      // erv_information.lane_index = wm_->getMapRoutingGraph()->rights(erv_current_lanelet).size();
+      int lane_index = wm_->getMapRoutingGraph()->rights(erv_current_lanelet).size();
+
+      if(has_tracked_erv_){
+        if(lane_index == tracked_erv_.previous_lane_index){
+          erv_information.lane_index = lane_index;
+        }
+        else{
+          RCLCPP_ERROR_STREAM(rclcpp::get_logger(logger_name), "Detected first new lane index of " << lane_index << ", ERV's lane index will remain " << tracked_erv_.lane_index);
+        }
+
+        erv_information.previous_lane_index = lane_index;
+      }
+      else{
+        RCLCPP_ERROR_STREAM(rclcpp::get_logger(logger_name), "First time detecting this ERV, it's lane index will be " << lane_index);
+        erv_information.lane_index = lane_index;
+        erv_information.previous_lane_index = lane_index;
+      }
 
      
       RCLCPP_ERROR_STREAM(rclcpp::get_logger(logger_name), "ERV's lane index is " << erv_information.lane_index);
@@ -563,7 +580,9 @@ namespace approaching_emergency_vehicle_plugin
     }
 
     // Get intersecting lanelet between ERV's future route and ego vehicle's future shortest path
+    RCLCPP_ERROR_STREAM(rclcpp::get_logger(logger_name), "Calling getRouteIntersectingLanelet"); 
     boost::optional<lanelet::ConstLanelet> intersecting_lanelet = getRouteIntersectingLanelet(erv_future_route.get());
+    RCLCPP_ERROR_STREAM(rclcpp::get_logger(logger_name), "Done calling getRouteIntersectingLanelet"); 
 
     if(intersecting_lanelet){
       erv_information.intersecting_lanelet = *intersecting_lanelet;
@@ -576,7 +595,9 @@ namespace approaching_emergency_vehicle_plugin
     }
 
     // Get the time (seconds) until the ERV passes the ego vehicle
+    RCLCPP_ERROR_STREAM(rclcpp::get_logger(logger_name), "Calling getSecondsUntilPassing()"); 
     boost::optional<double> seconds_until_passing = getSecondsUntilPassing(erv_future_route, erv_information.current_position_in_map, erv_information.current_speed, erv_information.intersecting_lanelet);
+    RCLCPP_ERROR_STREAM(rclcpp::get_logger(logger_name), "Done calling getSecondsUntilPassing()"); 
 
     if(seconds_until_passing){
       erv_information.seconds_until_passing = seconds_until_passing.get();
@@ -921,6 +942,18 @@ namespace approaching_emergency_vehicle_plugin
 
   void ApproachingEmergencyVehiclePlugin::routeStateCallback(carma_planning_msgs::msg::RouteState::UniquePtr msg)
   {
+    // TODO: A node's first call to CARMA World Model's getLaneletsBetween() function can take 1-4 seconds. This is a workaround to conduct this process as early as possible
+    //       to avoid this delay when processing ERV BSMs for Emergency Response Phase 1. A  more robust solution should be implemented for Phase 2.
+    if(!has_received_route_state_){
+      if(wm_->getRoute()){
+        RCLCPP_ERROR_STREAM(rclcpp::get_logger(logger_name), "Making first call to getLaneletsBetween"); 
+        double ending_downtrack = wm_->getRouteEndTrackPos().downtrack;
+        wm_->getLaneletsBetween(latest_route_state_.down_track, ending_downtrack);
+        RCLCPP_ERROR_STREAM(rclcpp::get_logger(logger_name), "Finished making first call to getLaneletsBetween"); 
+        has_received_route_state_ = true;
+      }
+    }
+
     latest_route_state_ = *msg;
   }
 
