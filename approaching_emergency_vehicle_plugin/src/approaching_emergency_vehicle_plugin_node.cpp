@@ -555,9 +555,10 @@ namespace approaching_emergency_vehicle_plugin
         return boost::optional<ErvInformation>(); // if opposite direction, do not track
       }
 
-      // erv_information.lane_index = wm_->getMapRoutingGraph()->rights(erv_current_lanelet).size();
+      // Get ERV's lane index
       int lane_index = wm_->getMapRoutingGraph()->rights(erv_current_lanelet).size();
 
+      // A currently-tracked ERV must report the same lane index twice in a row before it is assigned the new lane index
       if(has_tracked_erv_){
         if(lane_index == tracked_erv_.previous_lane_index){
           erv_information.lane_index = lane_index;
@@ -975,22 +976,6 @@ namespace approaching_emergency_vehicle_plugin
 
   void ApproachingEmergencyVehiclePlugin::routeStateCallback(carma_planning_msgs::msg::RouteState::UniquePtr msg)
   {
-    // TODO: A node's first call to CARMA World Model's getLaneletsBetween() function can take 1-4 seconds. This is a workaround to conduct this process as early as possible
-    //       to avoid this delay when processing ERV BSMs for Emergency Response Phase 1. A  more robust solution should be implemented for Phase 2.
-    // if(!has_received_route_state_){
-    //   if(wm_->getRoute()){
-    //     double current_downtrack = msg->down_track;
-    //     double ending_downtrack = wm_->getRouteEndTrackPos().downtrack;
-
-    //     if(current_downtrack < ending_downtrack){
-    //       RCLCPP_ERROR_STREAM(rclcpp::get_logger(logger_name), "Making first call to getLaneletsBetween"); 
-    //       wm_->getLaneletsBetween(current_downtrack, ending_downtrack);
-    //       RCLCPP_ERROR_STREAM(rclcpp::get_logger(logger_name), "Finished making first call to getLaneletsBetween"); 
-    //       has_received_route_state_ = true;
-    //     }
-    //   }
-    // }
-    
     latest_route_state_ = *msg;
   }
 

@@ -1,17 +1,17 @@
 # Double: A threshold; if the estimated duration until an ERV passes the ego vehicle is below this, the
 #         ERV is considered to be actively passing the ego vehicle.
 # Units: Seconds
-passing_threshold : 10.0
+passing_threshold : 13.0
 
 # Double: A threshold; if the estimated duration until an ERV passes the ego vehicle is below this, the
 #         ERV will no longer attempt to change lanes in reaction to an approaching ERV.
 # Units: Seconds
-approaching_threshold : 100.0
+approaching_threshold : 75.0
 
 # Double: A threshold; an actively-passing ERV is considered to have completed passing the ego vehicle when
 #         it is this distance in front of the ego vehicle.
 # Units: Meters
-finished_passing_threshold : 80.0 #152.4
+finished_passing_threshold : 152.4
 
 # Double: The minimum duration of lane following that must be planned before a lane change when in the 
 #         MOVING_OVER_FOR_APPROACHING_ERV state.
@@ -26,7 +26,7 @@ bsm_processing_frequency : 1.0
 # Double: The amount that the speed limit of a lanelet will be reduced by when planning a maneuver when an
 #         ERV is actively passing the ego vehicle.
 # Units: m/s
-speed_limit_reduction_during_passing : 8.94 #4.4704 #2.235 # NOTE: 4.4704 m/s is 10 mph
+speed_limit_reduction_during_passing : 4.4704 # NOTE: 4.4704 m/s is 10 mph
 
 # Double: The minimum speed limit that a lanelet's speed limit will be reduced to when an ERV is actively passing
 #         the ego vehicle.
@@ -64,7 +64,7 @@ warning_broadcast_frequency : 2.0
 # Int: The maximum number of times that an EmergencyVehicleResponse warning message will be broadcasted to an ERV if an
 #      EmergencyVehicleAck message is not received from the ERV.
 # Units: N/A
-max_warning_broadcasts : 60
+max_warning_broadcasts : 10
 
 # Double: The minimal duration of a generated maneuver plan.
 # Units: Seconds

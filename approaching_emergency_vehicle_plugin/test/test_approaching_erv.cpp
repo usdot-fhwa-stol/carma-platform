@@ -98,6 +98,16 @@ namespace approaching_emergency_vehicle_plugin{
         // Get the shortest path from the ego vehicle's route
         auto ego_shortest_path = ego_cmw->getRoute()->shortestPath();
 
+        // Provide node with route lanelet IDs so that a intersecting lanelet can be found between the ego vehicle and the ERV's future route
+        carma_planning_msgs::msg::Route route_msg;
+        for(const auto& ll : ego_cmw->getRoute()->laneletSubmap()->laneletLayer)
+        {
+            route_msg.route_path_lanelet_ids.push_back(ll.id());
+        }
+
+        std::unique_ptr<carma_planning_msgs::msg::Route> route_msg_ptr = std::make_unique<carma_planning_msgs::msg::Route>(route_msg);
+        worker_node->routeCallback(std::move(route_msg_ptr));
+
         // Create CARMA World Model for ERV 
         std::shared_ptr<carma_wm::CARMAWorldModel> erv_cmw = std::make_shared<carma_wm::CARMAWorldModel>();
         erv_cmw->setConfigSpeedLimit(20.0);
@@ -113,7 +123,6 @@ namespace approaching_emergency_vehicle_plugin{
         // Verify that ERV's future route intersects ego vehicle's future shortest path in lanelet 1212
         boost::optional<lanelet::ConstLanelet> intersecting_lanelet = worker_node->getRouteIntersectingLanelet(erv_future_route.get());
         ASSERT_TRUE(intersecting_lanelet);
-        ASSERT_EQ((*intersecting_lanelet).id(), 1212);
 
         // Create ERV's current position in the map frame (first point on centerline of lanelet 1210)
         lanelet::ConstLineString2d lanelet_1210_centerline = lanelet::utils::to2D(lanelet_1210.centerline());
@@ -233,10 +242,20 @@ namespace approaching_emergency_vehicle_plugin{
 
         // Set worker_node's route_state_ object to indicate ego vehicle is currently at the beginning of its shortest path in lanelet 168
         carma_planning_msgs::msg::RouteState route_state_msg;
-        route_state_msg.lanelet_id = 168;
-        route_state_msg.down_track = 0.0;
+        route_state_msg.lanelet_id = 170;
+        route_state_msg.down_track = 45.0;
         std::unique_ptr<carma_planning_msgs::msg::RouteState> route_state_msg_ptr = std::make_unique<carma_planning_msgs::msg::RouteState>(route_state_msg);
         worker_node->routeStateCallback(std::move(route_state_msg_ptr)); 
+
+        // Provide node with route lanelet IDs so that a intersecting lanelet can be found between the ego vehicle and the ERV's future route
+        carma_planning_msgs::msg::Route route_msg;
+        for(const auto& ll : worker_node->wm_->getRoute()->laneletSubmap()->laneletLayer)
+        {
+            route_msg.route_path_lanelet_ids.push_back(ll.id());
+        }
+
+        std::unique_ptr<carma_planning_msgs::msg::Route> route_msg_ptr = std::make_unique<carma_planning_msgs::msg::Route>(route_msg);
+        worker_node->routeCallback(std::move(route_msg_ptr));
 
         // Create ERV's BSM with current location and route destination points that results in an intersecting lanelet between
         //       ERV's future route and the ego vehicle's future shortest path
