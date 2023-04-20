@@ -49,7 +49,7 @@ timeout_check_frequency : 2.0
 # Double: If no BSM has been received from the currently-tracked ERV, than the ERV will no longer be tracked by
 #         this plugin. 
 # Units: Seconds
-timeout_duration : 5.0
+timeout_duration : 15.0
 
 # Double: The frequency at which this plugin will publish status updates to the Web UI that describe the estimated time until an approaching ERV
 #         passes the ego vehicle, and a description of the ego vehicle's path plan in response to the approaching ERV. 
