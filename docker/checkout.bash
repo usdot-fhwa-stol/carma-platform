@@ -45,13 +45,13 @@ if [[ "$BRANCH" = "develop" ]]; then
       git clone --depth=1 https://github.com/usdot-fhwa-stol/carma-utils.git --branch $BRANCH
       git clone --depth=1 https://github.com/usdot-fhwa-stol/carma-messenger.git --branch $BRANCH
 else
-      git clone --depth=1 https://github.com/usdot-fhwa-stol/carma-msgs.git --branch develop
-      git clone --depth=1 https://github.com/usdot-fhwa-stol/carma-utils.git --branch develop
-      git clone --depth=1 https://github.com/usdot-fhwa-stol/carma-messenger.git --branch develop
+      git clone --depth=1 https://github.com/usdot-fhwa-stol/carma-msgs.git --branch release/k900
+      git clone --depth=1 https://github.com/usdot-fhwa-stol/carma-utils.git --branch release/k900
+      git clone --depth=1 https://github.com/usdot-fhwa-stol/carma-messenger.git --branch release/k900
 fi
 
 # Get humble branch of message filters which supports template Node arguments (foxy version supports rclcpp::Node only)
-git clone https://github.com/usdot-fhwa-stol/carma-message-filters.git --branch develop
+git clone https://github.com/usdot-fhwa-stol/carma-message-filters.git --branch release/k900
 
 # add astuff messages
 # NOTE: The ibeo_msgs package is ignored because on build the cmake files in that package run a sed command 
@@ -77,7 +77,7 @@ cd ${dir}/src
 
 # git clone --branch master --depth 1 https://github.com/nitroshare/qhttpengine.git
 git clone -b master --depth 1 https://github.com/etherealjoy/qhttpengine.git
-git clone -b develop --depth 1 https://github.com/usdot-fhwa-OPS/V2X-Hub.git
+git clone -b k900 --depth 1 https://github.com/usdot-fhwa-OPS/V2X-Hub.git
 cd V2X-Hub
 git config core.sparsecheckout true
 git sparse-checkout init
