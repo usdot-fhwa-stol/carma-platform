@@ -170,6 +170,9 @@ namespace approaching_emergency_vehicle_plugin
     guidance_state_sub_ = create_subscription<carma_planning_msgs::msg::GuidanceState>("state", 1,
                                           std::bind(&ApproachingEmergencyVehiclePlugin::guidanceStateCallback, this, std_ph::_1));
 
+    route_sub_ = create_subscription<carma_planning_msgs::msg::Route>("route", 1,
+                                          std::bind(&ApproachingEmergencyVehiclePlugin::routeCallback, this, std_ph::_1));
+
     // Setup publishers
     outgoing_emergency_vehicle_response_pub_ = create_publisher<carma_v2x_msgs::msg::EmergencyVehicleResponse>("outgoing_emergency_vehicle_response", 10);
 
@@ -560,7 +563,8 @@ namespace approaching_emergency_vehicle_plugin
           erv_information.lane_index = lane_index;
         }
         else{
-          RCLCPP_ERROR_STREAM(rclcpp::get_logger(logger_name), "Detected first new lane index of " << lane_index << ", ERV's lane index will remain " << tracked_erv_.lane_index);
+          erv_information.lane_index = tracked_erv_.previous_lane_index;
+          RCLCPP_ERROR_STREAM(rclcpp::get_logger(logger_name), "Detected first new lane index of " << lane_index << ", ERV's lane index will remain " << tracked_erv_.previous_lane_index);
         }
 
         erv_information.previous_lane_index = lane_index;
@@ -844,6 +848,13 @@ namespace approaching_emergency_vehicle_plugin
     if(!erv_information){
         RCLCPP_ERROR_STREAM(rclcpp::get_logger(logger_name), "BSM is not from an active ERV that is approaching the ego vehicle.");
 
+        if(has_tracked_erv_){
+          RCLCPP_ERROR_STREAM(rclcpp::get_logger(logger_name), "BSM was from the currently tracked approaching ERV! ERV is no longer approaching.");
+          has_tracked_erv_ = false;
+          has_planned_upcoming_lc_ = false;
+          transition_table_.event(ApproachingEmergencyVehicleEvent::NO_APPROACHING_ERV);
+        }
+
       // BSM is not from an active ERV that is approaching the ego vehicle
       return;
     }
@@ -893,6 +904,9 @@ namespace approaching_emergency_vehicle_plugin
         }
         else{
           RCLCPP_ERROR_STREAM(rclcpp::get_logger(logger_name), "ERV has passed the ego vehicle");
+          has_tracked_erv_ = false;
+          has_planned_upcoming_lc_ = false;
+          transition_table_.event(ApproachingEmergencyVehicleEvent::ERV_PASSED);
           return boost::optional<double>();
         }
       }
@@ -920,40 +934,63 @@ namespace approaching_emergency_vehicle_plugin
 
   boost::optional<lanelet::ConstLanelet> ApproachingEmergencyVehiclePlugin::getRouteIntersectingLanelet(const lanelet::routing::Route& erv_future_route){
 
-    // Get the ego vehicle's future shortest path lanelets
-    double ending_downtrack = wm_->getRouteEndTrackPos().downtrack;
-    std::vector<lanelet::ConstLanelet> ego_future_shortest_path = wm_->getLaneletsBetween(latest_route_state_.down_track, ending_downtrack);
-
-    if(ego_future_shortest_path.empty()){
-      RCLCPP_WARN_STREAM(rclcpp::get_logger(logger_name), "Remaining shortest path for ego vehicle not found; intersecting lanelet with ERV will not be computed"); 
+    if(future_route_lanelet_ids_.empty()){
+      RCLCPP_WARN_STREAM(rclcpp::get_logger(logger_name), "Remaining route lanelets for the ego vehicle not found; plugin cannot compute the intersecting lanelet."); 
       return boost::optional<lanelet::ConstLanelet>();
     }
 
-    // Loop through ego vehicle's future shortest path and find first lanelet that exists in ERV's future route
-    for(size_t i = 0; i < ego_future_shortest_path.size(); ++i){
-      if(erv_future_route.contains(ego_future_shortest_path[i])){
-        return boost::optional<lanelet::ConstLanelet>(ego_future_shortest_path[i]);
+    // Get current downtrack from latest_route_state_
+    double current_downtrack = latest_route_state_.down_track;
+
+    // Find first successful intersecting lanelet between ERV route and ego route with a lanelet starting downtrack greater than current downtrack.
+    // Additionally, remove lanelets from future_route_lanelet_ids_ that the ego vehicle has passed.
+    for(auto it = future_route_lanelet_ids_.begin(); it != future_route_lanelet_ids_.end();){
+      // Get lanelet
+      lanelet::Id ego_route_lanelet_id = *it;
+      lanelet::ConstLanelet ego_route_lanelet = wm_->getMap()->laneletLayer.get(ego_route_lanelet_id);
+
+      // Get lanelet's centerline end point downtrack
+      lanelet::BasicPoint2d ego_route_lanelet_centerline_end = lanelet::utils::to2D(ego_route_lanelet.centerline()).back();
+      double ego_route_lanelet_centerline_end_downtrack = wm_->routeTrackPos(ego_route_lanelet_centerline_end).downtrack;
+
+      if(current_downtrack > ego_route_lanelet_centerline_end_downtrack){
+        // If current downtrack is greater than lanelet ending downtrack, remove lanelet from future route lanelet and continue
+        // NOTE: Iterator is not updated since an element is being erased
+        RCLCPP_ERROR_STREAM(rclcpp::get_logger(logger_name), "Removing passed lanelet " << ego_route_lanelet_id); 
+        future_route_lanelet_ids_.erase(it);
+      }
+      else{
+        // If lanelet exists in both, return it as the intersecting lanelet
+        if(erv_future_route.contains(ego_route_lanelet)){
+          RCLCPP_ERROR_STREAM(rclcpp::get_logger(logger_name), "Found intersecting lanelet " << ego_route_lanelet_id); 
+          return boost::optional<lanelet::ConstLanelet>(ego_route_lanelet);
+        }
+        else{
+          // Increase iterator
+          ++it;
+        }
       }
     }
-
-    // No intersecting lanelet was found, return empty object
-    return boost::optional<lanelet::ConstLanelet>();
   }
 
   void ApproachingEmergencyVehiclePlugin::routeStateCallback(carma_planning_msgs::msg::RouteState::UniquePtr msg)
   {
     // TODO: A node's first call to CARMA World Model's getLaneletsBetween() function can take 1-4 seconds. This is a workaround to conduct this process as early as possible
     //       to avoid this delay when processing ERV BSMs for Emergency Response Phase 1. A  more robust solution should be implemented for Phase 2.
-    if(!has_received_route_state_){
-      if(wm_->getRoute()){
-        RCLCPP_ERROR_STREAM(rclcpp::get_logger(logger_name), "Making first call to getLaneletsBetween"); 
-        double ending_downtrack = wm_->getRouteEndTrackPos().downtrack;
-        wm_->getLaneletsBetween(latest_route_state_.down_track, ending_downtrack);
-        RCLCPP_ERROR_STREAM(rclcpp::get_logger(logger_name), "Finished making first call to getLaneletsBetween"); 
-        has_received_route_state_ = true;
-      }
-    }
+    // if(!has_received_route_state_){
+    //   if(wm_->getRoute()){
+    //     double current_downtrack = msg->down_track;
+    //     double ending_downtrack = wm_->getRouteEndTrackPos().downtrack;
 
+    //     if(current_downtrack < ending_downtrack){
+    //       RCLCPP_ERROR_STREAM(rclcpp::get_logger(logger_name), "Making first call to getLaneletsBetween"); 
+    //       wm_->getLaneletsBetween(current_downtrack, ending_downtrack);
+    //       RCLCPP_ERROR_STREAM(rclcpp::get_logger(logger_name), "Finished making first call to getLaneletsBetween"); 
+    //       has_received_route_state_ = true;
+    //     }
+    //   }
+    // }
+    
     latest_route_state_ = *msg;
   }
 
@@ -968,6 +1005,18 @@ namespace approaching_emergency_vehicle_plugin
     else{
       is_guidance_engaged_ = false;
     }
+  }
+
+  void ApproachingEmergencyVehiclePlugin::routeCallback(carma_planning_msgs::msg::Route::UniquePtr msg){
+    RCLCPP_ERROR_STREAM(rclcpp::get_logger(logger_name), "Received route callback"); 
+    std::vector<int> new_future_route_lanelet_ids;
+
+    for(size_t i = 0; i < msg->route_path_lanelet_ids.size(); ++i){
+      RCLCPP_ERROR_STREAM(rclcpp::get_logger(logger_name), "New route lanelet: " << msg->route_path_lanelet_ids[i]); 
+      new_future_route_lanelet_ids.push_back(msg->route_path_lanelet_ids[i]);
+    }
+    
+    future_route_lanelet_ids_ = new_future_route_lanelet_ids;
   }
 
   double ApproachingEmergencyVehiclePlugin::getLaneletSpeedLimit(const lanelet::ConstLanelet& lanelet)
