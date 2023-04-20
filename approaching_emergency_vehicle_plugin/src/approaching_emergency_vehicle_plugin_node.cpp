@@ -215,11 +215,6 @@ namespace approaching_emergency_vehicle_plugin
     return CallbackReturn::SUCCESS;
   }
 
-
-
-
-
-
   void ApproachingEmergencyVehiclePlugin::publishHazardLightStatus()
   {
     if (transition_table_.getState() == ApproachingEmergencyVehicleState::SLOWING_DOWN_FOR_ERV &&
@@ -237,10 +232,6 @@ namespace approaching_emergency_vehicle_plugin
     hazard_light_cmd_pub_->publish(msg);
   }
 
-
-
-
-
   void ApproachingEmergencyVehiclePlugin::checkForErvTimeout(){
     // Trigger timeout event if a timeout has occurred for the currently tracked ERV
     if(has_tracked_erv_){
@@ -257,7 +248,7 @@ namespace approaching_emergency_vehicle_plugin
 
   void ApproachingEmergencyVehiclePlugin::broadcastWarningToErv(){
     if(has_tracked_erv_ && should_broadcast_warnings_){
-      RCLCPP_ERROR_STREAM(rclcpp::get_logger(logger_name), "Sending a warning message to " << tracked_erv_.vehicle_id);
+      RCLCPP_DEBUG_STREAM(rclcpp::get_logger(logger_name), "Sending a warning message to " << tracked_erv_.vehicle_id);
 
       carma_v2x_msgs::msg::EmergencyVehicleResponse msg;
       msg.m_header.sender_id = config_.vehicle_id;
@@ -273,7 +264,7 @@ namespace approaching_emergency_vehicle_plugin
 
       // Reset counter and boolean flag if the maximum number of warnings have been broadcasted
       if(num_warnings_broadcasted_ >= config_.max_warning_broadcasts){
-        RCLCPP_ERROR_STREAM(rclcpp::get_logger(logger_name), "Maximum number of warning messages sent to " << tracked_erv_.vehicle_id);
+        RCLCPP_DEBUG_STREAM(rclcpp::get_logger(logger_name), "Maximum number of warning messages sent to " << tracked_erv_.vehicle_id);
         num_warnings_broadcasted_ = 0;
         should_broadcast_warnings_ = false;
       }
@@ -444,7 +435,7 @@ namespace approaching_emergency_vehicle_plugin
 
     if(!has_active_lights_and_sirens){
       // BSM is not a valid ERV BSM since the lights and sirens are not both active; return an empty object
-      RCLCPP_ERROR_STREAM(rclcpp::get_logger(logger_name), "BSM is not a valid ERV BSM since the lights and sirens are not both active; return an empty object");
+      RCLCPP_DEBUG_STREAM(rclcpp::get_logger(logger_name), "BSM is not a valid ERV BSM since the lights and sirens are not both active; return an empty object");
 
       return boost::optional<ErvInformation>();
     }
@@ -511,7 +502,7 @@ namespace approaching_emergency_vehicle_plugin
     }
     
     if(erv_destination_points.empty()){
-      RCLCPP_ERROR_STREAM(rclcpp::get_logger(logger_name), "erv_destination_points");
+      RCLCPP_ERROR_STREAM(rclcpp::get_logger(logger_name), "ERV's BSM does not contain any future destination points");
       
       // BSM is not a valid ERV BSM since it does not include destination points; return an empty object
       return boost::optional<ErvInformation>();
@@ -522,7 +513,7 @@ namespace approaching_emergency_vehicle_plugin
 
     if(!erv_future_route){
       // ERV cannot be tracked since its route could not be generated; return an empty object
-      RCLCPP_ERROR_STREAM(rclcpp::get_logger(logger_name), "route error");
+      RCLCPP_ERROR_STREAM(rclcpp::get_logger(logger_name), "The ERV's route could not be generated");
 
       return boost::optional<ErvInformation>();
     }
@@ -543,7 +534,7 @@ namespace approaching_emergency_vehicle_plugin
           {
             is_same_direction_[erv_information.vehicle_id] = true;
 
-            RCLCPP_ERROR_STREAM(rclcpp::get_logger(logger_name), "Detected that ERV: " << erv_information.vehicle_id << " and CMV are on the SAME direction");
+            RCLCPP_DEBUG_STREAM(rclcpp::get_logger(logger_name), "Detected that ERV: " << erv_information.vehicle_id << " and CMV are travelling in the SAME direction");
             break;
           }
         }
@@ -551,7 +542,7 @@ namespace approaching_emergency_vehicle_plugin
 
       if (!is_same_direction_[erv_information.vehicle_id])  // opposite direction
       {
-        RCLCPP_ERROR_STREAM(rclcpp::get_logger(logger_name), "Detected that ERV and CMV are on the DIFFERENT direction");
+        RCLCPP_DEBUG_STREAM(rclcpp::get_logger(logger_name), "Detected that ERV and CMV are travelling in DIFFERENT directions");
         return boost::optional<ErvInformation>(); // if opposite direction, do not track
       }
 
@@ -565,19 +556,19 @@ namespace approaching_emergency_vehicle_plugin
         }
         else{
           erv_information.lane_index = tracked_erv_.previous_lane_index;
-          RCLCPP_ERROR_STREAM(rclcpp::get_logger(logger_name), "Detected first new lane index of " << lane_index << ", ERV's lane index will remain " << tracked_erv_.previous_lane_index);
+          RCLCPP_DEBUG_STREAM(rclcpp::get_logger(logger_name), "Detected first new lane index of " << lane_index << ", ERV's lane index will remain " << tracked_erv_.previous_lane_index);
         }
 
         erv_information.previous_lane_index = lane_index;
       }
       else{
-        RCLCPP_ERROR_STREAM(rclcpp::get_logger(logger_name), "First time detecting this ERV, it's lane index will be " << lane_index);
+        RCLCPP_DEBUG_STREAM(rclcpp::get_logger(logger_name), "First time detecting this ERV, it's lane index will be " << lane_index);
         erv_information.lane_index = lane_index;
         erv_information.previous_lane_index = lane_index;
       }
 
      
-      RCLCPP_ERROR_STREAM(rclcpp::get_logger(logger_name), "ERV's lane index is " << erv_information.lane_index);
+      RCLCPP_DEBUG_STREAM(rclcpp::get_logger(logger_name), "ERV's lane index is " << erv_information.lane_index);
 
     }
     else{
@@ -585,28 +576,28 @@ namespace approaching_emergency_vehicle_plugin
     }
 
     // Get intersecting lanelet between ERV's future route and ego vehicle's future shortest path
-    RCLCPP_ERROR_STREAM(rclcpp::get_logger(logger_name), "Calling getRouteIntersectingLanelet"); 
+    RCLCPP_DEBUG_STREAM(rclcpp::get_logger(logger_name), "Calling getRouteIntersectingLanelet"); 
     boost::optional<lanelet::ConstLanelet> intersecting_lanelet = getRouteIntersectingLanelet(erv_future_route.get());
-    RCLCPP_ERROR_STREAM(rclcpp::get_logger(logger_name), "Done calling getRouteIntersectingLanelet"); 
+    RCLCPP_DEBUG_STREAM(rclcpp::get_logger(logger_name), "Done calling getRouteIntersectingLanelet"); 
 
     if(intersecting_lanelet){
       erv_information.intersecting_lanelet = *intersecting_lanelet;
     }
     else{
       // No intersecting lanelet between ERV and ego vehicle was found; return an empty object
-      RCLCPP_ERROR_STREAM(rclcpp::get_logger(logger_name), "no intersection");
+      RCLCPP_ERROR_STREAM(rclcpp::get_logger(logger_name), "No intersecting lanelet between the ERV's future route and the ego vehicle's future route was found.");
 
       return boost::optional<ErvInformation>();
     }
 
     // Get the time (seconds) until the ERV passes the ego vehicle
-    RCLCPP_ERROR_STREAM(rclcpp::get_logger(logger_name), "Calling getSecondsUntilPassing()"); 
+    RCLCPP_DEBUG_STREAM(rclcpp::get_logger(logger_name), "Calling getSecondsUntilPassing()"); 
     boost::optional<double> seconds_until_passing = getSecondsUntilPassing(erv_future_route, erv_information.current_position_in_map, erv_information.current_speed, erv_information.intersecting_lanelet);
-    RCLCPP_ERROR_STREAM(rclcpp::get_logger(logger_name), "Done calling getSecondsUntilPassing()"); 
+    RCLCPP_DEBUG_STREAM(rclcpp::get_logger(logger_name), "Done calling getSecondsUntilPassing()"); 
 
     if(seconds_until_passing){
       erv_information.seconds_until_passing = seconds_until_passing.get();
-      RCLCPP_ERROR_STREAM(rclcpp::get_logger(logger_name), "Detected approaching ERV that is passing ego vehicle in " << seconds_until_passing.get() << " seconds");
+      RCLCPP_INFO_STREAM(rclcpp::get_logger(logger_name), "Detected approaching ERV that is passing ego vehicle in " << seconds_until_passing.get() << " seconds");
     }
     else{
       RCLCPP_ERROR_STREAM(rclcpp::get_logger(logger_name), "Detected ERV is not approaching the ego vehicle");
@@ -628,7 +619,7 @@ namespace approaching_emergency_vehicle_plugin
   {
     // Only process message if it is from the currently-tracked ERV and it is intended for the ego vehicle
     if(has_tracked_erv_ && (msg->m_header.sender_id == tracked_erv_.vehicle_id) && (msg->m_header.recipient_id == config_.vehicle_id)){
-      RCLCPP_ERROR_STREAM(rclcpp::get_logger(logger_name), "EmergencyVehicleAck received from ERV " << tracked_erv_.vehicle_id);
+      RCLCPP_DEBUG_STREAM(rclcpp::get_logger(logger_name), "EmergencyVehicleAck received from ERV " << tracked_erv_.vehicle_id);
 
       // Reset counter and boolean flag to stop warning messages from being broadcasted
       num_warnings_broadcasted_ = 0;
@@ -683,7 +674,7 @@ namespace approaching_emergency_vehicle_plugin
 
     if(shortened_erv_destination_points_in_map.empty())
     {
-        RCLCPP_ERROR_STREAM(rclcpp::get_logger(logger_name), "Passed all the destination points!");
+        RCLCPP_ERROR_STREAM(rclcpp::get_logger(logger_name), "ERV has passed all the destination points!");
 
         // Return empty route
         return lanelet::Optional<lanelet::routing::Route>();
@@ -695,7 +686,7 @@ namespace approaching_emergency_vehicle_plugin
 
       // Return empty route if a destination point is not contained within the map
       if((wm_->getLaneletsFromPoint(shortened_erv_destination_points_in_map[i])).empty()){
-        RCLCPP_ERROR_STREAM(rclcpp::get_logger(logger_name), "ERV destination point " << i 
+        RCLCPP_DEBUG_STREAM(rclcpp::get_logger(logger_name), "ERV destination point " << i 
                 << " is not contained in a lanelet map; x: " << pt.x() << " y: " << pt.y());
 
         return lanelet::Optional<lanelet::routing::Route>();
@@ -716,8 +707,8 @@ namespace approaching_emergency_vehicle_plugin
     // Obtain ERV's ending lanelet
     auto ending_lanelet_vector = lanelet::geometry::findNearest(wm_->getMap()->laneletLayer, shortened_erv_destination_points_in_map.back(), 1);
     auto ending_lanelet = lanelet::ConstLanelet(ending_lanelet_vector[0].second.constData());
-    RCLCPP_ERROR_STREAM(rclcpp::get_logger(logger_name), "ending_lanelet: " << ending_lanelet.id());
-    RCLCPP_ERROR_STREAM(rclcpp::get_logger(logger_name), "starting_lanelet: " << starting_lanelet.id());
+    RCLCPP_DEBUG_STREAM(rclcpp::get_logger(logger_name), "ending_lanelet: " << ending_lanelet.id());
+    RCLCPP_DEBUG_STREAM(rclcpp::get_logger(logger_name), "starting_lanelet: " << starting_lanelet.id());
 
     // Obtain ERV's via lanelets
     std::vector<lanelet::BasicPoint2d> via = std::vector<lanelet::BasicPoint2d>(shortened_erv_destination_points_in_map.begin(), shortened_erv_destination_points_in_map.end() - 1);
@@ -725,13 +716,13 @@ namespace approaching_emergency_vehicle_plugin
     for(const auto& point : via){
       auto lanelet_vector = lanelet::geometry::findNearest(wm_->getMap()->laneletLayer, point, 1);
       auto chosen_lanelet_to_emplace = lanelet::ConstLanelet(lanelet_vector[0].second.constData());
-      RCLCPP_ERROR_STREAM(rclcpp::get_logger(logger_name), "chosen_lanelet_to_emplace: " << chosen_lanelet_to_emplace.id());
+      RCLCPP_DEBUG_STREAM(rclcpp::get_logger(logger_name), "chosen_lanelet_to_emplace: " << chosen_lanelet_to_emplace.id());
 
       if (chosen_lanelet_to_emplace.id() != starting_lanelet.id())  // if id is same, it fails to route
         via_lanelets_vector.emplace_back(chosen_lanelet_to_emplace);
       else
       {
-        RCLCPP_ERROR_STREAM(rclcpp::get_logger(logger_name), "======> id was found same: " << chosen_lanelet_to_emplace.id());
+        RCLCPP_DEBUG_STREAM(rclcpp::get_logger(logger_name), "======> id was found same: " << chosen_lanelet_to_emplace.id());
       }
     }
 
@@ -767,8 +758,8 @@ namespace approaching_emergency_vehicle_plugin
       double v2x = extended_points[i+1].x() - extended_points[i].x();
       double v2y = extended_points[i+1].y() - extended_points[i].y();
 
-      RCLCPP_ERROR_STREAM(rclcpp::get_logger(logger_name), "reference_point x: " << reference_point.x() << ", y: " << reference_point.y());
-      RCLCPP_ERROR_STREAM(rclcpp::get_logger(logger_name), "extended_points x: " << extended_points[i].x() << ", y: " << extended_points[i].y());
+      RCLCPP_DEBUG_STREAM(rclcpp::get_logger(logger_name), "reference_point x: " << reference_point.x() << ", y: " << reference_point.y());
+      RCLCPP_DEBUG_STREAM(rclcpp::get_logger(logger_name), "extended_points x: " << extended_points[i].x() << ", y: " << extended_points[i].y());
 
 
       // Calculate dot product
@@ -791,7 +782,7 @@ namespace approaching_emergency_vehicle_plugin
         {
           closest_dist = distance;
           closest_idx = i;
-          RCLCPP_ERROR_STREAM(rclcpp::get_logger(logger_name), "closest_dist: " << closest_dist << ", closest_idx" << closest_idx);
+          RCLCPP_DEBUG_STREAM(rclcpp::get_logger(logger_name), "closest_dist: " << closest_dist << ", closest_idx" << closest_idx);
 
         }
       }
@@ -847,10 +838,10 @@ namespace approaching_emergency_vehicle_plugin
     // Get ErvInformation object with information from the BSM if it is from an active ERV that is approaching the ego vehicle
     boost::optional<ErvInformation> erv_information = getErvInformationFromBsm(std::move(msg));
     if(!erv_information){
-        RCLCPP_ERROR_STREAM(rclcpp::get_logger(logger_name), "BSM is not from an active ERV that is approaching the ego vehicle.");
+        RCLCPP_DEBUG_STREAM(rclcpp::get_logger(logger_name), "BSM is not from an active ERV that is approaching the ego vehicle.");
 
         if(has_tracked_erv_){
-          RCLCPP_ERROR_STREAM(rclcpp::get_logger(logger_name), "BSM was from the currently tracked approaching ERV! ERV is no longer approaching.");
+          RCLCPP_INFO_STREAM(rclcpp::get_logger(logger_name), "BSM was from the currently tracked approaching ERV! ERV is no longer approaching.");
           has_tracked_erv_ = false;
           has_planned_upcoming_lc_ = false;
           transition_table_.event(ApproachingEmergencyVehicleEvent::NO_APPROACHING_ERV);
@@ -894,7 +885,7 @@ namespace approaching_emergency_vehicle_plugin
       // When ERV is in front of the ego vehicle, only process further if the ERV is actively passing the ego vehicle
 
       if(transition_table_.getState() != ApproachingEmergencyVehicleState::SLOWING_DOWN_FOR_ERV){
-        RCLCPP_ERROR_STREAM(rclcpp::get_logger(logger_name), "Detected ERV is in front of the ego vehicle");
+        RCLCPP_DEBUG_STREAM(rclcpp::get_logger(logger_name), "Detected ERV is in front of the ego vehicle");
         return boost::optional<double>();
       }
       else{
@@ -904,7 +895,7 @@ namespace approaching_emergency_vehicle_plugin
           return 0.0;
         }
         else{
-          RCLCPP_ERROR_STREAM(rclcpp::get_logger(logger_name), "ERV has passed the ego vehicle");
+          RCLCPP_DEBUG_STREAM(rclcpp::get_logger(logger_name), "ERV has passed the ego vehicle");
           has_tracked_erv_ = false;
           has_planned_upcoming_lc_ = false;
           transition_table_.event(ApproachingEmergencyVehicleEvent::ERV_PASSED);
@@ -916,7 +907,7 @@ namespace approaching_emergency_vehicle_plugin
       // When ERV is behind the ego vehicle, only process further if the ERV is travelling faster than the ego vehicle
 
       if(erv_current_speed < current_speed_){
-        RCLCPP_ERROR_STREAM(rclcpp::get_logger(logger_name), "Detected ERV is travelling slower than the ego vehicle, and will not pass the ego vehicle");
+        RCLCPP_DEBUG_STREAM(rclcpp::get_logger(logger_name), "Detected ERV is travelling slower than the ego vehicle, and will not pass the ego vehicle");
         return boost::optional<double>();
       }
       else{
@@ -957,13 +948,13 @@ namespace approaching_emergency_vehicle_plugin
       if(current_downtrack > ego_route_lanelet_centerline_end_downtrack){
         // If current downtrack is greater than lanelet ending downtrack, remove lanelet from future route lanelet and continue
         // NOTE: Iterator is not updated since an element is being erased
-        RCLCPP_ERROR_STREAM(rclcpp::get_logger(logger_name), "Removing passed lanelet " << ego_route_lanelet_id); 
+        RCLCPP_DEBUG_STREAM(rclcpp::get_logger(logger_name), "Removing passed lanelet " << ego_route_lanelet_id); 
         future_route_lanelet_ids_.erase(it);
       }
       else{
         // If lanelet exists in both, return it as the intersecting lanelet
         if(erv_future_route.contains(ego_route_lanelet)){
-          RCLCPP_ERROR_STREAM(rclcpp::get_logger(logger_name), "Found intersecting lanelet " << ego_route_lanelet_id); 
+          RCLCPP_DEBUG_STREAM(rclcpp::get_logger(logger_name), "Found intersecting lanelet " << ego_route_lanelet_id); 
           return boost::optional<lanelet::ConstLanelet>(ego_route_lanelet);
         }
         else{
@@ -993,11 +984,11 @@ namespace approaching_emergency_vehicle_plugin
   }
 
   void ApproachingEmergencyVehiclePlugin::routeCallback(carma_planning_msgs::msg::Route::UniquePtr msg){
-    RCLCPP_ERROR_STREAM(rclcpp::get_logger(logger_name), "Received route callback"); 
+    RCLCPP_DEBUG_STREAM(rclcpp::get_logger(logger_name), "Received route callback"); 
     std::vector<int> new_future_route_lanelet_ids;
 
     for(size_t i = 0; i < msg->route_path_lanelet_ids.size(); ++i){
-      RCLCPP_ERROR_STREAM(rclcpp::get_logger(logger_name), "New route lanelet: " << msg->route_path_lanelet_ids[i]); 
+      RCLCPP_DEBUG_STREAM(rclcpp::get_logger(logger_name), "New route lanelet: " << msg->route_path_lanelet_ids[i]); 
       new_future_route_lanelet_ids.push_back(msg->route_path_lanelet_ids[i]);
     }
     
@@ -1062,9 +1053,9 @@ namespace approaching_emergency_vehicle_plugin
     rclcpp::Duration maneuver_duration = getManeuverDuration(maneuver_msg, epsilon_);
     maneuver_msg.lane_following_maneuver.end_time = start_time + maneuver_duration;
 
-    RCLCPP_ERROR_STREAM(rclcpp::get_logger(logger_name), "Composed lane follow maneuver for lanelet ID:" << lanelet_id << " with duration " << maneuver_duration.seconds());
-    RCLCPP_ERROR_STREAM(rclcpp::get_logger(logger_name), "start speed: " << start_speed << ", end speed: " << target_speed);
-    RCLCPP_ERROR_STREAM(rclcpp::get_logger(logger_name), "start dist: " << start_dist << ", end dist: " << end_dist);
+    RCLCPP_DEBUG_STREAM(rclcpp::get_logger(logger_name), "Composed lane follow maneuver for lanelet ID:" << lanelet_id << " with duration " << maneuver_duration.seconds());
+    RCLCPP_DEBUG_STREAM(rclcpp::get_logger(logger_name), "start speed: " << start_speed << ", end speed: " << target_speed);
+    RCLCPP_DEBUG_STREAM(rclcpp::get_logger(logger_name), "start dist: " << start_dist << ", end dist: " << end_dist);
 
     return maneuver_msg;
   }
@@ -1098,9 +1089,9 @@ namespace approaching_emergency_vehicle_plugin
       maneuver_msg.lane_change_maneuver.parameters.maneuver_id = boost::lexical_cast<std::string>(gen()); // generate uuid and convert to string
     }
 
-    RCLCPP_ERROR_STREAM(get_logger(),"Creating lane change id: "  << maneuver_msg.lane_change_maneuver.parameters.maneuver_id << "start dist: " << start_dist << " end dist: " << end_dist << " Starting llt: " << starting_lane_id << " Ending llt: " << ending_lane_id);
-    RCLCPP_ERROR_STREAM(rclcpp::get_logger(logger_name), "start speed: " << start_speed << ", end speed: " << target_speed << ", duration: " << maneuver_duration.seconds());
-    RCLCPP_ERROR_STREAM(rclcpp::get_logger(logger_name), "start dist: " << start_dist << ", end dist: " << end_dist);
+    RCLCPP_DEBUG_STREAM(get_logger(),"Creating lane change id: "  << maneuver_msg.lane_change_maneuver.parameters.maneuver_id << "start dist: " << start_dist << " end dist: " << end_dist << " Starting llt: " << starting_lane_id << " Ending llt: " << ending_lane_id);
+    RCLCPP_DEBUG_STREAM(rclcpp::get_logger(logger_name), "start speed: " << start_speed << ", end speed: " << target_speed << ", duration: " << maneuver_duration.seconds());
+    RCLCPP_DEBUG_STREAM(rclcpp::get_logger(logger_name), "start dist: " << start_dist << ", end dist: " << end_dist);
 
     return maneuver_msg;
   }
@@ -1132,9 +1123,9 @@ namespace approaching_emergency_vehicle_plugin
     static auto gen = boost::uuids::random_generator(); // Initialize uuid generator
     maneuver_msg.stop_and_wait_maneuver.parameters.maneuver_id = boost::lexical_cast<std::string>(gen()); // generate uuid and convert to string
 
-    RCLCPP_ERROR_STREAM(rclcpp::get_logger(logger_name), "Composed stop and wait maneuver for with start lanelet:" << starting_lane_id << ", end lanelet: " << ending_lane_id << " with duration " << maneuver_duration.seconds());
-    RCLCPP_ERROR_STREAM(rclcpp::get_logger(logger_name), "start speed: " << start_speed);
-    RCLCPP_ERROR_STREAM(rclcpp::get_logger(logger_name), "start dist: " << start_dist << ", end dist: " << end_dist);
+    RCLCPP_DEBUG_STREAM(rclcpp::get_logger(logger_name), "Composed stop and wait maneuver for with start lanelet:" << starting_lane_id << ", end lanelet: " << ending_lane_id << " with duration " << maneuver_duration.seconds());
+    RCLCPP_DEBUG_STREAM(rclcpp::get_logger(logger_name), "start speed: " << start_speed);
+    RCLCPP_DEBUG_STREAM(rclcpp::get_logger(logger_name), "start dist: " << start_dist << ", end dist: " << end_dist);
 
     return maneuver_msg;
   }
@@ -1144,7 +1135,7 @@ namespace approaching_emergency_vehicle_plugin
                           double stopping_entry_speed, double stopping_deceleration, double current_lanelet_ending_downtrack,
                           lanelet::ConstLanelet current_lanelet, rclcpp::Time time_progress)
   {
-    RCLCPP_ERROR_STREAM(rclcpp::get_logger(logger_name), "Maneuver plan is reaching the end of the route");
+    RCLCPP_DEBUG_STREAM(rclcpp::get_logger(logger_name), "Maneuver plan is reaching the end of the route");
 
     // Add a lane follow maneuver before the stop and wait maneuver if the distance before stop_maneuver_beginning_downtrack is too large
     if((stop_maneuver_beginning_downtrack - downtrack_progress) >= config_.buffer_distance_before_stopping){
@@ -1195,7 +1186,7 @@ namespace approaching_emergency_vehicle_plugin
     lanelet::ConstLanelet current_lanelet, double downtrack_progress, double current_lanelet_ending_downtrack,
     double speed_progress, double target_speed, rclcpp::Time time_progress, bool is_maintaining_non_reduced_speed)
   {
-    RCLCPP_ERROR_STREAM(rclcpp::get_logger(logger_name), "Generating remain-in-lane maneuver plan");
+    RCLCPP_DEBUG_STREAM(rclcpp::get_logger(logger_name), "Generating remain-in-lane maneuver plan");
 
     // Reset planned lane change flag since plugin will not be planning for an upcoming lane change
     has_planned_upcoming_lc_ = false;
@@ -1208,15 +1199,15 @@ namespace approaching_emergency_vehicle_plugin
     else{
       // Reduce target_speed since this method is triggered when an ERV is approaching the ego vehicle
       target_speed = std::max((target_speed - config_.speed_limit_reduction_during_passing), config_.minimum_reduced_speed_limit);
-      RCLCPP_ERROR_STREAM(rclcpp::get_logger(logger_name), "Maneuver target speed reduced to " << target_speed);
+      RCLCPP_DEBUG_STREAM(rclcpp::get_logger(logger_name), "Maneuver target speed reduced to " << target_speed);
     }
 
     double maneuver_plan_ending_downtrack = downtrack_progress + config_.minimal_plan_duration * target_speed;
-    RCLCPP_ERROR_STREAM(rclcpp::get_logger(logger_name), "Ending downtrack based on plan duration: " << maneuver_plan_ending_downtrack);
+    RCLCPP_DEBUG_STREAM(rclcpp::get_logger(logger_name), "Ending downtrack based on plan duration: " << maneuver_plan_ending_downtrack);
 
     maneuver_plan_ending_downtrack = std::min(maneuver_plan_ending_downtrack, wm_->getRouteEndTrackPos().downtrack);
-    RCLCPP_ERROR_STREAM(rclcpp::get_logger(logger_name), "Ending downtrack based on end of route: " << wm_->getRouteEndTrackPos().downtrack);
-    RCLCPP_ERROR_STREAM(rclcpp::get_logger(logger_name), "Selected ending downtrack: " << maneuver_plan_ending_downtrack);
+    RCLCPP_DEBUG_STREAM(rclcpp::get_logger(logger_name), "Ending downtrack based on end of route: " << wm_->getRouteEndTrackPos().downtrack);
+    RCLCPP_DEBUG_STREAM(rclcpp::get_logger(logger_name), "Selected ending downtrack: " << maneuver_plan_ending_downtrack);
 
     // Compute target deceleration for stopping
     double stopping_deceleration = config_.vehicle_acceleration_limit * config_.stopping_accel_limit_multiplier;
@@ -1225,7 +1216,7 @@ namespace approaching_emergency_vehicle_plugin
     // (v_f^2 - v_i^2) / (2*a) = d 
     double stopping_distance = (target_speed * target_speed) / (2.0 * stopping_deceleration);
     double begin_stopping_downtrack = wm_->getRouteEndTrackPos().downtrack - stopping_distance;
-    RCLCPP_ERROR_STREAM(rclcpp::get_logger(logger_name), "Stop and wait maneuver must begin by downtrack " << begin_stopping_downtrack);
+    RCLCPP_DEBUG_STREAM(rclcpp::get_logger(logger_name), "Stop and wait maneuver must begin by downtrack " << begin_stopping_downtrack);
 
     // Generate maneuver plan
     while(downtrack_progress < maneuver_plan_ending_downtrack){
@@ -1274,12 +1265,12 @@ namespace approaching_emergency_vehicle_plugin
         else{
           // Reduce target_speed if an ERV is actively passing the ego vehicle
           target_speed = std::max((target_speed - config_.speed_limit_reduction_during_passing), config_.minimum_reduced_speed_limit);
-          RCLCPP_ERROR_STREAM(rclcpp::get_logger(logger_name), "Maneuver target speed reduced to " << target_speed);
+          RCLCPP_DEBUG_STREAM(rclcpp::get_logger(logger_name), "Maneuver target speed reduced to " << target_speed);
         }
 
         time_progress += getManeuverDuration(resp->new_plan.maneuvers.back(), epsilon_);
 
-        RCLCPP_ERROR_STREAM(rclcpp::get_logger(logger_name), "Next maneuver starting downtrack is " << downtrack_progress << ", end of plan is at " << maneuver_plan_ending_downtrack);
+        RCLCPP_DEBUG_STREAM(rclcpp::get_logger(logger_name), "Next maneuver starting downtrack is " << downtrack_progress << ", end of plan is at " << maneuver_plan_ending_downtrack);
       }
     }
   }
@@ -1289,14 +1280,14 @@ namespace approaching_emergency_vehicle_plugin
     lanelet::ConstLanelet current_lanelet, double downtrack_progress, double current_lanelet_ending_downtrack,
     double speed_progress, double target_speed, rclcpp::Time time_progress, int ego_lane_index, int erv_lane_index)
   {
-    RCLCPP_ERROR_STREAM(rclcpp::get_logger(logger_name), "Generating move-over maneuver plan");
+    RCLCPP_DEBUG_STREAM(rclcpp::get_logger(logger_name), "Generating move-over maneuver plan");
 
     double maneuver_plan_ending_downtrack = downtrack_progress + config_.minimal_plan_duration * target_speed;
-    RCLCPP_ERROR_STREAM(rclcpp::get_logger(logger_name), "Ending downtrack based on plan duration: " << maneuver_plan_ending_downtrack);
+    RCLCPP_DEBUG_STREAM(rclcpp::get_logger(logger_name), "Ending downtrack based on plan duration: " << maneuver_plan_ending_downtrack);
 
     maneuver_plan_ending_downtrack = std::min(maneuver_plan_ending_downtrack, wm_->getRouteEndTrackPos().downtrack);
-    RCLCPP_ERROR_STREAM(rclcpp::get_logger(logger_name), "Ending downtrack based on end of route: " << wm_->getRouteEndTrackPos().downtrack);
-    RCLCPP_ERROR_STREAM(rclcpp::get_logger(logger_name), "Selected ending downtrack: " << maneuver_plan_ending_downtrack);
+    RCLCPP_DEBUG_STREAM(rclcpp::get_logger(logger_name), "Ending downtrack based on end of route: " << wm_->getRouteEndTrackPos().downtrack);
+    RCLCPP_DEBUG_STREAM(rclcpp::get_logger(logger_name), "Selected ending downtrack: " << maneuver_plan_ending_downtrack);
 
     // Compute target deceleration for stopping
     double stopping_deceleration = config_.vehicle_acceleration_limit * config_.stopping_accel_limit_multiplier;
@@ -1305,7 +1296,7 @@ namespace approaching_emergency_vehicle_plugin
     // (v_f^2 - v_i^2) / (2*a) = d 
     double stopping_distance = (target_speed * target_speed) / (2.0 * stopping_deceleration);
     double begin_stopping_downtrack = wm_->getRouteEndTrackPos().downtrack - stopping_distance;
-    RCLCPP_ERROR_STREAM(rclcpp::get_logger(logger_name), "Stop and wait maneuver must begin by downtrack " << begin_stopping_downtrack);
+    RCLCPP_DEBUG_STREAM(rclcpp::get_logger(logger_name), "Stop and wait maneuver must begin by downtrack " << begin_stopping_downtrack);
 
     // Generate maneuver plan when there is already a planned upcoming lane change
     if(has_planned_upcoming_lc_){
@@ -1355,7 +1346,7 @@ namespace approaching_emergency_vehicle_plugin
           target_speed = getLaneletSpeedLimit(current_lanelet);
           time_progress += getManeuverDuration(resp->new_plan.maneuvers.back(), epsilon_);
 
-          RCLCPP_ERROR_STREAM(rclcpp::get_logger(logger_name), "Next maneuver starting downtrack is " << downtrack_progress << ", end of plan is at " << maneuver_plan_ending_downtrack);
+          RCLCPP_DEBUG_STREAM(rclcpp::get_logger(logger_name), "Next maneuver starting downtrack is " << downtrack_progress << ", end of plan is at " << maneuver_plan_ending_downtrack);
         }
       }
     }
@@ -1378,10 +1369,10 @@ namespace approaching_emergency_vehicle_plugin
                                     speed_progress, target_speed, current_lanelet.id(), time_progress));
 
             initial_lane_following_duration += getManeuverDuration(resp->new_plan.maneuvers.back(), epsilon_).seconds();
-            RCLCPP_ERROR_STREAM(rclcpp::get_logger(logger_name), "Seconds of lane following before lane change: " << initial_lane_following_duration);
+            RCLCPP_DEBUG_STREAM(rclcpp::get_logger(logger_name), "Seconds of lane following before lane change: " << initial_lane_following_duration);
 
             if(initial_lane_following_duration >= config_.min_lane_following_duration_before_lane_change){
-              RCLCPP_ERROR_STREAM(rclcpp::get_logger(logger_name), "Minimum lane following duration before lane change satisfied.");
+              RCLCPP_DEBUG_STREAM(rclcpp::get_logger(logger_name), "Minimum lane following duration before lane change satisfied.");
               completed_initial_lane_following = true;
             }
           }
@@ -1402,13 +1393,13 @@ namespace approaching_emergency_vehicle_plugin
                 // Ego vehicle and ERV are both in the rightmost lane so a left lane change is required
                 new_lc_params.is_right_lane_change = false;
                 target_lanelet = wm_->getMapRoutingGraph()->left(current_lanelet);   
-                RCLCPP_ERROR_STREAM(rclcpp::get_logger(logger_name), "Composing a left lane change maneuver from lanelet " << current_lanelet.id());
+                RCLCPP_DEBUG_STREAM(rclcpp::get_logger(logger_name), "Composing a left lane change maneuver from lanelet " << current_lanelet.id());
               }
               else{
                 // A right lane change is required
                 new_lc_params.is_right_lane_change = true;
                 target_lanelet = wm_->getMapRoutingGraph()->right(current_lanelet);
-                RCLCPP_ERROR_STREAM(rclcpp::get_logger(logger_name), "Composing a right lane change maneuver from lanelet " << current_lanelet.id());
+                RCLCPP_DEBUG_STREAM(rclcpp::get_logger(logger_name), "Composing a right lane change maneuver from lanelet " << current_lanelet.id());
               }
 
               // Only compose lane change maneuver if the target lanelet exists, otherwise compose lane follow maneuver
@@ -1467,7 +1458,7 @@ namespace approaching_emergency_vehicle_plugin
           target_speed = getLaneletSpeedLimit(current_lanelet);
           time_progress += getManeuverDuration(resp->new_plan.maneuvers.back(), epsilon_);
 
-          RCLCPP_ERROR_STREAM(rclcpp::get_logger(logger_name), "Next maneuver starting downtrack is " << downtrack_progress << ", end of plan is at " << maneuver_plan_ending_downtrack);
+          RCLCPP_DEBUG_STREAM(rclcpp::get_logger(logger_name), "Next maneuver starting downtrack is " << downtrack_progress << ", end of plan is at " << maneuver_plan_ending_downtrack);
         }
       }    
     }
@@ -1502,7 +1493,7 @@ namespace approaching_emergency_vehicle_plugin
     carma_planning_msgs::srv::PlanManeuvers::Request::SharedPtr req, 
     carma_planning_msgs::srv::PlanManeuvers::Response::SharedPtr resp)
   {
-    RCLCPP_ERROR_STREAM(rclcpp::get_logger(logger_name), "Received request to plan maneuvers");
+    RCLCPP_DEBUG_STREAM(rclcpp::get_logger(logger_name), "Received request to plan maneuvers");
 
     // Check whether ego vehicle is currently in the middle of a lane change, or whether its planned lane change has been completed
     bool is_currently_lane_changing = false;
@@ -1519,10 +1510,10 @@ namespace approaching_emergency_vehicle_plugin
     boost::optional<lanelet::ConstLanelet> ego_current_lanelet_optional = getLaneletOnEgoRouteFromMapPosition(req->veh_x, req->veh_y);
 
     if(ego_current_lanelet_optional){
-      RCLCPP_ERROR_STREAM(rclcpp::get_logger(logger_name), "starting lanelet for maneuver plan is " << ego_current_lanelet_optional.get().id());
+      RCLCPP_DEBUG_STREAM(rclcpp::get_logger(logger_name), "starting lanelet for maneuver plan is " << ego_current_lanelet_optional.get().id());
     }
     else{
-      RCLCPP_WARN_STREAM(rclcpp::get_logger(logger_name), "Given vehicle position is not within a lanelet on the route. Returning empty maneuver plan");
+      RCLCPP_DEBUG_STREAM(rclcpp::get_logger(logger_name), "Given vehicle position is not within a lanelet on the route. Returning empty maneuver plan");
       return;
     }
 
@@ -1534,7 +1525,7 @@ namespace approaching_emergency_vehicle_plugin
     if(has_tracked_erv_ && !is_currently_lane_changing){
       if(ego_lane_index_ == tracked_erv_.lane_index){
         // Trigger state machine transition for case in which the ego vehicle is in the ERV's path
-        RCLCPP_ERROR_STREAM(rclcpp::get_logger(logger_name), "Ego vehicle and ERV are both in lane index " << ego_lane_index_);
+        RCLCPP_DEBUG_STREAM(rclcpp::get_logger(logger_name), "Ego vehicle and ERV are both in lane index " << ego_lane_index_);
 
         if(tracked_erv_.seconds_until_passing >= config_.approaching_threshold){
           transition_table_.event(ApproachingEmergencyVehicleEvent::NO_APPROACHING_ERV);
@@ -1571,7 +1562,7 @@ namespace approaching_emergency_vehicle_plugin
       }
       else{
         // Trigger state machine transition for case in which the ego vehicle is not in the ERV's path
-        RCLCPP_ERROR_STREAM(rclcpp::get_logger(logger_name), "Ego vehicle is not in ERV's path");
+        RCLCPP_DEBUG_STREAM(rclcpp::get_logger(logger_name), "Ego vehicle is not in ERV's path");
 
         if((tracked_erv_.seconds_until_passing >= config_.approaching_threshold)){
           transition_table_.event(ApproachingEmergencyVehicleEvent::NO_APPROACHING_ERV);
@@ -1600,7 +1591,7 @@ namespace approaching_emergency_vehicle_plugin
     {
       case ApproachingEmergencyVehicleState::NO_APPROACHING_ERV:
         resp->new_plan.maneuvers = {};
-        RCLCPP_ERROR_STREAM(rclcpp::get_logger(logger_name), "No approaching ERV. Returning empty maneuver plan");
+        RCLCPP_DEBUG_STREAM(rclcpp::get_logger(logger_name), "No approaching ERV. Returning empty maneuver plan");
         is_maintaining_non_reduced_speed_ = false; // Reset flag since ego vehicle does not need to maintain a non-reduced speed
         break;
 
