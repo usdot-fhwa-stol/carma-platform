@@ -1,6 +1,6 @@
 #include <iostream>
 #include <functional>
-#include "ns-3_client.h"
+#include "ns3_client.h"
 
 NS3Client::NS3Client() :
     running_(false)

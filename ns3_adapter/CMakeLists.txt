@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 2.8.3)
-project(ns-3_adapter)
+project(ns3_adapter)
 
 # Declare carma package and check ROS version
 find_package(carma_cmake_common REQUIRED)
@@ -20,15 +20,15 @@ find_package(catkin REQUIRED COMPONENTS
 
 add_executable( ${PROJECT_NAME}
   ${headers}
-  src/ns-3_client.cpp
-  src/ns-3_adapter.cpp
+  src/ns3_client.cpp
+  src/ns3_adapter.cpp
   src/driver_application/driver_application.cpp
   src/driver_wrapper/driver_wrapper.cpp
   src/main.cpp)
-add_library(ns-3_adapter_library src/ns-3_adapter.cpp src/ns-3_client.cpp src/main.cpp src/driver_application/driver_application.cpp src/driver_wrapper/driver_wrapper.cpp)
+add_library(ns3_adapter_library src/ns3_adapter.cpp src/ns3_client.cpp src/main.cpp src/driver_application/driver_application.cpp src/driver_wrapper/driver_wrapper.cpp)
 target_link_libraries(${PROJECT_NAME} ${catkin_LIBRARIES} ${Boost_LIBRARIES})
 add_dependencies(${PROJECT_NAME} ${catkin_EXPORTED_TARGETS})
-add_dependencies(ns-3_adapter_library ${catkin_EXPORTED_TARGETS})
+add_dependencies(ns3_adapter_library ${catkin_EXPORTED_TARGETS})
 
 catkin_package(
   CATKIN_DEPENDS roscpp dynamic_reconfigure bondcpp
@@ -59,36 +59,22 @@ file(GLOB_RECURSE headers */*.hpp */*.h)
 ## Install ##
 #############
 
-# all install targets should use catkin DESTINATION variables
-# See http://ros.org/doc/api/catkin/html/adv_user_guide/variables.html
+install(DIRECTORY include
+  DESTINATION ${CATKIN_PACKAGE_INCLUDE_DESTINATION}
+)
 
-## Mark executable scripts (Python etc.) for installation
-## in contrast to setup.py, you can choose the destination
-# install(PROGRAMS
-#   scripts/my_python_script
-#   DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}
-# )
+## Install C++
+install(TARGETS ${PROJECT_NAME} ns3_adapter_library
+  ARCHIVE DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
+  LIBRARY DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
+  RUNTIME DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}
+)
 
-#install(TARGETS ${PROJECT_NAME}_node
-#  ARCHIVE DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
-#  LIBRARY DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
-#  RUNTIME DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}
-#)
+## Install Other Resources
+install(DIRECTORY launch
+  DESTINATION ${CATKIN_PACKAGE_SHARE_DESTINATION}
+)
 
-## Mark cpp header files for installation
-#install(DIRECTORY 
-#  thirdparty
-#  DESTINATION ${CATKIN_PACKAGE_INCLUDE_DESTINATION}
-#  PATTERN ".svn" EXCLUDE
-#)
-
-## Mark other files for installation (e.g. launch and bag files, etc.)
-#install(DIRECTORY
-#  etc
-#  launch
-#  config
-#  DESTINATION ${CATKIN_PACKAGE_SHARE_DESTINATION}
-#)
 
 #############
 ## Testing ##
@@ -96,9 +82,9 @@ file(GLOB_RECURSE headers */*.hpp */*.h)
 
 ## Add gtest based cpp test target and link libraries
 catkin_add_gtest(${PROJECT_NAME}-test 
-test/test_ns-3_adapter.cpp
+test/test_ns3_adapter.cpp
 test/test_main.cpp)
-target_link_libraries(${PROJECT_NAME}-test ns-3_adapter_library ${catkin_LIBRARIES})
+target_link_libraries(${PROJECT_NAME}-test ns3_adapter_library ${catkin_LIBRARIES})
 ## Add folders to be run by python nosetests
 # catkin_add_nosetests(test)
 

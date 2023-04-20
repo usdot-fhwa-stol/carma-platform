@@ -1,5 +1,5 @@
 
-#include "ns-3_adapter.h"
+#include "ns3_adapter.h"
 
 int main(int argc, char**argv)
 {

@@ -1,4 +1,4 @@
-#include <ns-3_adapter.h>
+#include <ns3_adapter.h>
 #include <gtest/gtest.h>
 #include <ros/ros.h>
 

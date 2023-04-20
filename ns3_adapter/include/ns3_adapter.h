@@ -16,7 +16,7 @@
  * the License.
  */
 
-#include "ns-3_client.h"
+#include "ns3_client.h"
 #include <boost/asio.hpp>
 #include <boost/signals2/signal.hpp>
 #include <boost/lambda/lambda.hpp>

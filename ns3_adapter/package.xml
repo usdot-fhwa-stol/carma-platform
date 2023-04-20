@@ -17,10 +17,10 @@
 
  -->
 <package format="3">
-  <name>ns-3_adapter</name>
+  <name>ns3_adapter</name>
   <!-- For CARMA XIL Testing -->
   <version>0.0.1</version>
-  <description>The ns-3_adapter package</description>
+  <description>The ns3_adapter package</description>
 
   <maintainer email="carma@dot.gov">carma</maintainer>
 

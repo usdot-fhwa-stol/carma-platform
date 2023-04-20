@@ -41,10 +41,12 @@ DriverApplication::DriverApplication(int argc, char** argv, std::string name) /*
     argc_ = argc;
     argv_ = argv;
     name_ = name;
+    shutdown_ = false;
 
 }
 int DriverApplication::run()
 {
+    
     ros::init(argc_,argv_,name_);
     //Initialize nodehandles
     nh_.reset(new ros::NodeHandle());
@@ -65,17 +67,24 @@ int DriverApplication::run()
     ros::Timer timer = pnh_->createTimer(ros::Duration(1), &DriverApplication::status_publish_timer,this);
     ROS_INFO("Driver services initialized");
 
+    ROS_WARN_STREAM("0");
     initialize();
 
     ros::Rate r(spin_rate);
+    ROS_WARN_STREAM("1");
+    ROS_WARN_STREAM("ros::ok()" << ros::ok());
+    ROS_WARN_STREAM("shutdown_ " << shutdown_);
     while(ros::ok() && !shutdown_)
     {
+        ROS_WARN_STREAM("2");
         pre_spin();
+        ROS_WARN_STREAM("3");
         ros::spinOnce();
+        ROS_WARN_STREAM("4");
         post_spin();
         r.sleep();
     }
-
+    
     ROS_INFO_STREAM("Driver Shutting Down");
     shutdown();
     ros::shutdown();
