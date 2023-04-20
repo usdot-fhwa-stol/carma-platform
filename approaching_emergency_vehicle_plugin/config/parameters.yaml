@@ -1,12 +1,12 @@
 # Double: A threshold; if the estimated duration until an ERV passes the ego vehicle is below this, the
 #         ERV is considered to be actively passing the ego vehicle.
 # Units: Seconds
-passing_threshold : 15.0
+passing_threshold : 13.0
 
 # Double: A threshold; if the estimated duration until an ERV passes the ego vehicle is below this, the
 #         ERV will no longer attempt to change lanes in reaction to an approaching ERV.
 # Units: Seconds
-approaching_threshold : 33.0
+approaching_threshold : 75.0
 
 # Double: A threshold; an actively-passing ERV is considered to have completed passing the ego vehicle when
 #         it is this distance in front of the ego vehicle.
@@ -49,22 +49,22 @@ timeout_check_frequency : 2.0
 # Double: If no BSM has been received from the currently-tracked ERV, than the ERV will no longer be tracked by
 #         this plugin. 
 # Units: Seconds
-timeout_duration : 5.0
+timeout_duration : 15.0
 
 # Double: The frequency at which this plugin will publish status updates to the Web UI that describe the estimated time until an approaching ERV
 #         passes the ego vehicle, and a description of the ego vehicle's path plan in response to the approaching ERV. 
 # Units: Hz
-approaching_erv_status_publication_frequency : 1.0
+approaching_erv_status_publication_frequency : 5.0
 
 # Double: The frequency at which this plugin will broadcast EmergencyVehicleResponse warning messages to the currently-tracked ERV
 #         when the ego vehicle is in the approaching ERV's path but is unable to change lanes.
 # Units: Hz
-warning_broadcast_frequency : 1.0
+warning_broadcast_frequency : 2.0
 
 # Int: The maximum number of times that an EmergencyVehicleResponse warning message will be broadcasted to an ERV if an
 #      EmergencyVehicleAck message is not received from the ERV.
 # Units: N/A
-max_warning_broadcasts : 5
+max_warning_broadcasts : 10
 
 # Double: The minimal duration of a generated maneuver plan.
 # Units: Seconds
