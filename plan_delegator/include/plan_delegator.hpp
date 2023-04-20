@@ -198,12 +198,6 @@ namespace plan_delegator
             carma_ros2_utils::SubPtr<geometry_msgs::msg::TwistStamped> twist_sub_;
             carma_ros2_utils::SubPtr<carma_planning_msgs::msg::GuidanceState> guidance_state_sub_;
 
-            // Maps lanelet ID to its previous lanelet on the current route
-            std::unordered_map<std::string, std::string> previous_lanelets_map_;
-
-            // Maps lanelet ID to its starting downtrack on the current route
-            std::unordered_map<std::string, double> lanelet_starting_downtrack_map_;
-
             rclcpp::TimerBase::SharedPtr traj_timer_;
 
             bool guidance_engaged = false;
