@@ -3,14 +3,14 @@
 pose_pub_rate: 10.0
 
 # Double: NDT fitness score threshold above which the result can be considered degraded
-fitness_score_degraded_threshold: 350.0
+fitness_score_degraded_threshold: 20.0
 
 # Double: NDT fitness score threshold to determine if the result can be considered unusable
 fitness_score_fault_threshold: 100000.0
 
 # Double: NDT result frequency threshold below which the result can be considered degraded
 # Units: Hz
-ndt_frequency_degraded_threshold: 3.0
+ndt_frequency_degraded_threshold: 8.0
 
 # Double: NDT result frequency threshold below which the result can be considered unusable
 # Units: Hz
@@ -26,12 +26,12 @@ gnss_only_operation_timeout: 20000
 
 # Integer: GNSS Data timeout. If exceeded the system will assume the GNSS is no longer functional. 
 # Units: ms
-gnss_data_timeout: 1000
+gnss_data_timeout: 500
 
 # Integer: Maximum allowed number of sequential timesteps to let lidar initialize before switching to GPS only mode
 # NOTE: Only used in GNSS only with NDT initialization mode
 # Units: Int
-sequential_timesteps_until_gps_operation: 3
+sequential_timesteps_until_gps_operation: 5
 
 # Integer Enum: Localization mode for the platform
 # 0 - NDT only
@@ -43,6 +43,6 @@ sequential_timesteps_until_gps_operation: 3
 localization_mode: 4
 
 # Fixed offset (in meters in map frame) to use when GNSS only with fixed offset is being used (Mode 5)
-x_offset: 0.0
-y_offset: 0.0
+x_offset: 2.8
+y_offset: -2.1
 z_offset: 0.0

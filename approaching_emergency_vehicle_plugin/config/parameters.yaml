@@ -54,7 +54,7 @@ timeout_duration : 5.0
 # Double: The frequency at which this plugin will publish status updates to the Web UI that describe the estimated time until an approaching ERV
 #         passes the ego vehicle, and a description of the ego vehicle's path plan in response to the approaching ERV. 
 # Units: Hz
-approaching_erv_status_publication_frequency : 3.0
+approaching_erv_status_publication_frequency : 5.0
 
 # Double: The frequency at which this plugin will broadcast EmergencyVehicleResponse warning messages to the currently-tracked ERV
 #         when the ego vehicle is in the approaching ERV's path but is unable to change lanes.
