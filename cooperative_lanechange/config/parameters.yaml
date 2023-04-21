@@ -58,7 +58,7 @@ curvature_moving_average_window_size : 9
 curvature_calc_lookahead_count : 1
 
 # Int: Amount to downsample input lanelet centerline data. Value corresponds to saving each nth point.
-downsample_ratio : 3
+downsample_ratio : 4
 
 # Double : Acceptable range from the ending downtrack, when planning success can be published, if vehicle has changed lanes
 # Units: meters
@@ -104,4 +104,4 @@ back_distance: 0.0
 
 # Double: Additional distance beyond ending downtrack to ensure sufficient points
 # Units: meters
-buffer_ending_downtrack: 20.0
+buffer_ending_downtrack: 10.0
