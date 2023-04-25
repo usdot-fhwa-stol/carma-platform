@@ -71,7 +71,7 @@ install(TARGETS ${PROJECT_NAME} ns3_adapter_library
 )
 
 ## Install Other Resources
-install(DIRECTORY launch
+install(DIRECTORY launch config
   DESTINATION ${CATKIN_PACKAGE_SHARE_DESTINATION}
 )
 

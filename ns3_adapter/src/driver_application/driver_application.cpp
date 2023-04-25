@@ -55,7 +55,7 @@ int DriverApplication::run()
     //Setup initial status
     status_.name = ros::this_node::getName();
     status_.status = cav_msgs::DriverStatus::OFF;
-
+    
     //Initialize DriverApplication services
     ros::ServiceServer bind_service = pnh_->advertiseService("bind", &DriverApplication::bind_service_cb,this);
     ros::ServiceServer api_service = pnh_->advertiseService("get_driver_api",
@@ -67,20 +67,15 @@ int DriverApplication::run()
     ros::Timer timer = pnh_->createTimer(ros::Duration(1), &DriverApplication::status_publish_timer,this);
     ROS_INFO("Driver services initialized");
 
-    ROS_WARN_STREAM("0");
     initialize();
 
     ros::Rate r(spin_rate);
-    ROS_WARN_STREAM("1");
     ROS_WARN_STREAM("ros::ok()" << ros::ok());
     ROS_WARN_STREAM("shutdown_ " << shutdown_);
     while(ros::ok() && !shutdown_)
     {
-        ROS_WARN_STREAM("2");
         pre_spin();
-        ROS_WARN_STREAM("3");
         ros::spinOnce();
-        ROS_WARN_STREAM("4");
         post_spin();
         r.sleep();
     }

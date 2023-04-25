@@ -97,6 +97,7 @@ class NS3Adapter : public cav::DriverApplication
 
         std::string ns3_address_ = "192.168.88.40";
         int ns3_registration_port_ = 1000;
+        int ns3_listening_port_ = 5398;
  
 
         //dynamic reconfig

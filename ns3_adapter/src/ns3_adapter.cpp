@@ -33,13 +33,15 @@ void NS3Adapter::initialize() {
 
     std::string wave_cfg_file;
     ros::NodeHandle pnh("~");
-    pnh.param<std::string>("wave_cfg_file",wave_cfg_file,"etc/wave.json");
+    comms_api_nh_.reset(new ros::NodeHandle("comms"));
+
+    pnh_->param<std::string>("wave_cfg_file",wave_cfg_file,"etc/wave.json");
     ROS_ERROR_STREAM("wave_cfg_file : " << wave_cfg_file);
     //pnh.param<int>("listening_port",config_.listening_port, 5398);
     //pnh.param<int>("dsrc_listening_port",config_.dsrc_listening_port, 1516);
     //pnh.param<std::string>("dsrc_address",config_.dsrc_address, "169.254.1.1");    
     loadWaveConfig(wave_cfg_file);
-    comms_api_nh_.reset(new ros::NodeHandle("comms"));
+
     //dyn_cfg_server_.reset(new dynamic_reconfigure::Server<dsrc::DSRCConfig>(dyn_cfg_mutex_));
     //dyn_cfg_server_->updateConfig(config_);
     //dyn_cfg_server_->setCallback([this](dsrc::DSRCConfig & cfg, uint32_t level) { dynReconfigCB(cfg, level); });
@@ -48,6 +50,7 @@ void NS3Adapter::initialize() {
     pnh_->getParam("carla/ego_vehicle/role_name", role_id_);
     pnh.param<std::string>("ns3_address", ns3_address_, "192.168.88.40");
     pnh.param<int>("ns3_registration_port", ns3_registration_port_, 1000);
+    pnh.param<int>("ns3_listening_port", ns3_listening_port_, 1000);
     std::string handshake_msg = compose_handshake_msg(vehicle_id_, role_id_, port_, host_ip_);
     broadcastHandshakemsg(handshake_msg);
 
@@ -192,6 +195,7 @@ void NS3Adapter::onOutboundMessage(const cav_msgs::ByteArrayPtr& message) {
     
     std::shared_ptr<std::vector<uint8_t>> message_content = std::make_shared<std::vector<uint8_t>>(std::move(packMessage(*message)));
     send_msg_queue_.push_back(std::move(message_content));
+    ROS_WARN_STREAM("queue size: " << send_msg_queue_.size());
 }
 
 /**

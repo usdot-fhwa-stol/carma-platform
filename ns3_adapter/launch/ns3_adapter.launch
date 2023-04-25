@@ -16,5 +16,7 @@
 -->
 
 <launch>
-    <node name="ns3_adapter" pkg="ns3_adapter" type="ns3_adapter"/>
+    <node name="ns3_adapter" pkg="ns3_adapter" type="ns3_adapter">
+    <rosparam command="load" file="$(find ns3_adapter)/config/parameters.yaml"/>
+    </node>
 </launch>
