@@ -157,7 +157,7 @@ cloud-sim__start() {
     fi
     
     # Call cloud formation
-    local STACK_NAME="CloudSimStack"$(echo ${USER_ARN} |  grep -oh "/.*@" | sed "s|@|-|" | sed "s|\.|-|" | sed "s|[^A-Za-z0-9]|-|")
+    local STACK_NAME="CloudSimStack"$(echo ${USER_ARN} |  grep -oh "/.*@" | sed "s|@|-|g" | sed "s|\.|-|g" | sed "s|[^A-Za-z0-9]|-|g")
 
     local RESULT=$(aws --region us-east-1 cloudformation create-stack --template-body "file://${CARMA_CLOUD_SIM_CLOUD_FORMATION_PATH}" \
         --stack-name "${STACK_NAME}" \
