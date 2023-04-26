@@ -484,7 +484,19 @@ Resources:
           # Install default route
           sudo curl -o /opt/carma/routes/Release_test_case_1.csv -L https://raw.githubusercontent.com/usdot-fhwa-stol/carma-platform/develop/testing_maps/Release_test_case_1.csv
 
-          reboot
+          # Checkout CARMA-Streets/V2X-Hub deployment files
+          # Kowl deployment file
+          curl -o /home/ubuntu/kowl/kowl.yaml -L https://raw.githubusercontent.com/usdot-fhwa-stol/carma-streets/develop/performance/kowl.yaml
+          # V2X-Hub MYSQL database initilization file
+          curl -o /home/ubuntu/mysql/localhost.sql -L https://raw.githubusercontent.com/usdot-fhwa-OPS/V2X-Hub/develop/configuration/amd64/mysql/localhost.sql
+          # V2X-Hub add web ui user script
+          curl -o /home/ubuntu/mysql/add_v2xhub_user.bash -L https://raw.githubusercontent.com/usdot-fhwa-OPS/V2X-Hub/develop/configuration/amd64/mysql/add_v2xhub_user.bash
+          # Intersection Model configuration file
+          sudo curl -o /home/ubuntu/intersection_model/manifest.json -L https://raw.githubusercontent.com/usdot-fhwa-stol/carma-streets/develop/intersection_model/manifest.json
+          # TSC Service configuration file
+          curl -o /home/ubuntu/tsc_client_service/manifest.json -L https://raw.githubusercontent.com/usdot-fhwa-stol/carma-streets/develop/tsc_client_service/manifest.json
+
+          reboot 
 
       IamInstanceProfile: !Ref C9InstanceProfile
       Tags:
