@@ -37,13 +37,13 @@
     <remap from="/lanelet_map_bin" to="base_map"/>
   </node>  
 
-   <!-- ns3_adapter
-  <group>
+   <!-- ns3_adapter -->
+  <!-- <group>
     <include file = "$(find ns3_adapter)/launch/ns3_adapter.launch"/>
     <remap from="comms/inbound_binary_msg" to="$(optenv CARMA_INTR_NS)/comms/inbound_binary_msg"/>
     <remap from="comms/outbound_binary_msg" to="$(optenv CARMA_INTR_NS)/comms/outbound_binary_msg"/>
   </group> -->
-
+  
   <node pkg="map_file" type="lanelet2_map_visualization" name="lanelet2_map_visualization">
     <remap from="/lanelet_map_bin" to="semantic_map"/>
   </node>

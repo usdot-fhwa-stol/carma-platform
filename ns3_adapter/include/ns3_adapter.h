@@ -95,7 +95,7 @@ class NS3Adapter : public cav::DriverApplication
         std::string port_ = "2000";
         std::string host_ip_ = "127.0.0.1";
 
-        std::string ns3_address_ = "192.168.88.40";
+        std::string ns3_address_ = "127.0.0.1";
         int ns3_registration_port_ = 1000;
         int ns3_listening_port_ = 5398;
  

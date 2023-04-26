@@ -1,4 +1,4 @@
 wave_cfg_file: "etc/wave.json"
-ns3_address: "192.168.88.40"
-ns3_registration_port: 1000
-ns3_listening_port: 5398 
+ns3_address: "127.0.0.1"
+ns3_registration_port: 1515
+ns3_listening_port: 1516 
