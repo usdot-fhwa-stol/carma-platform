@@ -485,6 +485,11 @@ Resources:
           sudo curl -o /opt/carma/routes/Release_test_case_1.csv -L https://raw.githubusercontent.com/usdot-fhwa-stol/carma-platform/develop/testing_maps/Release_test_case_1.csv
 
           # Checkout CARMA-Streets/V2X-Hub deployment files
+          # Setup Volume directories
+          mkdir /home/ubuntu/kowl
+          mkdir /home/ubuntu/mysql
+          mkdir /home/ubuntu/tsc_client_service
+          mkdir /home/ubuntu/intersection_model 
           # Kowl deployment file
           curl -o /home/ubuntu/kowl/kowl.yaml -L https://raw.githubusercontent.com/usdot-fhwa-stol/carma-streets/develop/performance/kowl.yaml
           # V2X-Hub MYSQL database initilization file
@@ -495,7 +500,12 @@ Resources:
           sudo curl -o /home/ubuntu/intersection_model/manifest.json -L https://raw.githubusercontent.com/usdot-fhwa-stol/carma-streets/develop/intersection_model/manifest.json
           # TSC Service configuration file
           curl -o /home/ubuntu/tsc_client_service/manifest.json -L https://raw.githubusercontent.com/usdot-fhwa-stol/carma-streets/develop/tsc_client_service/manifest.json
-
+          # Initialize mysql password files
+          mkdir /home/ubuntu/secrets
+          echo -n 'password' > /home/ubuntu/secrets/mysql_root_password.txt
+          echo -n 'password' > /home/ubuntu/secrets/mysql_password.txt
+          # Initialize docker .env file
+          echo 'DOCKER_HOST_IP=127.0.0.1' > /home/ubuntu/.env
           reboot 
 
       IamInstanceProfile: !Ref C9InstanceProfile
