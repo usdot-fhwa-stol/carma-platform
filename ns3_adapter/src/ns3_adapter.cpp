@@ -331,38 +331,39 @@ void NS3Adapter::post_spin() {
 void NS3Adapter::loadWaveConfig(const std::string &fileName)
 {
     ROS_DEBUG_STREAM("Loading wave config");
+    
     const char* schema = "{\n"
-                         " \"$schema\":\"http://json-schema.org/draft-06/schema\",\n"
-                         " \"title\":\"Wave Config Schema\",\n"
-                         " \"description\":\"A simple schema to describe DSRC/Wave messages\",\n"
-                         "  \"type\": \"array\",\n"
-                         "  \"items\": {\n"
-                         "    \"type\": \"object\",\n"
-                         "    \"properties\": {\n"
-                         "      \"name\": {\n"
-                         "        \"description\": \"message type - abbreviated name\",\n"
-                         "        \"type\": \"string\"\n"
-                         "      },\n"
-                         "      \"psid\": {\n"
-                         "        \"description\": \"psid assigned to message type in decimal\",\n"
-                         "        \"type\": \"string\"\n"
-                         "      },\n"
-                         "      \"ns3_id\": {\n"
-                         "        \"description\": \"J2735 NS-3 id assigned to message type in decimal\",\n"
-                         "        \"type\": \"string\"\n"
-                         "      },\n"
-                         "      \"channel\": {\n"
-                         "        \"description\": \"DSRC radio channel assigned to message type in decimal\",\n"
-                         "        \"type\": \"string\"\n"
-                         "      },\n"
-                         "      \"priority\": {\n"
-                         "        \"description\": \"WSM Priotiy to use assigned to message type in decimal\",\n"
-                         "        \"type\":\"string\"\n"
-                         "      }\n"
-                         "    },\n"
-                         "    \"required\":[\"name\",\"psid\",\"ns3_id\",\"channel\",\"priority\"]"
-                         "  }\n"
-                         "}\n";
+                        " \"$schema\":\"http://json-schema.org/draft-06/schema\",\n"
+                        " \"title\":\"Wave Config Schema\",\n"
+                        " \"description\":\"A simple schema to describe DSRC/Wave messages\",\n"
+                        "  \"type\": \"array\",\n"
+                        "  \"items\": {\n"
+                        "    \"type\": \"object\",\n"
+                        "    \"properties\": {\n"
+                        "      \"name\": {\n"
+                        "        \"description\": \"message type - abbreviated name\",\n"
+                        "        \"type\": \"string\"\n"
+                        "      },\n"
+                        "      \"psid\": {\n"
+                        "        \"description\": \"psid assigned to message type in decimal\",\n"
+                        "        \"type\": \"string\"\n"
+                        "      },\n"
+                        "      \"dsrc_id\": {\n"
+                        "        \"description\": \"J2735 DSRC id assigned to message type in decimal\",\n"
+                        "        \"type\": \"string\"\n"
+                        "      },\n"
+                        "      \"channel\": {\n"
+                        "        \"description\": \"DSRC radio channel assigned to message type in decimal\",\n"
+                        "        \"type\": \"string\"\n"
+                        "      },\n"
+                        "      \"priority\": {\n"
+                        "        \"description\": \"WSM Priotiy to use assigned to message type in decimal\",\n"
+                        "        \"type\":\"string\"\n"
+                        "      }\n"
+                        "    },\n"
+                        "    \"required\":[\"name\",\"psid\",\"dsrc_id\",\"channel\",\"priority\"]"
+                        "  }\n"
+                        "}\n";
 
     std::ifstream file;
     try
@@ -375,14 +376,12 @@ void NS3Adapter::loadWaveConfig(const std::string &fileName)
         ROS_ERROR_STREAM("Unable to open file : " << fileName << ", exception: " << e.what());
         return;
     }
-
     rapidjson::Document sd;
     if(sd.Parse(schema).HasParseError())
     {
         ROS_ERROR_STREAM("Invalid Wave Config Schema");
         return;
     }
-
     rapidjson::SchemaDocument schemaDocument(sd);
     rapidjson::Document doc;
     rapidjson::IStreamWrapper isw(file);
@@ -391,20 +390,18 @@ void NS3Adapter::loadWaveConfig(const std::string &fileName)
         ROS_ERROR_STREAM("Error Parsing Wave Config");
         return;
     }
-
     rapidjson::SchemaValidator validator(schemaDocument);
     if(!doc.Accept(validator))
     {
         ROS_ERROR_STREAM("Wave Config improperly formatted");
         return;
     }
-
     for(auto& it : doc.GetArray())
     {
         auto entry = it.GetObject();
         wave_cfg_items_.emplace_back(entry["name"].GetString(),
                                      entry["psid"].GetString(),
-                                     entry["ns3_id"].GetString(),
+                                     entry["dsrc_id"].GetString(),
                                      entry["channel"].GetString(),
                                      entry["priority"].GetString());
 

@@ -75,5 +75,19 @@
     "dsrc_id" : "245",
     "channel" : "172",
     "priority" : "6"
+  },
+  {
+    "name" : "EmergencyVehicleResponse",
+    "psid" : "8005",
+    "dsrc_id" : "246",
+    "channel" : "172",
+    "priority" : "6"
+  },
+  {
+    "name" : "EmergencyVehicleAck",
+    "psid" : "8005",
+    "dsrc_id" : "247",
+    "channel" : "172",
+    "priority" : "6"
   }
 ]
