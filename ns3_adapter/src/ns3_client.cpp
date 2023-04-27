@@ -32,7 +32,7 @@ bool NS3Client::registermsg(const std::shared_ptr<std::vector<uint8_t>>&message,
     else std::cerr << "Connection failed" << std::endl;
 
 
-    close();
+    // close();
     
     return success;
 }
@@ -49,12 +49,8 @@ bool NS3Client::connect(const std::string &remote_address,
                                  unsigned short local_port,
                                  boost::system::error_code &ec)
 {
-    std::cerr << "in connect : " << std::endl;
-    local_port = 2000;
     //If we are already connected return false
     if(running_) return false;
-    std::cerr << "1 running_ : " << running_ << std::endl;
-
     //Get remote endpoint
     try
     {
@@ -70,10 +66,6 @@ bool NS3Client::connect(const std::string &remote_address,
     io_.reset(new boost::asio::io_service());
     output_strand_.reset(new boost::asio::io_service::strand(*io_));
 
-    std::cerr << "remote_address " << remote_address << std::endl;
-    std::cerr << "remote_port " << remote_port << std::endl;
-    std::cerr << "local_port " << local_port << std::endl;
-    
     //build the udp listener, this class listens on address::port and sends packets through onReceive
     try
     {
@@ -90,7 +82,7 @@ bool NS3Client::connect(const std::string &remote_address,
     }
     catch(std::exception e)
     {
-        std::cerr << "NS3Client::connect threw exception : " << e.what();
+        std::cerr << "NS3Client::connect threw exception : " << e.what() <<std::endl;
         return false;
     };
 
@@ -98,11 +90,9 @@ bool NS3Client::connect(const std::string &remote_address,
     udp_listener_->onReceive.connect([this](const std::shared_ptr<const std::vector<uint8_t>>& data){process(data);});
 
     udp_out_socket_.reset(new boost::asio::ip::udp::socket(*io_,remote_udp_ep_.protocol()));
-    std::cerr << "3 " << std::endl;
     work_.reset(new boost::asio::io_service::work(*io_));
     // run the io service
     udp_listener_->start();
-    std::cerr << "started" << std::endl;
     io_thread_.reset(new std::thread([this]()
                                      {
                                          boost::system::error_code err;
@@ -113,7 +103,6 @@ bool NS3Client::connect(const std::string &remote_address,
                                          }
                                      }));
     running_ = true;
-    std::cerr << "2 running_ : " << running_ << std::endl;
     onConnect();
     return true;
 }

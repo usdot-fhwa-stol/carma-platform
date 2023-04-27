@@ -77,7 +77,7 @@ int DriverApplication::run()
         pre_spin();
         ros::spinOnce();
         post_spin();
-        r.sleep();
+        // r.sleep();
     }
     
     ROS_INFO_STREAM("Driver Shutting Down");

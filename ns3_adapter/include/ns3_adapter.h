@@ -96,8 +96,10 @@ class NS3Adapter : public cav::DriverApplication
         std::string host_ip_ = "127.0.0.1";
 
         std::string ns3_address_ = "127.0.0.1";
-        int ns3_registration_port_ = 1000;
-        int ns3_listening_port_ = 5398;
+        int ns3_registration_port_ = 1515;
+        int ns3_listening_port_ = 1516;
+
+        bool handshake_sent_ = false;
  
 
         //dynamic reconfig
