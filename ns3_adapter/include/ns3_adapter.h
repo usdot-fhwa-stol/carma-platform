@@ -92,12 +92,14 @@ class NS3Adapter : public cav::DriverApplication
         std::string vehicle_id_;
         // vehicle role id in carla
         std::string role_id_ = "ego_vehicle";
-        std::string port_ = "2000";
+        
         std::string host_ip_ = "127.0.0.1";
 
         std::string ns3_address_ = "127.0.0.1";
         int ns3_registration_port_ = 1515;
-        int ns3_listening_port_ = 1516;
+        int ns3_listening_port_ = 2500;
+        int ns3_broadcasting_port_ = 1516;
+        int local_port_ = 2000;
 
         bool handshake_sent_ = false;
  

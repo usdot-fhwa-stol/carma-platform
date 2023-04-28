@@ -35,26 +35,20 @@ void NS3Adapter::initialize() {
     ros::NodeHandle pnh("~");
     comms_api_nh_.reset(new ros::NodeHandle("comms"));
 
-    pnh_->param<std::string>("wave_cfg_file",wave_cfg_file,"/opt/carma/install/ns3_adapter/share/ns3_adapter/config/wave.json");
-    //pnh.param<int>("listening_port",config_.listening_port, 5398);
-    //pnh.param<int>("dsrc_listening_port",config_.dsrc_listening_port, 1516);
-    //pnh.param<std::string>("dsrc_address",config_.dsrc_address, "169.254.1.1");    
+    pnh_->param<std::string>("wave_cfg_file",wave_cfg_file,"/opt/carma/install/ns3_adapter/share/ns3_adapter/config/wave.json"); 
     loadWaveConfig(wave_cfg_file);
 
-    //dyn_cfg_server_.reset(new dynamic_reconfigure::Server<dsrc::DSRCConfig>(dyn_cfg_mutex_));
-    //dyn_cfg_server_->updateConfig(config_);
-    //dyn_cfg_server_->setCallback([this](dsrc::DSRCConfig & cfg, uint32_t level) { dynReconfigCB(cfg, level); });
     // Start the handshake
     pnh_->getParam("/vehicle_id", vehicle_id_);  
     pnh_->getParam("carla/ego_vehicle/role_name", role_id_);
     pnh.param<std::string>("ns3_address", ns3_address_, "127.0.0.1");
     pnh.param<int>("ns3_registration_port", ns3_registration_port_, 1515);
-    pnh.param<int>("ns3_listening_port", ns3_listening_port_, 1516);
-    ROS_WARN_STREAM("ns3_listening_port: " << ns3_listening_port_);
+    pnh.param<int>("ns3_broadcasting_port", ns3_broadcasting_port_, 1516);
+    pnh.param<int>("ns3_listening_port", ns3_listening_port_, 2500);
 
-    std::string handshake_msg = compose_handshake_msg(vehicle_id_, role_id_, std::to_string(ns3_listening_port_), host_ip_);
-    ROS_WARN_STREAM("handshake: " << handshake_msg);
-    // broadcastHandshakemsg(handshake_msg);
+    // std::string handshake_msg = compose_handshake_msg(vehicle_id_, role_id_, std::to_string(ns3_broadcasting_port), host_ip_);
+    // ROS_WARN_STREAM("handshake: " << handshake_msg);
+    // // broadcastHandshakemsg(handshake_msg);
     
     //Setup connection handlers
     ns3_client_error_.clear();
@@ -108,6 +102,7 @@ void NS3Adapter::onDisconnectHandler() {
 */
 void NS3Adapter::onMessageReceivedHandler(const std::vector<uint8_t> &data, uint16_t id) {
     // Create and populate the message
+    ROS_WARN_STREAM("in onMessageReceivedHandler");
     auto it = std::find_if(wave_cfg_items_.begin(),wave_cfg_items_.end(),[id](const WaveConfigStruct& entry)
                                                                             {
                                                                                return entry.ns3_id == std::to_string(id);
@@ -160,7 +155,7 @@ std::vector<uint8_t> NS3Adapter::packMessage(const cav_msgs::ByteArray& message)
     ss << "Version=0.7" << std::endl;
     ss << "Type=" << cfg.name << std::endl;
     ss << "PSID=" << cfg.psid << std::endl;
-    ss << "VehicleID=" << vehicle_id_ << std::endl;
+    // ss << "VehicleID=" << vehicle_id_ << std::endl;
     ss << "Priority=" << cfg.priority << std::endl;
     ss << "TxMode=ALT" << std::endl;
     ss << "TxChannel=" << cfg.channel << std::endl;
@@ -169,8 +164,8 @@ std::vector<uint8_t> NS3Adapter::packMessage(const cav_msgs::ByteArray& message)
     ss << "DeliveryStop=" << std::endl;
     ss << "Signature=False" << std::endl;
     ss << "Encryption=False" << std::endl;
-    ss << "VehiclePosX=" << pose_msg_.pose.position.x << std::endl;
-    ss << "VehiclePosY=" << pose_msg_.pose.position.y << std::endl;
+    // ss << "VehiclePosX=" << pose_msg_.pose.position.x << std::endl;
+    // ss << "VehiclePosY=" << pose_msg_.pose.position.y << std::endl;
     
 
     ss << "Payload=" <<  uint8_vector_to_hex_string(message.content) << std::endl;
@@ -187,8 +182,8 @@ std::vector<uint8_t> NS3Adapter::packMessage(const cav_msgs::ByteArray& message)
 * This method receives a message from the ROS network, and adds it to the send queue.
 */
 void NS3Adapter::onOutboundMessage(const cav_msgs::ByteArrayPtr& message) {
-    std::cerr<<"onOutboundMessage"<<std::endl;
     ROS_WARN_STREAM("in onOutboundMessage");
+    ROS_WARN_STREAM("message received: " << message->message_type);
     ROS_WARN_STREAM("connected: " << ns3_client_.connected());
     if(!ns3_client_.connected())
     {
@@ -252,7 +247,7 @@ void NS3Adapter::pre_spin()
 {
     if (!handshake_sent_)
     {
-        std::string handshake_msg = compose_handshake_msg(vehicle_id_, role_id_, std::to_string(ns3_listening_port_), host_ip_);
+        std::string handshake_msg = compose_handshake_msg(vehicle_id_, role_id_, std::to_string(ns3_broadcasting_port_), host_ip_);
         broadcastHandshakemsg(handshake_msg);
         handshake_sent_ = true;
     }
@@ -283,10 +278,10 @@ void NS3Adapter::pre_spin()
             ROS_INFO_STREAM("Attempting to connect to NS3");
             boost::system::error_code ec;
            // ROS_INFO("Connecting to %s:%u", cfg.dsrc_address.c_str(), cfg.dsrc_listening_port);
-            ROS_INFO("Local port: %u", ns3_listening_port_);
+            ROS_INFO("Local port: %u", ns3_broadcasting_port_);
             try {
-                if (!ns3_client_.connect(ns3_address_, ns3_listening_port_,
-                                          2500, ec))
+                if (!ns3_client_.connect(ns3_address_, ns3_broadcasting_port_,
+                                          ns3_listening_port_, ec))
                 {
                     ROS_WARN_STREAM("Failed to connect, err: " << ec.message());
                 }
@@ -446,19 +441,19 @@ std::string NS3Adapter::compose_handshake_msg(std::string veh_id, std::string ro
 
     rapidjson::Value idtextPart;
 	idtextPart.SetString(veh_id.c_str(), allocator);
-    document.AddMember("vehicle_id", idtextPart, allocator);
+    document.AddMember("carmaVehicleId", idtextPart, allocator);
 
     rapidjson::Value roletextPart;
 	roletextPart.SetString(role_id.c_str(), allocator);
-    document.AddMember("role_id", roletextPart, allocator);
+    document.AddMember("carlaVehicleRole", roletextPart, allocator);
 
     rapidjson::Value porttextPart;
 	porttextPart.SetString(port.c_str(), allocator);
-    document.AddMember("port", porttextPart, allocator);
+    document.AddMember("rxMessagePort", porttextPart, allocator);
 
     rapidjson::Value iptextPart;
 	iptextPart.SetString(ip.c_str(), allocator);
-    document.AddMember("host_ip", iptextPart, allocator);
+    document.AddMember("rxMessageIpAddress", iptextPart, allocator);
 
     rapidjson::StringBuffer strbuf;
 	rapidjson::Writer<rapidjson::StringBuffer> writer(strbuf);
@@ -478,7 +473,7 @@ void NS3Adapter::broadcastHandshakemsg(const std::string& msg_string)
     std::string addres;
     unsigned short remote_port;
     
-    bool success = ns3_client_.registermsg(message_content, ns3_address_, ns3_registration_port_, 1500);
+    bool success = ns3_client_.registermsg(message_content, ns3_address_, ns3_registration_port_, local_port_);
     ROS_WARN_STREAM("Handshake Message success: " << success);
     if (!success) {
         ROS_WARN_STREAM("Handshake Message send failed");

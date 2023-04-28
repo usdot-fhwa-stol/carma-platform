@@ -1,5 +1,6 @@
-wave_cfg_file: "/workspaces/carma_ws/src/install/ns3_adapter/share/ns3_adapter/config/wave.json"
+wave_cfg_file: "config/wave.json"
   # "etc/wave.json"
 ns3_address: "127.0.0.1"
 ns3_registration_port: 1515
-ns3_listening_port: 1516 
+ns3_listening_port: 2500 
+ns3_broadcasting_port: 1516
