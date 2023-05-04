@@ -73,6 +73,7 @@ TEST(YieldPluginTest, test_polynomial_calc)
 
   result = plugin.polynomial_calc(coeff, 3);
   EXPECT_EQ(728, result);
+  throw std::invalid_argument("sd");
 }
 
 TEST(YieldPluginTest, test_polynomial_calc_derivative)
@@ -204,8 +205,8 @@ TEST(YieldPluginTest, test_update_traj)
   carma_planning_msgs::msg::TrajectoryPlanPoint trajectory_point_6;
   carma_planning_msgs::msg::TrajectoryPlanPoint trajectory_point_7;
 
-  trajectory_point_1.x = 1.0;
-  trajectory_point_1.y = 1.0;
+  trajectory_point_1.x = 10.0;
+  trajectory_point_1.y = 0.0001;
   trajectory_point_1.target_time = rclcpp::Time(0);
 
   trajectory_point_2.x = 10.0;
@@ -253,7 +254,7 @@ TEST(YieldPluginTest, test_update_traj)
   rwo_1.object.size.z = 1;
 
   carma_perception_msgs::msg::PredictedState ps_1;
-  ps_1.header.stamp.nanosec = 1000;
+  ps_1.header.stamp.sec = 1;
 
   ps_1.predicted_position.position.x = 10;
   ps_1.predicted_position.position.y = 10;
@@ -265,7 +266,7 @@ TEST(YieldPluginTest, test_update_traj)
   ps_1.predicted_position.orientation.w = tf_orientation.getW();
 
   carma_perception_msgs::msg::PredictedState ps_2;
-  ps_2.header.stamp.nanosec = 2000;
+  ps_2.header.stamp.sec = 2;
 
   ps_2.predicted_position.position.x = 10;
   ps_2.predicted_position.position.y = 20;
@@ -277,7 +278,7 @@ TEST(YieldPluginTest, test_update_traj)
   ps_2.predicted_position.orientation.w = tf_orientation.getW();
 
   carma_perception_msgs::msg::PredictedState ps_3;
-  ps_3.header.stamp.nanosec = 3000;
+  ps_3.header.stamp.sec = 3;
 
   ps_3.predicted_position.position.x = 10;
   ps_3.predicted_position.position.y = 30;
@@ -289,7 +290,7 @@ TEST(YieldPluginTest, test_update_traj)
   ps_3.predicted_position.orientation.w = tf_orientation.getW();
 
   rwo_1.object.predictions = {ps_1,ps_2,ps_3};
-  rwo_1.object.velocity.twist.linear.x = 5.0;
+  rwo_1.object.velocity.twist.linear.x = 10.0;
 
   rwol.roadway_obstacles = {rwo_1};
 
@@ -302,12 +303,17 @@ TEST(YieldPluginTest, test_update_traj)
 
   carma_planning_msgs::msg::TrajectoryPlan tp_new = plugin.update_traj_for_object(tp, 10.0);
 
-  for (size_t i = 1; i < tp_new.trajectory_points.size(); i++) {
-   std::cout << tp_new.trajectory_points[i].x<< tp_new.trajectory_points[i].y << std::endl;
+  for (auto pt:  tp_new.trajectory_points) {
+    std::cout << "new x: " << pt.x << ", y:" << pt.y << ", t:" << std::to_string(rclcpp::Time(pt.target_time).seconds()) << std::endl;
+
   }
 
   EXPECT_EQ(7, tp.trajectory_points.size());
-
+  for (auto pt : tp.trajectory_points)
+  {
+    std::cout << "x: " << pt.x << ", y:" << pt.y << ", t:" << std::to_string(rclcpp::Time(pt.target_time).seconds()) << std::endl;
+  }
+  throw std::invalid_argument("forced stop");
 }
 
 TEST(YieldPluginTest, test_update_traj2)

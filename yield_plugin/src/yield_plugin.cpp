@@ -385,6 +385,8 @@ namespace yield_plugin
         double dt = (2 * original_traj_downtracks[i]) / (current_speed + prev_speed);
         jmt_tpp = original_tp.trajectory_points[i];
         jmt_tpp.target_time =  rclcpp::Time(jmt_trajectory_points[i-1].target_time) + rclcpp::Duration(dt*1e9);
+        std::cout << "non-empty x: " << jmt_tpp.x << ", y:" << jmt_tpp.y << ", t:" << std::to_string(rclcpp::Time(jmt_tpp.target_time).seconds()) << std::endl;
+
         jmt_trajectory_points.push_back(jmt_tpp);
       }
       else
@@ -392,7 +394,10 @@ namespace yield_plugin
         RCLCPP_DEBUG_STREAM(nh_->get_logger(),"target speed is zero");
         // if speed is zero, the vehicle will stay in previous location.
         jmt_tpp = jmt_trajectory_points[i-1];
-        jmt_tpp.target_time =  rclcpp::Time(jmt_trajectory_points[0].target_time) + rclcpp::Duration(traj_target_time*1e9);
+        // MISH: Potential bug where if purepursuit accidentally picks a point that has previous time, then it may speed up. target_time is assumed to increase 
+        jmt_tpp.target_time =  rclcpp::Time(std::max((rclcpp::Time(jmt_trajectory_points[0].target_time) + rclcpp::Duration(traj_target_time*1e9)).seconds(), rclcpp::Time(jmt_trajectory_points[i -1 ].target_time).seconds()) * 1e9);
+        std::cout << "empty x: " << jmt_tpp.x << ", y:" << jmt_tpp.y << ", t:" << std::to_string(rclcpp::Time(jmt_tpp.target_time).seconds()) << std::endl;
+
         jmt_trajectory_points.push_back(jmt_tpp);
       }
       prev_speed = current_speed;
