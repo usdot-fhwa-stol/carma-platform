@@ -70,7 +70,8 @@ echo "" > COLCON_IGNORE
 cd ../
 
 #rosbridge_suite is a ROS meta-package including all the rosbridge packages.
-git clone https://github.com/usdot-fhwa-stol/rosbridge_suite --branch ros2
+# NOTE: clone -b flag is used instead of --branch to avoid hook rewriting it
+git clone -b ros2 https://github.com/usdot-fhwa-stol/rosbridge_suite
 
 
 cd ${dir}/src
