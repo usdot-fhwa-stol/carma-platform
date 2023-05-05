@@ -19,7 +19,7 @@
 #include <rclcpp/rclcpp.hpp>
 #include <carma_perception_msgs/msg/external_object.hpp>
 #include <carma_perception_msgs/msg/external_object_list.hpp>
-#include <carma_wm_ros2/WorldModel.hpp>
+#include <carma_wm/WorldModel.hpp>
 #include <carma_perception_msgs/msg/roadway_obstacle_list.hpp>
 #include <carma_perception_msgs/msg/roadway_obstacle.hpp>
 #include <lanelet2_core/LaneletMap.h>

@@ -15,10 +15,10 @@
  */
 
 #include <gmock/gmock.h>
-#include <carma_wm_ros2/WMTestLibForGuidance.hpp>
+#include <carma_wm/WMTestLibForGuidance.hpp>
 #include <carma_wm_ctrl/GeofenceSchedule.hpp>
 #include <carma_wm_ctrl/Geofence.hpp>
-#include <carma_wm_ros2/TrafficControl.hpp>
+#include <carma_wm/TrafficControl.hpp>
 #include <lanelet2_io/Io.h>
 #include <lanelet2_io/io_handlers/Factory.h>
 #include <lanelet2_io/io_handlers/Writer.h>

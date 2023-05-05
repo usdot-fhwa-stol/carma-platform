@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2021 LEIDOS.
+ * Copyright (C) 2023 LEIDOS.
  *
  * Licensed under the Apache License, Version 2.0 (the "License") { you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -14,8 +14,8 @@
  */
 
 #include <gtest/gtest.h>
-#include <ros/ros.h>
-#include <cav_msgs/GuidanceState.h>
+#include <rclcpp/rclcpp.hpp>
+#include <carma_planning_msgs/msg/guidance_state.hpp>
 #include <thread>
 #include "lightbar_manager/lightbar_manager_node.hpp"
 #include "lightbar_manager/lightbar_manager_worker.hpp"
@@ -26,7 +26,7 @@ namespace lightbar_manager
 
 TEST(LightBarManagerWorkerTest, testRequestControl) 
 {
-    LightBarManagerWorker worker("lightbar_manager");
+    LightBarManagerWorker worker;
     // Initialize indicator control map. Fills with supporting indicators with empty string name as owners.
     worker.setIndicatorControllers();
     worker.control_priorities.push_back("lightbar_manager");
@@ -160,7 +160,7 @@ TEST(LightBarManagerWorkerTest, testRequestControl)
 
 TEST(LightBarManagerWorkerTest, testReleaseControl) 
 {
-    LightBarManagerWorker worker("lightbar_manager");
+    LightBarManagerWorker worker;
     // Initialize indicator control map. Fills with supporting indicators with empty string name as owners.
     worker.setIndicatorControllers();
     worker.control_priorities.push_back("lightbar_manager");
@@ -220,7 +220,7 @@ TEST(LightBarManagerWorkerTest, testReleaseControl)
 
 TEST(LightBarManagerWorkerTest, testSetIndicator) 
 {
-    LightBarManagerWorker worker("lightbar_manager");
+    LightBarManagerWorker worker;
     // Initialize indicator control map. Fills with supporting indicators with empty string name as owners.
     worker.setIndicatorControllers();
     worker.control_priorities.push_back("lightbar_manager");
@@ -269,7 +269,7 @@ TEST(LightBarManagerWorkerTest, testSetIndicator)
 
 TEST(LightBarManagerWorkerTest, testHasHigherPriority) 
 {
-    LightBarManagerWorker worker("lightbar_manager");
+    LightBarManagerWorker worker;
     // Initialize indicator control map. Fills with supporting indicators with empty string name as owners.
     worker.setIndicatorControllers();
     worker.control_priorities.push_back("lightbar_manager");
@@ -298,7 +298,7 @@ TEST(LightBarManagerWorkerTest, testHasHigherPriority)
 
 TEST(LightBarManagerWorkerTest, testGetLightBarStatusMsg) 
 {
-    LightBarManagerWorker worker("lightbar_manager");
+    LightBarManagerWorker worker;
     // Initialize indicator control map. Fills with supporting indicators with empty string name as owners.
     worker.setIndicatorControllers();
     worker.control_priorities.push_back("lightbar_manager");
@@ -315,49 +315,49 @@ TEST(LightBarManagerWorkerTest, testGetLightBarStatusMsg)
 
 
     std::vector<IndicatorStatus> all_indicators = {ON, OFF, ON, ON, OFF, OFF, OFF, ON};
-    cav_msgs::LightBarStatus msg = worker.getLightBarStatusMsg(all_indicators);
-    EXPECT_EQ(cav_msgs::LightBarStatus::ON, msg.green_solid);
-    EXPECT_EQ(cav_msgs::LightBarStatus::OFF, msg.green_flash);
-    EXPECT_EQ(cav_msgs::LightBarStatus::ON, msg.sides_solid);
-    EXPECT_EQ(cav_msgs::LightBarStatus::ON, msg.yellow_solid);
-    EXPECT_EQ(cav_msgs::LightBarStatus::OFF, msg.flash);
-    EXPECT_EQ(cav_msgs::LightBarStatus::ON, msg.left_arrow);
-    EXPECT_EQ(cav_msgs::LightBarStatus::ON, msg.right_arrow);
+    carma_driver_msgs::msg::LightBarStatus msg = worker.getLightBarStatusMsg(all_indicators);
+    EXPECT_EQ(carma_driver_msgs::msg::LightBarStatus::ON, msg.green_solid);
+    EXPECT_EQ(carma_driver_msgs::msg::LightBarStatus::OFF, msg.green_flash);
+    EXPECT_EQ(carma_driver_msgs::msg::LightBarStatus::ON, msg.sides_solid);
+    EXPECT_EQ(carma_driver_msgs::msg::LightBarStatus::ON, msg.yellow_solid);
+    EXPECT_EQ(carma_driver_msgs::msg::LightBarStatus::OFF, msg.flash);
+    EXPECT_EQ(carma_driver_msgs::msg::LightBarStatus::ON, msg.left_arrow);
+    EXPECT_EQ(carma_driver_msgs::msg::LightBarStatus::ON, msg.right_arrow);
 }
 
 TEST(LightBarManagerWorkerTest, testHandleHandleTurnSignal) 
 {
     // Handle left/right indicators with arrow_out correctly
-    LightBarManagerWorker worker("lightbar_manager");
+    LightBarManagerWorker worker;
 
-    automotive_platform_msgs::TurnSignalCommandPtr turn_signal = boost::make_shared<automotive_platform_msgs::TurnSignalCommand>();
-    turn_signal->turn_signal = automotive_platform_msgs::TurnSignalCommand::RIGHT;
+    automotive_platform_msgs::msg::TurnSignalCommand turn_signal;
+    turn_signal.turn_signal = automotive_platform_msgs::msg::TurnSignalCommand::RIGHT;
     auto light_signals = worker.handleTurnSignal(turn_signal);
 
     EXPECT_EQ(light_signals.size(), 1);
     EXPECT_EQ(light_signals[0], lightbar_manager::LightBarIndicator::YELLOW_ARROW_RIGHT);
     
-    turn_signal->turn_signal = automotive_platform_msgs::TurnSignalCommand::NONE;
+    turn_signal.turn_signal = automotive_platform_msgs::msg::TurnSignalCommand::NONE;
     light_signals = worker.handleTurnSignal(turn_signal);
 
     EXPECT_EQ(light_signals.size(), 1);
     EXPECT_EQ(light_signals[0], lightbar_manager::LightBarIndicator::YELLOW_ARROW_RIGHT);
 
-    turn_signal->turn_signal = automotive_platform_msgs::TurnSignalCommand::NONE;
+    turn_signal.turn_signal = automotive_platform_msgs::msg::TurnSignalCommand::NONE;
     light_signals = worker.handleTurnSignal(turn_signal);
     EXPECT_EQ(light_signals.size(), 0);
 
-    turn_signal->turn_signal = automotive_platform_msgs::TurnSignalCommand::LEFT;
+    turn_signal.turn_signal = automotive_platform_msgs::msg::TurnSignalCommand::LEFT;
     light_signals = worker.handleTurnSignal(turn_signal);
     EXPECT_EQ(light_signals.size(), 1);
     EXPECT_EQ(light_signals[0], lightbar_manager::LightBarIndicator::YELLOW_ARROW_LEFT);
     
-    turn_signal->turn_signal = automotive_platform_msgs::TurnSignalCommand::NONE;
+    turn_signal.turn_signal = automotive_platform_msgs::msg::TurnSignalCommand::NONE;
     light_signals = worker.handleTurnSignal(turn_signal);
     EXPECT_EQ(light_signals.size(), 1);
     EXPECT_EQ(light_signals[0], lightbar_manager::LightBarIndicator::YELLOW_ARROW_LEFT);
 
-    turn_signal->turn_signal = automotive_platform_msgs::TurnSignalCommand::NONE;
+    turn_signal.turn_signal = automotive_platform_msgs::msg::TurnSignalCommand::NONE;
     light_signals = worker.handleTurnSignal(turn_signal);
     EXPECT_EQ(light_signals.size(), 0);
 }

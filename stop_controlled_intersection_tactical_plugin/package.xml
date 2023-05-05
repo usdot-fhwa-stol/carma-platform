@@ -35,11 +35,11 @@
   <depend>carma_guidance_plugins</depend>
   <depend>carma_v2x_msgs</depend>
   <depend>autoware_msgs</depend>
-  <depend>carma_wm_ros2</depend>
+  <depend>carma_wm</depend>
   <depend>tf2</depend>
   <depend>tf2_geometry_msgs</depend> 
   <depend>trajectory_utils_ros2</depend>   
-  <depend>basic_autonomy_ros2</depend>   
+  <depend>basic_autonomy</depend>   
 
   <test_depend>ament_lint_auto</test_depend>
   <test_depend>ament_cmake_gtest</test_depend>

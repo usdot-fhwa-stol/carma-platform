@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2019-2021 LEIDOS.
+ * Copyright (C) 2022 LEIDOS.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -15,61 +15,115 @@
  */
 
 #include <new>
-#include <carma_wm/WMListener.h>
-#include "WMListenerWorker.h"
+#include <carma_wm/WMListener.hpp>
+#include "WMListenerWorker.hpp"
 
 
 namespace carma_wm
 {
   // @SONAR_STOP@
-WMListener::WMListener(bool multi_thread) : worker_(std::unique_ptr<WMListenerWorker>(new WMListenerWorker)), multi_threaded_(multi_thread)
+WMListener::WMListener(
+  rclcpp::node_interfaces::NodeBaseInterface::SharedPtr node_base,
+  rclcpp::node_interfaces::NodeLoggingInterface::SharedPtr node_logging,
+  rclcpp::node_interfaces::NodeTopicsInterface::SharedPtr node_topics,
+  rclcpp::node_interfaces::NodeParametersInterface::SharedPtr node_params_,
+  bool multi_thread)
+    :node_base_(node_base),node_logging_(node_logging),node_topics_(node_topics),worker_(std::unique_ptr<WMListenerWorker>(new WMListenerWorker)), multi_threaded_(multi_thread)
 {
 
-  ROS_DEBUG_STREAM("WMListener: Creating world model listener");
+  RCLCPP_DEBUG_STREAM(node_logging_->get_logger(), "WMListener: Creating world model listener");
 
-  if (multi_threaded_)
-  {
-    ROS_DEBUG_STREAM("WMListener: Using multi-threaded subscription");
-    nh_.setCallbackQueue(&async_queue_);
+  //Declare parameter if it doesn't exist
+  rclcpp::Parameter config_speed_limit_param("config_speed_limit");
+  if(!node_params_->get_parameter("config_speed_limit", config_speed_limit_param)){
+    rclcpp::ParameterValue config_speed_limit_param_value;
+    config_speed_limit_param_value = node_params_->declare_parameter("config_speed_limit", rclcpp::ParameterValue (0.0));
   }
-  map_update_sub_= nh_.subscribe("map_update", 200, &WMListener::mapUpdateCallback, this);
-  map_sub_ = nh_.subscribe("semantic_map", 2, &WMListenerWorker::mapCallback, worker_.get());
-  route_sub_ = nh_.subscribe("route", 1, &WMListenerWorker::routeCallback, worker_.get());
-  roadway_objects_sub_ = nh_.subscribe("roadway_objects", 1, &WMListenerWorker::roadwayObjectListCallback, worker_.get());
-  traffic_spat_sub_ = nh_.subscribe("incoming_spat", 20, &WMListenerWorker::incomingSpatCallback, worker_.get());
 
-  double cL;
-  nh2_.getParam("/config_speed_limit", cL);
-  setConfigSpeedLimit(cL);
-
-  std::string participant;
-  nh2_.getParam("/vehicle_participant_type", participant);
-  worker_->setVehicleParticipationType(participant);
-
-
-  // Set up AsyncSpinner for multi-threaded use case
-  if (multi_threaded_)
-  {
-    wm_spinner_ = std::unique_ptr<ros::AsyncSpinner>(new ros::AsyncSpinner(1, &async_queue_));
-    wm_spinner_->start();
+  rclcpp::Parameter participant_param("vehicle_participant_type");
+  if(!node_params_->get_parameter("vehicle_participant_type", participant_param)){
+    rclcpp::ParameterValue participant_param_value;
+    participant_param_value = node_params_->declare_parameter("vehicle_participant_type", rclcpp::ParameterValue(""));
   }
+  
+  // Get params
+  config_speed_limit_param = node_params_->get_parameter("config_speed_limit");
+  participant_param = node_params_->get_parameter("vehicle_participant_type");
+
+  RCLCPP_INFO_STREAM(node_logging->get_logger(), "Loaded config speed limit: " << config_speed_limit_param.as_double());
+  RCLCPP_INFO_STREAM(node_logging->get_logger(), "Loaded vehicle participant type: " << participant_param.as_string());
+
+  setConfigSpeedLimit(config_speed_limit_param.as_double());
+  worker_->setVehicleParticipationType(participant_param.as_string());
+
+  rclcpp::SubscriptionOptions map_update_options;
+  rclcpp::SubscriptionOptions map_options;
+  rclcpp::SubscriptionOptions route_options;
+  rclcpp::SubscriptionOptions roadway_objects_options;
+  rclcpp::SubscriptionOptions traffic_spat_options;
+
+  if(multi_threaded_)
+  {
+    RCLCPP_DEBUG_STREAM(node_logging_->get_logger(), "WMListener: Using a multi-threaded subscription");
+
+    auto map_update_cb_group = node_base_->create_callback_group(rclcpp::CallbackGroupType::MutuallyExclusive);
+    map_update_options.callback_group = map_update_cb_group;
+
+    auto map_cb_group = node_base_->create_callback_group(rclcpp::CallbackGroupType::MutuallyExclusive);
+    map_options.callback_group = map_cb_group;
+
+    auto route_cb_group = node_base_->create_callback_group(rclcpp::CallbackGroupType::MutuallyExclusive);
+    route_options.callback_group = route_cb_group;                               
+
+    auto roadway_objects_group = node_base_->create_callback_group(rclcpp::CallbackGroupType::MutuallyExclusive);
+    roadway_objects_options.callback_group = roadway_objects_group;                                      
+
+    auto traffic_spat_group = node_base_->create_callback_group(rclcpp::CallbackGroupType::MutuallyExclusive);
+    traffic_spat_options.callback_group = traffic_spat_group;  
+
+  }  
+
+  // Setup subscribers
+  route_sub_ = rclcpp::create_subscription<carma_planning_msgs::msg::Route>(node_topics_, "route", 1, 
+                                  std::bind(&WMListenerWorker::routeCallback, worker_.get(), std::placeholders::_1), route_options);
+
+  roadway_objects_sub_ = rclcpp::create_subscription<carma_perception_msgs::msg::RoadwayObstacleList>(node_topics_, "roadway_objects", 1,
+                                  std::bind(&WMListenerWorker::roadwayObjectListCallback, worker_.get(), std::placeholders::_1), roadway_objects_options);
+
+  traffic_spat_sub_ = rclcpp::create_subscription<carma_v2x_msgs::msg::SPAT>(node_topics_, "incoming_spat", 1,
+                                  std::bind(&WMListenerWorker::incomingSpatCallback, worker_.get(), std::placeholders::_1), traffic_spat_options); 
+
+  // NOTE: Currently, intra-process comms must be disabled for subscribers that are transient_local: https://github.com/ros2/rclcpp/issues/1753
+  map_update_options.use_intra_process_comm = rclcpp::IntraProcessSetting::Disable; // Disable intra-process comms for the map update subscriber
+  auto map_update_sub_qos = rclcpp::QoS(rclcpp::KeepLast(10)); // Set the queue size for the map update subscriber
+  map_update_sub_qos.transient_local();  // If it is possible that this node is a late-joiner to its topic, it must be set to transient_local to receive earlier messages that were missed.
+                                         // NOTE: The publisher's QoS must be set to transisent_local() as well for earlier messages to be resent to this later-joiner.
+
+  // Create map update subscriber that will receive earlier messages that were missed ONLY if the publisher is transient_local too
+  map_update_sub_ = rclcpp::create_subscription<autoware_lanelet2_msgs::msg::MapBin>(node_topics_, "map_update", map_update_sub_qos, 
+                  std::bind(&WMListener::mapUpdateCallback, this, std::placeholders::_1), map_update_options);
+
+  map_options.use_intra_process_comm = rclcpp::IntraProcessSetting::Disable; // Disable intra-process comms for the semantic map subscriber
+  auto map_sub_qos = rclcpp::QoS(rclcpp::KeepLast(2)); // Set the queue size for the semantic map subscriber
+  map_sub_qos.transient_local();  // If it is possible that this node is a late-joiner to its topic, it must be set to transient_local to receive earlier messages that were missed.
+                                  // NOTE: The publisher's QoS must be set to transisent_local() as well for earlier messages to be resent to this later-joiner.
+
+  // Create semantic mab subscriber that will receive earlier messages that were missed ONLY if the publisher is transient_local too
+  map_sub_ = rclcpp::create_subscription<autoware_lanelet2_msgs::msg::MapBin>(node_topics_, "semantic_map", map_sub_qos,
+                                  std::bind(&WMListenerWorker::mapCallback, worker_.get(), std::placeholders::_1), map_options);
 }
 
-WMListener::~WMListener()
-{
-  if (multi_threaded_)
-  {
-    wm_spinner_->stop();
-  }
-}
+WMListener::~WMListener() {}
 
 void WMListener::enableUpdatesWithoutRouteWL()
 {
-   worker_->enableUpdatesWithoutRoute();
+  const std::lock_guard<std::mutex> lock(mw_mutex_);
+  worker_->enableUpdatesWithoutRoute();
 }
 
-bool WMListener::checkIfReRoutingNeededWL() const
+bool WMListener::checkIfReRoutingNeededWL()
 {
+  const std::lock_guard<std::mutex> lock(mw_mutex_);
   return worker_->checkIfReRoutingNeeded();
 }
 
@@ -79,13 +133,13 @@ WorldModelConstPtr WMListener::getWorldModel()
   return worker_->getWorldModel();
 }
 
-void WMListener::mapUpdateCallback(const autoware_lanelet2_msgs::MapBinPtr& geofence_msg)
+void WMListener::mapUpdateCallback(autoware_lanelet2_msgs::msg::MapBin::UniquePtr geofence_msg)
 {
   const std::lock_guard<std::mutex> lock(mw_mutex_);
 
-  ROS_INFO_STREAM("New Map Update Received. SeqNum: " << geofence_msg->seq_id);
+  RCLCPP_INFO_STREAM(node_logging_->get_logger(), "New Map Update Received. SeqNum: " << geofence_msg->seq_id);
 
-  worker_->mapUpdateCallback(geofence_msg);
+  worker_->mapUpdateCallback(std::move(geofence_msg));
 }
 
 void WMListener::setMapCallback(std::function<void()> callback)
@@ -118,4 +172,4 @@ void WMListener::setConfigSpeedLimit(double config_lim) const
 
 // @SONAR_START@
 
-}  // namespace carma_wm
+}

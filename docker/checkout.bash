@@ -45,13 +45,13 @@ if [[ "$BRANCH" = "develop" ]]; then
       git clone --depth=1 https://github.com/usdot-fhwa-stol/carma-utils.git --branch $BRANCH
       git clone --depth=1 https://github.com/usdot-fhwa-stol/carma-messenger.git --branch $BRANCH
 else
-      git clone --depth=1 https://github.com/usdot-fhwa-stol/carma-msgs.git --branch carma-system-4.3.0
-      git clone --depth=1 https://github.com/usdot-fhwa-stol/carma-utils.git --branch carma-system-4.3.0
-      git clone --depth=1 https://github.com/usdot-fhwa-stol/carma-messenger.git --branch carma-system-4.3.0
+      git clone --depth=1 https://github.com/usdot-fhwa-stol/carma-msgs.git --branch carma-system-4.4.0
+      git clone --depth=1 https://github.com/usdot-fhwa-stol/carma-utils.git --branch carma-system-4.4.0
+      git clone --depth=1 https://github.com/usdot-fhwa-stol/carma-messenger.git --branch carma-system-4.4.0
 fi
 
 # Get humble branch of message filters which supports template Node arguments (foxy version supports rclcpp::Node only)
-git clone https://github.com/usdot-fhwa-stol/carma-message-filters.git --branch carma-system-4.3.0
+git clone https://github.com/usdot-fhwa-stol/carma-message-filters.git --branch develop
 
 # add astuff messages
 # NOTE: The ibeo_msgs package is ignored because on build the cmake files in that package run a sed command 
@@ -70,14 +70,15 @@ echo "" > COLCON_IGNORE
 cd ../
 
 #rosbridge_suite is a ROS meta-package including all the rosbridge packages.
-git clone https://github.com/usdot-fhwa-stol/rosbridge_suite -b ros2
+# NOTE: clone -b flag is used instead of --branch to avoid hook rewriting it
+git clone -b ros2 https://github.com/usdot-fhwa-stol/rosbridge_suite
 
 
 cd ${dir}/src
 
 # git clone --branch master --depth 1 https://github.com/nitroshare/qhttpengine.git
 git clone -b master --depth 1 https://github.com/etherealjoy/qhttpengine.git
-git clone -b 7.4.0 --depth 1 https://github.com/usdot-fhwa-OPS/V2X-Hub.git
+git clone -b 7.5.0 --depth 1 https://github.com/usdot-fhwa-OPS/V2X-Hub.git
 cd V2X-Hub
 git config core.sparsecheckout true
 git sparse-checkout init

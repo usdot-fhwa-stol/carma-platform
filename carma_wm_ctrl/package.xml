@@ -20,7 +20,7 @@
   <depend>lanelet2_routing</depend>
   <depend>lanelet2_traffic_rules</depend>
   <depend>lanelet2_extension</depend>
-  <depend>carma_wm_ros2</depend>
+  <depend>carma_wm</depend>
   <depend>carma_perception_msgs</depend>
   <depend>carma_planning_msgs</depend>
   <depend>carma_v2x_msgs</depend>

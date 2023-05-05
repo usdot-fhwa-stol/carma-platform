@@ -16,7 +16,7 @@
 
 #include <inlanecruising_plugin/inlanecruising_plugin.hpp>
 #include <inlanecruising_plugin/inlanecruising_plugin_node.hpp>
-#include <carma_wm_ros2/WMTestLibForGuidance.hpp>
+#include <carma_wm/WMTestLibForGuidance.hpp>
 #include <gtest/gtest.h>
 #include <rclcpp/rclcpp.hpp>
 #include <lanelet2_core/primitives/Lanelet.h>
@@ -28,8 +28,8 @@
 #include <lanelet2_core/Attribute.h>
 #include <lanelet2_core/primitives/Traits.h>
 #include <lanelet2_extension/traffic_rules/CarmaUSTrafficRules.h>
-#include <carma_wm_ros2/MapConformer.hpp>
-#include <carma_wm_ros2/CARMAWorldModel.hpp>
+#include <carma_wm/MapConformer.hpp>
+#include <carma_wm/CARMAWorldModel.hpp>
 #include <unsupported/Eigen/Splines>
 #include <lanelet2_extension/projection/local_frame_projector.h>
 #include <lanelet2_extension/io/autoware_osm_parser.h>

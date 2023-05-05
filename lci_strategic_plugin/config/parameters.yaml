@@ -16,9 +16,6 @@ stopping_location_buffer : 8.0
 # Double: A buffer in seconds around the green phase which will reduce the phase length such that vehicle still considers it non-green
 green_light_time_buffer : 0.5
 
-# Double: A buffer in seconds starting green phase which is still considered valid stop if safety requires it
-stop_light_time_buffer : 2.0
-
 # Double: Minimum allowable speed in trajectory smoothing algorithm m/s
 algo_minimum_speed : 2.235
 
@@ -32,18 +29,11 @@ desired_distance_to_stop_buffer : 15.0
 # Double: The minimum period in seconds which a maneuver plan must cover if the plugin wishes to control the whole plan
 min_maneuver_planning_period : 15.1
 
-# Double: Update time interval of carma streets. Units in s
-carma_streets_update_interval : 1.0
-
-# Double: Minimum vehicle reaction time. Units in s
-reaction_time : 2.0
-
 # Bool: If enable_carma_streets_connection is true when we want to allow carma streets functionality (UC3) and if its false that means we don't want to allow carma streets behaviour and will only use UC2 behaviour.
 enable_carma_streets_connection : true
 
 # Double: Mobility operation rate
 mobility_rate : 10.0
-
 
 # String: The name to use for this plugin during comminications with the arbitrator
 strategic_plugin_name : lci_strategic_plugin

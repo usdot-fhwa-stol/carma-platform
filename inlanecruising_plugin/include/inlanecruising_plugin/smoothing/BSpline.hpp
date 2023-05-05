@@ -17,7 +17,7 @@
  */
 
 #include <vector>
-#include <carma_wm_ros2/Geometry.hpp>
+#include <carma_wm/Geometry.hpp>
 #include <inlanecruising_plugin/smoothing/SplineI.hpp>
 #include <unsupported/Eigen/Splines>
 

@@ -117,9 +117,6 @@ void setManeuverLaneletIds(carma_planning_msgs::msg::Maneuver& mvr, lanelet::Id 
     
     RCLCPP_INFO_STREAM(rclcpp::get_logger("route_following_plugin"), "RouteFollowingPlugin Config: " << config_);
 
-    // Setup publishers
-    upcoming_lane_change_status_pub_ = create_publisher<carma_planning_msgs::msg::UpcomingLaneChangeStatus>("upcoming_lane_change_status", 1);
-
     // Setup subscribers
     twist_sub_ = create_subscription<geometry_msgs::msg::TwistStamped>("current_velocity", 50,
                                                               std::bind(&RouteFollowingPlugin::twist_cb,this,std_ph::_1));
@@ -150,6 +147,16 @@ void setManeuverLaneletIds(carma_planning_msgs::msg::Maneuver& mvr, lanelet::Id 
     return CallbackReturn::SUCCESS;
   }
 
+    carma_ros2_utils::CallbackReturn RouteFollowingPlugin::on_activate_plugin()
+    {
+        bumper_pose_timer_ = create_timer(get_clock(),
+            std::chrono::milliseconds(100),
+            std::bind(&RouteFollowingPlugin::bumper_pose_cb, this));
+
+        // Return success if everthing initialized successfully
+        return CallbackReturn::SUCCESS;
+    }
+    
     void RouteFollowingPlugin::twist_cb(geometry_msgs::msg::TwistStamped::UniquePtr msg)
     {
         current_speed_ = msg->twist.linear.x;
@@ -224,7 +231,6 @@ void setManeuverLaneletIds(carma_planning_msgs::msg::Maneuver& mvr, lanelet::Id 
                 // Determine the Lane Change Status
                 RCLCPP_DEBUG_STREAM(get_logger(),"Recording lanechange start_dist <<" << start_dist  << ", from llt id:" << route_shortest_path[shortest_path_index].id() << " to llt id: " << 
                     route_shortest_path[shortest_path_index+ 1].id());
-                upcoming_lane_change_status_msg_map_.push({start_dist, ComposeLaneChangeStatus(route_shortest_path[shortest_path_index],route_shortest_path[shortest_path_index + 1])});
 
                 maneuvers.push_back(composeLaneChangeManeuverMessage(start_dist, end_dist, start_speed, target_speed_in_lanelet, route_shortest_path[shortest_path_index].id(), route_shortest_path[shortest_path_index + 1].id()));
                 ++shortest_path_index; //Since lane change covers 2 lanelets - skip planning for the next lanelet
@@ -522,27 +528,6 @@ void setManeuverLaneletIds(carma_planning_msgs::msg::Maneuver& mvr, lanelet::Id 
         return;
     }
 
-    carma_planning_msgs::msg::UpcomingLaneChangeStatus RouteFollowingPlugin::ComposeLaneChangeStatus(lanelet::ConstLanelet starting_lanelet,lanelet::ConstLanelet ending_lanelet)
-    {
-        carma_planning_msgs::msg::UpcomingLaneChangeStatus upcoming_lanechange_status_msg;
-        // default to right lane change
-        upcoming_lanechange_status_msg.lane_change = carma_planning_msgs::msg::UpcomingLaneChangeStatus::RIGHT; 
-        // change to left if detected
-        for (const auto &relation : wm_->getRoute()->leftRelations(starting_lanelet))
-        {
-           RCLCPP_DEBUG_STREAM(get_logger(),"Checking relation.lanelet.id()" <<relation.lanelet.id());
-            if (relation.lanelet.id() == ending_lanelet.id())
-            {
-               RCLCPP_DEBUG_STREAM(get_logger(),"relation.lanelet.id()" << relation.lanelet.id() << " is LEFT");
-                upcoming_lanechange_status_msg.lane_change = carma_planning_msgs::msg::UpcomingLaneChangeStatus::LEFT;
-                break;
-            }  
-        }
-        RCLCPP_DEBUG_STREAM(get_logger(),"ComposeLaneChangeStatus Exiting now");
-        return upcoming_lanechange_status_msg;
-    }
-
-
     void RouteFollowingPlugin::bumper_pose_cb()
     {
         RCLCPP_DEBUG_STREAM(get_logger(),"Entering pose_cb");
@@ -570,21 +555,7 @@ void setManeuverLaneletIds(carma_planning_msgs::msg::Maneuver& mvr, lanelet::Id 
         current_loc_ = current_loc;
         double current_progress = wm_->routeTrackPos(current_loc).downtrack;
         
-        RCLCPP_DEBUG_STREAM(get_logger(),"pose_cb : current_progress" << current_progress << ", and upcoming_lane_change_status_msg_map_.size(): " << upcoming_lane_change_status_msg_map_.size());
-        while (!upcoming_lane_change_status_msg_map_.empty() && current_progress > upcoming_lane_change_status_msg_map_.front().first)
-        {
-            RCLCPP_DEBUG_STREAM(get_logger(),"pose_cb : the vehicle has passed the lanechange point at downtrack" << upcoming_lane_change_status_msg_map_.front().first);
-            upcoming_lane_change_status_msg_map_.pop();
-        }
-
-        if (!upcoming_lane_change_status_msg_map_.empty() && upcoming_lane_change_status_msg_map_.front().second.lane_change != carma_planning_msgs::msg::UpcomingLaneChangeStatus::NONE)
-        {
-            RCLCPP_DEBUG_STREAM(get_logger(),"upcoming_lane_change_status_msg_map_.lane_change : " << static_cast<int>(upcoming_lane_change_status_msg_map_.front().second.lane_change) << 
-           ", downtrack until that lanechange: " << upcoming_lane_change_status_msg_map_.front().first);
-            upcoming_lane_change_status_msg_map_.front().second.downtrack_until_lanechange=upcoming_lane_change_status_msg_map_.front().first-current_progress;
-           RCLCPP_DEBUG_STREAM(get_logger(),"upcoming_lane_change_status_msg_map_.front().second.downtrack_until_lanechange: " <<static_cast<double>(upcoming_lane_change_status_msg_map_.front().second.downtrack_until_lanechange));
-            upcoming_lane_change_status_pub_->publish(upcoming_lane_change_status_msg_map_.front().second); 
-        }
+        RCLCPP_DEBUG_STREAM(get_logger(),"pose_cb : current_progress" << current_progress);
         
         // Check if we need to return to route shortest path.
         // Step 1. Check if another plugin aside from RFP has been in control
@@ -595,7 +566,8 @@ void setManeuverLaneletIds(carma_planning_msgs::msg::Maneuver& mvr, lanelet::Id 
             auto llts = wm_->getLaneletsFromPoint(current_loc, 10);                                          
             // Remove any candidate lanelets not on the route
             llts.erase(std::remove_if(llts.begin(), llts.end(),
-                [&](auto lanelet) -> bool { return !wm_->getRoute()->contains(lanelet); }));
+                [&](auto lanelet) -> bool { return !wm_->getRoute()->contains(lanelet); }),
+                llts.end());
 
             // !!! ASSUMPTION !!!:
             // Once non-route lanelets have been removed, it is assumed that our actual current lanelet is the only one that can remain.
@@ -613,12 +585,23 @@ void setManeuverLaneletIds(carma_planning_msgs::msg::Maneuver& mvr, lanelet::Id 
             }
 
             const auto& current_lanelet = llts[0];
+            RCLCPP_DEBUG_STREAM(get_logger(), "Vehicle is currently in lanelet " << current_lanelet.id());
 
             // if the current lanelet is not on the shortest path
             if (shortest_path_set_.find(current_lanelet.id()) == shortest_path_set_.end())
             {
+                RCLCPP_DEBUG_STREAM(get_logger(), "Generating a new shortest path since the vehicle is not on the shortest path");
                 returnToShortestPath(current_lanelet);
-    
+            }
+
+            // Replan if vehicle currently located in a lane change planned by route_following_plugin, since a lane change maneuver can't begin part way through
+            for(size_t i = 0; i < latest_maneuver_plan_.size(); ++i){
+                if((GET_MANEUVER_PROPERTY(latest_maneuver_plan_[i], start_dist) <= current_progress) && (current_progress <= GET_MANEUVER_PROPERTY(latest_maneuver_plan_[i], end_dist))){
+                    if(latest_maneuver_plan_[i].type == carma_planning_msgs::msg::Maneuver::LANE_CHANGE){
+                        RCLCPP_DEBUG_STREAM(get_logger(), "Generating a new shortest path since vehicle is positioned in a lane change but the previous maneuver plan was not generated by route_following_plugin");
+                        returnToShortestPath(current_lanelet);
+                    }
+                }
             }
         }
     }
@@ -864,10 +847,20 @@ void setManeuverLaneletIds(carma_planning_msgs::msg::Maneuver& mvr, lanelet::Id 
         auto original_shortestpath = wm_->getRoute()->shortestPath();
         RCLCPP_DEBUG_STREAM(get_logger(),"The vehicle has left the shortest path");
         auto routing_graph = wm_->getMapRoutingGraph();
+        
+        // Obtain the lanelet following the current lanelet in this same lane, this lanelet must exist since the new shortest path cannot begin with a lane change
+        auto current_lane_following_lanelets = routing_graph->following(current_lanelet);
+        lanelet::ConstLanelet current_lane_following_lanelet;
+        if(!current_lane_following_lanelets.empty()){
+            current_lane_following_lanelet = current_lane_following_lanelets[0];
+        }
+        else{
+            throw std::invalid_argument("The current lanelet does not have a following lanelet. Vehicle cannot return to shortest path!");
+        }
 
         // In order to return to the shortest path, the closest future lanelet on the shortest path needs to be found.
-        // That is the following lanelet of the adjacent lanelet of the current lanelet.
-        auto adjacent_lanelets = routing_graph->besides(current_lanelet);
+        // That is the adjacent lanelet of the following lanelet of the current lanelet.
+        auto adjacent_lanelets = routing_graph->besides(current_lane_following_lanelet);
         if (!adjacent_lanelets.empty())
         {
             for (const auto& adjacent:adjacent_lanelets)
@@ -878,8 +871,9 @@ void setManeuverLaneletIds(carma_planning_msgs::msg::Maneuver& mvr, lanelet::Id 
                     const auto& target_following_lanelet = following_lanelets[0];
                     RCLCPP_DEBUG_STREAM(get_logger(),"The target_following_lanelet id is: " << target_following_lanelet.id());
                     lanelet::ConstLanelets interm;
+                    interm.push_back(static_cast<lanelet::ConstLanelet>(current_lane_following_lanelet));
                     interm.push_back(static_cast<lanelet::ConstLanelet>(target_following_lanelet));
-                    // a new shortest path, via the target_following_lanelet is calculated and used an alternative shortest path
+                    // a new shortest path, via the the lanelets in 'interm' is calculated and used an alternative shortest path
                     auto new_shortestpath = routing_graph->shortestPathVia(current_lanelet, interm, original_shortestpath.back());
                     RCLCPP_DEBUG_STREAM(get_logger(),"a new shortestpath is generated to return to original shortestpath");
                     // routeCb is called to update latest_maneuver_plan_
@@ -890,7 +884,7 @@ void setManeuverLaneletIds(carma_planning_msgs::msg::Maneuver& mvr, lanelet::Id 
                 {
                     // a new shortest path, via the current_lanelet is calculated and used an alternative shortest path
                     lanelet::ConstLanelets new_interm;
-                    new_interm.push_back(static_cast<lanelet::ConstLanelet>(current_lanelet));
+                    new_interm.push_back(static_cast<lanelet::ConstLanelet>(current_lane_following_lanelet));
                     auto new_shortestpath = routing_graph->shortestPathVia(current_lanelet, new_interm, original_shortestpath.back());
                     RCLCPP_DEBUG_STREAM(get_logger(),"Cannot return to the original shortestpath from adjacent lanes, so a new shortestpath is generated");
                     // routeCb is called to update latest_maneuver_plan_

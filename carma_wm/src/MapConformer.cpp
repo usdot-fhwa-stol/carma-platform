@@ -13,12 +13,12 @@
  * License for the specific language governing permissions and limitations under
  * the License.
  */
-#include <ros/ros.h>
-#include <carma_wm/WorldModel.h>
+#include <rclcpp/rclcpp.hpp>
+#include <carma_wm/WorldModel.hpp>
 #include <lanelet2_core/Attribute.h>
 #include <lanelet2_core/utility/Units.h>
 #include <boost/algorithm/string.hpp>
-#include <carma_wm/MapConformer.h>
+#include <carma_wm/MapConformer.hpp>
 
 
 namespace lanelet
@@ -82,7 +82,7 @@ std::vector<lanelet::traffic_rules::TrafficRulesUPtr> getAllGermanTrafficRules()
     catch (const lanelet::InvalidInputError& e)
     {
       // Ignore participants which there is no generic rules for
-      ROS_INFO_STREAM ("Ignoring participant: " << participant_types[i] <<  ", which there is no generic rule for...");
+      RCLCPP_INFO_STREAM ( rclcpp::get_logger("MapConformer"), "Ignoring participant: " << participant_types[i] <<  ", which there is no generic rule for...");
     }
   }
 
@@ -530,13 +530,13 @@ void addValidSpeedLimit(Lanelet& lanelet, lanelet::LaneletMapPtr map, lanelet::V
     if(speed_limit.back().get()->speed_limit_ > max_speed)//Check that speed limit value does not exceed the maximum value
     {
     
-      ROS_DEBUG_STREAM("Invalid speed limit value. Value reset to maximum speed limit.");
+      RCLCPP_DEBUG_STREAM( rclcpp::get_logger("lanelet::MapConformer"), "Invalid speed limit value. Value reset to maximum speed limit.");
       auto rar = std::make_shared<DigitalSpeedLimit>(DigitalSpeedLimit::buildData(lanelet::utils::getId(), max_speed, {lanelet},
       {}, allowed_participants));
       lanelet.removeRegulatoryElement(speed_limit.back());
       lanelet.addRegulatoryElement(rar);
       map->update(lanelet, rar);//Add DigitalSpeedLimit data to the map
-      ROS_INFO_STREAM("Number of Regulatory Elements: "<< map->regulatoryElementLayer.size());
+      RCLCPP_INFO_STREAM( rclcpp::get_logger("lanelet::MapConformer"), "Number of Regulatory Elements: "<< map->regulatoryElementLayer.size());
 
 
     }

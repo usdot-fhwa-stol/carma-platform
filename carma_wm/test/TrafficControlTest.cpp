@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2021 LEIDOS.
+ * Copyright (C) 2022 LEIDOS.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -14,23 +14,17 @@
  * the License.
  */
 
-#include <gmock/gmock.h>
-#include <carma_wm/TrafficControl.h>
-#include <autoware_lanelet2_ros_interface/utility/message_conversion.h>
+#include <gtest/gtest.h>
+#include <carma_wm/TrafficControl.hpp>
+#include <autoware_lanelet2_ros2_interface/utility/message_conversion.hpp>
 #include <memory>
 #include <chrono>
 #include <ctime>
 #include <atomic>
-#include "TestHelpers.h"
+#include "TestHelpers.hpp"
 
-#include <cav_msgs/TrafficControlMessage.h>
+#include <carma_v2x_msgs/msg/traffic_control_message.hpp>
 
-using ::testing::_;
-using ::testing::A;
-using ::testing::DoAll;
-using ::testing::InSequence;
-using ::testing::Return;
-using ::testing::ReturnArg;
 
 namespace carma_wm
 
@@ -65,10 +59,10 @@ TEST(TrafficControl, TrafficControlBinMsgTest)
   gf_ptr->update_list_.push_back(std::make_pair(ll_1.id(), speed_limit_new));
 
   // from broadcaster
-  autoware_lanelet2_msgs::MapBin gf_obj_msg;
+  autoware_lanelet2_msgs::msg::MapBin gf_obj_msg;
   
   auto send_data = std::make_shared<carma_wm::TrafficControl>(carma_wm::TrafficControl(gf_ptr->id_, gf_ptr->update_list_, gf_ptr->remove_list_, {ll_1}));
-  ROS_INFO("Below null pointer error message is expected");
+  RCLCPP_INFO(rclcpp::get_logger("carma_wm::TrafficControlTest"), "Below null pointer error message is expected");
   auto null = nullptr;
   carma_wm::toBinMsg(send_data, null);
   ASSERT_EQ(null, nullptr);
@@ -76,7 +70,7 @@ TEST(TrafficControl, TrafficControlBinMsgTest)
   
   // at map users
   auto data_received = std::make_shared<carma_wm::TrafficControl>(carma_wm::TrafficControl());
-  ROS_INFO("Below null pointer error message is expected");
+  RCLCPP_INFO(rclcpp::get_logger("carma_wm::TrafficControlTest"), "Below null pointer error message is expected");
   carma_wm::fromBinMsg(gf_obj_msg, null);
   ASSERT_EQ(null, nullptr);
   carma_wm::fromBinMsg(gf_obj_msg, data_received);

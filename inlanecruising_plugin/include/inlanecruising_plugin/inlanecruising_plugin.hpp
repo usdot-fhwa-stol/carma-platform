@@ -23,10 +23,10 @@
 #include <boost/shared_ptr.hpp>
 #include <carma_ros2_utils/carma_lifecycle_node.hpp>
 #include <boost/geometry.hpp>
-#include <carma_wm_ros2/Geometry.hpp>
-#include <basic_autonomy_ros2/basic_autonomy.hpp>
+#include <carma_wm/Geometry.hpp>
+#include <basic_autonomy/basic_autonomy.hpp>
 #include <carma_planning_msgs/srv/plan_trajectory.hpp>
-#include <carma_wm_ros2/WMListener.hpp>
+#include <carma_wm/WMListener.hpp>
 #include <functional>
 #include "inlanecruising_config.hpp"
 #include <unordered_set>

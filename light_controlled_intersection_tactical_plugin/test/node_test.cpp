@@ -21,7 +21,7 @@
 #include <future>
 
 #include "light_controlled_intersection_tactical_plugin/light_controlled_intersection_tactical_plugin_node.hpp"
-#include <carma_wm_ros2/WMTestLibForGuidance.hpp>
+#include <carma_wm/WMTestLibForGuidance.hpp>
 
 namespace light_controlled_intersection_tactical_plugin
 {
