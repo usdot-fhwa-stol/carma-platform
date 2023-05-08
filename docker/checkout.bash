@@ -45,9 +45,9 @@ if [[ "$BRANCH" = "develop" ]]; then
       git clone --depth=1 https://github.com/usdot-fhwa-stol/carma-utils.git --branch $BRANCH
       git clone --depth=1 https://github.com/usdot-fhwa-stol/carma-messenger.git --branch $BRANCH
 else
-      git clone --depth=1 https://github.com/usdot-fhwa-stol/carma-msgs.git --branch carma-system-4.4.0
-      git clone --depth=1 https://github.com/usdot-fhwa-stol/carma-utils.git --branch carma-system-4.4.0
-      git clone --depth=1 https://github.com/usdot-fhwa-stol/carma-messenger.git --branch carma-system-4.4.0
+      git clone --depth=1 https://github.com/usdot-fhwa-stol/carma-msgs.git --branch develop
+      git clone --depth=1 https://github.com/usdot-fhwa-stol/carma-utils.git --branch develop
+      git clone --depth=1 https://github.com/usdot-fhwa-stol/carma-messenger.git --branch develop
 fi
 
 # Get humble branch of message filters which supports template Node arguments (foxy version supports rclcpp::Node only)
@@ -78,7 +78,7 @@ cd ${dir}/src
 
 # git clone --branch master --depth 1 https://github.com/nitroshare/qhttpengine.git
 git clone -b master --depth 1 https://github.com/etherealjoy/qhttpengine.git
-git clone -b 7.5.0 --depth 1 https://github.com/usdot-fhwa-OPS/V2X-Hub.git
+git clone -b develop --depth 1 https://github.com/usdot-fhwa-OPS/V2X-Hub.git
 cd V2X-Hub
 git config core.sparsecheckout true
 git sparse-checkout init
