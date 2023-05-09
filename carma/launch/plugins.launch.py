@@ -85,6 +85,8 @@ def generate_launch_description():
 
     pure_pursuit_tuning_parameters = [vehicle_calibration_dir, "/pure_pursuit/calibration.yaml"]
 
+    lci_plugin_calibration_params = [vehicle_calibration_dir, "/identifiers/UniqueVehicleParams.yaml"]
+
     carma_inlanecruising_plugin_container = ComposableNodeContainer(
         package='carma_ros2_utils',
         name='carma_lainlanecruising_plugin_container',
@@ -283,7 +285,8 @@ def generate_launch_description():
                 ],
                 parameters=[
                     lci_strategic_plugin_file_path,
-                    vehicle_config_param_file
+                    vehicle_config_param_file,
+                    lci_plugin_calibration_params
                 ]
             ),
         ]
