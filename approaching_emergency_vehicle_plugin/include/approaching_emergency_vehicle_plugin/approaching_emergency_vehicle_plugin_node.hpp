@@ -443,6 +443,9 @@ namespace approaching_emergency_vehicle_plugin
     // Boolean flag to indicate whether if each ERV and CMV are going on same direction
     std::unordered_map<std::string, bool> is_same_direction_;
 
+    // Unordered map to store the latest time a BSM was processed for a given active ERV
+    std::unordered_map<std::string, rclcpp::Time> latest_erv_update_times_;
+
     // Pointer for map projector
     boost::optional<std::string> map_projector_;
 
