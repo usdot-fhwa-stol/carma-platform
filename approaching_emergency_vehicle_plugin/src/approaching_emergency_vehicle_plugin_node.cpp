@@ -152,7 +152,7 @@ namespace approaching_emergency_vehicle_plugin
     add_on_set_parameters_callback(std::bind(&ApproachingEmergencyVehiclePlugin::parameter_update_callback, this, std_ph::_1));
 
     // Setup subscribers
-    incoming_bsm_sub_ = create_subscription<carma_v2x_msgs::msg::BSM>("incoming_bsm", 10,
+    incoming_bsm_sub_ = create_subscription<carma_v2x_msgs::msg::BSM>("incoming_bsm", 1,
                                             std::bind(&ApproachingEmergencyVehiclePlugin::incomingBsmCallback, this, std_ph::_1));
 
     georeference_sub_ = create_subscription<std_msgs::msg::String>("georeference", 10,
@@ -507,6 +507,9 @@ namespace approaching_emergency_vehicle_plugin
       return boost::optional<ErvInformation>();
     }
 
+    // Update the latest processing time of this ERV
+    latest_erv_update_times_[erv_information.vehicle_id] = this->now();
+
     // Generate ERV's route based on its current position and its destination points
     lanelet::Optional<lanelet::routing::Route> erv_future_route = generateErvRoute(erv_information.current_latitude, erv_information.current_longitude, erv_destination_points);
 
@@ -810,27 +813,42 @@ namespace approaching_emergency_vehicle_plugin
       return;
     }
 
-    // If there is already an ERV approaching the ego vehicle, only process this BSM futher if enough time has passed since the previously processed BSM
-    if(has_tracked_erv_){
+    // Get the vehicle ID associated with the received BSM
+    std::stringstream ss;
+    for(size_t i = 0; i < msg->core_data.id.size(); ++i){
+      ss << std::setfill('0') << std::setw(2) << std::hex << (unsigned)msg->core_data.id.at(i);
+    }
+    std::string erv_vehicle_id = ss.str();
+    RCLCPP_DEBUG_STREAM(rclcpp::get_logger(logger_name), "Received a BSM from " << erv_vehicle_id);
 
-      // Get the vehicle ID associated with the received BSM
-      std::stringstream ss;
-      for(size_t i = 0; i < msg->core_data.id.size(); ++i){
-        ss << std::setfill('0') << std::setw(2) << std::hex << (unsigned)msg->core_data.id.at(i);
-      }
-      std::string erv_vehicle_id = ss.str();
+    if(has_tracked_erv_){
+      // If there is already an ERV approaching the ego vehicle, only process this BSM further if it is from that ERV and enough time has passed since the previously processed BSM
 
       if(erv_vehicle_id == tracked_erv_.vehicle_id){
-        double seconds_since_prev_bsm = (this->now() - tracked_erv_.latest_update_time).seconds();
+        double seconds_since_prev_processed_bsm = (this->now() - tracked_erv_.latest_update_time).seconds();
 
-        if(seconds_since_prev_bsm < (1.0 / config_.bsm_processing_frequency)){
+        if(seconds_since_prev_processed_bsm < (1.0 / config_.bsm_processing_frequency)){
           // Do not process ERV's BSM further since not enough time has passed since its previously processed BSM
+          RCLCPP_DEBUG_STREAM(rclcpp::get_logger(logger_name), "Ignoring BSM from tracked ERV " << erv_vehicle_id << " since a BSM from it was processed " << seconds_since_prev_processed_bsm << " seconds ago");
           return;
         }
       }
       else{
         // Do not process BSM further since it is not for the currently tracked ERV
         return;
+      }
+    }
+    else{
+
+      // If BSM is from a detected active ERV, only process it further if enough time has passed since the previously processed BSM from this ERV
+      if (latest_erv_update_times_.find(erv_vehicle_id) != latest_erv_update_times_.end()){
+        double seconds_since_prev_processed_bsm = (this->now() - latest_erv_update_times_[erv_vehicle_id]).seconds();
+
+        if(seconds_since_prev_processed_bsm < (1.0 / config_.bsm_processing_frequency)){
+          // Do not process ERV's BSM further since not enough time has passed since its previously processed BSM
+          RCLCPP_DEBUG_STREAM(rclcpp::get_logger(logger_name), "Ignoring BSM from non tracked ERV " << erv_vehicle_id << " since a BSM from it was processed " << seconds_since_prev_processed_bsm << " seconds ago");
+          return;
+        }
       }
     }
 
