@@ -294,10 +294,14 @@ namespace approaching_emergency_vehicle_plugin{
         regional_ext.route_destination_points.push_back(position2);
         erv_bsm.regional.push_back(regional_ext);
         
+        // Verify that there are no elements in latest_erv_update_times_ since no active ERV BSM has been processed yet
+        ASSERT_EQ(worker_node->latest_erv_update_times_.size(), 0);
+
         // Verify that ego vehicle does not determine that ERV is approaching since ego vehicle is not engaged (BSM is not processed)
         std::unique_ptr<carma_v2x_msgs::msg::BSM> erv_bsm_ptr = std::make_unique<carma_v2x_msgs::msg::BSM>(erv_bsm);
         worker_node->incomingBsmCallback(std::move(erv_bsm_ptr)); 
         ASSERT_FALSE(worker_node->has_tracked_erv_);
+        ASSERT_EQ(worker_node->latest_erv_update_times_.size(), 0); // ERV BSM was received, but guidance was not engaged, so BSM was not processed
 
         // Set is_guidance_engaged_ flag to true to enable incomingBsmCallback to fully process the incoming BSM
         worker_node->is_guidance_engaged_ = true;
@@ -306,6 +310,7 @@ namespace approaching_emergency_vehicle_plugin{
         std::unique_ptr<carma_v2x_msgs::msg::BSM> erv_bsm_ptr2 = std::make_unique<carma_v2x_msgs::msg::BSM>(erv_bsm);
         worker_node->incomingBsmCallback(std::move(erv_bsm_ptr2)); 
         ASSERT_FALSE(worker_node->has_tracked_erv_);
+        ASSERT_EQ(worker_node->latest_erv_update_times_.size(), 0); // ERV BSM was received, but ERV was slower than ego vehicle, so BSM was not processed
 
         // Increase ERV's speed to twice the ego vehicle speed so that the BSM is processed and the ERV is tracked by this plugin
         erv_bsm.core_data.speed = 20.0;
@@ -314,6 +319,7 @@ namespace approaching_emergency_vehicle_plugin{
         ASSERT_TRUE(worker_node->has_tracked_erv_);
         ASSERT_EQ(worker_node->tracked_erv_.lane_index, 0);
         ASSERT_NEAR(worker_node->tracked_erv_.current_speed, 20.0, 0.001);
+        ASSERT_EQ(worker_node->latest_erv_update_times_.size(), 1);
 
         // Set BSM processing frequency to 0.5 Hz 
         worker_node->config_.bsm_processing_frequency = 0.5; // (Hz) Only process ERV BSMs that are at least 2 seconds apart
@@ -352,6 +358,9 @@ namespace approaching_emergency_vehicle_plugin{
             executor.spin_once();
         }
 
+        double seconds_since_prev_processed_bsm = (worker_node->now() - worker_node->latest_erv_update_times_[worker_node->tracked_erv_.vehicle_id]).seconds();
+        ASSERT_NEAR(seconds_since_prev_processed_bsm, 3.0, 0.15);
+
         // Verify that the plugin no longer has an approaching ERV
         ASSERT_FALSE(worker_node->has_tracked_erv_);
 
@@ -383,6 +392,9 @@ namespace approaching_emergency_vehicle_plugin{
         while(std::chrono::system_clock::now() < end_time){
             executor.spin_once();
         }
+
+        seconds_since_prev_processed_bsm = (worker_node->now() - worker_node->latest_erv_update_times_[worker_node->tracked_erv_.vehicle_id]).seconds();
+        ASSERT_NEAR(seconds_since_prev_processed_bsm, 5.0, 0.15);
 
         std::unique_ptr<carma_v2x_msgs::msg::BSM> erv_bsm_ptr6 = std::make_unique<carma_v2x_msgs::msg::BSM>(erv_bsm_opposing);
         worker_node->incomingBsmCallback(std::move(erv_bsm_ptr6)); 
@@ -995,8 +1007,8 @@ namespace approaching_emergency_vehicle_plugin{
             executor.spin_once();
         }
 
-        // Verify that node has broadcasted 2 (of 3) warning messages
-        ASSERT_EQ(worker_node->num_warnings_broadcasted_, 2);
+        // Verify that node has broadcasted 1 (of 3) warning messages
+        ASSERT_EQ(worker_node->num_warnings_broadcasted_, 1);
 
         // Set the internal data members of the plugin to match the incoming EmergencyVehicleAck message contents
         worker_node->tracked_erv_.vehicle_id = "ERV";

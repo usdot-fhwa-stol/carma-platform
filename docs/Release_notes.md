@@ -1,22 +1,41 @@
 CARMA Platform Release Notes
 ----------------------------
 
+Version 4.4.2, released May 10th, 2023
+----------------------------------------
+
+### **Summary**
+Carma-platform release version 4.4.2 is a hotfix release for 4.4.0.
+
+Fixes in this release:
+- PR 2105: Fixed Light Controlled Intersection (LCI) strategic plugin where the node fails to load parameters from the vehicle calibration directory.
+
+Version 4.4.1, released May 9th, 2023
+----------------------------------------
+
+### **Summary**
+Carma-platform release version 4.4.1 is a hotfix release for 4.4.0.
+
+Fixes in this release:
+- Issue 2104: Fixed an exception that can occurs in rare circumstances when the approaching_emergency_vehicle_plugin cannot process all received BSMs from an active ERV at ~10 Hz. Received BSMs that are processed by the approaching_emergency_vehicle_plugin should not result in any exception.
+
 Version 4.4.0, released May 5th, 2023
 ----------------------------------------
 
-**Summary:**
+### **Summary**
 CARMA system release version 4.4.0 is comprised of new features in CARMA Cloud, CARMA Messenger, and CARMA Platform to support Freight Emergency Response functionality; a newly created Workforce Development (WFD) CDA telematics tool; and CARMA Platform Robotics Operating System 2 (ROS2) upgrades; Along with the above enhancements, several bug fixes and CI related enhancements are included in this release. 
 
-**<ins>Freight Emergency Response</ins>** – This functionality consists of interactions between automated vehicles equipped with CARMA Platform and a rear-approaching connected emergency response vehicle (ERV) equipped with CARMA Messenger on a highway utilizing cooperative driving automation (CDA). Using CDA, through V2V or V2I communication between the ERV and CARMA equipped vehicles, automated vehicles can detect an approaching ERV on the same route by processing the ERV’s broadcasted BSMs with Part II content, and will attempt to abide by the move-over law by making a lane change and slowing down. When a CARMA equipped vehicle is unable to change lanes out of the approaching ERV’s path, it will broadcast warning messages (EmergencyVehicleResponse) to the ERV until an acknowledgement message (EmergencyVehicleAck) is received.   To enable V2I communication of an ERV’s BSMs to downstream vehicles equipped with CARMA Platform, RSUs equipped with V2X Hub receive ERV BSMs and send them to CARMA Cloud, which identifies V2X Hub instances along the ERV’s future route and forwards the BSMs to those V2X Hubs. Additional details regarding the implemented features within CARMA Platform, CARMA Messenger, and CARMA Cloud to support this new functionality are listed in their respective release notes sections. Potential benefits of this use case are: 
-    1.Adoption of CDA in emergency response situations may provide improved and quicker reaction by automated vehicles for smoother transition of states from a normally operating traffic stream to slower traffic movement with less gap availability. These benefits may increase in proportion with higher penetration of technology deployment in the traffic stream. 
-    2.CDA technologies could be used to improve reaction time of traffic participants by providing advance notice (through V2V communication) for automated vehicles to respond faster, safely, and more efficiently to the presence of an ERV. 
-    3.Through V2I communication, traffic participants responding to the presence of an ERV would have the time to identify optimal and safe gap availability for a safer lane change maneuvering. 
-    4.Infrastructure owners and operators (IOOs) participating in the testing and development of CDA on their facilities gain a first-mover advantage and can align the direction of CDA technology with organizational      goals. 
-    5.Organizations that adapt rapidly to new technology, such as CDA, will be better prepared for other rapid technological changes in the transportation field. 
+- **<ins>Freight Emergency Response</ins>** – This functionality consists of interactions between automated vehicles equipped with CARMA Platform and a rear-approaching connected emergency response vehicle (ERV) equipped with CARMA Messenger on a highway utilizing cooperative driving automation (CDA). Using CDA, through V2V or V2I communication between the ERV and CARMA equipped vehicles, automated vehicles can detect an approaching ERV on the same route by processing the ERV’s broadcasted BSMs with Part II content, and will attempt to abide by the move-over law by making a lane change and slowing down. When a CARMA equipped vehicle is unable to change lanes out of the approaching ERV’s path, it will broadcast warning messages (EmergencyVehicleResponse) to the ERV until an acknowledgement message (EmergencyVehicleAck) is received.   To enable V2I communication of an ERV’s BSMs to downstream vehicles equipped with CARMA Platform, RSUs equipped with V2X Hub receive ERV BSMs and send them to CARMA Cloud, which identifies V2X Hub instances along the ERV’s future route and forwards the BSMs to those V2X Hubs. Additional details regarding the implemented features within CARMA Platform, CARMA Messenger, and CARMA Cloud to support this new functionality are listed in their respective release notes sections. Potential benefits of this use case are: 
 
-**<ins>Workforce Development (WFD) CDA-Telematics tool (NEW)</ins>** - This is first release of CDA-Telematics tool. CDA-Telematics Tool is an open-source web-based tool that allows near real-time data collection and streaming from vehicles and infrastructure (entities) for situational awareness during testing or demonstrations. This enables the users to monitor and analyze the behavior of entities via a dynamic and easy-to-use dashboard where users can visualize and plot any data generated from these entities. The tool has both hardware and software components. The hardware includes an edge device or computer connected physically to the entity to collect the data and a cellular network provider to stream the data. The software component includes a data processing server to process the data, a time-series database to store collected data, and a user-interface to visualize and analyze the data. The end-result provides quick and easy analysis of data, collected from an entire fleet and/or region, in near-real-time. 
+    1. Adoption of CDA in emergency response situations may provide improved and quicker reaction by automated vehicles for smoother transition of states from a normally operating traffic stream to slower traffic movement with less gap availability. These benefits may increase in proportion with higher penetration of technology deployment in the traffic stream. 
+    2. CDA technologies could be used to improve reaction time of traffic participants by providing advance notice (through V2V communication) for automated vehicles to respond faster, safely, and more efficiently to the presence of an ERV. 
+    3. Through V2I communication, traffic participants responding to the presence of an ERV would have the time to identify optimal and safe gap availability for a safer lane change maneuvering. 
+    4. Infrastructure owners and operators (IOOs) participating in the testing and development of CDA on their facilities gain a first-mover advantage and can align the direction of CDA technology with organizational      goals. 
+    5.  Organizations that adapt rapidly to new technology, such as CDA, will be better prepared for other rapid technological changes in the transportation field. 
 
-**<ins>CARMA Platform Robotics Operating System 2 (ROS2) upgrades</ins>** –  In this release, the ROS2 migration of the CARMA Platform guidance subsystem’s has been completed. As part of this, the ROS1 versions of the basic_autonomy and carma_wm libraries have been removed, as they have been fully replaced by their ROS2 versions in CARMA Platform. 
+- **<ins>Workforce Development (WFD) CDA-Telematics tool (NEW)</ins>** - This is first release of CDA-Telematics tool. CDA-Telematics Tool is an open-source web-based tool that allows near real-time data collection and streaming from vehicles and infrastructure (entities) for situational awareness during testing or demonstrations. This enables the users to monitor and analyze the behavior of entities via a dynamic and easy-to-use dashboard where users can visualize and plot any data generated from these entities. The tool has both hardware and software components. The hardware includes an edge device or computer connected physically to the entity to collect the data and a cellular network provider to stream the data. The software component includes a data processing server to process the data, a time-series database to store collected data, and a user-interface to visualize and analyze the data. The end-result provides quick and easy analysis of data, collected from an entire fleet and/or region, in near-real-time. 
+
+- **<ins>CARMA Platform Robotics Operating System 2 (ROS2) upgrades</ins>** –  In this release, the ROS2 migration of the CARMA Platform guidance subsystem’s has been completed. As part of this, the ROS1 versions of the basic_autonomy and carma_wm libraries have been removed, as they have been fully replaced by their ROS2 versions in CARMA Platform. 
 
 ### **CARMA Platform**
 
