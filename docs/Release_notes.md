@@ -1,6 +1,24 @@
 CARMA Platform Release Notes
 ----------------------------
 
+Version 4.4.2, released May 10th, 2023
+----------------------------------------
+
+### **Summary**
+Carma-System release version 4.4.2 is a hotfix release for 4.4.0.
+
+Fixes in this release:
+- PR 2105: Fixed Light Controlled Intersection (LCI) strategic plugin where the node fails to load parameters from the vehicle calibration directory.
+
+Version 4.4.1, released May 9th, 2023
+----------------------------------------
+
+### **Summary**
+Carma-System release version 4.4.1 is a hotfix release for 4.4.0.
+
+Fixes in this release:
+- Issue 2104: Fixed an exception that can occurs in rare circumstances when the approaching_emergency_vehicle_plugin cannot process all received BSMs from an active ERV at ~10 Hz, where all the Received BSMs that are processed by the approaching_emergency_vehicle_plugin should not result in any exception.
+
 Version 4.4.0, released May 5th, 2023
 ----------------------------------------
 
