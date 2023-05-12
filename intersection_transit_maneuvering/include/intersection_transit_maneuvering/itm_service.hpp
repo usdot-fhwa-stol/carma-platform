@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021 LEIDOS.
+ * Copyright (C) 2023 LEIDOS.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -14,17 +14,17 @@
  * the License.
  */
 
-#include <ros/ros.h>
+#include <rclcpp/rclcpp.hpp>
 #include <vector>
-#include <cav_msgs/TrajectoryPlan.h>
-#include <cav_msgs/TrajectoryPlanPoint.h>
-#include <cav_msgs/Maneuver.h>
-#include <cav_msgs/Plugin.h>
+#include <carma_planning_msgs/msg/trajectory_plan.hpp>
+#include <carma_planning_msgs/msg/trajectory_plan_point.hpp>
+#include <carma_planning_msgs/msg/plugin.hpp>
+#include <carma_planning_msgs/msg/maneuver.hpp>
 #include <boost/shared_ptr.hpp>
-#include <carma_utils/CARMAUtils.h>
+#include <carma_ros2_utils/carma_lifecycle_node.hpp>
 #include <boost/geometry.hpp>
-#include <cav_srvs/PlanTrajectory.h>
-#include <call_interface.h>
+#include <carma_planning_msgs/srv/plan_trajectory.hpp>
+#include <intersection_transit_maneuvering/call_interface.hpp>
 
 
 namespace intersection_transit_maneuvering
@@ -45,25 +45,17 @@ class Servicer: public CallInterface
          * @param resp Incoming PlanTrajectory service response
          * @return true if successful, otherwise false
          */
-        bool call(cav_srvs::PlanTrajectoryRequest& req, cav_srvs::PlanTrajectoryResponse& resp);
-
+        void call(carma_planning_msgs::srv::PlanTrajectory::Request::SharedPtr req, carma_planning_msgs::srv::PlanTrajectory::Response::SharedPtr resp); 
+        
         /**
         * \brief set the trajectory service client
         * 
         * \param client input trajectory service client
         */
-        void set_client(ros::ServiceClient& srv_client);
-
-        std::string getTopic() override {
-            return client.getService();
-        }
-
-        bool exists() override {
-            return client.exists();
-        }
+        void set_client(carma_ros2_utils::ClientPtr<carma_planning_msgs::srv::PlanTrajectory> srv_client);
     
     private:
-        ros::ServiceClient client;
+        carma_ros2_utils::ClientPtr<carma_planning_msgs::srv::PlanTrajectory> client; 
 
 
 };

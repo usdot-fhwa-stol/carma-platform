@@ -1,6 +1,6 @@
 #pragma once
 /*
- * Copyright (C) 2021 LEIDOS.
+ * Copyright (C) 2023 LEIDOS.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -15,15 +15,21 @@
  * the License.
  */
 
-#include <ros/ros.h>
+#include <rclcpp/rclcpp.hpp>
 #include <string>
-#include <carma_utils/containers/containers.h>
+#include <carma_ros2_utils/carma_lifecycle_node.hpp>
+
 
 class CallInterface
 {
     public:
-        virtual bool call(cav_srvs::PlanTrajectoryRequest& req, cav_srvs::PlanTrajectoryResponse& resp) = 0;
+        virtual void call(carma_planning_msgs::srv::PlanTrajectory::Request::SharedPtr req, carma_planning_msgs::srv::PlanTrajectory::Response::SharedPtr resp) = 0;
         virtual ~CallInterface() {};
-        virtual std::string getTopic() { return "Unknown Topic"; }
-        virtual bool exists() { throw std::invalid_argument("Unimplemented"); }
+
+                /**
+        * \brief set the trajectory service client
+        * 
+        * \param client input trajectory service client
+        */
+       virtual void set_client(carma_ros2_utils::ClientPtr<carma_planning_msgs::srv::PlanTrajectory> srv_client) = 0;
 };

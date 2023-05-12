@@ -116,6 +116,56 @@ namespace carma_wm
     return routeTrackPos(front);
   }
 
+  std::vector<lanelet::BusStopRulePtr> CARMAWorldModel::getBusStopsAlongRoute(const lanelet::BasicPoint2d& loc) const
+  {
+    // Check if the map is loaded yet
+    if (!semantic_map_ || semantic_map_->laneletLayer.empty())
+    {
+      RCLCPP_ERROR_STREAM(rclcpp::get_logger("carma_wm"), "Map is not set or does not contain lanelets");
+      return {};
+    }
+    // Check if the route was loaded yet
+    if (!route_)
+    {
+      RCLCPP_ERROR_STREAM(rclcpp::get_logger("carma_wm"), "Route has not yet been loaded");
+      return {};
+    }
+    std::vector<lanelet::BusStopRulePtr> bus_stop_list;
+    auto curr_downtrack = routeTrackPos(loc).downtrack;
+    // shortpath is already sorted by distance
+    
+    for (const auto &ll : route_->shortestPath())
+    {
+      auto bus_stops = semantic_map_->laneletLayer.get(ll.id()).regulatoryElementsAs<lanelet::BusStopRule>();
+      if (bus_stops.empty())  
+      {
+        continue;
+      }
+      
+      for (auto bus_stop : bus_stops)
+      {
+        auto stop_line = bus_stop->stopAndWaitLine();
+        if (stop_line.empty())
+        {
+          RCLCPP_ERROR_STREAM(rclcpp::get_logger("carma_wm"), "No stop line");
+          continue;
+        }
+        else
+        {
+          double bus_stop_downtrack = routeTrackPos(stop_line.front().front().basicPoint2d()).downtrack;
+          double distance_remaining_to_bus_stop = bus_stop_downtrack - curr_downtrack;
+
+          if (distance_remaining_to_bus_stop < 0)
+          {
+            continue;
+          }
+          bus_stop_list.push_back(bus_stop);
+        }
+      }
+    }
+    return bus_stop_list;
+  }
+
   TrackPos CARMAWorldModel::routeTrackPos(const lanelet::BasicPoint2d& point) const
   {
     // Check if the route was loaded yet

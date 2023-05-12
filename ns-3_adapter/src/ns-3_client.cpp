@@ -13,6 +13,29 @@ NS3Client::~NS3Client() {
     }catch(...){}
 }
 
+bool NS3Client::registermsg(const std::shared_ptr<std::vector<uint8_t>>&message, const std::string &remote_address, unsigned short remote_port,
+                            unsigned short local_port)
+{
+    bool success = false;
+    
+    if (connect(remote_address, remote_port, local_port))
+    {
+        bool send_success = sendNS3Message(message);
+        if (send_success)
+        { 
+            // ROS_DEBUG("Handshake Message sent successfully");
+            success = true;
+        }
+        // else ROS_DEBUG("Handshake Message send failed");
+    }
+    // else ROS_DEBUG( "Connection failed" );
+
+    close();
+    
+    return success;
+}
+
+
 bool NS3Client::connect(const std::string &remote_address, unsigned short remote_port,
                             unsigned short local_port) {
     boost::system::error_code ignored_ec;

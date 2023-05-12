@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2021 LEIDOS.
+# Copyright (C) 2023 LEIDOS.
 #
 # Licensed under the Apache License, Version 2.0 (the "License"); you may not
 # use this file except in compliance with the License. You may obtain a copy of
@@ -14,98 +14,69 @@
 # the License.
 #
 
-cmake_minimum_required(VERSION 2.8.3)
+cmake_minimum_required(VERSION 3.5)
 project(intersection_transit_maneuvering)
 
+# Declare carma package and check ROS version
 find_package(carma_cmake_common REQUIRED)
-carma_check_ros_version(1)
+carma_check_ros_version(2)
 carma_package()
 
-set( CATKIN_DEPS
-  roscpp
-  std_msgs
-  cav_msgs
-  cav_srvs
-  carma_utils
-  trajectory_utils
-)
+## Find dependencies using ament auto
+find_package(ament_cmake_auto REQUIRED)
+ament_auto_find_build_dependencies()
 
-## Find catkin macros and libraries
-find_package(catkin REQUIRED COMPONENTS
- ${CATKIN_DEPS}
-)
+# Name build targets
+set(node_exec intersection_transit_maneuvering_exec)
+set(node_lib intersection_transit_maneuvering_lib)
 
 ## System dependencies are found with CMake's conventions
 find_package(Boost)
 find_package(Eigen3 REQUIRED)
-
-###################################
-## catkin specific configuration ##
-###################################
-
-catkin_package(
-  INCLUDE_DIRS include
-  CATKIN_DEPENDS ${CATKIN_DEPS}
-  DEPENDS Boost EIGEN3
-)
 
 ###########
 ## Build ##
 ###########
 
 include_directories(
-  include
   ${catkin_INCLUDE_DIRS}
   ${Boost_INCLUDE_DIRS}
   ${EIGEN3_INCLUDE_DIRS}
+  include
 )
 
-add_executable( ${PROJECT_NAME}
-  src/main.cpp)
-
-  
-add_library(intersection_transit_maneuvering_library 
-  src/intersection_transit_maneuvering.cpp
-  src/itm_service.cpp
-  src/call_test.cpp
-)
-target_link_libraries(intersection_transit_maneuvering_library ${catkin_LIBRARIES} ${Boost_LIBRARIES})
-add_dependencies(intersection_transit_maneuvering_library ${catkin_EXPORTED_TARGETS})
-
-target_link_libraries(${PROJECT_NAME} intersection_transit_maneuvering_library ${catkin_LIBRARIES} ${Boost_LIBRARIES})
-add_dependencies(${PROJECT_NAME} intersection_transit_maneuvering_library ${catkin_EXPORTED_TARGETS})
-
-#############
-## Install ##
-#############
-
-install(DIRECTORY include
-  DESTINATION ${CATKIN_PACKAGE_INCLUDE_DESTINATION}
+# Build
+ament_auto_add_library(${node_lib} SHARED
+        src/intersection_transit_maneuvering.cpp
+        src/itm_service.cpp
 )
 
-## Install C++
-install(TARGETS ${PROJECT_NAME} intersection_transit_maneuvering_library
-  ARCHIVE DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
-  LIBRARY DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
-  RUNTIME DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}
+ament_auto_add_executable(${node_exec} 
+        src/main.cpp 
 )
 
-## Install Other Resources
-install(DIRECTORY launch
-  DESTINATION ${CATKIN_PACKAGE_SHARE_DESTINATION}
+# Register component
+rclcpp_components_register_nodes(${node_lib} "intersection_transit_maneuvering::IntersectionTransitManeuveringNode")
+
+# All locally created targets will need to be manually linked
+# ament auto will handle linking of external dependencies
+target_link_libraries(${node_exec}
+        ${node_lib}
 )
 
-#############
-## Testing ##
-#############
+# Testing
+if(BUILD_TESTING)  
 
-## Add gtest based cpp test target and link libraries
+find_package(ament_lint_auto REQUIRED)
+ament_lint_auto_find_test_dependencies() # This populates the ${${PROJECT_NAME}_FOUND_TEST_DEPENDS} variable
 
-catkin_add_gmock(${PROJECT_NAME}-test 
-    test/test_intersection_transit_maneuvering.cpp
-    test/test_main.cpp
-)
-#catkin_add_gtest(${PROJECT_NAME}-test test/test_intersection_transit_maneuvering.cpp)
-if(TARGET ${PROJECT_NAME}-test)
- target_link_libraries(${PROJECT_NAME}-test intersection_transit_maneuvering_library ${catkin_LIBRARIES})
+ament_add_gtest(test_intersection_transit_maneuvering test/test_intersection_transit_maneuvering.cpp test/call_test.cpp test/test_main.cpp)
+ament_target_dependencies(test_intersection_transit_maneuvering ${${PROJECT_NAME}_FOUND_TEST_DEPENDS})
+target_link_libraries(test_intersection_transit_maneuvering ${node_lib})
+
 endif()
+
+# Install
+ament_auto_package(
+        INSTALL_TO_SHARE launch
+)
