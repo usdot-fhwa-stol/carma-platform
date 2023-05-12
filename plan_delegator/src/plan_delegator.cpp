@@ -465,6 +465,7 @@ namespace plan_delegator
             RCLCPP_ERROR_STREAM(rclcpp::get_logger("plan_delegator"), "Map is not set yet");
             return;
         }
+        
         // Update maneuver starting and ending downtrack distances
         double original_start_dist = GET_MANEUVER_PROPERTY(maneuver, start_dist);
         double original_end_dist = GET_MANEUVER_PROPERTY(maneuver, end_dist);
@@ -478,98 +479,88 @@ namespace plan_delegator
         SET_MANEUVER_PROPERTY(maneuver, start_dist, adjusted_start_dist);
         SET_MANEUVER_PROPERTY(maneuver, end_dist, adjusted_end_dist);
 
-        // Get the lanelets crossed by the updated maneuver (considers full route; not just shortest path)
-        std::vector<lanelet::ConstLanelet> adjusted_crossed_lanelets = wm_->getLaneletsBetween(adjusted_start_dist, adjusted_end_dist, false, false);
-        
-        if (adjusted_crossed_lanelets.size() == 0) {
-            throw std::invalid_argument("The adjusted maneuver does not cross any lanelets going from: " + std::to_string(adjusted_start_dist) + " to " + std::to_string(adjusted_end_dist));
-        }
+        // Shift maneuver starting and ending lanelets
+        // NOTE: Assumes that maneuver start and end downtrack distances have not been shifted by more than one lanelet
+        if(maneuver.type == carma_planning_msgs::msg::Maneuver::LANE_FOLLOWING && !maneuver.lane_following_maneuver.lane_ids.empty()){
+            // (1) Add new beginning lanelet to maneuver if necessary and (2) remove ending lanelet from maneuver if necessary
 
-        // Update maneuver-specific lanelet ID parameters
-        // Note: Assumes that the maneuver start and end distances are adjusted by a distance less than the length of a lanelet. 
-        if(maneuver.type == carma_planning_msgs::msg::Maneuver::LANE_FOLLOWING && !maneuver.lane_following_maneuver.lane_ids.empty()) 
-        {
-            // Obtain the original starting lanelet from the maneuver's lane_ids
+            // Obtain the original starting lanelet from the maneuver
             lanelet::Id original_starting_lanelet_id = std::stoi(maneuver.lane_following_maneuver.lane_ids.front());
             lanelet::ConstLanelet original_starting_lanelet = wm_->getMap()->laneletLayer.get(original_starting_lanelet_id);
 
-            // Obtain the original ending lanelet from the maneuver's lane_ids
-            lanelet::Id original_ending_lanelet_id = std::stoi(maneuver.lane_following_maneuver.lane_ids.back());
-            lanelet::ConstLanelet original_ending_lanelet = wm_->getMap()->laneletLayer.get(original_ending_lanelet_id);
+            // Get the downtrack of the start of the original starting lanelet
+            lanelet::BasicPoint2d original_starting_lanelet_centerline_start_point = lanelet::utils::to2D(original_starting_lanelet.centerline()).front();
+            double original_starting_lanelet_centerline_start_point_dt = wm_->routeTrackPos(original_starting_lanelet_centerline_start_point).downtrack;
 
-            // Check whether the updated maneuver crosses a new starting lanelet and whether it still crosses the original ending lanelet
-            bool found_lanelet_before_starting_lanelet = false;
-            bool crosses_original_ending_lanelet = false;
-            for(auto lanelet : adjusted_crossed_lanelets) {
-                auto starting_relation = wm_->getMapRoutingGraph()->routingRelation(lanelet, original_starting_lanelet);
+            if(adjusted_start_dist < original_starting_lanelet_centerline_start_point_dt){
+                auto previous_lanelets = wm_->getMapRoutingGraph()->previous(original_starting_lanelet, false);
 
-                // Lanelet preceeding the original starting lanelet is crossed by the updated maneuver, so it is added to the beginning of lane_ids
-                if (starting_relation == lanelet::routing::RelationType::Successor && !found_lanelet_before_starting_lanelet) {
-                    RCLCPP_DEBUG_STREAM(rclcpp::get_logger("plan_delegator"),"Lanelet " << lanelet.id() << " inserted at the front of maneuver's lane_ids");
-
+                if(!previous_lanelets.empty()){
                     // lane_ids array is ordered by increasing downtrack, so this new starting lanelet is inserted at the front
-                    maneuver.lane_following_maneuver.lane_ids.insert(maneuver.lane_following_maneuver.lane_ids.begin(), std::to_string(lanelet.id()));
+                    maneuver.lane_following_maneuver.lane_ids.insert(maneuver.lane_following_maneuver.lane_ids.begin(), std::to_string(previous_lanelets[0].id()));
 
-                    found_lanelet_before_starting_lanelet = true;
+                    RCLCPP_DEBUG_STREAM(rclcpp::get_logger("plan_delegator"), "Inserted lanelet " << std::to_string(previous_lanelets[0].id()) << " to beginning of maneuver.");
                 }
-                else if (lanelet == original_ending_lanelet) {
-                    crosses_original_ending_lanelet = true;
+                else{
+                    RCLCPP_WARN_STREAM(rclcpp::get_logger("plan_delegator"), "No previous lanelet was found for lanelet " << original_starting_lanelet.id());
                 }
             }
 
-            // If the updated maneuver does not cross the original ending lanelet, remove that lanelet from the end of the maneuver's lane_ids
-            if (!crosses_original_ending_lanelet) {
+            // Obtain the maneuver ending lanelet
+            lanelet::Id original_ending_lanelet_id = std::stoi(maneuver.lane_following_maneuver.lane_ids.back());
+            lanelet::ConstLanelet original_ending_lanelet = wm_->getMap()->laneletLayer.get(original_ending_lanelet_id);
+
+            // Get the downtrack of the start of the maneuver ending lanelet
+            lanelet::BasicPoint2d original_ending_lanelet_centerline_start_point = lanelet::utils::to2D(original_ending_lanelet.centerline()).front();
+            double original_ending_lanelet_centerline_start_point_dt = wm_->routeTrackPos(original_ending_lanelet_centerline_start_point).downtrack;
+
+            if(adjusted_end_dist < original_ending_lanelet_centerline_start_point_dt){
                 RCLCPP_DEBUG_STREAM(rclcpp::get_logger("plan_delegator"),"Original ending lanelet " << original_ending_lanelet.id() << " removed from lane_ids since the updated maneuver no longer crosses it");
                 
                 // lane_ids array is ordered by increasing downtrack, so the last element in the array corresponds to the original ending lanelet
                 maneuver.lane_following_maneuver.lane_ids.pop_back();
             }
-        } 
-        else if (maneuver.type != carma_planning_msgs::msg::Maneuver::LANE_FOLLOWING)
-        {
+        }   
+        else if (maneuver.type != carma_planning_msgs::msg::Maneuver::LANE_FOLLOWING){
+            // (1) Update starting maneuver lanelet if necessary and (2) Update ending maneuver lanelet if necessary
+
             // Obtain the original starting lanelet from the maneuver
             lanelet::Id original_starting_lanelet_id = std::stoi(getManeuverStartingLaneletId(maneuver));
             lanelet::ConstLanelet original_starting_lanelet = wm_->getMap()->laneletLayer.get(original_starting_lanelet_id);
+
+            // Get the downtrack of the start of the lanelet
+            lanelet::BasicPoint2d original_starting_lanelet_centerline_start_point = lanelet::utils::to2D(original_starting_lanelet.centerline()).front();
+            double original_starting_lanelet_centerline_start_point_dt = wm_->routeTrackPos(original_starting_lanelet_centerline_start_point).downtrack;
+
+            if(adjusted_start_dist < original_starting_lanelet_centerline_start_point_dt){
+                auto previous_lanelets = wm_->getMapRoutingGraph()->previous(original_starting_lanelet, false);
+
+                if(!previous_lanelets.empty()){
+                    setManeuverStartingLaneletId(maneuver, previous_lanelets[0].id());
+                }
+                else{
+                    RCLCPP_WARN_STREAM(rclcpp::get_logger("plan_delegator"), "No previous lanelet was found for lanelet " << original_starting_lanelet.id());
+                }
+            }
 
             // Obtain the original ending lanelet from the maneuver
             lanelet::Id original_ending_lanelet_id = std::stoi(getManeuverEndingLaneletId(maneuver));
             lanelet::ConstLanelet original_ending_lanelet = wm_->getMap()->laneletLayer.get(original_ending_lanelet_id);
 
-            // Check whether the updated maneuver crosses a new starting lanelet and whether it still crosses the original ending lanelet
-            bool found_lanelet_before_starting_lanelet = false;
-            bool found_lanelet_before_ending_lanelet = false;
-            bool crosses_original_ending_lanelet = false;
-            lanelet::ConstLanelet lanelet_before_original_ending_lanelet;
-            for(auto lanelet : adjusted_crossed_lanelets) {
-                auto starting_relation = wm_->getMapRoutingGraph()->routingRelation(lanelet, original_starting_lanelet);
-                auto ending_relation = wm_->getMapRoutingGraph()->routingRelation(lanelet, original_ending_lanelet);
+            // Get the downtrack of the start of the ending lanelet
+            lanelet::BasicPoint2d original_ending_lanelet_centerline_start_point = lanelet::utils::to2D(original_ending_lanelet.centerline()).front();
+            double original_ending_lanelet_centerline_start_point_dt = wm_->routeTrackPos(original_ending_lanelet_centerline_start_point).downtrack;
 
-                // Lanelet preceeding the original starting lanelet is crossed by the updated maneuver, so maneuver's starting_lanelet_id must be updated
-                if (starting_relation == lanelet::routing::RelationType::Successor && !found_lanelet_before_starting_lanelet) {
-                    setManeuverStartingLaneletId(maneuver, lanelet.id());
-                    found_lanelet_before_starting_lanelet = true;
-                }
-                // Lanelet preceeding the original ending lanelet is found
-                else if (ending_relation == lanelet::routing::RelationType::Successor && !found_lanelet_before_ending_lanelet) {
-                    lanelet_before_original_ending_lanelet = lanelet;
-                    found_lanelet_before_ending_lanelet = true;
-                }
+            if(adjusted_end_dist < original_ending_lanelet_centerline_start_point_dt){
+                auto previous_lanelets = wm_->getMapRoutingGraph()->previous(original_ending_lanelet, false);
 
-                if (lanelet == original_ending_lanelet) {
-                    crosses_original_ending_lanelet = true;
+                if(!previous_lanelets.empty()){
+                    setManeuverEndingLaneletId(maneuver, previous_lanelets[0].id());
+                }
+                else{
+                    RCLCPP_WARN_STREAM(rclcpp::get_logger("plan_delegator"), "No previous lanelet was found for lanelet " << original_starting_lanelet.id());
                 }
             }
-
-            // If the updated maneuver does not cross the original ending lanelet, update the ending lanelet to its preceeding lanelet
-            if (!crosses_original_ending_lanelet) {
-                if (found_lanelet_before_ending_lanelet){
-                    setManeuverEndingLaneletId(maneuver, lanelet_before_original_ending_lanelet.id());
-                }
-                else {
-                    throw std::invalid_argument("Updated maneuver has unknown ending lanelet.");
-                }
-            }
-
         }
     }
 

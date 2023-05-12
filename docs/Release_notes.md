@@ -1,6 +1,174 @@
 CARMA Platform Release Notes
 ----------------------------
 
+Version 4.4.2, released May 10th, 2023
+----------------------------------------
+
+### **Summary**
+Carma-platform release version 4.4.2 is a hotfix release for 4.4.0.
+
+Fixes in this release:
+- PR 2105: Fixed Light Controlled Intersection (LCI) strategic plugin where the node fails to load parameters from the vehicle calibration directory.
+
+Version 4.4.1, released May 9th, 2023
+----------------------------------------
+
+### **Summary**
+Carma-platform release version 4.4.1 is a hotfix release for 4.4.0.
+
+Fixes in this release:
+- Issue 2104: Fixed an exception that can occurs in rare circumstances when the approaching_emergency_vehicle_plugin cannot process all received BSMs from an active ERV at ~10 Hz. Received BSMs that are processed by the approaching_emergency_vehicle_plugin should not result in any exception.
+
+Version 4.4.0, released May 5th, 2023
+----------------------------------------
+
+### **Summary**
+CARMA system release version 4.4.0 is comprised of new features in CARMA Cloud, CARMA Messenger, and CARMA Platform to support Freight Emergency Response functionality; a newly created Workforce Development (WFD) CDA telematics tool; and CARMA Platform Robotics Operating System 2 (ROS2) upgrades; Along with the above enhancements, several bug fixes and CI related enhancements are included in this release. 
+
+- **<ins>Freight Emergency Response</ins>** – This functionality consists of interactions between automated vehicles equipped with CARMA Platform and a rear-approaching connected emergency response vehicle (ERV) equipped with CARMA Messenger on a highway utilizing cooperative driving automation (CDA). Using CDA, through V2V or V2I communication between the ERV and CARMA equipped vehicles, automated vehicles can detect an approaching ERV on the same route by processing the ERV’s broadcasted BSMs with Part II content, and will attempt to abide by the move-over law by making a lane change and slowing down. When a CARMA equipped vehicle is unable to change lanes out of the approaching ERV’s path, it will broadcast warning messages (EmergencyVehicleResponse) to the ERV until an acknowledgement message (EmergencyVehicleAck) is received.   To enable V2I communication of an ERV’s BSMs to downstream vehicles equipped with CARMA Platform, RSUs equipped with V2X Hub receive ERV BSMs and send them to CARMA Cloud, which identifies V2X Hub instances along the ERV’s future route and forwards the BSMs to those V2X Hubs. Additional details regarding the implemented features within CARMA Platform, CARMA Messenger, and CARMA Cloud to support this new functionality are listed in their respective release notes sections. Potential benefits of this use case are: 
+
+    1. Adoption of CDA in emergency response situations may provide improved and quicker reaction by automated vehicles for smoother transition of states from a normally operating traffic stream to slower traffic movement with less gap availability. These benefits may increase in proportion with higher penetration of technology deployment in the traffic stream. 
+    2. CDA technologies could be used to improve reaction time of traffic participants by providing advance notice (through V2V communication) for automated vehicles to respond faster, safely, and more efficiently to the presence of an ERV. 
+    3. Through V2I communication, traffic participants responding to the presence of an ERV would have the time to identify optimal and safe gap availability for a safer lane change maneuvering. 
+    4. Infrastructure owners and operators (IOOs) participating in the testing and development of CDA on their facilities gain a first-mover advantage and can align the direction of CDA technology with organizational      goals. 
+    5.  Organizations that adapt rapidly to new technology, such as CDA, will be better prepared for other rapid technological changes in the transportation field. 
+
+- **<ins>Workforce Development (WFD) CDA-Telematics tool (NEW)</ins>** - This is first release of CDA-Telematics tool. CDA-Telematics Tool is an open-source web-based tool that allows near real-time data collection and streaming from vehicles and infrastructure (entities) for situational awareness during testing or demonstrations. This enables the users to monitor and analyze the behavior of entities via a dynamic and easy-to-use dashboard where users can visualize and plot any data generated from these entities. The tool has both hardware and software components. The hardware includes an edge device or computer connected physically to the entity to collect the data and a cellular network provider to stream the data. The software component includes a data processing server to process the data, a time-series database to store collected data, and a user-interface to visualize and analyze the data. The end-result provides quick and easy analysis of data, collected from an entire fleet and/or region, in near-real-time. 
+
+- **<ins>CARMA Platform Robotics Operating System 2 (ROS2) upgrades</ins>** –  In this release, the ROS2 migration of the CARMA Platform guidance subsystem’s has been completed. As part of this, the ROS1 versions of the basic_autonomy and carma_wm libraries have been removed, as they have been fully replaced by their ROS2 versions in CARMA Platform. 
+
+### **CARMA Platform**
+
+**<ins> Freight Emergency Response Functionalities</ins>**  
+
+Enhancements in this release related to Freight Emergency Response: 
+
+- Issue 2005: Implemented a new approaching_emergency_vehicle_plugin guidance strategic plugin in CARMA Platform, which is responsible for processing received BSMs with Part II content from an approaching ERV (through either direct V2V communication or V2I message forwarding), detecting the time until the approaching ERV will pass the host vehicle, and updating the host vehicle’s maneuver plan accordingly to lane change out of the ERV’s path and/or slow down to a reduced speed while the ERV is actively passing the host vehicle. When an approaching ERV is detected, this plugin sends status messages to the CARMA Web UI to communicate to the user the time until the ERV will pass, and how the host vehicle’s trajectory will be updated in reaction to the approaching ERV. 
+- Issue 2085: Hazard lights activation commands are sent to the vehicle when an approaching ERV is in close enough proximity to the host vehicle and in the same lane, which results in the host vehicle being unable to change lanes out of the ERV’s path. 
+- Issues 2057 & 2059: Added logic to plan delegator to support turn signal activation on the vehicle and upcoming lane change status updates on the CARMA Web UI. 
+- PR 2064: Updated approaching emergency vehicle plugin to publish status messages to the CARMA Web UI based on a detected approaching ERV. 
+
+Known issues in this release related to Freight Emergency Response:  
+
+- Due to the nature of CARMA Platform operating as a proof-of-concept SAE Level 2 system without integrated object detection, emergency response scenarios have not been conducted with an ERV passing a CARMA-equipped CMV in an immediately adjacent lane. All live testing of this functionality for scenarios in which the ERV passes the CMV have been conducted with the ERV passing with at least open lane between itself and the CMV. 
+
+**<ins>ROS2 Upgrades</ins>**
+
+Enhancements in this release related to ROS2 upgrades: 
+
+- Issue 2080: Ported the lci_strategic_plugin guidance strategic plugin to ROS2. 
+- Issue 2090: Ported the intersection_transit_maneuvering guidance tactical plugin to ROS2. 
+- Issue 2079: Removed ROS1 versions of carma_wm and basic_autonomy that are no longer actively used within CARMA Platform. 
+- Issue 2063: Ported lightbar manager library (and its ROS1 dependencies) to ROS2. 
+
+**<ins>Other</ins>** 
+
+Enhancements in this release: 
+
+- Issue 2072: Created a new Stop and Dwell strategic plugin in support of enabling CARMA Platform to detect bus stops and generate stop and wait maneuvers when approaching them.  
+- Issue 2076: Implemented a configurable timeout parameter for Plan Delegator when calling a tactical plugin's "plan_trajectory" service to support testing environment using a vector map with longer lanelet lengths (which correlates to longer lane change trajectory generation time). 
+
+Fixes in this release related: 
+
+- Issue 2058: Fixed unit tests in the plan delegator package that are failing. 
+- Issue 2075: Lane change trajectory generation takes longer than the 100ms limit (approximately 80-150ms on average for lane change lengths of 70-100 meters) which may cause plan delegator to not publish updated trajectory. 
+- PR 2080: Fixed unit tests that are failing for the LCI (Light controlled intersection) strategic plugin package in CARMA Platform. 
+- Issue 2093: Fixed Plan Delegator's update Maneuver Parameters function to avoid delay which is approximately 0.3-0.8 seconds for each received maneuver plan. This is a significant amount of delay and can contribute to CARMA control issues, especially at high (30+ mph) speeds. 
+
+### **CDA-Telematics**
+
+The first release includes the several features related to WFD CDA-Telematics tool: 
+
+- The ability to collect (and send in real-time) any data being used in any CARMA system. For CARMA Platform, this data includes but is not limited to: a) current position, speed, acceleration, and steering angle; b) current feature(s) being used; c) moment-by-moment planned trajectories; d) current entities with whom the vehicle is communicating and the data they are receiving. 
+- CDA-Telematics tool has ability to collect data from the CARMA Messenger vehicles to get data of vehicles like new speed limits. 
+- This telematics tool has ability to capture any data being sent to any other entity and received from any other entity in real-time for CARMA Cloud and CARMA Streets. 
+- The CDA-Telematics UI and Grafana is a web-based user interface that allows users to interact with telematic system using login credentials, users can access this telematics web dashboards.  
+- CDA-Telematics tool helps the user make it easy to visualize the data and further data processing.  
+- The ability to visualize, real-time, on a map, where the vehicle is (e.g., via a moving triangle on a map, pointed in the direction of travel) and some additional real-time information (e.g., speed, via a pop-up box when the vehicle/triangle is clicked on). 
+- The ability to plot and edit the plot (e.g., zoom in/out, adjust the axis, etc.) of any two selected variables (i.e., any reported variable can be on the Y-axis, and it may be plotted against any reported variable on the X-axis; the user need only select the variable of interest). The selected variables should be able to show any number of lines, one line for each entity (e.g., vehicle) that the user desires to plot.  
+- The ability to turn on/off the viewing/processing of any entity that the user is not interested in. 
+- The ability to turn on/off the viewing/processing of any variables that the user is not interested in.  
+- The ability to process and visualize any number of vehicles, from all off the world, if they have the Module and a wireless connection.  
+- The ability to download the data for further analysis. 
+
+Known issues in this release related to WFD CDA-Telematics tool:  
+
+- Issue 138 & 145: There are two anomalies that the team discovered during integration testing that are documented on Github and the links are provided below. These are not issues as they’ve been fixed but the fix is a workaround due to the limitations that were discovered on InfluxDB (the database that we are using). We have kept them open as anomalies, so we can revisit and try to find a more robust fix for those, after meeting with the InfluxDB development team (third-party).  
+
+### **CARMA Messenger** 
+
+**<ins>Freight Emergency Response Functionalities</ins>**
+
+Enhancements in this release related to Freight Emergency Response: 
+
+- PR 175: Implementation of a new emergency_response_vehicle_plugin to support a connected ERV and enable it to broadcast BSMs that include its current location, speed, emergency lights and sirens status, and future route when applicable. BSM information pertaining to emergency lights, sirens status, and the ERV’s future route are included within the generated BSM’s Part II content. 
+- Issue 167: Updated the cpp_message node to enable encoding and decoding of EmergencyVehicleAck messages (NOTE: This functionality is also used within CARMA Platform). 
+- Issue 168: Updated the j2735_convertor and cpp_message nodes to enable encoding, decoding, and conversion of BSM Part II content for usage within CARMA Messenger (NOTE: This functionality is also used within CARMA Platform). 
+- Issue 169: Updated the cpp_message node to enable encoding and decoding of EmergencyVehicleResponse messages (NOTE: This functionality is also used within CARMA Platform). 
+- Issue 173: Creation of a new Emergency Response Vehicle Web UI Widget, which displays relevant ERV information (current speed, location, and future route) to a user, along with warning messages when a downstream vehicle is unable to lane change out of the path of the ERV. 
+
+Fixes in this release related to Freight Emergency Response: 
+
+- Issue 184: Fixed Unit tests that are failing for the CPP message package for tests related to encoding/decoding BSMs, Traffic Control Messages, and Emergency Vehicle Acknowledgement messages. 
+- Issue 187: Fixed the /position/velocity topic that does not contain any velocity information published data as it should have current vehicle speed data. 
+- Issue 188: Fixed the BSMs published by the emergency response vehicle plugin that doesn’t set properly BSM's presence flag to signify that a regional extension is included. 
+- Issues 190 & 191: Fixed Significant delay occurs for high-frequency ROS topics that are bridged from ROS1 to ROS2. 
+
+**<ins>WFD CDA-Telematics Functionalities:</ins>**  
+
+Enhancements in this release related to WFD CDA-Telematics: 
+
+- PR 116: Adds the cyclone DDS configuration xml required to transmit ROS2 data outside the vehicle pc. 
+- PR 108: Adds cyclone DDS configuration for the Ford Fusion, Silver Lexus and Blue Lexus. 
+- PR 107: Adds cyclone DDS configuration for the Fusion. 
+ 
+
+### **CARMA Web UI** 
+
+**<ins>Freight Emergency Response Functionalities</ins>**
+
+Enhancements in this release related to Freight Emergency Response: 
+
+- Issue 160: Updated CARMA Web UI to alert the driver of an approaching ERV and the ego vehicle's updated path plan by displaying alert message whether an approaching ERV has been detected, along with the estimated time until the ERV will pass the host vehicle, and the host vehicle’s intended action. 
+
+**<ins>Other</ins>** 
+
+Fixes in this release: 
+
+- Issue 162: Fixed CARMA Web UI which does not subscribe to /guidance/route event and notifications are not displayed to the driver. 
+- Issue 151: Fixed base image errors by changing it from Debian Jessie to Debian buster due to Debian Jessie was EOL. 
+
+### **CARMA Cloud**
+
+**<ins>Freight Emergency Response Functionalities</ins>**
+
+Enhancements in this release related to Freight Emergency Response: 
+
+- Issue 45: The creation of a new RSU software package, which enables V2X Hub instances connected to an RSU to register their location information with CARMA Cloud. Additionally, this software package is responsible for processing ERV BSMs received from V2X Hub instances,  identifying other V2X Hub instances connected to RSUs (Roadside Units) along the ERV’s future route, and forwarding the ERV BSMs to those applicable V2X Hubs. 
+
+### **CARMA Torc Pinpoint Driver** 
+
+Enhancements in this release: 
+
+- Issue 35: URDF information should be removed and placed in a vehicle-specific configuration repository. 
+
+### **CARMA Cohda DSRC Driver** 
+
+**<ins>Freight Emergency Response Functionalities</ins>**
+
+Enhancements in this release related to Freight Emergency Response: 
+
+- Issue 111: Driver now supports receiving and broadcasting EmergencyVehicleResponse and EmergencyVehicleAck messages. 
+
+### **CARMA Analytics**  
+
+**<ins>Freight Emergency Response Functionalities</ins>**
+
+Enhancements in this release related to Freight Emergency Response: 
+
+- PR 15: Developed analysis scripts to generate Emergency Response use case verification metrics for V2X Hub and CARMA Cloud. 
+- PR 14: Developed analysis scripts to generate Emergency Response use case verification metrics from CARMA Messenger and CARMA Platform rosbags. 
+
 Version 4.3.0, released Feb 10th, 2023
 ----------------------------------------
 
