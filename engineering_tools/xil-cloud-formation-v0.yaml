@@ -505,7 +505,14 @@ Resources:
           echo -n 'password' > /home/ubuntu/secrets/mysql_root_password.txt
           echo -n 'password' > /home/ubuntu/secrets/mysql_password.txt
           # Initialize docker .env file
-          echo 'DOCKER_HOST_IP=127.0.0.1' > /home/ubuntu/.env
+          echo 'DOCKER_HOST_IP=172.2.0.2' >> /home/ubuntu/.env
+          echo 'SIMULATION_MODE=TRUE' >> /home/ubuntu/.env
+
+          # Checkout most recent CARMA Simulation
+          rm -r /home/ubuntu/carma-simulation
+          cd /home/ubuntu/
+          git clone https://github.com/usdot-fhwa-stol/carma-simulation.git
+          
           reboot 
 
       IamInstanceProfile: !Ref C9InstanceProfile
