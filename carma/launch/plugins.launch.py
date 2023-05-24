@@ -88,6 +88,8 @@ def generate_launch_description():
 
     pure_pursuit_tuning_parameters = [vehicle_calibration_dir, "/pure_pursuit/calibration.yaml"]
 
+    lci_plugin_calibration_params = [vehicle_calibration_dir, "/identifiers/UniqueVehicleParams.yaml"]
+
     carma_inlanecruising_plugin_container = ComposableNodeContainer(
         package='carma_ros2_utils',
         name='carma_lainlanecruising_plugin_container',
@@ -175,6 +177,7 @@ def generate_launch_description():
                     ("route", [ EnvironmentVariable('CARMA_GUIDE_NS', default_value=''), "/route" ] ),
                     ("state", [ EnvironmentVariable('CARMA_GUIDE_NS', default_value=''), "/state" ] ),
                     ("approaching_erv_status", [ EnvironmentVariable('CARMA_GUIDE_NS', default_value=''), "/approaching_erv_status" ] ),
+                    ("hazard_light_status", [ EnvironmentVariable('CARMA_INTR_NS', default_value=''), "/hazard_light_status" ] ),
                     ("current_velocity", [ EnvironmentVariable('CARMA_INTR_NS', default_value=''), "/vehicle/twist" ] ),
                     ("incoming_bsm", [ EnvironmentVariable('CARMA_MSG_NS', default_value=''), "/incoming_bsm" ] ),
                     ("georeference", [ EnvironmentVariable('CARMA_LOCZ_NS', default_value=''), "/map_param_loader/georeference" ] ),
@@ -285,7 +288,8 @@ def generate_launch_description():
                 ],
                 parameters=[
                     lci_strategic_plugin_file_path,
-                    vehicle_config_param_file
+                    vehicle_config_param_file,
+                    lci_plugin_calibration_params
                 ]
             ),
         ]

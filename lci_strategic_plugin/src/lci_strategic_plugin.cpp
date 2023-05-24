@@ -62,7 +62,7 @@ LCIStrategicPlugin::LCIStrategicPlugin(const rclcpp::NodeOptions &options)
   config_.intersection_transit_plugin_name = declare_parameter<std::string>("intersection_transit_plugin_name", config_.intersection_transit_plugin_name);
   config_.enable_carma_streets_connection = declare_parameter<bool>("enable_carma_streets_connection",config_.enable_carma_streets_connection);
   config_.mobility_rate = declare_parameter<double>("mobility_rate", config_.mobility_rate);
-  config_.vehicle_id = declare_parameter("vehicle_id", config_.vehicle_id);
+  config_.vehicle_id = declare_parameter<std::string>("vehicle_id", config_.vehicle_id);
 
   max_comfort_accel_ = config_.vehicle_accel_limit * config_.vehicle_accel_limit_multiplier;
   max_comfort_decel_ = -1 * config_.vehicle_decel_limit * config_.vehicle_decel_limit_multiplier;

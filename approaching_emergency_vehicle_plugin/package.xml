@@ -29,6 +29,7 @@
   <depend>rclcpp</depend>
   <depend>carma_ros2_utils</depend>
   <depend>rclcpp_components</depend>
+  <depend>std_msgs</depend>
   <depend>std_srvs</depend>
   <depend>carma_guidance_plugins</depend>
   <depend>carma_v2x_msgs</depend>
