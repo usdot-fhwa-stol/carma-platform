@@ -32,14 +32,4 @@
   
   <remap from="incoming_spat" to="$(optenv CARMA_MSG_NS)/incoming_spat"/>
 
-	<!-- vector map loader -->
-  <node pkg="map_file" type="lanelet2_map_loader" name="lanelet2_map_loader"  args="$(arg vector_map_file)">
-    <remap from="/lanelet_map_bin" to="base_map"/>
-  </node>  
-
-  <!-- vector map visualization -->
-  <node pkg="map_file" type="lanelet2_map_visualization" name="lanelet2_map_visualization">
-    <remap from="/lanelet_map_bin" to="semantic_map"/>
-  </node>
-
 </launch>

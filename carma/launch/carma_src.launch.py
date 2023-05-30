@@ -124,6 +124,22 @@ def generate_launch_description():
         description='The default port for rosbridge is 909'
     )
 
+    # Declare launch arguments for points_map_loader
+    load_type = LaunchConfiguration('load_type')
+    declare_load_type= DeclareLaunchArgument(name = 'load_type', default_value = "noupdate")
+
+    single_pcd_path = LaunchConfiguration('single_pcd_path')
+    declare_single_pcd_path = DeclareLaunchArgument(name='single_pcd_path', default_value="['/opt/carma/maps/pcd_map.pcd']")
+
+    area = LaunchConfiguration('area')
+    declare_area = DeclareLaunchArgument(name='area', default_value="1x1")
+
+    arealist_path = LaunchConfiguration('arealist_path')
+    declare_arealist_path = DeclareLaunchArgument(name='arealist_path', default_value="/opt/carma/maps/arealist.txt")
+
+    vector_map_file = LaunchConfiguration('vector_map_file')
+    declare_vector_map_file = DeclareLaunchArgument(name='vector_map_file', default_value='/opt/carma/maps/vector_map.osm')
+
     # Nodes
 
     transform_group = GroupAction(
@@ -143,7 +159,8 @@ def generate_launch_description():
                 launch_arguments = { 
                     'subsystem_controller_param_file' : [vehicle_config_dir, '/SubsystemControllerParams.yaml'],
                     'vehicle_config_param_file' : vehicle_config_param_file,
-                    'vehicle_characteristics_param_file' : vehicle_characteristics_param_file
+                    'vehicle_characteristics_param_file' : vehicle_characteristics_param_file,
+                    'vector_map_file' : vector_map_file
                     }.items()
             ),
         ]
@@ -156,6 +173,11 @@ def generate_launch_description():
                 PythonLaunchDescriptionSource([ThisLaunchFileDir(), '/localization.launch.py']),
                 launch_arguments = { 
                     'subsystem_controller_param_file' : [vehicle_config_dir, '/SubsystemControllerParams.yaml'],
+                    'load_type' : load_type,
+                    'single_pcd_path' : single_pcd_path,
+                    'area' : area,
+                    'arealist_path' : arealist_path,
+                    'vector_map_file' : vector_map_file
                 }.items()
             )
         ]
@@ -243,6 +265,11 @@ def generate_launch_description():
         declare_control_plugins_to_validate,
         declare_enable_opening_tunnels,
         declare_port,
+        declare_load_type,
+        declare_single_pcd_path,
+        declare_area,
+        declare_arealist_path,
+        declare_vector_map_file,
         drivers_group,
         transform_group,
         environment_group,
