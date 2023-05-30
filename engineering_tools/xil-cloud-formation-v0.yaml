@@ -497,7 +497,7 @@ Resources:
           # V2X-Hub add web ui user script
           curl -o /home/ubuntu/mysql/add_v2xhub_user.bash -L https://raw.githubusercontent.com/usdot-fhwa-OPS/V2X-Hub/develop/configuration/amd64/mysql/add_v2xhub_user.bash
           # Intersection Model configuration file
-          sudo curl -o /home/ubuntu/intersection_model/manifest.json -L https://raw.githubusercontent.com/usdot-fhwa-stol/carma-streets/develop/intersection_model/manifest.json
+          curl -o /home/ubuntu/intersection_model/manifest.json -L https://raw.githubusercontent.com/usdot-fhwa-stol/carma-streets/develop/intersection_model/manifest.json
           # TSC Service configuration file
           curl -o /home/ubuntu/tsc_client_service/manifest.json -L https://raw.githubusercontent.com/usdot-fhwa-stol/carma-streets/develop/tsc_client_service/manifest.json
           # Initialize mysql password files
