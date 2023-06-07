@@ -59,6 +59,22 @@ def generate_launch_description():
     localization_manager_convertor_param_file = os.path.join(
     get_package_share_directory('localization_manager'), 'config/parameters.yaml')
 
+    # Declare launch arguments for points_map_loader
+    load_type = LaunchConfiguration('load_type')
+    declare_load_type= DeclareLaunchArgument(name = 'load_type', default_value = "noupdate")
+
+    single_pcd_path = LaunchConfiguration('single_pcd_path')
+    declare_single_pcd_path = DeclareLaunchArgument(name='single_pcd_path', default_value="['/opt/carma/maps/pcd_map.pcd']", description='Path to the map pcd file if using the noupdate load type')
+
+    area = LaunchConfiguration('area')
+    declare_area = DeclareLaunchArgument(name='area', default_value="1x1")
+
+    arealist_path = LaunchConfiguration('arealist_path')
+    declare_arealist_path = DeclareLaunchArgument(name='arealist_path', default_value="/opt/carma/maps/arealist.txt")
+
+    vector_map_file = LaunchConfiguration('vector_map_file')
+    declare_map_file = DeclareLaunchArgument(name='vector_map_file', default_value='vector_map.osm', description='Path to the map osm file if using the noupdate load type')
+
     gnss_to_map_convertor_container = ComposableNodeContainer(
     package='carma_ros2_utils',
     name='gnss_to_map_convertor_container',
@@ -102,7 +118,58 @@ def generate_launch_description():
                 parameters=[ localization_manager_convertor_param_file ]
         )
     ])
+    
+    ###Point Cloud Map file location and parameter loading process
 
+    # map param/tf loader
+    map_param_loader_container = ComposableNodeContainer(
+    package='carma_ros2_utils',
+    name='map_param_loader_container',
+    executable='carma_component_container_mt',
+    namespace=GetCurrentNamespace(),
+    composable_node_descriptions=[
+        ComposableNode(
+                package='map_file_ros2',
+                plugin='map_param_loader::MapParamLoader',
+                name='map_param_loader',
+                extra_arguments=[
+                    {'use_intra_process_comms': True}, 
+                    {'--log-level' : GetLogLevel('map_param_loader', env_log_levels) }
+                ],
+                remappings=[
+                    ("georeference", "map_param_loader/georeference"),
+                ],
+                parameters=[ {'file_name' : vector_map_file } ]
+        )
+    ])
+
+    # Point Cloud map file loading process
+    pcd_map_file_loader_container = ComposableNodeContainer(
+        package='carma_ros2_utils',
+        name='map_file_nodes_container',
+        namespace=GetCurrentNamespace(),
+        executable='carma_component_container_mt',
+        composable_node_descriptions=[
+
+            ComposableNode(
+                package='map_file_ros2',
+                plugin='points_map_loader::PointsMapLoader',
+                name='points_map_loader',
+                extra_arguments=[
+                    {'use_intra_process_comms': True}, 
+                    {'--log-level' : GetLogLevel('points_map_loader', env_log_levels) }
+                ],
+                parameters=[
+                    {'load_type' : load_type },
+                    {'pcd_path_parameter' : single_pcd_path },
+                    {'area' : area },
+                    {'path_area_list' : arealist_path }
+                ]
+            ),
+        ]
+    )
+
+    
     # subsystem_controller which orchestrates the lifecycle of this subsystem's components
     subsystem_controller = Node(
         package='subsystem_controllers',
@@ -115,7 +182,14 @@ def generate_launch_description():
 
     return LaunchDescription([
         declare_subsystem_controller_param_file_arg,       
-        subsystem_controller,
+        declare_load_type,
+        declare_single_pcd_path,
+        declare_area,
+        declare_arealist_path,
+        declare_map_file,
         gnss_to_map_convertor_container,
-        localization_manager_container
+        localization_manager_container,
+        map_param_loader_container,
+        pcd_map_file_loader_container,
+        subsystem_controller
     ]) 
