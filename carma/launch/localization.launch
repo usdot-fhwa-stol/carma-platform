@@ -115,12 +115,6 @@
     </include>
   </group>
 
-  <!-- Deadreckoner -->
-  <include file="$(find deadreckoner)/launch/deadreckoner.launch">
-    <arg name="current_twist" value="$(optenv CARMA_INTR_NS)/vehicle/twist" />
-    <arg name="current_odom" value="vehicle/odom" />
-  </include>
-
     <!-- Random Sampler -->
   <group>
     <node pkg="rostopic" type="rostopic" name="config_random_filter"

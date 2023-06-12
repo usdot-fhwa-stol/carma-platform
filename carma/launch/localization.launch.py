@@ -169,6 +169,30 @@ def generate_launch_description():
         ]
     )
 
+    # Dead Reckoner 
+    dead_reckoner_container = ComposableNodeContainer(
+        package='carma_ros2_utils',
+        name='dead_reckoner_container',
+        namespace=GetCurrentNamespace(),
+        executable='carma_component_container_mt',
+        composable_node_descriptions=[
+
+            ComposableNode(
+                package='dead_reckoner_ros2',
+                plugin='dead_reckoner::DeadReckoner',
+                name='dead_reckoner',
+                extra_arguments=[
+                    {'use_intra_process_comms': True}, 
+                    {'--log-level' : GetLogLevel('dead_reckoner_ros2', env_log_levels) }
+                ],
+                remappings=[
+                    ("current_twist", [EnvironmentVariable('CARMA_INTR_NS', default_value=''), "/vehicle/twist" ]),
+                    ("current_odom", "vehicle/odom")  
+                ],
+            ),
+        ]
+    )
+
     
     # subsystem_controller which orchestrates the lifecycle of this subsystem's components
     subsystem_controller = Node(
@@ -189,6 +213,7 @@ def generate_launch_description():
         declare_map_file,
         gnss_to_map_convertor_container,
         localization_manager_container,
+        dead_reckoner_container,
         map_param_loader_container,
         pcd_map_file_loader_container,
         subsystem_controller
