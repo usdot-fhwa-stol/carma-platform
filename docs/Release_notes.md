@@ -1,6 +1,103 @@
 CARMA Platform Release Notes
 ----------------------------
 
+Version 4.4.3, released June 21st, 2023
+----------------------------------------
+
+### **Summary**
+This release adds functionality for the integration of CARMA Streets and V2X Hub to CDASim. Notable features of this integration include time synchronization of CARMA Streets and V2X Hub with CDASim via a newly developed time synchronization library, full integration of the NS-3 network simulator to simulate the transmission of DSRC messages to and from CARMA Streets/V2X Hub and CARMA Platform, and integration of the Econolite Virtual Controller module to provide an NTCIP-compatible interface between CARMA Streets/V2X Hub and the SUMO traffic simulator.
+
+### **CDA Simulation** 
+
+The CDASim repository was previously called carma-simulation. This package name update has been applied to the GitHub repository and Docker Hub repository and images and will be the name for this package going forward.
+
+This release for CDASim adds the necessary software components to register and communicate with one or more infrastructure software (V2X Hub and/or CARMA Streets) instances and fixes issues with the configuration and usage of the NS-3 simulator to simulate the transmission and reception of DSRC messages by simulation participants (both vehicle and infrastructure). This release also adds the necessary interfaces to support integration with the Econolite Virtual Controller, however the Econolite Virtual Controller itself is not distributed with this release. In addition, please note that this release of CDASim has been integration and verification tested with CARMA Platform 4.2.0, though the interfaces used should support all ROS2 versions of the CARMA Platform. 
+
+Enhancements in this release: 
+ - PR 108:  Added SUMO multi-client feature for EVC integration. 
+ - PR 109: Added EVC-SUMO bridge. 
+ - PR 110: Added GitHub actions workflows for CI/CD  
+ - PR 114: Setup shell structure for infrastructure ambassador. currently this design mainly followed Carma ambassador implementation. 
+ - PR 115: Implement Loop Detector Functionality in EVC-SUMO Bridge 
+ - PR 120:  Updated install.sh script by removing unused code. 
+ - PR 121: The implementation of Infrastructure Time Interface class which includes encoding time message and updating to registered instances.
+ - PR 122:  Added functionality to enable the handshake between CARMA simulation and CARMA street. The data flow of the handshake is as follows:
+    1.	CARMA Streets sends an infrastructure registration message to mosaic-infrastructure.
+    2.	The infrastructure Registration Receiver receives the registration message from CARMA street and converts it to an infrastructure Registration Message object.
+    3.	The Infrastructure Registration Receiver stores the infrastructure Registration Message object in a queue.
+    4.	The Infrastructure Message Ambassador runs in a loop and checks the queue for any new messages while processing time advance grants.
+    5.	When a new message is found in the queue, the Infrastructure Message Ambassador creates an RSU with its DSRC configuration and sends the registration message to the MOSAIC RTI.
+    6.	These created RSUs are stored in the Infrastructure Instance Manager with the type of Infrastructure Instance.
+ - PR 124: Added Build status checks in readme markdown page for CI and Docker hub.
+ - PR 125: Added an NS3 docker build process and GitHub actions to build and run sonar analysis. Additionally, Upgraded SUMO version to 1.15.0, which now supports 'induction loop' for the purpose to test EVC-SUMO integration.
+ - PR 126: Added new scenario files for EVC and fix a function call in bridge to get traffic light state from sumo.
+ - PR 127: Refactored existing v2x-message reception logic into a new maven module to be easily incorporated into the infrastructure ambassador without code duplication.
+ - PR 133: Added TraCI IP argument for EVC-Sumo connection.
+ - PR 118: Updated Java version to 11 for maven sonar scanner plugin
+   
+Known Issues in this release: 
+
+- CARMA Platform Issue #2117 Data analysis revealed that commanded acceleration exceeded anticipated value range.
+- CARMA Platform Issue #2118 Vehicle command frequency varies unexpectedly from target 30Hz
+- CARMA Platform Issue #2119 CARLA Initialization causes random time offset from CDASim provided simulation time.
+
+Fixes in this release:
+
+- PR 128: Fixed the simulation freezing issue that occurs when NS3 and infrastructure ambassador are enabled and running in the MOSAIC scenario Tiergarten which needs infrastructure ambassador to successfully register RSU and DSRC to NS3 and store the new registration in the infrastructure Instance Manager.
+- PR 129: Updated infrastructure time message to use millisecond timestep instead of nanosecond time stamp since nanosecond level logic is not supported on infrastructure.
+- PR 130: Resolved an error with the tokenizer in the CarmaV2xMessage class which causing it to incorrectly bundle tokens together and parse failure for valid message.
+- PR 132: Fixed Parser error in mosaic Carma-utils to avoid parsing after reading the final field. This will ignore any potential junk data after the end of the payload field.
+- PR: 135: Fixed a variety of issues related to NS-3 integration with CARMA Streets and platform. Integration is not functional to the point that messages from streets and platform can enter NS-3 and be simulated, and then exit NS-3 and be received by their respective systems.
+
+### **CARMA NS3 Adapter** 
+
+The carma-ns3-adapter is a new repository and docker image for this release, which came from an existing package that has been refactored out of the carma-platform repository to better match the structure used by other CARMA Platform drivers.
+
+Enhancements in this release: 
+- PR 1:  Implemented new feature to send the registration message each timestep by using two sockets in parallel.
+- PR 3: Added configuration parameters in NS3 adapter for host IP address in registration message.
+- PR 5: Updated NS3 adapter mode to load the parameters at launch and changed the IP address values for XIL testing.
+- PR 4: Added GitHub actions workflows and configured Docker Hub repositories for NS3 adapter. 
+
+### **CARMA Streets** 
+
+CARMA Streets Traffic Signal Control (TSC) service has been integrated with CDASim in this release. This includes the necessary input data flows (from MOSAIC and from the Econolite Virtual Controller) as well as time synchronization and output data flows in the form of V2X messages.
+
+Enhancements in this release: 
+
+- Issue 331: Added new functionality for CARMA-Streets to consume Multi-Modal Intelligent Traffic Signal System (MMITSS) phase control message.
+  
+Fixes in this release: 
+
+- PR 328:  Fixed time sync segfault when attempting to call start on the service since the time consumer had not been properly initialized after leaving TIME_SYNC_TOPIC configuration.
+- PR 329 & 333: Fixed Carma-clock functionality related to a bug fix in Carma-time-lib when multiple threads call the streets clock singleton method for incoming messages to initialize the clock time. 
+- PR 332: Fixed docker builds for all XIL Release CARMA-Streets services.
+- PR 333: Fixed TSC service in non-simulation mode which has and exception from the Carma-clock object when trying to update its time to 0. Where this calls to Carma clock is valid only in simulation mode.
+
+### **CARMA-CARLA Integration Tool** 
+
+There are no significant changes to this package as part of the release. Only minor build system and CI issues have been addressed so that this package continues to function.
+
+Enhancements in this release: 
+
+- Issue 28: Add CI workflows for Sonar scan which scans the source code and captures code quality reports on sonar cloud.
+
+Fixes in this release: 
+
+- Issue 27: Fixed Docker file that manually downloads and installs CMake 3.13. This is no longer needed Carma-base ships with Ubuntu's CMake 3.16.x package.
+- Issue 31: Fixed Carma-Carla-integration ROS launch errors that shuts down on startup of system.
+
+### **CARMA Time Library** 
+
+The carma-time-lib repository is new repository that adds a library containing logic for managing the real- and simulation time in software that uses it. It provides an interface to useful time functions (such as getting the current time and sleeping until a specified time) that can be swapped between using the system clock and using an externally supplied time source (such as a simulator). This package has been modeled on the ROS time system in terms of general functionality but is able to integrate into software that is not ROS-enabled (such as CARMA Streets and V2X Hub).
+
+Enhancements in this release: 
+
+- PR 3&4: Added CI workflows and setup build arm64. 
+- PR 6: Updated Carma-clock class files with time stamp to test in seconds.
+- PR 8: Updated Carma-clock method that throws exception when trying to update the time on Realtime clock.
+- PR 11: Updated CMake version and Debian packages for focal and Jammy distributions of ubuntu.
+
 Version 4.4.2, released May 10th, 2023
 ----------------------------------------
 
