@@ -178,12 +178,12 @@ def generate_launch_description():
         composable_node_descriptions=[
 
             ComposableNode(
-                package='dead_reckoner_ros2',
+                package='dead_reckoner',
                 plugin='dead_reckoner::DeadReckoner',
                 name='dead_reckoner',
                 extra_arguments=[
                     {'use_intra_process_comms': True}, 
-                    {'--log-level' : GetLogLevel('dead_reckoner_ros2', env_log_levels) }
+                    {'--log-level' : GetLogLevel('dead_reckoner', env_log_levels) }
                 ],
                 remappings=[
                     ("current_twist", [EnvironmentVariable('CARMA_INTR_NS', default_value=''), "/vehicle/twist" ]),
@@ -193,7 +193,60 @@ def generate_launch_description():
         ]
     )
 
-    
+    ### Lidar stack
+
+    voxel_grid_filter_container = ComposableNodeContainer(
+        package='carma_ros2_utils',
+        name='voxel_grid_filter_container',
+        namespace=GetCurrentNamespace(),
+        executable='carma_component_container_mt',
+        composable_node_descriptions=[
+            
+            # Launch the core node(s)
+            ComposableNode(
+                package='points_downsampler',
+                plugin='voxel_grid_filter::VoxelGridFilter',
+                name='voxel_grid_filter_node',
+                extra_arguments=[
+                     {'use_intra_process_comms': True}, 
+                    {'--log-level' : GetLogLevel('voxel_grid_filter', env_log_levels) }
+                ],
+                parameters=[
+                    {"points_topic": [EnvironmentVariable('CARMA_INTR_NS', default_value=''), "/lidar/points_raw" ]},
+                    {"output_log": False},
+                    {"measurement_range": 200.0},
+                    {"voxel_leaf_size": 3.0}
+                ],
+            ),
+        ]
+    )
+
+    random_filter_container = ComposableNodeContainer(
+        package='carma_ros2_utils',
+        name='random_filter_container',
+        namespace=GetCurrentNamespace(),
+        executable='carma_component_container_mt',
+        composable_node_descriptions=[
+            
+            # Launch the core node(s)
+            ComposableNode(
+                package='points_downsampler',
+                plugin='random_filter::RandomFilter',
+                name='random_filter_node',
+                extra_arguments=[
+                    {'use_intra_process_comms': True}, 
+                    {'--log-level' : GetLogLevel('random_filter', env_log_levels) }
+                ],
+                parameters=[
+                    {"points_topic": "filtered_points"},  
+                    {"output_log": False},
+                    {"measurement_range": 200.0},
+                    {"sample_num": 700}
+                ],
+            ),
+        ]
+    )
+
     # subsystem_controller which orchestrates the lifecycle of this subsystem's components
     subsystem_controller = Node(
         package='subsystem_controllers',
@@ -214,6 +267,8 @@ def generate_launch_description():
         gnss_to_map_convertor_container,
         localization_manager_container,
         dead_reckoner_container,
+        voxel_grid_filter_container,
+        random_filter_container,
         map_param_loader_container,
         pcd_map_file_loader_container,
         subsystem_controller
