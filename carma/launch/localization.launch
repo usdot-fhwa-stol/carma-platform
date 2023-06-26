@@ -96,37 +96,22 @@
     </include>
   </group>
 
-    <!-- Random Sampler -->
-  <group>
-    <node pkg="rostopic" type="rostopic" name="config_random_filter"
-      args="pub --latch config/random_filter autoware_config_msgs/ConfigRandomFilter '{
-        sample_num: 700,
-        measurement_range: 200
-      }'"/>
-    <remap from="/filtered_points" to="random_points"/>
-    <include file="$(find points_downsampler)/launch/points_downsample.launch">
-      <arg name="node_name" default="random_filter" />
-      <arg name="points_topic" default="filtered_points" />
-      <arg name="output_log" default="false" />
+  <!-- NDT Matching-->
+  <!-- This namesapce sets the parameters which are not set by default in the ndt_matching.launch file -->
+  <!-- These parameters are not in the ndt_matching node private namespace -->
+  <!-- <group>
+    <rosparam command="load" file="$(arg vehicle_calibration_dir)/lidar_localizer/ndt_matching/params.yaml"/>
+
+    <remap from="/config/ndt" to="config/ndt"/>
+    <remap from="filtered_points" to="random_points"/>
+    <remap from="initialpose" to="managed_initialpose"/>
+    <include file="$(find lidar_localizer)/launch/ndt_matching.launch">
+      <arg name="get_height" value="true" />
+      <arg name="use_odom" value="true" />
+      <arg name="use_gnss" value="0"/>
+      <arg name="gnss_reinit_fitness" value="10000.0" /> <!-- Set to unreasonably high value to ensure no reinitialization occurs as it rarely works -->
+      <arg name="base_frame" value="base_link"/>
     </include>
-  </group>
+  </group> -->
 
-
-
-  <!-- Voxel Grid Filter -->
-  <group>
-    <remap from="/config/voxel_grid_filter" to="config/voxel_grid_filter"/>
-
-    <node pkg="rostopic" type="rostopic" name="config_voxel_grid_filter"
-      args="pub --latch config/voxel_grid_filter autoware_config_msgs/ConfigVoxelGridFilter '{
-        voxel_leaf_size: 3.0,
-        measurement_range: 200
-      }'"/>
-
-    <include file="$(find points_downsampler)/launch/points_downsample.launch">
-      <arg name="node_name" default="voxel_grid_filter" />
-      <arg name="points_topic" default="$(optenv CARMA_INTR_NS)/lidar/points_raw" />
-      <arg name="output_log" default="false" />
-    </include>
-  </group>
 </launch>
