@@ -217,7 +217,7 @@ def generate_launch_description():
                 ],
                 remappings=[
                     ("/config/ndt", "config/ndt"),
-                    ("/imu_raw", "imu_raw"),
+                    ("/imu_raw", [ EnvironmentVariable('CARMA_INTR_NS', default_value=''), "/imu_raw" ] ),
                     ('filtered_points', 'random_points'),
                     ('initialpose','managed_initialpose'),
                 ],
