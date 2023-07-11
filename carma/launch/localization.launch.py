@@ -50,78 +50,6 @@ def generate_launch_description():
         default_value = subsystem_controller_default_param_file,
         description = "Path to file containing override parameters for the subsystem controller"
     )
-    
-    show_debug_info = LaunchConfiguration('show_debug_info')
-    declare_show_debug_info = DeclareLaunchArgument(name='show_debug_info', default_value = "False")
-
-    predict_frequency = LaunchConfiguration('predict_frequency')
-    declare_predict_frequency = DeclareLaunchArgument(name='predict_frequency', default_value = '50.0')
-
-    enable_yaw_bias_estimation = LaunchConfiguration('enable_yaw_bias_estimation')
-    declare_enable_yaw_bias_estimation = DeclareLaunchArgument(name='enable_yaw_bias_estimation', default_value = "True")
-
-    extend_state_step = LaunchConfiguration('extend_state_step')
-    declare_extend_state_step = DeclareLaunchArgument(name='extend_state_step', default_value = '50')
-
-    pose_frame_id = LaunchConfiguration('pose_frame_id')
-    declare_pose_frame_id = DeclareLaunchArgument(name='pose_frame_id', default_value='map')
-
-    child_frame_id = LaunchConfiguration('child_frame_id')
-    declare_child_frame_id = DeclareLaunchArgument(name='child_frame_id', default_value ='base_link')
-
-    pose_additional_delay = LaunchConfiguration('pose_additional_delay')
-    declare_pose_additional_delay = DeclareLaunchArgument(name='pose_additional_delay', default_value = '0.0')
-
-    pose_measure_uncertainty_time = LaunchConfiguration('pose_measure_uncertainty_time')
-    declare_pose_measure_uncertainty_time = DeclareLaunchArgument(name='pose_measure_uncertainty_time', default_value = '0.01')
-
-    pose_rate = LaunchConfiguration('pose_rate')
-    declare_pose_rate = DeclareLaunchArgument(name='pose_rate', default_value = '10.0')
-
-    pose_gate_dist = LaunchConfiguration('pose_gate_dist')
-    declare_pose_gate_dist = DeclareLaunchArgument(name='pose_gate_dist', default_value = '10000.0')
-
-    pose_stddev_x = LaunchConfiguration('pose_stddev_x')
-    declare_pose_stddev_x = DeclareLaunchArgument(name='pose_stddev_x', default_value= '0.05')
-
-    pose_stddev_y = LaunchConfiguration('pose_stddev_y')
-    declare_pose_stddev_y = DeclareLaunchArgument(name='pose_stddev_y', default_value= '0.05')
-
-    pose_stddev_yaw = LaunchConfiguration('pose_stddev_yaw')
-    declare_pose_stddev_yaw = DeclareLaunchArgument(name='pose_stddev_yaw', default_value = '0.025')
-
-    use_pose_with_covariance = LaunchConfiguration('use_pose_with_covariance')
-    declare_use_pose_with_covariance = DeclareLaunchArgument(name='use_pose_with_covariance', default_value="False")
-
-    twist_additional_delay = LaunchConfiguration('twist_additional_delay')
-    declare_twist_additional_delay = DeclareLaunchArgument(name='twist_additional_delay', default_value='0.0')
-
-    twist_rate = LaunchConfiguration('twist_rate')
-    declare_twist_rate = DeclareLaunchArgument(name='twist_rate', default_value='30.0')
-
-    twist_gate_dist = LaunchConfiguration('twist_gate_dist')
-    declare_twist_gate_dist = DeclareLaunchArgument(name = 'twist_gate_dist', default_value = '10000.0')
-
-    twist_stddev_vx = LaunchConfiguration('twist_stddev_vx')
-    declare_twist_stddev_vx = DeclareLaunchArgument(name='twist_stddev_vx', default_value = '0.2')
-
-    twist_stddev_wz = LaunchConfiguration('twist_stddev_wz')
-    declare_twist_stddev_wz = DeclareLaunchArgument(name='twist_stddev_wz', default_value='0.03')
-
-    # use_twist_with_covariance = LaunchConfiguration('use_twist_with_covariance')
-    # declare_use_twist_with_covariance = DeclareLaunchArgument(name='use_twist_with_covariance', default_value="False")
-
-    proc_stddev_yaw_c = LaunchConfiguration('proc_stddev_yaw_c')
-    declare_proc_stddev_yaw_c = DeclareLaunchArgument(name='proc_stddev_yaw_c', default_value='0.005')
-
-    proc_stddev_yaw_bias_c = LaunchConfiguration('proc_stddev_yaw_bias_c')
-    declare_proc_stddev_yaw_bias_c = DeclareLaunchArgument(name='proc_stddev_yaw_bias_c', default_value = '0.001')
-
-    proc_stddev_vx_c = LaunchConfiguration('proc_stddev_vx_c')
-    declare_proc_stddev_vx_c = DeclareLaunchArgument(name='proc_stddev_vx_c', default_value = '0.1')
-
-    proc_stddev_wz_c = LaunchConfiguration('proc_stddev_wz_c')
-    declare_proc_stddev_wz_c = DeclareLaunchArgument(name='proc_stddev_wz_c', default_value='0.05')
 
     # Nodes
     # TODO add ROS2 localization nodes here
@@ -297,29 +225,29 @@ def generate_launch_description():
                     ("estimated_yaw_bias", "~/estimated_yaw_bias")
                 ],
                 parameters=[
-                    {'show_debug_info': show_debug_info},
-                    {'predict_frequency': predict_frequency},
-                    {'enable_yaw_bias_estimation': enable_yaw_bias_estimation},
-                    {'extend_state_step': extend_state_step},
-                    {'pose_frame_id': pose_frame_id},
-                    {'child_frame_id': child_frame_id},
-                    {'pose_additional_delay': pose_additional_delay},
-                    {'pose_measure_uncertainty_time': pose_measure_uncertainty_time},
-                    {'pose_rate': pose_rate},
-                    {'pose_gate_dist': pose_gate_dist},
-                    {'pose_stddev_x': pose_stddev_x},
-                    {'pose_stddev_y': pose_stddev_y},
-                    {'pose_stddev_yaw': pose_stddev_yaw},
-                    {'use_pose_with_covariance': use_pose_with_covariance},
-                    {'twist_additional_delay': twist_additional_delay},
-                    {'twist_rate': twist_rate},
-                    {'twist_gate_dist': twist_gate_dist},
-                    {'twist_stddev_vx': twist_stddev_vx},
-                    {'twist_stddev_wz': twist_stddev_wz},
-                    {'proc_stddev_yaw_c': proc_stddev_yaw_c},
-                    {'proc_stddev_yaw_bias_c': proc_stddev_yaw_bias_c},
-                    {'proc_stddev_vx_c': proc_stddev_vx_c},
-                    {'proc_stddev_wz_c': proc_stddev_wz_c}
+                    {'show_debug_info': False},
+                    {'predict_frequency': 50.0},
+                    {'enable_yaw_bias_estimation': True},
+                    {'extend_state_step': 50},
+                    {'pose_frame_id': 'map'},
+                    {'child_frame_id': 'base_link'},
+                    {'pose_additional_delay': 0.0},
+                    {'pose_measure_uncertainty_time': 0.01},
+                    {'pose_rate': 10.0},
+                    {'pose_gate_dist': 10000.0},
+                    {'pose_stddev_x': 0.05},
+                    {'pose_stddev_y': 0.05},
+                    {'pose_stddev_yaw': 0.025},
+                    {'use_pose_with_covariance': False},
+                    {'twist_additional_delay': 0.0},
+                    {'twist_rate': 30.0},
+                    {'twist_gate_dist': 10000.0},
+                    {'twist_stddev_vx': 0.2},
+                    {'twist_stddev_wz': 0.03},
+                    {'proc_stddev_yaw_c': 0.005},
+                    {'proc_stddev_yaw_bias_c': 0.001},
+                    {'proc_stddev_vx_c': 0.1},
+                    {'proc_stddev_wz_c': 0.05}
                 ],
             )
         ]
@@ -397,29 +325,6 @@ def generate_launch_description():
         declare_area,
         declare_arealist_path,
         declare_map_file,
-        declare_show_debug_info,
-        declare_predict_frequency,
-        declare_enable_yaw_bias_estimation,
-        declare_extend_state_step,
-        declare_pose_frame_id,
-        declare_child_frame_id,
-        declare_pose_additional_delay,
-        declare_pose_measure_uncertainty_time,
-        declare_pose_rate,
-        declare_pose_gate_dist,
-        declare_pose_stddev_x,
-        declare_pose_stddev_y,
-        declare_pose_stddev_yaw,
-        declare_use_pose_with_covariance,
-        declare_twist_additional_delay,
-        declare_twist_rate,
-        declare_twist_gate_dist,
-        declare_twist_stddev_vx,
-        declare_twist_stddev_wz,
-        declare_proc_stddev_yaw_c,
-        declare_proc_stddev_yaw_bias_c,
-        declare_proc_stddev_vx_c,
-        declare_proc_stddev_wz_c,
         gnss_to_map_convertor_container,
         localization_manager_container,
         dead_reckoner_container,
