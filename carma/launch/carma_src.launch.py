@@ -177,7 +177,8 @@ def generate_launch_description():
                     'single_pcd_path' : single_pcd_path,
                     'area' : area,
                     'arealist_path' : arealist_path,
-                    'vector_map_file' : vector_map_file
+                    'vector_map_file' : vector_map_file,
+                    'vehicle_calibration_dir': vehicle_calibration_dir
                 }.items()
             )
         ]

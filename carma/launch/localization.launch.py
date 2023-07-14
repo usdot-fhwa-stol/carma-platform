@@ -58,6 +58,9 @@ def generate_launch_description():
     localization_manager_convertor_param_file = os.path.join(
     get_package_share_directory('localization_manager'), 'config/parameters.yaml')
 
+    vehicle_calibration_dir = LaunchConfiguration('vehicle_calibration_dir')
+    ndt_matching_param_file = [vehicle_calibration_dir, "/lidar_localizer/ndt_matching/params.yaml"]
+
     # Declare launch arguments for points_map_loader
     load_type = LaunchConfiguration('load_type')
     declare_load_type= DeclareLaunchArgument(name = 'load_type', default_value = "noupdate")
@@ -192,6 +195,43 @@ def generate_launch_description():
         ]
     )
 
+   # NDT Matching
+   # This namesapce sets the parameters which are not set by default in the ndt_matching.launch file
+   # These parameters are not in the ndt_matching node private namespace
+
+    ndt_matching_container = ComposableNodeContainer(
+        package='carma_ros2_utils',
+        name='ndt_matching_container',
+        namespace=GetCurrentNamespace(),
+        executable='carma_component_container_mt',
+        composable_node_descriptions=[
+
+            ComposableNode(
+                package='lidar_localizer_ros2',
+                plugin='ndt_matching::NDTMatching',
+                name='ndt_matching',
+                extra_arguments=[
+                    {'use_intra_process_comms': True}, 
+                    {'--log-level' : GetLogLevel('ndt_matching', env_log_levels) }
+                ],
+                remappings=[
+                    ("/config/ndt", "config/ndt"),
+                    ("/imu_raw", [ EnvironmentVariable('CARMA_INTR_NS', default_value=''), "/imu_raw" ] ),
+                    ('filtered_points', 'random_points'),
+                    ('initialpose','managed_initialpose'),
+                ],
+                parameters=[
+                    ndt_matching_param_file,
+                    {'get_height' : True },
+                    {'use_odom' : True },
+                    {'use_gnss' : 0 },
+                    {'gnss_reinit_fitness' : 10000.0 }, # Set to unreasonably high value to ensure no reinitialization occurs as it rarely works
+                    {'base_frame': "base_link"}
+                ]
+            )
+        ]
+    )
+
     # EKF Localizer
     # Comment out to remove and change marked line in waypoint following.launch
     ekf_localizer_container = ComposableNodeContainer(
@@ -251,7 +291,6 @@ def generate_launch_description():
         ]
     )
 
-    
     ### Lidar stack
 
     voxel_grid_filter_container = ComposableNodeContainer(
@@ -306,6 +345,7 @@ def generate_launch_description():
         ]
     )
 
+    
     # subsystem_controller which orchestrates the lifecycle of this subsystem's components
     subsystem_controller = Node(
         package='subsystem_controllers',
@@ -330,6 +370,7 @@ def generate_launch_description():
         random_filter_container,
         map_param_loader_container,
         pcd_map_file_loader_container,
+        ndt_matching_container,
         ekf_localizer_container,
         subsystem_controller
     ]) 
