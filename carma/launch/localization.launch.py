@@ -48,7 +48,6 @@ def generate_launch_description():
         default_value = subsystem_controller_default_param_file,
         description = "Path to file containing override parameters for the subsystem controller"
     )
-    
 
     # Nodes
     # TODO add ROS2 localization nodes here
@@ -232,6 +231,66 @@ def generate_launch_description():
             )
         ]
     )
+
+    # EKF Localizer
+    # Comment out to remove and change marked line in waypoint following.launch
+    ekf_localizer_container = ComposableNodeContainer(
+        package='carma_ros2_utils',
+        name='ekf_localizer_container',
+        namespace=GetCurrentNamespace(),
+        executable='carma_component_container_mt',
+        composable_node_descriptions=[
+
+            ComposableNode(
+                package='ekf_localizer',
+                plugin='ekf_localizer::EKFLocalizer',
+                name='ekf_localizer',
+                extra_arguments=[
+                    {'use_intra_process_comms': True}, 
+                    {'--log-level' : GetLogLevel('ekf_localizer', env_log_levels) }
+                ],
+                remappings=[
+                    ("in_pose","selected_pose"),
+                    ("in_pose_with_covariance", "input_pose_with_cov_UNUSED"),
+                    ("in_twist",  [EnvironmentVariable('CARMA_INTR_NS', default_value=''), "/vehicle/twist" ]),
+                    ("in_twist_with_covariance", "input_twist_with_covariance_UNUSED"),
+                    ("initialpose", "managed_initialpose"),
+                    ("ekf_pose", "current_pose"),
+                    ("ekf_pose_with_covariance", "current_pose_with_covariance"),
+                    # remap to namespace/nodename/topic_name
+                    ("debug", "~/debug"),
+                    ("debug/measured_pose", "~/debug/measured_pose"),
+                    ("estimated_yaw_bias", "~/estimated_yaw_bias")
+                ],
+                parameters=[
+                    {'show_debug_info': False},
+                    {'predict_frequency': 50.0},
+                    {'enable_yaw_bias_estimation': True},
+                    {'extend_state_step': 50},
+                    {'pose_frame_id': 'map'},
+                    {'child_frame_id': 'base_link'},
+                    {'pose_additional_delay': 0.0},
+                    {'pose_measure_uncertainty_time': 0.01},
+                    {'pose_rate': 10.0},
+                    {'pose_gate_dist': 10000.0},
+                    {'pose_stddev_x': 0.05},
+                    {'pose_stddev_y': 0.05},
+                    {'pose_stddev_yaw': 0.025},
+                    {'use_pose_with_covariance': False},
+                    {'twist_additional_delay': 0.0},
+                    {'twist_rate': 30.0},
+                    {'twist_gate_dist': 10000.0},
+                    {'twist_stddev_vx': 0.2},
+                    {'twist_stddev_wz': 0.03},
+                    {'proc_stddev_yaw_c': 0.005},
+                    {'proc_stddev_yaw_bias_c': 0.001},
+                    {'proc_stddev_vx_c': 0.1},
+                    {'proc_stddev_wz_c': 0.05}
+                ],
+            )
+        ]
+    )
+
     ### Lidar stack
 
     voxel_grid_filter_container = ComposableNodeContainer(
@@ -312,5 +371,6 @@ def generate_launch_description():
         map_param_loader_container,
         pcd_map_file_loader_container,
         ndt_matching_container,
+        ekf_localizer_container,
         subsystem_controller
     ]) 
