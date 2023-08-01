@@ -141,7 +141,7 @@ def generate_launch_description():
     declare_vector_map_file = DeclareLaunchArgument(name='vector_map_file', default_value='/opt/carma/maps/vector_map.osm')
 
     simulation_mode = LaunchConfiguration('simulation')
-    declare_simulation_mode = DeclareLaunchArgument(name='simulation', default_value = 'False', descriptionn = 'True if CARMA Platform is launched with CARLA Simulator')
+    declare_simulation_mode = DeclareLaunchArgument(name='simulation', default_value = 'False', description = 'True if CARMA Platform is launched with CARLA Simulator')
 
     # Nodes
 
