@@ -30,6 +30,7 @@ from launch.actions import IncludeLaunchDescription
 from launch.launch_description_sources import PythonLaunchDescriptionSource
 from launch.actions import GroupAction
 from launch_ros.actions import set_remap
+from launch.conditions import IfCondition
 
 
 def generate_launch_description():
@@ -237,6 +238,7 @@ def generate_launch_description():
     # EKF Localizer
     # Comment out to remove and change marked line in waypoint following.launch
     ekf_localizer_container = ComposableNodeContainer(
+        condition = IfCondition(simulation_mode),
         package='carma_ros2_utils',
         name='ekf_localizer_container',
         namespace=GetCurrentNamespace(),
@@ -358,7 +360,7 @@ def generate_launch_description():
         arguments=['--ros-args', '--log-level', GetLogLevel('subsystem_controllers', env_log_levels)]
     )
 
-    ld = LaunchDescription([
+    return LaunchDescription([
         declare_subsystem_controller_param_file_arg,       
         declare_load_type,
         declare_single_pcd_path,
@@ -373,11 +375,6 @@ def generate_launch_description():
         map_param_loader_container,
         pcd_map_file_loader_container,
         ndt_matching_container,
-        subsystem_controller
+        ekf_localizer_container,
+        subsystem_controller,
     ]) 
-
-    if simulation_mode is False:
-        ld.add_action(ekf_localizer_container)
-        return ld
-    else:
-        return ld
