@@ -77,7 +77,7 @@ def generate_launch_description():
     vector_map_file = LaunchConfiguration('vector_map_file')
     declare_map_file = DeclareLaunchArgument(name='vector_map_file', default_value='vector_map.osm', description='Path to the map osm file if using the noupdate load type')
 
-    simulation_mode = LaunchConfiguration('simulation')
+    simulation_mode = LaunchConfiguration('simulation_mode')
 
     gnss_to_map_convertor_container = ComposableNodeContainer(
     package='carma_ros2_utils',
