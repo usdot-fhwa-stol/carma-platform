@@ -77,6 +77,8 @@ def generate_launch_description():
     vector_map_file = LaunchConfiguration('vector_map_file')
     declare_map_file = DeclareLaunchArgument(name='vector_map_file', default_value='vector_map.osm', description='Path to the map osm file if using the noupdate load type')
 
+    simulation_mode = LaunchConfiguration('simulation')
+
     gnss_to_map_convertor_container = ComposableNodeContainer(
     package='carma_ros2_utils',
     name='gnss_to_map_convertor_container',
@@ -356,7 +358,7 @@ def generate_launch_description():
         arguments=['--ros-args', '--log-level', GetLogLevel('subsystem_controllers', env_log_levels)]
     )
 
-    return LaunchDescription([
+    ld = LaunchDescription([
         declare_subsystem_controller_param_file_arg,       
         declare_load_type,
         declare_single_pcd_path,
@@ -371,6 +373,11 @@ def generate_launch_description():
         map_param_loader_container,
         pcd_map_file_loader_container,
         ndt_matching_container,
-        ekf_localizer_container,
         subsystem_controller
     ]) 
+
+    if simulation_mode is False:
+        ld.add_action(ekf_localizer_container)
+        return ld
+    else:
+        return ld
