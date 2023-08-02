@@ -86,18 +86,6 @@
     </include>
   </group>
 
-  <!-- Localization Stack -->
-  <group ns="$(env CARMA_LOCZ_NS)">
-    <include file="$(find carma)/launch/localization.launch">
-      <arg name="arealist_path" value="$(arg arealist_path)"/>
-      <arg name="area" value="$(arg area)"/>
-      <arg name="load_type" value="$(arg load_type)"/>
-      <arg name="single_pcd_path" value="$(arg single_pcd_path)"/>
-      <arg name="vehicle_calibration_dir" value="$(arg vehicle_calibration_dir)"/>
-      <arg name="vector_map_file" value="$(arg vector_map_file)" />
-      <arg name="simulation_mode" value="$(arg simulation_mode)" />
-    </include>
-  </group>
 
   <!-- Environment Perception Stack -->
   <group ns="$(env CARMA_ENV_NS)">
