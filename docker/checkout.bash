@@ -73,6 +73,10 @@ cd ../
 # NOTE: clone -b flag is used instead of --branch to avoid hook rewriting it
 git clone -b ros2 https://github.com/usdot-fhwa-stol/rosbridge_suite
 
+# The feature/integrate-carma branch of rosbag2 includes improvements that were not possible to backport into the foxy branch
+# of rosbag2. These rosbag2 packages will replace the originally built foxy rosbag2 packages.
+# NOTE: Additional information regarding the rosbag2 improvements on this branch are included in the forked repository's README. 
+git clone -b feature/integrate-carma https://github.com/usdot-fhwa-stol/rosbag2
 
 cd ${dir}/src
 
