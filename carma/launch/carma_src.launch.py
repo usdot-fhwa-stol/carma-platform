@@ -1,4 +1,4 @@
-# Copyright (C) 2021-2022 LEIDOS.
+# Copyright (C) 2021-2023 LEIDOS.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -124,6 +124,14 @@ def generate_launch_description():
         description='The default port for rosbridge is 909'
     )
 
+    # Declare launch argument for ROS 2 rosbag logging
+    use_ros2_rosbag = LaunchConfiguration('use_ros2_rosbag')
+    declare_use_ros2_rosbag = DeclareLaunchArgument(
+        name = 'use_ros2_rosbag',
+        default_value='false',
+        description = 'Flag indicating whether data should be recorded in ROS 2 rosbag format'
+    )
+
     # Declare launch arguments for points_map_loader
     load_type = LaunchConfiguration('load_type')
     declare_load_type= DeclareLaunchArgument(name = 'load_type', default_value = "noupdate")
@@ -139,6 +147,16 @@ def generate_launch_description():
 
     vector_map_file = LaunchConfiguration('vector_map_file')
     declare_vector_map_file = DeclareLaunchArgument(name='vector_map_file', default_value='/opt/carma/maps/vector_map.osm')
+
+    # Launch ROS2 rosbag logging
+    ros2_rosbag_launch = IncludeLaunchDescription(
+        PythonLaunchDescriptionSource([ThisLaunchFileDir(), '/ros2_rosbag.launch.py']),
+        launch_arguments = {
+            'vehicle_config_dir' : vehicle_config_dir,
+            'vehicle_config_param_file' : vehicle_config_param_file,
+            'use_ros2_rosbag' : use_ros2_rosbag
+            }.items()
+    )
 
     # Nodes
 
@@ -266,6 +284,7 @@ def generate_launch_description():
         declare_control_plugins_to_validate,
         declare_enable_opening_tunnels,
         declare_port,
+        declare_use_ros2_rosbag,
         declare_load_type,
         declare_single_pcd_path,
         declare_area,
@@ -277,6 +296,7 @@ def generate_launch_description():
         localization_group,
         v2x_group,
         guidance_group, 
+        ros2_rosbag_launch,
         ui_group,
         system_controller
     ])
