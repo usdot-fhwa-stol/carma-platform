@@ -148,6 +148,9 @@ def generate_launch_description():
     vector_map_file = LaunchConfiguration('vector_map_file')
     declare_vector_map_file = DeclareLaunchArgument(name='vector_map_file', default_value='/opt/carma/maps/vector_map.osm')
 
+    simulation_mode = LaunchConfiguration('simulation_mode')
+    declare_simulation_mode = DeclareLaunchArgument(name='simulation_mode', default_value = 'False', description = 'True if CARMA Platform is launched with CARLA Simulator')
+
     # Launch ROS2 rosbag logging
     ros2_rosbag_launch = IncludeLaunchDescription(
         PythonLaunchDescriptionSource([ThisLaunchFileDir(), '/ros2_rosbag.launch.py']),
@@ -196,7 +199,8 @@ def generate_launch_description():
                     'area' : area,
                     'arealist_path' : arealist_path,
                     'vector_map_file' : vector_map_file,
-                    'vehicle_calibration_dir': vehicle_calibration_dir
+                    'vehicle_calibration_dir': vehicle_calibration_dir,
+                    'simulation_mode': simulation_mode,
                 }.items()
             )
         ]
@@ -290,6 +294,7 @@ def generate_launch_description():
         declare_area,
         declare_arealist_path,
         declare_vector_map_file,
+        declare_simulation_mode,
         drivers_group,
         transform_group,
         environment_group,
