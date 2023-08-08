@@ -19,5 +19,8 @@
     # but which are required to be operational for the subsystem to function
     unmanaged_required_nodes: ['']
 
+    # List of drivers that are ported to ROS2. If not in this list, it is assumed to be ROS1, and not managed.
+    ros2_drivers: ['']
+
     # Boolean: If this flag is true then all nodes under subsystem_namespace are treated as required in addition to any nodes in required_subsystem_nodes
     full_subsystem_required: false
