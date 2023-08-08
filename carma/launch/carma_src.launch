@@ -53,7 +53,7 @@
 
   <!-- Logging -->
   <!-- ROS Bag -->
-  <arg name="use_rosbag" default="true" doc="Record a rosbag"/>
+  <arg name="use_ros1_rosbag" default="true" doc="Flag indicating whether data will be recorded in ROS 1 rosbag format"/>
   <arg name="rosbag_exclusions" default="/fake_exclusion" doc="Additonal regex pattern to match for identifying what topics to exclude from rosbag recordings"/>
   
   <!-- Map files to load -->
@@ -139,7 +139,7 @@
 
   <!-- Set up the rosbag record node that will exclude sensitive topics -->
   <group ns="carma_record">
-    <include file="$(find carma_record)/launch/carma_record.launch" if="$(arg use_rosbag)" />
+    <include file="$(find carma_record)/launch/carma_record.launch" if="$(arg use_ros1_rosbag)" />
   </group>
 
   <!-- Dump all ros parameters to a file -->
