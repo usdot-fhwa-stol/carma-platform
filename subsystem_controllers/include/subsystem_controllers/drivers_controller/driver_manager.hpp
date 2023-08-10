@@ -49,11 +49,11 @@ namespace subsystem_controllers
         /**
          * \brief Constructor for DriverManager
          * 
-         * \param critical_driver_names The set of plugins which will be treated as required. A failure in these plugins will result in an exception
+         * \param critical_driver_names The set of drivers which will be treated as required. A failure in these plugins will result in an exception
          * \param lidar_gps_entries The set of lidar and gps drivers .
          * \param camera_entries The set of camera drivers.
          * \param unmanaged_required_nodes List of nodes which will not be directly managed by this subsystem controller but which are required to be operational for the subsystem to function
-         * \param plugin_lifecycle_mgr A fully initialized lifecycle manager which will be used trigger plugin transitions
+         * \param driver_lifecycle_mgr A fully initialized lifecycle manager which will be used trigger driver transitions
          * \param get_parent_state_func A callback which will allow this object to access the parent process lifecycle state
          * \param get_service_names_and_types_func A callback which returns a map of service names to service types based on the provided base node name and namespace
          * \param driver_timeout The timeout for calls to drivers to fail in nanoseconds
@@ -63,7 +63,7 @@ namespace subsystem_controllers
                         const std::vector<std::string>& camera_entries,
                         const std::vector<std::string>& unmanaged_required_nodes,
                         const std::vector<std::string>& ros2_drivers, 
-                        std::shared_ptr<ros2_lifecycle_manager::LifecycleManagerInterface> drivers_lifecycle_mgr,
+                        std::shared_ptr<ros2_lifecycle_manager::LifecycleManagerInterface> driver_lifecycle_mgr,
                         GetParentNodeStateFunc get_parent_state_func,
                         ServiceNamesAndTypesFunc get_service_names_and_types_func,
                         std::chrono::nanoseconds driver_timeout);
@@ -129,7 +129,7 @@ namespace subsystem_controllers
         std::vector<std::string> ros2_drivers_;
 
         //! Lifecycle Manager which will track the plugin nodes and call their lifecycle services on request
-        std::shared_ptr<ros2_lifecycle_manager::LifecycleManagerInterface> plugin_lifecycle_mgr_;
+        std::shared_ptr<ros2_lifecycle_manager::LifecycleManagerInterface> driver_lifecycle_mgr_;
 
         //! Callback to retrieve the lifecycle state of the parent process 
         GetParentNodeStateFunc get_parent_state_func_;

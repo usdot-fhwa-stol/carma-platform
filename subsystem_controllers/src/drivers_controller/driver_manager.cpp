@@ -31,7 +31,7 @@ namespace subsystem_controllers
                         const std::vector<std::string>& camera_entries,
                         const std::vector<std::string>& ros2_drivers,
                         const std::vector<std::string>& unmanaged_required_nodes, 
-                        std::shared_ptr<ros2_lifecycle_manager::LifecycleManagerInterface> drivers_lifecycle_mgr,
+                        std::shared_ptr<ros2_lifecycle_manager::LifecycleManagerInterface> driver_lifecycle_mgr,
                         GetParentNodeStateFunc get_parent_state_func,
                         ServiceNamesAndTypesFunc get_service_names_and_types_func,
                         std::chrono::nanoseconds driver_timeout)
@@ -39,12 +39,12 @@ namespace subsystem_controllers
             lidar_gps_entries_(lidar_gps_entries.begin(), lidar_gps_entries.end()),
             camera_entries_(camera_entries.begin(), camera_entries.end()),
             ros2_drivers_(ros2_drivers.begin(), ros2_drivers.end()),
-            plugin_lifecycle_mgr_(plugin_lifecycle_mgr), get_parent_state_func_(get_parent_state_func),
+            driver_lifecycle_mgr_(driver_lifecycle_mgr), get_parent_state_func_(get_parent_state_func),
             get_service_names_and_types_func_(get_service_names_and_types_func),
             service_timeout_(service_timeout), call_timeout_(call_timeout)
     {
         if (!drivers_lifecycle_mgr)
-            throw std::invalid_argument("Input plugin_lifecycle_mgr to DriverManager constructor cannot be null");
+            throw std::invalid_argument("Input driver_lifecycle_mgr to DriverManager constructor cannot be null");
 
         for (const auto& p : critical_driver_names_) {
             bool is_ros1 = ros2_drivers_.find(p) == ros2_drivers_.end();
@@ -68,7 +68,7 @@ namespace subsystem_controllers
             if(driver.is_ros1) // we do not manage lifecycle of ros1 nodes
                 continue;
 
-            auto result_state = plugin_lifecycle_mgr_->transition_node_to_state(lifecycle_msgs::msg::State::PRIMARY_STATE_INACTIVE, plugin.name_, service_timeout_, call_timeout_);
+            auto result_state = driver_lifecycle_mgr_->transition_node_to_state(lifecycle_msgs::msg::State::PRIMARY_STATE_INACTIVE, driver.name_, service_timeout_, call_timeout_);
 
             if(results_state != lifecycle_msgs::msg::State::PRIMARY_STATE_INACTIVE)
             {
@@ -96,8 +96,123 @@ namespace subsystem_controllers
 
     bool DriverManager::activate()
     {
-        
+        bool full_success = true;
+        // Bring all required drivers to the active state
+        for(auto driver : em_.get_entries())
+        {
+            if (driver.is_ros1) // We do not manage lifecycle of ros1 nodes
+                continue;
+            
+            auto result_state = driver_lifecycle_mgr_->transition_node_to_state(lifecycle_msgs::msg::State::PRIMARY_STATE_ACTIVE, driver.name_, service_timeout_, call_timeout_);
+
+            if(result_state != lifecycle_msgs::msg::State::PRIMARY_STATE_ACTIVE)
+            {
+                //If tis driver was required then trigger exception
+                if (critical_drivers_.find(driver.name_) != critical_drivers_.end())
+                {
+                    throw std::runtime_error("Required driver " + driver.name_ + " could not be activated");
+                }
+
+                // If this driver was not required log an error and mark it is unavailable and deactivated               
+                RCLCPP_ERROR_STREAM(rclcpp::get_logger("subsystem_controllers"), "Failed to activate newly discovered non-required driver: " 
+                    << driver.name_ << " Marking as deactivated and unavailable!");
+
+                Entry deactivated_entry = driver;
+                deactivate_entry.active_ = false;
+                deactivated_entry.available = false;
+                em_.update_entry(deactivated_entry);
+
+                full_success = false;
+            }
+
+            driver.active_ = true;  //Mark driver as active
+            em_.update_entry(driver);
+        }
+        return full_success;
     }
+
+    bool DriverManager::deactivate()
+    {
+        bool full_success = true;
+        //Bring all ros2 drivers to the inactive state
+        for (auto driver: em_.get_entries())
+        {
+            if (driver.is_ros1_) // We do not manage lifecycle of ros1 nodes
+                continue;
+            
+            auto result_state = driver_lifecycle_mgr_->transition_node_to_state(lifecycle_msgs::msg::State::PRIMARY_STATE_INACTIVE, driver.name_, service_timeout_, call_timeout_);
+
+            if(result_state != lifecycle_msgs::msg::State::PRIMARY_STATE_INACTIVE)
+            {
+                if (critical_drivers_.find(driver.name_) != critical_drivers_.end())
+                {
+                    throw std::runtime_error("Required driver" + driver.name_  = " could not be deactivated.")
+                }
+
+                //If this driver was not required log an error and mark it is as unavailable and deactivated
+                RCLCPP_ERROR_STREAM(rclcpp::get_logger("subsystem_controller"), "Failed  to deactivate non-required driver: " << driver.name_ < " Marking as deactivated and unavailable!")
+
+                Entry deactivated_entry = driver;
+                deactivated_entry.active_ = false;
+                deactivated_entry.available_ = false;
+                em_.update_entry(deactivated_entry);
+
+                full_success = false;
+            }
+        }  
+
+        return full_success; 
+    }
+
+    bool DriverManager::cleanup()
+    {
+        bool full_success = true;
+        //Bring all required drivers to the unconfigured state
+        for (auto driver : em_.get_entries())
+        {
+
+            if (driver.is_ros1_) //We do not manage lifecycle of ros1 nodes
+                continue;
+
+            auto result_state = driver_lifecycle_mgr_->transition_node_to_state(lifecycle_msgs::msg::State::PRIMARY_STATE_UNCONFIGURED, driver.name_, service_timeout_, call_timeout_);
+
+            if(result_state != lifecycle_msgs::msg::State::PRIMARY_STATE_UNCONFIGURED)
+            {
+                // If this driver was required then trigger exeception
+                if (critical_driver_.find(driver.name_) != critical_drivers_.end())
+                {
+                    throw std::runtime_error("Required driver " + driver.name_ + " could not be cleaned up");
+                }
+
+                // If this driver was not required log an error and mark it is  unavailable and deactivated
+                RCLCPP_ERROR_STREAM(rclcpp::get_logger("subsystem_controllers"), "Failed to cleanup non-required driver: " << driver.name_ << " Marking as deactivated and available!");
+
+                Entry deactivated_entry = driver;
+                deactivated_entry.active_ = false;
+                deactivated_entry.available_ = false;
+                em_.update_entry(deactivated_entry);
+
+                full_success = false;
+            }
+        }
+
+        return full_success;
+    }
+
+    bool DriverManager::shutdown()
+    [
+        std::vector<std::string> all_names = em_.get_entry_names();
+        std::vector<std::string>  ros2_names;
+
+        ros2_names.reserve(all_names.size());
+
+        std::copy_if(all_names.begin(), all_names.end(),
+                 std::back_inserter(ros2_names),
+                 [this](const std::string& n) { return !em_.get_entry_by_name(n)->is_ros1_; });
+
+        return driver_lifecycle_mgr_->shutdown(service_timeout_, call_timeout_, false, ros2_names).empty();
+
+    ]
 
     bool DriverManager::is_ros2_lifecycle_node(const std::string& node)
     {
@@ -106,7 +221,7 @@ namespace subsystem_controllers
         boost::split(name_parts, node, boost::is_any_of("/"));
 
         if (name_parts.empty()) {
-          RCLCPP_WARN_STREAM(rclcpp::get_logger("subsystem_controllers"), "Invalid name for plugin: " << node << " Plugin may not function in system.");
+          RCLCPP_WARN_STREAM(rclcpp::get_logger("subsystem_controllers"), "Invalid name for driver: " << node << " Driver may not function in system.");
           return false;
         }
 
@@ -138,7 +253,7 @@ namespace subsystem_controllers
 
         }
 
-        RCLCPP_DEBUG_STREAM(rclcpp::get_logger("subsystem_controllers"), "Detected non-ros2 lifecycle plugin " << node);
+        RCLCPP_DEBUG_STREAM(rclcpp::get_logger("subsystem_controllers"), "Detected non-ros2 lifecycle driver " << node);
         return false;
     }
 
