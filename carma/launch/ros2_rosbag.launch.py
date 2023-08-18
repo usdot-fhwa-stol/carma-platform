@@ -65,8 +65,6 @@ def record_ros2_rosbag(context: LaunchContext, vehicle_config_param_file):
 
         return [proc]
 
-
-
 def generate_launch_description():
     # Declare the vehicle_config_dir launch argument
     vehicle_config_dir = LaunchConfiguration('vehicle_config_dir')
