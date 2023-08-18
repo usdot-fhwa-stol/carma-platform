@@ -21,9 +21,10 @@ from launch.launch_description_sources import PythonLaunchDescriptionSource
 from launch.substitutions import ThisLaunchFileDir
 from launch.substitutions import EnvironmentVariable
 from launch.actions import GroupAction
+from launch.conditions import IfCondition
 from launch_ros.actions import PushRosNamespace
 from carma_ros2_utils.launch.get_log_level import GetLogLevel
-from launch.substitutions import LaunchConfiguration
+from launch.substitutions import LaunchConfiguration, PythonExpression
 from launch.actions import DeclareLaunchArgument
 
 import os
@@ -128,7 +129,7 @@ def generate_launch_description():
     use_ros2_rosbag = LaunchConfiguration('use_ros2_rosbag')
     declare_use_ros2_rosbag = DeclareLaunchArgument(
         name = 'use_ros2_rosbag',
-        default_value='false',
+        default_value='False',
         description = 'Flag indicating whether data should be recorded in ROS 2 rosbag format'
     )
 
@@ -152,13 +153,17 @@ def generate_launch_description():
     declare_simulation_mode = DeclareLaunchArgument(name='simulation_mode', default_value = 'False', description = 'True if CARMA Platform is launched with CARLA Simulator')
 
     # Launch ROS2 rosbag logging
-    ros2_rosbag_launch = IncludeLaunchDescription(
-        PythonLaunchDescriptionSource([ThisLaunchFileDir(), '/ros2_rosbag.launch.py']),
-        launch_arguments = {
-            'vehicle_config_dir' : vehicle_config_dir,
-            'vehicle_config_param_file' : vehicle_config_param_file,
-            'use_ros2_rosbag' : use_ros2_rosbag
-            }.items()
+    ros2_rosbag_launch = GroupAction(
+        condition=IfCondition(PythonExpression([use_ros2_rosbag])),
+        actions=[
+            IncludeLaunchDescription(
+                PythonLaunchDescriptionSource([ThisLaunchFileDir(), '/ros2_rosbag.launch.py']),
+                launch_arguments = {
+                    'vehicle_config_dir' : vehicle_config_dir,
+                    'vehicle_config_param_file' : vehicle_config_param_file
+                    }.items()
+            )
+        ]
     )
 
     # Nodes

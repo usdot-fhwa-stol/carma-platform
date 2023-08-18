@@ -45,8 +45,7 @@ def record_ros2_rosbag(context: LaunchContext, vehicle_config_param_file):
         if "exclude_lidar" in vehicle_config_params:
             if (vehicle_config_params["exclude_lidar"] == True) and ("excluded_lidar_topics" in vehicle_config_params):
                 for topic in vehicle_config_params["excluded_lidar_topics"]:
-                    #exclude_topics_regex += str(topic) + "|"
-                    continue # TODO Remove
+                    exclude_topics_regex += str(topic) + "|"
 
         if "exclude_camera" in vehicle_config_params:
             if (vehicle_config_params["exclude_camera"] == True) and ("excluded_camera_topics" in vehicle_config_params):
@@ -57,16 +56,6 @@ def record_ros2_rosbag(context: LaunchContext, vehicle_config_param_file):
             if (vehicle_config_params["exclude_can"] == True) and ("excluded_can_topics" in vehicle_config_params):
                 for topic in vehicle_config_params["excluded_can_topics"]:
                     exclude_topics_regex += str(topic) + "|"
-
-        # TODO remove these lines used for testing
-        #exclude_topics_regex += "/rosout(.*)|"
-        # exclude_topics_regex += "/rosout$|"
-        # exclude_topics_regex += "/rosout_agg$|"
-        exclude_topics_regex += "(.*)/received_messages"
-        exclude_topics_regex += "(.*)/sent_messages"
-        exclude_topics_regex += "(.*)/scan"
-
-        print("Final exclude regex: " + str(exclude_topics_regex)) # TODO remove
 
         proc = ExecuteProcess(
                 cmd=['ros2', 'bag', 'record', '-o', '/opt/carma/logs/rosbag2_' + str(datetime.now().strftime('%Y-%m-%d_%H%M%S')), '-a', '-x', exclude_topics_regex],
@@ -95,17 +84,8 @@ def generate_launch_description():
         description = "Path to file contain vehicle configuration parameters"
     )
 
-    # Declare launch argument for ROS 2 rosbag logging
-    use_ros2_rosbag = LaunchConfiguration('use_ros2_rosbag')
-    declare_use_ros2_rosbag = DeclareLaunchArgument(
-        name = 'use_ros2_rosbag',
-        default_value='false',
-        description = 'Flag indicating whether data should be recorded in ROS 2 rosbag format'
-    )
-
     return LaunchDescription([
         declare_vehicle_config_dir_arg,
         declare_vehicle_config_param_file_arg,
-        declare_use_ros2_rosbag,
         OpaqueFunction(function=record_ros2_rosbag, args=[LaunchConfiguration('vehicle_config_param_file')])
     ])

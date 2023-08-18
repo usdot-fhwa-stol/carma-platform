@@ -40,7 +40,7 @@ sudo chgrp carma /opt/carma # Set group to expose permissions for build
 if [[ ! -z "$ROS1_PACKAGES$ROS2_PACKAGES" ]]; then
     if [[ ! -z "$ROS1_PACKAGES" ]]; then
         echo "Incrementally building ROS1 packages: $ROS1_PACKAGES"
-        colcon build --install-base /opt/carma/install --cmake-args -DCMAKE_BUILD_TYPE=Release --packages-above $ROS1_PACKAGES 
+        colcon build --install-base /opt/carma/install --cmake-args -DCMAKE_BUILD_TYPE=Release --packages-above $ROS1_PACKAGES --packages-skip novatel_oem7_driver novatel_oem7_msgs
     else
         echo "Build type is incremental but no ROS1 packages specified, skipping ROS1 build..."
     fi
@@ -64,14 +64,6 @@ else
 fi
 
 cd ~/carma_ws
-
-# Install test-msgs package
-sudo apt-get update && sudo apt install curl gnupg2 lsb-release
-sudo curl -sSL https://raw.githubusercontent.com/ros/rosdistro/master/ros.key  -o /usr/share/keyrings/ros-archive-keyring.gpg
-echo "deb [arch=$(dpkg --print-architecture) signed-by=/usr/share/keyrings/ros-archive-keyring.gpg] http://packages.ros.org/ros2/ubuntu $(lsb_release -cs) main" | sudo tee /etc/apt/sources.list.d/ros2.list > /dev/null
-
-sudo apt install python3-pybind11 -y
-sudo apt install ros-foxy-test-msgs -y
 
 echo "Building ROS2 CARMA Components"
 
