@@ -35,6 +35,9 @@ namespace subsystem_controllers
         uint8_t type_ = 0;
         //! The capability string of the driver
         std::string capability_;
+        
+        long timestamp_;
+        
         //! Flag indicating if this is a ros1 node
         bool is_ros1_ = false;
 

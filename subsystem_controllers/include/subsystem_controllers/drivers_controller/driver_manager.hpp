@@ -30,6 +30,8 @@
 #include <map>
 #include "entry_manager.hpp"
 #include "entry.hpp"
+#include <carma_driver_msgs/msg/driver_status.hpp>
+#include <carma_msgs/msg/system_alert.hpp>
 
 
 namespace subsystem_controllers
@@ -46,45 +48,32 @@ namespace subsystem_controllers
      */ 
     class DriverManager
     {
+        public:
         /**
          * \brief Constructor for DriverManager
          * 
          * \param critical_driver_names The set of drivers which will be treated as required. A failure in these plugins will result in an exception
          * \param lidar_gps_entries The set of lidar and gps drivers .
          * \param camera_entries The set of camera drivers.
-         * \param unmanaged_required_nodes List of nodes which will not be directly managed by this subsystem controller but which are required to be operational for the subsystem to function
          * \param driver_lifecycle_mgr A fully initialized lifecycle manager which will be used trigger driver transitions
          * \param get_parent_state_func A callback which will allow this object to access the parent process lifecycle state
          * \param get_service_names_and_types_func A callback which returns a map of service names to service types based on the provided base node name and namespace
-         * \param driver_timeout The timeout for calls to drivers to fail in nanoseconds
+         * \param driver_timeout The timeout threshold for essential drivers
          */
         DriverManager(const std::vector<std::string>& critical_driver_names,
                         const std::vector<std::string>& lidar_gps_entries,
                         const std::vector<std::string>& camera_entries,
-                        const std::vector<std::string>& unmanaged_required_nodes,
-                        const std::vector<std::string>& ros2_drivers, 
-                        std::shared_ptr<ros2_lifecycle_manager::LifecycleManagerInterface> driver_lifecycle_mgr,
+                        const std::vector<std::string>& base_managed_ros2_nodes,
+                        std::shared_ptr<ros2_lifecycle_manager::LifecycleManagerInterface> driver_lifecycle_mgr, 
                         GetParentNodeStateFunc get_parent_state_func,
                         ServiceNamesAndTypesFunc get_service_names_and_types_func,
-                        std::chrono::nanoseconds driver_timeout);
-
-        /**
-         * Below are the state transition methods which will cause this manager to trigger the corresponding 
-         * state transitions in the managed plugins. 
-         * 
-         * \throw std::runtime_error If a required node could not transition successfully
-         * \return True if all components transitioned successfully
-         */ 
-        bool configure(); 
-        bool activate(); 
-        bool deactivate(); 
-        bool cleanup(); 
-        bool shutdown(); 
+                        const long driver_timeout);
+ 
 
         /*!
          * \brief Update driver status
          */
-        void update_driver_status(const carma_driver_msgs::msg::DriverStatus::UniquePtr msg, long current_time);
+        void update_driver_status(const carma_driver_msgs::msg::DriverStatus::SharedPtr msg, long current_time);
 
         /*!
          * \brief Check if all critical drivers are operational for truck
@@ -99,12 +88,12 @@ namespace subsystem_controllers
         /*!
          * \brief Evaluate if the sensor is available
          */
-        void evaluate_sensor(int &sensor_input,bool available,long current_time,long timestamp,long driver_timeout);
+        void evaluate_sensor(int &sensor_input,bool available,long current_time,long timestamp,long driver_timeout, std::string source_node, bool is_ros1);
 
         /*!
          * \brief Handle the spin and publisher
          */
-        carma_msgs::msg::SystemAlert handleSpin(bool truck,bool car,long time_now,long start_up_timestamp,long startup_duration);
+        carma_msgs::msg::SystemAlert handle_spin(bool truck,bool car,long time_now,long start_up_timestamp,long startup_duration);
 
         protected:
 
@@ -118,7 +107,7 @@ namespace subsystem_controllers
         bool is_ros2_lifecycle_node(const std::string& node);
 
         //list of critical drivers
-        std::vector<std::string> critical_driver_names_;
+        std::vector<std::string> critical_drivers_;
 
         //list of lidar and gps entries
         std::vector<std::string> lidar_gps_entries_;
@@ -126,10 +115,7 @@ namespace subsystem_controllers
         //list of camera entries
         std::vector<std::string> camera_entries_;
 
-        std::vector<std::string> ros2_drivers_;
-
-        //! Lifecycle Manager which will track the plugin nodes and call their lifecycle services on request
-        std::shared_ptr<ros2_lifecycle_manager::LifecycleManagerInterface> driver_lifecycle_mgr_;
+        std::unordered_set<std::string> ros2_drivers_;
 
         //! Callback to retrieve the lifecycle state of the parent process 
         GetParentNodeStateFunc get_parent_state_func_;
@@ -137,22 +123,15 @@ namespace subsystem_controllers
         //! Callback to get service names and types for the given node
         ServiceNamesAndTypesFunc get_service_names_and_types_func_;
 
+        std::shared_ptr<ros2_lifecycle_manager::LifecycleManagerInterface> driver_lifecycle_mgr_;
+
         //! Entry manager to keep track of detected plugins
-        EntryManager em_;  
+        std::shared_ptr<EntryManager> em_;  
 
-        //! The timeout for services to be available
-        std::chrono::nanoseconds service_timeout_;
-            
-        //! The timeout for service calls to return
-        std::chrono::nanoseconds call_timeout_; 
-        
         // timeout for critical driver timeout
-        long driver_timeout_ {1000}; 
-
+        long driver_timeout_; 
 
         bool starting_up_ = true;
 
-
-
-    }:
+    };
 }

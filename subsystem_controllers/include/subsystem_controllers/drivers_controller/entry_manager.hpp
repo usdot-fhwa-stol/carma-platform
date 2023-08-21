@@ -38,8 +38,8 @@ namespace subsystem_controllers
         * \param lidar_gps_entries The set of lidar and gps drivers .
         * \param camera_entries The set of camera drivers.
         */
-        EntryManager(std::vector<std::string> required_entries,std::vector<std::string> lidar_gps_entries, 
-                    std::vector<std::string> camera_entries);
+        EntryManager(const std::vector<std::string>& required_entries,const std::vector<std::string>&lidar_gps_entries, 
+                    const std::vector<std::string>& camera_entries) : required_entries_(required_entries), lidar_gps_entries_(lidar_gps_entries), camera_entries_(camera_entries) {}
 
         /*!
         * \brief Add a new entry if the given name does not exist.
@@ -53,8 +53,13 @@ namespace subsystem_controllers
         std::vector<Entry> get_entries() const;
 
         /*!
-            * \brief Get a entry using name as the key.
-            */
+         * \brief Get all entry names as a list
+         */
+        std::vector<std::string> get_entry_names() const;
+
+        /*!
+         * \brief Get a entry using name as the key.
+         */
         boost::optional<Entry> get_entry_by_name(const std::string& name) const;
         
         /*!

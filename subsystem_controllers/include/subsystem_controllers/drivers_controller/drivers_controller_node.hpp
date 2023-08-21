@@ -23,8 +23,11 @@
 #include "carma_msgs/msg/system_alert.hpp"
 #include "ros2_lifecycle_manager/ros2_lifecycle_manager.hpp"
 #include "rclcpp/rclcpp.hpp"
+#include <carma_driver_msgs/msg/driver_status.hpp>
 #include "subsystem_controllers/base_subsystem_controller/base_subsystem_controller.hpp"
-#include "subsystem_controllers/drivers_controllers/drivers_controller_config.hpp"
+#include "drivers_controller_config.hpp"
+#include "driver_manager.hpp"
+#include <boost/algorithm/string.hpp>
 
 namespace subsystem_controllers
 {
@@ -47,43 +50,32 @@ namespace subsystem_controllers
     // TODO integrate driver_discovery/health_monitor behavior into this node
     // https://github.com/usdot-fhwa-stol/carma-platform/issues/1500
 
-    carma_ros2_utils::CallbackReturn handle_on_configure(const rclcpp::NodeOptions &options);
-    
-    carma_ros2_utils::CallbackReturn handle_on_activate(const rclcpp_lifecycle::State &);
-
-    carma_ros2_utils::CallbackReturn handle_on_deactivate(const rclcpp_lifecycle::State &);
-
-    carma_ros2_utils::CallbackReturn handle_on_cleanup(const rclcpp_lifecycle::State &);
-
-    carma_ros2_utils::CallbackReturn handle_on_shutdown(const rclcpp_lifecycle::State &);
-
-
-    /*!
-      * \brief Begin normal execution of health monitor node. Will take over control flow of program and exit from here.
-      * 
-      * \return The exit status of this program
-      */
-    void run();
-
-    // spin callback function
-    bool spin_cb();
 
   private:
 
     // DriverManager to handle all the driver specific discovery and reporting
-    // DriverManager driver_manager_;
+    std::shared_ptr<DriverManager> driver_manager_;
 
     //! Config for user provided parameters
-    DriverControllerConfig config_;
+    DriversControllerConfig config_;
 
     //! ROS handles
-    carma_ros2_utils<carma_driver_msgs::msg::DriverStatus> driver_status_sub_;
+    carma_ros2_utils::SubPtr<carma_driver_msgs::msg::DriverStatus> driver_status_sub_;
 
     // message/service callbacks
+    // void driver_discovery_cb(const carma_driver_msgs::msg::DriverStatus::SharedPtr msg);
     void driver_discovery_cb(const carma_driver_msgs::msg::DriverStatus::SharedPtr msg);
 
-    // initialize method
-    void initialize();
+    void timer_callback();
+
+    bool is_ros2_lifecycle_node(const std::string& node);
+
+    void setDriverManager(DriverManager dm);
+    void setCarTrue();
+    void setTruckTrue();
+
+    carma_ros2_utils::CallbackReturn handle_on_configure(const rclcpp_lifecycle::State &prev_state);
+    carma_ros2_utils::CallbackReturn handle_on_activate(const rclcpp_lifecycle::State &prev_state);
 
     //! ROS parameters
     std::vector<std::string> required_drivers_;
@@ -93,8 +85,14 @@ namespace subsystem_controllers
     bool truck_;
     bool car_;
 
+    // record of startup timestamp
+    long start_up_timestamp_;
+
+    rclcpp::TimerBase::SharedPtr timer_;
+
     // Previously published alert message
     boost::optional<carma_msgs::msg::SystemAlert> prev_alert;
+
   };
 
 } // namespace v2x_controller

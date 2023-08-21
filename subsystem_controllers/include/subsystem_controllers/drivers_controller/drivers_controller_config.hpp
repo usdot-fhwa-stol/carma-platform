@@ -28,29 +28,45 @@ namespace subsystem_controllers
   
   {
     //! List of drivers (node name) to consider required and who's failure shall result in automation abort. 
-    //  Required plugins will be automatically activated at startup
-    //  Required plugins cannot be deactivated by the user
-    std::vector<std::string> required_subsystem_nodes;
-
-    //! List of drivers that are ROS2. If it is not in the list, it is assumed to be ROS1 and not managed
-    std::vector<std::string> unmanaged_required_nodes;
+    std::vector<std::string> required_drivers_;
+    std::vector<std::string> lidar_gps_drivers_;
+    std::vector<std::string> camera_drivers_;
+    double startup_duration_;
+    double driver_timeout_;
+    bool truck_;
+    bool car_;
+    
 
     // Stream operator for this config
-    friend std::ostream &operator<<(std::ostream &output, const GuidanceControllerConfig &c)
+    friend std::ostream &operator<<(std::ostream &output, const DriversControllerConfig &c)
     {
       
       output << "DriversControllerConfig { " << std::endl
-             << "required_subsystem_nodes: [ " << std::endl;
+             << "required_drivers_: [ " << std::endl;
             
-      for (auto node : c.required_subsystem_nodes)
+      for (auto node : c.required_drivers_)
         output << node << " ";
 
-      output << "] " << std::endl << "unmanaged_required_nodes: [ ";
+      output << "] " << std::endl << "lidar_gps_drivers: [ ";
 
-      for (auto node : c.unmanaged_required_nodes)
+      for (auto node : c.lidar_gps_drivers_)
+        output << node << " ";
+
+      output << "] " << std::endl << "camera_drivers: [ ";
+
+      for (auto node : c.camera_drivers_)
         output << node << " ";
       
-      output << "] " << std::endl 
+      output << "] " << std::endl; 
+
+      output<< "startup_duration: "<< c.startup_duration_ << std::endl;
+
+      output <<"driver_timeout: "<< c.driver_timeout_ << std::endl;
+
+      output <<"truck: " << c.truck_ << std::endl;
+
+      output <<"car: " << c.car_ << std::endl
+      
         << "}" << std::endl;
       return output;
     }
