@@ -51,7 +51,7 @@ namespace subsystem_controllers
             if(status.compare("s_1_c_1") == 0)
             {
                 starting_up_ = false;
-                alert.description = "All essential drivers are ready";
+                alert.description = "All essential ROS1 drivers are ready";
                 alert.type = carma_msgs::msg::SystemAlert::DRIVERS_READY;
                 return alert;
             } 
@@ -92,7 +92,7 @@ namespace subsystem_controllers
             if(status.compare("s_1_c_1") == 0)
             {
                 starting_up_ = false;
-                alert.description = "All essential drivers are ready";
+                alert.description = "All essential ROS1 drivers are ready";
                 alert.type = carma_msgs::msg::SystemAlert::DRIVERS_READY;
                 return alert; 
             }
@@ -159,10 +159,13 @@ namespace subsystem_controllers
     std::string DriverManager::are_critical_drivers_operational_truck(long current_time)
     {
         int ssc=0;
-        int lidar1=0;
-        int lidar2=0;
-        int gps=0;
         int camera=0; //Add Camera Driver
+
+        // Manual disable of ssc entry in case ssc wrapper is in ros2
+        if (critical_drivers_.empty())
+        {
+            ssc = 1;
+        }
 
         std::vector<Entry> driver_list = em_->get_entries(); //Real time driver list from driver status
         for(auto i = driver_list.begin(); i < driver_list.end(); ++i)
@@ -178,13 +181,6 @@ namespace subsystem_controllers
             
         }
 
-        //////////////////////
-        // NOTE: THIS IS A MANUAL DISABLE OF ALL LIDAR AND GPS FAILURE DETECTION FOLLOWING THE ROS2 PORT
-        /////////////////////
-        lidar1=1;
-        lidar2=1;
-        gps=1;
-        /////////////////////
 
         //Decision making 
         if (ssc == 1 && camera == 1)
@@ -205,9 +201,14 @@ namespace subsystem_controllers
     std::string DriverManager::are_critical_drivers_operational_car(long current_time)
     {
         int ssc=0;
-        int lidar=0;
-        int gps=0;
         int camera=0;
+        
+        // Manual disable of ssc entry in case ssc wrapper is in ros2
+        if (critical_drivers_.empty())
+        {
+            ssc = 1;
+        }
+
         std::vector<Entry> driver_list = em_->get_entries(); //Real time driver list from driver status
         for(auto i = driver_list.begin(); i < driver_list.end(); ++i)
         {
@@ -221,11 +222,6 @@ namespace subsystem_controllers
             }
         }
 
-        //////////////////////
-        // NOTE: THIS IS A MANUAL DISABLE OF ALL LIDAR FAILURE DETECTION FOLLOWING THE ROS2 PORT
-        /////////////////////
-        lidar=1;
-        gps=1;
         /////////////////////
         //Decision making 
         if (ssc == 1 && camera == 1)
