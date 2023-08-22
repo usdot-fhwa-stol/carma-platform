@@ -53,7 +53,6 @@
 
   <!-- Logging -->
   <!-- ROS Bag -->
-  <arg name="use_ros1_rosbag" default="true" doc="Flag indicating whether data will be recorded in ROS 1 rosbag format"/>
   <arg name="rosbag_exclusions" default="/fake_exclusion" doc="Additonal regex pattern to match for identifying what topics to exclude from rosbag recordings"/>
   
   <!-- Map files to load -->
