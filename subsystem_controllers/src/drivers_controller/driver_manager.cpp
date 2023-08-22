@@ -29,28 +29,14 @@ namespace subsystem_controllers
     DriverManager::DriverManager(const std::vector<std::string>& critical_driver_names,
                         const std::vector<std::string>& lidar_gps_entries,
                         const std::vector<std::string>& camera_entries,
-                        const std::vector<std::string>& base_managed_ros2_nodes,
-                        std::shared_ptr<ros2_lifecycle_manager::LifecycleManagerInterface> driver_lifecycle_mgr,
-                        GetParentNodeStateFunc get_parent_state_func,
-                        ServiceNamesAndTypesFunc get_service_names_and_types_func,
                         const long driver_timeout)
             : critical_drivers_(critical_driver_names.begin(), critical_driver_names.end()),
             lidar_gps_entries_(lidar_gps_entries.begin(), lidar_gps_entries.end()),
             camera_entries_(camera_entries.begin(), camera_entries.end()),
-            ros2_drivers_(base_managed_ros2_nodes.begin(), base_managed_ros2_nodes.end()),
-            get_parent_state_func_(get_parent_state_func),
-            driver_lifecycle_mgr_(driver_lifecycle_mgr),
-            get_service_names_and_types_func_(get_service_names_and_types_func),
             driver_timeout_(driver_timeout)
     { 
         // Intialize entry manager
         em_ = std::make_shared<EntryManager>(critical_driver_names, lidar_gps_entries, camera_entries);
-        // Create entries for ros2 drivers
-        for (const auto& p: ros2_drivers_)
-        {
-            Entry ros2_driver_status(false, false, p, 0, "", false);
-            em_->update_entry(ros2_driver_status);
-        }
 
     }
     
@@ -62,7 +48,7 @@ namespace subsystem_controllers
         if(truck==true)
         {
             std::string status = are_critical_drivers_operational_truck(time_now);
-            if(status.compare("s_1_l1_1_l2_1_g_1_c_1") == 0)
+            if(status.compare("s_1_c_1") == 0)
             {
                 starting_up_ = false;
                 alert.description = "All essential drivers are ready";
@@ -75,40 +61,15 @@ namespace subsystem_controllers
                 alert.type = carma_msgs::msg::SystemAlert::NOT_READY;
                 return alert;
             }
-             else if(status.compare("s_1_l1_1_l2_1_g_1_c_0")==0)
+             else if(status.compare("s_1_c_0")==0)
             {
                 alert.description = "Camera Failed";
                 alert.type = carma_msgs::msg::SystemAlert::SHUTDOWN;
             }
-            else if((status.compare("s_1_l1_0_l2_1_g_1") == 0) || (status.compare("s_1_l1_1_l2_0_g_1") == 0))
-            {
-            
-                alert.description = "One LIDAR Failed";
-                alert.type = carma_msgs::msg::SystemAlert::CAUTION;
-                return alert;
-            }
-            else if((status.compare("s_1_l1_0_l2_1_g_0") == 0) || (status.compare("s_1_l1_1_l2_0_g_0") == 0))
-            {   
-                alert.description = "One Lidar and GPS Failed";
-                alert.type = carma_msgs::msg::SystemAlert::CAUTION;
-                return alert;
-            } 
             else if(status.compare("s_1_l1_1_l2_1_g_0") == 0)
             {
                 alert.description = "GPS Failed";
                 alert.type = carma_msgs::msg::SystemAlert::CAUTION;
-                return alert;
-            }
-            else if(status.compare("s_1_l1_0_l2_0_g_1") == 0)
-            {
-                alert.description = "Both LIDARS Failed";
-                alert.type = carma_msgs::msg::SystemAlert::WARNING;
-                return alert;
-            }
-            else if(status.compare("s_1_l1_0_l2_0_g_0") == 0)
-            {
-                alert.description = "LIDARS and GPS Failed";
-                alert.type = carma_msgs::msg::SystemAlert::SHUTDOWN;
                 return alert;
             }
             else if(status.compare("s_0") == 0)
@@ -128,7 +89,7 @@ namespace subsystem_controllers
         else if(car==true)
         {
             std::string status = are_critical_drivers_operational_car(time_now);
-            if(status.compare("s_1_l_1_g_1_c_1") == 0)
+            if(status.compare("s_1_c_1") == 0)
             {
                 starting_up_ = false;
                 alert.description = "All essential drivers are ready";
@@ -142,42 +103,12 @@ namespace subsystem_controllers
                 return alert; 
             }
             
-            else if(status.compare("s_1_l_1_g_1_c_0") == 0)
+            else if(status.compare("s_1_c_0") == 0)
             {
                 alert.description = "Camera Failed";
                 alert.type = carma_msgs::msg::SystemAlert::SHUTDOWN;
                 return alert;
             } 
-            else if(status.compare("s_1_l_1_g_0") == 0)
-            {
-                alert.description = "GPS Failed";
-                alert.type = carma_msgs::msg::SystemAlert::CAUTION;
-                return alert; 
-            }
-            else if(status.compare("s_1_l_0_g_1") == 0)
-            {
-                alert.description = "LIDAR Failed";
-                alert.type = carma_msgs::msg::SystemAlert::WARNING;
-                return alert; 
-            }
-            else if(status.compare("s_1_l_0_g_0") == 0)
-            {
-                alert.description = "LIDAR, GPS Failed";
-                alert.type = carma_msgs::msg::SystemAlert::SHUTDOWN;
-                return alert; 
-            }
-            else if(status.compare("s_1_l_0_g_1_c_0") == 0)
-            {
-                alert.description = "LIDAR, Camera Failed";
-                alert.type = carma_msgs::msg::SystemAlert::SHUTDOWN;
-                return alert;
-            }
-            else if(status.compare("s_1_l_1_g_0_c_0") == 0)
-            {
-                alert.description = " GPS, Camera Failed";
-                alert.type = carma_msgs::msg::SystemAlert::SHUTDOWN;
-                return alert;
-            }
             else if(status.compare("s_0") == 0)
             {
                 alert.description = "SSC Failed";
@@ -211,29 +142,18 @@ namespace subsystem_controllers
     }
 
 
-    void DriverManager::evaluate_sensor(int &sensor_input,bool available,long current_time,long timestamp,long driver_timeout, std::string source_node, bool is_ros1)
+    void DriverManager::evaluate_sensor(int &sensor_input,bool available,long current_time,long timestamp,long driver_timeout)
     {
-        if(is_ros1){
-            if((!available) || (current_time-timestamp > driver_timeout))
-            {
-                sensor_input=0;
-            }
-            else
-            {
-                sensor_input=1;
-            }
+        
+        if((!available) || (current_time-timestamp > driver_timeout))
+        {
+            sensor_input=0;
         }
-        else{
-            // If source node is ros2 check lifecycle manager for active state
-            if (driver_lifecycle_mgr_->get_managed_node_state(source_node) == lifecycle_msgs::msg::State::PRIMARY_STATE_ACTIVE)
-            {
-                sensor_input = 1;
-            }
-            else
-            {
-                sensor_input = 0;
-            }
+        else
+        {
+            sensor_input=1;
         }
+        
     }
 
     std::string DriverManager::are_critical_drivers_operational_truck(long current_time)
@@ -249,24 +169,11 @@ namespace subsystem_controllers
         {
             if(em_->is_entry_required(i->name_))
             {
-              evaluate_sensor(ssc,i->available_,current_time,i->timestamp_,driver_timeout_, i->name_, i->is_ros1_);
-            }
-
-            if(em_->is_lidar_gps_entry_required(i->name_)==0) //Lidar1
-            {
-               evaluate_sensor(lidar1,i->available_,current_time,i->timestamp_,driver_timeout_, i->name_, i->is_ros1_);
-            }
-            else if(em_->is_lidar_gps_entry_required(i->name_)==1) //Lidar2
-            {
-              evaluate_sensor(lidar2,i->available_,current_time,i->timestamp_,driver_timeout_, i->name_, i->is_ros1_);
-            }
-            else if(em_->is_lidar_gps_entry_required(i->name_)==2) //GPS
-            {
-              evaluate_sensor(gps,i->available_,current_time,i->timestamp_,driver_timeout_, i->name_, i->is_ros1_);
+              evaluate_sensor(ssc,i->available_,current_time,i->timestamp_,driver_timeout_);
             }
             else if(em_->is_camera_entry_required(i->name_)==0)
             {
-                evaluate_sensor(camera,i->available_,current_time,i->timestamp_,driver_timeout_, i->name_, i->is_ros1_);
+                evaluate_sensor(camera,i->available_,current_time,i->timestamp_,driver_timeout_);
             }
             
         }
@@ -280,46 +187,16 @@ namespace subsystem_controllers
         /////////////////////
 
         //Decision making 
-        if (ssc == 0)
+        if (ssc == 1 && camera == 1)
         {
+            return "s_1_c1";
+        }
+        else if (ssc == 1 && camera == 0)
+        {
+            return "s_1_c_0";
+        }
+        else{
             return "s_0";
-        }
-        // if ssc= 1
-        if((lidar1==0) && (lidar2==0) && (gps==0))
-        {
-            return "s_1_l1_0_l2_0_g_0";
-        }
-        else if((lidar1==0) && (lidar2==0) && (gps==1))
-        {
-            return "s_1_l1_0_l2_0_g_1";
-        }
-        else if((lidar1==0) && (lidar2==1) && (gps==0))
-        {
-            return "s_1_l1_0_l2_1_g_0";
-        }
-        else if((lidar1==0) && (lidar2==1) && (gps==1))
-        {
-            return "s_1_l1_0_l2_1_g_1";
-        }
-        else if((lidar1==1) && (lidar2==0) && (gps==0))
-        {
-            return "s_1_l1_1_l2_0_g_0";
-        }
-        else if((lidar1==1) && (lidar2==0) && (gps==1))
-        {
-            return "s_1_l1_1_l2_0_g_1";
-        }
-        else if((lidar1==1) && (lidar2==1) && (gps==0))
-        {
-            return "s_1_l1_1_l2_1_g_0";
-        }
-        else if ((camera==0) && (lidar1 ==1) && (lidar2 == 1) && (gps == 1) )
-        {
-            return "s_1_l1_1_l2_1_g_1_c_0";
-        }
-        else if((lidar1==1) && (lidar2==1) && (gps==1) && (camera == 1))
-        {
-            return "s_1_l1_1_l2_1_g_1_c_1";
         }
         
     }
@@ -336,19 +213,11 @@ namespace subsystem_controllers
         {
             if(em_->is_entry_required(i->name_))
             {
-                evaluate_sensor(ssc,i->available_,current_time,i->timestamp_,driver_timeout_, i->name_, i->is_ros1_);
-            }
-            if(em_->is_lidar_gps_entry_required(i->name_)==0) //Lidar
-            {   
-                evaluate_sensor(lidar,i->available_,current_time,i->timestamp_,driver_timeout_, i->name_, i->is_ros1_);
-            }
-            else if(em_->is_lidar_gps_entry_required(i->name_)==1) //GPS
-            {
-                evaluate_sensor(gps,i->available_,current_time,i->timestamp_,driver_timeout_, i->name_, i->is_ros1_);
+                evaluate_sensor(ssc,i->available_,current_time,i->timestamp_,driver_timeout_);
             }
             else if(em_->is_camera_entry_required(i->name_)==0)
             {
-                evaluate_sensor(camera,i->available_,current_time,i->timestamp_,driver_timeout_, i->name_, i->is_ros1_);
+                evaluate_sensor(camera,i->available_,current_time,i->timestamp_,driver_timeout_);
             }
         }
 
@@ -358,45 +227,20 @@ namespace subsystem_controllers
         lidar=1;
         gps=1;
         /////////////////////
-
         //Decision making 
-        if(ssc==1)
+        if (ssc == 1 && camera == 1)
         {
-            if((lidar==0) && (gps==0))
-            {
-                return "s_1_l_0_g_0";
-            }
-            
-            else if((lidar==0) && (gps==1) && (camera == 1))
-            {
-                return "s_1_l_0_g_1";
-            }
-            else if((lidar==1) && (gps==0) && (camera == 1))
-            {
-                return "s_1_l_1_g_0";
-            }
-            else if ((camera==0) && (lidar == 1) && (gps ==1))
-            {
-                return "s_1_l_1_g_1_c_0";
-            }
-            else if ((camera==0) && (lidar == 0) && (gps == 1))
-            {
-                return "s_1_l_0_g_1_c_0";
-            }
-            else if ((camera==0) && (lidar == 1) && (gps == 0))
-            {
-                return "s_1_l_1_g_0_c_0";
-            }
-            else if((lidar==1) && (gps==1) && (camera == 1))
-            {
-                return "s_1_l_1_g_1_c_1";
-            }
-
+            return "s_1_c1";
         }
-        else
+        else if (ssc == 1 && camera == 0)
         {
+            return "s_1_c_0";
+        }
+        else{
             return "s_0";
         }
+
+        
 
     }
 

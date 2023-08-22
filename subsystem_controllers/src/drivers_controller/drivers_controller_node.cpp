@@ -63,44 +63,10 @@ namespace subsystem_controllers
 
     auto base_managed_nodes = lifecycle_mgr_.get_managed_nodes();
 
-    std::string drivers_namespace = base_config_.subsystem_namespace;
-
-    //Add listed drivers to managed nodes if they are ros2 lifecycle nodes and not already managed by lifecycle_mgr
-    std::vector<std::string> additional_nodes = config_.required_drivers_;
-    additional_nodes.insert(additional_nodes.end(), config_.lidar_gps_drivers_.begin(), config_.lidar_gps_drivers_.end());
-    additional_nodes.insert(additional_nodes.end(), config_.camera_drivers_.begin(), config_.camera_drivers_.end());
-
-    // Updated list of required ros2 nodes 
-    std::vector<std::string> updated_required_nodes;
-
-    for (auto node : additional_nodes)
-    {
-      if(is_ros2_lifecycle_node(node)){
-        updated_required_nodes.push_back(node);
-        //Add nodes that are not already managed and can be managed to lifecycle_mgr_
-        if(std::find(base_managed_nodes.begin(), base_managed_nodes.end(), node) != base_managed_nodes.end())
-        {
-          base_managed_nodes.push_back(node);
-        }
-      }
-      
-    }
-
-    // Update required_subsystem_nodes to be this list of ros2 required_drivers obtained from carma-config. TODO: Check if this is correct
-    base_config_.required_subsystem_nodes = updated_required_nodes;
-    
-    // Set lifecycle managed nodes
-    lifecycle_mgr_.set_managed_nodes(base_managed_nodes);
-
-
     driver_manager_ = std::make_shared<DriverManager>(
       config_.required_drivers_, 
       config_.lidar_gps_drivers_,
       config_.camera_drivers_, 
-      base_managed_nodes,
-      std::make_shared<ros2_lifecycle_manager::Ros2LifecycleManager>(lifecycle_mgr_),
-      [this](){ return get_current_state().id(); },
-      [this](auto node, auto ns){ return get_service_names_and_types_by_node(node, ns); },
       config_.driver_timeout_
     );
 
@@ -165,49 +131,6 @@ namespace subsystem_controllers
 
   }
 
-
-  bool DriversControllerNode::is_ros2_lifecycle_node(const std::string& node)
-  {
-      // Determine if this driver is a ROS1 or ROS2 driver
-      std::vector<std::string> name_parts;
-      boost::split(name_parts, node, boost::is_any_of("/"));
-
-      if (name_parts.empty()) {
-        RCLCPP_WARN_STREAM(rclcpp::get_logger("subsystem_controllers"), "Invalid name for driver: " << node << " Driver may not function in system.");
-        return false;
-      }
-
-      std::string base_name = name_parts.back();
-      name_parts.pop_back();
-      std::string namespace_joined = boost::algorithm::join(name_parts, "/");
-
-      std::map<std::string, std::vector<std::string>> services_and_types;
-      try {
-          services_and_types = get_service_names_and_types_by_node(base_name, namespace_joined);
-      } 
-      catch (const std::runtime_error& e) {
-          return false; // Seems this method can throw an exception if not a ros2 node
-      }
-      
-
-      // Next we check if both services are available with the correct type
-      // Short variable names used here to make conditional more readable
-      const std::string cs_srv = node + "/change_state";
-      const std::string gs_srv = node + "/get_state";
-
-      if (services_and_types.find(cs_srv) != services_and_types.end() 
-        && services_and_types.find(gs_srv) != services_and_types.end()
-        && std::find(services_and_types.at(cs_srv).begin(), services_and_types.at(cs_srv).end(), "lifecycle_msgs/srv/ChangeState") != services_and_types.at(cs_srv).end()
-        && std::find(services_and_types.at(gs_srv).begin(), services_and_types.at(gs_srv).end(), "lifecycle_msgs/srv/GetState") != services_and_types.at(gs_srv).end())
-      {
-
-        return true;
-
-      }
-
-      RCLCPP_DEBUG_STREAM(rclcpp::get_logger("subsystem_controllers"), "Detected non-ros2 lifecycle driver " << node);
-      return false;
-  }
 
   void DriversControllerNode::driver_discovery_cb(const carma_driver_msgs::msg::DriverStatus::SharedPtr msg)
   {

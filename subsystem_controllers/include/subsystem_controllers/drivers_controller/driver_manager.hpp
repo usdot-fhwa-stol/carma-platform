@@ -55,18 +55,11 @@ namespace subsystem_controllers
          * \param critical_driver_names The set of drivers which will be treated as required. A failure in these plugins will result in an exception
          * \param lidar_gps_entries The set of lidar and gps drivers .
          * \param camera_entries The set of camera drivers.
-         * \param driver_lifecycle_mgr A fully initialized lifecycle manager which will be used trigger driver transitions
-         * \param get_parent_state_func A callback which will allow this object to access the parent process lifecycle state
-         * \param get_service_names_and_types_func A callback which returns a map of service names to service types based on the provided base node name and namespace
          * \param driver_timeout The timeout threshold for essential drivers
          */
         DriverManager(const std::vector<std::string>& critical_driver_names,
                         const std::vector<std::string>& lidar_gps_entries,
                         const std::vector<std::string>& camera_entries,
-                        const std::vector<std::string>& base_managed_ros2_nodes,
-                        std::shared_ptr<ros2_lifecycle_manager::LifecycleManagerInterface> driver_lifecycle_mgr, 
-                        GetParentNodeStateFunc get_parent_state_func,
-                        ServiceNamesAndTypesFunc get_service_names_and_types_func,
                         const long driver_timeout);
  
 
@@ -88,7 +81,7 @@ namespace subsystem_controllers
         /*!
          * \brief Evaluate if the sensor is available
          */
-        void evaluate_sensor(int &sensor_input,bool available,long current_time,long timestamp,long driver_timeout, std::string source_node, bool is_ros1);
+        void evaluate_sensor(int &sensor_input,bool available,long current_time,long timestamp,long driver_timeout);
 
         /*!
          * \brief Handle the spin and publisher
