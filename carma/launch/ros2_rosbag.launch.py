@@ -37,33 +37,37 @@ def record_ros2_rosbag(context: LaunchContext, vehicle_config_param_file):
 
         vehicle_config_params = yaml.safe_load(f)
 
-        if "exclude_default" in vehicle_config_params:
-            if (vehicle_config_params["exclude_default"] == True) and ("excluded_default_topics" in vehicle_config_params):
-                for topic in vehicle_config_params["excluded_default_topics"]:
-                    exclude_topics_regex += str(topic) + "|"
+        if "use_ros2_rosbag" in vehicle_config_params:
+            if vehicle_config_params["use_ros2_rosbag"] == True:
 
-        if "exclude_lidar" in vehicle_config_params:
-            if (vehicle_config_params["exclude_lidar"] == True) and ("excluded_lidar_topics" in vehicle_config_params):
-                for topic in vehicle_config_params["excluded_lidar_topics"]:
-                    exclude_topics_regex += str(topic) + "|"
+                if "exclude_default" in vehicle_config_params:
+                    if (vehicle_config_params["exclude_default"] == True) and ("excluded_default_topics" in vehicle_config_params):
+                        for topic in vehicle_config_params["excluded_default_topics"]:
+                            exclude_topics_regex += str(topic) + "|"
 
-        if "exclude_camera" in vehicle_config_params:
-            if (vehicle_config_params["exclude_camera"] == True) and ("excluded_camera_topics" in vehicle_config_params):
-                for topic in vehicle_config_params["excluded_camera_topics"]:
-                    exclude_topics_regex += str(topic) + "|"
+                if "exclude_lidar" in vehicle_config_params:
+                    if (vehicle_config_params["exclude_lidar"] == True) and ("excluded_lidar_topics" in vehicle_config_params):
+                        for topic in vehicle_config_params["excluded_lidar_topics"]:
+                            exclude_topics_regex += str(topic) + "|"
 
-        if "exclude_can" in vehicle_config_params:
-            if (vehicle_config_params["exclude_can"] == True) and ("excluded_can_topics" in vehicle_config_params):
-                for topic in vehicle_config_params["excluded_can_topics"]:
-                    exclude_topics_regex += str(topic) + "|"
+                if "exclude_camera" in vehicle_config_params:
+                    if (vehicle_config_params["exclude_camera"] == True) and ("excluded_camera_topics" in vehicle_config_params):
+                        for topic in vehicle_config_params["excluded_camera_topics"]:
+                            exclude_topics_regex += str(topic) + "|"
 
-        proc = ExecuteProcess(
-                cmd=['ros2', 'bag', 'record', '-o', '/opt/carma/logs/rosbag2_' + str(datetime.now().strftime('%Y-%m-%d_%H%M%S')), '-a', '-x', exclude_topics_regex],
-                output='screen',
-                shell='true'
-            )
+                if "exclude_can" in vehicle_config_params:
+                    if (vehicle_config_params["exclude_can"] == True) and ("excluded_can_topics" in vehicle_config_params):
+                        for topic in vehicle_config_params["excluded_can_topics"]:
+                            exclude_topics_regex += str(topic) + "|"
 
-        return [proc]
+                proc = ExecuteProcess(
+                        cmd=['ros2', 'bag', 'record', '-o', '/opt/carma/logs/rosbag2_' + str(datetime.now().strftime('%Y-%m-%d_%H%M%S')), '-a', '-x', exclude_topics_regex],
+                        output='screen',
+                        shell='true'
+                    )
+
+                return [proc]
+
 
 def generate_launch_description():
     # Declare the vehicle_config_dir launch argument

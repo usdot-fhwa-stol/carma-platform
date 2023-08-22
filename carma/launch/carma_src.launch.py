@@ -125,14 +125,6 @@ def generate_launch_description():
         description='The default port for rosbridge is 909'
     )
 
-    # Declare launch argument for ROS 2 rosbag logging
-    use_ros2_rosbag = LaunchConfiguration('use_ros2_rosbag')
-    declare_use_ros2_rosbag = DeclareLaunchArgument(
-        name = 'use_ros2_rosbag',
-        default_value='False',
-        description = 'Flag indicating whether data should be recorded in ROS 2 rosbag format'
-    )
-
     # Declare launch arguments for points_map_loader
     load_type = LaunchConfiguration('load_type')
     declare_load_type= DeclareLaunchArgument(name = 'load_type', default_value = "noupdate")
@@ -154,7 +146,6 @@ def generate_launch_description():
 
     # Launch ROS2 rosbag logging
     ros2_rosbag_launch = GroupAction(
-        condition=IfCondition(PythonExpression([use_ros2_rosbag])),
         actions=[
             IncludeLaunchDescription(
                 PythonLaunchDescriptionSource([ThisLaunchFileDir(), '/ros2_rosbag.launch.py']),
@@ -293,7 +284,6 @@ def generate_launch_description():
         declare_control_plugins_to_validate,
         declare_enable_opening_tunnels,
         declare_port,
-        declare_use_ros2_rosbag,
         declare_load_type,
         declare_single_pcd_path,
         declare_area,
