@@ -47,9 +47,6 @@ namespace subsystem_controllers
      */
     explicit DriversControllerNode(const rclcpp::NodeOptions &options);
 
-    // TODO integrate driver_discovery/health_monitor behavior into this node
-    // https://github.com/usdot-fhwa-stol/carma-platform/issues/1500
-
 
   private:
 
@@ -79,7 +76,6 @@ namespace subsystem_controllers
 
     //! ROS parameters
     std::vector<std::string> required_drivers_;
-    std::vector<std::string> lidar_gps_drivers_;
     std::vector<std::string> camera_drivers_;
 
     bool truck_;

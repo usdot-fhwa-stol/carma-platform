@@ -31,7 +31,6 @@ namespace subsystem_controllers
     
     // carma-config parameters
     config_.required_drivers_ = declare_parameter<std::vector<std::string>>("required_drivers", config_.required_drivers_); 
-    config_.lidar_gps_drivers_ = declare_parameter<std::vector<std::string>>("lidar_gps_drivers", config_.lidar_gps_drivers_); 
     config_.camera_drivers_ = declare_parameter<std::vector<std::string>>("camera_drivers", config_.camera_drivers_);
     config_.truck_ = declare_parameter<bool>("truck", config_.truck_);
     config_.car_ = declare_parameter<bool>("car", config_.car_);
@@ -50,8 +49,7 @@ namespace subsystem_controllers
     config_ = DriversControllerConfig();
 
     // Load required plugins and default enabled plugins
-    get_parameter<std::vector<std::string>>("required_drivers", config_.required_drivers_); 
-    get_parameter<std::vector<std::string>>("lidar_gps_drivers", config_.lidar_gps_drivers_); 
+    get_parameter<std::vector<std::string>>("required_drivers", config_.required_drivers_);  
     get_parameter<std::vector<std::string>>("camera_drivers", config_.camera_drivers_); 
     get_parameter<double>("startup_duration", config_.startup_duration_);
     get_parameter<bool>("truck", config_.truck_);
@@ -65,7 +63,6 @@ namespace subsystem_controllers
 
     driver_manager_ = std::make_shared<DriverManager>(
       config_.required_drivers_, 
-      config_.lidar_gps_drivers_,
       config_.camera_drivers_, 
       config_.driver_timeout_
     );

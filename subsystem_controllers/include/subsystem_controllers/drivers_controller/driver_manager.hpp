@@ -49,16 +49,20 @@ namespace subsystem_controllers
     class DriverManager
     {
         public:
+
+        /*!
+             * \brief Default constructor for DriverManager with driver_timeout_ = 1000
+             */
+            DriverManager();
+
         /**
          * \brief Constructor for DriverManager
          * 
          * \param critical_driver_names The set of drivers which will be treated as required. A failure in these plugins will result in an exception
-         * \param lidar_gps_entries The set of lidar and gps drivers .
          * \param camera_entries The set of camera drivers.
          * \param driver_timeout The timeout threshold for essential drivers
          */
         DriverManager(const std::vector<std::string>& critical_driver_names,
-                        const std::vector<std::string>& lidar_gps_entries,
                         const std::vector<std::string>& camera_entries,
                         const long driver_timeout);
  
@@ -77,6 +81,11 @@ namespace subsystem_controllers
          * \brief Check if all critical drivers are operational for car
          */
         std::string are_critical_drivers_operational_car(long current_time);
+
+        /*!
+         * \brief Check if all critical drivers are operational
+         */
+        std::string are_critical_drivers_operational(long current_time);
 
         /*!
          * \brief Evaluate if the sensor is available
@@ -102,21 +111,8 @@ namespace subsystem_controllers
         //list of critical drivers
         std::vector<std::string> critical_drivers_;
 
-        //list of lidar and gps entries
-        std::vector<std::string> lidar_gps_entries_;
-
         //list of camera entries
         std::vector<std::string> camera_entries_;
-
-        std::unordered_set<std::string> ros2_drivers_;
-
-        //! Callback to retrieve the lifecycle state of the parent process 
-        GetParentNodeStateFunc get_parent_state_func_;
-
-        //! Callback to get service names and types for the given node
-        ServiceNamesAndTypesFunc get_service_names_and_types_func_;
-
-        std::shared_ptr<ros2_lifecycle_manager::LifecycleManagerInterface> driver_lifecycle_mgr_;
 
         //! Entry manager to keep track of detected plugins
         std::shared_ptr<EntryManager> em_;  

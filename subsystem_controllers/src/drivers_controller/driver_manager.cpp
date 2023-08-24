@@ -26,17 +26,17 @@ using std_msec = std::chrono::milliseconds;
 
 namespace subsystem_controllers
 {
+    DriverManager::DriverManager() {}
+
     DriverManager::DriverManager(const std::vector<std::string>& critical_driver_names,
-                        const std::vector<std::string>& lidar_gps_entries,
                         const std::vector<std::string>& camera_entries,
                         const long driver_timeout)
             : critical_drivers_(critical_driver_names.begin(), critical_driver_names.end()),
-            lidar_gps_entries_(lidar_gps_entries.begin(), lidar_gps_entries.end()),
             camera_entries_(camera_entries.begin(), camera_entries.end()),
             driver_timeout_(driver_timeout)
     { 
         // Intialize entry manager
-        em_ = std::make_shared<EntryManager>(critical_driver_names, lidar_gps_entries, camera_entries);
+        em_ = std::make_shared<EntryManager>(critical_driver_names, camera_entries);
 
     }
     
@@ -65,12 +65,6 @@ namespace subsystem_controllers
             {
                 alert.description = "Camera Failed";
                 alert.type = carma_msgs::msg::SystemAlert::SHUTDOWN;
-            }
-            else if(status.compare("s_1_l1_1_l2_1_g_0") == 0)
-            {
-                alert.description = "GPS Failed";
-                alert.type = carma_msgs::msg::SystemAlert::CAUTION;
-                return alert;
             }
             else if(status.compare("s_0") == 0)
             {
@@ -136,7 +130,7 @@ namespace subsystem_controllers
     {
         // update driver status is only called in response to a message received on driver_discovery. This topic is only being published in ros1
         Entry driver_status(msg->status == carma_driver_msgs::msg::DriverStatus::OPERATIONAL || msg->status == carma_driver_msgs::msg::DriverStatus::DEGRADED,
-                            true, msg->name, 0, "", true);
+                            true, msg->name, 0, "",current_time, true);
 
         em_->update_entry(driver_status);                            
     }

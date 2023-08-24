@@ -25,21 +25,26 @@
 namespace subsystem_controllers
 {
     /**
-     * \brief The DriverManager serves as a component to manage CARMA required Drivers via their ros2 lifecycle interfaces
+     * \brief The EntryManager serves as a component to track the status of each required CARMA ROS 1 driver
      */ 
     class EntryManager
     {
 
-    public: 
+    public:
 
         /*!
-        * \brief Constructor for EntryManager to set required entries and lidar gps entires.
-        * \param required_plugins The set of plugins which will be treated as required. A failure in these plugins will result in an exception
-        * \param lidar_gps_entries The set of lidar and gps drivers .
-        * \param camera_entries The set of camera drivers.
-        */
-        EntryManager(const std::vector<std::string>& required_entries,const std::vector<std::string>&lidar_gps_entries, 
-                    const std::vector<std::string>& camera_entries) : required_entries_(required_entries), lidar_gps_entries_(lidar_gps_entries), camera_entries_(camera_entries) {}
+         * \brief Default constructor for EntryManager.
+         */
+        EntryManager();
+        /*!
+         * \brief Constructor for EntryManager to set required entries.
+         */
+        EntryManager(std::vector<std::string> required_entries);
+
+        /*!
+         * \brief Constructor for EntryManager to set required entries and camera entires.
+         */
+        EntryManager(std::vector<std::string> required_entries, std::vector<std::string> camera_entries); 
 
         /*!
         * \brief Add a new entry if the given name does not exist.
@@ -51,11 +56,6 @@ namespace subsystem_controllers
         * \brief Get all registed entries as a list.
         */
         std::vector<Entry> get_entries() const;
-
-        /*!
-         * \brief Get all entry names as a list
-         */
-        std::vector<std::string> get_entry_names() const;
 
         /*!
          * \brief Get a entry using name as the key.
@@ -73,25 +73,17 @@ namespace subsystem_controllers
         bool is_entry_required(const std::string& name) const;
 
         /*!
-        * \brief Check if the entry is a required lidar_gps entry
-        */
-        int is_lidar_gps_entry_required(const std::string& name) const;
-
-        /*!
         * \brief Check if the entry is a required camera entry
         */
         int is_camera_entry_required(const std::string& name) const;
 
     private:
 
-        //! private map by entry name to keep track of all entries
-        std::unordered_map<std::string, Entry> entry_map_;
+        //! private list to keep track of all entries
+        std::vector<Entry> entry_list_;
 
         //list of required entries
         std::vector<std::string> required_entries_;
-
-        //list of lidar and gps entries
-        std::vector<std::string> lidar_gps_entries_;
 
         //list of camera entries
         std::vector<std::string> camera_entries_;

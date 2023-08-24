@@ -19,46 +19,56 @@
 
 namespace subsystem_controllers
 {
+    EntryManager::EntryManager() {}
+
+    EntryManager::EntryManager(std::vector<std::string> required_entries):required_entries_(required_entries) {}
+
+    EntryManager::EntryManager(std::vector<std::string> required_entries, std::vector<std::string> camera_entries) 
+                :required_entries_(required_entries), camera_entries_(camera_entries){}
+
     void EntryManager::update_entry(const Entry& entry)
     {
-        entry_map_[entry.name_] = entry;
+        for(auto i = entry_list_.begin(); i < entry_list_.end(); ++i)
+        {
+            if(i->name_.compare(entry.name_) == 0)
+            {
+                // name and type of the entry wont change
+                i->active_ = entry.active_;
+                i->available_ = entry.available_;
+                i->timestamp_ = entry.timestamp_;
+                return;
+            }
+        }
+        entry_list_.push_back(entry);
     }
 
     std::vector<Entry> EntryManager::get_entries() const
     {
-        // returns the copy of the original data
-        std::vector<Entry> entries;
-        entries.reserve(entry_map_.size());
-
-        for (const auto& e : entry_map_)
-            entries.push_back(e.second);
-
-        return entries;
-    }
-
-    std::vector<std::string> EntryManager::get_entry_names() const
-    {
-        std::vector<std::string> names;
-        names.reserve(entry_map_.size());
-
-        for (const auto& e : entry_map_)
-            names.push_back(e.second.name_);
-        
-        return names;
+        // returns the copy of the original list
+        return std::vector<Entry>(entry_list_);
     }
 
     void EntryManager::delete_entry(const std::string& name)
     {
-        if (entry_map_.find(name) != entry_map_.end())
-            entry_map_.erase(name);
+        for(auto i = entry_list_.begin(); i < entry_list_.end(); ++i)
+        {
+            if(i->name_.compare(name) == 0)
+            {
+                entry_list_.erase(i);
+                return;
+            }
+        }
     }
 
     boost::optional<Entry> EntryManager::get_entry_by_name(const std::string&  name) const
     {
-        if (entry_map_.find(name) != entry_map_.end())
-            return entry_map_.at(name);
-
-
+        for(auto i = entry_list_.begin(); i < entry_list_.end(); ++i)
+        {
+            if(i->name_.compare(name) == 0)
+            {
+                return *i;
+            }
+        }
         // use boost::optional because requested entry might not exist
         return boost::none;
     }
@@ -73,22 +83,6 @@ namespace subsystem_controllers
             }
         }
         return false;
-    }
-
-
-    int EntryManager::is_lidar_gps_entry_required(const std::string& name) const
-    {
-        
-        for(int i=0;i<lidar_gps_entries_.size();i++)
-        {
-            if(lidar_gps_entries_[i].compare(name) == 0)
-            {
-                return i;
-            }
-
-        }
-
-        return -1;
     }
 
     int EntryManager::is_camera_entry_required(const std::string& name) const

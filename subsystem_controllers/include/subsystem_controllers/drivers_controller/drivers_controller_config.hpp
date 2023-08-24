@@ -29,7 +29,6 @@ namespace subsystem_controllers
   {
     //! List of drivers (node name) to consider required and who's failure shall result in automation abort. 
     std::vector<std::string> required_drivers_;
-    std::vector<std::string> lidar_gps_drivers_;
     std::vector<std::string> camera_drivers_;
     double startup_duration_;
     double driver_timeout_;
@@ -45,11 +44,6 @@ namespace subsystem_controllers
              << "required_drivers_: [ " << std::endl;
             
       for (auto node : c.required_drivers_)
-        output << node << " ";
-
-      output << "] " << std::endl << "lidar_gps_drivers: [ ";
-
-      for (auto node : c.lidar_gps_drivers_)
         output << node << " ";
 
       output << "] " << std::endl << "camera_drivers: [ ";
