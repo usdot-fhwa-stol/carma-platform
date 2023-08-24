@@ -41,86 +41,40 @@ namespace subsystem_controllers
     }
     
 
-    carma_msgs::msg::SystemAlert DriverManager::handle_spin(bool truck,bool car,long time_now,long start_up_timestamp,long startup_duration)
+    carma_msgs::msg::SystemAlert DriverManager::handle_spin(long time_now,long start_up_timestamp,long startup_duration)
     {
         carma_msgs::msg::SystemAlert alert;
 
-        if(truck==true)
+        std::string status = are_critical_drivers_operational(time_now);
+        if(status.compare("s_1_c_1") == 0)
         {
-            std::string status = are_critical_drivers_operational_truck(time_now);
-            if(status.compare("s_1_c_1") == 0)
-            {
-                starting_up_ = false;
-                alert.description = "All essential ROS1 drivers are ready";
-                alert.type = carma_msgs::msg::SystemAlert::DRIVERS_READY;
-                return alert;
-            } 
-           else if(starting_up_ && (time_now - start_up_timestamp <= startup_duration))
-            {
-                alert.description = "System is starting up...";
-                alert.type = carma_msgs::msg::SystemAlert::NOT_READY;
-                return alert;
-            }
-             else if(status.compare("s_1_c_0")==0)
-            {
-                alert.description = "Camera Failed";
-                alert.type = carma_msgs::msg::SystemAlert::SHUTDOWN;
-            }
-            else if(status.compare("s_0") == 0)
-            {
-                alert.description = "SSC Failed";
-                alert.type = carma_msgs::msg::SystemAlert::SHUTDOWN;
-                return alert;
-            }
-            else
-            {
-                alert.description = "Unknown problem assessing essential driver availability";
-                alert.type = carma_msgs::msg::SystemAlert::FATAL;
-                return alert;  
-            }
- 
+            starting_up_ = false;
+            alert.description = "All essential ROS1 drivers are ready";
+            alert.type = carma_msgs::msg::SystemAlert::DRIVERS_READY;
+            return alert;
+        } 
+        else if(starting_up_ && (time_now - start_up_timestamp <= startup_duration))
+        {
+            alert.description = "System is starting up...";
+            alert.type = carma_msgs::msg::SystemAlert::NOT_READY;
+            return alert;
         }
-        else if(car==true)
+            else if(status.compare("s_1_c_0")==0)
         {
-            std::string status = are_critical_drivers_operational_car(time_now);
-            if(status.compare("s_1_c_1") == 0)
-            {
-                starting_up_ = false;
-                alert.description = "All essential ROS1 drivers are ready";
-                alert.type = carma_msgs::msg::SystemAlert::DRIVERS_READY;
-                return alert; 
-            }
-            else if(starting_up_ && (time_now - start_up_timestamp <= startup_duration))
-            {
-                alert.description = "System is starting up...";
-                alert.type = carma_msgs::msg::SystemAlert::NOT_READY;
-                return alert; 
-            }
-            
-            else if(status.compare("s_1_c_0") == 0)
-            {
-                alert.description = "Camera Failed";
-                alert.type = carma_msgs::msg::SystemAlert::SHUTDOWN;
-                return alert;
-            } 
-            else if(status.compare("s_0") == 0)
-            {
-                alert.description = "SSC Failed";
-                alert.type = carma_msgs::msg::SystemAlert::SHUTDOWN;
-                return alert; 
-            }
-            else
-            {
-                alert.description = "Unknown problem assessing essential driver availability";
-                alert.type = carma_msgs::msg::SystemAlert::FATAL;
-                return alert;  
-            }
+            alert.description = "Camera Failed";
+            alert.type = carma_msgs::msg::SystemAlert::SHUTDOWN;
+        }
+        else if(status.compare("s_0") == 0)
+        {
+            alert.description = "SSC Failed";
+            alert.type = carma_msgs::msg::SystemAlert::SHUTDOWN;
+            return alert;
         }
         else
         {
-            alert.description = "Need to set either truck or car flag";
+            alert.description = "Unknown problem assessing essential driver availability";
             alert.type = carma_msgs::msg::SystemAlert::FATAL;
-            return alert; 
+            return alert;  
         }
     
     }
@@ -150,53 +104,13 @@ namespace subsystem_controllers
         
     }
 
-    std::string DriverManager::are_critical_drivers_operational_truck(long current_time)
+    std::string DriverManager::are_critical_drivers_operational(long current_time)
     {
         int ssc=0;
-        int camera=0; //Add Camera Driver
-
-        // Manual disable of ssc entry in case ssc wrapper is in ros2
-        if (critical_drivers_.empty())
-        {
-            ssc = 1;
-        }
-
-        std::vector<Entry> driver_list = em_->get_entries(); //Real time driver list from driver status
-        for(auto i = driver_list.begin(); i < driver_list.end(); ++i)
-        {
-            if(em_->is_entry_required(i->name_))
-            {
-              evaluate_sensor(ssc,i->available_,current_time,i->timestamp_,driver_timeout_);
-            }
-            else if(em_->is_camera_entry_required(i->name_)==0)
-            {
-                evaluate_sensor(camera,i->available_,current_time,i->timestamp_,driver_timeout_);
-            }
-            
-        }
-
-
-        //Decision making 
-        if (ssc == 1 && camera == 1)
-        {
-            return "s_1_c1";
-        }
-        else if (ssc == 1 && camera == 0)
-        {
-            return "s_1_c_0";
-        }
-        else{
-            return "s_0";
-        }
-        
-    }
-
-
-    std::string DriverManager::are_critical_drivers_operational_car(long current_time)
-    {
-        int ssc=0;
+        int lidar=0;
+        int gps=0;
         int camera=0;
-        
+
         // Manual disable of ssc entry in case ssc wrapper is in ros2
         if (critical_drivers_.empty())
         {
@@ -230,7 +144,6 @@ namespace subsystem_controllers
             return "s_0";
         }
 
-        
 
     }
 

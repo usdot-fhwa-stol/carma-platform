@@ -68,8 +68,6 @@ namespace subsystem_controllers
     bool is_ros2_lifecycle_node(const std::string& node);
 
     void setDriverManager(DriverManager dm);
-    void setCarTrue();
-    void setTruckTrue();
 
     carma_ros2_utils::CallbackReturn handle_on_configure(const rclcpp_lifecycle::State &prev_state);
     carma_ros2_utils::CallbackReturn handle_on_activate(const rclcpp_lifecycle::State &prev_state);
@@ -77,9 +75,6 @@ namespace subsystem_controllers
     //! ROS parameters
     std::vector<std::string> required_drivers_;
     std::vector<std::string> camera_drivers_;
-
-    bool truck_;
-    bool car_;
 
     // record of startup timestamp
     long start_up_timestamp_;

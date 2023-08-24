@@ -32,8 +32,6 @@ namespace subsystem_controllers
     // carma-config parameters
     config_.required_drivers_ = declare_parameter<std::vector<std::string>>("required_drivers", config_.required_drivers_); 
     config_.camera_drivers_ = declare_parameter<std::vector<std::string>>("camera_drivers", config_.camera_drivers_);
-    config_.truck_ = declare_parameter<bool>("truck", config_.truck_);
-    config_.car_ = declare_parameter<bool>("car", config_.car_);
 
   }
 
@@ -52,8 +50,6 @@ namespace subsystem_controllers
     get_parameter<std::vector<std::string>>("required_drivers", config_.required_drivers_);  
     get_parameter<std::vector<std::string>>("camera_drivers", config_.camera_drivers_); 
     get_parameter<double>("startup_duration", config_.startup_duration_);
-    get_parameter<bool>("truck", config_.truck_);
-    get_parameter<bool>("car", config_.car_);
     get_parameter<double>("required_driver_timeout", config_.driver_timeout_);
 
     RCLCPP_INFO_STREAM(get_logger(), "Config: " << config_);
@@ -113,7 +109,7 @@ namespace subsystem_controllers
     rclcpp::Duration sd(config_.startup_duration_);
     long start_duration = sd.nanoseconds()/1e6;
 
-    auto dm = driver_manager_->handle_spin(config_.truck_, config_.car_, time_now, start_up_timestamp_, config_.startup_duration_);
+    auto dm = driver_manager_->handle_spin(time_now, start_up_timestamp_, config_.startup_duration_);
     if (!prev_alert) {
       prev_alert = dm;
       publish_system_alert(dm);
@@ -136,24 +132,10 @@ namespace subsystem_controllers
   }
 
   void DriversControllerNode::setDriverManager(DriverManager dm)
-    {
-        driver_manager_ = std::make_shared<DriverManager>(dm);
-    }
-
-  void DriversControllerNode::setCarTrue()
   {
-      car_ = true;
-      if(truck_ == true)
-          throw std::invalid_argument("truck_ = true");
+      driver_manager_ = std::make_shared<DriverManager>(dm);
   }
 
-  void DriversControllerNode::setTruckTrue()
-  {
-      truck_ = true;
-      if(car_ == true)
-          throw std::invalid_argument("car_ = true");
-      
-  }
 
 } // namespace subsystem_controllers
 

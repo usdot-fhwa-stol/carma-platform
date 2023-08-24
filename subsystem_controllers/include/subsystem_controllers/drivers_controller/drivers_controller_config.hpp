@@ -32,8 +32,6 @@ namespace subsystem_controllers
     std::vector<std::string> camera_drivers_;
     double startup_duration_;
     double driver_timeout_;
-    bool truck_;
-    bool car_;
     
 
     // Stream operator for this config
@@ -55,11 +53,7 @@ namespace subsystem_controllers
 
       output<< "startup_duration: "<< c.startup_duration_ << std::endl;
 
-      output <<"driver_timeout: "<< c.driver_timeout_ << std::endl;
-
-      output <<"truck: " << c.truck_ << std::endl;
-
-      output <<"car: " << c.car_ << std::endl
+      output <<"driver_timeout: "<< c.driver_timeout_ << std::endl
       
         << "}" << std::endl;
       return output;

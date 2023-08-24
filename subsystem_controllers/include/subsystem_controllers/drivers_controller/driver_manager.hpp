@@ -73,16 +73,6 @@ namespace subsystem_controllers
         void update_driver_status(const carma_driver_msgs::msg::DriverStatus::SharedPtr msg, long current_time);
 
         /*!
-         * \brief Check if all critical drivers are operational for truck
-         */
-        std::string are_critical_drivers_operational_truck(long current_time);
-
-        /*!
-         * \brief Check if all critical drivers are operational for car
-         */
-        std::string are_critical_drivers_operational_car(long current_time);
-
-        /*!
          * \brief Check if all critical drivers are operational
          */
         std::string are_critical_drivers_operational(long current_time);
@@ -95,7 +85,7 @@ namespace subsystem_controllers
         /*!
          * \brief Handle the spin and publisher
          */
-        carma_msgs::msg::SystemAlert handle_spin(bool truck,bool car,long time_now,long start_up_timestamp,long startup_duration);
+        carma_msgs::msg::SystemAlert handle_spin(long time_now,long start_up_timestamp,long startup_duration);
 
         protected:
 
