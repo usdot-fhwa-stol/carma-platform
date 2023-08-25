@@ -109,7 +109,7 @@ namespace subsystem_controllers
     rclcpp::Duration sd(config_.startup_duration_);
     long start_duration = sd.nanoseconds()/1e6;
 
-    auto dm = driver_manager_->handle_spin(time_now, start_up_timestamp_, config_.startup_duration_);
+    auto dm = driver_manager_->handle_spin(time_now, start_up_timestamp_, start_duration);
     if (!prev_alert) {
       prev_alert = dm;
       publish_system_alert(dm);

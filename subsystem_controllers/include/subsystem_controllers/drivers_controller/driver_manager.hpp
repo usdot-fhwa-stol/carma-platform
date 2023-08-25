@@ -90,15 +90,6 @@ namespace subsystem_controllers
 
         protected:
 
-        /**
-         * \brief Returns true if the specified fully qualified node name is a ROS2 lifecycle node
-         * 
-         * \param node The fully specified name of the node to evaluate
-         * 
-         * \return True if ros2 lifecycle node. False otherwise
-         */ 
-        bool is_ros2_lifecycle_node(const std::string& node);
-
         //list of critical drivers
         std::vector<std::string> critical_drivers_;
 

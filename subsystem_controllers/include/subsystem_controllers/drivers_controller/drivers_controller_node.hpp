@@ -65,8 +65,6 @@ namespace subsystem_controllers
 
     void timer_callback();
 
-    bool is_ros2_lifecycle_node(const std::string& node);
-
     void setDriverManager(DriverManager dm);
 
     carma_ros2_utils::CallbackReturn handle_on_configure(const rclcpp_lifecycle::State &prev_state);
