@@ -29,11 +29,14 @@ include(dependencies.cmake)
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_C_STANDARD 11)
 
+# This will automatically add include files from include/carma_cooperative_perception
 ament_auto_add_library(sdsm_to_detection_list_node SHARED
   src/sdsm_to_detection_list_node
 )
 
 target_link_libraries(sdsm_to_detection_list_node
+  PROJ::proj
+  Microsoft.GSL::GSL
   units::units
 )
 
@@ -45,6 +48,18 @@ target_include_directories(sdsm_to_detection_list_node
 rclcpp_components_register_nodes(sdsm_to_detection_list_node
   "cooperative_perception::SdsmToDetectionListNode"
 )
+
+if(carma_cooperative_perception_BUILD_TESTS)
+  enable_testing()
+
+  # We must add tests to top-level CMakeLists.txt because the
+  # ament_auto_add_gtest command will look for headers in the include/
+  # directory. Moving this command to test/CMakeLists.txt will prevent the
+  # header files from getting included.
+  ament_auto_add_gtest(cooperative_perception_tests
+    test/test_geodetic.cpp
+  )
+endif()
 
 carma_package()
 ament_auto_package()

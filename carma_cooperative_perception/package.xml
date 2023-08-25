@@ -33,6 +33,9 @@ limitations under the License.
     <build_depend>carma_ros2_utils</build_depend>
     <build_depend>j3224_v2x_msgs</build_depend>
 
+  <test_depend>ament_lint_auto</test_depend>
+  <test_depend>ament_cmake_gtest</test_depend>
+
     <export>
         <build_type>ament_cmake</build_type>
     </export>
