@@ -59,7 +59,7 @@ namespace subsystem_controllers
             alert.type = carma_msgs::msg::SystemAlert::NOT_READY;
             return alert;
         }
-            else if(status.compare("s_1_c_0")==0)
+        else if(status.compare("s_1_c_0")==0)
         {
             alert.description = "Camera Failed";
             alert.type = carma_msgs::msg::SystemAlert::SHUTDOWN;
@@ -134,7 +134,7 @@ namespace subsystem_controllers
         //Decision making 
         if (ssc == 1 && camera == 1)
         {
-            return "s_1_c1";
+            return "s_1_c_1";
         }
         else if (ssc == 1 && camera == 0)
         {

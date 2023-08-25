@@ -32,6 +32,7 @@
 #include "entry.hpp"
 #include <carma_driver_msgs/msg/driver_status.hpp>
 #include <carma_msgs/msg/system_alert.hpp>
+#include <gtest/gtest_prod.h>
 
 
 namespace subsystem_controllers
@@ -111,6 +112,8 @@ namespace subsystem_controllers
         long driver_timeout_; 
 
         bool starting_up_ = true;
+
+        FRIEND_TEST(DriverManagerTest, testCarTruckHandleSpinFatalUnknown);
 
     };
 }
