@@ -27,11 +27,15 @@ namespace subsystem_controllers
   struct DriversControllerConfig
   
   {
-    //! List of drivers (node name) to consider required and who's failure shall result in automation abort. 
+    //! List of ros1 controller drivers (node name) to consider required and who's failure shall result in automation abort. 
     std::vector<std::string> required_drivers_;
+    //! List of ros1 camera drivers (node name) to consider required and who's failure shall result in automation abort.
     std::vector<std::string> camera_drivers_;
+    //! List of nodes in the namespace which will not be managed by this subsystem controller
     std::vector<std::string> unmanaged_namespace_nodes_;
+    //! The time allocated for system startup in seconds
     double startup_duration_;
+    //! The timeout threshold for essential drivers in ms
     double driver_timeout_;
     
 

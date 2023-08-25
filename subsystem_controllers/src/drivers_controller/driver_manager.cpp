@@ -84,7 +84,7 @@ namespace subsystem_controllers
     {
         // update driver status is only called in response to a message received on driver_discovery. This topic is only being published in ros1
         Entry driver_status(msg->status == carma_driver_msgs::msg::DriverStatus::OPERATIONAL || msg->status == carma_driver_msgs::msg::DriverStatus::DEGRADED,
-                            true, msg->name, 0, "",current_time, true);
+                            msg->name,current_time);
 
         em_->update_entry(driver_status);                            
     }

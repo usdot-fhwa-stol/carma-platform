@@ -37,12 +37,6 @@
 
 namespace subsystem_controllers
 {
-    using GetParentNodeStateFunc = std::function<uint8_t()>;
-    using SrvHeader = const std::shared_ptr<rmw_request_id_t>;
-    /**
-     * \brief Function which will return a map of service names and their message types based on the provided base node name and namespace
-     */ 
-    using ServiceNamesAndTypesFunc = std::function<std::map<std::string, std::vector<std::string, std::allocator<std::string>>>(const std::string &,const std::string &)>;
 
     /**
      * \brief The DriverManager serves as a component to manage CARMA required ROS1 Drivers 
@@ -52,9 +46,9 @@ namespace subsystem_controllers
         public:
 
         /*!
-             * \brief Default constructor for DriverManager with driver_timeout_ = 1000
-             */
-            DriverManager();
+         * \brief Default constructor for DriverManager with driver_timeout_ = 1000
+         */
+        DriverManager();
 
         /**
          * \brief Constructor for DriverManager
@@ -100,7 +94,7 @@ namespace subsystem_controllers
         std::shared_ptr<EntryManager> em_;  
 
         // timeout for critical driver timeout
-        long driver_timeout_; 
+        long driver_timeout_ = 1000; 
 
         bool starting_up_ = true;
 

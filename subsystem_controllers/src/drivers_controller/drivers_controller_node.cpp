@@ -138,11 +138,6 @@ namespace subsystem_controllers
     driver_manager_->update_driver_status(msg, this->now().nanoseconds()/1e6);
   }
 
-  void DriversControllerNode::setDriverManager(DriverManager dm)
-  {
-      driver_manager_ = std::make_shared<DriverManager>(dm);
-  }
-
 
 } // namespace subsystem_controllers
 

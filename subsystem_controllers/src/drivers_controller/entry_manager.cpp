@@ -32,8 +32,7 @@ namespace subsystem_controllers
         {
             if(i->name_.compare(entry.name_) == 0)
             {
-                // name and type of the entry wont change
-                i->active_ = entry.active_;
+                // name entry wont change
                 i->available_ = entry.available_;
                 i->timestamp_ = entry.timestamp_;
                 return;

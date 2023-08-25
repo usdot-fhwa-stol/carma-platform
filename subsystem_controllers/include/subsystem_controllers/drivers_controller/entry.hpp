@@ -27,24 +27,16 @@ namespace subsystem_controllers
     {
         //! Availability flag of a driver
         bool available_ = false;
-        //! Activation flag of a driver
-        bool active_ = false;
         //! Fully specified node name of a driver
         std::string name_;
-        //! Type of the driver
-        uint8_t type_ = 0;
-        //! The capability string of the driver
-        std::string capability_;
         //! The timestamp at which the entry was last updated
         long timestamp_;
-        //! Flag indicating if this is a ros1 node
-        bool is_ros1_ = false;
 
         /**
          * \brief All fields constructor
          */ 
-        Entry(bool available, bool active, const std::string& name, uint8_t type, const std::string& capability, long timestamp, bool is_ros1)
-            : available_(available), active_(active), name_(name), type_(type), capability_(capability), timestamp_(timestamp), is_ros1_(is_ros1) {}
+        Entry(bool available, const std::string& name, long timestamp)
+            : available_(available), name_(name), timestamp_(timestamp) {}
         
 
         Entry() = default;

@@ -60,12 +60,10 @@ namespace subsystem_controllers
     carma_ros2_utils::SubPtr<carma_driver_msgs::msg::DriverStatus> driver_status_sub_;
 
     // message/service callbacks
-    // void driver_discovery_cb(const carma_driver_msgs::msg::DriverStatus::SharedPtr msg);
     void driver_discovery_cb(const carma_driver_msgs::msg::DriverStatus::SharedPtr msg);
 
+    //! Timer callback function to check status of required ros1 drivers 
     void timer_callback();
-
-    void setDriverManager(DriverManager dm);
 
     carma_ros2_utils::CallbackReturn handle_on_configure(const rclcpp_lifecycle::State &prev_state);
     carma_ros2_utils::CallbackReturn handle_on_activate(const rclcpp_lifecycle::State &prev_state);
