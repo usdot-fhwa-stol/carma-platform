@@ -84,7 +84,11 @@ def generate_launch_description():
         package='subsystem_controllers',
         name='drivers_controller',
         executable='drivers_controller',
-        parameters=[ subsystem_controller_default_param_file, subsystem_controller_param_file  ], 
+        parameters=[ subsystem_controller_default_param_file, subsystem_controller_param_file, vehicle_config_param_file  ],
+        remappings=[
+            ('ros2_required_driver_subsystem_nodes','required_subsystem_nodes'),
+            ('driver_subsystem_excluded_nodes', 'unmanaged_namespace_nodes')
+        ],
         on_exit= Shutdown(), # Mark the subsystem controller as required
         arguments=['--ros-args', '--log-level', GetLogLevel('subsystem_controllers', env_log_levels)]
     )

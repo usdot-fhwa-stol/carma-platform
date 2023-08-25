@@ -30,6 +30,7 @@ namespace subsystem_controllers
     //! List of drivers (node name) to consider required and who's failure shall result in automation abort. 
     std::vector<std::string> required_drivers_;
     std::vector<std::string> camera_drivers_;
+    std::vector<std::string> unmanaged_namespace_nodes_;
     double startup_duration_;
     double driver_timeout_;
     
@@ -49,9 +50,12 @@ namespace subsystem_controllers
       for (auto node : c.camera_drivers_)
         output << node << " ";
       
-      output << "] " << std::endl; 
+      output << "] " << std::endl << "unmanaged_namespace_nodes: [ ";
 
-      output<< "startup_duration: "<< c.startup_duration_ << std::endl;
+      for (auto node : c.unmanaged_namespace_nodes_)
+        output << node << " ";
+
+      output<< "] " << std::endl << "startup_duration: "<< c.startup_duration_ << std::endl;
 
       output <<"driver_timeout: "<< c.driver_timeout_ << std::endl
       
