@@ -45,7 +45,7 @@ namespace subsystem_controllers
     using ServiceNamesAndTypesFunc = std::function<std::map<std::string, std::vector<std::string, std::allocator<std::string>>>(const std::string &,const std::string &)>;
 
     /**
-     * \brief The DriverManager serves as a component to manage CARMA required Drivers via their ros2 lifecycle interfaces
+     * \brief The DriverManager serves as a component to manage CARMA required ROS1 Drivers 
      */ 
     class DriverManager
     {

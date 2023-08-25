@@ -107,8 +107,6 @@ namespace subsystem_controllers
     std::string DriverManager::are_critical_drivers_operational(long current_time)
     {
         int ssc=0;
-        int lidar=0;
-        int gps=0;
         int camera=0;
 
         // Manual disable of ssc entry in case ssc wrapper is in ros2
