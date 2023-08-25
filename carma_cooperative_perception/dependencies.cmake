@@ -22,10 +22,40 @@ CPMAddPackage(NAME units
     "BUILD_DOCS FALSE"
 )
 
+CPMAddPackage(NAME PROJ
+  GITHUB_REPOSITORY OSGeo/PROJ
+  # Version 9.2.1 introduces `unintall` target, which collides with Eigen's
+  # `uninstall` target.
+  GIT_TAG 9.1.1
+  OPTIONS
+    "BUILD_APPS FALSE"
+    "BUILD_TESTING FALSE"
+    "ENABLE_CURL FALSE"
+    "ENABLE_TIFF FALSE"
+)
+
+CPMAddPackage(NAME Microsoft.GSL
+  GITHUB_REPOSITORY microsoft/GSL
+  GIT_TAG v4.0.0
+  OPTIONS
+    "GSL_INSTALL TRUE"
+    "GSL_TEST FALSE"
+    "CMAKE_CXX_STANDARD 17"
+)
+
 # This will pull dependencies from <build_depend>...</build_depend> tags in the
 # package.xml file. It saves us from having to manually call find_package(...)
 # for each dependency.
 ament_auto_find_build_dependencies()
+
+if(carma_cooperative_perception_BUILD_TESTS)
+  # These CMake commands were added to ament_cmake_auto in ROS 2 Humble. Until
+  # CARMA supports ROS 2 Humble, we will use package-local copies.
+  include(cmake/ament_auto_find_test_dependencies.cmake)
+  include(cmake/ament_auto_add_gtest.cmake)
+
+  ament_auto_find_test_dependencies()
+endif()
 
 # From carma_cmake_common (ament_cmake_auto finds the package)
 carma_check_ros_version(2)
