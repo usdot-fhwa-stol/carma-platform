@@ -110,7 +110,7 @@ namespace subsystem_controllers
     trigger_managed_nodes_configure_from_base_class_ = true;
 
     auto base_return = BaseSubsystemController::handle_on_activate(prev_state); // This will activate all base_managed_nodes
-    RCLCPP_INFO(get_logger(), "Activate base return is: ", int(base_return));
+    
     if (base_return != carma_ros2_utils::CallbackReturn::SUCCESS) {
       RCLCPP_ERROR(get_logger(), "Driver Controller could not activate");
       return base_return;
