@@ -32,7 +32,7 @@ namespace subsystem_controllers
     //! List of ros1 camera drivers (node name) to consider required and who's failure shall result in automation abort.
     std::vector<std::string> camera_drivers_;
     //! List of nodes in the namespace which will not be managed by this subsystem controller
-    std::vector<std::string> unmanaged_namespace_nodes_;
+    std::vector<std::string> excluded_namespace_nodes_;
     //! The time allocated for system startup in seconds
     double startup_duration_;
     //! The timeout threshold for essential drivers in ms
@@ -54,9 +54,9 @@ namespace subsystem_controllers
       for (auto node : c.camera_drivers_)
         output << node << " ";
       
-      output << "] " << std::endl << "unmanaged_namespace_nodes: [ ";
+      output << "] " << std::endl << "excluded_namespace_nodes: [ ";
 
-      for (auto node : c.unmanaged_namespace_nodes_)
+      for (auto node : c.excluded_namespace_nodes_)
         output << node << " ";
 
       output<< "] " << std::endl << "startup_duration: "<< c.startup_duration_ << std::endl;

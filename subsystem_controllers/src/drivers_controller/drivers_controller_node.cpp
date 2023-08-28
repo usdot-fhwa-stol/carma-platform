@@ -32,7 +32,7 @@ namespace subsystem_controllers
     // carma-config parameters
     config_.required_drivers_ = declare_parameter<std::vector<std::string>>("required_drivers", config_.required_drivers_); 
     config_.camera_drivers_ = declare_parameter<std::vector<std::string>>("camera_drivers", config_.camera_drivers_);
-    config_.unmanaged_namespace_nodes_ = declare_parameter<std::vector<std::string>>("unmanaged_namespace_nodes", config_.unmanaged_namespace_nodes_);
+    config_.excluded_namespace_nodes_ = declare_parameter<std::vector<std::string>>("excluded_namespace_nodes", config_.excluded_namespace_nodes_);
 
   }
 
@@ -52,15 +52,25 @@ namespace subsystem_controllers
     get_parameter<std::vector<std::string>>("camera_drivers", config_.camera_drivers_); 
     get_parameter<double>("startup_duration", config_.startup_duration_);
     get_parameter<double>("required_driver_timeout", config_.driver_timeout_);
-    get_parameter<std::vector<std::string>>("unmanaged_namespace_nodes", config_.unmanaged_namespace_nodes_);
+    get_parameter<std::vector<std::string>>("excluded_namespace_nodes", config_.excluded_namespace_nodes_);
 
     RCLCPP_INFO_STREAM(get_logger(), "Config: " << config_);
 
-
+    // Handle fact that parameter vectors cannot be empty
+    if (config_.required_drivers_.size() == 1 && config_.required_drivers_[0].empty()) {
+      config_.required_drivers_.clear();
+    }
+    if (config_.camera_drivers_.size() == 1 && config_.camera_drivers_[0].empty()) {
+      config_.camera_drivers_.clear();
+    }
+    if (config_.excluded_namespace_nodes_.size() == 1 && config_.excluded_namespace_nodes_[0].empty()) {
+      config_.excluded_namespace_nodes_.clear();
+    }
+    
     auto base_managed_nodes = lifecycle_mgr_.get_managed_nodes();
     // Update managed nodes
-    // Collect namespace nodes not managed by other subsystem controllers
-    auto updated_managed_nodes = get_non_intersecting_set(base_managed_nodes, config_.unmanaged_namespace_nodes_);
+    // Collect namespace nodes not managed by other subsystem controllers - manually specified in carma-config
+    auto updated_managed_nodes = get_non_intersecting_set(base_managed_nodes, config_.excluded_namespace_nodes_);
 
     lifecycle_mgr_.set_managed_nodes(updated_managed_nodes);
 
@@ -101,7 +111,7 @@ namespace subsystem_controllers
     trigger_managed_nodes_configure_from_base_class_ = true;
 
     auto base_return = BaseSubsystemController::handle_on_activate(prev_state); // This will activate all base_managed_nodes
-
+    RCLCPP_INFO(get_logger(), "Activate base return is: ", int(base_return));
     if (base_return != carma_ros2_utils::CallbackReturn::SUCCESS) {
       RCLCPP_ERROR(get_logger(), "Driver Controller could not activate");
       return base_return;

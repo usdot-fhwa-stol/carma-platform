@@ -21,7 +21,7 @@
 
     # List of nodes in the namespace which will not be managed by this subsystem controller
     # Specifically includes the lidar and gps nodes which are handled in other subsystem controllers
-    unmanaged_namespace_nodes : ['']
+    excluded_namespace_nodes : ['']
     
     # Boolean: If this flag is true then all nodes under subsystem_namespace are treated as required in addition to any nodes in required_subsystem_nodes
     full_subsystem_required: false
