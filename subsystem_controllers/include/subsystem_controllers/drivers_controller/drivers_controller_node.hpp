@@ -69,8 +69,8 @@ namespace subsystem_controllers
     carma_ros2_utils::CallbackReturn handle_on_activate(const rclcpp_lifecycle::State &prev_state);
 
     //! ROS parameters
-    std::vector<std::string> required_drivers_;
-    std::vector<std::string> camera_drivers_;
+    std::vector<std::string> ros1_required_drivers_;
+    std::vector<std::string> ros1_camera_drivers_;
 
     // record of startup timestamp
     long start_up_timestamp_;

@@ -28,9 +28,9 @@ namespace subsystem_controllers
   
   {
     //! List of ros1 controller drivers (node name) to consider required and who's failure shall result in automation abort. 
-    std::vector<std::string> required_drivers_;
+    std::vector<std::string> ros1_required_drivers_;
     //! List of ros1 camera drivers (node name) to consider required and who's failure shall result in automation abort.
-    std::vector<std::string> camera_drivers_;
+    std::vector<std::string> ros1_camera_drivers_;
     //! List of nodes in the namespace which will not be managed by this subsystem controller
     std::vector<std::string> excluded_namespace_nodes_;
     //! The time allocated for system startup in seconds
@@ -44,14 +44,14 @@ namespace subsystem_controllers
     {
       
       output << "DriversControllerConfig { " << std::endl
-             << "required_drivers_: [ " << std::endl;
+             << "ros1_required_drivers: [ " << std::endl;
             
-      for (auto node : c.required_drivers_)
+      for (auto node : c.ros1_required_drivers_)
         output << node << " ";
 
-      output << "] " << std::endl << "camera_drivers: [ ";
+      output << "] " << std::endl << "ros1_camera_drivers: [ ";
 
-      for (auto node : c.camera_drivers_)
+      for (auto node : c.ros1_camera_drivers_)
         output << node << " ";
       
       output << "] " << std::endl << "excluded_namespace_nodes: [ ";

@@ -24,10 +24,10 @@
     excluded_namespace_nodes : ['']
     
     # List of ros1 controller drivers (node name) to consider required and who's failure shall result in automation abort
-    required_drivers: ['']
+    ros1_required_drivers: ['']
 
     # List of ros1 camera drivers (node name) to consider required and who's failure shall result in automation abort.
-    camera_drivers: ['']
+    ros1_camera_drivers: ['']
     
     # Boolean: If this flag is true then all nodes under subsystem_namespace are treated as required in addition to any nodes in required_subsystem_nodes
     full_subsystem_required: false

@@ -30,8 +30,8 @@ namespace subsystem_controllers
     config_.driver_timeout_ = declare_parameter<double>("required_driver_timeout", config_.driver_timeout_);
     
     // carma-config parameters
-    config_.required_drivers_ = declare_parameter<std::vector<std::string>>("required_drivers", config_.required_drivers_); 
-    config_.camera_drivers_ = declare_parameter<std::vector<std::string>>("camera_drivers", config_.camera_drivers_);
+    config_.ros1_required_drivers_ = declare_parameter<std::vector<std::string>>("ros1_required_drivers", config_.ros1_required_drivers_); 
+    config_.ros1_camera_drivers_ = declare_parameter<std::vector<std::string>>("ros1_camera_drivers", config_.ros1_camera_drivers_);
     config_.excluded_namespace_nodes_ = declare_parameter<std::vector<std::string>>("excluded_namespace_nodes", config_.excluded_namespace_nodes_);
 
   }
@@ -48,8 +48,8 @@ namespace subsystem_controllers
     config_ = DriversControllerConfig();
 
     // Load required plugins and default enabled plugins
-    get_parameter<std::vector<std::string>>("required_drivers", config_.required_drivers_);  
-    get_parameter<std::vector<std::string>>("camera_drivers", config_.camera_drivers_); 
+    get_parameter<std::vector<std::string>>("ros1_required_drivers", config_.ros1_required_drivers_);  
+    get_parameter<std::vector<std::string>>("ros1_camera_drivers", config_.ros1_camera_drivers_); 
     get_parameter<double>("startup_duration", config_.startup_duration_);
     get_parameter<double>("required_driver_timeout", config_.driver_timeout_);
     get_parameter<std::vector<std::string>>("excluded_namespace_nodes", config_.excluded_namespace_nodes_);
@@ -57,11 +57,11 @@ namespace subsystem_controllers
     RCLCPP_INFO_STREAM(get_logger(), "Config: " << config_);
 
     // Handle fact that parameter vectors cannot be empty
-    if (config_.required_drivers_.size() == 1 && config_.required_drivers_[0].empty()) {
-      config_.required_drivers_.clear();
+    if (config_.ros1_required_drivers_.size() == 1 && config_.ros1_required_drivers_[0].empty()) {
+      config_.ros1_required_drivers_.clear();
     }
-    if (config_.camera_drivers_.size() == 1 && config_.camera_drivers_[0].empty()) {
-      config_.camera_drivers_.clear();
+    if (config_.ros1_camera_drivers_.size() == 1 && config_.ros1_camera_drivers_[0].empty()) {
+      config_.ros1_camera_drivers_.clear();
     }
     if (config_.excluded_namespace_nodes_.size() == 1 && config_.excluded_namespace_nodes_[0].empty()) {
       config_.excluded_namespace_nodes_.clear();
@@ -75,8 +75,8 @@ namespace subsystem_controllers
     lifecycle_mgr_.set_managed_nodes(updated_managed_nodes);
 
     driver_manager_ = std::make_shared<DriverManager>(
-      config_.required_drivers_, 
-      config_.camera_drivers_, 
+      config_.ros1_required_drivers_, 
+      config_.ros1_camera_drivers_, 
       config_.driver_timeout_
     );
 
