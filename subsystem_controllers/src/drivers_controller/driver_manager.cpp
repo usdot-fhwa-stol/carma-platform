@@ -109,12 +109,6 @@ namespace subsystem_controllers
         int ssc=0;
         int camera=0;
 
-        // Manual disable of ssc entry in case ssc wrapper is in ros2
-        if (critical_drivers_.empty())
-        {
-            ssc = 1;
-        }
-
         std::vector<Entry> driver_list = em_->get_entries(); //Real time driver list from driver status
         for(auto i = driver_list.begin(); i < driver_list.end(); ++i)
         {
@@ -126,6 +120,12 @@ namespace subsystem_controllers
             {
                 evaluate_sensor(camera,i->available_,current_time,i->timestamp_,driver_timeout_);
             }
+        }
+
+        // Manual disable of ssc entry in case ssc wrapper is in ros2
+        if (critical_drivers_.empty())
+        {
+            ssc = 1;
         }
 
         /////////////////////

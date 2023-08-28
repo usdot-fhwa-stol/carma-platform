@@ -85,8 +85,7 @@ namespace subsystem_controllers
 
     driver_status_sub_ = create_subscription<carma_driver_msgs::msg::DriverStatus>("driver_discovery", 1, std::bind(&DriversControllerNode::driver_discovery_cb, this, std::placeholders::_1));
     
-
-    timer_ = create_timer(get_clock(), std::chrono::milliseconds(100), std::bind(&DriversControllerNode::timer_callback,this));
+    timer_ = create_timer(get_clock(), std::chrono::milliseconds(1000), std::bind(&DriversControllerNode::timer_callback,this));
 
     // Configure our drivers
     bool success = lifecycle_mgr_.configure(std::chrono::milliseconds(base_config_.service_timeout_ms), std::chrono::milliseconds(base_config_.call_timeout_ms)).empty();
@@ -127,16 +126,20 @@ namespace subsystem_controllers
     long start_duration = sd.nanoseconds()/1e6;
 
     auto dm = driver_manager_->handle_spin(time_now, start_up_timestamp_, start_duration);
-    if (!prev_alert) {
-      prev_alert = dm;
-      publish_system_alert(dm);
-    } 
-    else if ( prev_alert->type == dm.type && prev_alert->description.compare(dm.description) == 0) { // Do not publish duplicate alerts
-      RCLCPP_DEBUG_STREAM(get_logger(), "No change to alert status");
-    }
-    else{
-      prev_alert = dm;
-      publish_system_alert(dm);
+
+    //Wait for node to be activated
+    if (get_current_state().id() == lifecycle_msgs::msg::State::PRIMARY_STATE_ACTIVE){
+      if (!prev_alert) {
+        prev_alert = dm;
+        publish_system_alert(dm);
+      } 
+      else if ( prev_alert->type == dm.type && prev_alert->description.compare(dm.description) == 0) { // Do not publish duplicate alerts
+        RCLCPP_DEBUG_STREAM(get_logger(), "No change to alert status");
+      }
+      else{
+        prev_alert = dm;
+        publish_system_alert(dm);
+      }
     }
 
   }
