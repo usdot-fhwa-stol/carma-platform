@@ -49,7 +49,7 @@ namespace subsystem_controllers
         if(status.compare("s_1_c_1") == 0)
         {
             starting_up_ = false;
-            alert.description = "All essential ROS1 drivers are ready";
+            alert.description = "All essential drivers are ready";
             alert.type = carma_msgs::msg::SystemAlert::DRIVERS_READY;
             return alert;
         } 
