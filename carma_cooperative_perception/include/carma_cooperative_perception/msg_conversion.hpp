@@ -1,6 +1,22 @@
 #ifndef CARMA_COOPERATIVE_PERCEPTION_MSG_CONVERSION_HPP_
 #define CARMA_COOPERATIVE_PERCEPTION_MSG_CONVERSION_HPP_
 
+/*
+ * Copyright 2023 Leidos
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
 #include <tf2_geometry_msgs/tf2_geometry_msgs.h>
 #include <units.h>
 
@@ -124,7 +140,7 @@ inline auto to_detection_list_msg(const j3224_v2x_msgs::msg::SensorDataSharingMe
     detection.twist.twist.angular.z =
       remove_units(units::angular_velocity::degrees_per_second_t{accel_set.yaw_rate});
 
-    switch(common_data.obj_type.object_type) {
+    switch (common_data.obj_type.object_type) {
       case common_data.obj_type.ANIMAL:
         detection.motion_model = detection.MOTION_MODEL_CTRV;
         break;
