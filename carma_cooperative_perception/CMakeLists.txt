@@ -46,7 +46,7 @@ target_include_directories(sdsm_to_detection_list_node
 )
 
 rclcpp_components_register_nodes(sdsm_to_detection_list_node
-  "cooperative_perception::SdsmToDetectionListNode"
+  "carma_cooperative_perception::SdsmToDetectionListNode"
 )
 
 if(carma_cooperative_perception_BUILD_TESTS)
@@ -58,6 +58,10 @@ if(carma_cooperative_perception_BUILD_TESTS)
   # header files from getting included.
   ament_auto_add_gtest(cooperative_perception_tests
     test/test_geodetic.cpp
+    test/test_j2735_types.cpp
+    test/test_j3224_types.cpp
+    test/test_month.cpp
+    test/test_msg_conversion.cpp
   )
 endif()
 

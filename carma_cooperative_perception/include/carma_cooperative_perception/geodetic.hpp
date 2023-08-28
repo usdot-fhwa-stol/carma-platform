@@ -26,6 +26,57 @@ struct UtmCoordinate
   units::length::meter_t elevation; /** With respect to the reference ellipsoid. */
 };
 
+struct UtmDisplacement
+{
+  units::length::meter_t easting;
+  units::length::meter_t northing;
+  units::length::meter_t elevation;
+};
+
+inline constexpr auto operator+=(
+  UtmCoordinate & coordinate, const UtmDisplacement & displacement) noexcept -> UtmCoordinate &
+{
+  coordinate.easting += displacement.easting;
+  coordinate.northing += displacement.northing;
+  coordinate.elevation += displacement.elevation;
+
+  return coordinate;
+}
+
+inline constexpr auto operator+(
+  UtmCoordinate coordinate, const UtmDisplacement & displacement) noexcept -> UtmCoordinate
+{
+  return coordinate += displacement;
+}
+
+inline constexpr auto operator+(
+  const UtmDisplacement & displacement, UtmCoordinate coordinate) noexcept -> UtmCoordinate
+{
+  return coordinate += displacement;
+}
+
+inline constexpr auto operator-=(
+  UtmCoordinate & coordinate, const UtmDisplacement & displacement) noexcept -> UtmCoordinate &
+{
+  coordinate.easting += displacement.easting;
+  coordinate.northing += displacement.northing;
+  coordinate.elevation += displacement.elevation;
+
+  return coordinate;
+}
+
+inline constexpr auto operator-(
+  UtmCoordinate coordinate, const UtmDisplacement & displacement) noexcept -> UtmCoordinate
+{
+  return coordinate -= displacement;
+}
+
+inline constexpr auto operator-(
+  const UtmDisplacement & displacement, UtmCoordinate coordinate) noexcept -> UtmCoordinate
+{
+  return coordinate -= displacement;
+}
+
 /**
  * @brief Get the UTM zone number from a WGS-84 coordinate
  *
@@ -36,7 +87,7 @@ struct UtmCoordinate
  *
  * @return The UTM zone containing the coordinate
 */
-auto calculate_utm_zone(const Wgs84Coordinate & coordinate) -> UtmZone
+inline auto calculate_utm_zone(const Wgs84Coordinate & coordinate) -> UtmZone
 {
   // Note: std::floor prevents this function from being constexpr (until C++23)
 
@@ -63,7 +114,7 @@ auto calculate_utm_zone(const Wgs84Coordinate & coordinate) -> UtmZone
   return zone;
 }
 
-auto project_to_utm(const Wgs84Coordinate & coordinate) -> UtmCoordinate
+inline auto project_to_utm(const Wgs84Coordinate & coordinate) -> UtmCoordinate
 {
   gsl::owner<PJ_CONTEXT *> context = proj_context_create();
   proj_log_level(context, PJ_LOG_NONE);
@@ -103,7 +154,7 @@ auto project_to_utm(const Wgs84Coordinate & coordinate) -> UtmCoordinate
     .elevation = units::length::meter_t{coordinate.elevation}};
 }
 
-auto calculate_grid_convergence(const Wgs84Coordinate & position, const UtmZone & zone)
+inline auto calculate_grid_convergence(const Wgs84Coordinate & position, const UtmZone & zone)
   -> units::angle::degree_t
 {
   gsl::owner<PJ_CONTEXT *> context = proj_context_create();

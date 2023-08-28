@@ -7,14 +7,10 @@
 #include <j3224_v2x_msgs/msg/sensor_data_sharing_message.hpp>
 #include <rclcpp/rclcpp.hpp>
 
+#include "carma_cooperative_perception/msg_conversion.hpp"
+
 namespace carma_cooperative_perception
 {
-
-inline auto to_detection_list_msg(const j3224_v2x_msgs::msg::SensorDataSharingMessage & msg)
-  -> carma_cooperative_perception_interfaces::msg::DetectionList
-{
-  return carma_cooperative_perception_interfaces::msg::DetectionList{};
-}
 
 class SdsmToDetectionListNode : public carma_ros2_utils::CarmaLifecycleNode
 {

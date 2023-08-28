@@ -29,7 +29,7 @@ constexpr inline auto operator!=(const UtmZone & lhs, const UtmZone & rhs) -> bo
   return !(lhs == rhs);
 }
 
-auto to_string(const UtmZone& zone) -> std::string {
+inline auto to_string(const UtmZone& zone) -> std::string {
   if (zone.hemisphere == Hemisphere::kNorth) {
     return std::to_string(zone.number) + "N";
   }
