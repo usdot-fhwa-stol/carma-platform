@@ -17,26 +17,29 @@ limitations under the License.
 -->
 
 <package format="3">
-    <name>carma_cooperative_perception</name>
-    <version>0.1.0</version>
-    <description>The CARMA Platform cooperative perception package</description>
+  <name>carma_cooperative_perception</name>
+  <version>0.1.0</version>
+  <description>The CARMA Platform cooperative perception package</description>
 
-    <maintainer email="carma@dot.gov">carma</maintainer>
+  <maintainer email="carma@dot.gov">carma</maintainer>
 
-    <license>Apache 2.0</license>
+  <license>Apache 2.0</license>
 
-    <buildtool_depend>ament_cmake</buildtool_depend>
+  <buildtool_depend>ament_cmake</buildtool_depend>
 
-    <build_depend>ament_cmake_auto</build_depend>
-    <build_depend>carma_cmake_common</build_depend>
-    <build_depend>carma_cooperative_perception_interfaces</build_depend>
-    <build_depend>carma_ros2_utils</build_depend>
-    <build_depend>j3224_v2x_msgs</build_depend>
+  <build_depend>ament_cmake_auto</build_depend>
+  <build_depend>carma_cmake_common</build_depend>
+  <build_depend>carma_cooperative_perception_interfaces</build_depend>
+  <build_depend>carma_ros2_utils</build_depend>
+  <build_depend>j2735_v2x_msgs</build_depend>
+  <build_depend>j3224_v2x_msgs</build_depend>
+  <build_depend>rclcpp</build_depend>
+  <build_depend>tf2_geometry_msgs</build_depend>
 
   <test_depend>ament_lint_auto</test_depend>
   <test_depend>ament_cmake_gtest</test_depend>
 
-    <export>
-        <build_type>ament_cmake</build_type>
-    </export>
+  <export>
+    <build_type>ament_cmake</build_type>
+  </export>
 </package>

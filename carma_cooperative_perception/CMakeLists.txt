@@ -40,11 +40,6 @@ target_link_libraries(sdsm_to_detection_list_node
   units::units
 )
 
-target_include_directories(sdsm_to_detection_list_node
-  PUBLIC
-    $<BUILD_INTERFACE:${PROJECT_SOURCE_DIR}/include>
-)
-
 rclcpp_components_register_nodes(sdsm_to_detection_list_node
   "carma_cooperative_perception::SdsmToDetectionListNode"
 )
