@@ -51,7 +51,7 @@ struct DDateTime
     }
 
     if (msg.month.month != msg.month.UNAVAILABLE) {
-      d_date_time.month = month_from_number(msg.month.month);
+      d_date_time.month = Month{msg.month.month};
     }
 
     if (msg.day.day != msg.day.UNAVAILABLE) {
