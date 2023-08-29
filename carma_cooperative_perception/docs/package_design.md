@@ -27,8 +27,8 @@ flow with its neighboring actors (e.g., other connected vehicles or infrastructu
 - External object list to detection list Node: [`external_object_list_to_detection_list_node`][external_object_list_to_detection_list_node_docs]
 - Sensor data sharing message (SDSM) to detection list Node: [`sdsm_to_detection_list_node`][sdsm_to_detection_list_node_docs]
 - Multiple object tracker Node: [`multiple_object_tracker_node`][multiple_object_tracker_node_docs]
-- Track list to external object list: [`external_object_list_from_track_node`][track_list_to_external_object_list_node_docs]
-- External object list to sensor data sharing message (SDSM) Node: [`sdsm_from_external_object_list_node`][external_object_list_to_sdsm_node_docs]
+- Track list to external object list: [`track_list_to_external_object_list_node`][track_list_to_external_object_list_node_docs]
+- External object list to sensor data sharing message (SDSM) Node: [`external_object_list_to_sdsm_node`][external_object_list_to_sdsm_node_docs]
 - Basic safety message (BSM) filter Node[^1]: [`bsm_filter_node`][bsm_filter_node_docs]
 
 [^1]: These Nodes are currently unimplemented.
