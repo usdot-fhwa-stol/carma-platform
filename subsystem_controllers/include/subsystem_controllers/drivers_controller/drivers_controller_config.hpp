@@ -36,7 +36,7 @@ namespace subsystem_controllers
     //! The time allocated for system startup in seconds
     double startup_duration_;
     //! The timeout threshold for essential drivers in ms
-    double driver_timeout_;
+    double driver_timeout_ = 1000;
     
 
     // Stream operator for this config

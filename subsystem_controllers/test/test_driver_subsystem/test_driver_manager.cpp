@@ -29,7 +29,6 @@ namespace subsystem_controllers
         msg0.name = "controller";
         msg0.status = carma_driver_msgs::msg::DriverStatus::OPERATIONAL;
         
-        // carma_driver_msgs::msg::DriverStatus::SharedPtr msg0_pointer(new carma_driver_msgs::msg::DriverStatus(msg0));
         auto msg0_pointer = std::make_shared<carma_driver_msgs::msg::DriverStatus>(msg0);
         
         dm0.update_driver_status(msg0_pointer, 1000);
