@@ -15,6 +15,13 @@
 cmake_minimum_required(VERSION 3.16)
 project(carma_cooperative_perception)
 
+# CARMA builds packages in an environment with both ROS 1 and ROS 2 installed.
+# This check gracefully skips the current package if the sourced ROS environment
+# is not the specified version. This call must come before any other ROS
+# dependencies becasue ROS 1 does not have some of the required packages.
+find_package(carma_cmake_common REQUIRED)
+carma_check_ros_version(2)
+
 # Added outside of `dependencies.cmake` because ament sets some variables
 # (e.g., BUILD_TESTING) that affect the configuration options for the rest of
 # the package. Putting the command call here allows us to put all project
@@ -24,6 +31,9 @@ find_package(ament_cmake_auto REQUIRED)
 
 include(project_options.cmake)
 include(dependencies.cmake)
+
+# Configures CARMA package default settings
+carma_package()
 
 # C17 CMake support added in CMake 3.21
 set(CMAKE_CXX_STANDARD 17)
@@ -60,5 +70,4 @@ if(carma_cooperative_perception_BUILD_TESTS)
   )
 endif()
 
-carma_package()
 ament_auto_package()

@@ -56,6 +56,3 @@ if(carma_cooperative_perception_BUILD_TESTS)
 
   ament_auto_find_test_dependencies()
 endif()
-
-# From carma_cmake_common (ament_cmake_auto finds the package)
-carma_check_ros_version(2)
