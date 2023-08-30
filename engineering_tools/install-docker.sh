@@ -34,7 +34,7 @@ fi
 
 # Compiled from https://docs.docker.com/install/linux/docker-ce/ubuntu/
 
-sudo apt-get remove docker docker-engine docker.io
+sudo apt-get remove docker docker-engine docker.io docker-doc docker-compose podman-docker docker-ce
 sudo apt-get update
 sudo apt-get install -y apt-transport-https ca-certificates curl software-properties-common
 curl -fsSL https://download.docker.com/linux/ubuntu/gpg | sudo apt-key add -
