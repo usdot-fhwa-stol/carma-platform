@@ -1,4 +1,4 @@
-# Copyright (C) 2021-2022 LEIDOS.
+# Copyright (C) 2021-2023 LEIDOS.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -21,9 +21,10 @@ from launch.launch_description_sources import PythonLaunchDescriptionSource
 from launch.substitutions import ThisLaunchFileDir
 from launch.substitutions import EnvironmentVariable
 from launch.actions import GroupAction
+from launch.conditions import IfCondition
 from launch_ros.actions import PushRosNamespace
 from carma_ros2_utils.launch.get_log_level import GetLogLevel
-from launch.substitutions import LaunchConfiguration
+from launch.substitutions import LaunchConfiguration, PythonExpression
 from launch.actions import DeclareLaunchArgument
 
 import os
@@ -142,6 +143,19 @@ def generate_launch_description():
 
     simulation_mode = LaunchConfiguration('simulation_mode')
     declare_simulation_mode = DeclareLaunchArgument(name='simulation_mode', default_value = 'False', description = 'True if CARMA Platform is launched with CARLA Simulator')
+
+    # Launch ROS2 rosbag logging
+    ros2_rosbag_launch = GroupAction(
+        actions=[
+            IncludeLaunchDescription(
+                PythonLaunchDescriptionSource([ThisLaunchFileDir(), '/ros2_rosbag.launch.py']),
+                launch_arguments = {
+                    'vehicle_config_dir' : vehicle_config_dir,
+                    'vehicle_config_param_file' : vehicle_config_param_file
+                    }.items()
+            )
+        ]
+    )
 
     # Nodes
 
@@ -282,6 +296,7 @@ def generate_launch_description():
         localization_group,
         v2x_group,
         guidance_group, 
+        ros2_rosbag_launch,
         ui_group,
         system_controller
     ])
