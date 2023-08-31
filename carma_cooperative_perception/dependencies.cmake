@@ -13,6 +13,7 @@
 # limitations under the License.
 
 include(cmake/get_cpm.cmake)
+set(CPM_USE_LOCAL_PACKAGES ON)
 
 CPMAddPackage(NAME units
   GITHUB_REPOSITORY nholthaus/units
@@ -22,21 +23,26 @@ CPMAddPackage(NAME units
     "BUILD_DOCS FALSE"
 )
 
-CPMAddPackage(NAME PROJ
-  GITHUB_REPOSITORY OSGeo/PROJ
-  # Version 9.2.1 introduces `unintall` target, which collides with Eigen's
-  # `uninstall` target.
-  GIT_TAG 9.1.1
-  OPTIONS
-    "BUILD_APPS FALSE"
-    "BUILD_TESTING FALSE"
-    "ENABLE_CURL FALSE"
-    "ENABLE_TIFF FALSE"
-)
+# CARMA currently uses PROJ version 6.3.1, which is not designed to be incorporated
+# as a subdirectory into larger projects. The CPMAddPackage(...) command is here as a
+# placeholder for when PROJ gets bumped to a newer version.
+find_package(PROJ4 REQUIRED)
+
+# CPMAddPackage(NAME PROJ
+#   GITHUB_REPOSITORY OSGeo/PROJ
+#   # Version 9.2.1 introduces `unintall` target, which collides with Eigen's
+#   # `uninstall` target.
+#   GIT_TAG 9.1.1
+#   OPTIONS
+#     "BUILD_APPS FALSE"
+#     "BUILD_TESTING FALSE"
+#     "ENABLE_CURL FALSE"
+#     "ENABLE_TIFF FALSE"
+# )
 
 CPMAddPackage(NAME Microsoft.GSL
   GITHUB_REPOSITORY microsoft/GSL
-  GIT_TAG v4.0.0
+  GIT_TAG v2.1.0  # This is the version shipped with Ubuntu 20.04; newer versions are available
   OPTIONS
     "GSL_INSTALL TRUE"
     "GSL_TEST FALSE"

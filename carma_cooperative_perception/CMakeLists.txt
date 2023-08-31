@@ -45,8 +45,8 @@ ament_auto_add_library(sdsm_to_detection_list_node SHARED
 )
 
 target_link_libraries(sdsm_to_detection_list_node
-  PROJ::proj
-  Microsoft.GSL::GSL
+  ${PROJ4_LIBRARIES}  # Note: Newer versions of PROJ use PROJ::proj
+  GSL  # Note: Newer versions of GSL use Microsoft.GSL::GSL
   units::units
 )
 
