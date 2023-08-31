@@ -42,6 +42,7 @@ set(CMAKE_C_STANDARD 11)
 # This will automatically add include files from include/carma_cooperative_perception
 ament_auto_add_library(sdsm_to_detection_list_node SHARED
   src/geodetic.cpp
+  src/j2735_types.cpp
   src/sdsm_to_detection_list_node.cpp
   src/utm_zone.cpp
 )

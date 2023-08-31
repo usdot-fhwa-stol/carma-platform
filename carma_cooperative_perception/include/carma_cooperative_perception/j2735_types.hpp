@@ -42,41 +42,8 @@ struct DDateTime
   std::optional<units::time::second_t> second;
   std::optional<units::time::minute_t> time_zone_offset;
 
-  static auto from_msg(const j2735_v2x_msgs::msg::DDateTime & msg) noexcept
-  {
-    DDateTime d_date_time;
-
-    if (msg.year.year != msg.year.UNAVAILABLE) {
-      d_date_time.year = units::time::year_t{static_cast<double>(msg.year.year)};
-    }
-
-    if (msg.month.month != msg.month.UNAVAILABLE) {
-      d_date_time.month = Month{msg.month.month};
-    }
-
-    if (msg.day.day != msg.day.UNAVAILABLE) {
-      d_date_time.day = units::time::day_t{static_cast<double>(msg.day.day)};
-    }
-
-    if (msg.hour.hour != msg.hour.UNAVAILABLE) {
-      d_date_time.hour = units::time::hour_t{static_cast<double>(msg.hour.hour)};
-    }
-
-    if (msg.minute.minute != msg.minute.UNAVAILABLE) {
-      d_date_time.minute = units::time::minute_t{static_cast<double>(msg.minute.minute)};
-    }
-
-    if (msg.second.millisecond != msg.second.UNAVAILABLE) {
-      d_date_time.second = units::time::millisecond_t{static_cast<double>(msg.second.millisecond)};
-    }
-
-    if (msg.offset.offset_minute != msg.offset.UNAVAILABLE) {
-      d_date_time.time_zone_offset =
-        units::time::minute_t{static_cast<double>(msg.offset.offset_minute)};
-    }
-
-    return d_date_time;
-  }
+  [[nodiscard]] static auto from_msg(const j2735_v2x_msgs::msg::DDateTime & msg) noexcept
+    -> DDateTime;
 };
 
 struct AccelerationSet4Way
@@ -86,17 +53,8 @@ struct AccelerationSet4Way
   units::acceleration::two_centi_standard_gravities_t vert;
   units::angular_velocity::centi_degrees_per_second_t yaw_rate;
 
-  static auto from_msg(const j2735_v2x_msgs::msg::AccelerationSet4Way & msg)
-  {
-    return AccelerationSet4Way{
-      .longitudinal{units::acceleration::centi_meters_per_second_squared_t{
-        static_cast<double>(msg.longitudinal)}},
-      .lateral{
-        units::acceleration::centi_meters_per_second_squared_t{static_cast<double>(msg.lateral)}},
-      .vert{units::acceleration::two_centi_standard_gravities_t{static_cast<double>(msg.vert)}},
-      .yaw_rate{
-        units::angular_velocity::centi_degrees_per_second_t{static_cast<double>(msg.yaw_rate)}}};
-  }
+  [[nodiscard]] static auto from_msg(const j2735_v2x_msgs::msg::AccelerationSet4Way & msg) noexcept
+    -> AccelerationSet4Way;
 };
 
 struct Position3D
@@ -105,39 +63,23 @@ struct Position3D
   units::angle::deci_micro_degrees_t longitude;
   std::optional<units::length::deca_centimeters_t> elevation;
 
-  static auto from_msg(const j2735_v2x_msgs::msg::Position3D & msg)
-  {
-    Position3D position{
-      .latitude{units::angle::deci_micro_degrees_t{static_cast<double>(msg.latitude)}},
-      .longitude{units::angle::deci_micro_degrees_t{static_cast<double>(msg.longitude)}},
-      .elevation{std::nullopt}};
-
-    if (msg.elevation_exists) {
-      position.elevation = units::length::deca_centimeters_t{static_cast<double>(msg.elevation)};
-    }
-
-    return position;
-  }
+  [[nodiscard]] static auto from_msg(const j2735_v2x_msgs::msg::Position3D & msg) noexcept
+    -> Position3D;
 };
 
 struct Heading
 {
   units::angle::eighth_deci_degrees_t heading;
 
-  static auto from_msg(const j2735_v2x_msgs::msg::Heading & heading)
-  {
-    return Heading{units::angle::eighth_deci_degrees_t{static_cast<double>(heading.heading)}};
-  }
+  [[nodiscard]] static auto from_msg(const j2735_v2x_msgs::msg::Heading & heading) noexcept
+    -> Heading;
 };
 
 struct Speed
 {
   units::velocity::two_centi_meters_per_second_t speed;
 
-  static auto from_msg(const j2735_v2x_msgs::msg::Speed & speed)
-  {
-    return Speed{units::velocity::two_centi_meters_per_second_t{static_cast<double>(speed.speed)}};
-  }
+  [[nodiscard]] static auto from_msg(const j2735_v2x_msgs::msg::Speed & speed) noexcept -> Speed;
 };
 
 }  // namespace carma_cooperative_perception
