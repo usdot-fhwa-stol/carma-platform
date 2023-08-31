@@ -29,7 +29,7 @@ carma_check_ros_version(2)
 # `dependencies.cmake`.
 find_package(ament_cmake_auto REQUIRED)
 
-include(project_options.cmake)
+include(cmake_options.cmake)
 include(dependencies.cmake)
 
 # Configures CARMA package default settings
@@ -40,7 +40,7 @@ set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_C_STANDARD 11)
 
 # This will automatically add include files from include/carma_cooperative_perception
-ament_auto_add_library(sdsm_to_detection_list_node SHARED
+ament_auto_add_library(carma_cooperative_perception SHARED
   src/geodetic.cpp
   src/j2735_types.cpp
   src/j3224_types.cpp
@@ -49,13 +49,13 @@ ament_auto_add_library(sdsm_to_detection_list_node SHARED
   src/utm_zone.cpp
 )
 
-target_link_libraries(sdsm_to_detection_list_node
+target_link_libraries(carma_cooperative_perception
   ${PROJ4_LIBRARIES}  # Note: Newer versions of PROJ use PROJ::proj
   GSL  # Note: Newer versions of GSL use Microsoft.GSL::GSL
   units::units
 )
 
-rclcpp_components_register_nodes(sdsm_to_detection_list_node
+rclcpp_components_register_nodes(carma_cooperative_perception
   "carma_cooperative_perception::SdsmToDetectionListNode"
 )
 
@@ -66,7 +66,7 @@ if(carma_cooperative_perception_BUILD_TESTS)
   # ament_auto_add_gtest command will look for headers in the include/
   # directory. Moving this command to test/CMakeLists.txt will prevent the
   # header files from getting included.
-  ament_auto_add_gtest(cooperative_perception_tests
+  ament_auto_add_gtest(carm_cooperative_perception_tests
     test/test_geodetic.cpp
     test/test_j2735_types.cpp
     test/test_j3224_types.cpp
@@ -74,7 +74,7 @@ if(carma_cooperative_perception_BUILD_TESTS)
     test/test_msg_conversion.cpp
   )
 
-  target_link_libraries(cooperative_perception_tests
+  target_link_libraries(carm_cooperative_perception_tests
     sdsm_to_detection_list_node
   )
 endif()
