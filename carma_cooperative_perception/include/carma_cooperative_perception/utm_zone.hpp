@@ -45,14 +45,7 @@ constexpr inline auto operator!=(const UtmZone & lhs, const UtmZone & rhs) -> bo
   return !(lhs == rhs);
 }
 
-inline auto to_string(const UtmZone & zone) -> std::string
-{
-  if (zone.hemisphere == Hemisphere::kNorth) {
-    return std::to_string(zone.number) + "N";
-  }
-
-  return std::to_string(zone.number) + "S";
-}
+auto to_string(const UtmZone & zone) -> std::string;
 
 }  // namespace carma_cooperative_perception
 
