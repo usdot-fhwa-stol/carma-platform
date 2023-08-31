@@ -24,6 +24,9 @@ We also assume actors with local perception abilities have access to object-leve
 
 ## Local perception and fusion
 
+> [!IMPORTANT]\
+> This stack configuration is currently unsupported because the required Nodes are unimplemented.
+
 In this stack configuration variant, the host vehicle (HV) or host roadside unit (HRSU) can perceive objects using its
 local sensors, and it can fuse remotely-received object data from BSMs and SDSMs. Actors using this configuration
 broadcast sensor data sharing messages (SDSMs) containing locally-perceived objects. The figure below shows the Node
@@ -33,6 +36,9 @@ diagram for this deployment configuration.
 ![](assets/carma_cooperative_perception_perception_fusion_system_diagram.png)
 
 ## Local fusion only
+
+> [!IMPORTANT]\
+> This stack configuration is currently unsupported because the required Nodes are unimplemented.
 
 Host vehicles (HVs) or host roadside units (HRSUs) using this deployment configuration are unable to perceive the
 environment using only their local abilities (i.e., their own sensors). However, they can fuse object information they
@@ -47,6 +53,9 @@ provide object data. If neighboring actors…
 
 ## Local Perception Only
 
+> [!IMPORTANT]\
+> This stack configuration is currently unsupported because the required Nodes are unimplemented.
+
 In this stack configuration, the host vehicle (HV) or host roadside unit (HRSU) can use object information only from
 its local sensors; it cannot fuse that data with any remotely-received object data. Actors using this stack deployment
 variant do not use incoming SDSMs, but they still publish their local sensor data with others through SDSMs. The figure
@@ -56,6 +65,9 @@ below shows the Node diagram for this deployment configuration.
 ![](assets/carma_cooperative_perception_perception_no_fusion_system_diagram.png)
 
 ## No Local Perception or Fusion
+
+> [!IMPORTANT]\
+> This stack configuration is currently unsupported because the required Nodes are unimplemented.
 
 > [!WARNING]\
 > We do not recommend this stack configuration but included it for completeness. If you intent to use this
