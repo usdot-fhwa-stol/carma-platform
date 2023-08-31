@@ -43,6 +43,7 @@ set(CMAKE_C_STANDARD 11)
 ament_auto_add_library(sdsm_to_detection_list_node SHARED
   src/geodetic.cpp
   src/sdsm_to_detection_list_node.cpp
+  src/utm_zone.cpp
 )
 
 target_link_libraries(sdsm_to_detection_list_node
