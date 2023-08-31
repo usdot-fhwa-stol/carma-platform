@@ -112,8 +112,36 @@ TEST(ToDetectionMsg, Simple)
   EXPECT_EQ(detection.motion_model, detection.MOTION_MODEL_CTRV);
 }
 
-TEST(CalcDetectionTimeStamp, Simple) {}
+TEST(CalcDetectionTimeStamp, Simple)
+{
+  carma_cooperative_perception::DDateTime d_date_time;
+  d_date_time.second = units::time::second_t{5.0};
 
-TEST(ToPositionMsg, Simple) {}
+  carma_cooperative_perception::MeasurementTimeOffset offset{units::time::millisecond_t{2}};
 
-TEST(ToDetectionListMsg, Simple) {}
+  const auto stamp{carma_cooperative_perception::calc_detection_time_stamp(d_date_time, offset)};
+
+  ASSERT_TRUE(stamp.second.has_value());
+  EXPECT_DOUBLE_EQ(carma_cooperative_perception::remove_units(stamp.second.value()), 5.002);
+}
+
+TEST(ToPositionMsg, Simple)
+{
+  using namespace units::literals;
+
+  constexpr carma_cooperative_perception::UtmZone zone{
+    32, carma_cooperative_perception::Hemisphere::kNorth};
+  constexpr carma_cooperative_perception::UtmCoordinate position_utm{zone, 12.0_m, 13.5_m, -0.5_m};
+  const auto position_msg{carma_cooperative_perception::to_position_msg(position_utm)};
+
+  EXPECT_DOUBLE_EQ(
+    carma_cooperative_perception::remove_units(position_utm.easting), position_msg.x);
+  EXPECT_DOUBLE_EQ(
+    carma_cooperative_perception::remove_units(position_utm.northing), position_msg.y);
+  EXPECT_DOUBLE_EQ(
+    carma_cooperative_perception::remove_units(position_utm.elevation), position_msg.z);
+}
+
+// No ToDetectionListMsg test because a DetectionList.msg contains only a list of Detection.msg
+// elements, the test for which is covered by ToDetectionMsg.
+// TEST(ToDetectionListMsg, Simple) {}
