@@ -33,6 +33,7 @@ limitations under the License.
   <build_depend>carma_ros2_utils</build_depend>
   <build_depend>j2735_v2x_msgs</build_depend>
   <build_depend>j3224_v2x_msgs</build_depend>
+  <build_depend>carma_v2x_msgs</build_depend>
   <build_depend>rclcpp</build_depend>
   <build_depend>tf2_geometry_msgs</build_depend>
 

@@ -20,7 +20,7 @@
 #include <carma_cooperative_perception_interfaces/msg/detection_list.hpp>
 #include <carma_ros2_utils/carma_lifecycle_node.hpp>
 #include <carma_ros2_utils/msg_conversion_node.hpp>
-#include <j3224_v2x_msgs/msg/sensor_data_sharing_message.hpp>
+#include <carma_v2x_msgs/msg/sensor_data_sharing_message.hpp>
 #include <rclcpp/rclcpp.hpp>
 
 #include "carma_cooperative_perception/msg_conversion.hpp"
@@ -30,7 +30,7 @@ namespace carma_cooperative_perception
 
 class SdsmToDetectionListNode : public carma_ros2_utils::CarmaLifecycleNode
 {
-  using input_msg_type = j3224_v2x_msgs::msg::SensorDataSharingMessage;
+  using input_msg_type = carma_v2x_msgs::msg::SensorDataSharingMessage;
   using input_msg_shared_pointer = typename input_msg_type::SharedPtr;
   using output_msg_type = carma_cooperative_perception_interfaces::msg::DetectionList;
 
