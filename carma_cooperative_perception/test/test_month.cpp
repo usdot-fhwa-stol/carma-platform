@@ -85,7 +85,7 @@ TEST(Month, UnaryDecrement)
 TEST(Month, UnsignedConversion)
 {
   const carma_cooperative_perception::Month month{5};
-  EXPECT_EQ(static_cast<unsigned>(month), 5);
+  EXPECT_EQ(static_cast<unsigned>(month), 5U);
 }
 
 TEST(Month, OkFunction)
