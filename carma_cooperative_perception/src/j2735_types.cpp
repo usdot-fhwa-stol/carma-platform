@@ -59,21 +59,17 @@ auto AccelerationSet4Way::from_msg(const j2735_v2x_msgs::msg::AccelerationSet4Wa
   -> AccelerationSet4Way
 {
   return AccelerationSet4Way{
-    .longitudinal{units::acceleration::centi_meters_per_second_squared_t{
-      static_cast<double>(msg.longitudinal)}},
-    .lateral{
-      units::acceleration::centi_meters_per_second_squared_t{static_cast<double>(msg.lateral)}},
-    .vert{units::acceleration::two_centi_standard_gravities_t{static_cast<double>(msg.vert)}},
-    .yaw_rate{
-      units::angular_velocity::centi_degrees_per_second_t{static_cast<double>(msg.yaw_rate)}}};
+    units::acceleration::centi_meters_per_second_squared_t{static_cast<double>(msg.longitudinal)},
+    units::acceleration::centi_meters_per_second_squared_t{static_cast<double>(msg.lateral)},
+    units::acceleration::two_centi_standard_gravities_t{static_cast<double>(msg.vert)},
+    units::angular_velocity::centi_degrees_per_second_t{static_cast<double>(msg.yaw_rate)}};
 }
 
 auto Position3D::from_msg(const j2735_v2x_msgs::msg::Position3D & msg) noexcept -> Position3D
 {
   Position3D position{
-    .latitude{units::angle::deci_micro_degrees_t{static_cast<double>(msg.latitude)}},
-    .longitude{units::angle::deci_micro_degrees_t{static_cast<double>(msg.longitude)}},
-    .elevation{std::nullopt}};
+    units::angle::deci_micro_degrees_t{static_cast<double>(msg.latitude)},
+    units::angle::deci_micro_degrees_t{static_cast<double>(msg.longitude)}, std::nullopt};
 
   if (msg.elevation_exists) {
     position.elevation = units::length::deca_centimeters_t{static_cast<double>(msg.elevation)};

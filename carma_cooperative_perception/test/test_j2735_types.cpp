@@ -31,9 +31,8 @@ TEST(Position3D, FromMsgAllAvailable)
   msg.elevation = 300;
 
   const carma_cooperative_perception::Position3D expected_position_3d{
-    .latitude{units::angle::deci_micro_degrees_t{100}},
-    .longitude{units::angle::deci_micro_degrees_t{200}},
-    .elevation{units::length::decimeter_t{300}}};
+    units::angle::deci_micro_degrees_t{100}, units::angle::deci_micro_degrees_t{200},
+    units::length::decimeter_t{300}};
 
   EXPECT_EQ(expected_position_3d.latitude, 100_deci_udeg);
   EXPECT_EQ(expected_position_3d.longitude, 200_deci_udeg);
@@ -52,9 +51,7 @@ TEST(Position3D, FromMsgNoElevation)
   msg.elevation = msg.ELEVATION_UNAVAILABLE;
 
   const carma_cooperative_perception::Position3D expected_position_3d{
-    .latitude{units::angle::deci_micro_degrees_t{100}},
-    .longitude{units::angle::deci_micro_degrees_t{200}},
-    .elevation{std::nullopt}};
+    units::angle::deci_micro_degrees_t{100}, units::angle::deci_micro_degrees_t{200}, std::nullopt};
 
   EXPECT_EQ(expected_position_3d.latitude, 100_deci_udeg);
   EXPECT_EQ(expected_position_3d.longitude, 200_deci_udeg);

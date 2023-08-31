@@ -29,19 +29,19 @@ TEST(CalculateUtmZone, Wgs84Coordinate)
   static constexpr std::size_t zone_width{6};
 
   // Test data will be {(-180, 1), (-179, 1), (-173, 1), (-167, 2), ..., (180, 60)};
-  std::vector<TestDataPair> test_data{{-180, 1}};
+  std::vector<TestDataPair> test_data{
+    {-180, {1, carma_cooperative_perception::Hemisphere::kNorth}}};
   for (std::size_t i{0U}; i < 60UL; ++i) {
     test_data.push_back(
-      {zone_width * i + 1 - 180.0, carma_cooperative_perception::UtmZone{
-                                     i + 1, carma_cooperative_perception::Hemisphere::kNorth}});
+      {zone_width * i + 1 - 180.0, {i + 1, carma_cooperative_perception::Hemisphere::kNorth}});
   }
 
-  test_data.push_back({180.0, 60});
+  test_data.push_back({180.0, {60, carma_cooperative_perception::Hemisphere::kNorth}});
 
   using namespace units::literals;
   for (const auto [test_longitude, expected_zone] : test_data) {
     const carma_cooperative_perception::Wgs84Coordinate coord{
-      .latitude = 0.0_deg, .longitude = units::angle::degree_t{test_longitude}, .elevation = 0.0_m};
+      0.0_deg, units::angle::degree_t{test_longitude}, 0.0_m};
     EXPECT_EQ(carma_cooperative_perception::calculate_utm_zone(coord), expected_zone);
   }
 }
@@ -93,11 +93,11 @@ TEST(CalculateGridConvergence, RightHalf)
   using namespace units::literals;
 
   const carma_cooperative_perception::UtmZone utm_zone{
-    .number = 32, .hemisphere = carma_cooperative_perception::Hemisphere::kNorth};
+    32, carma_cooperative_perception::Hemisphere::kNorth};
 
   // UTM Zone 32: 510500 easting, 7043500 northing
   const carma_cooperative_perception::Wgs84Coordinate position_wgs84{
-    .latitude = 63.510617_deg, .longitude = 9.210989_deg, .elevation = 25.3_m};
+    63.510617_deg, 9.210989_deg, 25.3_m};
 
   const auto result =
     carma_cooperative_perception::calculate_grid_convergence(position_wgs84, utm_zone);
@@ -110,11 +110,11 @@ TEST(CalculateGridConvergence, LeftHalf)
   using namespace units::literals;
 
   const carma_cooperative_perception::UtmZone utm_zone{
-    .number = 32, .hemisphere = carma_cooperative_perception::Hemisphere::kNorth};
+    32, carma_cooperative_perception::Hemisphere::kNorth};
 
   // UTM Zone 32: 480500 easting, 7043500 northing
   const carma_cooperative_perception::Wgs84Coordinate position_wgs84{
-    .latitude = 63.510617_deg, .longitude = 8.608168_deg, .elevation = 25.3_m};
+    63.510617_deg, 8.608168_deg, 25.3_m};
 
   const auto result =
     carma_cooperative_perception::calculate_grid_convergence(position_wgs84, utm_zone);

@@ -33,7 +33,7 @@ auto calculate_utm_zone(const Wgs84Coordinate & coordinate) -> UtmZone
   // Works for longitudes [-180, 360). Longitude of 360 will assign 61.
   const auto number{
     static_cast<std::size_t>(
-      (std::floor(units::unit_cast<double>(coordinate.longitude) + 180) / 6)) +
+      (std::floor(units::unit_cast<double>(coordinate.longitude) + 180) / zone_width)) +
     1};
 
   UtmZone zone;
@@ -84,10 +84,8 @@ auto project_to_utm(const Wgs84Coordinate & coordinate) -> UtmCoordinate
   proj_context_destroy(context);
 
   return {
-    .utm_zone = utm_zone,
-    .easting = units::length::meter_t{coord_utm.enu.e},
-    .northing = units::length::meter_t{coord_utm.enu.n},
-    .elevation = units::length::meter_t{coordinate.elevation}};
+    utm_zone, units::length::meter_t{coord_utm.enu.e}, units::length::meter_t{coord_utm.enu.n},
+    units::length::meter_t{coordinate.elevation}};
 }
 
 auto calculate_grid_convergence(const Wgs84Coordinate & position, const UtmZone & zone)
