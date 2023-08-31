@@ -34,7 +34,7 @@ namespace subsystem_controllers
     //! List of nodes in the namespace which will not be managed by this subsystem controller
     std::vector<std::string> excluded_namespace_nodes_;
     //! The time allocated for system startup in seconds
-    double startup_duration_;
+    int startup_duration_;
     //! The timeout threshold for essential drivers in ms
     double driver_timeout_ = 1000;
     

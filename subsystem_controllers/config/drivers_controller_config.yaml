@@ -33,7 +33,7 @@
     full_subsystem_required: false
 
     # Double: The time allocated for system startup in seconds
-    startup_duration: 30.0
+    startup_duration: 30
 
     # Double: The timeout threshold for essential drivers in ms
     required_driver_timeout: 3000.0

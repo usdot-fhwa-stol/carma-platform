@@ -26,7 +26,7 @@ namespace subsystem_controllers
       // In this class the managed nodes list first needs to be modified then the transition will be triggered manually
     trigger_managed_nodes_configure_from_base_class_ = false;
 
-    config_.startup_duration_ = declare_parameter<double>("startup_duration", config_.startup_duration_);
+    config_.startup_duration_ = declare_parameter<int>("startup_duration", config_.startup_duration_);
     config_.driver_timeout_ = declare_parameter<double>("required_driver_timeout", config_.driver_timeout_);
     
     // carma-config parameters
@@ -50,7 +50,7 @@ namespace subsystem_controllers
     // Load required plugins and default enabled plugins
     get_parameter<std::vector<std::string>>("ros1_required_drivers", config_.ros1_required_drivers_);  
     get_parameter<std::vector<std::string>>("ros1_camera_drivers", config_.ros1_camera_drivers_); 
-    get_parameter<double>("startup_duration", config_.startup_duration_);
+    get_parameter<int>("startup_duration", config_.startup_duration_);
     get_parameter<double>("required_driver_timeout", config_.driver_timeout_);
     get_parameter<std::vector<std::string>>("excluded_namespace_nodes", config_.excluded_namespace_nodes_);
 
@@ -122,7 +122,7 @@ namespace subsystem_controllers
   {
     
     long time_now = this->now().nanoseconds() / 1e6;
-    rclcpp::Duration sd(config_.startup_duration_);
+    rclcpp::Duration sd(config_.startup_duration_, 0);
     long start_duration = sd.nanoseconds()/1e6;
 
     auto dm = driver_manager_->handle_spin(time_now, start_up_timestamp_, start_duration);

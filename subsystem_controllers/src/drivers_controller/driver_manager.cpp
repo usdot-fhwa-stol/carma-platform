@@ -63,6 +63,7 @@ namespace subsystem_controllers
         {
             alert.description = "Camera Failed";
             alert.type = carma_msgs::msg::SystemAlert::SHUTDOWN;
+            return alert;
         }
         else if(status.compare("s_0") == 0)
         {
