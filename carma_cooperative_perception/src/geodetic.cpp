@@ -99,8 +99,11 @@ auto calculate_grid_convergence(const Wgs84Coordinate & position, const UtmZone 
     throw std::invalid_argument("Could not create PROJ context: " + error_string + '.');
   }
 
+  // N.B. developers: PROJ and the related geodetic calculations seem particularly sensitive
+  // to the parameters in this PROJ string. If you run into problems with you calculation
+  // results, carefully check this or any other PROJ string.
   std::string proj_string{
-    "+proj=utm +zone=" + std::to_string(zone.number) + " +datum=WGS84 +units=m +no_defs +type=crs"};
+    "+proj=utm +zone=" + std::to_string(zone.number) + " +datum=WGS84 +units=m +no_defs"};
   if (zone.hemisphere == Hemisphere::kSouth) {
     proj_string += " +south";
   }
@@ -111,6 +114,11 @@ auto calculate_grid_convergence(const Wgs84Coordinate & position, const UtmZone 
     transform, proj_coord(
                  proj_torad(units::unit_cast<double>(position.longitude)),
                  proj_torad(units::unit_cast<double>(position.latitude)), 0, 0));
+
+  if (proj_context_errno(context) != 0) {
+    const std::string error_string{proj_errno_string(proj_context_errno(context))};
+    throw std::invalid_argument("Could not calculate PROJ factors: " + error_string + '.');
+  }
 
   proj_destroy(transform);
   proj_context_destroy(context);
