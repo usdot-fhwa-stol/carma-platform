@@ -20,7 +20,9 @@
 
 #include <algorithm>
 #include <cmath>
+#include <j2735_v2x_msgs/msg/d_date_time.hpp>
 #include <j3224_v2x_msgs/msg/detected_object_data.hpp>
+#include <j3224_v2x_msgs/msg/measurement_time_offset.hpp>
 
 #include "carma_cooperative_perception/geodetic.hpp"
 #include "carma_cooperative_perception/j2735_types.hpp"
@@ -43,14 +45,10 @@ auto to_time_msg(const DDateTime & d_date_time) noexcept -> builtin_interfaces::
   return msg;
 }
 
-auto calc_detection_time_stamp(
-  const j2735_v2x_msgs::msg::DDateTime & d_date_time,
-  const j3224_v2x_msgs::msg::MeasurementTimeOffset offset) noexcept -> DDateTime
+auto calc_detection_time_stamp(DDateTime sdsm_time, const MeasurementTimeOffset & offset) noexcept
+  -> DDateTime
 {
-  auto sdsm_time{DDateTime::from_msg(d_date_time)};
-  const auto detection_offset{MeasurementTimeOffset::from_msg(offset)};
-
-  sdsm_time.second.value() += detection_offset.measurement_time_offset;
+  sdsm_time.second.value() += offset.measurement_time_offset;
 
   return sdsm_time;
 }
@@ -75,7 +73,7 @@ auto heading_to_enu_yaw(const units::angle::degree_t & heading) noexcept -> unit
     std::fmod(-(units::unit_cast<double>(heading) - 90.0) + 360.0, 360.0)};
 }
 
-auto to_detection_list_msg(const j3224_v2x_msgs::msg::SensorDataSharingMessage & sdsm) noexcept
+auto to_detection_list_msg(const carma_v2x_msgs::msg::SensorDataSharingMessage & sdsm) noexcept
   -> carma_cooperative_perception_interfaces::msg::DetectionList
 {
   carma_cooperative_perception_interfaces::msg::DetectionList detection_list;
@@ -91,8 +89,10 @@ auto to_detection_list_msg(const j3224_v2x_msgs::msg::SensorDataSharingMessage &
     carma_cooperative_perception_interfaces::msg::Detection detection;
     detection.header.frame_id = to_string(ref_pos_utm.utm_zone);
 
-    const auto detection_time{
-      calc_detection_time_stamp(sdsm.sdsm_time_stamp, common_data.measurement_time)};
+    const auto detection_time{calc_detection_time_stamp(
+      DDateTime::from_msg(sdsm.sdsm_time_stamp),
+      MeasurementTimeOffset::from_msg(common_data.measurement_time))};
+
     detection.header.stamp = to_time_msg(detection_time);
 
     detection.id = std::to_string(common_data.detected_id.object_id);

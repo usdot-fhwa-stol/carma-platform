@@ -20,27 +20,25 @@
 #include <units.h>
 
 #include <carma_cooperative_perception_interfaces/msg/detection_list.hpp>
-#include <j2735_v2x_msgs/msg/d_date_time.hpp>
-#include <j3224_v2x_msgs/msg/measurement_time_offset.hpp>
-#include <j3224_v2x_msgs/msg/sensor_data_sharing_message.hpp>
+#include <carma_v2x_msgs/msg/sensor_data_sharing_message.hpp>
 
 #include "carma_cooperative_perception/geodetic.hpp"
 #include "carma_cooperative_perception/j2735_types.hpp"
+#include "carma_cooperative_perception/j3224_types.hpp"
 
 namespace carma_cooperative_perception
 {
 
 auto to_time_msg(const DDateTime & d_date_time) noexcept -> builtin_interfaces::msg::Time;
 
-auto calc_detection_time_stamp(
-  const j2735_v2x_msgs::msg::DDateTime & d_date_time,
-  const j3224_v2x_msgs::msg::MeasurementTimeOffset offset) noexcept -> DDateTime;
+auto calc_detection_time_stamp(DDateTime d_date_time, const MeasurementTimeOffset & offset) noexcept
+  -> DDateTime;
 
 auto to_position_msg(const UtmCoordinate & position_utm) noexcept -> geometry_msgs::msg::Point;
 
 auto heading_to_enu_yaw(const units::angle::degree_t & heading) noexcept -> units::angle::degree_t;
 
-auto to_detection_list_msg(const j3224_v2x_msgs::msg::SensorDataSharingMessage & sdsm) noexcept
+auto to_detection_list_msg(const carma_v2x_msgs::msg::SensorDataSharingMessage & sdsm) noexcept
   -> carma_cooperative_perception_interfaces::msg::DetectionList;
 
 }  // namespace carma_cooperative_perception

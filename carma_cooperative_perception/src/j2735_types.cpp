@@ -58,11 +58,21 @@ auto DDateTime::from_msg(const j2735_v2x_msgs::msg::DDateTime & msg) noexcept ->
 auto AccelerationSet4Way::from_msg(const j2735_v2x_msgs::msg::AccelerationSet4Way & msg) noexcept
   -> AccelerationSet4Way
 {
-  return AccelerationSet4Way{
+  return {
     units::acceleration::centi_meters_per_second_squared_t{static_cast<double>(msg.longitudinal)},
     units::acceleration::centi_meters_per_second_squared_t{static_cast<double>(msg.lateral)},
     units::acceleration::two_centi_standard_gravities_t{static_cast<double>(msg.vert)},
     units::angular_velocity::centi_degrees_per_second_t{static_cast<double>(msg.yaw_rate)}};
+}
+
+auto AccelerationSet4Way::from_msg(const carma_v2x_msgs::msg::AccelerationSet4Way & msg) noexcept
+  -> AccelerationSet4Way
+{
+  return {
+    units::acceleration::meters_per_second_squared_t{static_cast<double>(msg.longitudinal)},
+    units::acceleration::meters_per_second_squared_t{static_cast<double>(msg.lateral)},
+    units::acceleration::meters_per_second_squared_t{static_cast<double>(msg.vert)},
+    units::angular_velocity::degrees_per_second_t{static_cast<double>(msg.yaw_rate)}};
 }
 
 auto Position3D::from_msg(const j2735_v2x_msgs::msg::Position3D & msg) noexcept -> Position3D
@@ -78,14 +88,37 @@ auto Position3D::from_msg(const j2735_v2x_msgs::msg::Position3D & msg) noexcept 
   return position;
 }
 
+auto Position3D::from_msg(const carma_v2x_msgs::msg::Position3D & msg) noexcept -> Position3D
+{
+  Position3D position{
+    units::angle::degree_t{static_cast<double>(msg.latitude)},
+    units::angle::degree_t{static_cast<double>(msg.longitude)}, std::nullopt};
+
+  if (msg.elevation_exists) {
+    position.elevation = units::length::meter_t{static_cast<double>(msg.elevation)};
+  }
+
+  return position;
+}
+
 auto Heading::from_msg(const j2735_v2x_msgs::msg::Heading & heading) noexcept -> Heading
 {
-  return Heading{units::angle::eighth_deci_degrees_t{static_cast<double>(heading.heading)}};
+  return {units::angle::eighth_deci_degrees_t{static_cast<double>(heading.heading)}};
+}
+
+auto Heading::from_msg(const carma_v2x_msgs::msg::Heading & heading) noexcept -> Heading
+{
+  return {units::angle::degree_t{static_cast<double>(heading.heading)}};
 }
 
 auto Speed::from_msg(const j2735_v2x_msgs::msg::Speed & speed) noexcept -> Speed
 {
-  return Speed{units::velocity::two_centi_meters_per_second_t{static_cast<double>(speed.speed)}};
+  return {units::velocity::two_centi_meters_per_second_t{static_cast<double>(speed.speed)}};
+}
+
+auto Speed::from_msg(const carma_v2x_msgs::msg::Speed & speed) noexcept -> Speed
+{
+  return {units::velocity::meters_per_second_t{static_cast<double>(speed.speed)}};
 }
 
 }  // namespace carma_cooperative_perception

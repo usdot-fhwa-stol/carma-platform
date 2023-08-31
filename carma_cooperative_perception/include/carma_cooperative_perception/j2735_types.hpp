@@ -19,6 +19,10 @@
 
 #include <units.h>
 
+#include <carma_v2x_msgs/msg/acceleration_set4_way.hpp>
+#include <carma_v2x_msgs/msg/heading.hpp>
+#include <carma_v2x_msgs/msg/position3_d.hpp>
+#include <carma_v2x_msgs/msg/speed.hpp>
 #include <j2735_v2x_msgs/msg/acceleration_set4_way.hpp>
 #include <j2735_v2x_msgs/msg/d_date_time.hpp>
 #include <j2735_v2x_msgs/msg/heading.hpp>
@@ -55,6 +59,9 @@ struct AccelerationSet4Way
 
   [[nodiscard]] static auto from_msg(const j2735_v2x_msgs::msg::AccelerationSet4Way & msg) noexcept
     -> AccelerationSet4Way;
+
+  [[nodiscard]] static auto from_msg(const carma_v2x_msgs::msg::AccelerationSet4Way & msg) noexcept
+    -> AccelerationSet4Way;
 };
 
 struct Position3D
@@ -65,6 +72,9 @@ struct Position3D
 
   [[nodiscard]] static auto from_msg(const j2735_v2x_msgs::msg::Position3D & msg) noexcept
     -> Position3D;
+
+  [[nodiscard]] static auto from_msg(const carma_v2x_msgs::msg::Position3D & msg) noexcept
+    -> Position3D;
 };
 
 struct Heading
@@ -73,6 +83,9 @@ struct Heading
 
   [[nodiscard]] static auto from_msg(const j2735_v2x_msgs::msg::Heading & heading) noexcept
     -> Heading;
+
+  [[nodiscard]] static auto from_msg(const carma_v2x_msgs::msg::Heading & heading) noexcept
+    -> Heading;
 };
 
 struct Speed
@@ -80,6 +93,8 @@ struct Speed
   units::velocity::two_centi_meters_per_second_t speed;
 
   [[nodiscard]] static auto from_msg(const j2735_v2x_msgs::msg::Speed & speed) noexcept -> Speed;
+
+  [[nodiscard]] static auto from_msg(const carma_v2x_msgs::msg::Speed & speed) noexcept -> Speed;
 };
 
 }  // namespace carma_cooperative_perception

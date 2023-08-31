@@ -33,11 +33,30 @@ auto PositionOffsetXYZ::from_msg(const j3224_v2x_msgs::msg::PositionOffsetXYZ & 
   return offset;
 }
 
+auto PositionOffsetXYZ::from_msg(const carma_v2x_msgs::msg::PositionOffsetXYZ & msg) noexcept
+  -> PositionOffsetXYZ
+{
+  PositionOffsetXYZ offset{
+    units::length::meter_t{static_cast<double>(msg.offset_x.object_distance)},
+    units::length::meter_t{static_cast<double>(msg.offset_y.object_distance)}, std::nullopt};
+
+  if (msg.presence_vector & msg.HAS_OFFSET_Z) {
+    offset.offset_z = units::length::meter_t{static_cast<double>(msg.offset_z.object_distance)};
+  }
+
+  return offset;
+}
+
 auto MeasurementTimeOffset::from_msg(
   const j3224_v2x_msgs::msg::MeasurementTimeOffset & msg) noexcept -> MeasurementTimeOffset
 {
-  return MeasurementTimeOffset{
-    units::time::millisecond_t{static_cast<double>(msg.measurement_time_offset)}};
+  return {units::time::millisecond_t{static_cast<double>(msg.measurement_time_offset)}};
+}
+
+auto MeasurementTimeOffset::from_msg(
+  const carma_v2x_msgs::msg::MeasurementTimeOffset & msg) noexcept -> MeasurementTimeOffset
+{
+  return {units::time::second_t{static_cast<double>(msg.measurement_time_offset)}};
 }
 
 }  // namespace carma_cooperative_perception

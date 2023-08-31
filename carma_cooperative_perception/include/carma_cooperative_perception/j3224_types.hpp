@@ -19,6 +19,8 @@
 
 #include <units.h>
 
+#include <carma_v2x_msgs/msg/measurement_time_offset.hpp>
+#include <carma_v2x_msgs/msg/position_offset_xyz.hpp>
 #include <j3224_v2x_msgs/msg/measurement_time_offset.hpp>
 #include <j3224_v2x_msgs/msg/position_offset_xyz.hpp>
 #include <optional>
@@ -34,6 +36,9 @@ struct PositionOffsetXYZ
 
   [[nodiscard]] static auto from_msg(const j3224_v2x_msgs::msg::PositionOffsetXYZ & msg) noexcept
     -> PositionOffsetXYZ;
+
+  [[nodiscard]] static auto from_msg(const carma_v2x_msgs::msg::PositionOffsetXYZ & msg) noexcept
+    -> PositionOffsetXYZ;
 };
 
 struct MeasurementTimeOffset
@@ -42,6 +47,9 @@ struct MeasurementTimeOffset
 
   [[nodiscard]] static auto from_msg(
     const j3224_v2x_msgs::msg::MeasurementTimeOffset & msg) noexcept -> MeasurementTimeOffset;
+
+  [[nodiscard]] static auto from_msg(
+    const carma_v2x_msgs::msg::MeasurementTimeOffset & msg) noexcept -> MeasurementTimeOffset;
 };
 
 }  // namespace carma_cooperative_perception
