@@ -22,7 +22,7 @@
 #include <j2735_v2x_msgs/msg/position3_d.hpp>
 #include <optional>
 
-TEST(DDateTime, FromMsgAllAvailableJ2735)
+TEST(DDateTime, FromJ2735MsgAllAvailable)
 {
   using namespace units::literals;
 
@@ -63,7 +63,7 @@ TEST(DDateTime, FromMsgAllAvailableJ2735)
   EXPECT_EQ(d_date_time.time_zone_offset.value(), 7_min);
 }
 
-TEST(DDateTime, FromMsgNoneAvailableJ2735)
+TEST(DDateTime, FromJ2735MsgNoneAvailable)
 {
   using namespace units::literals;
 
@@ -81,7 +81,7 @@ TEST(DDateTime, FromMsgNoneAvailableJ2735)
   ASSERT_FALSE(d_date_time.time_zone_offset.has_value());
 }
 
-TEST(AccelerationSet4Way, FromMsgJ2735)
+TEST(AccelerationSet4Way, FromJ2735Msg)
 {
   using namespace units::literals;
 
@@ -101,7 +101,7 @@ TEST(AccelerationSet4Way, FromMsgJ2735)
   EXPECT_EQ(accel_set.yaw_rate, 400_centi_deg_per_s);
 }
 
-TEST(AccelerationSet4Way, FromMsgCarma)
+TEST(AccelerationSet4Way, FromCarmaMsg)
 {
   using namespace units::literals;
 
@@ -121,7 +121,7 @@ TEST(AccelerationSet4Way, FromMsgCarma)
   EXPECT_EQ(accel_set.yaw_rate, 400_deg_per_s);
 }
 
-TEST(Position3D, FromMsgAllAvailableJ2735)
+TEST(Position3D, FromJ2735MsgAllAvailable)
 {
   using namespace units::literals;
 
@@ -142,7 +142,7 @@ TEST(Position3D, FromMsgAllAvailableJ2735)
   EXPECT_EQ(position.elevation.value(), 300_deca_cm);
 }
 
-TEST(Position3D, FromMsgNoElevationJ2735)
+TEST(Position3D, FromJ2735MsgNoElevation)
 {
   using namespace units::literals;
 
@@ -161,7 +161,7 @@ TEST(Position3D, FromMsgNoElevationJ2735)
   EXPECT_FALSE(position.elevation.has_value());
 }
 
-TEST(Position3D, FromMsgAllAvailableCarma)
+TEST(Position3D, FromCarmaMsgAllAvailable)
 {
   using namespace units::literals;
 
@@ -182,7 +182,7 @@ TEST(Position3D, FromMsgAllAvailableCarma)
   EXPECT_EQ(position.elevation.value(), 300_m);
 }
 
-TEST(Position3D, FromMsgNoElevationCarma)
+TEST(Position3D, FromCarmaMsgNoElevation)
 {
   using namespace units::literals;
 
@@ -201,7 +201,7 @@ TEST(Position3D, FromMsgNoElevationCarma)
   EXPECT_FALSE(position.elevation.has_value());
 }
 
-TEST(Heading, FromMsgJ2735)
+TEST(Heading, FromJ2735Msg)
 {
   using namespace units::literals;
 
@@ -215,7 +215,7 @@ TEST(Heading, FromMsgJ2735)
   EXPECT_EQ(heading.heading, 100_eighth_ddeg);
 }
 
-TEST(Heading, FromMsgCarma)
+TEST(Heading, FromCarmaMsg)
 {
   using namespace units::literals;
 
@@ -229,7 +229,7 @@ TEST(Heading, FromMsgCarma)
   EXPECT_EQ(heading.heading, 100_deg);
 }
 
-TEST(Speed, FromMsgJ2735)
+TEST(Speed, FromJ2735Msg)
 {
   using namespace units::literals;
 
@@ -243,7 +243,7 @@ TEST(Speed, FromMsgJ2735)
   EXPECT_EQ(speed.speed, 100_two_centi_mps);
 }
 
-TEST(Speed, FromMsgCarma)
+TEST(Speed, FromCarmaMsg)
 {
   using namespace units::literals;
 
