@@ -20,6 +20,8 @@
 
 #include <gsl/pointers>
 
+#include "carma_cooperative_perception/units_extensions.hpp"
+
 namespace carma_cooperative_perception
 {
 
@@ -33,7 +35,8 @@ auto calculate_utm_zone(const Wgs84Coordinate & coordinate) -> UtmZone
   // Works for longitudes [-180, 360). Longitude of 360 will assign 61.
   const auto number{
     static_cast<std::size_t>(
-      (std::floor(units::unit_cast<double>(coordinate.longitude) + 180) / zone_width)) +
+      (std::floor(carma_cooperative_perception::remove_units(coordinate.longitude) + 180) /
+       zone_width)) +
     1};
 
   UtmZone zone;
@@ -76,8 +79,8 @@ auto project_to_utm(const Wgs84Coordinate & coordinate) -> UtmCoordinate
   }
 
   auto coord_wgs84 = proj_coord(
-    units::unit_cast<double>(coordinate.latitude), units::unit_cast<double>(coordinate.longitude),
-    0, 0);
+    carma_cooperative_perception::remove_units(coordinate.latitude),
+    carma_cooperative_perception::remove_units(coordinate.longitude), 0, 0);
   auto coord_utm = proj_trans(utm_transformation, PJ_FWD, coord_wgs84);
 
   proj_destroy(utm_transformation);
@@ -112,8 +115,8 @@ auto calculate_grid_convergence(const Wgs84Coordinate & position, const UtmZone 
 
   const auto factors = proj_factors(
     transform, proj_coord(
-                 proj_torad(units::unit_cast<double>(position.longitude)),
-                 proj_torad(units::unit_cast<double>(position.latitude)), 0, 0));
+                 proj_torad(carma_cooperative_perception::remove_units(position.longitude)),
+                 proj_torad(carma_cooperative_perception::remove_units(position.latitude)), 0, 0));
 
   if (proj_context_errno(context) != 0) {
     const std::string error_string{proj_errno_string(proj_context_errno(context))};

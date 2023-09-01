@@ -68,8 +68,7 @@ auto heading_to_enu_yaw(const units::angle::degree_t & heading) noexcept -> unit
 {
   using namespace units::literals;
 
-  return units::angle::degree_t{
-    std::fmod(-(units::unit_cast<double>(heading) - 90.0) + 360.0, 360.0)};
+  return units::angle::degree_t{std::fmod(-(remove_units(heading) - 90.0) + 360.0, 360.0)};
 }
 
 auto to_detection_list_msg(const carma_v2x_msgs::msg::SensorDataSharingMessage & sdsm) noexcept

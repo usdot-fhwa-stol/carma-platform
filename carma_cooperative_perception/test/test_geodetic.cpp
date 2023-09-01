@@ -17,6 +17,7 @@
 #include <gtest/gtest.h>
 
 #include <carma_cooperative_perception/geodetic.hpp>
+#include <carma_cooperative_perception/units_extensions.hpp>
 
 TEST(CalculateUtmZone, Wgs84Coordinate)
 {
@@ -74,14 +75,16 @@ TEST(ProjectToUtm, BasicCases)
 
     EXPECT_EQ(expected_utm.utm_zone, utm.utm_zone) << "Test index: " << test_index;
     EXPECT_NEAR(
-      units::unit_cast<double>(expected_utm.easting), units::unit_cast<double>(utm.easting), 1e-2)
+      carma_cooperative_perception::remove_units(expected_utm.easting),
+      carma_cooperative_perception::remove_units(utm.easting), 1e-2)
       << "Test index: " << test_index;
     EXPECT_NEAR(
-      units::unit_cast<double>(expected_utm.northing), units::unit_cast<double>(utm.northing), 1e-2)
+      carma_cooperative_perception::remove_units(expected_utm.northing),
+      carma_cooperative_perception::remove_units(utm.northing), 1e-2)
       << "Test index: " << test_index;
     EXPECT_NEAR(
-      units::unit_cast<double>(expected_utm.elevation), units::unit_cast<double>(utm.elevation),
-      1e-2)
+      carma_cooperative_perception::remove_units(expected_utm.elevation),
+      carma_cooperative_perception::remove_units(utm.elevation), 1e-2)
       << "Test index: " << test_index;
 
     ++test_index;
@@ -102,7 +105,7 @@ TEST(CalculateGridConvergence, RightHalf)
   const auto result =
     carma_cooperative_perception::calculate_grid_convergence(position_wgs84, utm_zone);
 
-  EXPECT_NEAR(units::unit_cast<double>(result), 0.188839, 1e-6);
+  EXPECT_NEAR(carma_cooperative_perception::remove_units(result), 0.188839, 1e-6);
 }
 
 TEST(CalculateGridConvergence, LeftHalf)
@@ -119,5 +122,5 @@ TEST(CalculateGridConvergence, LeftHalf)
   const auto result =
     carma_cooperative_perception::calculate_grid_convergence(position_wgs84, utm_zone);
 
-  EXPECT_NEAR(units::unit_cast<double>(result), -0.350697, 1e-6);
+  EXPECT_NEAR(carma_cooperative_perception::remove_units(result), -0.350697, 1e-6);
 }
