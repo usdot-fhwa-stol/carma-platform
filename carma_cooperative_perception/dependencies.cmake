@@ -24,21 +24,12 @@ CPMAddPackage(NAME units
 )
 
 # CARMA currently uses PROJ version 6.3.1, which is not designed to be incorporated
-# as a subdirectory into larger projects. The CPMAddPackage(...) command is here as a
-# placeholder for when PROJ gets bumped to a newer version.
+# as a subdirectory into larger projects. If CARMA upgrades to a newer version, we
+# could use the CPMAddPackage(...) command to install PROJ as a source dependency
+# if there is no version already locally available.
+# See https://github.com/usdot-fhwa-stol/carma-platform/issues/2139 for the PROJ
+# version upgrade plans.
 find_package(PROJ4 REQUIRED)
-
-# CPMAddPackage(NAME PROJ
-#   GITHUB_REPOSITORY OSGeo/PROJ
-#   # Version 9.2.1 introduces `unintall` target, which collides with Eigen's
-#   # `uninstall` target.
-#   GIT_TAG 9.1.1
-#   OPTIONS
-#     "BUILD_APPS FALSE"
-#     "BUILD_TESTING FALSE"
-#     "ENABLE_CURL FALSE"
-#     "ENABLE_TIFF FALSE"
-# )
 
 CPMAddPackage(NAME Microsoft.GSL
   GITHUB_REPOSITORY microsoft/GSL

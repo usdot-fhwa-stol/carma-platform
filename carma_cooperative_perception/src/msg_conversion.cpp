@@ -68,7 +68,6 @@ auto heading_to_enu_yaw(const units::angle::degree_t & heading) noexcept -> unit
 {
   using namespace units::literals;
 
-  // return units::math::fmod(-(heading - 90_deg) + 360_deg, 360_deg);
   return units::angle::degree_t{
     std::fmod(-(units::unit_cast<double>(heading) - 90.0) + 360.0, 360.0)};
 }
