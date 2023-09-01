@@ -32,6 +32,12 @@ constexpr auto remove_units(const T & value) noexcept
 
 }  // namespace carma_cooperative_perception
 
+/*
+ * The nholthaus/units library does not include an exhaustive list of units, so
+ * this is how we can add missing/new ones. See the following for more information:
+ * - https://github.com/nholthaus/units?tab=readme-ov-file#defining-new-units
+ * - https://github.com/nholthaus/units?tab=readme-ov-file#unit-definition-macros
+ */
 namespace units
 {
 
