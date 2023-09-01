@@ -1,6 +1,6 @@
 # SDSM to detection list Node
 
-This Node converts incoming `j3224_v2x_msgs/SensorDataSharingMessage.msg` messages into
+This Node converts incoming `carma_v2x_msgs/SensorDataSharingMessage.msg` messages into
 `carma_cooperative_perception/DetectionList.msg` messages. Similar to the Detection from basic safety message (BSM)
 Node, this node performs some coordinate changes. The Node projects the SDSM's reference position from the WGS-84 datum
 to the local UTM zone’s coordinate frame. It also converts the detected objects' positions, represented as Euclidean
@@ -10,7 +10,7 @@ offsets, to the same local UTM zone’s coordinate frame.
 
 | Topic          | Message Type                                  | Description    |
 | -------------- | --------------------------------------------- | -------------- |
-| `~/input/sdsm` | `j3224_v2x_msgs/SensorDataSharingMessage.msg` | Incoming SDSMs |
+| `~/input/sdsm` | `carma_v2x_msgs/SensorDataSharingMessage.msg` | Incoming SDSMs |
 
 ## Publishers
 
