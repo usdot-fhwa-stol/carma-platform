@@ -29,7 +29,7 @@ CPMAddPackage(NAME units
 # if there is no version already locally available.
 # See https://github.com/usdot-fhwa-stol/carma-platform/issues/2139 for the PROJ
 # version upgrade plans.
-find_package(PROJ4 REQUIRED)
+find_package(PROJ4 REQUIRED MODULE)
 
 CPMAddPackage(NAME Microsoft.GSL
   GITHUB_REPOSITORY microsoft/GSL

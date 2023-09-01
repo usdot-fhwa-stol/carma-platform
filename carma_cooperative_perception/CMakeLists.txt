@@ -29,8 +29,21 @@ carma_check_ros_version(2)
 # `dependencies.cmake`.
 find_package(ament_cmake_auto REQUIRED)
 
+# Needed so CMake can find the vendored PROJ4 module file. Th FindPROJ4.cmake
+# module file can be removed if we upgrade to a more recent PROJ version. See
+# https://github.com/usdot-fhwa-stol/carma-platform/issues/2139 for updates.
+list(APPEND CMAKE_MODULE_PATH ${CMAKE_CURRENT_SOURCE_DIR}/cmake)
+
 include(cmake_options.cmake)
 include(dependencies.cmake)
+
+# The generated compilation database is helpful with code completion in IDEs
+set(CMAKE_EXPORT_COMPILE_COMMANDS ${carma_cooperative_perception_EXPORT_COMPILE_COMMANDS})
+
+# This prevents `colcon` from tyring to build the CMake project's binary
+# directory. This is useful in case we want to build the project outside of
+# `colcon` but still keep it in a ROS repository.
+file(TOUCH ${PROJECT_BINARY_DIR}/COLCON_IGNORE)
 
 # Configures CARMA package default settings
 carma_package()

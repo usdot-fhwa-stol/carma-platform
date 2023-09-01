@@ -16,3 +16,8 @@ option(carma_cooperative_perception_BUILD_TESTS
   "Build package tests"
   ${BUILD_TESTING}
 )
+
+option(carma_cooperative_perception_EXPORT_COMPILE_COMMANDS
+  "Export compile commands"
+  ON
+)
