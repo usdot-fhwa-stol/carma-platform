@@ -52,6 +52,7 @@ TEST(ToDetectionMsg, Simple)
 {
   carma_v2x_msgs::msg::SensorDataSharingMessage sdsm_msg;
   sdsm_msg.sdsm_time_stamp.second.millisecond = 1000;
+  sdsm_msg.sdsm_time_stamp.presence_vector |= sdsm_msg.sdsm_time_stamp.SECOND;
   sdsm_msg.ref_pos.longitude = -90.703125;  // degrees
   sdsm_msg.ref_pos.latitude = 32.801128;    // degrees
   sdsm_msg.ref_pos.elevation_exists = true;

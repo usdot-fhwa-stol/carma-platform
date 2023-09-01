@@ -23,31 +23,31 @@ auto DDateTime::from_msg(const j2735_v2x_msgs::msg::DDateTime & msg) noexcept ->
 {
   DDateTime d_date_time;
 
-  if (msg.year.year != msg.year.UNAVAILABLE) {
+  if (msg.presence_vector & msg.YEAR) {
     d_date_time.year = units::time::year_t{static_cast<double>(msg.year.year)};
   }
 
-  if (msg.month.month != msg.month.UNAVAILABLE) {
+  if (msg.presence_vector & msg.MONTH) {
     d_date_time.month = Month{msg.month.month};
   }
 
-  if (msg.day.day != msg.day.UNAVAILABLE) {
+  if (msg.presence_vector & msg.DAY) {
     d_date_time.day = units::time::day_t{static_cast<double>(msg.day.day)};
   }
 
-  if (msg.hour.hour != msg.hour.UNAVAILABLE) {
+  if (msg.presence_vector & msg.HOUR) {
     d_date_time.hour = units::time::hour_t{static_cast<double>(msg.hour.hour)};
   }
 
-  if (msg.minute.minute != msg.minute.UNAVAILABLE) {
+  if (msg.presence_vector & msg.MINUTE) {
     d_date_time.minute = units::time::minute_t{static_cast<double>(msg.minute.minute)};
   }
 
-  if (msg.second.millisecond != msg.second.UNAVAILABLE) {
+  if (msg.presence_vector & msg.SECOND) {
     d_date_time.second = units::time::millisecond_t{static_cast<double>(msg.second.millisecond)};
   }
 
-  if (msg.offset.offset_minute != msg.offset.UNAVAILABLE) {
+  if (msg.presence_vector & msg.OFFSET) {
     d_date_time.time_zone_offset =
       units::time::minute_t{static_cast<double>(msg.offset.offset_minute)};
   }
