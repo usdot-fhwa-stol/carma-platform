@@ -30,6 +30,8 @@ TEST(PositionOffsetXYZ, FromJ3224MsgAllAvailable)
 
   const auto position{carma_cooperative_perception::PositionOffsetXYZ::from_msg(msg)};
 
+  // Due to nholthaus/units's equality operator implementation,
+  // this will check almost-equality.
   EXPECT_EQ(position.offset_x, 1_dm);
   EXPECT_EQ(position.offset_y, 2_dm);
 
@@ -48,6 +50,8 @@ TEST(PositionOffsetXYZ, FromJ3224MsgNoZOffset)
 
   const auto position{carma_cooperative_perception::PositionOffsetXYZ::from_msg(msg)};
 
+  // Due to nholthaus/units's equality operator implementation,
+  // this will check almost-equality.
   EXPECT_EQ(position.offset_x, 1_dm);
   EXPECT_EQ(position.offset_y, 2_dm);
 
@@ -66,6 +70,8 @@ TEST(PositionOffsetXYZ, FromCarmaMsgAllAvailable)
 
   const auto position{carma_cooperative_perception::PositionOffsetXYZ::from_msg(msg)};
 
+  // Due to nholthaus/units's equality operator implementation,
+  // this will check almost-equality.
   EXPECT_EQ(position.offset_x, 1_m);
   EXPECT_EQ(position.offset_y, 2_m);
 
@@ -84,6 +90,8 @@ TEST(PositionOffsetXYZ, FromCarmaMsgNoZOffset)
 
   const auto position{carma_cooperative_perception::PositionOffsetXYZ::from_msg(msg)};
 
+  // Due to nholthaus/units's equality operator implementation,
+  // this will check almost-equality.
   EXPECT_EQ(position.offset_x, 1_m);
   EXPECT_EQ(position.offset_y, 2_m);
 
@@ -99,6 +107,8 @@ TEST(MeasurementTimeOffset, FromJ3224Msg)
 
   const auto offset{carma_cooperative_perception::MeasurementTimeOffset::from_msg(msg)};
 
+  // Due to nholthaus/units's equality operator implementation,
+  // this will check almost-equality.
   EXPECT_EQ(offset.measurement_time_offset, 1_ms);
 }
 
@@ -111,5 +121,7 @@ TEST(MeasurementTimeOffset, FromCarmaMsg)
 
   const auto offset{carma_cooperative_perception::MeasurementTimeOffset::from_msg(msg)};
 
+  // Due to nholthaus/units's equality operator implementation,
+  // this will check almost-equality.
   EXPECT_EQ(offset.measurement_time_offset, 1_s);
 }
