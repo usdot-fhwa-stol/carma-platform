@@ -12,7 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include "carma_cooperative_perception/sdsm_to_detection_list_node.hpp"
+#include "carma_cooperative_perception/sdsm_to_detection_list_component.hpp"
 
 #include <rclcpp_components/register_node_macro.hpp>
 

@@ -12,8 +12,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#ifndef CARMA_COOPERATIVE_PERCEPTION__SDSM_TO_DETECTION_LIST_NODE_HPP_
-#define CARMA_COOPERATIVE_PERCEPTION__SDSM_TO_DETECTION_LIST_NODE_HPP_
+#ifndef CARMA_COOPERATIVE_PERCEPTION__SDSM_TO_DETECTION_LIST_COMPONENT_HPP_
+#define CARMA_COOPERATIVE_PERCEPTION__SDSM_TO_DETECTION_LIST_COMPONENT_HPP_
 
 #include <carma_cooperative_perception_interfaces/msg/detection_list.hpp>
 #include <carma_ros2_utils/carma_lifecycle_node.hpp>
@@ -52,4 +52,4 @@ private:
 
 }  // namespace carma_cooperative_perception
 
-#endif  // CARMA_COOPERATIVE_PERCEPTION__SDSM_TO_DETECTION_LIST_NODE_HPP_
+#endif  // CARMA_COOPERATIVE_PERCEPTION__SDSM_TO_DETECTION_LIST_COMPONENT_HPP_
