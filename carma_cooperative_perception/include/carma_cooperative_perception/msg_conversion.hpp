@@ -18,6 +18,7 @@
 #include <units.h>
 
 #include <carma_cooperative_perception_interfaces/msg/detection_list.hpp>
+#include <carma_perception_msgs/msg/external_object_list.hpp>
 #include <carma_v2x_msgs/msg/sensor_data_sharing_message.hpp>
 
 #include "carma_cooperative_perception/geodetic.hpp"
@@ -37,6 +38,13 @@ auto to_position_msg(const UtmCoordinate & position_utm) noexcept -> geometry_ms
 auto heading_to_enu_yaw(const units::angle::degree_t & heading) noexcept -> units::angle::degree_t;
 
 auto to_detection_list_msg(const carma_v2x_msgs::msg::SensorDataSharingMessage & sdsm) noexcept
+  -> carma_cooperative_perception_interfaces::msg::DetectionList;
+
+auto to_detection_msg(const carma_perception_msgs::msg::ExternalObject & object) noexcept
+  -> carma_cooperative_perception_interfaces::msg::Detection;
+
+auto to_detection_list_msg(
+  const carma_perception_msgs::msg::ExternalObjectList & object_list) noexcept
   -> carma_cooperative_perception_interfaces::msg::DetectionList;
 
 }  // namespace carma_cooperative_perception

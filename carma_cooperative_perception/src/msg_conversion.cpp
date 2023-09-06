@@ -15,9 +15,8 @@
 #include "carma_cooperative_perception/msg_conversion.hpp"
 
 #include <tf2_geometry_msgs/tf2_geometry_msgs.h>
-
-#include <algorithm>
-#include <cmath>
+#include <carma_perception_msgs/msg/external_object.hpp>
+#include <carma_perception_msgs/msg/external_object_list.hpp>
 #include <j2735_v2x_msgs/msg/d_date_time.hpp>
 #include <j3224_v2x_msgs/msg/detected_object_data.hpp>
 #include <j3224_v2x_msgs/msg/measurement_time_offset.hpp>
@@ -150,6 +149,68 @@ auto to_detection_list_msg(const carma_v2x_msgs::msg::SensorDataSharingMessage &
 
     detection_list.detections.push_back(std::move(detection));
   }
+
+  return detection_list;
+}
+
+auto to_detection_msg(const carma_perception_msgs::msg::ExternalObject & object) noexcept
+  -> carma_cooperative_perception_interfaces::msg::Detection
+{
+  carma_cooperative_perception_interfaces::msg::Detection detection;
+
+  detection.header = object.header;
+
+  if (object.presence_vector & object.BSM_ID_PRESENCE_VECTOR) {
+    detection.id = "";
+    std::transform(
+      std::cbegin(object.bsm_id), std::cend(object.bsm_id), std::back_inserter(detection.id),
+      [](const auto & i) { return i + '0'; });
+  }
+
+  if (object.presence_vector & object.ID_PRESENCE_VECTOR) {
+    detection.id += '-' + std::to_string(object.id);
+  }
+
+  if (object.presence_vector & object.POSE_PRESENCE_VECTOR) {
+    detection.pose = object.pose;
+  }
+
+  if (object.presence_vector & object.VELOCITY_INST_PRESENCE_VECTOR) {
+    detection.twist = object.velocity_inst;
+  }
+
+  if (object.presence_vector & object.OBJECT_TYPE_PRESENCE_VECTOR) {
+    switch (object.object_type) {
+      case object.SMALL_VEHICLE:
+      case object.LARGE_VEHICLE:
+        detection.motion_model = detection.MOTION_MODEL_CTRA;
+        break;
+      case object.MOTORCYCLE:
+        detection.motion_model = detection.MOTION_MODEL_CTRV;
+        break;
+      case object.PEDESTRIAN:
+      case object.UNKNOWN:
+        detection.motion_model = detection.MOTION_MODEL_CV;
+        break;
+
+      default:
+        detection.motion_model = detection.MOTION_MODEL_CV;
+    }
+  }
+
+  return detection;
+}
+
+auto to_detection_list_msg(
+  const carma_perception_msgs::msg::ExternalObjectList & object_list) noexcept
+  -> carma_cooperative_perception_interfaces::msg::DetectionList
+{
+  carma_cooperative_perception_interfaces::msg::DetectionList detection_list;
+
+  std::transform(
+    std::cbegin(object_list.objects), std::cend(object_list.objects),
+    std::back_inserter(detection_list.detections),
+    [](const auto & object) { return to_detection_msg(object); });
 
   return detection_list;
 }

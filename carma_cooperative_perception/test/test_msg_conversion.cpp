@@ -16,6 +16,8 @@
 
 #include <carma_cooperative_perception/j2735_types.hpp>
 #include <carma_cooperative_perception/msg_conversion.hpp>
+#include <carma_perception_msgs/msg/external_object.hpp>
+#include <carma_perception_msgs/msg/external_object_list.hpp>
 
 TEST(ToTimeMsg, HasSeconds)
 {
@@ -145,3 +147,50 @@ TEST(ToPositionMsg, Simple)
 // No ToDetectionListMsg test because a DetectionList.msg contains only a list of Detection.msg
 // elements, the test for which is covered by ToDetectionMsg.
 // TEST(ToDetectionListMsg, Simple) {}
+
+TEST(ToDetectionMsg, FromExternalObject)
+{
+  carma_perception_msgs::msg::ExternalObject object;
+  object.header.stamp.sec = 1;
+  object.header.stamp.nanosec = 2;
+  object.header.frame_id = "test_frame";
+  object.bsm_id = {3, 4, 5, 6};
+  object.id = 7;
+  object.pose.pose.position.x = 8;
+  object.pose.pose.position.y = 9;
+  object.pose.pose.position.z = 10;
+  object.pose.pose.orientation.x = 11;
+  object.pose.pose.orientation.y = 12;
+  object.pose.pose.orientation.z = 13;
+  object.pose.pose.orientation.w = 14;
+  object.velocity_inst.twist.linear.x = 15;
+  object.velocity_inst.twist.linear.y = 16;
+  object.velocity_inst.twist.linear.z = 17;
+  object.velocity_inst.twist.angular.x = 18;
+  object.velocity_inst.twist.angular.y = 19;
+  object.velocity_inst.twist.angular.z = 20;
+  object.object_type = object.SMALL_VEHICLE;
+
+  object.presence_vector |= object.BSM_ID_PRESENCE_VECTOR | object.ID_PRESENCE_VECTOR |
+                            object.POSE_PRESENCE_VECTOR | object.VELOCITY_INST_PRESENCE_VECTOR |
+                            object.OBJECT_TYPE_PRESENCE_VECTOR;
+
+  const auto detection{carma_cooperative_perception::to_detection_msg(object)};
+
+  EXPECT_EQ(detection.header, object.header);
+  EXPECT_EQ(detection.id, "3456-7");
+  EXPECT_EQ(detection.pose, object.pose);
+  EXPECT_EQ(detection.twist, object.velocity_inst);
+  EXPECT_EQ(detection.motion_model, detection.MOTION_MODEL_CTRA);
+}
+
+TEST(ToDetectionListMsg, FromExternalObjectList)
+{
+  carma_perception_msgs::msg::ExternalObjectList object_list;
+  object_list.objects.emplace_back();
+  object_list.objects.emplace_back();
+
+  const auto detection_list{carma_cooperative_perception::to_detection_list_msg(object_list)};
+
+  EXPECT_EQ(std::size(detection_list.detections), 2U);
+}
