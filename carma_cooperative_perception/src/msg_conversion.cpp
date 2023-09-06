@@ -1,18 +1,16 @@
-/*
- * Copyright 2023 Leidos
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *     http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2023 Leidos
+//
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+//
+//     http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
 
 #include "carma_cooperative_perception/msg_conversion.hpp"
 
@@ -23,6 +21,10 @@
 #include <j2735_v2x_msgs/msg/d_date_time.hpp>
 #include <j3224_v2x_msgs/msg/detected_object_data.hpp>
 #include <j3224_v2x_msgs/msg/measurement_time_offset.hpp>
+
+#include <algorithm>
+#include <cmath>
+#include <utility>
 
 #include "carma_cooperative_perception/geodetic.hpp"
 #include "carma_cooperative_perception/j2735_types.hpp"
@@ -66,8 +68,6 @@ auto to_position_msg(const UtmCoordinate & position_utm) noexcept -> geometry_ms
 
 auto heading_to_enu_yaw(const units::angle::degree_t & heading) noexcept -> units::angle::degree_t
 {
-  using namespace units::literals;
-
   return units::angle::degree_t{std::fmod(-(remove_units(heading) - 90.0) + 360.0, 360.0)};
 }
 
@@ -146,7 +146,8 @@ auto to_detection_list_msg(const carma_v2x_msgs::msg::SensorDataSharingMessage &
         break;
       default:
         detection.motion_model = detection.MOTION_MODEL_CTRV;
-    };
+    }
+
     detection_list.detections.push_back(std::move(detection));
   }
 

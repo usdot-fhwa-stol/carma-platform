@@ -15,6 +15,7 @@
 include(cmake/get_cpm.cmake)
 set(CPM_USE_LOCAL_PACKAGES ON)
 
+# lint_cmake: -readability/wonkycase
 CPMAddPackage(NAME units
   GITHUB_REPOSITORY nholthaus/units
   GIT_TAG v2.3.3
@@ -31,6 +32,7 @@ CPMAddPackage(NAME units
 # version upgrade plans.
 find_package(PROJ4 REQUIRED MODULE)
 
+# lint_cmake: -readability/wonkycase
 CPMAddPackage(NAME Microsoft.GSL
   GITHUB_REPOSITORY microsoft/GSL
   GIT_TAG v2.1.0  # This is the version shipped with Ubuntu 20.04; newer versions are available
@@ -52,4 +54,16 @@ if(carma_cooperative_perception_BUILD_TESTS)
   include(cmake/ament_auto_add_gtest.cmake)
 
   ament_auto_find_test_dependencies()
+
+  if(NOT AMENT_LINT_AUTO_EXCLUDE)
+    set(AMENT_LINT_AUTO_EXCLUDE "")
+  endif()
+
+  # Uncrustify needs some configuration tweaks to work nicely with trailing
+  # return types, so we are disabling it.
+  list(APPEND AMENT_LINT_AUTO_EXCLUDE
+    ament_cmake_uncrustify
+  )
+
+  ament_lint_auto_find_test_dependencies()
 endif()
