@@ -12,7 +12,6 @@
     subsystem_namespace: /hardware_interface
 
     # Required subsystem controller nodes for the overall system to be functional and will have their lifecycle's managed
-    # TODO Move this parameter to carma config in some capacity
     required_subsystem_nodes: ['']
 
     # List of nodes which will not be directly managed by this subsystem controller 
@@ -32,7 +31,7 @@
     # Boolean: If this flag is true then all nodes under subsystem_namespace are treated as required in addition to any nodes in required_subsystem_nodes
     full_subsystem_required: false
 
-    # Double: The time allocated for system startup in seconds
+    # Int: The time allocated for system startup in seconds
     startup_duration: 30
 
     # Double: The timeout threshold for essential drivers in ms

@@ -46,7 +46,7 @@ namespace subsystem_controllers
         public:
 
         /*!
-         * \brief Default constructor for DriverManager with driver_timeout_ = 1000
+         * \brief Default constructor for DriverManager with driver_timeout_ = 1000ms
          */
         DriverManager();
 
@@ -93,7 +93,7 @@ namespace subsystem_controllers
         //! Entry manager to keep track of detected plugins
         std::shared_ptr<EntryManager> em_;  
 
-        // timeout for critical driver timeout
+        // timeout for critical driver timeout in milliseconds
         long driver_timeout_ = 1000; 
 
         bool starting_up_ = true;
