@@ -1,6 +1,6 @@
 <?xml version="1.0"?>
 <!--
-  Copyright (C) 2018-2021 LEIDOS.
+  Copyright (C) 2018-2023 LEIDOS.
 
   Licensed under the Apache License, Version 2.0 (the "License"); you may not
   use this file except in compliance with the License. You may obtain a copy of
@@ -53,7 +53,6 @@
 
   <!-- Logging -->
   <!-- ROS Bag -->
-  <arg name="use_rosbag" default="true" doc="Record a rosbag"/>
   <arg name="rosbag_exclusions" default="/fake_exclusion" doc="Additonal regex pattern to match for identifying what topics to exclude from rosbag recordings"/>
   
   <!-- Map files to load -->
@@ -102,9 +101,9 @@
 
   <!-- Set up the rosbag record node that will exclude sensitive topics -->
   <group ns="carma_record">
-    <include file="$(find carma_record)/launch/carma_record.launch" if="$(arg use_rosbag)" />
+    <include file="$(find carma_record)/launch/carma_record.launch" />
   </group>
-
+  
   <!-- Dump all ros parameters to a file -->
   <node name="param_dump" pkg="carma_record" type="param_dump.sh"/>
   
