@@ -19,7 +19,6 @@
 
 #include <carma_cooperative_perception_interfaces/msg/detection_list.hpp>
 #include <carma_ros2_utils/carma_lifecycle_node.hpp>
-#include <carma_ros2_utils/msg_conversion_node.hpp>
 #include <carma_v2x_msgs/msg/sensor_data_sharing_message.hpp>
 #include <rclcpp/rclcpp.hpp>
 

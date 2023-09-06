@@ -1,6 +1,3 @@
-#ifndef CARMA_COOPERATIVE_PERCEPTION_UNITS_EXTENSIONS_HPP_
-#define CARMA_COOPERATIVE_PERCEPTION_UNITS_EXTENSIONS_HPP_
-
 /*
  * Copyright 2023 Leidos
  *
@@ -16,6 +13,9 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
+#ifndef CARMA_COOPERATIVE_PERCEPTION_UNITS_EXTENSIONS_HPP_
+#define CARMA_COOPERATIVE_PERCEPTION_UNITS_EXTENSIONS_HPP_
 
 #include <units.h>
 
