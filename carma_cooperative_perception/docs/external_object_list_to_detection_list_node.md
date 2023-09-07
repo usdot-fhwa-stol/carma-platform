@@ -6,10 +6,10 @@ from the host vehicle's map frame to the its UTM zone’s coordinate frame.
 
 ## Subscriptions
 
-| Topic                      | Message Type                                   | Description                                 |
-| -------------------------- | ---------------------------------------------- | ------------------------------------------- |
-| `~/input/external_objects` | `carma_perception_msgs/ExternalObjectList.msg` | Incoming external objects perceived locally |
-| `~/input/georeference` | `std_msgs/String.msg` | PROJ string representing the projection from WGS-84 coordinates to the host vehicle's map frame |
+| Topic                      | Message Type                                   | Description                                                                                     |
+| -------------------------- | ---------------------------------------------- | ----------------------------------------------------------------------------------------------- |
+| `~/input/external_objects` | `carma_perception_msgs/ExternalObjectList.msg` | Incoming external objects perceived locally                                                     |
+| `~/input/georeference`     | `std_msgs/String.msg`                          | PROJ string representing the projection from WGS-84 coordinates to the host vehicle's map frame |
 
 ## Publishers
 
@@ -19,13 +19,13 @@ from the host vehicle's map frame to the its UTM zone’s coordinate frame.
 
 ## Parameters
 
-| Topic                          | Data Type | Default Value | Required | Read Only | Description                                                                          |
-| ------------------------------ | --------- | ------------- | -------- | --------- | ------------------------------------------------------------------------------------ |
-| `~/unknown_motion_model`       | `string`  | `''`          | Yes      | Yes       | Motion model assigned to detected object types with an `UNKNOWN` sematic class       |
-| `~/small_vehicle_motion_model` | `string`  | `''`          | Yes      | Yes       | Motion model assigned to detected object types with an `SMALL_VEHICLE` sematic class |
-| `~/large_vehicle_motion_model` | `string`  | `''`          | Yes      | Yes       | Motion model assigned to detected object types with an `LARGE_VEHICLE` sematic class |
-| `~/motorcycle_motion_model`    | `string`  | `''`          | Yes      | Yes       | Motion model assigned to detected object types with an `MOTORCYCLE` sematic class    |
-| `~/pedestrian_motion_model`    | `string`  | `''`          | Yes      | Yes       | Motion model assigned to detected object types with an `PEDESTRIAN` sematic class    |
+| Topic                          | Data Type | Default Value                                                                                 | Required | Read Only | Description                                                                          |
+| ------------------------------ | --------- | --------------------------------------------------------------------------------------------- | -------- | --------- | ------------------------------------------------------------------------------------ |
+| `~/unknown_motion_model`       | `int64`   | `3` (defined by `carma_cooperative_perception_interfaces::msg::Detection::MOTION_MODEL_CV`)   | No      | No       | Motion model assigned to detected object types with an `UNKNOWN` sematic class       |
+| `~/small_vehicle_motion_model` | `int64`   | `1` (defined by `carma_cooperative_perception_interfaces::msg::Detection::MOTION_MODEL_CTRV`) | No      | No       | Motion model assigned to detected object types with an `SMALL_VEHICLE` sematic class |
+| `~/large_vehicle_motion_model` | `int64`   | `1` (defined by `carma_cooperative_perception_interfaces::msg::Detection::MOTION_MODEL_CTRV`) | No      | No       | Motion model assigned to detected object types with an `LARGE_VEHICLE` sematic class |
+| `~/motorcycle_motion_model`    | `int64`   | `2` (defined by `carma_cooperative_perception_interfaces::msg::Detection::MOTION_MODEL_CTRA`) | No      | No       | Motion model assigned to detected object types with an `MOTORCYCLE` sematic class    |
+| `~/pedestrian_motion_model`    | `int64`   | `3` (defined by `carma_cooperative_perception_interfaces::msg::Detection::MOTION_MODEL_CV`)   | No      | No       | Motion model assigned to detected object types with an `PEDESTRIAN` sematic class    |
 
 ## Services
 
