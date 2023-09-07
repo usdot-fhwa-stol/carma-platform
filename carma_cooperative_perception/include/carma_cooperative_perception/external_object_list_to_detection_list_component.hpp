@@ -61,10 +61,16 @@ public:
 
   auto publish_as_detection_list(const input_msg_type & msg) const -> void
   {
-    const auto detection_list{
-      transform_from_map_to_utm(to_detection_list_msg(msg), map_georeference_)};
+    try {
+      const auto detection_list{
+        transform_from_map_to_utm(to_detection_list_msg(msg), map_georeference_)};
 
-    publisher_->publish(detection_list);
+      publisher_->publish(detection_list);
+    } catch (const std::invalid_argument & e) {
+      RCLCPP_ERROR(
+        this->get_logger(), "Could not convert external object list to detection list: %s",
+        e.what());
+    }
   }
 
   auto update_proj_string(const std_msgs::msg::String & msg) noexcept -> void
