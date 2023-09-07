@@ -175,13 +175,21 @@ TEST(ToDetectionMsg, FromExternalObject)
                             object.POSE_PRESENCE_VECTOR | object.VELOCITY_INST_PRESENCE_VECTOR |
                             object.OBJECT_TYPE_PRESENCE_VECTOR;
 
-  const auto detection{carma_cooperative_perception::to_detection_msg(object)};
+  constexpr carma_cooperative_perception::MotionModelMapping motion_model_mapping{
+    carma_cooperative_perception_interfaces::msg::Detection::MOTION_MODEL_CTRV,
+    carma_cooperative_perception_interfaces::msg::Detection::MOTION_MODEL_CTRV,
+    carma_cooperative_perception_interfaces::msg::Detection::MOTION_MODEL_CTRA,
+    carma_cooperative_perception_interfaces::msg::Detection::MOTION_MODEL_CV,
+    carma_cooperative_perception_interfaces::msg::Detection::MOTION_MODEL_CV};
+
+  const auto detection{
+    carma_cooperative_perception::to_detection_msg(object, motion_model_mapping)};
 
   EXPECT_EQ(detection.header, object.header);
   EXPECT_EQ(detection.id, "3456-7");
   EXPECT_EQ(detection.pose, object.pose);
   EXPECT_EQ(detection.twist, object.velocity_inst);
-  EXPECT_EQ(detection.motion_model, detection.MOTION_MODEL_CTRA);
+  EXPECT_EQ(detection.motion_model, detection.MOTION_MODEL_CTRV);
 }
 
 TEST(ToDetectionListMsg, FromExternalObjectList)
@@ -190,7 +198,15 @@ TEST(ToDetectionListMsg, FromExternalObjectList)
   object_list.objects.emplace_back();
   object_list.objects.emplace_back();
 
-  const auto detection_list{carma_cooperative_perception::to_detection_list_msg(object_list)};
+  constexpr carma_cooperative_perception::MotionModelMapping motion_model_mapping{
+    carma_cooperative_perception_interfaces::msg::Detection::MOTION_MODEL_CTRV,
+    carma_cooperative_perception_interfaces::msg::Detection::MOTION_MODEL_CTRV,
+    carma_cooperative_perception_interfaces::msg::Detection::MOTION_MODEL_CTRA,
+    carma_cooperative_perception_interfaces::msg::Detection::MOTION_MODEL_CV,
+    carma_cooperative_perception_interfaces::msg::Detection::MOTION_MODEL_CV};
+
+  const auto detection_list{
+    carma_cooperative_perception::to_detection_list_msg(object_list, motion_model_mapping)};
 
   EXPECT_EQ(std::size(detection_list.detections), 2U);
 }

@@ -152,7 +152,9 @@ auto to_detection_list_msg(const carma_v2x_msgs::msg::SensorDataSharingMessage &
   return detection_list;
 }
 
-auto to_detection_msg(const carma_perception_msgs::msg::ExternalObject & object) noexcept
+auto to_detection_msg(
+  const carma_perception_msgs::msg::ExternalObject & object,
+  const MotionModelMapping & motion_model_mapping) noexcept
   -> carma_cooperative_perception_interfaces::msg::Detection
 {
   carma_cooperative_perception_interfaces::msg::Detection detection;
@@ -181,19 +183,20 @@ auto to_detection_msg(const carma_perception_msgs::msg::ExternalObject & object)
   if (object.presence_vector & object.OBJECT_TYPE_PRESENCE_VECTOR) {
     switch (object.object_type) {
       case object.SMALL_VEHICLE:
+        detection.motion_model = motion_model_mapping.small_vehicle_model;
+        break;
       case object.LARGE_VEHICLE:
-        detection.motion_model = detection.MOTION_MODEL_CTRA;
+        detection.motion_model = motion_model_mapping.large_vehicle_model;
         break;
       case object.MOTORCYCLE:
-        detection.motion_model = detection.MOTION_MODEL_CTRV;
+        detection.motion_model = motion_model_mapping.motorcycle_model;
         break;
       case object.PEDESTRIAN:
-      case object.UNKNOWN:
-        detection.motion_model = detection.MOTION_MODEL_CV;
+        detection.motion_model = motion_model_mapping.pedestrian_model;
         break;
-
+      case object.UNKNOWN:
       default:
-        detection.motion_model = detection.MOTION_MODEL_CV;
+        detection.motion_model = motion_model_mapping.unknown_model;
     }
   }
 
@@ -201,7 +204,8 @@ auto to_detection_msg(const carma_perception_msgs::msg::ExternalObject & object)
 }
 
 auto to_detection_list_msg(
-  const carma_perception_msgs::msg::ExternalObjectList & object_list) noexcept
+  const carma_perception_msgs::msg::ExternalObjectList & object_list,
+  const MotionModelMapping & motion_model_mapping) noexcept
   -> carma_cooperative_perception_interfaces::msg::DetectionList
 {
   carma_cooperative_perception_interfaces::msg::DetectionList detection_list;
@@ -209,7 +213,9 @@ auto to_detection_list_msg(
   std::transform(
     std::cbegin(object_list.objects), std::cend(object_list.objects),
     std::back_inserter(detection_list.detections),
-    [](const auto & object) { return to_detection_msg(object); });
+    [&motion_model_mapping = std::as_const(motion_model_mapping)](const auto & object) {
+      return to_detection_msg(object, motion_model_mapping);
+    });
 
   return detection_list;
 }

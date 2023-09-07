@@ -62,8 +62,8 @@ public:
   auto publish_as_detection_list(const input_msg_type & msg) const -> void
   {
     try {
-      const auto detection_list{
-        transform_from_map_to_utm(to_detection_list_msg(msg), map_georeference_)};
+      const auto detection_list{transform_from_map_to_utm(
+        to_detection_list_msg(msg, motion_model_mapping_), map_georeference_)};
 
       publisher_->publish(detection_list);
     } catch (const std::invalid_argument & e) {
@@ -83,6 +83,8 @@ private:
   rclcpp::Subscription<input_msg_type>::SharedPtr external_objects_subscription_;
   rclcpp::Subscription<std_msgs::msg::String>::SharedPtr georeference_subscription_;
   std::string map_georeference_;
+  MotionModelMapping motion_model_mapping_;
+  OnSetParametersCallbackHandle::SharedPtr on_set_parameters_callback_;
 };
 
 }  // namespace carma_cooperative_perception

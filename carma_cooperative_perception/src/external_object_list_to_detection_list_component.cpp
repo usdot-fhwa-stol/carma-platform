@@ -112,6 +112,56 @@ auto ExternalObjectListToDetectionListNode::on_configure(
 {
   publisher_ = create_publisher<output_msg_type>("output/detections", 1);
 
+  declare_parameter(
+    "small_vehicle_motion_model",
+    carma_cooperative_perception_interfaces::msg::Detection::MOTION_MODEL_CTRV);
+
+  declare_parameter(
+    "large_vehicle_motion_model",
+    carma_cooperative_perception_interfaces::msg::Detection::MOTION_MODEL_CTRV);
+
+  declare_parameter(
+    "motorcycle_motion_model",
+    carma_cooperative_perception_interfaces::msg::Detection::MOTION_MODEL_CTRA);
+
+  declare_parameter(
+    "pedestrian_motion_model",
+    carma_cooperative_perception_interfaces::msg::Detection::MOTION_MODEL_CV);
+
+  declare_parameter(
+    "unknown_motion_model",
+    carma_cooperative_perception_interfaces::msg::Detection::MOTION_MODEL_CV);
+
+  on_set_parameters_callback_ =
+    add_on_set_parameters_callback([this](const std::vector<rclcpp::Parameter> & parameters) {
+      rcl_interfaces::msg::SetParametersResult result;
+      result.successful = true;
+      result.reason = "success";
+
+      for (const auto & parameter : parameters) {
+        if (parameter.get_name() == "small_vehicle_motion_model") {
+          this->motion_model_mapping_.small_vehicle_model =
+            static_cast<std::uint8_t>(parameter.as_int());
+        } else if (parameter.get_name() == "large_vehicle_motion_model") {
+          this->motion_model_mapping_.large_vehicle_model =
+            static_cast<std::uint8_t>(parameter.as_int());
+        } else if (parameter.get_name() == "motorcycle_motion_model") {
+          this->motion_model_mapping_.motorcycle_model =
+            static_cast<std::uint8_t>(parameter.as_int());
+        } else if (parameter.get_name() == "pedestrian_motion_model") {
+          this->motion_model_mapping_.pedestrian_model =
+            static_cast<std::uint8_t>(parameter.as_int());
+        } else if (parameter.get_name() == "unknown_motion_model") {
+          this->motion_model_mapping_.unknown_model = static_cast<std::uint8_t>(parameter.as_int());
+        } else {
+          result.successful = false;
+          result.reason = "Unexpected parameter name '" + parameter.get_name() + '\'';
+        }
+      }
+
+      return result;
+    });
+
   return carma_ros2_utils::CallbackReturn::SUCCESS;
 }
 

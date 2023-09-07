@@ -39,11 +39,23 @@ auto heading_to_enu_yaw(const units::angle::degree_t & heading) noexcept -> unit
 auto to_detection_list_msg(const carma_v2x_msgs::msg::SensorDataSharingMessage & sdsm) noexcept
   -> carma_cooperative_perception_interfaces::msg::DetectionList;
 
-auto to_detection_msg(const carma_perception_msgs::msg::ExternalObject & object) noexcept
+struct MotionModelMapping
+{
+  std::uint8_t small_vehicle_model;
+  std::uint8_t large_vehicle_model;
+  std::uint8_t motorcycle_model;
+  std::uint8_t pedestrian_model;
+  std::uint8_t unknown_model;
+};
+
+auto to_detection_msg(
+  const carma_perception_msgs::msg::ExternalObject & object,
+  const MotionModelMapping & motion_model_mapping) noexcept
   -> carma_cooperative_perception_interfaces::msg::Detection;
 
 auto to_detection_list_msg(
-  const carma_perception_msgs::msg::ExternalObjectList & object_list) noexcept
+  const carma_perception_msgs::msg::ExternalObjectList & object_list,
+  const MotionModelMapping & motion_model_mapping) noexcept
   -> carma_cooperative_perception_interfaces::msg::DetectionList;
 
 }  // namespace carma_cooperative_perception
