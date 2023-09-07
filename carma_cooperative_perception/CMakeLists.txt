@@ -59,7 +59,7 @@ ament_auto_add_library(carma_cooperative_perception SHARED
   src/j2735_types.cpp
   src/j3224_types.cpp
   src/msg_conversion.cpp
-  src/sdsm_to_detection_list_node.cpp
+  src/sdsm_to_detection_list_component.cpp
   src/utm_zone.cpp
 )
 
