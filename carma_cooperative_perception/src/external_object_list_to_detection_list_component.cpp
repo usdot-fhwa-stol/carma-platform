@@ -24,7 +24,6 @@
 
 namespace carma_cooperative_perception
 {
-
 auto transform_from_map_to_utm(
   carma_cooperative_perception_interfaces::msg::DetectionList detection_list,
   const std::string & map_origin) -> carma_cooperative_perception_interfaces::msg::DetectionList
@@ -74,4 +73,9 @@ auto transform_from_map_to_utm(
 
 }  // namespace carma_cooperative_perception
 
-RCLCPP_COMPONENTS_REGISTER_NODE(carma_cooperative_perception::ExternalObjectListToDetectionListNode)
+// This is not our macro, so we should not worry about linting it.
+// clang-tidy added support for ignoring system macros in release 14.0.0 (see the release notes
+// here: https://releases.llvm.org/14.0.0/tools/clang/tools/extra/docs/ReleaseNotes.html), but
+// ament_clang_tidy for ROS 2 Foxy specifically looks for clang-tidy-6.0.
+RCLCPP_COMPONENTS_REGISTER_NODE(                                        // NOLINT
+  carma_cooperative_perception::ExternalObjectListToDetectionListNode)  // NOLINT

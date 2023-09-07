@@ -32,7 +32,6 @@
 
 namespace carma_cooperative_perception
 {
-
 auto to_time_msg(const DDateTime & d_date_time) noexcept -> builtin_interfaces::msg::Time
 {
   double seconds;

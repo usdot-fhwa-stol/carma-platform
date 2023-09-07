@@ -19,6 +19,8 @@ set(CPM_USE_LOCAL_PACKAGES ON)
 CPMAddPackage(NAME units
   GITHUB_REPOSITORY nholthaus/units
   GIT_TAG v2.3.3
+  EXCLUDE_FROM_ALL ON
+  SYSTEM ON
   OPTIONS
     "BUILD_TESTS FALSE"
     "BUILD_DOCS FALSE"
@@ -36,6 +38,8 @@ find_package(PROJ4 REQUIRED MODULE)
 CPMAddPackage(NAME Microsoft.GSL
   GITHUB_REPOSITORY microsoft/GSL
   GIT_TAG v2.1.0  # This is the version shipped with Ubuntu 20.04; newer versions are available
+  EXCLUDE_FROM_ALL ON
+  SYSTEM ON
   OPTIONS
     "GSL_INSTALL TRUE"
     "GSL_TEST FALSE"
@@ -55,15 +59,12 @@ if(carma_cooperative_perception_BUILD_TESTS)
 
   ament_auto_find_test_dependencies()
 
-  if(NOT AMENT_LINT_AUTO_EXCLUDE)
-    set(AMENT_LINT_AUTO_EXCLUDE "")
-  endif()
-
-  # Uncrustify needs some configuration tweaks to work nicely with trailing
-  # return types, so we are disabling it.
   list(APPEND AMENT_LINT_AUTO_EXCLUDE
-    ament_cmake_uncrustify
+    ament_cmake_uncrustify  # Using clang-format instead
+    ament_cmake_clang_tidy  # Can't specify compilation database with ament_lint_auto
   )
+
+  set(ament_cmake_clang_format_CONFIG_FILE ${PROJECT_SOURCE_DIR}/.clang-format)
 
   ament_lint_auto_find_test_dependencies()
 endif()

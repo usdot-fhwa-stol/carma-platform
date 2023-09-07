@@ -26,7 +26,6 @@
 
 namespace carma_cooperative_perception
 {
-
 /**
  * @brief Represents a position using WGS-84 coordinates
 */

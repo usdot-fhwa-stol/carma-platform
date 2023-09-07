@@ -18,7 +18,6 @@
 
 namespace carma_cooperative_perception
 {
-
 auto to_string(const UtmZone & zone) -> std::string
 {
   if (zone.hemisphere == Hemisphere::kNorth) {

@@ -25,7 +25,6 @@
 
 namespace carma_cooperative_perception
 {
-
 struct PositionOffsetXYZ
 {
   units::length::decimeter_t offset_x;

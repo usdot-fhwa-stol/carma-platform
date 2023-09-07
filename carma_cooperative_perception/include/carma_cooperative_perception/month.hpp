@@ -26,7 +26,6 @@
 
 namespace carma_cooperative_perception
 {
-
 class Month
 {
 public:

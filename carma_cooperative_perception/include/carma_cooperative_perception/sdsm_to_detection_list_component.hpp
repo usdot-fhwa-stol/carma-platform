@@ -24,7 +24,6 @@
 
 namespace carma_cooperative_perception
 {
-
 class SdsmToDetectionListNode : public carma_ros2_utils::CarmaLifecycleNode
 {
   using input_msg_type = carma_v2x_msgs::msg::SensorDataSharingMessage;

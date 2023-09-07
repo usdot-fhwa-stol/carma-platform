@@ -33,7 +33,6 @@
 
 namespace carma_cooperative_perception
 {
-
 struct DDateTime
 {
   std::optional<units::time::year_t> year;

@@ -31,7 +31,6 @@
 
 namespace carma_cooperative_perception
 {
-
 auto transform_from_map_to_utm(
   carma_cooperative_perception_interfaces::msg::DetectionList detection_list,
   const std::string & map_origin) -> carma_cooperative_perception_interfaces::msg::DetectionList;

@@ -20,7 +20,6 @@
 
 namespace carma_cooperative_perception
 {
-
 enum class Hemisphere
 {
   kNorth,

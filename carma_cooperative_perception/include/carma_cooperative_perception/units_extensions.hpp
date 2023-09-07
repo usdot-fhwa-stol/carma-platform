@@ -21,7 +21,6 @@
 
 namespace carma_cooperative_perception
 {
-
 template <typename T>
 constexpr auto remove_units(const T & value) noexcept
 {
@@ -38,36 +37,44 @@ constexpr auto remove_units(const T & value) noexcept
  */
 namespace units
 {
+// These are not our macros, so we should not worry about linting them.
+// clang-tidy added support for ignoring system macros in release 14.0.0 (see the release notes
+// here: https://releases.llvm.org/14.0.0/tools/clang/tools/extra/docs/ReleaseNotes.html), but
+// ament_clang_tidy for ROS 2 Foxy specifically looks for clang-tidy-6.0. Note also that
+// clang-tidy release 14.0.0 adds NOLINTBEGIN...NOLINTEND, so we can remove the individual NOLINT
+// calls in the future.
 
-UNIT_ADD(
-  acceleration, centi_meters_per_second_squared, centimeters_per_second_squared, centi_mps_sq,
-  unit<std::centi, meters_per_second_squared>)
+UNIT_ADD(                                                                         // NOLINT
+  acceleration, centi_meters_per_second_squared, centimeters_per_second_squared,  // NOLINT
+  centi_mps_sq,                                                                   // NOLINT
+  unit<std::centi, meters_per_second_squared>)                                    // NOLINT
 
-UNIT_ADD(
-  acceleration, two_centi_standard_gravities, two_centi_standard_gravities, two_centi_SG,
-  unit<std::ratio_multiply<std::ratio<2>, std::centi>, standard_gravity>)
+UNIT_ADD(                                                                                  // NOLINT
+  acceleration, two_centi_standard_gravities, two_centi_standard_gravities, two_centi_SG,  // NOLINT
+  unit<std::ratio_multiply<std::ratio<2>, std::centi>, standard_gravity>)                  // NOLINT
 
-UNIT_ADD(
-  angular_velocity, centi_degrees_per_second, centi_degrees_per_second, centi_deg_per_s,
-  unit<std::centi, degrees_per_second>)
+UNIT_ADD(                                                                                 // NOLINT
+  angular_velocity, centi_degrees_per_second, centi_degrees_per_second, centi_deg_per_s,  // NOLINT
+  unit<std::centi, degrees_per_second>)                                                   // NOLINT
 
-UNIT_ADD(
-  angle, deci_micro_degrees, deci_micro_degrees, deci_udeg,
-  unit<std::ratio_multiply<std::deci, std::micro>, degrees>)
+UNIT_ADD(                                                     // NOLINT
+  angle, deci_micro_degrees, deci_micro_degrees, deci_udeg,   // NOLINT
+  unit<std::ratio_multiply<std::deci, std::micro>, degrees>)  // NOLINT
 
-UNIT_ADD(length, deca_centimeters, deca_centimeters, deca_cm, unit<std::ratio<10>, centimeters>)
+UNIT_ADD(                                                                                  // NOLINT
+  length, deca_centimeters, deca_centimeters, deca_cm, unit<std::ratio<10>, centimeters>)  // NOLINT
 
-UNIT_ADD(
-  angle, eighth_deci_degrees, eighth_deci_degrees, eighth_ddeg,
-  unit<std::ratio_multiply<std::ratio<1, 8>, std::deci>, degrees>)
+UNIT_ADD(                                                           // NOLINT
+  angle, eighth_deci_degrees, eighth_deci_degrees, eighth_ddeg,     // NOLINT
+  unit<std::ratio_multiply<std::ratio<1, 8>, std::deci>, degrees>)  // NOLINT
 
-UNIT_ADD(
-  velocity, two_milli_meters_per_second, two_milli_meters_per_second, two_milli_mps,
-  unit<std::ratio_multiply<std::ratio<2>, std::milli>, meters_per_second>)
+UNIT_ADD(                                                                             // NOLINT
+  velocity, two_milli_meters_per_second, two_milli_meters_per_second, two_milli_mps,  // NOLINT
+  unit<std::ratio_multiply<std::ratio<2>, std::milli>, meters_per_second>)            // NOLINT
 
-UNIT_ADD(
-  velocity, two_centi_meters_per_second, two_centi_meters_per_second, two_centi_mps,
-  unit<std::ratio_multiply<std::ratio<2>, std::centi>, meters_per_second>)
+UNIT_ADD(                                                                             // NOLINT
+  velocity, two_centi_meters_per_second, two_centi_meters_per_second, two_centi_mps,  // NOLINT
+  unit<std::ratio_multiply<std::ratio<2>, std::centi>, meters_per_second>)            // NOLINT
 
 }  // namespace units
 

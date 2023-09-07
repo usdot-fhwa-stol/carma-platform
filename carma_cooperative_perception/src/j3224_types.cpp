@@ -16,7 +16,6 @@
 
 namespace carma_cooperative_perception
 {
-
 auto PositionOffsetXYZ::from_msg(const j3224_v2x_msgs::msg::PositionOffsetXYZ & msg) noexcept
   -> PositionOffsetXYZ
 {

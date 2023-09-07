@@ -1,0 +1,15 @@
+---
+Checks: >-
+  bugprone-*,
+  cert-*,
+  clang-analyzer-*,
+  concurrency-*,
+  cppcoreguidelines-*,
+  misc-*,
+  modernize-*,
+  performance-*,
+  portability-*,
+  readability-*
+FormatStyle: "file"
+HeaderFilterRegex: ""
+WarningsAsErrors: "*"

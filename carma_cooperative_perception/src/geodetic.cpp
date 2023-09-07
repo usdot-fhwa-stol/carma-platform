@@ -24,7 +24,6 @@
 
 namespace carma_cooperative_perception
 {
-
 auto calculate_utm_zone(const Wgs84Coordinate & coordinate) -> UtmZone
 {
   // Note: std::floor prevents this function from being constexpr (until C++23)

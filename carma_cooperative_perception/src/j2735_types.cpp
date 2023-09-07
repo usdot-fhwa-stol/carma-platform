@@ -16,7 +16,6 @@
 
 namespace carma_cooperative_perception
 {
-
 auto DDateTime::from_msg(const j2735_v2x_msgs::msg::DDateTime & msg) noexcept -> DDateTime
 {
   DDateTime d_date_time;
