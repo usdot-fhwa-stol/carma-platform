@@ -27,8 +27,8 @@ namespace carma_cooperative_perception
 {
 struct PositionOffsetXYZ
 {
-  units::length::decimeter_t offset_x;
-  units::length::decimeter_t offset_y;
+  units::length::decimeter_t offset_x{0.0};
+  units::length::decimeter_t offset_y{0.0};
   std::optional<units::length::decimeter_t> offset_z;
 
   [[nodiscard]] static auto from_msg(const j3224_v2x_msgs::msg::PositionOffsetXYZ & msg) noexcept

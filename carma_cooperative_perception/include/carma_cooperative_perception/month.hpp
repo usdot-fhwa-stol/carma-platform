@@ -45,10 +45,13 @@ public:
   */
   constexpr auto operator++() noexcept -> Month &
   {
-    month_value_ = (month_value_ + 1) % 13;
+    constexpr auto jav_value{1U};
+    constexpr auto dec_value{12U};
+
+    month_value_ = (month_value_ + 1) % (dec_value + 1);
 
     if (month_value_ == 0) {
-      month_value_ = 1;
+      month_value_ = jav_value;
     }
 
     return *this;
@@ -76,10 +79,12 @@ public:
   */
   constexpr auto operator--() noexcept -> Month &
   {
-    month_value_ = (month_value_ - 1 % 13);
+    constexpr auto dec_value{12U};
+
+    month_value_ = (month_value_ - 1 % (dec_value + 1));
 
     if (month_value_ == 0) {
-      month_value_ = 12;
+      month_value_ = dec_value;
     }
 
     return *this;
@@ -113,7 +118,13 @@ public:
    *
    * @return true if Month instance's value is within [1, 12]; false otherwise
   */
-  constexpr auto ok() const noexcept -> bool { return month_value_ >= 1 && month_value_ <= 12; }
+  [[nodiscard]] constexpr auto ok() const noexcept -> bool
+  {
+    constexpr auto jan_value{1U};
+    constexpr auto dec_value{12U};
+
+    return month_value_ >= jan_value && month_value_ <= dec_value;
+  }
 
   /**
    * @brief Compare exact equality between two Month instances
