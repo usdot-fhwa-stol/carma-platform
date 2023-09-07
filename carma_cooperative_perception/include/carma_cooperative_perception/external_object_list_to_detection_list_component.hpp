@@ -42,19 +42,24 @@ class ExternalObjectListToDetectionListNode : public carma_ros2_utils::CarmaLife
   using output_msg_type = carma_cooperative_perception_interfaces::msg::DetectionList;
 
 public:
-  explicit ExternalObjectListToDetectionListNode(const rclcpp::NodeOptions & options)
-  : CarmaLifecycleNode{options},
-    publisher_{create_publisher<output_msg_type>("output/detections", 1)},
-    external_objects_subscription_{create_subscription<input_msg_type>(
-      "input/external_objects", 1,
-      [this](input_msg_shared_pointer msg_ptr) { subscription_callback(*msg_ptr); })},
-    georeference_subscription_{create_subscription<std_msgs::msg::String>(
-      "input/georeference", 1,
-      [this](std_msgs::msg::String::SharedPtr msg_ptr) { update_proj_string(*msg_ptr); })}
-  {
-  }
+  explicit ExternalObjectListToDetectionListNode(const rclcpp::NodeOptions & options);
 
-  auto subscription_callback(const input_msg_type & msg) const -> void
+  auto on_configure(const rclcpp_lifecycle::State & /* previous_state */)
+    -> carma_ros2_utils::CallbackReturn override;
+
+  auto on_activate(const rclcpp_lifecycle::State & /* previous_state */)
+    -> carma_ros2_utils::CallbackReturn override;
+
+  auto on_deactivate(const rclcpp_lifecycle::State & /* previous_state */)
+    -> carma_ros2_utils::CallbackReturn override;
+
+  auto on_cleanup(const rclcpp_lifecycle::State & /* previous_state */)
+    -> carma_ros2_utils::CallbackReturn override;
+
+  auto on_shutdown(const rclcpp_lifecycle::State & /* previous_state */)
+    -> carma_ros2_utils::CallbackReturn override;
+
+  auto publish_as_detection_list(const input_msg_type & msg) const -> void
   {
     const auto detection_list{
       transform_from_map_to_utm(to_detection_list_msg(msg), map_georeference_)};
@@ -68,7 +73,7 @@ public:
   }
 
 private:
-  rclcpp::Publisher<output_msg_type>::SharedPtr publisher_;
+  rclcpp_lifecycle::LifecyclePublisher<output_msg_type>::SharedPtr publisher_;
   rclcpp::Subscription<input_msg_type>::SharedPtr external_objects_subscription_;
   rclcpp::Subscription<std_msgs::msg::String>::SharedPtr georeference_subscription_;
   std::string map_georeference_;

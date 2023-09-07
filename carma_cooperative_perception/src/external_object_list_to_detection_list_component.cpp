@@ -71,6 +71,82 @@ auto transform_from_map_to_utm(
   return detection_list;
 }
 
+ExternalObjectListToDetectionListNode::ExternalObjectListToDetectionListNode(
+  const rclcpp::NodeOptions & options)
+: CarmaLifecycleNode{options},
+  publisher_{nullptr},
+  external_objects_subscription_{create_subscription<input_msg_type>(
+    "input/external_objects", 1,
+    [this](input_msg_shared_pointer msg_ptr) {
+      const auto current_state{this->get_current_state().label()};
+
+      if (current_state == "active") {
+        publish_as_detection_list(*msg_ptr);
+      } else {
+        RCLCPP_WARN(
+          this->get_logger(),
+          "Trying to receive message on the topic '%s', but the containing node is not activated. "
+          "Current node state: '%s'",
+          this->external_objects_subscription_->get_topic_name(), current_state.c_str());
+      }
+    })},
+  georeference_subscription_{create_subscription<std_msgs::msg::String>(
+    "input/georeference", 1, [this](std_msgs::msg::String::SharedPtr msg_ptr) {
+      const auto current_state{this->get_current_state().label()};
+
+      if (current_state == "active") {
+        update_proj_string(*msg_ptr);
+      } else {
+        RCLCPP_WARN(
+          this->get_logger(),
+          "Trying to receive message on the topic '%s', but the containing node is not activated. "
+          "Current node state: '%s'",
+          this->georeference_subscription_->get_topic_name(), current_state.c_str());
+      }
+    })}
+{
+}
+
+auto ExternalObjectListToDetectionListNode::on_configure(
+  const rclcpp_lifecycle::State & /* previous_state */) -> carma_ros2_utils::CallbackReturn
+{
+  publisher_ = create_publisher<output_msg_type>("output/detections", 1);
+
+  return carma_ros2_utils::CallbackReturn::SUCCESS;
+}
+
+auto ExternalObjectListToDetectionListNode::on_activate(
+  const rclcpp_lifecycle::State & /* previous_state */) -> carma_ros2_utils::CallbackReturn
+{
+  publisher_->on_activate();
+
+  return carma_ros2_utils::CallbackReturn::SUCCESS;
+}
+
+auto ExternalObjectListToDetectionListNode::on_deactivate(
+  const rclcpp_lifecycle::State & /* previous_state */) -> carma_ros2_utils::CallbackReturn
+{
+  publisher_->on_deactivate();
+
+  return carma_ros2_utils::CallbackReturn::SUCCESS;
+}
+
+auto ExternalObjectListToDetectionListNode::on_cleanup(
+  const rclcpp_lifecycle::State & /* previous_state */) -> carma_ros2_utils::CallbackReturn
+{
+  publisher_.reset();
+
+  return carma_ros2_utils::CallbackReturn::SUCCESS;
+}
+
+auto ExternalObjectListToDetectionListNode::on_shutdown(
+  const rclcpp_lifecycle::State & /* previous_state */) -> carma_ros2_utils::CallbackReturn
+{
+  publisher_.reset();
+
+  return carma_ros2_utils::CallbackReturn::SUCCESS;
+}
+
 }  // namespace carma_cooperative_perception
 
 // This is not our macro, so we should not worry about linting it.
