@@ -61,7 +61,6 @@ if(carma_cooperative_perception_BUILD_TESTS)
 
   list(APPEND AMENT_LINT_AUTO_EXCLUDE
     ament_cmake_uncrustify  # Using clang-format instead
-    ament_cmake_clang_tidy  # Can't specify compilation database with ament_lint_auto
   )
 
   set(ament_cmake_clang_format_CONFIG_FILE ${PROJECT_SOURCE_DIR}/.clang-format)

@@ -107,9 +107,11 @@ ExternalObjectListToDetectionListNode::ExternalObjectListToDetectionListNode(
 {
 }
 
-auto ExternalObjectListToDetectionListNode::on_configure(
+auto ExternalObjectListToDetectionListNode::handle_on_configure(
   const rclcpp_lifecycle::State & /* previous_state */) -> carma_ros2_utils::CallbackReturn
 {
+  RCLCPP_INFO(get_logger(), "Life cycle state transition: configuring");
+
   publisher_ = create_publisher<output_msg_type>("output/detections", 1);
 
   declare_parameter(
@@ -165,33 +167,41 @@ auto ExternalObjectListToDetectionListNode::on_configure(
   return carma_ros2_utils::CallbackReturn::SUCCESS;
 }
 
-auto ExternalObjectListToDetectionListNode::on_activate(
+auto ExternalObjectListToDetectionListNode::handle_on_activate(
   const rclcpp_lifecycle::State & /* previous_state */) -> carma_ros2_utils::CallbackReturn
 {
+  RCLCPP_INFO(get_logger(), "Life cycle state transition: activating");
+
   publisher_->on_activate();
 
   return carma_ros2_utils::CallbackReturn::SUCCESS;
 }
 
-auto ExternalObjectListToDetectionListNode::on_deactivate(
+auto ExternalObjectListToDetectionListNode::handle_on_deactivate(
   const rclcpp_lifecycle::State & /* previous_state */) -> carma_ros2_utils::CallbackReturn
 {
+  RCLCPP_INFO(get_logger(), "Life cycle state transition: deactivating");
+
   publisher_->on_deactivate();
 
   return carma_ros2_utils::CallbackReturn::SUCCESS;
 }
 
-auto ExternalObjectListToDetectionListNode::on_cleanup(
+auto ExternalObjectListToDetectionListNode::handle_on_cleanup(
   const rclcpp_lifecycle::State & /* previous_state */) -> carma_ros2_utils::CallbackReturn
 {
+  RCLCPP_INFO(get_logger(), "Life cycle state transition: cleaning up");
+
   publisher_.reset();
 
   return carma_ros2_utils::CallbackReturn::SUCCESS;
 }
 
-auto ExternalObjectListToDetectionListNode::on_shutdown(
+auto ExternalObjectListToDetectionListNode::handle_on_shutdown(
   const rclcpp_lifecycle::State & /* previous_state */) -> carma_ros2_utils::CallbackReturn
 {
+  RCLCPP_INFO(get_logger(), "Life cycle state transition: shuting down");
+
   publisher_.reset();
 
   return carma_ros2_utils::CallbackReturn::SUCCESS;

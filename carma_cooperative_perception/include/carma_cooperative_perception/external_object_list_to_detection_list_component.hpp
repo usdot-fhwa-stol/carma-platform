@@ -44,19 +44,19 @@ class ExternalObjectListToDetectionListNode : public carma_ros2_utils::CarmaLife
 public:
   explicit ExternalObjectListToDetectionListNode(const rclcpp::NodeOptions & options);
 
-  auto on_configure(const rclcpp_lifecycle::State & /* previous_state */)
+  auto handle_on_configure(const rclcpp_lifecycle::State & /* previous_state */)
     -> carma_ros2_utils::CallbackReturn override;
 
-  auto on_activate(const rclcpp_lifecycle::State & /* previous_state */)
+  auto handle_on_activate(const rclcpp_lifecycle::State & /* previous_state */)
     -> carma_ros2_utils::CallbackReturn override;
 
-  auto on_deactivate(const rclcpp_lifecycle::State & /* previous_state */)
+  auto handle_on_deactivate(const rclcpp_lifecycle::State & /* previous_state */)
     -> carma_ros2_utils::CallbackReturn override;
 
-  auto on_cleanup(const rclcpp_lifecycle::State & /* previous_state */)
+  auto handle_on_cleanup(const rclcpp_lifecycle::State & /* previous_state */)
     -> carma_ros2_utils::CallbackReturn override;
 
-  auto on_shutdown(const rclcpp_lifecycle::State & /* previous_state */)
+  auto handle_on_shutdown(const rclcpp_lifecycle::State & /* previous_state */)
     -> carma_ros2_utils::CallbackReturn override;
 
   auto publish_as_detection_list(const input_msg_type & msg) const -> void;
