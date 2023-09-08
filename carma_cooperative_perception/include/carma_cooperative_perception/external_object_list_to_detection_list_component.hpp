@@ -64,12 +64,12 @@ public:
   auto update_georeference(const std_msgs::msg::String & msg) noexcept -> void;
 
 private:
-  rclcpp_lifecycle::LifecyclePublisher<output_msg_type>::SharedPtr publisher_;
-  rclcpp::Subscription<input_msg_type>::SharedPtr external_objects_subscription_;
-  rclcpp::Subscription<std_msgs::msg::String>::SharedPtr georeference_subscription_;
-  std::string map_georeference_;
-  MotionModelMapping motion_model_mapping_;
-  OnSetParametersCallbackHandle::SharedPtr on_set_parameters_callback_;
+  rclcpp_lifecycle::LifecyclePublisher<output_msg_type>::SharedPtr publisher_{nullptr};
+  rclcpp::Subscription<input_msg_type>::SharedPtr external_objects_subscription_{nullptr};
+  rclcpp::Subscription<std_msgs::msg::String>::SharedPtr georeference_subscription_{nullptr};
+  std::string map_georeference_{""};
+  MotionModelMapping motion_model_mapping_{};
+  OnSetParametersCallbackHandle::SharedPtr on_set_parameters_callback_{nullptr};
 };
 
 }  // namespace carma_cooperative_perception

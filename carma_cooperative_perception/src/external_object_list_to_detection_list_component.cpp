@@ -73,11 +73,19 @@ auto transform_from_map_to_utm(
 
 ExternalObjectListToDetectionListNode::ExternalObjectListToDetectionListNode(
   const rclcpp::NodeOptions & options)
-: CarmaLifecycleNode{options},
-  publisher_{nullptr},
-  external_objects_subscription_{create_subscription<input_msg_type>(
-    "input/external_objects", 1,
-    [this](input_msg_shared_pointer msg_ptr) {
+: CarmaLifecycleNode{options}
+{
+}
+
+auto ExternalObjectListToDetectionListNode::handle_on_configure(
+  const rclcpp_lifecycle::State & /* previous_state */) -> carma_ros2_utils::CallbackReturn
+{
+  RCLCPP_INFO(get_logger(), "Life cycle state transition: configuring");
+
+  publisher_ = create_publisher<output_msg_type>("output/detections", 1);
+
+  external_objects_subscription_ = create_subscription<input_msg_type>(
+    "input/external_objects", 1, [this](input_msg_shared_pointer msg_ptr) {
       const auto current_state{this->get_current_state().label()};
 
       if (current_state == "active") {
@@ -89,8 +97,9 @@ ExternalObjectListToDetectionListNode::ExternalObjectListToDetectionListNode(
           "Current node state: '%s'",
           this->external_objects_subscription_->get_topic_name(), current_state.c_str());
       }
-    })},
-  georeference_subscription_{create_subscription<std_msgs::msg::String>(
+    });
+
+  georeference_subscription_ = create_subscription<std_msgs::msg::String>(
     "input/georeference", 1, [this](std_msgs::msg::String::SharedPtr msg_ptr) {
       const auto current_state{this->get_current_state().label()};
 
@@ -103,16 +112,7 @@ ExternalObjectListToDetectionListNode::ExternalObjectListToDetectionListNode(
           "Current node state: '%s'",
           this->georeference_subscription_->get_topic_name(), current_state.c_str());
       }
-    })}
-{
-}
-
-auto ExternalObjectListToDetectionListNode::handle_on_configure(
-  const rclcpp_lifecycle::State & /* previous_state */) -> carma_ros2_utils::CallbackReturn
-{
-  RCLCPP_INFO(get_logger(), "Life cycle state transition: configuring");
-
-  publisher_ = create_publisher<output_msg_type>("output/detections", 1);
+    });
 
   declare_parameter(
     "small_vehicle_motion_model",
@@ -193,6 +193,8 @@ auto ExternalObjectListToDetectionListNode::handle_on_cleanup(
   RCLCPP_INFO(get_logger(), "Life cycle state transition: cleaning up");
 
   publisher_.reset();
+  external_objects_subscription_.reset();
+  georeference_subscription_.reset();
 
   return carma_ros2_utils::CallbackReturn::SUCCESS;
 }
@@ -203,6 +205,8 @@ auto ExternalObjectListToDetectionListNode::handle_on_shutdown(
   RCLCPP_INFO(get_logger(), "Life cycle state transition: shuting down");
 
   publisher_.reset();
+  external_objects_subscription_.reset();
+  georeference_subscription_.reset();
 
   return carma_ros2_utils::CallbackReturn::SUCCESS;
 }
