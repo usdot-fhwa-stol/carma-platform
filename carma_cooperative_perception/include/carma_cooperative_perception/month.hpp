@@ -45,13 +45,13 @@ public:
   */
   constexpr auto operator++() noexcept -> Month &
   {
-    constexpr auto jav_value{1U};
+    constexpr auto jan_value{1U};
     constexpr auto dec_value{12U};
 
     month_value_ = (month_value_ + 1) % (dec_value + 1);
 
     if (month_value_ == 0) {
-      month_value_ = jav_value;
+      month_value_ = jan_value;
     }
 
     return *this;

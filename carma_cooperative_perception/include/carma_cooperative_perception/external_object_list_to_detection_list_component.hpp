@@ -59,24 +59,9 @@ public:
   auto on_shutdown(const rclcpp_lifecycle::State & /* previous_state */)
     -> carma_ros2_utils::CallbackReturn override;
 
-  auto publish_as_detection_list(const input_msg_type & msg) const -> void
-  {
-    try {
-      const auto detection_list{transform_from_map_to_utm(
-        to_detection_list_msg(msg, motion_model_mapping_), map_georeference_)};
+  auto publish_as_detection_list(const input_msg_type & msg) const -> void;
 
-      publisher_->publish(detection_list);
-    } catch (const std::invalid_argument & e) {
-      RCLCPP_ERROR(
-        this->get_logger(), "Could not convert external object list to detection list: %s",
-        e.what());
-    }
-  }
-
-  auto update_proj_string(const std_msgs::msg::String & msg) noexcept -> void
-  {
-    map_georeference_ = msg.data;
-  }
+  auto update_georeference(const std_msgs::msg::String & msg) noexcept -> void;
 
 private:
   rclcpp_lifecycle::LifecyclePublisher<output_msg_type>::SharedPtr publisher_;

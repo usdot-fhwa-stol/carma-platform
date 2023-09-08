@@ -95,7 +95,7 @@ ExternalObjectListToDetectionListNode::ExternalObjectListToDetectionListNode(
       const auto current_state{this->get_current_state().label()};
 
       if (current_state == "active") {
-        update_proj_string(*msg_ptr);
+        update_georeference(*msg_ptr);
       } else {
         RCLCPP_WARN(
           this->get_logger(),
@@ -195,6 +195,26 @@ auto ExternalObjectListToDetectionListNode::on_shutdown(
   publisher_.reset();
 
   return carma_ros2_utils::CallbackReturn::SUCCESS;
+}
+
+auto ExternalObjectListToDetectionListNode::publish_as_detection_list(
+  const input_msg_type & msg) const -> void
+{
+  try {
+    const auto detection_list{transform_from_map_to_utm(
+      to_detection_list_msg(msg, motion_model_mapping_), map_georeference_)};
+
+    publisher_->publish(detection_list);
+  } catch (const std::invalid_argument & e) {
+    RCLCPP_ERROR(
+      this->get_logger(), "Could not convert external object list to detection list: %s", e.what());
+  }
+}
+
+auto ExternalObjectListToDetectionListNode::update_georeference(
+  const std_msgs::msg::String & msg) noexcept -> void
+{
+  map_georeference_ = msg.data;
 }
 
 }  // namespace carma_cooperative_perception
