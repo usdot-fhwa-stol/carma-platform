@@ -68,8 +68,8 @@ if(BUILD_TESTING)
   ament_lint_auto_find_test_dependencies() # This populates the ${${PROJECT_NAME}_FOUND_TEST_DEPENDS} variable
 
   ament_add_gtest(test_roadway_objects
-    test/TestRoadwayObjectsWorker.cpp
-    test/TestHelpers.hpp
+    test/test_roadway_objects_worker.cpp
+    test/test_helpers.hpp
   )
 
   ament_target_dependencies(test_roadway_objects ${${PROJECT_NAME}_FOUND_TEST_DEPENDS})

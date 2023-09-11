@@ -16,7 +16,7 @@
 
 #include <roadway_objects/roadway_objects_worker.hpp>
 #include <gtest/gtest.h>
-#include "TestHelpers.hpp"
+#include "test_helpers.hpp"
 
 namespace roadway_objects
 {
