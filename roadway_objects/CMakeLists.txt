@@ -38,15 +38,15 @@ include_directories(
 # Build
 
 ament_auto_add_library(${worker_lib} SHARED
-        src/roadway_objects_worker.cpp
+  src/roadway_objects_worker.cpp
 )
 
 ament_auto_add_library(${node_lib} SHARED
-        src/roadway_objects_component.cpp
+  src/roadway_objects_component.cpp
 )
 
 ament_auto_add_executable(${node_exec}
-        src/roadway_objects_node.cpp
+  src/roadway_objects_node.cpp
 )
 
 # Register component
@@ -55,11 +55,11 @@ rclcpp_components_register_nodes(${node_lib} "roadway_objects::RoadwayObjectsNod
 # All locally created targets will need to be manually linked
 # ament auto will handle linking of external dependencies
 target_link_libraries(${node_lib}
-        ${worker_lib}
+  ${worker_lib}
 )
 
 target_link_libraries(${node_exec}
-        ${node_lib}
+  ${node_lib}
 )
 
 # Testing
@@ -69,8 +69,8 @@ if(BUILD_TESTING)
   ament_lint_auto_find_test_dependencies() # This populates the ${${PROJECT_NAME}_FOUND_TEST_DEPENDS} variable
 
   ament_add_gtest(test_roadway_objects
-        test/TestRoadwayObjectsWorker.cpp
-        test/TestHelpers.hpp
+    test/TestRoadwayObjectsWorker.cpp
+    test/TestHelpers.hpp
   )
 
   ament_target_dependencies(test_roadway_objects ${${PROJECT_NAME}_FOUND_TEST_DEPENDS})
@@ -81,5 +81,5 @@ endif()
 
 # Install
 ament_auto_package(
-        INSTALL_TO_SHARE launch
+  INSTALL_TO_SHARE launch
 )
