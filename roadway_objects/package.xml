@@ -40,6 +40,7 @@ limitations under the License.
   <depend>tf2_geometry_msgs</depend>
 
   <test_depend>ament_lint_auto</test_depend>
+  <test_depend>ament_cmake_clang_format</test_depend>
   <test_depend>ament_cmake_gtest</test_depend>
 
   <exec_depend>launch</exec_depend>
