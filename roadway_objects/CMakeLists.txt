@@ -47,58 +47,35 @@ carma_package()
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_C_STANDARD 11)
 
-# Name build targets
-set(worker_lib roadway_objects_worker_lib)
-set(node_exec roadway_objects_node_exec)
-set(node_lib roadway_objects_node)
-
-# Includes
-include_directories(
-  include
-)
-
-# Build
-
-ament_auto_add_library(${worker_lib} SHARED
+# ament_auto will automatically add include files from include/roadway_objects
+# and link necessary libraries
+ament_auto_add_library(roadway_objects SHARED
+  src/roadway_objects_component.cpp
   src/roadway_objects_worker.cpp
 )
 
-ament_auto_add_library(${node_lib} SHARED
-  src/roadway_objects_component.cpp
-)
-
-ament_auto_add_executable(${node_exec}
+ament_auto_add_executable(roadway_objects_node
   src/roadway_objects_node.cpp
 )
 
-# Register component
-rclcpp_components_register_nodes(${node_lib} "roadway_objects::RoadwayObjectsNode")
-
-# All locally created targets will need to be manually linked
-# ament auto will handle linking of external dependencies
-target_link_libraries(${node_lib}
-  ${worker_lib}
+rclcpp_components_register_nodes(roadway_objects
+  "roadway_objects::RoadwayObjectsNode"
 )
 
-target_link_libraries(${node_exec}
-  ${node_lib}
-)
-
-# Testing
 if(roadway_objects_BUILD_TESTS)
+  enable_testing()
 
   ament_add_gtest(test_roadway_objects
     test/test_roadway_objects_worker.cpp
     test/test_helpers.hpp
   )
 
-  ament_target_dependencies(test_roadway_objects ${${PROJECT_NAME}_FOUND_TEST_DEPENDS})
-
-  target_link_libraries(test_roadway_objects ${node_lib})
+  target_link_libraries(test_roadway_objects
+    roadway_objects
+  )
 
 endif()
 
-# Install
 ament_auto_package(
   INSTALL_TO_SHARE launch
 )
