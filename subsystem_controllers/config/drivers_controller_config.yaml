@@ -12,12 +12,27 @@
     subsystem_namespace: /hardware_interface
 
     # Required subsystem controller nodes for the overall system to be functional and will have their lifecycle's managed
-    # TODO Move this parameter to carma config in some capacity
     required_subsystem_nodes: ['']
 
     # List of nodes which will not be directly managed by this subsystem controller 
     # but which are required to be operational for the subsystem to function
     unmanaged_required_nodes: ['']
 
+    # List of nodes in the namespace which will not be managed by this subsystem controller
+    # Specifically includes the lidar and gps nodes which are handled in other subsystem controllers
+    excluded_namespace_nodes : ['']
+    
+    # List of ros1 controller drivers (node name) to consider required and who's failure shall result in automation abort
+    ros1_required_drivers: ['']
+
+    # List of ros1 camera drivers (node name) to consider required and who's failure shall result in automation abort.
+    ros1_camera_drivers: ['']
+    
     # Boolean: If this flag is true then all nodes under subsystem_namespace are treated as required in addition to any nodes in required_subsystem_nodes
     full_subsystem_required: false
+
+    # Int: The time allocated for system startup in seconds
+    startup_duration: 30
+
+    # Double: The timeout threshold for essential drivers in ms
+    required_driver_timeout: 3000.0

@@ -1,7 +1,7 @@
 #pragma once
 
 /*
- * Copyright (C) 2019-2021 LEIDOS.
+ * Copyright (C) 2023 LEIDOS.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -18,18 +18,27 @@
 
 #include <string>
 
-namespace health_monitor
+namespace subsystem_controllers
 {
+    /**
+     * \brief An entry represents a driver details for the purposes of tracking
+     */ 
     struct Entry
     {
-        /* data */
-        bool available_;
-        bool active_;
+        //! Availability flag of a driver
+        bool available_ = false;
+        //! Fully specified node name of a driver
         std::string name_;
+        //! The timestamp at which the entry was last updated
         long timestamp_;
-        uint8_t type_;
-        std::string capability_;
 
-        Entry(bool available, bool active, const std::string& name, long timestamp, uint8_t type, const std::string& capability);
+        /**
+         * \brief All fields constructor
+         */ 
+        Entry(bool available, const std::string& name, long timestamp)
+            : available_(available), name_(name), timestamp_(timestamp) {}
+        
+
+        Entry() = default;
     };
 }

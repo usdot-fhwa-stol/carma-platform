@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2019-2021 LEIDOS.
+ * Copyright (C) 2023 LEIDOS.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -14,18 +14,17 @@
  * the License.
  */
 
-#include "entry_manager.h"
+#include "subsystem_controllers/drivers_controller/entry_manager.hpp"
 #include <iostream>
 
-namespace health_monitor
+namespace subsystem_controllers
 {
-
     EntryManager::EntryManager() {}
 
-    EntryManager::EntryManager(std::vector<std::string> required_entries):required_entries_(required_entries) {} 
-    
-    EntryManager::EntryManager(std::vector<std::string> required_entries,std::vector<std::string> lidar_gps_entries, 
-    std::vector<std::string> camera_entries) :required_entries_(required_entries),lidar_gps_entries_(lidar_gps_entries), camera_entries_(camera_entries){}
+    EntryManager::EntryManager(std::vector<std::string> required_entries):required_entries_(required_entries) {}
+
+    EntryManager::EntryManager(std::vector<std::string> required_entries, std::vector<std::string> camera_entries) 
+                :required_entries_(required_entries), camera_entries_(camera_entries){}
 
     void EntryManager::update_entry(const Entry& entry)
     {
@@ -33,8 +32,7 @@ namespace health_monitor
         {
             if(i->name_.compare(entry.name_) == 0)
             {
-                // name and type of the entry wont change
-                i->active_ = entry.active_;
+                // name entry wont change
                 i->available_ = entry.available_;
                 i->timestamp_ = entry.timestamp_;
                 return;
@@ -42,7 +40,6 @@ namespace health_monitor
         }
         entry_list_.push_back(entry);
     }
-
 
     std::vector<Entry> EntryManager::get_entries() const
     {
@@ -75,7 +72,7 @@ namespace health_monitor
         return boost::none;
     }
 
-    bool EntryManager::is_entry_required(const std::string&  name) const
+    bool EntryManager::is_entry_required(const std::string& name) const
     {
         for(auto i = required_entries_.begin(); i < required_entries_.end(); ++i)
         {
@@ -85,21 +82,6 @@ namespace health_monitor
             }
         }
         return false;
-    }
-
-    int EntryManager::is_lidar_gps_entry_required(const std::string& name) const
-    {
-        
-        for(int i=0;i<lidar_gps_entries_.size();i++)
-        {
-            if(lidar_gps_entries_[i].compare(name) == 0)
-            {
-                return i;
-            }
-
-        }
-
-        return -1;
     }
 
     int EntryManager::is_camera_entry_required(const std::string& name) const
@@ -115,5 +97,6 @@ namespace health_monitor
         // default like above?
         return -1;
     }
+
 
 }

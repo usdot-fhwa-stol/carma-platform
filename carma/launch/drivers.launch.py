@@ -84,7 +84,7 @@ def generate_launch_description():
         package='subsystem_controllers',
         name='drivers_controller',
         executable='drivers_controller',
-        parameters=[ subsystem_controller_default_param_file, subsystem_controller_param_file  ], 
+        parameters=[ subsystem_controller_default_param_file, subsystem_controller_param_file ],
         on_exit= Shutdown(), # Mark the subsystem controller as required
         arguments=['--ros-args', '--log-level', GetLogLevel('subsystem_controllers', env_log_levels)]
     )
