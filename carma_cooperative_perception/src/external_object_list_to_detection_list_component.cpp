@@ -75,13 +75,13 @@ ExternalObjectListToDetectionListNode::ExternalObjectListToDetectionListNode(
   const rclcpp::NodeOptions & options)
 : CarmaLifecycleNode{options}
 {
+  lifecycle_publishers_.push_back(publisher_);
+  param_callback_handles_.push_back(on_set_parameters_callback_);
 }
 
 auto ExternalObjectListToDetectionListNode::handle_on_configure(
   const rclcpp_lifecycle::State & /* previous_state */) -> carma_ros2_utils::CallbackReturn
 {
-  RCLCPP_INFO(get_logger(), "Life cycle state transition: configuring");
-
   publisher_ = create_publisher<output_msg_type>("output/detections", 1);
 
   external_objects_subscription_ = create_subscription<input_msg_type>(
@@ -167,32 +167,10 @@ auto ExternalObjectListToDetectionListNode::handle_on_configure(
   return carma_ros2_utils::CallbackReturn::SUCCESS;
 }
 
-auto ExternalObjectListToDetectionListNode::handle_on_activate(
-  const rclcpp_lifecycle::State & /* previous_state */) -> carma_ros2_utils::CallbackReturn
-{
-  RCLCPP_INFO(get_logger(), "Life cycle state transition: activating");
-
-  publisher_->on_activate();
-
-  return carma_ros2_utils::CallbackReturn::SUCCESS;
-}
-
-auto ExternalObjectListToDetectionListNode::handle_on_deactivate(
-  const rclcpp_lifecycle::State & /* previous_state */) -> carma_ros2_utils::CallbackReturn
-{
-  RCLCPP_INFO(get_logger(), "Life cycle state transition: deactivating");
-
-  publisher_->on_deactivate();
-
-  return carma_ros2_utils::CallbackReturn::SUCCESS;
-}
-
 auto ExternalObjectListToDetectionListNode::handle_on_cleanup(
   const rclcpp_lifecycle::State & /* previous_state */) -> carma_ros2_utils::CallbackReturn
 {
-  RCLCPP_INFO(get_logger(), "Life cycle state transition: cleaning up");
-
-  publisher_.reset();
+  // CarmaLifecycleNode does not handle subscriber pointer reseting for us
   external_objects_subscription_.reset();
   georeference_subscription_.reset();
 
@@ -202,9 +180,7 @@ auto ExternalObjectListToDetectionListNode::handle_on_cleanup(
 auto ExternalObjectListToDetectionListNode::handle_on_shutdown(
   const rclcpp_lifecycle::State & /* previous_state */) -> carma_ros2_utils::CallbackReturn
 {
-  RCLCPP_INFO(get_logger(), "Life cycle state transition: shuting down");
-
-  publisher_.reset();
+  // CarmaLifecycleNode does not handle subscriber pointer reseting for us
   external_objects_subscription_.reset();
   georeference_subscription_.reset();
 
