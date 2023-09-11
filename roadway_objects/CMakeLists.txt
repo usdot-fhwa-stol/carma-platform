@@ -42,11 +42,11 @@ ament_auto_add_library(${worker_lib} SHARED
 )
 
 ament_auto_add_library(${node_lib} SHARED
-        src/roadway_objects_node.cpp
+        src/roadway_objects_component.cpp
 )
 
-ament_auto_add_executable(${node_exec} 
-        src/main.cpp 
+ament_auto_add_executable(${node_exec}
+        src/roadway_objects_node.cpp
 )
 
 # Register component
@@ -63,12 +63,12 @@ target_link_libraries(${node_exec}
 )
 
 # Testing
-if(BUILD_TESTING)  
+if(BUILD_TESTING)
 
   find_package(ament_lint_auto REQUIRED)
   ament_lint_auto_find_test_dependencies() # This populates the ${${PROJECT_NAME}_FOUND_TEST_DEPENDS} variable
 
-  ament_add_gtest(test_roadway_objects 
+  ament_add_gtest(test_roadway_objects
         test/TestRoadwayObjectsWorker.cpp
         test/TestHelpers.hpp
   )

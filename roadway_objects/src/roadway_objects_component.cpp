@@ -13,7 +13,7 @@
  * License for the specific language governing permissions and limitations under
  * the License.
  */
-#include "roadway_objects/roadway_objects_node.hpp"
+#include "roadway_objects/roadway_objects_component.hpp"
 
 namespace roadway_objects
 {
