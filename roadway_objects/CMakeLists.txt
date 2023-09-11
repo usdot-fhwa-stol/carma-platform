@@ -12,17 +12,40 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-cmake_minimum_required(VERSION 3.5)
+cmake_minimum_required(VERSION 3.16)
 project(roadway_objects)
 
-# Declare carma package and check ROS version
+# CARMA builds packages in an environment with both ROS 1 and ROS 2 installed.
+# This check gracefully skips the current package if the sourced ROS environment
+# is not the specified version. This call must come before any other ROS
+# dependencies becasue ROS 1 does not have some of the required packages.
 find_package(carma_cmake_common REQUIRED)
 carma_check_ros_version(2)
+
+# Added outside of `dependencies.cmake` because ament sets some variables
+# (e.g., BUILD_TESTING) that affect the configuration options for the rest of
+# the package. Putting the command call here allows us to put all project
+# options together in separate CMake module then query those options in
+# `dependencies.cmake`.
+find_package(ament_cmake_auto REQUIRED)
+
+include(options.cmake)
+include(dependencies.cmake)
+
+# The generated compilation database is helpful with code completion in IDEs
+set(CMAKE_EXPORT_COMPILE_COMMANDS ${roadway_objects_EXPORT_COMPILE_COMMANDS})
+
+# This prevents `colcon` from tyring to build the CMake project's binary
+# directory. This is useful in case we want to build the project outside of
+# `colcon` but still keep it in a ROS repository.
+file(TOUCH ${PROJECT_BINARY_DIR}/COLCON_IGNORE)
+
+# Configures CARMA package default settings
 carma_package()
 
-## Find dependencies using ament auto
-find_package(ament_cmake_auto REQUIRED)
-ament_auto_find_build_dependencies()
+# C17 CMake support added in CMake 3.21
+set(CMAKE_CXX_STANDARD 17)
+set(CMAKE_C_STANDARD 11)
 
 # Name build targets
 set(worker_lib roadway_objects_worker_lib)
@@ -62,10 +85,7 @@ target_link_libraries(${node_exec}
 )
 
 # Testing
-if(BUILD_TESTING)
-
-  find_package(ament_lint_auto REQUIRED)
-  ament_lint_auto_find_test_dependencies() # This populates the ${${PROJECT_NAME}_FOUND_TEST_DEPENDS} variable
+if(roadway_objects_BUILD_TESTS)
 
   ament_add_gtest(test_roadway_objects
     test/test_roadway_objects_worker.cpp
