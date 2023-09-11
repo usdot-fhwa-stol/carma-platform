@@ -1,27 +1,28 @@
-/*
- * Copyright 2023 Leidos
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *     http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2023 Leidos
+//
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+//
+//     http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
 
-#ifndef ROADWAY_OBJECTS__TEST_HELPERS_HPP_
-#define ROADWAY_OBJECTS__TEST_HELPERS_HPP_
+#ifndef TEST_HELPERS_HPP_
+#define TEST_HELPERS_HPP_
 
 #include <lanelet2_core/Attribute.h>
 #include <lanelet2_core/geometry/LineString.h>
 #include <lanelet2_traffic_rules/TrafficRulesFactory.h>
 #include <carma_wm/CARMAWorldModel.hpp>
+
 #include <iostream>
+#include <memory>
+#include <vector>
 
 /**
  * Helper file containing inline functions used to quickly build lanelet objects in unit tests
@@ -83,4 +84,4 @@ inline lanelet::Lanelet getLanelet(
 }
 }  // namespace carma_wm
 
-#endif  // ROADWAY_OBJECTS__TEST_HELPERS_HPP_
+#endif  // TEST_HELPERS_HPP_
