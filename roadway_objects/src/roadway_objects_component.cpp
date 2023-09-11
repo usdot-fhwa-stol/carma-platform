@@ -18,39 +18,47 @@
 
 namespace roadway_objects
 {
-  namespace std_ph = std::placeholders;
+namespace std_ph = std::placeholders;
 
-  RoadwayObjectsNode::RoadwayObjectsNode(const rclcpp::NodeOptions &options)
-      : carma_ros2_utils::CarmaLifecycleNode(options)
-  {
-  }
+RoadwayObjectsNode::RoadwayObjectsNode(const rclcpp::NodeOptions & options)
+: carma_ros2_utils::CarmaLifecycleNode(options)
+{
+}
 
-  carma_ros2_utils::CallbackReturn RoadwayObjectsNode::handle_on_configure(const rclcpp_lifecycle::State &)
-  {
-    RCLCPP_INFO_STREAM(get_logger(), "RoadwayObjectsNode trying to configure");
+carma_ros2_utils::CallbackReturn RoadwayObjectsNode::handle_on_configure(
+  const rclcpp_lifecycle::State &)
+{
+  RCLCPP_INFO_STREAM(get_logger(), "RoadwayObjectsNode trying to configure");
 
-    wm_listener_ = std::make_shared<carma_wm::WMListener>(get_node_base_interface(), get_node_logging_interface(),
-                    get_node_topics_interface(), get_node_parameters_interface());
+  wm_listener_ = std::make_shared<carma_wm::WMListener>(
+    get_node_base_interface(), get_node_logging_interface(), get_node_topics_interface(),
+    get_node_parameters_interface());
 
-    object_worker_ = std::make_shared<RoadwayObjectsWorker>(wm_listener_->getWorldModel(), std::bind(&RoadwayObjectsNode::publishObstacles, this, std_ph::_1), get_node_logging_interface());
+  object_worker_ = std::make_shared<RoadwayObjectsWorker>(
+    wm_listener_->getWorldModel(),
+    std::bind(&RoadwayObjectsNode::publishObstacles, this, std_ph::_1),
+    get_node_logging_interface());
 
-    // Setup publishers
-    roadway_obs_pub_ = create_publisher<carma_perception_msgs::msg::RoadwayObstacleList>("roadway_objects", 10);
+  // Setup publishers
+  roadway_obs_pub_ =
+    create_publisher<carma_perception_msgs::msg::RoadwayObstacleList>("roadway_objects", 10);
 
-    // Setup subscribers
-    external_objects_sub_ = create_subscription<carma_perception_msgs::msg::ExternalObjectList>("external_objects", 10,
-                                                              std::bind(&RoadwayObjectsWorker::externalObjectsCallback, object_worker_.get(), std_ph::_1));
+  // Setup subscribers
+  external_objects_sub_ = create_subscription<carma_perception_msgs::msg::ExternalObjectList>(
+    "external_objects", 10,
+    std::bind(&RoadwayObjectsWorker::externalObjectsCallback, object_worker_.get(), std_ph::_1));
 
-    // Return success if everthing initialized successfully
-    return CallbackReturn::SUCCESS;
-  }
+  // Return success if everthing initialized successfully
+  return CallbackReturn::SUCCESS;
+}
 
-  void RoadwayObjectsNode::publishObstacles(const carma_perception_msgs::msg::RoadwayObstacleList& msg)
-  {
-    roadway_obs_pub_->publish(msg);
-  }
+void RoadwayObjectsNode::publishObstacles(
+  const carma_perception_msgs::msg::RoadwayObstacleList & msg)
+{
+  roadway_obs_pub_->publish(msg);
+}
 
-} // roadway_objects
+}  // namespace roadway_objects
 
 #include "rclcpp_components/register_node_macro.hpp"
 

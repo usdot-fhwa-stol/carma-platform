@@ -18,33 +18,40 @@
 
 namespace roadway_objects
 {
-RoadwayObjectsWorker::RoadwayObjectsWorker(carma_wm::WorldModelConstPtr wm, const PublishObstaclesCallback& obj_pub, rclcpp::node_interfaces::NodeLoggingInterface::SharedPtr logger)
-  : obj_pub_(obj_pub), wm_(wm), logger_(logger)
+RoadwayObjectsWorker::RoadwayObjectsWorker(
+  carma_wm::WorldModelConstPtr wm, const PublishObstaclesCallback & obj_pub,
+  rclcpp::node_interfaces::NodeLoggingInterface::SharedPtr logger)
+: obj_pub_(obj_pub), wm_(wm), logger_(logger)
 {
 }
 
-void RoadwayObjectsWorker::externalObjectsCallback(const carma_perception_msgs::msg::ExternalObjectList::UniquePtr obj_array)
+void RoadwayObjectsWorker::externalObjectsCallback(
+  const carma_perception_msgs::msg::ExternalObjectList::UniquePtr obj_array)
 {
   carma_perception_msgs::msg::RoadwayObstacleList obstacle_list;
   auto map = wm_->getMap();
-  if (!map)
-  {
-    RCLCPP_WARN_STREAM(logger_->get_logger(), "roadway_objects could not process external objects as no semantic map was available");
+  if (!map) {
+    RCLCPP_WARN_STREAM(
+      logger_->get_logger(),
+      "roadway_objects could not process external objects as no semantic map was available");
     return;
   }
 
-  if (map->laneletLayer.size() == 0)
-  {
-    RCLCPP_WARN_STREAM(logger_->get_logger(), "roadway_objects could not process external objects as the semantic map does not contain any lanelets");
+  if (map->laneletLayer.size() == 0) {
+    RCLCPP_WARN_STREAM(
+      logger_->get_logger(),
+      "roadway_objects could not process external objects as the semantic map does not contain any "
+      "lanelets");
     return;
   }
 
-  for (auto object : obj_array->objects)
-  {
-    lanelet::Optional<carma_perception_msgs::msg::RoadwayObstacle> obs = wm_->toRoadwayObstacle(object);
-    if (!obs)
-    {
-      RCLCPP_DEBUG_STREAM(logger_->get_logger(), "roadway_objects dropping detected object with id: " << object.id << " as it is off the road.");
+  for (auto object : obj_array->objects) {
+    lanelet::Optional<carma_perception_msgs::msg::RoadwayObstacle> obs =
+      wm_->toRoadwayObstacle(object);
+    if (!obs) {
+      RCLCPP_DEBUG_STREAM(
+        logger_->get_logger(), "roadway_objects dropping detected object with id: "
+                                 << object.id << " as it is off the road.");
       continue;
     }
 
@@ -52,6 +59,5 @@ void RoadwayObjectsWorker::externalObjectsCallback(const carma_perception_msgs::
   }
 
   obj_pub_(obstacle_list);
-
 }
-}  // namespace objects
+}  // namespace roadway_objects

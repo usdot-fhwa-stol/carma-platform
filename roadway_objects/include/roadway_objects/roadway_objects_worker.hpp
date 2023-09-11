@@ -17,32 +17,35 @@
 #ifndef ROADWAY_OBJECTS__ROADWAY_OBJECTS_WORKER_HPP_
 #define ROADWAY_OBJECTS__ROADWAY_OBJECTS_WORKER_HPP_
 
-#include <rclcpp/rclcpp.hpp>
-#include <carma_perception_msgs/msg/external_object.hpp>
-#include <carma_perception_msgs/msg/external_object_list.hpp>
-#include <carma_wm/WorldModel.hpp>
-#include <carma_perception_msgs/msg/roadway_obstacle_list.hpp>
-#include <carma_perception_msgs/msg/roadway_obstacle.hpp>
 #include <lanelet2_core/LaneletMap.h>
 #include <lanelet2_core/primitives/Lanelet.h>
 #include <lanelet2_core/utility/Optional.h>
-#include <boost/geometry.hpp>
-#include <boost/geometry/geometries/polygon.hpp>
 #include <tf2/LinearMath/Transform.h>
 #include <tf2_geometry_msgs/tf2_geometry_msgs.h>
+#include <boost/geometry.hpp>
+#include <boost/geometry/geometries/polygon.hpp>
+#include <carma_perception_msgs/msg/external_object.hpp>
+#include <carma_perception_msgs/msg/external_object_list.hpp>
+#include <carma_perception_msgs/msg/roadway_obstacle.hpp>
+#include <carma_perception_msgs/msg/roadway_obstacle_list.hpp>
+#include <carma_wm/WorldModel.hpp>
 #include <functional>
+#include <rclcpp/rclcpp.hpp>
 
 namespace roadway_objects
 {
 class RoadwayObjectsWorker
 {
 public:
-  using PublishObstaclesCallback = std::function<void(const carma_perception_msgs::msg::RoadwayObstacleList&)>;
+  using PublishObstaclesCallback =
+    std::function<void(const carma_perception_msgs::msg::RoadwayObstacleList &)>;
 
   /*!
    * \brief Constructor
    */
-  RoadwayObjectsWorker(carma_wm::WorldModelConstPtr wm, const PublishObstaclesCallback& obj_pub, rclcpp::node_interfaces::NodeLoggingInterface::SharedPtr logger);
+  RoadwayObjectsWorker(
+    carma_wm::WorldModelConstPtr wm, const PublishObstaclesCallback & obj_pub,
+    rclcpp::node_interfaces::NodeLoggingInterface::SharedPtr logger);
 
   /*!
    * \brief Converts the provided ExternalObjectList to a RoadwayObstacleList and re-publishes it
@@ -62,4 +65,4 @@ private:
 
 }  // namespace roadway_objects
 
-#endif // ROADWAY_OBJECTS__ROADWAY_OBJECTS_WORKER_HPP_
+#endif  // ROADWAY_OBJECTS__ROADWAY_OBJECTS_WORKER_HPP_

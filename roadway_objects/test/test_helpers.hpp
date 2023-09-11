@@ -17,11 +17,11 @@
 #ifndef ROADWAY_OBJECTS__TEST_HELPERS_HPP_
 #define ROADWAY_OBJECTS__TEST_HELPERS_HPP_
 
-#include <iostream>
-#include <carma_wm/CARMAWorldModel.hpp>
+#include <lanelet2_core/Attribute.h>
 #include <lanelet2_core/geometry/LineString.h>
 #include <lanelet2_traffic_rules/TrafficRulesFactory.h>
-#include <lanelet2_core/Attribute.h>
+#include <carma_wm/CARMAWorldModel.hpp>
+#include <iostream>
 
 /**
  * Helper file containing inline functions used to quickly build lanelet objects in unit tests
@@ -45,9 +45,10 @@ inline lanelet::BasicPoint2d getBasicPoint(double x, double y)
 }
 
 // Defaults to double solid line on left and double solid line on right
-inline lanelet::Lanelet getLanelet(lanelet::LineString3d& left_ls, lanelet::LineString3d& right_ls,
-                                   const lanelet::Attribute& left_sub_type = lanelet::AttributeValueString::SolidSolid,
-                                   const lanelet::Attribute& right_sub_type = lanelet::AttributeValueString::Solid)
+inline lanelet::Lanelet getLanelet(
+  lanelet::LineString3d & left_ls, lanelet::LineString3d & right_ls,
+  const lanelet::Attribute & left_sub_type = lanelet::AttributeValueString::SolidSolid,
+  const lanelet::Attribute & right_sub_type = lanelet::AttributeValueString::Solid)
 {
   left_ls.attributes()[lanelet::AttributeName::Type] = lanelet::AttributeValueString::LineThin;
   left_ls.attributes()[lanelet::AttributeName::Subtype] = left_sub_type;
@@ -69,9 +70,10 @@ inline lanelet::Lanelet getLanelet(lanelet::LineString3d& left_ls, lanelet::Line
   return ll;
 }
 
-inline lanelet::Lanelet getLanelet(std::vector<lanelet::Point3d> left, std::vector<lanelet::Point3d> right,
-                                   const lanelet::Attribute& left_sub_type = lanelet::AttributeValueString::SolidSolid,
-                                   const lanelet::Attribute& right_sub_type = lanelet::AttributeValueString::Solid)
+inline lanelet::Lanelet getLanelet(
+  std::vector<lanelet::Point3d> left, std::vector<lanelet::Point3d> right,
+  const lanelet::Attribute & left_sub_type = lanelet::AttributeValueString::SolidSolid,
+  const lanelet::Attribute & right_sub_type = lanelet::AttributeValueString::Solid)
 {
   lanelet::LineString3d left_ls(lanelet::utils::getId(), left);
 
@@ -81,4 +83,4 @@ inline lanelet::Lanelet getLanelet(std::vector<lanelet::Point3d> left, std::vect
 }
 }  // namespace carma_wm
 
-#endif // ROADWAY_OBJECTS__TEST_HELPERS_HPP_
+#endif  // ROADWAY_OBJECTS__TEST_HELPERS_HPP_

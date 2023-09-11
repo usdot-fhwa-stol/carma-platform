@@ -17,7 +17,7 @@
 #include <rclcpp/rclcpp.hpp>
 #include "roadway_objects/roadway_objects_component.hpp"
 
-int main(int argc, char **argv)
+int main(int argc, char ** argv)
 {
   rclcpp::init(argc, argv);
 
