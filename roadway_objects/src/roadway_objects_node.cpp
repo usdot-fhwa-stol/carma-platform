@@ -15,14 +15,14 @@
  */
 
 #include <rclcpp/rclcpp.hpp>
-#include "roadway_objects/roadway_objects_node.hpp"
+#include "roadway_objects/roadway_objects_component.hpp"
 
-int main(int argc, char **argv) 
+int main(int argc, char **argv)
 {
   rclcpp::init(argc, argv);
 
   auto node = std::make_shared<roadway_objects::RoadwayObjectsNode>(rclcpp::NodeOptions());
-  
+
   rclcpp::executors::MultiThreadedExecutor executor;
   executor.add_node(node->get_node_base_interface());
   executor.spin();
