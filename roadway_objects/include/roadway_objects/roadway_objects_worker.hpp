@@ -14,7 +14,8 @@
  * limitations under the License.
  */
 
-#pragma once
+#ifndef ROADWAY_OBJECTS__ROADWAY_OBJECTS_WORKER_HPP_
+#define ROADWAY_OBJECTS__ROADWAY_OBJECTS_WORKER_HPP_
 
 #include <rclcpp/rclcpp.hpp>
 #include <carma_perception_msgs/msg/external_object.hpp>
@@ -60,3 +61,5 @@ private:
 };
 
 }  // namespace roadway_objects
+
+#endif // ROADWAY_OBJECTS__ROADWAY_OBJECTS_WORKER_HPP_
