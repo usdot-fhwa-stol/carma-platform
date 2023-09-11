@@ -33,7 +33,7 @@ namespace roadway_objects
   /**
    * \class RoadwayObjectsNode
    * \brief The class responsible for converting detected objects into objects that are mapped onto specific lanelets.
-   * 
+   *
    */
   class RoadwayObjectsNode : public carma_ros2_utils::CarmaLifecycleNode
   {
@@ -54,7 +54,7 @@ namespace roadway_objects
 
   public:
     /**
-     * \brief Node constructor 
+     * \brief Node constructor
      */
     explicit RoadwayObjectsNode(const rclcpp::NodeOptions &);
 

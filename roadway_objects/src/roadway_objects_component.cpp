@@ -28,11 +28,11 @@ namespace roadway_objects
   {
     RCLCPP_INFO_STREAM(get_logger(), "RoadwayObjectsNode trying to configure");
 
-    wm_listener_ = std::make_shared<carma_wm::WMListener>(get_node_base_interface(), get_node_logging_interface(), 
+    wm_listener_ = std::make_shared<carma_wm::WMListener>(get_node_base_interface(), get_node_logging_interface(),
                     get_node_topics_interface(), get_node_parameters_interface());
-    
+
     object_worker_ = std::make_shared<RoadwayObjectsWorker>(wm_listener_->getWorldModel(), std::bind(&RoadwayObjectsNode::publishObstacles, this, std_ph::_1), get_node_logging_interface());
-    
+
     // Setup publishers
     roadway_obs_pub_ = create_publisher<carma_perception_msgs::msg::RoadwayObstacleList>("roadway_objects", 10);
 
