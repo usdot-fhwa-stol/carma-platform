@@ -1,18 +1,16 @@
-/*
- * Copyright 2023 Leidos
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *     http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2023 Leidos
+//
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+//
+//     http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
 
 #include <gtest/gtest.h>
 
@@ -20,7 +18,8 @@
 
 TEST(PositionOffsetXYZ, FromJ3224MsgAllAvailable)
 {
-  using namespace units::literals;
+  // Note: Google C++ style guide prohibits namespace using-directives
+  using units::literals::operator""_dm;
 
   j3224_v2x_msgs::msg::PositionOffsetXYZ msg;
   msg.offset_x.object_distance = 1;  // decimeters
@@ -41,7 +40,8 @@ TEST(PositionOffsetXYZ, FromJ3224MsgAllAvailable)
 
 TEST(PositionOffsetXYZ, FromJ3224MsgNoZOffset)
 {
-  using namespace units::literals;
+  // Note: Google C++ style guide prohibits namespace using-directives
+  using units::literals::operator""_dm;
 
   j3224_v2x_msgs::msg::PositionOffsetXYZ msg;
   msg.offset_x.object_distance = 1;  // decimeters
@@ -60,7 +60,8 @@ TEST(PositionOffsetXYZ, FromJ3224MsgNoZOffset)
 
 TEST(PositionOffsetXYZ, FromCarmaMsgAllAvailable)
 {
-  using namespace units::literals;
+  // Note: Google C++ style guide prohibits namespace using-directives
+  using units::literals::operator""_m;
 
   carma_v2x_msgs::msg::PositionOffsetXYZ msg;
   msg.offset_x.object_distance = 1;  // meters
@@ -81,7 +82,8 @@ TEST(PositionOffsetXYZ, FromCarmaMsgAllAvailable)
 
 TEST(PositionOffsetXYZ, FromCarmaMsgNoZOffset)
 {
-  using namespace units::literals;
+  // Note: Google C++ style guide prohibits namespace using-directives
+  using units::literals::operator""_m;
 
   carma_v2x_msgs::msg::PositionOffsetXYZ msg;
   msg.offset_x.object_distance = 1;  // meters
@@ -100,7 +102,8 @@ TEST(PositionOffsetXYZ, FromCarmaMsgNoZOffset)
 
 TEST(MeasurementTimeOffset, FromJ3224Msg)
 {
-  using namespace units::literals;
+  // Note: Google C++ style guide prohibits namespace using-directives
+  using units::literals::operator""_ms;
 
   j3224_v2x_msgs::msg::MeasurementTimeOffset msg;
   msg.measurement_time_offset = 1;  // milliseconds
@@ -114,7 +117,8 @@ TEST(MeasurementTimeOffset, FromJ3224Msg)
 
 TEST(MeasurementTimeOffset, FromCarmaMsg)
 {
-  using namespace units::literals;
+  // Note: Google C++ style guide prohibits namespace using-directives
+  using units::literals::operator""_s;
 
   carma_v2x_msgs::msg::MeasurementTimeOffset msg;
   msg.measurement_time_offset = 1;  // seconds

@@ -1,28 +1,29 @@
-/*
- * Copyright 2023 Leidos
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *     http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2023 Leidos
+//
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+//
+//     http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
 
 #include "carma_cooperative_perception/msg_conversion.hpp"
 
 #include <tf2_geometry_msgs/tf2_geometry_msgs.h>
-
-#include <algorithm>
-#include <cmath>
+#include <carma_perception_msgs/msg/external_object.hpp>
+#include <carma_perception_msgs/msg/external_object_list.hpp>
 #include <j2735_v2x_msgs/msg/d_date_time.hpp>
 #include <j3224_v2x_msgs/msg/detected_object_data.hpp>
 #include <j3224_v2x_msgs/msg/measurement_time_offset.hpp>
+
+#include <algorithm>
+#include <cmath>
+#include <utility>
 
 #include "carma_cooperative_perception/geodetic.hpp"
 #include "carma_cooperative_perception/j2735_types.hpp"
@@ -31,7 +32,6 @@
 
 namespace carma_cooperative_perception
 {
-
 auto to_time_msg(const DDateTime & d_date_time) noexcept -> builtin_interfaces::msg::Time
 {
   double seconds;
@@ -66,8 +66,6 @@ auto to_position_msg(const UtmCoordinate & position_utm) noexcept -> geometry_ms
 
 auto heading_to_enu_yaw(const units::angle::degree_t & heading) noexcept -> units::angle::degree_t
 {
-  using namespace units::literals;
-
   return units::angle::degree_t{std::fmod(-(remove_units(heading) - 90.0) + 360.0, 360.0)};
 }
 
@@ -146,9 +144,78 @@ auto to_detection_list_msg(const carma_v2x_msgs::msg::SensorDataSharingMessage &
         break;
       default:
         detection.motion_model = detection.MOTION_MODEL_CTRV;
-    };
+    }
+
     detection_list.detections.push_back(std::move(detection));
   }
+
+  return detection_list;
+}
+
+auto to_detection_msg(
+  const carma_perception_msgs::msg::ExternalObject & object,
+  const MotionModelMapping & motion_model_mapping) noexcept
+  -> carma_cooperative_perception_interfaces::msg::Detection
+{
+  carma_cooperative_perception_interfaces::msg::Detection detection;
+
+  detection.header = object.header;
+
+  if (object.presence_vector & object.BSM_ID_PRESENCE_VECTOR) {
+    detection.id = "";
+    std::transform(
+      std::cbegin(object.bsm_id), std::cend(object.bsm_id), std::back_inserter(detection.id),
+      [](const auto & i) { return i + '0'; });
+  }
+
+  if (object.presence_vector & object.ID_PRESENCE_VECTOR) {
+    detection.id += '-' + std::to_string(object.id);
+  }
+
+  if (object.presence_vector & object.POSE_PRESENCE_VECTOR) {
+    detection.pose = object.pose;
+  }
+
+  if (object.presence_vector & object.VELOCITY_INST_PRESENCE_VECTOR) {
+    detection.twist = object.velocity_inst;
+  }
+
+  if (object.presence_vector & object.OBJECT_TYPE_PRESENCE_VECTOR) {
+    switch (object.object_type) {
+      case object.SMALL_VEHICLE:
+        detection.motion_model = motion_model_mapping.small_vehicle_model;
+        break;
+      case object.LARGE_VEHICLE:
+        detection.motion_model = motion_model_mapping.large_vehicle_model;
+        break;
+      case object.MOTORCYCLE:
+        detection.motion_model = motion_model_mapping.motorcycle_model;
+        break;
+      case object.PEDESTRIAN:
+        detection.motion_model = motion_model_mapping.pedestrian_model;
+        break;
+      case object.UNKNOWN:
+      default:
+        detection.motion_model = motion_model_mapping.unknown_model;
+    }
+  }
+
+  return detection;
+}
+
+auto to_detection_list_msg(
+  const carma_perception_msgs::msg::ExternalObjectList & object_list,
+  const MotionModelMapping & motion_model_mapping) noexcept
+  -> carma_cooperative_perception_interfaces::msg::DetectionList
+{
+  carma_cooperative_perception_interfaces::msg::DetectionList detection_list;
+
+  std::transform(
+    std::cbegin(object_list.objects), std::cend(object_list.objects),
+    std::back_inserter(detection_list.detections),
+    [&motion_model_mapping = std::as_const(motion_model_mapping)](const auto & object) {
+      return to_detection_msg(object, motion_model_mapping);
+    });
 
   return detection_list;
 }

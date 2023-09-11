@@ -12,19 +12,12 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include "carma_cooperative_perception/utm_zone.hpp"
+#include "carma_cooperative_perception/sdsm_to_detection_list_component.hpp"
 
-#include <string>
+#include <rclcpp_components/register_node_macro.hpp>
 
-namespace carma_cooperative_perception
-{
-auto to_string(const UtmZone & zone) -> std::string
-{
-  if (zone.hemisphere == Hemisphere::kNorth) {
-    return std::to_string(zone.number) + "N";
-  }
-
-  return std::to_string(zone.number) + "S";
-}
-
-}  // namespace carma_cooperative_perception
+// This is not our macro, so we should not worry about linting it.
+// clang-tidy added support for ignoring system macros in release 14.0.0 (see the release notes
+// here: https://releases.llvm.org/14.0.0/tools/clang/tools/extra/docs/ReleaseNotes.html), but
+// ament_clang_tidy for ROS 2 Foxy specifically looks for clang-tidy-6.0.
+RCLCPP_COMPONENTS_REGISTER_NODE(carma_cooperative_perception::SdsmToDetectionListNode)  // NOLINT

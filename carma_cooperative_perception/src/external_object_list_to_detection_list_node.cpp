@@ -12,19 +12,24 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include "carma_cooperative_perception/utm_zone.hpp"
+#include <rclcpp/rclcpp.hpp>
 
-#include <string>
+#include <carma_cooperative_perception/external_object_list_to_detection_list_component.hpp>
 
-namespace carma_cooperative_perception
+#include <memory>
+
+auto main(int argc, char * argv[]) noexcept -> int
 {
-auto to_string(const UtmZone & zone) -> std::string
-{
-  if (zone.hemisphere == Hemisphere::kNorth) {
-    return std::to_string(zone.number) + "N";
-  }
+  rclcpp::init(argc, argv);
 
-  return std::to_string(zone.number) + "S";
+  auto node{std::make_shared<carma_cooperative_perception::ExternalObjectListToDetectionListNode>(
+    rclcpp::NodeOptions{})};
+
+  rclcpp::executors::SingleThreadedExecutor executor;
+  executor.add_node(node->get_node_base_interface());
+  executor.spin();
+
+  rclcpp::shutdown();
+
+  return 0;
 }
-
-}  // namespace carma_cooperative_perception

@@ -20,6 +20,7 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
 
+# lint_cmake: -linelength
 # Reference: https://raw.githubusercontent.com/cpm-cmake/CPM.cmake/master/cmake/get_cpm.cmake
 
 set(CPM_DOWNLOAD_VERSION 0.38.2)
@@ -38,8 +39,8 @@ get_filename_component(CPM_DOWNLOAD_LOCATION ${CPM_DOWNLOAD_LOCATION} ABSOLUTE)
 function(download_cpm)
   message(STATUS "Downloading CPM.cmake to ${CPM_DOWNLOAD_LOCATION}")
   file(DOWNLOAD
-       https://github.com/cpm-cmake/CPM.cmake/releases/download/v${CPM_DOWNLOAD_VERSION}/CPM.cmake
-       ${CPM_DOWNLOAD_LOCATION}
+    https://github.com/cpm-cmake/CPM.cmake/releases/download/v${CPM_DOWNLOAD_VERSION}/CPM.cmake
+    ${CPM_DOWNLOAD_LOCATION}
   )
 endfunction()
 

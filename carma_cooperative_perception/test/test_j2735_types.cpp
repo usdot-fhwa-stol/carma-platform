@@ -1,18 +1,16 @@
-/*
- * Copyright 2023 Leidos
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *     http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2023 Leidos
+//
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+//
+//     http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
 
 #include <gtest/gtest.h>
 
@@ -24,7 +22,12 @@
 
 TEST(DDateTime, FromJ2735MsgAllAvailable)
 {
-  using namespace units::literals;
+  // Note: Google C++ style guide prohibits namespace using-directives
+  using units::literals::operator""_yr;
+  using units::literals::operator""_d;
+  using units::literals::operator""_hr;
+  using units::literals::operator""_min;
+  using units::literals::operator""_s;
 
   j2735_v2x_msgs::msg::DDateTime msg;
   msg.presence_vector = 0b1111'1111;
@@ -65,8 +68,6 @@ TEST(DDateTime, FromJ2735MsgAllAvailable)
 
 TEST(DDateTime, FromJ2735MsgNoneAvailable)
 {
-  using namespace units::literals;
-
   j2735_v2x_msgs::msg::DDateTime msg;
   msg.presence_vector = 0b0000'0000;
 
@@ -83,7 +84,10 @@ TEST(DDateTime, FromJ2735MsgNoneAvailable)
 
 TEST(AccelerationSet4Way, FromJ2735Msg)
 {
-  using namespace units::literals;
+  // Note: Google C++ style guide prohibits namespace using-directives
+  using units::literals::operator""_centi_mps_sq;
+  using units::literals::operator""_two_centi_SG;
+  using units::literals::operator""_centi_deg_per_s;
 
   j2735_v2x_msgs::msg::AccelerationSet4Way msg;
   msg.longitudinal = 100;  // centimeters per second squared
@@ -103,7 +107,9 @@ TEST(AccelerationSet4Way, FromJ2735Msg)
 
 TEST(AccelerationSet4Way, FromCarmaMsg)
 {
-  using namespace units::literals;
+  // Note: Google C++ style guide prohibits namespace using-directives
+  using units::literals::operator""_mps_sq;
+  using units::literals::operator""_deg_per_s;
 
   carma_v2x_msgs::msg::AccelerationSet4Way msg;
   msg.longitudinal = 100;  // meters per second squared
@@ -123,7 +129,9 @@ TEST(AccelerationSet4Way, FromCarmaMsg)
 
 TEST(Position3D, FromJ2735MsgAllAvailable)
 {
-  using namespace units::literals;
+  // Note: Google C++ style guide prohibits namespace using-directives
+  using units::literals::operator""_deci_udeg;
+  using units::literals::operator""_deca_cm;
 
   j2735_v2x_msgs::msg::Position3D msg;
   msg.latitude = 100;   // deci micro degrees
@@ -144,7 +152,8 @@ TEST(Position3D, FromJ2735MsgAllAvailable)
 
 TEST(Position3D, FromJ2735MsgNoElevation)
 {
-  using namespace units::literals;
+  // Note: Google C++ style guide prohibits namespace using-directives
+  using units::literals::operator""_deci_udeg;
 
   j2735_v2x_msgs::msg::Position3D msg;
   msg.latitude = 100;
@@ -163,7 +172,9 @@ TEST(Position3D, FromJ2735MsgNoElevation)
 
 TEST(Position3D, FromCarmaMsgAllAvailable)
 {
-  using namespace units::literals;
+  // Note: Google C++ style guide prohibits namespace using-directives
+  using units::literals::operator""_deg;
+  using units::literals::operator""_m;
 
   carma_v2x_msgs::msg::Position3D msg;
   msg.latitude = 100;   // degrees
@@ -184,7 +195,8 @@ TEST(Position3D, FromCarmaMsgAllAvailable)
 
 TEST(Position3D, FromCarmaMsgNoElevation)
 {
-  using namespace units::literals;
+  // Note: Google C++ style guide prohibits namespace using-directives
+  using units::literals::operator""_deg;
 
   carma_v2x_msgs::msg::Position3D msg;
   msg.latitude = 100;
@@ -203,7 +215,8 @@ TEST(Position3D, FromCarmaMsgNoElevation)
 
 TEST(Heading, FromJ2735Msg)
 {
-  using namespace units::literals;
+  // Note: Google C++ style guide prohibits namespace using-directives
+  using units::literals::operator""_eighth_ddeg;
 
   j2735_v2x_msgs::msg::Heading msg;
   msg.heading = 100;  // eighth deci degrees
@@ -217,7 +230,8 @@ TEST(Heading, FromJ2735Msg)
 
 TEST(Heading, FromCarmaMsg)
 {
-  using namespace units::literals;
+  // Note: Google C++ style guide prohibits namespace using-directives
+  using units::literals::operator""_deg;
 
   carma_v2x_msgs::msg::Heading msg;
   msg.heading = 100;  // degrees
@@ -231,7 +245,8 @@ TEST(Heading, FromCarmaMsg)
 
 TEST(Speed, FromJ2735Msg)
 {
-  using namespace units::literals;
+  // Note: Google C++ style guide prohibits namespace using-directives
+  using units::literals::operator""_two_centi_mps;
 
   j2735_v2x_msgs::msg::Speed msg;
   msg.speed = 100;  // 2 cm per second
@@ -245,7 +260,8 @@ TEST(Speed, FromJ2735Msg)
 
 TEST(Speed, FromCarmaMsg)
 {
-  using namespace units::literals;
+  // Note: Google C++ style guide prohibits namespace using-directives
+  using units::literals::operator""_mps;
 
   carma_v2x_msgs::msg::Speed msg;
   msg.speed = 100;  // meters per second
