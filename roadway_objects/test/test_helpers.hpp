@@ -14,7 +14,8 @@
  * limitations under the License.
  */
 
-#pragma once
+#ifndef ROADWAY_OBJECTS__TEST_HELPERS_HPP_
+#define ROADWAY_OBJECTS__TEST_HELPERS_HPP_
 
 #include <iostream>
 #include <carma_wm/CARMAWorldModel.hpp>
@@ -79,3 +80,5 @@ inline lanelet::Lanelet getLanelet(std::vector<lanelet::Point3d> left, std::vect
   return getLanelet(left_ls, right_ls, left_sub_type, right_sub_type);
 }
 }  // namespace carma_wm
+
+#endif // ROADWAY_OBJECTS__TEST_HELPERS_HPP_

@@ -14,7 +14,8 @@
  * limitations under the License.
  */
 
-#pragma once
+#ifndef ROADWAY_OBJECTS__ROADWAY_OBJECTS_COMPONENT_HPP_
+#define ROADWAY_OBJECTS__ROADWAY_OBJECTS_COMPONENT_HPP_
 
 #include <rclcpp/rclcpp.hpp>
 #include <functional>
@@ -70,3 +71,5 @@ namespace roadway_objects
   };
 
 } // roadway_objects
+
+#endif // ROADWAY_OBJECTS__ROADWAY_OBJECTS_COMPONENT_HPP_
