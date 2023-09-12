@@ -30,6 +30,7 @@ limitations under the License.
   <build_depend>ament_cmake_auto</build_depend>
   <build_depend>carma_cmake_common</build_depend>
   <build_depend>carma_cooperative_perception_interfaces</build_depend>
+  <build_depend>carma_perception_msgs</build_depend>
   <build_depend>carma_ros2_utils</build_depend>
   <build_depend>j2735_v2x_msgs</build_depend>
   <build_depend>j3224_v2x_msgs</build_depend>
@@ -38,6 +39,8 @@ limitations under the License.
   <build_depend>tf2_geometry_msgs</build_depend>
 
   <test_depend>ament_lint_auto</test_depend>
+  <test_depend>ament_lint_common</test_depend>
+  <test_depend>ament_cmake_clang_format</test_depend>
   <test_depend>ament_cmake_gtest</test_depend>
 
   <export>

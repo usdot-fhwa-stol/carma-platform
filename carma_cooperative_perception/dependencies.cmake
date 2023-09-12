@@ -15,9 +15,12 @@
 include(cmake/get_cpm.cmake)
 set(CPM_USE_LOCAL_PACKAGES ON)
 
+# lint_cmake: -readability/wonkycase
 CPMAddPackage(NAME units
   GITHUB_REPOSITORY nholthaus/units
   GIT_TAG v2.3.3
+  EXCLUDE_FROM_ALL ON
+  SYSTEM ON
   OPTIONS
     "BUILD_TESTS FALSE"
     "BUILD_DOCS FALSE"
@@ -31,9 +34,12 @@ CPMAddPackage(NAME units
 # version upgrade plans.
 find_package(PROJ4 REQUIRED MODULE)
 
+# lint_cmake: -readability/wonkycase
 CPMAddPackage(NAME Microsoft.GSL
   GITHUB_REPOSITORY microsoft/GSL
   GIT_TAG v2.1.0  # This is the version shipped with Ubuntu 20.04; newer versions are available
+  EXCLUDE_FROM_ALL ON
+  SYSTEM ON
   OPTIONS
     "GSL_INSTALL TRUE"
     "GSL_TEST FALSE"
@@ -52,4 +58,12 @@ if(carma_cooperative_perception_BUILD_TESTS)
   include(cmake/ament_auto_add_gtest.cmake)
 
   ament_auto_find_test_dependencies()
+
+  list(APPEND AMENT_LINT_AUTO_EXCLUDE
+    ament_cmake_uncrustify  # Using clang-format instead
+  )
+
+  set(ament_cmake_clang_format_CONFIG_FILE ${PROJECT_SOURCE_DIR}/.clang-format)
+
+  ament_lint_auto_find_test_dependencies()
 endif()

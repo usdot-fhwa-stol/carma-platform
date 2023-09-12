@@ -1,21 +1,19 @@
-#ifndef CARMA_COOPERATIVE_PERCEPTION_MONTH_HPP_
-#define CARMA_COOPERATIVE_PERCEPTION_MONTH_HPP_
+// Copyright 2023 Leidos
+//
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+//
+//     http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
 
-/*
- * Copyright 2023 Leidos
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *     http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+#ifndef CARMA_COOPERATIVE_PERCEPTION__MONTH_HPP_
+#define CARMA_COOPERATIVE_PERCEPTION__MONTH_HPP_
 
 /**
  * This file contains a Month class implementation that should be source-compatible
@@ -28,7 +26,6 @@
 
 namespace carma_cooperative_perception
 {
-
 class Month
 {
 public:
@@ -48,10 +45,13 @@ public:
   */
   constexpr auto operator++() noexcept -> Month &
   {
-    month_value_ = (month_value_ + 1) % 13;
+    constexpr auto jan_value{1U};
+    constexpr auto dec_value{12U};
+
+    month_value_ = (month_value_ + 1) % (dec_value + 1);
 
     if (month_value_ == 0) {
-      month_value_ = 1;
+      month_value_ = jan_value;
     }
 
     return *this;
@@ -79,10 +79,12 @@ public:
   */
   constexpr auto operator--() noexcept -> Month &
   {
-    month_value_ = (month_value_ - 1 % 13);
+    constexpr auto dec_value{12U};
+
+    month_value_ = (month_value_ - 1 % (dec_value + 1));
 
     if (month_value_ == 0) {
-      month_value_ = 12;
+      month_value_ = dec_value;
     }
 
     return *this;
@@ -116,7 +118,13 @@ public:
    *
    * @return true if Month instance's value is within [1, 12]; false otherwise
   */
-  constexpr auto ok() const noexcept -> bool { return month_value_ >= 1 && month_value_ <= 12; }
+  [[nodiscard]] constexpr auto ok() const noexcept -> bool
+  {
+    constexpr auto jan_value{1U};
+    constexpr auto dec_value{12U};
+
+    return month_value_ >= jan_value && month_value_ <= dec_value;
+  }
 
   /**
    * @brief Compare exact equality between two Month instances
@@ -239,4 +247,4 @@ inline constexpr Month December{12};
 
 }  // namespace carma_cooperative_perception
 
-#endif  // CARMA_COOPERATIVE_PERCEPTION_MONTH_HPP_
+#endif  // CARMA_COOPERATIVE_PERCEPTION__MONTH_HPP_

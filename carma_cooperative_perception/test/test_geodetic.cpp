@@ -1,23 +1,22 @@
-/*
- * Copyright 2023 Leidos
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *     http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2023 Leidos
+//
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+//
+//     http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
 
 #include <gtest/gtest.h>
 
 #include <carma_cooperative_perception/geodetic.hpp>
 #include <carma_cooperative_perception/units_extensions.hpp>
+#include <vector>
 
 TEST(CalculateUtmZone, Wgs84Coordinate)
 {
@@ -39,7 +38,10 @@ TEST(CalculateUtmZone, Wgs84Coordinate)
 
   test_data.push_back({180.0, {60, carma_cooperative_perception::Hemisphere::kNorth}});
 
-  using namespace units::literals;
+  // Note: Google C++ style guide prohibits namespace using-directives
+  using units::literals::operator""_deg;
+  using units::literals::operator""_m;
+
   for (const auto [test_longitude, expected_zone] : test_data) {
     const carma_cooperative_perception::Wgs84Coordinate coord{
       0.0_deg, units::angle::degree_t{test_longitude}, 0.0_m};
@@ -55,7 +57,10 @@ TEST(ProjectToUtm, BasicCases)
     carma_cooperative_perception::UtmCoordinate expected_utm;
   };
 
-  using namespace units::literals;
+  // Note: Google C++ style guide prohibits namespace using-directives
+  using units::literals::operator""_deg;
+  using units::literals::operator""_m;
+
   std::vector<TestDataPair> test_data{
     {carma_cooperative_perception::Wgs84Coordinate{61.15880_deg, 10.36924_deg, 25.6_m},
      carma_cooperative_perception::UtmCoordinate{
@@ -93,7 +98,9 @@ TEST(ProjectToUtm, BasicCases)
 
 TEST(CalculateGridConvergence, RightHalf)
 {
-  using namespace units::literals;
+  // Note: Google C++ style guide prohibits namespace using-directives
+  using units::literals::operator""_deg;
+  using units::literals::operator""_m;
 
   const carma_cooperative_perception::UtmZone utm_zone{
     32, carma_cooperative_perception::Hemisphere::kNorth};
@@ -110,7 +117,9 @@ TEST(CalculateGridConvergence, RightHalf)
 
 TEST(CalculateGridConvergence, LeftHalf)
 {
-  using namespace units::literals;
+  // Note: Google C++ style guide prohibits namespace using-directives
+  using units::literals::operator""_deg;
+  using units::literals::operator""_m;
 
   const carma_cooperative_perception::UtmZone utm_zone{
     32, carma_cooperative_perception::Hemisphere::kNorth};
