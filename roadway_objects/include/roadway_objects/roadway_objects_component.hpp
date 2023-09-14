@@ -1,4 +1,4 @@
-// Copyright 2023 Leidos
+// Copyright 2019-2023 Leidos
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -20,49 +20,36 @@
 #include <carma_wm/WMListener.hpp>
 #include <carma_wm/WorldModel.hpp>
 #include <rclcpp/rclcpp.hpp>
+#include <rclcpp_lifecycle/lifecycle_publisher.hpp>
 
-#include <functional>
 #include <memory>
-
-#include "roadway_objects/roadway_objects_worker.hpp"
 
 namespace roadway_objects
 {
 /**
    * \class RoadwayObjectsNode
-   * \brief The class responsible for converting detected objects into objects that are mapped onto specific lanelets.
+   * \brief The class responsible for converting detected objects into objects that are mapped
+   * onto specific lanelets.
    *
    */
 class RoadwayObjectsNode : public carma_ros2_utils::CarmaLifecycleNode
 {
-private:
-  // Subscribers
-  carma_ros2_utils::SubPtr<carma_perception_msgs::msg::ExternalObjectList> external_objects_sub_;
-
-  // Publishers
-  carma_ros2_utils::PubPtr<carma_perception_msgs::msg::RoadwayObstacleList> roadway_obs_pub_;
-
-  // World Model Listener. Must be declared before object_worker_ for proper initialization.
-  std::shared_ptr<carma_wm::WMListener> wm_listener_;
-
-  // Worker class object
-  std::shared_ptr<RoadwayObjectsWorker> object_worker_;
-
 public:
-  /**
-     * \brief Node constructor
-     */
   explicit RoadwayObjectsNode(const rclcpp::NodeOptions &);
 
-  /*!
-      \brief Callback to publish RoadwayObstacleList
-    */
-  void publishObstacles(const carma_perception_msgs::msg::RoadwayObstacleList & msg);
+  auto publish_obstacles(const carma_perception_msgs::msg::ExternalObjectList & msg) -> void;
 
-  ////
-  // Overrides
-  ////
-  carma_ros2_utils::CallbackReturn handle_on_configure(const rclcpp_lifecycle::State &);
+  auto handle_on_configure(const rclcpp_lifecycle::State &)
+    -> carma_ros2_utils::CallbackReturn override;
+
+private:
+  rclcpp::Subscription<carma_perception_msgs::msg::ExternalObjectList>::SharedPtr
+    external_objects_sub_{nullptr};
+
+  rclcpp_lifecycle::LifecyclePublisher<carma_perception_msgs::msg::RoadwayObstacleList>::SharedPtr
+    roadway_obs_pub_{nullptr};
+
+  std::shared_ptr<carma_wm::WMListener> wm_listener_{nullptr};
 };
 
 }  // namespace roadway_objects

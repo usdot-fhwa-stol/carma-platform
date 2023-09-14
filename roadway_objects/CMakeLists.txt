@@ -1,4 +1,4 @@
-# Copyright 2023 Leidos
+# Copyright 2019-2023 Leidos
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -51,7 +51,6 @@ set(CMAKE_C_STANDARD 11)
 # and link necessary libraries
 ament_auto_add_library(roadway_objects SHARED
   src/roadway_objects_component.cpp
-  src/roadway_objects_worker.cpp
 )
 
 ament_auto_add_executable(roadway_objects_node
@@ -63,19 +62,22 @@ rclcpp_components_register_nodes(roadway_objects
 )
 
 if(roadway_objects_BUILD_TESTS)
-  enable_testing()
 
-  ament_add_gtest(test_roadway_objects
-    test/test_roadway_objects_worker.cpp
-    test/test_helpers.hpp
-  )
-
-  target_link_libraries(test_roadway_objects
-    roadway_objects
-  )
+  add_launch_test(test/roadway_objects_no_map_launch_test.py)
+  add_launch_test(test/roadway_objects_empty_map_launch_test.py)
+  add_launch_test(test/roadway_objects_regular_map_launch_test.py)
 
 endif()
 
 ament_auto_package(
-  INSTALL_TO_SHARE launch
+  INSTALL_TO_SHARE
+    launch
+)
+
+include(GNUInstallDirs)
+
+# ament_auto does not provide the file pattern matching we need
+install(DIRECTORY ${PROJECT_SOURCE_DIR}/test/data/
+  DESTINATION ${CMAKE_INSTALL_DATADIR}/roadway_objects/test/data
+  FILES_MATCHING PATTERN *.osm
 )
