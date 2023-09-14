@@ -1,22 +1,24 @@
-/*
- * Copyright (C) 2019-2022 LEIDOS.
- *
- * Licensed under the Apache License, Version 2.0 (the "License"); you may not
- * use this file except in compliance with the License. You may obtain a copy of
- * the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
- * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
- * License for the specific language governing permissions and limitations under
- * the License.
- */
+// Copyright 2023 Leidos
+//
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+//
+//     http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
 
-#include <roadway_objects/roadway_objects_worker.hpp>
 #include <gtest/gtest.h>
-#include "TestHelpers.hpp"
+#include <roadway_objects/roadway_objects_worker.hpp>
+
+#include <memory>
+#include <utility>
+
+#include "test_helpers.hpp"
 
 namespace roadway_objects
 {
@@ -29,10 +31,10 @@ TEST(RoadwayObjectsWorkerTest, testExternalObjectCallback)
   auto p2 = carma_wm::getPoint(9, 9, 0);
   auto p3 = carma_wm::getPoint(2, 0, 0);
   auto p4 = carma_wm::getPoint(2, 9, 0);
-  lanelet::LineString3d right_ls_1(lanelet::utils::getId(), { p1, p2 });
-  lanelet::LineString3d left_ls_1(lanelet::utils::getId(), { p3, p4 });
+  lanelet::LineString3d right_ls_1(lanelet::utils::getId(), {p1, p2});
+  lanelet::LineString3d left_ls_1(lanelet::utils::getId(), {p3, p4});
   auto ll_1 = carma_wm::getLanelet(left_ls_1, right_ls_1);
-  lanelet::LaneletMapPtr map = lanelet::utils::createMap({ ll_1 }, {});
+  lanelet::LaneletMapPtr map = lanelet::utils::createMap({ll_1}, {});
 
   // Build external object
   geometry_msgs::msg::Pose pose;
@@ -70,10 +72,15 @@ TEST(RoadwayObjectsWorkerTest, testExternalObjectCallback)
   // Build roadway objects worker to test
   carma_perception_msgs::msg::RoadwayObstacleList resulting_objs;
   auto node = std::make_shared<rclcpp::Node>("test_node");
-  rclcpp::node_interfaces::NodeLoggingInterface::SharedPtr logger = node->get_node_logging_interface();
+  rclcpp::node_interfaces::NodeLoggingInterface::SharedPtr logger =
+    node->get_node_logging_interface();
 
-  RoadwayObjectsWorker row(std::static_pointer_cast<const carma_wm::WorldModel>(cmw),
-                           [&](const carma_perception_msgs::msg::RoadwayObstacleList& objs) -> void { resulting_objs = objs; }, logger);
+  RoadwayObjectsWorker row(
+    std::static_pointer_cast<const carma_wm::WorldModel>(cmw),
+    [&](const carma_perception_msgs::msg::RoadwayObstacleList & objs) -> void {
+      resulting_objs = objs;
+    },
+    logger);
 
   ASSERT_EQ(resulting_objs.roadway_obstacles.size(), 0);  // Verify resulting_objs is empty
 
@@ -82,7 +89,8 @@ TEST(RoadwayObjectsWorkerTest, testExternalObjectCallback)
   obj_list.objects.push_back(obj);
 
   // Test with no map set
-  std::unique_ptr<carma_perception_msgs::msg::ExternalObjectList> obj_list_msg_ptr1 = std::make_unique<carma_perception_msgs::msg::ExternalObjectList>(obj_list);
+  std::unique_ptr<carma_perception_msgs::msg::ExternalObjectList> obj_list_msg_ptr1 =
+    std::make_unique<carma_perception_msgs::msg::ExternalObjectList>(obj_list);
   row.externalObjectsCallback(move(obj_list_msg_ptr1));  // Call function under test
 
   ASSERT_EQ(resulting_objs.roadway_obstacles.size(), 0);
@@ -92,7 +100,8 @@ TEST(RoadwayObjectsWorkerTest, testExternalObjectCallback)
 
   cmw->setMap(empty_map);
 
-  std::unique_ptr<carma_perception_msgs::msg::ExternalObjectList> obj_list_msg_ptr2 = std::make_unique<carma_perception_msgs::msg::ExternalObjectList>(obj_list);
+  std::unique_ptr<carma_perception_msgs::msg::ExternalObjectList> obj_list_msg_ptr2 =
+    std::make_unique<carma_perception_msgs::msg::ExternalObjectList>(obj_list);
   row.externalObjectsCallback(move(obj_list_msg_ptr2));  // Call function under test
 
   ASSERT_EQ(resulting_objs.roadway_obstacles.size(), 0);
@@ -100,7 +109,8 @@ TEST(RoadwayObjectsWorkerTest, testExternalObjectCallback)
   // Test with regular map
   cmw->setMap(map);
 
-  std::unique_ptr<carma_perception_msgs::msg::ExternalObjectList> obj_list_msg_ptr3 = std::make_unique<carma_perception_msgs::msg::ExternalObjectList>(obj_list);
+  std::unique_ptr<carma_perception_msgs::msg::ExternalObjectList> obj_list_msg_ptr3 =
+    std::make_unique<carma_perception_msgs::msg::ExternalObjectList>(obj_list);
   row.externalObjectsCallback(move(obj_list_msg_ptr3));  // Call function under test
 
   ASSERT_EQ(resulting_objs.roadway_obstacles.size(), 1);
@@ -111,7 +121,9 @@ TEST(RoadwayObjectsWorkerTest, testExternalObjectCallback)
 
   ASSERT_EQ(obs.lanelet_id, ll_1.id());
 
-  ASSERT_EQ(obs.connected_vehicle_type.type, carma_perception_msgs::msg::ConnectedVehicleType::NOT_CONNECTED);
+  ASSERT_EQ(
+    obs.connected_vehicle_type.type,
+    carma_perception_msgs::msg::ConnectedVehicleType::NOT_CONNECTED);
 
   ASSERT_NEAR(obs.cross_track, 0.5, 0.00001);
 
@@ -136,19 +148,20 @@ TEST(RoadwayObjectsWorkerTest, testExternalObjectCallback)
   ASSERT_NEAR(obs.predicted_down_track_confidences[0], 0.9, 0.00001);
 }
 
-}  // namespace objects
+}  // namespace roadway_objects
 
 // Run all the tests
-int main(int argc, char **argv) {
-    ::testing::InitGoogleTest(&argc, argv);
+int main(int argc, char ** argv)
+{
+  ::testing::InitGoogleTest(&argc, argv);
 
-    //Initialize ROS
-    rclcpp::init(argc, argv);
+  // Initialize ROS
+  rclcpp::init(argc, argv);
 
-    bool success = RUN_ALL_TESTS();
+  bool success = RUN_ALL_TESTS();
 
-    //shutdown ROS
-    rclcpp::shutdown();
+  // shutdown ROS
+  rclcpp::shutdown();
 
-    return success;
+  return success;
 }
