@@ -60,10 +60,14 @@ WMBroadcasterNode::WMBroadcasterNode(const rclcpp::NodeOptions &options)
   config_.traffic_control_request_period = declare_parameter<double>("traffic_control_request_period", config_.traffic_control_request_period);
   config_.vehicle_id = declare_parameter<std::string>("vehicle_id", config_.vehicle_id);
   config_.participant = declare_parameter<std::string>("vehicle_participant_type", config_.participant);
-  config_.participant = declare_parameter<double>("config_speed_limit", config_.config_limit);
-  
+  config_.config_limit = declare_parameter<double>("config_speed_limit", config_.config_limit);
+  config_.external_object_speed = declare_parameter<double>("external_object_speed", config_.external_object_speed);
+  config_.external_object_spawn_delay_period = declare_parameter<double>("external_object_spawn_delay_period", config_.external_object_spawn_delay_period);
+
   declare_parameter("intersection_ids_for_correction");
   declare_parameter("intersection_coord_correction");
+  declare_parameter("external_object_route_coords");
+
 };
 
 void WMBroadcasterNode::initializeWorker(std::weak_ptr<carma_ros2_utils::CarmaLifecycleNode> weak_node_pointer)
@@ -91,6 +95,8 @@ carma_ros2_utils::CallbackReturn WMBroadcasterNode::handle_on_configure(const rc
   get_parameter<std::string>("vehicle_id", config_.vehicle_id);
   get_parameter<std::string>("vehicle_participant_type", config_.participant);
   get_parameter<double>("config_speed_limit", config_.config_limit);
+  get_parameter<double>("external_object_speed", config_.external_object_speed);
+  get_parameter<double>("external_object_spawn_delay_period", config_.external_object_spawn_delay_period);
   
   wmb_->setConfigACKPubTimes(config_.ack_pub_times);
   wmb_->setMaxLaneWidth(config_.max_lane_width);
@@ -104,10 +110,17 @@ carma_ros2_utils::CallbackReturn WMBroadcasterNode::handle_on_configure(const rc
   rclcpp::Parameter intersection_ids_for_correction_param = get_parameter("intersection_ids_for_correction");
   config_.intersection_ids_for_correction = intersection_ids_for_correction_param.as_integer_array();
   
+  rclcpp::Parameter external_object_route_coords = get_parameter("external_object_route_coords");
+  config_.external_object_route_coords = external_object_route_coords.as_double_array();  
+
+  RCLCPP_ERROR_STREAM(rclcpp::get_logger("carma_mw_ctrl"),"1 Done loading parameters: " << config_);
+
   wmb_->setIntersectionCoordCorrection(config_.intersection_ids_for_correction, config_.intersection_coord_correction);
   
-  RCLCPP_INFO_STREAM(rclcpp::get_logger("carma_mw_ctrl"),"Done loading parameters: " << config_);
-
+  // TODO set predicted period
+  wmb_->setSimulationRoute(config_.external_object_route_coords, config_.external_object_speed, config_.external_object_spawn_delay_period);
+  
+  RCLCPP_ERROR_STREAM(rclcpp::get_logger("carma_mw_ctrl"),"2 Done loading parameters: " << config_);
   /////////////
   // PUBLISHERS
   /////////////
@@ -145,6 +158,10 @@ carma_ros2_utils::CallbackReturn WMBroadcasterNode::handle_on_configure(const rc
   //Upcoming intersection and group id of traffic light 
   upcoming_intersection_ids_pub_ = create_publisher<std_msgs::msg::Int32MultiArray>("intersection_signal_group_ids", 1);
   
+  //External Object Simulation
+  ext_obj_pub_ = create_publisher<carma_perception_msgs::msg::ExternalObjectList>("external_object_simulation_list",1);
+
+
   // Return success if everything initialized successfully
   
   return CallbackReturn::SUCCESS;
@@ -156,6 +173,11 @@ carma_ros2_utils::CallbackReturn WMBroadcasterNode::handle_on_activate(const rcl
   timer_ = create_timer(get_clock(),
                           std::chrono::milliseconds((int)(config_.traffic_control_request_period * 1000)),
                           std::bind(&WMBroadcasterNode::spin_callback, this));
+
+  // Timer setup
+  timer_simulation_ = create_timer(get_clock(),
+                          std::chrono::milliseconds((int)(100)), //10Hz
+                          std::bind(&WMBroadcasterNode::external_object_simulation_cb, this));
   
   /////////////
   //SUBSCRIBERS
@@ -179,14 +201,29 @@ carma_ros2_utils::CallbackReturn WMBroadcasterNode::handle_on_activate(const rcl
   //Current Location Sub
   curr_location_sub_ = create_subscription<geometry_msgs::msg::PoseStamped>("current_pose", 1, std::bind(&WMBroadcaster::currentLocationCallback, wmb_.get(), std_ph::_1));
   
-  
   return CallbackReturn::SUCCESS;
 }
+
+
+bool WMBroadcasterNode::external_object_simulation_cb()
+{
+  auto recent_state = wmb_->getRecentState(get_clock()->now());
+  if (!!recent_state)
+  {
+    RCLCPP_ERROR_STREAM(rclcpp::get_logger("carma_mw_ctrl"),"Trying to publish recent state");
+    
+    ext_obj_pub_->publish(recent_state.get());
+  }
+
+  return true;
+}
+    
 
 bool WMBroadcasterNode::spin_callback()
 {
   tcm_visualizer_pub_->publish(wmb_->tcm_marker_array_);
   tcr_visualizer_pub_->publish(wmb_->tcr_polygon_);
+  
   wmb_->publishLightId();
   //updating upcoming traffic signal group id and intersection id
   wmb_->updateUpcomingSGIntersectionIds();

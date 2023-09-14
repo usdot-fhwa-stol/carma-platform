@@ -19,6 +19,7 @@
 #include <functional>
 #include <autoware_lanelet2_msgs/msg/map_bin.hpp>
 #include <carma_v2x_msgs/msg/traffic_control_request.hpp>
+#include <carma_perception_msgs/msg/external_object.hpp>
 #include <carma_ros2_utils/carma_ros2_utils.hpp>
 #include <visualization_msgs/msg/marker_array.hpp>
 #include <carma_wm_ctrl/WMBroadcaster.hpp>
@@ -105,6 +106,8 @@ private:
   */
   bool spin_callback();
 
+  bool external_object_simulation_cb();
+
   // Node configuration
   Config config_;
 
@@ -113,6 +116,8 @@ private:
   carma_ros2_utils::PubPtr<carma_v2x_msgs::msg::TrafficControlRequest> control_msg_pub_;
   carma_ros2_utils::PubPtr<visualization_msgs::msg::MarkerArray> tcm_visualizer_pub_;
   carma_ros2_utils::PubPtr<carma_v2x_msgs::msg::TrafficControlRequestPolygon> tcr_visualizer_pub_;
+  carma_ros2_utils::PubPtr<carma_perception_msgs::msg::ExternalObjectList> ext_obj_pub_;
+
   carma_ros2_utils::PubPtr<std_msgs::msg::Int32MultiArray> upcoming_intersection_ids_pub_;
   carma_ros2_utils::PubPtr<carma_perception_msgs::msg::CheckActiveGeofence> active_pub_;
   carma_ros2_utils::PubPtr<carma_v2x_msgs::msg::MobilityOperation> tcm_ack_pub_;
@@ -126,6 +131,8 @@ private:
   
   // Timer for publishing TCR and SignalGroup/IntersectionID
   rclcpp::TimerBase::SharedPtr timer_;
+  rclcpp::TimerBase::SharedPtr timer_simulation_;
+
 
   std::shared_ptr<carma_ros2_utils::CarmaLifecycleNode> ptr_;
   std::unique_ptr<carma_wm_ctrl::WMBroadcaster> wmb_;

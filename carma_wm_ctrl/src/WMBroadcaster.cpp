@@ -39,6 +39,7 @@
 #include <math.h>
 #include <boost/date_time/date_defs.hpp>
 #include "RoutingGraphAccessor.hpp"
+#include <cmath>
 
 namespace carma_wm_ctrl
 {
@@ -220,11 +221,11 @@ std::vector<std::shared_ptr<Geofence>> WMBroadcaster::geofenceFromMapMsg(std::sh
   std::vector<std::shared_ptr<lanelet::SignalizedIntersection>> intersections;
   std::vector<std::shared_ptr<lanelet::CarmaTrafficSignal>> traffic_signals;
 
-  auto sim_copy = sim_;
+  auto sim_copy = std::make_shared<carma_wm::SignalizedIntersectionManager>(*sim_);
 
-  sim_.createIntersectionFromMapMsg(intersections, traffic_signals, map_msg, current_map_, current_routing_graph_);
+  sim_->createIntersectionFromMapMsg(intersections, traffic_signals, map_msg, current_map_, current_routing_graph_);
 
-  if (sim_ == sim_copy) // if no change
+  if (*sim_ == *sim_copy) // if no change
   {
     RCLCPP_DEBUG_STREAM(rclcpp::get_logger("carma_wm_ctrl"), ">>> Detected no change from previous, ignoring duplicate message! with gf id: " << gf_ptr->id_);
     return {};
@@ -257,6 +258,211 @@ std::vector<std::shared_ptr<Geofence>> WMBroadcaster::geofenceFromMapMsg(std::sh
   }
   
   return updates_to_send;
+}
+
+// TODO rename
+void WMBroadcaster::setSimulationRoute(const std::vector<double>& gps_coords, double velocity, double delay)
+{
+  if (gps_coords.size() % 2 != 0)
+  {
+    throw std::invalid_argument("Some of external_object's route gps_coords are not fully set!");
+  }
+
+  for (auto i = 0; i < gps_coords.size(); i = i + 2)
+  {
+    external_object_.route_coords_.push_back({gps_coords[i],gps_coords[i+1]}); //x,y
+  }
+
+  external_object_.delay_ = delay;
+
+  // static info
+  external_object_.msg_.header.frame_id = "map";
+  external_object_.msg_.pose.pose.position.x = external_object_.route_coords_.front().first;
+  external_object_.msg_.pose.pose.position.y = external_object_.route_coords_.front().second;
+  external_object_.msg_.presence_vector = 895;
+  external_object_.msg_.id = 999;
+  external_object_.msg_.velocity.twist.linear.x = velocity;
+  external_object_.msg_.velocity_inst.twist.linear.x = velocity;
+  
+  // Identity matrix
+  const int N = 6; // Size of the matrix (6x6)
+  std::vector<float> identity_matrix(N * N, 0.0f);
+  for (int i = 0; i < N; i++) {
+    identity_matrix[i * N + i] = 1.0f;
+  }
+  
+  for (int i = 0; i < 36; i++)
+  {
+    external_object_.msg_.velocity.covariance[i] = identity_matrix[i];
+    external_object_.msg_.pose.covariance[i] = identity_matrix[i];
+  }
+
+  external_object_.msg_.size.x = 2;
+  external_object_.msg_.size.y = 2;
+  external_object_.msg_.size.z = 1.5;
+
+  external_object_.msg_.confidence = 1;
+  external_object_.msg_.object_type = 1;
+  external_object_.msg_.dynamic_obj = true;
+
+}
+
+boost::optional<carma_perception_msgs::msg::ExternalObjectList> WMBroadcaster::getRecentState(const rclcpp::Time& now)
+{
+  RCLCPP_ERROR_STREAM(rclcpp::get_logger("carma_wm_ctrl"), "Trying to get recent state");
+  carma_perception_msgs::msg::ExternalObjectList msg_list;
+  // WORKING CODE
+
+  if (external_object_.simulation_start_time_ == rclcpp::Time(0, 0, external_object_.simulation_start_time_.get_clock_type())) //first time
+  {
+    external_object_.simulation_start_time_ = now;
+    
+    RCLCPP_ERROR_STREAM(rclcpp::get_logger("carma_wm_ctrl"), "Returning from first if clause");
+    return boost::none;
+  }
+
+  RCLCPP_ERROR_STREAM(rclcpp::get_logger("carma_wm_ctrl"), "Between the two IFs");
+
+  // Return if within start delay
+  if (external_object_.simulation_start_time_ + rclcpp::Duration(external_object_.delay_ * 1e9) >= now )
+  {
+    RCLCPP_ERROR_STREAM(rclcpp::get_logger("carma_wm_ctrl"), "Not within the delay");
+    return boost::none;
+  }
+
+  external_object_ = updateExternalObject(now);
+  msg_list.header.stamp = now;
+  msg_list.header.frame_id = "map";
+  msg_list.objects.push_back(external_object_.msg_);
+
+  external_object_.last_time_ = now;
+  return msg_list;
+
+}
+
+
+CoordHelper WMBroadcaster::findPosition(double startX, double startY, int start_idx, const std::vector<std::pair<double, double>>& route, double time_travelled)
+{
+  CoordHelper return_value;
+  double time_spent = 0.0;
+  size_t i = start_idx;
+  auto velocity = external_object_.msg_.velocity.twist.linear.x;
+  RCLCPP_ERROR_STREAM(rclcpp::get_logger("carma_wm_ctrl"), "Inside findPosition");
+  
+  while (i < route.size() - 1) 
+  {
+    double starting_x = route[i].first;
+    double starting_y = route[i].second;
+    RCLCPP_ERROR_STREAM(rclcpp::get_logger("carma_wm_ctrl"), "starting_x: " << starting_x << ", starting_y:" << starting_y);
+
+
+    if (i == start_idx) 
+    {
+      // Adjust the first segment distance and time to account for the start position
+      starting_x = startX;
+      starting_y = startY;
+      RCLCPP_ERROR_STREAM(rclcpp::get_logger("carma_wm_ctrl"), "FIrst: startX: " << startX  << ", startY:" << startY);
+
+    }
+
+    double distance = std::hypot(route[i+1].first - starting_x, route[i+1].second - starting_y);
+    double time_to_next = distance / velocity;
+
+    if (time_spent + time_to_next > time_travelled) {
+      double remaining_time = time_travelled - time_spent;
+      double ratio = remaining_time / time_to_next;
+      
+      return_value.x = starting_x + ratio * (route[i+1].first - starting_x);
+      return_value.y = starting_y + ratio * (route[i+1].second - starting_y);
+      return_value.last_idx = i;
+      RCLCPP_ERROR_STREAM(rclcpp::get_logger("carma_wm_ctrl"), "Returning from first option resort, time_travelled: " << time_travelled << ", time_spent: " << time_spent << ", remaining_time: " << remaining_time
+                                                                  << ", ratio: " << ratio << ", time_to_next: " << time_to_next);
+
+      RCLCPP_ERROR_STREAM(rclcpp::get_logger("carma_wm_ctrl"), "Returning from first option resort, x: " << return_value.x << ", y: " << return_value.y << ", idx: " << return_value.last_idx);
+
+      return return_value;
+    }
+    else
+    {
+      ++i;
+      RCLCPP_ERROR_STREAM(rclcpp::get_logger("carma_wm_ctrl"), "Increasing i to :" << i);
+
+    }    
+    time_spent += time_to_next;
+
+  }
+
+  return_value.x = route.back().first;
+  return_value.y = route.back().second;
+  return_value.last_idx = i;
+  RCLCPP_ERROR_STREAM(rclcpp::get_logger("carma_wm_ctrl"), "Returning from last resort");
+
+  return return_value;  // return the last coordinate if time exceeds the total travel time
+}
+
+
+ExternalObject WMBroadcaster::updateExternalObject(const rclcpp::Time& now)
+{
+  auto dt = now.seconds() - external_object_.last_time_.seconds();
+  RCLCPP_ERROR_STREAM(rclcpp::get_logger("carma_wm_ctrl"), "Inside updateExternalObject last_time: " << std::to_string(external_object_.last_time_.seconds()));
+
+  auto curr_coord = findPosition(external_object_.msg_.pose.pose.position.x, external_object_.msg_.pose.pose.position.y, 
+                                  external_object_.last_route_idx_, external_object_.route_coords_,dt);
+
+  double distance_until_end = std::hypot(curr_coord.x - external_object_.route_coords_.back().first, curr_coord.y - external_object_.route_coords_.back().second);
+  if (distance_until_end < 0.5)
+  {
+    curr_coord.x = external_object_.route_coords_.front().first;
+    curr_coord.y = external_object_.route_coords_.front().second;
+    curr_coord.last_idx = 0;
+    RCLCPP_ERROR_STREAM(rclcpp::get_logger("carma_wm_ctrl"), "Repeating the simulation");
+  } //repeat the simulation
+
+  external_object_.msg_.header.stamp = now;
+  external_object_.msg_.pose.pose.position.x = curr_coord.x;
+  external_object_.msg_.pose.pose.position.y = curr_coord.y;
+  external_object_.last_route_idx_ = curr_coord.last_idx;
+  external_object_.last_time_ = now;
+  external_object_.msg_.predictions = {};
+  // update predictions
+  // TODO hardcoded 3s, and hardcoded 0.5s 
+  double predict_dt = 0;
+  CoordHelper last_predicted_coord = curr_coord;
+  last_predicted_coord.last_time = now;
+  carma_perception_msgs::msg::PredictedState predicted_state;
+  predicted_state.predicted_position_confidence = 1.0;
+  predicted_state.predicted_velocity_confidence = 1.0;
+  predicted_state.header = external_object_.msg_.header;
+
+  while (predict_dt < 3)
+  {
+    RCLCPP_ERROR_STREAM(rclcpp::get_logger("carma_wm_ctrl"), "1 Inside updateExternalObject while");
+    
+    auto curr_coord = findPosition(last_predicted_coord.x, last_predicted_coord.y, 
+                                  last_predicted_coord.last_idx, external_object_.route_coords_, 0.5);
+    // insert this state to predicted
+    predicted_state.header.stamp = last_predicted_coord.last_time + rclcpp::Duration(0.5 * 1e9);
+    curr_coord.last_time = last_predicted_coord.last_time + rclcpp::Duration(0.5 * 1e9);
+
+    RCLCPP_ERROR_STREAM(rclcpp::get_logger("carma_wm_ctrl"), "predicted_state.header.stamp: " << std::to_string(rclcpp::Time(predicted_state.header.stamp).seconds()));
+
+    predicted_state.predicted_position.position.x = curr_coord.x;
+    predicted_state.predicted_position.position.y = curr_coord.y;
+    predicted_state.predicted_velocity.linear.x = external_object_.msg_.velocity_inst.twist.linear.x;
+
+    // TODO; review orientation?
+
+    external_object_.msg_.predictions.push_back(predicted_state);
+    last_predicted_coord = curr_coord;
+    last_predicted_coord.last_time = curr_coord.last_time;
+    last_predicted_coord.last_idx = curr_coord.last_idx;
+
+    predict_dt += 0.5;
+    RCLCPP_ERROR_STREAM(rclcpp::get_logger("carma_wm_ctrl"), "2 Inside updateExternalObject while");
+
+  }
+  return external_object_;
+  
 }
 
 void WMBroadcaster::geofenceFromMsg(std::shared_ptr<Geofence> gf_ptr, const carma_v2x_msgs::msg::TrafficControlMessageV01& msg_v01)
@@ -1039,13 +1245,13 @@ void WMBroadcaster::externalMapMsgCallback(carma_v2x_msgs::msg::MapData::UniqueP
 
   // check if we have seen this message already
   bool up_to_date = false;
-  if (sim_.intersection_id_to_regem_id_.size() == map_msg->intersections.size())
+  if (sim_->intersection_id_to_regem_id_.size() == map_msg->intersections.size())
   {
     up_to_date = true;
     // check id of the intersection only
     for (auto intersection : map_msg->intersections)
     {
-      if (sim_.intersection_id_to_regem_id_.find(intersection.id.id) == sim_.intersection_id_to_regem_id_.end())
+      if (sim_->intersection_id_to_regem_id_.find(intersection.id.id) == sim_->intersection_id_to_regem_id_.end())
       {
         up_to_date = false;
         break;
@@ -1198,14 +1404,16 @@ void WMBroadcaster::scheduleGeofence(std::shared_ptr<carma_wm_ctrl::Geofence> gf
 void WMBroadcaster::geoReferenceCallback(std_msgs::msg::String::UniquePtr geo_ref)
 {
   std::lock_guard<std::mutex> guard(map_mutex_);
-  sim_.setTargetFrame(geo_ref->data);
+  sim_->setTargetFrame(geo_ref->data);
   base_map_georef_ = geo_ref->data;
 }
 
 void WMBroadcaster::setMaxLaneWidth(double max_lane_width)
 {
+  sim_ = std::make_shared<carma_wm::SignalizedIntersectionManager>();
+  
   max_lane_width_ = max_lane_width;
-  sim_.setMaxLaneWidth(max_lane_width_);
+  sim_->setMaxLaneWidth(max_lane_width_);
 }
 
 void WMBroadcaster::setIntersectionCoordCorrection(const std::vector<int64_t>& intersection_ids_for_correction, const std::vector<double>& intersection_correction)
@@ -1217,9 +1425,10 @@ void WMBroadcaster::setIntersectionCoordCorrection(const std::vector<int64_t>& i
 
   for (auto i = 0; i < intersection_correction.size(); i = i + 2)
   {
-    sim_.intersection_coord_correction_[(uint16_t)intersection_ids_for_correction[i/2]].first =  intersection_correction[i]; //x
-    sim_.intersection_coord_correction_[(uint16_t)intersection_ids_for_correction[i/2]].second = intersection_correction[i + 1]; //y
+    sim_->intersection_coord_correction_[(uint16_t)intersection_ids_for_correction[i/2]].first =  intersection_correction[i]; //x
+    sim_->intersection_coord_correction_[(uint16_t)intersection_ids_for_correction[i/2]].second = intersection_correction[i + 1]; //y
   }
+
 }
 
 void WMBroadcaster::setConfigSpeedLimit(double cL)
@@ -1374,17 +1583,53 @@ bool WMBroadcaster::shouldChangeControlLine(const lanelet::ConstLaneletOrArea& e
   return should_change_pcl;
 }
 
+/*!
+  * \brief This is a helper function that returns true if signal in the lanelet should be changed according to the records of signalizer intersection manager
+           Used in managing multiple signal_groups in a single entry lanelet for example
+  * \param el The LaneletOrArea that houses the regem
+  * \param regem The regulatoryElement that needs to be checked
+  * \param sim The signalized intersection manager that has records regems and corresponding lanelets
+  * NOTE: Currently this function only works on lanelets. It returns true if the regem is not CarmaTrafficSignal or if the signal should be changed.
+  */
+bool WMBroadcaster::shouldChangeTrafficSignal(const lanelet::ConstLaneletOrArea& el,const lanelet::RegulatoryElementConstPtr& regem, std::shared_ptr<carma_wm::SignalizedIntersectionManager> sim) const
+{
+  // should change if the regem is not a CarmaTrafficSignal, which is not supported by this logic
+  if (regem->attribute(lanelet::AttributeName::Subtype).value().compare(lanelet::CarmaTrafficSignal::RuleName) != 0 || !el.isLanelet() || !sim_)
+  {
+    return true;
+  }
+  
+  lanelet::CarmaTrafficSignalPtr traffic_signal =  std::dynamic_pointer_cast<lanelet::CarmaTrafficSignal>(current_map_->regulatoryElementLayer.get(regem->id()));
+  uint8_t signal_id = 0;
+  
+  for (auto it = sim->signal_group_to_traffic_light_id_.begin(); it != sim->signal_group_to_traffic_light_id_.end(); ++it) 
+  {
+    if (regem->id() == it->second)
+    {
+      signal_id = it->first;
+    } 
+  } 
+
+  if (signal_id == 0) // doesn't exist in the record
+    return true;
+  
+  if (sim->signal_group_to_entry_lanelet_ids_[signal_id].find(el.id()) != sim->signal_group_to_entry_lanelet_ids_[signal_id].end())
+    return false; // signal group's entry lane is still part of the intersection, so don't change
+  
+  return true;
+}
+
 void WMBroadcaster::addRegulatoryComponent(std::shared_ptr<Geofence> gf_ptr) const
 {
-
-
   // First loop is to save the relation between element and regulatory element
   // so that we can add back the old one after geofence deactivates
   for (auto el: gf_ptr->affected_parts_)
   {
     for (auto regem : el.regulatoryElements())
     {
-      if (!shouldChangeControlLine(el, regem, gf_ptr)) continue;
+      if (!shouldChangeControlLine(el, regem, gf_ptr) ||
+        !shouldChangeTrafficSignal(el, regem, sim_))
+        continue;
 
       if (regem->attribute(lanelet::AttributeName::Subtype).value() == gf_ptr->regulatory_element_->attribute(lanelet::AttributeName::Subtype).value())
       {
@@ -1523,7 +1768,7 @@ void WMBroadcaster::addGeofence(std::shared_ptr<Geofence> gf_ptr)
 
     if (detected_map_msg_signal && updates_to_send.back() == update) // if last update
     {
-      send_data->sim_ = sim_;
+      send_data->sim_ = *sim_;
     }
 
     carma_wm::toBinMsg(send_data, &gf_msg);
@@ -1994,9 +2239,10 @@ carma_perception_msgs::msg::CheckActiveGeofence WMBroadcaster::checkActiveGeofen
 
   if (active_geofence_llt_ids_.size() <= 0 ) 
   {
-    RCLCPP_INFO_STREAM(rclcpp::get_logger("carma_wm_ctrl"), "No active geofence llt ids are loaded to the WMBroadcaster");
     return outgoing_geof;
   }
+  
+  RCLCPP_INFO_STREAM(rclcpp::get_logger("carma_wm_ctrl"), "Active geofence llt ids are loaded to the WMBroadcaster");
 
   // Obtain the closest lanelet to the vehicle's current position
   auto current_llt = lanelet::geometry::findNearest(current_map_->laneletLayer, curr_pos, 1)[0].second;
@@ -2174,9 +2420,9 @@ void WMBroadcaster::updateUpcomingSGIntersectionIds()
     }
   }
 
-  if(isLightFound)
+  if(isLightFound && sim_)
   {
-    for(auto itr = sim_.signal_group_to_traffic_light_id_.begin(); itr != sim_.signal_group_to_traffic_light_id_.end(); itr++)
+    for(auto itr = sim_->signal_group_to_traffic_light_id_.begin(); itr != sim_->signal_group_to_traffic_light_id_.end(); itr++)
     {     
       if(itr->second == traffic_lights.front()->id())
       {
@@ -2200,7 +2446,7 @@ void WMBroadcaster::updateUpcomingSGIntersectionIds()
     lanelet::Id intersection_id = intersections.front()->id();    
     if(intersection_id != lanelet::InvalId)
     {
-      for(auto itr = sim_.intersection_id_to_regem_id_.begin(); itr != sim_.intersection_id_to_regem_id_.end(); itr++)
+      for(auto itr = sim_->intersection_id_to_regem_id_.begin(); itr != sim_->intersection_id_to_regem_id_.end(); itr++)
       {
         if(itr->second == intersection_id)
         {

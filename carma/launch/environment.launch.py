@@ -266,7 +266,8 @@ def generate_launch_description():
                         {'--log-level' : GetLogLevel('object_visualizer', env_log_levels) }
                     ],
                     remappings=[
-                        ("external_objects", "external_object_predictions"),
+                        ("external_objects", "external_object_simulation_list"),
+                        ("roadway_obstacles", "roadway_objects"),
                     ],
                     parameters=[ object_visualizer_param_file ]
             ),
@@ -297,7 +298,7 @@ def generate_launch_description():
                         {'--log-level' : GetLogLevel('motion_prediction_visualizer', env_log_levels) }
                     ],
                     remappings=[
-                        ("external_objects", "external_object_predictions" ),
+                        ("external_objects", "external_object_simulation_list" ),
                     ]
             ),
             ComposableNode( 
@@ -309,7 +310,7 @@ def generate_launch_description():
                         {'--log-level' : GetLogLevel('roadway_objects', env_log_levels) }
                     ],
                     remappings=[
-                        ("external_objects", "external_object_predictions"),
+                        ("external_objects", "external_object_simulation_list"),
                         ("incoming_spat", [ EnvironmentVariable('CARMA_MSG_NS', default_value=''), "/incoming_spat" ] ),
                         ("route", [ EnvironmentVariable('CARMA_GUIDE_NS', default_value=''), "/route" ] )
                     ],

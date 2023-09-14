@@ -35,7 +35,9 @@ namespace carma_wm_ctrl
     double config_limit = 6.67; //config speed limit in m/s
     std::string vehicle_id = "CARMA"; 
     std::string participant = "vehicle:car";
-    
+    double external_object_speed = 4.47;
+    double external_object_spawn_delay_period = 4;
+    std::vector<double> external_object_route_coords = {};
     // Stream operator for this config
     friend std::ostream &operator<<(std::ostream &output, const Config &c)
     {
@@ -45,9 +47,12 @@ namespace carma_wm_ctrl
            << "traffic_control_request_period: " << c.traffic_control_request_period << std::endl
            << "intersection_coord_correction.size(): " << c.intersection_coord_correction.size() << std::endl
            << "intersection_ids_for_correction.size(): " << c.intersection_ids_for_correction.size() << std::endl
+           << "external_object_route_coords.size(): " << c.external_object_route_coords.size() << std::endl
            << "vehicle_id: " << c.vehicle_id << std::endl
            << "participant: " << c.participant << std::endl
            << "config_limit: " << c.config_limit << std::endl
+           << "external_object_speed: " << c.external_object_speed << std::endl
+           << "external_object_spawn_delay_period: " << c.external_object_spawn_delay_period << std::endl
            << "}" << std::endl;
       return output;
     }

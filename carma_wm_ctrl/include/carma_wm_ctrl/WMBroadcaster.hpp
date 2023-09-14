@@ -38,6 +38,7 @@
 #include <carma_v2x_msgs/msg/traffic_control_bounds.hpp>
 #include <lanelet2_routing/RoutingGraph.h>
 #include <geometry_msgs/msg/pose_stamped.h>
+#include <carma_perception_msgs/msg/external_object.hpp>
 
 #include <carma_wm_ros2/MapConformer.hpp>
 
@@ -60,6 +61,24 @@ namespace carma_wm_ctrl
 {
   const int WORKZONE_TCM_REQUIRED_SIZE = 4;
   struct WorkZoneSection { static const uint8_t OPEN; static const uint8_t CLOSED; static const uint8_t TAPERLEFT; static const uint8_t TAPERRIGHT; static const uint8_t OPENLEFT; static const uint8_t OPENRIGHT; static const uint8_t REVERSE;}; 
+  struct ExternalObject
+  {
+    double delay_ = 4;
+    double last_downtrack_ = 0;
+    int last_route_idx_ = 0;
+    std::vector<std::pair<double,double>> route_coords_; //x,y
+    rclcpp::Time simulation_start_time_{0};
+    rclcpp::Time last_time_{0};
+    
+    carma_perception_msgs::msg::ExternalObject msg_;
+  };
+  struct CoordHelper
+  {
+    double x;
+    double y;
+    int last_idx = 0;
+    rclcpp::Time last_time = rclcpp::Time();
+  };
 
 /*!
  * \brief Class which provies exposes map publication and carma_wm update logic
@@ -396,16 +415,29 @@ public:
   */
   void pubTCMACK(j2735_v2x_msgs::msg::Id64b tcm_req_id, uint16_t msgnum, int ack_status, const std::string& ack_reason);
 
-
   /*! \brief populate upcoming_intersection_ids_ from local traffic lanelet ids
    */
   void updateUpcomingSGIntersectionIds();
+
+  /*! \brief TODO
+   */
+  boost::optional<carma_perception_msgs::msg::ExternalObjectList> getRecentState(const rclcpp::Time& now);
+
+  /*! \brief TODO
+   */
+  void setSimulationRoute(const std::vector<double>& gps_coords, double velocity, double delay);
+
+  ExternalObject updateExternalObject(const rclcpp::Time& now);
+  CoordHelper findPosition(double startX, double startY, int start_idx, const std::vector<std::pair<double, double>>& route, double time_travelled);
 
   visualization_msgs::msg::MarkerArray tcm_marker_array_;
   carma_v2x_msgs::msg::TrafficControlRequestPolygon tcr_polygon_;
   std_msgs::msg::Int32MultiArray upcoming_intersection_ids_;
 
 private:
+  //TODO simulation
+  ExternalObject external_object_;
+
   double error_distance_ = 5; //meters
   lanelet::ConstLanelets route_path_;
   std::unordered_set<lanelet::Id> active_geofence_llt_ids_; 
@@ -416,6 +448,7 @@ private:
   void removeGeofenceHelper(std::shared_ptr<Geofence> gf_ptr) const;
   void addGeofenceHelper(std::shared_ptr<Geofence> gf_ptr);
   bool shouldChangeControlLine(const lanelet::ConstLaneletOrArea& el,const lanelet::RegulatoryElementConstPtr& regem, std::shared_ptr<Geofence> gf_ptr) const;
+  bool shouldChangeTrafficSignal(const lanelet::ConstLaneletOrArea& el,const lanelet::RegulatoryElementConstPtr& regem, std::shared_ptr<carma_wm::SignalizedIntersectionManager> sim) const;
   void addPassingControlLineFromMsg(std::shared_ptr<Geofence> gf_ptr, const carma_v2x_msgs::msg::TrafficControlMessageV01& msg_v01, const std::vector<lanelet::Lanelet>& affected_llts) const; 
   void addScheduleFromMsg(std::shared_ptr<Geofence> gf_ptr, const carma_v2x_msgs::msg::TrafficControlMessageV01& msg_v01);
   void scheduleGeofence(std::shared_ptr<carma_wm_ctrl::Geofence> gf_ptr_list);
@@ -459,7 +492,8 @@ private:
 
   size_t update_count_ = -1; // Records the total number of sent map updates. Used as the set value for update.seq_id
 
-  carma_wm::SignalizedIntersectionManager sim_;
+  std::shared_ptr<carma_wm::SignalizedIntersectionManager> sim_;
+
   enum class AcknowledgementStatus {
     ACKNOWLEDGED = 1,
     REJECTED = 2
@@ -468,6 +502,7 @@ private:
   int ack_pub_times_ = 1;
   std::string vehicle_id_;
 };
+
 
 
 }  // namespace carma_wm_ctrl
