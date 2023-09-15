@@ -41,15 +41,6 @@ class TestHarnessNode(rclpy.node.Node):
     def __init__(self, *args, **kwargs) -> None:
         super().__init__("test_harness", *args, **kwargs)
 
-        self.change_state_client = self.create_client(
-            ChangeState, "node_under_test/change_state"
-        )
-
-        self.get_logger().info("Waiting for `node_under_test/change_state` service")
-
-        while not self.change_state_client.wait_for_service(timeout_sec=1.0):
-            pass
-
         self.external_object_list_pub = self.create_publisher(
             ExternalObjectList, "external_objects", 1
         )
