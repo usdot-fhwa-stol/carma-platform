@@ -402,7 +402,10 @@ namespace yield_plugin
         ROS_DEBUG_STREAM("target speed is zero");
         // if speed is zero, the vehicle will stay in previous location.
         jmt_tpp = jmt_trajectory_points[i-1];
-        jmt_tpp.target_time = jmt_trajectory_points[0].target_time + ros::Duration(traj_target_time);
+
+        jmt_tpp.target_time =  ros::Time(std::max((ros::Time(jmt_trajectory_points[0].target_time) + ros::Duration(traj_target_time)).toSec(), ros::Time(jmt_trajectory_points[i -1 ].target_time).toSec()));
+        //std::cout << "empty x: " << jmt_tpp.x << ", y:" << jmt_tpp.y << ", t:" << std::to_string(ros::Time(jmt_tpp.target_time).seconds()) << std::endl
+
         jmt_trajectory_points.push_back(jmt_tpp);
       }
       prev_speed = current_speed;
@@ -414,6 +417,58 @@ namespace yield_plugin
     return jmt_trajectory;
   }
   
+  bool detectCollision(const cav_msgs::TrajectoryPlan& trajectory1, const std::vector<cav_msgs::PredictedState>& trajectory2, double collisionRadius) {
+    // Iterate through each pair of consecutive points in the trajectories
+  
+    ROS_ERROR_STREAM("Starting new collision detection, trajectory size: " << trajectory1.trajectory_points.size() << ". prediction size: " << trajectory2.size());
+  
+    double filter_radius = 11.67 * 6 * 2; //(6sec radius) * 2 (worst case it also has that speed to us)
+    double smallest_dist = 999.0;
+    for (int i = 0; i < trajectory1.trajectory_points.size() - 1; ++i) {
+        auto p1a = trajectory1.trajectory_points[i];
+        auto p1b = trajectory1.trajectory_points[i + 1];
+        for (int j = 0; j < trajectory2.size() - 1; ++j) {
+            auto p2a = trajectory2[j];
+            auto p2b = trajectory2[j + 1];
+            ROS_DEBUG_STREAM("p1a.target_time: " << std::to_string(p1a.target_time.toSec()) << ", p1b.target_time: " << std::to_string(p1b.target_time.toSec()));
+            ROS_DEBUG_STREAM("p2a.target_time: " << std::to_string(p2a.header.stamp.toSec()) << ", p2b.target_time: " << std::to_string(p2b.header.stamp.toSec()));
+            ROS_DEBUG_STREAM("p1a.x: " << p1a.x << ", p1b.y: " << p1b.y);
+            ROS_DEBUG_STREAM("p2a.x: " << p2a.predicted_position.position.x << ", p2b.y: " << p2b.predicted_position.position.y);
+          
+
+            // Linearly interpolate positions at a common timestamp for both trajectories
+            double t1 = (p2a.header.stamp - p1a.target_time).toSec() / (p1b.target_time - p1a.target_time).toSec();
+            double t2 = (p1a.target_time - p2a.header.stamp).toSec() / (p2b.header.stamp - p2a.header.stamp).toSec();
+            double x1 = p1a.x + t1 * (p1b.x - p1a.x);
+            double y1 = p1a.y + t1 * (p1b.y - p1a.y);
+            double x2 = p2a.predicted_position.position.x;
+            //+ t2 * (p2b.predicted_position.position.x - p2a.predicted_position.position.x);
+            double y2 = p2a.predicted_position.position.y;
+            //+ t2 * (p2b.predicted_position.position.y - p2a.predicted_position.position.y);
+            
+            // Calculate the distance between the two interpolated points
+            double distance = std::sqrt((x1 - x2) * (x1 - x2) + (y1 - y2) * (y1 - y2));
+            smallest_dist = std::min(distance, smallest_dist);
+            ROS_DEBUG_STREAM("smallest_dist: " << smallest_dist << ", distance: " << distance << ", t1: " << t1 << ", t2: " << t2 << ", x1: " << x1 << ", y1: " <<y1 <<  ", x2: " << x2 << ", y2: " << y2);
+
+            if (i ==0 && j ==0 && distance > filter_radius)
+            {
+                ROS_ERROR_STREAM("<========Too far away" );
+                return false;
+              
+            }
+            // Check if the distance is less than the collision radius
+            if (distance < collisionRadius) {
+                ROS_ERROR_STREAM("<================================================ !!!!!! Collision detected at timestamp " << std::to_string(p1a.target_time.toSec()) );
+                return true;
+            }
+        }
+    }
+
+    // No collision detected
+    return false;
+}
+
   cav_msgs::TrajectoryPlan YieldPlugin::update_traj_for_object(const cav_msgs::TrajectoryPlan& original_tp, double initial_velocity) 
   {
         
@@ -432,6 +487,34 @@ namespace yield_plugin
     std::vector<cav_msgs::RoadwayObstacle> rwol_collision;
 
     // std::vector<cav_msgs::RoadwayObstacle> rwol_collision = carma_wm::collision_detection::WorldCollisionDetection(rwol2, original_tp, host_vehicle_size, current_velocity, config_.collision_horizon);
+    // instert current position as prediction as well
+
+    std::vector<cav_msgs::PredictedState> new_list;
+    ROS_ERROR_STREAM("RoadwayObjects size: " << rwol.size());
+
+    for (auto curr_obstacle : rwol2.roadway_obstacles)
+    {
+      ROS_ERROR_STREAM("back Time: " << std::to_string(curr_obstacle.object.predictions.back().header.stamp.toSec()) << ", now: " << std::to_string(ros::Time::now().toSec()));
+      
+      if (curr_obstacle.object.predictions.back().header.stamp > ros::Time::now())
+      {
+        cav_msgs::PredictedState curr_state;
+        curr_state.header.stamp = curr_obstacle.object.header.stamp;
+        curr_state.predicted_position.position.x = curr_obstacle.object.pose.pose.position.x;
+        curr_state.predicted_position.position.y = curr_obstacle.object.pose.pose.position.y;
+        curr_state.predicted_velocity.linear.x = curr_obstacle.object.velocity.twist.linear.x;
+        new_list.push_back(curr_state);
+        new_list.insert(new_list.end(), curr_obstacle.object.predictions.begin(), curr_obstacle.object.predictions.end());
+        // TODO consider radius of object
+        bool collision_detected = detectCollision(original_tp, new_list, 10);
+        ROS_ERROR_STREAM("Collision: " << collision_detected);
+        if (collision_detected)
+        {
+          rwol_collision.push_back(curr_obstacle);
+        }
+      }
+    }
+  
     
     lanelet::BasicPoint2d point(original_tp.trajectory_points[0].x,original_tp.trajectory_points[0].y);
     double vehicle_downtrack = wm_->routeTrackPos(point).downtrack;
@@ -453,18 +536,19 @@ namespace yield_plugin
       ROS_DEBUG_STREAM("i.object.velocity.twist.linear.x");
       ROS_DEBUG_STREAM(i.object.velocity.twist.linear.x);
 
-      if(current_velocity.linear.x > 0.0) {
+      // TODO turn off
+      // if(current_velocity.linear.x > 0.0) {
         
-          // std::abs might not be needed cause vehicles in the behind of vehicle to cause problem
+      //     // std::abs might not be needed cause vehicles in the behind of vehicle to cause problem
         
-          ROS_DEBUG_STREAM("std::abs(vehicle_downtrack - object_down_track)/current_velocity.linear.x");
+      //     ROS_DEBUG_STREAM("std::abs(vehicle_downtrack - object_down_track)/current_velocity.linear.x");
 
-          ROS_DEBUG_STREAM(object_down_track - vehicle_downtrack/current_velocity.linear.x);
+      //     ROS_DEBUG_STREAM((std::to_string((object_down_track - vehicle_downtrack)/current_velocity.linear.x)));
 
-          if((object_down_track - vehicle_downtrack)/current_velocity.linear.x < config_.collision_horizon) {
-              rwol_collision.push_back(i);
-          }
-      }
+      //     if(std::abs((object_down_track - vehicle_downtrack))/current_velocity.linear.x < config_.collision_horizon) {
+      //         rwol_collision.push_back(i);
+      //     }
+      // }
 
     }
 
@@ -502,7 +586,7 @@ namespace yield_plugin
       if (goal_velocity <= config_.min_obstacle_speed){
         ROS_WARN_STREAM("The obstacle is not moving");
       }
-
+      ROS_DEBUG_STREAM("goal_pos: " << goal_pos << ", x_lead: " << x_lead << ", safety_gap: " << safety_gap);
 
       double initial_time = 0;
       double initial_pos = 0.0; //relative initial position (first trajectory point)

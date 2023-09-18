@@ -309,24 +309,31 @@ void WMBroadcaster::setSimulationRoute(const std::vector<double>& gps_coords, do
 
 boost::optional<carma_perception_msgs::msg::ExternalObjectList> WMBroadcaster::getRecentState(const rclcpp::Time& now)
 {
-  RCLCPP_ERROR_STREAM(rclcpp::get_logger("carma_wm_ctrl"), "Trying to get recent state");
+  RCLCPP_DEBUG_STREAM(rclcpp::get_logger("carma_wm_ctrl"), "Trying to get recent state");
   carma_perception_msgs::msg::ExternalObjectList msg_list;
   // WORKING CODE
 
+  // TODO
+  // force the object to not move, but have predicted movements
+  //external_object_.msg_.pose.pose.position.x = external_object_.route_coords_.front().first;
+  //external_object_.msg_.pose.pose.position.y = external_object_.route_coords_.front().second;
+  ///////
+
+  
   if (external_object_.simulation_start_time_ == rclcpp::Time(0, 0, external_object_.simulation_start_time_.get_clock_type())) //first time
   {
     external_object_.simulation_start_time_ = now;
     
-    RCLCPP_ERROR_STREAM(rclcpp::get_logger("carma_wm_ctrl"), "Returning from first if clause");
+    RCLCPP_DEBUG_STREAM(rclcpp::get_logger("carma_wm_ctrl"), "Returning from first if clause");
     return boost::none;
   }
 
-  RCLCPP_ERROR_STREAM(rclcpp::get_logger("carma_wm_ctrl"), "Between the two IFs");
+  RCLCPP_DEBUG_STREAM(rclcpp::get_logger("carma_wm_ctrl"), "Between the two IFs");
 
   // Return if within start delay
   if (external_object_.simulation_start_time_ + rclcpp::Duration(external_object_.delay_ * 1e9) >= now )
   {
-    RCLCPP_ERROR_STREAM(rclcpp::get_logger("carma_wm_ctrl"), "Not within the delay");
+    RCLCPP_DEBUG_STREAM(rclcpp::get_logger("carma_wm_ctrl"), "Not within the delay");
     return boost::none;
   }
 
@@ -347,13 +354,13 @@ CoordHelper WMBroadcaster::findPosition(double startX, double startY, int start_
   double time_spent = 0.0;
   size_t i = start_idx;
   auto velocity = external_object_.msg_.velocity.twist.linear.x;
-  RCLCPP_ERROR_STREAM(rclcpp::get_logger("carma_wm_ctrl"), "Inside findPosition");
+  RCLCPP_DEBUG_STREAM(rclcpp::get_logger("carma_wm_ctrl"), "Inside findPosition");
   
   while (i < route.size() - 1) 
   {
     double starting_x = route[i].first;
     double starting_y = route[i].second;
-    RCLCPP_ERROR_STREAM(rclcpp::get_logger("carma_wm_ctrl"), "starting_x: " << starting_x << ", starting_y:" << starting_y);
+    RCLCPP_DEBUG_STREAM(rclcpp::get_logger("carma_wm_ctrl"), "starting_x: " << starting_x << ", starting_y:" << starting_y);
 
 
     if (i == start_idx) 
@@ -361,7 +368,7 @@ CoordHelper WMBroadcaster::findPosition(double startX, double startY, int start_
       // Adjust the first segment distance and time to account for the start position
       starting_x = startX;
       starting_y = startY;
-      RCLCPP_ERROR_STREAM(rclcpp::get_logger("carma_wm_ctrl"), "FIrst: startX: " << startX  << ", startY:" << startY);
+      RCLCPP_DEBUG_STREAM(rclcpp::get_logger("carma_wm_ctrl"), "FIrst: startX: " << startX  << ", startY:" << startY);
 
     }
 
@@ -375,17 +382,17 @@ CoordHelper WMBroadcaster::findPosition(double startX, double startY, int start_
       return_value.x = starting_x + ratio * (route[i+1].first - starting_x);
       return_value.y = starting_y + ratio * (route[i+1].second - starting_y);
       return_value.last_idx = i;
-      RCLCPP_ERROR_STREAM(rclcpp::get_logger("carma_wm_ctrl"), "Returning from first option resort, time_travelled: " << time_travelled << ", time_spent: " << time_spent << ", remaining_time: " << remaining_time
+      RCLCPP_DEBUG_STREAM(rclcpp::get_logger("carma_wm_ctrl"), "Returning from first option resort, time_travelled: " << time_travelled << ", time_spent: " << time_spent << ", remaining_time: " << remaining_time
                                                                   << ", ratio: " << ratio << ", time_to_next: " << time_to_next);
 
-      RCLCPP_ERROR_STREAM(rclcpp::get_logger("carma_wm_ctrl"), "Returning from first option resort, x: " << return_value.x << ", y: " << return_value.y << ", idx: " << return_value.last_idx);
+      RCLCPP_DEBUG_STREAM(rclcpp::get_logger("carma_wm_ctrl"), "Returning from first option resort, x: " << return_value.x << ", y: " << return_value.y << ", idx: " << return_value.last_idx);
 
       return return_value;
     }
     else
     {
       ++i;
-      RCLCPP_ERROR_STREAM(rclcpp::get_logger("carma_wm_ctrl"), "Increasing i to :" << i);
+      RCLCPP_DEBUG_STREAM(rclcpp::get_logger("carma_wm_ctrl"), "Increasing i to :" << i);
 
     }    
     time_spent += time_to_next;
@@ -395,7 +402,7 @@ CoordHelper WMBroadcaster::findPosition(double startX, double startY, int start_
   return_value.x = route.back().first;
   return_value.y = route.back().second;
   return_value.last_idx = i;
-  RCLCPP_ERROR_STREAM(rclcpp::get_logger("carma_wm_ctrl"), "Returning from last resort");
+  RCLCPP_DEBUG_STREAM(rclcpp::get_logger("carma_wm_ctrl"), "Returning from last resort");
 
   return return_value;  // return the last coordinate if time exceeds the total travel time
 }
@@ -404,7 +411,7 @@ CoordHelper WMBroadcaster::findPosition(double startX, double startY, int start_
 ExternalObject WMBroadcaster::updateExternalObject(const rclcpp::Time& now)
 {
   auto dt = now.seconds() - external_object_.last_time_.seconds();
-  RCLCPP_ERROR_STREAM(rclcpp::get_logger("carma_wm_ctrl"), "Inside updateExternalObject last_time: " << std::to_string(external_object_.last_time_.seconds()));
+  RCLCPP_DEBUG_STREAM(rclcpp::get_logger("carma_wm_ctrl"), "Inside updateExternalObject last_time: " << std::to_string(external_object_.last_time_.seconds()));
 
   auto curr_coord = findPosition(external_object_.msg_.pose.pose.position.x, external_object_.msg_.pose.pose.position.y, 
                                   external_object_.last_route_idx_, external_object_.route_coords_,dt);
@@ -415,7 +422,7 @@ ExternalObject WMBroadcaster::updateExternalObject(const rclcpp::Time& now)
     curr_coord.x = external_object_.route_coords_.front().first;
     curr_coord.y = external_object_.route_coords_.front().second;
     curr_coord.last_idx = 0;
-    RCLCPP_ERROR_STREAM(rclcpp::get_logger("carma_wm_ctrl"), "Repeating the simulation");
+    RCLCPP_DEBUG_STREAM(rclcpp::get_logger("carma_wm_ctrl"), "Repeating the simulation");
   } //repeat the simulation
 
   external_object_.msg_.header.stamp = now;
@@ -436,7 +443,7 @@ ExternalObject WMBroadcaster::updateExternalObject(const rclcpp::Time& now)
 
   while (predict_dt < 3)
   {
-    RCLCPP_ERROR_STREAM(rclcpp::get_logger("carma_wm_ctrl"), "1 Inside updateExternalObject while");
+    RCLCPP_DEBUG_STREAM(rclcpp::get_logger("carma_wm_ctrl"), "1 Inside updateExternalObject while");
     
     auto curr_coord = findPosition(last_predicted_coord.x, last_predicted_coord.y, 
                                   last_predicted_coord.last_idx, external_object_.route_coords_, 0.5);
@@ -444,7 +451,7 @@ ExternalObject WMBroadcaster::updateExternalObject(const rclcpp::Time& now)
     predicted_state.header.stamp = last_predicted_coord.last_time + rclcpp::Duration(0.5 * 1e9);
     curr_coord.last_time = last_predicted_coord.last_time + rclcpp::Duration(0.5 * 1e9);
 
-    RCLCPP_ERROR_STREAM(rclcpp::get_logger("carma_wm_ctrl"), "predicted_state.header.stamp: " << std::to_string(rclcpp::Time(predicted_state.header.stamp).seconds()));
+    RCLCPP_DEBUG_STREAM(rclcpp::get_logger("carma_wm_ctrl"), "predicted_state.header.stamp: " << std::to_string(rclcpp::Time(predicted_state.header.stamp).seconds()));
 
     predicted_state.predicted_position.position.x = curr_coord.x;
     predicted_state.predicted_position.position.y = curr_coord.y;
@@ -458,7 +465,7 @@ ExternalObject WMBroadcaster::updateExternalObject(const rclcpp::Time& now)
     last_predicted_coord.last_idx = curr_coord.last_idx;
 
     predict_dt += 0.5;
-    RCLCPP_ERROR_STREAM(rclcpp::get_logger("carma_wm_ctrl"), "2 Inside updateExternalObject while");
+    RCLCPP_DEBUG_STREAM(rclcpp::get_logger("carma_wm_ctrl"), "2 Inside updateExternalObject while");
 
   }
   return external_object_;

@@ -120,7 +120,7 @@ bool InLaneCruisingPlugin::plan_trajectory_cb(cav_srvs::PlanTrajectoryRequest& r
   if (config_.enable_object_avoidance)
   {
     ROS_DEBUG_STREAM("Activate Object Avoidance");
-    if (yield_client_ && yield_client_.exists() && yield_client_.isValid())
+    if (yield_client_ && yield_client_.exists() && yield_client_.isValid() && original_trajectory.trajectory_points.size() >= 2)
     {
       ROS_DEBUG_STREAM("Yield Client is valid");
       cav_srvs::PlanTrajectory yield_srv;

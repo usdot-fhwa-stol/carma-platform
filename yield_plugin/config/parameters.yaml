@@ -20,9 +20,9 @@ tpmin: 2.0
 # Value type: Desired
 yield_max_deceleration: 3.0
 # Minimum safety gap with an Object/Obstacle
-# Units: s
+# Units: meter
 # Value type: Desired
-x_gap: 2.0
+x_gap: 20.0
 # Host vehicle length
 # Units: m
 # Value type: Measured

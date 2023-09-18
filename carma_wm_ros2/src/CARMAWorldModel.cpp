@@ -762,7 +762,12 @@ namespace carma_wm
     auto nearestLaneletBoost = getIntersectingLanelet(object);
 
     if (!nearestLaneletBoost)
+    {
+      RCLCPP_ERROR_STREAM(rclcpp::get_logger("carma_wm_ros2"), "No nearest lanelet found for this object: " << (int)object.id);
+      
       return boost::none;
+    }
+      
 
     lanelet::Lanelet nearestLanelet = nearestLaneletBoost.get();
 
@@ -894,16 +899,42 @@ namespace carma_wm
     lanelet::BasicPoint2d object_center(object.pose.pose.position.x, object.pose.pose.position.y);
     lanelet::BasicPolygon2d object_polygon = geometry::objectToMapPolygon(object.pose.pose, object.size);
 
-    auto nearestLanelet = semantic_map_->laneletLayer.nearest(
-        object_center, 1)[0];  // Since the map contains lanelets there should always be at least 1 element
+    auto nearestLaneletList = semantic_map_->laneletLayer.nearest(
+        object_center, 3);  // Since the map contains lanelets there should always be at least 1 element (checking 3)
 
     // Check if the object is inside or intersecting this lanelet
     // If no intersection then the object can be considered off the road and does not need to processed
-    if (!boost::geometry::intersects(nearestLanelet.polygon2d().basicPolygon(), object_polygon))
+    lanelet::Optional<lanelet::Lanelet> returnLanelet = boost::none;
+
+    if (nearestLaneletList.empty())
     {
-      return boost::none;
+      RCLCPP_ERROR_STREAM(rclcpp::get_logger("carma_wm_ros2"), "toRoadway, nearest lanelet List is empty!");
+      return returnLanelet;
     }
-    return nearestLanelet;
+
+    size_t nearest_llt_size = std::min(3, (int)nearestLaneletList.size());
+    auto specific = semantic_map_->laneletLayer.get(11139); //TODO need fix
+
+    if (boost::geometry::intersects(specific.polygon2d().basicPolygon(), object_polygon))
+    {
+      returnLanelet = specific;
+      RCLCPP_ERROR_STREAM(rclcpp::get_logger("carma_wm_ros2"), "Found match with specific");
+      return returnLanelet;
+    }   
+
+    for (size_t i = 0; i < nearest_llt_size; i ++) //TODO: only check 3 or less nearest lanelets
+    {
+      RCLCPP_ERROR_STREAM(rclcpp::get_logger("carma_wm_ros2"), "Checking id: " << (int)nearestLaneletList[i].id());
+      
+      if (boost::geometry::intersects(nearestLaneletList[i].polygon2d().basicPolygon(), object_polygon))
+      {
+        returnLanelet = nearestLaneletList[i];
+        RCLCPP_ERROR_STREAM(rclcpp::get_logger("carma_wm_ros2"), "Found match");
+        break;
+      }
+    }
+    
+    return returnLanelet;
   }
 
   lanelet::Optional<double> CARMAWorldModel::distToNearestObjInLane(const lanelet::BasicPoint2d& object_center) const
