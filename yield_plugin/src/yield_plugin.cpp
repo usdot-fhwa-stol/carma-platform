@@ -457,10 +457,12 @@ namespace yield_plugin
       
     double filter_radius = 11.67 * 6 * 2; //(6sec radius) * 2 (worst case it also has that speed to us)
     double smallest_dist = 999.0;
-    for (int i = 0; i < trajectory1.trajectory_points.size() - 1; ++i) {
+    for (int i = 0; i < trajectory1.trajectory_points.size() - 1; ++i) 
+    {
       auto p1a = trajectory1.trajectory_points[i];
       auto p1b = trajectory1.trajectory_points[i + 1];
-      for (int j = on_route_idx; j < trajectory2.size() - 1; ++j) {
+      for (int j = on_route_idx; j < trajectory2.size() - 1; ++j) 
+      {
         auto p2a = trajectory2[j];
         auto p2b = trajectory2[j + 1];
         ROS_DEBUG_STREAM("p1a.target_time: " << std::to_string(p1a.target_time.toSec()) << ", p1b.target_time: " << std::to_string(p1b.target_time.toSec()));
@@ -487,11 +489,27 @@ namespace yield_plugin
           return false;
           
         }
-        // Check if the distance is less than the collision radius
-        if (distance < collisionRadius) {
+        
+        if (distance > collisionRadius) 
+        {
+          continue;
+        }
+
+        // if within collision radius
+        lanelet::BasicPoint2d vehicle_point(x1,y1);
+        lanelet::BasicPoint2d object_point(x2,y2);
+        double vehicle_downtrack = wm_->routeTrackPos(vehicle_point).downtrack;
+        double object_down_track = wm_->routeTrackPos(object_point).downtrack;
+        if (vehicle_downtrack > object_down_track + 2)  
+        {
+          ROS_ERROR_STREAM("<==============================!!!! Collision detected, but behind at timestamp " << std::to_string(p1a.target_time.toSec()));
+          return false;
+        }
+        else
+        {
           ROS_ERROR_STREAM("<================================================ !!!!!! Collision detected at timestamp " << std::to_string(p1a.target_time.toSec()) );
           return true;
-        }
+        }      
       }
     }
 
@@ -521,6 +539,12 @@ namespace yield_plugin
 
     std::vector<cav_msgs::PredictedState> new_list;
     ROS_ERROR_STREAM("RoadwayObjects size: " << rwol.size());
+
+    if (!wm_->getRoute())
+    {
+      ROS_ERROR_STREAM("No route available!");
+      return original_tp; //route not available
+    }
 
     // save route Ids
     for (auto llt: wm_->getRoute()->shortestPath())

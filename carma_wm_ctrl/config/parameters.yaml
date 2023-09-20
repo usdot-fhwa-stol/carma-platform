@@ -14,10 +14,10 @@ intersection_coord_correction: [0.0, -1.5, -0.5, -1.0]
 
 #List of Int: Route lanelets for external object route (if empty, no external object is published)
 #external_object_route_coords: [-66.980, 322.7323, -65.0987, 333.5559, -45.0, 300.0]
-external_object_route_coords: [215.279, 235.601, 215.969, 255.677]
+external_object_route_coords: [205.869, 393.017, 203.926, 229.820]
 
 #Double: Speed of the external object's speed in m/s
-external_object_speed: 1.0
+external_object_speed: 2.75
 
 #Double: Seconds between start and end of the simulation to repeat
 external_object_spawn_delay_period: 4.0
