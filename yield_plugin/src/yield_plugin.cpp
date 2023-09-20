@@ -244,7 +244,7 @@ namespace yield_plugin
     }
     cav_msgs::TrajectoryPlan original_trajectory = req.initial_trajectory_plan;
     cav_msgs::TrajectoryPlan yield_trajectory;
-
+    
     // seperating cooperative yield with regular object detection for better performance.
     if (config_.enable_cooperative_behavior && clc_urgency_ > config_.acceptable_urgency)
     {
@@ -417,52 +417,82 @@ namespace yield_plugin
     return jmt_trajectory;
   }
   
-  bool detectCollision(const cav_msgs::TrajectoryPlan& trajectory1, const std::vector<cav_msgs::PredictedState>& trajectory2, double collisionRadius) {
+  bool YieldPlugin::detectCollision(const cav_msgs::TrajectoryPlan& trajectory1, const std::vector<cav_msgs::PredictedState>& trajectory2, double collisionRadius) 
+  {
     // Iterate through each pair of consecutive points in the trajectories
   
     ROS_ERROR_STREAM("Starting new collision detection, trajectory size: " << trajectory1.trajectory_points.size() << ". prediction size: " << trajectory2.size());
-  
+    
+    // Iterate through the object to check if on the route
+    bool on_route = false;
+    int on_route_idx = 0;
+
+    for (int j = 0; j < trajectory2.size(); ++j) 
+    {
+      lanelet::BasicPoint2d curr_point;
+      curr_point.x() = trajectory2[j].predicted_position.position.x;
+      curr_point.y() = trajectory2[j].predicted_position.position.y;
+
+      auto corresponding_lanelets = wm_->getLaneletsFromPoint(curr_point, 4); // get 4 lanelets
+
+      for (auto llt: corresponding_lanelets)
+      {
+        ROS_DEBUG_STREAM("Checking llt" << llt.id());
+        
+        if (route_llt_ids_.find(llt.id()) != route_llt_ids_.end())
+        {
+          on_route = true;
+          break;
+        }
+      }
+      if (on_route)
+        break;
+    }
+
+    if (!on_route)
+    {
+      ROS_DEBUG_STREAM("Predicted states are not on the route! ignoring");
+      return false;
+    }
+      
     double filter_radius = 11.67 * 6 * 2; //(6sec radius) * 2 (worst case it also has that speed to us)
     double smallest_dist = 999.0;
     for (int i = 0; i < trajectory1.trajectory_points.size() - 1; ++i) {
-        auto p1a = trajectory1.trajectory_points[i];
-        auto p1b = trajectory1.trajectory_points[i + 1];
-        for (int j = 0; j < trajectory2.size() - 1; ++j) {
-            auto p2a = trajectory2[j];
-            auto p2b = trajectory2[j + 1];
-            ROS_DEBUG_STREAM("p1a.target_time: " << std::to_string(p1a.target_time.toSec()) << ", p1b.target_time: " << std::to_string(p1b.target_time.toSec()));
-            ROS_DEBUG_STREAM("p2a.target_time: " << std::to_string(p2a.header.stamp.toSec()) << ", p2b.target_time: " << std::to_string(p2b.header.stamp.toSec()));
-            ROS_DEBUG_STREAM("p1a.x: " << p1a.x << ", p1b.y: " << p1b.y);
-            ROS_DEBUG_STREAM("p2a.x: " << p2a.predicted_position.position.x << ", p2b.y: " << p2b.predicted_position.position.y);
+      auto p1a = trajectory1.trajectory_points[i];
+      auto p1b = trajectory1.trajectory_points[i + 1];
+      for (int j = on_route_idx; j < trajectory2.size() - 1; ++j) {
+        auto p2a = trajectory2[j];
+        auto p2b = trajectory2[j + 1];
+        ROS_DEBUG_STREAM("p1a.target_time: " << std::to_string(p1a.target_time.toSec()) << ", p1b.target_time: " << std::to_string(p1b.target_time.toSec()));
+        ROS_DEBUG_STREAM("p2a.target_time: " << std::to_string(p2a.header.stamp.toSec()) << ", p2b.target_time: " << std::to_string(p2b.header.stamp.toSec()));
+        ROS_DEBUG_STREAM("p1a.x: " << p1a.x << ", p1b.y: " << p1b.y);
+        ROS_DEBUG_STREAM("p2a.x: " << p2a.predicted_position.position.x << ", p2b.y: " << p2b.predicted_position.position.y);
+      
+        // Linearly interpolate positions at a common timestamp for both trajectories
+        double t1 = (p2a.header.stamp - p1a.target_time).toSec() / (p1b.target_time - p1a.target_time).toSec();
+        double t2 = (p1a.target_time - p2a.header.stamp).toSec() / (p2b.header.stamp - p2a.header.stamp).toSec();
+        double x1 = p1a.x + t1 * (p1b.x - p1a.x);
+        double y1 = p1a.y + t1 * (p1b.y - p1a.y);
+        double x2 = p2a.predicted_position.position.x;
+        double y2 = p2a.predicted_position.position.y;
+        
+        // Calculate the distance between the two interpolated points
+        double distance = std::sqrt((x1 - x2) * (x1 - x2) + (y1 - y2) * (y1 - y2));
+        smallest_dist = std::min(distance, smallest_dist);
+        ROS_DEBUG_STREAM("smallest_dist: " << smallest_dist << ", distance: " << distance << ", t1: " << t1 << ", t2: " << t2 << ", x1: " << x1 << ", y1: " <<y1 <<  ", x2: " << x2 << ", y2: " << y2);
+
+        if (i ==0 && j ==0 && distance > filter_radius)
+        {
+          ROS_ERROR_STREAM("<========Too far away" );
+          return false;
           
-
-            // Linearly interpolate positions at a common timestamp for both trajectories
-            double t1 = (p2a.header.stamp - p1a.target_time).toSec() / (p1b.target_time - p1a.target_time).toSec();
-            double t2 = (p1a.target_time - p2a.header.stamp).toSec() / (p2b.header.stamp - p2a.header.stamp).toSec();
-            double x1 = p1a.x + t1 * (p1b.x - p1a.x);
-            double y1 = p1a.y + t1 * (p1b.y - p1a.y);
-            double x2 = p2a.predicted_position.position.x;
-            //+ t2 * (p2b.predicted_position.position.x - p2a.predicted_position.position.x);
-            double y2 = p2a.predicted_position.position.y;
-            //+ t2 * (p2b.predicted_position.position.y - p2a.predicted_position.position.y);
-            
-            // Calculate the distance between the two interpolated points
-            double distance = std::sqrt((x1 - x2) * (x1 - x2) + (y1 - y2) * (y1 - y2));
-            smallest_dist = std::min(distance, smallest_dist);
-            ROS_DEBUG_STREAM("smallest_dist: " << smallest_dist << ", distance: " << distance << ", t1: " << t1 << ", t2: " << t2 << ", x1: " << x1 << ", y1: " <<y1 <<  ", x2: " << x2 << ", y2: " << y2);
-
-            if (i ==0 && j ==0 && distance > filter_radius)
-            {
-                ROS_ERROR_STREAM("<========Too far away" );
-                return false;
-              
-            }
-            // Check if the distance is less than the collision radius
-            if (distance < collisionRadius) {
-                ROS_ERROR_STREAM("<================================================ !!!!!! Collision detected at timestamp " << std::to_string(p1a.target_time.toSec()) );
-                return true;
-            }
         }
+        // Check if the distance is less than the collision radius
+        if (distance < collisionRadius) {
+          ROS_ERROR_STREAM("<================================================ !!!!!! Collision detected at timestamp " << std::to_string(p1a.target_time.toSec()) );
+          return true;
+        }
+      }
     }
 
     // No collision detected
@@ -492,13 +522,21 @@ namespace yield_plugin
     std::vector<cav_msgs::PredictedState> new_list;
     ROS_ERROR_STREAM("RoadwayObjects size: " << rwol.size());
 
+    // save route Ids
+    for (auto llt: wm_->getRoute()->shortestPath())
+    {
+      route_llt_ids_.insert(llt.id());
+    }
+
     for (auto curr_obstacle : rwol2.roadway_obstacles)
     {
       ROS_ERROR_STREAM("back Time: " << std::to_string(curr_obstacle.object.predictions.back().header.stamp.toSec()) << ", now: " << std::to_string(ros::Time::now().toSec()));
       
+      // do not process outdated objects
       if (curr_obstacle.object.predictions.back().header.stamp > ros::Time::now())
       {
         cav_msgs::PredictedState curr_state;
+        // artificially include current position as one of the predicted states
         curr_state.header.stamp = curr_obstacle.object.header.stamp;
         curr_state.predicted_position.position.x = curr_obstacle.object.pose.pose.position.x;
         curr_state.predicted_position.position.y = curr_obstacle.object.pose.pose.position.y;
@@ -506,6 +544,7 @@ namespace yield_plugin
         new_list.push_back(curr_state);
         new_list.insert(new_list.end(), curr_obstacle.object.predictions.begin(), curr_obstacle.object.predictions.end());
         // TODO consider radius of object
+
         bool collision_detected = detectCollision(original_tp, new_list, 10);
         ROS_ERROR_STREAM("Collision: " << collision_detected);
         if (collision_detected)

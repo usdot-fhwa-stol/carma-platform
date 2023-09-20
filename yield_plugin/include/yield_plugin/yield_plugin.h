@@ -228,7 +228,11 @@ public:
    */ 
   void georeferenceCallback(const std_msgs::StringConstPtr& msg);
 
-
+  /**
+   * \brief TODO
+   * \brief msg The proj string defining the projection.
+   */ 
+  bool detectCollision(const cav_msgs::TrajectoryPlan& trajectory1, const std::vector<cav_msgs::PredictedState>& trajectory2, double collisionRadius);
 private:
 
   carma_wm::WorldModelConstPtr wm_;
@@ -236,7 +240,7 @@ private:
   PublishPluginDiscoveryCB plugin_discovery_publisher_;
   MobilityResponseCB mobility_response_publisher_;
   LaneChangeStatusCB lc_status_publisher_;
-
+  std::set<lanelet::Id> route_llt_ids_;
 
   // flag to show if it is possible for the vehicle to accept the cooperative request
   bool cooperative_request_acceptable_ = false;
