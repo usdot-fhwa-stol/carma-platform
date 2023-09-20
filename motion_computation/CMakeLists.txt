@@ -1,17 +1,16 @@
-
-# Copyright (C) 2020-2022 LEIDOS.
+# Copyright 2020-2023 Leidos
 #
-# Licensed under the Apache License, Version 2.0 (the "License"); you may not
-# use this file except in compliance with the License. You may obtain a copy of
-# the License at
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
 #
-# http://www.apache.org/licenses/LICENSE-2.0
+#     http://www.apache.org/licenses/LICENSE-2.0
 #
 # Unless required by applicable law or agreed to in writing, software
-# distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
-# WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
-# License for the specific language governing permissions and limitations under
-# the License.
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
 
 cmake_minimum_required(VERSION 3.5)
 project(motion_computation)
@@ -41,18 +40,18 @@ add_definitions(-DBOOST_DATE_TIME_POSIX_TIME_STD_CONFIG)
 # Build
 
 ament_auto_add_library(${worker_lib} SHARED
-        src/motion_computation_worker.cpp
-        src/mobility_path_to_external_object.cpp
-        src/psm_to_external_object_convertor.cpp
-        src/bsm_to_external_object_convertor.cpp
+  src/motion_computation_worker.cpp
+  src/mobility_path_to_external_object.cpp
+  src/psm_to_external_object_convertor.cpp
+  src/bsm_to_external_object_convertor.cpp
 )
 
 ament_auto_add_library(${node_lib} SHARED
-        src/motion_computation_node.cpp
+  src/motion_computation_node.cpp
 )
 
-ament_auto_add_executable(${node_exec} 
-        src/main.cpp 
+ament_auto_add_executable(${node_exec}
+  src/main.cpp
 )
 
 # Register component
@@ -61,22 +60,26 @@ rclcpp_components_register_nodes(${node_lib} "motion_computation::MotionComputat
 # All locally created targets will need to be manually linked
 # ament auto will handle linking of external dependencies
 target_link_libraries(${node_lib}
-        ${worker_lib}
+  ${worker_lib}
 )
 
 target_link_libraries(${node_exec}
-        ${node_lib}
+  ${node_lib}
 )
 
 # Testing
-if(BUILD_TESTING)  
+if(BUILD_TESTING)
 
   find_package(ament_lint_auto REQUIRED)
   ament_lint_auto_find_test_dependencies() # This populates the ${${PROJECT_NAME}_FOUND_TEST_DEPENDS} variable
 
-  ament_add_gtest(test_motion_computation 
-        test/MotionComputationTest.cpp
-        test/TestMain.cpp)
+  ament_add_gtest(test_motion_computation
+    test/MotionComputationTest.cpp
+    test/TestMain.cpp
+  )
+
+  add_launch_test(test/motion_computation_external_object_launch_test.py)
+  add_launch_test(test/motion_computation_queueing_launch_test.py)
 
   ament_target_dependencies(test_motion_computation ${${PROJECT_NAME}_FOUND_TEST_DEPENDS})
 
@@ -86,5 +89,23 @@ endif()
 
 # Install
 ament_auto_package(
-        INSTALL_TO_SHARE config launch
+  INSTALL_TO_SHARE
+    config
+    launch
+)
+
+include(GNUInstallDirs)
+
+install(DIRECTORY ${PROJECT_SOURCE_DIR}/test/
+  DESTINATION ${CMAKE_INSTALL_DATADIR}/motion_computation/test
+  FILES_MATCHING
+    PATTERN *.py
+    PATTERN *.cpp
+    PATTERN __pycache__ EXCLUDE
+)
+
+install(DIRECTORY ${PROJECT_SOURCE_DIR}/test/data/
+  DESTINATION ${CMAKE_INSTALL_DATADIR}/motion_computation/test/data
+  FILES_MATCHING
+    PATTERN *.yaml
 )
