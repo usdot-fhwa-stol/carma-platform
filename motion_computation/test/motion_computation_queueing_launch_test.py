@@ -55,13 +55,9 @@ class TestHarnessNode(rclpy.node.Node):
             ExternalObjectList, "external_objects", 1
         )
 
-        self.bsm_pub = self.create_publisher(
-            BSM, "incoming_bsm", 1
-        )
+        self.bsm_pub = self.create_publisher(BSM, "incoming_bsm", 1)
 
-        self.psm_pub = self.create_publisher(
-            PSM, "incoming_psm", 1
-        )
+        self.psm_pub = self.create_publisher(PSM, "incoming_psm", 1)
 
         self.mobility_path_pub = self.create_publisher(
             MobilityPath, "incoming_mobility_path", 1
@@ -83,10 +79,12 @@ def generate_test_description():
         package="motion_computation",
         executable="motion_computation_node_exec",
         name="node_under_test",
-        parameters=[{"enable_sensor_processing": True},
-                    {"enable_bsm_processing": True},
-                    {"enable_psm_processing": True},
-                    {"enable_mobility_path_processing": True}],
+        parameters=[
+            {"enable_sensor_processing": True},
+            {"enable_bsm_processing": True},
+            {"enable_psm_processing": True},
+            {"enable_mobility_path_processing": True},
+        ],
     )
 
     launch_description = LaunchDescription(

@@ -23,7 +23,6 @@ from carma_launch_testing.spinning import spin_node_until
 import carma_message_utilities
 
 from carma_perception_msgs.msg import ExternalObjectList
-from carma_v2x_msgs.msg import MobilityPath
 
 import launch_ros.actions
 
