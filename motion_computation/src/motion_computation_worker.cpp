@@ -161,12 +161,12 @@ void MotionComputationWorker::setDetectionInputFlags(bool enable_sensor_processi
 
 void MotionComputationWorker::mobilityPathCallback(const carma_v2x_msgs::msg::MobilityPath::UniquePtr msg) {
   if (!map_projector_) {
-    RCLCPP_DEBUG_STREAM(logger_->get_logger(), "Map projection not available yet so ignoring MobilityPath messages");
+    RCLCPP_ERROR(logger_->get_logger(), "Map projection not available yet so ignoring MobilityPath messages");
     return;
   }
 
   if (!enable_mobility_path_processing_) {
-    RCLCPP_DEBUG_STREAM(logger_->get_logger(),
+    RCLCPP_WARN(logger_->get_logger(),
                         "enable_mobility_path_processing is false so ignoring MobilityPath messages");
     return;
   }
@@ -196,7 +196,7 @@ void MotionComputationWorker::psmCallback(const carma_v2x_msgs::msg::PSM::Unique
     RCLCPP_DEBUG_STREAM(logger_->get_logger(), "enable_psm_processing is false so ignoring PSM messages");
     return;
   }
-  
+
   carma_perception_msgs::msg::ExternalObject obj_msg;
   conversion::convert(*msg, obj_msg, map_frame_id_ , prediction_period_, prediction_time_step_, *map_projector_, ned_in_map_rotation_, node_clock_);
 
@@ -210,7 +210,7 @@ void MotionComputationWorker::psmCallback(const carma_v2x_msgs::msg::PSM::Unique
     psm_obj_id_map_[obj_msg.id] = psm_list_.objects.size();
     psm_list_.objects.push_back(obj_msg);
   }
-  
+
 }
 
 void MotionComputationWorker::bsmCallback(const carma_v2x_msgs::msg::BSM::UniquePtr msg) {
