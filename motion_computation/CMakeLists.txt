@@ -15,79 +15,75 @@
 cmake_minimum_required(VERSION 3.5)
 project(motion_computation)
 
-# Declare carma package and check ROS version
+# CARMA builds packages in an environment with both ROS 1 and ROS 2 installed.
+# This check gracefully skips the current package if the sourced ROS environment
+# is not the specified version. This call must come before any other ROS
+# dependencies becasue ROS 1 does not have some of the required packages.
 find_package(carma_cmake_common REQUIRED)
 carma_check_ros_version(2)
+
+
+# Added outside of `dependencies.cmake` because ament sets some variables
+# (e.g., BUILD_TESTING) that affect the configuration options for the rest of
+# the package. Putting the command call here allows us to put all project
+# options together in separate CMake module then query those options in
+# `dependencies.cmake`.
+find_package(ament_cmake_auto REQUIRED)
+
+include(options.cmake)
+include(dependencies.cmake)
+
+# The generated compilation database is helpful with code completion in IDEs
+set(CMAKE_EXPORT_COMPILE_COMMANDS ${motion_computation_EXPORT_COMPILE_COMMANDS})
+
+# This prevents `colcon` from tyring to build the CMake project's binary
+# directory. This is useful in case we want to build the project outside of
+# `colcon` but still keep it in a ROS repository.
+file(TOUCH ${PROJECT_BINARY_DIR}/COLCON_IGNORE)
+
+# Configures CARMA package default settings
 carma_package()
 
-## Find dependencies using ament auto
-find_package(ament_cmake_auto REQUIRED)
-ament_auto_find_build_dependencies()
+# C17 CMake support added in CMake 3.21
+set(CMAKE_CXX_STANDARD 17)
+set(CMAKE_C_STANDARD 11)
 
-# Name build targets
-set(worker_lib motion_computation_worker_lib)
-set(node_exec motion_computation_node_exec)
-set(node_lib motion_computation_node_lib)
-
-# Includes
-include_directories(
-  include
-)
-
-# boost::posix_time definition for using nanoseconds
-add_definitions(-DBOOST_DATE_TIME_POSIX_TIME_STD_CONFIG)
-
-# Build
-
-ament_auto_add_library(${worker_lib} SHARED
+# ament_auto will automatically add include files from include/roadway_objects
+# and link necessary libraries
+ament_auto_add_library(motion_computation SHARED
   src/motion_computation_worker.cpp
   src/mobility_path_to_external_object.cpp
   src/psm_to_external_object_convertor.cpp
   src/bsm_to_external_object_convertor.cpp
-)
-
-ament_auto_add_library(${node_lib} SHARED
   src/motion_computation_node.cpp
 )
 
-ament_auto_add_executable(${node_exec}
+ament_auto_add_executable(motion_computation_node_exec
   src/main.cpp
 )
 
-# Register component
-rclcpp_components_register_nodes(${node_lib} "motion_computation::MotionComputationNode")
-
-# All locally created targets will need to be manually linked
-# ament auto will handle linking of external dependencies
-target_link_libraries(${node_lib}
-  ${worker_lib}
+rclcpp_components_register_nodes(motion_computation
+  "motion_computation::MotionComputationNode"
 )
 
-target_link_libraries(${node_exec}
-  ${node_lib}
-)
+if(motion_computation_BUILD_TESTS)
 
-# Testing
-if(BUILD_TESTING)
-
-  find_package(ament_lint_auto REQUIRED)
-  ament_lint_auto_find_test_dependencies() # This populates the ${${PROJECT_NAME}_FOUND_TEST_DEPENDS} variable
-
-  ament_add_gtest(test_motion_computation
+  ament_auto_add_gtest(test_motion_computation
     test/MotionComputationTest.cpp
     test/TestMain.cpp
+  )
+
+  # boost::posix_time definition for using nanoseconds
+  target_compile_definitions(test_motion_computation
+    PRIVATE
+      -DBOOST_DATE_TIME_POSIX_TIME_STD_CONFIG
   )
 
   add_launch_test(test/motion_computation_external_object_launch_test.py)
   add_launch_test(test/motion_computation_queueing_launch_test.py)
 
-  ament_target_dependencies(test_motion_computation ${${PROJECT_NAME}_FOUND_TEST_DEPENDS})
-
-  target_link_libraries(test_motion_computation ${node_lib})
-
 endif()
 
-# Install
 ament_auto_package(
   INSTALL_TO_SHARE
     config
@@ -96,6 +92,7 @@ ament_auto_package(
 
 include(GNUInstallDirs)
 
+# ament_auto does not provide file pattern matching
 install(DIRECTORY ${PROJECT_SOURCE_DIR}/test/
   DESTINATION ${CMAKE_INSTALL_DATADIR}/motion_computation/test
   FILES_MATCHING
