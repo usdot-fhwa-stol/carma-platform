@@ -88,7 +88,7 @@ public:
                                             &InLaneCruisingPlugin::plan_trajectory_cb, &worker);
 
     //TODO: Update yield client to use the Plugin Manager capabilities query, in case someone else wants to add an alternate yield implementation 
-    ros::ServiceClient yield_client = nh.serviceClient<cav_srvs::PlanTrajectory>("plugins/YieldPlugin/plan_trajectory");
+    ros::ServiceClient yield_client = nh.serviceClient<cav_srvs::PlanTrajectory>("plugins/yield_plugin/plan_trajectory");
     worker.set_yield_client(yield_client);
     ROS_INFO_STREAM("Yield Client Set");
 

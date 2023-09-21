@@ -17,7 +17,7 @@ intersection_coord_correction: [0.0, -1.5, -0.5, -1.0]
 external_object_route_coords: [205.869, 393.017, 203.926, 229.820]
 
 #Double: Speed of the external object's speed in m/s
-external_object_speed: 2.75
+external_object_speed: 2.65
 
 #Double: Seconds between start and end of the simulation to repeat
 external_object_spawn_delay_period: 4.0

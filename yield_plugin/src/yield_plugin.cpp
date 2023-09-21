@@ -34,7 +34,7 @@
 #include <carma_v2x_msgs/msg/location_ecef.hpp>
 #include <carma_v2x_msgs/msg/trajectory.hpp>
 #include <carma_v2x_msgs/msg/plan_type.hpp>
-#include <basic_autonomy/smoothing/filters.hpp>
+#include <basic_autonomy_ros2/smoothing/filters.hpp>
 
 using oss = std::ostringstream;
 
@@ -232,6 +232,8 @@ namespace yield_plugin
     if (req->initial_trajectory_plan.trajectory_points.size() < 2){
       throw std::invalid_argument("Empty Trajectory received by Yield");
     }
+    std::chrono::system_clock::time_point start_time = std::chrono::system_clock::now();  // Start timing the execution time for planning so it can be logged
+
     carma_planning_msgs::msg::TrajectoryPlan original_trajectory = req->initial_trajectory_plan;
     carma_planning_msgs::msg::TrajectoryPlan yield_trajectory;
 
@@ -262,7 +264,12 @@ namespace yield_plugin
     yield_trajectory.initial_longitudinal_velocity = original_trajectory.initial_longitudinal_velocity;//copy the original trajectory's desired speed for now. 
 
     resp->trajectory_plan = yield_trajectory;
- 
+
+    std::chrono::system_clock::time_point end_time = std::chrono::system_clock::now();  // Planning complete
+
+    auto duration = end_time - start_time;
+    RCLCPP_DEBUG_STREAM(rclcpp::get_logger("yield_plugin"), "ExecutionTime: " << std::chrono::duration<double>(duration).count());
+
   }
 
   carma_planning_msgs::msg::TrajectoryPlan YieldPlugin::update_traj_for_cooperative_behavior(const carma_planning_msgs::msg::TrajectoryPlan& original_tp, double current_speed)
