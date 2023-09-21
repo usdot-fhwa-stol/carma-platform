@@ -1,7 +1,7 @@
 #pragma once
 
 /*
- * Copyright (C) 2019-2020 LEIDOS.
+ * Copyright (C) 2022 LEIDOS.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -17,37 +17,40 @@
  */
 
 #include <vector>
-#include <cav_msgs/TrajectoryPlan.h>
-#include <cav_msgs/TrajectoryPlanPoint.h>
-#include <cav_msgs/Plugin.h>
-#include <cav_msgs/MobilityRequest.h>
-#include <cav_msgs/MobilityResponse.h>
-#include <cav_msgs/BSM.h>
-#include <cav_msgs/LaneChangeStatus.h>
+#include <carma_planning_msgs/msg/trajectory_plan.hpp>
+#include <carma_planning_msgs/msg/trajectory_plan_point.hpp>
+#include <carma_planning_msgs/msg/plugin.hpp>
+#include <carma_v2x_msgs/msg/mobility_request.hpp>
+#include <carma_v2x_msgs/msg/mobility_response.hpp>
+#include <carma_v2x_msgs/msg/bsm.hpp>
+#include <carma_planning_msgs/msg/lane_change_status.hpp>
 #include <boost/shared_ptr.hpp>
-#include <carma_utils/CARMAUtils.h>
+#include <carma_ros2_utils/carma_lifecycle_node.hpp>
 #include <boost/geometry.hpp>
-#include <carma_wm/Geometry.h>
-#include <cav_srvs/PlanTrajectory.h>
-#include <carma_wm/WMListener.h>
+#include <carma_wm/WMListener.hpp>
 #include <functional>
-#include "yield_config.h"
+#include "yield_config.hpp"
 #include <unordered_set>
-#include <carma_wm/WorldModel.h>
-#include <carma_wm/collision_detection.h>
-#include <trajectory_utils/quintic_coefficient_calculator.h>
-#include <geometry_msgs/PoseStamped.h>
+#include <carma_planning_msgs/srv/plan_trajectory.hpp>
+#include <std_msgs/msg/string.hpp>
+#include <geometry_msgs/msg/pose_stamped.hpp>
+#include <trajectory_utils/quintic_coefficient_calculator.hpp>
 #include <boost/property_tree/json_parser.hpp>
-#include <carma_wm/TrafficControl.h>
 #include <lanelet2_extension/projection/local_frame_projector.h>
-#include <std_msgs/String.h>
+#include <carma_v2x_msgs/msg/location_ecef.hpp>
+#include <carma_v2x_msgs/msg/trajectory.hpp>
+#include <carma_v2x_msgs/msg/plan_type.hpp>
+#include <carma_wm/Geometry.hpp>
+#include <carma_wm/WorldModel.hpp>
+#include <carma_wm/collision_detection.hpp>
+#include <carma_wm/TrafficControl.hpp>
+#include <gtest/gtest.h>
 
 
 namespace yield_plugin
 {
-using PublishPluginDiscoveryCB = std::function<void(const cav_msgs::Plugin&)>;
-using MobilityResponseCB = std::function<void(const cav_msgs::MobilityResponse&)>;
-using LaneChangeStatusCB = std::function<void(const cav_msgs::LaneChangeStatus&)>;
+using MobilityResponseCB = std::function<void(const carma_v2x_msgs::msg::MobilityResponse&)>;
+using LaneChangeStatusCB = std::function<void(const carma_planning_msgs::msg::LaneChangeStatus&)>;
 
 /**
  * \brief Convenience class for pairing 2d points with speeds
@@ -70,32 +73,23 @@ public:
    * 
    * \param wm Pointer to intialized instance of the carma world model for accessing semantic map data
    * \param config The configuration to be used for this object
-   * \param plugin_discovery_publisher Callback which will publish the current plugin discovery state
    * \param mobility_response_publisher Callback which will publish the mobility response
    * \param lc_status_publisher Callback which will publish the cooperative lane change status
    */ 
-  YieldPlugin(carma_wm::WorldModelConstPtr wm, YieldPluginConfig config,
-                       PublishPluginDiscoveryCB plugin_discovery_publisher, 
+  YieldPlugin(std::shared_ptr<carma_ros2_utils::CarmaLifecycleNode> nh, carma_wm::WorldModelConstPtr wm, YieldPluginConfig config,
                        MobilityResponseCB mobility_response_publisher,
                        LaneChangeStatusCB lc_status_publisher);
 
   /**
-   * \brief Method to call at fixed rate in execution loop. Will publish plugin discovery updates
-   * 
-   * \return True if the node should continue running. False otherwise
-   */ 
-  bool onSpin();
-  
-
-  /**
    * \brief Service callback for trajectory planning
-   * 
+   * \param srv_header header
    * \param req The service request
    * \param resp The service response
    * 
-   * \return True if success. False otherwise
    */ 
-  bool plan_trajectory_cb(cav_srvs::PlanTrajectoryRequest& req, cav_srvs::PlanTrajectoryResponse& resp);
+  void plan_trajectory_callback(
+    carma_planning_msgs::srv::PlanTrajectory::Request::SharedPtr req, 
+    carma_planning_msgs::srv::PlanTrajectory::Response::SharedPtr resp);
 
   /**
    * \brief trajectory is modified to safely avoid obstacles on the road
@@ -103,7 +97,7 @@ public:
    * \param current_speed_ current speed of the vehicle
    * \return modified trajectory plan
    */
-  cav_msgs::TrajectoryPlan update_traj_for_object(const cav_msgs::TrajectoryPlan& original_tp, double initial_velocity);
+  carma_planning_msgs::msg::TrajectoryPlan update_traj_for_object(const carma_planning_msgs::msg::TrajectoryPlan& original_tp, double initial_velocity);
 
   /**
    * \brief calculate quintic polynomial equation for a given x
@@ -126,26 +120,26 @@ public:
    * \param trajectory_points trajectory points
    * \return maximum speed
    */
-  double max_trajectory_speed(const std::vector<cav_msgs::TrajectoryPlanPoint>& trajectory_points) const;
+  double max_trajectory_speed(const std::vector<carma_planning_msgs::msg::TrajectoryPlanPoint>& trajectory_points) const;
 
   /**
    * \brief calculates distance between trajectory points in a plan
    * \param trajectory_plan input trajectory plan 
    * \return vector of relative distances between trajectory points
    */                     
-  std::vector<double> get_relative_downtracks(const cav_msgs::TrajectoryPlan& trajectory_plan) const;  
+  std::vector<double> get_relative_downtracks(const carma_planning_msgs::msg::TrajectoryPlan& trajectory_plan) const;  
 
   /**
    * \brief callback for mobility request
    * \param msg mobility request message 
    */
-  void mobilityrequest_cb(const cav_msgs::MobilityRequestConstPtr& msg);
+  void mobilityrequest_cb(const carma_v2x_msgs::msg::MobilityRequest::UniquePtr msg);
 
   /**
    * \brief callback for bsm message
    * \param msg mobility bsm message 
    */
-  void bsm_cb(const cav_msgs::BSMConstPtr& msg);
+  void bsm_cb(const carma_v2x_msgs::msg::BSM::UniquePtr msg);
 
   /**
    * \brief convert a carma trajectory from ecef frame to map frame
@@ -153,7 +147,7 @@ public:
    * \param ecef_trajectory carma trajectory (ecef frame)
    * \return vector of 2d points in map frame
    */
-  std::vector<lanelet::BasicPoint2d> convert_eceftrajectory_to_mappoints(const cav_msgs::Trajectory& ecef_trajectory) const;
+  std::vector<lanelet::BasicPoint2d> convert_eceftrajectory_to_mappoints(const carma_v2x_msgs::msg::Trajectory& ecef_trajectory) const;
   
   /**
    * \brief convert a point in ecef frame (in cm) into map frame (in meters)
@@ -161,7 +155,7 @@ public:
    * \param map_in_earth translate frame 
    * \return 2d point in map frame
    */
-  lanelet::BasicPoint2d ecef_to_map_point(const cav_msgs::LocationECEF& ecef_point) const;
+  lanelet::BasicPoint2d ecef_to_map_point(const carma_v2x_msgs::msg::LocationECEF& ecef_point) const;
 
   /**
    * \brief compose a mobility response message
@@ -170,7 +164,7 @@ public:
    * \param response accept/reject to the response based on conditions
    * \return filled mobility response
    */
-  cav_msgs::MobilityResponse compose_mobility_response(const std::string& resp_recipient_id, const std::string& req_plan_id, bool response) const;
+  carma_v2x_msgs::msg::MobilityResponse compose_mobility_response(const std::string& resp_recipient_id, const std::string& req_plan_id, bool response) const;
   
   /**
    * \brief generate a Jerk Minimizing Trajectory(JMT) with the provided start and end conditions
@@ -182,7 +176,7 @@ public:
    * \param planning_time time duration of the planning
    * \return updated JMT trajectory 
    */
-  cav_msgs::TrajectoryPlan generate_JMT_trajectory(const cav_msgs::TrajectoryPlan& original_tp, double initial_pos, double goal_pos, double initial_velocity, double goal_velocity, double planning_time);
+  carma_planning_msgs::msg::TrajectoryPlan generate_JMT_trajectory(const carma_planning_msgs::msg::TrajectoryPlan& original_tp, double initial_pos, double goal_pos, double initial_velocity, double goal_velocity, double planning_time);
   
   /**
    * \brief update trajectory for yielding to an incoming cooperative behavior
@@ -190,7 +184,7 @@ public:
    * \param current_speed current speed of the vehicle
    * \return updated trajectory for cooperative behavior
    */
-  cav_msgs::TrajectoryPlan update_traj_for_cooperative_behavior(const cav_msgs::TrajectoryPlan& original_tp, double current_speed);
+  carma_planning_msgs::msg::TrajectoryPlan update_traj_for_cooperative_behavior(const carma_planning_msgs::msg::TrajectoryPlan& original_tp, double current_speed);
 
   /**
    * \brief detect intersection point(s) of two trajectories
@@ -213,34 +207,45 @@ public:
   /**
    * \brief Looks up the transform between map and earth frames, and sets the member variable
    */
-  void lookupECEFtoMapTransform();
+  void lookup_ecef_to_map_transform();
 
   /**
    * \brief checks trajectory for minimum gap associated with it
    * \param original_tp original trajectory plan
    * \return minumum required
    */
-  double check_traj_for_digital_min_gap(const cav_msgs::TrajectoryPlan& original_tp) const;
+  double check_traj_for_digital_min_gap(const carma_planning_msgs::msg::TrajectoryPlan& original_tp) const;
 
   /**
    * \brief Callback for map projection string to define lat/lon -> map conversion
    * \brief msg The proj string defining the projection.
    */ 
-  void georeferenceCallback(const std_msgs::StringConstPtr& msg);
+  void georeference_callback(const std_msgs::msg::String::UniquePtr msg);
+  
+  /**
+   * \brief Callback for external objects with predictions in the environment
+   * \param msg The object list msg.
+   */ 
+  void external_objects_callback(const carma_perception_msgs::msg::ExternalObjectList::UniquePtr msg);
 
   /**
-   * \brief TODO
-   * \brief msg The proj string defining the projection.
+   * \brief Return collision time given two trajectories
+   * \param trajectory1 trajectory of the ego vehicle
+   * \param trajectory2 trajectory of the obstacle 
+   * \param collision_radius a distance to check between two trajectory points at a same timestamp that is considered a collision
+   * \return time_of_collision if collision detected, otherwise, boost::none
    */ 
-  bool detectCollision(const cav_msgs::TrajectoryPlan& trajectory1, const std::vector<cav_msgs::PredictedState>& trajectory2, double collisionRadius);
+  boost::optional<rclcpp::Time> detect_collision_time(const carma_planning_msgs::msg::TrajectoryPlan& trajectory1, const std::vector<carma_perception_msgs::msg::PredictedState>& trajectory2, double collision_radius);
+
 private:
 
   carma_wm::WorldModelConstPtr wm_;
   YieldPluginConfig config_;
-  PublishPluginDiscoveryCB plugin_discovery_publisher_;
   MobilityResponseCB mobility_response_publisher_;
   LaneChangeStatusCB lc_status_publisher_;
+  std::shared_ptr<carma_ros2_utils::CarmaLifecycleNode> nh_;
   std::set<lanelet::Id> route_llt_ids_;
+  std::vector<carma_perception_msgs::msg::ExternalObject> external_objects_;
 
   // flag to show if it is possible for the vehicle to accept the cooperative request
   bool cooperative_request_acceptable_ = false;
@@ -256,16 +261,14 @@ private:
   // time between ecef trajectory points
   double ecef_traj_timestep_ = 0.1;
 
-
-  cav_msgs::Plugin plugin_discovery_msg_;
-  geometry_msgs::Vector3 host_vehicle_size;
+  geometry_msgs::msg::Vector3 host_vehicle_size;
   double current_speed_;
   // BSM Message
   std::string host_bsm_id_;
 
   std::shared_ptr<lanelet::projection::LocalFrameProjector> map_projector_;
 
-  std::string bsmIDtoString(cav_msgs::BSMCoreData bsm_core)
+  std::string bsmIDtoString(carma_v2x_msgs::msg::BSMCoreData bsm_core)
   {
     std::string res = "";
     for (size_t i=0; i<bsm_core.id.size(); i++)
@@ -274,46 +277,9 @@ private:
     }
       return res;
   }
-
-  // TODO replace with Basic Autonomy moving average filter
-  std::vector<double> moving_average_filter(const std::vector<double> input, int window_size, bool ignore_first_point=true)
-  {
-    if (window_size % 2 == 0) {
-      throw std::invalid_argument("moving_average_filter window size must be odd");
-    }
-
-    std::vector<double> output;
-    output.reserve(input.size());
-
-    if (input.size() == 0) {
-      return output;
-    }
-
-    int start_index = 0;
-    if (ignore_first_point) {
-      start_index = 1;
-      output.push_back(input[0]);
-    }
-
-    for (int i = start_index; i<input.size(); i++) {
-      
-      
-      double total = 0;
-      int sample_min = std::max(0, i - window_size / 2);
-      int sample_max = std::min((int) input.size() - 1 , i + window_size / 2);
-
-      int count = sample_max - sample_min + 1;
-      std::vector<double> sample;
-      sample.reserve(count);
-      for (int j = sample_min; j <= sample_max; j++) {
-        total += input[j];
-      }
-      output.push_back(total / (double) count);
-
-    }
-
-    return output;
-  }
+  
+  FRIEND_TEST(YieldPluginTest, test_update_traj);
+  FRIEND_TEST(YieldPluginTest, detect_collision_time);
 
 };
 };  // namespace yield_plugin

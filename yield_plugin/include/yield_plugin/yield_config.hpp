@@ -42,6 +42,7 @@ struct YieldPluginConfig
   bool enable_adjustable_gap = true;          // Flag to enable yield plugin to check for adjustable gap for example digital gap from map
   int acceptable_urgency = 5;                 //Minimum urgency value to consider the mobility request
   double speed_moving_average_window_size = 3.0;  //Window size for speed moving average filter
+  double collision_check_radius = 150.0;  //Radius to check for potential collision
 
   friend std::ostream& operator<<(std::ostream& output, const YieldPluginConfig& c)
   {
@@ -64,6 +65,7 @@ struct YieldPluginConfig
           << "enable_adjustable_gap: " << c.enable_adjustable_gap << std::endl
           << "acceptable_urgency: " << c.acceptable_urgency << std::endl
           << "speed_moving_average_window_size: " << c.speed_moving_average_window_size << std::endl
+          << "collision_check_radius: " << c.collision_check_radius << std::endl
           << "}" << std::endl;
     return output;
   }

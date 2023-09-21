@@ -19,6 +19,7 @@ from launch_ros.actions import Node
 from launch_ros.actions import ComposableNodeContainer
 from launch_ros.descriptions import ComposableNode
 from launch.substitutions import EnvironmentVariable
+from launch.substitutions import ThisLaunchFileDir
 from carma_ros2_utils.launch.get_log_level import GetLogLevel
 from carma_ros2_utils.launch.get_current_namespace import GetCurrentNamespace
 from launch.substitutions import LaunchConfiguration
@@ -30,18 +31,21 @@ from launch.launch_description_sources import PythonLaunchDescriptionSource
 from launch.actions import GroupAction
 from launch_ros.actions import set_remap
 from launch.actions import DeclareLaunchArgument
+from launch_ros.actions import PushRosNamespace
+
 
 # Launch file for launching the nodes in the CARMA guidance stack
 
 def generate_launch_description():
 
     route_file_folder = LaunchConfiguration('route_file_folder')
+    vehicle_calibration_dir = LaunchConfiguration('vehicle_calibration_dir')
     vehicle_characteristics_param_file = LaunchConfiguration('vehicle_characteristics_param_file')
     enable_guidance_plugin_validator = LaunchConfiguration('enable_guidance_plugin_validator')
     strategic_plugins_to_validate = LaunchConfiguration('strategic_plugins_to_validate')
     tactical_plugins_to_validate = LaunchConfiguration('tactical_plugins_to_validate')
     control_plugins_to_validate = LaunchConfiguration('control_plugins_to_validate')
-
+    vehicle_config_dir = LaunchConfiguration('vehicle_config_dir')
     vehicle_config_param_file = LaunchConfiguration('vehicle_config_param_file')
     declare_vehicle_config_param_file_arg = DeclareLaunchArgument(
         name = 'vehicle_config_param_file',
@@ -60,7 +64,6 @@ def generate_launch_description():
     
     route_param_file = os.path.join(
         get_package_share_directory('route'), 'config/parameters.yaml')
-    
     env_log_levels = EnvironmentVariable('CARMA_ROS_LOGGING_CONFIG', default_value='{ "default_level" : "WARN" }')
 
     subsystem_controller_param_file = LaunchConfiguration('subsystem_controller_param_file')
@@ -70,15 +73,18 @@ def generate_launch_description():
         description = "Path to file containing override parameters for the subsystem controller"
     )
 
+    # Below nodes are separated to individual container such that the nodes with reentrant services are within their separate container.
+    # When all nodes are within single container, it is prone to fail throwing runtime_error, and it is currently hypothesized to be
+    # because of this issue: https://github.com/ros2/rclcpp/issues/1212, where fix in the rclcpp library, so not able to be integrated at this moment:
+    # https://github.com/ros2/rclcpp/pull/1241. This issue was first discovered in this carma issue: https://github.com/usdot-fhwa-stol/carma-platform/issues/1961  
 
     # Nodes
-    carma_guidance_container = ComposableNodeContainer(
+    carma_guidance_visualizer_container = ComposableNodeContainer(
         package='carma_ros2_utils',
-        name='carma_guidance_container',
+        name='carma_guidance_visualizer_container',
         executable='carma_component_container_mt',
         namespace=GetCurrentNamespace(),
         composable_node_descriptions=[
-
             ComposableNode(
                 package='mobilitypath_visualizer',
                 plugin='mobilitypath_visualizer::MobilityPathVisualizer',
@@ -88,7 +94,7 @@ def generate_launch_description():
                     {'--log-level' : GetLogLevel('mobilitypath_visualizer', env_log_levels) }
                 ],
                 remappings = [
-                    ("mobility_path_msg", [ EnvironmentVariable('CARMA_MSG_NS', default_value=''), "/mobility_path_msg" ] ),
+                    ("mobility_path_msg", [ EnvironmentVariable('CARMA_MSG_NS', default_value=''), "/outgoing_mobility_path" ] ),
                     ("incoming_mobility_path", [ EnvironmentVariable('CARMA_MSG_NS', default_value=''), "/incoming_mobility_path" ] ),
                     ("georeference", [ EnvironmentVariable('CARMA_LOCZ_NS', default_value=''), "/map_param_loader/georeference"])
                 ],
@@ -97,23 +103,17 @@ def generate_launch_description():
                     mobilitypath_visualizer_param_file,
                     vehicle_config_param_file
                 ]
-            ),
-            ComposableNode(
-                package='trajectory_executor',
-                plugin='trajectory_executor::TrajectoryExecutor',
-                name='trajectory_executor_node',
-                extra_arguments=[
-                    {'use_intra_process_comms': True}, 
-                    {'--log-level' : GetLogLevel('trajectory_executor', env_log_levels) }
-                ],
-                remappings = [
-                    ("trajectory", "plan_trajectory"),
-                ],
-                parameters=[
-                    trajectory_executor_param_file,
-                    vehicle_config_param_file
-                ]
-            ),
+            )
+        ]
+    )
+
+    
+    carma_trajectory_executor_and_route_container = ComposableNodeContainer(
+        package='carma_ros2_utils',
+        name='carma_trajectory_executor_and_route_container',
+        executable='carma_component_container_mt',
+        namespace=GetCurrentNamespace(),
+        composable_node_descriptions=[
             ComposableNode(
                 package='route',
                 plugin='route::Route',
@@ -136,9 +136,46 @@ def generate_launch_description():
                     vehicle_config_param_file
                 ]
             ),
+            ComposableNode(
+                package='trajectory_executor',
+                plugin='trajectory_executor::TrajectoryExecutor',
+                name='trajectory_executor_node',
+                extra_arguments=[
+                    {'use_intra_process_comms': True}, 
+                    {'--log-level' : GetLogLevel('trajectory_executor', env_log_levels) }
+                ],
+                remappings = [
+                    ("trajectory", "plan_trajectory"),
+                ],
+                parameters=[
+                    trajectory_executor_param_file,
+                    vehicle_config_param_file
+                ]
+            )
         ]
     )
 
+    # Launch plugins
+    plugins_group = GroupAction(
+        actions=[
+            PushRosNamespace("plugins"),
+            IncludeLaunchDescription(
+                PythonLaunchDescriptionSource([ThisLaunchFileDir(), '/plugins.launch.py']),
+                launch_arguments={
+                    'route_file_folder' : route_file_folder,
+                    'vehicle_calibration_dir' : vehicle_calibration_dir,
+                    'vehicle_characteristics_param_file' : vehicle_characteristics_param_file, 
+                    'vehicle_config_param_file' : vehicle_config_param_file,
+                    'enable_guidance_plugin_validator' : enable_guidance_plugin_validator,
+                    'strategic_plugins_to_validate' : strategic_plugins_to_validate,
+                    'tactical_plugins_to_validate' : tactical_plugins_to_validate,
+                    'control_plugins_to_validate' : control_plugins_to_validate,
+                    'subsystem_controller_param_file' : [vehicle_config_dir, '/SubsystemControllerParams.yaml'],
+                }.items()
+            ),
+        ]
+    )
+      
     # subsystem_controller which orchestrates the lifecycle of this subsystem's components
     subsystem_controller = Node(
         package='subsystem_controllers',
@@ -151,7 +188,9 @@ def generate_launch_description():
 
     return LaunchDescription([  
         declare_vehicle_config_param_file_arg,
-        declare_subsystem_controller_param_file_arg,      
-        carma_guidance_container,
+        declare_subsystem_controller_param_file_arg,  
+        carma_trajectory_executor_and_route_container,
+        carma_guidance_visualizer_container,    
+        plugins_group,
         subsystem_controller
     ]) 
