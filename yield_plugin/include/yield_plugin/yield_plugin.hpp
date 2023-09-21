@@ -279,8 +279,6 @@ private:
   }
   
   FRIEND_TEST(YieldPluginTest, test_update_traj);
-  FRIEND_TEST(YieldPluginTest, DISABLED_test_update_traj);
-
   FRIEND_TEST(YieldPluginTest, detect_collision_time);
 
 };

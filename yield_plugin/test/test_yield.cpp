@@ -43,7 +43,7 @@
 namespace yield_plugin
 {
 
-TEST(YieldPluginTest, DISABLED_test_polynomial_calc)
+TEST(YieldPluginTest, test_polynomial_calc)
 {
   YieldPluginConfig config;
   std::shared_ptr<carma_wm::CARMAWorldModel> wm = std::make_shared<carma_wm::CARMAWorldModel>();
@@ -72,7 +72,7 @@ TEST(YieldPluginTest, DISABLED_test_polynomial_calc)
   EXPECT_EQ(728, result);
 }
 
-TEST(YieldPluginTest, DISABLED_test_polynomial_calc_derivative)
+TEST(YieldPluginTest, test_polynomial_calc_derivative)
 {
   YieldPluginConfig config;
   std::shared_ptr<carma_wm::CARMAWorldModel> wm = std::make_shared<carma_wm::CARMAWorldModel>();
@@ -101,7 +101,7 @@ TEST(YieldPluginTest, DISABLED_test_polynomial_calc_derivative)
   EXPECT_EQ(1094, result);
 }
 
-TEST(YieldPluginTest, DISABLED_MaxTrajectorySpeed)
+TEST(YieldPluginTest, MaxTrajectorySpeed)
 {
   YieldPluginConfig config;
   std::shared_ptr<carma_wm::CARMAWorldModel> wm = std::make_shared<carma_wm::CARMAWorldModel>();
@@ -168,7 +168,7 @@ TEST(YieldPluginTest, DISABLED_MaxTrajectorySpeed)
 
 }
 
-TEST(YieldPluginTest, DISABLED_test_update_traj)
+TEST(YieldPluginTest, test_update_traj)
 {
   std::shared_ptr<carma_wm::CARMAWorldModel> wm = std::make_shared<carma_wm::CARMAWorldModel>();
   auto map = carma_wm::test::buildGuidanceTestMap(100,100);
@@ -327,6 +327,7 @@ TEST(YieldPluginTest, detect_collision_time)
 
   YieldPlugin plugin(nh,wm, config,[&](auto msg) {}, [&](auto msg) {});
 
+  
   // save route Ids for faster access
   for (auto llt: plugin.wm_->getRoute()->shortestPath())
   {
@@ -519,7 +520,7 @@ TEST(YieldPluginTest, detect_collision_time)
   ASSERT_TRUE(collision_time == boost::none);
 }
 
-TEST(YieldPluginTest, DISABLED_test_update_traj2)
+TEST(YieldPluginTest, test_update_traj2)
 {
   YieldPluginConfig config;
   std::shared_ptr<carma_wm::CARMAWorldModel> wm = std::make_shared<carma_wm::CARMAWorldModel>();
@@ -621,7 +622,7 @@ TEST(YieldPluginTest, DISABLED_test_update_traj2)
 }
 
 
-TEST(YieldPluginTest, DISABLED_test_update_traj_stop)
+TEST(YieldPluginTest, test_update_traj_stop)
 {
   YieldPluginConfig config;
   std::shared_ptr<carma_wm::CARMAWorldModel> wm = std::make_shared<carma_wm::CARMAWorldModel>();
@@ -733,7 +734,7 @@ TEST(YieldPluginTest, DISABLED_test_update_traj_stop)
   EXPECT_TRUE(rclcpp::Time(new_trajectory_points[5].target_time) > rclcpp::Time(new_trajectory_points[4].target_time));
 }
 
-TEST(YieldPluginTest, DISABLED_jmt_traj)
+TEST(YieldPluginTest, jmt_traj)
 {
   YieldPluginConfig config;
   std::shared_ptr<carma_wm::CARMAWorldModel> wm = std::make_shared<carma_wm::CARMAWorldModel>();
@@ -800,7 +801,7 @@ TEST(YieldPluginTest, DISABLED_jmt_traj)
 
 }
 
-TEST(YieldPluginTest, DISABLED_min_digital_gap)
+TEST(YieldPluginTest, min_digital_gap)
 {
   std::shared_ptr<carma_wm::CARMAWorldModel> wm = std::make_shared<carma_wm::CARMAWorldModel>();
   auto map = carma_wm::test::buildGuidanceTestMap(3,3);
