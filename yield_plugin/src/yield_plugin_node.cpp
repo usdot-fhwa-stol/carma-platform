@@ -29,6 +29,7 @@ namespace yield_plugin
     config_.acceleration_adjustment_factor = declare_parameter<double>("acceleration_adjustment_factor", config_.acceleration_adjustment_factor);
     config_.min_obstacle_speed = declare_parameter<double>("min_obstacle_speed", config_.min_obstacle_speed);
     config_.collision_horizon = declare_parameter<double>("collision_horizon", config_.collision_horizon);
+    config_.collision_check_radius = declare_parameter<double>("collision_check_radius", config_.collision_check_radius);
     config_.yield_max_deceleration = declare_parameter<double>("yield_max_deceleration", config_.yield_max_deceleration);
     config_.tpmin = declare_parameter<double>("tpmin", config_.tpmin);
     config_.x_gap = declare_parameter<double>("x_gap", config_.x_gap);
@@ -55,6 +56,7 @@ namespace yield_plugin
     get_parameter<double>("acceleration_adjustment_factor", config_.acceleration_adjustment_factor);
     get_parameter<double>("min_obstacle_speed", config_.min_obstacle_speed);
     get_parameter<double>("collision_horizon", config_.collision_horizon);
+    get_parameter<double>("collision_check_radius", config_.collision_check_radius);
     get_parameter<double>("yield_max_deceleration", config_.yield_max_deceleration);
     get_parameter<double>("x_gap", config_.x_gap);
     get_parameter<double>("max_stop_speed", config_.max_stop_speed);
@@ -85,7 +87,8 @@ namespace yield_plugin
     // Subscriber
     mob_request_sub_ = create_subscription<carma_v2x_msgs::msg::MobilityRequest>("incoming_mobility_request", 10, std::bind(&YieldPlugin::mobilityrequest_cb,worker_.get(),std_ph::_1));
     bsm_sub_ = create_subscription<carma_v2x_msgs::msg::BSM>("bsm_outbound", 1, std::bind(&YieldPlugin::bsm_cb,worker_.get(),std_ph::_1));
-    georeference_sub_ = create_subscription<std_msgs::msg::String>("georeference", 10, std::bind(&YieldPlugin::georeferenceCallback,worker_.get(),std_ph::_1));
+    georeference_sub_ = create_subscription<std_msgs::msg::String>("georeference", 10, std::bind(&YieldPlugin::georeference_callback,worker_.get(),std_ph::_1));
+    external_objects_sub_ = create_subscription<carma_perception_msgs::msg::ExternalObjectList>("external_object_predictions", 20, std::bind(&YieldPlugin::external_objects_callback,worker_.get(),std_ph::_1));
 
     // Return success if everything initialized successfully
     return CallbackReturn::SUCCESS;

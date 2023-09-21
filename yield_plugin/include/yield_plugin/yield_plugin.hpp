@@ -37,8 +37,6 @@
 #include <trajectory_utils/quintic_coefficient_calculator.hpp>
 #include <boost/property_tree/json_parser.hpp>
 #include <lanelet2_extension/projection/local_frame_projector.h>
-#include <carma_perception_msgs/msg/roadway_obstacle.hpp>
-#include <carma_perception_msgs/msg/roadway_obstacle_list.hpp>
 #include <carma_v2x_msgs/msg/location_ecef.hpp>
 #include <carma_v2x_msgs/msg/trajectory.hpp>
 #include <carma_v2x_msgs/msg/plan_type.hpp>
@@ -46,6 +44,7 @@
 #include <carma_wm/WorldModel.hpp>
 #include <carma_wm/collision_detection.hpp>
 #include <carma_wm/TrafficControl.hpp>
+#include <gtest/gtest.h>
 
 
 namespace yield_plugin
@@ -208,7 +207,7 @@ public:
   /**
    * \brief Looks up the transform between map and earth frames, and sets the member variable
    */
-  void lookupECEFtoMapTransform();
+  void lookup_ecef_to_map_transform();
 
   /**
    * \brief checks trajectory for minimum gap associated with it
@@ -221,8 +220,22 @@ public:
    * \brief Callback for map projection string to define lat/lon -> map conversion
    * \brief msg The proj string defining the projection.
    */ 
-  void georeferenceCallback(const std_msgs::msg::String::UniquePtr msg);
+  void georeference_callback(const std_msgs::msg::String::UniquePtr msg);
+  
+  /**
+   * \brief Callback for external objects with predictions in the environment
+   * \param msg The object list msg.
+   */ 
+  void external_objects_callback(const carma_perception_msgs::msg::ExternalObjectList::UniquePtr msg);
 
+  /**
+   * \brief Return collision time given two trajectories
+   * \param trajectory1 trajectory of the ego vehicle
+   * \param trajectory2 trajectory of the obstacle 
+   * \param collision_radius a distance to check between two trajectory points at a same timestamp that is considered a collision
+   * \return time_of_collision if collision detected, otherwise, boost::none
+   */ 
+  boost::optional<rclcpp::Time> detect_collision_time(const carma_planning_msgs::msg::TrajectoryPlan& trajectory1, const std::vector<carma_perception_msgs::msg::PredictedState>& trajectory2, double collision_radius);
 
 private:
 
@@ -231,6 +244,8 @@ private:
   MobilityResponseCB mobility_response_publisher_;
   LaneChangeStatusCB lc_status_publisher_;
   std::shared_ptr<carma_ros2_utils::CarmaLifecycleNode> nh_;
+  std::set<lanelet::Id> route_llt_ids_;
+  std::vector<carma_perception_msgs::msg::ExternalObject> external_objects_;
 
   // flag to show if it is possible for the vehicle to accept the cooperative request
   bool cooperative_request_acceptable_ = false;
@@ -262,45 +277,11 @@ private:
     }
       return res;
   }
+  
+  FRIEND_TEST(YieldPluginTest, test_update_traj);
+  FRIEND_TEST(YieldPluginTest, DISABLED_test_update_traj);
 
-  // TODO replace with Basic Autonomy moving average filter
-  std::vector<double> moving_average_filter(const std::vector<double> input, int window_size, bool ignore_first_point=true)
-  {
-    if (window_size % 2 == 0) {
-      throw std::invalid_argument("moving_average_filter window size must be odd");
-    }
-
-    std::vector<double> output;
-    output.reserve(input.size());
-
-    if (input.size() == 0) {
-      return output;
-    }
-
-    int start_index = 0;
-    if (ignore_first_point) {
-      start_index = 1;
-      output.push_back(input[0]);
-    }
-
-    for (int i = start_index; i<input.size(); i++) {
-            
-      double total = 0;
-      int sample_min = std::max(0, i - window_size / 2);
-      int sample_max = std::min((int) input.size() - 1 , i + window_size / 2);
-
-      int count = sample_max - sample_min + 1;
-      std::vector<double> sample;
-      sample.reserve(count);
-      for (int j = sample_min; j <= sample_max; j++) {
-        total += input[j];
-      }
-      output.push_back(total / (double) count);
-
-    }
-
-    return output;
-  }
+  FRIEND_TEST(YieldPluginTest, detect_collision_time);
 
 };
 };  // namespace yield_plugin

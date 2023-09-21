@@ -25,7 +25,7 @@
 #include <carma_v2x_msgs/msg/mobility_response.hpp>
 #include <carma_v2x_msgs/msg/bsm.hpp>
 #include <functional>
-
+#include <carma_perception_msgs/msg/external_object_list.hpp>
 #include "yield_plugin.hpp"
 #include "yield_config.hpp"
 
@@ -74,8 +74,8 @@ private:
     // Subscribers
     carma_ros2_utils::SubPtr<carma_v2x_msgs::msg::MobilityRequest> mob_request_sub_;
     carma_ros2_utils::SubPtr<carma_v2x_msgs::msg::BSM> bsm_sub_;
+    carma_ros2_utils::SubPtr<carma_perception_msgs::msg::ExternalObjectList> external_objects_sub_;
     carma_ros2_utils::SubPtr<std_msgs::msg::String> georeference_sub_;
-   
 };
 
 }  // namespace yield_plugin
