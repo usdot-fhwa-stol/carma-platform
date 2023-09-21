@@ -1,6 +1,6 @@
 <?xml version="1.0"?>
 <!--
-  Copyright (C) 2018-2021 LEIDOS.
+  Copyright (C) 2018-2023 LEIDOS.
 
   Licensed under the Apache License, Version 2.0 (the "License"); you may not
   use this file except in compliance with the License. You may obtain a copy of
@@ -53,7 +53,6 @@
 
   <!-- Logging -->
   <!-- ROS Bag -->
-  <arg name="use_rosbag" default="true" doc="Record a rosbag"/>
   <arg name="rosbag_exclusions" default="/fake_exclusion" doc="Additonal regex pattern to match for identifying what topics to exclude from rosbag recordings"/>
   
   <!-- Map files to load -->
@@ -86,18 +85,6 @@
     </include>
   </group>
 
-  <!-- Localization Stack -->
-  <group ns="$(env CARMA_LOCZ_NS)">
-    <include file="$(find carma)/launch/localization.launch">
-      <arg name="arealist_path" value="$(arg arealist_path)"/>
-      <arg name="area" value="$(arg area)"/>
-      <arg name="load_type" value="$(arg load_type)"/>
-      <arg name="single_pcd_path" value="$(arg single_pcd_path)"/>
-      <arg name="vehicle_calibration_dir" value="$(arg vehicle_calibration_dir)"/>
-      <arg name="vector_map_file" value="$(arg vector_map_file)" />
-      <arg name="simulation_mode" value="$(arg simulation_mode)" />
-    </include>
-  </group>
 
   <!-- Environment Perception Stack -->
   <group ns="$(env CARMA_ENV_NS)">
@@ -111,37 +98,12 @@
     </include>
   </group>
 
-  <!-- Guidance Stack -->
-  <group ns="$(env CARMA_GUIDE_NS)">
-    <!-- Health Monitor.
-    Health monitor is required to launch with node tag here to correctly shut down
-    other nodes through its required=true attribute-->
-    <node pkg="health_monitor" type="health_monitor" name="health_monitor" required="true">
-      <remap from="driver_discovery" to="$(optenv CARMA_INTR_NS)/driver_discovery"/>
-      <remap from="system_alert" to="/system_alert"/>
-      <remap from="~required_drivers" to="/required_drivers"/> 
-      <remap from="~lidar_gps_drivers" to="/lidar_gps_drivers"/>
-      <remap from="~camera_drivers" to="/camera_drivers"/>
-      <remap from="~truck" to="/truck"/>
-      <remap from="~car" to="/car"/> 
-      <rosparam command="load" file="$(find health_monitor)/config/params.yaml"/>
-    </node>
-    
-    <include file="$(find carma)/launch/guidance.launch">
-      <arg name="route_file_folder" value="$(arg route_file_folder)"/>
-      <arg name="vehicle_calibration_dir" value="$(arg vehicle_calibration_dir)"/>
-      <arg name="enable_guidance_plugin_validator" value="$(arg enable_guidance_plugin_validator)"/>
-      <arg name="strategic_plugins_to_validate" value="$(arg strategic_plugins_to_validate)"/>
-      <arg name="tactical_plugins_to_validate" value="$(arg tactical_plugins_to_validate)"/>
-      <arg name="control_plugins_to_validate" value="$(arg control_plugins_to_validate)"/>
-    </include>
-  </group>
 
   <!-- Set up the rosbag record node that will exclude sensitive topics -->
   <group ns="carma_record">
-    <include file="$(find carma_record)/launch/carma_record.launch" if="$(arg use_rosbag)" />
+    <include file="$(find carma_record)/launch/carma_record.launch" />
   </group>
-
+  
   <!-- Dump all ros parameters to a file -->
   <node name="param_dump" pkg="carma_record" type="param_dump.sh"/>
   

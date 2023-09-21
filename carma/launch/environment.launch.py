@@ -45,6 +45,8 @@ def generate_launch_description():
         description = "Path to file containing unique vehicle calibrations"
     )
 
+    vector_map_file = LaunchConfiguration('vector_map_file')
+    declare_vector_map_file = DeclareLaunchArgument(name='vector_map_file', default_value = 'vector_map.osm', description = "Path to the map osm file if using the noupdate load type")
 
     autoware_auto_launch_pkg_prefix = get_package_share_directory(
         'autoware_auto_launch')
@@ -341,6 +343,62 @@ def generate_launch_description():
         ]
     )
 
+    # Vector map loader
+    lanelet2_map_loader_container = ComposableNodeContainer(
+        package='carma_ros2_utils', # rclcpp_components
+        name='lanelet2_map_loader_container',
+        executable='lifecycle_component_wrapper_mt',
+        namespace=GetCurrentNamespace(),
+        composable_node_descriptions=[
+            ComposableNode(
+                package='map_file_ros2',
+                plugin='lanelet2_map_loader::Lanelet2MapLoader',
+                name='lanelet2_map_loader',
+                extra_arguments=[
+                    {'use_intra_process_comms': True}, 
+                    {'--log-level' : GetLogLevel('lanelet2_map_loader', env_log_levels) },
+                    {'is_lifecycle_node': True} # Flag to allow lifecycle node loading in lifecycle wrapper
+                ],
+                remappings=[
+                    ("lanelet_map_bin", "base_map"),
+                    ("change_state", "disabled_change_state"), # Disable lifecycle topics since this is a lifecycle wrapper container
+                    ("get_state", "disabled_get_state")        # Disable lifecycle topics since this is a lifecycle wrapper container  
+                ],
+                parameters=[ 
+                    { "lanelet2_filename" : vector_map_file}
+                ]
+            )
+        ]
+    )
+
+
+    # Vector map visualization
+    lanelet2_map_visualization_container = ComposableNodeContainer(
+        package='carma_ros2_utils', # rclcpp_components
+        name='lanelet2_map_visualization_container',
+        executable='lifecycle_component_wrapper_mt',
+        namespace= GetCurrentNamespace(),
+        composable_node_descriptions=[
+            ComposableNode(
+                package='map_file_ros2',
+                plugin='lanelet2_map_visualization::Lanelet2MapVisualization',
+                name='lanelet2_map_visualization',
+                extra_arguments=[
+                    {'use_intra_process_comms': True}, 
+                    {'--log-level' : GetLogLevel('lanelet2_map_visualization', env_log_levels) },
+                    {'is_lifecycle_node': True} # Flag to allow lifecycle node loading in lifecycle wrapper
+                ],
+                remappings=[
+                    ("lanelet_map_bin", "semantic_map"),
+                    ("change_state", "disabled_change_state"), # Disable lifecycle topics since this is a lifecycle wrapper container
+                    ("get_state", "disabled_get_state")        # Disable lifecycle topics since this is a lifecycle wrapper container  
+                ],
+                parameters=[ 
+
+                ]
+            )
+        ]
+    )
     # subsystem_controller which orchestrates the lifecycle of this subsystem's components
     subsystem_controller = Node(
         package='subsystem_controllers',
@@ -355,7 +413,10 @@ def generate_launch_description():
         declare_vehicle_characteristics_param_file_arg,
         declare_vehicle_config_param_file_arg,
         declare_subsystem_controller_param_file_arg,
+        declare_vector_map_file,
         lidar_perception_container,
         carma_external_objects_container,
+        lanelet2_map_loader_container,
+        lanelet2_map_visualization_container,
         subsystem_controller
     ])

@@ -55,7 +55,11 @@ ament_auto_add_executable(environment_perception_controller src/environment_perc
 target_link_libraries(environment_perception_controller environment_perception_controller_core ${base_lib})
 
 # Driver Subsystem
-ament_auto_add_library(drivers_controller_core SHARED src/drivers_controller/drivers_controller_node.cpp)
+ament_auto_add_library(drivers_controller_core SHARED 
+  src/drivers_controller/drivers_controller_node.cpp
+  src/drivers_controller/entry_manager.cpp
+  src/drivers_controller/driver_manager.cpp
+  )
 rclcpp_components_register_nodes(drivers_controller_core "subsystem_controllers::DriversControllerNode")
 target_link_libraries(drivers_controller_core ${base_lib})
 ament_auto_add_executable(drivers_controller src/drivers_controller/main.cpp)
