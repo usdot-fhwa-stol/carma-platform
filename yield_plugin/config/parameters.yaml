@@ -4,7 +4,7 @@
 # No unit
 acceleration_adjustment_factor: 4.0 
 # Time horizon for collision detection for vehicles on the route
-# NOTE: note applied for pedestrians or other obstacles on the road
+# NOTE: not applied for pedestrians or other non-vehicle obstacles on the road
 # Units: s
 # Value type: Desired
 collision_horizon: 10.0

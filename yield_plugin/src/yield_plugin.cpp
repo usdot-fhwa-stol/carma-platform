@@ -593,7 +593,7 @@ namespace yield_plugin
     
     RCLCPP_DEBUG_STREAM(rclcpp::get_logger("yield_plugin"),"vehicle_downtrack: " << vehicle_downtrack);
 
-    // Issue (CAR-TODO ): If the yield_plugin can detect if the roadway object is moving along the route, 
+    // Issue (https://github.com/usdot-fhwa-stol/carma-platform/issues/2155): If the yield_plugin can detect if the roadway object is moving along the route, 
     // it is able to plan yielding much earlier and smoother using collision_horizon. 
 
     if(earliest_collision_obj)
