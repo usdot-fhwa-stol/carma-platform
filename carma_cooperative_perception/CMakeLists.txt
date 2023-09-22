@@ -55,6 +55,7 @@ set(CMAKE_C_STANDARD 11)
 # This will automatically add include files from include/carma_cooperative_perception
 ament_auto_add_library(carma_cooperative_perception SHARED
   src/external_object_list_to_detection_list_component.cpp
+  src/external_object_list_to_sdsm_component.cpp
   src/geodetic.cpp
   src/j2735_types.cpp
   src/j3224_types.cpp
@@ -71,11 +72,16 @@ target_link_libraries(carma_cooperative_perception
 
 rclcpp_components_register_nodes(carma_cooperative_perception
   "carma_cooperative_perception::ExternalObjectListToDetectionListNode"
+  "carma_cooperative_perception::ExternalObjectListToSdsmNode"
   "carma_cooperative_perception::SdsmToDetectionListNode"
 )
 
 ament_auto_add_executable(external_object_list_to_detection_list_node
   src/external_object_list_to_detection_list_node.cpp
+)
+
+ament_auto_add_executable(external_object_list_to_sdsm_node
+  src/external_object_list_to_sdsm_node.cpp
 )
 
 if(carma_cooperative_perception_BUILD_TESTS)
@@ -97,6 +103,13 @@ if(carma_cooperative_perception_BUILD_TESTS)
   target_link_libraries(carma_cooperative_perception_tests
     carma_cooperative_perception
   )
+
+  # add_launch_test(test/launch_testing/carma_cooperative_perception_ros_launch_test.py)
+
+  # ament_clang_tidy(
+  #   CONFIG_FILE ${PROJECT_SOURCE_DIR}/.clang-tidy
+  #   ${PROJECT_BINARY_DIR}/compile_commands.json
+  # )
 endif()
 
 ament_auto_package()

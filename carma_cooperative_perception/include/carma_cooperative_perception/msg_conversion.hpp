@@ -58,6 +58,11 @@ auto to_detection_list_msg(
   const MotionModelMapping & motion_model_mapping) noexcept
   -> carma_cooperative_perception_interfaces::msg::DetectionList;
 
+inline auto to_sdsm_msg(const carma_perception_msgs::msg::ExternalObjectList & object_list) noexcept
+{
+  return carma_v2x_msgs::msg::SensorDataSharingMessage{};
+}
+
 }  // namespace carma_cooperative_perception
 
 #endif  // CARMA_COOPERATIVE_PERCEPTION__MSG_CONVERSION_HPP_
