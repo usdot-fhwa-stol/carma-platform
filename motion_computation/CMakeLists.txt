@@ -48,7 +48,7 @@ carma_package()
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_C_STANDARD 11)
 
-# ament_auto will automatically add include files from include/roadway_objects
+# ament_auto will automatically add include files from include/motion_computation
 # and link necessary libraries
 ament_auto_add_library(motion_computation SHARED
   src/motion_computation_worker.cpp
