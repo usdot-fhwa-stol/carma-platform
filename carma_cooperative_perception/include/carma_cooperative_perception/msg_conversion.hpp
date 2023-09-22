@@ -103,6 +103,11 @@ auto to_detected_object_data_msg(
   const carma_perception_msgs::msg::ExternalObject & external_object) noexcept
   -> carma_v2x_msgs::msg::DetectedObjectData;
 
+inline auto to_sdsm_msg(const carma_perception_msgs::msg::ExternalObjectList & object_list) noexcept
+{
+  return carma_v2x_msgs::msg::SensorDataSharingMessage{};
+}
+
 }  // namespace carma_cooperative_perception
 
 
