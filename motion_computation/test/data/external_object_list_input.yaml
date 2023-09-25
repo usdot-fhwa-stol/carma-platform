@@ -1,0 +1,27 @@
+---
+message_type: carma_perception_msgs/msg/ExternalObjectList
+message_fields:
+  objects:
+    - header:
+        frame_id: "map"
+      id: 1
+      object_type: 1 # ExternalObject.SMALL_VEHICLE
+      pose:
+        pose:
+          position:
+            x: 45.8529
+            y: -223.004
+            z: 0.0
+          orientation:
+            x: 0.0
+            y: 0.0
+            z: 0.7071081
+            w: 0.7071055
+      velocity:
+        twist:
+          linear:
+            x: 1.0
+      size:
+        x: 4.0
+        y: 2.0
+        z: 1.0

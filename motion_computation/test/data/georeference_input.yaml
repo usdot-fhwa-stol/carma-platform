@@ -1,0 +1,14 @@
+---
+message_type: std_msgs/msg/String
+message_fields:
+  data: >
+    +proj=tmerc
+    +lat_0=4.9000000000000000e+1
+    +lon_0=8.0000000000000000e+0
+    +k=1
+    +x_0=0
+    +y_0=0
+    +datum=WGS84
+    +units=m
+    +vunits=m
+    +no_defs
