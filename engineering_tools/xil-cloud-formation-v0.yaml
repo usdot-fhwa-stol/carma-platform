@@ -18,6 +18,10 @@ Parameters:
     Type: String
     NoEcho: true
     MinLength: 6
+  ExistingVPCID:
+    Description: The existing VPCId to use for the instance
+    Type: AWS::EC2::VPC::Id
+    Default: vpc-00e8b9c2ecc9a4746
   CarmaConfigImage:
     Description: The specific carma config which launches xil and platform to make available in the instance
     Type: String
@@ -27,22 +31,12 @@ Mappings:
     us-east-1:
       ami: ami-0c5b5f70bfa4f1021 # Custom Leidos AMI
 Resources:
-  VPC:
-    Type: AWS::EC2::VPC
-    Properties:
-      CidrBlock: 10.0.0.0/16
-      EnableDnsSupport: true
-      EnableDnsHostnames: true
-      InstanceTenancy: default
-      Tags:
-        - Key: Name
-          Value: !Sub "Cloud9 Dev VPC-${AWS::StackName}"
   InternetGateway:
     Type: AWS::EC2::InternetGateway
   VPCGatewayAttachment:
     Type: AWS::EC2::VPCGatewayAttachment
     Properties:
-      VpcId: !Ref VPC
+      VpcId: !Ref ExistingVPCID
       InternetGatewayId: !Ref InternetGateway
   SubnetA:
     Type: AWS::EC2::Subnet
@@ -51,13 +45,13 @@ Resources:
         - 0
         - !GetAZs
           Ref: 'AWS::Region'
-      VpcId: !Ref VPC
-      CidrBlock: 10.0.0.0/24
+      VpcId: !Ref ExistingVPCID
+      CidrBlock: 10.0.1.0/24
       MapPublicIpOnLaunch: true
   RouteTable:
     Type: AWS::EC2::RouteTable
     Properties:
-      VpcId: !Ref VPC
+      VpcId: !Ref ExistingVPCID
   InternetRoute:
     Type: AWS::EC2::Route
     Properties:
@@ -74,7 +68,7 @@ Resources:
     Properties:
       GroupName: !Sub "Cloud9 Security Group-${AWS::StackName}"
       GroupDescription: !Sub "Permit SSH traffic for Cloud9 and 8443 traffic for DCV"
-      VpcId: !Ref VPC
+      VpcId: !Ref ExistingVPCID
       SecurityGroupIngress:
         - IpProtocol: tcp
           FromPort: '22'
