@@ -24,7 +24,7 @@
 struct YieldPluginConfig
 {
   double acceleration_adjustment_factor = 4.0;  // Adjustment factor for safe and comfortable acceleration/deceleration 
-  double collision_horizon = 10.0;        // time horizon for collision detection in s
+  double on_route_vehicle_collision_horizon = 10.0;        // time horizon for collision detection in s
   double min_obstacle_speed = 2.0;       // Minimum speed for moving obstacle in m/s
   double tpmin = 2.0;                     // minimum object avoidance planning time in s
   double yield_max_deceleration = 3.0;  // max deceleration value in m/s^2
@@ -48,7 +48,7 @@ struct YieldPluginConfig
   {
     output << "YieldPluginConfig { " << std::endl
           << "acceleration_adjustment_factor: " << c.acceleration_adjustment_factor << std::endl
-          << "collision_horizon: " << c.collision_horizon << std::endl
+          << "on_route_vehicle_collision_horizon: " << c.on_route_vehicle_collision_horizon << std::endl
           << "min_obstacle_speed: " << c.min_obstacle_speed << std::endl
           << "yield_max_deceleration: " << c.yield_max_deceleration << std::endl
           << "x_gap: " << c.x_gap << std::endl

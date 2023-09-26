@@ -40,8 +40,8 @@
 #include <carma_planning_msgs/msg/trajectory_plan.hpp>
 #include <carma_perception_msgs/msg/predicted_state.hpp>
 
-namespace yield_plugin
-{
+using namespace yield_plugin;
+
 
 TEST(YieldPluginTest, test_polynomial_calc)
 {
@@ -49,7 +49,7 @@ TEST(YieldPluginTest, test_polynomial_calc)
   std::shared_ptr<carma_wm::CARMAWorldModel> wm = std::make_shared<carma_wm::CARMAWorldModel>();
   auto nh = std::make_shared<yield_plugin::YieldPluginNode>(rclcpp::NodeOptions());
 
-  YieldPlugin plugin(nh,wm, config,[&](auto msg) {}, [&](auto msg) {});
+  YieldPlugin plugin(nh,wm, config,[](const auto& msg) {}, [](const auto& msg) {});
 
   std::vector<double> coeff;
   coeff.push_back(2.0);
@@ -78,7 +78,7 @@ TEST(YieldPluginTest, test_polynomial_calc_derivative)
   std::shared_ptr<carma_wm::CARMAWorldModel> wm = std::make_shared<carma_wm::CARMAWorldModel>();
   auto nh = std::make_shared<yield_plugin::YieldPluginNode>(rclcpp::NodeOptions());
 
-  YieldPlugin plugin(nh,wm, config,[&](auto msg) {}, [&](auto msg) {});
+  YieldPlugin plugin(nh,wm, config,[](const auto& msg) {}, [](const auto& msg) {});
 
   std::vector<double> coeff;
   coeff.push_back(2.0);
@@ -107,7 +107,7 @@ TEST(YieldPluginTest, MaxTrajectorySpeed)
   std::shared_ptr<carma_wm::CARMAWorldModel> wm = std::make_shared<carma_wm::CARMAWorldModel>();
   auto nh = std::make_shared<yield_plugin::YieldPluginNode>(rclcpp::NodeOptions());
 
-  YieldPlugin plugin(nh,wm, config,[&](auto msg) {}, [&](auto msg) {});
+  YieldPlugin plugin(nh,wm, config,[](const auto& msg) {}, [](const auto& msg) {});
 
   std::vector<carma_planning_msgs::msg::TrajectoryPlanPoint> trajectory_points;
 
@@ -184,7 +184,7 @@ TEST(YieldPluginTest, test_update_traj)
   // std::shared_ptr<carma_wm::CARMAWorldModel> wm = std::make_shared<carma_wm::CARMAWorldModel>();
   auto nh = std::make_shared<yield_plugin::YieldPluginNode>(rclcpp::NodeOptions());
 
-  YieldPlugin plugin(nh,wm, config,[&](auto msg) {}, [&](auto msg) {});
+  YieldPlugin plugin(nh,wm, config,[](const auto& msg) {}, [](const auto& msg) {});
 
   carma_perception_msgs::msg::ExternalObjectList rwol;
   carma_planning_msgs::msg::TrajectoryPlan tp;
@@ -292,20 +292,9 @@ TEST(YieldPluginTest, test_update_traj)
 
   rw_objs.push_back(rwo_1);
 
-  plugin.external_objects_ = rw_objs;
-
-  carma_planning_msgs::msg::TrajectoryPlan tp_new = plugin.update_traj_for_object(tp, 10.0);
-
-  for (auto pt:  tp_new.trajectory_points) {
-    std::cout << "new x: " << pt.x << ", y:" << pt.y << ", t:" << std::to_string(rclcpp::Time(pt.target_time).seconds()) << std::endl;
-
-  }
+  carma_planning_msgs::msg::TrajectoryPlan tp_new = plugin.update_traj_for_object(tp, rw_objs, 10.0);
 
   EXPECT_EQ(7, tp.trajectory_points.size());
-  for (auto pt : tp.trajectory_points)
-  {
-    std::cout << "x: " << pt.x << ", y:" << pt.y << ", t:" << std::to_string(rclcpp::Time(pt.target_time).seconds()) << std::endl;
-  }
 }
 
 TEST(YieldPluginTest, detect_collision_time)
@@ -325,17 +314,12 @@ TEST(YieldPluginTest, detect_collision_time)
   // std::shared_ptr<carma_wm::CARMAWorldModel> wm = std::make_shared<carma_wm::CARMAWorldModel>();
   auto nh = std::make_shared<yield_plugin::YieldPluginNode>(rclcpp::NodeOptions());
 
-  YieldPlugin plugin(nh,wm, config,[&](auto msg) {}, [&](auto msg) {});
-
+  YieldPlugin plugin(nh,wm, config,[](const auto& msg) {}, [](const auto& msg) {});
   
-  // save route Ids for faster access
-  for (auto llt: plugin.wm_->getRoute()->shortestPath())
-  {
-    plugin.route_llt_ids_.insert(llt.id());
-  }
-
   carma_perception_msgs::msg::ExternalObjectList rwol;
   carma_planning_msgs::msg::TrajectoryPlan tp;
+
+  EXPECT_THROW(plugin.update_traj_for_object(tp, {}, 0.0), std::invalid_argument);
 
   carma_planning_msgs::msg::TrajectoryPlanPoint trajectory_point_1;
   carma_planning_msgs::msg::TrajectoryPlanPoint trajectory_point_2;
@@ -377,6 +361,9 @@ TEST(YieldPluginTest, detect_collision_time)
 
   carma_perception_msgs::msg::ExternalObject rwo_1;
 
+  // Set route but also test no throw
+  EXPECT_NO_THROW(plugin.update_traj_for_object(tp, {}, 0.0));
+ 
   // ON ROUTE, BUT NO COLLISION DUE TO BEING AHEAD
 
   tf2::Quaternion tf_orientation;
@@ -434,9 +421,9 @@ TEST(YieldPluginTest, detect_collision_time)
   rwo_1.predictions = {ps_1,ps_2,ps_3};
   rwo_1.velocity.twist.linear.x = 10.0;
 
-  boost::optional<rclcpp::Time> collision_time = plugin.detect_collision_time(tp, rwo_1.predictions, 6);
+  std::optional<rclcpp::Time> collision_time = plugin.detect_collision_time(tp, rwo_1.predictions, 6);
 
-  ASSERT_TRUE(collision_time == boost::none);
+  ASSERT_TRUE(collision_time == std::nullopt);
 
   // DETECT COLLISION
 
@@ -462,8 +449,8 @@ TEST(YieldPluginTest, detect_collision_time)
   //
 
   collision_time = plugin.detect_collision_time(tp, rwo_1.predictions, 6);
-  ASSERT_TRUE(collision_time != boost::none);
-  ASSERT_TRUE(collision_time.get() == rclcpp::Time(2, 0, collision_time.get().get_clock_type()));
+  ASSERT_TRUE(collision_time != std::nullopt);
+  ASSERT_TRUE(collision_time.value() == rclcpp::Time(2, 0, collision_time.value().get_clock_type()));
 
   // STATES ARE NOT ON ROUTE
   ps_1.header.stamp.sec = 1;
@@ -481,7 +468,7 @@ TEST(YieldPluginTest, detect_collision_time)
   rwo_1.predictions = {ps_1,ps_2};
 
   collision_time = plugin.detect_collision_time(tp, rwo_1.predictions, 6);
-  ASSERT_TRUE(collision_time == boost::none);
+  ASSERT_TRUE(collision_time == std::nullopt);
 
   // STATES ARE ON THE ROUTE, BUT TOO FAR AWAY
   ps_1.header.stamp.sec = 1;
@@ -499,7 +486,7 @@ TEST(YieldPluginTest, detect_collision_time)
   rwo_1.predictions = {ps_1,ps_2};
 
   collision_time = plugin.detect_collision_time(tp, rwo_1.predictions, 6);
-  ASSERT_TRUE(collision_time == boost::none);
+  ASSERT_TRUE(collision_time == std::nullopt);
 
   // STATES ARE ON THE ROUTE, BUT ALREADY PASSED
   ps_1.header.stamp.sec = 2;
@@ -517,7 +504,7 @@ TEST(YieldPluginTest, detect_collision_time)
   rwo_1.predictions = {ps_1,ps_2};
 
   collision_time = plugin.detect_collision_time(tp, rwo_1.predictions, 6);
-  ASSERT_TRUE(collision_time == boost::none);
+  ASSERT_TRUE(collision_time == std::nullopt);
 }
 
 TEST(YieldPluginTest, test_update_traj2)
@@ -526,7 +513,7 @@ TEST(YieldPluginTest, test_update_traj2)
   std::shared_ptr<carma_wm::CARMAWorldModel> wm = std::make_shared<carma_wm::CARMAWorldModel>();
   auto nh = std::make_shared<yield_plugin::YieldPluginNode>(rclcpp::NodeOptions());
 
-  YieldPlugin plugin(nh,wm, config,[&](auto msg) {}, [&](auto msg) {});
+  YieldPlugin plugin(nh,wm, config,[](const auto& msg) {}, [](const auto& msg) {});
 
   carma_planning_msgs::msg::TrajectoryPlan original_tp;
 
@@ -628,7 +615,7 @@ TEST(YieldPluginTest, test_update_traj_stop)
   std::shared_ptr<carma_wm::CARMAWorldModel> wm = std::make_shared<carma_wm::CARMAWorldModel>();
   auto nh = std::make_shared<yield_plugin::YieldPluginNode>(rclcpp::NodeOptions());
 
-  YieldPlugin plugin(nh,wm, config,[&](auto msg) {}, [&](auto msg) {});
+  YieldPlugin plugin(nh,wm, config,[](const auto& msg) {}, [](const auto& msg) {});
 
   carma_planning_msgs::msg::TrajectoryPlan original_tp;
 
@@ -707,7 +694,7 @@ TEST(YieldPluginTest, test_update_traj_stop)
       
       if (dv >= 1.0)
         {
-          RCLCPP_WARN_STREAM(rclcpp::get_logger("yield_plugin"),"target speed is positive");
+          RCLCPP_WARN(rclcpp::get_logger("yield_plugin"),"target speed is positive");
           if (dv >= current_speed_){
             dv = current_speed_;
           }
@@ -718,7 +705,7 @@ TEST(YieldPluginTest, test_update_traj_stop)
         }
         else
         {
-          RCLCPP_WARN_STREAM(rclcpp::get_logger("yield_plugin"),"target speed is zero");
+          RCLCPP_WARN(rclcpp::get_logger("yield_plugin"),"target speed is zero");
           new_tpp = new_trajectory_points[i-1];
           new_tpp.target_time = rclcpp::Time(new_trajectory_points[0].target_time) + rclcpp::Duration(traj_target_time*1e9);
           new_trajectory_points.push_back(new_tpp);
@@ -740,7 +727,7 @@ TEST(YieldPluginTest, jmt_traj)
   std::shared_ptr<carma_wm::CARMAWorldModel> wm = std::make_shared<carma_wm::CARMAWorldModel>();
   auto nh = std::make_shared<yield_plugin::YieldPluginNode>(rclcpp::NodeOptions());
 
-  YieldPlugin plugin(nh,wm, config,[&](auto msg) {}, [&](auto msg) {});
+  YieldPlugin plugin(nh,wm, config,[](const auto& msg) {}, [](const auto& msg) {});
 
   carma_planning_msgs::msg::TrajectoryPlan original_tp;
 
@@ -819,7 +806,7 @@ TEST(YieldPluginTest, min_digital_gap)
   YieldPluginConfig config;
   auto nh = std::make_shared<yield_plugin::YieldPluginNode>(rclcpp::NodeOptions());
 
-  YieldPlugin plugin(nh,wm, config,[&](auto msg) {}, [&](auto msg) {});
+  YieldPlugin plugin(nh,wm, config,[](const auto& msg) {}, [](const auto& msg) {});
 
   carma_planning_msgs::msg::TrajectoryPlan original_tp;
 
@@ -854,9 +841,3 @@ TEST(YieldPluginTest, min_digital_gap)
   EXPECT_EQ(gap, min_gap);
     
 }
-
-
-
-
-
-} //namespace yield_plugin

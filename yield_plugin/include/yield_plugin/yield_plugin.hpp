@@ -95,9 +95,10 @@ public:
    * \brief trajectory is modified to safely avoid obstacles on the road
    * \param original_tp original trajectory plan without object avoidance
    * \param current_speed_ current speed of the vehicle
+   * \param 
    * \return modified trajectory plan
    */
-  carma_planning_msgs::msg::TrajectoryPlan update_traj_for_object(const carma_planning_msgs::msg::TrajectoryPlan& original_tp, double initial_velocity);
+  carma_planning_msgs::msg::TrajectoryPlan update_traj_for_object(const carma_planning_msgs::msg::TrajectoryPlan& original_tp, const std::vector<carma_perception_msgs::msg::ExternalObject>& external_objects, double initial_velocity);
 
   /**
    * \brief calculate quintic polynomial equation for a given x
@@ -217,25 +218,25 @@ public:
   double check_traj_for_digital_min_gap(const carma_planning_msgs::msg::TrajectoryPlan& original_tp) const;
 
   /**
-   * \brief Callback for map projection string to define lat/lon -> map conversion
-   * \brief msg The proj string defining the projection.
+   * \brief Setter for map projection string to define lat/lon -> map conversion
+   * \param georeference The proj string defining the projection.
    */ 
-  void georeference_callback(const std_msgs::msg::String::UniquePtr msg);
-  
+  void set_georeference_string(const std::string& georeference);
+
   /**
-   * \brief Callback for external objects with predictions in the environment
-   * \param msg The object list msg.
+   * \brief Setter for external objects with predictions in the environment
+   * \param object_list The object list.
    */ 
-  void external_objects_callback(const carma_perception_msgs::msg::ExternalObjectList::UniquePtr msg);
+  void set_external_objects(const std::vector<carma_perception_msgs::msg::ExternalObject>& object_list);
 
   /**
    * \brief Return collision time given two trajectories
    * \param trajectory1 trajectory of the ego vehicle
    * \param trajectory2 trajectory of the obstacle 
    * \param collision_radius a distance to check between two trajectory points at a same timestamp that is considered a collision
-   * \return time_of_collision if collision detected, otherwise, boost::none
+   * \return time_of_collision if collision detected, otherwise, std::nullopt
    */ 
-  boost::optional<rclcpp::Time> detect_collision_time(const carma_planning_msgs::msg::TrajectoryPlan& trajectory1, const std::vector<carma_perception_msgs::msg::PredictedState>& trajectory2, double collision_radius);
+  std::optional<rclcpp::Time> detect_collision_time(const carma_planning_msgs::msg::TrajectoryPlan& trajectory1, const std::vector<carma_perception_msgs::msg::PredictedState>& trajectory2, double collision_radius);
 
 private:
 
@@ -277,9 +278,6 @@ private:
     }
       return res;
   }
-  
-  FRIEND_TEST(YieldPluginTest, test_update_traj);
-  FRIEND_TEST(YieldPluginTest, detect_collision_time);
 
 };
 };  // namespace yield_plugin

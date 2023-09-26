@@ -7,7 +7,7 @@ acceleration_adjustment_factor: 4.0
 # NOTE: not applied for pedestrians or other non-vehicle obstacles on the road
 # Units: s
 # Value type: Desired
-collision_horizon: 10.0
+on_route_vehicle_collision_horizon: 10.0
 # Minimum speed for moving obstacle
 # Units: m/s
 # Value type: Desired
