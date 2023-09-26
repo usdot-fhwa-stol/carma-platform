@@ -75,7 +75,7 @@ namespace yield_plugin
     get_parameter<double>("vehicle_width", config_.vehicle_width);
     get_parameter<std::string>("vehicle_id", config_.vehicle_id);
 
-    RCLCPP_INFO_STREAM(rclcpp::get_logger("yield_plugin"), "YieldPlugin Params: " << config_);
+    RCLCPP_INFO_STREAM(get_logger(), "YieldPlugin Params: " << config_);
 
     worker_ = std::make_shared<YieldPlugin>(shared_from_this(), get_world_model(), config_,
                                                           [this](auto msg) { mob_resp_pub_->publish(msg); },
