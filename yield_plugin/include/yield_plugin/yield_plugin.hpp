@@ -44,7 +44,6 @@
 #include <carma_wm/WorldModel.hpp>
 #include <carma_wm/collision_detection.hpp>
 #include <carma_wm/TrafficControl.hpp>
-#include <gtest/gtest.h>
 
 
 namespace yield_plugin
