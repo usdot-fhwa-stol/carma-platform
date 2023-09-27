@@ -231,8 +231,7 @@ TEST(ToExternalObject, FromTrack)
   track.pose.pose.orientation.z = 6;
   track.pose.pose.orientation.w = 7;
 
-  track.pose.covariance = {1,  2,  3,  4,  5,  6,  7,  8,  9,  10, 11, 12, 13, 14, 15, 16, 17, 18,
-                           19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36};
+  std::iota(std::begin(track.pose.covariance), std::end(track.pose.covariance), 1U);
 
   track.twist.twist.linear.x = 1;
   track.twist.twist.linear.y = 2;
@@ -242,8 +241,7 @@ TEST(ToExternalObject, FromTrack)
   track.twist.twist.angular.y = 5;
   track.twist.twist.angular.z = 6;
 
-  track.twist.covariance = {1,  2,  3,  4,  5,  6,  7,  8,  9,  10, 11, 12, 13, 14, 15, 16, 17, 18,
-                            19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36};
+  std::iota(std::begin(track.twist.covariance), std::end(track.twist.covariance), 1U);
 
   const auto external_object{carma_cooperative_perception::to_external_object_msg(track)};
 
@@ -276,8 +274,7 @@ TEST(ToExternalObject, FromTrackNonNumericId)
   track.pose.pose.orientation.z = 6;
   track.pose.pose.orientation.w = 7;
 
-  track.pose.covariance = {1,  2,  3,  4,  5,  6,  7,  8,  9,  10, 11, 12, 13, 14, 15, 16, 17, 18,
-                           19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36};
+  std::iota(std::begin(track.pose.covariance), std::end(track.pose.covariance), 1U);
 
   track.twist.twist.linear.x = 1;
   track.twist.twist.linear.y = 2;
@@ -287,8 +284,7 @@ TEST(ToExternalObject, FromTrackNonNumericId)
   track.twist.twist.angular.y = 5;
   track.twist.twist.angular.z = 6;
 
-  track.twist.covariance = {1,  2,  3,  4,  5,  6,  7,  8,  9,  10, 11, 12, 13, 14, 15, 16, 17, 18,
-                            19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36};
+  std::iota(std::begin(track.twist.covariance), std::end(track.twist.covariance), 1U);
 
   const auto external_object{carma_cooperative_perception::to_external_object_msg(track)};
 
@@ -319,8 +315,7 @@ TEST(ToExternalObject, FromTrackNegativeId)
   track.pose.pose.orientation.z = 6;
   track.pose.pose.orientation.w = 7;
 
-  track.pose.covariance = {1,  2,  3,  4,  5,  6,  7,  8,  9,  10, 11, 12, 13, 14, 15, 16, 17, 18,
-                           19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36};
+  std::iota(std::begin(track.pose.covariance), std::end(track.pose.covariance), 1U);
 
   track.twist.twist.linear.x = 1;
   track.twist.twist.linear.y = 2;
@@ -330,8 +325,7 @@ TEST(ToExternalObject, FromTrackNegativeId)
   track.twist.twist.angular.y = 5;
   track.twist.twist.angular.z = 6;
 
-  track.twist.covariance = {1,  2,  3,  4,  5,  6,  7,  8,  9,  10, 11, 12, 13, 14, 15, 16, 17, 18,
-                            19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36};
+  std::iota(std::begin(track.twist.covariance), std::end(track.twist.covariance), 1U);
 
   const auto external_object{carma_cooperative_perception::to_external_object_msg(track)};
 
