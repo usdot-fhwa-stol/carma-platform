@@ -20,6 +20,8 @@
 #include <j2735_v2x_msgs/msg/d_date_time.hpp>
 #include <j3224_v2x_msgs/msg/detected_object_data.hpp>
 #include <j3224_v2x_msgs/msg/measurement_time_offset.hpp>
+#include <carma_cooperative_perception_interfaces/msg/track.hpp>
+#include <carma_cooperative_perception_interfaces/msg/track_list.hpp>
 
 #include <algorithm>
 #include <cmath>
@@ -219,5 +221,18 @@ auto to_detection_list_msg(
 
   return detection_list;
 }
+
+// TODO
+auto to_external_object_list_msg(
+  const carma_cooperative_perception_interfaces::msg::TrackList &track_list) noexcept
+  -> carma_perception_msgs::msg::ExternalObjectList
+{
+
+  carma_perception_msgs::msg::ExternalObjectList external_object_list;
+
+
+}
+
+
 
 }  // namespace carma_cooperative_perception
