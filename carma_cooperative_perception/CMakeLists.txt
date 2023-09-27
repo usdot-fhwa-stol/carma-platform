@@ -103,6 +103,26 @@ if(carma_cooperative_perception_BUILD_TESTS)
   target_link_libraries(carma_cooperative_perception_tests
     carma_cooperative_perception
   )
+
+  add_launch_test(test/track_list_to_external_object_list_launch_test.py)
+
 endif()
 
 ament_auto_package()
+
+include(GNUInstallDirs)
+
+# ament_auto does not provide file pattern matching
+install(DIRECTORY ${PROJECT_SOURCE_DIR}/test/
+  DESTINATION ${CMAKE_INSTALL_DATADIR}/carma_cooperative_perception/test
+  FILES_MATCHING
+    PATTERN *.py
+    PATTERN *.cpp
+    PATTERN __pycache__ EXCLUDE
+)
+
+install(DIRECTORY ${PROJECT_SOURCE_DIR}/test/data/
+  DESTINATION ${CMAKE_INSTALL_DATADIR}/carma_cooperative_perception/test/data
+  FILES_MATCHING
+    PATTERN *.yaml
+)

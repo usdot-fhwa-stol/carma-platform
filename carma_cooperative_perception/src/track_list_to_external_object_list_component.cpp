@@ -37,7 +37,7 @@ auto TrackListToExternalObjectListNode::handle_on_configure(
   const rclcpp_lifecycle::State & /* previous_state */) -> carma_ros2_utils::CallbackReturn
 {
   publisher_ = create_publisher<carma_perception_msgs::msg::ExternalObjectList>(
-    "output/external_objects_list", 1);
+    "output/external_object_list", 1);
 
   track_list_subscription_ = create_subscription<
     carma_cooperative_perception_interfaces::msg::TrackList>(
