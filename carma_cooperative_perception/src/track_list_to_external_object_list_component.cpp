@@ -12,28 +12,25 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include "carma_cooperative_perception/external_object_list_to_detection_list_component.hpp"
+#include "carma_cooperative_perception/track_list_to_external_object_list_component.hpp"
 
 #include <rclcpp_components/register_node_macro.hpp>
 #include <string>
 #include <utility>
 #include <vector>
 
+#include "carma_cooperative_perception/external_object_list_to_detection_list_component.hpp"
 #include "carma_cooperative_perception/geodetic.hpp"
 #include "carma_cooperative_perception/units_extensions.hpp"
 
 namespace carma_cooperative_perception
 {
-
-auto transform_from_map_origin_to_local( // improve name scheme
+auto transform_from_map_origin_to_local(  // improve name scheme
   carma_cooperative_perception_interfaces::msg::TrackList track_list,
-  const std::string &map_origin) -> carma_cooperative_perception_interfaces::msg::DetectionList
+  const std::string & map_origin) -> carma_cooperative_perception_interfaces::msg::DetectionList
 {
-
-    // TODO
-
+  // TODO(username)
 }
-
 
 TrackListToExternalObjectListNode::TrackListToExternalObjectListNode(
   const rclcpp::NodeOptions & options)
@@ -46,25 +43,24 @@ TrackListToExternalObjectListNode::TrackListToExternalObjectListNode(
 auto TrackListToExternalObjectListNode::handle_on_configure(
   const rclcpp_lifecycle::State & /* previous_state */) -> carma_ros2_utils::CallbackReturn
 {
-  publisher_ = create_publisher<output_msg_type("output/external_objects_list", 1);
+  publisher_ = create_publisher < output_msg_type("output/external_objects_list", 1);
 
   track_list_subscription = create_subscription<input_msg_type>(
-    "input/track_list", 1, [this](input_msg_shared_pointer msg_ptr){
+    "input/track_list", 1, [this](input_msg_shared_pointer msg_ptr) {
       const auto current_State{this->get_current_state().label()};
 
-      if(current_state == "active"){
+      if (current_state == "active") {
         publish_as_external_object_list(*msg_ptr);
-      } else{
+      } else {
         RCLCPP_WARN(
           this->get_logger(),
           "Trying to receive message on the topic '%s', but the containing node is not activated. "
           "Current node state: '%s'",
-          this->track_subscription_->get_topic_name(), current_state.c_str()); 
+          this->track_subscription_->get_topic_name(), current_state.c_str());
       }
     });
 
-    // TODO
-
+  // TODO(username)
 }
 
 auto TrackListToExternalObjectListNode::handle_on_cleanup(
@@ -107,5 +103,4 @@ auto TrackListToExternalObjectListNode::update_georeference(
   map_georeference_ = msg.data;
 }
 
-
-} // namespace carma_cooperative_perception
+}  // namespace carma_cooperative_perception

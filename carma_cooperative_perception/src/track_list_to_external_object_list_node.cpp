@@ -24,7 +24,7 @@ auto main(int argc, char * argv[]) noexcept -> int
 
   auto node{std::make_shared<carma_cooperative_perception::TrackListToExternalObjectListNode>(
     rclcpp::NodeOptions{})};
-    
+
   rclcpp::executors::SingleThreadedExecutor executor;
   executor.add_node(node->get_node_base_interface());
   executor.spin();
