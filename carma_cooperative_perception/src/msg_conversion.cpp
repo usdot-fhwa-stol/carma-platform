@@ -25,6 +25,7 @@
 
 #include <algorithm>
 #include <cmath>
+#include <limits>
 #include <utility>
 
 #include "carma_cooperative_perception/geodetic.hpp"
@@ -222,12 +223,46 @@ auto to_detection_list_msg(
   return detection_list;
 }
 
-// TODO(username)
+auto to_external_object_msg(
+  const carma_cooperative_perception_interfaces::msg::Track & track) noexcept
+  -> carma_perception_msgs::msg::ExternalObject
+{
+  carma_perception_msgs::msg::ExternalObject external_object;
+  external_object.header = track.header;
+  external_object.presence_vector = 0;
+
+  try {
+    if (const auto numeric_id{std::stol(track.id)};
+        numeric_id >= 0 && numeric_id <= std::numeric_limits<std::uint32_t>::max()) {
+      external_object.presence_vector |= external_object.ID_PRESENCE_VECTOR;
+      external_object.id = static_cast<std::uint32_t>(numeric_id);
+    }
+  } catch (const std::invalid_argument & /* exception */) {
+    external_object.presence_vector &= ~external_object.ID_PRESENCE_VECTOR;
+  } catch (const std::out_of_range & /* exception */) {
+    external_object.presence_vector &= ~external_object.ID_PRESENCE_VECTOR;
+  }
+
+  external_object.presence_vector |= external_object.POSE_PRESENCE_VECTOR;
+  external_object.pose = track.pose;
+
+  external_object.presence_vector |= external_object.VELOCITY_PRESENCE_VECTOR;
+  external_object.velocity = track.twist;
+
+  return external_object;
+}
+
 auto to_external_object_list_msg(
   const carma_cooperative_perception_interfaces::msg::TrackList & track_list) noexcept
   -> carma_perception_msgs::msg::ExternalObjectList
 {
   carma_perception_msgs::msg::ExternalObjectList external_object_list;
+
+  for (const auto & track : track_list.tracks) {
+    external_object_list.objects.push_back(to_external_object_msg(track));
+  }
+
+  return external_object_list;
 }
 
 }  // namespace carma_cooperative_perception

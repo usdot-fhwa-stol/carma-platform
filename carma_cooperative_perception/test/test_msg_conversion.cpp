@@ -19,6 +19,8 @@
 #include <carma_perception_msgs/msg/external_object.hpp>
 #include <carma_perception_msgs/msg/external_object_list.hpp>
 
+#include <numeric>
+
 TEST(ToTimeMsg, HasSeconds)
 {
   carma_cooperative_perception::DDateTime d_date_time;
@@ -209,4 +211,189 @@ TEST(ToDetectionListMsg, FromExternalObjectList)
     carma_cooperative_perception::to_detection_list_msg(object_list, motion_model_mapping)};
 
   EXPECT_EQ(std::size(detection_list.detections), 2U);
+}
+
+TEST(ToExternalObject, FromTrack)
+{
+  carma_cooperative_perception_interfaces::msg::Track track;
+  track.header.stamp.sec = 1;
+  track.header.stamp.nanosec = 2;
+  track.header.frame_id = "test_frame";
+
+  track.id = "1234";
+
+  track.pose.pose.position.x = 1;
+  track.pose.pose.position.y = 2;
+  track.pose.pose.position.z = 3;
+
+  track.pose.pose.orientation.x = 4;
+  track.pose.pose.orientation.y = 5;
+  track.pose.pose.orientation.z = 6;
+  track.pose.pose.orientation.w = 7;
+
+  track.pose.covariance = {1,  2,  3,  4,  5,  6,  7,  8,  9,  10, 11, 12, 13, 14, 15, 16, 17, 18,
+                           19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36};
+
+  track.twist.twist.linear.x = 1;
+  track.twist.twist.linear.y = 2;
+  track.twist.twist.linear.z = 3;
+
+  track.twist.twist.angular.x = 4;
+  track.twist.twist.angular.y = 5;
+  track.twist.twist.angular.z = 6;
+
+  track.twist.covariance = {1,  2,  3,  4,  5,  6,  7,  8,  9,  10, 11, 12, 13, 14, 15, 16, 17, 18,
+                            19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36};
+
+  const auto external_object{carma_cooperative_perception::to_external_object_msg(track)};
+
+  EXPECT_TRUE(external_object.presence_vector & external_object.ID_PRESENCE_VECTOR);
+  EXPECT_TRUE(external_object.presence_vector & external_object.POSE_PRESENCE_VECTOR);
+  EXPECT_TRUE(external_object.presence_vector & external_object.VELOCITY_PRESENCE_VECTOR);
+
+  EXPECT_EQ(external_object.id, 1234U);
+
+  EXPECT_EQ(external_object.header, track.header);
+  EXPECT_EQ(external_object.pose, track.pose);
+  EXPECT_EQ(external_object.velocity, track.twist);
+}
+
+TEST(ToExternalObject, FromTrackNonNumericId)
+{
+  carma_cooperative_perception_interfaces::msg::Track track;
+  track.header.stamp.sec = 1;
+  track.header.stamp.nanosec = 2;
+  track.header.frame_id = "test_frame";
+
+  track.id = "abcd";
+
+  track.pose.pose.position.x = 1;
+  track.pose.pose.position.y = 2;
+  track.pose.pose.position.z = 3;
+
+  track.pose.pose.orientation.x = 4;
+  track.pose.pose.orientation.y = 5;
+  track.pose.pose.orientation.z = 6;
+  track.pose.pose.orientation.w = 7;
+
+  track.pose.covariance = {1,  2,  3,  4,  5,  6,  7,  8,  9,  10, 11, 12, 13, 14, 15, 16, 17, 18,
+                           19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36};
+
+  track.twist.twist.linear.x = 1;
+  track.twist.twist.linear.y = 2;
+  track.twist.twist.linear.z = 3;
+
+  track.twist.twist.angular.x = 4;
+  track.twist.twist.angular.y = 5;
+  track.twist.twist.angular.z = 6;
+
+  track.twist.covariance = {1,  2,  3,  4,  5,  6,  7,  8,  9,  10, 11, 12, 13, 14, 15, 16, 17, 18,
+                            19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36};
+
+  const auto external_object{carma_cooperative_perception::to_external_object_msg(track)};
+
+  EXPECT_FALSE(external_object.presence_vector & external_object.ID_PRESENCE_VECTOR);
+  EXPECT_TRUE(external_object.presence_vector & external_object.POSE_PRESENCE_VECTOR);
+  EXPECT_TRUE(external_object.presence_vector & external_object.VELOCITY_PRESENCE_VECTOR);
+
+  EXPECT_EQ(external_object.header, track.header);
+  EXPECT_EQ(external_object.pose, track.pose);
+  EXPECT_EQ(external_object.velocity, track.twist);
+}
+
+TEST(ToExternalObject, FromTrackNegativeId)
+{
+  carma_cooperative_perception_interfaces::msg::Track track;
+  track.header.stamp.sec = 1;
+  track.header.stamp.nanosec = 2;
+  track.header.frame_id = "test_frame";
+
+  track.id = "-1234";
+
+  track.pose.pose.position.x = 1;
+  track.pose.pose.position.y = 2;
+  track.pose.pose.position.z = 3;
+
+  track.pose.pose.orientation.x = 4;
+  track.pose.pose.orientation.y = 5;
+  track.pose.pose.orientation.z = 6;
+  track.pose.pose.orientation.w = 7;
+
+  track.pose.covariance = {1,  2,  3,  4,  5,  6,  7,  8,  9,  10, 11, 12, 13, 14, 15, 16, 17, 18,
+                           19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36};
+
+  track.twist.twist.linear.x = 1;
+  track.twist.twist.linear.y = 2;
+  track.twist.twist.linear.z = 3;
+
+  track.twist.twist.angular.x = 4;
+  track.twist.twist.angular.y = 5;
+  track.twist.twist.angular.z = 6;
+
+  track.twist.covariance = {1,  2,  3,  4,  5,  6,  7,  8,  9,  10, 11, 12, 13, 14, 15, 16, 17, 18,
+                            19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36};
+
+  const auto external_object{carma_cooperative_perception::to_external_object_msg(track)};
+
+  EXPECT_FALSE(external_object.presence_vector & external_object.ID_PRESENCE_VECTOR);
+  EXPECT_TRUE(external_object.presence_vector & external_object.POSE_PRESENCE_VECTOR);
+  EXPECT_TRUE(external_object.presence_vector & external_object.VELOCITY_PRESENCE_VECTOR);
+
+  EXPECT_EQ(external_object.header, track.header);
+  EXPECT_EQ(external_object.pose, track.pose);
+  EXPECT_EQ(external_object.velocity, track.twist);
+}
+
+TEST(ToExternalObject, FromTrackIdTooLarge)
+{
+  carma_cooperative_perception_interfaces::msg::Track track;
+  track.header.stamp.sec = 1;
+  track.header.stamp.nanosec = 2;
+  track.header.frame_id = "test_frame";
+
+  track.id = "5294967295";
+
+  track.pose.pose.position.x = 1;
+  track.pose.pose.position.y = 2;
+  track.pose.pose.position.z = 3;
+
+  track.pose.pose.orientation.x = 4;
+  track.pose.pose.orientation.y = 5;
+  track.pose.pose.orientation.z = 6;
+  track.pose.pose.orientation.w = 7;
+
+  std::iota(std::begin(track.pose.covariance), std::end(track.pose.covariance), 1U);
+
+  track.twist.twist.linear.x = 1;
+  track.twist.twist.linear.y = 2;
+  track.twist.twist.linear.z = 3;
+
+  track.twist.twist.angular.x = 4;
+  track.twist.twist.angular.y = 5;
+  track.twist.twist.angular.z = 6;
+
+  std::iota(std::begin(track.twist.covariance), std::end(track.twist.covariance), 1U);
+
+  const auto external_object{carma_cooperative_perception::to_external_object_msg(track)};
+
+  EXPECT_FALSE(external_object.presence_vector & external_object.ID_PRESENCE_VECTOR);
+  EXPECT_TRUE(external_object.presence_vector & external_object.POSE_PRESENCE_VECTOR);
+  EXPECT_TRUE(external_object.presence_vector & external_object.VELOCITY_PRESENCE_VECTOR);
+
+  EXPECT_EQ(external_object.header, track.header);
+  EXPECT_EQ(external_object.pose, track.pose);
+  EXPECT_EQ(external_object.velocity, track.twist);
+}
+
+TEST(ToExternalObjectList, FromTrackList)
+{
+  carma_cooperative_perception_interfaces::msg::TrackList track_list;
+  track_list.tracks.push_back(carma_cooperative_perception_interfaces::msg::Track{});
+  track_list.tracks.push_back(carma_cooperative_perception_interfaces::msg::Track{});
+  track_list.tracks.push_back(carma_cooperative_perception_interfaces::msg::Track{});
+
+  const auto external_object_list{
+    carma_cooperative_perception::to_external_object_list_msg(track_list)};
+
+  ASSERT_EQ(std::size(external_object_list.objects), 3U);
 }
