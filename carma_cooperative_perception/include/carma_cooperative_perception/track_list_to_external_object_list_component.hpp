@@ -29,16 +29,8 @@
 
 namespace carma_cooperative_perception
 {
-auto transform_from_map_origin_to_local(  // improve name scheme
-  carma_cooperative_perception_interfaces::msg::TrackList track_list,
-  const std::string & map_origin) -> carma_perception_msgs::msg::ExternalObjectList;
-
 class TrackListToExternalObjectListNode : public carma_ros2_utils::CarmaLifecycleNode
 {
-  using input_msg_type = carma_cooperative_perception_interfaces::msg::TrackList;
-  using input_msg_shared_pointer = typename input_msg_type::sjaredPtr;
-  using output_msg_type = carma_perception_msgs::msg::ExternalObjectList;
-
 public:
   explicit TrackListToExternalObjectListNode(const rclcpp::NodeOptions & options);
 
@@ -51,14 +43,15 @@ public:
   auto handle_on_shutdown(const rclcpp_lifecycle::State & /* previous_state */)
     -> carma_ros2_utils::CallbackReturn override;
 
-  auto publish_as_external_object_list(const input_msg_type & msg) const -> void;
+  auto publish_as_external_object_list(
+    const carma_cooperative_perception_interfaces::msg::TrackList & msg) const noexcept -> void;
 
 private:
-  rclcpp_lifecycle::LifecyclePublisher<output_msg_type>::SharedPtr publisher_{nullptr};
-  rclcpp::Subscription<input_msg_type>::SharedPtr track_subscription_{nullptr};
-  rclcpp::Subscription<std_msgs::msg::String>::SharedPtr georeference_subscription_{nullptr};
+  rclcpp_lifecycle::LifecyclePublisher<carma_perception_msgs::msg::ExternalObjectList>::SharedPtr
+    publisher_{nullptr};
+  rclcpp::Subscription<carma_cooperative_perception_interfaces::msg::TrackList>::SharedPtr
+    track_list_subscription_{nullptr};
   std::string map_georeference_{""};
-  // MotionModelMapping motion_model_mapping_{};
   OnSetParametersCallbackHandle::SharedPtr on_set_parameters_callback_{nullptr};
 };
 

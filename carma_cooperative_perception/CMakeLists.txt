@@ -60,6 +60,7 @@ ament_auto_add_library(carma_cooperative_perception SHARED
   src/j3224_types.cpp
   src/msg_conversion.cpp
   src/sdsm_to_detection_list_component.cpp
+  src/track_list_to_external_object_list_component.cpp
   src/utm_zone.cpp
 )
 
@@ -72,10 +73,15 @@ target_link_libraries(carma_cooperative_perception
 rclcpp_components_register_nodes(carma_cooperative_perception
   "carma_cooperative_perception::ExternalObjectListToDetectionListNode"
   "carma_cooperative_perception::SdsmToDetectionListNode"
+  "carma_cooperative_perception::TrackListToExternalObjectListComponent"
 )
 
 ament_auto_add_executable(external_object_list_to_detection_list_node
   src/external_object_list_to_detection_list_node.cpp
+)
+
+ament_auto_add_executable(track_list_to_external_object_list_node
+  src/track_list_to_external_object_list_node.cpp
 )
 
 if(carma_cooperative_perception_BUILD_TESTS)

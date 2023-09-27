@@ -25,13 +25,6 @@
 
 namespace carma_cooperative_perception
 {
-auto transform_from_map_origin_to_local(  // improve name scheme
-  carma_cooperative_perception_interfaces::msg::TrackList track_list,
-  const std::string & map_origin) -> carma_cooperative_perception_interfaces::msg::DetectionList
-{
-  // TODO(username)
-}
-
 TrackListToExternalObjectListNode::TrackListToExternalObjectListNode(
   const rclcpp::NodeOptions & options)
 : CarmaLifecycleNode{options}
@@ -43,32 +36,32 @@ TrackListToExternalObjectListNode::TrackListToExternalObjectListNode(
 auto TrackListToExternalObjectListNode::handle_on_configure(
   const rclcpp_lifecycle::State & /* previous_state */) -> carma_ros2_utils::CallbackReturn
 {
-  publisher_ = create_publisher < output_msg_type("output/external_objects_list", 1);
+  publisher_ = create_publisher<carma_perception_msgs::msg::ExternalObjectList>(
+    "output/external_objects_list", 1);
 
-  track_list_subscription = create_subscription<input_msg_type>(
-    "input/track_list", 1, [this](input_msg_shared_pointer msg_ptr) {
-      const auto current_State{this->get_current_state().label()};
-
-      if (current_state == "active") {
+  track_list_subscription_ = create_subscription<
+    carma_cooperative_perception_interfaces::msg::TrackList>(
+    "input/track_list", 1,
+    [this](const carma_cooperative_perception_interfaces::msg::TrackList::SharedPtr msg_ptr) {
+      if (const auto current_state{this->get_current_state().label()}; current_state == "active") {
         publish_as_external_object_list(*msg_ptr);
       } else {
         RCLCPP_WARN(
           this->get_logger(),
           "Trying to receive message on the topic '%s', but the containing node is not activated. "
           "Current node state: '%s'",
-          this->track_subscription_->get_topic_name(), current_state.c_str());
+          this->track_list_subscription_->get_topic_name(), current_state.c_str());
       }
     });
 
-  // TODO(username)
+  return carma_ros2_utils::CallbackReturn::SUCCESS;
 }
 
 auto TrackListToExternalObjectListNode::handle_on_cleanup(
   const rclcpp_lifecycle::State & /* previous_state */) -> carma_ros2_utils::CallbackReturn
 {
   // CarmaLifecycleNode does not handle subscriber pointer reseting for us
-  track_subscription_.reset();
-  georeference_subscription_.reset();
+  track_list_subscription_.reset();
 
   return carma_ros2_utils::CallbackReturn::SUCCESS;
 }
@@ -77,30 +70,18 @@ auto TrackListToExternalObjectListNode::handle_on_shutdown(
   const rclcpp_lifecycle::State & /* previous_state */) -> carma_ros2_utils::CallbackReturn
 {
   // CarmaLifecycleNode does not handle subscriber pointer reseting for us
-  track_subscription_.reset();
-  georeference_subscription_.reset();
+  track_list_subscription_.reset();
 
   return carma_ros2_utils::CallbackReturn::SUCCESS;
 }
 
 auto TrackListToExternalObjectListNode::publish_as_external_object_list(
-  const input_msg_type & msg) const -> void
+  const carma_cooperative_perception_interfaces::msg::TrackList & msg) const noexcept -> void
 {
-  try {
-    const auto detection_list{transform_from_map_to_utm(
-      to_detection_list_msg(msg, motion_model_mapping_), map_georeference_)};
+  auto external_object_list{to_external_object_list_msg(msg)};
+  external_object_list.header.stamp = now();
 
-    publisher_->publish(detection_list);
-  } catch (const std::invalid_argument & e) {
-    RCLCPP_ERROR(
-      this->get_logger(), "Could not convert external object list to detection list: %s", e.what());
-  }
-}
-
-auto TrackListToExternalObjectListNode::update_georeference(
-  const std_msgs::msg::String & msg) noexcept -> void
-{
-  map_georeference_ = msg.data;
+  publisher_->publish(external_object_list);
 }
 
 }  // namespace carma_cooperative_perception
