@@ -42,6 +42,11 @@ limitations under the License.
   <test_depend>ament_lint_common</test_depend>
   <test_depend>ament_cmake_clang_format</test_depend>
   <test_depend>ament_cmake_gtest</test_depend>
+  <test_depend>carma_launch_testing</test_depend>
+  <test_depend>carma_message_utilities</test_depend>
+  <test_depend>launch_testing</test_depend>
+  <test_depend>launch_testing_ament_cmake</test_depend>
+  <test_depend>rclcpy</test_depend>
 
   <export>
     <build_type>ament_cmake</build_type>

@@ -1,0 +1,7 @@
+---
+message_type: carma_cooperative_perception_interfaces/msg/TrackList
+message_fields:
+  tracks:
+  - id: "1"
+  - id: "2"
+  - id: "3"
