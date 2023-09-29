@@ -20,24 +20,71 @@ Parameters:
     MinLength: 6
   ExistingVPCID:
     Description: The existing VPCId to use for the instance
-    Type: AWS::EC2::VPC::Id
-    Default: vpc-00e8b9c2ecc9a4746
+    Type: String
+    Default: vpc-0b87aaf5689a49981
+  ExistingRouteTableID:
+    Type: String
+    Default: rtb-080bcd24bfb4b17a3
+  EC2SubnetCIDRBlock:
+    Type: String
+    Default: "10.0.0.0/24"
   CarmaConfigImage:
     Description: The specific carma config which launches xil and platform to make available in the instance
     Type: String
     Default: "usdotfhwastoldev/carma-config:xil-cloud-test"
+  isFirstUser:
+    Description: Conditional to specify whether to create a VPC or not
+    Type: String
+    Default: true
+    AllowedValues:
+      - true
+      - false
+Conditions:
+  CreateVPC: !Equals
+    - !Ref isFirstUser
+    - true
 Mappings:
   AMIMap:
     us-east-1:
       ami: ami-0c5b5f70bfa4f1021 # Custom Leidos AMI
 Resources:
+  # Create a VPC if condition is true
+  VPC:
+    Type: AWS::EC2::VPC
+    Condition: CreateVPC
+    Properties:
+      CidrBlock: 10.0.0.0/16
+      EnableDnsSupport: true
+      EnableDnsHostnames: true
+      InstanceTenancy: default
+      Tags:
+        - Key: Name
+          Value: "XiL-Cloud VPC"
+  # Create an Internet Gateway to the VPC if condition is true
   InternetGateway:
     Type: AWS::EC2::InternetGateway
+    Condition: CreateVPC
   VPCGatewayAttachment:
     Type: AWS::EC2::VPCGatewayAttachment
+    Condition: CreateVPC
     Properties:
-      VpcId: !Ref ExistingVPCID
+      VpcId: !Ref VPC
       InternetGatewayId: !Ref InternetGateway
+  RouteTable:
+    Type: AWS::EC2::RouteTable
+    Condition: CreateVPC
+    Properties:
+      VpcId: !If [CreateVPC, !Ref VPC, !Ref ExistingVPCID]
+      Tags:
+        - Key: Name
+          Value: "XiL-Cloud RouteTable"
+  InternetRoute:
+    Type: AWS::EC2::Route
+    Condition: CreateVPC
+    Properties:
+      DestinationCidrBlock: 0.0.0.0/0
+      GatewayId: !Ref InternetGateway
+      RouteTableId: !Ref RouteTable
   SubnetA:
     Type: AWS::EC2::Subnet
     Properties:
@@ -45,30 +92,21 @@ Resources:
         - 0
         - !GetAZs
           Ref: 'AWS::Region'
-      VpcId: !Ref ExistingVPCID
-      CidrBlock: 10.0.1.0/24
+      VpcId: !If [CreateVPC, !Ref VPC, !Ref ExistingVPCID]
+      CidrBlock: !Ref EC2SubnetCIDRBlock
       MapPublicIpOnLaunch: true
-  RouteTable:
-    Type: AWS::EC2::RouteTable
-    Properties:
-      VpcId: !Ref ExistingVPCID
-  InternetRoute:
-    Type: AWS::EC2::Route
-    Properties:
-      DestinationCidrBlock: 0.0.0.0/0
-      GatewayId: !Ref InternetGateway
-      RouteTableId: !Ref RouteTable
   SubnetARouteTableAssociation:
     Type: AWS::EC2::SubnetRouteTableAssociation
     Properties:
-      RouteTableId: !Ref RouteTable
+      # Is Create vpc is true, get the route table ID from created VPC, else use ID of existing route table
+      RouteTableId: !If [CreateVPC, !Ref RouteTable, !Ref ExistingRouteTableID]
       SubnetId: !Ref SubnetA
   InstanceSecurityGroup:
     Type: AWS::EC2::SecurityGroup
     Properties:
       GroupName: !Sub "Cloud9 Security Group-${AWS::StackName}"
       GroupDescription: !Sub "Permit SSH traffic for Cloud9 and 8443 traffic for DCV"
-      VpcId: !Ref ExistingVPCID
+      VpcId: !If [CreateVPC, !Ref VPC, !Ref ExistingVPCID]
       SecurityGroupIngress:
         - IpProtocol: tcp
           FromPort: '22'

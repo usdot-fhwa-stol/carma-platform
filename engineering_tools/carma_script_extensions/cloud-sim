@@ -157,13 +157,77 @@ cloud-sim__start() {
     fi
     
     # Call cloud formation
-    local STACK_NAME="CloudSimStack"$(echo ${USER_ARN} |  grep -oh "/.*@" | sed "s|@|-|g" | sed "s|\.|-|g" | sed "s|[^A-Za-z0-9]|-|g")
+    local STACK_NAME="CloudSimStack"$(echo ${USER_ARN} |  grep -oh "/.*@" | sed "s|@|-|" | sed "s|\.|-|" | sed "s|[^A-Za-z0-9]|-|")
+    
+    
+    # Get the VPC ID
+    local VPC_ID=$(aws ec2 describe-vpcs --filters "Name=tag:Name,Values=XiL-Cloud VPC" --query 'Vpcs[].VpcId' --output text)
+    # Get the Route Table ID
+    local ROUTETABLE_ID=$(aws ec2 describe-route-tables --filters "Name=tag:Name,Values=XiL-Cloud RouteTable" --query 'RouteTables[].RouteTableId' --output text)
+    
+    
+    #If both VPC and route table are specified - create new user connecting to them
+    local isFirstUser="true"
+    if [ -z "$VPC_ID" ] && [ -z "$ROUTETABLE_ID" ]; then
+        isFirstUser="true"
+    else
+        isFirstUser="false"
+    fi
+    
+    # Get subnet information
+    local SubnetCIDRBlock="10.0.0.0/24"
+
+    if [ $isFirstUser = "false" ]; then
+        # Query for existing subnetID list
+        subnet_ids=$(aws ec2 describe-route-tables --route-table-ids "$ROUTETABLE_ID" \
+                    --query 'RouteTables[0].Associations[].SubnetId' \
+                    --output text)
+        # Check existing subnets and increment by 1 for new user
+        total_subnets=${#subnet_ids[@]}
+        max=0
+        for ((i = 0; i < total_subnets; i++)); do
+            subnet_id=${subnet_ids[i]}
+
+            # Lookup subnet address
+            cidr_block=$(aws ec2 describe-subnets --subnet-ids "$subnet_id" --query 'Subnets[0].CidrBlock' --output text)
+            
+            # Split the CIDR block into its components
+            IFS="/" read -r ip_address subnet_mask <<< "$cidr_block"
+
+            # Split the IP address into its octets
+            IFS="." read -r -a octets <<< "$ip_address"
+
+            # Get the last octet
+            last_octet="${octets[3]}"
+            
+            if [ "$last_octet" -gt "$max" ]; then
+                max="$last_octet"
+            fi
+            
+            #Update Octet
+            if ((i == total_subnets - 1)); then
+                ((max++))
+                updated_subnet="${octets[0]}.${octets[1]}.$max.${octets[3]}"
+                
+                # Reconstruct the updated CIDR block
+                updated_cidr_block="$updated_subnet/$subnet_mask"
+                SubnetCIDRBlock="$updated_cidr_block"
+            fi
+        done
+    fi
+    
+  
+        
 
     local RESULT=$(aws --region us-east-1 cloudformation create-stack --template-body "file://${CARMA_CLOUD_SIM_CLOUD_FORMATION_PATH}" \
         --stack-name "${STACK_NAME}" \
         --parameters  ParameterKey=Cloud9AccessRoleName,ParameterValue="${USER_ARN}" \
         ParameterKey=Password,ParameterValue="${PASS}" \
         ParameterKey=CarmaConfigImage,ParameterValue="${CONFIG_IMAGE}" \
+        ParameterKey=ExistingVPCID,ParameterValue="${VPC_ID}" \
+        ParameterKey=ExistingRouteTableID,ParameterValue="${ROUTETABLE_ID}" \
+        ParameterKey=isFirstUser,ParameterValue="${isFirstUser}" \
+        ParameterKey=EC2SubnetCIDRBlock,ParameterValue="${SubnetCIDRBlock}" \
         --capabilities CAPABILITY_NAMED_IAM)
     
     local VALID_LAUNCH=$(echo "${RESULT}" | grep 'arn:aws:cloudformation:us-east-1')
