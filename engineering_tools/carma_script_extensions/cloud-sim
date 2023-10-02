@@ -157,7 +157,7 @@ cloud-sim__start() {
     fi
     
     # Call cloud formation
-    local STACK_NAME="CloudSimStack"$(echo ${USER_ARN} |  grep -oh "/.*@" | sed "s|@|-|" | sed "s|\.|-|" | sed "s|[^A-Za-z0-9]|-|")
+    local STACK_NAME="CloudSimStack"$(echo ${USER_ARN} |  grep -oh "/.*@" | sed "s|@|-|" | sed "s|\.|-|" | sed "s|[^A-Za-z0-9]|-|g")
     
     
     # Get the VPC ID
