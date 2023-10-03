@@ -1,4 +1,4 @@
-// Copyright 2019-2023 Leidos
+// Copyright 2023 Leidos
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -14,17 +14,18 @@
 
 #include <rclcpp/rclcpp.hpp>
 
+#include <carma_cooperative_perception/track_list_to_external_object_list_component.hpp>
+
 #include <memory>
 
-#include "motion_computation/motion_computation_node.hpp"
-
-int main(int argc, char ** argv)
+auto main(int argc, char * argv[]) noexcept -> int
 {
   rclcpp::init(argc, argv);
 
-  auto node = std::make_shared<motion_computation::MotionComputationNode>(rclcpp::NodeOptions());
+  auto node{std::make_shared<carma_cooperative_perception::TrackListToExternalObjectListNode>(
+    rclcpp::NodeOptions{})};
 
-  rclcpp::executors::MultiThreadedExecutor executor;
+  rclcpp::executors::SingleThreadedExecutor executor;
   executor.add_node(node->get_node_base_interface());
   executor.spin();
 

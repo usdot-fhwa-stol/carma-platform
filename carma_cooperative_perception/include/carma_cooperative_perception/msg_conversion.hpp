@@ -18,6 +18,9 @@
 #include <units.h>
 
 #include <carma_cooperative_perception_interfaces/msg/detection_list.hpp>
+#include <carma_cooperative_perception_interfaces/msg/track.hpp>
+#include <carma_cooperative_perception_interfaces/msg/track_list.hpp>
+#include <carma_perception_msgs/msg/external_object.hpp>
 #include <carma_perception_msgs/msg/external_object_list.hpp>
 #include <carma_v2x_msgs/msg/sensor_data_sharing_message.hpp>
 
@@ -57,6 +60,14 @@ auto to_detection_list_msg(
   const carma_perception_msgs::msg::ExternalObjectList & object_list,
   const MotionModelMapping & motion_model_mapping) noexcept
   -> carma_cooperative_perception_interfaces::msg::DetectionList;
+
+auto to_external_object_msg(
+  const carma_cooperative_perception_interfaces::msg::Track & track) noexcept
+  -> carma_perception_msgs::msg::ExternalObject;
+
+auto to_external_object_list_msg(
+  const carma_cooperative_perception_interfaces::msg::TrackList & track_list) noexcept
+  -> carma_perception_msgs::msg::ExternalObjectList;
 
 }  // namespace carma_cooperative_perception
 

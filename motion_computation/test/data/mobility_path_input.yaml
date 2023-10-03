@@ -1,0 +1,24 @@
+message_type: carma_v2x_msgs/msg/MobilityPath
+message_fields:
+  m_header:
+    sender_id: USDOT-49096
+    recipient_id: USDOT-49097
+    sender_bsm_id: FFFFFFFF
+    plan_id: b937d2f6-e618-4867-920b-c1f74f98ef1f
+    timestamp: 0
+  trajectory:
+    location:
+      ecef_x: 0
+      ecef_y: 0
+      ecef_z: 0
+      timestamp: 0
+    offsets:
+      - offset_x: 1
+        offset_y: 1
+        offset_z: 1
+      - offset_x: 2
+        offset_y: 2
+        offset_z: 2
+      - offset_x: 3
+        offset_y: 3
+        offset_z: 3

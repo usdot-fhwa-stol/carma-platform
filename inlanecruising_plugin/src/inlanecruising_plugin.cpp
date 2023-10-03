@@ -106,8 +106,9 @@ void InLaneCruisingPlugin::plan_trajectory_callback(
   for (auto& p : original_trajectory.trajectory_points) {
     p.planner_plugin_name = plugin_name_;
   }
-    
-  if (config_.enable_object_avoidance)
+  
+  // Aside from the flag, ILC should not call yield_plugin on invalid trajectories
+  if (config_.enable_object_avoidance && original_trajectory.trajectory_points.size() >= 2)
   {
     RCLCPP_DEBUG_STREAM(nh_->get_logger(), "Activate Object Avoidance");
 

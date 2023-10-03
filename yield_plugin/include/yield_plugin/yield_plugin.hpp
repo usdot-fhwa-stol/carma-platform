@@ -37,8 +37,6 @@
 #include <trajectory_utils/quintic_coefficient_calculator.hpp>
 #include <boost/property_tree/json_parser.hpp>
 #include <lanelet2_extension/projection/local_frame_projector.h>
-#include <carma_perception_msgs/msg/roadway_obstacle.hpp>
-#include <carma_perception_msgs/msg/roadway_obstacle_list.hpp>
 #include <carma_v2x_msgs/msg/location_ecef.hpp>
 #include <carma_v2x_msgs/msg/trajectory.hpp>
 #include <carma_v2x_msgs/msg/plan_type.hpp>
@@ -96,9 +94,10 @@ public:
    * \brief trajectory is modified to safely avoid obstacles on the road
    * \param original_tp original trajectory plan without object avoidance
    * \param current_speed_ current speed of the vehicle
+   * \param 
    * \return modified trajectory plan
    */
-  carma_planning_msgs::msg::TrajectoryPlan update_traj_for_object(const carma_planning_msgs::msg::TrajectoryPlan& original_tp, double initial_velocity);
+  carma_planning_msgs::msg::TrajectoryPlan update_traj_for_object(const carma_planning_msgs::msg::TrajectoryPlan& original_tp, const std::vector<carma_perception_msgs::msg::ExternalObject>& external_objects, double initial_velocity);
 
   /**
    * \brief calculate quintic polynomial equation for a given x
@@ -208,7 +207,7 @@ public:
   /**
    * \brief Looks up the transform between map and earth frames, and sets the member variable
    */
-  void lookupECEFtoMapTransform();
+  void lookup_ecef_to_map_transform();
 
   /**
    * \brief checks trajectory for minimum gap associated with it
@@ -218,11 +217,25 @@ public:
   double check_traj_for_digital_min_gap(const carma_planning_msgs::msg::TrajectoryPlan& original_tp) const;
 
   /**
-   * \brief Callback for map projection string to define lat/lon -> map conversion
-   * \brief msg The proj string defining the projection.
+   * \brief Setter for map projection string to define lat/lon -> map conversion
+   * \param georeference The proj string defining the projection.
    */ 
-  void georeferenceCallback(const std_msgs::msg::String::UniquePtr msg);
+  void set_georeference_string(const std::string& georeference);
 
+  /**
+   * \brief Setter for external objects with predictions in the environment
+   * \param object_list The object list.
+   */ 
+  void set_external_objects(const std::vector<carma_perception_msgs::msg::ExternalObject>& object_list);
+
+  /**
+   * \brief Return collision time given two trajectories
+   * \param trajectory1 trajectory of the ego vehicle
+   * \param trajectory2 trajectory of the obstacle 
+   * \param collision_radius a distance to check between two trajectory points at a same timestamp that is considered a collision
+   * \return time_of_collision if collision detected, otherwise, std::nullopt
+   */ 
+  std::optional<rclcpp::Time> detect_collision_time(const carma_planning_msgs::msg::TrajectoryPlan& trajectory1, const std::vector<carma_perception_msgs::msg::PredictedState>& trajectory2, double collision_radius);
 
 private:
 
@@ -231,6 +244,8 @@ private:
   MobilityResponseCB mobility_response_publisher_;
   LaneChangeStatusCB lc_status_publisher_;
   std::shared_ptr<carma_ros2_utils::CarmaLifecycleNode> nh_;
+  std::set<lanelet::Id> route_llt_ids_;
+  std::vector<carma_perception_msgs::msg::ExternalObject> external_objects_;
 
   // flag to show if it is possible for the vehicle to accept the cooperative request
   bool cooperative_request_acceptable_ = false;
@@ -261,45 +276,6 @@ private:
       res+=std::to_string(bsm_core.id[i]);
     }
       return res;
-  }
-
-  // TODO replace with Basic Autonomy moving average filter
-  std::vector<double> moving_average_filter(const std::vector<double> input, int window_size, bool ignore_first_point=true)
-  {
-    if (window_size % 2 == 0) {
-      throw std::invalid_argument("moving_average_filter window size must be odd");
-    }
-
-    std::vector<double> output;
-    output.reserve(input.size());
-
-    if (input.size() == 0) {
-      return output;
-    }
-
-    int start_index = 0;
-    if (ignore_first_point) {
-      start_index = 1;
-      output.push_back(input[0]);
-    }
-
-    for (int i = start_index; i<input.size(); i++) {
-            
-      double total = 0;
-      int sample_min = std::max(0, i - window_size / 2);
-      int sample_max = std::min((int) input.size() - 1 , i + window_size / 2);
-
-      int count = sample_max - sample_min + 1;
-      std::vector<double> sample;
-      sample.reserve(count);
-      for (int j = sample_min; j <= sample_max; j++) {
-        total += input[j];
-      }
-      output.push_back(total / (double) count);
-
-    }
-
-    return output;
   }
 
 };

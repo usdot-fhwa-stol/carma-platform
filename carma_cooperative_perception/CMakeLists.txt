@@ -60,6 +60,7 @@ ament_auto_add_library(carma_cooperative_perception SHARED
   src/j3224_types.cpp
   src/msg_conversion.cpp
   src/sdsm_to_detection_list_component.cpp
+  src/track_list_to_external_object_list_component.cpp
   src/utm_zone.cpp
 )
 
@@ -72,10 +73,15 @@ target_link_libraries(carma_cooperative_perception
 rclcpp_components_register_nodes(carma_cooperative_perception
   "carma_cooperative_perception::ExternalObjectListToDetectionListNode"
   "carma_cooperative_perception::SdsmToDetectionListNode"
+  "carma_cooperative_perception::TrackListToExternalObjectListComponent"
 )
 
 ament_auto_add_executable(external_object_list_to_detection_list_node
   src/external_object_list_to_detection_list_node.cpp
+)
+
+ament_auto_add_executable(track_list_to_external_object_list_node
+  src/track_list_to_external_object_list_node.cpp
 )
 
 if(carma_cooperative_perception_BUILD_TESTS)
@@ -97,6 +103,26 @@ if(carma_cooperative_perception_BUILD_TESTS)
   target_link_libraries(carma_cooperative_perception_tests
     carma_cooperative_perception
   )
+
+  add_launch_test(test/track_list_to_external_object_list_launch_test.py)
+
 endif()
 
 ament_auto_package()
+
+include(GNUInstallDirs)
+
+# ament_auto does not provide file pattern matching
+install(DIRECTORY ${PROJECT_SOURCE_DIR}/test/
+  DESTINATION ${CMAKE_INSTALL_DATADIR}/carma_cooperative_perception/test
+  FILES_MATCHING
+    PATTERN *.py
+    PATTERN *.cpp
+    PATTERN __pycache__ EXCLUDE
+)
+
+install(DIRECTORY ${PROJECT_SOURCE_DIR}/test/data/
+  DESTINATION ${CMAKE_INSTALL_DATADIR}/carma_cooperative_perception/test/data
+  FILES_MATCHING
+    PATTERN *.yaml
+)

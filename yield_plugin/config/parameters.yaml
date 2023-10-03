@@ -3,10 +3,11 @@
 # Value type: Desired
 # No unit
 acceleration_adjustment_factor: 4.0 
-# Time horizon for collision detection
+# Time horizon for collision detection for vehicles on the route
+# NOTE: not applied for pedestrians or other non-vehicle obstacles on the road
 # Units: s
 # Value type: Desired
-collision_horizon: 10.0
+on_route_vehicle_collision_horizon: 10.0
 # Minimum speed for moving obstacle
 # Units: m/s
 # Value type: Desired
@@ -20,9 +21,9 @@ tpmin: 2.0
 # Value type: Desired
 yield_max_deceleration: 3.0
 # Minimum safety gap with an Object/Obstacle
-# Units: s
+# Units: meters
 # Value type: Desired
-x_gap: 2.0
+x_gap: 10.0
 # Host vehicle length
 # Units: m
 # Value type: Measured
@@ -52,6 +53,10 @@ acceptable_passed_timesteps: 5
 # Unit: m
 # Value type: Desired
 intervehicle_collision_distance: 6.0
+# Radius to check for potential collision
+# Unit: m
+# Value type: Desired
+collision_check_radius: 150.0
 # Time gap to finish planning a yield earlier than collision time
 # Unit: s
 # Value type: Desired

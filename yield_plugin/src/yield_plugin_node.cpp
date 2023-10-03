@@ -28,7 +28,8 @@ namespace yield_plugin
     // Declare parameters
     config_.acceleration_adjustment_factor = declare_parameter<double>("acceleration_adjustment_factor", config_.acceleration_adjustment_factor);
     config_.min_obstacle_speed = declare_parameter<double>("min_obstacle_speed", config_.min_obstacle_speed);
-    config_.collision_horizon = declare_parameter<double>("collision_horizon", config_.collision_horizon);
+    config_.on_route_vehicle_collision_horizon = declare_parameter<double>("on_route_vehicle_collision_horizon", config_.on_route_vehicle_collision_horizon);
+    config_.collision_check_radius = declare_parameter<double>("collision_check_radius", config_.collision_check_radius);
     config_.yield_max_deceleration = declare_parameter<double>("yield_max_deceleration", config_.yield_max_deceleration);
     config_.tpmin = declare_parameter<double>("tpmin", config_.tpmin);
     config_.x_gap = declare_parameter<double>("x_gap", config_.x_gap);
@@ -54,7 +55,8 @@ namespace yield_plugin
 
     get_parameter<double>("acceleration_adjustment_factor", config_.acceleration_adjustment_factor);
     get_parameter<double>("min_obstacle_speed", config_.min_obstacle_speed);
-    get_parameter<double>("collision_horizon", config_.collision_horizon);
+    get_parameter<double>("on_route_vehicle_collision_horizon", config_.on_route_vehicle_collision_horizon);
+    get_parameter<double>("collision_check_radius", config_.collision_check_radius);
     get_parameter<double>("yield_max_deceleration", config_.yield_max_deceleration);
     get_parameter<double>("x_gap", config_.x_gap);
     get_parameter<double>("max_stop_speed", config_.max_stop_speed);
@@ -73,11 +75,12 @@ namespace yield_plugin
     get_parameter<double>("vehicle_width", config_.vehicle_width);
     get_parameter<std::string>("vehicle_id", config_.vehicle_id);
 
-    RCLCPP_INFO_STREAM(rclcpp::get_logger("yield_plugin"), "YieldPlugin Params" << config_);
+    RCLCPP_INFO_STREAM(get_logger(), "YieldPlugin Params: " << config_);
 
     worker_ = std::make_shared<YieldPlugin>(shared_from_this(), get_world_model(), config_,
                                                           [this](auto msg) { mob_resp_pub_->publish(msg); },
                                                           [this](auto msg) { lc_status_pub_->publish(msg); });
+
      // Publisher
     mob_resp_pub_ = create_publisher<carma_v2x_msgs::msg::MobilityResponse>("outgoing_mobility_response", 1);
     lc_status_pub_ = create_publisher<carma_planning_msgs::msg::LaneChangeStatus>("cooperative_lane_change_status", 10);
@@ -85,8 +88,16 @@ namespace yield_plugin
     // Subscriber
     mob_request_sub_ = create_subscription<carma_v2x_msgs::msg::MobilityRequest>("incoming_mobility_request", 10, std::bind(&YieldPlugin::mobilityrequest_cb,worker_.get(),std_ph::_1));
     bsm_sub_ = create_subscription<carma_v2x_msgs::msg::BSM>("bsm_outbound", 1, std::bind(&YieldPlugin::bsm_cb,worker_.get(),std_ph::_1));
-    georeference_sub_ = create_subscription<std_msgs::msg::String>("georeference", 10, std::bind(&YieldPlugin::georeferenceCallback,worker_.get(),std_ph::_1));
-
+    georeference_sub_ = create_subscription<std_msgs::msg::String>("georeference", 10, 
+                                                                  [this](const std_msgs::msg::String::SharedPtr msg) {
+                                                                    worker_->set_georeference_string(msg->data);
+                                                                  });
+                                                                  
+    // Return success if everything initialized successfully
+    external_objects_sub_ = create_subscription<carma_perception_msgs::msg::ExternalObjectList>("external_object_predictions", 20, 
+                                                                                                [this](const carma_perception_msgs::msg::ExternalObjectList::SharedPtr msg) {
+                                                                                                  worker_->set_external_objects(msg->objects);
+                                                                                                });
     // Return success if everything initialized successfully
     return CallbackReturn::SUCCESS;
   }

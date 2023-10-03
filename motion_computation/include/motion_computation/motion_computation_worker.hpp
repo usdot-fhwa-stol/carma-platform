@@ -1,22 +1,19 @@
-/*
- * Copyright (C) 2019-2022 LEIDOS.
- *
- * Licensed under the Apache License, Version 2.0 (the "License"); you may not
- * use this file except in compliance with the License. You may obtain a copy of
- * the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
- * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
- * License for the specific language governing permissions and limitations under
- * the License.
- */
+// Copyright 2019-2023 Leidos
+//
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+//
+//     http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
 
-#ifndef MOTION_COMPUTATION_WORKER_H
-#define MOTION_COMPUTATION_WORKER_H
-
+#ifndef MOTION_COMPUTATION__MOTION_COMPUTATION_WORKER_HPP_
+#define MOTION_COMPUTATION__MOTION_COMPUTATION_WORKER_HPP_
 
 #include <gtest/gtest_prod.h>
 #include <lanelet2_extension/projection/local_frame_projector.h>
@@ -27,30 +24,38 @@
 #include <carma_v2x_msgs/msg/bsm.hpp>
 #include <carma_v2x_msgs/msg/mobility_path.hpp>
 #include <carma_v2x_msgs/msg/psm.hpp>
-#include <functional>
 #include <motion_predict/motion_predict.hpp>
 #include <motion_predict/predict_ctrv.hpp>
 #include <rclcpp/rclcpp.hpp>
 #include <std_msgs/msg/string.hpp>
-#include <tuple>
 
-namespace motion_computation {
+#include <functional>
+#include <memory>
+#include <string>
+#include <tuple>
+#include <unordered_map>
+
+namespace motion_computation
+{
 
 /**
  * \class MotionComputationWorker
  * \brief The class containing the primary business logic for the Motion Computation Package
  */
-class MotionComputationWorker {
- public:
-  using PublishObjectCallback = std::function<void(const carma_perception_msgs::msg::ExternalObjectList&)>;
+class MotionComputationWorker
+{
+public:
+  using PublishObjectCallback =
+    std::function<void(const carma_perception_msgs::msg::ExternalObjectList &)>;
   using LookUpTransform = std::function<void()>;
 
   /*!
    * \brief Constructor for MotionComputationWorker
    */
-   MotionComputationWorker(const PublishObjectCallback& obj_pub,
-                          rclcpp::node_interfaces::NodeLoggingInterface::SharedPtr logger,
-                          rclcpp::node_interfaces::NodeClockInterface::SharedPtr node_clock);
+  MotionComputationWorker(
+    const PublishObjectCallback & obj_pub,
+    rclcpp::node_interfaces::NodeLoggingInterface::SharedPtr logger,
+    rclcpp::node_interfaces::NodeClockInterface::SharedPtr node_clock);
   /**
    * \brief Function to populate duplicated detected objects along with their velocity, yaw,
    * yaw_rate and static/dynamic class to the provided ExternalObjectList message.
@@ -65,8 +70,9 @@ class MotionComputationWorker {
   void setYAccelerationNoise(double noise);
   void setProcessNoiseMax(double noise_max);
   void setConfidenceDropRate(double drop_rate);
-  void setDetectionInputFlags(bool enable_sensor_processing, bool enable_bsm_processing, bool enable_psm_processing,
-                              bool enable_mobility_path_processing);
+  void setDetectionInputFlags(
+    bool enable_sensor_processing, bool enable_bsm_processing, bool enable_psm_processing,
+    bool enable_mobility_path_processing);
 
   // callbacks
   void mobilityPathCallback(const carma_v2x_msgs::msg::MobilityPath::UniquePtr msg);
@@ -88,7 +94,7 @@ class MotionComputationWorker {
    * \return ExternalObject object
    */
   carma_perception_msgs::msg::ExternalObject mobilityPathToExternalObject(
-      const carma_v2x_msgs::msg::MobilityPath::UniquePtr& msg) const;
+    const carma_v2x_msgs::msg::MobilityPath::UniquePtr & msg) const;
 
   /**
    * \brief Appends external objects list behind base_objects. This does not do sensor fusion.
@@ -100,8 +106,8 @@ class MotionComputationWorker {
    * \return append and synchronized list of external objects
    */
   carma_perception_msgs::msg::ExternalObjectList synchronizeAndAppend(
-      const carma_perception_msgs::msg::ExternalObjectList& base_objects,
-      carma_perception_msgs::msg::ExternalObjectList new_objects) const;
+    const carma_perception_msgs::msg::ExternalObjectList & base_objects,
+    carma_perception_msgs::msg::ExternalObjectList new_objects) const;
 
   /*!
    * \brief It cuts ExternalObject's prediction points before the time_to_match. And uses the average
@@ -113,10 +119,9 @@ class MotionComputationWorker {
    * \note  It assumes time_to_match falls in prediction time's whole interval.
    */
   carma_perception_msgs::msg::ExternalObject matchAndInterpolateTimeStamp(
-      carma_perception_msgs::msg::ExternalObject path, const rclcpp::Time& time_to_match) const;
+    carma_perception_msgs::msg::ExternalObject path, const rclcpp::Time & time_to_match) const;
 
- private:
-
+private:
   // Local copy of external object publisher
   PublishObjectCallback obj_pub_;
 
@@ -135,20 +140,18 @@ class MotionComputationWorker {
   bool enable_psm_processing_ = false;
   bool enable_mobility_path_processing_ = false;
 
-
-  //Map frame
+  // Map frame
   std::string map_frame_id_ = "map";
 
   // Logger interface
   rclcpp::node_interfaces::NodeLoggingInterface::SharedPtr logger_;
-  //Clock interface - gets the ros simulated clock from Node
+  // Clock interface - gets the ros simulated clock from Node
   rclcpp::node_interfaces::NodeClockInterface::SharedPtr node_clock_;
 
   // Queue for v2x msgs to synchronize them with sensor msgs
   carma_perception_msgs::msg::ExternalObjectList mobility_path_list_;
   carma_perception_msgs::msg::ExternalObjectList bsm_list_;
   carma_perception_msgs::msg::ExternalObjectList psm_list_;
-
 
   // Maps of external object id to index in synchronization queues
   std::unordered_map<uint32_t, size_t> mobility_path_obj_id_map_;
@@ -161,11 +164,11 @@ class MotionComputationWorker {
   tf2::Quaternion ned_in_map_rotation_;
 
   // Unit Test Accessors
-  FRIEND_TEST(MotionComputationWorker, mobilityPathToExternalObject);
-  FRIEND_TEST(MotionComputationWorker, psmToExternalObject);
+  FRIEND_TEST(MotionComputationWorker, MobilityPathToExternalObject);
+  FRIEND_TEST(MotionComputationWorker, PsmToExternalObject);
   FRIEND_TEST(MotionComputationWorker, BSMtoExternalObject);
 };
 
 }  // namespace motion_computation
 
-#endif /* MOTION_COMPUTATION_WORKER_H */
+#endif  // MOTION_COMPUTATION__MOTION_COMPUTATION_WORKER_HPP_
