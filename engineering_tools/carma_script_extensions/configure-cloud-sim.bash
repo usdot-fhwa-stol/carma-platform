@@ -170,8 +170,6 @@ delete_resources() {
         echo "No resources required to be deleted"
     fi
 
-    
-    
 }
 
 configure-cloud-sim__help() {
