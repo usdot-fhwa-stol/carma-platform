@@ -64,6 +64,10 @@ Resources:
   InternetGateway:
     Type: AWS::EC2::InternetGateway
     Condition: CreateVPC
+    Properties:
+      Tags:
+        - Key: Name
+          Value: "XiL-Cloud IGW"
   VPCGatewayAttachment:
     Type: AWS::EC2::VPCGatewayAttachment
     Condition: CreateVPC
