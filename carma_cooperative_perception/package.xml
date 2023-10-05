@@ -1,5 +1,4 @@
-<?xml version="1.0"?>
-
+<?xml version="1.0" ?>
 <!--
 Copyright 2023 Leidos
 
@@ -15,7 +14,6 @@ WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 See the License for the specific language governing permissions and
 limitations under the License.
 -->
-
 <package format="3">
   <name>carma_cooperative_perception</name>
   <version>0.1.0</version>
