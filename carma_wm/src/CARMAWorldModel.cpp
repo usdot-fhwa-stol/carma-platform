@@ -1458,7 +1458,7 @@ namespace carma_wm
 
   }
 
-  boost::posix_time::ptime CARMAWorldModel::min_end_time_converter_minute_of_year(boost::posix_time::ptime min_end_time,bool moy_exists,uint32_t moy)
+  boost::posix_time::ptime CARMAWorldModel::min_end_time_converter_minute_of_year(boost::posix_time::ptime min_end_time,bool moy_exists,uint32_t moy, bool is_simulation)
   {
     if (moy_exists) //account for minute of the year
     {
@@ -1467,6 +1467,10 @@ namespace carma_wm
       auto curr_time_boost = inception_boost + duration_since_inception;
 
       int curr_year = curr_time_boost.date().year();
+
+      if (is_simulation)
+        curr_year = 0;
+
       auto curr_year_start_boost(boost::posix_time::time_from_string(std::to_string(curr_year)+ "-01-01 00:00:00.000"));
 
       auto curr_minute_stamp_boost = curr_year_start_boost + boost::posix_time::minutes((int)moy);
@@ -1487,7 +1491,7 @@ namespace carma_wm
     }
   }
 
-  void CARMAWorldModel::processSpatFromMsg(const carma_v2x_msgs::msg::SPAT &spat_msg)
+  void CARMAWorldModel::processSpatFromMsg(const carma_v2x_msgs::msg::SPAT &spat_msg, bool use_sim_time)
   {
     if (!semantic_map_)
     {
@@ -1503,7 +1507,7 @@ namespace carma_wm
     
     for (const auto& curr_intersection : spat_msg.intersection_state_list)
     {      
-      bool is_dynamic_spat = false;
+      bool is_dynamic_spat = true;
 
       for (const auto& current_movement_state : curr_intersection.movement_list)
       {
@@ -1561,8 +1565,8 @@ namespace carma_wm
             boost::posix_time::ptime min_end_time_dynamic = lanelet::time::timeFromSec(current_movement_event.timing.min_end_time);
             boost::posix_time::ptime start_time_dynamic = lanelet::time::timeFromSec(current_movement_event.timing.start_time);
 
-            min_end_time_dynamic=min_end_time_converter_minute_of_year(min_end_time_dynamic,curr_intersection.moy_exists,curr_intersection.moy); // Accounting minute of the year
-            start_time_dynamic=min_end_time_converter_minute_of_year(start_time_dynamic,curr_intersection.moy_exists,curr_intersection.moy); // Accounting minute of the year
+            min_end_time_dynamic=min_end_time_converter_minute_of_year(min_end_time_dynamic,curr_intersection.moy_exists,curr_intersection.moy, use_sim_time); // Accounting minute of the year
+            start_time_dynamic=min_end_time_converter_minute_of_year(start_time_dynamic,curr_intersection.moy_exists,curr_intersection.moy, use_sim_time); // Accounting minute of the year
 
             auto received_state_dynamic = static_cast<lanelet::CarmaTrafficSignalState>(current_movement_event.event_state.movement_phase_state);
             

@@ -31,4 +31,4 @@ duration_to_signal_before_lane_change: 2.5
 # NOTE: It is highly desirable to maintain a timeout of 100 ms or less, but trajectory generation success cannot be guaranteed with this duration
 #       for tactical plugins (primarily cooperative_lanechange) in all test scenarios at this time.
 # Units: Milliseconds
-tactical_plugin_service_call_timeout: 100
+tactical_plugin_service_call_timeout: 1000

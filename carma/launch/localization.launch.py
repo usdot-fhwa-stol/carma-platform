@@ -376,6 +376,6 @@ def generate_launch_description():
         map_param_loader_container,
         pcd_map_file_loader_container,
         ndt_matching_container,
-        ekf_localizer_container,
+        #ekf_localizer_container,
         subsystem_controller
     ]) 

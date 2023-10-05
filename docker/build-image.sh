@@ -129,10 +129,10 @@ echo "Final image name: $USERNAME/$IMAGE:$COMPONENT_VERSION_STRING"
 cd ..
 if [[ $COMPONENT_VERSION_STRING = "develop" ]]; then
     sed "s|usdotfhwastoldev/|$USERNAME/|g; s|usdotfhwastolcandidate/|$USERNAME/|g; s|usdotfhwastol/|$USERNAME/|g; s|:[0-9]*\.[0-9]*\.[0-9]*|:$COMPONENT_VERSION_STRING|g; s|checkout.bash|checkout.bash -d|g" \
-        Dockerfile | docker build -f - --no-cache -t $USERNAME/$IMAGE:$COMPONENT_VERSION_STRING \
-        --build-arg VERSION="$COMPONENT_VERSION_STRING" \
-        --build-arg VCS_REF=`git rev-parse --short HEAD` \
-        --build-arg BUILD_DATE=`date -u +”%Y-%m-%dT%H:%M:%SZ”` .
+    Dockerfile | docker build -f - --no-cache -t $USERNAME/$IMAGE:$COMPONENT_VERSION_STRING \
+    --build-arg VERSION="$COMPONENT_VERSION_STRING" \
+    --build-arg VCS_REF=`git rev-parse --short HEAD` \
+    --build-arg BUILD_DATE=`date -u +”%Y-%m-%dT%H:%M:%SZ”` .
 elif [[ $COMPONENT_VERSION_STRING = "SNAPSHOT" ]]; then
     docker build --network=host --no-cache -t $USERNAME/$IMAGE:$COMPONENT_VERSION_STRING \
         --build-arg ROS1_PACKAGES="$ROS1_PACKAGES" \

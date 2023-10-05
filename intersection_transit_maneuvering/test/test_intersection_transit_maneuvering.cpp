@@ -130,7 +130,7 @@ namespace intersection_transit_maneuvering
     }
 
     /*Assert that the maneuver status will be updated after the callback function*/
-    ASSERT_EQ(0, test_resp->maneuver_status.size());
+    ASSERT_EQ(0, test_resp.maneuver_status.size());
     ASSERT_EQ(1, resp->maneuver_status.size());
     ASSERT_EQ(carma_planning_msgs::srv::PlanTrajectory::Response::MANEUVER_IN_PROGRESS, resp->maneuver_status.back());
 

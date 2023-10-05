@@ -21,7 +21,7 @@
 namespace call_test
 {
 
-    void CallTest::call(carma_planning_msgs::srv::PlanTrajectory::Request::SharedPtr req, carma_planning_msgs::srv::PlanTrajectory::Response::SharedPtr resp)
+    void CallTest::call(carma_planning_msgs::srv::PlanTrajectory::Request::SharedPtr req, carma_planning_msgs::srv::PlanTrajectory::Response& resp)
     {
         request = req;
         response = resp;

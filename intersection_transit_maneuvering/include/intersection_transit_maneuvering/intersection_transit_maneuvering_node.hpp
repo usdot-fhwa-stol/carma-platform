@@ -41,6 +41,7 @@ class IntersectionTransitManeuveringNode : public carma_guidance_plugins::Tactic
     
     public:
     std::shared_ptr<CallInterface> object_;
+    carma_ros2_utils::ClientPtr<carma_planning_msgs::srv::PlanTrajectory> client_; 
     /**
      * \brief IntersectionTransitManeuveringNode constructor 
      */

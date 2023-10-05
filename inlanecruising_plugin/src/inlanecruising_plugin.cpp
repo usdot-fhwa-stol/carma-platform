@@ -51,6 +51,7 @@ void InLaneCruisingPlugin::plan_trajectory_callback(
   carma_planning_msgs::srv::PlanTrajectory::Response::SharedPtr resp)
 {
   std::chrono::system_clock::time_point start_time = std::chrono::system_clock::now();  // Start timing the execution time for planning so it can be logged
+  RCLCPP_ERROR_STREAM(rclcpp::get_logger("inlanecruising_plugin"),"ILC was called!: ");
 
   lanelet::BasicPoint2d veh_pos(req->vehicle_state.x_pos_global, req->vehicle_state.y_pos_global);
   double current_downtrack = wm_->routeTrackPos(veh_pos).downtrack;
@@ -62,6 +63,7 @@ void InLaneCruisingPlugin::plan_trajectory_callback(
     if(req->maneuver_plan.maneuvers[i].type == carma_planning_msgs::msg::Maneuver::LANE_FOLLOWING)
     {
       maneuver_plan.push_back(req->maneuver_plan.maneuvers[i]);
+      RCLCPP_ERROR_STREAM(rclcpp::get_logger("inlanecruising_plugin"),"ILC was called from!: " << req->maneuver_plan.maneuvers[i].lane_following_maneuver.parameters.planning_strategic_plugin);
       resp->related_maneuvers.push_back((uint8_t)i);
     }
     else
@@ -166,6 +168,8 @@ void InLaneCruisingPlugin::plan_trajectory_callback(
 
   auto duration = end_time - start_time;
   RCLCPP_DEBUG_STREAM(nh_->get_logger(), "ExecutionTime: " << std::chrono::duration<double>(duration).count());
+  RCLCPP_ERROR_STREAM(rclcpp::get_logger("inlanecruising_plugin"),"ILC is returning with size!: " << resp->trajectory_plan.trajectory_points.size());
+
 }
 
 void InLaneCruisingPlugin::set_yield_client(carma_ros2_utils::ClientPtr<carma_planning_msgs::srv::PlanTrajectory> client)

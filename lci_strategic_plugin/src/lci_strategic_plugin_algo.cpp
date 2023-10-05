@@ -55,6 +55,21 @@ rclcpp::Time LCIStrategicPlugin::get_nearest_green_entry_time(const rclcpp::Time
   boost::posix_time::ptime t = lanelet::time::timeFromSec(current_time.seconds());                        // time variable
   boost::posix_time::ptime eet = lanelet::time::timeFromSec(earliest_entry_time.seconds());                        // earliest entry time
 
+  // check if the signal even has a green signal
+  bool has_green_signal = false;
+  for (auto pair : signal->recorded_time_stamps)
+  {
+    if (pair.second == lanelet::CarmaTrafficSignalState::PROTECTED_MOVEMENT_ALLOWED)
+    {
+      has_green_signal = true;
+    }
+  }
+
+  if (!has_green_signal)
+  {
+    return rclcpp::Time((lanelet::time::toSec(signal->recorded_time_stamps[std::max(0, static_cast<int>(signal->recorded_time_stamps.size() - 2))].first) + EPSILON) * 1e9); //second to last because last is TDB red
+  }
+
   auto curr_pair = signal->predictState(t);
   if (!curr_pair)
     throw std::invalid_argument("Traffic signal with id:" + std::to_string(signal->id()) + ", does not have any recorded time stamps!");
