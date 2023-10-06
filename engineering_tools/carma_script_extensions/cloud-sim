@@ -163,9 +163,9 @@ cloud-sim__start() {
     if query_resource_status; then
     
         # Get the VPC ID
-        local VPC_ID=$(aws ec2 describe-vpcs --filters "Name=tag:Name,Values=XiL-Cloud VPC" --query 'Vpcs[].VpcId' --output text)
+        local VPC_ID=$(aws ec2 describe-vpcs --filters "Name=tag:Name,Values=CDASim VPC" --query 'Vpcs[].VpcId' --output text)
         # Get the Route Table ID
-        local ROUTETABLE_ID=$(aws ec2 describe-route-tables --filters "Name=tag:Name,Values=XiL-Cloud RouteTable" --query 'RouteTables[].RouteTableId' --output text)
+        local ROUTETABLE_ID=$(aws ec2 describe-route-tables --filters "Name=tag:Name,Values=CDASim RouteTable" --query 'RouteTables[].RouteTableId' --output text)
 
         # Get subnet information
         local SubnetCIDRBlock="10.0.0.0/24"
@@ -313,7 +313,7 @@ cloud-sim__start() {
         echo "##############################"
     
     else
-        echo "Required resources have not been setup. Please run "init" first"
+        echo -e "Required resources have not been setup. Please run \e[3m\e[1mcarma cloud-sim init-resources\e[0m first"
         exit 1
     fi
 }
@@ -352,7 +352,7 @@ cloud-sim__status() {
 }
 
 # Function to create the VPC, internet gateway, and route table
-cloud-sim__init() {
+cloud-sim__init-resources() {
 
     if [ ! command -v "aws" &> /dev/null ]; then
         echo "aws cli is not installed. Attempting to install. This requires sudo."
@@ -373,14 +373,14 @@ cloud-sim__init() {
     # Get resource status - query_resource_status defines VPC, Internet Gateway and Route Table ID
 
     if query_resource_status; then
-        echo "Xil Cloud resources already exist. No change required. Run start to bring up stack.
+        echo -e "CDASim resources already exist. No change required. Run \e[3m\e[1mcarma cloud-sim start\e[0m to bring up stack.
         VPC: ${vpc_id}, Internet Gateway: ${igw_id}, Route Table: ${route_table_id}"
         exit 1
 
     else
 
-        # Try deleting XiL Cloud resources if `all` don't exist
-        echo "Checking and deleting existing XiL-Cloud resources first"
+        # Try deleting CDASim resources if `all` don't exist
+        echo "Checking and deleting existing CDASim resources first"
         cloud-sim__cleanup-resources
 
 
@@ -388,7 +388,7 @@ cloud-sim__init() {
         local CIDR_Block="10.0.0.0/16"
 
         # Create VPC
-        vpc_id=$(aws ec2 create-vpc --cidr-block $CIDR_Block --tag-specifications 'ResourceType=vpc,Tags=[{Key=Name,Value=XiL-Cloud VPC}]' \
+        vpc_id=$(aws ec2 create-vpc --cidr-block $CIDR_Block --tag-specifications 'ResourceType=vpc,Tags=[{Key=Name,Value=CDASim VPC}]' \
         --query 'Vpc.VpcId' --output text) 
 
         # Check the exit code to determine if the VPC creation was successful
@@ -396,13 +396,13 @@ cloud-sim__init() {
             vpc_success=1
             echo "Created vpc: $vpc_id"
         else
-            echo "Error creating XiL-Cloud VPC. Configuration Failed, deleting resources allocated"
+            echo "Error creating CDASim VPC. Configuration Failed, deleting resources allocated"
             cloud-sim__cleanup-resources
         fi
 
         # Create Internet Gateway
         igw_id=$(aws ec2 create-internet-gateway \
-        --tag-specifications 'ResourceType=internet-gateway,Tags=[{Key=Name,Value=XiL-Cloud IGW}]' --query 'InternetGateway.InternetGatewayId' \
+        --tag-specifications 'ResourceType=internet-gateway,Tags=[{Key=Name,Value=CDASim IGW}]' --query 'InternetGateway.InternetGatewayId' \
         --output text) 
 
         # Check the exit code to determine if the Internet Gateway creation was successful
@@ -419,7 +419,7 @@ cloud-sim__init() {
 
         # Create Route Table
         route_table_id=$(aws ec2 create-route-table --vpc-id $vpc_id  \
-        --tag-specifications 'ResourceType=route-table,Tags=[{Key=Name,Value=XiL-Cloud RouteTable}]' --query 'RouteTable.RouteTableId' \
+        --tag-specifications 'ResourceType=route-table,Tags=[{Key=Name,Value=CDASim RouteTable}]' --query 'RouteTable.RouteTableId' \
         --output text)
 
         # Check the exit code to determine if the Route Table creation was successful
@@ -443,7 +443,7 @@ cloud-sim__init() {
 
 
         if [ $vpc_success -eq 1 ] && [ $igw_success -eq 1 ] && [ $route_table_success -eq 1 ]; then
-            echo "XiL-Cloud required resources were created successfully!"
+            echo "CDASim required resources were created successfully!"
         else
             echo "Some resources encountered errors. See above for details."
         fi
@@ -451,18 +451,18 @@ cloud-sim__init() {
 
 }
 
-# Queries AWS for existing XiL-Cloud VPC, internet gateway, and route table and sets global variables
+# Queries AWS for existing CDASim VPC, internet gateway, and route table and sets global variables
 query_resource_status() {
     # Get VPC ID based on tag name
-    vpc_id=$(aws ec2 describe-vpcs --filters "Name=tag:Name,Values=XiL-Cloud VPC" --query 'Vpcs[0].VpcId' --output text)
+    vpc_id=$(aws ec2 describe-vpcs --filters "Name=tag:Name,Values=CDASim VPC" --query 'Vpcs[0].VpcId' --output text)
 
     # Get Internet Gateway ID based on tag name
-    igw_id=$(aws ec2 describe-internet-gateways --filters "Name=tag:Name,Values=XiL-Cloud IGW" \
+    igw_id=$(aws ec2 describe-internet-gateways --filters "Name=tag:Name,Values=CDASim IGW" \
     --query 'InternetGateways[0].InternetGatewayId' --output text)
 
 
     # Get Route Table ID based on tag name
-    route_table_id=$(aws ec2 describe-route-tables --filters "Name=tag:Name,Values=XiL-Cloud RouteTable" \
+    route_table_id=$(aws ec2 describe-route-tables --filters "Name=tag:Name,Values=CDASim RouteTable" \
     --query 'RouteTables[0].RouteTableId' --output text)
 
     local vpc_success=0
@@ -501,7 +501,7 @@ cloud-sim__cleanup-resources() {
         exit 1
     fi
 
-    echo "Trying to delete XiL Cloud resources..."
+    echo "Trying to delete CDASim resources..."
     query_resource_status
 
     local vpc_success=0
@@ -549,7 +549,7 @@ cloud-sim__cleanup-resources() {
     fi
 
     if [ $vpc_success -eq 1 ] || [ $igw_success -eq 1 ] || [ $route_table_success -eq 1 ]; then
-        echo "XiL-Cloud Resources were deleted successfully!"
+        echo "CDASim Resources were deleted successfully!"
     else
         echo "No resources required to be deleted."
     fi
@@ -586,7 +586,7 @@ Please enter one of the following commands when using the cloud-sim extension:
                     - Specify the exact carma-config to use for launching the vehicle and simulation
                       For example " -i image usdotfhwastol/carma-config:carma-system-1.0.1 "
                       This option is an alternative to -v and should only be used if that option is not specified.
-            init
+            init-resources
                 - Initialize the resources required to deploy the cloud environment. Creates a VPC with internet gateway and route table.
                  Created resources are required will persist for all users in organization until `clean` is called.
             start

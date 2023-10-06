@@ -50,6 +50,7 @@ Resources:
   SubnetARouteTableAssociation:
     Type: AWS::EC2::SubnetRouteTableAssociation
     Properties:
+      # Is Create vpc is true, get the route table ID from created VPC, else use ID of existing route table
       RouteTableId: !Ref ExistingRouteTableID
       SubnetId: !Ref SubnetA
   InstanceSecurityGroup:
