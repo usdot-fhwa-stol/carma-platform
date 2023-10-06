@@ -157,7 +157,7 @@ cloud-sim__start() {
     fi
     
     # Call cloud formation
-    local STACK_NAME="CloudSimStack"$(echo ${USER_ARN} |  grep -oh "/.*@" | sed "s|@|-|g" | sed "s|\.|-|g" | sed "s|[^A-Za-z0-9]|-|g")
+    local STACK_NAME="CloudSimStack"$(echo ${USER_ARN} |  grep -oh "/.*@" | sed "s|@|-|g" | sed "s|\.|-|g" | sed "s|[^A-Za-z0-9]|-|")
     
     # Check if required resources are available
     if query_resource_status; then
@@ -176,8 +176,9 @@ cloud-sim__start() {
                     --output text)
         # Use default subnet if none exist, else check existing subnets and increment by 1
         local total_subnets=${#subnet_ids[@]}
+        
 
-        if [ -n "$subnet_ids" ]; then 
+        if [ -n "${subnet_ids[0]}" ]; then 
             local max=0
             for ((i = 0; i < total_subnets; i++)); do
                 subnet_id=${subnet_ids[i]}
@@ -391,6 +392,8 @@ cloud-sim__init-resources() {
         vpc_id=$(aws ec2 create-vpc --cidr-block $CIDR_Block --tag-specifications 'ResourceType=vpc,Tags=[{Key=Name,Value=CDASim VPC}]' \
         --query 'Vpc.VpcId' --output text) 
 
+        aws ec2 modify-vpc-attribute --vpc-id $vpc_id --enable-dns-support 
+        aws ec2 modify-vpc-attribute --vpc-id $vpc_id --enable-dns-hostnames
         # Check the exit code to determine if the VPC creation was successful
         if [ $? -eq 0 ]; then
             vpc_success=1
@@ -517,7 +520,7 @@ cloud-sim__cleanup-resources() {
             echo "Deleted Route Table: $route_table_id"
         else
             echo "Failed to delete route table. Cleanup resources Failed"
-            exit
+            exit 1
         fi
     fi
 
@@ -530,7 +533,7 @@ cloud-sim__cleanup-resources() {
             echo "Deleted Internet Gateway: $igw_id"
         else
             echo "Failed to delete internet gateway. Cleanup resources Failed"
-            exit
+            exit 1
         fi
 
     fi
@@ -543,7 +546,7 @@ cloud-sim__cleanup-resources() {
             echo "Deleted VPC: $vpc_id"
         else
             echo "Failed to delete VPC. Cleanup resources Failed"
-            exit
+            exit 1
         fi
 
     fi
