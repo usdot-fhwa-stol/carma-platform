@@ -157,7 +157,7 @@ cloud-sim__start() {
     fi
     
     # Call cloud formation
-    local STACK_NAME="CloudSimStack"$(echo ${USER_ARN} |  grep -oh "/.*@" | sed "s|@|-|g" | sed "s|\.|-|g" | sed "s|[^A-Za-z0-9]|-|")
+    local STACK_NAME="CloudSimStack"$(echo ${USER_ARN} |  grep -oh "/.*@" | sed "s|@|-|g" | sed "s|\.|-|g" | sed "s|[^A-Za-z0-9]|-|g")
     
     # Check if required resources are available
     if query_resource_status; then
