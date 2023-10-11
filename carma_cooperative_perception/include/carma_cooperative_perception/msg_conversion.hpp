@@ -49,9 +49,9 @@ auto to_position_msg(const UtmCoordinate & position_utm) noexcept -> geometry_ms
 
 auto heading_to_enu_yaw(const units::angle::degree_t & heading) noexcept -> units::angle::degree_t;
 
+// TODO: Find a conversion from MAP pose to WGS84 heading
 // auto yaw_to_wgs_heading(const units::angle::degree_t & yaw) noexcept -> units::angle::degree_t;
 
-// take in a ref_pos (in wgs84 frame) and a detected_object_data object, update the object's pose by (-) ref_pos
 auto calc_reference_pose_offset(const carma_v2x_msgs::msg::Position3D & current_pose,
   const carma_v2x_msgs::msg::DetectedObjectData & detected_object_data) noexcept -> carma_v2x_msgs::msg::DetectedObjectData;
 
@@ -80,26 +80,6 @@ auto to_detection_list_msg(
   const MotionModelMapping & motion_model_mapping) noexcept
   -> carma_cooperative_perception_interfaces::msg::DetectionList;
 
-// this seems to match MotionModelMapping, define a map to sdsm types?
-struct ObjectTypeMapping
-{
-  std::uint8_t unknown_type;
-  std::uint8_t small_vehicle_type;
-  std::uint8_t large_vehicle_type;
-  std::uint8_t motorcycle_type;
-  std::uint8_t pedestrian_type;
-};
-
-auto to_sdsm_msg(
-  const carma_perception_msgs::msg::ExternalObjectList & external_object_list,
-  const geometry_msgs::msg::PoseStamped & current_pose,
-  const std::shared_ptr<lanelet::projection::LocalFrameProjector> map_projection) noexcept
-  -> carma_v2x_msgs::msg::SensorDataSharingMessage;
-
-auto to_detected_object_data_msg(
-  const carma_perception_msgs::msg::ExternalObject & external_object) noexcept
-  -> carma_v2x_msgs::msg::DetectedObjectData;
-
 auto to_external_object_msg(
   const carma_cooperative_perception_interfaces::msg::Track & track) noexcept
   -> carma_perception_msgs::msg::ExternalObject;
@@ -118,10 +98,6 @@ auto to_detected_object_data_msg(
   const carma_perception_msgs::msg::ExternalObject & external_object) noexcept
   -> carma_v2x_msgs::msg::DetectedObjectData;
 
-inline auto to_sdsm_msg(const carma_perception_msgs::msg::ExternalObjectList & object_list) noexcept
-{
-  return carma_v2x_msgs::msg::SensorDataSharingMessage{};
-}
 
 }  // namespace carma_cooperative_perception
 

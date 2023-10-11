@@ -67,7 +67,6 @@ private:
   rclcpp::Subscription<external_objects_msg_type>::SharedPtr external_objects_subscription_{
     nullptr};
   rclcpp::Subscription<georeference_msg_type>::SharedPtr georeference_subscription_{nullptr};
-
   rclcpp::Subscription<pose_msg_type>::SharedPtr current_pose_subscription_{nullptr};
 
   std::string map_georeference_{""};
