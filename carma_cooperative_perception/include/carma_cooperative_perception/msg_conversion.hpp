@@ -80,10 +80,25 @@ auto to_detection_list_msg(
   const MotionModelMapping & motion_model_mapping) noexcept
   -> carma_cooperative_perception_interfaces::msg::DetectionList;
 
-inline auto to_sdsm_msg(const carma_perception_msgs::msg::ExternalObjectList & object_list) noexcept
+// this seems to match MotionModelMapping, define a map to sdsm types?
+struct ObjectTypeMapping
 {
-  return carma_v2x_msgs::msg::SensorDataSharingMessage{};
-}
+  std::uint8_t unknown_type;
+  std::uint8_t small_vehicle_type;
+  std::uint8_t large_vehicle_type;
+  std::uint8_t motorcycle_type;
+  std::uint8_t pedestrian_type;
+};
+
+auto to_sdsm_msg(
+  const carma_perception_msgs::msg::ExternalObjectList & external_object_list,
+  const geometry_msgs::msg::PoseStamped & current_pose,
+  const std::shared_ptr<lanelet::projection::LocalFrameProjector> map_projection) noexcept
+  -> carma_v2x_msgs::msg::SensorDataSharingMessage;
+
+auto to_detected_object_data_msg(
+  const carma_perception_msgs::msg::ExternalObject & external_object) noexcept
+  -> carma_v2x_msgs::msg::DetectedObjectData;
 
 auto to_external_object_msg(
   const carma_cooperative_perception_interfaces::msg::Track & track) noexcept
