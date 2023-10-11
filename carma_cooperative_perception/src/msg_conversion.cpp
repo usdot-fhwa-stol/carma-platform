@@ -18,17 +18,26 @@
 #include <carma_perception_msgs/msg/external_object.hpp>
 #include <carma_perception_msgs/msg/external_object_list.hpp>
 #include <j2735_v2x_msgs/msg/d_date_time.hpp>
+#include <j2735_v2x_msgs/msg/personal_device_user_type.hpp>
+#include <j3224_v2x_msgs/msg/object_type.hpp>
 #include <j3224_v2x_msgs/msg/detected_object_data.hpp>
 #include <j3224_v2x_msgs/msg/measurement_time_offset.hpp>
 
 #include <algorithm>
 #include <cmath>
 #include <utility>
+#include <chrono>
 
 #include "carma_cooperative_perception/geodetic.hpp"
 #include "carma_cooperative_perception/j2735_types.hpp"
 #include "carma_cooperative_perception/j3224_types.hpp"
 #include "carma_cooperative_perception/units_extensions.hpp"
+
+#include <lanelet2_core/geometry/Lanelet.h>
+#include <lanelet2_extension/projection/local_frame_projector.h>
+#include "boost/date_time/posix_time/posix_time.hpp"
+#include <boost/date_time/posix_time/conversion.hpp>
+#include <boost/date_time/posix_time/posix_time_io.hpp>
 
 namespace carma_cooperative_perception
 {
@@ -53,6 +62,57 @@ auto calc_detection_time_stamp(DDateTime sdsm_time, const MeasurementTimeOffset 
   return sdsm_time;
 }
 
+auto to_ddate_time_msg(const builtin_interfaces::msg::Time & builtin_time) noexcept -> j2735_v2x_msgs::msg::DDateTime
+{
+  j2735_v2x_msgs::msg::DDateTime ddate_time_output;
+
+  // Add the time components from epoch seconds
+  boost::posix_time::ptime posix_time = boost::posix_time::from_time_t(builtin_time.sec) + 
+                                        boost::posix_time::nanosec(builtin_time.nanosec);
+
+  const auto time_stamp_year = posix_time.date().year();
+  const auto time_stamp_month = posix_time.date().month();
+  const auto time_stamp_day = posix_time.date().day();
+
+  const auto hours_of_day = posix_time.time_of_day().hours();
+  const auto minutes_of_hour = posix_time.time_of_day().minutes();
+  const auto seconds_of_minute = posix_time.time_of_day().seconds();
+
+  ddate_time_output.presence_vector |= j2735_v2x_msgs::msg::DDateTime::YEAR;
+  ddate_time_output.year.year = time_stamp_year;
+  ddate_time_output.presence_vector |= j2735_v2x_msgs::msg::DDateTime::MONTH;
+  ddate_time_output.month.month = time_stamp_month;
+  ddate_time_output.presence_vector |= j2735_v2x_msgs::msg::DDateTime::DAY;
+  ddate_time_output.day.day = time_stamp_day;
+  ddate_time_output.presence_vector |= j2735_v2x_msgs::msg::DDateTime::HOUR;
+  ddate_time_output.hour.hour = hours_of_day;
+  ddate_time_output.presence_vector |= j2735_v2x_msgs::msg::DDateTime::MINUTE;
+  ddate_time_output.minute.minute = minutes_of_hour;
+  ddate_time_output.presence_vector |= j2735_v2x_msgs::msg::DDateTime::SECOND;
+  ddate_time_output.second.millisecond = seconds_of_minute;
+
+  return ddate_time_output;
+}
+
+auto calc_sdsm_time_offset(const builtin_interfaces::msg::Time & external_object_list_stamp,
+const builtin_interfaces::msg::Time & external_object_stamp) noexcept -> carma_v2x_msgs::msg::MeasurementTimeOffset
+{
+  carma_v2x_msgs::msg::MeasurementTimeOffset time_offset;
+
+  boost::posix_time::ptime external_object_list_time = boost::posix_time::from_time_t(external_object_list_stamp.sec) + 
+                                                        boost::posix_time::nanosec(external_object_list_stamp.nanosec);
+                                                        
+  boost::posix_time::ptime external_object_time = boost::posix_time::from_time_t(external_object_stamp.sec) + 
+                                                  boost::posix_time::nanosec(external_object_stamp.nanosec);
+
+  boost::posix_time::time_duration offset_duration = (external_object_list_time - external_object_time);
+
+  time_offset.measurement_time_offset = offset_duration.total_seconds();
+
+  return time_offset;
+}
+
+
 auto to_position_msg(const UtmCoordinate & position_utm) noexcept -> geometry_msgs::msg::Point
 {
   geometry_msgs::msg::Point msg;
@@ -67,6 +127,44 @@ auto to_position_msg(const UtmCoordinate & position_utm) noexcept -> geometry_ms
 auto heading_to_enu_yaw(const units::angle::degree_t & heading) noexcept -> units::angle::degree_t
 {
   return units::angle::degree_t{std::fmod(-(remove_units(heading) - 90.0) + 360.0, 360.0)};
+}
+
+// auto yaw_to_wgs_heading(const units::angle::degree_t & yaw) noexcept -> units::angle::degree_t
+// {
+//   // take yaw wrt detected object
+//   // get map grid convergence of the object (angle from true north)
+//   // get grid heading (not 90 - yaw?)
+// }
+
+// determine the object position offset in m from the current reference pose in map frame and external object pose
+auto calc_reference_pose_offset(const geometry_msgs::msg::PoseStamped source_pose,
+  const carma_v2x_msgs::msg::PositionOffsetXYZ & position_offset) noexcept -> carma_v2x_msgs::msg::PositionOffsetXYZ
+{
+  carma_v2x_msgs::msg::PositionOffsetXYZ adjusted_offset;
+
+  adjusted_offset.offset_x.object_distance = position_offset.offset_x.object_distance - source_pose.pose.position.x;
+  adjusted_offset.offset_y.object_distance = position_offset.offset_y.object_distance - source_pose.pose.position.y;
+  adjusted_offset.offset_z.object_distance = position_offset.offset_z.object_distance - source_pose.pose.position.z;
+  adjusted_offset.presence_vector |= carma_v2x_msgs::msg::PositionOffsetXYZ::HAS_OFFSET_Z;
+
+  return adjusted_offset;
+}
+
+auto transform_pose_from_map_to_wgs84(const geometry_msgs::msg::PoseStamped source_pose, 
+  std::shared_ptr<lanelet::projection::LocalFrameProjector> map_projection) noexcept
+  -> carma_v2x_msgs::msg::Position3D
+{
+  carma_v2x_msgs::msg::Position3D ref_pos;
+
+  lanelet::BasicPoint3d wgs84_ref_pose = map_projection->projectECEF({ 
+    source_pose.pose.position.x, source_pose.pose.position.y, 0.0}, 1);
+
+  ref_pos.longitude = wgs84_ref_pose.x();
+  ref_pos.latitude = wgs84_ref_pose.y();
+  ref_pos.elevation = source_pose.pose.position.z;
+  ref_pos.elevation_exists = true;
+
+  return ref_pos;
 }
 
 auto to_detection_list_msg(const carma_v2x_msgs::msg::SensorDataSharingMessage & sdsm) noexcept
@@ -219,5 +317,149 @@ auto to_detection_list_msg(
 
   return detection_list;
 }
+
+auto to_sdsm_msg(
+  const carma_perception_msgs::msg::ExternalObjectList & external_object_list,
+  const geometry_msgs::msg::PoseStamped & current_pose,
+  const std::shared_ptr<lanelet::projection::LocalFrameProjector> map_projection) noexcept
+  -> carma_v2x_msgs::msg::SensorDataSharingMessage
+{ 
+  carma_v2x_msgs::msg::SensorDataSharingMessage sdsm;
+  carma_v2x_msgs::msg::DetectedObjectList detected_object_list;
+
+  sdsm.sdsm_time_stamp = to_ddate_time_msg(external_object_list.header.stamp);
+
+  sdsm.ref_pos = transform_pose_from_map_to_wgs84(current_pose, map_projection);
+
+  // Convert external objects within the list to detected_object_data
+  for (const auto & external_object : external_object_list.objects) {
+    auto sdsm_detected_object = to_detected_object_data_msg(external_object);
+
+    // Calculate the time offset between individual objects and the respective SDSM container msg
+    sdsm_detected_object.detected_object_common_data.measurement_time = 
+      calc_sdsm_time_offset(external_object.header.stamp, external_object.header.stamp);
+
+    // Calculate the position offset from the current reference pose (in m)
+    sdsm_detected_object.detected_object_common_data.pos =
+      calc_reference_pose_offset(current_pose, sdsm_detected_object.detected_object_common_data.pos);
+
+    detected_object_list.detected_object_data.push_back(sdsm_detected_object);
+  }
+  sdsm.objects = detected_object_list;
+
+  return sdsm;
+}
+
+auto to_detected_object_data_msg(
+  const carma_perception_msgs::msg::ExternalObject & external_object) noexcept
+  -> carma_v2x_msgs::msg::DetectedObjectData
+{
+  carma_v2x_msgs::msg::DetectedObjectData detected_object_data;
+  detected_object_data.presence_vector = 0;
+
+  carma_v2x_msgs::msg::DetectedObjectCommonData detected_object_common_data;
+  detected_object_common_data.presence_vector = 0;
+
+  // common data //////////
+
+  // obj_type_conf - convert from percentile, cast to proper uint type
+  if (external_object.presence_vector & external_object.OBJECT_TYPE_PRESENCE_VECTOR){
+    detected_object_common_data.obj_type_cfd.classification_confidence = static_cast<std::uint8_t>(external_object.confidence * 100);
+  }
+  
+  // detected_id - cast proper type
+  if (external_object.presence_vector & external_object.ID_PRESENCE_VECTOR){
+    detected_object_common_data.detected_id.object_id = static_cast<std::uint16_t>(external_object.id);
+  }
+
+  // pos - Add offset to ref_pos to get object position in map frame -> convert to WGS84 coordinates for sdsm
+  // To get offset: Subtract the external object pose from the current vehicle location given by the current_pose topic
+  if (external_object.presence_vector & external_object.POSE_PRESENCE_VECTOR){
+    detected_object_common_data.pos.offset_x.object_distance = static_cast<std::float>(external_object.pose.pose.position.x);
+    detected_object_common_data.pos.offset_y.object_distance = static_cast<std::float>(external_object.pose.pose.position.y);
+    detected_object_common_data.pos.offset_z.object_distance = static_cast<std::float>(external_object.pose.pose.position.z);
+  }
+
+  // speed/speed_z - convert vector velocity to scalar speed val given x/y components
+  if (external_object.presence_vector & external_object.VELOCITY_INST_PRESENCE_VECTOR){
+    detected_object_common_data.speed.speed = std::hypot(external_object.velocity_inst.twist.linear.x, external_object.velocity_inst.twist.linear.y);
+
+    detected_object_common_data.presence_vector |= carma_v2x_msgs::msg::DetectedObjectCommonData::HAS_SPEED_Z;
+    detected_object_common_data.speed_z.speed = external_object.velocity_inst.twist.linear.z;
+
+    // heading - convert ang vel to scale heading
+    detected_object_common_data.heading.heading = external_object.velocity_inst.twist.angular.z * (180.0/3.14115926535); // to radian, use units.h
+  }
+
+  // optional data (determine based on object type)
+  // use object type struct for better control
+  carma_v2x_msgs::msg::DetectedObjectOptionalData detected_object_optional_data;
+
+  switch (external_object.object_type) {
+    case external_object.SMALL_VEHICLE:
+      detected_object_common_data.obj_type.object_type |= j3224_v2x_msgs::msg::ObjectType::VEHICLE;
+
+      if(external_object.presence_vector & external_object.SIZE_PRESENCE_VECTOR){
+        detected_object_optional_data.det_veh.presence_vector |= carma_v2x_msgs::msg::DetectedVehicleData::HAS_SIZE;
+        detected_object_optional_data.det_veh.presence_vector |= carma_v2x_msgs::msg::DetectedVehicleData::HAS_HEIGHT;
+
+        detected_object_optional_data.det_veh.size.vehicle_width = external_object.size.y;
+        detected_object_optional_data.det_veh.size.vehicle_length = external_object.size.x;
+        detected_object_optional_data.det_veh.height.vehicle_height = external_object.size.z;
+      }
+      break;
+    case external_object.LARGE_VEHICLE:
+      detected_object_common_data.obj_type.object_type |= j3224_v2x_msgs::msg::ObjectType::VEHICLE;
+
+      if(external_object.presence_vector & external_object.SIZE_PRESENCE_VECTOR){
+        detected_object_optional_data.det_veh.presence_vector |= carma_v2x_msgs::msg::DetectedVehicleData::HAS_SIZE;
+        detected_object_optional_data.det_veh.presence_vector |= carma_v2x_msgs::msg::DetectedVehicleData::HAS_HEIGHT;
+
+        detected_object_optional_data.det_veh.size.vehicle_width = external_object.size.y;
+        detected_object_optional_data.det_veh.size.vehicle_length = external_object.size.x;
+        detected_object_optional_data.det_veh.height.vehicle_height = external_object.size.z;
+      }
+      break;
+    case external_object.MOTORCYCLE:
+      detected_object_common_data.obj_type.object_type |= j3224_v2x_msgs::msg::ObjectType::VEHICLE;
+
+      if(external_object.presence_vector & external_object.SIZE_PRESENCE_VECTOR){
+        detected_object_optional_data.det_veh.presence_vector |= carma_v2x_msgs::msg::DetectedVehicleData::HAS_SIZE;
+        detected_object_optional_data.det_veh.presence_vector |= carma_v2x_msgs::msg::DetectedVehicleData::HAS_HEIGHT;
+
+        detected_object_optional_data.det_veh.size.vehicle_width = external_object.size.y;
+        detected_object_optional_data.det_veh.size.vehicle_length = external_object.size.x;
+        detected_object_optional_data.det_veh.height.vehicle_height = external_object.size.z;
+      }
+      break;
+    case external_object.PEDESTRIAN:
+      detected_object_common_data.obj_type.object_type |= j3224_v2x_msgs::msg::ObjectType::VRU;
+
+      detected_object_optional_data.det_vru.presence_vector |= carma_v2x_msgs::msg::DetectedVRUData::HAS_BASIC_TYPE;
+      detected_object_optional_data.det_vru.basic_type.type |= j2735_v2x_msgs::msg::PersonalDeviceUserType::A_PEDESTRIAN;
+
+      break;
+    case external_object.UNKNOWN:
+    default:
+      detected_object_common_data.obj_type.object_type |= j3224_v2x_msgs::msg::ObjectType::UNKNOWN;
+
+      if(external_object.presence_vector & external_object.SIZE_PRESENCE_VECTOR){
+
+        detected_object_optional_data.det_obst.obst_size.width.size_value = external_object.size.y;
+        detected_object_optional_data.det_obst.obst_size.length.size_value = external_object.size.x;
+
+        detected_object_optional_data.det_obst.obst_size.presence_vector |= carma_v2x_msgs::msg::ObstacleSize::HAS_HEIGHT;
+        detected_object_optional_data.det_obst.obst_size.height.size_value = external_object.size.z;
+      }
+
+  }
+  detected_object_data.detected_object_common_data = detected_object_common_data;
+
+  detected_object_data.detected_object_optional_data = detected_object_optional_data;
+
+  return detected_object_data;
+
+}
+
 
 }  // namespace carma_cooperative_perception

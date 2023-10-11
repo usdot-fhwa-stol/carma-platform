@@ -210,3 +210,67 @@ TEST(ToDetectionListMsg, FromExternalObjectList)
 
   EXPECT_EQ(std::size(detection_list.detections), 2U);
 }
+
+TEST(ToDetectedObjectDataMsg, FromExternalObject)
+{
+  carma_perception_msgs::msg::ExternalObject object;
+  object.header.stamp.sec = 1;
+  object.header.stamp.nanosec = 2;
+  object.header.frame_id = "test_frame";
+  object.bsm_id = {3, 4, 5, 6};
+  object.id = 7;
+  object.pose.pose.position.x = 8;
+  object.pose.pose.position.y = 9;
+  object.pose.pose.position.z = 10;
+  object.pose.pose.orientation.x = 11;
+  object.pose.pose.orientation.y = 12;
+  object.pose.pose.orientation.z = 13;
+  object.pose.pose.orientation.w = 14;
+  object.velocity_inst.twist.linear.x = 15;
+  object.velocity_inst.twist.linear.y = 16;
+  object.velocity_inst.twist.linear.z = 17;
+  object.velocity_inst.twist.angular.x = 18;
+  object.velocity_inst.twist.angular.y = 19;
+  object.velocity_inst.twist.angular.z = 20;
+  object.size.x = 21;
+  object.size.y = 22;
+  object.size.z = 23;
+  object.confidence = 0.9;
+  object.object_type = object.SMALL_VEHICLE;
+
+  object.presence_vector |= object.BSM_ID_PRESENCE_VECTOR | object.ID_PRESENCE_VECTOR |
+                            object.POSE_PRESENCE_VECTOR | object.VELOCITY_INST_PRESENCE_VECTOR |
+                            object.CONFIDENCE_PRESENCE_VECTOR | object.OBJECT_TYPE_PRESENCE_VECTOR |
+                            object.SIZE_PRESENCE_VECTOR;
+
+  const auto detected_object{
+    carma_cooperative_perception::to_detected_object_data_msg(object)};
+
+  EXPECT_EQ(detected_object.detected_object_common_data.obj_type.object_type, 1); //specify 1
+  EXPECT_EQ(detected_object.detected_object_common_data.obj_type_cfd.classification_confidence, 90);
+  EXPECT_EQ(detected_object.detected_object_common_data.detected_id.object_id, 7);
+  EXPECT_NEAR(detected_object.detected_object_common_data.speed.speed, std::sqrt(481), 1e-2);
+  EXPECT_EQ(detected_object.detected_object_common_data.speed_z.speed, object.velocity_inst.twist.linear.z);
+
+  EXPECT_EQ(detected_object.detected_object_optional_data.det_veh.size.vehicle_width, 22);
+  EXPECT_EQ(detected_object.detected_object_optional_data.det_veh.size.vehicle_length, 21);
+  EXPECT_EQ(detected_object.detected_object_optional_data.det_veh.height.vehicle_height, 23);
+
+  // check to see pose is unchanged
+  // heading - not done
+}
+
+
+// TEST(ToSDSMMsg, FromExternalObjectList)
+// {
+//   carma_perception_msgs::msg::ExternalObjectList object_list;
+//   object_list.objects.emplace_back();
+//   object_list.objects.emplace_back();
+
+//   geometry_msgs::msg::PoseStamped current_pose;
+//   std::shared_ptr<lanelet::projection::LocalFrameProjector> map_projection;
+
+//   const auto sdsm{carma_cooperative_perception::to_sdsm_msg(object_list, current_pose, map_projection)};
+
+//   EXPECT_EQ(std::size(sdsm.objects.detected_object_data), 2U);
+// }

@@ -25,6 +25,11 @@
 #include "carma_cooperative_perception/j2735_types.hpp"
 #include "carma_cooperative_perception/j3224_types.hpp"
 
+#include <geometry_msgs/msg/pose_stamped.hpp>
+
+#include <lanelet2_core/geometry/Lanelet.h>
+#include <lanelet2_extension/projection/local_frame_projector.h>
+
 namespace carma_cooperative_perception
 {
 auto to_time_msg(const DDateTime & d_date_time) noexcept -> builtin_interfaces::msg::Time;
@@ -32,9 +37,23 @@ auto to_time_msg(const DDateTime & d_date_time) noexcept -> builtin_interfaces::
 auto calc_detection_time_stamp(DDateTime d_date_time, const MeasurementTimeOffset & offset) noexcept
   -> DDateTime;
 
+auto to_ddate_time_msg(const builtin_interfaces::msg::Time & builtin_time) noexcept -> j2735_v2x_msgs::msg::DDateTime;
+
+auto calc_sdsm_time_offset(const builtin_interfaces::msg::Time & external_object_list_time,
+  const builtin_interfaces::msg::Time & external_object_time) noexcept -> carma_v2x_msgs::msg::MeasurementTimeOffset;
+
 auto to_position_msg(const UtmCoordinate & position_utm) noexcept -> geometry_msgs::msg::Point;
 
 auto heading_to_enu_yaw(const units::angle::degree_t & heading) noexcept -> units::angle::degree_t;
+
+// auto yaw_to_wgs_heading(const units::angle::degree_t & yaw) noexcept -> units::angle::degree_t;
+
+// take in a ref_pos (in wgs84 frame) and a detected_object_data object, update the object's pose by (-) ref_pos
+auto calc_reference_pose_offset(const carma_v2x_msgs::msg::Position3D & current_pose,
+  const carma_v2x_msgs::msg::DetectedObjectData & detected_object_data) noexcept -> carma_v2x_msgs::msg::DetectedObjectData;
+
+auto transform_from_map_to_wgs84(const geometry_msgs::msg::PoseStamped source_pose, 
+  std::shared_ptr<lanelet::projection::LocalFrameProjector> map_projection) noexcept;
 
 auto to_detection_list_msg(const carma_v2x_msgs::msg::SensorDataSharingMessage & sdsm) noexcept
   -> carma_cooperative_perception_interfaces::msg::DetectionList;
@@ -58,11 +77,27 @@ auto to_detection_list_msg(
   const MotionModelMapping & motion_model_mapping) noexcept
   -> carma_cooperative_perception_interfaces::msg::DetectionList;
 
-inline auto to_sdsm_msg(const carma_perception_msgs::msg::ExternalObjectList & object_list) noexcept
+// this seems to match MotionModelMapping, define a map to sdsm types?
+struct ObjectTypeMapping
 {
-  return carma_v2x_msgs::msg::SensorDataSharingMessage{};
-}
+  std::uint8_t unknown_type;
+  std::uint8_t small_vehicle_type;
+  std::uint8_t large_vehicle_type;
+  std::uint8_t motorcycle_type;
+  std::uint8_t pedestrian_type;
+};
+
+auto to_sdsm_msg(
+  const carma_perception_msgs::msg::ExternalObjectList & external_object_list,
+  const geometry_msgs::msg::PoseStamped & current_pose,
+  const std::shared_ptr<lanelet::projection::LocalFrameProjector> map_projection) noexcept
+  -> carma_v2x_msgs::msg::SensorDataSharingMessage;
+
+auto to_detected_object_data_msg(
+  const carma_perception_msgs::msg::ExternalObject & external_object) noexcept
+  -> carma_v2x_msgs::msg::DetectedObjectData;
 
 }  // namespace carma_cooperative_perception
+
 
 #endif  // CARMA_COOPERATIVE_PERCEPTION__MSG_CONVERSION_HPP_

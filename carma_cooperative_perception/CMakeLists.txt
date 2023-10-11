@@ -84,6 +84,9 @@ ament_auto_add_executable(external_object_list_to_sdsm_node
   src/external_object_list_to_sdsm_node.cpp
 )
 
+# boost::posix_time definition for using nanoseconds
+add_definitions(-DBOOST_DATE_TIME_POSIX_TIME_STD_CONFIG)
+
 if(carma_cooperative_perception_BUILD_TESTS)
   enable_testing()
 
@@ -103,6 +106,8 @@ if(carma_cooperative_perception_BUILD_TESTS)
   target_link_libraries(carma_cooperative_perception_tests
     carma_cooperative_perception
   )
+
+  
 
   # add_launch_test(test/launch_testing/carma_cooperative_perception_ros_launch_test.py)
 

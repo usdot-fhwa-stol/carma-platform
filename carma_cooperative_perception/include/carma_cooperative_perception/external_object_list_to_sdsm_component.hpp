@@ -21,19 +21,22 @@
 #include <rclcpp/rclcpp.hpp>
 #include <std_msgs/msg/string.hpp>
 
+#include <geometry_msgs/msg/pose_stamped.hpp>
+
+#include <lanelet2_core/geometry/Lanelet.h>
+#include <lanelet2_extension/projection/local_frame_projector.h>
+
 #include <string>
 
 namespace carma_cooperative_perception
 {
-struct ObjectTypeMapping
-{
-};
-
 class ExternalObjectListToSdsmNode : public carma_ros2_utils::CarmaLifecycleNode
 {
   using sdsm_msg_type = carma_v2x_msgs::msg::SensorDataSharingMessage;
   using external_objects_msg_type = carma_perception_msgs::msg::ExternalObjectList;
   using georeference_msg_type = std_msgs::msg::String;
+
+  using pose_msg_type = geometry_msgs::msg::PoseStamped;
 
 public:
   explicit ExternalObjectListToSdsmNode(const rclcpp::NodeOptions & options);
@@ -57,13 +60,21 @@ public:
 
   auto update_georeference(const georeference_msg_type & proj_string) noexcept -> void;
 
+  auto update_current_pose(const pose_msg_type & pose) noexcept -> void;
+
 private:
   rclcpp_lifecycle::LifecyclePublisher<sdsm_msg_type>::SharedPtr sdsm_publisher_{nullptr};
   rclcpp::Subscription<external_objects_msg_type>::SharedPtr external_objects_subscription_{
     nullptr};
   rclcpp::Subscription<georeference_msg_type>::SharedPtr georeference_subscription_{nullptr};
+
+  rclcpp::Subscription<pose_msg_type>::SharedPtr current_pose_subscription_{nullptr};
+
   std::string map_georeference_{""};
-  ObjectTypeMapping object_type_mapping_{};
+  geometry_msgs::msg::PoseStamped current_pose_;
+
+  //ObjectTypeMapping object_type_mapping_{};
+  std::shared_ptr<lanelet::projection::LocalFrameProjector> map_projector_;
   OnSetParametersCallbackHandle::SharedPtr on_set_parameters_callback_{nullptr};
 };
 }  // namespace carma_cooperative_perception

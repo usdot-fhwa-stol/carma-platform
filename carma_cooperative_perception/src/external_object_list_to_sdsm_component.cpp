@@ -64,6 +64,22 @@ auto ExternalObjectListToSdsmNode::handle_on_configure(
       }
     });
 
+  current_pose_subscription_ = create_subscription<pose_msg_type>(
+    "input/pose_stamped", 1, [this](const pose_msg_type::SharedPtr msg_ptr) {
+      const auto current_state{this->get_current_state().label()};
+
+      if (current_state == "active") {
+        update_current_pose(*msg_ptr);
+      } else {
+        RCLCPP_WARN(
+          this->get_logger(),
+          "Trying to recieve message on topic '%s', but the containing node is not activated."
+          "current node state: '%s'",
+          this->current_pose_subscription_->get_topic_name(), current_state.c_str());
+        
+      }
+    });
+
   return carma_ros2_utils::CallbackReturn::SUCCESS;
 }
 
@@ -96,6 +112,8 @@ auto ExternalObjectListToSdsmNode::handle_on_cleanup(
   external_objects_subscription_.reset();
   georeference_subscription_.reset();
 
+  current_pose_subscription_.reset();
+
   return carma_ros2_utils::CallbackReturn::SUCCESS;
 }
 
@@ -108,6 +126,8 @@ auto ExternalObjectListToSdsmNode::handle_on_shutdown(
   external_objects_subscription_.reset();
   georeference_subscription_.reset();
 
+  current_pose_subscription_.reset();
+
   return carma_ros2_utils::CallbackReturn::SUCCESS;
 }
 
@@ -115,7 +135,9 @@ auto ExternalObjectListToSdsmNode::publish_as_sdsm(const external_objects_msg_ty
   -> void
 {
   try {
-    sdsm_publisher_->publish(to_sdsm_msg(msg));
+    const auto sdsm_output{to_sdsm_msg(msg, current_pose_, map_projector_)};
+
+    sdsm_publisher_->publish(sdsm_output);
   } catch (const std::invalid_argument & e) {
     RCLCPP_ERROR(
       this->get_logger(), "Could not convert external object list to SDSM: %s", e.what());
@@ -126,6 +148,13 @@ auto ExternalObjectListToSdsmNode::update_georeference(const georeference_msg_ty
   -> void
 {
   map_georeference_ = msg.data;
+  map_projector_ = std::make_shared<lanelet::projection::LocalFrameProjector>(msg.data.c_str());
+}
+
+auto ExternalObjectListToSdsmNode::update_current_pose(const pose_msg_type & msg) noexcept
+  -> void
+{
+  current_pose_ = msg;
 }
 
 }  // namespace carma_cooperative_perception
