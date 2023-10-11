@@ -76,9 +76,33 @@ class TestExternalObjectListToSDSM(unittest.TestCase):
         rclpy.shutdown(context=cls.context)
 
     # def test_external_object_list_conversion(self):
+    #     transition_id = Transition.TRANSITION_CONFIGURE
+    #     transition_node("node_under_test", transition_id, self.context)
+
+    #     transition_id = Transition.TRANSITION_ACTIVATE
+    #     transition_node("node_under_test", transition_id, self.context)
+
+    #     package_share_path = get_package_share_path("carma_cooperative_perception")
+
+    #     msg_file = package_share_path / "test/data/external_object_list.yaml"
+    #     msg = carma_message_utilities.msg_from_yaml_file(msg_file)
+    #     self.test_harness_node.external_object_list_pub.publish(msg)
+
+    #     spin_node_until(
+    #         self.test_harness_node,
+    #         LenIncreases(self.test_harness_node.sdsm_msgs),
+    #         self.context
+    #     )
+
+    #     self.assertGreaterEqual(
+    #         len(self.test_harness_node.sdsm_msgs), 0
+    #     )
+    #     SensorDataSharingMessage = self.test_harness_node.sdsm_msgs[-1]
+
+    #     # self.assertEqual(len(sdsm.))
 
 
-@post_shutdown_test()
-class TestProcessOutput(unittest.TestCase):
-    def test_exit_codes(Self, proc_info):
-        assertExitCodes(proc_info)
+    @post_shutdown_test()
+    class TestProcessOutput(unittest.TestCase):
+        def test_exit_codes(Self, proc_info):
+            assertExitCodes(proc_info)
