@@ -193,7 +193,7 @@ cloud-sim__start() {
                 IFS="." read -r -a octets <<< "$ip_address"
 
                 # Get the last octet
-                last_octet="${octets[3]}"
+                last_octet="${octets[2]}"
                 
                 if [ "$last_octet" -gt "$max" ]; then
                     max="$last_octet"
