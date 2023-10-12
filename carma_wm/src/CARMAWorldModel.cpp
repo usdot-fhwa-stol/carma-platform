@@ -1469,7 +1469,7 @@ namespace carma_wm
       int curr_year = curr_time_boost.date().year();
 
       if (is_simulation)
-        curr_year = 0;
+        curr_year = 1970;
 
       auto curr_year_start_boost(boost::posix_time::time_from_string(std::to_string(curr_year)+ "-01-01 00:00:00.000"));
 
