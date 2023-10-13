@@ -40,13 +40,13 @@ sudo chgrp carma /opt/carma # Set group to expose permissions for build
 if [[ ! -z "$ROS1_PACKAGES$ROS2_PACKAGES" ]]; then
     if [[ ! -z "$ROS1_PACKAGES" ]]; then
         echo "Incrementally building ROS1 packages: $ROS1_PACKAGES"
-        colcon build --install-base /opt/carma/install --cmake-args -DCMAKE_BUILD_TYPE=Release --packages-above $ROS1_PACKAGES
+        colcon build --install-base /opt/carma/install --cmake-args -DCMAKE_BUILD_TYPE=Release --packages-above $ROS1_PACKAGES 
     else
         echo "Build type is incremental but no ROS1 packages specified, skipping ROS1 build..."
     fi
 else
     echo "Building all ROS1 CARMA Components"
-    colcon build --install-base /opt/carma/install --cmake-args -DCMAKE_BUILD_TYPE=Release --packages-skip novatel_oem7_driver novatel_oem7_msgs
+    colcon build --install-base /opt/carma/install --cmake-args -DCMAKE_BUILD_TYPE=Release
 fi
 echo "Build of ROS1 CARMA Components Complete"
 
