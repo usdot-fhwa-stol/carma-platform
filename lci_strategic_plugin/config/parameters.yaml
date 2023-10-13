@@ -8,7 +8,7 @@ vehicle_accel_limit_multiplier : 1.0
 min_approach_distance : 30.0
 
 # Double: Downtrack distance until nearest intersection where the Trajectory Smoothing algorithm should activate
-trajectory_smoothing_activation_distance: 30.0
+trajectory_smoothing_activation_distance: 200.0
 
 # Double: A buffer infront of the stopping location which will still be considered a valid stop. Units in meters
 stopping_location_buffer : 8.0

@@ -203,17 +203,7 @@ return CallbackReturn::SUCCESS;
         carma_planning_msgs::srv::PlanTrajectory::Response::SharedPtr ilc_resp = std::make_shared<carma_planning_msgs::srv::PlanTrajectory::Response>();
         object_->call(new_req,ilc_resp);
 
-        if (ilc_resp == nullptr)
-        {
-           RCLCPP_DEBUG_STREAM(rclcpp::get_logger("intersection_transit_maneuvering"),"Somehow we lost the pointer!");
-        }
-        else
-        {
-           RCLCPP_DEBUG_STREAM(rclcpp::get_logger("intersection_transit_maneuvering"),"Pointer is still there! id: " << ilc_resp->trajectory_plan.trajectory_id << ", size: " << ilc_resp->trajectory_plan.trajectory_points.size());
-
-        }
-
-        if(ilc_resp->trajectory_plan.trajectory_points.size() == 0)//Since we're using an interface for this process, the call() functionality will come from somewhere else
+        if(ilc_resp->trajectory_plan.trajectory_points.empty())//Since we're using an interface for this process, the call() functionality will come from somewhere else
         {
            RCLCPP_DEBUG_STREAM(rclcpp::get_logger("intersection_transit_maneuvering"),"Failed to call service");
            return ;

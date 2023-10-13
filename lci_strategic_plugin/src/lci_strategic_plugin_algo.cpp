@@ -67,7 +67,7 @@ rclcpp::Time LCIStrategicPlugin::get_nearest_green_entry_time(const rclcpp::Time
 
   if (!has_green_signal)
   {
-    return rclcpp::Time((lanelet::time::toSec(signal->recorded_time_stamps[std::max(0, static_cast<int>(signal->recorded_time_stamps.size() - 2))].first) + EPSILON) * 1e9); //second to last because last is TDB red
+    return rclcpp::Time((lanelet::time::toSec(signal->recorded_time_stamps.back().first) + EPSILON) * 1e9); //return TBD red if no green is found...
   }
 
   auto curr_pair = signal->predictState(t);
