@@ -41,11 +41,11 @@ namespace intersection_transit_maneuvering
         if (future_status == std::future_status::ready) {
             resp = resp_future.get();
             
-            RCLCPP_ERROR_STREAM(rclcpp::get_logger("intersection_transit_maneuvering"), "ILC was called and got trajectory size: " << resp->trajectory_plan.trajectory_points.size());
+            RCLCPP_DEBUG_STREAM(rclcpp::get_logger("intersection_transit_maneuvering"), "Responsible tactical plugin was called and got trajectory size: " << resp->trajectory_plan.trajectory_points.size());
         }
         else
         {
-            RCLCPP_ERROR_STREAM(rclcpp::get_logger("intersection_transit_maneuvering"), "failed to call plugin from" << "intersection_transit_maneuvering");
+            RCLCPP_DEBUG(rclcpp::get_logger("intersection_transit_maneuvering"), "Failed to call the responsible tactical plugin from intersection_transit_maneuvering");
         }
         return;
 
