@@ -110,7 +110,7 @@ public:
    * @brief processSpatFromMsg update map's traffic light states with SPAT msg
    *
    * @param spat_msg Msg to update with
-   * // TODO
+   * @param use_sim_time Boolean to indicate if it is currently simulation or not
    */
   void processSpatFromMsg(const carma_v2x_msgs::msg::SPAT& spat_msg, bool use_sim_time = false);
 
