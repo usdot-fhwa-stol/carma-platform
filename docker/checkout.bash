@@ -1,6 +1,6 @@
 #!/bin/bash
 
-#  Copyright (C) 2018-2021 LEIDOS.
+#  Copyright (C) 2018-2023 LEIDOS.
 # 
 #  Licensed under the Apache License, Version 2.0 (the "License"); you may not
 #  use this file except in compliance with the License. You may obtain a copy of
@@ -73,6 +73,19 @@ cd ../
 # NOTE: clone -b flag is used instead of --branch to avoid hook rewriting it
 git clone -b ros2 https://github.com/usdot-fhwa-stol/rosbridge_suite
 
+# The feature/integrate-carma branch of rosbag2 includes improvements that were not possible to backport into the foxy branch
+# of rosbag2. These rosbag2 packages will replace the originally built foxy rosbag2 packages.
+# NOTE: Additional information regarding the rosbag2 improvements on this branch are included in the forked repository's README. 
+git clone -b carma-develop https://github.com/usdot-fhwa-stol/rosbag2
+
+# Novatel OEM7 Driver
+# NOTE: This is required since otherwise this image will not contain the novatel_oem7_msgs package, and a missing ROS 2 message package
+#       can cause ROS 2 rosbag logging to fail in Foxy. 
+# Related GitHub discussion for fix that was not backported to Foxy: https://github.com/ros2/rosbag2/pull/858
+sudo git clone https://github.com/novatel/novatel_oem7_driver.git ${dir}/src/novatel_oem7_driver -b ros2-dev
+# Checkout verified commit
+cd ${dir}/src/novatel_oem7_driver
+sudo git checkout 3055e220bb9715b59c3ef53ab0aba05a495d9d5
 
 cd ${dir}/src
 
