@@ -110,9 +110,8 @@ public:
    * @brief processSpatFromMsg update map's traffic light states with SPAT msg
    *
    * @param spat_msg Msg to update with
-   * @param use_sim_time Boolean to indicate if it is currently simulation or not
    */
-  void processSpatFromMsg(const carma_v2x_msgs::msg::SPAT& spat_msg, bool use_sim_time = false);
+  void processSpatFromMsg(const carma_v2x_msgs::msg::SPAT& spat_msg);
 
   /**
    * \brief This function is called by distanceToObjectBehindInLane or distanceToObjectAheadInLane. 
@@ -136,7 +135,7 @@ public:
     * \param moy_exists tells weather minute of the year exist or not
     * \param moy value of the minute of the year
    */
-  boost::posix_time::ptime min_end_time_converter_minute_of_year(boost::posix_time::ptime min_end_time,bool moy_exists,uint32_t moy=0, bool is_simulation = false);
+  boost::posix_time::ptime min_end_time_converter_minute_of_year(boost::posix_time::ptime min_end_time,bool moy_exists,uint32_t moy=0);
 
   /*! \brief for cheking previous rate to avoid repetation.
     * \param min_end_time_dynamic dynamic spat processing minimum end time

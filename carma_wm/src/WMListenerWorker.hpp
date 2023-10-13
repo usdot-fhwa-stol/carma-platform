@@ -137,12 +137,8 @@ public:
    */
   void incomingSpatCallback(const carma_v2x_msgs::msg::SPAT::UniquePtr spat_msg);
 
-    // TODO
-  void isUsingSimTime(bool use_sim_time);
-
 private:
   std::shared_ptr<CARMAWorldModel> world_model_;
-  bool use_sim_time_;
   std::function<void()> map_callback_;
   std::function<void()> route_callback_;
   void newRegemUpdateHelper(lanelet::Lanelet parent_llt, lanelet::RegulatoryElement* regem) const;
