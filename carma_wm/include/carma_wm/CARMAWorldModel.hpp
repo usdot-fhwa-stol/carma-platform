@@ -15,7 +15,7 @@
  * License for the specific language governing permissions and limitations under
  * the License.
  */
-
+#include <rclcpp/rclcpp.hpp>
 #include "carma_wm/WorldModel.hpp"
 #include <lanelet2_extension/traffic_rules/CarmaUSTrafficRules.h>
 #include <lanelet2_core/primitives/BasicRegulatoryElements.h>
@@ -269,6 +269,8 @@ public:
 
   carma_wm::SignalizedIntersectionManager sim_; // records SPAT/MAP lane ids to lanelet ids
 
+  void setLogger(const rclcpp::Logger& new_logger) { logger_ = new_logger; sim_.setLogger(logger_);};
+
 private:
 
   double config_speed_limit_;
@@ -316,6 +318,8 @@ private:
   static constexpr double RED_LIGHT_DURATION = 20.0; //in sec
   static constexpr double YELLOW_LIGHT_DURATION = 3.0; //in sec
   static constexpr double GREEN_LIGHT_DURATION = 20.0; //in sec
+
+  rclcpp::Logger logger_ = rclcpp::get_logger("carma_wm");
   
 };
 }  // namespace carma_wm

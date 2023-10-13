@@ -171,12 +171,16 @@ public:
   // traffic signal state counter
   std::unordered_map<uint16_t, std::unordered_map<uint8_t,int>> signal_state_counter_; //[intersection_id][signal_group_id]
 
+  void setLogger(const rclcpp::Logger& new_logger) { logger_ = new_logger; world_model_->setLogger(logger_);};
+
 private:
   // PROJ string of current map
   std::string target_frame_ = "";
 
   // Max width of lane in meters
   double max_lane_width_ = 4;
+
+  rclcpp::Logger logger_ = rclcpp::get_logger("carma_wm");
 };
 
 }  // namespace carma_wm

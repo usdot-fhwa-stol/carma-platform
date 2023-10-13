@@ -67,6 +67,7 @@ WMListener::WMListener(
   setConfigSpeedLimit(config_speed_limit_param.as_double());
   worker_->setVehicleParticipationType(participant_param.as_string());
   worker_->isUsingSimTime(use_sim_time_param.as_bool());
+  worker_->setLogger(node_logging_->get_logger());
 
   rclcpp::SubscriptionOptions map_update_options;
   rclcpp::SubscriptionOptions map_options;

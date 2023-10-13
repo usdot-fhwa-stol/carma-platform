@@ -75,14 +75,14 @@ namespace carma_wm
 
     auto ref_node  = local_projector.forward(gps_point);
 
-    RCLCPP_DEBUG_STREAM(rclcpp::get_logger("carma_wm::SignalizedIntersectionManager"), "Reference node in map frame x: " << ref_node.x() << ", y: " << ref_node.y());
+    RCLCPP_DEBUG_STREAM(rclcpp::get_logger(logger_), "Reference node in map frame x: " << ref_node.x() << ", y: " << ref_node.y());
     
 
     for (auto lane : intersection.lane_list)
     {
       if (lane.lane_attributes.lane_type.choice != j2735_v2x_msgs::msg::LaneTypeAttributes::VEHICLE)
       {
-        RCLCPP_DEBUG_STREAM(rclcpp::get_logger("carma_wm::SignalizedIntersectionManager"), "Lane id: " << (int)lane.lane_id << ", is not a lane for vehicle. Only vehicle road is currently supported. Skipping..." );
+        RCLCPP_DEBUG_STREAM(rclcpp::get_logger(logger_), "Lane id: " << (int)lane.lane_id << ", is not a lane for vehicle. Only vehicle road is currently supported. Skipping..." );
         continue;
       }
       std::vector<lanelet::Point3d> node_list;
@@ -94,11 +94,11 @@ namespace carma_wm
       {
         curr_x += intersection_coord_correction_[intersection.id.id].first;
         curr_y += intersection_coord_correction_[intersection.id.id].second;
-        RCLCPP_DEBUG_STREAM(rclcpp::get_logger("carma_wm::SignalizedIntersectionManager"), "Applied reference point correction, delta_x: " <<  intersection_coord_correction_[intersection.id.id].first <<
+        RCLCPP_DEBUG_STREAM(rclcpp::get_logger(logger_), "Applied reference point correction, delta_x: " <<  intersection_coord_correction_[intersection.id.id].first <<
                           ", delta_y: " << intersection_coord_correction_[intersection.id.id].second << ", to intersection id: " << (int)lane.lane_id);
       }
 
-      RCLCPP_DEBUG_STREAM(rclcpp::get_logger("carma_wm::SignalizedIntersectionManager"), "Processing Lane id: " << (int)lane.lane_id);
+      RCLCPP_DEBUG_STREAM(rclcpp::get_logger(logger_), "Processing Lane id: " << (int)lane.lane_id);
       
       size_t min_number_of_points = 2; // two points minimum are required
 
@@ -106,7 +106,7 @@ namespace carma_wm
 
       if (size_of_available_points < min_number_of_points)
       {
-        RCLCPP_WARN_STREAM(rclcpp::get_logger("carma_wm::SignalizedIntersectionManager"), "Not enough points are provided to match a lane. Skipping... ");
+        RCLCPP_WARN_STREAM(rclcpp::get_logger(logger_), "Not enough points are provided to match a lane. Skipping... ");
         continue;
       }
 
@@ -116,23 +116,23 @@ namespace carma_wm
         curr_y = lane.node_list.nodes.node_set_xy[i].delta.y + curr_y;
         lanelet::Point3d curr_node{map->pointLayer.uniqueId(), curr_x, curr_y, 0};
 
-        RCLCPP_DEBUG_STREAM(rclcpp::get_logger("carma_wm::SignalizedIntersectionManager"), "Current node x: " << curr_x << ", y: " << curr_y);
+        RCLCPP_DEBUG_STREAM(rclcpp::get_logger(logger_), "Current node x: " << curr_x << ", y: " << curr_y);
 
         node_list.push_back(curr_node);
       }
 
-      RCLCPP_DEBUG_STREAM(rclcpp::get_logger("carma_wm::SignalizedIntersectionManager"), "Lane directions: " << (int)lane.lane_attributes.directional_use.lane_direction); 
+      RCLCPP_DEBUG_STREAM(rclcpp::get_logger(logger_), "Lane directions: " << (int)lane.lane_attributes.directional_use.lane_direction); 
       
       if (lane.lane_attributes.directional_use.lane_direction == LANE_DIRECTION::INGRESS)
       {
         // flip direction if ingress to pick up correct lanelets
-        RCLCPP_DEBUG_STREAM(rclcpp::get_logger("carma_wm::SignalizedIntersectionManager"), "Reversed the node list!");
+        RCLCPP_DEBUG_STREAM(rclcpp::get_logger(logger_), "Reversed the node list!");
         std::reverse(node_list.begin(), node_list.end());
       }
       
       for (auto node : node_list)
       {
-        RCLCPP_DEBUG_STREAM(rclcpp::get_logger("carma_wm::SignalizedIntersectionManager"), node.x() << ", " << node.y());
+        RCLCPP_DEBUG_STREAM(rclcpp::get_logger(logger_), node.x() << ", " << node.y());
       }
 
       // save which signal group connect to which exit lanes
@@ -151,7 +151,7 @@ namespace carma_wm
       {
         // https://github.com/usdot-fhwa-stol/carma-platform/issues/1593 
         // Open issue TODO on how this error is handled
-        RCLCPP_WARN_STREAM(rclcpp::get_logger("carma_wm::SignalizedIntersectionManager"), "Given offset points are not inside the map for lane: " << (int)lane.lane_id);
+        RCLCPP_WARN_STREAM(rclcpp::get_logger(logger_), "Given offset points are not inside the map for lane: " << (int)lane.lane_id);
         continue;
       }
 
@@ -159,18 +159,18 @@ namespace carma_wm
       if (lane.lane_attributes.directional_use.lane_direction == LANE_DIRECTION::EGRESS)
       {        
         corresponding_lanelet_id = affected_llts.front().id(); 
-        RCLCPP_DEBUG_STREAM(rclcpp::get_logger("carma_wm::SignalizedIntersectionManager"), "Default corresponding_lanelet_id: " << corresponding_lanelet_id <<", in EGRESS");
+        RCLCPP_DEBUG_STREAM(rclcpp::get_logger(logger_), "Default corresponding_lanelet_id: " << corresponding_lanelet_id <<", in EGRESS");
 
       }
       else //ingress
       {        
         corresponding_lanelet_id = affected_llts.back().id(); 
-        RCLCPP_DEBUG_STREAM(rclcpp::get_logger("carma_wm::SignalizedIntersectionManager"), "Default corresponding_lanelet_id: " << corresponding_lanelet_id <<", in INGRESS");
+        RCLCPP_DEBUG_STREAM(rclcpp::get_logger(logger_), "Default corresponding_lanelet_id: " << corresponding_lanelet_id <<", in INGRESS");
       } 
 
       for (auto llt : affected_llts) // filter out intersection lanelets
       {
-        RCLCPP_DEBUG_STREAM(rclcpp::get_logger("carma_wm::SignalizedIntersectionManager"), "Checking if we can get entry/exit from lanelet " << llt.id());
+        RCLCPP_DEBUG_STREAM(rclcpp::get_logger(logger_), "Checking if we can get entry/exit from lanelet " << llt.id());
         //TODO direction of affected_llts may play role, but it should be good
         if (llt.lanelet().get().hasAttribute("turn_direction") && 
             (llt.lanelet().get().attribute("turn_direction").value().compare("left") == 0 ||
@@ -179,12 +179,12 @@ namespace carma_wm
           std::vector<lanelet::ConstLanelet> connecting_llts;
           if (lane.lane_attributes.directional_use.lane_direction == LANE_DIRECTION::EGRESS)
           {
-            RCLCPP_DEBUG_STREAM(rclcpp::get_logger("carma_wm::SignalizedIntersectionManager"), "lanelet " << llt.id() << " is actually part of the intersecion. Trying to detect EGRESS...");
+            RCLCPP_DEBUG_STREAM(rclcpp::get_logger(logger_), "lanelet " << llt.id() << " is actually part of the intersecion. Trying to detect EGRESS...");
             connecting_llts = current_routing_graph->following(llt.lanelet().get());
           }
           else
           {
-            RCLCPP_DEBUG_STREAM(rclcpp::get_logger("carma_wm::SignalizedIntersectionManager"), "lanelet " << llt.id() << " is actually part of the intersecion. Trying to detect INGRESS...");
+            RCLCPP_DEBUG_STREAM(rclcpp::get_logger(logger_), "lanelet " << llt.id() << " is actually part of the intersecion. Trying to detect INGRESS...");
             connecting_llts = current_routing_graph->previous(llt.lanelet().get());
           }
 
@@ -194,7 +194,7 @@ namespace carma_wm
           }
           else
           {
-            RCLCPP_WARN_STREAM(rclcpp::get_logger("carma_wm::SignalizedIntersectionManager"), "Interestingly, did not detect here");
+            RCLCPP_WARN_STREAM(rclcpp::get_logger(logger_), "Interestingly, did not detect here");
             continue;
           }
 
@@ -202,16 +202,16 @@ namespace carma_wm
         }
       }
 
-      RCLCPP_DEBUG_STREAM(rclcpp::get_logger("carma_wm::SignalizedIntersectionManager"), "Found existing lanelet id: " << corresponding_lanelet_id);
+      RCLCPP_DEBUG_STREAM(rclcpp::get_logger(logger_), "Found existing lanelet id: " << corresponding_lanelet_id);
 
       if (lane.lane_attributes.directional_use.lane_direction == LANE_DIRECTION::INGRESS)
       {
-        RCLCPP_DEBUG_STREAM(rclcpp::get_logger("carma_wm::SignalizedIntersectionManager"), "Detected INGRESS, " << (int)lane.lane_id);
+        RCLCPP_DEBUG_STREAM(rclcpp::get_logger(logger_), "Detected INGRESS, " << (int)lane.lane_id);
         entry[lane.lane_id] = corresponding_lanelet_id;
       }
       else if (lane.lane_attributes.directional_use.lane_direction == LANE_DIRECTION::EGRESS)
       {
-        RCLCPP_DEBUG_STREAM(rclcpp::get_logger("carma_wm::SignalizedIntersectionManager"), "Detected EGRESS, " << (int)lane.lane_id);
+        RCLCPP_DEBUG_STREAM(rclcpp::get_logger(logger_), "Detected EGRESS, " << (int)lane.lane_id);
         exit[lane.lane_id] = corresponding_lanelet_id;
       }
       // ignoring types that are neither ingress nor egress 
@@ -224,14 +224,14 @@ namespace carma_wm
       {
         if (exit.find(exit_lane) != exit.end())
         {
-          RCLCPP_DEBUG_STREAM(rclcpp::get_logger("carma_wm::SignalizedIntersectionManager"), "Adding exit_lane id: " << exit_lane);
+          RCLCPP_DEBUG_STREAM(rclcpp::get_logger(logger_), "Adding exit_lane id: " << exit_lane);
           signal_group_to_exit_lanelet_ids_[iter->first].insert(exit[exit_lane]);
         }
         else
         {
           // https://github.com/usdot-fhwa-stol/carma-platform/issues/1593 
           // Open issue TODO on how this error is handled
-          RCLCPP_WARN_STREAM(rclcpp::get_logger("carma_wm::SignalizedIntersectionManager"), "Unable to convert exit lane Id: "  + std::to_string((int)exit_lane) + ", to lanelet id using the given MAP.msg!");
+          RCLCPP_WARN_STREAM(rclcpp::get_logger(logger_), "Unable to convert exit lane Id: "  + std::to_string((int)exit_lane) + ", to lanelet id using the given MAP.msg!");
         }
       }
     }
@@ -241,7 +241,7 @@ namespace carma_wm
     {
       for (auto entry_lane : iter->second)
       {
-        RCLCPP_DEBUG_STREAM(rclcpp::get_logger("carma_wm::SignalizedIntersectionManager"), "Adding entry_lane id: " << entry_lane);
+        RCLCPP_DEBUG_STREAM(rclcpp::get_logger(logger_), "Adding entry_lane id: " << entry_lane);
         if (entry.find(entry_lane) != entry.end())
         {
           signal_group_to_entry_lanelet_ids_[iter->first].insert(entry[entry_lane]);
@@ -250,7 +250,7 @@ namespace carma_wm
         {
           // https://github.com/usdot-fhwa-stol/carma-platform/issues/1593 
           // Open issue TODO on how this error is handled
-          RCLCPP_WARN_STREAM(rclcpp::get_logger("carma_wm::SignalizedIntersectionManager"), "Unable to convert entry lane Id: "  + std::to_string((int)entry_lane) + ", to lanelet id using the given MAP.msg!");
+          RCLCPP_WARN_STREAM(rclcpp::get_logger(logger_), "Unable to convert entry lane Id: "  + std::to_string((int)entry_lane) + ", to lanelet id using the given MAP.msg!");
         }
       }
     }
@@ -372,7 +372,7 @@ namespace carma_wm
 
       if (intersection_id == lanelet::InvalId)
       {
-        RCLCPP_DEBUG_STREAM(rclcpp::get_logger("carma_wm::SignalizedIntersectionManager"), "No existing intersection found. Creating a new one...");
+        RCLCPP_DEBUG_STREAM(rclcpp::get_logger(logger_), "No existing intersection found. Creating a new one...");
         intersection_id = lanelet::utils::getId();
 
         std::vector<lanelet::Lanelet> interior_llts = identifyInteriorLanelets(entry_llts, map);
@@ -388,7 +388,7 @@ namespace carma_wm
     // check if it already exists
     for (auto sig_grp_pair : signal_group_to_exit_lanelet_ids_)
     {
-      RCLCPP_DEBUG_STREAM(rclcpp::get_logger("carma_wm::SignalizedIntersectionManager"), "Creating signal for: " << (int)sig_grp_pair.first);
+      RCLCPP_DEBUG_STREAM(rclcpp::get_logger(logger_), "Creating signal for: " << (int)sig_grp_pair.first);
       // ignore the traffic signals already inside
       if (signal_group_to_traffic_light_id_.find(sig_grp_pair.first) != signal_group_to_traffic_light_id_.end() &&
            map->regulatoryElementLayer.exists(signal_group_to_traffic_light_id_[sig_grp_pair.first]))
