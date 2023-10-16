@@ -110,6 +110,72 @@ auto make_detection(const carma_cooperative_perception_interfaces::msg::Detectio
   throw std::runtime_error("unkown motion model type '" + std::to_string(msg.motion_model) + "'");
 }
 
+static auto to_ros_msg(const mot::CtraTrack & track) noexcept
+{
+  carma_cooperative_perception_interfaces::msg::Track msg;
+
+  msg.header.stamp.sec = mot::remove_units(units::math::floor(track.timestamp));
+  msg.header.stamp.nanosec = mot::remove_units(
+    units::time::nanosecond_t{units::math::fmod(track.timestamp, units::time::second_t{10.0})});
+  msg.header.frame_id = "map";
+
+  msg.id = track.uuid.value();
+  msg.motion_model = msg.MOTION_MODEL_CTRA;
+  msg.pose.pose.position.x = mot::remove_units(track.state.position_x);
+  msg.pose.pose.position.y = mot::remove_units(track.state.position_y);
+
+  tf2::Quaternion orientation;
+  orientation.setRPY(0, 0, mot::remove_units(track.state.yaw.get_angle()));
+  msg.pose.pose.orientation.x = orientation.getX();
+  msg.pose.pose.orientation.y = orientation.getY();
+  msg.pose.pose.orientation.z = orientation.getZ();
+  msg.pose.pose.orientation.w = orientation.getW();
+
+  msg.twist.twist.linear.x = mot::remove_units(track.state.velocity);
+  msg.twist.twist.angular.z = mot::remove_units(track.state.yaw_rate);
+
+  msg.accel.accel.linear.x = mot::remove_units(track.state.acceleration);
+
+  return msg;
+}
+
+static auto to_ros_msg(const mot::CtrvTrack & track) noexcept
+{
+  carma_cooperative_perception_interfaces::msg::Track msg;
+
+  msg.header.stamp.sec = mot::remove_units(units::math::floor(track.timestamp));
+  msg.header.stamp.nanosec = mot::remove_units(
+    units::time::nanosecond_t{units::math::fmod(track.timestamp, units::time::second_t{10.0})});
+  msg.header.frame_id = "map";
+
+  msg.id = track.uuid.value();
+  msg.motion_model = msg.MOTION_MODEL_CTRV;
+  msg.pose.pose.position.x = mot::remove_units(track.state.position_x);
+  msg.pose.pose.position.y = mot::remove_units(track.state.position_y);
+
+  tf2::Quaternion orientation;
+  orientation.setRPY(0, 0, mot::remove_units(track.state.yaw.get_angle()));
+  msg.pose.pose.orientation.x = orientation.getX();
+  msg.pose.pose.orientation.y = orientation.getY();
+  msg.pose.pose.orientation.z = orientation.getZ();
+  msg.pose.pose.orientation.w = orientation.getW();
+
+  msg.twist.twist.linear.x = mot::remove_units(track.state.velocity);
+  msg.twist.twist.angular.z = mot::remove_units(track.state.yaw_rate);
+
+  return msg;
+}
+
+static auto to_ros_msg(const Track & track) noexcept
+{
+  static constexpr mot::Visitor visitor{
+    [](const mot::CtrvTrack & t) { return to_ros_msg(t); },
+    [](const mot::CtraTrack & t) { return to_ros_msg(t); },
+    [](const auto &) { throw std::runtime_error{"cannot make ROS 2 message from track type"}; }};
+
+  return std::visit(visitor, track);
+}
+
 MultipleObjectTrackerNode::MultipleObjectTrackerNode(const rclcpp::NodeOptions & options)
 : CarmaLifecycleNode{options}
 {
