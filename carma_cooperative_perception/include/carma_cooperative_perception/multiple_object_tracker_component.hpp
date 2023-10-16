@@ -18,7 +18,12 @@
 #include <carma_ros2_utils/carma_lifecycle_node.hpp>
 #include <rclcpp/rclcpp.hpp>
 
+#include <variant>
 #include <vector>
+
+#include <cooperative_perception/ctra_model.hpp>
+#include <cooperative_perception/ctrv_model.hpp>
+#include <cooperative_perception/track_management.hpp>
 
 #include <carma_cooperative_perception_interfaces/msg/detection_list.hpp>
 #include <carma_cooperative_perception_interfaces/msg/track_list.hpp>
@@ -26,9 +31,11 @@
 namespace carma_cooperative_perception
 {
 
-using Detection = std::variant<int>;
+using Detection =
+  std::variant<cooperative_perception::CtrvDetection, cooperative_perception::CtraDetection>;
+using Track = std::variant<cooperative_perception::CtrvTrack, cooperative_perception::CtraTrack>;
 
-auto make_detection(const carma_cooperative_perception_interfaces::msg::Detection & msg) noexcept
+auto make_detection(const carma_cooperative_perception_interfaces::msg::Detection & msg)
   -> Detection;
 
 class MultipleObjectTrackerNode : public carma_ros2_utils::CarmaLifecycleNode
@@ -51,9 +58,10 @@ public:
   auto handle_on_shutdown(const rclcpp_lifecycle::State & /* previous_state */)
     -> carma_ros2_utils::CallbackReturn override;
 
-  auto store_new_detections() -> void {}
+  auto store_new_detections(
+    const carma_cooperative_perception_interfaces::msg::DetectionList & msg) noexcept -> void;
 
-  auto execute_pipeline() const noexcept -> void;
+  auto execute_pipeline() noexcept -> void;
 
 private:
   rclcpp::Subscription<carma_cooperative_perception_interfaces::msg::DetectionList>::SharedPtr
@@ -65,6 +73,9 @@ private:
   rclcpp::TimerBase::SharedPtr pipeline_execution_timer_{nullptr};
 
   std::vector<Detection> detections_;
+  cooperative_perception::TrackManager<
+    Track, cooperative_perception::FixedThresholdManagementPolicy>
+    track_manager_;
 };
 
 }  // namespace carma_cooperative_perception

@@ -69,6 +69,7 @@ target_link_libraries(carma_cooperative_perception
   ${PROJ4_LIBRARIES}  # Note: Newer versions of PROJ use PROJ::proj
   GSL  # Note: Newer versions of GSL use Microsoft.GSL::GSL
   units::units
+  cooperative_perception::cooperative_perception
 )
 
 rclcpp_components_register_nodes(carma_cooperative_perception

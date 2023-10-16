@@ -22,7 +22,7 @@
 namespace carma_cooperative_perception
 {
 
-auto make_detection(const carma_cooperative_perception_interfaces::msg::Detection & msg) noexcept
+auto make_detection(const carma_cooperative_perception_interfaces::msg::Detection & msg)
   -> Detection
 {
   Detection detection;
@@ -136,8 +136,10 @@ auto MultipleObjectTrackerNode::handle_on_shutdown(
 }
 
 auto MultipleObjectTrackerNode::execute_pipeline() const noexcept -> void
+auto MultipleObjectTrackerNode::execute_pipeline() noexcept -> void
 {
   if (detections_.empty()) {
+    RCLCPP_DEBUG(get_logger(), "Not executing pipeline: internal detection list is empty");
     RCLCPP_DEBUG(get_logger(), "List of detections is empty. Not executing pipeline.");
     return;
   }
