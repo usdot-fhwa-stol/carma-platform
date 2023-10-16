@@ -132,9 +132,7 @@ auto MultipleObjectTrackerNode::handle_on_configure(
     "input/detection_list", 1,
     [this](const carma_cooperative_perception_interfaces::msg::DetectionList::SharedPtr msg_ptr) {
       if (const auto current_state{this->get_current_state().label()}; current_state == "active") {
-        for (const auto detection : msg_ptr->detections) {
-          detections_.push_back(make_detection(detection));
-        }
+        this->store_new_detections(*msg_ptr);
       } else {
         RCLCPP_WARN(
           this->get_logger(),
@@ -204,7 +202,25 @@ auto MultipleObjectTrackerNode::handle_on_shutdown(
   return carma_ros2_utils::CallbackReturn::SUCCESS;
 }
 
-auto MultipleObjectTrackerNode::execute_pipeline() const noexcept -> void
+auto MultipleObjectTrackerNode::store_new_detections(
+  const carma_cooperative_perception_interfaces::msg::DetectionList & msg) noexcept -> void
+{
+  if (std::size(msg.detections) == 0) {
+    RCLCPP_WARN(this->get_logger(), "Not storing detections: incoming detection list is empty");
+    return;
+  }
+
+  for (const auto & detection : msg.detections) {
+    try {
+      detections_.push_back(make_detection(detection));
+    } catch (const std::runtime_error & error) {
+      RCLCPP_ERROR(
+        this->get_logger(), "Could not process detection with ID '%s': %s", detection.id.c_str(),
+        error.what());
+    }
+  }
+}
+
 auto MultipleObjectTrackerNode::execute_pipeline() noexcept -> void
 {
   if (detections_.empty()) {
