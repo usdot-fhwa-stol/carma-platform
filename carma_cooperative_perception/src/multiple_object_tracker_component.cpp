@@ -14,7 +14,15 @@
 
 #include "carma_cooperative_perception/multiple_object_tracker_component.hpp"
 
+#include <tf2_geometry_msgs/tf2_geometry_msgs.h>
+#include <units.h>
+#include <algorithm>
 #include <chrono>
+#include <cooperative_perception/ctra_model.hpp>
+#include <cooperative_perception/ctrv_model.hpp>
+#include <cooperative_perception/fusing.hpp>
+#include <cooperative_perception/scoring.hpp>
+#include <cooperative_perception/temporal_alignment.hpp>
 
 #include <rclcpp/rclcpp.hpp>
 #include <rclcpp_components/register_node_macro.hpp>
@@ -22,23 +30,84 @@
 namespace carma_cooperative_perception
 {
 
+namespace mot = cooperative_perception;
+
+auto make_ctrv_detection(
+  const carma_cooperative_perception_interfaces::msg::Detection & msg) noexcept -> Detection
+{
+  const auto timestamp{
+    units::time::second_t{static_cast<double>(msg.header.stamp.sec)} +
+    units::time::nanosecond_t{static_cast<double>(msg.header.stamp.nanosec)}};
+
+  tf2::Quaternion orientation;
+  orientation.setX(msg.pose.pose.orientation.x);
+  orientation.setY(msg.pose.pose.orientation.y);
+  orientation.setZ(msg.pose.pose.orientation.z);
+  orientation.setW(msg.pose.pose.orientation.w);
+
+  double roll{0.0};
+  double pitch{0.0};
+  double yaw{0.0};
+
+  tf2::Matrix3x3 matrix{orientation};
+  matrix.getRPY(roll, pitch, yaw);
+
+  const mot::CtrvState state{
+    units::length::meter_t{msg.pose.pose.position.x},
+    units::length::meter_t{msg.pose.pose.position.y},
+    units::velocity::meters_per_second_t{msg.twist.twist.linear.x},
+    mot::Angle{units::angle::radian_t{yaw}},
+    units::angular_velocity::radians_per_second_t{msg.twist.twist.angular.z}};
+
+  return mot::CtrvDetection{timestamp, state, mot::CtrvStateCovariance{}, mot::Uuid{msg.id}};
+}
+
+auto make_ctra_detection(
+  const carma_cooperative_perception_interfaces::msg::Detection & msg) noexcept -> Detection
+{
+  const auto timestamp{
+    units::time::second_t{static_cast<double>(msg.header.stamp.sec)} +
+    units::time::nanosecond_t{static_cast<double>(msg.header.stamp.nanosec)}};
+
+  tf2::Quaternion orientation;
+  orientation.setX(msg.pose.pose.orientation.x);
+  orientation.setY(msg.pose.pose.orientation.y);
+  orientation.setZ(msg.pose.pose.orientation.z);
+  orientation.setW(msg.pose.pose.orientation.w);
+
+  double roll{0.0};
+  double pitch{0.0};
+  double yaw{0.0};
+
+  tf2::Matrix3x3 matrix{orientation};
+  matrix.getRPY(roll, pitch, yaw);
+
+  const mot::CtraState state{
+    units::length::meter_t{msg.pose.pose.position.x},
+    units::length::meter_t{msg.pose.pose.position.y},
+    units::velocity::meters_per_second_t{msg.twist.twist.linear.x},
+    mot::Angle{units::angle::radian_t{yaw}},
+    units::angular_velocity::radians_per_second_t{msg.twist.twist.angular.z},
+    units::acceleration::meters_per_second_squared_t{msg.accel.accel.linear.x}};
+
+  return mot::CtraDetection{timestamp, state, mot::CtraStateCovariance{}, mot::Uuid{msg.id}};
+}
+
 auto make_detection(const carma_cooperative_perception_interfaces::msg::Detection & msg)
   -> Detection
 {
-  Detection detection;
-
   switch (msg.motion_model) {
     case msg.MOTION_MODEL_CTRV:
-      break;
+      return make_ctrv_detection(msg);
 
     case msg.MOTION_MODEL_CTRA:
-      break;
+      return make_ctra_detection(msg);
 
     case msg.MOTION_MODEL_CV:
       break;
   }
 
-  return detection;
+  throw std::runtime_error("unkown motion model type '" + std::to_string(msg.motion_model) + "'");
 }
 
 MultipleObjectTrackerNode::MultipleObjectTrackerNode(const rclcpp::NodeOptions & options)
