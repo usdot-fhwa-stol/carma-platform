@@ -77,6 +77,8 @@ private:
   cooperative_perception::TrackManager<
     Track, cooperative_perception::FixedThresholdManagementPolicy>
     track_manager_;
+  units::time::nanosecond_t execution_period_{1 / units::frequency::hertz_t{2.0}};
+  OnSetParametersCallbackHandle::SharedPtr on_set_parameters_callback_{nullptr};
 };
 
 }  // namespace carma_cooperative_perception

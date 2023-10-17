@@ -210,6 +210,36 @@ auto MultipleObjectTrackerNode::handle_on_configure(
       }
     });
 
+  declare_parameter(
+    "execution_frequency_hz", mot::remove_units(units::frequency::hertz_t{1 / execution_period_}));
+
+  on_set_parameters_callback_ =
+    add_on_set_parameters_callback([this](const std::vector<rclcpp::Parameter> & parameters) {
+      rcl_interfaces::msg::SetParametersResult result;
+      result.successful = true;
+      result.reason = "success";
+
+      for (const auto & parameter : parameters) {
+        if (parameter.get_name() == "execution_frequency_hz") {
+          if (this->get_current_state().label() == "active") {
+            RCLCPP_ERROR(
+              get_logger(),
+              "Cannot change parameter 'execution_frequencey_hz' while node is in 'Active' state");
+            result.successful = false;
+            result.reason = "parameter is read-only while node is in 'Active' state";
+            return result;
+          } else {
+            this->execution_period_ = 1 / units::frequency::hertz_t{parameter.as_double()};
+          }
+        } else {
+          result.successful = false;
+          result.reason = "Unexpected parameter name '" + parameter.get_name() + '\'';
+        }
+      }
+
+      return result;
+    });
+
   RCLCPP_INFO(get_logger(), "Lifecycle transition: successfully configured");
 
   return carma_ros2_utils::CallbackReturn::SUCCESS;
@@ -220,9 +250,9 @@ auto MultipleObjectTrackerNode::handle_on_activate(
 {
   RCLCPP_INFO(get_logger(), "Lifecycle transition: actiavting");
 
-  using std::chrono_literals::operator""ms;
   if (pipeline_execution_timer_ == nullptr) {
-    pipeline_execution_timer_ = create_wall_timer(500ms, [this] { execute_pipeline(); });
+    const std::chrono::duration<double, std::nano> period_ns{mot::remove_units(execution_period_)};
+    pipeline_execution_timer_ = create_wall_timer(period_ns, [this] { execute_pipeline(); });
   } else {
     pipeline_execution_timer_->reset();
   }
@@ -239,6 +269,10 @@ auto MultipleObjectTrackerNode::handle_on_deactivate(
 
   pipeline_execution_timer_->cancel();
 
+  // There is currently no way to change a timer's period in ROS 2, so we will
+  // have to create a new one in case a user changes the period.
+  pipeline_execution_timer_.reset();
+
   RCLCPP_INFO(get_logger(), "Lifecycle transition: successfully deactivated");
 
   return carma_ros2_utils::CallbackReturn::SUCCESS;
@@ -251,6 +285,9 @@ auto MultipleObjectTrackerNode::handle_on_cleanup(
 
   // CarmaLifecycleNode does not handle subscriber pointer reseting for us
   detection_list_sub_.reset();
+
+  undeclare_parameter("execution_frequency_hz");
+  remove_on_set_parameters_callback(on_set_parameters_callback_.get());
 
   RCLCPP_INFO(get_logger(), "Lifecycle transition: successfully cleaned up");
 
