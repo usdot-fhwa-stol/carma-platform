@@ -278,12 +278,23 @@ auto MultipleObjectTrackerNode::store_new_detections(
     return;
   }
 
-  for (const auto & detection : msg.detections) {
+  for (const auto & detection_msg : msg.detections) {
     try {
-      detections_.push_back(make_detection(detection));
+      const auto detection{make_detection(detection_msg)};
+      const auto uuid{mot::get_uuid(detection)};
+
+      if (uuid_index_map_.count(uuid) == 0) {
+        detections_.push_back(std::move(detection));
+        uuid_index_map_[uuid] = std::size(detections_) - 1;
+      } else {
+        RCLCPP_WARN_STREAM(
+          this->get_logger(),
+          "Detection with ID '" << uuid << "' already exists. Overwriting its data");
+        detections_.at(uuid_index_map_[uuid]) = detection;
+      }
     } catch (const std::runtime_error & error) {
       RCLCPP_ERROR(
-        this->get_logger(), "Could not process detection with ID '%s': %s", detection.id.c_str(),
+        this->get_logger(), "Ignoring detection with ID '%s': %s", detection_msg.id.c_str(),
         error.what());
     }
   }

@@ -73,6 +73,7 @@ private:
   rclcpp::TimerBase::SharedPtr pipeline_execution_timer_{nullptr};
 
   std::vector<Detection> detections_;
+  std::unordered_map<cooperative_perception::Uuid, std::size_t> uuid_index_map_;
   cooperative_perception::TrackManager<
     Track, cooperative_perception::FixedThresholdManagementPolicy>
     track_manager_;
