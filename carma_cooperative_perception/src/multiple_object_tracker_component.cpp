@@ -177,7 +177,9 @@ static auto to_ros_msg(const Track & track) noexcept
 }
 
 MultipleObjectTrackerNode::MultipleObjectTrackerNode(const rclcpp::NodeOptions & options)
-: CarmaLifecycleNode{options}
+: CarmaLifecycleNode{options},
+  track_manager_{
+    mot::FixedThresholdManagementPolicy{mot::PromotionThreshold{3}, mot::RemovalThreshold{3}}}
 {
   // CarmaLifecycleNode base class will automatically handle lifecycle state changes for
   // lifecycle publishers and timers.
@@ -287,13 +289,92 @@ auto MultipleObjectTrackerNode::store_new_detections(
   }
 }
 
+static auto temporally_align_detections(
+  std::vector<Detection> & detections, units::time::second_t end_time) noexcept -> void
+{
+  for (auto & detection : detections) {
+    mot::propagate_to_time(detection, end_time, mot::default_unscented_transform);
+  }
+}
+
+static auto predict_track_states(std::vector<Track> tracks, units::time::second_t end_time) noexcept
+{
+  for (auto & track : tracks) {
+    mot::propagate_to_time(track, end_time, mot::default_unscented_transform);
+  }
+
+  return tracks;
+}
+
 auto MultipleObjectTrackerNode::execute_pipeline() noexcept -> void
 {
   if (detections_.empty()) {
     RCLCPP_DEBUG(get_logger(), "Not executing pipeline: internal detection list is empty");
-    RCLCPP_DEBUG(get_logger(), "List of detections is empty. Not executing pipeline.");
     return;
   }
+
+  static constexpr mot::Visitor make_track_visitor{
+    [](const mot::CtrvDetection & d) { return Track{mot::make_track<mot::CtrvTrack>(d)}; },
+    [](const mot::CtraDetection & d) { return Track{mot::make_track<mot::CtraTrack>(d)}; },
+    [](const auto &) { throw std::runtime_error("cannot make track from given detection"); },
+  };
+
+  if (track_manager_.get_all_tracks().empty()) {
+    RCLCPP_DEBUG(
+      get_logger(), "List of tracks is empty. Converting detections to tentative tracks");
+
+    for (const auto & detection : detections_) {
+      track_manager_.add_tentative_track(std::visit(make_track_visitor, detection));
+    }
+
+    detections_.clear();
+    uuid_index_map_.clear();
+    return;
+  }
+
+  const units::time::second_t current_time{this->now().seconds()};
+
+  temporally_align_detections(detections_, current_time);
+
+  const auto predicted_tracks{predict_track_states(track_manager_.get_all_tracks(), current_time)};
+  const auto scores{
+    mot::score_tracks_and_detections(predicted_tracks, detections_, mot::euclidean_distance_score)};
+
+  const auto associations{mot::associate_detections_to_tracks(scores, mot::gnn_associator)};
+  track_manager_.update_track_lists(associations);
+
+  std::unordered_map<mot::Uuid, Detection> detection_map;
+  for (const auto & detection : detections_) {
+    detection_map[mot::get_uuid(detection)] = detection;
+  }
+
+  const mot::HasAssociation has_association{associations};
+  for (auto & track : track_manager_.get_all_tracks()) {
+    if (has_association(track)) {
+      const auto detection_uuids{associations.at(get_uuid(track))};
+      const auto first_detection{detection_map[detection_uuids.at(0)]};
+      // mot::fuse_detection_to_track(first_detection, track, mot::covariance_intersection);
+      track = std::visit(mot::covariance_intersection_visitor, track, first_detection);
+    }
+  }
+
+  // Unassociated detections don't influence the tracking pipeline, so we can add
+  // them to the tracker at the end.
+  for (const auto & [uuid, detection] : detection_map) {
+    if (!has_association(detection)) {
+      track_manager_.add_tentative_track(std::visit(make_track_visitor, detection));
+    }
+  }
+
+  carma_cooperative_perception_interfaces::msg::TrackList track_list;
+  for (const auto & track : track_manager_.get_confirmed_tracks()) {
+    track_list.tracks.push_back(to_ros_msg(track));
+  }
+
+  track_list_pub_->publish(track_list);
+
+  detections_.clear();
+  uuid_index_map_.clear();
 }
 
 }  // namespace carma_cooperative_perception
