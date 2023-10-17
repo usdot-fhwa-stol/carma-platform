@@ -81,6 +81,8 @@ auto to_ddate_time_msg(const builtin_interfaces::msg::Time & builtin_time) noexc
   const auto minutes_of_hour = posix_time.time_of_day().minutes();
   const auto seconds_of_minute = posix_time.time_of_day().seconds();
 
+  ddate_time_output.presence_vector = 0;
+
   ddate_time_output.presence_vector |= j2735_v2x_msgs::msg::DDateTime::YEAR;
   ddate_time_output.year.year = time_stamp_year;
   ddate_time_output.presence_vector |= j2735_v2x_msgs::msg::DDateTime::MONTH;
@@ -131,16 +133,16 @@ auto heading_to_enu_yaw(const units::angle::degree_t & heading) noexcept -> unit
   return units::angle::degree_t{std::fmod(-(remove_units(heading) - 90.0) + 360.0, 360.0)};
 }
 
-// TODO: find the WGS84 heading from map frame pose
-// auto yaw_to_wgs_heading(const units::angle::degree_t & yaw) noexcept -> units::angle::degree_t
+// // TODO: find the WGS84 heading from map frame pose
+// auto enu_orientation_to_wgs_heading(const geometry_msgs::msg::Quaternion & enu_orientation) noexcept -> double
 // {
-//   // take yaw wrt detected object
-//   // get map grid convergence of the object (angle from true north)
-//   // get grid heading (not 90 - yaw?)
+
+
+//   return wgs_heading;
 // }
 
 // determine the object position offset in m from the current reference pose in map frame and external object pose
-auto calc_reference_pose_offset(const geometry_msgs::msg::PoseStamped source_pose,
+auto calc_relative_position(const geometry_msgs::msg::PoseStamped & source_pose,
   const carma_v2x_msgs::msg::PositionOffsetXYZ & position_offset) noexcept -> carma_v2x_msgs::msg::PositionOffsetXYZ
 {
   carma_v2x_msgs::msg::PositionOffsetXYZ adjusted_offset;
@@ -153,7 +155,7 @@ auto calc_reference_pose_offset(const geometry_msgs::msg::PoseStamped source_pos
   return adjusted_offset;
 }
 
-auto transform_pose_from_map_to_wgs84(const geometry_msgs::msg::PoseStamped source_pose, 
+auto transform_pose_from_map_to_wgs84(const geometry_msgs::msg::PoseStamped & source_pose, 
   std::shared_ptr<lanelet::projection::LocalFrameProjector> map_projection) noexcept
   -> carma_v2x_msgs::msg::Position3D
 {
@@ -366,7 +368,7 @@ auto to_external_object_list_msg(
 auto to_sdsm_msg(
   const carma_perception_msgs::msg::ExternalObjectList & external_object_list,
   const geometry_msgs::msg::PoseStamped & current_pose,
-  const std::shared_ptr<lanelet::projection::LocalFrameProjector> map_projection) noexcept
+  const std::shared_ptr<lanelet::projection::LocalFrameProjector> & map_projection) noexcept
   -> carma_v2x_msgs::msg::SensorDataSharingMessage
 { 
   carma_v2x_msgs::msg::SensorDataSharingMessage sdsm;
@@ -386,7 +388,7 @@ auto to_sdsm_msg(
 
     // Calculate the position offset from the current reference pose (in m)
     sdsm_detected_object.detected_object_common_data.pos =
-      calc_reference_pose_offset(current_pose, sdsm_detected_object.detected_object_common_data.pos);
+      calc_relative_position(current_pose, sdsm_detected_object.detected_object_common_data.pos);
 
     detected_object_list.detected_object_data.push_back(sdsm_detected_object);
   }
@@ -432,7 +434,8 @@ auto to_detected_object_data_msg(
     detected_object_common_data.presence_vector |= carma_v2x_msgs::msg::DetectedObjectCommonData::HAS_SPEED_Z;
     detected_object_common_data.speed_z.speed = external_object.velocity_inst.twist.linear.z;
 
-    // heading - convert ang vel to scale heading
+    // TODO: heading - convert ang vel to scale heading
+    // detected_object_common_data.heading.heading = enu_orientation_to_wgs_heading(external_object.velocity_inst.twist.angular.z);
     detected_object_common_data.heading.heading = external_object.velocity_inst.twist.angular.z * (180.0/3.14115926535); // to radian, use units.h
   }
 
@@ -442,7 +445,7 @@ auto to_detected_object_data_msg(
 
   switch (external_object.object_type) {
     case external_object.SMALL_VEHICLE:
-      detected_object_common_data.obj_type.object_type |= j3224_v2x_msgs::msg::ObjectType::VEHICLE;
+      detected_object_common_data.obj_type.object_type = j3224_v2x_msgs::msg::ObjectType::VEHICLE;
 
       if(external_object.presence_vector & external_object.SIZE_PRESENCE_VECTOR){
         detected_object_optional_data.det_veh.presence_vector |= carma_v2x_msgs::msg::DetectedVehicleData::HAS_SIZE;
@@ -454,7 +457,7 @@ auto to_detected_object_data_msg(
       }
       break;
     case external_object.LARGE_VEHICLE:
-      detected_object_common_data.obj_type.object_type |= j3224_v2x_msgs::msg::ObjectType::VEHICLE;
+      detected_object_common_data.obj_type.object_type = j3224_v2x_msgs::msg::ObjectType::VEHICLE;
 
       if(external_object.presence_vector & external_object.SIZE_PRESENCE_VECTOR){
         detected_object_optional_data.det_veh.presence_vector |= carma_v2x_msgs::msg::DetectedVehicleData::HAS_SIZE;
@@ -466,7 +469,7 @@ auto to_detected_object_data_msg(
       }
       break;
     case external_object.MOTORCYCLE:
-      detected_object_common_data.obj_type.object_type |= j3224_v2x_msgs::msg::ObjectType::VEHICLE;
+      detected_object_common_data.obj_type.object_type = j3224_v2x_msgs::msg::ObjectType::VEHICLE;
 
       if(external_object.presence_vector & external_object.SIZE_PRESENCE_VECTOR){
         detected_object_optional_data.det_veh.presence_vector |= carma_v2x_msgs::msg::DetectedVehicleData::HAS_SIZE;
@@ -478,7 +481,7 @@ auto to_detected_object_data_msg(
       }
       break;
     case external_object.PEDESTRIAN:
-      detected_object_common_data.obj_type.object_type |= j3224_v2x_msgs::msg::ObjectType::VRU;
+      detected_object_common_data.obj_type.object_type = j3224_v2x_msgs::msg::ObjectType::VRU;
 
       detected_object_optional_data.det_vru.presence_vector |= carma_v2x_msgs::msg::DetectedVRUData::HAS_BASIC_TYPE;
       detected_object_optional_data.det_vru.basic_type.type |= j2735_v2x_msgs::msg::PersonalDeviceUserType::A_PEDESTRIAN;
@@ -486,7 +489,7 @@ auto to_detected_object_data_msg(
       break;
     case external_object.UNKNOWN:
     default:
-      detected_object_common_data.obj_type.object_type |= j3224_v2x_msgs::msg::ObjectType::UNKNOWN;
+      detected_object_common_data.obj_type.object_type = j3224_v2x_msgs::msg::ObjectType::UNKNOWN;
 
       if(external_object.presence_vector & external_object.SIZE_PRESENCE_VECTOR){
 
@@ -498,9 +501,9 @@ auto to_detected_object_data_msg(
       }
 
   }
-  detected_object_data.detected_object_common_data = detected_object_common_data;
 
-  detected_object_data.detected_object_optional_data = detected_object_optional_data;
+  detected_object_data.detected_object_common_data = std::move(detected_object_common_data);
+  detected_object_data.detected_object_optional_data = std::move(detected_object_optional_data);
 
   return detected_object_data;
 

@@ -438,18 +438,26 @@ TEST(ToDetectedObjectDataMsg, FromExternalObject)
   EXPECT_EQ(detected_object.detected_object_optional_data.det_veh.height.vehicle_height, 23);
 
   // heading - not done
+  // geometry_msgs::msg::Quaternion orientation;
+  // orientation = object.pose.pose.orientation;
+  // const auto test_heading{carma_cooperative_perception::enu_orientation_to_wgs_heading(orientation)};
+  // std::cout << "Heading: " << test_heading << std::endl;
+
+  // const auto test_yaw{carma_cooperative_perception::heading_to_enu_yaw(units::angle::degree_t{215})};
+  // std::cout << "Yaw: " << test_yaw << std::endl;
+
 }
 
-// TEST(ToSDSMMsg, FromExternalObjectList)
-// {
-//   carma_perception_msgs::msg::ExternalObjectList object_list;
-//   object_list.objects.emplace_back();
-//   object_list.objects.emplace_back();
+TEST(ToSDSMMsg, FromExternalObjectList)
+{
+  carma_perception_msgs::msg::ExternalObjectList object_list;
+  object_list.objects.emplace_back();
+  object_list.objects.emplace_back();
 
-//   geometry_msgs::msg::PoseStamped current_pose;
-//   std::shared_ptr<lanelet::projection::LocalFrameProjector> map_projection;
+  geometry_msgs::msg::PoseStamped current_pose;
+  std::shared_ptr<lanelet::projection::LocalFrameProjector> map_projection;
 
-//   const auto sdsm{carma_cooperative_perception::to_sdsm_msg(object_list, current_pose, map_projection)};
+  const auto sdsm{carma_cooperative_perception::to_sdsm_msg(object_list, current_pose, map_projection)};
 
-//   EXPECT_EQ(std::size(sdsm.objects.detected_object_data), 2U);
-// }
+  EXPECT_EQ(std::size(sdsm.objects.detected_object_data), 2U);
+}
