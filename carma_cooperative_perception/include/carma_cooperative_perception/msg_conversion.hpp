@@ -33,6 +33,8 @@
 #include <lanelet2_core/geometry/Lanelet.h>
 #include <lanelet2_extension/projection/local_frame_projector.h>
 
+#include <tf2/LinearMath/Quaternion.h>
+
 namespace carma_cooperative_perception
 {
 auto to_time_msg(const DDateTime & d_date_time) noexcept -> builtin_interfaces::msg::Time;
@@ -50,9 +52,9 @@ auto to_position_msg(const UtmCoordinate & position_utm) noexcept -> geometry_ms
 auto heading_to_enu_yaw(const units::angle::degree_t & heading) noexcept -> units::angle::degree_t;
 
 // TODO: Find a conversion from MAP pose to WGS84 heading
-// auto yaw_to_wgs_heading(const units::angle::degree_t & yaw) noexcept -> units::angle::degree_t;
+// auto enu_orientation_to_wgs_heading(const geometry_msgs::msg::Quaternion & orientation) noexcept -> double;
 
-auto calc_reference_pose_offset(const carma_v2x_msgs::msg::Position3D & current_pose,
+auto calc_relative_position(const carma_v2x_msgs::msg::Position3D & current_pose,
   const carma_v2x_msgs::msg::DetectedObjectData & detected_object_data) noexcept -> carma_v2x_msgs::msg::DetectedObjectData;
 
 auto transform_from_map_to_wgs84(const geometry_msgs::msg::PoseStamped source_pose, 
@@ -91,7 +93,7 @@ auto to_external_object_list_msg(
 auto to_sdsm_msg(
   const carma_perception_msgs::msg::ExternalObjectList & external_object_list,
   const geometry_msgs::msg::PoseStamped & current_pose,
-  const std::shared_ptr<lanelet::projection::LocalFrameProjector> map_projection) noexcept
+  const std::shared_ptr<lanelet::projection::LocalFrameProjector> & map_projection) noexcept
   -> carma_v2x_msgs::msg::SensorDataSharingMessage;
 
 auto to_detected_object_data_msg(

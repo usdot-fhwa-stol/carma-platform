@@ -24,6 +24,8 @@ namespace carma_cooperative_perception
 ExternalObjectListToSdsmNode::ExternalObjectListToSdsmNode(const rclcpp::NodeOptions & options)
 : CarmaLifecycleNode{options}
 {
+  lifecycle_publishers_.push_back(sdsm_publisher_);
+  param_callback_handles_.push_back(on_set_parameters_callback_);
 }
 
 auto ExternalObjectListToSdsmNode::handle_on_configure(
@@ -80,25 +82,7 @@ auto ExternalObjectListToSdsmNode::handle_on_configure(
       }
     });
 
-  return carma_ros2_utils::CallbackReturn::SUCCESS;
-}
-
-auto ExternalObjectListToSdsmNode::handle_on_activate(
-  const rclcpp_lifecycle::State & /* previous_state */) -> carma_ros2_utils::CallbackReturn
-{
-  RCLCPP_INFO(get_logger(), "Life cycle state transition: activating");
-
-  sdsm_publisher_->on_activate();
-
-  return carma_ros2_utils::CallbackReturn::SUCCESS;
-}
-
-auto ExternalObjectListToSdsmNode::handle_on_deactivate(
-  const rclcpp_lifecycle::State & /* previous_state */) -> carma_ros2_utils::CallbackReturn
-{
-  RCLCPP_INFO(get_logger(), "Life cycle state transition: deactivating");
-
-  sdsm_publisher_->on_deactivate();
+  RCLCPP_INFO(get_logger(), "Lifecycle transition: successfully configured");
 
   return carma_ros2_utils::CallbackReturn::SUCCESS;
 }

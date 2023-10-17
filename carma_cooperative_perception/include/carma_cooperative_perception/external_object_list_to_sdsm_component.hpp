@@ -44,12 +44,6 @@ public:
   auto handle_on_configure(const rclcpp_lifecycle::State & /* previous_state */)
     -> carma_ros2_utils::CallbackReturn override;
 
-  auto handle_on_activate(const rclcpp_lifecycle::State & /* previous_state */)
-    -> carma_ros2_utils::CallbackReturn override;
-
-  auto handle_on_deactivate(const rclcpp_lifecycle::State & /* previous_state */)
-    -> carma_ros2_utils::CallbackReturn override;
-
   auto handle_on_cleanup(const rclcpp_lifecycle::State & /* previous_state */)
     -> carma_ros2_utils::CallbackReturn override;
 
@@ -73,7 +67,7 @@ private:
   geometry_msgs::msg::PoseStamped current_pose_;
 
   //ObjectTypeMapping object_type_mapping_{};
-  std::shared_ptr<lanelet::projection::LocalFrameProjector> map_projector_;
+  std::shared_ptr<lanelet::projection::LocalFrameProjector> map_projector_{nullptr};
   OnSetParametersCallbackHandle::SharedPtr on_set_parameters_callback_{nullptr};
 };
 }  // namespace carma_cooperative_perception
