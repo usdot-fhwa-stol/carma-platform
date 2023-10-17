@@ -121,13 +121,13 @@ namespace carma_wm
     // Check if the map is loaded yet
     if (!semantic_map_ || semantic_map_->laneletLayer.empty())
     {
-      RCLCPP_ERROR_STREAM(logger_, "Map is not set or does not contain lanelets");
+      RCLCPP_ERROR_STREAM(rclcpp::get_logger("carma_wm"), "Map is not set or does not contain lanelets");
       return {};
     }
     // Check if the route was loaded yet
     if (!route_)
     {
-      RCLCPP_ERROR_STREAM(logger_, "Route has not yet been loaded");
+      RCLCPP_ERROR_STREAM(rclcpp::get_logger("carma_wm"), "Route has not yet been loaded");
       return {};
     }
     std::vector<lanelet::BusStopRulePtr> bus_stop_list;
@@ -147,7 +147,7 @@ namespace carma_wm
         auto stop_line = bus_stop->stopAndWaitLine();
         if (stop_line.empty())
         {
-          RCLCPP_ERROR_STREAM(logger_, "No stop line");
+          RCLCPP_ERROR_STREAM(rclcpp::get_logger("carma_wm"), "No stop line");
           continue;
         }
         else
@@ -392,7 +392,7 @@ namespace carma_wm
     std::vector<lanelet::BasicPoint2d> output;
     if (!route_)
     {
-      RCLCPP_WARN_STREAM(logger_, "Route has not yet been loaded");
+      RCLCPP_WARN_STREAM(rclcpp::get_logger("carma_wm"), "Route has not yet been loaded");
       return output;
     }
 
@@ -401,7 +401,7 @@ namespace carma_wm
     if (start_downtrack < 0 || start_downtrack > route_end || end_downtrack < 0 || end_downtrack > route_end ||
         start_downtrack > end_downtrack)
     {
-      RCLCPP_WARN_STREAM(logger_, "Invalid input downtracks");
+      RCLCPP_WARN_STREAM(rclcpp::get_logger("carma_wm"), "Invalid input downtracks");
       return output;
     }
 
@@ -434,13 +434,13 @@ namespace carma_wm
 
     if (!route_)
     {
-      RCLCPP_DEBUG_STREAM(logger_, "Route has not yet been loaded");
+      RCLCPP_DEBUG_STREAM(rclcpp::get_logger("carma_wm"), "Route has not yet been loaded");
       return boost::none;
     }
 
     if (downtrack < 0 || downtrack > getRouteEndTrackPos().downtrack)
     {
-      RCLCPP_DEBUG_STREAM(logger_, "Tried to convert a downtrack of: " << downtrack
+      RCLCPP_DEBUG_STREAM(rclcpp::get_logger("carma_wm"), "Tried to convert a downtrack of: " << downtrack
                                                            << " to map point, but it did not fit in route bounds of "
                                                            << getRouteEndTrackPos().downtrack);
       return boost::none;
@@ -566,7 +566,7 @@ namespace carma_wm
     if (!semantic_map_)
     {
 
-      RCLCPP_INFO_STREAM(logger_, "First time map is set in carma_wm. Routing graph will be recomputed reguardless of method inputs.");
+      RCLCPP_INFO_STREAM(rclcpp::get_logger("carma_wm"), "First time map is set in carma_wm. Routing graph will be recomputed reguardless of method inputs.");
 
       recompute_routing_graph = true;
     }
@@ -578,7 +578,7 @@ namespace carma_wm
     if (recompute_routing_graph)
     {
 
-      RCLCPP_INFO_STREAM(logger_, "Building routing graph");
+      RCLCPP_INFO_STREAM(rclcpp::get_logger("carma_wm"), "Building routing graph");
 
       auto tr = getTrafficRules(participant_type_);
 
@@ -592,13 +592,13 @@ namespace carma_wm
       lanelet::routing::RoutingGraphUPtr map_graph = lanelet::routing::RoutingGraph::build(*semantic_map_, *traffic_rules);
       map_routing_graph_ = std::move(map_graph);
 
-      RCLCPP_INFO_STREAM(logger_, "Done building routing graph");
+      RCLCPP_INFO_STREAM(rclcpp::get_logger("carma_wm"), "Done building routing graph");
     }
   }
 
   void CARMAWorldModel::setRoutingGraph(LaneletRoutingGraphPtr graph) {
 
-    RCLCPP_INFO_STREAM(logger_, "Setting the routing graph with user or listener provided graph");
+    RCLCPP_INFO_STREAM(rclcpp::get_logger("carma_wm"), "Setting the routing graph with user or listener provided graph");
 
     map_routing_graph_ = graph;
   }
@@ -1210,13 +1210,13 @@ namespace carma_wm
     // Check if the map is loaded yet
     if (!semantic_map_ || semantic_map_->laneletLayer.empty())
     {
-      RCLCPP_ERROR_STREAM(logger_, "Map is not set or does not contain lanelets");
+      RCLCPP_ERROR_STREAM(rclcpp::get_logger("carma_wm"), "Map is not set or does not contain lanelets");
       return {};
     }
     // Check if the route was loaded yet
     if (!route_)
     {
-      RCLCPP_ERROR_STREAM(logger_, "Route has not yet been loaded");
+      RCLCPP_ERROR_STREAM(rclcpp::get_logger("carma_wm"), "Route has not yet been loaded");
       return {};
     }
     std::vector<lanelet::CarmaTrafficSignalPtr> light_list;
@@ -1236,7 +1236,7 @@ namespace carma_wm
         auto stop_line = light->getStopLine(ll);
         if (!stop_line)
         {
-          RCLCPP_ERROR_STREAM(logger_, "No stop line");
+          RCLCPP_ERROR_STREAM(rclcpp::get_logger("carma_wm"), "No stop line");
           continue;
         }
         else
@@ -1310,13 +1310,13 @@ namespace carma_wm
     // Check if the map is loaded yet
     if (!semantic_map_ || semantic_map_->laneletLayer.empty())
     {
-      RCLCPP_ERROR_STREAM(logger_, "Map is not set or does not contain lanelets");
+      RCLCPP_ERROR_STREAM(rclcpp::get_logger("carma_wm"), "Map is not set or does not contain lanelets");
       return {};
     }
     // Check if the route was loaded yet
     if (!route_)
     {
-      RCLCPP_ERROR_STREAM(logger_, "Route has not yet been loaded");
+      RCLCPP_ERROR_STREAM(rclcpp::get_logger("carma_wm"), "Route has not yet been loaded");
       return {};
     }
     std::vector<std::shared_ptr<lanelet::AllWayStop>> intersection_list;
@@ -1347,13 +1347,13 @@ namespace carma_wm
     // Check if the map is loaded yet
     if (!semantic_map_ || semantic_map_->laneletLayer.empty())
     {
-      RCLCPP_ERROR_STREAM(logger_, "Map is not set or does not contain lanelets");
+      RCLCPP_ERROR_STREAM(rclcpp::get_logger("carma_wm"), "Map is not set or does not contain lanelets");
       return {};
     }
     // Check if the route was loaded yet
     if (!route_)
     {
-      RCLCPP_ERROR_STREAM(logger_, "Route has not yet been loaded");
+      RCLCPP_ERROR_STREAM(rclcpp::get_logger("carma_wm"), "Route has not yet been loaded");
       return {};
     }
     std::vector<lanelet::SignalizedIntersectionPtr> intersection_list;
@@ -1386,14 +1386,14 @@ namespace carma_wm
     auto lanelets_general = semantic_map_->laneletLayer.findUsages(general_regem);
     if (lanelets_general.empty())
     {
-      RCLCPP_WARN_STREAM(logger_, "There was an error querying lanelet for traffic light with id: " << id);
+      RCLCPP_WARN_STREAM(rclcpp::get_logger("carma_wm"), "There was an error querying lanelet for traffic light with id: " << id);
     }
 
     auto curr_light_list = lanelets_general[0].regulatoryElementsAs<lanelet::CarmaTrafficSignal>();
 
     if (curr_light_list.empty())
     {
-      RCLCPP_WARN_STREAM(logger_, "There was an error querying traffic light with id: " << id);
+      RCLCPP_WARN_STREAM(rclcpp::get_logger("carma_wm"), "There was an error querying traffic light with id: " << id);
       return nullptr;
     }
 
@@ -1410,7 +1410,7 @@ namespace carma_wm
 
     if (!curr_light)
     {
-      RCLCPP_WARN_STREAM(logger_, "Was not able to find traffic signal with id: " << id << ", ignoring...");
+      RCLCPP_WARN_STREAM(rclcpp::get_logger("carma_wm"), "Was not able to find traffic signal with id: " << id << ", ignoring...");
       return nullptr;
     }
 
@@ -1496,13 +1496,13 @@ namespace carma_wm
   {
     if (!semantic_map_)
     {
-      RCLCPP_INFO_STREAM(logger_, "Map is not set yet.");
+      RCLCPP_INFO_STREAM(rclcpp::get_logger("carma_wm"), "Map is not set yet.");
       return;
     }
 
     if (spat_msg.intersection_state_list.empty())
     {
-      RCLCPP_WARN_STREAM(logger_, "No intersection_state_list in the newly received SPAT msg. Returning...");
+      RCLCPP_WARN_STREAM(rclcpp::get_logger("carma_wm"), "No intersection_state_list in the newly received SPAT msg. Returning...");
       return;
     }
     
@@ -1528,19 +1528,19 @@ namespace carma_wm
         // reset states if the intersection's geometry changed
         if (curr_light->revision_ != curr_intersection.revision)
         {
-          RCLCPP_DEBUG_STREAM(logger_, "Received a new intersection geometry. intersection_id: " << (int)curr_intersection.id.id << ", and signal_group_id: " << (int)current_movement_state.signal_group);
+          RCLCPP_DEBUG_STREAM(rclcpp::get_logger("carma_wm"), "Received a new intersection geometry. intersection_id: " << (int)curr_intersection.id.id << ", and signal_group_id: " << (int)current_movement_state.signal_group);
           sim_.traffic_signal_states_[curr_intersection.id.id][current_movement_state.signal_group].clear();
         }
 
         // all maneuver types in same signal group is currently expected to share signal timing, so only 0th index is used when setting states
         if (current_movement_state.movement_event_list.empty())
         {
-          RCLCPP_DEBUG_STREAM(logger_, "Movement_event_list is empty . intersection_id: " << (int)curr_intersection.id.id << ", and signal_group_id: " << (int)current_movement_state.signal_group);
+          RCLCPP_DEBUG_STREAM(rclcpp::get_logger("carma_wm"), "Movement_event_list is empty . intersection_id: " << (int)curr_intersection.id.id << ", and signal_group_id: " << (int)current_movement_state.signal_group);
           continue;
         }
         else
         {
-          RCLCPP_DEBUG_STREAM(logger_, "Movement_event_list size: " << current_movement_state.movement_event_list.size() << " . intersection_id: " << (int)curr_intersection.id.id << ", and signal_group_id: " << (int)current_movement_state.signal_group);
+          RCLCPP_DEBUG_STREAM(rclcpp::get_logger("carma_wm"), "Movement_event_list size: " << current_movement_state.movement_event_list.size() << " . intersection_id: " << (int)curr_intersection.id.id << ", and signal_group_id: " << (int)current_movement_state.signal_group);
         }
 
         curr_light->revision_ = curr_intersection.revision; // valid SPAT msg
@@ -1565,7 +1565,7 @@ namespace carma_wm
           sim_.traffic_signal_start_times_[curr_intersection.id.id][current_movement_state.signal_group].push_back(
                               start_time_dynamic);
             
-          RCLCPP_DEBUG_STREAM(logger_, "intersection id: " << (int)curr_intersection.id.id << ", signal: " << (int)current_movement_state.signal_group
+          RCLCPP_DEBUG_STREAM(rclcpp::get_logger("carma_wm"), "intersection id: " << (int)curr_intersection.id.id << ", signal: " << (int)current_movement_state.signal_group
             << ", start_time: " << std::to_string(lanelet::time::toSec(start_time_dynamic))
             << ", end_time: " << std::to_string(lanelet::time::toSec(min_end_time_dynamic))
             << ", state: " << received_state_dynamic);

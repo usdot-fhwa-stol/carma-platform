@@ -141,11 +141,8 @@ public:
    */
   void isUsingSimTime(bool use_sim_time);
 
-  void setLogger(const rclcpp::Logger& new_logger) { logger_ = new_logger; world_model_->setLogger(logger_);};
-
 private:
   std::shared_ptr<CARMAWorldModel> world_model_;
-  rclcpp::Logger logger_ = rclcpp::get_logger("carma_wm");
   bool use_sim_time_;
   std::function<void()> map_callback_;
   std::function<void()> route_callback_;
