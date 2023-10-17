@@ -23,7 +23,7 @@
 class CallInterface
 {
     public:
-        virtual void call(carma_planning_msgs::srv::PlanTrajectory::Request::SharedPtr req, carma_planning_msgs::srv::PlanTrajectory::Response::SharedPtr resp) = 0;
+        virtual void call(carma_planning_msgs::srv::PlanTrajectory::Request::SharedPtr req, carma_planning_msgs::srv::PlanTrajectory::Response::SharedPtr& resp) = 0;
         virtual ~CallInterface() {};
 
                 /**

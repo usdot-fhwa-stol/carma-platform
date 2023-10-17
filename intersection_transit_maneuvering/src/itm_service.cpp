@@ -32,7 +32,7 @@ namespace intersection_transit_maneuvering
 
     Servicer::Servicer(){};
 
-    void Servicer::call(carma_planning_msgs::srv::PlanTrajectory::Request::SharedPtr req, carma_planning_msgs::srv::PlanTrajectory::Response::SharedPtr resp)
+    void Servicer::call(carma_planning_msgs::srv::PlanTrajectory::Request::SharedPtr req, carma_planning_msgs::srv::PlanTrajectory::Response::SharedPtr& resp)
     {
        std::shared_future<carma_planning_msgs::srv::PlanTrajectory::Response::SharedPtr> resp_future = client->async_send_request(req);
 
@@ -40,10 +40,12 @@ namespace intersection_transit_maneuvering
                     
         if (future_status == std::future_status::ready) {
             resp = resp_future.get();
+            
+            RCLCPP_DEBUG_STREAM(rclcpp::get_logger("intersection_transit_maneuvering"), "Responsible tactical plugin was called and got trajectory size: " << resp->trajectory_plan.trajectory_points.size());
         }
         else
         {
-            RCLCPP_ERROR_STREAM(rclcpp::get_logger("intersection_transit_maneuvering"), "failed to call plugin from" << "intersection_transit_maneuvering");
+            RCLCPP_DEBUG(rclcpp::get_logger("intersection_transit_maneuvering"), "Failed to call the responsible tactical plugin from intersection_transit_maneuvering");
         }
         return;
 

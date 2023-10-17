@@ -209,8 +209,8 @@ namespace intersection_transit_maneuvering
         ASSERT_EQ(carma_planning_msgs::msg::ManeuverParameters::HAS_TACTICAL_PLUGIN, converted[i].lane_following_maneuver.parameters.presence_vector);
         ASSERT_EQ(0.0, converted[i].lane_following_maneuver.start_dist);
         ASSERT_EQ(5.0, converted[i].lane_following_maneuver.end_dist);
-        ASSERT_EQ(rclcpp::Time(1e9 * 0.0), converted[i].lane_following_maneuver.start_time);
-        ASSERT_EQ(rclcpp::Time(1e9 * 1.7701), converted[i].lane_following_maneuver.end_time);
+        ASSERT_EQ(rclcpp::Time(1e9 * 0.0, rclcpp::Time(converted[i].lane_following_maneuver.start_time).get_clock_type()), converted[i].lane_following_maneuver.start_time);
+        ASSERT_EQ(rclcpp::Time(1e9 * 1.7701, rclcpp::Time(converted[i].lane_following_maneuver.end_time).get_clock_type()), converted[i].lane_following_maneuver.end_time);
         ASSERT_EQ(25.0, converted[i].lane_following_maneuver.start_speed);
         ASSERT_EQ(1.0, converted[i].lane_following_maneuver.end_speed);
     }
