@@ -220,12 +220,13 @@ auto MultipleObjectTrackerNode::handle_on_configure(
       for (const auto & parameter : parameters) {
         if (parameter.get_name() == "execution_frequency_hz") {
           if (this->get_current_state().label() == "active") {
-            RCLCPP_ERROR(
-              get_logger(),
-              "Cannot change parameter 'execution_frequencey_hz' while node is in 'Active' state");
             result.successful = false;
             result.reason = "parameter is read-only while node is in 'Active' state";
-            return result;
+
+            RCLCPP_ERROR(
+              get_logger(), "Cannot change parameter 'execution_frequencey_hz': " + result.reason);
+
+            break;
           } else {
             this->execution_period_ = 1 / units::frequency::hertz_t{parameter.as_double()};
           }
