@@ -16,6 +16,9 @@
 
 #include <tf2_geometry_msgs/tf2_geometry_msgs.h>
 #include <units.h>
+#include <rclcpp/rclcpp.hpp>
+#include <rclcpp_components/register_node_macro.hpp>
+
 #include <algorithm>
 #include <chrono>
 #include <cooperative_perception/ctra_model.hpp>
@@ -23,9 +26,9 @@
 #include <cooperative_perception/fusing.hpp>
 #include <cooperative_perception/scoring.hpp>
 #include <cooperative_perception/temporal_alignment.hpp>
-
-#include <rclcpp/rclcpp.hpp>
-#include <rclcpp_components/register_node_macro.hpp>
+#include <unordered_map>
+#include <utility>
+#include <vector>
 
 namespace carma_cooperative_perception
 {
@@ -166,7 +169,7 @@ static auto to_ros_msg(const mot::CtrvTrack & track) noexcept
   return msg;
 }
 
-static auto to_ros_msg(const Track & track) noexcept
+static auto to_ros_msg(const Track & track)
 {
   static constexpr mot::Visitor visitor{
     [](const mot::CtrvTrack & t) { return to_ros_msg(t); },
@@ -353,7 +356,7 @@ static auto predict_track_states(std::vector<Track> tracks, units::time::second_
   return tracks;
 }
 
-auto MultipleObjectTrackerNode::execute_pipeline() noexcept -> void
+auto MultipleObjectTrackerNode::execute_pipeline() -> void
 {
   if (detections_.empty()) {
     RCLCPP_DEBUG(get_logger(), "Not executing pipeline: internal detection list is empty");

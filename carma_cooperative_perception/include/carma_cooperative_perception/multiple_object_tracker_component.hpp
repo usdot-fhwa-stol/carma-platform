@@ -18,15 +18,15 @@
 #include <carma_ros2_utils/carma_lifecycle_node.hpp>
 #include <rclcpp/rclcpp.hpp>
 
-#include <variant>
-#include <vector>
+#include <carma_cooperative_perception_interfaces/msg/detection_list.hpp>
+#include <carma_cooperative_perception_interfaces/msg/track_list.hpp>
 
 #include <cooperative_perception/ctra_model.hpp>
 #include <cooperative_perception/ctrv_model.hpp>
 #include <cooperative_perception/track_management.hpp>
-
-#include <carma_cooperative_perception_interfaces/msg/detection_list.hpp>
-#include <carma_cooperative_perception_interfaces/msg/track_list.hpp>
+#include <unordered_map>
+#include <variant>
+#include <vector>
 
 namespace carma_cooperative_perception
 {
@@ -61,7 +61,7 @@ public:
   auto store_new_detections(
     const carma_cooperative_perception_interfaces::msg::DetectionList & msg) noexcept -> void;
 
-  auto execute_pipeline() noexcept -> void;
+  auto execute_pipeline() -> void;
 
 private:
   rclcpp::Subscription<carma_cooperative_perception_interfaces::msg::DetectionList>::SharedPtr
