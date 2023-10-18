@@ -177,9 +177,7 @@ static auto to_ros_msg(const Track & track) noexcept
 }
 
 MultipleObjectTrackerNode::MultipleObjectTrackerNode(const rclcpp::NodeOptions & options)
-: CarmaLifecycleNode{options},
-  track_manager_{
-    mot::FixedThresholdManagementPolicy{mot::PromotionThreshold{3}, mot::RemovalThreshold{3}}}
+: CarmaLifecycleNode{options}, track_manager_{mot::PromotionThreshold{3}, mot::RemovalThreshold{3}}
 {
   // CarmaLifecycleNode base class will automatically handle lifecycle state changes for
   // lifecycle publishers and timers.
