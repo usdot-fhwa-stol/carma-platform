@@ -1529,6 +1529,7 @@ namespace carma_wm
         if (curr_light->revision_ != curr_intersection.revision)
         {
           RCLCPP_DEBUG_STREAM(rclcpp::get_logger("carma_wm"), "Received a new intersection geometry. intersection_id: " << (int)curr_intersection.id.id << ", and signal_group_id: " << (int)current_movement_state.signal_group);
+          sim_.traffic_signal_start_times_[curr_intersection.id.id][current_movement_state.signal_group].clear();
           sim_.traffic_signal_states_[curr_intersection.id.id][current_movement_state.signal_group].clear();
         }
 
