@@ -1417,47 +1417,6 @@ namespace carma_wm
     return curr_light;
   }
 
-  bool CARMAWorldModel::check_if_seen_before_movement_state(boost::posix_time::ptime min_end_time_dynamic,lanelet::CarmaTrafficSignalState received_state_dynamic,uint16_t mov_id, uint8_t mov_signal_group)
-  {
-
-    if(sim_.traffic_signal_states_[mov_id][mov_signal_group].empty())
-    {      
-      return false;
-    }
-
-    // temp states that does not include outdated states
-    std::vector<std::pair<boost::posix_time::ptime, lanelet::CarmaTrafficSignalState>> temp_signal_states;
-    std::vector<boost::posix_time::ptime> temp_start_times;
-
-    int i = 0;
-    for(auto mov_check:sim_.traffic_signal_states_[mov_id][mov_signal_group])
-    {
-      if (lanelet::time::timeFromSec(std::chrono::duration<double>(std::chrono::system_clock::now().time_since_epoch()).count()) < mov_check.first)
-      {
-        temp_signal_states.push_back(std::make_pair(mov_check.first, mov_check.second ));
-        temp_start_times.push_back(sim_.traffic_signal_start_times_[mov_id][mov_signal_group][i]);
-      }
-      else
-      {
-        i++;
-        continue;
-      }
-
-      auto last_time_difference = mov_check.first - min_end_time_dynamic;  
-      bool is_duplicate = last_time_difference.total_milliseconds() >= -500 && last_time_difference.total_milliseconds() <= 500;
-      
-      if(received_state_dynamic == mov_check.second && is_duplicate)
-      {
-        return true;
-      }
-      i++;
-    } 
-    sim_.traffic_signal_states_[mov_id][mov_signal_group]=temp_signal_states;
-    sim_.traffic_signal_start_times_[mov_id][mov_signal_group] = temp_start_times;
-    return false;
-
-  }
-
   boost::posix_time::ptime CARMAWorldModel::min_end_time_converter_minute_of_year(boost::posix_time::ptime min_end_time,bool moy_exists,uint32_t moy, bool is_simulation)
   {
     if (moy_exists) //account for minute of the year
@@ -1560,8 +1519,6 @@ namespace carma_wm
 
           auto received_state_dynamic = static_cast<lanelet::CarmaTrafficSignalState>(current_movement_event.event_state.movement_phase_state);
           
-          //bool recorded = check_if_seen_before_movement_state(min_end_time_dynamic,received_state_dynamic,curr_intersection.id.id,current_movement_state.signal_group);
-                      
           sim_.traffic_signal_states_[curr_intersection.id.id][current_movement_state.signal_group].push_back(std::make_pair(min_end_time_dynamic, received_state_dynamic));
           sim_.traffic_signal_start_times_[curr_intersection.id.id][current_movement_state.signal_group].push_back(
                               start_time_dynamic);

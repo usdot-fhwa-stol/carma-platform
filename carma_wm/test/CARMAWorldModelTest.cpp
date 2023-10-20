@@ -1464,26 +1464,4 @@ TEST(CARMAWorldModelTest, getIntersectionAlongRoute)
 
 }
 
-TEST(CARMAWorldModelTest, checkIfSeenBeforeMovementState)
-{
-  carma_wm::CARMAWorldModel cmw;
-  auto system_now = std::chrono::duration<double>(std::chrono::system_clock::now().time_since_epoch()).count() + 1.0;
-
-  cmw.sim_.traffic_signal_states_[13][15].push_back(std::make_pair(lanelet::time::timeFromSec(system_now + 1.0), lanelet::CarmaTrafficSignalState::STOP_AND_REMAIN));
-  cmw.sim_.traffic_signal_start_times_[13][15].push_back(lanelet::time::timeFromSec(system_now));
-
-  boost::posix_time::ptime min_end_time_dynamic = lanelet::time::timeFromSec(system_now + 1.0);
-  auto received_state_dynamic=lanelet::CarmaTrafficSignalState::STOP_AND_REMAIN;
-  int mov_id=13;
-  int mov_signal_group=15;
-
-  ASSERT_EQ(cmw.check_if_seen_before_movement_state(min_end_time_dynamic,received_state_dynamic,mov_id,mov_signal_group), 1);
-
-  min_end_time_dynamic=lanelet::time::timeFromSec(system_now);
-  received_state_dynamic= lanelet::CarmaTrafficSignalState::PROTECTED_CLEARANCE;
-  mov_id=13;
-  mov_signal_group=15;
-
-  ASSERT_EQ(cmw.check_if_seen_before_movement_state(min_end_time_dynamic,received_state_dynamic,mov_id,mov_signal_group), 0);
-}
 }  // namespace carma_wm
