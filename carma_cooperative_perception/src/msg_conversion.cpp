@@ -435,7 +435,6 @@ auto to_detected_object_data_msg(
 
     // TODO: heading - convert ang vel to scale heading
     // detected_object_common_data.heading.heading = enu_orientation_to_wgs_heading(external_object.velocity_inst.twist.angular.z);
-    detected_object_common_data.heading.heading = external_object.velocity_inst.twist.angular.z * (180.0/3.14115926535); // to radian, use units.h
   }
 
   // optional data (determine based on object type)
@@ -498,7 +497,6 @@ auto to_detected_object_data_msg(
         detected_object_optional_data.det_obst.obst_size.presence_vector |= carma_v2x_msgs::msg::ObstacleSize::HAS_HEIGHT;
         detected_object_optional_data.det_obst.obst_size.height.size_value = external_object.size.z;
       }
-
   }
 
   detected_object_data.detected_object_common_data = std::move(detected_object_common_data);
