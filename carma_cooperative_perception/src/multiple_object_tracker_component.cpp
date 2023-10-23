@@ -358,11 +358,6 @@ static auto predict_track_states(std::vector<Track> tracks, units::time::second_
 
 auto MultipleObjectTrackerNode::execute_pipeline() -> void
 {
-  if (detections_.empty()) {
-    RCLCPP_DEBUG(get_logger(), "Not executing pipeline: internal detection list is empty");
-    return;
-  }
-
   static constexpr mot::Visitor make_track_visitor{
     [](const mot::CtrvDetection & d) { return Track{mot::make_track<mot::CtrvTrack>(d)}; },
     [](const mot::CtraDetection & d) { return Track{mot::make_track<mot::CtraTrack>(d)}; },
@@ -376,6 +371,8 @@ auto MultipleObjectTrackerNode::execute_pipeline() -> void
     for (const auto & detection : detections_) {
       track_manager_.add_tentative_track(std::visit(make_track_visitor, detection));
     }
+
+    track_list_pub_->publish(carma_cooperative_perception_interfaces::msg::TrackList{});
 
     detections_.clear();
     uuid_index_map_.clear();
