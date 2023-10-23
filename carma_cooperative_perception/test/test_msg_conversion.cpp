@@ -136,7 +136,7 @@ TEST(ToPositionMsg, Simple)
   constexpr carma_cooperative_perception::UtmZone zone{
     32, carma_cooperative_perception::Hemisphere::kNorth};
   constexpr carma_cooperative_perception::UtmCoordinate position_utm{zone, 12.0_m, 13.5_m, -0.5_m};
-  const auto position_msg{carma_cooperative_perception::to_position_msg(position_utm)};
+  const auto position_msg{carma_cooperative_perception::to_point_msg(position_utm)};
 
   EXPECT_DOUBLE_EQ(
     carma_cooperative_perception::remove_units(position_utm.easting), position_msg.x);

@@ -117,7 +117,7 @@ const builtin_interfaces::msg::Time & external_object_stamp) noexcept -> carma_v
   return time_offset;
 }
 
-auto to_position_msg(const UtmCoordinate & position_utm) noexcept -> geometry_msgs::msg::Point
+auto to_point_msg(const UtmCoordinate & position_utm) noexcept -> geometry_msgs::msg::Point
 {
   geometry_msgs::msg::Point msg;
 
@@ -162,11 +162,11 @@ auto transform_pose_from_map_to_wgs84(const geometry_msgs::msg::PoseStamped & so
   carma_v2x_msgs::msg::Position3D ref_pos;
 
   lanelet::BasicPoint3d wgs84_ref_pose = map_projection->projectECEF({ 
-    source_pose.pose.position.x, source_pose.pose.position.y, 0.0}, 1);
+    source_pose.pose.position.x, source_pose.pose.position.y, source_pose.pose.position.z}, 1);
 
   ref_pos.longitude = wgs84_ref_pose.x();
   ref_pos.latitude = wgs84_ref_pose.y();
-  ref_pos.elevation = source_pose.pose.position.z;
+  ref_pos.elevation = wgs84_ref_pose.z();
   ref_pos.elevation_exists = true;
 
   return ref_pos;
@@ -201,7 +201,7 @@ auto to_detection_list_msg(const carma_v2x_msgs::msg::SensorDataSharingMessage &
       UtmDisplacement{pos_offset.offset_x, pos_offset.offset_y, pos_offset.offset_z.value()}};
 
     const auto detection_pos_utm{ref_pos_utm + utm_displacement};
-    detection.pose.pose.position = to_position_msg(detection_pos_utm);
+    detection.pose.pose.position = to_point_msg(detection_pos_utm);
 
     const auto true_heading{units::angle::degree_t{Heading::from_msg(common_data.heading).heading}};
 
@@ -390,9 +390,8 @@ auto to_sdsm_msg(
     sdsm_detected_object.detected_object_common_data.pos =
       calc_relative_position(current_pose, sdsm_detected_object.detected_object_common_data.pos);
 
-    detected_object_list.detected_object_data.push_back(sdsm_detected_object);
+    sdsm.objects.detected_object_data.push_back(std::move(sdsm_detected_object));
   }
-  sdsm.objects = detected_object_list;
 
   return sdsm;
 }
@@ -509,6 +508,5 @@ auto to_detected_object_data_msg(
 
 }
 
-// git rebase check
 
 }  // namespace carma_cooperative_perception

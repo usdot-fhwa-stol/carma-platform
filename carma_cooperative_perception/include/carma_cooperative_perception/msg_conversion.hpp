@@ -47,7 +47,7 @@ auto to_ddate_time_msg(const builtin_interfaces::msg::Time & builtin_time) noexc
 auto calc_sdsm_time_offset(const builtin_interfaces::msg::Time & external_object_list_time,
   const builtin_interfaces::msg::Time & external_object_time) noexcept -> carma_v2x_msgs::msg::MeasurementTimeOffset;
 
-auto to_position_msg(const UtmCoordinate & position_utm) noexcept -> geometry_msgs::msg::Point;
+auto to_point_msg(const UtmCoordinate & position_utm) noexcept -> geometry_msgs::msg::Point;
 
 auto heading_to_enu_yaw(const units::angle::degree_t & heading) noexcept -> units::angle::degree_t;
 
