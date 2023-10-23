@@ -52,6 +52,7 @@ WorldModelConstPtr WMListenerWorker::getWorldModel() const
   return std::static_pointer_cast<const WorldModel>(world_model_);  // Cast pointer to const variant
 }
 
+
 void WMListenerWorker::mapCallback(const autoware_lanelet2_msgs::msg::MapBin::UniquePtr map_msg)
 {
   current_map_version_ = map_msg->map_version;
@@ -102,7 +103,7 @@ void WMListenerWorker::mapCallback(const autoware_lanelet2_msgs::msg::MapBin::Un
 
 void WMListenerWorker::incomingSpatCallback(const carma_v2x_msgs::msg::SPAT::UniquePtr spat_msg)
 {
-  world_model_->processSpatFromMsg(*spat_msg);
+  world_model_->processSpatFromMsg(*spat_msg, use_sim_time_);
 }
 
 bool WMListenerWorker::checkIfReRoutingNeeded() const
@@ -687,6 +688,11 @@ void WMListenerWorker::setConfigSpeedLimit(double config_lim)
   config_speed_limit_ = config_lim;
   //Function to load config_limit into CarmaWorldModel
    world_model_->setConfigSpeedLimit(config_speed_limit_);
+}
+
+void WMListenerWorker::isUsingSimTime(bool use_sim_time)
+{
+  use_sim_time_ = use_sim_time;
 }
 
 double WMListenerWorker::getConfigSpeedLimit() const
