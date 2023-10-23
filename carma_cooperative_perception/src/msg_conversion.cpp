@@ -117,6 +117,58 @@ const builtin_interfaces::msg::Time & external_object_stamp) noexcept -> carma_v
   return time_offset;
 }
 
+auto to_ddate_time_msg(const builtin_interfaces::msg::Time & builtin_time) noexcept -> j2735_v2x_msgs::msg::DDateTime
+{
+  j2735_v2x_msgs::msg::DDateTime ddate_time_output;
+
+  // Add the time components from epoch seconds
+  boost::posix_time::ptime posix_time = boost::posix_time::from_time_t(builtin_time.sec) + 
+                                        boost::posix_time::nanosec(builtin_time.nanosec);
+
+  const auto time_stamp_year = posix_time.date().year();
+  const auto time_stamp_month = posix_time.date().month();
+  const auto time_stamp_day = posix_time.date().day();
+
+  const auto hours_of_day = posix_time.time_of_day().hours();
+  const auto minutes_of_hour = posix_time.time_of_day().minutes();
+  const auto seconds_of_minute = posix_time.time_of_day().seconds();
+
+  ddate_time_output.presence_vector = 0;
+
+  ddate_time_output.presence_vector |= j2735_v2x_msgs::msg::DDateTime::YEAR;
+  ddate_time_output.year.year = time_stamp_year;
+  ddate_time_output.presence_vector |= j2735_v2x_msgs::msg::DDateTime::MONTH;
+  ddate_time_output.month.month = time_stamp_month;
+  ddate_time_output.presence_vector |= j2735_v2x_msgs::msg::DDateTime::DAY;
+  ddate_time_output.day.day = time_stamp_day;
+  ddate_time_output.presence_vector |= j2735_v2x_msgs::msg::DDateTime::HOUR;
+  ddate_time_output.hour.hour = hours_of_day;
+  ddate_time_output.presence_vector |= j2735_v2x_msgs::msg::DDateTime::MINUTE;
+  ddate_time_output.minute.minute = minutes_of_hour;
+  ddate_time_output.presence_vector |= j2735_v2x_msgs::msg::DDateTime::SECOND;
+  ddate_time_output.second.millisecond = seconds_of_minute;
+
+  return ddate_time_output;
+}
+
+auto calc_sdsm_time_offset(const builtin_interfaces::msg::Time & external_object_list_stamp,
+const builtin_interfaces::msg::Time & external_object_stamp) noexcept -> carma_v2x_msgs::msg::MeasurementTimeOffset
+{
+  carma_v2x_msgs::msg::MeasurementTimeOffset time_offset;
+
+  boost::posix_time::ptime external_object_list_time = boost::posix_time::from_time_t(external_object_list_stamp.sec) + 
+                                                        boost::posix_time::nanosec(external_object_list_stamp.nanosec);
+                                                        
+  boost::posix_time::ptime external_object_time = boost::posix_time::from_time_t(external_object_stamp.sec) + 
+                                                  boost::posix_time::nanosec(external_object_stamp.nanosec);
+
+  boost::posix_time::time_duration offset_duration = (external_object_list_time - external_object_time);
+
+  time_offset.measurement_time_offset = offset_duration.total_seconds();
+
+  return time_offset;
+}
+
 auto to_point_msg(const UtmCoordinate & position_utm) noexcept -> geometry_msgs::msg::Point
 {
   geometry_msgs::msg::Point msg;

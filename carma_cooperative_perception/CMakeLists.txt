@@ -114,14 +114,7 @@ if(carma_cooperative_perception_BUILD_TESTS)
   )
 
   add_launch_test(test/track_list_to_external_object_list_launch_test.py)
-
-  # add_launch_test(test/launch_testing/carma_cooperative_perception_ros_launch_test.py)
-
-  # ament_clang_tidy(
-  #   CONFIG_FILE ${PROJECT_SOURCE_DIR}/.clang-tidy
-  #   ${PROJECT_BINARY_DIR}/compile_commands.json
-  # )
-
+  
 endif()
 
 ament_auto_package()
