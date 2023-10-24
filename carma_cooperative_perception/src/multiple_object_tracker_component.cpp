@@ -368,7 +368,9 @@ auto MultipleObjectTrackerNode::execute_pipeline() -> void
     RCLCPP_DEBUG(
       get_logger(), "List of tracks is empty. Converting detections to tentative tracks");
 
-    for (const auto & detection : detections_) {
+    const auto clusters{mot::cluster_detections(detections_, 0.75)};
+    for (const auto & cluster : clusters) {
+      const auto detection{std::cbegin(cluster.get_detections())->second};
       track_manager_.add_tentative_track(std::visit(make_track_visitor, detection));
     }
 
@@ -400,18 +402,24 @@ auto MultipleObjectTrackerNode::execute_pipeline() -> void
     if (has_association(track)) {
       const auto detection_uuids{associations.at(get_uuid(track))};
       const auto first_detection{detection_map[detection_uuids.at(0)]};
-      // mot::fuse_detection_to_track(first_detection, track, mot::covariance_intersection);
       track = std::visit(mot::covariance_intersection_visitor, track, first_detection);
     }
   }
 
   // Unassociated detections don't influence the tracking pipeline, so we can add
   // them to the tracker at the end.
+  std::vector<Detection> unassociated_detections;
   for (const auto & [uuid, detection] : detection_map) {
     if (!has_association(detection)) {
-      track_manager_.add_tentative_track(std::visit(make_track_visitor, detection));
+      unassociated_detections.push_back(detection);
     }
   }
+
+  const auto clusters{mot::cluster_detections(unassociated_detections, 0.75)};
+  for (const auto & cluster : clusters) {
+    const auto detection{std::cbegin(cluster.get_detections())->second};
+    track_manager_.add_tentative_track(std::visit(make_track_visitor, detection));
+    }
 
   carma_cooperative_perception_interfaces::msg::TrackList track_list;
   for (const auto & track : track_manager_.get_confirmed_tracks()) {
