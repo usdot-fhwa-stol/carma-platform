@@ -27,9 +27,11 @@ flow with its neighboring actors (e.g., other connected vehicles or infrastructu
 - External object list to detection list Node:
   [`external_object_list_to_detection_list_node`][external_object_list_to_detection_list_node_docs]
 - Track list to external object list Node: [`track_list_to_external_object_list_node`][track_list_to_external_object_list_node_docs]
+- Multiple object tracker Node: [multiple_object_tracker_node_docs]
 
 [ros2_lifecycle_nodes_link]: https://design.ros2.org/articles/node_lifecycle.html
 [ros2_components_link]: https://docs.ros.org/en/rolling/Concepts/Intermediate/About-Composition.html
 [sdsm_to_detection_list_node_docs]: sdsm_to_detection_list_node.md
 [external_object_list_to_detection_list_node_docs]: external_object_list_to_detection_list_node.md
 [track_list_to_external_object_list_node_docs]: track_list_to_external_object_list_node.md
+[multiple_object_tracker_node_docs]: multiple_object_tracker_node.md
