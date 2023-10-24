@@ -63,7 +63,9 @@ auto make_ctrv_detection(
     mot::Angle{units::angle::radian_t{yaw}},
     units::angular_velocity::radians_per_second_t{msg.twist.twist.angular.z}};
 
-  return mot::CtrvDetection{timestamp, state, mot::CtrvStateCovariance{}, mot::Uuid{msg.id}};
+  const mot::CtrvStateCovariance covariance = mot::CtrvStateCovariance::Zero();
+
+  return mot::CtrvDetection{timestamp, state, covariance, mot::Uuid{msg.id}};
 }
 
 auto make_ctra_detection(
@@ -94,7 +96,9 @@ auto make_ctra_detection(
     units::angular_velocity::radians_per_second_t{msg.twist.twist.angular.z},
     units::acceleration::meters_per_second_squared_t{msg.accel.accel.linear.x}};
 
-  return mot::CtraDetection{timestamp, state, mot::CtraStateCovariance{}, mot::Uuid{msg.id}};
+  const mot::CtraStateCovariance covariance = mot::CtraStateCovariance::Zero();
+
+  return mot::CtraDetection{timestamp, state, covariance, mot::Uuid{msg.id}};
 }
 
 auto make_detection(const carma_cooperative_perception_interfaces::msg::Detection & msg)
