@@ -21,6 +21,7 @@
 
 #include <algorithm>
 #include <chrono>
+#include <cooperative_perception/clustering.hpp>
 #include <cooperative_perception/ctra_model.hpp>
 #include <cooperative_perception/ctrv_model.hpp>
 #include <cooperative_perception/fusing.hpp>
