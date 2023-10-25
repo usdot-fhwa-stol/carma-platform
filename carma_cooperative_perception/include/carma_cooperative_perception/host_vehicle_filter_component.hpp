@@ -1,0 +1,60 @@
+// Copyright 2023 Leidos
+//
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+//
+//     http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
+
+#ifndef CARMA_COOPERATIVE_PERCEPTION__HOST_VEHICLE_FILTER_COMPONENT_HPP_
+#define CARMA_COOPERATIVE_PERCEPTION__HOST_VEHICLE_FILTER_COMPONENT_HPP_
+
+#include <carma_ros2_utils/carma_lifecycle_node.hpp>
+#include <rclcpp/rclcpp.hpp>
+
+#include <carma_cooperative_perception_interfaces/msg/detection_list.hpp>
+
+namespace carma_cooperative_perception
+{
+
+class HostVehicleFilterNode : public carma_ros2_utils::CarmaLifecycleNode
+{
+public:
+  explicit HostVehicleFilterNode(const rclcpp::NodeOptions & options);
+
+  auto handle_on_configure(const rclcpp_lifecycle::State & /* previous_state */)
+    -> carma_ros2_utils::CallbackReturn override;
+
+  auto handle_on_activate(const rclcpp_lifecycle::State & /* previous_state */)
+    -> carma_ros2_utils::CallbackReturn override;
+
+  auto handle_on_deactivate(const rclcpp_lifecycle::State & /* previous_state */)
+    -> carma_ros2_utils::CallbackReturn override;
+
+  auto handle_on_cleanup(const rclcpp_lifecycle::State & /* previous_state */)
+    -> carma_ros2_utils::CallbackReturn override;
+
+  auto handle_on_shutdown(const rclcpp_lifecycle::State & /* previous_state */)
+    -> carma_ros2_utils::CallbackReturn override;
+
+private:
+  rclcpp::Subscription<carma_cooperative_perception_interfaces::msg::DetectionList>::SharedPtr
+    detection_list_sub_{nullptr};
+
+  rclcpp::Subscription<carma_cooperative_perception_interfaces::msg::DetectionList>::SharedPtr
+    host_vehicle_pose_sub_{nullptr};
+
+  rclcpp_lifecycle::LifecyclePublisher<
+    carma_cooperative_perception_interfaces::msg::DetectionList>::SharedPtr detection_list_pub_{
+    nullptr};
+};
+
+}  // namespace carma_cooperative_perception
+
+#endif  // CARMA_COOPERATIVE_PERCEPTION__HOST_VEHICLE_FILTER_COMPONENT_HPP_
