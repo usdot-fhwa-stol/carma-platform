@@ -179,20 +179,11 @@ auto transform_pose_from_map_to_wgs84(const geometry_msgs::msg::PoseStamped & so
   carma_v2x_msgs::msg::Position3D ref_pos;
   lanelet::BasicPoint3d source_pose_basicpoint{source_pose.pose.position.x, source_pose.pose.position.y,0.0};
 
-<<<<<<< HEAD
   lanelet::GPSPoint wgs84_ref_pose = map_projection->reverse(source_pose_basicpoint);
 
   ref_pos.longitude = wgs84_ref_pose.lon;
   ref_pos.latitude = wgs84_ref_pose.lat;
   ref_pos.elevation = wgs84_ref_pose.ele;
-=======
-  lanelet::BasicPoint3d wgs84_ref_pose = map_projection->projectECEF({ 
-    source_pose.pose.position.x, source_pose.pose.position.y, source_pose.pose.position.z}, 1);
-
-  ref_pos.longitude = wgs84_ref_pose.x();
-  ref_pos.latitude = wgs84_ref_pose.y();
-  ref_pos.elevation = wgs84_ref_pose.z();
->>>>>>> feature/cdar-253-external-obj-to-sdsm
   ref_pos.elevation_exists = true;
 
   return ref_pos;
@@ -462,15 +453,10 @@ auto to_detected_object_data_msg(
     detected_object_common_data.speed_z.speed = external_object.velocity_inst.twist.linear.z;
 
     // TODO: heading - convert ang vel to scale heading
-<<<<<<< HEAD
     lanelet::BasicPoint3d external_object_position{external_object.pose.pose.position.x, external_object.pose.pose.position.y,external_object.pose.pose.position.z};
     detected_object_common_data.heading.heading = remove_units(enu_orientation_to_true_heading(external_object.velocity_inst.twist.angular.z, external_object_position, map_projection));
     
   }
-=======
-    // detected_object_common_data.heading.heading = enu_orientation_to_wgs_heading(external_object.velocity_inst.twist.angular.z);
-}
->>>>>>> feature/cdar-253-external-obj-to-sdsm
 
   // optional data (determine based on object type)
   // use object type struct for better control
