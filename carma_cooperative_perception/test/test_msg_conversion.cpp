@@ -481,7 +481,7 @@ TEST(ToWGSHeading, FromMapYaw)
 
   double yaw = 10.0;
   auto shared_transform = std::make_shared<lanelet::projection::LocalFrameProjector>(proj_string.c_str());
-  auto heading = carma_cooperative_perception::enu_orientation_to_wgs_heading(yaw, obj_map_coordinates, shared_transform);
+  double heading = carma_cooperative_perception::remove_units(carma_cooperative_perception::enu_orientation_to_true_heading(yaw, obj_map_coordinates, shared_transform));
 
   EXPECT_EQ(heading, 80);
 

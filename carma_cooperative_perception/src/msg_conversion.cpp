@@ -136,8 +136,8 @@ auto heading_to_enu_yaw(const units::angle::degree_t & heading) noexcept -> unit
   return units::angle::degree_t{std::fmod(-(remove_units(heading) - 90.0) + 360.0, 360.0)};
 }
 
-auto enu_orientation_to_wgs_heading(double yaw, const lanelet::BasicPoint3d& obj_pose,
-const std::shared_ptr<lanelet::projection::LocalFrameProjector>& map_projection) noexcept -> double
+auto enu_orientation_to_true_heading(double yaw, const lanelet::BasicPoint3d& obj_pose,
+const std::shared_ptr<lanelet::projection::LocalFrameProjector>& map_projection) noexcept -> units::angle::degree_t
 {
   // Get object geodetic position
   lanelet::GPSPoint wgs_obj_pose = map_projection->reverse(obj_pose);
@@ -155,7 +155,7 @@ const std::shared_ptr<lanelet::projection::LocalFrameProjector>& map_projection)
   proj_destroy(transform);
   proj_context_destroy(context);
   
-  return remove_units(wgs_heading);
+  return wgs_heading;
 }
 
 // determine the object position offset in m from the current reference pose in map frame and external object pose
@@ -385,7 +385,7 @@ auto to_external_object_list_msg(
 auto to_sdsm_msg(
   const carma_perception_msgs::msg::ExternalObjectList & external_object_list,
   const geometry_msgs::msg::PoseStamped & current_pose,
-  const std::shared_ptr<lanelet::projection::LocalFrameProjector> & map_projection) noexcept
+ std::shared_ptr<lanelet::projection::LocalFrameProjector> map_projection) noexcept
   -> carma_v2x_msgs::msg::SensorDataSharingMessage
 { 
   carma_v2x_msgs::msg::SensorDataSharingMessage sdsm;
@@ -416,7 +416,7 @@ auto to_sdsm_msg(
 
 auto to_detected_object_data_msg(
   const carma_perception_msgs::msg::ExternalObject & external_object,
-  const std::shared_ptr<lanelet::projection::LocalFrameProjector> & map_projection) noexcept
+ std::shared_ptr<lanelet::projection::LocalFrameProjector> map_projection) noexcept
   -> carma_v2x_msgs::msg::DetectedObjectData
 {
   carma_v2x_msgs::msg::DetectedObjectData detected_object_data;
@@ -454,7 +454,7 @@ auto to_detected_object_data_msg(
 
     // TODO: heading - convert ang vel to scale heading
     lanelet::BasicPoint3d external_object_position{external_object.pose.pose.position.x, external_object.pose.pose.position.y,external_object.pose.pose.position.z};
-    detected_object_common_data.heading.heading = enu_orientation_to_wgs_heading(external_object.velocity_inst.twist.angular.z, external_object_position, map_projection);
+    detected_object_common_data.heading.heading = remove_units(enu_orientation_to_true_heading(external_object.velocity_inst.twist.angular.z, external_object_position, map_projection));
     
   }
 
