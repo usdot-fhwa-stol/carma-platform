@@ -173,7 +173,7 @@ auto calc_relative_position(const geometry_msgs::msg::PoseStamped & source_pose,
 }
 
 auto transform_pose_from_map_to_wgs84(const geometry_msgs::msg::PoseStamped & source_pose, 
-  const std::shared_ptr<lanelet::projection::LocalFrameProjector> map_projection) noexcept
+  const std::shared_ptr<lanelet::projection::LocalFrameProjector>& map_projection) noexcept
   -> carma_v2x_msgs::msg::Position3D
 {
   carma_v2x_msgs::msg::Position3D ref_pos;
