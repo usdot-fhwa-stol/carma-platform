@@ -66,7 +66,6 @@ private:
   std::string map_georeference_{""};
   geometry_msgs::msg::PoseStamped current_pose_;
 
-  //ObjectTypeMapping object_type_mapping_{};
   std::shared_ptr<lanelet::projection::LocalFrameProjector> map_projector_{nullptr};
   OnSetParametersCallbackHandle::SharedPtr on_set_parameters_callback_{nullptr};
 };

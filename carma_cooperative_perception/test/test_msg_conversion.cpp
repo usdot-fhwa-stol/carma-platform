@@ -432,7 +432,7 @@ TEST(ToDetectedObjectDataMsg, FromExternalObject)
   const auto detected_object{
     carma_cooperative_perception::to_detected_object_data_msg(object, shared_transform)};
 
-  EXPECT_EQ(detected_object.detected_object_common_data.obj_type.object_type, 1); //specify 1's enum
+  EXPECT_EQ(detected_object.detected_object_common_data.obj_type.object_type, 1);
   EXPECT_EQ(detected_object.detected_object_common_data.obj_type_cfd.classification_confidence, 90);
   EXPECT_EQ(detected_object.detected_object_common_data.detected_id.object_id, 7);
   EXPECT_NEAR(detected_object.detected_object_common_data.speed.speed, std::sqrt(481), 1e-2);
@@ -443,14 +443,6 @@ TEST(ToDetectedObjectDataMsg, FromExternalObject)
   EXPECT_EQ(detected_object.detected_object_optional_data.det_veh.height.vehicle_height, 23);
 
   // heading - not done
-  // geometry_msgs::msg::Quaternion orientation;
-  // orientation = object.pose.pose.orientation;
-  // const auto test_heading{carma_cooperative_perception::enu_orientation_to_wgs_heading(orientation)};
-  // std::cout << "Heading: " << test_heading << std::endl;
-
-  // const auto test_yaw{carma_cooperative_perception::heading_to_enu_yaw(units::angle::degree_t{215})};
-  // std::cout << "Yaw: " << test_yaw << std::endl;
-
 }
 
 TEST(ToSDSMMsg, FromExternalObjectList)
@@ -460,9 +452,17 @@ TEST(ToSDSMMsg, FromExternalObjectList)
   object_list.objects.emplace_back();
 
   geometry_msgs::msg::PoseStamped current_pose;
+  current_pose.pose.position.x = 1;
+  current_pose.pose.position.y = 2;
+  current_pose.pose.position.z = 3;
+
+  lanelet::projection::LocalFrameProjector local_projector("+proj=tmerc +lat_0=39.46636844371259 +lon_0=-76.16919523566943 +k=1 +x_0=0 +y_0=0 +datum=WGS84 +units=m +vunits=m +no_defs");
   std::shared_ptr<lanelet::projection::LocalFrameProjector> map_projection;
+  map_projection = std::make_shared<lanelet::projection::LocalFrameProjector>(local_projector);
 
   const auto sdsm{carma_cooperative_perception::to_sdsm_msg(object_list, current_pose, map_projection)};
+
+  std::cout << "SDSM year: " << sdsm.sdsm_time_stamp.year.year << std::endl;
 
   EXPECT_EQ(std::size(sdsm.objects.detected_object_data), 2U);
 }
