@@ -173,7 +173,7 @@ auto calc_relative_position(const geometry_msgs::msg::PoseStamped & source_pose,
 }
 
 auto transform_pose_from_map_to_wgs84(const geometry_msgs::msg::PoseStamped & source_pose, 
-  std::shared_ptr<lanelet::projection::LocalFrameProjector> map_projection) noexcept
+  const std::shared_ptr<lanelet::projection::LocalFrameProjector> map_projection) noexcept
   -> carma_v2x_msgs::msg::Position3D
 {
   carma_v2x_msgs::msg::Position3D ref_pos;
@@ -385,7 +385,7 @@ auto to_external_object_list_msg(
 auto to_sdsm_msg(
   const carma_perception_msgs::msg::ExternalObjectList & external_object_list,
   const geometry_msgs::msg::PoseStamped & current_pose,
- std::shared_ptr<lanelet::projection::LocalFrameProjector> map_projection) noexcept
+ const std::shared_ptr<lanelet::projection::LocalFrameProjector>& map_projection) noexcept
   -> carma_v2x_msgs::msg::SensorDataSharingMessage
 { 
   carma_v2x_msgs::msg::SensorDataSharingMessage sdsm;
@@ -416,7 +416,7 @@ auto to_sdsm_msg(
 
 auto to_detected_object_data_msg(
   const carma_perception_msgs::msg::ExternalObject & external_object,
- std::shared_ptr<lanelet::projection::LocalFrameProjector> map_projection) noexcept
+ const std::shared_ptr<lanelet::projection::LocalFrameProjector>& map_projection) noexcept
   -> carma_v2x_msgs::msg::DetectedObjectData
 {
   carma_v2x_msgs::msg::DetectedObjectData detected_object_data;
