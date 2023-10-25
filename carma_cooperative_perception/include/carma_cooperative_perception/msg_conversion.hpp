@@ -57,8 +57,9 @@ auto heading_to_enu_yaw(const units::angle::degree_t & heading) noexcept -> unit
 auto calc_relative_position(const carma_v2x_msgs::msg::Position3D & current_pose,
   const carma_v2x_msgs::msg::DetectedObjectData & detected_object_data) noexcept -> carma_v2x_msgs::msg::DetectedObjectData;
 
-auto transform_from_map_to_wgs84(const geometry_msgs::msg::PoseStamped source_pose, 
-  std::shared_ptr<lanelet::projection::LocalFrameProjector> map_projection) noexcept;
+auto transform_pose_from_map_to_wgs84(const geometry_msgs::msg::PoseStamped & source_pose, 
+  std::shared_ptr<lanelet::projection::LocalFrameProjector> map_projection) noexcept
+  -> carma_v2x_msgs::msg::Position3D;
 
 auto to_detection_list_msg(const carma_v2x_msgs::msg::SensorDataSharingMessage & sdsm) noexcept
   -> carma_cooperative_perception_interfaces::msg::DetectionList;
@@ -97,8 +98,12 @@ auto to_sdsm_msg(
   -> carma_v2x_msgs::msg::SensorDataSharingMessage;
 
 auto to_detected_object_data_msg(
-  const carma_perception_msgs::msg::ExternalObject & external_object) noexcept
+  const carma_perception_msgs::msg::ExternalObject & external_object,
+  const std::shared_ptr<lanelet::projection::LocalFrameProjector> & map_projection) noexcept
   -> carma_v2x_msgs::msg::DetectedObjectData;
+
+auto enu_orientation_to_wgs_heading(double yaw, const lanelet::BasicPoint3d& obj_pose,
+  const std::shared_ptr<lanelet::projection::LocalFrameProjector>& map_projection) noexcept -> double;
 
 
 }  // namespace carma_cooperative_perception
