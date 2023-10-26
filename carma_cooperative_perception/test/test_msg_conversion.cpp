@@ -442,10 +442,9 @@ TEST(ToDetectedObjectDataMsg, FromExternalObject)
   EXPECT_EQ(detected_object.detected_object_optional_data.det_veh.size.vehicle_length, 21);
   EXPECT_EQ(detected_object.detected_object_optional_data.det_veh.height.vehicle_height, 23);
 
-  // heading - not done
 }
 
-TEST(ToSDSMMsg, FromExternalObjectList)
+TEST(ToSdsmMsg, FromExternalObjectList)
 {
   carma_perception_msgs::msg::ExternalObjectList object_list;
   object_list.objects.emplace_back();
@@ -462,12 +461,10 @@ TEST(ToSDSMMsg, FromExternalObjectList)
 
   const auto sdsm{carma_cooperative_perception::to_sdsm_msg(object_list, current_pose, map_projection)};
 
-  std::cout << "SDSM year: " << sdsm.sdsm_time_stamp.year.year << std::endl;
-
   EXPECT_EQ(std::size(sdsm.objects.detected_object_data), 2U);
 }
 
-TEST(ToWGSHeading, FromMapYaw)
+TEST(ToWgsHeading, FromMapYaw)
 {
 
   std::string proj_string{"+proj=tmerc +lat_0=42.24375605014171 +lon_0=-83.55739733422793 +k=1 +x_0=0 +y_0=0 +datum=WGS84 +units=m +vunits=m +no_defs"};
@@ -487,7 +484,7 @@ TEST(ToWGSHeading, FromMapYaw)
 
 }
 
-TEST(toSDSMMsg, getSDSMOffset)
+TEST(toSdsmMsg, getSDSMOffset)
 {
 
   builtin_interfaces::msg::Time external_object_list_stamp;
@@ -499,7 +496,7 @@ TEST(toSDSMMsg, getSDSMOffset)
   EXPECT_EQ(time_offset, 50);
 }
 
-TEST(ToSDSMMsg, getRelativePosition)
+TEST(ToSdsmMsg, getRelativePosition)
 {
     geometry_msgs::msg::PoseStamped source_pose;
     source_pose.pose.position.x = 100;

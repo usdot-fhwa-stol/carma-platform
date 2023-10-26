@@ -452,9 +452,16 @@ auto to_detected_object_data_msg(
     detected_object_common_data.presence_vector |= carma_v2x_msgs::msg::DetectedObjectCommonData::HAS_SPEED_Z;
     detected_object_common_data.speed_z.speed = external_object.velocity_inst.twist.linear.z;
 
-    // TODO: heading - convert ang vel to scale heading
+    // heading - convert ang vel to scale heading
     lanelet::BasicPoint3d external_object_position{external_object.pose.pose.position.x, external_object.pose.pose.position.y,external_object.pose.pose.position.z};
-    detected_object_common_data.heading.heading = remove_units(enu_orientation_to_true_heading(external_object.velocity_inst.twist.angular.z, external_object_position, map_projection));
+    // Get yaw from orientation
+    auto obj_orientation = external_object.pose.pose.orientation;
+    tf2::Quaternion q(obj_orientation.x, obj_orientation.y, obj_orientation.z, obj_orientation.w);
+    tf2::Matrix3x3 m(q);
+    double roll, pitch, yaw;
+    m.getRPY(roll, pitch, yaw);
+
+    detected_object_common_data.heading.heading = remove_units(enu_orientation_to_true_heading(yaw, external_object_position, map_projection));
     
   }
 
@@ -467,7 +474,7 @@ auto to_detected_object_data_msg(
       detected_object_common_data.obj_type.object_type = j3224_v2x_msgs::msg::ObjectType::VEHICLE;
 
       if(external_object.presence_vector & external_object.SIZE_PRESENCE_VECTOR){
-        detected_object_optional_data.det_veh.presence_vector |= carma_v2x_msgs::msg::DetectedVehicleData::HAS_SIZE;
+        detected_object_optional_data.det_veh.presence_vector = carma_v2x_msgs::msg::DetectedVehicleData::HAS_SIZE;
         detected_object_optional_data.det_veh.presence_vector |= carma_v2x_msgs::msg::DetectedVehicleData::HAS_HEIGHT;
 
         detected_object_optional_data.det_veh.size.vehicle_width = external_object.size.y;
@@ -479,7 +486,7 @@ auto to_detected_object_data_msg(
       detected_object_common_data.obj_type.object_type = j3224_v2x_msgs::msg::ObjectType::VEHICLE;
 
       if(external_object.presence_vector & external_object.SIZE_PRESENCE_VECTOR){
-        detected_object_optional_data.det_veh.presence_vector |= carma_v2x_msgs::msg::DetectedVehicleData::HAS_SIZE;
+        detected_object_optional_data.det_veh.presence_vector = carma_v2x_msgs::msg::DetectedVehicleData::HAS_SIZE;
         detected_object_optional_data.det_veh.presence_vector |= carma_v2x_msgs::msg::DetectedVehicleData::HAS_HEIGHT;
 
         detected_object_optional_data.det_veh.size.vehicle_width = external_object.size.y;
@@ -491,7 +498,7 @@ auto to_detected_object_data_msg(
       detected_object_common_data.obj_type.object_type = j3224_v2x_msgs::msg::ObjectType::VEHICLE;
 
       if(external_object.presence_vector & external_object.SIZE_PRESENCE_VECTOR){
-        detected_object_optional_data.det_veh.presence_vector |= carma_v2x_msgs::msg::DetectedVehicleData::HAS_SIZE;
+        detected_object_optional_data.det_veh.presence_vector = carma_v2x_msgs::msg::DetectedVehicleData::HAS_SIZE;
         detected_object_optional_data.det_veh.presence_vector |= carma_v2x_msgs::msg::DetectedVehicleData::HAS_HEIGHT;
 
         detected_object_optional_data.det_veh.size.vehicle_width = external_object.size.y;
@@ -502,7 +509,7 @@ auto to_detected_object_data_msg(
     case external_object.PEDESTRIAN:
       detected_object_common_data.obj_type.object_type = j3224_v2x_msgs::msg::ObjectType::VRU;
 
-      detected_object_optional_data.det_vru.presence_vector |= carma_v2x_msgs::msg::DetectedVRUData::HAS_BASIC_TYPE;
+      detected_object_optional_data.det_vru.presence_vector = carma_v2x_msgs::msg::DetectedVRUData::HAS_BASIC_TYPE;
       detected_object_optional_data.det_vru.basic_type.type |= j2735_v2x_msgs::msg::PersonalDeviceUserType::A_PEDESTRIAN;
 
       break;
@@ -515,7 +522,7 @@ auto to_detected_object_data_msg(
         detected_object_optional_data.det_obst.obst_size.width.size_value = external_object.size.y;
         detected_object_optional_data.det_obst.obst_size.length.size_value = external_object.size.x;
 
-        detected_object_optional_data.det_obst.obst_size.presence_vector |= carma_v2x_msgs::msg::ObstacleSize::HAS_HEIGHT;
+        detected_object_optional_data.det_obst.obst_size.presence_vector = carma_v2x_msgs::msg::ObstacleSize::HAS_HEIGHT;
         detected_object_optional_data.det_obst.obst_size.height.size_value = external_object.size.z;
       }
   }
