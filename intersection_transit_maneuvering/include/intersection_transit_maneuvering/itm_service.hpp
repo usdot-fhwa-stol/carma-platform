@@ -45,7 +45,7 @@ class Servicer: public CallInterface
          * @param resp Incoming PlanTrajectory service response
          * @return true if successful, otherwise false
          */
-        void call(carma_planning_msgs::srv::PlanTrajectory::Request::SharedPtr req, carma_planning_msgs::srv::PlanTrajectory::Response::SharedPtr resp); 
+        void call(carma_planning_msgs::srv::PlanTrajectory::Request::SharedPtr req, carma_planning_msgs::srv::PlanTrajectory::Response::SharedPtr& resp); 
         
         /**
         * \brief set the trajectory service client

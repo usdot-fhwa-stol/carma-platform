@@ -139,9 +139,9 @@ carma_ros2_utils::CallbackReturn IntersectionTransitManeuveringNode::on_configur
                         
  object_ = std::make_shared<intersection_transit_maneuvering::Servicer>();
 
- auto trajectory_client  = create_client<carma_planning_msgs::srv::PlanTrajectory>("inlanecruising_plugin/plan_trajectory");
+ client_  = create_client<carma_planning_msgs::srv::PlanTrajectory>("inlanecruising_plugin/plan_trajectory");
 
- object_->set_client(trajectory_client);
+ object_->set_client(client_);
 
  //Return success if everthing initialized successfully
 return CallbackReturn::SUCCESS;
@@ -184,9 +184,9 @@ return CallbackReturn::SUCCESS;
                 related_maneuvers.push_back(i);
             }
             else
-                {
-                    break;
-                }
+            {
+                break;
+            }
         }
 
         converted_maneuvers_ = convert_maneuver_plan(maneuver_plan);
@@ -197,17 +197,19 @@ return CallbackReturn::SUCCESS;
             new_req->maneuver_plan.maneuvers.push_back(i);
         }
 
-            new_req->header = req->header;
-            new_req->vehicle_state = req->vehicle_state;
-            new_req->initial_trajectory_plan = req->initial_trajectory_plan;
-            object_->call(new_req,resp);
+        new_req->header = req->header;
+        new_req->vehicle_state = req->vehicle_state;
+        new_req->initial_trajectory_plan = req->initial_trajectory_plan;
+        carma_planning_msgs::srv::PlanTrajectory::Response::SharedPtr ilc_resp = std::make_shared<carma_planning_msgs::srv::PlanTrajectory::Response>();
+        object_->call(new_req,ilc_resp);
 
-        if(!resp->trajectory_plan.trajectory_points.empty())//Since we're using an interface for this process, the call() functionality will come from somewhere else
+        if(ilc_resp->trajectory_plan.trajectory_points.empty())//Since we're using an interface for this process, the call() functionality will come from somewhere else
         {
-            RCLCPP_DEBUG_STREAM(rclcpp::get_logger("intersection_transit_maneuvering"),"Call Successful");
+           RCLCPP_DEBUG_STREAM(rclcpp::get_logger("intersection_transit_maneuvering"),"Failed to call service");
+           return ;
         } else {
-            RCLCPP_DEBUG_STREAM(rclcpp::get_logger("intersection_transit_maneuvering"),"Failed to call service");
-            return ;
+            RCLCPP_DEBUG_STREAM(rclcpp::get_logger("intersection_transit_maneuvering"),"Call Successful");
+            resp->trajectory_plan = ilc_resp->trajectory_plan;
         }
 
 

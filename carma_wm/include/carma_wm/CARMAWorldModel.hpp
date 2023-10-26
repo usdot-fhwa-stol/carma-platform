@@ -15,7 +15,7 @@
  * License for the specific language governing permissions and limitations under
  * the License.
  */
-
+#include <rclcpp/rclcpp.hpp>
 #include "carma_wm/WorldModel.hpp"
 #include <lanelet2_extension/traffic_rules/CarmaUSTrafficRules.h>
 #include <lanelet2_core/primitives/BasicRegulatoryElements.h>
@@ -110,8 +110,9 @@ public:
    * @brief processSpatFromMsg update map's traffic light states with SPAT msg
    *
    * @param spat_msg Msg to update with
+   * @param use_sim_time Boolean to indicate if it is currently simulation or not
    */
-  void processSpatFromMsg(const carma_v2x_msgs::msg::SPAT& spat_msg);
+  void processSpatFromMsg(const carma_v2x_msgs::msg::SPAT& spat_msg, bool use_sim_time = false);
 
   /**
    * \brief This function is called by distanceToObjectBehindInLane or distanceToObjectAheadInLane. 
@@ -135,16 +136,8 @@ public:
     * \param moy_exists tells weather minute of the year exist or not
     * \param moy value of the minute of the year
    */
-  boost::posix_time::ptime min_end_time_converter_minute_of_year(boost::posix_time::ptime min_end_time,bool moy_exists,uint32_t moy=0);
-
-  /*! \brief for cheking previous rate to avoid repetation.
-    * \param min_end_time_dynamic dynamic spat processing minimum end time
-    * \param received_state_dynamic phase rate of the movement event list event state
-    * \param mov_id id of the traffic signal states
-    * \param mov_signal_group signal group of the traffic signal states
-   */
-  bool check_if_seen_before_movement_state(boost::posix_time::ptime min_end_time_dynamic,lanelet::CarmaTrafficSignalState received_state_dynamic,uint16_t mov_id, uint8_t mov_signal_group);
-
+  boost::posix_time::ptime min_end_time_converter_minute_of_year(boost::posix_time::ptime min_end_time,bool moy_exists,uint32_t moy=0, bool is_simulation = false);
+  
 /** \param config_lim the configurable speed limit value populated from WMListener using the config_speed_limit parameter
  * in VehicleConfigParams.yaml
 *

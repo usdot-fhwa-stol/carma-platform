@@ -18,6 +18,16 @@ Parameters:
     Type: String
     NoEcho: true
     MinLength: 6
+  ExistingVPCID:
+    Description: The existing VPCId to use for the instance
+    Type: String
+    Default: vpc-0b87aaf5689a49981
+  ExistingRouteTableID:
+    Type: String
+    Default: rtb-080bcd24bfb4b17a3
+  EC2SubnetCIDRBlock:
+    Type: String
+    Default: "10.0.0.0/24"
   CarmaConfigImage:
     Description: The specific carma config which launches xil and platform to make available in the instance
     Type: String
@@ -27,23 +37,6 @@ Mappings:
     us-east-1:
       ami: ami-0c5b5f70bfa4f1021 # Custom Leidos AMI
 Resources:
-  VPC:
-    Type: AWS::EC2::VPC
-    Properties:
-      CidrBlock: 10.0.0.0/16
-      EnableDnsSupport: true
-      EnableDnsHostnames: true
-      InstanceTenancy: default
-      Tags:
-        - Key: Name
-          Value: !Sub "Cloud9 Dev VPC-${AWS::StackName}"
-  InternetGateway:
-    Type: AWS::EC2::InternetGateway
-  VPCGatewayAttachment:
-    Type: AWS::EC2::VPCGatewayAttachment
-    Properties:
-      VpcId: !Ref VPC
-      InternetGatewayId: !Ref InternetGateway
   SubnetA:
     Type: AWS::EC2::Subnet
     Properties:
@@ -51,30 +44,21 @@ Resources:
         - 0
         - !GetAZs
           Ref: 'AWS::Region'
-      VpcId: !Ref VPC
-      CidrBlock: 10.0.0.0/24
+      VpcId: !Ref ExistingVPCID
+      CidrBlock: !Ref EC2SubnetCIDRBlock
       MapPublicIpOnLaunch: true
-  RouteTable:
-    Type: AWS::EC2::RouteTable
-    Properties:
-      VpcId: !Ref VPC
-  InternetRoute:
-    Type: AWS::EC2::Route
-    Properties:
-      DestinationCidrBlock: 0.0.0.0/0
-      GatewayId: !Ref InternetGateway
-      RouteTableId: !Ref RouteTable
   SubnetARouteTableAssociation:
     Type: AWS::EC2::SubnetRouteTableAssociation
     Properties:
-      RouteTableId: !Ref RouteTable
+      # Is Create vpc is true, get the route table ID from created VPC, else use ID of existing route table
+      RouteTableId: !Ref ExistingRouteTableID
       SubnetId: !Ref SubnetA
   InstanceSecurityGroup:
     Type: AWS::EC2::SecurityGroup
     Properties:
       GroupName: !Sub "Cloud9 Security Group-${AWS::StackName}"
       GroupDescription: !Sub "Permit SSH traffic for Cloud9 and 8443 traffic for DCV"
-      VpcId: !Ref VPC
+      VpcId: !Ref ExistingVPCID
       SecurityGroupIngress:
         - IpProtocol: tcp
           FromPort: '22'
