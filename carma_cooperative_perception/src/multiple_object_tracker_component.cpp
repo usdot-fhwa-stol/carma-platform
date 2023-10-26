@@ -232,7 +232,7 @@ auto MultipleObjectTrackerNode::handle_on_configure(
             result.reason = "parameter is read-only while node is in 'Active' state";
 
             RCLCPP_ERROR(
-              get_logger(), "Cannot change parameter 'execution_frequencey_hz': " + result.reason);
+              get_logger(), "Cannot change parameter 'execution_frequency_hz': " + result.reason);
 
             break;
           } else {
@@ -255,7 +255,7 @@ auto MultipleObjectTrackerNode::handle_on_configure(
 auto MultipleObjectTrackerNode::handle_on_activate(
   const rclcpp_lifecycle::State & /* previous_state */) -> carma_ros2_utils::CallbackReturn
 {
-  RCLCPP_INFO(get_logger(), "Lifecycle transition: actiavting");
+  RCLCPP_INFO(get_logger(), "Lifecycle transition: activating");
 
   if (pipeline_execution_timer_ == nullptr) {
     const std::chrono::duration<double, std::nano> period_ns{mot::remove_units(execution_period_)};
