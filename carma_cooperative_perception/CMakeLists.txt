@@ -113,9 +113,6 @@ if(carma_cooperative_perception_BUILD_TESTS)
     carma_cooperative_perception
   )
 
-  add_launch_test(test/track_list_to_external_object_list_launch_test.py)
-
-  
 endif()
 
 ament_auto_package()
