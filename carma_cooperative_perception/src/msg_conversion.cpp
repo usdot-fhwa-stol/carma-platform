@@ -167,7 +167,7 @@ auto calc_relative_position(const geometry_msgs::msg::PoseStamped & source_pose,
   adjusted_offset.offset_x.object_distance = position_offset.offset_x.object_distance - source_pose.pose.position.x;
   adjusted_offset.offset_y.object_distance = position_offset.offset_y.object_distance - source_pose.pose.position.y;
   adjusted_offset.offset_z.object_distance = position_offset.offset_z.object_distance - source_pose.pose.position.z;
-  adjusted_offset.presence_vector |= carma_v2x_msgs::msg::PositionOffsetXYZ::HAS_OFFSET_Z;
+  adjusted_offset.presence_vector = carma_v2x_msgs::msg::PositionOffsetXYZ::HAS_OFFSET_Z;
 
   return adjusted_offset;
 }
