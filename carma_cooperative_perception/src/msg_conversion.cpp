@@ -31,6 +31,9 @@
 #include <utility>
 #include <chrono>
 
+#include <proj.h>
+#include <gsl/pointers>
+
 #include "carma_cooperative_perception/geodetic.hpp"
 #include "carma_cooperative_perception/j2735_types.hpp"
 #include "carma_cooperative_perception/j3224_types.hpp"
@@ -133,13 +136,27 @@ auto heading_to_enu_yaw(const units::angle::degree_t & heading) noexcept -> unit
   return units::angle::degree_t{std::fmod(-(remove_units(heading) - 90.0) + 360.0, 360.0)};
 }
 
-// // TODO: find the WGS84 heading from map frame pose
-// auto enu_orientation_to_wgs_heading(const geometry_msgs::msg::Quaternion & enu_orientation) noexcept -> double
-// {
+auto enu_orientation_to_true_heading(double yaw, const lanelet::BasicPoint3d& obj_pose,
+const std::shared_ptr<lanelet::projection::LocalFrameProjector>& map_projection) noexcept -> units::angle::degree_t
+{
+  // Get object geodetic position
+  lanelet::GPSPoint wgs_obj_pose = map_projection->reverse(obj_pose);
 
+  // Get WGS84 Heading
+  gsl::owner<PJ_CONTEXT *> context = proj_context_create();
+  gsl::owner<PJ *> transform = proj_create(context, map_projection->ECEF_PROJ_STR);
+  units::angle::degree_t grid_heading{std::fmod(90 - yaw + 360, 360)};
 
-//   return wgs_heading;
-// }
+  const auto factors = proj_factors(transform, proj_coord( proj_torad(wgs_obj_pose.lon), proj_torad(wgs_obj_pose.lat), 0, 0));
+  units::angle::degree_t grid_convergence{proj_todeg(factors.meridian_convergence)};
+
+  auto wgs_heading = grid_convergence + grid_heading;
+  
+  proj_destroy(transform);
+  proj_context_destroy(context);
+  
+  return wgs_heading;
+}
 
 // determine the object position offset in m from the current reference pose in map frame and external object pose
 auto calc_relative_position(const geometry_msgs::msg::PoseStamped & source_pose,
@@ -156,17 +173,17 @@ auto calc_relative_position(const geometry_msgs::msg::PoseStamped & source_pose,
 }
 
 auto transform_pose_from_map_to_wgs84(const geometry_msgs::msg::PoseStamped & source_pose, 
-  std::shared_ptr<lanelet::projection::LocalFrameProjector> map_projection) noexcept
+  const std::shared_ptr<lanelet::projection::LocalFrameProjector>& map_projection) noexcept
   -> carma_v2x_msgs::msg::Position3D
 {
   carma_v2x_msgs::msg::Position3D ref_pos;
+  lanelet::BasicPoint3d source_pose_basicpoint{source_pose.pose.position.x, source_pose.pose.position.y,0.0};
 
-  lanelet::BasicPoint3d wgs84_ref_pose = map_projection->projectECEF({ 
-    source_pose.pose.position.x, source_pose.pose.position.y, source_pose.pose.position.z}, 1);
+  lanelet::GPSPoint wgs84_ref_pose = map_projection->reverse(source_pose_basicpoint);
 
-  ref_pos.longitude = wgs84_ref_pose.x();
-  ref_pos.latitude = wgs84_ref_pose.y();
-  ref_pos.elevation = wgs84_ref_pose.z();
+  ref_pos.longitude = wgs84_ref_pose.lon;
+  ref_pos.latitude = wgs84_ref_pose.lat;
+  ref_pos.elevation = wgs84_ref_pose.ele;
   ref_pos.elevation_exists = true;
 
   return ref_pos;
@@ -368,7 +385,7 @@ auto to_external_object_list_msg(
 auto to_sdsm_msg(
   const carma_perception_msgs::msg::ExternalObjectList & external_object_list,
   const geometry_msgs::msg::PoseStamped & current_pose,
-  const std::shared_ptr<lanelet::projection::LocalFrameProjector> & map_projection) noexcept
+ const std::shared_ptr<lanelet::projection::LocalFrameProjector>& map_projection) noexcept
   -> carma_v2x_msgs::msg::SensorDataSharingMessage
 { 
   carma_v2x_msgs::msg::SensorDataSharingMessage sdsm;
@@ -380,7 +397,7 @@ auto to_sdsm_msg(
 
   // Convert external objects within the list to detected_object_data
   for (const auto & external_object : external_object_list.objects) {
-    auto sdsm_detected_object = to_detected_object_data_msg(external_object);
+    auto sdsm_detected_object = to_detected_object_data_msg(external_object, map_projection);
 
     // Calculate the time offset between individual objects and the respective SDSM container msg
     sdsm_detected_object.detected_object_common_data.measurement_time = 
@@ -398,7 +415,8 @@ auto to_sdsm_msg(
 }
 
 auto to_detected_object_data_msg(
-  const carma_perception_msgs::msg::ExternalObject & external_object) noexcept
+  const carma_perception_msgs::msg::ExternalObject & external_object,
+ const std::shared_ptr<lanelet::projection::LocalFrameProjector>& map_projection) noexcept
   -> carma_v2x_msgs::msg::DetectedObjectData
 {
   carma_v2x_msgs::msg::DetectedObjectData detected_object_data;
@@ -435,8 +453,10 @@ auto to_detected_object_data_msg(
     detected_object_common_data.speed_z.speed = external_object.velocity_inst.twist.linear.z;
 
     // TODO: heading - convert ang vel to scale heading
-    // detected_object_common_data.heading.heading = enu_orientation_to_wgs_heading(external_object.velocity_inst.twist.angular.z);
-}
+    lanelet::BasicPoint3d external_object_position{external_object.pose.pose.position.x, external_object.pose.pose.position.y,external_object.pose.pose.position.z};
+    detected_object_common_data.heading.heading = remove_units(enu_orientation_to_true_heading(external_object.velocity_inst.twist.angular.z, external_object_position, map_projection));
+    
+  }
 
   // optional data (determine based on object type)
   // use object type struct for better control

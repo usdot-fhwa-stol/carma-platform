@@ -19,6 +19,9 @@
 #include <carma_perception_msgs/msg/external_object.hpp>
 #include <carma_perception_msgs/msg/external_object_list.hpp>
 
+#include <proj.h>
+#include <gsl/pointers>
+
 #include <numeric>
 
 TEST(ToTimeMsg, HasSeconds)
@@ -423,9 +426,11 @@ TEST(ToDetectedObjectDataMsg, FromExternalObject)
                             object.POSE_PRESENCE_VECTOR | object.VELOCITY_INST_PRESENCE_VECTOR |
                             object.CONFIDENCE_PRESENCE_VECTOR | object.OBJECT_TYPE_PRESENCE_VECTOR |
                             object.SIZE_PRESENCE_VECTOR;
-
+  
+  std::string proj_string{"+proj=tmerc +lat_0=42.24375605014171 +lon_0=-83.55739733422793 +k=1 +x_0=0 +y_0=0 +datum=WGS84 +units=m +vunits=m +no_defs"};
+  auto shared_transform = std::make_shared<lanelet::projection::LocalFrameProjector>(proj_string.c_str());
   const auto detected_object{
-    carma_cooperative_perception::to_detected_object_data_msg(object)};
+    carma_cooperative_perception::to_detected_object_data_msg(object, shared_transform)};
 
   EXPECT_EQ(detected_object.detected_object_common_data.obj_type.object_type, 1);
   EXPECT_EQ(detected_object.detected_object_common_data.obj_type_cfd.classification_confidence, 90);
@@ -460,4 +465,24 @@ TEST(ToSDSMMsg, FromExternalObjectList)
   std::cout << "SDSM year: " << sdsm.sdsm_time_stamp.year.year << std::endl;
 
   EXPECT_EQ(std::size(sdsm.objects.detected_object_data), 2U);
+}
+
+TEST(ToWGSHeading, FromMapYaw)
+{
+
+  std::string proj_string{"+proj=tmerc +lat_0=42.24375605014171 +lon_0=-83.55739733422793 +k=1 +x_0=0 +y_0=0 +datum=WGS84 +units=m +vunits=m +no_defs"};
+
+  // Test conversion from map to lat/lon
+  // Define map coordinates
+  lanelet::BasicPoint3d obj_map_coordinates;
+  obj_map_coordinates.x() = -69.7311856222;
+  obj_map_coordinates.y() = 331.419278969;
+  obj_map_coordinates.z() = 37.8485517148;
+
+  double yaw = 10.0;
+  auto shared_transform = std::make_shared<lanelet::projection::LocalFrameProjector>(proj_string.c_str());
+  double heading = carma_cooperative_perception::remove_units(carma_cooperative_perception::enu_orientation_to_true_heading(yaw, obj_map_coordinates, shared_transform));
+
+  EXPECT_EQ(heading, 80);
+
 }
