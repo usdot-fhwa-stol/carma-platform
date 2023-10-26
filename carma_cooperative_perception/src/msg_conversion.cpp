@@ -33,6 +33,7 @@
 
 #include <proj.h>
 #include <gsl/pointers>
+#include <memory>
 
 #include "carma_cooperative_perception/geodetic.hpp"
 #include "carma_cooperative_perception/j2735_types.hpp"
@@ -167,7 +168,8 @@ auto enu_orientation_to_true_heading(
   return wgs_heading;
 }
 
-// determine the object position offset in m from the current reference pose in map frame and external object pose
+// determine the object position offset in m from the current reference pose
+// in map frame and external object pose
 auto calc_relative_position(
   const geometry_msgs::msg::PoseStamped & source_pose,
   const carma_v2x_msgs::msg::PositionOffsetXYZ & position_offset) noexcept
@@ -455,8 +457,11 @@ auto to_detected_object_data_msg(
       static_cast<std::uint16_t>(external_object.id);
   }
 
-  // pos - Add offset to ref_pos to get object position in map frame -> convert to WGS84 coordinates for sdsm
-  // To get offset: Subtract the external object pose from the current vehicle location given by the current_pose topic
+  // pos - Add offset to ref_pos to get object position
+  // in map frame -> convert to WGS84 coordinates for sdsm
+
+  // To get offset: Subtract the external object pose from
+  // the current vehicle location given by the current_pose topic
   if (external_object.presence_vector & external_object.POSE_PRESENCE_VECTOR) {
     detected_object_common_data.pos.offset_x.object_distance =
       static_cast<float>(external_object.pose.pose.position.x);

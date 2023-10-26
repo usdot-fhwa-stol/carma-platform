@@ -26,6 +26,7 @@
 #include <lanelet2_core/geometry/Lanelet.h>
 #include <lanelet2_extension/projection/local_frame_projector.h>
 
+#include <memory>
 #include <string>
 
 namespace carma_cooperative_perception

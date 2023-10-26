@@ -21,6 +21,8 @@
 
 #include <proj.h>
 #include <gsl/pointers>
+#include <memory>
+#include <string>
 
 #include <numeric>
 

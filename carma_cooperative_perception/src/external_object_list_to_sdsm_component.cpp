@@ -79,7 +79,6 @@ auto ExternalObjectListToSdsmNode::handle_on_configure(
           "Trying to recieve message on topic '%s', but the containing node is not activated."
           "current node state: '%s'",
           this->current_pose_subscription_->get_topic_name(), current_state.c_str());
-
       }
     });
 
