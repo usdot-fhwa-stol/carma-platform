@@ -51,8 +51,8 @@ auto to_position_msg(const UtmCoordinate & position_utm) noexcept -> geometry_ms
 
 auto heading_to_enu_yaw(const units::angle::degree_t & heading) noexcept -> units::angle::degree_t;
 
-auto calc_relative_position(const carma_v2x_msgs::msg::Position3D & current_pose,
-  const carma_v2x_msgs::msg::DetectedObjectData & detected_object_data) noexcept -> carma_v2x_msgs::msg::DetectedObjectData;
+auto calc_relative_position(const geometry_msgs::msg::PoseStamped & current_pose,
+  const carma_v2x_msgs::msg::PositionOffsetXYZ & detected_object_data) noexcept -> carma_v2x_msgs::msg::PositionOffsetXYZ;
 
 auto transform_pose_from_map_to_wgs84(const geometry_msgs::msg::PoseStamped & source_pose, 
   const std::shared_ptr<lanelet::projection::LocalFrameProjector>& map_projection) noexcept

@@ -486,3 +486,28 @@ TEST(ToWGSHeading, FromMapYaw)
   EXPECT_EQ(heading, 80);
 
 }
+
+TEST(toSDSMMsg, getSDSMOffset)
+{
+
+  builtin_interfaces::msg::Time external_object_list_stamp;
+  external_object_list_stamp.sec = 100;
+  builtin_interfaces::msg::Time external_object_stamp;
+  external_object_stamp.sec = 50;
+  auto time_offset = (carma_cooperative_perception::calc_sdsm_time_offset(external_object_list_stamp, external_object_stamp)).measurement_time_offset;
+  
+  EXPECT_EQ(time_offset, 50);
+}
+
+TEST(ToSDSMMsg, getRelativePosition)
+{
+    geometry_msgs::msg::PoseStamped source_pose;
+    source_pose.pose.position.x = 100;
+    source_pose.pose.position.y = 100;
+    carma_v2x_msgs::msg::PositionOffsetXYZ position_offset;
+    position_offset.offset_x.object_distance = 110;
+    position_offset.offset_y.object_distance = 110;
+
+    carma_v2x_msgs::msg::PositionOffsetXYZ adjusted_pose = carma_cooperative_perception::calc_relative_position(source_pose, position_offset);
+    EXPECT_EQ(adjusted_pose.offset_x.object_distance, 10);
+}
