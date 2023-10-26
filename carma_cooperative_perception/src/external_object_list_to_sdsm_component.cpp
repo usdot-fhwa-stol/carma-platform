@@ -18,6 +18,7 @@
 #include <rclcpp_components/register_node_macro.hpp>
 
 #include "carma_cooperative_perception/msg_conversion.hpp"
+#include <memory>
 
 namespace carma_cooperative_perception
 {
@@ -78,7 +79,7 @@ auto ExternalObjectListToSdsmNode::handle_on_configure(
           "Trying to recieve message on topic '%s', but the containing node is not activated."
           "current node state: '%s'",
           this->current_pose_subscription_->get_topic_name(), current_state.c_str());
-        
+
       }
     });
 
