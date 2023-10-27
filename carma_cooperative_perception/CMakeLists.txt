@@ -117,7 +117,11 @@ if(carma_cooperative_perception_BUILD_TESTS)
 
 endif()
 
-ament_auto_package()
+ament_auto_package(
+  INSTALL_TO_SHARE
+    launch
+    params
+)
 
 include(GNUInstallDirs)
 

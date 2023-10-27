@@ -74,7 +74,8 @@ private:
 
   std::vector<Detection> detections_;
   std::unordered_map<cooperative_perception::Uuid, std::size_t> uuid_index_map_;
-  cooperative_perception::FixedThresholdTrackManager<Track> track_manager_;
+  cooperative_perception::FixedThresholdTrackManager<Track> track_manager_{
+    cooperative_perception::PromotionThreshold{3U}, cooperative_perception::RemovalThreshold{0U}};
   units::time::nanosecond_t execution_period_{1 / units::frequency::hertz_t{2.0}};
   OnSetParametersCallbackHandle::SharedPtr on_set_parameters_callback_{nullptr};
 };

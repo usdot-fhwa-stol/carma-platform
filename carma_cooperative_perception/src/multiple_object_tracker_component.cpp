@@ -185,7 +185,7 @@ static auto to_ros_msg(const Track & track)
 }
 
 MultipleObjectTrackerNode::MultipleObjectTrackerNode(const rclcpp::NodeOptions & options)
-: CarmaLifecycleNode{options}, track_manager_{mot::PromotionThreshold{3}, mot::RemovalThreshold{0}}
+: CarmaLifecycleNode{options}
 {
   // CarmaLifecycleNode base class will automatically handle lifecycle state changes for
   // lifecycle publishers and timers.
@@ -219,6 +219,12 @@ auto MultipleObjectTrackerNode::handle_on_configure(
   declare_parameter(
     "execution_frequency_hz", mot::remove_units(units::frequency::hertz_t{1 / execution_period_}));
 
+  declare_parameter(
+    "track_promotion_threshold", static_cast<int>(track_manager_.get_promotion_threshold().value));
+
+  declare_parameter(
+    "track_removal_threshold", static_cast<int>(track_manager_.get_promotion_threshold().value));
+
   on_set_parameters_callback_ =
     add_on_set_parameters_callback([this](const std::vector<rclcpp::Parameter> & parameters) {
       rcl_interfaces::msg::SetParametersResult result;
@@ -237,6 +243,42 @@ auto MultipleObjectTrackerNode::handle_on_configure(
             break;
           } else {
             this->execution_period_ = 1 / units::frequency::hertz_t{parameter.as_double()};
+          }
+        } else if (parameter.get_name() == "track_promotion_threshold") {
+          if (this->get_current_state().label() == "active") {
+            result.successful = false;
+            result.reason = "parameter is read-only while node is in 'Active' state";
+
+            RCLCPP_ERROR(
+              get_logger(), "Cannot change parameter 'execution_frequency_hz': " + result.reason);
+
+            break;
+          } else {
+            if (const auto value{parameter.as_int()}; value < 0) {
+              result.successful = false;
+              result.reason = "parameter must be nonnegative";
+            } else {
+              this->track_manager_.set_promotion_threshold_and_update(
+                mot::PromotionThreshold{static_cast<std::size_t>(value)});
+            }
+          }
+        } else if (parameter.get_name() == "track_removal_threshold") {
+          if (this->get_current_state().label() == "active") {
+            result.successful = false;
+            result.reason = "parameter is read-only while node is in 'Active' state";
+
+            RCLCPP_ERROR(
+              get_logger(), "Cannot change parameter 'execution_frequency_hz': " + result.reason);
+
+            break;
+          } else {
+            if (const auto value{parameter.as_int()}; value < 0) {
+              result.successful = false;
+              result.reason = "parameter must be nonnegative";
+            } else {
+              this->track_manager_.set_removal_threshold_and_update(
+                mot::RemovalThreshold{static_cast<std::size_t>(value)});
+            }
           }
         } else {
           result.successful = false;
@@ -424,7 +466,7 @@ auto MultipleObjectTrackerNode::execute_pipeline() -> void
   for (const auto & cluster : clusters) {
     const auto detection{std::cbegin(cluster.get_detections())->second};
     track_manager_.add_tentative_track(std::visit(make_track_visitor, detection));
-    }
+  }
 
   carma_cooperative_perception_interfaces::msg::TrackList track_list;
   for (const auto & track : track_manager_.get_confirmed_tracks()) {
