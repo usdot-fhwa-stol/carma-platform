@@ -187,10 +187,6 @@ static auto to_ros_msg(const Track & track)
 MultipleObjectTrackerNode::MultipleObjectTrackerNode(const rclcpp::NodeOptions & options)
 : CarmaLifecycleNode{options}
 {
-  // CarmaLifecycleNode base class will automatically handle lifecycle state changes for
-  // lifecycle publishers and timers.
-  lifecycle_publishers_.push_back(track_list_pub_);
-  timers_.push_back(pipeline_execution_timer_);
 }
 
 auto MultipleObjectTrackerNode::handle_on_configure(
@@ -299,12 +295,13 @@ auto MultipleObjectTrackerNode::handle_on_activate(
 {
   RCLCPP_INFO(get_logger(), "Lifecycle transition: activating");
 
-  if (pipeline_execution_timer_ == nullptr) {
-    const std::chrono::duration<double, std::nano> period_ns{mot::remove_units(execution_period_)};
-    pipeline_execution_timer_ = create_wall_timer(period_ns, [this] { execute_pipeline(); });
-  } else {
+  if (pipeline_execution_timer_ != nullptr) {
+    // The user might have changed the timer period since last time the Node was active
     pipeline_execution_timer_->reset();
   }
+
+  const std::chrono::duration<double, std::nano> period_ns{mot::remove_units(execution_period_)};
+  pipeline_execution_timer_ = create_wall_timer(period_ns, [this] { execute_pipeline(); });
 
   RCLCPP_INFO(get_logger(), "Lifecycle transition: successfully activated");
 
@@ -315,8 +312,6 @@ auto MultipleObjectTrackerNode::handle_on_deactivate(
   const rclcpp_lifecycle::State & /* previous_state */) -> carma_ros2_utils::CallbackReturn
 {
   RCLCPP_INFO(get_logger(), "Lifecycle transition: deactivating");
-
-  pipeline_execution_timer_->cancel();
 
   // There is currently no way to change a timer's period in ROS 2, so we will
   // have to create a new one in case a user changes the period.
