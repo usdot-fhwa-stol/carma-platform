@@ -26,6 +26,22 @@ CPMAddPackage(NAME units
     "BUILD_DOCS FALSE"
 )
 
+include(FetchContent)
+
+FetchContent_Declare(cooperative_perception
+  GIT_REPOSITORY https://github.com/usdot-fhwa-stol/multiple_object_tracking
+  GIT_TAG c6e0fbeebb775b93392738985d948c67784c9328
+)
+
+FetchContent_GetProperties(cooperative_perception)
+if(NOT cooperative_perception_POPULATED)
+  FetchContent_Populate(cooperative_perception)
+
+  set(CMAKE_POSITION_INDEPENDENT_CODE TRUE CACHE INTERNAL "")
+
+  add_subdirectory(${cooperative_perception_SOURCE_DIR} ${cooperative_perception_BINARY_DIR})
+endif()
+
 # CARMA currently uses PROJ version 6.3.1, which is not designed to be incorporated
 # as a subdirectory into larger projects. If CARMA upgrades to a newer version, we
 # could use the CPMAddPackage(...) command to install PROJ as a source dependency
