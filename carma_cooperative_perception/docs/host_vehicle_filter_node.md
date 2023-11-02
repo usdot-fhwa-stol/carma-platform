@@ -7,22 +7,24 @@ republish the (possibly pruned) list.
 
 ## Subscriptions
 
-| Topic                       | Message Type                                                | Description                     |
-| --------------------------- | ----------------------------------------------------------- | ------------------------------- |
-| `~/input/detections`        | `carma_cooperative_perception_interfaces/DetectionList.msg` | Incoming detections             |
-| `~/input/host_vehicle_pose` | `??`                                                        | The host vehicle's current pose |
+| Topic                       | Message Type                                                                      | Description                     |
+| --------------------------- | --------------------------------------------------------------------------------- | ------------------------------- |
+| `~/input/detection_list`    | [`carma_cooperative_perception_interfaces/DetectionList.msg`][detection_list_msg] | Incoming detections             |
+| `~/input/host_vehicle_pose` | [`geometry_msgs/PoseStamped.msg`][pose_stamped_msg]                               | The host vehicle's current pose |
+
+[pose_stamped_msg]: https://docs.ros.org/en/noetic/api/geometry_msgs/html/msg/PoseStamped.html
 
 ## Publishers
 
-| Topic                 | Message Type                                                | Frequency           | Description                                                                            |
-| --------------------- | ----------------------------------------------------------- | ------------------- | -------------------------------------------------------------------------------------- |
-| `~/output/detections` | `carma_cooperative_perception_interfaces/DetectionList.msg` | Subscription-driven | Incoming detections excluding any detections likely associating with the host vehicle. |
+| Topic                     | Message Type                                                                      | Frequency           | Description                                                                            |
+| ------------------------- | --------------------------------------------------------------------------------- | ------------------- | -------------------------------------------------------------------------------------- |
+| `~/output/detection_list` | [`carma_cooperative_perception_interfaces/DetectionList.msg`][detection_list_msg] | Subscription-driven | Incoming detections excluding any detections likely associating with the host vehicle. |
 
 ## Parameters
 
 | Topic                  | Data Type | Default Value | Required | Read Only | Description                                                                       |
 | ---------------------- | --------- | ------------- | -------- | --------- | --------------------------------------------------------------------------------- |
-| `~/distance_threshold` | `float`   | ``            | No       | No        | Distance below which a detection will be considered to represent the host vehicle |
+| `~/distance_threshold` | `float`   | `0.0`         | No       | No        | Distance below which a detection will be considered to represent the host vehicle |
 
 ## Services
 
@@ -31,3 +33,5 @@ This Node does not provide services.
 ## Actions
 
 This Node does not provide actions.
+
+[detection_list_msg]: https://github.com/usdot-fhwa-stol/carma-msgs/blob/develop/carma_cooperative_perception_interfaces/msg/DetectionList.msg
