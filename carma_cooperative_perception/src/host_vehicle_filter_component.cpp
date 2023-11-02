@@ -14,26 +14,13 @@
 
 #include "carma_cooperative_perception/host_vehicle_filter_component.hpp"
 
+#include <carma_cooperative_perception_interfaces/msg/detection.hpp>
 #include <carma_ros2_utils/carma_lifecycle_node.hpp>
 
 namespace carma_cooperative_perception
 {
-
-static auto pose_mahalanobis_distance(
-  const carma_cooperative_perception_interfaces::Detection & a,
-  const carma_cooperative_perception_interfaces::Detection & b) noexcept -> double
-{
-  return 0;
-}
-
-HostVehicleFilterNode::HostVehicleFilterNode(const rclcpp::NodeOptions & options)
-: CarmaLifecycleNode{options}
-{
-  lifecycle_publishers_.push_back(track_list_pub_);
-}
-
-auto handle_on_configure(const rclcpp_lifecycle::State & /* previous_state */)
-  -> carma_ros2_utils::CallbackReturn
+auto HostVehicleFilterNode::handle_on_configure(
+  const rclcpp_lifecycle::State & /* previous_state */) -> carma_ros2_utils::CallbackReturn
 {
   RCLCPP_INFO(get_logger(), "Lifecycle transition: configuring");
 
@@ -42,7 +29,7 @@ auto handle_on_configure(const rclcpp_lifecycle::State & /* previous_state */)
     "input/detection_list", 1,
     [this](const carma_cooperative_perception_interfaces::msg::DetectionList::SharedPtr msg_ptr) {
       if (const auto current_state{this->get_current_state().label()}; current_state == "active") {
-        // ...
+        attempt_filter_and_republish(*msg_ptr);
       } else {
         RCLCPP_WARN(
           this->get_logger(),
@@ -52,10 +39,10 @@ auto handle_on_configure(const rclcpp_lifecycle::State & /* previous_state */)
       }
     });
 
-  host_vehicle_pose_sub_ =
-    create_subscription<>("input/host_vehicle_pose", 1, [this](const auto & msg_ptr) {
+  host_vehicle_pose_sub_ = create_subscription<geometry_msgs::msg::PoseStamped>(
+    "input/host_vehicle_pose", 1, [this](const geometry_msgs::msg::PoseStamped::SharedPtr msg_ptr) {
       if (const auto current_state{this->get_current_state().label()}; current_state == "active") {
-        // ...
+        update_host_vehicle_pose(*msg_ptr);
       } else {
         RCLCPP_WARN(
           this->get_logger(),
@@ -64,31 +51,76 @@ auto handle_on_configure(const rclcpp_lifecycle::State & /* previous_state */)
           this->detection_list_sub_->get_topic_name(), current_state.c_str());
       }
     });
+
+  detection_list_pub_ =
+    create_publisher<carma_cooperative_perception_interfaces::msg::DetectionList>(
+      "output/detection_list", 1);
 
   RCLCPP_INFO(get_logger(), "Lifecycle transition: successfully configured");
 
-  return carma_ros2_utils::CallbackReturn::Success;
+  declare_parameter("distance_threshold", 0.0);
+
+  on_set_parameters_callback_ =
+    add_on_set_parameters_callback([this](const std::vector<rclcpp::Parameter> & parameters) {
+      rcl_interfaces::msg::SetParametersResult result;
+      result.successful = true;
+      result.reason = "success";
+
+      for (const auto & parameter : parameters) {
+        if (parameter.get_name() == "distance_threshold") {
+          if (this->get_current_state().label() == "active") {
+            result.successful = false;
+            result.reason = "parameter is read-only while node is in 'Active' state";
+
+            RCLCPP_ERROR(
+              get_logger(), "Cannot change parameter 'distance_threshold': " + result.reason);
+
+            break;
+          }
+
+          if (const auto value{parameter.as_double()}; value < 0) {
+            result.successful = false;
+            result.reason = "parameter must be nonnegative";
+
+            RCLCPP_ERROR(
+              get_logger(), "Cannot change parameter 'distance_threshold': " + result.reason);
+
+            break;
+          } else {
+            this->squared_distance_threshold_ = std::pow(value, 2);
+          }
+        } else {
+          result.successful = false;
+          result.reason = "Unexpected parameter name '" + parameter.get_name() + '\'';
+          break;
+        }
+      }
+
+      return result;
+    });
+
+  return carma_ros2_utils::CallbackReturn::SUCCESS;
 }
 
-auto handle_on_activate(const rclcpp_lifecycle::State & /* previous_state */)
+auto HostVehicleFilterNode::handle_on_activate(const rclcpp_lifecycle::State & /* previous_state */)
   -> carma_ros2_utils::CallbackReturn
 {
-  RCLCPP_INFO(get_logger(), "Lifecycle transition: actiavting");
+  RCLCPP_INFO(get_logger(), "Lifecycle transition: activating");
   RCLCPP_INFO(get_logger(), "Lifecycle transition: successfully activated");
 
-  return carma_ros2_utils::CallbackReturn::Success;
+  return carma_ros2_utils::CallbackReturn::SUCCESS;
 }
 
-auto handle_on_deactivate(const rclcpp_lifecycle::State & /* previous_state */)
-  -> carma_ros2_utils::CallbackReturn
+auto HostVehicleFilterNode::handle_on_deactivate(
+  const rclcpp_lifecycle::State & /* previous_state */) -> carma_ros2_utils::CallbackReturn
 {
   RCLCPP_INFO(get_logger(), "Lifecycle transition: deactivating");
   RCLCPP_INFO(get_logger(), "Lifecycle transition: successfully deactivated");
 
-  return carma_ros2_utils::CallbackReturn::Success;
+  return carma_ros2_utils::CallbackReturn::SUCCESS;
 }
 
-auto handle_on_cleanup(const rclcpp_lifecycle::State & /* previous_state */)
+auto HostVehicleFilterNode::handle_on_cleanup(const rclcpp_lifecycle::State & /* previous_state */)
   -> carma_ros2_utils::CallbackReturn
 {
   RCLCPP_INFO(get_logger(), "Lifecycle transition: cleaning up");
@@ -99,10 +131,10 @@ auto handle_on_cleanup(const rclcpp_lifecycle::State & /* previous_state */)
 
   RCLCPP_INFO(get_logger(), "Lifecycle transition: successfully cleaned up");
 
-  return carma_ros2_utils::CallbackReturn::Success;
+  return carma_ros2_utils::CallbackReturn::SUCCESS;
 }
 
-auto handle_on_shutdown(const rclcpp_lifecycle::State & /* previous_state */)
+auto HostVehicleFilterNode::handle_on_shutdown(const rclcpp_lifecycle::State & /* previous_state */)
   -> carma_ros2_utils::CallbackReturn
 {
   RCLCPP_INFO(get_logger(), "Lifecycle transition: shutting down");
@@ -113,7 +145,44 @@ auto handle_on_shutdown(const rclcpp_lifecycle::State & /* previous_state */)
 
   RCLCPP_INFO(get_logger(), "Lifecycle transition: successfully shut down");
 
-  return carma_ros2_utils::CallbackReturn::Success;
+  return carma_ros2_utils::CallbackReturn::SUCCESS;
+}
+
+auto HostVehicleFilterNode::update_host_vehicle_pose(
+  const geometry_msgs::msg::PoseStamped & msg) noexcept -> void
+{
+  host_vehicle_pose_ = msg;
+}
+
+auto HostVehicleFilterNode::attempt_filter_and_republish(
+  carma_cooperative_perception_interfaces::msg::DetectionList msg) noexcept -> void
+{
+  if (!host_vehicle_pose_.has_value()) {
+    RCLCPP_ERROR(get_logger(), "Could not filter detection list: host vehicle pose unknown");
+    return;
+  }
+
+  const auto is_within_distance = [this](const auto & detection) {
+    return euclidean_distance_squared(host_vehicle_pose_.value().pose, detection.pose.pose) <=
+           this->squared_distance_threshold_;
+  };
+
+  const auto new_end{
+    std::remove_if(std::begin(msg.detections), std::end(msg.detections), is_within_distance)};
+
+  msg.detections.erase(new_end, std::end(msg.detections));
+
+  this->detection_list_pub_->publish(msg);
+}
+
+auto euclidean_distance_squared(
+  const geometry_msgs::msg::Pose & a, const geometry_msgs::msg::Pose & b) noexcept -> double
+{
+  return std::pow(a.position.x - b.position.x, 2) + std::pow(a.position.y - b.position.y, 2) +
+         std::pow(a.position.z - b.position.z, 2) + std::pow(a.orientation.x - b.orientation.x, 2) +
+         std::pow(a.orientation.y - b.orientation.y, 2) +
+         std::pow(a.orientation.z - b.orientation.z, 2) +
+         std::pow(a.orientation.w - b.orientation.w, 2);
 }
 
 }  // namespace carma_cooperative_perception
