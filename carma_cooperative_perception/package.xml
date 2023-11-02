@@ -37,6 +37,7 @@ limitations under the License.
   <depend>lanelet2_core</depend>
   <depend>lanelet2_extension</depend>
   <build_depend>tf2_geometry_msgs</build_depend>
+  <build_depend>multiple_object_tracking</build_depend>
 
   <test_depend>ament_lint_auto</test_depend>
   <test_depend>ament_lint_common</test_depend>
