@@ -128,6 +128,7 @@ if(carma_cooperative_perception_BUILD_TESTS)
   add_launch_test(test/track_list_to_external_object_list_launch_test.py)
   add_launch_test(test/multiple_object_tracker_duplicates_launch_test.py)
   add_launch_test(test/multiple_object_tracker_static_obstacle_launch_test.py)
+  add_launch_test(test/host_vehicle_filter_launch_test.py)
 
 endif()
 

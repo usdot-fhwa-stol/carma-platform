@@ -17,6 +17,8 @@
 #include <carma_cooperative_perception_interfaces/msg/detection.hpp>
 #include <carma_ros2_utils/carma_lifecycle_node.hpp>
 
+#include <vector>
+
 namespace carma_cooperative_perception
 {
 auto HostVehicleFilterNode::handle_on_configure(
