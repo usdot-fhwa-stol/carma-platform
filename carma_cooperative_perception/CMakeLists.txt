@@ -63,12 +63,14 @@ ament_auto_add_library(carma_cooperative_perception SHARED
   src/sdsm_to_detection_list_component.cpp
   src/track_list_to_external_object_list_component.cpp
   src/utm_zone.cpp
+  src/multiple_object_tracker_component.cpp
 )
 
 target_link_libraries(carma_cooperative_perception
   ${PROJ4_LIBRARIES}  # Note: Newer versions of PROJ use PROJ::proj
   GSL  # Note: Newer versions of GSL use Microsoft.GSL::GSL
   units::units
+  cooperative_perception_core::cooperative_perception_coreLibrary
 )
 
 rclcpp_components_register_nodes(carma_cooperative_perception
@@ -76,6 +78,7 @@ rclcpp_components_register_nodes(carma_cooperative_perception
   "carma_cooperative_perception::ExternalObjectListToSdsmNode"
   "carma_cooperative_perception::SdsmToDetectionListNode"
   "carma_cooperative_perception::TrackListToExternalObjectListComponent"
+  "carma_cooperative_perception::MultipleObjectTrackerComponent"
 )
 
 ament_auto_add_executable(external_object_list_to_detection_list_node
@@ -84,6 +87,10 @@ ament_auto_add_executable(external_object_list_to_detection_list_node
 
 ament_auto_add_executable(track_list_to_external_object_list_node
   src/track_list_to_external_object_list_node.cpp
+)
+
+ament_auto_add_executable(multiple_object_tracker_node
+  src/multiple_object_tracker_node.cpp
 )
 
 ament_auto_add_executable(external_object_list_to_sdsm_node
@@ -113,9 +120,17 @@ if(carma_cooperative_perception_BUILD_TESTS)
     carma_cooperative_perception
   )
 
+  add_launch_test(test/track_list_to_external_object_list_launch_test.py)
+  add_launch_test(test/multiple_object_tracker_duplicates_launch_test.py)
+  add_launch_test(test/multiple_object_tracker_static_obstacle_launch_test.py)
+
 endif()
 
-ament_auto_package()
+ament_auto_package(
+  INSTALL_TO_SHARE
+    launch
+    config
+)
 
 include(GNUInstallDirs)
 

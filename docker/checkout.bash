@@ -1,13 +1,13 @@
 #!/bin/bash
 
 #  Copyright (C) 2018-2023 LEIDOS.
-# 
+#
 #  Licensed under the Apache License, Version 2.0 (the "License"); you may not
 #  use this file except in compliance with the License. You may obtain a copy of
 #  the License at
-# 
+#
 #  http://www.apache.org/licenses/LICENSE-2.0
-# 
+#
 #  Unless required by applicable law or agreed to in writing, software
 #  distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
 #  WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
@@ -53,10 +53,12 @@ fi
 # Get humble branch of message filters which supports template Node arguments (foxy version supports rclcpp::Node only)
 git clone https://github.com/usdot-fhwa-stol/carma-message-filters.git --branch develop
 
+git clone https://github.com/usdot-fhwa-stol/multiple_object_tracking --branch develop
+
 # add astuff messages
-# NOTE: The ibeo_msgs package is ignored because on build the cmake files in that package run a sed command 
+# NOTE: The ibeo_msgs package is ignored because on build the cmake files in that package run a sed command
 #       which can make them incompatible with a new ros version after a source switch
-git clone https://github.com/astuff/astuff_sensor_msgs 
+git clone https://github.com/astuff/astuff_sensor_msgs
 
 cd astuff_sensor_msgs
 git checkout 41d5ef0c33fb27eb3c9ba808b51332bcce186a83
@@ -75,12 +77,12 @@ git clone -b ros2 https://github.com/usdot-fhwa-stol/rosbridge_suite
 
 # The feature/integrate-carma branch of rosbag2 includes improvements that were not possible to backport into the foxy branch
 # of rosbag2. These rosbag2 packages will replace the originally built foxy rosbag2 packages.
-# NOTE: Additional information regarding the rosbag2 improvements on this branch are included in the forked repository's README. 
+# NOTE: Additional information regarding the rosbag2 improvements on this branch are included in the forked repository's README.
 git clone -b carma-develop https://github.com/usdot-fhwa-stol/rosbag2
 
 # Novatel OEM7 Driver
 # NOTE: This is required since otherwise this image will not contain the novatel_oem7_msgs package, and a missing ROS 2 message package
-#       can cause ROS 2 rosbag logging to fail in Foxy. 
+#       can cause ROS 2 rosbag logging to fail in Foxy.
 # Related GitHub discussion for fix that was not backported to Foxy: https://github.com/ros2/rosbag2/pull/858
 sudo git clone https://github.com/novatel/novatel_oem7_driver.git ${dir}/src/novatel_oem7_driver -b ros2-dev
 # Checkout verified commit
