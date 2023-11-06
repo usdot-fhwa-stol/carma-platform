@@ -160,7 +160,7 @@ auto HostVehicleFilterNode::attempt_filter_and_republish(
   carma_cooperative_perception_interfaces::msg::DetectionList msg) noexcept -> void
 {
   if (!host_vehicle_pose_.has_value()) {
-    RCLCPP_ERROR(get_logger(), "Could not filter detection list: host vehicle pose unknown");
+    RCLCPP_WARN(get_logger(), "Could not filter detection list: host vehicle pose unknown");
     return;
   }
 

@@ -27,4 +27,11 @@ def generate_launch_description():
         parameters=[package_share_path / "config/params.yaml"],
     )
 
-    return LaunchDescription([multiple_object_tracker_node])
+    host_vehicle_filter_node = Node(
+        package="carma_cooperative_perception",
+        executable="host_vehicle_filter_node",
+        name="host_vehicle_filter",
+        parameters=[package_share_path / "config/params.yaml"],
+    )
+
+    return LaunchDescription([multiple_object_tracker_node, host_vehicle_filter_node])
