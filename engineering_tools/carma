@@ -339,6 +339,69 @@ carma__stop() {
     fi
 }
 
+carma__swarm() {
+    if ! docker container inspect carma-config > /dev/null 2>&1; then
+        echo "No existing CARMA configuration found, nothing to report. Please set a config."
+        echo "Done."
+        exit 1
+    fi
+
+    if [ "$1" = "deploy" ]; then
+
+        echo "Checking Docker Swarm status..."
+        if [ "$(docker info | grep Swarm | sed 's/Swarm: //g')" == " inactive" ]; then
+            echo "Initalizing Docker Swarm..."
+            docker swarm init
+        else
+            echo "Docker Swarm active"
+        fi
+
+        # if carma-config-data volume doesn't exist exit or update
+
+        # for local testing a new image should be built based on development then the contents
+        # should be copied into carma-config-data
+
+        if [ "$2" = "single" ]; then 
+            echo "Deploying CARMA to single host Swarm stack..."
+
+            docker run --rm -v carma-config-data:/opt/carma/vehicle/config --entrypoint sh busybox:latest -c \
+            'cat /opt/carma/vehicle/config/docker-compose-background-pc1.yml' | \
+            docker stack deploy --compose-file - carma-background
+
+            docker run --rm -v carma-config-data:/opt/carma/vehicle/config --entrypoint sh busybox:latest -c \
+            'cat /opt/carma/vehicle/config/docker-compose-pc1.yml' | \
+            docker stack deploy --compose-file - carma-pc1
+
+            docker run --rm -v carma-config-data:/opt/carma/vehicle/config --entrypoint sh busybox:latest -c \
+            'cat /opt/carma/vehicle/config/docker-compose-pc2.yml' | \
+            docker stack deploy --compose-file - carma-pc2
+
+
+        elif [ "$2" = "dual" ]; then
+            echo "Deploying CARMA to dual compute Swarm stack..."
+            # token exchange between pcs here
+        
+        elif [ ! -z "$2" ]; then
+            echo "Unrecognized argument \"swarm deploy $2\""
+
+        fi
+
+    elif [ "$1" = "update-config" ]; then
+        echo "Updating carma-config-data volume..."
+        docker run --rm --name carma-config-data -v carma-config-data:/opt/carma/vehicle/config -d usdotfhwastoldev/carma-config:develop-development
+        # consider option for updating from local builds
+
+    elif [ "$1" = "down" ]; then
+        echo "Removing CARMA services from stack...shutting down swarm..."
+        # docker stack rm --all
+        docker swarm leave --force
+        # docker network prune
+
+    elif [ ! -z "$1" ]; then
+        echo "Unrecognized argument \"swarm $1\""
+    fi
+}
+
 carma__ps() {
     if ! docker container inspect carma-config > /dev/null 2>&1; then
         echo "No existing CARMA configuration found, nothing to report. Please set a config."
