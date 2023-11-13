@@ -349,24 +349,42 @@ carma__swarm() {
     if [ "$1" = "deploy" ]; then
 
         echo "Checking Docker Swarm status..."
-        if [ "$(docker info | grep Swarm | sed 's/Swarm: //g')" == " inactive" ]; then
+        if [ "$(docker info | grep Swarm | sed 's/Swarm:  //g')" == "inactive" ]; then
             echo "Initalizing Docker Swarm..."
-            docker swarm init
+            docker swarm init --advertise-addr 192.168.88.100
         else
             echo "Docker Swarm active"
         fi
 
-        # if carma-config-data volume doesn't exist exit or update
+        # if carma-config-data volume doesn't exist exit and request update
+        if [ "$(docker volume ls | grep carma-config-data | sed 's/local     //g')" ]; then
+            echo "Found carma-config-data volume"
+        else
+            echo "Missing carma-config-data volume, add with carma swarm update-config [image tag]"
+            exit 1
 
-        # for local testing a new image should be built based on development then the contents
-        # should be copied into carma-config-data
+        # carma-web-ui will always run as a background process regardless of deploy argument
+        docker run --rm -v carma-config-data:/opt/carma/vehicle/config --entrypoint sh busybox:latest -c \
+        'cat /opt/carma/vehicle/config/docker-compose-background-pc1.yml' | \
+        docker stack deploy --compose-file - carma-background
 
+
+        # Run part of the stack on a single host. Mostly for debugging purposes outside of the dual PC setup
         if [ "$2" = "single" ]; then 
             echo "Deploying CARMA to single host Swarm stack..."
 
             docker run --rm -v carma-config-data:/opt/carma/vehicle/config --entrypoint sh busybox:latest -c \
-            'cat /opt/carma/vehicle/config/docker-compose-background-pc1.yml' | \
-            docker stack deploy --compose-file - carma-background
+            'cat /opt/carma/vehicle/config/docker-compose-pc1.yml' | \
+            docker stack deploy --compose-file - carma-pc1
+
+
+        # For use with two connected PCs with known IPs
+        # Saves the generated swarm join token as a local variable and ssh's into the worker to execute
+        elif [ "$2" = "dual" ]; then
+            echo "Deploying CARMA to dual compute Swarm stack..."
+
+            local TKN=$(docker swarm join-token -q worker)
+            ssh dev@192.168.88.101 'docker swarm join $TKN 192.168.88.100:2377'
 
             docker run --rm -v carma-config-data:/opt/carma/vehicle/config --entrypoint sh busybox:latest -c \
             'cat /opt/carma/vehicle/config/docker-compose-pc1.yml' | \
@@ -375,27 +393,28 @@ carma__swarm() {
             docker run --rm -v carma-config-data:/opt/carma/vehicle/config --entrypoint sh busybox:latest -c \
             'cat /opt/carma/vehicle/config/docker-compose-pc2.yml' | \
             docker stack deploy --compose-file - carma-pc2
-
-
-        elif [ "$2" = "dual" ]; then
-            echo "Deploying CARMA to dual compute Swarm stack..."
-            # token exchange between pcs here
+            
         
         elif [ ! -z "$2" ]; then
             echo "Unrecognized argument \"swarm deploy $2\""
 
         fi
 
+    # consider updating this to match carma-config_set command arguments
+    # Updates the carma-config-data volume based on a input tag string given by the user
     elif [ "$1" = "update-config" ]; then
         echo "Updating carma-config-data volume..."
-        docker run --rm --name carma-config-data -v carma-config-data:/opt/carma/vehicle/config -d usdotfhwastoldev/carma-config:develop-development
-        # consider option for updating from local builds
+
+        if [ "$(docker images | grep $2 )" ]; then
+            echo "Found image, applying to carma-config-volume"
+            docker run --rm --name carma-config-data -v carma-config-data:/opt/carma/vehicle/config -d usdotfhwastoldev/carma-config:$2
+        else
+            echo "Could not find $2 in local images"
 
     elif [ "$1" = "down" ]; then
-        echo "Removing CARMA services from stack...shutting down swarm..."
-        # docker stack rm --all
+        echo "Shutting down swarm..."
+        ssh dev@192.168.88.101 "docker swarm leave"
         docker swarm leave --force
-        # docker network prune
 
     elif [ ! -z "$1" ]; then
         echo "Unrecognized argument \"swarm $1\""
