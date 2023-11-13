@@ -349,7 +349,7 @@ carma__swarm() {
     if [ "$1" = "deploy" ]; then
 
         echo "Checking Docker Swarm status..."
-        if [ "$(docker info | grep Swarm | sed 's/Swarm:  //g')" == "inactive" ]; then
+        if [ "$(docker info | grep Swarm | sed 's/Swarm: //g')" == " inactive" ]; then
             echo "Initalizing Docker Swarm..."
             docker swarm init --advertise-addr 192.168.88.100
         else
@@ -385,7 +385,7 @@ carma__swarm() {
             echo "Deploying CARMA to dual compute Swarm stack..."
 
             local TKN=$(docker swarm join-token -q worker)
-            ssh dev@192.168.88.101 'docker swarm join --token $TKN 192.168.88.100:2377'
+            ssh dev@192.168.88.101 "docker swarm join --token $TKN 192.168.88.100:2377"
 
             docker run --rm -v carma-config-data:/opt/carma/vehicle/config --entrypoint sh busybox:latest -c \
             'cat /opt/carma/vehicle/config/docker-compose-pc1.yml' | \
@@ -411,6 +411,7 @@ carma__swarm() {
             docker run --rm --name carma-config-data -v carma-config-data:/opt/carma/vehicle/config -d usdotfhwastoldev/carma-config:$2
         else
             echo "Could not find $2 in local images"
+        fi
 
     elif [ "$1" = "down" ]; then
         echo "Shutting down swarm..."
