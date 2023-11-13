@@ -362,6 +362,7 @@ carma__swarm() {
         else
             echo "Missing carma-config-data volume, add with carma swarm update-config [image tag]"
             exit 1
+        fi
 
         # carma-web-ui will always run as a background process regardless of deploy argument
         docker run --rm -v carma-config-data:/opt/carma/vehicle/config --entrypoint sh busybox:latest -c \
@@ -384,7 +385,7 @@ carma__swarm() {
             echo "Deploying CARMA to dual compute Swarm stack..."
 
             local TKN=$(docker swarm join-token -q worker)
-            ssh dev@192.168.88.101 'docker swarm join $TKN 192.168.88.100:2377'
+            ssh dev@192.168.88.101 'docker swarm join --token $TKN 192.168.88.100:2377'
 
             docker run --rm -v carma-config-data:/opt/carma/vehicle/config --entrypoint sh busybox:latest -c \
             'cat /opt/carma/vehicle/config/docker-compose-pc1.yml' | \
