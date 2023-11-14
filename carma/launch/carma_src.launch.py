@@ -13,6 +13,7 @@
 # limitations under the License.
 
 from ament_index_python import get_package_share_directory
+import launch
 from launch.actions import Shutdown
 from launch import LaunchDescription
 from launch_ros.actions import Node
@@ -26,8 +27,35 @@ from launch_ros.actions import PushRosNamespace
 from carma_ros2_utils.launch.get_log_level import GetLogLevel
 from launch.substitutions import LaunchConfiguration, PythonExpression
 from launch.actions import DeclareLaunchArgument
+from launch.actions import OpaqueFunction
 
+from tracetools_launch.action import Trace
+
+from datetime import datetime
 import os
+
+def create_ros2_tracing_action(context, *args, **kwargs):
+    """
+    Opaque Function for generating a 'Trace' ROS 2 launch action, which is dependent on the
+    'ROS_LOG_DIR' EnvironmentVariable and the 'is_ros2_tracing_enabled' LaunchConfiguration.
+
+    NOTE: This Opaque Function is required in order to evaluate the 'ROS_LOG_DIR' environment
+    variable as a string.
+    """
+    log_directory_string = launch.substitutions.EnvironmentVariable('ROS_LOG_DIR').perform(context)
+
+    trace = GroupAction( 
+        condition=IfCondition(LaunchConfiguration('is_ros2_tracing_enabled')),
+        actions=[
+            Trace(
+                base_path = log_directory_string,
+                session_name='my-tracing-session-' + str(datetime.now().strftime('%Y-%m-%d_%H%M%S')),
+                events_kernel = [], # Empty since kernel tracing is not enabled for CARMA Platform
+            )
+        ]
+    )
+
+    return [trace]
 
 def generate_launch_description():
     """
@@ -143,6 +171,12 @@ def generate_launch_description():
 
     simulation_mode = LaunchConfiguration('simulation_mode')
     declare_simulation_mode = DeclareLaunchArgument(name='simulation_mode', default_value = 'False', description = 'True if CARMA Platform is launched with CARLA Simulator')
+
+    is_ros2_tracing_enabled = LaunchConfiguration('is_ros2_tracing_enabled')
+    declare_is_ros2_tracing_enabled = DeclareLaunchArgument(
+        name='is_ros2_tracing_enabled', 
+        default_value = 'False', 
+        description = 'True if user wants ROS 2 Tracing logs to be generated from CARMA Platform.')
 
     # Launch ROS2 rosbag logging
     ros2_rosbag_launch = GroupAction(
@@ -290,6 +324,7 @@ def generate_launch_description():
         declare_arealist_path,
         declare_vector_map_file,
         declare_simulation_mode,
+        declare_is_ros2_tracing_enabled,
         drivers_group,
         transform_group,
         environment_group,
@@ -298,5 +333,6 @@ def generate_launch_description():
         guidance_group, 
         ros2_rosbag_launch,
         ui_group,
-        system_controller
+        system_controller,
+        OpaqueFunction(function=create_ros2_tracing_action)
     ])
