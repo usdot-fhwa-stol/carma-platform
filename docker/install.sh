@@ -1,6 +1,6 @@
 #!/bin/bash
 
-#  Copyright (C) 2018-2021 LEIDOS.
+#  Copyright (C) 2018-2023 LEIDOS.
 # 
 #  Licensed under the Apache License, Version 2.0 (the "License"); you may not
 #  use this file except in compliance with the License. You may obtain a copy of
@@ -46,7 +46,7 @@ if [[ ! -z "$ROS1_PACKAGES$ROS2_PACKAGES" ]]; then
     fi
 else
     echo "Building all ROS1 CARMA Components"
-    colcon build --install-base /opt/carma/install --cmake-args -DCMAKE_BUILD_TYPE=Release --packages-skip novatel_oem7_driver novatel_oem7_msgs
+    colcon build --install-base /opt/carma/install --cmake-args -DCMAKE_BUILD_TYPE=Release --packages-skip novatel_oem7_msgs novatel_oem7_msgs tracetools tracetools_test
 fi
 echo "Build of ROS1 CARMA Components Complete"
 

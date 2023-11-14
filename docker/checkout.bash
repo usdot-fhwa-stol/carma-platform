@@ -69,6 +69,10 @@ echo "" > COLCON_IGNORE
 
 cd ../
 
+# Clone the foxy branch of ros2_tracing in order to enable certain analyses of CARMA Platform
+# made possible through collected trace data, such as analyzing ROS 2 callback durations.
+git clone -b foxy https://github.com/ros2/ros2_tracing
+
 #rosbridge_suite is a ROS meta-package including all the rosbridge packages.
 # NOTE: clone -b flag is used instead of --branch to avoid hook rewriting it
 git clone -b ros2 https://github.com/usdot-fhwa-stol/rosbridge_suite
