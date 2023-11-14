@@ -1,0 +1,51 @@
+---
+message_type: carma_cooperative_perception_interfaces/msg/DetectionList
+message_fields:
+  detections:
+    - header: # obstacle detected from viewer A
+        stamp:
+          sec: 0
+          nanosec: 0
+        frame_id: "map"
+      id: "detection1"
+      motion_model: 1 # CTRV
+      pose:
+        pose:
+          position:
+            x: 5.0 # meters
+            y: 5.0 # meters
+          orientation:
+            x: 0
+            y: 0
+            z: 0
+            w: 1
+      twist:
+        twist:
+          linear:
+            x: 0.0 # meters per second
+          angular:
+            z: 0.0 # radians per second
+
+    - header: # obstacle detected from viewer B
+        stamp:
+          sec: 0
+          nanosec: 0
+        frame_id: "map"
+      id: "detection2"
+      motion_model: 1 # CTRV
+      pose:
+        pose:
+          position:
+            x: 6.0 # meters
+            y: 5.0 # meters
+          orientation:
+            x: 0
+            y: 0
+            z: 0
+            w: 1
+      twist:
+        twist:
+          linear:
+            x: 0.0 # meters per second
+          angular:
+            z: 0.0 # radians per second

@@ -81,7 +81,17 @@ namespace route
     // Setup publishers
     route_pub_ = create_publisher<carma_planning_msgs::msg::Route>("route", 1);
     route_state_pub_ = create_publisher<carma_planning_msgs::msg::RouteState>("route_state", 1);
-    route_event_pub_ = create_publisher<carma_planning_msgs::msg::RouteEvent>("route_event", 1);
+
+    // NOTE: Currently, intra-process comms must be disabled for the following two publishers that are transient_local: https://github.com/ros2/rclcpp/issues/1753
+    rclcpp::PublisherOptions intra_proc_disabled; 
+    intra_proc_disabled.use_intra_process_comm = rclcpp::IntraProcessSetting::Disable; // Disable intra-process comms for this PublisherOptions object
+
+    // Create a publisher that will send all previously published messages to late-joining subscribers ONLY If the subscriber is transient_local too
+    auto pub_qos_transient_local = rclcpp::QoS(rclcpp::KeepAll()); // A publisher with this QoS will store all messages that it has sent on the topic
+    pub_qos_transient_local.transient_local();  // A publisher with this QoS will re-send all (when KeepAll is used) messages to all late-joining subscribers 
+                                          // NOTE: The subscriber's QoS must be set to transient_local() as well for earlier messages to be resent to the later-joiner.
+  
+    route_event_pub_ = create_publisher<carma_planning_msgs::msg::RouteEvent>("route_event", pub_qos_transient_local, intra_proc_disabled);
     route_marker_pub_ = create_publisher<visualization_msgs::msg::Marker>("route_marker", 1);
 
     // Setup service servers

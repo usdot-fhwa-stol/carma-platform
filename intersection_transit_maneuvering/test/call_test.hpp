@@ -45,7 +45,7 @@ class CallTest: public CallInterface
          * @param resp Incoming PlanTrajectory service response
          * @return true if method successfully completes, otherwise false
          */
-        void call(carma_planning_msgs::srv::PlanTrajectory::Request::SharedPtr req, carma_planning_msgs::srv::PlanTrajectory::Response::SharedPtr resp);
+        void call(carma_planning_msgs::srv::PlanTrajectory::Request::SharedPtr req, carma_planning_msgs::srv::PlanTrajectory::Response::SharedPtr& resp);
 
         /**
          * @brief Get the Request object
@@ -65,8 +65,8 @@ class CallTest: public CallInterface
 
 
     private:
-        carma_planning_msgs::srv::PlanTrajectory::Request::SharedPtr request = std::make_shared<carma_planning_msgs::srv::PlanTrajectory::Request> ();;
-        carma_planning_msgs::srv::PlanTrajectory::Response::SharedPtr response = std::make_shared<carma_planning_msgs::srv::PlanTrajectory::Response> ();;
+        carma_planning_msgs::srv::PlanTrajectory::Request::SharedPtr request = std::make_shared<carma_planning_msgs::srv::PlanTrajectory::Request> ();
+        carma_planning_msgs::srv::PlanTrajectory::Response::SharedPtr response = std::make_shared<carma_planning_msgs::srv::PlanTrajectory::Response> ();
     
 
 

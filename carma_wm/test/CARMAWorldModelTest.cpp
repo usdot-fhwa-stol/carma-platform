@@ -1333,143 +1333,62 @@ TEST(CARMAWorldModelTest, processSpatFromMsg)
   // call the processSpatFromMsg with that msg 1
   event.event_state.movement_phase_state = 5;
   event.timing.min_end_time = 20;
+  event.timing.start_time = 0;
   movement.movement_event_list.push_back(event);
   state.movement_list.push_back(movement);
   spat.intersection_state_list.push_back(state);
   cmw.processSpatFromMsg(spat);
   auto lights1 = cmw.getMutableMap()->laneletLayer.get(ll_1.id()).regulatoryElementsAs<lanelet::CarmaTrafficSignal>();
-  // default
-  EXPECT_EQ(lanelet::time::durationFromSec(43), lights1[0]->fixed_cycle_duration);
+  // By default, traffic_signal shouldn't have fixed_cycle_duration
+  EXPECT_EQ(lanelet::time::durationFromSec(0), lights1[0]->fixed_cycle_duration);
 
-  // call the processSpatFromMsg with that msg 2
-  event.event_state.movement_phase_state = 7;
-  event.timing.min_end_time = 24;
-  movement.movement_event_list[0] = event;
-  state.movement_list[0] = movement;
-  spat.intersection_state_list[0] = state;
+  // Do nothing if received SPAT of another intersection
+  state.id.id = 2;
+  spat.intersection_state_list.push_back(state);
   cmw.processSpatFromMsg(spat);
-  lights1 = cmw.getMutableMap()->laneletLayer.get(ll_1.id()).regulatoryElementsAs<lanelet::CarmaTrafficSignal>();
-  // nothing changed
-  EXPECT_EQ(lanelet::time::durationFromSec(43), lights1[0]->fixed_cycle_duration);
+  EXPECT_EQ(lanelet::time::durationFromSec(0), lights1[0]->fixed_cycle_duration);
+  EXPECT_EQ(1, lights1[0]->recorded_time_stamps.size());
+  EXPECT_EQ(1, lights1[0]->recorded_start_time_stamps.size());
 
-  // call the processSpatFromMsg with that msg 3a
+  // Valid dynamic spat
+  state.id.id = 1;
+  spat.intersection_state_list = {};
+  spat.intersection_state_list.push_back(state);
+  cmw.processSpatFromMsg(spat);
+  EXPECT_EQ(lanelet::time::durationFromSec(0), lights1[0]->fixed_cycle_duration);
+  EXPECT_EQ(1, lights1[0]->recorded_time_stamps.size());
+  EXPECT_EQ(1, lights1[0]->recorded_start_time_stamps.size());
+  EXPECT_EQ(20, lanelet::time::toSec(lights1[0]->recorded_time_stamps.front().first));
+  EXPECT_EQ(0, lanelet::time::toSec(lights1[0]->recorded_start_time_stamps.front()));
+  EXPECT_EQ(lanelet::CarmaTrafficSignalState::PERMISSIVE_MOVEMENT_ALLOWED, lights1[0]->recorded_time_stamps.front().second);
+
+  // Empty movement, stay the same
+  state.id.id = 1;
+  carma_v2x_msgs::msg::MovementState empty_movement;
+  spat.intersection_state_list[0].movement_list[0] = empty_movement;
+  cmw.processSpatFromMsg(spat);
+  EXPECT_EQ(1, lights1[0]->recorded_time_stamps.size());
+  EXPECT_EQ(1, lights1[0]->recorded_start_time_stamps.size());
+
+  // Multiple states
+  // first state
+  spat.intersection_state_list[0] = state; 
+  // second state
   event.event_state.movement_phase_state = 3;
-  event.timing.min_end_time = 44.5;
-  movement.movement_event_list[0] = event;
-  state.movement_list[0] = movement;
-  spat.intersection_state_list[0] = state;
+  event.timing.min_end_time = 40;
+  event.timing.start_time = 20;
+  movement.movement_event_list.push_back(event);
+  state.movement_list.push_back(movement);
+  spat.intersection_state_list.push_back(state);
   cmw.processSpatFromMsg(spat);
-  lights1 = cmw.getMutableMap()->laneletLayer.get(ll_1.id()).regulatoryElementsAs<lanelet::CarmaTrafficSignal>();
-  // partial state 7
-  EXPECT_EQ(lanelet::time::durationFromSec(44.0), lights1[0]->fixed_cycle_duration);
-
-    // call the processSpatFromMsg with that msg 3b
-  event.event_state.movement_phase_state = 3;
-  event.timing.min_end_time = 45.0;
-  movement.movement_event_list[0] = event;
-  state.movement_list[0] = movement;
-  spat.intersection_state_list[0] = state;
-  cmw.processSpatFromMsg(spat);
-  lights1 = cmw.getMutableMap()->laneletLayer.get(ll_1.id()).regulatoryElementsAs<lanelet::CarmaTrafficSignal>();
-  // partial state 7
-  EXPECT_EQ(lanelet::time::durationFromSec(44.0), lights1[0]->fixed_cycle_duration);
-
-  // call the processSpatFromMsg with that msg 4.a
-  event.event_state.movement_phase_state = 5;
-  event.timing.min_end_time = 65;
-  movement.movement_event_list[0] = event;
-  state.movement_list[0] = movement;
-  spat.intersection_state_list[0] = state;
-  cmw.processSpatFromMsg(spat);
-  lights1 = cmw.getMutableMap()->laneletLayer.get(ll_1.id()).regulatoryElementsAs<lanelet::CarmaTrafficSignal>();
-  // partial state 3
-  EXPECT_EQ(lanelet::time::durationFromSec(44.5), lights1[0]->fixed_cycle_duration); // NOTE: 44.5 here instead of 45 because of the intentional subtraction of 0.5s inside the implementation
-  
-  // call the processSpatFromMsg with that msg 4.b
-  event.event_state.movement_phase_state = 5;
-  event.timing.min_end_time = 65.001;
-  movement.movement_event_list[0] = event;
-  state.movement_list[0] = movement;
-  spat.intersection_state_list[0] = state;
-  RCLCPP_DEBUG_STREAM(rclcpp::get_logger("carma_wm"), "Input: Duplicate, so ignore");
-  cmw.processSpatFromMsg(spat);
-  lights1 = cmw.getMutableMap()->laneletLayer.get(ll_1.id()).regulatoryElementsAs<lanelet::CarmaTrafficSignal>();
-  // and query the regem again to check if its entries are updated, by checking revision or getState or predictState etc
-  EXPECT_EQ(lanelet::time::durationFromSec(44.5), lights1[0]->fixed_cycle_duration); // NOTE: 44.5 here instead of 45 because of the intentional subtraction of 0.5s inside the implementation
-
-  // call the processSpatFromMsg with that msg 5
-  event.event_state.movement_phase_state = 3;
-  event.timing.min_end_time = 66;
-  movement.movement_event_list[0] = event;
-  state.movement_list[0] = movement;
-  spat.intersection_state_list[0] = state;
-  RCLCPP_DEBUG_STREAM(rclcpp::get_logger("carma_wm"), "Input: First cycle set. This is technically new cycle, but this info is not counted towards it due to inconvenience");
-  cmw.processSpatFromMsg(spat);
-  lights1 = cmw.getMutableMap()->laneletLayer.get(ll_1.id()).regulatoryElementsAs<lanelet::CarmaTrafficSignal>();
-  // same duration, but counter set to 0
-  EXPECT_EQ(lanelet::time::durationFromSec(45), lights1[0]->fixed_cycle_duration);
-
-  // call the processSpatFromMsg with that msg 6
-  // new cycle, but will be counted as old cycle due to same light
-  event.event_state.movement_phase_state = 5;
-  event.timing.min_end_time = 67;
-  movement.movement_event_list[0] = event;
-  state.movement_list[0] = movement;
-  spat.intersection_state_list[0] = state;
-  RCLCPP_DEBUG_STREAM(rclcpp::get_logger("carma_wm"), "Input: New cycle, but cycle duration is same due to shifting");
-  cmw.processSpatFromMsg(spat);
-  lights1 = cmw.getMutableMap()->laneletLayer.get(ll_1.id()).regulatoryElementsAs<lanelet::CarmaTrafficSignal>();
-
-  EXPECT_EQ(lanelet::time::durationFromSec(45), lights1[0]->fixed_cycle_duration);
-
-  // call the processSpatFromMsg with that msg 7
-  event.event_state.movement_phase_state = 7;
-  event.timing.min_end_time = 68;
-  movement.movement_event_list[0] = event;
-  state.movement_list[0] = movement;
-  spat.intersection_state_list[0] = state;
-  RCLCPP_DEBUG_STREAM(rclcpp::get_logger("carma_wm"),"Input: New partial cycle, yellow reduced");
-  cmw.processSpatFromMsg(spat);
-  lights1 = cmw.getMutableMap()->laneletLayer.get(ll_1.id()).regulatoryElementsAs<lanelet::CarmaTrafficSignal>();
-  // and query the regem again to check if its entries are updated, by checking revision or getState or predictState etc
-  EXPECT_EQ(lanelet::time::durationFromSec(43), lights1[0]->fixed_cycle_duration);
-
-  // call the processSpatFromMsg with that msg 8
-  event.event_state.movement_phase_state = 3;
-  event.timing.min_end_time = 69.000;
-  movement.movement_event_list[0] = event;
-  state.movement_list[0] = movement;
-  spat.intersection_state_list[0] = state;
-  RCLCPP_DEBUG_STREAM(rclcpp::get_logger("carma_wm"), "Input: New partial cycle, green reduced");
-  cmw.processSpatFromMsg(spat);
-  lights1 = cmw.getMutableMap()->laneletLayer.get(ll_1.id()).regulatoryElementsAs<lanelet::CarmaTrafficSignal>();
-  // and query the regem again to check if its entries are updated, by checking revision or getState or predictState etc
-  EXPECT_EQ(lanelet::time::durationFromSec(41), lights1[0]->fixed_cycle_duration);
-
-  // call the processSpatFromMsg with that msg 9
-  event.event_state.movement_phase_state = 5;
-  event.timing.min_end_time = 70;
-  movement.movement_event_list[0] = event;
-  state.movement_list[0] = movement;
-  spat.intersection_state_list[0] = state;
-  RCLCPP_DEBUG_STREAM(rclcpp::get_logger("carma_wm"), "Input: New full cycle, yellow reduced");
-  cmw.processSpatFromMsg(spat);
-  lights1 = cmw.getMutableMap()->laneletLayer.get(ll_1.id()).regulatoryElementsAs<lanelet::CarmaTrafficSignal>();
-  // and query the regem again to check if its entries are updated, by checking revision or getState or predictState etc
-  EXPECT_EQ(lanelet::time::durationFromSec(22), lights1[0]->fixed_cycle_duration);
-
-  // call the processSpatFromMsg with that msg 10
-  event.event_state.movement_phase_state = 7;
-  event.timing.min_end_time = 71;
-  movement.movement_event_list[0] = event;
-  state.movement_list[0] = movement;
-  spat.intersection_state_list[0] = state;
-  RCLCPP_DEBUG_STREAM(rclcpp::get_logger("carma_wm"), "Input: New full cycle, red reduced");
-  cmw.processSpatFromMsg(spat);
-  lights1 = cmw.getMutableMap()->laneletLayer.get(ll_1.id()).regulatoryElementsAs<lanelet::CarmaTrafficSignal>();
-  // and query the regem again to check if its entries are updated, by checking revision or getState or predictState etc
-  EXPECT_EQ(lanelet::time::durationFromSec(3), lights1[0]->fixed_cycle_duration);
-
+  EXPECT_EQ(2, lights1[0]->recorded_time_stamps.size());
+  EXPECT_EQ(2, lights1[0]->recorded_start_time_stamps.size());
+  EXPECT_NEAR(20.0, lanelet::time::toSec(lights1[0]->recorded_time_stamps.front().first), 0.0001);
+  EXPECT_NEAR(0.0, lanelet::time::toSec(lights1[0]->recorded_start_time_stamps.front()),  0.0001);
+  EXPECT_EQ(lanelet::CarmaTrafficSignalState::PERMISSIVE_MOVEMENT_ALLOWED, lights1[0]->recorded_time_stamps.front().second);
+  EXPECT_NEAR(40.0, lanelet::time::toSec(lights1[0]->recorded_time_stamps.back().first),  0.0001);
+  EXPECT_NEAR(20.0, lanelet::time::toSec(lights1[0]->recorded_start_time_stamps.back()),  0.0001);
+  EXPECT_EQ(lanelet::CarmaTrafficSignalState::STOP_AND_REMAIN, lights1[0]->recorded_time_stamps.back().second);
 }
 
 TEST(CARMAWorldModelTest, getSignalsAlongRoute)
@@ -1545,26 +1464,4 @@ TEST(CARMAWorldModelTest, getIntersectionAlongRoute)
 
 }
 
-TEST(CARMAWorldModelTest, checkIfSeenBeforeMovementState)
-{
-  carma_wm::CARMAWorldModel cmw;
-  auto system_now = std::chrono::duration<double>(std::chrono::system_clock::now().time_since_epoch()).count() + 1.0;
-
-  cmw.sim_.traffic_signal_states_[13][15].push_back(std::make_pair(lanelet::time::timeFromSec(system_now + 1.0), lanelet::CarmaTrafficSignalState::STOP_AND_REMAIN));
-  cmw.sim_.traffic_signal_start_times_[13][15].push_back(lanelet::time::timeFromSec(system_now));
-
-  boost::posix_time::ptime min_end_time_dynamic = lanelet::time::timeFromSec(system_now + 1.0);
-  auto received_state_dynamic=lanelet::CarmaTrafficSignalState::STOP_AND_REMAIN;
-  int mov_id=13;
-  int mov_signal_group=15;
-
-  ASSERT_EQ(cmw.check_if_seen_before_movement_state(min_end_time_dynamic,received_state_dynamic,mov_id,mov_signal_group), 1);
-
-  min_end_time_dynamic=lanelet::time::timeFromSec(system_now);
-  received_state_dynamic= lanelet::CarmaTrafficSignalState::PROTECTED_CLEARANCE;
-  mov_id=13;
-  mov_signal_group=15;
-
-  ASSERT_EQ(cmw.check_if_seen_before_movement_state(min_end_time_dynamic,received_state_dynamic,mov_id,mov_signal_group), 0);
-}
 }  // namespace carma_wm

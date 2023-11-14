@@ -1371,6 +1371,11 @@ void LCIStrategicPlugin::plan_maneuvers_callback(
     {
       current_light_state_optional = nearest_traffic_signal->predictState(lanelet::time::timeFromSec(current_state.stamp.seconds()));
       RCLCPP_DEBUG_STREAM(rclcpp::get_logger("lci_strategic_plugin"), "Real-time current signal: " << current_light_state_optional.get().second << ", for Id: " << nearest_traffic_signal->id());
+      if (current_light_state_optional.get().second == lanelet::CarmaTrafficSignalState::UNAVAILABLE || !current_light_state_optional)
+      {
+        RCLCPP_DEBUG_STREAM(rclcpp::get_logger("lci_strategic_plugin"), "Signal state not available returning..." );
+        return;
+      }      
     }
     switch (transition_table_.getState())
     {

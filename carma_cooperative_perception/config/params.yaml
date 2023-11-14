@@ -1,0 +1,9 @@
+multiple_object_tracker:
+  ros__parameters:
+    execution_frequency_hz: 5.0
+    track_promotion_threshold: 3
+    track_removal_threshold: 0
+
+host_vehicle_filter:
+  ros__parameters:
+    distance_threshold: 2.0

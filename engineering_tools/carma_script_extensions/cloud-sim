@@ -1,6 +1,6 @@
 #!/bin/bash
 
-#  Copyright (C) 2022 LEIDOS.
+#  Copyright (C) 2022-2023 LEIDOS.
 # 
 #  Licensed under the Apache License, Version 2.0 (the "License"); you may not
 #  use this file except in compliance with the License. You may obtain a copy of
@@ -158,104 +158,165 @@ cloud-sim__start() {
     
     # Call cloud formation
     local STACK_NAME="CloudSimStack"$(echo ${USER_ARN} |  grep -oh "/.*@" | sed "s|@|-|g" | sed "s|\.|-|g" | sed "s|[^A-Za-z0-9]|-|g")
-
-    local RESULT=$(aws --region us-east-1 cloudformation create-stack --template-body "file://${CARMA_CLOUD_SIM_CLOUD_FORMATION_PATH}" \
-        --stack-name "${STACK_NAME}" \
-        --parameters  ParameterKey=Cloud9AccessRoleName,ParameterValue="${USER_ARN}" \
-        ParameterKey=Password,ParameterValue="${PASS}" \
-        ParameterKey=CarmaConfigImage,ParameterValue="${CONFIG_IMAGE}" \
-        --capabilities CAPABILITY_NAMED_IAM)
     
-    local VALID_LAUNCH=$(echo "${RESULT}" | grep 'arn:aws:cloudformation:us-east-1')
-    if [ -z "${VALID_LAUNCH}" ]; then
-        echo "AWS Launch Failed with error:"
-        echo ${RESULT}
-        exit 1
-    fi
+    # Check if required resources are available
+    if query_resource_status; then
     
-    echo "AWS Stack ${STACK_NAME} starting up......."
+        # Get the VPC ID
+        local VPC_ID=$(aws ec2 describe-vpcs --filters "Name=tag:Name,Values=CDASim VPC" --query 'Vpcs[].VpcId' --output text)
+        # Get the Route Table ID
+        local ROUTETABLE_ID=$(aws ec2 describe-route-tables --filters "Name=tag:Name,Values=CDASim RouteTable" --query 'RouteTables[].RouteTableId' --output text)
 
-    local STACK_RESOURCE_STATUS="NOT_EMPTY"
-    local LAUNCHED_RESOURCE_COUNT=0
-    local PREV_LAUNCH_COUNT=0
-    local i=0
-    local SLEEP_SEC=5
-    local LAUNCH_TIMEOUT=595 # 10m timeout to launch the stack
-    local ELAPSED_TIME=0
-    local NON_COMPLETE_RES="ALL"
-    local FAILED_RES="NONE"
-    local TOTAL_STACK_RESOURCE=0
+        # Get subnet information
+        local SubnetCIDRBlock="10.0.0.0/24"
+        
+        # Query for existing subnetID list
+        local subnet_ids=$(aws ec2 describe-route-tables --route-table-ids "$ROUTETABLE_ID" \
+                    --query 'RouteTables[0].Associations[].SubnetId' \
+                    --output text)
+        # Use default subnet if none exist, else check existing subnets and increment by 1
+        local total_subnets=${#subnet_ids[@]}
+        
 
-    sleep ${SLEEP_SEC}
+        if [ -n "${subnet_ids[0]}" ]; then 
+            local max=0
+            for ((i = 0; i < total_subnets; i++)); do
+                subnet_id=${subnet_ids[i]}
 
-    # As long as there are resources which do not have the status CREATE_COMPLETE 
-    # TODO: Ideally we wouldn't need to hard code 14 resources but a rare race condition can occur where 13 complete before 14 starts which leads to the need to hard code it for now
-    while { [ -n "${NON_COMPLETE_RES}" ] || [ ${TOTAL_STACK_RESOURCE} -lt 14 ]; } && [ ${ELAPSED_TIME} -lt ${LAUNCH_TIMEOUT} ]; do 
+                # Lookup subnet address
+                cidr_block=$(aws ec2 describe-subnets --subnet-ids "$subnet_id" --query 'Subnets[0].CidrBlock' --output text)
+                
+                # Split the CIDR block into its components
+                IFS="/" read -r ip_address subnet_mask <<< "$cidr_block"
 
-        STACK_RESOURCE_STATUS=$(aws cloudformation describe-stack-resources --stack-name "${STACK_NAME}" | grep -oh '"ResourceStatus":.*",' | sed "s|\s*\"ResourceStatus\": \"||" | sed "s|\",||")
+                # Split the IP address into its octets
+                IFS="." read -r -a octets <<< "$ip_address"
 
-        NON_COMPLETE_RES=$(echo "${STACK_RESOURCE_STATUS}" | grep -v "CREATE_COMPLETE" | sed "s/\n//" )
-        FAILED_RES=$(echo "${STACK_RESOURCE_STATUS}" | grep "\(ROLLBACK\|FAILED\|DELETE\)" | sed "s/\n//")
+                # Get the second to last octet
+                update_octet="${octets[2]}"
+                
+                if [ "$update_octet" -gt "$max" ]; then
+                    max="$update_octet"
+                fi
+                
+                # Update Octet on last itr
+                if ((i == total_subnets - 1)); then
+                    ((max++))
+                    updated_subnet="${octets[0]}.${octets[1]}.$max.${octets[3]}"
+                    
+                    # Reconstruct the updated CIDR block
+                    updated_cidr_block="$updated_subnet/$subnet_mask"
+                    SubnetCIDRBlock="$updated_cidr_block"
+                fi
+            done
+        fi
+            
 
-        # If the status returns a ROLLBACK or FAILED state at any point then launch has failed
-        if [ -n "${FAILED_RES}" ]; then 
-            echo "Stack launch failed. Inspect AWS console for details. Remember to delete the stack after debugging!"
+        local RESULT=$(aws --region us-east-1 cloudformation create-stack --template-body "file://${CARMA_CLOUD_SIM_CLOUD_FORMATION_PATH}" \
+            --stack-name "${STACK_NAME}" \
+            --parameters  ParameterKey=Cloud9AccessRoleName,ParameterValue="${USER_ARN}" \
+            ParameterKey=Password,ParameterValue="${PASS}" \
+            ParameterKey=CarmaConfigImage,ParameterValue="${CONFIG_IMAGE}" \
+            ParameterKey=ExistingVPCID,ParameterValue="${VPC_ID}" \
+            ParameterKey=ExistingRouteTableID,ParameterValue="${ROUTETABLE_ID}" \
+            ParameterKey=EC2SubnetCIDRBlock,ParameterValue="${SubnetCIDRBlock}" \
+            --capabilities CAPABILITY_NAMED_IAM)
+        
+        local VALID_LAUNCH=$(echo "${RESULT}" | grep 'arn:aws:cloudformation:us-east-1')
+        if [ -z "${VALID_LAUNCH}" ]; then
+            echo "AWS Launch Failed with error:"
+            echo ${RESULT}
+            exit 1
+        fi
+        
+        echo "AWS Stack ${STACK_NAME} starting up......."
+
+        local STACK_RESOURCE_STATUS="NOT_EMPTY"
+        local LAUNCHED_RESOURCE_COUNT=0
+        local PREV_LAUNCH_COUNT=0
+        local i=0
+        local SLEEP_SEC=5
+        local LAUNCH_TIMEOUT=595 # 10m timeout to launch the stack
+        local ELAPSED_TIME=0
+        local NON_COMPLETE_RES="ALL"
+        local FAILED_RES="NONE"
+        local TOTAL_STACK_RESOURCE=0
+
+        sleep ${SLEEP_SEC}
+
+        # As long as there are resources which do not have the status CREATE_COMPLETE 
+        # TODO: Ideally we wouldn't need to hard code 14 resources but a rare race condition can occur where 13 complete before 14 starts which leads to the need to hard code it for now
+        while { [ -n "${NON_COMPLETE_RES}" ] || [ ${TOTAL_STACK_RESOURCE} -lt 14 ]; } && [ ${ELAPSED_TIME} -lt ${LAUNCH_TIMEOUT} ]; do 
+
+            STACK_RESOURCE_STATUS=$(aws cloudformation describe-stack-resources --stack-name "${STACK_NAME}" | grep -oh '"ResourceStatus":.*",' | sed "s|\s*\"ResourceStatus\": \"||" | sed "s|\",||")
+
+            NON_COMPLETE_RES=$(echo "${STACK_RESOURCE_STATUS}" | grep -v "CREATE_COMPLETE" | sed "s/\n//" )
+            FAILED_RES=$(echo "${STACK_RESOURCE_STATUS}" | grep "\(ROLLBACK\|FAILED\|DELETE\)" | sed "s/\n//")
+
+            # If the status returns a ROLLBACK or FAILED state at any point then launch has failed
+            if [ -n "${FAILED_RES}" ]; then 
+                echo "Stack launch failed. Inspect AWS console for details. Remember to delete the stack after debugging!"
+                exit 1
+            fi
+
+            TOTAL_STACK_RESOURCE=$(echo "${STACK_RESOURCE_STATUS}" | wc -l)
+            
+            LAUNCHED_RESOURCE_COUNT=$(echo "${STACK_RESOURCE_STATUS}" | grep "CREATE_COMPLETE" | wc -l)
+
+            if [ ${PREV_LAUNCH_COUNT} -ne ${LAUNCHED_RESOURCE_COUNT} ]; then
+                echo "Launched Stack Resource: ${LAUNCHED_RESOURCE_COUNT}/${TOTAL_STACK_RESOURCE} Elapsed Sec: ${ELAPSED_TIME}"
+                
+                PREV_LAUNCH_COUNT=${LAUNCHED_RESOURCE_COUNT}
+
+            elif [ $(( ELAPSED_TIME % 20 )) == 0 ]; then
+                echo "Waiting on resources. Launched Stack Resources: ${LAUNCHED_RESOURCE_COUNT}/${TOTAL_STACK_RESOURCE} Elapsed Sec: ${ELAPSED_TIME}"
+            fi 
+
+            ((i++))
+
+            # Wait SLEEP_SEC seconds before checking again
+            sleep ${SLEEP_SEC}
+            ELAPSED_TIME=$((SLEEP_SEC * i))
+
+        done
+
+        if [ ${ELAPSED_TIME} -gt ${LAUNCH_TIMEOUT} ]; then
+            echo "Stack launch timedout. Inspect AWS console for details. Remember to delete the stack after debugging!"
             exit 1
         fi
 
-        TOTAL_STACK_RESOURCE=$(echo "${STACK_RESOURCE_STATUS}" | wc -l)
+
+        local DEV_MACHINE_ID=$(aws cloudformation describe-stack-resources --stack-name ${STACK_NAME} --output text --logical-resource-id DevMachine --query StackResources[].PhysicalResourceId)
+
+        local PUBLIC_DNS=$(aws ec2 describe-instances --instance-ids ${DEV_MACHINE_ID} --output text --query Reservations[].Instances[].PublicDnsName)
+
+        local CLOUD9_ADDRESS_BASE="https://us-east-1.console.aws.amazon.com/cloud9/ide"
+        # 1. Extract cloud9 name from stack details
+        local CLOUD9_ENVS=$(aws cloud9 list-environments --output text | sed "s|ENVIRONMENTIDS\s||")
+        # 2. Determine cloud9 environment id
+        local CLOUD9_NAME="RobotWorkshop-${STACK_NAME}"
+        local CLOUD9_ID=$(aws cloud9 describe-environments --output text --environment-ids $(echo $CLOUD9_ENVS) --query "environments[?name=='${CLOUD9_NAME}'].id")
+        # 3. Update URL
+        local CLOUD9_ADDRESS="${CLOUD9_ADDRESS_BASE}/${CLOUD9_ID}"
+
+        # Save the stack name for cleanup
+        echo "STACK_NAME=${STACK_NAME}" > ${CARMA_CLOUD_SIM_STACK_PATH}
         
-        LAUNCHED_RESOURCE_COUNT=$(echo "${STACK_RESOURCE_STATUS}" | grep "CREATE_COMPLETE" | wc -l)
-
-        if [ ${PREV_LAUNCH_COUNT} -ne ${LAUNCHED_RESOURCE_COUNT} ]; then
-            echo "Launched Stack Resource: ${LAUNCHED_RESOURCE_COUNT}/${TOTAL_STACK_RESOURCE} Elapsed Sec: ${ELAPSED_TIME}"
-            
-            PREV_LAUNCH_COUNT=${LAUNCHED_RESOURCE_COUNT}
-
-        elif [ $(( ELAPSED_TIME % 20 )) == 0 ]; then
-            echo "Waiting on resources. Launched Stack Resources: ${LAUNCHED_RESOURCE_COUNT}/${TOTAL_STACK_RESOURCE} Elapsed Sec: ${ELAPSED_TIME}"
-        fi 
-
-        ((i++))
-
-        # Wait SLEEP_SEC seconds before checking again
-        sleep ${SLEEP_SEC}
-        ELAPSED_TIME=$((SLEEP_SEC * i))
-
-    done
-
-    if [ ${ELAPSED_TIME} -gt ${LAUNCH_TIMEOUT} ]; then
-        echo "Stack launch timedout. Inspect AWS console for details. Remember to delete the stack after debugging!"
+        # Print for user
+        echo "##############################"
+        echo ""
+        echo "AWS Stack ${STACK_NAME} Launch Suceeded"
+        echo ""
+        echo "EC2 Instance Address: ${PUBLIC_DNS}"
+        echo ""
+        echo "Cloud9 IDE Address: ${CLOUD9_ADDRESS}"
+        echo ""
+        echo "##############################"
+    
+    else
+        echo -e "Required resources have not been setup. Please run \e[3m\e[1mcarma cloud-sim init-resources\e[0m first"
         exit 1
     fi
-
-
-    local DEV_MACHINE_ID=$(aws cloudformation describe-stack-resources --stack-name ${STACK_NAME} --output text --logical-resource-id DevMachine --query StackResources[].PhysicalResourceId)
-
-    local PUBLIC_DNS=$(aws ec2 describe-instances --instance-ids ${DEV_MACHINE_ID} --output text --query Reservations[].Instances[].PublicDnsName)
-
-    local CLOUD9_ADDRESS_BASE="https://us-east-1.console.aws.amazon.com/cloud9/ide"
-    # 1. Extract cloud9 name from stack details
-    local CLOUD9_ENVS=$(aws cloud9 list-environments --output text | sed "s|ENVIRONMENTIDS\s||")
-    # 2. Determine cloud9 environment id
-    local CLOUD9_NAME="RobotWorkshop-${STACK_NAME}"
-    local CLOUD9_ID=$(aws cloud9 describe-environments --output text --environment-ids $(echo $CLOUD9_ENVS) --query "environments[?name=='${CLOUD9_NAME}'].id")
-    # 3. Update URL
-    local CLOUD9_ADDRESS="${CLOUD9_ADDRESS_BASE}/${CLOUD9_ID}"
-
-    # Save the stack name for cleanup
-    echo "STACK_NAME=${STACK_NAME}" > ${CARMA_CLOUD_SIM_STACK_PATH}
-    
-    # Print for user
-    echo "##############################"
-    echo ""
-    echo "AWS Stack ${STACK_NAME} Launch Suceeded"
-    echo ""
-    echo "EC2 Instance Address: ${PUBLIC_DNS}"
-    echo ""
-    echo "Cloud9 IDE Address: ${CLOUD9_ADDRESS}"
-    echo ""
-    echo "##############################"
 }
 
 cloud-sim__stop() {
@@ -291,6 +352,213 @@ cloud-sim__status() {
     aws cloudformation describe-stack-resources --stack-name "${STACK_NAME}"
 }
 
+# Function to create the VPC, internet gateway, and route table
+cloud-sim__init-resources() {
+
+    if [ ! command -v "aws" &> /dev/null ]; then
+        echo "aws cli is not installed. Attempting to install. This requires sudo."
+        
+        curl "https://awscli.amazonaws.com/awscli-exe-linux-x86_64.zip" -o "awscliv2.zip"
+        unzip awscliv2.zip
+        sudo ./aws/install
+
+        echo "NOTE: You need to manually configure the aws cli for your user access key. Refer to this video for instructions https://www.youtube.com/watch?v=Rp-A84oh4G8"
+        exit 1
+    fi
+    
+    # Check if resources already exist - reset if all don't exist
+    local vpc_success=0
+    local igw_success=0
+    local route_table_success=0
+
+    # Get resource status - query_resource_status defines VPC, Internet Gateway and Route Table ID
+
+    if query_resource_status; then
+        echo -e "CDASim resources already exist. No change required. Run \e[3m\e[1mcarma cloud-sim start\e[0m to bring up stack.
+        VPC: ${vpc_id}, Internet Gateway: ${igw_id}, Route Table: ${route_table_id}"
+        exit 1
+
+    else
+
+        # Try deleting CDASim resources if `all` don't exist
+        echo "Checking and deleting existing CDASim resources first"
+        cloud-sim__cleanup-resources
+
+
+        # Set desired CIDR block
+        local CIDR_Block="10.0.0.0/16"
+
+        # Create VPC
+        vpc_id=$(aws ec2 create-vpc --cidr-block $CIDR_Block --tag-specifications 'ResourceType=vpc,Tags=[{Key=Name,Value=CDASim VPC}]' \
+        --query 'Vpc.VpcId' --output text) 
+
+        aws ec2 modify-vpc-attribute --vpc-id $vpc_id --enable-dns-support 
+        aws ec2 modify-vpc-attribute --vpc-id $vpc_id --enable-dns-hostnames
+        # Check the exit code to determine if the VPC creation was successful
+        if [ $? -eq 0 ]; then
+            vpc_success=1
+            echo "Created vpc: $vpc_id"
+        else
+            echo "Error creating CDASim VPC. Configuration Failed, deleting resources allocated"
+            cloud-sim__cleanup-resources
+        fi
+
+        # Create Internet Gateway
+        igw_id=$(aws ec2 create-internet-gateway \
+        --tag-specifications 'ResourceType=internet-gateway,Tags=[{Key=Name,Value=CDASim IGW}]' --query 'InternetGateway.InternetGatewayId' \
+        --output text) 
+
+        # Check the exit code to determine if the Internet Gateway creation was successful
+        if [ $? -eq 0 ]; then
+            igw_success=1
+            echo "Created Internet Gateway: $igw_id"
+        else
+            echo "Error creating Internet Gateway. Configuration Failed, deleting resources allocated"
+            cloud-sim__cleanup-resources
+        fi
+
+        # Attach Internet Gateway to VPC
+        aws ec2 attach-internet-gateway --internet-gateway-id $igw_id --vpc-id $vpc_id
+
+        # Create Route Table
+        route_table_id=$(aws ec2 create-route-table --vpc-id $vpc_id  \
+        --tag-specifications 'ResourceType=route-table,Tags=[{Key=Name,Value=CDASim RouteTable}]' --query 'RouteTable.RouteTableId' \
+        --output text)
+
+        # Check the exit code to determine if the Route Table creation was successful
+        if [ $? -eq 0 ]; then
+            route_table_success=1
+            echo "Created route table: $route_table_id"
+        else
+            echo "Error creating Route Table. Configuration Failed, deleting resources allocated"
+            cloud-sim__cleanup-resources
+        fi
+
+        # Create a default route to the Internet Gateway
+        aws ec2 create-route --route-table-id $route_table_id --destination-cidr-block 0.0.0.0/0 --gateway-id $igw_id &> /dev/null
+
+        if [ $? -eq 0 ]; then
+            echo "Default route created successfully!"
+        else
+            echo "Error creating default route to Internet Gateway. Configuration Failed, deleting resources allocated"
+            cloud-sim__cleanup-resources
+        fi
+
+
+        if [ $vpc_success -eq 1 ] && [ $igw_success -eq 1 ] && [ $route_table_success -eq 1 ]; then
+            echo "CDASim required resources were created successfully!"
+        else
+            echo "Some resources encountered errors. See above for details."
+        fi
+    fi
+
+}
+
+# Queries AWS for existing CDASim VPC, internet gateway, and route table and sets global variables
+query_resource_status() {
+    # Get VPC ID based on tag name
+    vpc_id=$(aws ec2 describe-vpcs --filters "Name=tag:Name,Values=CDASim VPC" --query 'Vpcs[0].VpcId' --output text)
+
+    # Get Internet Gateway ID based on tag name
+    igw_id=$(aws ec2 describe-internet-gateways --filters "Name=tag:Name,Values=CDASim IGW" \
+    --query 'InternetGateways[0].InternetGatewayId' --output text)
+
+
+    # Get Route Table ID based on tag name
+    route_table_id=$(aws ec2 describe-route-tables --filters "Name=tag:Name,Values=CDASim RouteTable" \
+    --query 'RouteTables[0].RouteTableId' --output text)
+
+    local vpc_success=0
+    local igw_success=0
+    local route_table_success=0
+
+    if [ -z "$vpc_id" ] || [ $vpc_id != "None" ]; then
+        vpc_success=1
+    fi
+    if [ -z "$igw_id" ] || [ $igw_id != "None" ]; then
+        igw_success=1
+    fi
+    if [ -z "$igw_id" ] || [ $igw_id != "None" ]; then
+        route_table_success=1
+    fi
+
+    if [ $vpc_success -eq 1 ] && [ $igw_success -eq 1 ] && [ $route_table_success -eq 1 ]; then
+
+        return 0 # All resources setup successfully
+    fi
+    return 1 # All resources not setup successfully
+
+}
+
+# Function to delete the VPC, internet gateway, and route table based on tag name
+cloud-sim__cleanup-resources() {
+
+    if [ ! command -v "aws" &> /dev/null ]; then
+        echo "aws cli is not installed. Attempting to install. This requires sudo."
+        
+        curl "https://awscli.amazonaws.com/awscli-exe-linux-x86_64.zip" -o "awscliv2.zip"
+        unzip awscliv2.zip
+        sudo ./aws/install
+
+        echo "NOTE: You need to manually configure the aws cli for your user access key. Refer to this video for instructions https://www.youtube.com/watch?v=Rp-A84oh4G8"
+        exit 1
+    fi
+
+    echo "Trying to delete CDASim resources..."
+    query_resource_status
+
+    local vpc_success=0
+    local igw_success=0
+    local route_table_success=0
+
+
+    if [ -z "$route_table_id" ] || [ $route_table_id != "None" ]; then
+        # Delete the route table
+        aws ec2 delete-route-table --route-table-id $route_table_id
+        if [ $? -eq 0 ]; then
+            route_table_success=1
+            echo "Deleted Route Table: $route_table_id"
+        else
+            echo "Failed to delete route table. Cleanup resources Failed"
+            exit 1
+        fi
+    fi
+
+    if [ -z "$igw_id" ] || [ $igw_id != "None" ]; then
+        # Detach and delete the Internet Gateway
+        aws ec2 detach-internet-gateway --internet-gateway-id $igw_id --vpc-id $vpc_id
+        aws ec2 delete-internet-gateway --internet-gateway-id $igw_id
+        if [ $? -eq 0 ]; then
+            igw_success=1
+            echo "Deleted Internet Gateway: $igw_id"
+        else
+            echo "Failed to delete internet gateway. Cleanup resources Failed"
+            exit 1
+        fi
+
+    fi
+
+    if [ -z "$vpc_id" ] || [ $vpc_id != "None" ]; then
+        # Delete the VPC
+        aws ec2 delete-vpc --vpc-id $vpc_id
+        if [ $? -eq 0 ]; then
+            vpc_success=1
+            echo "Deleted VPC: $vpc_id"
+        else
+            echo "Failed to delete VPC. Cleanup resources Failed"
+            exit 1
+        fi
+
+    fi
+
+    if [ $vpc_success -eq 1 ] || [ $igw_success -eq 1 ] || [ $route_table_success -eq 1 ]; then
+        echo "CDASim Resources were deleted successfully!"
+    else
+        echo "No resources required to be deleted."
+    fi
+
+}
+
 
 cloud-sim__help() {
     cat <<HELP
@@ -320,7 +588,10 @@ Please enter one of the following commands when using the cloud-sim extension:
                 -i 
                     - Specify the exact carma-config to use for launching the vehicle and simulation
                       For example " -i image usdotfhwastol/carma-config:carma-system-1.0.1 "
-                      This option is an alternative to -v and should only be used if that option is not specified. 
+                      This option is an alternative to -v and should only be used if that option is not specified.
+            init-resources
+                - Initialize the resources required to deploy the cloud environment. Creates a VPC with internet gateway and route table.
+                 Created resources are required will persist for all users in organization until `clean` is called.
             start
                 - Starts the cloud formation stack using the configurations specified by cloud-sim config and returns access information for the user.
                   Saves the stack ARN to ${CARMA_CLOUD_SIM_STACK_PATH} for future reference by the stop command. 
@@ -331,6 +602,9 @@ Please enter one of the following commands when using the cloud-sim extension:
             stop
                 - Shutsdown the current cloud formation stack started by cloud-sim start and stored in ${CARMA_CLOUD_SIM_STACK_PATH}
                   If the stack is not availble returns a warning. 
+            cleanup-resources
+                - Tries to shutdown the current cloud formation stack started by cloud-sim start and then deallocates resources created on init.
+                  This command can be run independently to delete the created VPC, internet gateway, and route table"
             get-config
                 - Print the contents of the current configuration located at ${CARMA_CLOUD_SIM_CONFIG_PATH}
             status

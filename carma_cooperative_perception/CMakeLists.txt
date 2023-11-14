@@ -55,6 +55,7 @@ set(CMAKE_C_STANDARD 11)
 # This will automatically add include files from include/carma_cooperative_perception
 ament_auto_add_library(carma_cooperative_perception SHARED
   src/external_object_list_to_detection_list_component.cpp
+  src/external_object_list_to_sdsm_component.cpp
   src/geodetic.cpp
   src/j2735_types.cpp
   src/j3224_types.cpp
@@ -62,18 +63,23 @@ ament_auto_add_library(carma_cooperative_perception SHARED
   src/sdsm_to_detection_list_component.cpp
   src/track_list_to_external_object_list_component.cpp
   src/utm_zone.cpp
+  src/multiple_object_tracker_component.cpp
+  src/host_vehicle_filter_component.cpp
 )
 
 target_link_libraries(carma_cooperative_perception
   ${PROJ4_LIBRARIES}  # Note: Newer versions of PROJ use PROJ::proj
   GSL  # Note: Newer versions of GSL use Microsoft.GSL::GSL
   units::units
+  cooperative_perception_core::cooperative_perception_coreLibrary
 )
 
 rclcpp_components_register_nodes(carma_cooperative_perception
   "carma_cooperative_perception::ExternalObjectListToDetectionListNode"
+  "carma_cooperative_perception::ExternalObjectListToSdsmNode"
   "carma_cooperative_perception::SdsmToDetectionListNode"
   "carma_cooperative_perception::TrackListToExternalObjectListComponent"
+  "carma_cooperative_perception::MultipleObjectTrackerComponent"
 )
 
 ament_auto_add_executable(external_object_list_to_detection_list_node
@@ -83,6 +89,21 @@ ament_auto_add_executable(external_object_list_to_detection_list_node
 ament_auto_add_executable(track_list_to_external_object_list_node
   src/track_list_to_external_object_list_node.cpp
 )
+
+ament_auto_add_executable(multiple_object_tracker_node
+  src/multiple_object_tracker_node.cpp
+)
+
+ament_auto_add_executable(external_object_list_to_sdsm_node
+  src/external_object_list_to_sdsm_node.cpp
+)
+
+ament_auto_add_executable(host_vehicle_filter_node
+  src/host_vehicle_filter_node.cpp
+)
+
+# boost::posix_time definition for using nanoseconds
+add_definitions(-DBOOST_DATE_TIME_POSIX_TIME_STD_CONFIG)
 
 if(carma_cooperative_perception_BUILD_TESTS)
   enable_testing()
@@ -105,10 +126,17 @@ if(carma_cooperative_perception_BUILD_TESTS)
   )
 
   add_launch_test(test/track_list_to_external_object_list_launch_test.py)
+  add_launch_test(test/multiple_object_tracker_duplicates_launch_test.py)
+  add_launch_test(test/multiple_object_tracker_static_obstacle_launch_test.py)
+  add_launch_test(test/host_vehicle_filter_launch_test.py)
 
 endif()
 
-ament_auto_package()
+ament_auto_package(
+  INSTALL_TO_SHARE
+    launch
+    config
+)
 
 include(GNUInstallDirs)
 
