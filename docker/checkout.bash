@@ -86,10 +86,15 @@ git clone -b carma-develop https://github.com/usdot-fhwa-stol/rosbag2
 # NOTE: This is required since otherwise this image will not contain the novatel_oem7_msgs package, and a missing ROS 2 message package
 #       can cause ROS 2 rosbag logging to fail in Foxy. 
 # Related GitHub discussion for fix that was not backported to Foxy: https://github.com/ros2/rosbag2/pull/858
-sudo git clone https://github.com/novatel/novatel_oem7_driver.git ${dir}/src/novatel_oem7_driver -b ros2-dev
+git clone https://github.com/novatel/novatel_oem7_driver.git ${dir}/src/novatel_oem7_driver -b ros2-dev
 # Checkout verified commit
 cd ${dir}/src/novatel_oem7_driver
-sudo git checkout 3055e220bb9715b59c3ef53ab0aba05a495d9d5
+git checkout 3055e220bb9715b59c3ef53ab0aba05a495d9d5
+# Ignore novatel_oem7_driver package; only novatel_oem7_msgs is required
+cd ${dir}/src/novatel_oem7_driver/src/novatel_oem7_driver
+echo "" > COLCON_IGNORE
+cd ${dir}/src
+
 
 cd ${dir}/src
 
