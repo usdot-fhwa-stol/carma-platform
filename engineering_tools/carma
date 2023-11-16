@@ -143,7 +143,7 @@ carma__attach() {
     local CARMA_DOCKER_FILE="`docker run --rm --volumes-from carma-config:ro --entrypoint sh busybox:latest -c 'cat /opt/carma/vehicle/config/docker-compose.yml'`"
 
     echo "Attaching to CARMA container STDOUT..."
-    echo "$CARMA_DOCKER_FILE" | docker-compose -p carma -f - logs --follow --tail=10
+    echo "$CARMA_DOCKER_FILE" | docker-compose logs -f -t --tail=10
 }
 
 carma-config__edit() {
@@ -360,7 +360,7 @@ carma__swarm() {
         if [ "$(docker volume ls | grep carma-config-data | sed 's/local     //g')" ]; then
             echo "Found carma-config-data volume"
         else
-            echo "Missing carma-config-data volume, add with carma swarm update-config [image tag]"
+            echo "Missing carma-config-data volume, add with carma swarm update-config <image tag>"
             exit 1
         fi
 
@@ -374,13 +374,13 @@ carma__swarm() {
         if [ "$2" = "single" ]; then 
             echo "Deploying CARMA to single host Swarm stack..."
 
-            docker run --rm -v carma-config-data:/opt/carma/vehicle/config --entrypoint sh busybox:latest -c \
+            docker run --rm -a -v carma-config-data:/opt/carma/vehicle/config --entrypoint sh busybox:latest -c \
             'cat /opt/carma/vehicle/config/docker-compose-pc1.yml' | \
             docker stack deploy --compose-file - carma-pc1
 
 
         # For use with two connected PCs with known IPs
-        # Saves the generated swarm join token as a local variable and ssh's into the worker to execute
+        # Saves the generated swarm join token and ssh's into the worker to execute and deploy
         elif [ "$2" = "dual" ]; then
             echo "Deploying CARMA to dual compute Swarm stack..."
 
@@ -398,10 +398,9 @@ carma__swarm() {
         
         elif [ ! -z "$2" ]; then
             echo "Unrecognized argument \"swarm deploy $2\""
-
         fi
 
-    # consider updating this to match carma-config_set command arguments
+
     # Updates the carma-config-data volume based on a input tag string given by the user
     elif [ "$1" = "update-config" ]; then
         echo "Updating carma-config-data volume..."
@@ -413,13 +412,68 @@ carma__swarm() {
             echo "Could not find $2 in local images"
         fi
 
+
+    # Attaches the swarm's STDOUT logs to the current terminal
+    elif [ "$1" = "attach" ]; then
+        echo "Attaching STDOUT logs to terminal..."
+
+        SWARM_SERVICES=$(docker service ls --format "{{.Name}}")
+
+        # this seems to loop forever and cannot be escaped with ctrl+C
+        # performance will likely be poor due to combined log streams
+        for item in $SWARM_SERVICES; do
+            docker service logs --follow --details --tail=10 "$item" &
+        done
+
+        sleep infinity
+
+
+    # Takes n image tags that are saved locally and pushes them to the registry
+    elif [ "$1" = "set-image" ]; then
+        echo "Installing Docker images..."
+
+        if [ "$(docker volume ls | grep carma-registry | sed 's/local     //g')" ]; then
+            echo "Found carma-registry volume"
+        else
+            echo "Missing carma-registry volume, adding now..."
+            docker volume create carma-registry
+        fi
+
+        # this may need to deployed in the background compose file instead of here
+        docker service create --constraint 'node.role==manager' -d --volume="carma-registry:/var/lib/registry" -p 5000:5000 --name carma-registry-service registry:2
+
+        IMAGE_NAMES="$*"
+
+        for SOURCE_IMAGE_NAME in IMAGE_NAMES
+        do
+
+        echo "Pushing $SOURCE_IMAGE_NAME to localhost:5000"
+
+        # Should set pull or should it be an option where the normal behavior pushes a local image to the registry
+        # docker pull $SOURCE_IMAGE_NAME
+        docker tag "$SOURCE_IMAGE_NAME" "localhost:5000/$SOURCE_IMAGE_NAME"
+        docker push "localhost:5000/$SOURCE_IMAGE_NAME"
+        docker rmi "localhost:5000/$SOURCE_IMAGE_NAME"
+
+        done
+
+
     elif [ "$1" = "down" ]; then
         echo "Shutting down swarm..."
-        ssh dev@192.168.88.101 "docker swarm leave"
+
+        if [ "$(docker node ls | grep worker )" ]; then
+            ssh dev@192.168.88.101 "docker swarm leave"
+        fi
+
         docker swarm leave --force
+
 
     elif [ ! -z "$1" ]; then
         echo "Unrecognized argument \"swarm $1\""
+    
+    
+    elif [ $# -eq 0 ]; then
+        carma__swarm-help
     fi
 }
 
@@ -646,6 +700,40 @@ Please enter one of the following commands:
     help 
         - Display this information"
 HELP
+}
+
+carma__swarm-help() {
+    cat <<SHELP
+-------------------------------------------------------------------------------
+| USDOT FHWA STOL CARMA Swarm                                                 |
+-------------------------------------------------------------------------------
+
+Please enter one of the following commands:
+    deploy:
+        [empty]
+            - Will always deploy carma-web-ui as a background service on PC1 
+        single
+            - Deploys PC1 services as described in docker-compose-pc1.yml
+              to use for debugging on a single test system
+        dual
+            - Deploys PC1 services from docker-compose-pc1.yml and
+              PC2 services from docker-compose-pc2.yml to the PC1
+              manger node and PC2 worker node
+    update-config <tag/image>
+        - Uses the local carma-config image defined in
+          <tag/image> to update the Docker named volume
+          "carma-config-data" which can be found at
+          /var/lib/docker/volumes/carma-config-data/_data
+    set-image <tag/image>
+        - Pushes the image defined by <tag/image> to the
+          the registry service and associated volume
+    attach
+        - View STDOUT from all running CARMA processes
+    down
+        - Shuts down the worker node and manager node
+          and ends Swarm along with all services
+
+SHELP
 }
 
 carma__config() {
