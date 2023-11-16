@@ -22,27 +22,34 @@
 #include <string>
 #include <functional>
 #include <carma_planning_msgs/srv/plan_maneuvers.hpp>
+#include <rclcpp/exceptions/exceptions.hpp>
 
-namespace arbitrator 
+namespace arbitrator
 {
     template<typename MSrvReq, typename MSrvRes>
-    std::map<std::string, std::shared_ptr<MSrvRes>> 
+    std::map<std::string, std::shared_ptr<MSrvRes>>
         CapabilitiesInterface::multiplex_service_call_for_capability(const std::string& query_string, std::shared_ptr<MSrvReq> msg)
     {
         std::vector<std::string> topics = get_topics_for_capability(query_string);
 
         std::map<std::string, std::shared_ptr<MSrvRes>> responses;
 
-        for (auto i = topics.begin(); i != topics.end(); i++) 
+        for (auto i = topics.begin(); i != topics.end(); i++)
         {
             auto topic = *i;
-            auto sc = nh_->create_client<carma_planning_msgs::srv::PlanManeuvers>(topic);
-            RCLCPP_DEBUG_STREAM(rclcpp::get_logger("arbitrator"), "found client: " << topic);
-            
-            std::shared_future<std::shared_ptr<MSrvRes>> resp = sc->async_send_request(msg);
+            try {
+                auto sc = nh_->create_client<carma_planning_msgs::srv::PlanManeuvers>(topic);
+                RCLCPP_DEBUG_STREAM(rclcpp::get_logger("arbitrator"), "found client: " << topic);
+
+                std::shared_future<std::shared_ptr<MSrvRes>> resp = sc->async_send_request(msg);
+            } catch(const rclcpp::exceptions::RCLErrorBase& exception) {
+                RCLCPP_ERROR_STREAM(rclcpp::get_logger("arbitrator"),
+                    "Cannot make service request for service '" << topic << "': " << exception.what());
+                continue;
+            }
 
             auto future_status = resp.wait_for(std::chrono::milliseconds(500));
-            
+
             if (future_status == std::future_status::ready) {
                 responses.emplace(topic, resp.get());
             }
