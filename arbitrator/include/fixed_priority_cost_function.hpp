@@ -25,12 +25,12 @@ namespace arbitrator
 {
     /**
      * \brief Implementation of the CostFunction interface
-     * 
+     *
      * Implements costs by associating a fixed priority number with each plugin
      * (as specified by configuration). This priority is then normalized across
-     * all plugins, and then an inverse is computed to arrive at the cost per 
+     * all plugins, and then an inverse is computed to arrive at the cost per
      * unit distance for that plugins.
-     * 
+     *
      * e.g. Three plugins with priority 20, 10, and 5 will respectively have
      * costs 0, 0.5, 0.75 per unit distance.
      */
@@ -59,6 +59,6 @@ namespace arbitrator
         private:
             std::map<std::string, double> plugin_costs_;
     };
-};
+}
 
 #endif //__ARBITRATOR_INCLUDE_FIXED_PRIORITY_COST_FUNCTION_HPP__

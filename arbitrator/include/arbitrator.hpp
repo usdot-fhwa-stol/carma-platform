@@ -32,11 +32,11 @@
 #include "planning_strategy.hpp"
 #include "capabilities_interface.hpp"
 
-namespace arbitrator 
+namespace arbitrator
 {
     /**
      * Primary work class for the Arbitrator package
-     * 
+     *
      * Governs the interactions of plugins during the maneuver planning phase of
      * the CARMA planning process. Utilizes a generic planning interface to allow
      * for reconfiguration with other paradigms in the future.
@@ -53,27 +53,27 @@ namespace arbitrator
              * \param min_plan_duration The minimum acceptable length of a plan
              * \param planning_frequency The frequency at which to generate high-level plans when engaged
              * \param wm pointer to an inialized world model.
-             */ 
+             */
             Arbitrator(std::shared_ptr<carma_ros2_utils::CarmaLifecycleNode> nh,
-                std::shared_ptr<ArbitratorStateMachine> sm, 
-                std::shared_ptr<CapabilitiesInterface> ci, 
+                std::shared_ptr<ArbitratorStateMachine> sm,
+                std::shared_ptr<CapabilitiesInterface> ci,
                 std::shared_ptr<PlanningStrategy> planning_strategy,
                 rclcpp::Duration min_plan_duration,
                 double planning_period,
-                carma_wm::WorldModelConstPtr wm): 
+                carma_wm::WorldModelConstPtr wm):
                 sm_(sm),
                 nh_(nh),
+                min_plan_duration_(min_plan_duration),
+                time_between_plans_(planning_period),
                 capabilities_interface_(ci),
                 planning_strategy_(planning_strategy),
                 initialized_(false),
-                min_plan_duration_(min_plan_duration),
-                time_between_plans_(planning_period),
                 wm_(wm),
                 tf2_buffer_(nh_->get_clock()) {};
-            
+
             /**
              * \brief Begin the operation of the arbitrator.
-             * 
+             *
              * Loops internally via rclcpp::Duration sleeps and spins
              */
             void run();
@@ -93,7 +93,7 @@ namespace arbitrator
              * \brief Initialize transform Lookup from front bumper to map
              */
             void initializeBumperTransformLookup();
-            
+
         protected:
             /**
              * \brief Function to be executed during the initial state of the Arbitrator
@@ -129,9 +129,9 @@ namespace arbitrator
             void guidance_state_cb(carma_planning_msgs::msg::GuidanceState::UniquePtr msg);
 
         private:
-            
+
             VehicleState vehicle_state_; // The current state of the vehicle for populating planning requests
-            
+
             std::shared_ptr<ArbitratorStateMachine> sm_;
             carma_ros2_utils::PubPtr<carma_planning_msgs::msg::ManeuverPlan> final_plan_pub_;
             carma_ros2_utils::SubPtr<carma_planning_msgs::msg::GuidanceState> guidance_state_sub_;
@@ -152,6 +152,6 @@ namespace arbitrator
             tf2::Stamped<tf2::Transform> bumper_transform_;
             bool planning_in_progress_ = false;
     };
-};
+}
 
 #endif

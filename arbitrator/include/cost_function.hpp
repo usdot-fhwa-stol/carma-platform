@@ -48,6 +48,6 @@ namespace arbitrator
              */
             virtual ~CostFunction(){};
     };
-};
+}
 
 #endif //__ARBITRATOR_INCLUDE_COST_FUNCTION_HPP__
