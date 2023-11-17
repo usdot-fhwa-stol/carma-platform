@@ -340,18 +340,13 @@ carma__stop() {
 }
 
 carma__swarm() {
-    if ! docker container inspect carma-config > /dev/null 2>&1; then
-        echo "No existing CARMA configuration found, nothing to report. Please set a config."
-        echo "Done."
-        exit 1
-    fi
 
     if [ "$1" = "deploy" ]; then
 
         echo "Checking Docker Swarm status..."
         if [ "$(docker info | grep Swarm | sed 's/Swarm: //g')" == " inactive" ]; then
             echo "Initalizing Docker Swarm..."
-            docker swarm init --advertise-addr 192.168.88.100
+            docker swarm init --advertise-addr 192.168.88.100 # consider making a variable
         else
             echo "Docker Swarm active"
         fi
@@ -360,7 +355,7 @@ carma__swarm() {
         if [ "$(docker volume ls | grep carma-config-data | sed 's/local     //g')" ]; then
             echo "Found carma-config-data volume"
         else
-            echo "Missing carma-config-data volume, add with carma swarm update-config <image tag>"
+            echo "Missing carma-config-data volume, add with \"carma swarm update-config <image tag>\""
             exit 1
         fi
 
@@ -370,7 +365,7 @@ carma__swarm() {
         docker stack deploy --compose-file - carma-background
 
 
-        # Run part of the stack on a single host. Mostly for debugging purposes outside of the dual PC setup
+        # Run part of the stack on a single host. Mostly for debugging purposes off of the dual PC setup
         if [ "$2" = "single" ]; then 
             echo "Deploying CARMA to single host Swarm stack..."
 
@@ -432,7 +427,26 @@ carma__swarm() {
         fi
 
 
-    # Attaches the swarm's STDOUT logs to the current terminal
+    elif [ "$1" = "edit-config" ]; then
+        echo "Opening carma-config-data volume shell with read/write privileges..."
+
+        if [ "$(docker volume ls | grep carma-config-data | sed 's/local     //g')" ]; then
+            echo "Found carma-config-data volume"
+        else
+            echo "Missing carma-config-data volume, add with \"carma swarm update-config <image tag>\""
+            exit 1
+        fi
+
+        local carma_base=$(__get_image_from_config carma-base:)
+        if [[ -z $carma_base ]]; then
+            __pull_newest_carma_base
+            carma_base=$(__get_most_recent_carma_base)
+        fi
+
+        docker run -it --rm -v carma-config-data:/opt/carma/vehicle/config $carma_base bash
+
+
+    # Attaches each carma service's STDOUT logs to the current terminal
     elif [ "$1" = "attach" ]; then
         echo "Attaching STDOUT logs to terminal..."
 
@@ -440,8 +454,8 @@ carma__swarm() {
 
         # this seems to loop forever and cannot be escaped with ctrl+C
         # performance will likely be poor due to combined log streams
-        for item in $SWARM_SERVICES; do
-            docker service logs --follow --details --tail=10 "$item" &
+        for TASK in $SWARM_SERVICES; do
+            docker service logs --follow --details --tail=10 "$TASK" &
         done
 
         sleep infinity
@@ -449,6 +463,7 @@ carma__swarm() {
 
     # Takes n image tags that are saved locally and pushes them to the registry
     elif [ "$1" = "set-image" ]; then
+        shift
         echo "Installing Docker images..."
 
         if [ "$(docker volume ls | grep carma-registry | sed 's/local     //g')" ]; then
@@ -458,18 +473,15 @@ carma__swarm() {
             docker volume create carma-registry
         fi
 
-        # this may need to deployed in the background compose file instead of here
         docker service create --constraint 'node.role==manager' -d --volume="carma-registry:/var/lib/registry" -p 5000:5000 --name carma-registry-service registry:2
-
+        
         IMAGE_NAMES="$*"
 
-        for SOURCE_IMAGE_NAME in IMAGE_NAMES
+        for SOURCE_IMAGE_NAME in $IMAGE_NAMES
         do
-
+        
         echo "Pushing $SOURCE_IMAGE_NAME to localhost:5000"
 
-        # Should set pull or should it be an option where the normal behavior pushes a local image to the registry
-        # docker pull $SOURCE_IMAGE_NAME
         docker tag "$SOURCE_IMAGE_NAME" "localhost:5000/$SOURCE_IMAGE_NAME"
         docker push "localhost:5000/$SOURCE_IMAGE_NAME"
         docker rmi "localhost:5000/$SOURCE_IMAGE_NAME"
@@ -483,7 +495,6 @@ carma__swarm() {
         if [ "$(docker node ls | grep worker )" ]; then
             ssh dev@192.168.88.101 "docker swarm leave"
         fi
-
         docker swarm leave --force
 
 
@@ -743,8 +754,12 @@ Please enter one of the following commands:
           <tag/image> to update the Docker named volume
           "carma-config-data" which can be found at
           /var/lib/docker/volumes/carma-config-data/_data
+    edit-config
+        - Requires sudo privilege. Opens a bash shell
+          in a carma-base image with carma-config-data
+          mounted so that files can be modified
     set-image <tag/image>
-        - Pushes the image defined by <tag/image> to the
+        - Pushes the images defined by <tag/image> to the
           the registry service and associated volume
     attach
         - View STDOUT from all running CARMA processes
