@@ -405,11 +405,30 @@ carma__swarm() {
     elif [ "$1" = "update-config" ]; then
         echo "Updating carma-config-data volume..."
 
-        if [ "$(docker images | grep $2 )" ]; then
-            echo "Found image, applying to carma-config-volume"
-            docker run --rm --name carma-config-data -v carma-config-data:/opt/carma/vehicle/config -d usdotfhwastoldev/carma-config:$2
+        if [ "$2" = "-d" ]; then
+            local USERNAME=usdotfhwastoldev
+            local TAG=$3
+        elif [ "$2" = "-c" ]; then
+            local USERNAME=usdotfhwastolcandidate
+            local TAG=$3
         else
-            echo "Could not find $2 in local images"
+            local USERNAME=usdotfhwastol
+            local TAG=$2
+        fi
+
+        if [[ -z $2 ]]; then
+            echo "Please specify a tag string to update carma-config-data volume."
+            echo "Done."
+            exit 1
+        fi
+
+        local IMAGE_NAME="$USERNAME/carma-config:$TAG"
+
+        if [ "$(docker images | grep $USERNAME/carma-config | grep $TAG )" ]; then
+            echo "Found image, applying to carma-config-volume"
+            docker run --rm --name carma-config-data -v carma-config-data:/opt/carma/vehicle/config -d $USERNAME/carma-config:$TAG
+        else
+            echo "Could not find $USERNAME/carma-config:$TAG in local images"
         fi
 
 
