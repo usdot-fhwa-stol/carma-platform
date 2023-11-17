@@ -42,9 +42,9 @@ namespace arbitrator
                 RCLCPP_DEBUG_STREAM(rclcpp::get_logger("arbitrator"), "found client: " << topic);
 
                 std::shared_future<std::shared_ptr<MSrvRes>> resp = sc->async_send_request(msg);
-            } catch(const rclcpp::exceptions::RCLErrorBase& exception) {
+            } catch(const rclcpp::exceptions::RCLError& error) {
                 RCLCPP_ERROR_STREAM(rclcpp::get_logger("arbitrator"),
-                    "Cannot make service request for service '" << topic << "': " << exception.what());
+                    "Cannot make service request for service '" << topic << "': " << error.what());
                 continue;
             }
 
