@@ -30,27 +30,25 @@ namespace arbitrator
     std::map<std::string, std::shared_ptr<MSrvRes>>
         CapabilitiesInterface::multiplex_service_call_for_capability(const std::string& query_string, std::shared_ptr<MSrvReq> msg)
     {
-        std::vector<std::string> topics = get_topics_for_capability(query_string);
-
         std::map<std::string, std::shared_ptr<MSrvRes>> responses;
 
-        for (auto i = topics.begin(); i != topics.end(); i++)
+        for (const auto & topic : get_topics_for_capability(query_string))
         {
-            auto topic = *i;
             try {
-                auto sc = nh_->create_client<carma_planning_msgs::srv::PlanManeuvers>(topic);
+                using std::literals::chrono_literals::operator""ms;
+
+                const auto client = nh_->create_client<carma_planning_msgs::srv::PlanManeuvers>(topic);
                 RCLCPP_DEBUG_STREAM(rclcpp::get_logger("arbitrator"), "found client: " << topic);
 
-                std::shared_future<std::shared_ptr<MSrvRes>> resp = sc->async_send_request(msg);
+                const auto response = client->async_send_request(msg);
 
-                auto future_status = resp.wait_for(std::chrono::milliseconds(500));
-
-                if (future_status == std::future_status::ready) {
-                    responses.emplace(topic, resp.get());
-                }
-                else
-                {
-                    RCLCPP_WARN_STREAM(rclcpp::get_logger("arbitrator"), "failed...: " << topic);
+                switch (const auto status{response.wait_for(500ms)}; status) {
+                    case std::future_status::ready:
+                        responses.emplace(topic, response.get());
+                        break;
+                    case std::future_status::deferred:
+                    case std::future_status::timeout:
+                        RCLCPP_WARN_STREAM(rclcpp::get_logger("arbitrator"), "failed...: " << topic);
                 }
             } catch(const rclcpp::exceptions::RCLError& error) {
                 RCLCPP_ERROR_STREAM(rclcpp::get_logger("arbitrator"),
@@ -58,8 +56,9 @@ namespace arbitrator
                 continue;
             }
         }
+
         return responses;
     }
-};
+}
 
 #endif
