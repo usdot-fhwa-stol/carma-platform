@@ -42,20 +42,20 @@ namespace arbitrator
                 RCLCPP_DEBUG_STREAM(rclcpp::get_logger("arbitrator"), "found client: " << topic);
 
                 std::shared_future<std::shared_ptr<MSrvRes>> resp = sc->async_send_request(msg);
+
+                auto future_status = resp.wait_for(std::chrono::milliseconds(500));
+
+                if (future_status == std::future_status::ready) {
+                    responses.emplace(topic, resp.get());
+                }
+                else
+                {
+                    RCLCPP_WARN_STREAM(rclcpp::get_logger("arbitrator"), "failed...: " << topic);
+                }
             } catch(const rclcpp::exceptions::RCLError& error) {
                 RCLCPP_ERROR_STREAM(rclcpp::get_logger("arbitrator"),
                     "Cannot make service request for service '" << topic << "': " << error.what());
                 continue;
-            }
-
-            auto future_status = resp.wait_for(std::chrono::milliseconds(500));
-
-            if (future_status == std::future_status::ready) {
-                responses.emplace(topic, resp.get());
-            }
-            else
-            {
-                RCLCPP_WARN_STREAM(rclcpp::get_logger("arbitrator"), "failed...: " << topic);
             }
         }
         return responses;
