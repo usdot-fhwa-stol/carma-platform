@@ -369,7 +369,7 @@ carma__swarm() {
         if [ "$2" = "single" ]; then 
             echo "Deploying CARMA to single host Swarm stack..."
 
-            docker run --rm -a -v carma-config-data:/opt/carma/vehicle/config --entrypoint sh busybox:latest -c \
+            docker run --rm -v carma-config-data:/opt/carma/vehicle/config --entrypoint sh busybox:latest -c \
             'cat /opt/carma/vehicle/config/docker-compose-pc1.yml' | \
             docker stack deploy --compose-file - carma-pc1
 
@@ -473,7 +473,7 @@ carma__swarm() {
             docker volume create carma-registry
         fi
 
-        docker service create --constraint 'node.role==manager' -d --volume="carma-registry:/var/lib/registry" -p 5000:5000 --name carma-registry-service registry:2
+        docker service create --constraint 'node.role==manager' -d --volume "carma-registry:/var/lib/registry" -p 5000:5000 --name carma-registry-service registry:2
         
         IMAGE_NAMES="$*"
 
@@ -739,7 +739,8 @@ carma__swarm-help() {
 -------------------------------------------------------------------------------
 
 Please enter one of the following commands:
-    deploy:
+  swarm:
+    deploy
         [empty]
             - Will always deploy carma-web-ui as a background service on PC1 
         single
@@ -750,6 +751,12 @@ Please enter one of the following commands:
               PC2 services from docker-compose-pc2.yml to the PC1
               manger node and PC2 worker node
     update-config <tag/image>
+        - [empty]
+            - Defaults to a usdotfhwastol image
+        - d 
+            - Defines a usdotfhwastoldev image
+        - c
+            - Defines a usdotfhwastolcandidate image
         - Uses the local carma-config image defined in
           <tag/image> to update the Docker named volume
           "carma-config-data" which can be found at
