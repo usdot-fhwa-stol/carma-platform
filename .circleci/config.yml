@@ -62,14 +62,14 @@ jobs:
           command: |
             source ${INIT_ENV}
             export ROS_PARALLEL_JOBS='-j4 -l4' # Try to reduce memory consumption on build
-            sed -i 's/colcon build /colcon build --packages-skip novatel_oem7_msgs novatel_oem7_driver /' /home/carma/.ci-image/engineering_tools/code_coverage/make_with_coverage.bash
+            sed -i 's/colcon build /colcon build --packages-skip novatel_oem7_msgs tracetools tracetools_test /' /home/carma/.ci-image/engineering_tools/code_coverage/make_with_coverage.bash
             make_with_coverage.bash -m -e /opt/carma/ -o ./coverage_reports/gcov
       - run:
           name: Run C++ Tests ROS 1
           command: |
             source ${INIT_ENV}
             export ROS_PARALLEL_JOBS='-j4 -l4' # Try to reduce memory consumption on build
-            sed -i 's/colcon test /colcon test --packages-skip novatel_oem7_msgs novatel_oem7_driver /' /home/carma/.ci-image/engineering_tools/code_coverage/make_with_coverage.bash
+            sed -i 's/colcon test /colcon test --packages-skip novatel_oem7_msgs tracetools tracetools_test /' /home/carma/.ci-image/engineering_tools/code_coverage/make_with_coverage.bash
             make_with_coverage.bash -t -e /opt/carma/ -o ./coverage_reports/gcov
       - run:
           name: Backup ROS1 compile_commands.json
