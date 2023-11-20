@@ -25,7 +25,7 @@
 #include <string>
 
 
-namespace arbitrator 
+namespace arbitrator
 {
     // Stream operator for map data structure
     std::ostream &operator<<(std::ostream &output, const std::map<std::string, double> &map)
@@ -37,25 +37,25 @@ namespace arbitrator
         }
         output << "}";
         return output;
-    };
+    }
 
     /**
      * \brief Config struct
      */
     struct Config
     {
-        double min_plan_duration = 6.0; // The minimum amount of time in seconds that an arbitrated plan must cover for the 
+        double min_plan_duration = 6.0; // The minimum amount of time in seconds that an arbitrated plan must cover for the
                                         // system to proceed with execution
-        double target_plan_duration = 15.0; // The nominal amount of time in seconds that an arbitrated plan should cover for the 
+        double target_plan_duration = 15.0; // The nominal amount of time in seconds that an arbitrated plan should cover for the
                                         // system to operate at best performance
         double planning_frequency = 1.0; // The planning frequency (hz) for generation for arbitrated plans
-        int beam_width = 3; // The width of the search beam to use for arbitrator planning, 1 = 
+        int beam_width = 3; // The width of the search beam to use for arbitrator planning, 1 =
                                   // greedy search, as it approaches infinity the search approaches breadth-first search
-        bool use_fixed_costs = false; // Use fixed priority cost function over using the cost system for 
+        bool use_fixed_costs = false; // Use fixed priority cost function over using the cost system for
                                      // evaluating maneuver plans
-        std::map<std::string, double> plugin_priorities = {}; // The priorities associated with each plugin during the planning 
+        std::map<std::string, double> plugin_priorities = {}; // The priorities associated with each plugin during the planning
                                                                // process, values will be normalized at runtime and inverted into costs
-       
+
         // Stream operator for this config
         friend std::ostream &operator<<(std::ostream &output, const Config &c)
         {

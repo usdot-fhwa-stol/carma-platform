@@ -29,8 +29,8 @@ namespace arbitrator
         if (!planning_in_progress_ && nh_->get_current_state().id() != lifecycle_msgs::msg::State::TRANSITION_STATE_SHUTTINGDOWN)
         {
             planning_in_progress_ = true;
-            
-            switch (sm_->get_state()) 
+
+            switch (sm_->get_state())
             {
                 case INITIAL:
                     RCLCPP_INFO_STREAM(nh_->get_logger(), "Arbitrator spinning in INITIAL state.");
@@ -59,12 +59,12 @@ namespace arbitrator
         }
         else
         {
-            return;    
+            return;
         }
         planning_in_progress_ = false;
     }
-    
-    void Arbitrator::guidance_state_cb(carma_planning_msgs::msg::GuidanceState::UniquePtr msg) 
+
+    void Arbitrator::guidance_state_cb(carma_planning_msgs::msg::GuidanceState::UniquePtr msg)
     {
         switch (msg->state)
         {
@@ -105,7 +105,7 @@ namespace arbitrator
     void Arbitrator::initial_state()
     {
         if(!initialized_)
-        {   
+        {
             RCLCPP_INFO_STREAM(nh_->get_logger(), "Arbitrator initializing on first initial state spin...");
             final_plan_pub_ = nh_->create_publisher<carma_planning_msgs::msg::ManeuverPlan>("final_maneuver_plan", 5);
             guidance_state_sub_ = nh_->create_subscription<carma_planning_msgs::msg::GuidanceState>("guidance_state", 5, std::bind(&Arbitrator::guidance_state_cb, this, std::placeholders::_1));
@@ -121,20 +121,20 @@ namespace arbitrator
     {
         RCLCPP_INFO_STREAM(nh_->get_logger(), "Arbitrator beginning planning process!");
         rclcpp::Time planning_process_start = nh_->get_clock()->now();
-        
+
         carma_planning_msgs::msg::ManeuverPlan plan = planning_strategy_->generate_plan(vehicle_state_);
 
-        if (!plan.maneuvers.empty()) 
+        if (!plan.maneuvers.empty())
         {
             rclcpp::Time plan_end_time = arbitrator_utils::get_plan_end_time(plan);
             rclcpp::Time plan_start_time = arbitrator_utils::get_plan_start_time(plan);
             rclcpp::Duration plan_duration = plan_end_time - plan_start_time;
 
-            if (plan_duration < min_plan_duration_) 
+            if (plan_duration < min_plan_duration_)
             {
                 RCLCPP_WARN_STREAM(nh_->get_logger(), "Arbitrator is unable to generate a plan with minimum plan duration requirement!");
-            } 
-            else 
+            }
+            else
             {
                 RCLCPP_INFO_STREAM(nh_->get_logger(), "Arbitrator is publishing plan " << std::string(plan.maneuver_plan_id) << " of duration " << plan_duration.seconds() << " as current maneuver plan");
             }
@@ -203,14 +203,14 @@ namespace arbitrator
 
     }
 
-    void Arbitrator::twist_cb(geometry_msgs::msg::TwistStamped::UniquePtr msg) 
+    void Arbitrator::twist_cb(geometry_msgs::msg::TwistStamped::UniquePtr msg)
     {
         vehicle_state_.velocity = msg->twist.linear.x;
     }
 
-    void Arbitrator::initializeBumperTransformLookup() 
+    void Arbitrator::initializeBumperTransformLookup()
     {
         tf2_listener_.reset(new tf2_ros::TransformListener(tf2_buffer_));
         tf2_buffer_.setUsingDedicatedThread(true);
     }
-};
+}

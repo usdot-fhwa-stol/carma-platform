@@ -25,11 +25,11 @@ namespace arbitrator
 {
     /**
      * \brief Implementation of the NeighborGenerator interface using plugins
-     * 
+     *
      * Queries plugins via the CapabilitiesInterface to contribute additional
      * maneuvers as the potential child/neighbor nodes of a plan in progress.
-     * 
-     * \tparam T The type of CapabilitiesInterface to use. Templated to enable 
+     *
+     * \tparam T The type of CapabilitiesInterface to use. Templated to enable
      *      testing
      */
     template <class T>
@@ -44,7 +44,7 @@ namespace arbitrator
                 ci_(ci) {};
 
             /**
-             * Generates a list of neighbor states for the given plan using 
+             * Generates a list of neighbor states for the given plan using
              * the plugins available to the system
              * \param plan The plan that is the current search state
              * \param initial_state The initial state of the vehicle at the start of plan. This will be provided to planners for specific use when plan is empty
@@ -54,7 +54,7 @@ namespace arbitrator
         private:
             std::shared_ptr<T> ci_;
     };
-};
+}
 
 #include "plugin_neighbor_generator.tpp"
 

@@ -32,9 +32,9 @@ namespace arbitrator
         public:
             /**
              * \brief Generate a plausible maneuver plan
-             * 
+             *
              * \param start_state The starting state of the vehicle to plan for
-             * 
+             *
              * \return A maneuver plan from the vehicle's current state
              */
             virtual carma_planning_msgs::msg::ManeuverPlan generate_plan(const VehicleState& start_state) = 0;
@@ -44,6 +44,6 @@ namespace arbitrator
              */
             virtual ~PlanningStrategy(){};
     };
-};
+}
 
 #endif //__ARBITRATOR_INCLUDE_PLANNING_STRATEGY_HPP__
