@@ -23,6 +23,7 @@ from carma_ros2_utils.launch.get_log_level import GetLogLevel
 from carma_ros2_utils.launch.get_current_namespace import GetCurrentNamespace
 from launch.substitutions import LaunchConfiguration
 from launch.actions import DeclareLaunchArgument
+from pathlib import PurePath
 import os
 
 
@@ -90,7 +91,8 @@ def generate_launch_description():
     carma_wm_ctrl_param_file = os.path.join(
         get_package_share_directory('carma_wm_ctrl'), 'config/parameters.yaml')
 
-
+    cp_multiple_object_tracker_node_file = str(PurePath(get_package_share_directory("carma_cooperative_perception"), "config/cp_multiple_object_tracker_node.yaml"))
+    cp_host_vehicle_filter_node_file = str(PurePath(get_package_share_directory("carma_cooperative_perception"), "config/cp_host_vehicle_filter_node.yaml"))
 
     # lidar_perception_container contains all nodes for lidar based object perception
     # a failure in any one node in the chain would invalidate the rest of it, so they can all be 
@@ -284,7 +286,8 @@ def generate_launch_description():
                     ("incoming_mobility_path", [ EnvironmentVariable('CARMA_MSG_NS', default_value=''), "/incoming_mobility_path" ] ),
                     ("incoming_psm", [ EnvironmentVariable('CARMA_MSG_NS', default_value=''), "/incoming_psm" ] ),
                     ("incoming_bsm", [ EnvironmentVariable('CARMA_MSG_NS', default_value=''), "/incoming_bsm" ] ),
-                    ("georeference", [ EnvironmentVariable('CARMA_LOCZ_NS', default_value=''), "/map_param_loader/georeference" ] )
+                    ("georeference", [ EnvironmentVariable('CARMA_LOCZ_NS', default_value=''), "/map_param_loader/georeference" ] ),
+                    ("external_objects", "fused_external_objects")
                 ],
                 parameters=[ 
                     motion_computation_param_file,
@@ -399,6 +402,114 @@ def generate_launch_description():
             )
         ]
     )
+
+    # Cooperative Perception Stack
+    carma_cooperative_perception_container = ComposableNodeContainer(
+        package='carma_ros2_utils', # rclcpp_components
+        name='carma_cooperative_perception_container',
+        executable='carma_component_container_mt',
+        namespace= GetCurrentNamespace(),
+        composable_node_descriptions=[
+            ComposableNode(
+                package='carma_cooperative_perception',
+                plugin='carma_cooperative_perception::ExternalObjectListToDetectionListNode',
+                name='cp_external_object_list_to_detection_list_node',
+                extra_arguments=[
+                    {'use_intra_process_comms': True}, 
+                    {'--log-level' : GetLogLevel('cp_external_object_list_to_detection_list_node', env_log_levels) },
+                ],
+                remappings=[
+                    ("input/georeference", "georeference"),
+                    ("output/detections", "full_detection_list"),
+                    ("input/external_objects", "external_objects"),
+                ],
+                parameters=[ 
+                ]
+            ),
+            ComposableNode(
+                package='carma_cooperative_perception',
+                plugin='carma_cooperative_perception::ExternalObjectListToSdsmNode',
+                name='cp_external_object_list_to_sdsm_node',
+                extra_arguments=[
+                    {'use_intra_process_comms': True}, 
+                    {'--log-level' : GetLogLevel('cp_external_object_list_to_sdsm_node', env_log_levels) },
+                ],
+                remappings=[
+                    ("input/georeference", "georeference"),
+                    ("output/sdsms", [ EnvironmentVariable('CARMA_MSG_NS', default_value=''), "/outgoing_sdsm" ] ),
+                    ("input/pose_stamped", [ EnvironmentVariable('CARMA_LOCZ_NS', default_value=''), "/current_pose" ] ),
+                    ("input/external_objects", "external_objects"),
+                ],
+                parameters=[ 
+                ]
+            ),
+            ComposableNode(
+                package='carma_cooperative_perception',
+                plugin='carma_cooperative_perception::HostVehicleFilterNode',
+                name='cp_host_vehicle_filter_node',
+                extra_arguments=[
+                    {'use_intra_process_comms': True}, 
+                    {'--log-level' : GetLogLevel('cp_host_vehicle_filter_node', env_log_levels) },
+                ],
+                remappings=[
+                    ("input/host_vehicle_pose", [ EnvironmentVariable('CARMA_LOCZ_NS', default_value=''), "/current_pose" ] ),
+                    ("input/detection_list", "full_detection_list"),
+                    ("output/detection_list", "filtered_detection_list")
+                ],
+                parameters=[ 
+                    cp_host_vehicle_filter_node_file
+                ]
+            ),
+            ComposableNode(
+                package='carma_cooperative_perception',
+                plugin='carma_cooperative_perception::SdsmToDetectionListNode',
+                name='cp_sdsm_to_detection_list_node',
+                extra_arguments=[
+                    {'use_intra_process_comms': True}, 
+                    {'--log-level' : GetLogLevel('cp_sdsm_to_detection_list_node', env_log_levels) },
+                ],
+                remappings=[
+                    ("input/sdsm", [ EnvironmentVariable('CARMA_MSG_NS', default_value=''), "/incoming_sdsm" ] ),
+                    ("output/detections", "full_detection_list"),
+                ],
+                parameters=[ 
+                ]
+            ),
+            ComposableNode(
+                package='carma_cooperative_perception',
+                plugin='carma_cooperative_perception::TrackListToExternalObjectListNode',
+                name='cp_track_list_to_external_object_list_node',
+                extra_arguments=[
+                    {'use_intra_process_comms': True}, 
+                    {'--log-level' : GetLogLevel('cp_track_list_to_external_object_list_node', env_log_levels) },
+                ],
+                remappings=[
+                    ("input/track_list", "cooperative_perception_track_list"),
+                    ("output/external_object_list", "fused_external_objects"),
+                ],
+                parameters=[ 
+                ]
+            ),
+            ComposableNode(
+                package='carma_cooperative_perception',
+                plugin='carma_cooperative_perception::MultipleObjectTrackerNode',
+                name='cp_multiple_object_tracker_node',
+                extra_arguments=[
+                    {'use_intra_process_comms': True}, 
+                    {'--log-level' : GetLogLevel('cp_multiple_object_tracker_node', env_log_levels) },
+                ],
+                remappings=[
+                    ("output/track_list", "cooperative_perception_track_list"),
+                    ("input/detection_list", "filtered_detection_list"),
+                ],
+                parameters=[ 
+                    cp_multiple_object_tracker_node_file
+                ]
+            ),
+
+        ]
+    )
+
     # subsystem_controller which orchestrates the lifecycle of this subsystem's components
     subsystem_controller = Node(
         package='subsystem_controllers',
@@ -418,5 +529,6 @@ def generate_launch_description():
         carma_external_objects_container,
         lanelet2_map_loader_container,
         lanelet2_map_visualization_container,
+        carma_cooperative_perception_container,
         subsystem_controller
     ])

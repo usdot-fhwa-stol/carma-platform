@@ -16,6 +16,7 @@
 
 #include <carma_cooperative_perception_interfaces/msg/detection.hpp>
 #include <carma_ros2_utils/carma_lifecycle_node.hpp>
+#include <rclcpp_components/register_node_macro.hpp>
 
 #include <vector>
 
@@ -60,7 +61,7 @@ auto HostVehicleFilterNode::handle_on_configure(
 
   RCLCPP_INFO(get_logger(), "Lifecycle transition: successfully configured");
 
-  declare_parameter("distance_threshold", 0.0);
+  declare_parameter("distance_threshold_meters", 0.0);
 
   on_set_parameters_callback_ =
     add_on_set_parameters_callback([this](const std::vector<rclcpp::Parameter> & parameters) {
@@ -69,13 +70,13 @@ auto HostVehicleFilterNode::handle_on_configure(
       result.reason = "success";
 
       for (const auto & parameter : parameters) {
-        if (parameter.get_name() == "distance_threshold") {
+        if (parameter.get_name() == "distance_threshold_meters") {
           if (this->get_current_state().label() == "active") {
             result.successful = false;
             result.reason = "parameter is read-only while node is in 'Active' state";
 
             RCLCPP_ERROR(
-              get_logger(), "Cannot change parameter 'distance_threshold': " + result.reason);
+              get_logger(), "Cannot change parameter 'distance_threshold_meters': " + result.reason);
 
             break;
           }
@@ -85,11 +86,11 @@ auto HostVehicleFilterNode::handle_on_configure(
             result.reason = "parameter must be nonnegative";
 
             RCLCPP_ERROR(
-              get_logger(), "Cannot change parameter 'distance_threshold': " + result.reason);
+              get_logger(), "Cannot change parameter 'distance_threshold_meters': " + result.reason);
 
             break;
           } else {
-            this->squared_distance_threshold_ = std::pow(value, 2);
+            this->squared_distance_threshold_meters_ = std::pow(value, 2);
           }
         } else {
           result.successful = false;
@@ -166,7 +167,7 @@ auto HostVehicleFilterNode::attempt_filter_and_republish(
 
   const auto is_within_distance = [this](const auto & detection) {
     return euclidean_distance_squared(host_vehicle_pose_.value().pose, detection.pose.pose) <=
-           this->squared_distance_threshold_;
+           this->squared_distance_threshold_meters_;
   };
 
   const auto new_end{
@@ -188,3 +189,11 @@ auto euclidean_distance_squared(
 }
 
 }  // namespace carma_cooperative_perception
+
+
+// This is not our macro, so we should not worry about linting it.
+// clang-tidy added support for ignoring system macros in release 14.0.0 (see the release notes
+// here: https://releases.llvm.org/14.0.0/tools/clang/tools/extra/docs/ReleaseNotes.html), but
+// ament_clang_tidy for ROS 2 Foxy specifically looks for clang-tidy-6.0.
+RCLCPP_COMPONENTS_REGISTER_NODE(                               // NOLINT
+  carma_cooperative_perception::HostVehicleFilterNode)  // NOLINT

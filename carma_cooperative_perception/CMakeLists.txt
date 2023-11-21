@@ -78,8 +78,9 @@ rclcpp_components_register_nodes(carma_cooperative_perception
   "carma_cooperative_perception::ExternalObjectListToDetectionListNode"
   "carma_cooperative_perception::ExternalObjectListToSdsmNode"
   "carma_cooperative_perception::SdsmToDetectionListNode"
-  "carma_cooperative_perception::TrackListToExternalObjectListComponent"
-  "carma_cooperative_perception::MultipleObjectTrackerComponent"
+  "carma_cooperative_perception::TrackListToExternalObjectListNode"
+  "carma_cooperative_perception::MultipleObjectTrackerNode"
+  "carma_cooperative_perception::HostVehicleFilterNode"
 )
 
 ament_auto_add_executable(external_object_list_to_detection_list_node
