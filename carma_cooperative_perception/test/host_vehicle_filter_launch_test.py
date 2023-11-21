@@ -72,7 +72,7 @@ def generate_test_description():
         package="carma_cooperative_perception",
         executable="host_vehicle_filter_node",
         name="node_under_test",
-        parameters=[{"distance_threshold": 2.0}],
+        parameters=[{"distance_threshold_meters": 2.0}],
     )
 
     launch_description = LaunchDescription(

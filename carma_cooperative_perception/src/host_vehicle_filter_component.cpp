@@ -61,7 +61,10 @@ auto HostVehicleFilterNode::handle_on_configure(
 
   RCLCPP_INFO(get_logger(), "Lifecycle transition: successfully configured");
 
-  declare_parameter("distance_threshold", 0.0);
+  double distance_threshold_meters = 0.0;
+  distance_threshold_meters = declare_parameter("distance_threshold_meters", distance_threshold_meters);
+  get_parameter<double>("distance_threshold_meters", distance_threshold_meters);
+  this->squared_distance_threshold_meters_ = std::pow(distance_threshold_meters, 2);
 
   on_set_parameters_callback_ =
     add_on_set_parameters_callback([this](const std::vector<rclcpp::Parameter> & parameters) {
@@ -70,13 +73,13 @@ auto HostVehicleFilterNode::handle_on_configure(
       result.reason = "success";
 
       for (const auto & parameter : parameters) {
-        if (parameter.get_name() == "distance_threshold") {
+        if (parameter.get_name() == "distance_threshold_meters") {
           if (this->get_current_state().label() == "active") {
             result.successful = false;
             result.reason = "parameter is read-only while node is in 'Active' state";
 
             RCLCPP_ERROR(
-              get_logger(), "Cannot change parameter 'distance_threshold': " + result.reason);
+              get_logger(), "Cannot change parameter 'distance_threshold_meters': " + result.reason);
 
             break;
           }
@@ -86,11 +89,11 @@ auto HostVehicleFilterNode::handle_on_configure(
             result.reason = "parameter must be nonnegative";
 
             RCLCPP_ERROR(
-              get_logger(), "Cannot change parameter 'distance_threshold': " + result.reason);
+              get_logger(), "Cannot change parameter 'distance_threshold_meters': " + result.reason);
 
             break;
           } else {
-            this->squared_distance_threshold_ = std::pow(value, 2);
+            this->squared_distance_threshold_meters_ = std::pow(value, 2);
           }
         } else {
           result.successful = false;
@@ -167,7 +170,7 @@ auto HostVehicleFilterNode::attempt_filter_and_republish(
 
   const auto is_within_distance = [this](const auto & detection) {
     return euclidean_distance_squared(host_vehicle_pose_.value().pose, detection.pose.pose) <=
-           this->squared_distance_threshold_;
+           this->squared_distance_threshold_meters_;
   };
 
   const auto new_end{

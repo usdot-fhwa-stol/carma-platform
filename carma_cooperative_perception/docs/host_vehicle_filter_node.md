@@ -24,7 +24,7 @@ republish the (possibly pruned) list.
 
 | Topic                  | Data Type | Default Value | Required | Read Only | Description                                                                       |
 | ---------------------- | --------- | ------------- | -------- | --------- | --------------------------------------------------------------------------------- |
-| `~/distance_threshold` | `float`   | `0.0`         | No       | No        | Distance below which a detection will be considered to represent the host vehicle |
+| `~/distance_threshold_meters` | `float`   | `0.0`         | No       | No        | Distance below which a detection will be considered to represent the host vehicle |
 
 ## Services
 
