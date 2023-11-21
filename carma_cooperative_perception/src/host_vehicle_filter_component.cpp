@@ -61,10 +61,7 @@ auto HostVehicleFilterNode::handle_on_configure(
 
   RCLCPP_INFO(get_logger(), "Lifecycle transition: successfully configured");
 
-  double distance_threshold_meters = 0.0;
-  distance_threshold_meters = declare_parameter("distance_threshold_meters", distance_threshold_meters);
-  get_parameter<double>("distance_threshold_meters", distance_threshold_meters);
-  this->squared_distance_threshold_meters_ = std::pow(distance_threshold_meters, 2);
+  declare_parameter("distance_threshold_meters", 0.0);
 
   on_set_parameters_callback_ =
     add_on_set_parameters_callback([this](const std::vector<rclcpp::Parameter> & parameters) {
