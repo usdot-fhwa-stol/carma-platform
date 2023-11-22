@@ -41,7 +41,7 @@ swarm__install() {
     echo "Downloading $IMAGE_NAME..."
     docker pull $IMAGE_NAME
 
-    docker run --rm --name carma-config-data -v carma-config-data:/opt/carma/vehicle/config -d usdotfhwastol/carma-config:carma-system-4.4.3-47-g40f710d-SNAPSHOT-development
+    docker run --rm --name carma-config-data -v carma-config-data:/opt/carma/vehicle/config -d "$IMAGE_NAME"
 
     local BACKGROUND_COMPOSE="`docker run --rm -v carma-config-data:/opt/carma/vehicle/config --entrypoint sh busybox:latest -c \
     'cat /opt/carma/vehicle/config/docker-compose-background-manager.yml'`"
@@ -54,6 +54,22 @@ swarm__install() {
     echo "$BACKGROUND_COMPOSE" | docker-compose -f - pull
     echo "$MANAGER_COMPOSE" | docker-compose -f - pull
     echo "$WORKER_COMPOSE" | docker-compose -f - pull
+
+
+    local carma_base=$(__get_image_from_config carma-base:)
+    if [[ -z $carma_base ]]; then
+        __pull_newest_carma_base
+        carma_base=$(__get_most_recent_carma_base)
+    fi
+
+    MANAGER_INFO=$(docker run -it --rm -v carma-config-data:/opt/carma/vehicle/config $carma_base /bin/sh -c '{ echo "$MANAGER_USER"; echo "@"; echo "$MANAGER_IP"; } | tr -d "\n"')
+    WORKER_INFO=$(docker run -it --rm -v carma-config-data:/opt/carma/vehicle/config $carma_base /bin/sh -c '{ echo "$WORKER_USER"; echo "@"; echo "$WORKER_IP"; } | tr -d "\n"')
+
+    export MANAGER_IP=${MANAGER_INFO#*@}
+    export MANAGER_USER=${MANAGER_INFO%%@*}
+
+    export WORKER_IP=${WORKER_INFO#*@}
+    export WORKER_USER=${WORKER_INFO%%@*}
 
 }
 
@@ -98,7 +114,7 @@ swarm__start() {
         echo "Deploying CARMA to dual compute Swarm stack..."
 
         local TKN=$(docker swarm join-token -q worker)
-        ssh dev@192.168.88.101 "docker swarm join --token $TKN 192.168.88.100:2377"
+        ssh $WORKER_INFO "docker swarm join --token $TKN $MANAGER_IP:2377"
 
         docker run --rm -v carma-config-data:/opt/carma/vehicle/config --entrypoint sh busybox:latest -c \
         'cat /opt/carma/vehicle/config/docker-compose-manager.yml' | \
@@ -146,6 +162,7 @@ swarm-config__set() {
     else
         echo "Could not find $USERNAME/carma-config:$TAG in local images"
     fi
+
 }
 
 
@@ -166,6 +183,15 @@ swarm-config__edit() {
     fi
 
     docker run -it --rm -v carma-config-data:/opt/carma/vehicle/config $carma_base bash
+
+    MANAGER_INFO=$(docker run -it --rm -v carma-config-data:/opt/carma/vehicle/config $carma_base /bin/sh -c '{ echo "$MANAGER_USER"; echo "@"; echo "$MANAGER_IP"; } | tr -d "\n"')
+    WORKER_INFO=$(docker run -it --rm -v carma-config-data:/opt/carma/vehicle/config $carma_base /bin/sh -c '{ echo "$WORKER_USER"; echo "@"; echo "$WORKER_IP"; } | tr -d "\n"')
+
+    export MANAGER_IP=${MANAGER_INFO#*@}
+    export MANAGER_USER=${MANAGER_INFO%%@*}
+
+    export WORKER_IP=${WORKER_INFO#*@}
+    export WORKER_USER=${WORKER_INFO%%@*}
 }
 
 
@@ -221,17 +247,6 @@ swarm__register() {
         docker volume create carma-registry
     fi
 
-    # if [ "$2" = "-d" ]; then
-    #     local USERNAME=usdotfhwastoldev
-    #     local TAG=$3
-    # elif [ "$2" = "-c" ]; then
-    #     local USERNAME=usdotfhwastolcandidate
-    #     local TAG=$3
-    # else
-    #     local USERNAME=usdotfhwastol
-    #     local TAG=$2
-    # fi
-
     if [[ -z $1 ]]; then
         echo "Please specify a tag string to update carma-config-data volume."
         echo "Done."
@@ -245,6 +260,7 @@ swarm__register() {
     for SOURCE_IMAGE_NAME in $IMAGE_NAMES
     do
     
+    # Consider default-value variables for host/port that can be modified
     echo "Pushing $SOURCE_IMAGE_NAME to localhost:5000"
 
     docker tag "$SOURCE_IMAGE_NAME" "localhost:5000/$SOURCE_IMAGE_NAME"
@@ -259,19 +275,9 @@ swarm__stop() {
     echo "Shutting down swarm..."
 
     if [ "$(docker node ls | grep worker )" ]; then
-        ssh dev@192.168.88.101 "docker swarm leave"
+        ssh $WORKER_INFO "docker swarm leave"
     fi
     docker swarm leave --force
-
-    # if [ "$1" = "all" ]; then
-        # shuts down stacks on worker
-        # leaves worker
-
-        # shuts down stack on manager
-        # leaves manager
-
-    # elif [ ! -z "$1" ]; then
-    #     echo "Unrecognized argument \"swarm $1\""
 }
 
 
