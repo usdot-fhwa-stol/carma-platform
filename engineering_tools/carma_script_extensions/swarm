@@ -16,7 +16,45 @@
 
 
 swarm__install() {
-    echo "Installing Swarm images..."
+    if [ "$1" = "-d" ]; then
+        local USERNAME=usdotfhwastoldev
+        local TAG=$2
+    elif [ "$1" = "-c" ]; then
+        local USERNAME=usdotfhwastolcandidate
+        local TAG=$2
+    else
+        local USERNAME=usdotfhwastol
+        local TAG=$1
+    fi
+
+    if [[ -z $TAG ]]; then
+        echo "Please specify a tag string to update carma-config-data volume."
+        exit 1
+    fi
+
+    if [ ! -z "$(echo $TAG | grep :)" ]; then
+        local IMAGE_NAME="$TAG"
+    else
+        local IMAGE_NAME="$USERNAME/carma-config:$TAG"
+    fi
+
+    echo "Downloading $IMAGE_NAME..."
+    docker pull $IMAGE_NAME
+
+    docker run --rm --name carma-config-data -v carma-config-data:/opt/carma/vehicle/config -d usdotfhwastol/carma-config:carma-system-4.4.3-47-g40f710d-SNAPSHOT-development
+
+    local BACKGROUND_COMPOSE="`docker run --rm -v carma-config-data:/opt/carma/vehicle/config --entrypoint sh busybox:latest -c \
+    'cat /opt/carma/vehicle/config/docker-compose-background-manager.yml'`"
+    local MANAGER_COMPOSE="`docker run --rm -v carma-config-data:/opt/carma/vehicle/config --entrypoint sh busybox:latest -c \
+    'cat /opt/carma/vehicle/config/docker-compose-manager.yml'`"
+    local WORKER_COMPOSE="`docker run --rm -v carma-config-data:/opt/carma/vehicle/config --entrypoint sh busybox:latest -c \
+    'cat /opt/carma/vehicle/config/docker-compose-worker.yml'`"
+
+    echo "Downloading $IMAGE_NAME dependencies..."
+    echo "$BACKGROUND_COMPOSE" | docker-compose -f - pull
+    echo "$MANAGER_COMPOSE" | docker-compose -f - pull
+    echo "$WORKER_COMPOSE" | docker-compose -f - pull
+
 }
 
 
@@ -39,19 +77,19 @@ swarm__start() {
 
     # carma-web-ui will always run as a background process regardless of deploy argument
     docker run --rm -v carma-config-data:/opt/carma/vehicle/config --entrypoint sh busybox:latest -c \
-    'cat /opt/carma/vehicle/config/docker-compose-background-pc1.yml' | \
+    'cat /opt/carma/vehicle/config/docker-compose-background-manager.yml' | \
     docker stack deploy --compose-file - carma-background
 
 
-    # deploy services exclusively from docker-compose-pc1.yml on the manager node
+    # deploy services exclusively from docker-compose-manager.yml on the manager node
     # NOTE: This argument is used for debugging/developing Docker Swarm deployment on
     #       a single host PC. To deploy all services to two connected PCs, use "dual"
     if [ "$1" = "single" ]; then 
         echo "Deploying CARMA to single host Swarm stack..."
 
         docker run --rm -v carma-config-data:/opt/carma/vehicle/config --entrypoint sh busybox:latest -c \
-        'cat /opt/carma/vehicle/config/docker-compose-pc1.yml' | \
-        docker stack deploy --compose-file - carma-pc1
+        'cat /opt/carma/vehicle/config/docker-compose-manager.yml' | \
+        docker stack deploy --compose-file - carma-manager
 
 
     # For use with two connected PCs with known IPs
@@ -63,12 +101,12 @@ swarm__start() {
         ssh dev@192.168.88.101 "docker swarm join --token $TKN 192.168.88.100:2377"
 
         docker run --rm -v carma-config-data:/opt/carma/vehicle/config --entrypoint sh busybox:latest -c \
-        'cat /opt/carma/vehicle/config/docker-compose-pc1.yml' | \
-        docker stack deploy --compose-file - carma-pc1
+        'cat /opt/carma/vehicle/config/docker-compose-manager.yml' | \
+        docker stack deploy --compose-file - carma-manager
 
         docker run --rm -v carma-config-data:/opt/carma/vehicle/config --entrypoint sh busybox:latest -c \
-        'cat /opt/carma/vehicle/config/docker-compose-pc2.yml' | \
-        docker stack deploy --compose-file - carma-pc2
+        'cat /opt/carma/vehicle/config/docker-compose-worker.yml' | \
+        docker stack deploy --compose-file - carma-worker
         
     
     elif [ ! -z "$1" ]; then
@@ -91,13 +129,16 @@ swarm-config__set() {
         local TAG=$1
     fi
 
-    if [[ -z $2 ]]; then
+    if [[ -z $TAG ]]; then
         echo "Please specify a tag string to update carma-config-data volume."
-        echo "Done."
         exit 1
     fi
 
-    local IMAGE_NAME="$USERNAME/carma-config:$TAG"
+    if [ ! -z "$(echo $TAG | grep :)" ]; then
+        local IMAGE_NAME="$TAG"
+    else
+        local IMAGE_NAME="$USERNAME/carma-config:$TAG"
+    fi
 
     if [ "$(docker images | grep $USERNAME/carma-config | grep $TAG )" ]; then
         echo "Found image, applying to carma-config-volume"
@@ -111,7 +152,7 @@ swarm-config__set() {
 swarm-config__edit() {
     echo "Opening carma-config-data volume shell with read/write privileges..."
 
-    if [ "$(docker volume ls | grep carma-config-data | sed 's/local     //g')" ]; then
+    if [ ! -z "$(docker volume ls | grep carma-config-data)" ]; then
         echo "Found carma-config-data volume"
     else
         echo "Missing carma-config-data volume, add with \"carma swarm update-config <image tag>\""
@@ -129,7 +170,29 @@ swarm-config__edit() {
 
 
 swarm-config__status() {
-    echo "Current configuration is loaded from image: <filler>"
+    if [ ! -z "$(docker volume ls | grep carma-config-data)" ]; then
+        echo "Found carma-config-data volume"
+    else
+        echo "Missing carma-config-data volume, add with \"carma swarm update-config <image tag>\""
+        exit 1
+    fi
+
+    if [ -z "$1" ]; then
+        echo ""
+        docker run --rm -v carma-config-data:/opt/carma/vehicle/config --entrypoint sh busybox:latest -c \
+        'cat /opt/carma/vehicle/config/docker-compose-manager.yml <(echo)
+         cat /opt/carma/vehicle/config/docker-compose-worker.yml <(echo)
+         cat /opt/carma/vehicle/config/docker-compose-background-manager.yml <(echo)
+         cat /opt/carma/vehicle/config/carma.launch <(echo) 
+         cat /opt/carma/vehicle/config/carma.config.js <(echo)
+         cat /opt/carma/vehicle/config/carma.urdf <(echo)'
+        
+    else
+        echo " -- $1:"
+        docker run --rm -v carma-config-data:/opt/carma/vehicle/config --entrypoint sh busybox:latest -c \
+        "cat /opt/carma/vehicle/config/$1"
+    fi
+
 }
 
 
