@@ -28,7 +28,7 @@ swarm__install() {
     fi
 
     if [[ -z $TAG ]]; then
-        echo "Please specify a tag string to update carma-config-data volume."
+        echo "Please specify a tag string to update 'carma-config-data' volume."
         exit 1
     fi
 
@@ -78,16 +78,16 @@ swarm__start() {
     echo "Checking Docker Swarm status..."
     if [ "$(docker info | grep Swarm | sed 's/Swarm: //g')" == " inactive" ]; then
         echo "Initalizing Docker Swarm..."
-        docker swarm init --advertise-addr 192.168.88.100 # consider making a variable
+        docker swarm init --advertise-addr $MANAGER_IP
     else
         echo "Docker Swarm active"
     fi
 
     # if carma-config-data volume doesn't exist exit and request update
     if [ ! -z "$(docker volume ls | grep carma-config-data)" ]; then
-        echo "Found carma-config-data volume"
+        echo "Found 'carma-config-data' volume"
     else
-        echo "Missing carma-config-data volume, add with \"carma swarm update-config <image tag>\""
+        echo "Missing 'carma-config-data' volume, add with \"carma swarm update-config <image tag>\""
         exit 1
     fi
 
@@ -132,7 +132,7 @@ swarm__start() {
 
 
 swarm-config__set() {
-    echo "Updating carma-config-data volume..."
+    echo "Updating 'carma-config-data' volume..."
 
     if [ "$1" = "-d" ]; then
         local USERNAME=usdotfhwastoldev
@@ -146,7 +146,7 @@ swarm-config__set() {
     fi
 
     if [[ -z $TAG ]]; then
-        echo "Please specify a tag string to update carma-config-data volume."
+        echo "Please specify a tag string to update 'carma-config-data' volume."
         exit 1
     fi
 
@@ -167,12 +167,12 @@ swarm-config__set() {
 
 
 swarm-config__edit() {
-    echo "Opening carma-config-data volume shell with read/write privileges..."
+    echo "Opening 'carma-config-data' volume shell with read/write privileges..."
 
     if [ ! -z "$(docker volume ls | grep carma-config-data)" ]; then
-        echo "Found carma-config-data volume"
+        echo "Found 'carma-config-data' volume"
     else
-        echo "Missing carma-config-data volume, add with \"carma swarm update-config <image tag>\""
+        echo "Missing 'carma-config-data' volume, add with \"carma swarm update-config <image tag>\""
         exit 1
     fi
 
@@ -197,9 +197,9 @@ swarm-config__edit() {
 
 swarm-config__status() {
     if [ ! -z "$(docker volume ls | grep carma-config-data)" ]; then
-        echo "Found carma-config-data volume"
+        echo "Found 'carma-config-data' volume"
     else
-        echo "Missing carma-config-data volume, add with \"carma swarm update-config <image tag>\""
+        echo "Missing 'carma-config-data' volume, add with \"carma swarm update-config <image tag>\""
         exit 1
     fi
 
@@ -241,14 +241,14 @@ swarm__register() {
     echo "Installing Docker images..."
 
     if [ "$(docker volume ls | grep carma-registry | sed 's/local     //g')" ]; then
-        echo "Found carma-registry volume"
+        echo "Found 'carma-registry' volume"
     else
-        echo "Missing carma-registry volume, adding now..."
+        echo "Missing 'carma-registry' volume, adding now..."
         docker volume create carma-registry
     fi
 
     if [[ -z $1 ]]; then
-        echo "Please specify a tag string to update carma-config-data volume."
+        echo "Please specify a tag string to update 'carma-config-data' volume."
         echo "Done."
         exit 1
     fi
@@ -305,7 +305,7 @@ Please enter one of the following commands:
         set <tag/image>
             - Uses the local carma-config image defined in
               <tag/image> to update the Docker named volume
-              "carma-config-data" which can be found at
+              'carma-config-data' which can be found at
               /var/lib/docker/volumes/carma-config-data/_data
             - [empty]
                 - Defaults to a usdotfhwastol image
@@ -315,11 +315,11 @@ Please enter one of the following commands:
                 - Defines a usdotfhwastolcandidate image
         edit
             - Requires sudo privilege. Opens a bash shell
-              in a carma-base image with carma-config-data
+              in a carma-base image with 'carma-config-data'
               mounted so that files can be modified
         status
             - Reports the active Docker Compose files from
-              carma-config-data to the active terminal
+              'carma-config-data' to the active terminal
     register <images>
         - Pushes the images defined by <images> to the
           registry service. Images must have their full
