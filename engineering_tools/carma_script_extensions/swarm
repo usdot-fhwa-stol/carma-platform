@@ -55,7 +55,11 @@ swarm__install() {
     echo "$MANAGER_COMPOSE" | docker-compose -f - pull
     echo "$WORKER_COMPOSE" | docker-compose -f - pull
 
+}
 
+
+swarm__start() {
+    echo "Checking Docker Swarm status..."
     local carma_base=$(__get_image_from_config carma-base:)
     if [[ -z $carma_base ]]; then
         __pull_newest_carma_base
@@ -65,17 +69,12 @@ swarm__install() {
     MANAGER_INFO=$(docker run -it --rm -v carma-config-data:/opt/carma/vehicle/config $carma_base /bin/sh -c '{ echo "$MANAGER_USER"; echo "@"; echo "$MANAGER_IP"; } | tr -d "\n"')
     WORKER_INFO=$(docker run -it --rm -v carma-config-data:/opt/carma/vehicle/config $carma_base /bin/sh -c '{ echo "$WORKER_USER"; echo "@"; echo "$WORKER_IP"; } | tr -d "\n"')
 
-    export MANAGER_IP=${MANAGER_INFO#*@}
-    export MANAGER_USER=${MANAGER_INFO%%@*}
+    MANAGER_IP=${MANAGER_INFO#*@}
+    MANAGER_USER=${MANAGER_INFO%%@*}
 
-    export WORKER_IP=${WORKER_INFO#*@}
-    export WORKER_USER=${WORKER_INFO%%@*}
+    WORKER_IP=${WORKER_INFO#*@}
+    WORKER_USER=${WORKER_INFO%%@*}
 
-}
-
-
-swarm__start() {
-    echo "Checking Docker Swarm status..."
     if [ "$(docker info | grep Swarm | sed 's/Swarm: //g')" == " inactive" ]; then
         echo "Initalizing Docker Swarm..."
         docker swarm init --advertise-addr $MANAGER_IP
@@ -183,15 +182,6 @@ swarm-config__edit() {
     fi
 
     docker run -it --rm -v carma-config-data:/opt/carma/vehicle/config $carma_base bash
-
-    MANAGER_INFO=$(docker run -it --rm -v carma-config-data:/opt/carma/vehicle/config $carma_base /bin/sh -c '{ echo "$MANAGER_USER"; echo "@"; echo "$MANAGER_IP"; } | tr -d "\n"')
-    WORKER_INFO=$(docker run -it --rm -v carma-config-data:/opt/carma/vehicle/config $carma_base /bin/sh -c '{ echo "$WORKER_USER"; echo "@"; echo "$WORKER_IP"; } | tr -d "\n"')
-
-    export MANAGER_IP=${MANAGER_INFO#*@}
-    export MANAGER_USER=${MANAGER_INFO%%@*}
-
-    export WORKER_IP=${WORKER_INFO#*@}
-    export WORKER_USER=${WORKER_INFO%%@*}
 }
 
 
@@ -283,6 +273,8 @@ swarm__register() {
 
 swarm__stop() {
     echo "Shutting down swarm..."
+
+    WORKER_INFO=$(docker run -it --rm -v carma-config-data:/opt/carma/vehicle/config $carma_base /bin/sh -c '{ echo "$WORKER_USER"; echo "@"; echo "$WORKER_IP"; } | tr -d "\n"')
 
     if [ "$(docker node ls | grep worker )" ]; then
         ssh $WORKER_INFO "docker swarm leave"
