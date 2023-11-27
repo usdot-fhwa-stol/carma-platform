@@ -238,7 +238,7 @@ swarm__attach() {
 
 
 swarm__register() {
-    echo "Installing Docker images..."
+    echo "Adding Docker images to Manager's local registry..."
 
     if [ "$(docker volume ls | grep carma-registry | sed 's/local     //g')" ]; then
         echo "Found 'carma-registry' volume"
@@ -248,26 +248,36 @@ swarm__register() {
     fi
 
     if [[ -z $1 ]]; then
-        echo "Please specify a tag string to update 'carma-config-data' volume."
+        echo "Please specify an image string to add to the registry"
         echo "Done."
         exit 1
     fi
 
-    docker service create --constraint 'node.role==manager' -d --volume "carma-registry:/var/lib/registry" -p 5000:5000 --name carma-registry-service registry:2
+    local REGISTRY_PORT=5000
+    local REGISTRY_HOST="localhost"
+
+    docker service create --constraint 'node.role==manager' -d --volume "carma-registry:/var/lib/registry" -p "$REGISTRY_PORT:$REGISTRY_PORT" --name carma-registry-service registry:2
     
     IMAGE_NAMES="$*"
 
     for SOURCE_IMAGE_NAME in $IMAGE_NAMES
     do
-    
-    # Consider default-value variables for host/port that can be modified
-    echo "Pushing $SOURCE_IMAGE_NAME to localhost:5000"
-
-    docker tag "$SOURCE_IMAGE_NAME" "localhost:5000/$SOURCE_IMAGE_NAME"
-    docker push "localhost:5000/$SOURCE_IMAGE_NAME"
-    docker rmi "localhost:5000/$SOURCE_IMAGE_NAME"
-
+        echo "Pushing $SOURCE_IMAGE_NAME to $REGISTRY_HOST:$REGISTRY_PORT"
+        docker tag "$SOURCE_IMAGE_NAME" "$REGISTRY_HOST:$REGISTRY_PORT/$SOURCE_IMAGE_NAME"
+        docker push "$REGISTRY_HOST:$REGISTRY_PORT/$SOURCE_IMAGE_NAME"
+        docker rmi "$REGISTRY_HOST:$REGISTRY_PORT/$SOURCE_IMAGE_NAME"
     done
+
+    ssh -R "$REGISTRY_PORT:$REGISTRY_HOST:$REGISTRY_PORT" "$WORKER_INFO" sh
+    for TARGET_IMAGE_NAME in $IMAGE_NAMES
+    do
+        echo "Pulling \$TARGET_IMAGE_NAME onto $WORKER_INFO from $REGISTRY_HOST:$REGISTRY_PORT"
+        docker pull "$REGISTRY_HOST:$REGISTRY_PORT/\$TARGET_IMAGE_NAME" \
+          && docker tag "$REGISTRY_HOST:$REGISTRY_PORT/\$TARGET_IMAGE_NAME" "\$TARGET_IMAGE_NAME" \
+          && docker rmi "$REGISTRY_HOST:$REGISTRY_PORT/\$TARGET_IMAGE_NAME"
+    done
+
+    # May need to find the service and remove it after use since Swarm will likely keep it alive
 }
 
 
@@ -289,6 +299,8 @@ swarm__help() {
 
 Please enter one of the following commands:
   swarm
+    install
+        - Installs images locally based on the active Compose files
     start
         [empty]
             - Will always deploy carma-web-ui as a background service
