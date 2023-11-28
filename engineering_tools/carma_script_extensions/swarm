@@ -14,17 +14,16 @@
 #  License for the specific language governing permissions and limitations under
 #  the License.
 
-
 swarm__install() {
     if [ "$1" = "-d" ]; then
-        local USERNAME=usdotfhwastoldev
-        local TAG=$2
+        local -r USERNAME=usdotfhwastoldev
+        local -r TAG=$2
     elif [ "$1" = "-c" ]; then
-        local USERNAME=usdotfhwastolcandidate
-        local TAG=$2
+        local -r USERNAME=usdotfhwastolcandidate
+        local -r TAG=$2
     else
-        local USERNAME=usdotfhwastol
-        local TAG=$1
+        local -r USERNAME=usdotfhwastol
+        local -r TAG=$1
     fi
 
     if [[ -z $TAG ]]; then
@@ -33,9 +32,9 @@ swarm__install() {
     fi
 
     if [ ! -z "$(echo $TAG | grep :)" ]; then
-        local IMAGE_NAME="$TAG"
+        local -r IMAGE_NAME="$TAG"
     else
-        local IMAGE_NAME="$USERNAME/carma-config:$TAG"
+        local -r IMAGE_NAME="$USERNAME/carma-config:$TAG"
     fi
 
     echo "Downloading $IMAGE_NAME..."
@@ -43,11 +42,11 @@ swarm__install() {
 
     docker run --rm --name carma-config-data -v carma-config-data:/opt/carma/vehicle/config -d "$IMAGE_NAME"
 
-    local BACKGROUND_COMPOSE="`docker run --rm -v carma-config-data:/opt/carma/vehicle/config --entrypoint sh busybox:latest -c \
+    local -r BACKGROUND_COMPOSE="`docker run --rm -v carma-config-data:/opt/carma/vehicle/config --entrypoint sh busybox:latest -c \
     'cat /opt/carma/vehicle/config/docker-compose-background-manager.yml'`"
-    local MANAGER_COMPOSE="`docker run --rm -v carma-config-data:/opt/carma/vehicle/config --entrypoint sh busybox:latest -c \
+    local -r MANAGER_COMPOSE="`docker run --rm -v carma-config-data:/opt/carma/vehicle/config --entrypoint sh busybox:latest -c \
     'cat /opt/carma/vehicle/config/docker-compose-manager.yml'`"
-    local WORKER_COMPOSE="`docker run --rm -v carma-config-data:/opt/carma/vehicle/config --entrypoint sh busybox:latest -c \
+    local -r WORKER_COMPOSE="`docker run --rm -v carma-config-data:/opt/carma/vehicle/config --entrypoint sh busybox:latest -c \
     'cat /opt/carma/vehicle/config/docker-compose-worker.yml'`"
 
     echo "Downloading $IMAGE_NAME dependencies..."
@@ -60,6 +59,14 @@ swarm__install() {
 
 swarm__start() {
     echo "Checking Docker Swarm status..."
+    # if carma-config-data volume doesn't exist exit and request update
+    if [ ! -z "$(docker volume ls | grep carma-config-data)" ]; then
+        echo "Found 'carma-config-data' volume"
+    else
+        echo "Missing 'carma-config-data' volume, add with \"carma swarm update-config <image tag>\""
+        exit 1
+    fi
+
     local carma_base=$(__get_image_from_config carma-base:)
     if [[ -z $carma_base ]]; then
         __pull_newest_carma_base
@@ -80,14 +87,6 @@ swarm__start() {
         docker swarm init --advertise-addr $MANAGER_IP
     else
         echo "Docker Swarm active"
-    fi
-
-    # if carma-config-data volume doesn't exist exit and request update
-    if [ ! -z "$(docker volume ls | grep carma-config-data)" ]; then
-        echo "Found 'carma-config-data' volume"
-    else
-        echo "Missing 'carma-config-data' volume, add with \"carma swarm update-config <image tag>\""
-        exit 1
     fi
 
     # carma-web-ui will always run as a background process regardless of deploy argument
@@ -112,7 +111,7 @@ swarm__start() {
     elif [ "$1" = "dual" ]; then
         echo "Deploying CARMA to dual compute Swarm stack..."
 
-        local TKN=$(docker swarm join-token -q worker)
+        local -r TKN=$(docker swarm join-token -q worker)
         ssh $WORKER_INFO "docker swarm join --token $TKN $MANAGER_IP:2377"
 
         docker run --rm -v carma-config-data:/opt/carma/vehicle/config --entrypoint sh busybox:latest -c \
@@ -134,25 +133,25 @@ swarm-config__set() {
     echo "Updating 'carma-config-data' volume..."
 
     if [ "$1" = "-d" ]; then
-        local USERNAME=usdotfhwastoldev
-        local TAG=$2
+        local -r USERNAME=usdotfhwastoldev
+        local -r TAG=$2
     elif [ "$1" = "-c" ]; then
-        local USERNAME=usdotfhwastolcandidate
-        local TAG=$2
+        local -r USERNAME=usdotfhwastolcandidate
+        local -r TAG=$2
     else
-        local USERNAME=usdotfhwastol
-        local TAG=$1
+        local -r USERNAME=usdotfhwastol
+        local -r TAG=$1
     fi
 
     if [[ -z $TAG ]]; then
         echo "Please specify a tag string to update 'carma-config-data' volume."
-        exit 1
+        exit 1      
     fi
 
     if [ ! -z "$(echo $TAG | grep :)" ]; then
-        local IMAGE_NAME="$TAG"
+        local -r IMAGE_NAME="$TAG"
     else
-        local IMAGE_NAME="$USERNAME/carma-config:$TAG"
+        local -r IMAGE_NAME="$USERNAME/carma-config:$TAG"
     fi
 
     if [ "$(docker images | grep $USERNAME/carma-config | grep $TAG )" ]; then
@@ -186,6 +185,8 @@ swarm-config__edit() {
 
 
 swarm-config__status() {
+    # note the image being used
+    # remove old compose files not needed due to split can
     if [ ! -z "$(docker volume ls | grep carma-config-data)" ]; then
         echo "Found 'carma-config-data' volume"
     else
@@ -193,29 +194,30 @@ swarm-config__status() {
         exit 1
     fi
 
+    echo "Current carma-config image: "
+
     if [ -z "$1" ]; then
-        echo ""
+        echo -e " \n -- docker-compose-background-manager.yml\n"
         docker run --rm -v carma-config-data:/opt/carma/vehicle/config --entrypoint sh busybox:latest -c \
-        'cat /opt/carma/vehicle/config/docker-compose-manager.yml <(echo)
-         cat /opt/carma/vehicle/config/docker-compose-worker.yml <(echo)
-         cat /opt/carma/vehicle/config/docker-compose-background-manager.yml <(echo)
-         cat /opt/carma/vehicle/config/carma.launch <(echo) 
-         cat /opt/carma/vehicle/config/carma.config.js <(echo)
-         cat /opt/carma/vehicle/config/carma.urdf <(echo)'
+        'cat /opt/carma/vehicle/config/docker-compose-background-manager.yml    <(echo) <(echo) <(echo " -- docker-compose-manager.yml") <(echo)
+         cat /opt/carma/vehicle/config/docker-compose-manager.yml               <(echo) <(echo) <(echo " -- docker-compose-worker.yml") <(echo)
+         cat /opt/carma/vehicle/config/docker-compose-worker.yml                <(echo) <(echo) <(echo " -- carma.launch") <(echo)
+         cat /opt/carma/vehicle/config/carma.launch                             <(echo) <(echo) <(echo " -- carma.config.js") <(echo)
+         cat /opt/carma/vehicle/config/carma.config.js                          <(echo) <(echo) <(echo " -- carma.urdf") <(echo)
+         cat /opt/carma/vehicle/config/carma.urdf                               <(echo)'
         
     else
         echo " -- $1:"
         docker run --rm -v carma-config-data:/opt/carma/vehicle/config --entrypoint sh busybox:latest -c \
         "cat /opt/carma/vehicle/config/$1"
     fi
-
 }
 
 
 swarm__attach() {
     echo "Attaching STDOUT logs to terminal..."
 
-    SWARM_SERVICES=$(docker service ls --format "{{.Name}}")
+    local SWARM_SERVICES=$(docker service ls --format "{{.Name}}")
 
     # this seems to loop forever and cannot be escaped with ctrl+C
     # performance will likely be poor due to combined log streams
@@ -243,11 +245,19 @@ swarm__register() {
         exit 1
     fi
 
-    local REGISTRY_PORT=5000
-    local REGISTRY_HOST="localhost"
+    local carma_base=$(__get_image_from_config carma-base:)
+    if [[ -z $carma_base ]]; then
+        __pull_newest_carma_base
+        carma_base=$(__get_most_recent_carma_base)
+    fi
 
-    docker service create --constraint 'node.role==manager' -d --volume "carma-registry:/var/lib/registry" -p "$REGISTRY_PORT:$REGISTRY_PORT" --name carma-registry-service registry:2
-    
+    WORKER_INFO=$(docker run -it --rm -v carma-config-data:/opt/carma/vehicle/config $carma_base /bin/sh -c '{ echo "$WORKER_USER"; echo "@"; echo "$WORKER_IP"; } | tr -d "\n"')
+
+    local -r REGISTRY_PORT=5000
+    local -r REGISTRY_HOST="localhost"
+
+    docker run -d --volume carma-registry:/var/lib/registry --publish "$REGISTRY_PORT:$REGISTRY_PORT" --name carma-registry-task registry:2.6
+
     IMAGE_NAMES="$*"
 
     for SOURCE_IMAGE_NAME in $IMAGE_NAMES
@@ -261,23 +271,22 @@ swarm__register() {
     ssh -R "$REGISTRY_PORT:$REGISTRY_HOST:$REGISTRY_PORT" "$WORKER_INFO" sh
     for TARGET_IMAGE_NAME in $IMAGE_NAMES
     do
-        echo "Pulling \$TARGET_IMAGE_NAME onto $WORKER_INFO from $REGISTRY_HOST:$REGISTRY_PORT"
-        docker pull "$REGISTRY_HOST:$REGISTRY_PORT/\$TARGET_IMAGE_NAME" \
-          && docker tag "$REGISTRY_HOST:$REGISTRY_PORT/\$TARGET_IMAGE_NAME" "\$TARGET_IMAGE_NAME" \
-          && docker rmi "$REGISTRY_HOST:$REGISTRY_PORT/\$TARGET_IMAGE_NAME"
+        echo "Pulling $TARGET_IMAGE_NAME onto $WORKER_INFO from $REGISTRY_HOST:$REGISTRY_PORT"
+        docker pull "$REGISTRY_HOST:$REGISTRY_PORT/$TARGET_IMAGE_NAME" \
+          && docker tag "$REGISTRY_HOST:$REGISTRY_PORT/$TARGET_IMAGE_NAME" "$TARGET_IMAGE_NAME" \
+          && docker rmi "$REGISTRY_HOST:$REGISTRY_PORT/$TARGET_IMAGE_NAME"
     done
-
-    # May need to find the service and remove it after use since Swarm will likely keep it alive
 }
 
 
 swarm__stop() {
     echo "Shutting down swarm..."
+    local carma_base=$(__get_image_from_config carma-base:)
 
     WORKER_INFO=$(docker run -it --rm -v carma-config-data:/opt/carma/vehicle/config $carma_base /bin/sh -c '{ echo "$WORKER_USER"; echo "@"; echo "$WORKER_IP"; } | tr -d "\n"')
 
-    if [ "$(docker node ls | grep worker )" ]; then
-        ssh $WORKER_INFO "docker swarm leave"
+    if [ "$(docker node ls -f "role=worker" | grep  "Ready" )" ]; then
+        ssh $WORKER_INFO "docker swarm leave" 
     fi
     docker swarm leave --force
 }
@@ -291,8 +300,15 @@ swarm__help() {
 
 Please enter one of the following commands:
   swarm
-    install
-        - Installs images locally based on the active Compose files
+    install <tag/image>
+        - Installs images to the local host based on Compose files
+          contained in the carma-config defined by <tag/image>
+        - [empty]
+            - Defaults to a usdotfhwastol image
+        - d 
+            - Defines a usdotfhwastoldev image
+        - c
+            - Defines a usdotfhwastolcandidate image
     start
         [empty]
             - Will always deploy carma-web-ui as a background service
