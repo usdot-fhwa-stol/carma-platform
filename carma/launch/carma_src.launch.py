@@ -13,7 +13,7 @@
 # limitations under the License.
 
 from ament_index_python import get_package_share_directory
-from launch.actions import Shutdown
+from launch.actions import Shutdown, ExecuteProcess
 from launch import LaunchDescription
 from launch_ros.actions import Node
 from launch.actions import IncludeLaunchDescription
@@ -115,6 +115,22 @@ def generate_launch_description():
         name = 'enable_opening_tunnels',
         default_value= 'False',
         description='Flag to enable opening http tunnesl to CARMA Cloud'
+    )
+
+    # Declare system_architecture
+    system_architecture = LaunchConfiguration('system_architecture')
+    declare_system_architecture = DeclareLaunchArgument(
+        name = 'system_architecture',
+        default_value = 'single',
+        description = 'Flag to define whether a single compute system or a dual compute system is being used'
+    )
+
+    # Declare host_placement
+    host_placement = LaunchConfiguration('host_placement')
+    declare_host_placement = DeclareLaunchArgument(
+        name = 'host_placement',
+        default_value = 'manager',
+        description = 'Flag to define whether the current active host is a manager or worker for ROS node allocation'
     )
     
     # Declare port
@@ -272,31 +288,110 @@ def generate_launch_description():
         ]
     )
 
-    return LaunchDescription([
-        declare_vehicle_calibration_dir_arg,
-        declare_vehicle_config_dir_arg,
-        declare_vehicle_characteristics_param_file_arg,
-        declare_vehicle_config_param_file_arg,
-        declare_route_file_folder,
-        declare_enable_guidance_plugin_validator,
-        declare_strategic_plugins_to_validate,
-        declare_tactical_plugins_to_validate,
-        declare_control_plugins_to_validate,
-        declare_enable_opening_tunnels,
-        declare_port,
-        declare_load_type,
-        declare_single_pcd_path,
-        declare_area,
-        declare_arealist_path,
-        declare_vector_map_file,
-        declare_simulation_mode,
-        drivers_group,
-        transform_group,
-        environment_group,
-        localization_group,
-        v2x_group,
-        guidance_group, 
-        ros2_rosbag_launch,
-        ui_group,
-        system_controller
-    ])
+
+    ExecuteProcess(
+        condition=IfCondition(
+            PythonExpression(
+                ["'", system_architecture,"' == 'dual' and '", host_placement, "' == 'manager'"]
+            )
+        ),
+        launch_description = LaunchDescription([
+            declare_vehicle_calibration_dir_arg,
+            declare_vehicle_config_dir_arg,
+            declare_vehicle_characteristics_param_file_arg,
+            declare_vehicle_config_param_file_arg,
+            declare_route_file_folder,
+            declare_enable_guidance_plugin_validator,
+            declare_strategic_plugins_to_validate,
+            declare_tactical_plugins_to_validate,
+            declare_control_plugins_to_validate,
+            declare_enable_opening_tunnels,
+            declare_port,
+            declare_load_type,
+            declare_single_pcd_path,
+            declare_area,
+            declare_arealist_path,
+            declare_vector_map_file,
+            declare_simulation_mode,
+            drivers_group,
+            transform_group,
+            environment_group,
+            localization_group,
+            v2x_group,
+            ros2_rosbag_launch,
+            ui_group,
+            system_controller
+        ])
+    )
+
+    ExecuteProcess(
+        condition=IfCondition(
+            PythonExpression(
+                ["'", system_architecture,"' == 'dual' and '", host_placement, "' == 'worker'"]
+            )
+        ),
+        launch_description = LaunchDescription([
+            declare_vehicle_calibration_dir_arg,
+            declare_vehicle_config_dir_arg,
+            declare_vehicle_characteristics_param_file_arg,
+            declare_vehicle_config_param_file_arg,
+            declare_route_file_folder,
+            declare_enable_guidance_plugin_validator,
+            declare_strategic_plugins_to_validate,
+            declare_tactical_plugins_to_validate,
+            declare_control_plugins_to_validate,
+            declare_enable_opening_tunnels,
+            declare_port,
+            declare_load_type,
+            declare_single_pcd_path,
+            declare_area,
+            declare_arealist_path,
+            declare_vector_map_file,
+            declare_simulation_mode,
+            drivers_group,
+            transform_group,
+            environment_group,
+            localization_group,
+            v2x_group,
+            guidance_group
+        ])
+    )
+
+    ExecuteProcess(
+        condition=IfCondition(
+            PythonExpression(
+                ["'", system_architecture,"' == 'single'"]
+            )
+        ),
+        launch_description = LaunchDescription([
+            declare_vehicle_calibration_dir_arg,
+            declare_vehicle_config_dir_arg,
+            declare_vehicle_characteristics_param_file_arg,
+            declare_vehicle_config_param_file_arg,
+            declare_route_file_folder,
+            declare_enable_guidance_plugin_validator,
+            declare_strategic_plugins_to_validate,
+            declare_tactical_plugins_to_validate,
+            declare_control_plugins_to_validate,
+            declare_enable_opening_tunnels,
+            declare_port,
+            declare_load_type,
+            declare_single_pcd_path,
+            declare_area,
+            declare_arealist_path,
+            declare_vector_map_file,
+            declare_simulation_mode,
+            drivers_group,
+            transform_group,
+            environment_group,
+            localization_group,
+            v2x_group,
+            guidance_group, 
+            ros2_rosbag_launch,
+            ui_group,
+            system_controller
+        ])
+    )
+
+
+    return launch_description
