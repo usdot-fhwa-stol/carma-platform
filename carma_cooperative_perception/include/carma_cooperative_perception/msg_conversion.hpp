@@ -72,11 +72,11 @@ auto to_detection_list_msg(const carma_v2x_msgs::msg::SensorDataSharingMessage &
 
 struct MotionModelMapping
 {
-  std::uint8_t small_vehicle_model;
-  std::uint8_t large_vehicle_model;
-  std::uint8_t motorcycle_model;
-  std::uint8_t pedestrian_model;
-  std::uint8_t unknown_model;
+  std::uint8_t small_vehicle_model{carma_cooperative_perception_interfaces::msg::Detection::MOTION_MODEL_CTRV};
+  std::uint8_t large_vehicle_model{carma_cooperative_perception_interfaces::msg::Detection::MOTION_MODEL_CTRV};
+  std::uint8_t motorcycle_model{carma_cooperative_perception_interfaces::msg::Detection::MOTION_MODEL_CTRA};
+  std::uint8_t pedestrian_model{carma_cooperative_perception_interfaces::msg::Detection::MOTION_MODEL_CV};
+  std::uint8_t unknown_model{carma_cooperative_perception_interfaces::msg::Detection::MOTION_MODEL_CV};
 };
 
 auto to_detection_msg(

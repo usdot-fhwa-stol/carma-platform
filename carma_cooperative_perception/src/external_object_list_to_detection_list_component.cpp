@@ -114,25 +114,11 @@ auto ExternalObjectListToDetectionListNode::handle_on_configure(
       }
     });
 
-  declare_parameter(
-    "small_vehicle_motion_model",
-    carma_cooperative_perception_interfaces::msg::Detection::MOTION_MODEL_CTRV);
-
-  declare_parameter(
-    "large_vehicle_motion_model",
-    carma_cooperative_perception_interfaces::msg::Detection::MOTION_MODEL_CTRV);
-
-  declare_parameter(
-    "motorcycle_motion_model",
-    carma_cooperative_perception_interfaces::msg::Detection::MOTION_MODEL_CTRA);
-
-  declare_parameter(
-    "pedestrian_motion_model",
-    carma_cooperative_perception_interfaces::msg::Detection::MOTION_MODEL_CV);
-
-  declare_parameter(
-    "unknown_motion_model",
-    carma_cooperative_perception_interfaces::msg::Detection::MOTION_MODEL_CV);
+  declare_parameter("small_vehicle_motion_model", motion_model_mapping_.small_vehicle_model);
+  declare_parameter("large_vehicle_motion_model", motion_model_mapping_.large_vehicle_model);
+  declare_parameter("motorcycle_motion_model", motion_model_mapping_.motorcycle_model);
+  declare_parameter("pedestrian_motion_model", motion_model_mapping_.pedestrian_model);
+  declare_parameter("unknown_motion_model", motion_model_mapping_.unknown_model);
 
   on_set_parameters_callback_ =
     add_on_set_parameters_callback([this](const std::vector<rclcpp::Parameter> & parameters) {
