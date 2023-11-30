@@ -160,6 +160,29 @@ def generate_launch_description():
     simulation_mode = LaunchConfiguration('simulation_mode')
     declare_simulation_mode = DeclareLaunchArgument(name='simulation_mode', default_value = 'False', description = 'True if CARMA Platform is launched with CARLA Simulator')
 
+    # Declare initial configurations for the launch description
+    carma_launch_description = LaunchDescription([
+        declare_vehicle_calibration_dir_arg,
+        declare_vehicle_config_dir_arg,
+        declare_vehicle_characteristics_param_file_arg,
+        declare_vehicle_config_param_file_arg,
+        declare_route_file_folder,
+        declare_enable_guidance_plugin_validator,
+        declare_strategic_plugins_to_validate,
+        declare_tactical_plugins_to_validate,
+        declare_control_plugins_to_validate,
+        declare_enable_opening_tunnels,
+        declare_port,
+        declare_load_type,
+        declare_single_pcd_path,
+        declare_area,
+        declare_arealist_path,
+        declare_vector_map_file,
+        declare_simulation_mode  
+    ])
+
+    # condition=IfCondition(PythonExpression(["'", system_architecture,"' == 'dual' and '", host_placement, "' == 'manager'"]))
+
     # Launch ROS2 rosbag logging
     ros2_rosbag_launch = GroupAction(
         actions=[
@@ -172,22 +195,26 @@ def generate_launch_description():
             )
         ]
     )
+    carma_launch_description.add_action(ros2_rosbag_launch)
 
     # Nodes
-
     transform_group = GroupAction(
         actions=[
             PushRosNamespace(EnvironmentVariable('CARMA_TF_NS', default_value='/')),
             IncludeLaunchDescription(
+                condition=IfCondition(PythonExpression(["'", system_architecture,"' == 'single' or'" "'", system_architecture,"' == 'dual' and '", host_placement, "' == 'manager'"])),
                 PythonLaunchDescriptionSource([ThisLaunchFileDir(), '/transforms.launch.py'])
             ),
         ]
     )
+    carma_launch_description.add_action(transform_group)
+
 
     environment_group = GroupAction(
         actions=[
             PushRosNamespace(EnvironmentVariable('CARMA_ENV_NS', default_value='environment')),
             IncludeLaunchDescription(
+                condition=IfCondition(PythonExpression(["'", system_architecture,"' == 'single' or'" "'", system_architecture,"' == 'dual' and '", host_placement, "' == 'manager'"])),
                 PythonLaunchDescriptionSource([ThisLaunchFileDir(), '/environment.launch.py']),
                 launch_arguments = { 
                     'subsystem_controller_param_file' : [vehicle_config_dir, '/SubsystemControllerParams.yaml'],
@@ -198,11 +225,14 @@ def generate_launch_description():
             ),
         ]
     )
+    carma_launch_description.add_action(environment_group)
+
 
     localization_group = GroupAction(
         actions=[
             PushRosNamespace(EnvironmentVariable('CARMA_LOCZ_NS', default_value='localization')),
             IncludeLaunchDescription(
+                condition=IfCondition(PythonExpression(["'", system_architecture,"' == 'single' or'" "'", system_architecture,"' == 'dual' and '", host_placement, "' == 'manager'"])),
                 PythonLaunchDescriptionSource([ThisLaunchFileDir(), '/localization.launch.py']),
                 launch_arguments = { 
                     'subsystem_controller_param_file' : [vehicle_config_dir, '/SubsystemControllerParams.yaml'],
@@ -217,11 +247,14 @@ def generate_launch_description():
             )
         ]
     )
+    carma_launch_description.add_action(localization_group)
+
 
     v2x_group = GroupAction(
         actions=[
             PushRosNamespace(EnvironmentVariable('CARMA_MSG_NS', default_value='message')),
             IncludeLaunchDescription(
+                condition=IfCondition(PythonExpression(["'", system_architecture,"' == 'single' or'" "'", system_architecture,"' == 'dual' and '", host_placement, "' == 'manager'"])),
                 PythonLaunchDescriptionSource([ThisLaunchFileDir(), '/message.launch.py']),
                 launch_arguments = { 
                     'vehicle_characteristics_param_file' : vehicle_characteristics_param_file,
@@ -232,12 +265,15 @@ def generate_launch_description():
             ),
         ]
     )
+    carma_launch_description.add_action(v2x_group)
+
 
     guidance_group = GroupAction(
         actions=[
             PushRosNamespace(EnvironmentVariable('CARMA_GUIDE_NS', default_value='guidance')),
             
             IncludeLaunchDescription(
+                condition=IfCondition(PythonExpression(["'", system_architecture,"' == 'single' or'" "'", system_architecture,"' == 'dual' and '", host_placement, "' == 'manager'"])),
                 PythonLaunchDescriptionSource([ThisLaunchFileDir(), '/guidance.launch.py']),
                 launch_arguments={
                     'route_file_folder' : route_file_folder,
@@ -252,11 +288,14 @@ def generate_launch_description():
             ),
         ]
     )
+    carma_launch_description.add_action(guidance_group)
+
 
     drivers_group = GroupAction(
         actions=[
             PushRosNamespace(EnvironmentVariable('CARMA_INTR_NS', default_value='hardware_interface')),
             IncludeLaunchDescription(
+                condition=IfCondition(PythonExpression(["'", system_architecture,"' == 'single' or'" "'", system_architecture,"' == 'dual' and '", host_placement, "' == 'manager'"])),
                 PythonLaunchDescriptionSource([ThisLaunchFileDir(), '/drivers.launch.py']),
                 launch_arguments = { 
                     'vehicle_config_param_file' : vehicle_config_param_file,
@@ -265,6 +304,8 @@ def generate_launch_description():
             ),
         ]
     )
+    carma_launch_description.add_action(drivers_group)
+
 
     system_controller = Node(
         package='system_controller',
@@ -274,12 +315,15 @@ def generate_launch_description():
         on_exit = Shutdown(), # Mark the subsystem controller as required for segfaults
         arguments=['--ros-args', '--log-level', GetLogLevel('system_controller', env_log_levels)]
     )
+    carma_launch_description.add_action(system_controller)
+
 
     ui_group = GroupAction(
         actions=[
             PushRosNamespace(EnvironmentVariable('CARMA_UI_NS', default_value='ui')),
             
             IncludeLaunchDescription(
+                condition=IfCondition(PythonExpression(["'", system_architecture,"' == 'single' or'" "'", system_architecture,"' == 'dual' and '", host_placement, "' == 'manager'"])),
                 PythonLaunchDescriptionSource([ThisLaunchFileDir(), '/ui.launch.py']),
                 launch_arguments={
                 'port' : port
@@ -287,111 +331,7 @@ def generate_launch_description():
             ),
         ]
     )
+    carma_launch_description.add_action(ui_group)
 
 
-    ExecuteProcess(
-        condition=IfCondition(
-            PythonExpression(
-                ["'", system_architecture,"' == 'dual' and '", host_placement, "' == 'manager'"]
-            )
-        ),
-        launch_description = LaunchDescription([
-            declare_vehicle_calibration_dir_arg,
-            declare_vehicle_config_dir_arg,
-            declare_vehicle_characteristics_param_file_arg,
-            declare_vehicle_config_param_file_arg,
-            declare_route_file_folder,
-            declare_enable_guidance_plugin_validator,
-            declare_strategic_plugins_to_validate,
-            declare_tactical_plugins_to_validate,
-            declare_control_plugins_to_validate,
-            declare_enable_opening_tunnels,
-            declare_port,
-            declare_load_type,
-            declare_single_pcd_path,
-            declare_area,
-            declare_arealist_path,
-            declare_vector_map_file,
-            declare_simulation_mode,
-            drivers_group,
-            transform_group,
-            environment_group,
-            localization_group,
-            v2x_group,
-            ros2_rosbag_launch,
-            ui_group,
-            system_controller
-        ])
-    )
-
-    ExecuteProcess(
-        condition=IfCondition(
-            PythonExpression(
-                ["'", system_architecture,"' == 'dual' and '", host_placement, "' == 'worker'"]
-            )
-        ),
-        launch_description = LaunchDescription([
-            declare_vehicle_calibration_dir_arg,
-            declare_vehicle_config_dir_arg,
-            declare_vehicle_characteristics_param_file_arg,
-            declare_vehicle_config_param_file_arg,
-            declare_route_file_folder,
-            declare_enable_guidance_plugin_validator,
-            declare_strategic_plugins_to_validate,
-            declare_tactical_plugins_to_validate,
-            declare_control_plugins_to_validate,
-            declare_enable_opening_tunnels,
-            declare_port,
-            declare_load_type,
-            declare_single_pcd_path,
-            declare_area,
-            declare_arealist_path,
-            declare_vector_map_file,
-            declare_simulation_mode,
-            drivers_group,
-            transform_group,
-            environment_group,
-            localization_group,
-            v2x_group,
-            guidance_group
-        ])
-    )
-
-    ExecuteProcess(
-        condition=IfCondition(
-            PythonExpression(
-                ["'", system_architecture,"' == 'single'"]
-            )
-        ),
-        launch_description = LaunchDescription([
-            declare_vehicle_calibration_dir_arg,
-            declare_vehicle_config_dir_arg,
-            declare_vehicle_characteristics_param_file_arg,
-            declare_vehicle_config_param_file_arg,
-            declare_route_file_folder,
-            declare_enable_guidance_plugin_validator,
-            declare_strategic_plugins_to_validate,
-            declare_tactical_plugins_to_validate,
-            declare_control_plugins_to_validate,
-            declare_enable_opening_tunnels,
-            declare_port,
-            declare_load_type,
-            declare_single_pcd_path,
-            declare_area,
-            declare_arealist_path,
-            declare_vector_map_file,
-            declare_simulation_mode,
-            drivers_group,
-            transform_group,
-            environment_group,
-            localization_group,
-            v2x_group,
-            guidance_group, 
-            ros2_rosbag_launch,
-            ui_group,
-            system_controller
-        ])
-    )
-
-
-    return launch_description
+    return carma_launch_description

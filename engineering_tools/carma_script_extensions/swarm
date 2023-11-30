@@ -124,7 +124,7 @@ swarm__start() {
         
     
     elif [ ! -z "$1" ]; then
-        echo "Unrecognized argument \"swarm deploy $1\""
+        echo "Unrecognized argument \"swarm start $1\""
     fi
 }
 
