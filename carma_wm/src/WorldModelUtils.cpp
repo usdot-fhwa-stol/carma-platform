@@ -15,6 +15,9 @@
  */
 
 #include <carma_wm/WorldModelUtils.hpp>
+#include <boost/geometry.hpp>
+#include <boost/geometry/geometries/point_xy.hpp>
+#include <boost/geometry/geometries/polygon.hpp>
 
 namespace carma_wm
 {
@@ -24,6 +27,9 @@ namespace query
 std::vector<lanelet::ConstLanelet> getLaneletsFromPoint(const lanelet::LaneletMapConstPtr& semantic_map, const lanelet::BasicPoint2d& point,
                                                                     const unsigned int n)
 {
+  using Point = boost::geometry::model::d2::point_xy<double>;
+  using Polygon = boost::geometry::model::polygon<Point>;
+
   // Check if the map is loaded yet
   if (!semantic_map || semantic_map->laneletLayer.size() == 0)
   {
@@ -34,15 +40,33 @@ std::vector<lanelet::ConstLanelet> getLaneletsFromPoint(const lanelet::LaneletMa
   if (nearestLanelets.size() == 0)
     return {};
 
-  size_t id = 0;  // closest ones are in the back
+  RCLCPP_ERROR_STREAM(rclcpp::get_logger("carma_wm::query"), "check: x: " << point.x() << ", y: " << point.y());
+    // closest ones are in the back
   // loop through until the point is no longer geometrically in the lanelet
-
-  while (boost::geometry::within(point, nearestLanelets[id].second.polygon2d()))
+  for (size_t id = 0; id < nearestLanelets.size(); id++)
   {
-    possible_lanelets.push_back(nearestLanelets[id].second);
-    id++;
-    if (id >= nearestLanelets.size())
-      break;
+    RCLCPP_ERROR_STREAM(rclcpp::get_logger("carma_wm::query"), "nearest size: " << nearestLanelets.size() << ", checking: " << nearestLanelets[id].second.id());
+    auto poly_linestrings = nearestLanelets[id].second.leftBound2d();
+    auto poly_linestrings1 = nearestLanelets[id].second.rightBound2d();
+    //RCLCPP_ERROR_STREAM(rclcpp::get_logger("carma_wm::query"), "======start====");
+
+
+    Polygon new_poly;
+    for (const auto& temp_point : poly_linestrings) {
+    //  RCLCPP_ERROR_STREAM(rclcpp::get_logger("carma_wm::query"), "x: " << temp_point.x() << ", y: " << temp_point.y());
+        boost::geometry::append(new_poly, Point(temp_point.x(), temp_point.y()));
+    }
+    for (const auto& temp_point : poly_linestrings1.invert()) {
+    //  RCLCPP_ERROR_STREAM(rclcpp::get_logger("carma_wm::query"), "x: " << temp_point.x() << ", y: " << temp_point.y());
+        boost::geometry::append(new_poly, Point(temp_point.x(), temp_point.y()));
+    }
+    boost::geometry::append(new_poly, Point(poly_linestrings.front().x(), poly_linestrings.front().y()));
+    //RCLCPP_ERROR_STREAM(rclcpp::get_logger("carma_wm::query"), "x: " << poly_linestrings.front().x() << ", y: " << poly_linestrings.front().y());
+
+    //RCLCPP_ERROR_STREAM(rclcpp::get_logger("carma_wm::query"), "======END====");
+
+    if (boost::geometry::within(point, new_poly))
+      possible_lanelets.push_back(nearestLanelets[id].second);
   }
   return possible_lanelets;
 }
@@ -63,11 +87,11 @@ std::vector<lanelet::Lanelet> getLaneletsFromPoint(const lanelet::LaneletMapPtr&
 std::vector<lanelet::Lanelet> nonConnectedAdjacentLeft(const lanelet::LaneletMapPtr& semantic_map, const lanelet::BasicPoint2d& point,
                                                                     const unsigned int n)
 {
-  
+
   lanelet::LaneletMapConstPtr const_ptr = semantic_map;
   auto possible_lanelets = nonConnectedAdjacentLeft(const_ptr, point, n);
-  
-  
+
+
   std::vector<lanelet::Lanelet> return_lanelets;
   for (auto llt : possible_lanelets)
   {
@@ -79,24 +103,24 @@ std::vector<lanelet::Lanelet> nonConnectedAdjacentLeft(const lanelet::LaneletMap
 std::vector<lanelet::ConstLanelet> nonConnectedAdjacentLeft(const lanelet::LaneletMapConstPtr& semantic_map, const lanelet::BasicPoint2d& input_point,
                                                                     const unsigned int n)
 {
-  
+
   // Check if the map is loaded yet
   if (!semantic_map || semantic_map->laneletLayer.size() == 0)
   {
     throw std::invalid_argument("Map is not set or does not contain lanelets");
   }
-  
+
   auto input_lanelets = getLaneletsFromPoint(semantic_map, input_point);
-  
+
   if (input_lanelets.empty())
   {
     throw std::invalid_argument("Input point x: " + std::to_string(input_point.x()) + ", y: " + std::to_string(input_point.y()) + " is not in the map");
   }
-  
-  auto input_lanelet = input_lanelets[0]; 
-  
+
+  auto input_lanelet = input_lanelets[0];
+
   auto point_downtrack = carma_wm::geometry::trackPos(input_lanelet, input_point).downtrack;
-  
+
   auto point_downtrack_ratio = point_downtrack / carma_wm::geometry::trackPos(input_lanelet, input_lanelet.centerline().back().basicPoint2d()).downtrack;
 
   auto point_on_ls = input_lanelet.leftBound2d()[std::round((input_lanelet.leftBound2d().size()- 1) * point_downtrack_ratio) ];
@@ -125,13 +149,13 @@ lanelet::ConstLaneletOrAreas getAffectedLaneletOrAreas(const lanelet::Points3d& 
     std::unordered_set<lanelet::Lanelet> possible_lanelets;
 
     // This loop identifes the lanelets which this point lies within that could be impacted by the geofence
-    // This loop somewhat inefficiently calls the findNearest method iteratively until all the possible lanelets are identified. 
+    // This loop somewhat inefficiently calls the findNearest method iteratively until all the possible lanelets are identified.
     // The reason findNearest is used instead of nearestUntil is because that method orders results by bounding box which
-    // can give invalid sequences when dealing with large curved lanelets.  
-    bool continue_search = true; 
+    // can give invalid sequences when dealing with large curved lanelets.
+    bool continue_search = true;
     size_t nearest_count = 0;
     while (continue_search) {
-      
+
       nearest_count += 10; // Increase the index search radius by 10 each loop until all nearby lanelets are found
 
       for (const auto& ll_pair : lanelet::geometry::findNearest(lanelet_map->laneletLayer, gf_pts[idx].basicPoint2d(), nearest_count)) { // Get the nearest lanelets and iterate over them
@@ -143,7 +167,7 @@ lanelet::ConstLaneletOrAreas getAffectedLaneletOrAreas(const lanelet::Points3d& 
 
         double dist = std::get<0>(ll_pair);
         RCLCPP_DEBUG_STREAM(rclcpp::get_logger("carma_wm::query"), "Distance to lanelet " << ll.id() << ": " << dist << " max_lane_width: " << max_lane_width);
-        
+
         if (dist > max_lane_width) { // Only save values closer than max_lane_width. Since we are iterating in distance order when we reach this distance the search can stop
           continue_search = false;
           break;
@@ -184,12 +208,12 @@ lanelet::ConstLaneletOrAreas getAffectedLaneletOrAreas(const lanelet::Points3d& 
           {
             RCLCPP_DEBUG_STREAM(rclcpp::get_logger("carma_wm::query"), "Overlaps starting line... Picking llt: " << llt.id());
             affected_lanelets.insert(llt);
-          }  
+          }
         }
       }
 
       break;
-    } 
+    }
 
     RCLCPP_DEBUG_STREAM(rclcpp::get_logger("carma_wm::query"), "Checking possible lanelets");
     // check if each lines connecting end points of the llt is crossing with the line connecting current and next gf_pts
@@ -198,7 +222,7 @@ lanelet::ConstLaneletOrAreas getAffectedLaneletOrAreas(const lanelet::Points3d& 
       RCLCPP_DEBUG_STREAM(rclcpp::get_logger("carma_wm::query"), "Evaluating lanelet: " << llt.id());
       lanelet::BasicLineString2d gf_dir_line({gf_pts[idx].basicPoint2d(), gf_pts[idx+1].basicPoint2d()});
       lanelet::BasicLineString2d llt_boundary({(llt.leftBound2d().end() -1)->basicPoint2d(), (llt.rightBound2d().end() - 1)->basicPoint2d()});
-      
+
       // record the llts that are on the same dir
       if (boost::geometry::intersects(llt_boundary, gf_dir_line))
       {
@@ -206,11 +230,11 @@ lanelet::ConstLaneletOrAreas getAffectedLaneletOrAreas(const lanelet::Points3d& 
         affected_lanelets.insert(llt);
       }
       // check condition if two geofence points are in one lanelet then check matching direction and record it also
-      else if (boost::geometry::within(gf_pts[idx+1].basicPoint2d(), llt.polygon2d()) && 
+      else if (boost::geometry::within(gf_pts[idx+1].basicPoint2d(), llt.polygon2d()) &&
               affected_lanelets.find(llt) == affected_lanelets.end())
-      { 
+      {
         RCLCPP_DEBUG_STREAM(rclcpp::get_logger("carma_wm::query"), "Within new lanelet");
-        lanelet::BasicPoint2d median({((llt.leftBound2d().end() - 1)->basicPoint2d().x() + (llt.rightBound2d().end() - 1)->basicPoint2d().x())/2 , 
+        lanelet::BasicPoint2d median({((llt.leftBound2d().end() - 1)->basicPoint2d().x() + (llt.rightBound2d().end() - 1)->basicPoint2d().x())/2 ,
                                       ((llt.leftBound2d().end() - 1)->basicPoint2d().y() + (llt.rightBound2d().end() - 1)->basicPoint2d().y())/2});
         // turn into vectors
         Eigen::Vector2d vec_to_median(median);
@@ -234,8 +258,8 @@ lanelet::ConstLaneletOrAreas getAffectedLaneletOrAreas(const lanelet::Points3d& 
         RCLCPP_DEBUG_STREAM(rclcpp::get_logger("carma_wm::query"), "interior_angle: " << interior_angle);
         // Save the lanelet if the direction of two points inside aligns with that of the lanelet
 
-        if (interior_angle < M_PI_2 && interior_angle >= 0) 
-          affected_lanelets.insert(llt); 
+        if (interior_angle < M_PI_2 && interior_angle >= 0)
+          affected_lanelets.insert(llt);
       }
       else
       {
@@ -244,9 +268,9 @@ lanelet::ConstLaneletOrAreas getAffectedLaneletOrAreas(const lanelet::Points3d& 
 
     }
   }
-  
+
   RCLCPP_DEBUG_STREAM(rclcpp::get_logger("carma_wm::query"), "affected_lanelets size: " << affected_lanelets.size());
-  // Currently only returning lanelet, but this could be expanded to LanelerOrArea compound object 
+  // Currently only returning lanelet, but this could be expanded to LanelerOrArea compound object
   // by implementing non-const version of that LaneletOrArea
   lanelet::ConstLaneletOrAreas affected_parts;
   // return results in ascending downtrack order from the first point of geofence
@@ -262,7 +286,7 @@ lanelet::ConstLaneletOrAreas getAffectedLaneletOrAreas(const lanelet::Points3d& 
   {
     affected_parts.push_back(pair.second);
   }
-  
+
   return affected_parts;
 }
 
@@ -273,10 +297,10 @@ std::unordered_set<lanelet::Lanelet> filterSuccessorLanelets(const std::unordere
   if (!routing_graph) {
     throw std::invalid_argument("No routing graph available");
   }
-  
+
   std::unordered_set<lanelet::Lanelet> filtered_lanelets;
   // we utilize routes to filter llts that are overlapping but not connected
-  // as this is the last lanelet 
+  // as this is the last lanelet
   // we have to filter the llts that are only geometrically overlapping yet not connected to prev llts
   for (auto recorded_llt: root_lanelets)
   {

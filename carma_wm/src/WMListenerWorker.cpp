@@ -25,7 +25,7 @@
 namespace carma_wm
 {
 
-enum class GeofenceType{ INVALID, DIGITAL_SPEED_LIMIT, PASSING_CONTROL_LINE, REGION_ACCESS_RULE, DIGITAL_MINIMUM_GAP, 
+enum class GeofenceType{ INVALID, DIGITAL_SPEED_LIMIT, PASSING_CONTROL_LINE, REGION_ACCESS_RULE, DIGITAL_MINIMUM_GAP,
                           DIRECTION_OF_TRAVEL, STOP_RULE, CARMA_TRAFFIC_LIGHT, SIGNALIZED_INTERSECTION/* ... others */ };
 // helper function that return geofence type as an enum, which makes it cleaner by allowing switch statement
 GeofenceType resolveGeofenceType(const std::string& rule_name)
@@ -66,7 +66,7 @@ void WMListenerWorker::mapCallback(const autoware_lanelet2_msgs::msg::MapBin::Un
   // After setting map evaluate the current update queue to apply any updates that arrived before the map
   bool more_updates_to_apply = true;
   while(!map_update_queue_.empty() && more_updates_to_apply) {
-    
+
     auto update = std::move(map_update_queue_.front()); // Get first update
     map_update_queue_.pop(); // Remove update from queue
 
@@ -121,32 +121,32 @@ void logSignalizedIntersectionManager(const carma_wm::SignalizedIntersectionMana
 {
   for (auto pair : sim.intersection_id_to_regem_id_)
   {
-    RCLCPP_DEBUG_STREAM(rclcpp::get_logger("carma_wm::WMListenerWorker"), "inter id: " << (int)pair.first << ", regem id: " << pair.second);
+    RCLCPP_ERROR_STREAM(rclcpp::get_logger("carma_wm::WMListenerWorker"), "inter id: " << (int)pair.first << ", regem id: " << pair.second);
   }
   for (auto pair : sim.signal_group_to_entry_lanelet_ids_)
   {
     for (auto iter = pair.second.begin(); iter != pair.second.end(); iter++)
     {
-      RCLCPP_DEBUG_STREAM(rclcpp::get_logger("carma_wm::WMListenerWorker"), "signal id: " << (int)pair.first << ", entry llt id: " << *iter);
+      RCLCPP_ERROR_STREAM(rclcpp::get_logger("carma_wm::WMListenerWorker"), "signal id: " << (int)pair.first << ", entry llt id: " << *iter);
     }
   }
   for (auto pair : sim.signal_group_to_exit_lanelet_ids_)
   {
     for (auto iter = pair.second.begin(); iter != pair.second.end(); iter++)
     {
-      RCLCPP_DEBUG_STREAM(rclcpp::get_logger("carma_wm::WMListenerWorker"), "signal id: " << (int)pair.first << ", exit llt id: " << *iter);
+      RCLCPP_ERROR_STREAM(rclcpp::get_logger("carma_wm::WMListenerWorker"), "signal id: " << (int)pair.first << ", exit llt id: " << *iter);
     }
   }
   for (auto pair : sim.signal_group_to_traffic_light_id_)
   {
-    RCLCPP_DEBUG_STREAM(rclcpp::get_logger("carma_wm::WMListenerWorker"), "signal id: " << (int)pair.first << ", regem id: " << pair.second);
+    RCLCPP_ERROR_STREAM(rclcpp::get_logger("carma_wm::WMListenerWorker"), "signal id: " << (int)pair.first << ", regem id: " << pair.second);
   }
 }
 
 void WMListenerWorker::mapUpdateCallback(autoware_lanelet2_msgs::msg::MapBin::UniquePtr geofence_msg)
 {
   RCLCPP_INFO_STREAM(rclcpp::get_logger("carma_wm::WMListenerWorker"), "Map Update Being Evaluated. SeqNum: " << geofence_msg->seq_id);
-  if (rerouting_flag_) // no update should be applied if rerouting 
+  if (rerouting_flag_) // no update should be applied if rerouting
   {
     RCLCPP_INFO_STREAM(rclcpp::get_logger("carma_wm::WMListenerWorker"), "Currently new route is being processed. Queueing this update. Received seq: " << geofence_msg->seq_id << " prev seq: " << most_recent_update_msg_seq_);
     map_update_queue_.emplace(std::move(geofence_msg));
@@ -170,7 +170,7 @@ void WMListenerWorker::mapUpdateCallback(autoware_lanelet2_msgs::msg::MapBin::Un
 
 
   if(geofence_msg->invalidates_route==true && world_model_->getRoute())
-  {  
+  {
     rerouting_flag_=true;
     recompute_route_flag_ = true;
 
@@ -187,21 +187,21 @@ void WMListenerWorker::mapUpdateCallback(autoware_lanelet2_msgs::msg::MapBin::Un
   most_recent_update_msg_seq_ = geofence_msg->seq_id; // Update current sequence count
 
   auto gf_ptr = std::shared_ptr<carma_wm::TrafficControl>(new carma_wm::TrafficControl);
-  
+
   // convert ros msg to geofence object
   carma_wm::fromBinMsg(*geofence_msg, gf_ptr, world_model_->getMutableMap());
 
   RCLCPP_INFO_STREAM(rclcpp::get_logger("carma_wm::WMListenerWorker"), "Processing Map Update with Geofence Id:" << gf_ptr->id_);
-  
+
   RCLCPP_DEBUG_STREAM(rclcpp::get_logger("carma_wm::WMListenerWorker"), "Geofence id" << gf_ptr->id_ << " requests addition of lanelets size: " << gf_ptr->lanelet_additions_.size());
   for (auto llt : gf_ptr->lanelet_additions_)
   {
     // world model here should blindly accept the map update received
     RCLCPP_DEBUG_STREAM(rclcpp::get_logger("carma_wm::WMListenerWorker"), "Adding new lanelet with id: " << llt.id());
     auto left = llt.leftBound3d(); //new lanelet coming in
-    
+
     // updating incoming points' memory addresses with local ones of same ids
-    // so that lanelet library can recognize they are same objects 
+    // so that lanelet library can recognize they are same objects
     for (size_t i = 0; i < left.size(); i ++)
     {
       if (world_model_->getMutableMap()->pointLayer.exists(left[i].id())) //rewrite the memory address of new pts with that of local
@@ -251,7 +251,7 @@ void WMListenerWorker::mapUpdateCallback(autoware_lanelet2_msgs::msg::MapBin::Un
     RCLCPP_DEBUG_STREAM(rclcpp::get_logger("carma_wm::WMListenerWorker"), "Regems left in lanelet after removal: " << parent_llt.regulatoryElements().size());
 
   }
-  
+
   RCLCPP_INFO_STREAM(rclcpp::get_logger("carma_wm::WMListenerWorker"), "Geofence id" << gf_ptr->id_ << " requests update of size: " << gf_ptr->update_list_.size());
 
   // we should extract general regem to specific type of regem the geofence specifies
@@ -264,20 +264,20 @@ void WMListenerWorker::mapUpdateCallback(autoware_lanelet2_msgs::msg::MapBin::Un
 
     // if this regem is already in the map.
     // This section is expected to be called to add back regulations which were previously removed by expired geofences.
-    if (regemptr_it != world_model_->getMutableMap()->regulatoryElementLayer.end())  
+    if (regemptr_it != world_model_->getMutableMap()->regulatoryElementLayer.end())
     {
 
       RCLCPP_DEBUG_STREAM(rclcpp::get_logger("carma_wm::WMListenerWorker"), "Reapplying previously existing element for lanelet id:" << parent_llt.id() << ", and regem id: " << regemptr_it->get()->id());
       // again we should use the element with correct data address to be consistent
       world_model_->getMutableMap()->update(parent_llt, *regemptr_it);
     }
-    else // Updates are treated as new regulations after the old value was removed. In both cases we enter this block. 
+    else // Updates are treated as new regulations after the old value was removed. In both cases we enter this block.
     {
       RCLCPP_DEBUG_STREAM(rclcpp::get_logger("carma_wm::WMListenerWorker"), "New regulatory element at lanelet: " << parent_llt.id() << ", and id: " << pair.second->id());
       newRegemUpdateHelper(parent_llt, pair.second.get());
     }
   }
-  
+
   // set the Map to trigger a new route graph construction if rerouting was required by the updates and a new graph was not provided
   world_model_->setMap(world_model_->getMutableMap(), current_map_version_, recompute_route_flag_ && !geofence_msg->has_routing_graph );
 
@@ -298,9 +298,9 @@ void WMListenerWorker::mapUpdateCallback(autoware_lanelet2_msgs::msg::MapBin::Un
   // no need to reroute again unless received invalidated msg again
   if (recompute_route_flag_)
     recompute_route_flag_ = false;
-  
 
-  RCLCPP_INFO_STREAM(rclcpp::get_logger("carma_wm::WMListenerWorker"), "Finished Applying the Map Update with Geofence Id:" << gf_ptr->id_); 
+
+  RCLCPP_INFO_STREAM(rclcpp::get_logger("carma_wm::WMListenerWorker"), "Finished Applying the Map Update with Geofence Id:" << gf_ptr->id_);
 
   // Call user defined map callback
   if (map_callback_)
@@ -365,7 +365,7 @@ void WMListenerWorker::newRegemUpdateHelper(lanelet::Lanelet parent_llt, lanelet
       {
         std::invalid_argument("Dynamic Pointer cast failed on getting valid region access rule");
       }
-      
+
       break;
     }
     case GeofenceType::DIGITAL_MINIMUM_GAP:
@@ -380,7 +380,7 @@ void WMListenerWorker::newRegemUpdateHelper(lanelet::Lanelet parent_llt, lanelet
       {
         std::invalid_argument("Dynamic Pointer cast failed on getting valid minimum gap rule");
       }
-      
+
       break;
     }
     case GeofenceType::DIRECTION_OF_TRAVEL:
@@ -395,7 +395,7 @@ void WMListenerWorker::newRegemUpdateHelper(lanelet::Lanelet parent_llt, lanelet
       {
         std::invalid_argument("Dynamic Pointer cast failed on getting valid direction of travel");
       }
-      
+
       break;
     }
     case GeofenceType::STOP_RULE:
@@ -436,7 +436,7 @@ void WMListenerWorker::newRegemUpdateHelper(lanelet::Lanelet parent_llt, lanelet
       {
         std::invalid_argument("Dynamic Pointer cast failed on getting valid signalized intersection");
       }
-      
+
       break;
     }
     default:
@@ -449,8 +449,8 @@ LaneletRoutingGraphPtr WMListenerWorker::routingGraphFromMsg(const autoware_lane
 
   if (msg.participant_type.compare(getVehicleParticipationType()) != 0) {
 
-    RCLCPP_ERROR_STREAM(rclcpp::get_logger("carma_wm::WMListenerWorker"),"Received routing graph does not have matching vehicle type for world model. WM Type: " 
-      << getVehicleParticipationType() 
+    RCLCPP_ERROR_STREAM(rclcpp::get_logger("carma_wm::WMListenerWorker"),"Received routing graph does not have matching vehicle type for world model. WM Type: "
+      << getVehicleParticipationType()
       << " graph type: " << msg.participant_type
     );
 
@@ -543,14 +543,14 @@ LaneletRoutingGraphPtr WMListenerWorker::routingGraphFromMsg(const autoware_lane
 
         // Create edge
         graph->addEdge(
-          lanelet, 
-          map->laneletLayer.get(vertex.lanelet_or_area_ids[j]), 
+          lanelet,
+          map->laneletLayer.get(vertex.lanelet_or_area_ids[j]),
           lanelet::routing::internal::EdgeInfo{vertex.edge_routing_costs[j], vertex.edge_routing_cost_source_ids[j], relation}
         );
 
       }  catch(const lanelet::NoSuchPrimitiveError& e) {
 
-        RCLCPP_ERROR_STREAM(rclcpp::get_logger("carma_wm::WMListenerWorker"),"Received routing graph specifies lanelets which do not match the current map version. Not found lanelet or area: " 
+        RCLCPP_ERROR_STREAM(rclcpp::get_logger("carma_wm::WMListenerWorker"),"Received routing graph specifies lanelets which do not match the current map version. Not found lanelet or area: "
           << vertex.lanelet_or_area_ids[j] << " Actual exception: " << e.what());
 
         return nullptr;
@@ -601,7 +601,7 @@ void WMListenerWorker::routeCallback(const carma_planning_msgs::msg::Route::Uniq
     while(!map_update_queue_.empty() && more_updates_to_apply) {
 
       auto update = std::move(map_update_queue_.front()); // Get first update
-      map_update_queue_.pop(); // Remove update from queue     
+      map_update_queue_.pop(); // Remove update from queue
 
       if (update->map_version < current_map_version_) { // Drop any so far unapplied updates for the current map
         RCLCPP_WARN_STREAM(rclcpp::get_logger("carma_wm::WMListenerWorker"), "Apply from reroute: There were unapplied updates in carma_wm when a new map was recieved.");
@@ -701,7 +701,7 @@ double WMListenerWorker::getConfigSpeedLimit() const
 }
 
 void WMListenerWorker::setVehicleParticipationType(std::string participant)
-{  
+{
   //Function to load participation type into CarmaWorldModel
   world_model_->setVehicleParticipationType(participant);
 }
