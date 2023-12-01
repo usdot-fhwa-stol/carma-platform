@@ -156,8 +156,6 @@ swarm-config__set() {
         local -r IMAGE_NAME="$USERNAME/carma-config:$TAG"
     fi
 
-    echo "$ALT_USER /carma-config $ALT_TAG"
-
     if [ "$(docker images | grep $USERNAME/carma-config | grep $TAG )" ]; then
         echo "Found image, applying to carma-config-volume"
         docker run --rm --name carma-config-data -v carma-config-data:/opt/carma/vehicle/config -d $IMAGE_NAME
