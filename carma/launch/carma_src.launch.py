@@ -160,8 +160,148 @@ def generate_launch_description():
     simulation_mode = LaunchConfiguration('simulation_mode')
     declare_simulation_mode = DeclareLaunchArgument(name='simulation_mode', default_value = 'False', description = 'True if CARMA Platform is launched with CARLA Simulator')
 
-    # Declare initial configurations for the launch description
-    carma_launch_description = LaunchDescription([
+
+    # Launch ROS2 rosbag logging
+    ros2_rosbag_launch = GroupAction(
+        actions=[
+            IncludeLaunchDescription(
+                PythonLaunchDescriptionSource([ThisLaunchFileDir(), '/ros2_rosbag.launch.py']),
+                launch_arguments = {
+                    'vehicle_config_dir' : vehicle_config_dir,
+                    'vehicle_config_param_file' : vehicle_config_param_file
+                    }.items()
+            )
+        ]
+    )
+
+    # Nodes
+    transform_group = GroupAction(
+        condition=IfCondition(PythonExpression(["'", system_architecture, "' == 'single' or '", system_architecture, "' == 'dual' and '", host_placement, "' == 'manager''"])),
+        actions=[
+            PushRosNamespace(EnvironmentVariable('CARMA_TF_NS', default_value='/')),
+            IncludeLaunchDescription(
+                PythonLaunchDescriptionSource([ThisLaunchFileDir(), '/transforms.launch.py'])
+            ),
+        ]
+    )
+
+
+    environment_group = GroupAction(
+        condition=IfCondition(PythonExpression(["'", system_architecture, "' == 'single' or '", system_architecture, "' == 'dual' and '", host_placement, "' == 'manager''"])),
+        actions=[
+            PushRosNamespace(EnvironmentVariable('CARMA_ENV_NS', default_value='environment')),
+            IncludeLaunchDescription(
+                PythonLaunchDescriptionSource([ThisLaunchFileDir(), '/environment.launch.py']),
+                launch_arguments = { 
+                    'subsystem_controller_param_file' : [vehicle_config_dir, '/SubsystemControllerParams.yaml'],
+                    'vehicle_config_param_file' : vehicle_config_param_file,
+                    'vehicle_characteristics_param_file' : vehicle_characteristics_param_file,
+                    'vector_map_file' : vector_map_file
+                    }.items()
+            ),
+        ]
+    )
+
+
+    localization_group = GroupAction(
+        condition=IfCondition(PythonExpression(["'", system_architecture, "' == 'single' or '", system_architecture, "' == 'dual' and '", host_placement, "' == 'manager''"])),
+        actions=[
+            PushRosNamespace(EnvironmentVariable('CARMA_LOCZ_NS', default_value='localization')),
+            IncludeLaunchDescription(
+                PythonLaunchDescriptionSource([ThisLaunchFileDir(), '/localization.launch.py']),
+                launch_arguments = { 
+                    'subsystem_controller_param_file' : [vehicle_config_dir, '/SubsystemControllerParams.yaml'],
+                    'load_type' : load_type,
+                    'single_pcd_path' : single_pcd_path,
+                    'area' : area,
+                    'arealist_path' : arealist_path,
+                    'vector_map_file' : vector_map_file,
+                    'vehicle_calibration_dir': vehicle_calibration_dir,
+                    'simulation_mode': simulation_mode,
+                }.items()
+            )
+        ]
+    )
+
+
+    v2x_group = GroupAction(
+        condition=IfCondition(PythonExpression(["'", system_architecture, "' == 'single' or '", system_architecture, "' == 'dual' and '", host_placement, "' == 'manager''"])),
+        actions=[
+            PushRosNamespace(EnvironmentVariable('CARMA_MSG_NS', default_value='message')),
+            IncludeLaunchDescription(
+                PythonLaunchDescriptionSource([ThisLaunchFileDir(), '/message.launch.py']),
+                launch_arguments = { 
+                    'vehicle_characteristics_param_file' : vehicle_characteristics_param_file,
+                    'vehicle_config_param_file' : vehicle_config_param_file,
+                    'enable_opening_tunnels'  : enable_opening_tunnels,
+                    'subsystem_controller_param_file' : [vehicle_config_dir, '/SubsystemControllerParams.yaml']
+                }.items()
+            ),
+        ]
+    )
+
+
+    guidance_group = GroupAction(
+        condition=IfCondition(PythonExpression(["'", system_architecture, "' == 'single' or '", system_architecture, "' == 'dual' and '", host_placement, "' == 'manager''"])),
+        actions=[
+            PushRosNamespace(EnvironmentVariable('CARMA_GUIDE_NS', default_value='guidance')),
+            IncludeLaunchDescription(
+                PythonLaunchDescriptionSource([ThisLaunchFileDir(), '/guidance.launch.py']),
+                launch_arguments={
+                    'route_file_folder' : route_file_folder,
+                    'vehicle_characteristics_param_file' : vehicle_characteristics_param_file, 
+                    'vehicle_config_param_file' : vehicle_config_param_file,
+                    'enable_guidance_plugin_validator' : enable_guidance_plugin_validator,
+                    'strategic_plugins_to_validate' : strategic_plugins_to_validate,
+                    'tactical_plugins_to_validate' : tactical_plugins_to_validate,
+                    'control_plugins_to_validate' : control_plugins_to_validate,
+                    'subsystem_controller_param_file' : [vehicle_config_dir, '/SubsystemControllerParams.yaml'],
+                }.items()
+            ),
+        ]
+    )
+
+
+    drivers_group = GroupAction(
+        condition=IfCondition(PythonExpression(["'", system_architecture, "' == 'single' or '", system_architecture, "' == 'dual' and '", host_placement, "' == 'manager''"])),
+        actions=[
+            PushRosNamespace(EnvironmentVariable('CARMA_INTR_NS', default_value='hardware_interface')),
+            IncludeLaunchDescription(
+                PythonLaunchDescriptionSource([ThisLaunchFileDir(), '/drivers.launch.py']),
+                launch_arguments = { 
+                    'vehicle_config_param_file' : vehicle_config_param_file,
+                    'subsystem_controller_param_file' : [vehicle_config_dir, '/SubsystemControllerParams.yaml'],
+                }.items()
+            ),
+        ]
+    )
+
+
+    system_controller = Node(
+        package='system_controller',
+        name='system_controller',
+        executable='system_controller',
+        parameters=[ system_controller_param_file ],
+        on_exit = Shutdown(), # Mark the subsystem controller as required for segfaults
+        arguments=['--ros-args', '--log-level', GetLogLevel('system_controller', env_log_levels)]
+    )
+
+
+    ui_group = GroupAction(
+        condition=IfCondition(PythonExpression(["'", system_architecture, "' == 'single' or '", system_architecture, "' == 'dual' and '", host_placement, "' == 'manager''"])),
+        actions=[
+            PushRosNamespace(EnvironmentVariable('CARMA_UI_NS', default_value='ui')),
+            IncludeLaunchDescription(
+                PythonLaunchDescriptionSource([ThisLaunchFileDir(), '/ui.launch.py']),
+                launch_arguments={
+                'port' : port
+                }.items()
+            ),
+        ]
+    )
+
+
+    return LaunchDescription([
         declare_vehicle_calibration_dir_arg,
         declare_vehicle_config_dir_arg,
         declare_vehicle_characteristics_param_file_arg,
@@ -178,160 +318,16 @@ def generate_launch_description():
         declare_area,
         declare_arealist_path,
         declare_vector_map_file,
-        declare_simulation_mode  
+        declare_simulation_mode,
+        declare_system_architecture,
+        declare_host_placement,
+        drivers_group,
+        transform_group,
+        environment_group,
+        localization_group,
+        v2x_group,
+        guidance_group,
+        ros2_rosbag_launch,
+        ui_group,
+        system_controller
     ])
-
-    # condition=IfCondition(PythonExpression(["'", system_architecture,"' == 'dual' and '", host_placement, "' == 'manager'"]))
-
-    # Launch ROS2 rosbag logging
-    ros2_rosbag_launch = GroupAction(
-        actions=[
-            IncludeLaunchDescription(
-                PythonLaunchDescriptionSource([ThisLaunchFileDir(), '/ros2_rosbag.launch.py']),
-                launch_arguments = {
-                    'vehicle_config_dir' : vehicle_config_dir,
-                    'vehicle_config_param_file' : vehicle_config_param_file
-                    }.items()
-            )
-        ]
-    )
-    carma_launch_description.add_action(ros2_rosbag_launch)
-
-    # Nodes
-    transform_group = GroupAction(
-        actions=[
-            PushRosNamespace(EnvironmentVariable('CARMA_TF_NS', default_value='/')),
-            IncludeLaunchDescription(
-                condition=IfCondition(PythonExpression(["'", system_architecture,"' == 'single' or'" "'", system_architecture,"' == 'dual' and '", host_placement, "' == 'manager'"])),
-                PythonLaunchDescriptionSource([ThisLaunchFileDir(), '/transforms.launch.py'])
-            ),
-        ]
-    )
-    carma_launch_description.add_action(transform_group)
-
-
-    environment_group = GroupAction(
-        actions=[
-            PushRosNamespace(EnvironmentVariable('CARMA_ENV_NS', default_value='environment')),
-            IncludeLaunchDescription(
-                condition=IfCondition(PythonExpression(["'", system_architecture,"' == 'single' or'" "'", system_architecture,"' == 'dual' and '", host_placement, "' == 'manager'"])),
-                PythonLaunchDescriptionSource([ThisLaunchFileDir(), '/environment.launch.py']),
-                launch_arguments = { 
-                    'subsystem_controller_param_file' : [vehicle_config_dir, '/SubsystemControllerParams.yaml'],
-                    'vehicle_config_param_file' : vehicle_config_param_file,
-                    'vehicle_characteristics_param_file' : vehicle_characteristics_param_file,
-                    'vector_map_file' : vector_map_file
-                    }.items()
-            ),
-        ]
-    )
-    carma_launch_description.add_action(environment_group)
-
-
-    localization_group = GroupAction(
-        actions=[
-            PushRosNamespace(EnvironmentVariable('CARMA_LOCZ_NS', default_value='localization')),
-            IncludeLaunchDescription(
-                condition=IfCondition(PythonExpression(["'", system_architecture,"' == 'single' or'" "'", system_architecture,"' == 'dual' and '", host_placement, "' == 'manager'"])),
-                PythonLaunchDescriptionSource([ThisLaunchFileDir(), '/localization.launch.py']),
-                launch_arguments = { 
-                    'subsystem_controller_param_file' : [vehicle_config_dir, '/SubsystemControllerParams.yaml'],
-                    'load_type' : load_type,
-                    'single_pcd_path' : single_pcd_path,
-                    'area' : area,
-                    'arealist_path' : arealist_path,
-                    'vector_map_file' : vector_map_file,
-                    'vehicle_calibration_dir': vehicle_calibration_dir,
-                    'simulation_mode': simulation_mode,
-                }.items()
-            )
-        ]
-    )
-    carma_launch_description.add_action(localization_group)
-
-
-    v2x_group = GroupAction(
-        actions=[
-            PushRosNamespace(EnvironmentVariable('CARMA_MSG_NS', default_value='message')),
-            IncludeLaunchDescription(
-                condition=IfCondition(PythonExpression(["'", system_architecture,"' == 'single' or'" "'", system_architecture,"' == 'dual' and '", host_placement, "' == 'manager'"])),
-                PythonLaunchDescriptionSource([ThisLaunchFileDir(), '/message.launch.py']),
-                launch_arguments = { 
-                    'vehicle_characteristics_param_file' : vehicle_characteristics_param_file,
-                    'vehicle_config_param_file' : vehicle_config_param_file,
-                    'enable_opening_tunnels'  : enable_opening_tunnels,
-                    'subsystem_controller_param_file' : [vehicle_config_dir, '/SubsystemControllerParams.yaml']
-                }.items()
-            ),
-        ]
-    )
-    carma_launch_description.add_action(v2x_group)
-
-
-    guidance_group = GroupAction(
-        actions=[
-            PushRosNamespace(EnvironmentVariable('CARMA_GUIDE_NS', default_value='guidance')),
-            
-            IncludeLaunchDescription(
-                condition=IfCondition(PythonExpression(["'", system_architecture,"' == 'single' or'" "'", system_architecture,"' == 'dual' and '", host_placement, "' == 'manager'"])),
-                PythonLaunchDescriptionSource([ThisLaunchFileDir(), '/guidance.launch.py']),
-                launch_arguments={
-                    'route_file_folder' : route_file_folder,
-                    'vehicle_characteristics_param_file' : vehicle_characteristics_param_file, 
-                    'vehicle_config_param_file' : vehicle_config_param_file,
-                    'enable_guidance_plugin_validator' : enable_guidance_plugin_validator,
-                    'strategic_plugins_to_validate' : strategic_plugins_to_validate,
-                    'tactical_plugins_to_validate' : tactical_plugins_to_validate,
-                    'control_plugins_to_validate' : control_plugins_to_validate,
-                    'subsystem_controller_param_file' : [vehicle_config_dir, '/SubsystemControllerParams.yaml'],
-                }.items()
-            ),
-        ]
-    )
-    carma_launch_description.add_action(guidance_group)
-
-
-    drivers_group = GroupAction(
-        actions=[
-            PushRosNamespace(EnvironmentVariable('CARMA_INTR_NS', default_value='hardware_interface')),
-            IncludeLaunchDescription(
-                condition=IfCondition(PythonExpression(["'", system_architecture,"' == 'single' or'" "'", system_architecture,"' == 'dual' and '", host_placement, "' == 'manager'"])),
-                PythonLaunchDescriptionSource([ThisLaunchFileDir(), '/drivers.launch.py']),
-                launch_arguments = { 
-                    'vehicle_config_param_file' : vehicle_config_param_file,
-                    'subsystem_controller_param_file' : [vehicle_config_dir, '/SubsystemControllerParams.yaml'],
-                }.items()
-            ),
-        ]
-    )
-    carma_launch_description.add_action(drivers_group)
-
-
-    system_controller = Node(
-        package='system_controller',
-        name='system_controller',
-        executable='system_controller',
-        parameters=[ system_controller_param_file ],
-        on_exit = Shutdown(), # Mark the subsystem controller as required for segfaults
-        arguments=['--ros-args', '--log-level', GetLogLevel('system_controller', env_log_levels)]
-    )
-    carma_launch_description.add_action(system_controller)
-
-
-    ui_group = GroupAction(
-        actions=[
-            PushRosNamespace(EnvironmentVariable('CARMA_UI_NS', default_value='ui')),
-            
-            IncludeLaunchDescription(
-                condition=IfCondition(PythonExpression(["'", system_architecture,"' == 'single' or'" "'", system_architecture,"' == 'dual' and '", host_placement, "' == 'manager'"])),
-                PythonLaunchDescriptionSource([ThisLaunchFileDir(), '/ui.launch.py']),
-                launch_arguments={
-                'port' : port
-                }.items()
-            ),
-        ]
-    )
-    carma_launch_description.add_action(ui_group)
-
-
-    return carma_launch_description
