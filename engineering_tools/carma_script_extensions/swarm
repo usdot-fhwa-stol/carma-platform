@@ -150,15 +150,22 @@ swarm-config__set() {
 
     if [ ! -z "$(echo $TAG | grep :)" ]; then
         local -r IMAGE_NAME="$TAG"
+        local -r ALT_USER=$(echo $TAG | sed 's/\/.*//')
+        local -r ALT_TAG=$(echo $TAG | sed 's/.*\://')
     else
         local -r IMAGE_NAME="$USERNAME/carma-config:$TAG"
     fi
 
+    echo "$ALT_USER /carma-config $ALT_TAG"
+
     if [ "$(docker images | grep $USERNAME/carma-config | grep $TAG )" ]; then
         echo "Found image, applying to carma-config-volume"
-        docker run --rm --name carma-config-data -v carma-config-data:/opt/carma/vehicle/config -d $USERNAME/carma-config:$TAG
+        docker run --rm --name carma-config-data -v carma-config-data:/opt/carma/vehicle/config -d $IMAGE_NAME
+    elif [ "$(docker images | grep $ALT_USER/carma-config | grep $ALT_TAG )" ]; then
+        echo "Found full image, applying to carma-config-volume"
+        docker run --rm --name carma-config-data -v carma-config-data:/opt/carma/vehicle/config -d $IMAGE_NAME
     else
-        echo "Could not find $USERNAME/carma-config:$TAG in local images"
+        echo "Could not find $IMAGE_NAME in local images"
     fi
 
 }
@@ -328,7 +335,8 @@ Please enter one of the following commands:
               'carma-config-data' which can be found at
               /var/lib/docker/volumes/carma-config-data/_data
             - [empty]
-                - Defaults to a usdotfhwastol image
+                - Defaults to a usdotfhwastol image if only a tag,
+                  otherwise accepts full image names as an arg
             - d 
                 - Defines a usdotfhwastoldev image
             - c
