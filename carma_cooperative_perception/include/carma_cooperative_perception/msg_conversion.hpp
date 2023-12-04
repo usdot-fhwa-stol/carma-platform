@@ -74,9 +74,9 @@ struct MotionModelMapping
 {
   std::uint8_t small_vehicle_model{carma_cooperative_perception_interfaces::msg::Detection::MOTION_MODEL_CTRV};
   std::uint8_t large_vehicle_model{carma_cooperative_perception_interfaces::msg::Detection::MOTION_MODEL_CTRV};
-  std::uint8_t motorcycle_model{carma_cooperative_perception_interfaces::msg::Detection::MOTION_MODEL_CTRA};
-  std::uint8_t pedestrian_model{carma_cooperative_perception_interfaces::msg::Detection::MOTION_MODEL_CV};
-  std::uint8_t unknown_model{carma_cooperative_perception_interfaces::msg::Detection::MOTION_MODEL_CV};
+  std::uint8_t motorcycle_model{carma_cooperative_perception_interfaces::msg::Detection::MOTION_MODEL_CTRV};
+  std::uint8_t pedestrian_model{carma_cooperative_perception_interfaces::msg::Detection::MOTION_MODEL_CTRV};
+  std::uint8_t unknown_model{carma_cooperative_perception_interfaces::msg::Detection::MOTION_MODEL_CTRV};
 };
 
 auto to_detection_msg(
