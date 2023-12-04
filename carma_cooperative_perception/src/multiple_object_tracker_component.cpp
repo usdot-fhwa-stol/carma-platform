@@ -112,7 +112,7 @@ auto make_detection(const carma_cooperative_perception_interfaces::msg::Detectio
       return make_ctra_detection(msg);
 
     case msg.MOTION_MODEL_CV:
-      break;
+      throw std::runtime_error("unsupported motion model type '3: constant velocity (CV)'");
   }
 
   throw std::runtime_error("unkown motion model type '" + std::to_string(msg.motion_model) + "'");
