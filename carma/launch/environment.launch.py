@@ -419,7 +419,7 @@ def generate_launch_description():
                     {'--log-level' : GetLogLevel('cp_external_object_list_to_detection_list_node', env_log_levels) },
                 ],
                 remappings=[
-                    ("input/georeference", "georeference"),
+                    ("input/georeference", [EnvironmentVariable("CARMA_LOCZ_NS", default_value=""), "/map_param_loader/georeference"]),
                     ("output/detections", "full_detection_list"),
                     ("input/external_objects", "external_objects"),
                 ],
@@ -435,7 +435,7 @@ def generate_launch_description():
                     {'--log-level' : GetLogLevel('cp_external_object_list_to_sdsm_node', env_log_levels) },
                 ],
                 remappings=[
-                    ("input/georeference", "georeference"),
+                    ("input/georeference", [EnvironmentVariable("CARMA_LOCZ_NS", default_value=""), "/map_param_loader/georeference"]),
                     ("output/sdsms", [ EnvironmentVariable('CARMA_MSG_NS', default_value=''), "/outgoing_sdsm" ] ),
                     ("input/pose_stamped", [ EnvironmentVariable('CARMA_LOCZ_NS', default_value=''), "/current_pose" ] ),
                     ("input/external_objects", "external_objects"),
