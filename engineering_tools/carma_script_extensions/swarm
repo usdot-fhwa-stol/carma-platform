@@ -31,23 +31,23 @@ swarm__install() {
         exit 1
     fi
 
-    if [ ! -z "$(echo $TAG | grep :)" ]; then
+    if [ -n "$(echo "$TAG" | grep :)" ]; then
         local -r IMAGE_NAME="$TAG"
     else
         local -r IMAGE_NAME="$USERNAME/carma-config:$TAG"
     fi
 
     echo "Downloading $IMAGE_NAME..."
-    docker pull $IMAGE_NAME
+    docker pull "$IMAGE_NAME"
 
     docker run --rm --name carma-config-data -v carma-config-data:/opt/carma/vehicle/config -d "$IMAGE_NAME"
 
-    local -r BACKGROUND_COMPOSE="`docker run --rm -v carma-config-data:/opt/carma/vehicle/config --entrypoint sh busybox:latest -c \
-    'cat /opt/carma/vehicle/config/docker-compose-background-manager.yml'`"
-    local -r MANAGER_COMPOSE="`docker run --rm -v carma-config-data:/opt/carma/vehicle/config --entrypoint sh busybox:latest -c \
-    'cat /opt/carma/vehicle/config/docker-compose-manager.yml'`"
-    local -r WORKER_COMPOSE="`docker run --rm -v carma-config-data:/opt/carma/vehicle/config --entrypoint sh busybox:latest -c \
-    'cat /opt/carma/vehicle/config/docker-compose-worker.yml'`"
+    local -r BACKGROUND_COMPOSE=$(docker run --rm -v carma-config-data:/opt/carma/vehicle/config --entrypoint sh busybox:latest -c \
+    'cat /opt/carma/vehicle/config/docker-compose-background-manager.yml')
+    local -r MANAGER_COMPOSE=$(docker run --rm -v carma-config-data:/opt/carma/vehicle/config --entrypoint sh busybox:latest -c \
+    'cat /opt/carma/vehicle/config/docker-compose-manager.yml')
+    local -r WORKER_COMPOSE=$(docker run --rm -v carma-config-data:/opt/carma/vehicle/config --entrypoint sh busybox:latest -c \
+    'cat /opt/carma/vehicle/config/docker-compose-worker.yml')
 
     echo "Downloading $IMAGE_NAME dependencies..."
     echo "$BACKGROUND_COMPOSE" | docker-compose -f - pull
@@ -60,31 +60,31 @@ swarm__install() {
 swarm__start() {
     echo "Checking Docker Swarm status..."
     # if carma-config-data volume doesn't exist exit and request update
-    if [ ! -z "$(docker volume ls | grep carma-config-data)" ]; then
+    if [ -n "$(docker volume ls | grep carma-config-data)" ]; then
         echo "Found 'carma-config-data' volume"
     else
         echo "Missing 'carma-config-data' volume, add with \"carma swarm update-config <image tag>\""
         exit 1
     fi
 
-    local carma_base=$(__get_image_from_config carma-base:)
-    if [[ -z $carma_base ]]; then
+    local -r CARMA_BASE=$(__get_image_from_config carma-base:)
+    if [[ -z $CARMA_BASE ]]; then
         __pull_newest_carma_base
-        carma_base=$(__get_most_recent_carma_base)
+        CARMA_BASE=$(__get_most_recent_carma_base)
     fi
 
-    MANAGER_INFO=$(docker run -it --rm -v carma-config-data:/opt/carma/vehicle/config $carma_base /bin/sh -c '{ echo "$MANAGER_USER"; echo "@"; echo "$MANAGER_IP"; } | tr -d "\n"')
-    WORKER_INFO=$(docker run -it --rm -v carma-config-data:/opt/carma/vehicle/config $carma_base /bin/sh -c '{ echo "$WORKER_USER"; echo "@"; echo "$WORKER_IP"; } | tr -d "\n"')
+    MANAGER_INFO=$(docker run -it --rm -v carma-config-data:/opt/carma/vehicle/config "$CARMA_BASE" /bin/sh -c '{ echo "$MANAGER_USER"; echo "@"; echo "$MANAGER_IP"; } | tr -d "\n"')
+    WORKER_INFO=$(docker run -it --rm -v carma-config-data:/opt/carma/vehicle/config "$CARMA_BASE" /bin/sh -c '{ echo "$WORKER_USER"; echo "@"; echo "$WORKER_IP"; } | tr -d "\n"')
 
     MANAGER_IP=${MANAGER_INFO#*@}
-    MANAGER_USER=${MANAGER_INFO%%@*}
+    # MANAGER_USER=${MANAGER_INFO%%@*}
 
-    WORKER_IP=${WORKER_INFO#*@}
-    WORKER_USER=${WORKER_INFO%%@*}
+    # WORKER_IP=${WORKER_INFO#*@}
+    # WORKER_USER=${WORKER_INFO%%@*}
 
     if [ "$(docker info | grep Swarm | sed 's/Swarm: //g')" == " inactive" ]; then
         echo "Initalizing Docker Swarm..."
-        docker swarm init --advertise-addr $MANAGER_IP
+        docker swarm init --advertise-addr "$MANAGER_IP"
     else
         echo "Docker Swarm active"
     fi
@@ -112,7 +112,7 @@ swarm__start() {
         echo "Deploying CARMA to dual compute Swarm stack..."
 
         local -r TKN=$(docker swarm join-token -q worker)
-        ssh $WORKER_INFO "docker swarm join --token $TKN $MANAGER_IP:2377"
+        ssh "$WORKER_INFO" "docker swarm join --token $TKN $MANAGER_IP:2377"
 
         docker run --rm -v carma-config-data:/opt/carma/vehicle/config --entrypoint sh busybox:latest -c \
         'cat /opt/carma/vehicle/config/docker-compose-manager.yml' | \
@@ -123,7 +123,7 @@ swarm__start() {
         docker stack deploy --compose-file - carma-worker
         
     
-    elif [ ! -z "$1" ]; then
+    elif [ -n "$1" ]; then
         echo "Unrecognized argument \"swarm start $1\""
     fi
 }
@@ -148,20 +148,21 @@ swarm-config__set() {
         exit 1      
     fi
 
-    if [ ! -z "$(echo $TAG | grep :)" ]; then
+    if [ -n "$(echo "$TAG" | grep :)" ]; then
         local -r IMAGE_NAME="$TAG"
-        local -r ALT_USER=$(echo $TAG | sed 's/\/.*//')
-        local -r ALT_TAG=$(echo $TAG | sed 's/.*\://')
+        local -r ALT_USER=$(echo "$TAG" | sed 's/\/.*//')
+        local -r ALT_TAG=$(echo "$TAG" | sed 's/.*\://')
     else
         local -r IMAGE_NAME="$USERNAME/carma-config:$TAG"
     fi
 
-    if [ "$(docker images | grep $USERNAME/carma-config | grep $TAG )" ]; then
+
+    if [ "$(docker images | grep "$USERNAME"/carma-config | grep "$TAG" )" ]; then
         echo "Found image, applying to carma-config-volume"
-        docker run --rm --name carma-config-data -v carma-config-data:/opt/carma/vehicle/config -d $IMAGE_NAME
-    elif [ "$(docker images | grep $ALT_USER/carma-config | grep $ALT_TAG )" ]; then
+        docker run --rm --name carma-config-data -v carma-config-data:/opt/carma/vehicle/config -d "$IMAGE_NAME"
+    elif [ "$(docker images | grep "$ALT_USER"/carma-config | grep "$ALT_TAG" )" ]; then
         echo "Found full image, applying to carma-config-volume"
-        docker run --rm --name carma-config-data -v carma-config-data:/opt/carma/vehicle/config -d $IMAGE_NAME
+        docker run --rm --name carma-config-data -v carma-config-data:/opt/carma/vehicle/config -d "$IMAGE_NAME"
     else
         echo "Could not find $IMAGE_NAME in local images"
     fi
@@ -172,27 +173,27 @@ swarm-config__set() {
 swarm-config__edit() {
     echo "Opening 'carma-config-data' volume shell with read/write privileges..."
 
-    if [ ! -z "$(docker volume ls | grep carma-config-data)" ]; then
+    if [ -n "$(docker volume ls | grep carma-config-data)" ]; then
         echo "Found 'carma-config-data' volume"
     else
         echo "Missing 'carma-config-data' volume, add with \"carma swarm update-config <image tag>\""
         exit 1
     fi
 
-    local carma_base=$(__get_image_from_config carma-base:)
-    if [[ -z $carma_base ]]; then
+    local -r CARMA_BASE=$(__get_image_from_config carma-base:)
+    if [[ -z $CARMA_BASE ]]; then
         __pull_newest_carma_base
-        carma_base=$(__get_most_recent_carma_base)
+        CARMA_BASE=$(__get_most_recent_carma_base)
     fi
 
-    docker run -it --rm -v carma-config-data:/opt/carma/vehicle/config $carma_base bash
+    docker run -it --rm -v carma-config-data:/opt/carma/vehicle/config "$CARMA_BASE" bash
 }
 
 
 swarm-config__status() {
     # note the image being used
     # remove old compose files not needed due to split can
-    if [ ! -z "$(docker volume ls | grep carma-config-data)" ]; then
+    if [ -n "$(docker volume ls | grep carma-config-data)" ]; then
         echo "Found 'carma-config-data' volume"
     else
         echo "Missing 'carma-config-data' volume, add with \"carma swarm update-config <image tag>\""
@@ -222,7 +223,7 @@ swarm-config__status() {
 swarm__attach() {
     echo "Attaching STDOUT logs to terminal..."
 
-    local SWARM_SERVICES=$(docker service ls --format "{{.Name}}")
+    local -r SWARM_SERVICES=$(docker service ls --format "{{.Name}}")
 
     # this seems to loop forever and cannot be escaped with ctrl+C
     # performance will likely be poor due to combined log streams
@@ -233,7 +234,7 @@ swarm__attach() {
     sleep infinity
 }
 
-
+# Swarm has to be up to successfully register an image
 swarm__register() {
     echo "Adding Docker images to Manager's local registry..."
 
@@ -250,13 +251,13 @@ swarm__register() {
         exit 1
     fi
 
-    local carma_base=$(__get_image_from_config carma-base:)
-    if [[ -z $carma_base ]]; then
+    local -r CARMA_BASE=$(__get_image_from_config carma-base:)
+    if [[ -z $CARMA_BASE ]]; then
         __pull_newest_carma_base
-        carma_base=$(__get_most_recent_carma_base)
+        CARMA_BASE=$(__get_most_recent_carma_base)
     fi
 
-    WORKER_INFO=$(docker run -it --rm -v carma-config-data:/opt/carma/vehicle/config $carma_base /bin/sh -c '{ echo "$WORKER_USER"; echo "@"; echo "$WORKER_IP"; } | tr -d "\n"')
+    WORKER_INFO=$(docker run -it --rm -v carma-config-data:/opt/carma/vehicle/config "$CARMA_BASE" /bin/sh -c '{ echo "$WORKER_USER"; echo "@"; echo "$WORKER_IP"; } | tr -d "\n"')
 
     local -r REGISTRY_PORT=5000
     local -r REGISTRY_HOST="localhost"
@@ -286,12 +287,12 @@ swarm__register() {
 
 swarm__stop() {
     echo "Shutting down swarm..."
-    local carma_base=$(__get_image_from_config carma-base:)
+    local -r CARMA_BASE=$(__get_image_from_config carma-base:)
 
-    WORKER_INFO=$(docker run -it --rm -v carma-config-data:/opt/carma/vehicle/config $carma_base /bin/sh -c '{ echo "$WORKER_USER"; echo "@"; echo "$WORKER_IP"; } | tr -d "\n"')
+    WORKER_INFO=$(docker run -it --rm -v carma-config-data:/opt/carma/vehicle/config "$CARMA_BASE" /bin/sh -c '{ echo "$WORKER_USER"; echo "@"; echo "$WORKER_IP"; } | tr -d "\n"')
 
     if [ "$(docker node ls -f "role=worker" | grep  "Ready" )" ]; then
-        ssh $WORKER_INFO "docker swarm leave" 
+        ssh "$WORKER_INFO" "docker swarm leave" 
     fi
     docker swarm leave --force
 }
@@ -300,16 +301,16 @@ swarm__stop() {
 swarm__help() {
     cat <<HELP
 -------------------------------------------------------------------------------
-| USDOT FHWA STOL CARMA Swarm                                                 |
+| USDOT FHWA STOL CARMA Platform Swarm                                        |
 -------------------------------------------------------------------------------
 
 Please enter one of the following commands:
   swarm
     install <tag/image>
-        - Installs images to the local host based on Compose files
-          contained in the carma-config defined by <tag/image>
-        - [empty]
-            - Defaults to a usdotfhwastol image
+        - Install a configuration identified by <tag> and download 
+          dependencies. Initializes/updates carma-config-data volume
+          for Swarm use. If <tag> is bare (no :), it is assumed to 
+          be a usdotfhwastol/carma-config tag.
         - d 
             - Defines a usdotfhwastoldev image
         - c

@@ -13,7 +13,7 @@
 # limitations under the License.
 
 from ament_index_python import get_package_share_directory
-from launch.actions import Shutdown, ExecuteProcess
+from launch.actions import Shutdown
 from launch import LaunchDescription
 from launch_ros.actions import Node
 from launch.actions import IncludeLaunchDescription
@@ -163,6 +163,7 @@ def generate_launch_description():
 
     # Launch ROS2 rosbag logging
     ros2_rosbag_launch = GroupAction(
+        condition=IfCondition(PythonExpression(["'", system_architecture, "' == 'single' or '(", system_architecture, "' == 'dual' and '", host_placement, "' == 'manager')"])),
         actions=[
             IncludeLaunchDescription(
                 PythonLaunchDescriptionSource([ThisLaunchFileDir(), '/ros2_rosbag.launch.py']),
@@ -176,7 +177,7 @@ def generate_launch_description():
 
     # Nodes
     transform_group = GroupAction(
-        condition=IfCondition(PythonExpression(["'", system_architecture, "' == 'single' or '", system_architecture, "' == 'dual' and '", host_placement, "' == 'manager''"])),
+        condition=IfCondition(PythonExpression(["'", system_architecture, "' == 'single' or '(", system_architecture, "' == 'dual' and '", host_placement, "' == 'manager')"])),
         actions=[
             PushRosNamespace(EnvironmentVariable('CARMA_TF_NS', default_value='/')),
             IncludeLaunchDescription(
@@ -187,7 +188,7 @@ def generate_launch_description():
 
 
     environment_group = GroupAction(
-        condition=IfCondition(PythonExpression(["'", system_architecture, "' == 'single' or '", system_architecture, "' == 'dual' and '", host_placement, "' == 'manager''"])),
+        condition=IfCondition(PythonExpression(["'", system_architecture, "' == 'single' or '(", system_architecture, "' == 'dual' and '", host_placement, "' == 'manager')"])),
         actions=[
             PushRosNamespace(EnvironmentVariable('CARMA_ENV_NS', default_value='environment')),
             IncludeLaunchDescription(
@@ -204,7 +205,7 @@ def generate_launch_description():
 
 
     localization_group = GroupAction(
-        condition=IfCondition(PythonExpression(["'", system_architecture, "' == 'single' or '", system_architecture, "' == 'dual' and '", host_placement, "' == 'manager''"])),
+        condition=IfCondition(PythonExpression(["'", system_architecture, "' == 'single' or '(", system_architecture, "' == 'dual' and '", host_placement, "' == 'manager')"])),
         actions=[
             PushRosNamespace(EnvironmentVariable('CARMA_LOCZ_NS', default_value='localization')),
             IncludeLaunchDescription(
@@ -225,7 +226,7 @@ def generate_launch_description():
 
 
     v2x_group = GroupAction(
-        condition=IfCondition(PythonExpression(["'", system_architecture, "' == 'single' or '", system_architecture, "' == 'dual' and '", host_placement, "' == 'manager''"])),
+        condition=IfCondition(PythonExpression(["'", system_architecture, "' == 'single' or '(", system_architecture, "' == 'dual' and '", host_placement, "' == 'manager')"])),
         actions=[
             PushRosNamespace(EnvironmentVariable('CARMA_MSG_NS', default_value='message')),
             IncludeLaunchDescription(
@@ -242,7 +243,7 @@ def generate_launch_description():
 
 
     guidance_group = GroupAction(
-        condition=IfCondition(PythonExpression(["'", system_architecture, "' == 'single' or '", system_architecture, "' == 'dual' and '", host_placement, "' == 'manager''"])),
+        condition=IfCondition(PythonExpression(["'", system_architecture, "' == 'single' or '(", system_architecture, "' == 'dual' and '", host_placement, "' == 'worker')"])),
         actions=[
             PushRosNamespace(EnvironmentVariable('CARMA_GUIDE_NS', default_value='guidance')),
             IncludeLaunchDescription(
@@ -263,7 +264,7 @@ def generate_launch_description():
 
 
     drivers_group = GroupAction(
-        condition=IfCondition(PythonExpression(["'", system_architecture, "' == 'single' or '", system_architecture, "' == 'dual' and '", host_placement, "' == 'manager''"])),
+        condition=IfCondition(PythonExpression(["'", system_architecture, "' == 'single' or '(", system_architecture, "' == 'dual' and '", host_placement, "' == 'manager')"])),
         actions=[
             PushRosNamespace(EnvironmentVariable('CARMA_INTR_NS', default_value='hardware_interface')),
             IncludeLaunchDescription(
@@ -278,6 +279,7 @@ def generate_launch_description():
 
 
     system_controller = Node(
+        condition=IfCondition(PythonExpression(["'", system_architecture, "' == 'single' or '(", system_architecture, "' == 'dual' and '", host_placement, "' == 'manager')"])),
         package='system_controller',
         name='system_controller',
         executable='system_controller',
@@ -288,7 +290,7 @@ def generate_launch_description():
 
 
     ui_group = GroupAction(
-        condition=IfCondition(PythonExpression(["'", system_architecture, "' == 'single' or '", system_architecture, "' == 'dual' and '", host_placement, "' == 'manager''"])),
+        condition=IfCondition(PythonExpression(["'", system_architecture, "' == 'single' or '(", system_architecture, "' == 'dual' and '", host_placement, "' == 'manager')"])),
         actions=[
             PushRosNamespace(EnvironmentVariable('CARMA_UI_NS', default_value='ui')),
             IncludeLaunchDescription(
