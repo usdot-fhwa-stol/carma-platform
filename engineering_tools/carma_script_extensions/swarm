@@ -270,16 +270,14 @@ swarm__register() {
         docker rmi "$REGISTRY_HOST:$REGISTRY_PORT/$SOURCE_IMAGE_NAME"
     done
 
-    ssh -R "$REGISTRY_PORT:$REGISTRY_HOST:$REGISTRY_PORT" "$WORKER_INFO" sh <<EOF
+    ssh -R "$REGISTRY_PORT:$REGISTRY_HOST:$REGISTRY_PORT" "$WORKER_INFO" sh
         for TARGET_IMAGE_NAME in $IMAGE_NAMES
         do
             echo "Pulling $TARGET_IMAGE_NAME onto $WORKER_INFO from $REGISTRY_HOST:$REGISTRY_PORT"
-            docker pull "$REGISTRY_HOST:$REGISTRY_PORT/$TARGET_IMAGE_NAME" \
-              && docker tag "$REGISTRY_HOST:$REGISTRY_PORT/$TARGET_IMAGE_NAME" "$TARGET_IMAGE_NAME" \
-              && docker rmi "$REGISTRY_HOST:$REGISTRY_PORT/$TARGET_IMAGE_NAME"
+            docker pull "$REGISTRY_HOST:$REGISTRY_PORT/\$TARGET_IMAGE_NAME" \
+              && docker tag "$REGISTRY_HOST:$REGISTRY_PORT/\$TARGET_IMAGE_NAME" "\$TARGET_IMAGE_NAME" \
+              && docker rmi "$REGISTRY_HOST:$REGISTRY_PORT/\$TARGET_IMAGE_NAME"
         done
-
-    EOF
 
     docker stop carma-registry-task
 }
