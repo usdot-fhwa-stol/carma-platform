@@ -82,10 +82,10 @@ namespace carma_wm
   }
 
   lanelet::Id CARMAWorldModel::getTrafficSignalId(uint16_t intersection_id, uint8_t signal_group_id)
-  {    
+  {
     lanelet::Id inter_id = lanelet::InvalId;
     lanelet::Id signal_id = lanelet::InvalId;
-  
+
     if (sim_.intersection_id_to_regem_id_.find(intersection_id) != sim_.intersection_id_to_regem_id_.end())
     {
       inter_id = sim_.intersection_id_to_regem_id_[intersection_id];
@@ -95,7 +95,7 @@ namespace carma_wm
     {
       signal_id = sim_.signal_group_to_traffic_light_id_[signal_group_id];
     }
-    
+
     return signal_id;
   }
 
@@ -133,15 +133,15 @@ namespace carma_wm
     std::vector<lanelet::BusStopRulePtr> bus_stop_list;
     auto curr_downtrack = routeTrackPos(loc).downtrack;
     // shortpath is already sorted by distance
-    
+
     for (const auto &ll : route_->shortestPath())
     {
       auto bus_stops = semantic_map_->laneletLayer.get(ll.id()).regulatoryElementsAs<lanelet::BusStopRule>();
-      if (bus_stops.empty())  
+      if (bus_stops.empty())
       {
         continue;
       }
-      
+
       for (auto bus_stop : bus_stops)
       {
         auto stop_line = bus_stop->stopAndWaitLine();
@@ -335,7 +335,7 @@ namespace carma_wm
 
       if (!bounds_inclusive) // reduce bounds slightly to avoid including exact bounds
       {
-        if (std::max(min.downtrack, start + 0.00001) > std::min(max.downtrack, end - 0.00001) 
+        if (std::max(min.downtrack, start + 0.00001) > std::min(max.downtrack, end - 0.00001)
           || (start == end && (min.downtrack >= start || max.downtrack <= end)))
         {  // Check for 1d intersection
           // No intersection so continue
@@ -344,7 +344,7 @@ namespace carma_wm
       }
       else
       {
-        if (std::max(min.downtrack, start) > std::min(max.downtrack, end) 
+        if (std::max(min.downtrack, start) > std::min(max.downtrack, end)
           || (start == end && (min.downtrack > start || max.downtrack < end)))
         {  // Check for 1d intersection
           // No intersection so continue
@@ -699,7 +699,7 @@ namespace carma_wm
           // Append distance to current centerline
           size_t offset =
               lineStrings.size() == 0 || lineStrings.back().size() == 0 ?
-                0 : 
+                0 :
                 1;  // Prevent duplicate points when concatenating. Not clear if causes an issue at lane changes
           if ((nextCenterline.size() <= 1) || (nextCenterline.size() <= 2 && offset == 1))
           {
@@ -1222,7 +1222,7 @@ namespace carma_wm
     std::vector<lanelet::CarmaTrafficSignalPtr> light_list;
     auto curr_downtrack = routeTrackPos(loc).downtrack;
     // shortpath is already sorted by distance
-    
+
     for (const auto &ll : route_->shortestPath())
     {
       auto lights = semantic_map_->laneletLayer.get(ll.id()).regulatoryElementsAs<lanelet::CarmaTrafficSignal>();
@@ -1230,7 +1230,7 @@ namespace carma_wm
       {
         continue;
       }
-      
+
       for (auto light : lights)
       {
         auto stop_line = light->getStopLine(ll);
@@ -1380,7 +1380,7 @@ namespace carma_wm
   }
 
   lanelet::CarmaTrafficSignalPtr CARMAWorldModel::getTrafficSignal(const lanelet::Id& id) const
-  {    
+  {
     auto general_regem = semantic_map_->regulatoryElementLayer.get(id);
 
     auto lanelets_general = semantic_map_->laneletLayer.findUsages(general_regem);
@@ -1464,9 +1464,9 @@ namespace carma_wm
       RCLCPP_WARN_STREAM(rclcpp::get_logger("carma_wm"), "No intersection_state_list in the newly received SPAT msg. Returning...");
       return;
     }
-    
+
     for (const auto& curr_intersection : spat_msg.intersection_state_list)
-    {      
+    {
 
       for (const auto& current_movement_state : curr_intersection.movement_list)
       {
@@ -1478,7 +1478,7 @@ namespace carma_wm
         }
 
         lanelet::CarmaTrafficSignalPtr curr_light = getTrafficSignal(curr_light_id);
-        
+
         if (curr_light == nullptr)
         {
           continue;
@@ -1518,11 +1518,11 @@ namespace carma_wm
           start_time_dynamic=min_end_time_converter_minute_of_year(start_time_dynamic,curr_intersection.moy_exists,curr_intersection.moy, use_sim_time); // Accounting minute of the year
 
           auto received_state_dynamic = static_cast<lanelet::CarmaTrafficSignalState>(current_movement_event.event_state.movement_phase_state);
-          
+
           sim_.traffic_signal_states_[curr_intersection.id.id][current_movement_state.signal_group].push_back(std::make_pair(min_end_time_dynamic, received_state_dynamic));
           sim_.traffic_signal_start_times_[curr_intersection.id.id][current_movement_state.signal_group].push_back(
                               start_time_dynamic);
-            
+
           RCLCPP_DEBUG_STREAM(rclcpp::get_logger("carma_wm"), "intersection id: " << (int)curr_intersection.id.id << ", signal: " << (int)current_movement_state.signal_group
             << ", start_time: " << std::to_string(lanelet::time::toSec(start_time_dynamic))
             << ", end_time: " << std::to_string(lanelet::time::toSec(min_end_time_dynamic))

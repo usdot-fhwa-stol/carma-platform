@@ -53,9 +53,9 @@ public:
   /**
    * \brief Constructor
    */
-  StopandWait(std::shared_ptr<carma_ros2_utils::CarmaLifecycleNode> nh, 
-                                          carma_wm::WorldModelConstPtr wm, 
-                                          const StopandWaitConfig& config, 
+  StopandWait(std::shared_ptr<carma_ros2_utils::CarmaLifecycleNode> nh,
+                                          carma_wm::WorldModelConstPtr wm,
+                                          const StopandWaitConfig& config,
                                           const std::string& plugin_name,
                                           const std::string& version_id);
 
@@ -77,9 +77,9 @@ public:
    * the vehicle position or earlier. If the first maneuver exceeds this then it's downtrack will be shifted to this
    * value.
    *
-   * ASSUMPTION: Since the vehicle is trying to stop the assumption made is that the speed limit is irrelevant. 
+   * ASSUMPTION: Since the vehicle is trying to stop the assumption made is that the speed limit is irrelevant.
    * ASSUMPTION: The provided maneuver lies on the route shortest path
-   * 
+   *
    * \return List of centerline points paired with speed limits. All output points will have speed matching state.logitudinal_velocity
    */
   std::vector<PointSpeedPair> maneuvers_to_points(const std::vector<carma_planning_msgs::msg::Maneuver>& maneuvers,
@@ -109,6 +109,13 @@ public:
       const std::vector<lanelet::BasicPoint2d>& points, const std::vector<double>& times,
       const std::vector<double>& yaws, rclcpp::Time startTime);
 
+  /**
+   * \brief set the yield service
+   *
+   * \param yield_srv input yield service
+   */
+  void set_yield_client(carma_ros2_utils::ClientPtr<carma_planning_msgs::srv::PlanTrajectory> client);
+
 private:
 
   double epsilon_ = 0.001; //small constant to compare double
@@ -119,6 +126,8 @@ private:
   carma_wm::WorldModelConstPtr wm_;
   StopandWaitConfig config_;
   std::shared_ptr<carma_ros2_utils::CarmaLifecycleNode> nh_;
-  
+  // Service Clients
+  carma_ros2_utils::ClientPtr<carma_planning_msgs::srv::PlanTrajectory> yield_client_;
+
 };
 }  // namespace stop_and_wait_plugin

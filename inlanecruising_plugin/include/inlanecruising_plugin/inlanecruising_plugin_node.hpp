@@ -33,13 +33,13 @@ namespace inlanecruising_plugin
 {
 /**
  * \brief ROS node for the InLaneCruisingPlugin
- */ 
+ */
 class InLaneCruisingPluginNode : public carma_guidance_plugins::TacticalPlugin
 {
 public:
-    
+
   /**
-   * \brief Node constructor 
+   * \brief Node constructor
    */
   explicit InLaneCruisingPluginNode(const rclcpp::NodeOptions &);
 
@@ -47,7 +47,7 @@ public:
   // Overrides
   ////
   carma_ros2_utils::CallbackReturn on_configure_plugin();
-   
+
   bool get_availability() override;
 
   std::string get_version_id() override final;
@@ -55,8 +55,8 @@ public:
   rcl_interfaces::msg::SetParametersResult parameter_update_callback(const std::vector<rclcpp::Parameter> &parameters);
 
   void plan_trajectory_callback(
-    std::shared_ptr<rmw_request_id_t> srv_header, 
-    carma_planning_msgs::srv::PlanTrajectory::Request::SharedPtr req, 
+    std::shared_ptr<rmw_request_id_t> srv_header,
+    carma_planning_msgs::srv::PlanTrajectory::Request::SharedPtr req,
     carma_planning_msgs::srv::PlanTrajectory::Response::SharedPtr resp) override;
 
 private:

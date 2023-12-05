@@ -645,10 +645,10 @@ TEST(BasicAutonomyTest, get_nearest_basic_point_index)
         waypoint_generation::GeneralTrajConfig general_config = waypoint_generation::compose_general_trajectory_config(trajectory_type, 1, 1);
         const waypoint_generation::DetailedTrajConfig config = waypoint_generation::compose_detailed_trajectory_config(0, 0, 0, 0, 0, 5, 0, 0, 20);
         carma_planning_msgs::msg::VehicleState ending_state;
-        
-        std::vector<basic_autonomy::waypoint_generation::PointSpeedPair> points = basic_autonomy::waypoint_generation::create_geometry_profile(maneuvers, 
+
+        std::vector<basic_autonomy::waypoint_generation::PointSpeedPair> points = basic_autonomy::waypoint_generation::create_geometry_profile(maneuvers,
                                                                                     starting_downtrack, cwm, ending_state, state, general_config, config);
-        
+
         EXPECT_EQ(points.back().speed, state.longitudinal_vel);
 
 
@@ -656,9 +656,9 @@ TEST(BasicAutonomyTest, get_nearest_basic_point_index)
         int centerline_size = shortest_path.back().centerline2d().size();
         maneuver.lane_change_maneuver.end_dist = cwm->routeTrackPos(shortest_path.back().centerline2d()[centerline_size/2]).downtrack;
         maneuvers[0] = maneuver;
-        points = basic_autonomy::waypoint_generation::create_geometry_profile(maneuvers, 
+        points = basic_autonomy::waypoint_generation::create_geometry_profile(maneuvers,
                                                                                     starting_downtrack, cwm, ending_state, state, general_config, config);
-        
+
         EXPECT_TRUE(points.size() > 4);
 
         //Test resample linestring
@@ -732,8 +732,8 @@ TEST(BasicAutonomyTest, get_nearest_basic_point_index)
         waypoint_generation::GeneralTrajConfig general_config = waypoint_generation::compose_general_trajectory_config(trajectory_type, 1, 1);
         const waypoint_generation::DetailedTrajConfig config = waypoint_generation::compose_detailed_trajectory_config(0, 1, 0, 0, 0, 5, 0, 0, 20);
         carma_planning_msgs::msg::VehicleState ending_state;
-        
-        std::vector<basic_autonomy::waypoint_generation::PointSpeedPair> points = basic_autonomy::waypoint_generation::create_geometry_profile(maneuvers, 
+
+        std::vector<basic_autonomy::waypoint_generation::PointSpeedPair> points = basic_autonomy::waypoint_generation::create_geometry_profile(maneuvers,
                                                                                     starting_downtrack, cmw, ending_state, state, general_config, config);
         rclcpp::Time state_time(10 * 1e9); // Arbitrarily selected 10 seconds (converted to nanoseconds)
         EXPECT_EQ(points.back().speed, state.longitudinal_vel);
@@ -773,9 +773,9 @@ TEST(BasicAutonomyTest, get_nearest_basic_point_index)
         maneuver.lane_following_maneuver.end_speed = 6.7056;
         maneuver.lane_following_maneuver.end_time = rclcpp::Time(4.4704*1e9); // 4.4704 seconds converted to nanoseconds
 
-        
 
-        std::vector<basic_autonomy::waypoint_generation::PointSpeedPair> points = basic_autonomy::waypoint_generation::create_lanefollow_geometry(maneuver, 
+
+        std::vector<basic_autonomy::waypoint_generation::PointSpeedPair> points = basic_autonomy::waypoint_generation::create_lanefollow_geometry(maneuver,
                                                                                     starting_downtrack, wm, general_config, detailed_config, visited_lanelets);
 
         EXPECT_EQ(visited_lanelets.size(), 3);
@@ -815,12 +815,12 @@ TEST(BasicAutonomyTest, get_nearest_basic_point_index)
         maneuver.lane_following_maneuver.end_time = rclcpp::Time(4.4704*1e9); // 4.4704 seconds converted to nanoseconds
 
         // No defined lanelet ids in the maneuver msg
-        EXPECT_THROW(basic_autonomy::waypoint_generation::create_lanefollow_geometry(maneuver, 
+        EXPECT_THROW(basic_autonomy::waypoint_generation::create_lanefollow_geometry(maneuver,
                                                                                     starting_downtrack, wm, general_config, detailed_config, visited_lanelets), std::invalid_argument);
-        
-        // Defined lanelet ids in the maneuver msg                                                                            
+
+        // Defined lanelet ids in the maneuver msg
         maneuver.lane_following_maneuver.lane_ids.push_back(std::to_string(1200));
-        std::vector<basic_autonomy::waypoint_generation::PointSpeedPair> points = basic_autonomy::waypoint_generation::create_lanefollow_geometry(maneuver, 
+        std::vector<basic_autonomy::waypoint_generation::PointSpeedPair> points = basic_autonomy::waypoint_generation::create_lanefollow_geometry(maneuver,
                                                                                     starting_downtrack, wm, general_config, detailed_config, visited_lanelets);
         EXPECT_EQ(visited_lanelets.size(), 3);
         EXPECT_TRUE(visited_lanelets.find(id1) != visited_lanelets.end()); // the lanelet previously in the visited lanelet set
@@ -828,10 +828,72 @@ TEST(BasicAutonomyTest, get_nearest_basic_point_index)
 
         // Non-following lanelet id in the maneuver msg
         maneuver.lane_following_maneuver.lane_ids.push_back(std::to_string(1202));
-        EXPECT_THROW(basic_autonomy::waypoint_generation::create_lanefollow_geometry(maneuver, 
-                                                                                    starting_downtrack, wm, general_config, 
+        EXPECT_THROW(basic_autonomy::waypoint_generation::create_lanefollow_geometry(maneuver,
+                                                                                    starting_downtrack, wm, general_config,
                                                                                     detailed_config, visited_lanelets), std::invalid_argument);
     }
+
+
+    TEST(BasicAutonomyTest, test_verify_yield)
+    {
+        auto node = std::make_shared<carma_ros2_utils::CarmaLifecycleNode>(rclcpp::NodeOptions());
+
+        std::vector<carma_planning_msgs::msg::TrajectoryPlanPoint> trajectory_points;
+
+        rclcpp::Time startTime = node->now();
+
+        carma_planning_msgs::msg::TrajectoryPlanPoint point_2;
+        point_2.x = 5.0;
+        point_2.y = 0.0;
+        point_2.target_time = startTime + rclcpp::Duration(1, 0);
+        point_2.lane_id = "1";
+        trajectory_points.push_back(point_2);
+
+        carma_planning_msgs::msg::TrajectoryPlanPoint point_3;
+        point_3.x = 10.0;
+        point_3.y = 0.0;
+        point_3.target_time = startTime + rclcpp::Duration(2, 0);
+        point_3.lane_id = "1";
+        trajectory_points.push_back(point_3);
+
+
+        carma_planning_msgs::msg::TrajectoryPlan tp;
+        tp.trajectory_points = trajectory_points;
+
+        bool res = basic_autonomy::waypoint_generation::is_valid_yield_plan(node, tp);
+        ASSERT_TRUE(basic_autonomy::waypoint_generation::is_valid_yield_plan(node, tp));
+
+        carma_planning_msgs::msg::TrajectoryPlan tp2;
+
+        carma_planning_msgs::msg::TrajectoryPlanPoint point_4;
+        point_4.x = 5.0;
+        point_4.y = 0.0;
+        point_4.target_time = startTime + rclcpp::Duration(1, 0);
+        point_4.lane_id = "1";
+        tp2.trajectory_points.push_back(point_4);
+
+        ASSERT_FALSE(basic_autonomy::waypoint_generation::is_valid_yield_plan(node, tp2));
+
+        carma_planning_msgs::msg::TrajectoryPlan tp3;
+
+        carma_planning_msgs::msg::TrajectoryPlanPoint point_5;
+        point_5.x = 5.0;
+        point_5.y = 0.0;
+        point_5.target_time = startTime;
+        point_5.lane_id = "1";
+        tp3.trajectory_points.push_back(point_5);
+
+        carma_planning_msgs::msg::TrajectoryPlanPoint point_6;
+        point_6.x = 10.0;
+        point_6.y = 0.0;
+        point_6.target_time = startTime + rclcpp::Duration(1, 0);
+        point_6.lane_id = "1";
+        tp3.trajectory_points.push_back(point_6);
+
+        ASSERT_FALSE(basic_autonomy::waypoint_generation::is_valid_yield_plan(node, tp2));
+
+    }
+
 
 } // namespace basic_autonomy
 
@@ -849,4 +911,4 @@ int main(int argc, char ** argv)
     rclcpp::shutdown();
 
     return success;
-} 
+}
