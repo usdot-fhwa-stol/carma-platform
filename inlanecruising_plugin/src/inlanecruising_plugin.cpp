@@ -107,55 +107,16 @@ void InLaneCruisingPlugin::plan_trajectory_callback(
     p.planner_plugin_name = plugin_name_;
   }
 
+  resp->trajectory_plan = original_trajectory;
+
   // Aside from the flag, ILC should not call yield_plugin on invalid trajectories
   if (config_.enable_object_avoidance && original_trajectory.trajectory_points.size() >= 2)
   {
-    RCLCPP_DEBUG_STREAM(nh_->get_logger(), "Activate Object Avoidance");
-
-    if (yield_client_ && yield_client_->service_is_ready())
-    {
-      RCLCPP_DEBUG_STREAM(nh_->get_logger(), "Yield Client is valid");
-
-      auto yield_srv = std::make_shared<carma_planning_msgs::srv::PlanTrajectory::Request>();
-      yield_srv->initial_trajectory_plan = original_trajectory;
-      yield_srv->vehicle_state = req->vehicle_state;
-
-      auto yield_resp = yield_client_->async_send_request(yield_srv);
-
-      auto future_status = yield_resp.wait_for(std::chrono::milliseconds(300));
-
-      if (future_status == std::future_status::ready)
-      {
-        RCLCPP_DEBUG_STREAM(nh_->get_logger(), "Received Traj from Yield");
-        carma_planning_msgs::msg::TrajectoryPlan yield_plan = yield_resp.get()->trajectory_plan;
-        if (validate_yield_plan(yield_plan))
-        {
-          RCLCPP_DEBUG_STREAM(nh_->get_logger(), "Yield trajectory validated");
-          resp->trajectory_plan = yield_plan;
-        }
-        else
-        {
-          throw std::invalid_argument("Invalid Yield Trajectory");
-        }
-      }
-      else
-      {
-        // Sometimes the yield plugin's service call may be unsuccessful due to its computationally expensive logic.
-        // However, consecutive calls can be successful, so return original trajectory for now
-        RCLCPP_WARN_STREAM(nh_->get_logger(), "Unable to Call Yield Plugin");
-        resp->trajectory_plan = original_trajectory;
-      }
-    }
-    else
-    {
-      throw std::invalid_argument("Yield Client is unavailable");
-    }
-
+    basic_autonomy::waypoint_generation::modify_trajectory_to_yield_to_obstacles(nh_, req, resp, yield_client_, config_.tactical_plugin_service_call_timeout);
   }
   else
   {
     RCLCPP_DEBUG_STREAM(nh_->get_logger(), "Ignored Object Avoidance");
-    resp->trajectory_plan = original_trajectory;
   }
 
   if (config_.publish_debug) { // Publish the debug message if in debug logging mode
@@ -174,28 +135,6 @@ void InLaneCruisingPlugin::plan_trajectory_callback(
 void InLaneCruisingPlugin::set_yield_client(carma_ros2_utils::ClientPtr<carma_planning_msgs::srv::PlanTrajectory> client)
 {
   yield_client_ = client;
-}
-
-bool InLaneCruisingPlugin::validate_yield_plan(const carma_planning_msgs::msg::TrajectoryPlan& yield_plan) const
-{
-  if (yield_plan.trajectory_points.size()>= 2)
-  {
-    RCLCPP_DEBUG_STREAM(nh_->get_logger(), "Yield Trajectory Time" << rclcpp::Time(yield_plan.trajectory_points[0].target_time).seconds());
-    RCLCPP_DEBUG_STREAM(nh_->get_logger(), "Now:" << nh_->now().seconds());
-    if (rclcpp::Time(yield_plan.trajectory_points[0].target_time) + rclcpp::Duration(5.0, 0) > nh_->now())
-    {
-      return true;
-    }
-    else
-    {
-      RCLCPP_DEBUG_STREAM(nh_->get_logger(), "Old Yield Trajectory");
-    }
-  }
-  else
-  {
-    RCLCPP_DEBUG_STREAM(nh_->get_logger(), "Invalid Yield Trajectory");
-  }
-  return false;
 }
 
 

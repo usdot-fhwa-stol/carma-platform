@@ -32,6 +32,9 @@ struct StopandWaitConfig
   double centerline_sampling_spacing = 1.0; // The gap in meters between points sampled from the lanelet centerlines for planning trajectory positions
   double default_stopping_buffer = 3.0;      // The default buffer in meters used for where the vehicle can come to a stop during execution. This value is overriden by the first value in maneuver.parameters.float_valued_meta_data[]
   double moving_average_window_size = 11.0;  // Moving Average filter window size
+  int tactical_plugin_service_call_timeout = 100;      // Tactical plugin service call request timeout in milliseconds
+  bool enable_object_avoidance = false;      // True to enable object avoidance using yield_plugin
+
   friend std::ostream& operator<<(std::ostream& output, const StopandWaitConfig& c)
   {
     output << "StopandWaitConfig { " << std::endl
@@ -43,6 +46,8 @@ struct StopandWaitConfig
            << "crawl_speed: " << c.crawl_speed << std::endl
            << "centerline_sampling_spacing: " << c.crawl_speed << std::endl
            << "default_stopping_buffer: " << c.crawl_speed << std::endl
+           << "tactical_plugin_service_call_timeout: " << c.tactical_plugin_service_call_timeout << std::endl
+           << "enable_object_avoidance: " << c.enable_object_avoidance << std::endl
            << "}" << std::endl;
     return output;
   }

@@ -48,9 +48,9 @@ using oss = std::ostringstream;
 namespace stop_and_wait_plugin
 {
 
-StopandWait::StopandWait(std::shared_ptr<carma_ros2_utils::CarmaLifecycleNode> nh, 
-                                          carma_wm::WorldModelConstPtr wm, 
-                                          const StopandWaitConfig& config, 
+StopandWait::StopandWait(std::shared_ptr<carma_ros2_utils::CarmaLifecycleNode> nh,
+                                          carma_wm::WorldModelConstPtr wm,
+                                          const StopandWaitConfig& config,
                                           const std::string& plugin_name,
                                           const std::string& version_id)
   : version_id_ (version_id),plugin_name_(plugin_name),config_(config),nh_(nh), wm_(wm)
@@ -80,7 +80,7 @@ bool StopandWait::plan_trajectory_cb(carma_planning_msgs::srv::PlanTrajectory::R
   if (req->vehicle_state.longitudinal_vel < epsilon_)
   {
     RCLCPP_DEBUG_STREAM(rclcpp::get_logger("stop_and_wait_plugin"),"Detected that car is already stopped! Ignoring the request to plan Stop&Wait");
-     
+
     return true;
   }
 
@@ -114,7 +114,7 @@ bool StopandWait::plan_trajectory_cb(carma_planning_msgs::srv::PlanTrajectory::R
 
   // Extract the stopping buffer used to consider a stopping behavior complete
   double stop_location_buffer = config_.default_stopping_buffer;  // If no maneuver meta data is provided we will use the default buffer
-  
+
   double stopping_accel = 0.0;
   if (maneuver_plan[0].stop_and_wait_maneuver.parameters.presence_vector &
       carma_planning_msgs::msg::ManeuverParameters::HAS_FLOAT_META_DATA)
@@ -132,7 +132,7 @@ bool StopandWait::plan_trajectory_cb(carma_planning_msgs::srv::PlanTrajectory::R
     throw std::invalid_argument("stop and wait maneuver message missing required float meta data");
   }
 
-  double initial_speed = req->vehicle_state.longitudinal_vel; //will be modified after compose_trajectory_from_centerline 
+  double initial_speed = req->vehicle_state.longitudinal_vel; //will be modified after compose_trajectory_from_centerline
 
   RCLCPP_DEBUG_STREAM(rclcpp::get_logger("stop_and_wait_plugin"),"Original size: " << points_and_target_speeds.size());
 
@@ -146,6 +146,16 @@ bool StopandWait::plan_trajectory_cb(carma_planning_msgs::srv::PlanTrajectory::R
 
   resp->trajectory_plan = trajectory;
 
+  // Yield for potential obstacles in the road
+  // Aside from the flag, yield_plugin should not be called on invalid trajectories
+  if (config_.enable_object_avoidance && resp->trajectory_plan.trajectory_points.size() >= 2)
+  {
+    basic_autonomy::waypoint_generation::modify_trajectory_to_yield_to_obstacles(nh_, req, resp, yield_client_, config_.tactical_plugin_service_call_timeout);
+  }
+  else
+  {
+    RCLCPP_DEBUG_STREAM(rclcpp::get_logger("stop_and_wait_plugin"), "Ignored Object Avoidance");
+  }
 
   std::chrono::system_clock::time_point end_time = std::chrono::system_clock::now();  // Planning complete
 
@@ -184,7 +194,7 @@ std::vector<PointSpeedPair> StopandWait::maneuvers_to_points(const std::vector<c
   {
     PointSpeedPair pair;
     pair.point = p;
-    pair.speed = starting_speed; // NOTE: Since the vehicle is trying to stop the assumption made is that the speed limit is irrelevant. 
+    pair.speed = starting_speed; // NOTE: Since the vehicle is trying to stop the assumption made is that the speed limit is irrelevant.
     points_and_target_speeds.push_back(pair);
   }
 
@@ -213,7 +223,7 @@ std::vector<carma_planning_msgs::msg::TrajectoryPlanPoint> StopandWait::trajecto
     tpp.yaw = yaws[i];
     tpp.planner_plugin_name = plugin_name_;
     tpp.controller_plugin_name = "default";
- 
+
     traj.push_back(tpp);
   }
 
@@ -253,7 +263,7 @@ std::vector<carma_planning_msgs::msg::TrajectoryPlanPoint> StopandWait::compose_
      break;
    }
   }
-  
+
   if (req_dist > remaining_distance)
   {
 
@@ -290,7 +300,7 @@ std::vector<carma_planning_msgs::msg::TrajectoryPlanPoint> StopandWait::compose_
       prev_pair = pair;
       continue;
     }
-    
+
     if (reached_end || v_i >= starting_speed)
     {  // We are walking backward, so if the prev speed is greater than or equal to the starting speed then we are done
        // backtracking
@@ -302,7 +312,7 @@ std::vector<carma_planning_msgs::msg::TrajectoryPlanPoint> StopandWait::compose_
       prev_pair = pair;
       continue;  // continue until loop end
     }
-   
+
     double v_f = sqrt(v_i * v_i + 2 * target_accel * dx);
 
     PointSpeedPair pair = points[i];
@@ -315,7 +325,7 @@ std::vector<carma_planning_msgs::msg::TrajectoryPlanPoint> StopandWait::compose_
 
   // Now we have a trajectory that decelerates from our end point to somewhere in the maneuver
   std::reverse(final_points.begin(),
-               final_points.end());  
+               final_points.end());
 
   std::vector<double> speeds;
   std::vector<lanelet::BasicPoint2d> raw_points;
@@ -325,7 +335,7 @@ std::vector<carma_planning_msgs::msg::TrajectoryPlanPoint> StopandWait::compose_
   double max_downtrack = inverse_downtracks.back();
   std::vector<double> downtracks = lanelet::utils::transform(inverse_downtracks, [max_downtrack](const auto& d) { return max_downtrack - d; });
   std::reverse(downtracks.begin(),
-               downtracks.end()); 
+               downtracks.end());
 
   bool in_range = false;
   double stopped_downtrack = 0;
@@ -343,7 +353,7 @@ std::vector<carma_planning_msgs::msg::TrajectoryPlanPoint> StopandWait::compose_
 
     if (downtracks.back() - downtrack < stop_location_buffer && filtered_speeds[i] < config_.crawl_speed + one_mph_in_mps)
     {  // if we are within the stopping buffer and going at near crawl speed then command stop
-      
+
       // To avoid any issues in control plugin behavior we only command 0 if the vehicle is inside the buffer
       if (vehicle_in_buffer || (i == filtered_speeds.size() - 1)) { // Vehicle is in the buffer
         filtered_speeds[i] = 0.0;
@@ -406,6 +416,11 @@ void StopandWait::splitPointSpeedPairs(const std::vector<PointSpeedPair>& points
     basic_points->push_back(p.point);
     speeds->push_back(p.speed);
   }
+}
+
+void StopandWait::set_yield_client(carma_ros2_utils::ClientPtr<carma_planning_msgs::srv::PlanTrajectory> client)
+{
+  yield_client_ = client;
 }
 
 }  // namespace stop_and_wait_plugin

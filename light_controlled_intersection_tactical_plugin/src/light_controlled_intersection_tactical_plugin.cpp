@@ -19,24 +19,24 @@ namespace light_controlled_intersection_tactical_plugin
 {
 
 
-    LightControlledIntersectionTacticalPlugin::LightControlledIntersectionTacticalPlugin(carma_wm::WorldModelConstPtr wm, const Config& config, const std::string& plugin_name, 
-        rclcpp::node_interfaces::NodeLoggingInterface::SharedPtr logger)
-        :wm_(wm), config_(config), plugin_name_(plugin_name), logger_(logger)
+    LightControlledIntersectionTacticalPlugin::LightControlledIntersectionTacticalPlugin(carma_wm::WorldModelConstPtr wm, const Config& config, const std::string& plugin_name,
+        std::shared_ptr<carma_ros2_utils::CarmaLifecycleNode> nh)
+        :wm_(wm), config_(config), plugin_name_(plugin_name), nh_(nh)
     {
     }
 
-    void LightControlledIntersectionTacticalPlugin::planTrajectoryCB( 
-        carma_planning_msgs::srv::PlanTrajectory::Request::SharedPtr req, 
+    void LightControlledIntersectionTacticalPlugin::planTrajectoryCB(
+        carma_planning_msgs::srv::PlanTrajectory::Request::SharedPtr req,
         carma_planning_msgs::srv::PlanTrajectory::Response::SharedPtr resp)
     {
         std::chrono::system_clock::time_point start_time = std::chrono::system_clock::now();  // Start timing the execution time for planning so it can be logged
-        
+
         RCLCPP_DEBUG_STREAM(rclcpp::get_logger("light_controlled_intersection_tactical_plugin"), "Starting light controlled intersection trajectory planning");
-        
+
         if(req->maneuver_index_to_plan >= req->maneuver_plan.maneuvers.size())
         {
             throw std::invalid_argument(
-                "Light Control Intersection Plugin asked to plan invalid maneuver index: " + std::to_string(req->maneuver_index_to_plan) + 
+                "Light Control Intersection Plugin asked to plan invalid maneuver index: " + std::to_string(req->maneuver_index_to_plan) +
                 " for plan of size: " + std::to_string(req->maneuver_plan.maneuvers.size()));
         }
 
@@ -48,7 +48,7 @@ namespace light_controlled_intersection_tactical_plugin
             maneuver_plan.push_back(req->maneuver_plan.maneuvers[req->maneuver_index_to_plan]);
             resp->related_maneuvers.push_back(req->maneuver_index_to_plan);
         }
-        else 
+        else
         {
             throw std::invalid_argument("Light Control Intersection Plugin asked to plan unsupported maneuver");
         }
@@ -62,7 +62,7 @@ namespace light_controlled_intersection_tactical_plugin
 
         auto current_lanelets = wm_->getLaneletsFromPoint({req->vehicle_state.x_pos_global, req->vehicle_state.y_pos_global});
         lanelet::ConstLanelet current_lanelet;
-        
+
         if (current_lanelets.empty())
         {
             RCLCPP_ERROR_STREAM(rclcpp::get_logger("light_controlled_intersection_tactical_plugin"), "Given vehicle position is not on the road! Returning...");
@@ -93,11 +93,11 @@ namespace light_controlled_intersection_tactical_plugin
                                                                                     config_.default_downsample_ratio,
                                                                                     config_.turn_downsample_ratio);
 
-        wpg_detail_config = basic_autonomy:: waypoint_generation::compose_detailed_trajectory_config(config_.trajectory_time_length, 
-                                                                                config_.curve_resample_step_size, config_.minimum_speed, 
+        wpg_detail_config = basic_autonomy:: waypoint_generation::compose_detailed_trajectory_config(config_.trajectory_time_length,
+                                                                                config_.curve_resample_step_size, config_.minimum_speed,
                                                                                 config_.vehicle_accel_limit,
-                                                                                config_.lateral_accel_limit, 
-                                                                                config_.speed_moving_average_window_size, 
+                                                                                config_.lateral_accel_limit,
+                                                                                config_.speed_moving_average_window_size,
                                                                                 config_.curvature_moving_average_window_size, config_.back_distance,
                                                                                 config_.buffer_ending_downtrack);
 
@@ -137,7 +137,7 @@ namespace light_controlled_intersection_tactical_plugin
         last_final_speeds_ = reduced_final_speeds;
         last_trajectory_.trajectory_points = reduced_last_traj.trajectory_points;
 
-        
+
         if (is_last_case_successful_ != boost::none && last_case_ != boost::none
             && last_case_.get() == new_case
             && is_new_case_successful == true
@@ -159,7 +159,7 @@ namespace light_controlled_intersection_tactical_plugin
             resp->trajectory_plan = last_trajectory_;
             RCLCPP_DEBUG_STREAM(rclcpp::get_logger("light_controlled_intersection_tactical_plugin"), "Last Traj's target time: " << std::to_string(rclcpp::Time(last_trajectory_.trajectory_points.back().target_time).seconds()) << ", and stamp:" << std::to_string(rclcpp::Time(req->header.stamp).seconds()) << ", and scheduled: " << std::to_string(last_successful_scheduled_entry_time_));
             RCLCPP_DEBUG_STREAM(rclcpp::get_logger("light_controlled_intersection_tactical_plugin"), "EDGE CASE: USING LAST TRAJ: " << (int)last_case_.get());
-        }  
+        }
 
         if (!resp->trajectory_plan.trajectory_points.empty()) // if has valid trajectory saved from before return
         {
@@ -176,10 +176,10 @@ namespace light_controlled_intersection_tactical_plugin
 
             return;
         }
-        
+
         // IF NOT USING LAST TRAJECTORY PLAN NEW TRAJECTORY
 
-        // Create curve-fitting compatible trajectories (with extra back and front attached points) with raw speed limits from maneuver 
+        // Create curve-fitting compatible trajectories (with extra back and front attached points) with raw speed limits from maneuver
         auto points_and_target_speeds = createGeometryProfile(maneuver_plan, std::max((double)0, current_downtrack_ - config_.back_distance),
                                                                                 wm_, ending_state_before_buffer_, req->vehicle_state, wpg_general_config, wpg_detail_config);
 
@@ -197,30 +197,30 @@ namespace light_controlled_intersection_tactical_plugin
         trajectory.trajectory_id = boost::uuids::to_string(boost::uuids::random_generator()());
 
         // Compose smooth trajectory/speed by resampling
-        trajectory.trajectory_points = basic_autonomy::waypoint_generation::compose_lanefollow_trajectory_from_path(points_and_target_speeds, 
-                                                                                    req->vehicle_state, req->header.stamp, wm_, ending_state_before_buffer_, debug_msg_, 
+        trajectory.trajectory_points = basic_autonomy::waypoint_generation::compose_lanefollow_trajectory_from_path(points_and_target_speeds,
+                                                                                    req->vehicle_state, req->header.stamp, wm_, ending_state_before_buffer_, debug_msg_,
                                                                                     wpg_detail_config); // Compute the trajectory
 
         // Set the planning plugin field name
         for (auto& p : trajectory.trajectory_points) {
             p.planner_plugin_name = plugin_name_;
         }
-                
+
         if (trajectory.trajectory_points.size () < 2)
         {
             if (last_trajectory_.trajectory_points.size() >= 2
                 && rclcpp::Time(last_trajectory_.trajectory_points.back().target_time) > rclcpp::Time(req->header.stamp))
             {
                 resp->trajectory_plan = last_trajectory_;
-                RCLCPP_WARN_STREAM(rclcpp::get_logger("light_controlled_intersection_tactical_plugin"), "Failed to generate new trajectory, so using last valid trajectory!");    
+                RCLCPP_WARN_STREAM(rclcpp::get_logger("light_controlled_intersection_tactical_plugin"), "Failed to generate new trajectory, so using last valid trajectory!");
             }
             else
             {
                 resp->trajectory_plan = trajectory;
-                RCLCPP_WARN_STREAM(rclcpp::get_logger("light_controlled_intersection_tactical_plugin"), "Failed to generate new trajectory or use old valid trajectory, so returning empty/invalid trajectory!");    
+                RCLCPP_WARN_STREAM(rclcpp::get_logger("light_controlled_intersection_tactical_plugin"), "Failed to generate new trajectory or use old valid trajectory, so returning empty/invalid trajectory!");
             }
         }
-        else 
+        else
         {
             last_trajectory_ = trajectory;
             resp->trajectory_plan = trajectory;
@@ -235,11 +235,22 @@ namespace light_controlled_intersection_tactical_plugin
                 RCLCPP_DEBUG_STREAM(rclcpp::get_logger("light_controlled_intersection_tactical_plugin"), "last_successful_ending_downtrack_:" << last_successful_ending_downtrack_ << ", last_successful_scheduled_entry_time_: " << std::to_string(last_successful_scheduled_entry_time_));
             }
             RCLCPP_DEBUG_STREAM(rclcpp::get_logger("light_controlled_intersection_tactical_plugin"), "USING NEW CASE!!! : " << (int)last_case_.get());
-        
+
         }
         RCLCPP_DEBUG_STREAM(rclcpp::get_logger("light_controlled_intersection_tactical_plugin"), "Debug: new case:" << (int) new_case << ", is_new_case_successful: " << is_new_case_successful);
 
         resp->trajectory_plan.initial_longitudinal_velocity = last_final_speeds_.front();
+
+        // Yield for potential obstacles in the road
+        // Aside from the flag, yield_plugin should not be called on invalid trajectories
+        if (config_.enable_object_avoidance && resp->trajectory_plan.trajectory_points.size() >= 2)
+        {
+            basic_autonomy::waypoint_generation::modify_trajectory_to_yield_to_obstacles(nh_, req, resp, yield_client_, config_.tactical_plugin_service_call_timeout);
+        }
+        else
+        {
+            RCLCPP_DEBUG_STREAM(rclcpp::get_logger("light_controlled_intersection_tactical_plugin"), "Ignored Object Avoidance");
+        }
 
         resp->maneuver_status.push_back(carma_planning_msgs::srv::PlanTrajectory::Response::MANEUVER_IN_PROGRESS);
 
@@ -251,14 +262,14 @@ namespace light_controlled_intersection_tactical_plugin
         return;
     }
 
-    void LightControlledIntersectionTacticalPlugin::applyTrajectorySmoothingAlgorithm(const carma_wm::WorldModelConstPtr& wm, std::vector<PointSpeedPair>& points_and_target_speeds, double start_dist, double remaining_dist, 
+    void LightControlledIntersectionTacticalPlugin::applyTrajectorySmoothingAlgorithm(const carma_wm::WorldModelConstPtr& wm, std::vector<PointSpeedPair>& points_and_target_speeds, double start_dist, double remaining_dist,
                                                 double starting_speed, double departure_speed, TrajectoryParams tsp)
     {
         if (points_and_target_speeds.empty())
         {
             throw std::invalid_argument("Point and target speed list is empty! Unable to apply case one speed profile...");
         }
-        
+
         // Checking route geometry start against start_dist and adjust profile
         double planning_downtrack_start = wm->routeTrackPos(points_and_target_speeds[0].point).downtrack; // this can include buffered points earlier than maneuver start_dist
 
@@ -283,23 +294,23 @@ namespace light_controlled_intersection_tactical_plugin
         if (planning_downtrack_start < start_dist)
         {
             //Account for the buffer distance that is technically not part of this maneuver
-            
+
             total_dist_planned = planning_downtrack_start - start_dist;
-            RCLCPP_DEBUG_STREAM(rclcpp::get_logger("light_controlled_intersection_tactical_plugin"), "buffered section is present. Adjusted total_dist_planned to: " << total_dist_planned);      
+            RCLCPP_DEBUG_STREAM(rclcpp::get_logger("light_controlled_intersection_tactical_plugin"), "buffered section is present. Adjusted total_dist_planned to: " << total_dist_planned);
         }
-        
+
         double prev_speed = starting_speed;
         auto prev_point = points_and_target_speeds.front();
-        
+
         for(auto& p : points_and_target_speeds)
         {
             double delta_d = lanelet::geometry::distance2d(prev_point.point, p.point);
-            total_dist_planned += delta_d;  
+            total_dist_planned += delta_d;
 
             //Apply the speed from algorithm at dist covered
             //Kinematic: v_f = sqrt(v_o^2 + 2*a*d)
             double speed_i;
-            if (total_dist_planned <= epsilon_) 
+            if (total_dist_planned <= epsilon_)
             {
                 //Keep target speed same for buffer distance portion
                 speed_i = starting_speed;
@@ -317,7 +328,7 @@ namespace light_controlled_intersection_tactical_plugin
                 //Third segment
                 speed_i = sqrt(std::max(pow(tsp.v2_, 2) + 2 * tsp.a3_ * (total_dist_planned - dist2), 0.0)); //std::max to ensure negative value is not sqrt
             }
-            else 
+            else
             {
                 //buffer points that will be cut
                 speed_i = prev_speed;
@@ -330,7 +341,7 @@ namespace light_controlled_intersection_tactical_plugin
             }
 
             p.speed = std::max({speed_i, config_.minimum_speed, algo_min_speed});
-            p.speed = std::min({p.speed, speed_limit_, algo_max_speed}); 
+            p.speed = std::min({p.speed, speed_limit_, algo_max_speed});
             RCLCPP_DEBUG_STREAM(rclcpp::get_logger("light_controlled_intersection_tactical_plugin"), "Applied speed: " << p.speed << ", at dist: " << total_dist_planned);
 
             prev_point = p;
@@ -340,7 +351,7 @@ namespace light_controlled_intersection_tactical_plugin
 
     void LightControlledIntersectionTacticalPlugin::applyOptimizedTargetSpeedProfile(const carma_planning_msgs::msg::Maneuver& maneuver, const double starting_speed, std::vector<PointSpeedPair>& points_and_target_speeds)
     {
-        if(GET_MANEUVER_PROPERTY(maneuver, parameters.float_valued_meta_data).size() < 9 || 
+        if(GET_MANEUVER_PROPERTY(maneuver, parameters.float_valued_meta_data).size() < 9 ||
             GET_MANEUVER_PROPERTY(maneuver, parameters.int_valued_meta_data).size() < 2 ){
             throw std::invalid_argument("There must be 9 float_valued_meta_data and 2 int_valued_meta_data to apply algorithm's parameters.");
         }
@@ -366,7 +377,7 @@ namespace light_controlled_intersection_tactical_plugin
         double entry_dist = ending_downtrack - starting_downtrack;
 
         // change speed profile depending on algorithm case starting from maneuver start_dist
-        applyTrajectorySmoothingAlgorithm(wm_, points_and_target_speeds, starting_downtrack, entry_dist, starting_speed, 
+        applyTrajectorySmoothingAlgorithm(wm_, points_and_target_speeds, starting_downtrack, entry_dist, starting_speed,
                                                 departure_speed, tsp);
     }
 
@@ -388,7 +399,7 @@ namespace light_controlled_intersection_tactical_plugin
                                                                         const GeneralTrajConfig &general_config, const DetailedTrajConfig &detailed_config)
     {
         std::vector<PointSpeedPair> points_and_target_speeds;
-        
+
         bool first = true;
         std::unordered_set<lanelet::Id> visited_lanelets;
         std::vector<carma_planning_msgs::msg::Maneuver> processed_maneuvers;
@@ -400,7 +411,7 @@ namespace light_controlled_intersection_tactical_plugin
             auto maneuver = maneuvers.front();
 
             double starting_downtrack = GET_MANEUVER_PROPERTY(maneuver, start_dist);
-            
+
             starting_downtrack = std::min(starting_downtrack, max_starting_downtrack);
 
             RCLCPP_DEBUG_STREAM(rclcpp::get_logger("light_controlled_intersection_tactical_plugin"), "Used downtrack: " << starting_downtrack);
@@ -413,25 +424,30 @@ namespace light_controlled_intersection_tactical_plugin
 
             RCLCPP_DEBUG_STREAM(rclcpp::get_logger("light_controlled_intersection_tactical_plugin"), "Creating Lane Follow Geometry");
             std::vector<PointSpeedPair> lane_follow_points = basic_autonomy::waypoint_generation::create_lanefollow_geometry(maneuver, starting_downtrack, wm, general_config, detailed_config, visited_lanelets);
-            points_and_target_speeds.insert(points_and_target_speeds.end(), lane_follow_points.begin(), lane_follow_points.end());   
-            processed_maneuvers.push_back(maneuver);         
+            points_and_target_speeds.insert(points_and_target_speeds.end(), lane_follow_points.begin(), lane_follow_points.end());
+            processed_maneuvers.push_back(maneuver);
         }
-        else 
+        else
         {
             throw std::invalid_argument("Light Control Intersection Plugin can only create a geometry profile for one maneuver");
         }
 
-        //Add buffer ending to lane follow points at the end of maneuver(s) end dist 
+        //Add buffer ending to lane follow points at the end of maneuver(s) end dist
         if(!processed_maneuvers.empty() && processed_maneuvers.back().type == carma_planning_msgs::msg::Maneuver::LANE_FOLLOWING){
             points_and_target_speeds = add_lanefollow_buffer(wm, points_and_target_speeds, processed_maneuvers, ending_state_before_buffer, detailed_config);
         }
-        
+
         return points_and_target_speeds;
     }
 
-    void LightControlledIntersectionTacticalPlugin::setConfig(const Config& config) 
+    void LightControlledIntersectionTacticalPlugin::setConfig(const Config& config)
     {
         config_ = config;
+    }
+
+    void LightControlledIntersectionTacticalPlugin::set_yield_client(carma_ros2_utils::ClientPtr<carma_planning_msgs::srv::PlanTrajectory> client)
+    {
+        yield_client_ = client;
     }
 
 
