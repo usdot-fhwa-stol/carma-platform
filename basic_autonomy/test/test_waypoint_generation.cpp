@@ -860,8 +860,8 @@ TEST(BasicAutonomyTest, get_nearest_basic_point_index)
         carma_planning_msgs::msg::TrajectoryPlan tp;
         tp.trajectory_points = trajectory_points;
 
-        bool res = basic_autonomy::waypoint_generation::validate_yield_plan(node, tp);
-        ASSERT_TRUE(basic_autonomy::waypoint_generation::validate_yield_plan(node, tp));
+        bool res = basic_autonomy::waypoint_generation::is_valid_yield_plan(node, tp);
+        ASSERT_TRUE(basic_autonomy::waypoint_generation::is_valid_yield_plan(node, tp));
 
         carma_planning_msgs::msg::TrajectoryPlan tp2;
 
@@ -872,7 +872,7 @@ TEST(BasicAutonomyTest, get_nearest_basic_point_index)
         point_4.lane_id = "1";
         tp2.trajectory_points.push_back(point_4);
 
-        ASSERT_FALSE(basic_autonomy::waypoint_generation::validate_yield_plan(node, tp2));
+        ASSERT_FALSE(basic_autonomy::waypoint_generation::is_valid_yield_plan(node, tp2));
 
         carma_planning_msgs::msg::TrajectoryPlan tp3;
 
@@ -890,7 +890,7 @@ TEST(BasicAutonomyTest, get_nearest_basic_point_index)
         point_6.lane_id = "1";
         tp3.trajectory_points.push_back(point_6);
 
-        ASSERT_FALSE(basic_autonomy::waypoint_generation::validate_yield_plan(node, tp2));
+        ASSERT_FALSE(basic_autonomy::waypoint_generation::is_valid_yield_plan(node, tp2));
 
     }
 

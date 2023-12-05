@@ -390,7 +390,7 @@ namespace basic_autonomy
          *
          * \return true or false
          */
-        bool validate_yield_plan(std::shared_ptr<carma_ros2_utils::CarmaLifecycleNode> node_handler, const carma_planning_msgs::msg::TrajectoryPlan& yield_plan);
+        bool is_valid_yield_plan(std::shared_ptr<carma_ros2_utils::CarmaLifecycleNode> node_handler, const carma_planning_msgs::msg::TrajectoryPlan& yield_plan);
     }
 
 } // basic_autonomy
