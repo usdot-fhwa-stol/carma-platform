@@ -101,7 +101,7 @@ namespace yield_plugin
         throw std::invalid_argument("No map projector available for ecef conversion");
     }
 
-    lanelet::BasicPoint3d map_point = map_projector_->projectECEF( { (double)ecef_point.ecef_x/100.0, (double)ecef_point.ecef_y/100.0, (double)ecef_point.ecef_z/100.0 } , 1);
+    lanelet::BasicPoint3d map_point = map_projector_->projectECEF( { static_cast<double>(ecef_point.ecef_x)/100.0, static_cast<double>(ecef_point.ecef_y)/100.0, static_cast<double>(ecef_point.ecef_z)/100.0 } , 1);
 
     return lanelet::traits::to2D(map_point);
   }
@@ -168,7 +168,7 @@ namespace yield_plugin
         int req_traj_fractional = pt.get<int>("f");
         int start_lanelet_id = pt.get<int>("sl");
         int end_lanelet_id = pt.get<int>("el");
-        double req_traj_speed = (double)req_traj_speed_full + (double)(req_traj_fractional)/10.0;
+        double req_traj_speed = static_cast<double>(req_traj_speed_full) + static_cast<double>(req_traj_fractional)/10.0;
         RCLCPP_DEBUG_STREAM(nh_->get_logger(),"req_traj_speed" << req_traj_speed);
         RCLCPP_DEBUG_STREAM(nh_->get_logger(),"start_lanelet_id" << start_lanelet_id);
         RCLCPP_DEBUG_STREAM(nh_->get_logger(),"end_lanelet_id" << end_lanelet_id);
@@ -177,13 +177,13 @@ namespace yield_plugin
 
         req_traj_plan = convert_eceftrajectory_to_mappoints(incoming_trajectory);
 
-        double req_expiration_sec = (double)incoming_request.expiration;
+        double req_expiration_sec = static_cast<double>(incoming_request.expiration);
         double current_time_sec = nh_->now().seconds();
 
         bool response_to_clc_req = false;
         // ensure there is enough time for the yield
         double req_plan_time = req_expiration_sec - current_time_sec;
-        double req_timestamp = (double)incoming_request.m_header.timestamp / 1000.0 - current_time_sec;
+        double req_timestamp = static_cast<double>(incoming_request.m_header.timestamp) / 1000.0 - current_time_sec;
         set_incoming_request_info(req_traj_plan, req_traj_speed, req_plan_time, req_timestamp);
 
 
@@ -534,7 +534,8 @@ namespace yield_plugin
       RCLCPP_WARN(nh_->get_logger(), "Yield plugin received less than 2 points in update_traj_for_object, returning unchanged...");
       return original_tp;
     }
-    else if (original_tp.trajectory_points.empty())
+
+    if (original_tp.trajectory_points.empty())
     {
       RCLCPP_ERROR(nh_->get_logger(), "Yield plugin received empty trajectory plan in update_traj_for_object");
       throw std::invalid_argument("Yield plugin received empty trajectory plan in update_traj_for_object");
@@ -708,7 +709,7 @@ namespace yield_plugin
     double result = 0;
     for (size_t i = 0; i < coeff.size(); i++)
     {
-      double value = coeff.at(i) * pow(x, (int)(coeff.size() - 1 - i));
+      double value = coeff.at(i) * pow(x, static_cast<int>(coeff.size() - 1 - i));
       result = result + value;
     }
     return result;
@@ -719,7 +720,7 @@ namespace yield_plugin
     double result = 0;
     for (size_t i = 0; i < coeff.size()-1; i++)
     {
-      double value = (int)(coeff.size() - 1 - i) * coeff.at(i) * pow(x, (int)(coeff.size() - 2 - i));
+      double value = static_cast<int>(coeff.size() - 1 - i) * coeff.at(i) * pow(x, static_cast<int>(coeff.size() - 2 - i));
       result = result + value;
     }
     return result;

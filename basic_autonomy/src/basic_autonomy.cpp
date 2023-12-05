@@ -1304,42 +1304,39 @@ namespace basic_autonomy
         {
             RCLCPP_DEBUG_STREAM(node_handler->get_logger(), "Activate Object Avoidance");
 
-            if (yield_client && yield_client->service_is_ready())
+            if (!yield_client || !yield_client->service_is_ready())
             {
-                RCLCPP_DEBUG_STREAM(node_handler->get_logger(), "Yield Client is valid");
+                throw std::runtime_error("Yield Client is not set or unavailable after configuration state of lifecycle");
+            }
 
-                auto yield_srv = std::make_shared<carma_planning_msgs::srv::PlanTrajectory::Request>();
-                yield_srv->initial_trajectory_plan = resp->trajectory_plan;
-                yield_srv->vehicle_state = req->vehicle_state;
+            RCLCPP_DEBUG_STREAM(node_handler->get_logger(), "Yield Client is valid");
 
-                auto yield_resp = yield_client->async_send_request(yield_srv);
+            auto yield_srv = std::make_shared<carma_planning_msgs::srv::PlanTrajectory::Request>();
+            yield_srv->initial_trajectory_plan = resp->trajectory_plan;
+            yield_srv->vehicle_state = req->vehicle_state;
 
-                auto future_status = yield_resp.wait_for(std::chrono::milliseconds(yield_plugin_service_call_timeout));
+            auto yield_resp = yield_client->async_send_request(yield_srv);
 
-                if (future_status == std::future_status::ready)
-                {
-                    RCLCPP_DEBUG_STREAM(node_handler->get_logger(), "Received Traj from Yield");
-                    carma_planning_msgs::msg::TrajectoryPlan yield_plan = yield_resp.get()->trajectory_plan;
-                    if (validate_yield_plan(node_handler, yield_plan))
-                    {
-                        RCLCPP_DEBUG_STREAM(node_handler->get_logger(), "Yield trajectory validated");
-                        resp->trajectory_plan = yield_plan;
-                    }
-                    else
-                    {
-                        throw std::invalid_argument("Invalid Yield Trajectory");
-                    }
-                }
-                else
-                {
-                    // Sometimes the yield plugin's service call may be unsuccessful due to its computationally expensive logic.
-                    // However, consecutive calls can be successful, so return original trajectory for now
-                    RCLCPP_WARN_STREAM(node_handler->get_logger(), "Unable to Call Yield Plugin");
-                }
+            auto future_status = yield_resp.wait_for(std::chrono::milliseconds(yield_plugin_service_call_timeout));
+
+            if (future_status != std::future_status::ready)
+            {
+                // Sometimes the yield plugin's service call may be unsuccessful due to its computationally expensive logic.
+                // However, consecutive calls can be successful, so return original trajectory for now
+                RCLCPP_WARN_STREAM(node_handler->get_logger(), "Service request to yield plugin timed out waiting on a reply from the service server");
+                return resp;
+            }
+
+            RCLCPP_DEBUG_STREAM(node_handler->get_logger(), "Received Traj from Yield");
+            carma_planning_msgs::msg::TrajectoryPlan yield_plan = yield_resp.get()->trajectory_plan;
+            if (validate_yield_plan(node_handler, yield_plan))
+            {
+                RCLCPP_DEBUG_STREAM(node_handler->get_logger(), "Yield trajectory validated");
+                resp->trajectory_plan = yield_plan;
             }
             else
             {
-                throw std::invalid_argument("Yield Client is unavailable");
+                throw std::invalid_argument("Invalid Yield Trajectory");
             }
 
             return resp;

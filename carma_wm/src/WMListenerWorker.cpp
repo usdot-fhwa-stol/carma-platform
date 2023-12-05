@@ -126,16 +126,16 @@ void logSignalizedIntersectionManager(const carma_wm::SignalizedIntersectionMana
   }
   for (auto const &[signal_id, entry_llt_ids] : sim.signal_group_to_entry_lanelet_ids_)
   {
-    for (auto iter = entry_llt_ids.begin(); iter != entry_llt_ids.end(); iter++)
+    for (const auto & entry_llt_id : entry_llt_ids)
     {
-      RCLCPP_DEBUG_STREAM(rclcpp::get_logger("carma_wm::WMListenerWorker"), "signal id: " << (int)signal_id << ", entry llt id: " << *iter);
+      RCLCPP_DEBUG_STREAM(rclcpp::get_logger("carma_wm::WMListenerWorker"), "signal id: " << (int)signal_id << ", entry llt id: " << entry_llt_id);
     }
   }
   for (auto const &[signal_id, exit_llt_ids] : sim.signal_group_to_exit_lanelet_ids_)
   {
-    for (auto iter = exit_llt_ids.begin(); iter != exit_llt_ids.end(); iter++)
+    for (const auto & exit_llt_id : exit_llt_ids)
     {
-      RCLCPP_DEBUG_STREAM(rclcpp::get_logger("carma_wm::WMListenerWorker"), "signal id: " << (int)signal_id << ", exit llt id: " << *iter);
+      RCLCPP_DEBUG_STREAM(rclcpp::get_logger("carma_wm::WMListenerWorker"), "signal id: " << (int)signal_id << ", exit llt id: " << exit_llt_id);
     }
   }
   for (auto const &[signal_id, regem_id] : sim.signal_group_to_traffic_light_id_)
