@@ -1276,7 +1276,7 @@ namespace basic_autonomy
             return output;
         }
 
-        bool is_valid_yield_plan(const std::shared_ptr<carma_ros2_utils::CarmaLifecycleNode> node_handler, const carma_planning_msgs::msg::TrajectoryPlan& yield_plan)
+        bool is_valid_yield_plan(const std::shared_ptr<carma_ros2_utils::CarmaLifecycleNode>& node_handler, const carma_planning_msgs::msg::TrajectoryPlan& yield_plan)
         {
             if (yield_plan.trajectory_points.size() < 2)
             {
@@ -1299,10 +1299,10 @@ namespace basic_autonomy
         }
 
         carma_planning_msgs::srv::PlanTrajectory::Response::SharedPtr modify_trajectory_to_yield_to_obstacles(
-            const std::shared_ptr<carma_ros2_utils::CarmaLifecycleNode> node_handler,
-            const carma_planning_msgs::srv::PlanTrajectory::Request::SharedPtr req,
-            const carma_planning_msgs::srv::PlanTrajectory::Response::SharedPtr resp,
-            const carma_ros2_utils::ClientPtr<carma_planning_msgs::srv::PlanTrajectory> yield_client,
+            const std::shared_ptr<carma_ros2_utils::CarmaLifecycleNode>& node_handler,
+            const carma_planning_msgs::srv::PlanTrajectory::Request::SharedPtr& req,
+            const carma_planning_msgs::srv::PlanTrajectory::Response::SharedPtr& resp,
+            const carma_ros2_utils::ClientPtr<carma_planning_msgs::srv::PlanTrajectory>& yield_client,
             int yield_plugin_service_call_timeout)
         {
             RCLCPP_DEBUG(node_handler->get_logger(), "Activate Object Avoidance");
