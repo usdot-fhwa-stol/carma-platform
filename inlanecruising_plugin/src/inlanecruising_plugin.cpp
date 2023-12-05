@@ -140,7 +140,9 @@ void InLaneCruisingPlugin::plan_trajectory_callback(
       }
       else
       {
-        RCLCPP_WARN_STREAM(nh_->get_logger(), "UNABLE TO CALL YIELD PLUGIN!!!!");
+        // Sometimes the yield plugin's service call may be unsuccessful due to its computationally expensive logic.
+        // However, consecutive calls can be successful, so return original trajectory for now
+        RCLCPP_WARN_STREAM(nh_->get_logger(), "Unable to Call Yield Plugin");
         resp->trajectory_plan = original_trajectory;
       }
     }

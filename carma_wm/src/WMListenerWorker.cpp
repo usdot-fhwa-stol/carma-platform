@@ -119,27 +119,28 @@ void WMListenerWorker::enableUpdatesWithoutRoute()
 // helper function to log SignalizedIntersectionManager content
 void logSignalizedIntersectionManager(const carma_wm::SignalizedIntersectionManager& sim)
 {
-  for (auto pair : sim.intersection_id_to_regem_id_)
+  for (auto const &[intersection_id, regulatory_element_id] : sim.intersection_id_to_regem_id_)
   {
-    RCLCPP_DEBUG_STREAM(rclcpp::get_logger("carma_wm::WMListenerWorker"), "inter id: " << (int)pair.first << ", regem id: " << pair.second);
+    RCLCPP_DEBUG_STREAM(rclcpp::get_logger("carma_wm::WMListenerWorker"),
+      "inter id: " << intersection_id << ", regem id: " << regulatory_element_id);
   }
-  for (auto pair : sim.signal_group_to_entry_lanelet_ids_)
+  for (auto const &[signal_id, entry_llt_ids] : sim.signal_group_to_entry_lanelet_ids_)
   {
-    for (auto iter = pair.second.begin(); iter != pair.second.end(); iter++)
+    for (auto iter = entry_llt_ids.begin(); iter != entry_llt_ids.end(); iter++)
     {
-      RCLCPP_DEBUG_STREAM(rclcpp::get_logger("carma_wm::WMListenerWorker"), "signal id: " << (int)pair.first << ", entry llt id: " << *iter);
+      RCLCPP_DEBUG_STREAM(rclcpp::get_logger("carma_wm::WMListenerWorker"), "signal id: " << (int)signal_id << ", entry llt id: " << *iter);
     }
   }
-  for (auto pair : sim.signal_group_to_exit_lanelet_ids_)
+  for (auto const &[signal_id, exit_llt_ids] : sim.signal_group_to_exit_lanelet_ids_)
   {
-    for (auto iter = pair.second.begin(); iter != pair.second.end(); iter++)
+    for (auto iter = exit_llt_ids.begin(); iter != exit_llt_ids.end(); iter++)
     {
-      RCLCPP_DEBUG_STREAM(rclcpp::get_logger("carma_wm::WMListenerWorker"), "signal id: " << (int)pair.first << ", exit llt id: " << *iter);
+      RCLCPP_DEBUG_STREAM(rclcpp::get_logger("carma_wm::WMListenerWorker"), "signal id: " << (int)signal_id << ", exit llt id: " << *iter);
     }
   }
-  for (auto pair : sim.signal_group_to_traffic_light_id_)
+  for (auto const &[signal_id, regem_id] : sim.signal_group_to_traffic_light_id_)
   {
-    RCLCPP_DEBUG_STREAM(rclcpp::get_logger("carma_wm::WMListenerWorker"), "signal id: " << (int)pair.first << ", regem id: " << pair.second);
+    RCLCPP_DEBUG_STREAM(rclcpp::get_logger("carma_wm::WMListenerWorker"), "signal id: " << (int)signal_id << ", regem id: " << regem_id);
   }
 }
 
@@ -222,10 +223,10 @@ void WMListenerWorker::mapUpdateCallback(autoware_lanelet2_msgs::msg::MapBin::Un
   }
 
   RCLCPP_DEBUG_STREAM(rclcpp::get_logger("carma_wm::WMListenerWorker"), "Geofence id" << gf_ptr->id_ << " sends record of traffic_lights_id size: " << gf_ptr->traffic_light_id_lookup_.size());
-  for (auto pair : gf_ptr->traffic_light_id_lookup_)
+  for (auto const &[traffic_light_id, lanelet_id] : gf_ptr->traffic_light_id_lookup_)
   {
-    RCLCPP_DEBUG_STREAM(rclcpp::get_logger("carma_wm::WMListenerWorker"), "Adding new pair for traffic light ids: " << pair.first << ", and lanelet::Id: " << pair.second);
-    world_model_->setTrafficLightIds(pair.first, pair.second);
+    RCLCPP_DEBUG_STREAM(rclcpp::get_logger("carma_wm::WMListenerWorker"), "Adding new pair for traffic light ids: " << traffic_light_id << ", and lanelet::Id: " << lanelet_id);
+    world_model_->setTrafficLightIds(traffic_light_id, lanelet_id);
   }
 
   RCLCPP_DEBUG_STREAM(rclcpp::get_logger("carma_wm::WMListenerWorker"), "Geofence id" << gf_ptr->id_ << " sends record of intersections size: " << gf_ptr->sim_.intersection_id_to_regem_id_.size());
@@ -236,9 +237,9 @@ void WMListenerWorker::mapUpdateCallback(autoware_lanelet2_msgs::msg::MapBin::Un
   }
 
   RCLCPP_DEBUG_STREAM(rclcpp::get_logger("carma_wm::WMListenerWorker"), "Geofence id" << gf_ptr->id_ << " requests removal of size: " << gf_ptr->remove_list_.size());
-  for (auto pair : gf_ptr->remove_list_)
+  for (auto const &[lanelet_id, lanelet_to_remove] : gf_ptr->remove_list_)
   {
-    auto parent_llt = world_model_->getMutableMap()->laneletLayer.get(pair.first);
+    auto parent_llt = world_model_->getMutableMap()->laneletLayer.get(lanelet_id);
     // we can only check by id, if the element is there
     // this is only for speed optimization, as world model here should blindly accept the map update received
     auto regems_copy_to_check = parent_llt.regulatoryElements(); // save local copy as the regem can be deleted during iteration
@@ -246,7 +247,7 @@ void WMListenerWorker::mapUpdateCallback(autoware_lanelet2_msgs::msg::MapBin::Un
     for (auto regem: regems_copy_to_check)
     {
       // we can't use the deserialized element as its data address conflicts the one in this node
-      if (pair.second->id() == regem->id()) world_model_->getMutableMap()->remove(parent_llt, regem);
+      if (lanelet_to_remove->id() == regem->id()) world_model_->getMutableMap()->remove(parent_llt, regem);
     }
     RCLCPP_DEBUG_STREAM(rclcpp::get_logger("carma_wm::WMListenerWorker"), "Regems left in lanelet after removal: " << parent_llt.regulatoryElements().size());
 
@@ -255,12 +256,12 @@ void WMListenerWorker::mapUpdateCallback(autoware_lanelet2_msgs::msg::MapBin::Un
   RCLCPP_INFO_STREAM(rclcpp::get_logger("carma_wm::WMListenerWorker"), "Geofence id" << gf_ptr->id_ << " requests update of size: " << gf_ptr->update_list_.size());
 
   // we should extract general regem to specific type of regem the geofence specifies
-  for (auto pair : gf_ptr->update_list_)
+  for (auto const &[lanelet_id, lanelet_to_update]: gf_ptr->update_list_)
   {
 
-    auto parent_llt = world_model_->getMutableMap()->laneletLayer.get(pair.first);
+    auto parent_llt = world_model_->getMutableMap()->laneletLayer.get(lanelet_id);
 
-    auto regemptr_it = world_model_->getMutableMap()->regulatoryElementLayer.find(pair.second->id());
+    auto regemptr_it = world_model_->getMutableMap()->regulatoryElementLayer.find(lanelet_to_update->id());
 
     // if this regem is already in the map.
     // This section is expected to be called to add back regulations which were previously removed by expired geofences.
@@ -273,8 +274,8 @@ void WMListenerWorker::mapUpdateCallback(autoware_lanelet2_msgs::msg::MapBin::Un
     }
     else // Updates are treated as new regulations after the old value was removed. In both cases we enter this block.
     {
-      RCLCPP_DEBUG_STREAM(rclcpp::get_logger("carma_wm::WMListenerWorker"), "New regulatory element at lanelet: " << parent_llt.id() << ", and id: " << pair.second->id());
-      newRegemUpdateHelper(parent_llt, pair.second.get());
+      RCLCPP_DEBUG_STREAM(rclcpp::get_logger("carma_wm::WMListenerWorker"), "New regulatory element at lanelet: " << parent_llt.id() << ", and id: " << lanelet_to_update->id());
+      newRegemUpdateHelper(parent_llt, lanelet_to_update.get());
     }
   }
 
