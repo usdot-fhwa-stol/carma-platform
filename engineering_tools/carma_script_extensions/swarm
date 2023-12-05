@@ -77,10 +77,6 @@ swarm__start() {
     WORKER_INFO=$(docker run -it --rm -v carma-config-data:/opt/carma/vehicle/config "$CARMA_BASE" /bin/sh -c '{ echo "$WORKER_USER"; echo "@"; echo "$WORKER_IP"; } | tr -d "\n"')
 
     MANAGER_IP=${MANAGER_INFO#*@}
-    # MANAGER_USER=${MANAGER_INFO%%@*}
-
-    # WORKER_IP=${WORKER_INFO#*@}
-    # WORKER_USER=${WORKER_INFO%%@*}
 
     if [ "$(docker info | grep Swarm | sed 's/Swarm: //g')" == " inactive" ]; then
         echo "Initalizing Docker Swarm..."
@@ -274,19 +270,24 @@ swarm__register() {
         docker rmi "$REGISTRY_HOST:$REGISTRY_PORT/$SOURCE_IMAGE_NAME"
     done
 
-    ssh -R "$REGISTRY_PORT:$REGISTRY_HOST:$REGISTRY_PORT" "$WORKER_INFO" sh
-    for TARGET_IMAGE_NAME in $IMAGE_NAMES
-    do
-        echo "Pulling $TARGET_IMAGE_NAME onto $WORKER_INFO from $REGISTRY_HOST:$REGISTRY_PORT"
-        docker pull "$REGISTRY_HOST:$REGISTRY_PORT/$TARGET_IMAGE_NAME" \
-          && docker tag "$REGISTRY_HOST:$REGISTRY_PORT/$TARGET_IMAGE_NAME" "$TARGET_IMAGE_NAME" \
-          && docker rmi "$REGISTRY_HOST:$REGISTRY_PORT/$TARGET_IMAGE_NAME"
-    done
+    ssh -R "$REGISTRY_PORT:$REGISTRY_HOST:$REGISTRY_PORT" "$WORKER_INFO" sh <<EOF
+        for TARGET_IMAGE_NAME in $IMAGE_NAMES
+        do
+            echo "Pulling $TARGET_IMAGE_NAME onto $WORKER_INFO from $REGISTRY_HOST:$REGISTRY_PORT"
+            docker pull "$REGISTRY_HOST:$REGISTRY_PORT/$TARGET_IMAGE_NAME" \
+              && docker tag "$REGISTRY_HOST:$REGISTRY_PORT/$TARGET_IMAGE_NAME" "$TARGET_IMAGE_NAME" \
+              && docker rmi "$REGISTRY_HOST:$REGISTRY_PORT/$TARGET_IMAGE_NAME"
+        done
+
+    EOF
+
+    docker stop carma-registry-task
 }
 
 
 swarm__stop() {
     echo "Shutting down swarm..."
+
     local -r CARMA_BASE=$(__get_image_from_config carma-base:)
 
     WORKER_INFO=$(docker run -it --rm -v carma-config-data:/opt/carma/vehicle/config "$CARMA_BASE" /bin/sh -c '{ echo "$WORKER_USER"; echo "@"; echo "$WORKER_IP"; } | tr -d "\n"')
@@ -350,7 +351,7 @@ Please enter one of the following commands:
     register <images>
         - Pushes the images defined by <images> to the
           registry service. Images must have their full
-          identifier to be added.
+          identifier to be added and Swarm must be active.
     attach
         - View STDOUT from all running CARMA processes
     stop
