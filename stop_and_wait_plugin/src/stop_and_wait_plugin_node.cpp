@@ -83,7 +83,7 @@ namespace stop_and_wait_plugin
 
     yield_client_ = create_client<carma_planning_msgs::srv::PlanTrajectory>("yield_plugin/plan_trajectory");
     plugin_->set_yield_client(yield_client_);
-    RCLCPP_INFO_STREAM(rclcpp::get_logger("stop_and_wait_plugin"), "Yield Client Set");
+    RCLCPP_INFO(rclcpp::get_logger("stop_and_wait_plugin"), "Yield Client Set");
 
     // Return success if everything initialized successfully
     return CallbackReturn::SUCCESS;

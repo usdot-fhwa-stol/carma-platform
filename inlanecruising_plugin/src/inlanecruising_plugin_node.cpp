@@ -89,7 +89,7 @@ namespace inlanecruising_plugin
     //TODO: Update yield client to use the Plugin Manager capabilities query, in case someone else wants to add an alternate yield implementation
     yield_client_ = create_client<carma_planning_msgs::srv::PlanTrajectory>("yield_plugin/plan_trajectory");
     worker_->set_yield_client(yield_client_);
-    RCLCPP_INFO_STREAM(rclcpp::get_logger("inlanecruising_plugin"), "Yield Client Set");
+    RCLCPP_INFO(rclcpp::get_logger("inlanecruising_plugin"), "Yield Client Set");
 
     // Return success if everything initialized successfully
     return CallbackReturn::SUCCESS;
