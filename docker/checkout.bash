@@ -50,6 +50,7 @@ else
       git clone --depth=1 https://github.com/usdot-fhwa-stol/carma-messenger.git --branch develop
 fi
 
+
 # Get humble branch of message filters which supports template Node arguments (foxy version supports rclcpp::Node only)
 git clone https://github.com/usdot-fhwa-stol/carma-message-filters.git --branch develop
 
@@ -73,7 +74,7 @@ cd ../
 
 # Clone the foxy branch of ros2_tracing in order to enable certain analyses of CARMA Platform
 # made possible through collected trace data, such as analyzing ROS 2 callback durations.
-git clone -b foxy https://github.com/ros2/ros2_tracing
+#git clone -b foxy https://github.com/ros2/ros2_tracing
 
 #rosbridge_suite is a ROS meta-package including all the rosbridge packages.
 # NOTE: clone -b flag is used instead of --branch to avoid hook rewriting it
@@ -82,7 +83,7 @@ git clone -b ros2 https://github.com/usdot-fhwa-stol/rosbridge_suite
 # The feature/integrate-carma branch of rosbag2 includes improvements that were not possible to backport into the foxy branch
 # of rosbag2. These rosbag2 packages will replace the originally built foxy rosbag2 packages.
 # NOTE: Additional information regarding the rosbag2 improvements on this branch are included in the forked repository's README.
-git clone -b carma-develop https://github.com/usdot-fhwa-stol/rosbag2
+#git clone -b carma-develop https://github.com/usdot-fhwa-stol/rosbag2
 
 # Novatel OEM7 Driver
 # NOTE: This is required since otherwise this image will not contain the novatel_oem7_msgs package, and a missing ROS 2 message package

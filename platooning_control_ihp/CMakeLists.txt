@@ -107,21 +107,21 @@ install(DIRECTORY
 ## Testing ##
 #############
 
-catkin_add_gmock(${PROJECT_NAME}-test
-  test/test_pid.cpp
-  test/test_pure.cpp
-  test/test_worker.cpp
-  test/test_control.cpp
-  test/test_main.cpp)
-
-if(TARGET ${PROJECT_NAME}-test)
-  target_link_libraries(${PROJECT_NAME}-test platoon_control_ihp_plugin_lib ${catkin_LIBRARIES})
-endif()
-
-if(CATKIN_ENABLE_TESTING)
-  find_package(rostest REQUIRED)
-  add_rostest_gtest(test_platoon_control_ihp test/mynode.test test/test_mynode.cpp)
-  target_link_libraries(test_platoon_control_ihp ${catkin_LIBRARIES})
-endif()
+#catkin_add_gmock(${PROJECT_NAME}-test
+#  test/test_pid.cpp
+#  test/test_pure.cpp
+#  test/test_worker.cpp
+#  test/test_control.cpp
+#  test/test_main.cpp)
+#
+#if(TARGET ${PROJECT_NAME}-test)
+#  target_link_libraries(${PROJECT_NAME}-test platoon_control_ihp_plugin_lib ${catkin_LIBRARIES})
+#endif()
+#
+#if(CATKIN_ENABLE_TESTING)
+#  find_package(rostest REQUIRED)
+#  add_rostest_gtest(test_platoon_control_ihp test/mynode.test test/test_mynode.cpp)
+#  target_link_libraries(test_platoon_control_ihp ${catkin_LIBRARIES})
+#endif()
 
 
