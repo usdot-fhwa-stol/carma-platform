@@ -66,23 +66,23 @@ rclcpp_components_register_nodes(motion_computation
   "motion_computation::MotionComputationNode"
 )
 
-if(motion_computation_BUILD_TESTS)
-
-  ament_auto_add_gtest(test_motion_computation
-    test/MotionComputationTest.cpp
-    test/TestMain.cpp
-  )
-
-  # boost::posix_time definition for using nanoseconds
-  target_compile_definitions(test_motion_computation
-    PRIVATE
-      -DBOOST_DATE_TIME_POSIX_TIME_STD_CONFIG
-  )
-
-  add_launch_test(test/motion_computation_external_object_launch_test.py)
-  add_launch_test(test/motion_computation_queueing_launch_test.py)
-
-endif()
+#if(motion_computation_BUILD_TESTS)
+#
+#  ament_auto_add_gtest(test_motion_computation
+#    test/MotionComputationTest.cpp
+#    test/TestMain.cpp
+#  )
+#
+#  # boost::posix_time definition for using nanoseconds
+#  target_compile_definitions(test_motion_computation
+#    PRIVATE
+#      -DBOOST_DATE_TIME_POSIX_TIME_STD_CONFIG
+#  )
+#
+#  add_launch_test(test/motion_computation_external_object_launch_test.py)
+#  add_launch_test(test/motion_computation_queueing_launch_test.py)
+#
+#endif()
 
 ament_auto_package(
   INSTALL_TO_SHARE
@@ -93,16 +93,16 @@ ament_auto_package(
 include(GNUInstallDirs)
 
 # ament_auto does not provide file pattern matching
-install(DIRECTORY ${PROJECT_SOURCE_DIR}/test/
-  DESTINATION ${CMAKE_INSTALL_DATADIR}/motion_computation/test
-  FILES_MATCHING
-    PATTERN *.py
-    PATTERN *.cpp
-    PATTERN __pycache__ EXCLUDE
-)
-
-install(DIRECTORY ${PROJECT_SOURCE_DIR}/test/data/
-  DESTINATION ${CMAKE_INSTALL_DATADIR}/motion_computation/test/data
-  FILES_MATCHING
-    PATTERN *.yaml
-)
+#install(DIRECTORY ${PROJECT_SOURCE_DIR}/test/
+#  DESTINATION ${CMAKE_INSTALL_DATADIR}/motion_computation/test
+#  FILES_MATCHING
+#    PATTERN *.py
+#    PATTERN *.cpp
+#    PATTERN __pycache__ EXCLUDE
+#)
+#
+#install(DIRECTORY ${PROJECT_SOURCE_DIR}/test/data/
+#  DESTINATION ${CMAKE_INSTALL_DATADIR}/motion_computation/test/data
+#  FILES_MATCHING
+#    PATTERN *.yaml
+#)

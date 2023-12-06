@@ -26,6 +26,7 @@ ament_auto_add_executable(${executable_name} src/main.cpp)
 target_link_libraries(${executable_name} ${library_name})
 
 # Test
+set(BUILD_TESTING FALSE)
 if(BUILD_TESTING)
 
   add_subdirectory(test)

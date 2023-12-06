@@ -50,6 +50,7 @@ else
       git clone --depth=1 https://github.com/usdot-fhwa-stol/carma-messenger.git --branch develop
 fi
 
+rm -rf carma-messenger/carma-messenger-core/emergency_response_vehicle_plugin
 
 # Get humble branch of message filters which supports template Node arguments (foxy version supports rclcpp::Node only)
 git clone https://github.com/usdot-fhwa-stol/carma-message-filters.git --branch develop

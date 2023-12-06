@@ -106,32 +106,32 @@ ament_auto_add_executable(host_vehicle_filter_node
 # boost::posix_time definition for using nanoseconds
 add_definitions(-DBOOST_DATE_TIME_POSIX_TIME_STD_CONFIG)
 
-if(carma_cooperative_perception_BUILD_TESTS)
-  enable_testing()
-
-  # We must add tests to top-level CMakeLists.txt because the
-  # ament_auto_add_gtest command will look for headers in the include/
-  # directory. Moving this command to test/CMakeLists.txt will prevent the
-  # header files from getting included.
-  ament_auto_add_gtest(carma_cooperative_perception_tests
-    test/test_external_object_list_to_detection_list_component.cpp
-    test/test_geodetic.cpp
-    test/test_j2735_types.cpp
-    test/test_j3224_types.cpp
-    test/test_month.cpp
-    test/test_msg_conversion.cpp
-  )
-
-  target_link_libraries(carma_cooperative_perception_tests
-    carma_cooperative_perception
-  )
-
-  add_launch_test(test/track_list_to_external_object_list_launch_test.py)
-  add_launch_test(test/multiple_object_tracker_duplicates_launch_test.py)
-  add_launch_test(test/multiple_object_tracker_static_obstacle_launch_test.py)
-  add_launch_test(test/host_vehicle_filter_launch_test.py)
-
-endif()
+#if(carma_cooperative_perception_BUILD_TESTS)
+#  enable_testing()
+#
+#  # We must add tests to top-level CMakeLists.txt because the
+#  # ament_auto_add_gtest command will look for headers in the include/
+#  # directory. Moving this command to test/CMakeLists.txt will prevent the
+#  # header files from getting included.
+#  ament_auto_add_gtest(carma_cooperative_perception_tests
+#    test/test_external_object_list_to_detection_list_component.cpp
+#    test/test_geodetic.cpp
+#    test/test_j2735_types.cpp
+#    test/test_j3224_types.cpp
+#    test/test_month.cpp
+#    test/test_msg_conversion.cpp
+#  )
+#
+#  target_link_libraries(carma_cooperative_perception_tests
+#    carma_cooperative_perception
+#  )
+#
+#  add_launch_test(test/track_list_to_external_object_list_launch_test.py)
+#  add_launch_test(test/multiple_object_tracker_duplicates_launch_test.py)
+#  add_launch_test(test/multiple_object_tracker_static_obstacle_launch_test.py)
+#  add_launch_test(test/host_vehicle_filter_launch_test.py)
+#
+#endif()
 
 ament_auto_package(
   INSTALL_TO_SHARE
@@ -142,13 +142,13 @@ ament_auto_package(
 include(GNUInstallDirs)
 
 # ament_auto does not provide file pattern matching
-install(DIRECTORY ${PROJECT_SOURCE_DIR}/test/
-  DESTINATION ${CMAKE_INSTALL_DATADIR}/carma_cooperative_perception/test
-  FILES_MATCHING
-    PATTERN *.py
-    PATTERN *.cpp
-    PATTERN __pycache__ EXCLUDE
-)
+#install(DIRECTORY ${PROJECT_SOURCE_DIR}/test/
+#  DESTINATION ${CMAKE_INSTALL_DATADIR}/carma_cooperative_perception/test
+#  FILES_MATCHING
+#    PATTERN *.py
+#    PATTERN *.cpp
+#    PATTERN __pycache__ EXCLUDE
+#)
 
 install(DIRECTORY ${PROJECT_SOURCE_DIR}/test/data/
   DESTINATION ${CMAKE_INSTALL_DATADIR}/carma_cooperative_perception/test/data

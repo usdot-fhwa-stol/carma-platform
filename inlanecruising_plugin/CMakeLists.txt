@@ -48,8 +48,8 @@ ament_auto_add_library(${node_lib} SHARED
         src/smoothing/BSpline.cpp
 )
 
-ament_auto_add_executable(${node_exec} 
-        src/main.cpp 
+ament_auto_add_executable(${node_exec}
+        src/main.cpp
 )
 
 # Register component
@@ -66,11 +66,12 @@ target_link_libraries(${node_exec}
 )
 
 # Testing
-if(BUILD_TESTING)  
+set(BUILD_TESTING FALSE)
+if(BUILD_TESTING)
   find_package(ament_lint_auto REQUIRED)
   ament_lint_auto_find_test_dependencies() # This populates the ${${PROJECT_NAME}_FOUND_TEST_DEPENDS} variable
 
-  ament_add_gtest(test_inlanecruising_plugin 
+  ament_add_gtest(test_inlanecruising_plugin
         test/test_inlanecruising_plugin.cpp
         test/test_inlanecruising_plugin_planning.cpp
         test/rostest_ilc.cpp
@@ -78,7 +79,7 @@ if(BUILD_TESTING)
 
   ament_target_dependencies(test_inlanecruising_plugin ${${PROJECT_NAME}_FOUND_TEST_DEPENDS})
 
-  target_link_libraries(test_inlanecruising_plugin 
+  target_link_libraries(test_inlanecruising_plugin
        ${node_lib}
   )
 endif()

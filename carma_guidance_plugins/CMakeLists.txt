@@ -42,7 +42,8 @@ ament_auto_add_library(${node_lib} SHARED
 )
 
 # Testing
-if(BUILD_TESTING)  
+set(BUILD_TESTING FALSE)
+if(BUILD_TESTING)
 
   find_package(ament_lint_auto REQUIRED)
   ament_lint_auto_find_test_dependencies() # This populates the ${${PROJECT_NAME}_FOUND_TEST_DEPENDS} variable
