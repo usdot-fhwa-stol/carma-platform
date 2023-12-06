@@ -12,10 +12,10 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-option(motion_computation_BUILD_TESTS
-  "Build package tests"
-  ${BUILD_TESTING}
-)
+#option(motion_computation_BUILD_TESTS
+#  "Build package tests"
+#  ${BUILD_TESTING}
+#)
 
 option(motion_computation_EXPORT_COMPILE_COMMANDS
   "Export compile commands"

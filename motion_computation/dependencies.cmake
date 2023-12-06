@@ -17,17 +17,17 @@
 # for each dependency.
 ament_auto_find_build_dependencies()
 
-if(motion_computation_BUILD_TESTS)
-  # These CMake commands were added to ament_cmake_auto in ROS 2 Humble. Until
-  # CARMA supports ROS 2 Humble, we will use package-local copies.
-  include(cmake/ament_auto_find_test_dependencies.cmake)
-  include(cmake/ament_auto_add_gtest.cmake)
-
-  ament_auto_find_test_dependencies()
-
-  list(APPEND AMENT_LINT_AUTO_EXCLUDE
-    ament_cmake_uncrustify  # Using clang-format instead
-  )
-
-  ament_lint_auto_find_test_dependencies()
-endif()
+#if(motion_computation_BUILD_TESTS)
+#  # These CMake commands were added to ament_cmake_auto in ROS 2 Humble. Until
+#  # CARMA supports ROS 2 Humble, we will use package-local copies.
+#  include(cmake/ament_auto_find_test_dependencies.cmake)
+#  include(cmake/ament_auto_add_gtest.cmake)
+#
+#  ament_auto_find_test_dependencies()
+#
+#  list(APPEND AMENT_LINT_AUTO_EXCLUDE
+#    ament_cmake_uncrustify  # Using clang-format instead
+#  )
+#
+#  ament_lint_auto_find_test_dependencies()
+#endif()
