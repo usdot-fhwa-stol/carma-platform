@@ -21,12 +21,12 @@
 
 #include <algorithm>
 #include <chrono>
-#include <cooperative_perception/clustering.hpp>
-#include <cooperative_perception/ctra_model.hpp>
-#include <cooperative_perception/ctrv_model.hpp>
-#include <cooperative_perception/fusing.hpp>
-#include <cooperative_perception/scoring.hpp>
-#include <cooperative_perception/temporal_alignment.hpp>
+#include <multiple_object_tracking/clustering.hpp>
+#include <multiple_object_tracking/ctra_model.hpp>
+#include <multiple_object_tracking/ctrv_model.hpp>
+#include <multiple_object_tracking/fusing.hpp>
+#include <multiple_object_tracking/scoring.hpp>
+#include <multiple_object_tracking/temporal_alignment.hpp>
 #include <unordered_map>
 #include <utility>
 #include <vector>
@@ -34,7 +34,7 @@
 namespace carma_cooperative_perception
 {
 
-namespace mot = cooperative_perception;
+namespace mot = multiple_object_tracking;
 
 auto make_ctrv_detection(
   const carma_cooperative_perception_interfaces::msg::Detection & msg) noexcept -> Detection

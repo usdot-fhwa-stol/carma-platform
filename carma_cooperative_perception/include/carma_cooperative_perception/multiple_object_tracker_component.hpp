@@ -21,9 +21,9 @@
 #include <carma_cooperative_perception_interfaces/msg/detection_list.hpp>
 #include <carma_cooperative_perception_interfaces/msg/track_list.hpp>
 
-#include <cooperative_perception/ctra_model.hpp>
-#include <cooperative_perception/ctrv_model.hpp>
-#include <cooperative_perception/track_management.hpp>
+#include <multiple_object_tracking/ctra_model.hpp>
+#include <multiple_object_tracking/ctrv_model.hpp>
+#include <multiple_object_tracking/track_management.hpp>
 #include <unordered_map>
 #include <variant>
 #include <vector>
@@ -32,8 +32,8 @@ namespace carma_cooperative_perception
 {
 
 using Detection =
-  std::variant<cooperative_perception::CtrvDetection, cooperative_perception::CtraDetection>;
-using Track = std::variant<cooperative_perception::CtrvTrack, cooperative_perception::CtraTrack>;
+  std::variant<multiple_object_tracking::CtrvDetection, multiple_object_tracking::CtraDetection>;
+using Track = std::variant<multiple_object_tracking::CtrvTrack, multiple_object_tracking::CtraTrack>;
 
 auto make_detection(const carma_cooperative_perception_interfaces::msg::Detection & msg)
   -> Detection;
@@ -73,9 +73,9 @@ private:
   rclcpp::TimerBase::SharedPtr pipeline_execution_timer_{nullptr};
 
   std::vector<Detection> detections_;
-  std::unordered_map<cooperative_perception::Uuid, std::size_t> uuid_index_map_;
-  cooperative_perception::FixedThresholdTrackManager<Track> track_manager_{
-    cooperative_perception::PromotionThreshold{3U}, cooperative_perception::RemovalThreshold{0U}};
+  std::unordered_map<multiple_object_tracking::Uuid, std::size_t> uuid_index_map_;
+  multiple_object_tracking::FixedThresholdTrackManager<Track> track_manager_{
+    multiple_object_tracking::PromotionThreshold{3U}, multiple_object_tracking::RemovalThreshold{0U}};
   units::time::nanosecond_t execution_period_{1 / units::frequency::hertz_t{2.0}};
   OnSetParametersCallbackHandle::SharedPtr on_set_parameters_callback_{nullptr};
 };
