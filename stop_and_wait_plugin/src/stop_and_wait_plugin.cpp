@@ -154,7 +154,7 @@ bool StopandWait::plan_trajectory_cb(carma_planning_msgs::srv::PlanTrajectory::R
   }
   else
   {
-    RCLCPP_DEBUG(rclcpp::get_logger("stop_and_wait_plugin"), "Ignored Object Avoidance");
+    RCLCPP_ERROR(rclcpp::get_logger("stop_and_wait_plugin"), "Ignored Object Avoidance");
   }
 
   std::chrono::system_clock::time_point end_time = std::chrono::system_clock::now();  // Planning complete

@@ -116,7 +116,7 @@ void InLaneCruisingPlugin::plan_trajectory_callback(
   }
   else
   {
-    RCLCPP_DEBUG(nh_->get_logger(), "Ignored Object Avoidance");
+    RCLCPP_ERROR(nh_->get_logger(), "Ignored Object Avoidance");
   }
 
   if (config_.publish_debug) { // Publish the debug message if in debug logging mode

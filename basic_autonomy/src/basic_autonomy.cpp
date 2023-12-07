@@ -1305,14 +1305,14 @@ namespace basic_autonomy
             const carma_ros2_utils::ClientPtr<carma_planning_msgs::srv::PlanTrajectory>& yield_client,
             int yield_plugin_service_call_timeout)
         {
-            RCLCPP_DEBUG(node_handler->get_logger(), "Activate Object Avoidance");
+            RCLCPP_ERROR(node_handler->get_logger(), "Activate Object Avoidance");
 
             if (!yield_client || !yield_client->service_is_ready())
             {
                 throw std::runtime_error("Yield Client is not set or unavailable after configuration state of lifecycle");
             }
 
-            RCLCPP_DEBUG(node_handler->get_logger(), "Yield Client is valid");
+            RCLCPP_ERROR(node_handler->get_logger(), "Yield Client is valid");
 
             auto yield_srv = std::make_shared<carma_planning_msgs::srv::PlanTrajectory::Request>();
             yield_srv->initial_trajectory_plan = resp->trajectory_plan;
@@ -1330,11 +1330,11 @@ namespace basic_autonomy
                 return resp;
             }
 
-            RCLCPP_DEBUG(node_handler->get_logger(), "Received Traj from Yield");
+            RCLCPP_ERROR(node_handler->get_logger(), "Received Traj from Yield");
             carma_planning_msgs::msg::TrajectoryPlan yield_plan = yield_resp.get()->trajectory_plan;
             if (is_valid_yield_plan(node_handler, yield_plan))
             {
-                RCLCPP_DEBUG(node_handler->get_logger(), "Yield trajectory validated");
+                RCLCPP_ERROR(node_handler->get_logger(), "Yield trajectory validated");
                 resp->trajectory_plan = yield_plan;
             }
             else

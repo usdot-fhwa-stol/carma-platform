@@ -249,7 +249,7 @@ namespace light_controlled_intersection_tactical_plugin
         }
         else
         {
-            RCLCPP_DEBUG(rclcpp::get_logger("light_controlled_intersection_tactical_plugin"), "Ignored Object Avoidance");
+            RCLCPP_ERROR(rclcpp::get_logger("light_controlled_intersection_tactical_plugin"), "Ignored Object Avoidance");
         }
 
         resp->maneuver_status.push_back(carma_planning_msgs::srv::PlanTrajectory::Response::MANEUVER_IN_PROGRESS);
