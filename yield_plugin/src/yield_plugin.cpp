@@ -417,6 +417,7 @@ namespace yield_plugin
     jmt_trajectory.header = original_tp.header;
     jmt_trajectory.trajectory_id = original_tp.trajectory_id;
     jmt_trajectory.trajectory_points = jmt_trajectory_points;
+    jmt_trajectory.initial_longitudinal_velocity = initial_velocity;
     return jmt_trajectory;
   }
 
@@ -617,20 +618,21 @@ namespace yield_plugin
 
       RCLCPP_DEBUG_STREAM(nh_->get_logger(),"object_downtrack: " << object_downtrack);
 
-      double dist_to_object = object_downtrack - vehicle_downtrack;
-      RCLCPP_DEBUG_STREAM(nh_->get_logger(),"dist_to_object: " << dist_to_object);
+      double x_lead = object_downtrack - vehicle_downtrack;
+      RCLCPP_DEBUG_STREAM(nh_->get_logger(),"x_lead: " << dist_to_object);
 
       RCLCPP_DEBUG_STREAM(nh_->get_logger(),"object speed: " << earliest_collision_obj.value().velocity.twist.linear.x);
-
-      // Distance from the original trajectory point to the lead vehicle/object
-      double dist_x = earliest_collision_obj.value().pose.pose.position.x - original_tp.trajectory_points[0].x;
-      double dist_y = earliest_collision_obj.value().pose.pose.position.y - original_tp.trajectory_points[0].y;
-      double x_lead = sqrt(dist_x*dist_x + dist_y*dist_y);
 
       // roadway object position
       double gap_time = (x_lead - config_.x_gap)/initial_velocity;
 
       double goal_velocity = earliest_collision_obj.value().velocity.twist.linear.x;
+
+      if (goal_velocity <= config_.min_obstacle_speed){
+        RCLCPP_WARN(nh_->get_logger(),"The obstacle is not moving, goal velocity is set to 0");
+        goal_velocity = 0.0;
+      }
+
       // determine the safety inter-vehicle gap based on speed
       double safety_gap = std::max(goal_velocity * gap_time, config_.x_gap);
       if (config_.enable_adjustable_gap)
@@ -643,11 +645,6 @@ namespace yield_plugin
       }
       // safety gap is implemented
       double goal_pos = x_lead - safety_gap;
-
-      if (goal_velocity <= config_.min_obstacle_speed){
-        RCLCPP_WARN(nh_->get_logger(),"The obstacle is not moving, goal velocity is set to 0");
-        goal_velocity = 0.0;
-      }
 
       double initial_time = 0;
       double initial_pos = 0.0; //relative initial position (first trajectory point)

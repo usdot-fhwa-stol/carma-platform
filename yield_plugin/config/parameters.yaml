@@ -2,7 +2,7 @@
 # Adjustment factor for safe and comfortable acceleration/deceleration
 # Value type: Desired
 # No unit
-acceleration_adjustment_factor: 4.0
+acceleration_adjustment_factor: 2.0
 # Time horizon for collision detection for vehicles on the route
 # NOTE: not applied for pedestrians or other non-vehicle obstacles on the road
 # Units: s
@@ -11,7 +11,7 @@ on_route_vehicle_collision_horizon: 10.0
 # Minimum speed for moving obstacle
 # Units: m/s
 # Value type: Desired
-min_obstacle_speed: 0.5
+min_obstacle_speed: 3.0
 # Minimum object avoidance planning time
 # Units: s
 # Value type: Desired
@@ -24,18 +24,6 @@ yield_max_deceleration: 3.0
 # Units: meters
 # Value type: Desired
 x_gap: 10.0
-# Host vehicle length
-# Units: m
-# Value type: Measured
-vehicle_length: 5.0
-# Host vehicle width
-# Units: m
-# Value type: Measured
-vehicle_width: 2.5
-# Host vehicle height
-# Units: m
-# Value type: Measured
-vehicle_height: 3.0
 # Maximum speed value to consider the ego vehicle stopped
 # Units: m/s
 # Value type: Desired
