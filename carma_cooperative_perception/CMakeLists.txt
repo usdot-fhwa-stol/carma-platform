@@ -71,7 +71,7 @@ target_link_libraries(carma_cooperative_perception
   ${PROJ4_LIBRARIES}  # Note: Newer versions of PROJ use PROJ::proj
   GSL  # Note: Newer versions of GSL use Microsoft.GSL::GSL
   units::units
-  cooperative_perception_core::cooperative_perception_coreLibrary
+  multiple_object_tracking::multiple_object_tracking
 )
 
 rclcpp_components_register_nodes(carma_cooperative_perception
