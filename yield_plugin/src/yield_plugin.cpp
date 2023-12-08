@@ -519,7 +519,10 @@ namespace yield_plugin
         }
         else
         {
-          RCLCPP_WARN_STREAM(nh_->get_logger(), "Collision detected at timestamp " << std::to_string(p2a_t) << ", x: " << x1 << ", y: " << y1 << ", within distance: " << distance);
+
+          RCLCPP_WARN_STREAM(nh_->get_logger(), "Collision detected at timestamp " << std::to_string(p2a_t) << ", x: " << x1 << ", y: " << y1 <<
+            ", within actual downtrack distance: " << object_downtrack - vehicle_downtrack <<
+            ", and collision distance: " << distance);
           return rclcpp::Time(p2a.header.stamp);
         }
       }
@@ -535,7 +538,7 @@ namespace yield_plugin
     std::set<int> checked_external_object_ids;
     rclcpp::Time plan_start_time = original_tp.trajectory_points[0].target_time;
 
-    std::vector<carma_perception_msgs::msg::PredictedState> new_list;
+
     RCLCPP_DEBUG_STREAM(nh_->get_logger(), "ExternalObjects size: " << external_objects.size());
 
     if (wm_->getRoute() == nullptr)
@@ -561,6 +564,7 @@ namespace yield_plugin
       // do not process outdated objects
       if (rclcpp::Time(curr_obstacle.predictions.back().header.stamp) > plan_start_time)
       {
+        std::vector<carma_perception_msgs::msg::PredictedState> new_list;
         carma_perception_msgs::msg::PredictedState curr_state;
         // artificially include current position as one of the predicted states
         curr_state.header.stamp = curr_obstacle.header.stamp;
@@ -569,6 +573,7 @@ namespace yield_plugin
         // NOTE: predicted_velocity is not used for collision calculation, but timestamps
         curr_state.predicted_velocity.linear.x = curr_obstacle.velocity.twist.linear.x;
         curr_state.predicted_velocity.linear.y = curr_obstacle.velocity.twist.linear.y;
+        RCLCPP_ERROR_STREAM(nh_->get_logger(), "Object: " << curr_obstacle.id <<", type: " << static_cast<int>(curr_obstacle.object_type) << ", speed: " << curr_obstacle.velocity.twist.linear.x);
         new_list.push_back(curr_state);
         new_list.insert(new_list.end(), curr_obstacle.predictions.cbegin(), curr_obstacle.predictions.cend());
 
@@ -591,12 +596,13 @@ namespace yield_plugin
     if (earliest_collision_obj == std::nullopt)
       return std::nullopt;
 
+    RCLCPP_ERROR_STREAM(nh_->get_logger(),"earliest object x: " << earliest_collision_obj.value().velocity.twist.linear.x << ", y: " << earliest_collision_obj.value().velocity.twist.linear.y);
+
     return std::make_pair(earliest_collision_obj.value(), earliest_collision_obj_time);
   }
 
   double YieldPlugin::get_object_velocity_along_trajectory(const geometry_msgs::msg::Twist& object_velocity_in_map_frame, const carma_planning_msgs::msg::TrajectoryPlan& original_tp, double collision_timestamp_in_seconds)
   {
-    geometry_msgs::msg::Twist velocity;
     RCLCPP_ERROR_STREAM(nh_->get_logger(), "collision_timestamp_in_seconds: " << std::to_string(collision_timestamp_in_seconds) <<
       ", original_tp.trajectory_points.back().target_time: " << std::to_string(rclcpp::Time(original_tp.trajectory_points.back().target_time).seconds()));
 
