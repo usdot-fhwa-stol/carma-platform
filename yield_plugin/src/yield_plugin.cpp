@@ -677,14 +677,14 @@ namespace yield_plugin
 
     RCLCPP_DEBUG_STREAM(nh_->get_logger(),"object_downtrack: " << object_downtrack);
 
-    double x_lead = object_downtrack - vehicle_downtrack;
+    double x_lead = std::max(0.0, object_downtrack - vehicle_downtrack);
     RCLCPP_DEBUG_STREAM(nh_->get_logger(),"x_lead: " << x_lead);
 
     double goal_velocity = get_object_velocity_along_trajectory(earliest_collision_obj.velocity.twist, original_tp, earliest_collision_time);
     RCLCPP_DEBUG_STREAM(nh_->get_logger(),"object's speed along trajectory at collision: " << goal_velocity);
 
     // roadway object position
-    double gap_time = (x_lead - config_.x_gap)/initial_velocity;
+    double gap_time = std::max(0.0, x_lead - config_.x_gap)/initial_velocity;
 
     if (goal_velocity <= config_.min_obstacle_speed){
       RCLCPP_WARN_STREAM(nh_->get_logger(),"The obstacle is not moving, goal velocity is set to 0 from: " << goal_velocity);
@@ -702,7 +702,7 @@ namespace yield_plugin
       safety_gap = std::max(safety_gap, digital_gap);
     }
     // safety gap is implemented
-    double goal_pos = x_lead - safety_gap;
+    double goal_pos = std::max(0.0, x_lead - safety_gap);
     double initial_pos = 0.0; //relative initial position (first trajectory point)
     double delta_v_max = fabs(goal_velocity - max_trajectory_speed(original_tp.trajectory_points));
     // reference time, is the maximum time available to perform object avoidance (length of a trajectory)
