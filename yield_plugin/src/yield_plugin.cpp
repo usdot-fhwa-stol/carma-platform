@@ -597,20 +597,30 @@ namespace yield_plugin
   double YieldPlugin::get_object_velocity_along_trajectory(const geometry_msgs::msg::Twist& object_velocity_in_map_frame, const carma_planning_msgs::msg::TrajectoryPlan& original_tp, double collision_timestamp_in_seconds)
   {
     geometry_msgs::msg::Twist velocity;
+    RCLCPP_ERROR_STREAM(nh_->get_logger(), "collision_timestamp_in_seconds: " << std::to_string(collision_timestamp_in_seconds) <<
+      ", original_tp.trajectory_points.back().target_time: " << std::to_string(rclcpp::Time(original_tp.trajectory_points.back().target_time).seconds()));
 
     for (size_t i = 0; i < original_tp.trajectory_points.size() - 1; ++i)
     {
       auto p1a = original_tp.trajectory_points.at(i);
       auto p1b = original_tp.trajectory_points.at(i + 1);
       double p1b_t = rclcpp::Time(p1b.target_time).seconds();
+
       if (p1b_t >= collision_timestamp_in_seconds)
       {
         // TODO GEOMETRY
         auto dx = p1b.x - p1a.x;
-        auto dy = p1b.y - p1b.y;
+        auto dy = p1b.y - p1a.y;
         tf2::Vector3 trajectory_direction(dx, dy, 0);
         tf2::Vector3 object_direction(object_velocity_in_map_frame.linear.x, object_velocity_in_map_frame.linear.y, 0);
-        return static_cast<double>(tf2::tf2Dot(object_direction, trajectory_direction)) / trajectory_direction.length();
+
+        RCLCPP_ERROR_STREAM(nh_->get_logger(), "collision_timestamp_in_seconds: " << std::to_string(collision_timestamp_in_seconds)
+          << ", p1b_t: " << std::to_string(p1b_t)
+          << ", dx: " << dx << ", dy: " << dy << ", "
+          << ", object_velocity_in_map_frame.x: " << object_velocity_in_map_frame.linear.x
+          << ", object_velocity_in_map_frame.y: " << object_velocity_in_map_frame.linear.y);
+        auto return_value = static_cast<double>(tf2::tf2Dot(object_direction, trajectory_direction)) / trajectory_direction.length();
+        return return_value;
       }
     }
     // TODO error
