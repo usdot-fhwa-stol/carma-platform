@@ -1,0 +1,77 @@
+name: CI
+
+on:
+  push:
+  #  branches:
+  #    - "master"
+  #    - "develop"
+  # pull_request:
+  #     types: [opened, synchronize, reopened]
+jobs:
+  build:
+    defaults:
+      run:
+        shell: bash
+        working-directory: "/opt/carma/"
+    runs-on: ubuntu-latest
+    container:
+      image: usdotfhwastoldev/autoware.ai:develop
+      env:
+        INIT_ENV: "/home/carma/.base-image/init-env.sh"
+        ROS_2_ENV: "/opt/ros/foxy/setup.bash"
+        TERM: xterm
+      options: "--user root"
+    steps:
+    - name: Checkout ${{ github.event.repository.name }}
+      uses: actions/checkout@v3.3.0
+      with:
+        path: src/${{ github.event.repository.name }}
+        fetch-depth: 0
+    - name: Move source code
+      run: mv $GITHUB_WORKSPACE/src /opt/carma/
+    - name: Checkout dependencies
+      run: |
+        source "$INIT_ENV"
+        ./src/${{ github.event.repository.name }}/docker/checkout.bash -r /opt/carma/
+    - name: Build ROS1
+      run: |
+        source "$INIT_ENV"
+        PACKAGES=$(find . -maxdepth 2 -type f -name package.xml | sed 's/\.\///' | cut -d/ -f1)
+        sed -i '/colcon build/ s/$/ --packages-skip novatel_oem7_msgs novatel_oem7_driver --parallel-workers 4 --event-handlers console_direct+ --cmake-args -DCMAKE_EXPORT_COMPILE_COMMANDS=ON -DCMAKE_CXX_FLAGS="${COVERAGE_FLAGS}" -DCMAKE_C_FLAGS="${COVERAGE_FLAGS}" -DCMAKE_BUILD_TYPE="Debug"/' /home/carma/.ci-image/engineering_tools/code_coverage/make_with_coverage.bash
+        make_with_coverage.bash -m -e /opt/carma/ -o ./coverage_reports/gcov
+    - name: Run ROS1 C++ Tests
+      run: |
+        source "$INIT_ENV"
+        sed -i '/colcon test/ s/$/ --packages-skip novatel_oem7_msgs --parallel-workers 4 --event-handlers console_direct+ --cmake-args -DCMAKE_EXPORT_COMPILE_COMMANDS=ON -DCMAKE_CXX_FLAGS="${COVERAGE_FLAGS}" -DCMAKE_C_FLAGS="${COVERAGE_FLAGS}" -DCMAKE_BUILD_TYPE="Debug"/' /home/carma/.ci-image/engineering_tools/code_coverage/make_with_coverage.bash
+        make_with_coverage.bash -t -e /opt/carma/ -o ./coverage_reports/gcov 
+    - name: Backup ROS1 compile_commands.json
+      run: |
+        mv /opt/carma/build/compile_commands.json /opt/carma/compile_commands.ros1.json        
+    - name: Cleanup before ROS 2 build
+      # Clear the build and install folders before building ROS 2 
+      run: |
+        rm -rf /opt/carma/install
+        rm -rf /opt/carma/build             
+    - name: Build ROS2
+      run: |
+        source "$INIT_ENV"
+        source "$ROS_2_ENV"
+        sed -i '/colcon build/ s/$/ --parallel-workers 4 --event-handlers console_direct+ --cmake-args -DCMAKE_EXPORT_COMPILE_COMMANDS=ON -DCMAKE_CXX_FLAGS="${COVERAGE_FLAGS}" -DCMAKE_C_FLAGS="${COVERAGE_FLAGS}" -DCMAKE_BUILD_TYPE="Debug"/' /home/carma/.ci-image/engineering_tools/code_coverage/make_with_coverage.bash
+        make_with_coverage.bash -m -e /opt/carma/ -o ./coverage_reports/gcov
+    - name: Run Ros2 C++ Tests
+      continue-on-error: true
+      run: |
+        source "$INIT_ENV"
+        source "$ROS_2_ENV"
+        sed -i '/colcon test/ s/$/ --packages-skip novatel_oem7_msgs approximate_intersection --parallel-workers 4 --event-handlers console_direct+ --cmake-args -DCMAKE_EXPORT_COMPILE_COMMANDS=ON -DCMAKE_CXX_FLAGS="${COVERAGE_FLAGS}" -DCMAKE_C_FLAGS="${COVERAGE_FLAGS}" -DCMAKE_BUILD_TYPE="Debug"/' /home/carma/.ci-image/engineering_tools/code_coverage/make_with_coverage.bash
+        make_with_coverage.bash -t -e /opt/carma/ -o ./coverage_reports/gcov 
+    - name: Combine ROS1 and ROS2 compile_commands.json files
+      continue-on-error: true
+      run: |   
+        mv /opt/carma/build/compile_commands.json /opt/carma/compile_commands.ros2.json
+        jq -s add /opt/carma/compile_commands.ros1.json /opt/carma/compile_commands.ros2.json > /opt/carma/build/compile_commands.json              
+    - name: Run SonarScanner
+      uses: usdot-fhwa-stol/actions/sonar-scanner@main
+      with:
+        sonar-token: ${{ secrets.SONAR_TOKEN }}
+        working-dir: "/opt/carma/src/${{ github.event.repository.name }}"
