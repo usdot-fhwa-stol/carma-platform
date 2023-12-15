@@ -164,7 +164,7 @@ public:
    */
   void setRos1Clock(rclcpp::Time time_now);
 
-  /*! \brief Set current Ros1 clock (only used in simulation runs)
+  /*! \brief Set simulation clock clock (only used in simulation runs)
    */
   void setSimulationClock(rclcpp::Time time_now);
 

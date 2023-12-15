@@ -1433,11 +1433,10 @@ namespace carma_wm
 
     // NOTE: In simulation, ROS1 clock (often coming from CARLA) can have a large time ahead.
     // the timing calculated here is in Simulation time, which is behind. Therefore, the world model adds the offset to make it meaningful to carma-platform:
-    // TODO: github.com/issue#
+    // https://github.com/usdot-fhwa-stol/carma-platform/issues/2217
     if (is_simulation && ros1_clock_.has_value() && simulation_clock_.has_value())
     {
       simulation_time_difference_in_seconds = ros1_clock_.value().seconds() - simulation_clock_.value().seconds();
-      RCLCPP_ERROR_STREAM(rclcpp::get_logger("carma_wm,"), "simulation_time_difference_in_seconds: " << std::to_string(simulation_time_difference_in_seconds));
     }
 
     min_end_time += lanelet::time::durationFromSec(simulation_time_difference_in_seconds);
@@ -1546,7 +1545,7 @@ namespace carma_wm
           sim_.traffic_signal_start_times_[curr_intersection.id.id][current_movement_state.signal_group].push_back(
                               start_time_dynamic);
 
-          RCLCPP_ERROR_STREAM(rclcpp::get_logger("carma_wm"), "intersection id: " << (int)curr_intersection.id.id << ", signal: " << (int)current_movement_state.signal_group
+          RCLCPP_DEBUG_STREAM(rclcpp::get_logger("carma_wm"), "intersection id: " << (int)curr_intersection.id.id << ", signal: " << (int)current_movement_state.signal_group
             << ", start_time: " << std::to_string(lanelet::time::toSec(start_time_dynamic))
             << ", end_time: " << std::to_string(lanelet::time::toSec(min_end_time_dynamic))
             << ", state: " << received_state_dynamic);
