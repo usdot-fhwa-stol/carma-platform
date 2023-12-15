@@ -80,44 +80,56 @@ WMListener::WMListener(
   {
     RCLCPP_DEBUG_STREAM(node_logging_->get_logger(), "WMListener: Using a multi-threaded subscription");
 
-    auto map_update_cb_group = node_base_->create_callback_group(rclcpp::CallbackGroupType::MutuallyExclusive);
-    map_update_options.callback_group = map_update_cb_group;
+    map_update_options.callback_group = node_base_->create_callback_group(rclcpp::CallbackGroupType::MutuallyExclusive);
 
-    auto map_cb_group = node_base_->create_callback_group(rclcpp::CallbackGroupType::MutuallyExclusive);
-    map_options.callback_group = map_cb_group;
+    map_options.callback_group = node_base_->create_callback_group(rclcpp::CallbackGroupType::MutuallyExclusive);
 
-    auto route_cb_group = node_base_->create_callback_group(rclcpp::CallbackGroupType::MutuallyExclusive);
-    route_options.callback_group = route_cb_group;
+    route_options.callback_group = node_base_->create_callback_group(rclcpp::CallbackGroupType::MutuallyExclusive);
 
-    auto roadway_objects_group = node_base_->create_callback_group(rclcpp::CallbackGroupType::MutuallyExclusive);
-    roadway_objects_options.callback_group = roadway_objects_group;
+    roadway_objects_options.callback_group = node_base_->create_callback_group(rclcpp::CallbackGroupType::MutuallyExclusive);
 
-    auto traffic_spat_group = node_base_->create_callback_group(rclcpp::CallbackGroupType::MutuallyExclusive);
-    traffic_spat_options.callback_group = traffic_spat_group;
+    traffic_spat_options.callback_group = node_base_->create_callback_group(rclcpp::CallbackGroupType::MutuallyExclusive);
 
-    auto ros1_clock_group = node_base_->create_callback_group(rclcpp::CallbackGroupType::MutuallyExclusive);
-    ros1_clock_options.callback_group = ros1_clock_group;
+    ros1_clock_options.callback_group = node_base_->create_callback_group(rclcpp::CallbackGroupType::MutuallyExclusive);
 
-    auto sim_clock_group = node_base_->create_callback_group(rclcpp::CallbackGroupType::MutuallyExclusive);
-    sim_clock_options.callback_group = sim_clock_group;
-
+    sim_clock_options.callback_group = node_base_->create_callback_group(rclcpp::CallbackGroupType::MutuallyExclusive);
   }
 
   // Setup subscribers
   route_sub_ = rclcpp::create_subscription<carma_planning_msgs::msg::Route>(node_topics_, "route", 1,
-                                  std::bind(&WMListenerWorker::routeCallback, worker_.get(), std::placeholders::_1), route_options);
+                                  [this](const carma_planning_msgs::msg::Route::UniquePtr msg)
+                                  {
+                                    this->worker_->routeCallback(msg);
+                                  }
+                                  , route_options);
 
   ros1_clock_sub_ = rclcpp::create_subscription<rosgraph_msgs::msg::Clock>(node_topics_, "/clock", 1,
-                                  std::bind(&WMListenerWorker::ros1ClockCallback, worker_.get(), std::placeholders::_1), ros1_clock_options);
+                                  [this](const rosgraph_msgs::msg::Clock::UniquePtr msg)
+                                  {
+                                    this->worker_->ros1ClockCallback(msg);
+                                  }
+                                  , ros1_clock_options);
 
   sim_clock_sub_ = rclcpp::create_subscription<rosgraph_msgs::msg::Clock>(node_topics_, "/sim_clock", 1,
-                                  std::bind(&WMListenerWorker::simClockCallback, worker_.get(), std::placeholders::_1), sim_clock_options);
+                                  [this](const rosgraph_msgs::msg::Clock::UniquePtr msg)
+                                  {
+                                    this->worker_->simClockCallback(msg);
+                                  }
+                                  , sim_clock_options);
 
   roadway_objects_sub_ = rclcpp::create_subscription<carma_perception_msgs::msg::RoadwayObstacleList>(node_topics_, "roadway_objects", 1,
-                                  std::bind(&WMListenerWorker::roadwayObjectListCallback, worker_.get(), std::placeholders::_1), roadway_objects_options);
+                                  [this](const carma_perception_msgs::msg::RoadwayObstacleList::UniquePtr msg)
+                                  {
+                                    this->worker_->roadwayObjectListCallback(msg);
+                                  }
+                                  , roadway_objects_options);
 
   traffic_spat_sub_ = rclcpp::create_subscription<carma_v2x_msgs::msg::SPAT>(node_topics_, "incoming_spat", 1,
-                                  std::bind(&WMListenerWorker::incomingSpatCallback, worker_.get(), std::placeholders::_1), traffic_spat_options);
+                                  [this](const carma_v2x_msgs::msg::SPAT::UniquePtr msg)
+                                  {
+                                    this->worker_->incomingSpatCallback(msg);
+                                  }
+                                  , traffic_spat_options);
 
   // NOTE: Currently, intra-process comms must be disabled for subscribers that are transient_local: https://github.com/ros2/rclcpp/issues/1753
   map_update_options.use_intra_process_comm = rclcpp::IntraProcessSetting::Disable; // Disable intra-process comms for the map update subscriber
@@ -127,7 +139,11 @@ WMListener::WMListener(
 
   // Create map update subscriber that will receive earlier messages that were missed ONLY if the publisher is transient_local too
   map_update_sub_ = rclcpp::create_subscription<autoware_lanelet2_msgs::msg::MapBin>(node_topics_, "map_update", map_update_sub_qos,
-                  std::bind(&WMListener::mapUpdateCallback, this, std::placeholders::_1), map_update_options);
+                  [this](const autoware_lanelet2_msgs::msg::MapBin::UniquePtr msg)
+                  {
+                    this->mapUpdateCallback(msg);
+                  }
+                  , map_update_options);
 
   map_options.use_intra_process_comm = rclcpp::IntraProcessSetting::Disable; // Disable intra-process comms for the semantic map subscriber
   auto map_sub_qos = rclcpp::QoS(rclcpp::KeepLast(2)); // Set the queue size for the semantic map subscriber
@@ -136,7 +152,11 @@ WMListener::WMListener(
 
   // Create semantic mab subscriber that will receive earlier messages that were missed ONLY if the publisher is transient_local too
   map_sub_ = rclcpp::create_subscription<autoware_lanelet2_msgs::msg::MapBin>(node_topics_, "semantic_map", map_sub_qos,
-                                  std::bind(&WMListenerWorker::mapCallback, worker_.get(), std::placeholders::_1), map_options);
+                  [this](const autoware_lanelet2_msgs::msg::MapBin::UniquePtr msg)
+                  {
+                    this->mapCallback(msg);
+                  }
+                  , map_options);
 }
 
 WMListener::~WMListener() {}

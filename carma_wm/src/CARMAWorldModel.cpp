@@ -613,12 +613,12 @@ namespace carma_wm
     return semantic_map_;
   }
 
-  void CARMAWorldModel::setRos1Clock(rclcpp::Time time_now)
+  void CARMAWorldModel::setRos1Clock(const rclcpp::Time& time_now)
   {
     ros1_clock_ = time_now;
   }
 
-  void CARMAWorldModel::setSimulationClock(rclcpp::Time time_now)
+  void CARMAWorldModel::setSimulationClock(const rclcpp::Time& time_now)
   {
     simulation_clock_ = time_now;
   }
@@ -1434,7 +1434,7 @@ namespace carma_wm
     // NOTE: In simulation, ROS1 clock (often coming from CARLA) can have a large time ahead.
     // the timing calculated here is in Simulation time, which is behind. Therefore, the world model adds the offset to make it meaningful to carma-platform:
     // https://github.com/usdot-fhwa-stol/carma-platform/issues/2217
-    if (is_simulation && ros1_clock_.has_value() && simulation_clock_.has_value())
+    if (is_simulation && ros1_clock_ && simulation_clock_)
     {
       simulation_time_difference_in_seconds = ros1_clock_.value().seconds() - simulation_clock_.value().seconds();
     }
