@@ -63,7 +63,12 @@ auto make_ctrv_detection(
     mot::Angle{units::angle::radian_t{yaw}},
     units::angular_velocity::radians_per_second_t{msg.twist.twist.angular.z}};
 
-  const mot::CtrvStateCovariance covariance = mot::CtrvStateCovariance::Zero();
+  mot::CtrvStateCovariance covariance = mot::CtrvStateCovariance::Zero();
+  covariance(0, 0) = msg.pose.covariance.at(0);
+  covariance(1, 1) = msg.pose.covariance.at(7);
+  covariance(2, 2) = msg.twist.covariance.at(0);
+  covariance(3, 3) = msg.pose.covariance.at(35);
+  covariance(4, 4) = msg.twist.covariance.at(35);
 
   return mot::CtrvDetection{timestamp, state, covariance, mot::Uuid{msg.id}};
 }
@@ -96,7 +101,13 @@ auto make_ctra_detection(
     units::angular_velocity::radians_per_second_t{msg.twist.twist.angular.z},
     units::acceleration::meters_per_second_squared_t{msg.accel.accel.linear.x}};
 
-  const mot::CtraStateCovariance covariance = mot::CtraStateCovariance::Zero();
+  mot::CtraStateCovariance covariance = mot::CtraStateCovariance::Zero();
+  covariance(0, 0) = msg.pose.covariance.at(0);
+  covariance(1, 1) = msg.pose.covariance.at(7);
+  covariance(2, 2) = msg.twist.covariance.at(0);
+  covariance(3, 3) = msg.pose.covariance.at(35);
+  covariance(4, 4) = msg.twist.covariance.at(35);
+  covariance(5, 5) = msg.accel.covariance.at(0);
 
   return mot::CtraDetection{timestamp, state, covariance, mot::Uuid{msg.id}};
 }
