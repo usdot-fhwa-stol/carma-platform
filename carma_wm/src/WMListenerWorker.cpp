@@ -576,6 +576,16 @@ void WMListenerWorker::roadwayObjectListCallback(const carma_perception_msgs::ms
   world_model_->setRoadwayObjects(msg->roadway_obstacles);
 }
 
+void WMListenerWorker::ros1ClockCallback(const rosgraph_msgs::msg::Clock::UniquePtr clock_msg)
+{
+  world_model_->setRos1Clock(rclcpp::Time(clock_msg->clock));
+}
+
+void WMListenerWorker::simClockCallback(const rosgraph_msgs::msg::Clock::UniquePtr clock_msg)
+{
+  world_model_->setSimulationClock(rclcpp::Time(clock_msg->clock));
+}
+
 void WMListenerWorker::routeCallback(const carma_planning_msgs::msg::Route::UniquePtr route_msg)
 {
   if (route_msg->map_version < current_map_version_) {
