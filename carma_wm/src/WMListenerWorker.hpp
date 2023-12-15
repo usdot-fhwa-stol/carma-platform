@@ -23,6 +23,7 @@
 #include <queue>
 #include <carma_wm/SignalizedIntersectionManager.hpp>
 #include <utility>
+#include <rosgraph_msgs/msg/clock.hpp>
 
 namespace carma_wm
 {
@@ -62,6 +63,15 @@ public:
    */
   void routeCallback(const carma_planning_msgs::msg::Route::UniquePtr route_msg);
 
+  /*!
+   * \brief Callback for ROS1 clock message (used in Simulation runs)
+   */
+  void ros1ClockCallback(const rosgraph_msgs::msg::Clock::UniquePtr clock_msg);
+
+  /*!
+   * \brief Callback for Simulation clock message (used in Simulation runs)
+   */
+  void simClockCallback(const rosgraph_msgs::msg::Clock::UniquePtr clock_msg);
 
   /*!
    * \brief Callback for roadway objects msg
@@ -91,7 +101,7 @@ public:
 
   /**
    *  \brief Returns the current configured speed limit value
-   * 
+   *
    */
   double getConfigSpeedLimit() const;
 
@@ -105,30 +115,30 @@ public:
 
   /**
    * @brief Returns the Vehicle Participation Type value
-   * 
+   *
    */
   std::string getVehicleParticipationType() const;
 
 
   /**
    *  \brief Check if re-routing is needed and returns re-routing flag
-   * 
+   *
    */
   bool checkIfReRoutingNeeded() const;
   /**
    *  \brief Enable updates without route and set route_node_flag_ as true
-   * 
+   *
    */
   void enableUpdatesWithoutRoute();
 
   /**
    * \brief Helper function to convert a routing graph message into a actual RoutingGraph object
-   * 
+   *
    * \param msg The graph message to convert
-   * \param map The base map this graph applies to 
-   * 
+   * \param map The base map this graph applies to
+   *
    * \return nullptr if the graph could not be constructed or the provided graph does not match the map
-   */ 
+   */
   LaneletRoutingGraphPtr routingGraphFromMsg(const autoware_lanelet2_msgs::msg::RoutingGraph& msg, lanelet::LaneletMapPtr map) const;
 
   /**
