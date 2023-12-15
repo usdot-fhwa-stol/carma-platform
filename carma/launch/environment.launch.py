@@ -287,7 +287,7 @@ def generate_launch_description():
                     ("incoming_psm", [ EnvironmentVariable('CARMA_MSG_NS', default_value=''), "/incoming_psm" ] ),
                     ("incoming_bsm", [ EnvironmentVariable('CARMA_MSG_NS', default_value=''), "/incoming_bsm" ] ),
                     ("georeference", [ EnvironmentVariable('CARMA_LOCZ_NS', default_value=''), "/map_param_loader/georeference" ] ),
-                    #("external_objects", "fused_external_objects") TODO: directly listening to external objects
+                    ("external_objects", "fused_external_objects")
                 ],
                 parameters=[
                     motion_computation_param_file,
@@ -529,6 +529,6 @@ def generate_launch_description():
         carma_external_objects_container,
         lanelet2_map_loader_container,
         lanelet2_map_visualization_container,
-        #carma_cooperative_perception_container,
+        carma_cooperative_perception_container,
         subsystem_controller
     ])
