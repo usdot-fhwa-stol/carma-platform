@@ -314,8 +314,8 @@ auto to_detection_msg(
     detection.pose = object.pose;
   }
 
-  if (object.presence_vector & object.VELOCITY_INST_PRESENCE_VECTOR) {
-    detection.twist = object.velocity_inst;
+  if (object.presence_vector & object.VELOCITY_PRESENCE_VECTOR) {
+    detection.twist = object.velocity;
   }
 
   if (object.presence_vector & object.OBJECT_TYPE_PRESENCE_VECTOR) {
