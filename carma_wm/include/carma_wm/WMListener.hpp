@@ -128,7 +128,7 @@ public:
 
 private:
   // Callback function that uses lock to edit the map
-  void mapUpdateCallback(autoware_lanelet2_msgs::msg::MapBin::UniquePtr geofence_msg);
+  void mapUpdateCallback(autoware_lanelet2_msgs::msg::MapBin::SharedPtr geofence_msg);
   carma_ros2_utils::SubPtr<carma_perception_msgs::msg::RoadwayObstacleList> roadway_objects_sub_;
   carma_ros2_utils::SubPtr<autoware_lanelet2_msgs::msg::MapBin> map_update_sub_;
 
