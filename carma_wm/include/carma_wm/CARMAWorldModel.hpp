@@ -162,11 +162,11 @@ public:
 
   /*! \brief Set current Ros1 clock (only used in simulation runs)
    */
-  void setRos1Clock(rclcpp::Time time_now);
+  void setRos1Clock(const rclcpp::Time& time_now);
 
   /*! \brief Set simulation clock clock (only used in simulation runs)
    */
-  void setSimulationClock(rclcpp::Time time_now);
+  void setSimulationClock(const rclcpp::Time& time_now);
 
   /*! \brief helper for traffic signal Id
    */

@@ -49,34 +49,34 @@ public:
    *
    * \param map_msg The new map messages to generate the map from
    */
-  void mapCallback(const autoware_lanelet2_msgs::msg::MapBin::UniquePtr map_msg);
+  void mapCallback(const autoware_lanelet2_msgs::msg::MapBin::SharedPtr map_msg);
 
   /*!
    * \brief Callback for new map update messages (geofence). Updates the underlying map
    *
    * \param geofence_msg The new map update messages to generate the map edits from
    */
-  void mapUpdateCallback(autoware_lanelet2_msgs::msg::MapBin::UniquePtr geofence_msg);
+  void mapUpdateCallback(autoware_lanelet2_msgs::msg::MapBin::SharedPtr geofence_msg);
 
   /*!
    * \brief Callback for route message.
    */
-  void routeCallback(const carma_planning_msgs::msg::Route::UniquePtr route_msg);
+  void routeCallback(const carma_planning_msgs::msg::Route::SharedPtr route_msg);
 
   /*!
    * \brief Callback for ROS1 clock message (used in Simulation runs)
    */
-  void ros1ClockCallback(const rosgraph_msgs::msg::Clock::UniquePtr clock_msg);
+  void ros1ClockCallback(const rosgraph_msgs::msg::Clock::SharedPtr clock_msg);
 
   /*!
    * \brief Callback for Simulation clock message (used in Simulation runs)
    */
-  void simClockCallback(const rosgraph_msgs::msg::Clock::UniquePtr clock_msg);
+  void simClockCallback(const rosgraph_msgs::msg::Clock::SharedPtr clock_msg);
 
   /*!
    * \brief Callback for roadway objects msg
    */
-  void roadwayObjectListCallback(const carma_perception_msgs::msg::RoadwayObstacleList::UniquePtr msg);
+  void roadwayObjectListCallback(const carma_perception_msgs::msg::RoadwayObstacleList::SharedPtr msg);
 
   /*!
    * \brief Allows user to set a callback to be triggered when a map update is received
@@ -144,7 +144,7 @@ public:
   /**
    *  \brief incoming spat message
    */
-  void incomingSpatCallback(const carma_v2x_msgs::msg::SPAT::UniquePtr spat_msg);
+  void incomingSpatCallback(const carma_v2x_msgs::msg::SPAT::SharedPtr spat_msg);
 
   /**
    *  \brief set true if simulation_mode is on
@@ -160,7 +160,7 @@ private:
   double config_speed_limit_;
 
   size_t current_map_version_ = 0; // Current map version based on recived map messages
-  std::queue<autoware_lanelet2_msgs::msg::MapBin::UniquePtr> map_update_queue_; // Update queue used to cache map updates when they cannot be immeadiatly applied due to waiting for rerouting
+  std::queue<autoware_lanelet2_msgs::msg::MapBin::SharedPtr> map_update_queue_; // Update queue used to cache map updates when they cannot be immeadiatly applied due to waiting for rerouting
   boost::optional<carma_planning_msgs::msg::Route> delayed_route_msg_;
 
   bool recompute_route_flag_=false; // indicates whether if this node should recompute its route based on invalidated msg
