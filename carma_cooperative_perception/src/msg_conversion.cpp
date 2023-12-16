@@ -314,8 +314,8 @@ auto to_detection_msg(
     detection.pose = object.pose;
   }
 
-  if (object.presence_vector & object.VELOCITY_INST_PRESENCE_VECTOR) {
-    detection.twist = object.velocity_inst;
+  if (object.presence_vector & object.VELOCITY_PRESENCE_VECTOR) {
+    detection.twist = object.velocity;
   }
 
   if (object.presence_vector & object.OBJECT_TYPE_PRESENCE_VECTOR) {
@@ -472,13 +472,13 @@ auto to_detected_object_data_msg(
   }
 
   // speed/speed_z - convert vector velocity to scalar speed val given x/y components
-  if (external_object.presence_vector & external_object.VELOCITY_INST_PRESENCE_VECTOR) {
+  if (external_object.presence_vector & external_object.VELOCITY_PRESENCE_VECTOR) {
     detected_object_common_data.speed.speed = std::hypot(
-      external_object.velocity_inst.twist.linear.x, external_object.velocity_inst.twist.linear.y);
+      external_object.velocity.twist.linear.x, external_object.velocity.twist.linear.y);
 
     detected_object_common_data.presence_vector |=
       carma_v2x_msgs::msg::DetectedObjectCommonData::HAS_SPEED_Z;
-    detected_object_common_data.speed_z.speed = external_object.velocity_inst.twist.linear.z;
+    detected_object_common_data.speed_z.speed = external_object.velocity.twist.linear.z;
 
     // heading - convert ang vel to scale heading
     lanelet::BasicPoint3d external_object_position{

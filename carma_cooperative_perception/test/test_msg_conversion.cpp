@@ -170,16 +170,16 @@ TEST(ToDetectionMsg, FromExternalObject)
   object.pose.pose.orientation.y = 12;
   object.pose.pose.orientation.z = 13;
   object.pose.pose.orientation.w = 14;
-  object.velocity_inst.twist.linear.x = 15;
-  object.velocity_inst.twist.linear.y = 16;
-  object.velocity_inst.twist.linear.z = 17;
-  object.velocity_inst.twist.angular.x = 18;
-  object.velocity_inst.twist.angular.y = 19;
-  object.velocity_inst.twist.angular.z = 20;
+  object.velocity.twist.linear.x = 15;
+  object.velocity.twist.linear.y = 16;
+  object.velocity.twist.linear.z = 17;
+  object.velocity.twist.angular.x = 18;
+  object.velocity.twist.angular.y = 19;
+  object.velocity.twist.angular.z = 20;
   object.object_type = object.SMALL_VEHICLE;
 
   object.presence_vector |= object.BSM_ID_PRESENCE_VECTOR | object.ID_PRESENCE_VECTOR |
-                            object.POSE_PRESENCE_VECTOR | object.VELOCITY_INST_PRESENCE_VECTOR |
+                            object.POSE_PRESENCE_VECTOR | object.VELOCITY_PRESENCE_VECTOR |
                             object.OBJECT_TYPE_PRESENCE_VECTOR;
 
   constexpr carma_cooperative_perception::MotionModelMapping motion_model_mapping{
@@ -195,7 +195,7 @@ TEST(ToDetectionMsg, FromExternalObject)
   EXPECT_EQ(detection.header, object.header);
   EXPECT_EQ(detection.id, "3456-7");
   EXPECT_EQ(detection.pose, object.pose);
-  EXPECT_EQ(detection.twist, object.velocity_inst);
+  EXPECT_EQ(detection.twist, object.velocity);
   EXPECT_EQ(detection.motion_model, detection.MOTION_MODEL_CTRV);
 }
 
@@ -412,12 +412,12 @@ TEST(ToDetectedObjectDataMsg, FromExternalObject)
   object.pose.pose.orientation.y = 12;
   object.pose.pose.orientation.z = 13;
   object.pose.pose.orientation.w = 14;
-  object.velocity_inst.twist.linear.x = 15;
-  object.velocity_inst.twist.linear.y = 16;
-  object.velocity_inst.twist.linear.z = 17;
-  object.velocity_inst.twist.angular.x = 18;
-  object.velocity_inst.twist.angular.y = 19;
-  object.velocity_inst.twist.angular.z = 20;
+  object.velocity.twist.linear.x = 15;
+  object.velocity.twist.linear.y = 16;
+  object.velocity.twist.linear.z = 17;
+  object.velocity.twist.angular.x = 18;
+  object.velocity.twist.angular.y = 19;
+  object.velocity.twist.angular.z = 20;
   object.size.x = 21;
   object.size.y = 22;
   object.size.z = 23;
@@ -425,7 +425,7 @@ TEST(ToDetectedObjectDataMsg, FromExternalObject)
   object.object_type = object.SMALL_VEHICLE;
 
   object.presence_vector |= object.BSM_ID_PRESENCE_VECTOR | object.ID_PRESENCE_VECTOR |
-                            object.POSE_PRESENCE_VECTOR | object.VELOCITY_INST_PRESENCE_VECTOR |
+                            object.POSE_PRESENCE_VECTOR | object.VELOCITY_PRESENCE_VECTOR |
                             object.CONFIDENCE_PRESENCE_VECTOR | object.OBJECT_TYPE_PRESENCE_VECTOR |
                             object.SIZE_PRESENCE_VECTOR;
 
@@ -442,7 +442,7 @@ TEST(ToDetectedObjectDataMsg, FromExternalObject)
   EXPECT_EQ(detected_object.detected_object_common_data.detected_id.object_id, 7);
   EXPECT_NEAR(detected_object.detected_object_common_data.speed.speed, std::sqrt(481), 1e-2);
   EXPECT_EQ(
-    detected_object.detected_object_common_data.speed_z.speed, object.velocity_inst.twist.linear.z);
+    detected_object.detected_object_common_data.speed_z.speed, object.velocity.twist.linear.z);
 
   EXPECT_EQ(detected_object.detected_object_optional_data.det_veh.size.vehicle_width, 22);
   EXPECT_EQ(detected_object.detected_object_optional_data.det_veh.size.vehicle_length, 21);
