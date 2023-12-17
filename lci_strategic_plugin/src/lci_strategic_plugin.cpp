@@ -346,11 +346,6 @@ std::vector<lanelet::ConstLanelet> LCIStrategicPlugin::getLaneletsBetweenWithExc
   std::vector<lanelet::ConstLanelet> crossed_lanelets =
       wm_->getLaneletsBetween(start_downtrack, end_downtrack, shortest_path_only, bounds_inclusive);
 
-  for (auto llt: crossed_lanelets)
-  {
-    RCLCPP_ERROR_STREAM(get_logger(), "getLaneletsBetweenWithException: " << llt.id());
-  }
-
   if (crossed_lanelets.size() == 0)
   {
     throw std::invalid_argument("getLaneletsBetweenWithException called but inputs do not cross any lanelets going "
