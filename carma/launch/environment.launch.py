@@ -550,6 +550,6 @@ def generate_launch_description():
         carma_external_objects_container,
         lanelet2_map_loader_container,
         lanelet2_map_visualization_container,
-        #carma_cooperative_perception_container,
+        carma_cooperative_perception_container,
         subsystem_controller
     ])
