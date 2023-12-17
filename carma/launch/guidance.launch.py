@@ -57,7 +57,7 @@ def generate_launch_description():
     declare_use_sim_time_arg = DeclareLaunchArgument(
         name = 'use_sim_time',
         default_value = "False",
-        description = "Simulator"
+        description = "True if simulation mode is on"
     )
 
     subsystem_controller_default_param_file = os.path.join(

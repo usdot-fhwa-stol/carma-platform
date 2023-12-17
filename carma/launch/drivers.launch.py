@@ -44,7 +44,7 @@ def generate_launch_description():
     declare_use_sim_time_arg = DeclareLaunchArgument(
         name = 'use_sim_time',
         default_value = "False",
-        description = "Simulator"
+        description = "True if simulation mode is on"
     )
 
     env_log_levels = EnvironmentVariable('CARMA_ROS_LOGGING_CONFIG', default_value='{ "default_level" : "WARN" }')

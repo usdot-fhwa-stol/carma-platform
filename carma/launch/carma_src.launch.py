@@ -104,7 +104,7 @@ def generate_launch_description():
     declare_use_sim_time_arg = DeclareLaunchArgument(
         name = 'use_sim_time',
         default_value = 'False',
-        description = "Simulation"
+        description = "True of simulation mode is on"
     )
 
     #Declare the route file folder launch argument
@@ -207,7 +207,7 @@ def generate_launch_description():
                 PythonLaunchDescriptionSource([ThisLaunchFileDir(), '/transforms.launch.py']),
                 launch_arguments = {
                     'vehicle_config_param_file' : vehicle_config_param_file,
-                    #'use_sim_time' : use_sim_time
+                    'use_sim_time' : use_sim_time
                 }.items()
             ),
         ]
@@ -223,7 +223,7 @@ def generate_launch_description():
                     'vehicle_config_param_file' : vehicle_config_param_file,
                     'vehicle_characteristics_param_file' : vehicle_characteristics_param_file,
                     'vector_map_file' : vector_map_file,
-                    #'use_sim_time' : use_sim_time
+                    'use_sim_time' : use_sim_time
                     }.items()
             ),
         ]
@@ -243,7 +243,7 @@ def generate_launch_description():
                     'arealist_path' : arealist_path,
                     'vector_map_file' : vector_map_file,
                     'vehicle_calibration_dir': vehicle_calibration_dir,
-                    #'use_sim_time' : use_sim_time
+                    'use_sim_time' : use_sim_time
                 }.items()
             )
         ]
@@ -259,7 +259,7 @@ def generate_launch_description():
                     'vehicle_config_param_file' : vehicle_config_param_file,
                     'enable_opening_tunnels'  : enable_opening_tunnels,
                     'subsystem_controller_param_file' : [vehicle_config_dir, '/SubsystemControllerParams.yaml'],
-                    #'use_sim_time' : use_sim_time
+                    'use_sim_time' : use_sim_time
                 }.items()
             ),
         ]
@@ -280,7 +280,7 @@ def generate_launch_description():
                     'tactical_plugins_to_validate' : tactical_plugins_to_validate,
                     'control_plugins_to_validate' : control_plugins_to_validate,
                     'subsystem_controller_param_file' : [vehicle_config_dir, '/SubsystemControllerParams.yaml'],
-                    #'use_sim_time' : use_sim_time
+                    'use_sim_time' : use_sim_time
                 }.items()
             ),
         ]

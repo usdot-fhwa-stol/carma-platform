@@ -29,7 +29,7 @@ def generate_launch_description():
     declare_use_sim_time_arg = DeclareLaunchArgument(
         name = 'use_sim_time',
         default_value = "False",
-        description = "Simulator"
+        description = "True if simulation mode is on"
     )
 
     # Since the file needs to be actually read a substition does not work here
