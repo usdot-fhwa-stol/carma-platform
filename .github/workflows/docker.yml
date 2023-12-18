@@ -1,13 +1,8 @@
 name: Docker build
-
+# This workflow will only build for Pullrequest which are opened, changed , merged 
 on:
-  push:
-    branches-ignore:
-      - "develop"
-      - "master"
-      - "release/*"
   pull_request:
-      types: [opened, synchronize, reopened]
+    types: [opened, synchronize, reopened]
 
 jobs:
   docker:
