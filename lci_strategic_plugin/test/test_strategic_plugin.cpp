@@ -251,19 +251,19 @@ TEST_F(LCIStrategicTestFixture, get_nearest_valid_entry_time)
   carma_wm::test::addTrafficLight(cmw_, traffic_light_id, {1200}, { 1203 });
 
   auto signal = cmw_->getMutableMap()->laneletLayer.get(1200).regulatoryElementsAs<lanelet::CarmaTrafficSignal>().front();
-  auto time = lcip->get_nearest_valid_entry_time(rclcpp::Time(1e9 * 10), rclcpp::Time(1e9 * 15), signal, 0);
+  auto [time, in_tbd] = lcip->get_nearest_valid_entry_time(rclcpp::Time(1e9 * 10), rclcpp::Time(1e9 * 15), signal, 0);
 
   EXPECT_EQ(rclcpp::Time(1e9 * 24), time);
 
-  time = lcip->get_nearest_valid_entry_time(rclcpp::Time(1e9 * 10), rclcpp::Time(1e9 * 28), signal, 0);
+  std::tie(time, in_tbd) = lcip->get_nearest_valid_entry_time(rclcpp::Time(1e9 * 10), rclcpp::Time(1e9 * 28), signal, 0);
 
   EXPECT_EQ(rclcpp::Time(1e9 * 28), time);
 
-  time = lcip->get_nearest_valid_entry_time(rclcpp::Time(1e9 * 10), rclcpp::Time(1e9 * 45), signal, 0);
+  std::tie(time, in_tbd) = lcip->get_nearest_valid_entry_time(rclcpp::Time(1e9 * 10), rclcpp::Time(1e9 * 45), signal, 0);
 
   EXPECT_EQ(rclcpp::Time(1e9 * 68), time);
 
-  time = lcip->get_nearest_valid_entry_time(rclcpp::Time(1e9 * 10), rclcpp::Time(1e9 * 44), signal, 50);
+  std::tie(time, in_tbd) = lcip->get_nearest_valid_entry_time(rclcpp::Time(1e9 * 10), rclcpp::Time(1e9 * 44), signal, 50);
 
   EXPECT_EQ(rclcpp::Time(1e9 * 122), time);
 }

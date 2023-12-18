@@ -600,11 +600,11 @@ private:
    * \param signal CARMATrafficSignal that is responsible for the intersection along route
    * \param minimum_required_green_time Minimum seconds required by other vehicles in front to pass through the intersection first
    *
-   * \return Nearest ROS entry time during green phase.
+   * \return Nearest ROS entry time during green phase, and whether if tbd or not
    * NOTE: TSMO UC2: Algorithm 2. Entering time estimation algorithm for EVs in cooperation Class A when the SPaT plan is fixed-time (defined for C-ADS-equipped vehicles)
    */
 
-  rclcpp::Time get_nearest_valid_entry_time(const rclcpp::Time& current_time, const rclcpp::Time& earliest_entry_time, lanelet::CarmaTrafficSignalPtr signal, double minimum_required_green_time = 0.0) const;
+  std::tuple<rclcpp::Time, bool> get_nearest_valid_entry_time(const rclcpp::Time& current_time, const rclcpp::Time& earliest_entry_time, lanelet::CarmaTrafficSignalPtr signal, double minimum_required_green_time = 0.0) const;
 
   /**
    * \brief Gets the earliest entry time into the intersection that is kinematically possible for the vehicle.
