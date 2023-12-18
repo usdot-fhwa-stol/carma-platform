@@ -39,6 +39,13 @@ def generate_launch_description():
         description = "Path to file contain vehicle configuration parameters"
     )
 
+    use_sim_time = LaunchConfiguration('use_sim_time')
+    declare_use_sim_time_arg = DeclareLaunchArgument(
+        name = 'use_sim_time',
+        default_value = "False",
+        description = "True if simulation mode is on"
+    )
+
     vehicle_characteristics_param_file = LaunchConfiguration('vehicle_characteristics_param_file')
     declare_vehicle_characteristics_param_file_arg = DeclareLaunchArgument(
         name = 'vehicle_characteristics_param_file',
@@ -124,6 +131,7 @@ def generate_launch_description():
                     { "message_type" : "sensor_msgs/PointCloud2"},
                     { "queue_size" : 1},
                     { "timeout" : 50 },
+                    vehicle_config_param_file
                 ]
             ),
             ComposableNode(
@@ -142,7 +150,7 @@ def generate_launch_description():
                     ("change_state", "disabled_change_state"), # Disable lifecycle topics since this is a lifecycle wrapper container
                     ("get_state", "disabled_get_state")        # Disable lifecycle topics since this is a lifecycle wrapper container
                 ],
-                parameters=[ points_map_filter_param_file ]
+                parameters=[ points_map_filter_param_file, vehicle_config_param_file ]
             ),
             ComposableNode(
                 package='frame_transformer',
@@ -159,7 +167,7 @@ def generate_launch_description():
                     ("change_state", "disabled_change_state"), # Disable lifecycle topics since this is a lifecycle wrapper container
                     ("get_state", "disabled_get_state")        # Disable lifecycle topics since this is a lifecycle wrapper container
                 ],
-                parameters=[ frame_transformer_param_file ]
+                parameters=[ frame_transformer_param_file, vehicle_config_param_file ]
             ),
             ComposableNode(
                 package='ray_ground_classifier_nodes',
@@ -173,7 +181,7 @@ def generate_launch_description():
                     ("points_in", "points_in_base_link"),
                     ("points_nonground", "points_no_ground")
                 ],
-                parameters=[ ray_ground_classifier_param_file]
+                parameters=[ ray_ground_classifier_param_file, vehicle_config_param_file]
             ),
             ComposableNode(
                 package='euclidean_cluster_nodes',
@@ -186,7 +194,7 @@ def generate_launch_description():
                 remappings=[
                     ("points_in", "points_no_ground")
                 ],
-                parameters=[ euclidean_cluster_param_file ]
+                parameters=[ euclidean_cluster_param_file, vehicle_config_param_file]
             ),
             ComposableNode(
                 package='object_detection_tracking',
@@ -200,7 +208,8 @@ def generate_launch_description():
                 remappings=[
                     ("bounding_boxes", "lidar_bounding_boxes"),
                     ("lidar_detected_objects", "detected_objects"),
-                ]
+                ],
+                parameters=[vehicle_config_param_file]
             ),
             ComposableNode(
                     package='tracking_nodes',
@@ -215,7 +224,7 @@ def generate_launch_description():
                         # TODO note classified_rois1 is the default single camera input topic
                         # TODO when camera detection is added, we will wan to separate this node into a different component to preserve fault tolerance
                     ],
-                    parameters=[ tracking_nodes_param_file ]
+                    parameters=[ tracking_nodes_param_file, vehicle_config_param_file]
             )
         ]
     )
@@ -259,7 +268,7 @@ def generate_launch_description():
                     remappings=[
                         ("detected_objects", "tracked_objects"),
                     ],
-                    parameters=[ object_detection_tracking_param_file ]
+                    parameters=[ object_detection_tracking_param_file, vehicle_config_param_file]
             ),
             ComposableNode(
                     package='object_visualizer',
@@ -272,7 +281,7 @@ def generate_launch_description():
                     remappings=[
                         ("external_objects", "external_object_predictions"),
                     ],
-                    parameters=[ object_visualizer_param_file ]
+                    parameters=[ object_visualizer_param_file, vehicle_config_param_file ]
             ),
             ComposableNode(
                 package='motion_computation',
@@ -290,7 +299,7 @@ def generate_launch_description():
                     ("external_objects", "fused_external_objects")
                 ],
                 parameters=[
-                    motion_computation_param_file,
+                    motion_computation_param_file, vehicle_config_param_file
                 ]
             ),
             ComposableNode( #CARMA Motion Prediction Visualizer Node
@@ -303,7 +312,8 @@ def generate_launch_description():
                     ],
                     remappings=[
                         ("external_objects", "external_object_predictions" ),
-                    ]
+                    ],
+                    parameters=[ vehicle_config_param_file ]
             ),
             ComposableNode(
                     package='roadway_objects',
@@ -368,7 +378,8 @@ def generate_launch_description():
                     ("get_state", "disabled_get_state")        # Disable lifecycle topics since this is a lifecycle wrapper container
                 ],
                 parameters=[
-                    { "lanelet2_filename" : vector_map_file}
+                    { "lanelet2_filename" : vector_map_file},
+                    vehicle_config_param_file
                 ]
             )
         ]
@@ -397,7 +408,7 @@ def generate_launch_description():
                     ("get_state", "disabled_get_state")        # Disable lifecycle topics since this is a lifecycle wrapper container
                 ],
                 parameters=[
-
+                    vehicle_config_param_file
                 ]
             )
         ]
@@ -424,6 +435,7 @@ def generate_launch_description():
                     ("input/external_objects", "external_objects"),
                 ],
                 parameters=[
+                    vehicle_config_param_file
                 ]
             ),
             ComposableNode(
@@ -441,6 +453,7 @@ def generate_launch_description():
                     ("input/external_objects", "external_objects"),
                 ],
                 parameters=[
+                    vehicle_config_param_file
                 ]
             ),
             ComposableNode(
@@ -457,7 +470,8 @@ def generate_launch_description():
                     ("output/detection_list", "filtered_detection_list")
                 ],
                 parameters=[
-                    cp_host_vehicle_filter_node_file
+                    cp_host_vehicle_filter_node_file,
+                    vehicle_config_param_file
                 ]
             ),
             ComposableNode(
@@ -473,6 +487,7 @@ def generate_launch_description():
                     ("output/detections", "full_detection_list"),
                 ],
                 parameters=[
+                    vehicle_config_param_file
                 ]
             ),
             ComposableNode(
@@ -488,6 +503,7 @@ def generate_launch_description():
                     ("output/external_object_list", "fused_external_objects"),
                 ],
                 parameters=[
+                    vehicle_config_param_file
                 ]
             ),
             ComposableNode(
@@ -503,7 +519,8 @@ def generate_launch_description():
                     ("input/detection_list", "filtered_detection_list"),
                 ],
                 parameters=[
-                    cp_multiple_object_tracker_node_file
+                    cp_multiple_object_tracker_node_file,
+                    vehicle_config_param_file
                 ]
             ),
 
@@ -515,7 +532,10 @@ def generate_launch_description():
         package='subsystem_controllers',
         name='environment_perception_controller',
         executable='environment_perception_controller',
-        parameters=[ subsystem_controller_default_param_file, subsystem_controller_param_file ],
+        parameters=[
+            subsystem_controller_default_param_file,
+            subsystem_controller_param_file,
+            {"use_sim_time" : use_sim_time}],
         on_exit= Shutdown(), # Mark the subsystem controller as required
         arguments=['--ros-args', '--log-level', GetLogLevel('subsystem_controllers', env_log_levels)]
     )
@@ -523,6 +543,7 @@ def generate_launch_description():
     return LaunchDescription([
         declare_vehicle_characteristics_param_file_arg,
         declare_vehicle_config_param_file_arg,
+        declare_use_sim_time_arg,
         declare_subsystem_controller_param_file_arg,
         declare_vector_map_file,
         lidar_perception_container,

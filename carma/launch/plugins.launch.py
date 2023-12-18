@@ -451,7 +451,8 @@ def generate_launch_description():
                 ],
                 parameters=[
                     vehicle_characteristics_param_file, #vehicle_response_lag
-                    pure_pursuit_tuning_parameters #pure_pursuit calibration parameters
+                    pure_pursuit_tuning_parameters, #pure_pursuit calibration parameters
+                    vehicle_config_param_file
                 ]
             ),
         ]

@@ -54,12 +54,12 @@ def generate_launch_description():
 
     vehicle_characteristics_param_file = LaunchConfiguration('vehicle_characteristics_param_file')
     declare_vehicle_characteristics_param_file_arg = DeclareLaunchArgument(
-        name = 'vehicle_characteristics_param_file', 
+        name = 'vehicle_characteristics_param_file',
         default_value = "/opt/carma/vehicle/calibration/identifiers/UniqueVehicleParams.yaml",
         description = "Path to file containing unique vehicle calibrations"
     )
-    
-    
+
+
     vehicle_config_param_file = LaunchConfiguration('vehicle_config_param_file')
     declare_vehicle_config_param_file_arg = DeclareLaunchArgument(
         name = 'vehicle_config_param_file',
@@ -84,7 +84,13 @@ def generate_launch_description():
 
     carma_cloud_client_param_file = os.path.join(
         get_package_share_directory('carma_cloud_client'), 'config/parameters.yaml')
-    
+
+    use_sim_time = LaunchConfiguration('use_sim_time')
+    declare_use_sim_time_arg = DeclareLaunchArgument(
+        name = 'use_sim_time',
+        default_value = "False",
+        description = "True if simulation mode is on"
+    )
 
     # Nodes
     carma_v2x_container = ComposableNodeContainer(
@@ -99,7 +105,7 @@ def generate_launch_description():
                 plugin='mobilitypath_publisher::MobilityPathPublication',
                 name='mobilitypath_publisher_node',
                 extra_arguments=[
-                    {'use_intra_process_comms': True}, 
+                    {'use_intra_process_comms': True},
                     {'--log-level' : GetLogLevel('mobilitypath_publisher', env_log_levels) }
                 ],
                 remappings=[
@@ -108,9 +114,10 @@ def generate_launch_description():
                     ("georeference", [ EnvironmentVariable('CARMA_LOCZ_NS', default_value=''), "/map_param_loader/georeference" ] ),
                     ("mobility_path_msg", [ EnvironmentVariable('CARMA_MSG_NS', default_value=''), "/outgoing_mobility_path" ] )
                 ],
-                parameters=[ 
+                parameters=[
                     mobilitypath_publisher_param_file,
-                    vehicle_characteristics_param_file
+                    vehicle_characteristics_param_file,
+                    vehicle_config_param_file
                 ]
             ),
             ComposableNode(
@@ -118,7 +125,7 @@ def generate_launch_description():
                 plugin='bsm_generator::BSMGenerator',
                 name='bsm_generator_node',
                 extra_arguments=[
-                    {'use_intra_process_comms': True}, 
+                    {'use_intra_process_comms': True},
                     {'--log-level' : GetLogLevel('bsm_generator', env_log_levels) }
                 ],
                 remappings=[
@@ -132,7 +139,7 @@ def generate_launch_description():
                     ("pose", [ EnvironmentVariable('CARMA_LOCZ_NS', default_value=''), "/current_pose" ] ),
                     ("georeference", [ EnvironmentVariable('CARMA_LOCZ_NS', default_value=''), "/map_param_loader/georeference" ] )
                 ],
-                parameters=[ 
+                parameters=[
                     bsm_generator_param_file,
                     vehicle_characteristics_param_file,
                     vehicle_config_param_file
@@ -150,6 +157,9 @@ def generate_launch_description():
                     ("inbound_binary_msg", [ EnvironmentVariable('CARMA_INTR_NS', default_value=''), "/comms/inbound_binary_msg" ] ),
                     ("outbound_binary_msg", [ EnvironmentVariable('CARMA_INTR_NS', default_value=''), "/comms/outbound_binary_msg" ] ),
                 ],
+                parameters=[
+                    vehicle_config_param_file
+                ]
             ),
             ComposableNode(
                 package='j2735_convertor',
@@ -162,13 +172,16 @@ def generate_launch_description():
                 remappings=[
                     ("outgoing_bsm", "bsm_outbound" )
                 ],
+                parameters=[
+                    vehicle_config_param_file
+                ]
             ),
-            ComposableNode( 
+            ComposableNode(
                 package='carma_cloud_client',
                 plugin='carma_cloud_client::CarmaCloudClient',
                 name='carma_cloud_client_node',
                 extra_arguments=[
-                    {'use_intra_process_comms': True}, 
+                    {'use_intra_process_comms': True},
                     {'--log-level' : GetLogLevel('carma_cloud_client', env_log_levels) }
                 ],
                 remappings=[
@@ -177,7 +190,7 @@ def generate_launch_description():
                 parameters = [
                     vehicle_config_param_file, carma_cloud_client_param_file
                 ]
-                    
+
             ),
         ]
     )
@@ -187,7 +200,10 @@ def generate_launch_description():
         package='subsystem_controllers',
         name='v2x_controller',
         executable='v2x_controller',
-        parameters=[ subsystem_controller_default_param_file, subsystem_controller_param_file ], # Default file is loaded first followed by config file
+        parameters=[
+            subsystem_controller_default_param_file,
+            subsystem_controller_param_file,
+            {"use_sim_time" : use_sim_time}], # Default file is loaded first followed by config file
         on_exit= Shutdown(), # Mark the subsystem controller as required
         arguments=['--ros-args', '--log-level', GetLogLevel('subsystem_controllers', env_log_levels)]
     )
@@ -198,23 +214,23 @@ def generate_launch_description():
     REMOTE_ADDR="www.carma-cloud.com"
     KEY_FILE="carma-cloud-test-1.pem"
     HOST_PORT="33333" # This port is forwarded to remote host (carma-cloud)
-    REMOTE_PORT="10001" # This port is forwarded to local host 
+    REMOTE_PORT="10001" # This port is forwarded to local host
     param_launch_path = os.path.join(
         get_package_share_directory('carma_cloud_client'), 'launch/scripts')
-        
+
     script = param_launch_path + '/open_tunnels.sh'
 
     subprocess.check_call(['chmod','u+x', script])
 
     key_path =  "/opt/carma/vehicle/calibration/cloud_permission"
-    
+
     keyfile = key_path + '/' + KEY_FILE
-    
+
     subprocess.check_call(['sudo','chmod','400', keyfile])
 
-    
+
     open_tunnels_action = ExecuteProcess(
-        
+
         condition=IfCondition(enable_opening_tunnels),
         cmd = ['sudo',  script, '-u', REMOTE_USER, '-a', REMOTE_ADDR, '-k', keyfile, '-p', REMOTE_PORT,  '-r', HOST_PORT],
         output = 'screen'
@@ -223,12 +239,13 @@ def generate_launch_description():
 
     return LaunchDescription([
         declare_vehicle_config_param_file_arg,
-        declare_vehicle_characteristics_param_file_arg, 
-        declare_subsystem_controller_param_file_arg,  
-        declare_enable_opening_tunnels, 
-        open_tunnels_action,    
+        declare_use_sim_time_arg,
+        declare_vehicle_characteristics_param_file_arg,
+        declare_subsystem_controller_param_file_arg,
+        declare_enable_opening_tunnels,
+        open_tunnels_action,
         carma_v2x_container,
         subsystem_controller
     ])
- 
+
 
