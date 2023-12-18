@@ -49,7 +49,7 @@ double LCIStrategicPlugin::get_distance_to_accel_or_decel_once (double current_s
   }
 }
 
-rclcpp::Time LCIStrategicPlugin::get_nearest_green_entry_time(const rclcpp::Time& current_time, const rclcpp::Time& earliest_entry_time, lanelet::CarmaTrafficSignalPtr signal, double minimum_required_green_time) const
+rclcpp::Time LCIStrategicPlugin::get_nearest_valid_entry_time(const rclcpp::Time& current_time, const rclcpp::Time& earliest_entry_time, lanelet::CarmaTrafficSignalPtr signal, double minimum_required_green_time) const
 {
   boost::posix_time::time_duration g =  lanelet::time::durationFromSec(minimum_required_green_time);         // provided by considering min headways of vehicles in front
   boost::posix_time::ptime t = lanelet::time::timeFromSec(current_time.seconds());                        // time variable
@@ -247,7 +247,7 @@ std::tuple<rclcpp::Time, bool, bool> LCIStrategicPlugin::get_final_entry_time_an
 
   if (config_.enable_carma_streets_connection ==false || scheduled_enter_time_ == 0) //UC2
   {
-    nearest_green_entry_time = get_nearest_green_entry_time(current_state.stamp, earliest_entry_time, traffic_light)
+    nearest_green_entry_time = get_nearest_valid_entry_time(current_state.stamp, earliest_entry_time, traffic_light)
                                           + rclcpp::Duration(EPSILON * 1e9); //0.01sec more buffer since green_light algorithm's timestamp picks the previous signal - Vehicle Estimation
     is_entry_time_within_green_or_tbd = true;
   }
