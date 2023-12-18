@@ -37,12 +37,12 @@ jobs:
       run: |
         source "$INIT_ENV"
         PACKAGES=$(find . -maxdepth 2 -type f -name package.xml | sed 's/\.\///' | cut -d/ -f1)
-        sed -i '/colcon build/ s/$/ --packages-skip novatel_oem7_msgs novatel_oem7_driver --parallel-workers 4 --event-handlers console_direct+ --cmake-args -DCMAKE_EXPORT_COMPILE_COMMANDS=ON -DCMAKE_CXX_FLAGS="${COVERAGE_FLAGS}" -DCMAKE_C_FLAGS="${COVERAGE_FLAGS}" -DCMAKE_BUILD_TYPE="Debug"/' /home/carma/.ci-image/engineering_tools/code_coverage/make_with_coverage.bash
+        #sed -i '/colcon build/ s/$/ --packages-skip novatel_oem7_msgs novatel_oem7_driver --parallel-workers 4 --event-handlers console_direct+ --cmake-args -DCMAKE_EXPORT_COMPILE_COMMANDS=ON -DCMAKE_CXX_FLAGS="${COVERAGE_FLAGS}" -DCMAKE_C_FLAGS="${COVERAGE_FLAGS}" -DCMAKE_BUILD_TYPE="Debug"/' /home/carma/.ci-image/engineering_tools/code_coverage/make_with_coverage.bash
         make_with_coverage.bash -m -e /opt/carma/ -o ./coverage_reports/gcov
     - name: Run ROS1 C++ Tests
       run: |
         source "$INIT_ENV"
-        sed -i '/colcon test/ s/$/ --packages-skip novatel_oem7_msgs --parallel-workers 4 --event-handlers console_direct+ --cmake-args -DCMAKE_EXPORT_COMPILE_COMMANDS=ON -DCMAKE_CXX_FLAGS="${COVERAGE_FLAGS}" -DCMAKE_C_FLAGS="${COVERAGE_FLAGS}" -DCMAKE_BUILD_TYPE="Debug"/' /home/carma/.ci-image/engineering_tools/code_coverage/make_with_coverage.bash
+        #sed -i '/colcon test/ s/$/ --packages-skip novatel_oem7_msgs --parallel-workers 4 --event-handlers console_direct+ --cmake-args -DCMAKE_EXPORT_COMPILE_COMMANDS=ON -DCMAKE_CXX_FLAGS="${COVERAGE_FLAGS}" -DCMAKE_C_FLAGS="${COVERAGE_FLAGS}" -DCMAKE_BUILD_TYPE="Debug"/' /home/carma/.ci-image/engineering_tools/code_coverage/make_with_coverage.bash
         make_with_coverage.bash -t -e /opt/carma/ -o ./coverage_reports/gcov 
     - name: Backup ROS1 compile_commands.json
       run: |
