@@ -40,6 +40,8 @@ swarm__install() {
     echo "Downloading $IMAGE_NAME..."
     docker pull "$IMAGE_NAME"
 
+    # Set up the carma-config-data volume on the manager
+    docker volume create carma-config-data
     docker run --rm --name carma-config-data -v carma-config-data:/opt/carma/vehicle/config -d "$IMAGE_NAME"
 
     local -r BACKGROUND_COMPOSE=$(docker run --rm -v carma-config-data:/opt/carma/vehicle/config --entrypoint sh busybox:latest -c \
@@ -54,6 +56,26 @@ swarm__install() {
     echo "$MANAGER_COMPOSE" | docker-compose -f - pull
     echo "$WORKER_COMPOSE" | docker-compose -f - pull
 
+
+    if [ -z $(docker volume ls | grep carma-config-data) ]; then
+        echo "Missing 'carma-config-data' volume, add with \"carma swarm update-config <image tag>\""
+        exit 1
+    fi
+
+    local -r CARMA_BASE=$(__get_image_from_config carma-base:)
+    if [[ -z $CARMA_BASE ]]; then
+        __pull_newest_carma_base
+        CARMA_BASE=$(__get_most_recent_carma_base)
+    fi
+    WORKER_INFO=$(docker run -it --rm -v carma-config-data:/opt/carma/vehicle/config "$CARMA_BASE" /bin/sh -c '{ echo "$WORKER_USER"; echo "@"; echo "$WORKER_IP"; } | tr -d "\n"')
+
+    if [ -z $(ssh "$WORKER_INFO" "docker volume ls | grep carma-config-data") ]; then
+        ssh "$WORKER_INFO" "docker volume create --driver local \
+            --opt type=nfs \
+            --opt o=addr="$WORKER_INFO",nfsvers=4 \
+            --opt device=:/export/carma_volume \
+            carma-config-data"
+    fi
 }
 
 
@@ -124,9 +146,25 @@ swarm__start() {
     fi
 }
 
-
+# add a check to make sure carma-config-data exists on the Worker PC
 swarm-config__set() {
     echo "Updating 'carma-config-data' volume..."
+
+    # Check to make sure the worker system has carma-config-data initalized
+    local -r CARMA_BASE=$(__get_image_from_config carma-base:)
+    if [[ -z $CARMA_BASE ]]; then
+        __pull_newest_carma_base
+        CARMA_BASE=$(__get_most_recent_carma_base)
+    fi
+    WORKER_INFO=$(docker run -it --rm -v carma-config-data:/opt/carma/vehicle/config "$CARMA_BASE" /bin/sh -c '{ echo "$WORKER_USER"; echo "@"; echo "$WORKER_IP"; } | tr -d "\n"')
+
+    if [ -z $(ssh "WORKER_INFO" "docker volume ls | grep carma-config-data") ]; then
+        ssh "$WORKER_INFO" "docker volume create --driver local \
+            --opt type=nfs \
+            --opt o=addr="$WORKER_INFO",nfsvers=4 \
+            --opt device=:/export/carma_volume \
+            carma-config-data"
+    fi
 
     if [ "$1" = "-d" ]; then
         local -r USERNAME=usdotfhwastoldev
@@ -187,16 +225,12 @@ swarm-config__edit() {
 
 
 swarm-config__status() {
-    # note the image being used
-    # remove old compose files not needed due to split can
     if [ -n "$(docker volume ls | grep carma-config-data)" ]; then
         echo "Found 'carma-config-data' volume"
     else
         echo "Missing 'carma-config-data' volume, add with \"carma swarm update-config <image tag>\""
         exit 1
     fi
-
-    echo "Current carma-config image: "
 
     if [ -z "$1" ]; then
         echo -e " \n -- docker-compose-background-manager.yml\n"
