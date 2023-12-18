@@ -53,7 +53,7 @@ WorldModelConstPtr WMListenerWorker::getWorldModel() const
 }
 
 
-void WMListenerWorker::mapCallback(const autoware_lanelet2_msgs::msg::MapBin::UniquePtr map_msg)
+void WMListenerWorker::mapCallback(const autoware_lanelet2_msgs::msg::MapBin::SharedPtr map_msg)
 {
   current_map_version_ = map_msg->map_version;
 
@@ -67,7 +67,7 @@ void WMListenerWorker::mapCallback(const autoware_lanelet2_msgs::msg::MapBin::Un
   bool more_updates_to_apply = true;
   while(!map_update_queue_.empty() && more_updates_to_apply) {
 
-    auto update = std::move(map_update_queue_.front()); // Get first update
+    auto update = map_update_queue_.front(); // Get first update
     map_update_queue_.pop(); // Remove update from queue
 
     if (update->map_version < current_map_version_) { // Drop any so far unapplied updates for the previous map
@@ -75,7 +75,7 @@ void WMListenerWorker::mapCallback(const autoware_lanelet2_msgs::msg::MapBin::Un
       continue;
     }
     if (update->map_version == current_map_version_) { // Current update goes with current map
-      mapUpdateCallback(std::move(update)); // Apply the update
+      mapUpdateCallback(update); // Apply the update
     } else {
       RCLCPP_INFO_STREAM(rclcpp::get_logger("carma_wm::WMListenerWorker"), "Done applying updates for new map. However, more updates are waiting for a future map.");
       more_updates_to_apply = false; // If there is more updates queued that are not for this map version assume they are for a future map version
@@ -101,7 +101,7 @@ void WMListenerWorker::mapCallback(const autoware_lanelet2_msgs::msg::MapBin::Un
   }
 }
 
-void WMListenerWorker::incomingSpatCallback(const carma_v2x_msgs::msg::SPAT::UniquePtr spat_msg)
+void WMListenerWorker::incomingSpatCallback(const carma_v2x_msgs::msg::SPAT::SharedPtr spat_msg)
 {
   world_model_->processSpatFromMsg(*spat_msg, use_sim_time_);
 }
@@ -144,13 +144,13 @@ void logSignalizedIntersectionManager(const carma_wm::SignalizedIntersectionMana
   }
 }
 
-void WMListenerWorker::mapUpdateCallback(autoware_lanelet2_msgs::msg::MapBin::UniquePtr geofence_msg)
+void WMListenerWorker::mapUpdateCallback(autoware_lanelet2_msgs::msg::MapBin::SharedPtr geofence_msg)
 {
   RCLCPP_INFO_STREAM(rclcpp::get_logger("carma_wm::WMListenerWorker"), "Map Update Being Evaluated. SeqNum: " << geofence_msg->seq_id);
   if (rerouting_flag_) // no update should be applied if rerouting
   {
     RCLCPP_INFO_STREAM(rclcpp::get_logger("carma_wm::WMListenerWorker"), "Currently new route is being processed. Queueing this update. Received seq: " << geofence_msg->seq_id << " prev seq: " << most_recent_update_msg_seq_);
-    map_update_queue_.emplace(std::move(geofence_msg));
+    map_update_queue_.emplace(geofence_msg);
     return;
   }
   if (geofence_msg->seq_id <= most_recent_update_msg_seq_) {
@@ -158,14 +158,14 @@ void WMListenerWorker::mapUpdateCallback(autoware_lanelet2_msgs::msg::MapBin::Un
     return;
   } else if(!world_model_->getMap() || current_map_version_ < geofence_msg->map_version) { // If our current map version is older than the version target by this update
     RCLCPP_DEBUG_STREAM(rclcpp::get_logger("carma_wm::WMListenerWorker"), "Update received for newer map version than available. Queueing update until map is available.");
-    map_update_queue_.emplace(std::move(geofence_msg));
+    map_update_queue_.emplace(geofence_msg);
     return;
   } else if (current_map_version_ > geofence_msg->map_version) { // If this update is for an older map
     RCLCPP_WARN_STREAM(rclcpp::get_logger("carma_wm::WMListenerWorker"), "Dropping old map update as newer map is already available.");
     return;
   } else if (most_recent_update_msg_seq_ + 1 < geofence_msg->seq_id) {
     RCLCPP_INFO_STREAM(rclcpp::get_logger("carma_wm::WMListenerWorker"), "Queuing map update as we are waiting on an earlier update to be applied. most_recent_update_msg_seq_: " << most_recent_update_msg_seq_ << "geofence_msg->seq_id: " << geofence_msg->seq_id);
-    map_update_queue_.emplace(std::move(geofence_msg));
+    map_update_queue_.emplace(geofence_msg);
     return;
   }
 
@@ -180,7 +180,7 @@ void WMListenerWorker::mapUpdateCallback(autoware_lanelet2_msgs::msg::MapBin::Un
     if(route_node_flag_!=true)
     {
      RCLCPP_INFO_STREAM(rclcpp::get_logger("carma_wm::WMListenerWorker"), "Route is not yet available. Therefore queueing the update");
-     map_update_queue_.emplace(std::move(geofence_msg));
+     map_update_queue_.emplace(geofence_msg);
      return;
     }
   }
@@ -570,13 +570,23 @@ std::string WMListenerWorker::getVehicleParticipationType() const
   return world_model_->getVehicleParticipationType();
 }
 
-void WMListenerWorker::roadwayObjectListCallback(const carma_perception_msgs::msg::RoadwayObstacleList::UniquePtr msg)
+void WMListenerWorker::roadwayObjectListCallback(const carma_perception_msgs::msg::RoadwayObstacleList::SharedPtr msg)
 {
   // this topic publishes only the objects that are on the road
   world_model_->setRoadwayObjects(msg->roadway_obstacles);
 }
 
-void WMListenerWorker::routeCallback(const carma_planning_msgs::msg::Route::UniquePtr route_msg)
+void WMListenerWorker::ros1ClockCallback(const rosgraph_msgs::msg::Clock::SharedPtr clock_msg)
+{
+  world_model_->setRos1Clock(rclcpp::Time(clock_msg->clock));
+}
+
+void WMListenerWorker::simClockCallback(const rosgraph_msgs::msg::Clock::SharedPtr clock_msg)
+{
+  world_model_->setSimulationClock(rclcpp::Time(clock_msg->clock));
+}
+
+void WMListenerWorker::routeCallback(const carma_planning_msgs::msg::Route::SharedPtr route_msg)
 {
   if (route_msg->map_version < current_map_version_) {
     RCLCPP_WARN_STREAM(rclcpp::get_logger("carma_wm::WMListenerWorker"), "Route message rejected as it is for an older map");
@@ -601,7 +611,7 @@ void WMListenerWorker::routeCallback(const carma_planning_msgs::msg::Route::Uniq
     bool more_updates_to_apply = true;
     while(!map_update_queue_.empty() && more_updates_to_apply) {
 
-      auto update = std::move(map_update_queue_.front()); // Get first update
+      auto update = map_update_queue_.front(); // Get first update
       map_update_queue_.pop(); // Remove update from queue
 
       if (update->map_version < current_map_version_) { // Drop any so far unapplied updates for the current map
@@ -618,7 +628,7 @@ void WMListenerWorker::routeCallback(const carma_planning_msgs::msg::Route::Uniq
 
         update->invalidates_route=false; // Do not trigger recomputation of routing graph in mapUpdateCallback; recomputation of routing graph will occur outside of this loop
 
-        mapUpdateCallback(std::move(update)); // Apply the update
+        mapUpdateCallback(update); // Apply the update
       } else {
         RCLCPP_INFO_STREAM(rclcpp::get_logger("carma_wm::WMListenerWorker"), "Apply from reroute: Done applying updates for new map. However, more updates are waiting for a future map.");
         more_updates_to_apply = false; // If there is more updates queued that are not for this map version assume they are for a future map version
