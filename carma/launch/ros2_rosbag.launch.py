@@ -23,7 +23,7 @@ import pathlib
 import yaml
 
 # This function is used to generate a command to record a ROS 2 rosbag that excludes topics
-# topics as provided in the appropriate configuration file. 
+# topics as provided in the appropriate configuration file.
 def record_ros2_rosbag(context: LaunchContext, vehicle_config_param_file):
 
     # Convert LaunchConfiguration object to its string representation
@@ -73,7 +73,7 @@ def generate_launch_description():
     # Declare the vehicle_config_dir launch argument
     vehicle_config_dir = LaunchConfiguration('vehicle_config_dir')
     declare_vehicle_config_dir_arg = DeclareLaunchArgument(
-        name = 'vehicle_config_dir', 
+        name = 'vehicle_config_dir',
         default_value = "/opt/carma/vehicle/config",
         description = "Path to file containing vehicle config directories"
     )
