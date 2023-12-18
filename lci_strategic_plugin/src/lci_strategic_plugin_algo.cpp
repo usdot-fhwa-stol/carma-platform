@@ -54,8 +54,6 @@ rclcpp::Time LCIStrategicPlugin::get_nearest_green_entry_time(const rclcpp::Time
   boost::posix_time::time_duration g =  lanelet::time::durationFromSec(minimum_required_green_time);         // provided by considering min headways of vehicles in front
   boost::posix_time::ptime t = lanelet::time::timeFromSec(current_time.seconds());                        // time variable
   boost::posix_time::ptime eet = lanelet::time::timeFromSec(earliest_entry_time.seconds());                        // earliest entry time
-  RCLCPP_ERROR_STREAM(rclcpp::get_logger("lci_strategic_plugin"), "STARTING!");
-
 
   // check if the signal even has a green signal
   bool has_green_signal = false;
@@ -108,7 +106,6 @@ rclcpp::Time LCIStrategicPlugin::get_nearest_green_entry_time(const rclcpp::Time
       theta = curr_pair.get().first - t;
     }
   }
-  RCLCPP_ERROR_STREAM(rclcpp::get_logger("lci_strategic_plugin"), "1 mid time");
 
   if (t <= eet)
   {
@@ -122,11 +119,6 @@ rclcpp::Time LCIStrategicPlugin::get_nearest_green_entry_time(const rclcpp::Time
     theta = curr_pair.get().first - t;
     while ( t < eet || p != lanelet::CarmaTrafficSignalState::PROTECTED_MOVEMENT_ALLOWED)
     {
-      RCLCPP_ERROR_STREAM(rclcpp::get_logger("lci_strategic_plugin"), "===");
-      RCLCPP_ERROR_STREAM(rclcpp::get_logger("lci_strategic_plugin"), "t: " << lanelet::time::toSec(t));
-      RCLCPP_ERROR_STREAM(rclcpp::get_logger("lci_strategic_plugin"), "eet: " << lanelet::time::toSec(eet));
-      RCLCPP_ERROR_STREAM(rclcpp::get_logger("lci_strategic_plugin"), "theta: " << lanelet::time::toSec(theta));
-
       if ( p == lanelet::CarmaTrafficSignalState::PROTECTED_MOVEMENT_ALLOWED && eet - t < theta)
       {
         t = eet;
@@ -140,14 +132,14 @@ rclcpp::Time LCIStrategicPlugin::get_nearest_green_entry_time(const rclcpp::Time
         theta = curr_pair.get().first - t;
       }
 
-      if (t == lanelet::time::timeFromSec(2147483647))
+      if (t == lanelet::time::timeFromSec(lanelet::time::INFINITY_END_TIME_FOR_NOT_ENOUGH_STATES))
       {
-        RCLCPP_WARN_STREAM(rclcpp::get_logger("lci_strategic_plugin"), "No Green signal found returning TBD at: " << std::to_string(rclcpp::Time((lanelet::time::toSec(signal->recorded_time_stamps.back().first) + EPSILON) * 1e9).seconds()));
-        return rclcpp::Time((lanelet::time::toSec(signal->recorded_time_stamps.back().first) + EPSILON) * 1e9); //return TBD red if no green is found...
+        auto tbd_time = rclcpp::Time((lanelet::time::toSec(signal->recorded_time_stamps.back().first) + EPSILON) * 1e9);
+        RCLCPP_WARN_STREAM(rclcpp::get_logger("lci_strategic_plugin"), "No Green signal found returning start of TBD time (end of available signal states) at: " << std::to_string(tbd_time.seconds()));
+        return rclcpp::Time(tbd_time); //return TBD red if no green is found...
       }
     }
   }
-  RCLCPP_ERROR_STREAM(rclcpp::get_logger("lci_strategic_plugin"), "Returning the green time function");
   return rclcpp::Time(lanelet::time::toSec(t) * 1e9);
 }
 
