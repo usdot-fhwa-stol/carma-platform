@@ -62,12 +62,9 @@ swarm__install() {
         exit 1
     fi
 
-    local -r CARMA_BASE=$(__get_image_from_config carma-base:)
-    if [[ -z $CARMA_BASE ]]; then
-        __pull_newest_carma_base
-        CARMA_BASE=$(__get_most_recent_carma_base)
-    fi
-    WORKER_INFO=$(docker run -it --rm -v carma-config-data:/opt/carma/vehicle/config "$CARMA_BASE" /bin/sh -c '{ echo "$WORKER_USER"; echo "@"; echo "$WORKER_IP"; } | tr -d "\n"')
+    WORKER_INFO=$(docker run -it --rm -v carma-config-data:/opt/carma/vehicle/config busybox:latest /bin/sh -c '
+        source ./opt/carma/vehicle/config/carma.env; eval $(cat /opt/carma/vehicle/config/carma.env);
+        ( echo "$WORKER_USER"; echo "@"; echo "$WORKER_IP"; ) | tr -d "\n"')
 
     if [ -z $(ssh "$WORKER_INFO" "docker volume ls | grep carma-config-data") ]; then
         ssh "$WORKER_INFO" "docker volume create --driver local \
@@ -89,14 +86,15 @@ swarm__start() {
         exit 1
     fi
 
-    local -r CARMA_BASE=$(__get_image_from_config carma-base:)
-    if [[ -z $CARMA_BASE ]]; then
-        __pull_newest_carma_base
-        CARMA_BASE=$(__get_most_recent_carma_base)
-    fi
-
-    MANAGER_INFO=$(docker run -it --rm -v carma-config-data:/opt/carma/vehicle/config "$CARMA_BASE" /bin/sh -c '{ echo "$MANAGER_USER"; echo "@"; echo "$MANAGER_IP"; } | tr -d "\n"')
-    WORKER_INFO=$(docker run -it --rm -v carma-config-data:/opt/carma/vehicle/config "$CARMA_BASE" /bin/sh -c '{ echo "$WORKER_USER"; echo "@"; echo "$WORKER_IP"; } | tr -d "\n"')
+    # This mounts carma-config-data to a busybox container then sources/exports the contents of 'carma.env'
+    # The exported env variables are then echo'd with new lines removed and loaded into the "INFO" var in the
+    # format: <user>@<ip address>
+    MANAGER_INFO=$(docker run -it --rm -v carma-config-data:/opt/carma/vehicle/config busybox:latest /bin/sh -c '
+        source ./opt/carma/vehicle/config/carma.env; eval $(cat /opt/carma/vehicle/config/carma.env);
+        ( echo "$WORKER_USER"; echo "@"; echo "$WORKER_IP"; ) | tr -d "\n"')
+    WORKER_INFO=$(docker run -it --rm -v carma-config-data:/opt/carma/vehicle/config busybox:latest /bin/sh -c '
+        source ./opt/carma/vehicle/config/carma.env; eval $(cat /opt/carma/vehicle/config/carma.env);
+        ( echo "$MANAGER_USER"; echo "@"; echo "$MANAGER_IP"; ) | tr -d "\n"')
 
     MANAGER_IP=${MANAGER_INFO#*@}
 
@@ -150,15 +148,11 @@ swarm__start() {
 swarm-config__set() {
     echo "Updating 'carma-config-data' volume..."
 
-    # Check to make sure the worker system has carma-config-data initalized
-    local -r CARMA_BASE=$(__get_image_from_config carma-base:)
-    if [[ -z $CARMA_BASE ]]; then
-        __pull_newest_carma_base
-        CARMA_BASE=$(__get_most_recent_carma_base)
-    fi
-    WORKER_INFO=$(docker run -it --rm -v carma-config-data:/opt/carma/vehicle/config "$CARMA_BASE" /bin/sh -c '{ echo "$WORKER_USER"; echo "@"; echo "$WORKER_IP"; } | tr -d "\n"')
+    WORKER_INFO=$(docker run -it --rm -v carma-config-data:/opt/carma/vehicle/config busybox:latest /bin/sh -c '
+        source ./opt/carma/vehicle/config/carma.env; eval $(cat /opt/carma/vehicle/config/carma.env);
+        ( echo "$WORKER_USER"; echo "@"; echo "$WORKER_IP"; ) | tr -d "\n"')
 
-    if [ -z $(ssh "WORKER_INFO" "docker volume ls | grep carma-config-data") ]; then
+    if [ -z $(ssh "$WORKER_INFO" "docker volume ls | grep carma-config-data") ]; then
         ssh "$WORKER_INFO" "docker volume create --driver local \
             --opt type=nfs \
             --opt o=addr="$WORKER_INFO",nfsvers=4 \
@@ -224,6 +218,8 @@ swarm-config__edit() {
 }
 
 
+# Currently does not track image version due to how volumes are used
+# Consider adding a way to track current image used/if modified
 swarm-config__status() {
     if [ -n "$(docker volume ls | grep carma-config-data)" ]; then
         echo "Found 'carma-config-data' volume"
@@ -232,6 +228,7 @@ swarm-config__status() {
         exit 1
     fi
 
+    # Reports the contents of several files from carma-config to the active terminal window
     if [ -z "$1" ]; then
         echo -e " \n -- docker-compose-background-manager.yml\n"
         docker run --rm -v carma-config-data:/opt/carma/vehicle/config --entrypoint sh busybox:latest -c \
@@ -255,8 +252,8 @@ swarm__attach() {
 
     local -r SWARM_SERVICES=$(docker service ls --format "{{.Name}}")
 
-    # this seems to loop forever and cannot be escaped with ctrl+C
-    # performance will likely be poor due to combined log streams
+    # This seems to loop forever and cannot be escaped with Ctrl+C
+    # Performance will likely be poor due to combined log streams
     for TASK in $SWARM_SERVICES; do
         docker service logs --follow --details --tail=10 "$TASK" &
     done
@@ -265,6 +262,7 @@ swarm__attach() {
 }
 
 # Swarm has to be up to successfully register an image
+# Most functionality based off of the previous work in https://github.com/kjrush/docker-pushmi-pullyu
 swarm__register() {
     echo "Adding Docker images to Manager's local registry..."
 
@@ -281,21 +279,20 @@ swarm__register() {
         exit 1
     fi
 
-    local -r CARMA_BASE=$(__get_image_from_config carma-base:)
-    if [[ -z $CARMA_BASE ]]; then
-        __pull_newest_carma_base
-        CARMA_BASE=$(__get_most_recent_carma_base)
-    fi
-
-    WORKER_INFO=$(docker run -it --rm -v carma-config-data:/opt/carma/vehicle/config "$CARMA_BASE" /bin/sh -c '{ echo "$WORKER_USER"; echo "@"; echo "$WORKER_IP"; } | tr -d "\n"')
+    WORKER_INFO=$(docker run -it --rm -v carma-config-data:/opt/carma/vehicle/config busybox:latest /bin/sh -c '
+        source ./opt/carma/vehicle/config/carma.env; eval $(cat /opt/carma/vehicle/config/carma.env);
+        ( echo "$WORKER_USER"; echo "@"; echo "$WORKER_IP"; ) | tr -d "\n"')
 
     local -r REGISTRY_PORT=5000
     local -r REGISTRY_HOST="localhost"
 
+    # Create the registry task on the host and expose the ports
     docker run -d --volume carma-registry:/var/lib/registry --publish "$REGISTRY_PORT:$REGISTRY_PORT" --name carma-registry-task registry:2.6
 
     IMAGE_NAMES="$*"
 
+    # Each argument should contain a full image name. Goes through each and creates a new tagged version
+    # on the manager, adds it to the registry, and removes it
     for SOURCE_IMAGE_NAME in $IMAGE_NAMES
     do
         echo "Pushing $SOURCE_IMAGE_NAME to $REGISTRY_HOST:$REGISTRY_PORT"
@@ -304,6 +301,7 @@ swarm__register() {
         docker rmi "$REGISTRY_HOST:$REGISTRY_PORT/$SOURCE_IMAGE_NAME"
     done
 
+    # Registry images are then sent via an SSH call and the same process is followed as before but in reverse
     ssh -R "$REGISTRY_PORT:$REGISTRY_HOST:$REGISTRY_PORT" "$WORKER_INFO" sh <<ENDSSH
         for TARGET_IMAGE_NAME in $IMAGE_NAMES
         do
@@ -322,9 +320,9 @@ ENDSSH
 swarm__stop() {
     echo "Shutting down swarm..."
 
-    local -r CARMA_BASE=$(__get_image_from_config carma-base:)
-
-    WORKER_INFO=$(docker run -it --rm -v carma-config-data:/opt/carma/vehicle/config "$CARMA_BASE" /bin/sh -c '{ echo "$WORKER_USER"; echo "@"; echo "$WORKER_IP"; } | tr -d "\n"')
+    WORKER_INFO=$(docker run -it --rm -v carma-config-data:/opt/carma/vehicle/config busybox:latest /bin/sh -c '
+        source ./opt/carma/vehicle/config/carma.env; eval $(cat /opt/carma/vehicle/config/carma.env);
+        ( echo "$WORKER_USER"; echo "@"; echo "$WORKER_IP"; ) | tr -d "\n"')
 
     if [ "$(docker node ls -f "role=worker" | grep  "Ready" )" ]; then
         ssh "$WORKER_INFO" "docker swarm leave" 
