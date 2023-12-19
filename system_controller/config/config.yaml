@@ -6,7 +6,7 @@
 
     # Long: Timeout for each service to be detected as available in milliseconds
     # Units: milliseconds
-    service_timeout_ms : 200
+    service_timeout_ms : 18000
 
     # Long: Timeout for each service call in milliseconds
     # Units: milliseconds
