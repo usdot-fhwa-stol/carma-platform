@@ -107,3 +107,4 @@ cd V2X-Hub
 git config core.sparsecheckout true
 git sparse-checkout init
 git sparse-checkout set ext/ccserver
+sudo apt-get update && sudo apt-get install -y libdlib-dev  

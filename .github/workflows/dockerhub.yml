@@ -1,5 +1,5 @@
 name: Docker Hub build
-# This workflow will build and push of docker images when new push occurs to develop, master, release branches but doesn't run any unit test or sonar scanner
+# This workflow will build and push official docker images when new push occurs to develop, master, release branches but doesn't run any unit test or sonar scanner
 on:
   push:
     branches:
