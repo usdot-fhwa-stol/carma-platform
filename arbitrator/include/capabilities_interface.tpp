@@ -26,35 +26,83 @@
 
 namespace arbitrator
 {
+    constexpr auto MAX_RETRY_ATTEMPTS {10};
+
     template<typename MSrvReq, typename MSrvRes>
     std::map<std::string, std::shared_ptr<MSrvRes>>
         CapabilitiesInterface::multiplex_service_call_for_capability(const std::string& query_string, std::shared_ptr<MSrvReq> msg)
     {
         std::map<std::string, std::shared_ptr<MSrvRes>> responses;
-
-        for (const auto & topic : get_topics_for_capability(query_string))
+        bool topics_call_successful = false;
+        std::vector<std::string> topics_to_retry;
+        std::vector<std::string> current_topics_to_check;
+        int retry_attempt = 0;
+        while (!topics_call_successful && retry_attempt < MAX_RETRY_ATTEMPTS)
         {
             try {
-                using std::literals::chrono_literals::operator""ms;
-
-                const auto client = nh_->create_client<carma_planning_msgs::srv::PlanManeuvers>(topic);
-                RCLCPP_DEBUG_STREAM(rclcpp::get_logger("arbitrator"), "found client: " << topic);
-
-                const auto response = client->async_send_request(msg);
-
-                switch (const auto status{response.wait_for(500ms)}; status) {
-                    case std::future_status::ready:
-                        responses.emplace(topic, response.get());
-                        break;
-                    case std::future_status::deferred:
-                    case std::future_status::timeout:
-                        RCLCPP_WARN_STREAM(rclcpp::get_logger("arbitrator"), "failed...: " << topic);
-                }
-            } catch(const rclcpp::exceptions::RCLError& error) {
-                RCLCPP_ERROR_STREAM(rclcpp::get_logger("arbitrator"),
-                    "Cannot make service request for service '" << topic << "': " << error.what());
-                continue;
+            topics_to_retry = get_topics_for_capability(query_string);
+            topics_call_successful = true;
+            if (retry_attempt > 0)
+            {
+                RCLCPP_INFO_STREAM(rclcpp::get_logger("arbitrator")," Service call to get available strategic plugins successfully finished after retrying: " << retry_attempt);
             }
+            } catch (const std::exception& error) {
+                RCLCPP_WARN_STREAM(rclcpp::get_logger("arbitrator"),
+                            "Could not make a service call to get available strategic service topic names, with detected error: " << error.what() <<". So retrying, attempt no: " << retry_attempt);
+                retry_attempt ++;
+            }
+
+        }
+
+        if (!topics_call_successful)
+        {
+            RCLCPP_WARN_STREAM(rclcpp::get_logger("arbitrator"),
+                            "Failed to retrieve available strategic plugin service topics! Returning empty maneuver responses");
+            return responses;
+        }
+
+        retry_attempt = 0;
+        while (!topics_to_retry.empty() && retry_attempt < MAX_RETRY_ATTEMPTS)
+        {
+            current_topics_to_check = topics_to_retry;
+            topics_to_retry = {};
+            for (const auto & topic : current_topics_to_check)
+            {
+                try {
+                    using std::literals::chrono_literals::operator""ms;
+
+                    const auto client = nh_->create_client<carma_planning_msgs::srv::PlanManeuvers>(topic);
+                    RCLCPP_DEBUG_STREAM(rclcpp::get_logger("arbitrator"), "found client: " << topic);
+
+                    const auto response = client->async_send_request(msg);
+
+                    switch (const auto status{response.wait_for(500ms)}; status) {
+                        case std::future_status::ready:
+                            responses.emplace(topic, response.get());
+                            break;
+                        case std::future_status::deferred:
+                        case std::future_status::timeout:
+                            RCLCPP_WARN_STREAM(rclcpp::get_logger("arbitrator"), "failed...: " << topic);
+                    }
+                    if (retry_attempt > 0)
+                    {
+                        RCLCPP_INFO_STREAM(rclcpp::get_logger("arbitrator"),"Service call to: " << topic << ", successfully finished after retrying: " << retry_attempt);
+                    }
+
+                } catch(const rclcpp::exceptions::RCLError& error) {
+                    RCLCPP_WARN_STREAM(rclcpp::get_logger("arbitrator"),
+                        "Cannot make service request for service '" << topic << "': " << error.what() <<". So retrying, attempt no: " << retry_attempt);
+                    topics_to_retry.push_back(topic);
+                    continue;
+                }
+            }
+            retry_attempt ++;
+        }
+
+        if (retry_attempt == MAX_RETRY_ATTEMPTS)
+        {
+            RCLCPP_WARN_STREAM(rclcpp::get_logger("arbitrator"),
+                            "Failed to get a valid response from one or all of the strategic plugins...");
         }
 
         return responses;
