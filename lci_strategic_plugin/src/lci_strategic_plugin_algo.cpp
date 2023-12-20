@@ -49,6 +49,20 @@ double LCIStrategicPlugin::get_distance_to_accel_or_decel_once (double current_s
   }
 }
 
+rclcpp::Time get_eet_or_tbd(const rclcpp::Time& earliest_entry_time, const lanelet::CarmaTrafficSignalPtr& signal)
+{
+  // If no green signal found after earliest entry time
+  auto start_of_tbd_time = rclcpp::Time((lanelet::time::toSec(signal->recorded_time_stamps.back().first) + EPSILON) * 1e9);
+  if (earliest_entry_time > start_of_tbd_time)
+  {
+    RCLCPP_ERROR_STREAM(rclcpp::get_logger("lci_strategic_plugin"), "Not enough signals are available to check for EET, so returning EET at: " << std::to_string(earliest_entry_time.seconds()));
+    return earliest_entry_time; //return TBD or EET red if no green is found...
+  }
+
+  RCLCPP_ERROR_STREAM(rclcpp::get_logger("lci_strategic_plugin"), "No valid green entry time found, so returning start of TBD at: " << std::to_string(start_of_tbd_time.seconds()));
+  return start_of_tbd_time;
+}
+
 rclcpp::Time LCIStrategicPlugin::get_nearest_valid_entry_time(const rclcpp::Time& current_time, const rclcpp::Time& earliest_entry_time, lanelet::CarmaTrafficSignalPtr signal, double minimum_required_green_time) const
 {
   boost::posix_time::time_duration g =  lanelet::time::durationFromSec(minimum_required_green_time);         // provided by considering min headways of vehicles in front
@@ -69,8 +83,7 @@ rclcpp::Time LCIStrategicPlugin::get_nearest_valid_entry_time(const rclcpp::Time
 
   if (!has_green_signal)
   {
-    RCLCPP_WARN_STREAM(rclcpp::get_logger("lci_strategic_plugin"), "No Green signal found returning TBD at: " << std::to_string(rclcpp::Time((lanelet::time::toSec(signal->recorded_time_stamps.back().first) + EPSILON) * 1e9).seconds()));
-    return rclcpp::Time((lanelet::time::toSec(signal->recorded_time_stamps.back().first) + EPSILON) * 1e9); //return TBD red if no green is found...
+    return get_eet_or_tbd(earliest_entry_time, signal);
   }
 
   auto curr_pair = signal->predictState(t);
@@ -113,6 +126,7 @@ rclcpp::Time LCIStrategicPlugin::get_nearest_valid_entry_time(const rclcpp::Time
     if (cycle_duration < 0.001) //if it is a dynamic traffic signal not fixed
       cycle_duration = lanelet::time::toSec(signal->recorded_time_stamps.back().first) - lanelet::time::toSec(signal->recorded_start_time_stamps.front());
 
+    RCLCPP_ERROR_STREAM(rclcpp::get_logger("test"), "1");
     t = t + lanelet::time::durationFromSec(std::floor((eet - t).total_milliseconds()/1000.0/cycle_duration) * cycle_duration); //fancy logic was needed to compile
     curr_pair = signal->predictState(t + boost::posix_time::milliseconds(20)); // select next phase
     p = curr_pair.get().second;
@@ -132,14 +146,17 @@ rclcpp::Time LCIStrategicPlugin::get_nearest_valid_entry_time(const rclcpp::Time
         theta = curr_pair.get().first - t;
       }
 
-      if (t == lanelet::time::timeFromSec(lanelet::time::INFINITY_END_TIME_FOR_NOT_ENOUGH_STATES))
-      {
-        auto tbd_time = rclcpp::Time((lanelet::time::toSec(signal->recorded_time_stamps.back().first) + EPSILON) * 1e9);
-        RCLCPP_WARN_STREAM(rclcpp::get_logger("lci_strategic_plugin"), "No Green signal found returning start of TBD time (end of available signal states) at: " << std::to_string(tbd_time.seconds()));
-        return rclcpp::Time(tbd_time); //return TBD red if no green is found...
-      }
+      if (t != lanelet::time::timeFromSec(lanelet::time::INFINITY_END_TIME_FOR_NOT_ENOUGH_STATES))
+        continue;
+
+      // if no valid green entry time found,
+      // return whichever the latest of earliest entry time or start of the tbd signals
+      RCLCPP_ERROR_STREAM(rclcpp::get_logger("lci_strategic_plugin"), "returning 1: " << get_eet_or_tbd(earliest_entry_time, signal).seconds());
+
+      return get_eet_or_tbd(earliest_entry_time, signal);
     }
   }
+  RCLCPP_ERROR_STREAM(rclcpp::get_logger("lci_strategic_plugin"), "returning: " << lanelet::time::toSec(t));
   return rclcpp::Time(lanelet::time::toSec(t) * 1e9);
 }
 
