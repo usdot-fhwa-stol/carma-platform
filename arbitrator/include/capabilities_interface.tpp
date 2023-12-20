@@ -23,7 +23,8 @@
 #include <functional>
 #include <carma_planning_msgs/srv/plan_maneuvers.hpp>
 #include <rclcpp/exceptions/exceptions.hpp>
-
+#include <chrono>
+#include <thread>
 namespace arbitrator
 {
     constexpr auto MAX_RETRY_ATTEMPTS {10};
@@ -92,6 +93,10 @@ namespace arbitrator
                 } catch(const rclcpp::exceptions::RCLError& error) {
                     RCLCPP_WARN_STREAM(rclcpp::get_logger("arbitrator"),
                         "Cannot make service request for service '" << topic << "': " << error.what() <<". So retrying, attempt no: " << retry_attempt);
+                    // Fast repeated calls may fail and on average in one of our environment was failing at 70ms repeated calls
+                    // https://github.com/ros2/rmw_fastrtps/issues/46
+                    std::chrono::milliseconds duration(100);
+                    std::this_thread::sleep_for(duration);
                     topics_to_retry.push_back(topic);
                     continue;
                 }
