@@ -36,6 +36,42 @@ namespace carma_cooperative_perception
 
 namespace mot = multiple_object_tracking;
 
+auto make_semantic_class(std::size_t numeric_value)
+{
+  switch (numeric_value) {
+    case 0:
+      return mot::SemanticClass::kUnknown;
+    case 1:
+      return mot::SemanticClass::kSmallVehicle;
+    case 2:
+      return mot::SemanticClass::kLargeVehicle;
+    case 3:
+      return mot::SemanticClass::kPedestrian;
+    case 4:
+      return mot::SemanticClass::kMotorcycle;
+  }
+
+  return mot::SemanticClass::kUnknown;
+}
+
+auto semantic_class_to_numeric_value(mot::SemanticClass semantic_class)
+{
+  switch (semantic_class) {
+    case mot::SemanticClass::kUnknown:
+      return 0;
+    case mot::SemanticClass::kSmallVehicle:
+      return 1;
+    case mot::SemanticClass::kLargeVehicle:
+      return 2;
+    case mot::SemanticClass::kPedestrian:
+      return 3;
+    case mot::SemanticClass::kMotorcycle:
+      return 4;
+  }
+
+  return 0;
+}
+
 auto make_ctrv_detection(
   const carma_cooperative_perception_interfaces::msg::Detection & msg) noexcept -> Detection
 {
@@ -70,7 +106,8 @@ auto make_ctrv_detection(
   covariance(3, 3) = msg.pose.covariance.at(35);
   covariance(4, 4) = msg.twist.covariance.at(35);
 
-  return mot::CtrvDetection{timestamp, state, covariance, mot::Uuid{msg.id}};
+  return mot::CtrvDetection{
+    timestamp, state, covariance, mot::Uuid{msg.id}, make_semantic_class(msg.semantic_class)};
 }
 
 auto make_ctra_detection(
@@ -109,7 +146,8 @@ auto make_ctra_detection(
   covariance(4, 4) = msg.twist.covariance.at(35);
   covariance(5, 5) = msg.accel.covariance.at(0);
 
-  return mot::CtraDetection{timestamp, state, covariance, mot::Uuid{msg.id}};
+  return mot::CtraDetection{
+    timestamp, state, covariance, mot::Uuid{msg.id}, make_semantic_class(msg.semantic_class)};
 }
 
 auto make_detection(const carma_cooperative_perception_interfaces::msg::Detection & msg)
@@ -155,6 +193,8 @@ static auto to_ros_msg(const mot::CtraTrack & track) noexcept
 
   msg.accel.accel.linear.x = mot::remove_units(track.state.acceleration);
 
+  msg.semantic_class = semantic_class_to_numeric_value(mot::get_semantic_class(track));
+
   return msg;
 }
 
@@ -181,6 +221,8 @@ static auto to_ros_msg(const mot::CtrvTrack & track) noexcept
 
   msg.twist.twist.linear.x = mot::remove_units(track.state.velocity);
   msg.twist.twist.angular.z = mot::remove_units(track.state.yaw_rate);
+
+  msg.semantic_class = semantic_class_to_numeric_value(mot::get_semantic_class(track));
 
   return msg;
 }

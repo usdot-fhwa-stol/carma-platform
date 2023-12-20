@@ -322,19 +322,24 @@ auto to_detection_msg(
     switch (object.object_type) {
       case object.SMALL_VEHICLE:
         detection.motion_model = motion_model_mapping.small_vehicle_model;
+        detection.semantic_class = detection.SEMANTIC_CLASS_SMALL_VEHICLE;
         break;
       case object.LARGE_VEHICLE:
         detection.motion_model = motion_model_mapping.large_vehicle_model;
+        detection.semantic_class = detection.SEMANTIC_CLASS_LARGE_VEHICLE;
         break;
       case object.MOTORCYCLE:
         detection.motion_model = motion_model_mapping.motorcycle_model;
+        detection.semantic_class = detection.SEMANTIC_CLASS_MOTORCYCLE;
         break;
       case object.PEDESTRIAN:
         detection.motion_model = motion_model_mapping.pedestrian_model;
+        detection.semantic_class = detection.SEMANTIC_CLASS_PEDESTRIAN;
         break;
       case object.UNKNOWN:
       default:
         detection.motion_model = motion_model_mapping.unknown_model;
+        detection.semantic_class = detection.SEMANTIC_CLASS_UNKNOWN;
     }
   }
 
@@ -383,6 +388,25 @@ auto to_external_object_msg(
 
   external_object.presence_vector |= external_object.VELOCITY_PRESENCE_VECTOR;
   external_object.velocity = track.twist;
+
+  external_object.presence_vector |= external_object.OBJECT_TYPE_PRESENCE_VECTOR;
+  switch (track.semantic_class) {
+    case track.SEMANTIC_CLASS_SMALL_VEHICLE:
+      external_object.object_type = external_object.SMALL_VEHICLE;
+      break;
+    case track.SEMANTIC_CLASS_LARGE_VEHICLE:
+      external_object.object_type = external_object.LARGE_VEHICLE;
+      break;
+    case track.SEMANTIC_CLASS_MOTORCYCLE:
+      external_object.object_type = external_object.MOTORCYCLE;
+      break;
+    case track.SEMANTIC_CLASS_PEDESTRIAN:
+      external_object.object_type = external_object.PEDESTRIAN;
+      break;
+    case track.SEMANTIC_CLASS_UNKNOWN:
+    default:
+      external_object.object_type = external_object.UNKNOWN;
+  };
 
   return external_object;
 }
