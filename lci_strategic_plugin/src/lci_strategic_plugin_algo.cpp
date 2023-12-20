@@ -55,11 +55,11 @@ rclcpp::Time get_eet_or_tbd(const rclcpp::Time& earliest_entry_time, const lanel
   auto start_of_tbd_time = rclcpp::Time((lanelet::time::toSec(signal->recorded_time_stamps.back().first) + EPSILON) * 1e9);
   if (earliest_entry_time > start_of_tbd_time)
   {
-    RCLCPP_ERROR_STREAM(rclcpp::get_logger("lci_strategic_plugin"), "Not enough signals are available to check for EET, so returning EET at: " << std::to_string(earliest_entry_time.seconds()));
+    RCLCPP_DEBUG_STREAM(rclcpp::get_logger("lci_strategic_plugin"), "Not enough signals are available to check for EET, so returning EET at: " << std::to_string(earliest_entry_time.seconds()));
     return earliest_entry_time; //return TBD or EET red if no green is found...
   }
 
-  RCLCPP_ERROR_STREAM(rclcpp::get_logger("lci_strategic_plugin"), "No valid green entry time found, so returning start of TBD at: " << std::to_string(start_of_tbd_time.seconds()));
+  RCLCPP_DEBUG_STREAM(rclcpp::get_logger("lci_strategic_plugin"), "No valid green entry time found, so returning start of TBD at: " << std::to_string(start_of_tbd_time.seconds()));
   return start_of_tbd_time;
 }
 
@@ -126,7 +126,6 @@ std::tuple<rclcpp::Time, bool> LCIStrategicPlugin::get_nearest_valid_entry_time(
     if (cycle_duration < 0.001) //if it is a dynamic traffic signal not fixed
       cycle_duration = lanelet::time::toSec(signal->recorded_time_stamps.back().first) - lanelet::time::toSec(signal->recorded_start_time_stamps.front());
 
-    RCLCPP_ERROR_STREAM(rclcpp::get_logger("test"), "1");
     t = t + lanelet::time::durationFromSec(std::floor((eet - t).total_milliseconds()/1000.0/cycle_duration) * cycle_duration); //fancy logic was needed to compile
     curr_pair = signal->predictState(t + boost::posix_time::milliseconds(20)); // select next phase
     p = curr_pair.get().second;
@@ -151,8 +150,6 @@ std::tuple<rclcpp::Time, bool> LCIStrategicPlugin::get_nearest_valid_entry_time(
 
       // if no valid green entry time found,
       // return whichever the latest of earliest entry time or start of the tbd signals
-      RCLCPP_ERROR_STREAM(rclcpp::get_logger("lci_strategic_plugin"), "returning 1: " << get_eet_or_tbd(earliest_entry_time, signal).seconds());
-
       return std::make_tuple(get_eet_or_tbd(earliest_entry_time, signal), true);
     }
   }
