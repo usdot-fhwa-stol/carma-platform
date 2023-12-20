@@ -253,23 +253,25 @@ TEST_F(LCIStrategicTestFixture, get_nearest_valid_entry_time)
   carma_wm::test::addTrafficLight(cmw_, traffic_light_id, {1200}, { 1203 });
 
   auto signal = cmw_->getMutableMap()->laneletLayer.get(1200).regulatoryElementsAs<lanelet::CarmaTrafficSignal>().front();
-  auto time = lcip->get_nearest_valid_entry_time(rclcpp::Time(1e9 * 10), rclcpp::Time(1e9 * 15), signal, 0);
+  auto [time, in_tbd] = lcip->get_nearest_valid_entry_time(rclcpp::Time(1e9 * 10), rclcpp::Time(1e9 * 15), signal, 0);
 
   // Fixed cycle signal tests
 
   EXPECT_EQ(rclcpp::Time(1e9 * 24), time);
 
-  time = lcip->get_nearest_valid_entry_time(rclcpp::Time(1e9 * 10), rclcpp::Time(1e9 * 28), signal, 0);
+  std::tie(time, in_tbd) = lcip->get_nearest_valid_entry_time(rclcpp::Time(1e9 * 10), rclcpp::Time(1e9 * 28), signal, 0);
 
   EXPECT_EQ(rclcpp::Time(1e9 * 28), time);
 
-  time = lcip->get_nearest_valid_entry_time(rclcpp::Time(1e9 * 10), rclcpp::Time(1e9 * 45), signal, 0);
+  std::tie(time, in_tbd) = lcip->get_nearest_valid_entry_time(rclcpp::Time(1e9 * 10), rclcpp::Time(1e9 * 45), signal, 0);
 
   EXPECT_EQ(rclcpp::Time(1e9 * 68), time);
 
-  time = lcip->get_nearest_valid_entry_time(rclcpp::Time(1e9 * 10), rclcpp::Time(1e9 * 44), signal, 50);
+  std::tie(time, in_tbd) = lcip->get_nearest_valid_entry_time(rclcpp::Time(1e9 * 10), rclcpp::Time(1e9 * 44), signal, 50);
 
   EXPECT_EQ(rclcpp::Time(1e9 * 122), time);
+  EXPECT_FALSE(in_tbd);
+
 
   // Handle dynamic signal states where signal extrapolation is not used
   // overwrite signal states to not be fixed_cycle
@@ -278,10 +280,11 @@ TEST_F(LCIStrategicTestFixture, get_nearest_valid_entry_time)
   signal->recorded_start_time_stamps.push_back(lanelet::time::timeFromSec(0));
   signal->recorded_time_stamps = {};
   signal->recorded_time_stamps.push_back(std::make_pair<boost::posix_time::ptime, lanelet::CarmaTrafficSignalState>(lanelet::time::timeFromSec(15), lanelet::CarmaTrafficSignalState::PROTECTED_MOVEMENT_ALLOWED));
-  // when eet is past the available signals of the traffic_light (44sec)
-  time = lcip->get_nearest_valid_entry_time(rclcpp::Time(1e9 * 0), rclcpp::Time(1e9 * 16), signal, 0);
+  // when eet is past the available signals of the traffic_light (16sec is past available signal at 15)
+  std::tie(time, in_tbd) = lcip->get_nearest_valid_entry_time(rclcpp::Time(1e9 * 0), rclcpp::Time(1e9 * 16), signal, 0);
 
   EXPECT_NEAR(rclcpp::Time(1e9 * 16).seconds(), time.seconds(), 0.02);
+  EXPECT_TRUE(in_tbd);
 
 }
 
