@@ -120,7 +120,7 @@ public:
    * \param trajectory_points trajectory points
    * \return maximum speed
    */
-  double max_trajectory_speed(const std::vector<carma_planning_msgs::msg::TrajectoryPlanPoint>& trajectory_points) const;
+  double max_trajectory_speed(const std::vector<carma_planning_msgs::msg::TrajectoryPlanPoint>& trajectory_points, double earliest_collision_time) const;
 
   /**
    * \brief calculates distance between trajectory points in a plan
@@ -174,9 +174,10 @@ public:
    * \param initial_velocity start velocity
    * \param goal_velocity end velocity
    * \param planning_time time duration of the planning
+   * \param original original_max_speed from original_tp accounting for the collision TODO
    * \return updated JMT trajectory
    */
-  carma_planning_msgs::msg::TrajectoryPlan generate_JMT_trajectory(const carma_planning_msgs::msg::TrajectoryPlan& original_tp, double initial_pos, double goal_pos, double initial_velocity, double goal_velocity, double planning_time);
+  carma_planning_msgs::msg::TrajectoryPlan generate_JMT_trajectory(const carma_planning_msgs::msg::TrajectoryPlan& original_tp, double initial_pos, double goal_pos, double initial_velocity, double goal_velocity, double planning_time, double original_max_speed);
 
   /**
    * \brief update trajectory for yielding to an incoming cooperative behavior

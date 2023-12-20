@@ -11,7 +11,7 @@ on_route_vehicle_collision_horizon: 10.0
 # Minimum speed for moving obstacle
 # Units: m/s
 # Value type: Desired
-min_obstacle_speed: 3.0
+min_obstacle_speed: 2.0
 # Minimum object avoidance planning time
 # Units: s
 # Value type: Desired
@@ -40,7 +40,7 @@ acceptable_passed_timesteps: 5
 # Intervehicle distance that is considered a collision
 # Unit: m
 # Value type: Desired
-intervehicle_collision_distance: 6.0
+intervehicle_collision_distance: 3.0
 # Radius to check for potential collision
 # Unit: m
 # Value type: Desired
@@ -57,4 +57,4 @@ enable_adjustable_gap: true
 acceptable_urgency: 5
 # Window size for speed moving average filter
 # Value type: Desired (must be odd)
-speed_moving_average_window_size: 7.0
+speed_moving_average_window_size: 3.0

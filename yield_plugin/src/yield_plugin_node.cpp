@@ -22,7 +22,7 @@ namespace yield_plugin
 
   YieldPluginNode::YieldPluginNode(const rclcpp::NodeOptions &options)
       : carma_guidance_plugins::TacticalPlugin(options),
-        version_id_("v1.0"), 
+        version_id_("v1.0"),
         config_(YieldPluginConfig())
   {
     // Declare parameters
@@ -46,7 +46,7 @@ namespace yield_plugin
     config_.vehicle_height = declare_parameter<double>("vehicle_height", config_.vehicle_height);
     config_.vehicle_width = declare_parameter<double>("vehicle_width", config_.vehicle_width);
     config_.vehicle_id = declare_parameter<std::string>("vehicle_id", config_.vehicle_id);
-     
+
   }
 
   carma_ros2_utils::CallbackReturn YieldPluginNode::on_configure_plugin()
@@ -68,7 +68,7 @@ namespace yield_plugin
     get_parameter<double>("safety_collision_time_gap", config_.safety_collision_time_gap);
     get_parameter<bool>("enable_adjustable_gap", config_.enable_adjustable_gap);
     get_parameter<int>("acceptable_urgency", config_.acceptable_urgency);
-    get_parameter<double>("speed_moving_average_window_size", config_.speed_moving_average_window_size);
+    get_parameter<double>("speed_moving_average_window_size", config_.speed_moving_average_window_size); //TODO not double
     get_parameter<double>("tpmin", config_.tpmin);
     get_parameter<double>("vehicle_length", config_.vehicle_length);
     get_parameter<double>("vehicle_height", config_.vehicle_height);
@@ -88,13 +88,13 @@ namespace yield_plugin
     // Subscriber
     mob_request_sub_ = create_subscription<carma_v2x_msgs::msg::MobilityRequest>("incoming_mobility_request", 10, std::bind(&YieldPlugin::mobilityrequest_cb,worker_.get(),std_ph::_1));
     bsm_sub_ = create_subscription<carma_v2x_msgs::msg::BSM>("bsm_outbound", 1, std::bind(&YieldPlugin::bsm_cb,worker_.get(),std_ph::_1));
-    georeference_sub_ = create_subscription<std_msgs::msg::String>("georeference", 10, 
+    georeference_sub_ = create_subscription<std_msgs::msg::String>("georeference", 10,
                                                                   [this](const std_msgs::msg::String::SharedPtr msg) {
                                                                     worker_->set_georeference_string(msg->data);
                                                                   });
-                                                                  
+
     // Return success if everything initialized successfully
-    external_objects_sub_ = create_subscription<carma_perception_msgs::msg::ExternalObjectList>("external_object_predictions", 20, 
+    external_objects_sub_ = create_subscription<carma_perception_msgs::msg::ExternalObjectList>("external_object_predictions", 20,
                                                                                                 [this](const carma_perception_msgs::msg::ExternalObjectList::SharedPtr msg) {
                                                                                                   worker_->set_external_objects(msg->objects);
                                                                                                 });
@@ -103,8 +103,8 @@ namespace yield_plugin
   }
 
     void YieldPluginNode::plan_trajectory_callback(
-    std::shared_ptr<rmw_request_id_t> srv_header, 
-    carma_planning_msgs::srv::PlanTrajectory::Request::SharedPtr req, 
+    std::shared_ptr<rmw_request_id_t> srv_header,
+    carma_planning_msgs::srv::PlanTrajectory::Request::SharedPtr req,
     carma_planning_msgs::srv::PlanTrajectory::Response::SharedPtr resp)
   {
     worker_->plan_trajectory_callback(req, resp);

@@ -56,7 +56,7 @@ TEST(YieldPluginTest, test_polynomial_calc)
   coeff.push_back(2.0);
   coeff.push_back(2.0);
   coeff.push_back(2.0);
-  coeff.push_back(2.0);    
+  coeff.push_back(2.0);
   coeff.push_back(2.0);
 
   double result = plugin.polynomial_calc(coeff, 0);
@@ -64,7 +64,7 @@ TEST(YieldPluginTest, test_polynomial_calc)
 
   result = plugin.polynomial_calc(coeff, 1);
   EXPECT_EQ(12, result);
-  
+
   result = plugin.polynomial_calc(coeff, 2);
   EXPECT_EQ(126, result);
 
@@ -85,7 +85,7 @@ TEST(YieldPluginTest, test_polynomial_calc_derivative)
   coeff.push_back(2.0);
   coeff.push_back(2.0);
   coeff.push_back(2.0);
-  coeff.push_back(2.0);    
+  coeff.push_back(2.0);
   coeff.push_back(2.0);
 
   double result = plugin.polynomial_calc_d(coeff, 0);
@@ -93,7 +93,7 @@ TEST(YieldPluginTest, test_polynomial_calc_derivative)
 
   result = plugin.polynomial_calc_d(coeff, 1);
   EXPECT_EQ(30, result);
-  
+
   result = plugin.polynomial_calc_d(coeff, 2);
   EXPECT_EQ(258, result);
 
@@ -163,7 +163,7 @@ TEST(YieldPluginTest, MaxTrajectorySpeed)
   point_7.lane_id = "1";
   trajectory_points.push_back(point_7);
 
-  double result = plugin.max_trajectory_speed(trajectory_points);
+  double result = plugin.max_trajectory_speed(trajectory_points, rclcpp::Time(point_7.target_time).seconds());
   EXPECT_EQ(5, result);
 
 }
@@ -172,15 +172,15 @@ TEST(YieldPluginTest, test_update_traj)
 {
   std::shared_ptr<carma_wm::CARMAWorldModel> wm = std::make_shared<carma_wm::CARMAWorldModel>();
   auto map = carma_wm::test::buildGuidanceTestMap(100,100);
-  
+
   wm->setMap(map);
   carma_wm::test::setRouteByIds({ 1200, 1201, 1202, 1203 }, wm);
-  
+
   YieldPluginConfig config;
   config.vehicle_length = 4;
   config.vehicle_width = 2;
   config.vehicle_height = 1;
-  
+
   // std::shared_ptr<carma_wm::CARMAWorldModel> wm = std::make_shared<carma_wm::CARMAWorldModel>();
   auto nh = std::make_shared<yield_plugin::YieldPluginNode>(rclcpp::NodeOptions());
 
@@ -188,7 +188,7 @@ TEST(YieldPluginTest, test_update_traj)
 
   carma_perception_msgs::msg::ExternalObjectList rwol;
   carma_planning_msgs::msg::TrajectoryPlan tp;
-  
+
   rclcpp::Time startTime(1.0);
 
   carma_planning_msgs::msg::TrajectoryPlanPoint trajectory_point_1;
@@ -301,21 +301,21 @@ TEST(YieldPluginTest, detect_collision_time)
 {
   std::shared_ptr<carma_wm::CARMAWorldModel> wm = std::make_shared<carma_wm::CARMAWorldModel>();
   auto map = carma_wm::test::buildGuidanceTestMap(100,100);
-  
+
   wm->setMap(map);
   carma_wm::test::setRouteByIds({ 1200, 1201, 1202, 1203 }, wm);
-  
+
   YieldPluginConfig config;
   config.vehicle_length = 4;
   config.vehicle_width = 2;
   config.vehicle_height = 1;
   config.collision_check_radius = 90;
-  
+
   // std::shared_ptr<carma_wm::CARMAWorldModel> wm = std::make_shared<carma_wm::CARMAWorldModel>();
   auto nh = std::make_shared<yield_plugin::YieldPluginNode>(rclcpp::NodeOptions());
 
   YieldPlugin plugin(nh,wm, config,[](const auto& msg) {}, [](const auto& msg) {});
-  
+
   carma_perception_msgs::msg::ExternalObjectList rwol;
   carma_planning_msgs::msg::TrajectoryPlan tp;
 
@@ -363,7 +363,7 @@ TEST(YieldPluginTest, detect_collision_time)
 
   // Set route but also test no throw
   EXPECT_NO_THROW(plugin.update_traj_for_object(tp, {}, 0.0));
- 
+
   // ON ROUTE, BUT NO COLLISION DUE TO BEING AHEAD
 
   tf2::Quaternion tf_orientation;
@@ -536,7 +536,7 @@ TEST(YieldPluginTest, test_update_traj2)
   trajectory_point_3.x = 10.0;
   trajectory_point_3.y = 1.0;
   trajectory_point_3.target_time = rclcpp::Time(2,0);
-  
+
   trajectory_point_4.x = 15.0;
   trajectory_point_4.y = 1.0;
   trajectory_point_4.target_time = rclcpp::Time(3,0);
@@ -552,7 +552,7 @@ TEST(YieldPluginTest, test_update_traj2)
   trajectory_point_7.x = 30.0;
   trajectory_point_7.y = 1.0;
   trajectory_point_7.target_time = rclcpp::Time(6,0);
-   
+
   original_tp.trajectory_points = {trajectory_point_1, trajectory_point_2, trajectory_point_3, trajectory_point_4, trajectory_point_5, trajectory_point_6, trajectory_point_7};
 
 
@@ -565,13 +565,13 @@ TEST(YieldPluginTest, test_update_traj2)
   double initial_time = 0.0;
   double tp = 5;
 
-  std::vector<double> values = quintic_coefficient_calculator::quintic_coefficient_calculator(initial_pos, 
-                                                                                              goal_pos, 
-                                                                                              current_speed_, 
-                                                                                              goal_velocity, 
+  std::vector<double> values = quintic_coefficient_calculator::quintic_coefficient_calculator(initial_pos,
+                                                                                              goal_pos,
+                                                                                              current_speed_,
+                                                                                              goal_velocity,
                                                                                               initial_accel,
-                                                                                              goal_accel, 
-                                                                                              initial_time, 
+                                                                                              goal_accel,
+                                                                                              initial_time,
                                                                                               tp);
 
   std::vector<carma_planning_msgs::msg::TrajectoryPlanPoint> new_trajectory_points;
@@ -584,7 +584,7 @@ TEST(YieldPluginTest, test_update_traj2)
 
 
   for(size_t i = 1; i < original_tp.trajectory_points.size() ; i++ )
-  {            
+  {
       double traj_target_time = i * tp / original_tp.trajectory_points.size();
       double dt_dist = plugin.polynomial_calc(values, traj_target_time);
       distance_travelled.push_back(dt_dist);
@@ -597,7 +597,7 @@ TEST(YieldPluginTest, test_update_traj2)
       new_trajectory_points.push_back(new_tpp);
   }
 
-  // speeds are decreasing 
+  // speeds are decreasing
   EXPECT_EQ(6, new_speeds.size());
   EXPECT_TRUE(new_speeds[5] <= new_speeds[4]);
   EXPECT_TRUE(new_speeds[3] <= new_speeds[1]);
@@ -638,7 +638,7 @@ TEST(YieldPluginTest, test_update_traj_stop)
   trajectory_point_3.x = 10.0;
   trajectory_point_3.y = 1.0;
   trajectory_point_3.target_time = rclcpp::Time(2,0);
-  
+
   trajectory_point_4.x = 15.0;
   trajectory_point_4.y = 1.0;
   trajectory_point_4.target_time = rclcpp::Time(3,0);
@@ -654,7 +654,7 @@ TEST(YieldPluginTest, test_update_traj_stop)
   trajectory_point_7.x = 30.0;
   trajectory_point_7.y = 1.0;
   trajectory_point_7.target_time = rclcpp::Time(6,0);
-   
+
   original_tp.trajectory_points = {trajectory_point_1, trajectory_point_2, trajectory_point_3, trajectory_point_4, trajectory_point_5, trajectory_point_6, trajectory_point_7};
 
 
@@ -670,13 +670,13 @@ TEST(YieldPluginTest, test_update_traj_stop)
   double initial_time = 0.0;
   double tp = 5;
 
-  std::vector<double> values = quintic_coefficient_calculator::quintic_coefficient_calculator(initial_pos, 
-                                                                                              goal_pos, 
-                                                                                              current_speed_, 
-                                                                                              goal_velocity, 
+  std::vector<double> values = quintic_coefficient_calculator::quintic_coefficient_calculator(initial_pos,
+                                                                                              goal_pos,
+                                                                                              current_speed_,
+                                                                                              goal_velocity,
                                                                                               initial_accel,
-                                                                                              goal_accel, 
-                                                                                              initial_time, 
+                                                                                              goal_accel,
+                                                                                              initial_time,
                                                                                               tp);
 
   std::vector<carma_planning_msgs::msg::TrajectoryPlanPoint> new_trajectory_points;
@@ -686,12 +686,12 @@ TEST(YieldPluginTest, test_update_traj_stop)
   std::vector<double> new_speeds;
   std::vector<double> distance_travelled;
   for(size_t i = 1; i < original_tp.trajectory_points.size() ; i++ )
-  {            
+  {
       double traj_target_time = i * tp / original_tp.trajectory_points.size();
       double dt_dist = plugin.polynomial_calc(values, traj_target_time);
       double dv = plugin.polynomial_calc_d(values, traj_target_time);
       carma_planning_msgs::msg::TrajectoryPlanPoint new_tpp;
-      
+
       if (dv >= 1.0)
         {
           RCLCPP_WARN(rclcpp::get_logger("yield_plugin"),"target speed is positive");
@@ -713,7 +713,7 @@ TEST(YieldPluginTest, test_update_traj_stop)
       new_speeds.push_back(dv);
   }
 
-  
+
   EXPECT_EQ(original_tp.trajectory_points.size(), new_trajectory_points.size());
   // Trajectory point location same as previous point
   EXPECT_EQ(new_trajectory_points[5].x, new_trajectory_points[4].x);
@@ -750,7 +750,7 @@ TEST(YieldPluginTest, jmt_traj)
   trajectory_point_3.x = 10.0;
   trajectory_point_3.y = 1.0;
   trajectory_point_3.target_time = rclcpp::Time(2,0);
-  
+
   trajectory_point_4.x = 15.0;
   trajectory_point_4.y = 1.0;
   trajectory_point_4.target_time = rclcpp::Time(3,0);
@@ -766,7 +766,7 @@ TEST(YieldPluginTest, jmt_traj)
   trajectory_point_7.x = 30.0;
   trajectory_point_7.y = 1.0;
   trajectory_point_7.target_time = rclcpp::Time(6,0);
-   
+
   original_tp.trajectory_points = {trajectory_point_1, trajectory_point_2, trajectory_point_3, trajectory_point_4, trajectory_point_5, trajectory_point_6, trajectory_point_7};
 
 
@@ -781,7 +781,7 @@ TEST(YieldPluginTest, jmt_traj)
   double initial_time = 0.0;
   double tp = 5;
 
-  carma_planning_msgs::msg::TrajectoryPlan jmt_traj = plugin.generate_JMT_trajectory(original_tp, initial_pos, goal_pos, initial_velocity, goal_velocity, tp);
+  carma_planning_msgs::msg::TrajectoryPlan jmt_traj = plugin.generate_JMT_trajectory(original_tp, initial_pos, goal_pos, initial_velocity, goal_velocity, tp, rclcpp::Time(original_tp.trajectory_points.back().target_time).seconds());
 
   EXPECT_EQ(jmt_traj.trajectory_points.size(), original_tp.trajectory_points.size());
   EXPECT_LE(rclcpp::Time(jmt_traj.trajectory_points[2].target_time), rclcpp::Time(original_tp.trajectory_points[2].target_time));
@@ -829,7 +829,7 @@ TEST(YieldPluginTest, min_digital_gap)
   trajectory_point_3.x = 2.0;
   trajectory_point_3.y = 1.0;
   trajectory_point_3.target_time = rclcpp::Time(2,0);
-  
+
   trajectory_point_4.x = 2.5;
   trajectory_point_4.y = 1.0;
   trajectory_point_4.target_time = rclcpp::Time(3,0);
@@ -839,5 +839,5 @@ TEST(YieldPluginTest, min_digital_gap)
   double gap = plugin.check_traj_for_digital_min_gap(original_tp);
 
   EXPECT_EQ(gap, min_gap);
-    
+
 }
