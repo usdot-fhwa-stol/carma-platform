@@ -368,62 +368,69 @@ namespace yield_plugin
                                                                                                 initial_time,
                                                                                                 planning_time);
 
-    std::vector<double> original_traj_downtracks = get_relative_downtracks(original_tp);
+    std::vector<double> original_traj_relative_downtracks = get_relative_downtracks(original_tp);
     std::vector<double> calculated_speeds = {};
-    std::vector<double> new_downtracks = {};
-    new_downtracks.push_back(0.0);
+    std::vector<double> s = {};
+    new_relative_downtracks.push_back(0.0);
     calculated_speeds.push_back(initial_velocity);
-    for(size_t i = 1; i < original_tp.trajectory_points.size(); i++ )
-    {
-      double traj_target_time = i * planning_time / original_tp.trajectory_points.size();
-      double dt_dist = polynomial_calc(values, traj_target_time);
-      double dv = polynomial_calc_d(values, traj_target_time);
+    auto original_planning_time = (rclcpp::Time(original_tp.trajectory_points.back().target_time) - rclcpp::Time(original_tp.trajectory_points.front().target_time)).seconds();
 
-      RCLCPP_ERROR_STREAM(nh_->get_logger(), "Calculated speed dv: " << dv << ", dt_dist: "<< dt_dist << ", traj_target_time: " << traj_target_time);
-      if (dv >= original_max_speed)
+    double average_time_step = original_planning_time / original_tp.trajectory_points.size(); // arbitrary
+    double new_traj_accumulated_downtrack = 0.0;
+    double original_traj_accumulated_downtrack = original_traj_relative_downtracks.at(1);
+    int new_traj_i = 1;
+    int original_traj_i = 1;
+    while (new_traj_accumulated_downtrack < goal_pos - 0.1 && original_traj_i < original_traj_relative_downtracks.size()) // 0.1 buffer to make it stop
+    {
+      double traj_target_time = new_traj_i * average_time_step;
+      double dist_at_tt = polynomial_calc(values, traj_target_time);
+      double velocity_at_tt = polynomial_calc_d(values, traj_target_time);
+
+      RCLCPP_ERROR_STREAM(nh_->get_logger(), "Calculated speed velocity_at_tt: " << velocity_at_tt << ", dist_at_tt: "<< dist_at_tt << ", traj_target_time: " << traj_target_time);
+      if (velocity_at_tt >= original_max_speed)
       {
-        //RCLCPP_ERROR_STREAM(nh_->get_logger(), "higher! speed dv: " << dv);
-        dv = original_max_speed;
+        //RCLCPP_ERROR_STREAM(nh_->get_logger(), "higher! speed velocity_at_tt: " << velocity_at_tt);
+        velocity_at_tt = original_max_speed;
       }
-      dv = std::max(dv, 0.0);
-      new_downtracks.push_back(dt_dist);
-      calculated_speeds.push_back(dv);
+      velocity_at_tt = std::max(velocity_at_tt, 0.0);
+
+      // pick the speeds if it matches with the original downtracks
+      if (dist_at_tt >= original_traj_accumulated_downtrack)
+      {
+        calculated_speeds.push_back(velocity_at_tt);  // assuming the dist_at_tt is so close to original_traj_accumulated_downtrack; hence this speed matches that of original_traj_relative_downtracks
+        original_traj_accumulated_downtrack += original_traj_relative_downtracks.at(original_traj_i);
+        original_traj_i ++;
+      }
+      new_traj_accumulated_downtrack = dist_at_tt;
+      new_traj_i++;
     }
+
+    // TODO: combine the later speed with the newer speed before filtering?
+
     // moving average filter
     std::vector<double> filtered_speeds = basic_autonomy::smoothing::moving_average_filter(calculated_speeds, config_.speed_moving_average_window_size);
 
     double prev_speed = filtered_speeds[0];
-    size_t new_downtrack_idx = 1;
-    double original_accumulated_downtrack = original_traj_downtracks.at(1);
-    double dT = planning_time / original_tp.trajectory_points.size();
-    auto planning_start_time = rclcpp::Time(original_tp.trajectory_points[0].target_time);
-    for(size_t i = 1; i < original_tp.trajectory_points.size(); i++ )
+    // Modify the original trajectory based on the new filtered_speed and downtracks
+    for(size_t i = 1; i < original_tp.trajectory_points.size(); i++)
     {
       carma_planning_msgs::msg::TrajectoryPlanPoint jmt_tpp;
-
       double current_speed = prev_speed;
-
-      while (new_downtrack_idx < new_downtracks.size() && new_downtracks.at(new_downtrack_idx) < original_accumulated_downtrack)
+      if (i < filtered_speeds.size())
       {
-        prev_speed = filtered_speeds.at(new_downtrack_idx);
-        new_downtrack_idx++;
+        current_speed = filtered_speeds.at(i);
       }
 
-      if (new_downtrack_idx < new_downtracks.size())
+      if (current_speed >= config_.max_stop_speed)
       {
-        current_speed = filtered_speeds.at(new_downtrack_idx);
-        if (current_speed >= config_.max_stop_speed)
-        {
-          double dt = (2 * (new_downtracks.at(new_downtrack_idx) - new_downtracks.at(new_downtrack_idx - 1))) / (current_speed + prev_speed);
-          jmt_tpp = original_tp.trajectory_points.at(i);
-          jmt_tpp.target_time = planning_start_time + rclcpp::Duration(((new_downtrack_idx - 1) * dT + dt) * 1e9);
-          RCLCPP_ERROR_STREAM(nh_->get_logger(), "non-empty x: " << jmt_tpp.x << ", y:" << jmt_tpp.y << ", t:" << std::to_string(rclcpp::Time(jmt_tpp.target_time).seconds()));
+        double dt = (2 * original_traj_relative_downtracks.at(i)) / (current_speed + prev_speed);
+        jmt_tpp = original_tp.trajectory_points.at(i);
+        jmt_tpp.target_time =  rclcpp::Time(jmt_trajectory_points.back().target_time) + rclcpp::Duration(dt * 1e9);
+        RCLCPP_ERROR_STREAM(nh_->get_logger(), "non-empty x: " << jmt_tpp.x << ", y:" << jmt_tpp.y << ", t:" << std::to_string(rclcpp::Time(jmt_tpp.target_time).seconds()));
 
-          jmt_trajectory_points.push_back(jmt_tpp);
-        }
+        jmt_trajectory_points.push_back(jmt_tpp);
       }
-
-      if (current_speed < config_.max_stop_speed)
+      else (current_speed < config_.max_stop_speed)
       {
         RCLCPP_DEBUG(nh_->get_logger(),"Target speed is zero");
         // if speed is zero, the vehicle will stay in previous location.
@@ -431,9 +438,6 @@ namespace yield_plugin
         RCLCPP_ERROR_STREAM(nh_->get_logger(), "empty x: " << jmt_tpp.x << ", y:" << jmt_tpp.y << ", t:" << std::to_string(rclcpp::Time(jmt_tpp.target_time).seconds()));
         jmt_trajectory_points.push_back(jmt_tpp);
       }
-
-      if (i + 1 < original_tp.trajectory_points.size())
-        original_accumulated_downtrack += original_traj_downtracks.at(i + 1);
 
       prev_speed = current_speed;
     }
