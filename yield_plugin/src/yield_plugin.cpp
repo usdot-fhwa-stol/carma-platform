@@ -397,6 +397,7 @@ namespace yield_plugin
       // pick the speeds if it matches with the original downtracks
       if (dist_at_tt >= original_traj_accumulated_downtrack)
       {
+        RCLCPP_ERROR_STREAM(nh_->get_logger(), "Picked Calculated speed velocity_at_tt: " << velocity_at_tt << ", dist_at_tt: "<< dist_at_tt << ", traj_target_time: " << traj_target_time);
         calculated_speeds.push_back(velocity_at_tt);  // assuming the dist_at_tt is so close to original_traj_accumulated_downtrack; hence this speed matches that of original_traj_relative_downtracks
         original_traj_accumulated_downtrack += original_traj_relative_downtracks.at(original_traj_i);
         original_traj_i ++;
@@ -409,24 +410,24 @@ namespace yield_plugin
 
     // moving average filter
     std::vector<double> filtered_speeds = basic_autonomy::smoothing::moving_average_filter(calculated_speeds, config_.speed_moving_average_window_size);
+    RCLCPP_ERROR_STREAM(nh_->get_logger(), "filtered_speeds size: " << filtered_speeds.size());
 
     double prev_speed = filtered_speeds[0];
     // Modify the original trajectory based on the new filtered_speed and downtracks
     for(size_t i = 1; i < original_tp.trajectory_points.size(); i++)
     {
       carma_planning_msgs::msg::TrajectoryPlanPoint jmt_tpp;
-      double current_speed = prev_speed;
+      double current_speed = goal_velocity;
       if (i < filtered_speeds.size())
       {
         current_speed = filtered_speeds.at(i);
       }
-
       if (current_speed >= config_.max_stop_speed)
       {
         double dt = (2 * original_traj_relative_downtracks.at(i)) / (current_speed + prev_speed);
         jmt_tpp = original_tp.trajectory_points.at(i);
         jmt_tpp.target_time =  rclcpp::Time(jmt_trajectory_points.back().target_time) + rclcpp::Duration(dt * 1e9);
-        RCLCPP_ERROR_STREAM(nh_->get_logger(), "non-empty x: " << jmt_tpp.x << ", y:" << jmt_tpp.y << ", t:" << std::to_string(rclcpp::Time(jmt_tpp.target_time).seconds()));
+        RCLCPP_ERROR_STREAM(nh_->get_logger(), "non-empty x: " << jmt_tpp.x << ", y:" << jmt_tpp.y << ", t:" << std::to_string(rclcpp::Time(jmt_tpp.target_time).seconds()) << ", current_speed:" << current_speed);
 
         jmt_trajectory_points.push_back(jmt_tpp);
       }

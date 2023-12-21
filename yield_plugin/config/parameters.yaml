@@ -11,7 +11,7 @@ on_route_vehicle_collision_horizon: 10.0
 # Minimum speed for moving obstacle
 # Units: m/s
 # Value type: Desired
-min_obstacle_speed: 2.0
+min_obstacle_speed: 0.5
 # Minimum object avoidance planning time
 # Units: s
 # Value type: Desired
@@ -23,7 +23,7 @@ yield_max_deceleration: 3.0
 # Minimum safety gap with an Object/Obstacle
 # Units: meters
 # Value type: Desired
-x_gap: 10.0
+x_gap: 20.0
 # Maximum speed value to consider the ego vehicle stopped
 # Units: m/s
 # Value type: Desired
@@ -40,7 +40,7 @@ acceptable_passed_timesteps: 5
 # Intervehicle distance that is considered a collision
 # Unit: m
 # Value type: Desired
-intervehicle_collision_distance: 3.0
+intervehicle_collision_distance: 3.0 #TODO account for obstacle + vehicle length into code
 # Radius to check for potential collision
 # Unit: m
 # Value type: Desired
