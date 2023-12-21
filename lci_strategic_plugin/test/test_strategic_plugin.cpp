@@ -265,6 +265,10 @@ TEST_F(LCIStrategicTestFixture, get_eet_or_tbd)
   auto time = lcip->get_eet_or_tbd(rclcpp::Time(1e9 * 16), signal);
 
   EXPECT_EQ(time, rclcpp::Time(1e9 * 16));
+
+  time = lcip->get_eet_or_tbd(rclcpp::Time(1e9 * 14), signal);
+
+  EXPECT_NEAR(time.seconds(), rclcpp::Time(1e9 * 15).seconds(), 0.01);
 }
 
 TEST_F(LCIStrategicTestFixture, get_nearest_green_entry_time)

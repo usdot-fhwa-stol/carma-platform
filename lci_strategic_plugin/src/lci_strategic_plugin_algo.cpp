@@ -49,7 +49,7 @@ double LCIStrategicPlugin::get_distance_to_accel_or_decel_once (double current_s
   }
 }
 
-rclcpp::Time LCIStrategicPlugin::get_eet_or_tbd(const rclcpp::Time& earliest_entry_time, const lanelet::CarmaTrafficSignalPtr& signal)
+rclcpp::Time LCIStrategicPlugin::get_eet_or_tbd(const rclcpp::Time& earliest_entry_time, const lanelet::CarmaTrafficSignalPtr& signal) const
 {
   // If no green signal found after earliest entry time
   auto start_of_tbd_time = rclcpp::Time((lanelet::time::toSec(signal->recorded_time_stamps.back().first) + EPSILON) * 1e9);
@@ -259,17 +259,18 @@ std::tuple<rclcpp::Time, bool, bool> LCIStrategicPlugin::get_final_entry_time_an
 
   if (config_.enable_carma_streets_connection ==false || scheduled_enter_time_ == 0) //UC2
   {
-    nearest_green_entry_time = get_nearest_green_entry_time(current_state.stamp, earliest_entry_time, traffic_light);
-    if (!nearest_green_entry_time)
+    auto nearest_green_entry_time_optional = get_nearest_green_entry_time(current_state.stamp, earliest_entry_time, traffic_light);
+    is_entry_time_within_green_or_tbd = true;
+
+    if (!nearest_green_entry_time_optional)
     {
       nearest_green_entry_time = get_eet_or_tbd(earliest_entry_time, traffic_light);
     }
-    earliest
+    else
     {
       in_tbd = false;
+      nearest_green_entry_time = nearest_green_entry_time_optional.value() + rclcpp::Duration(EPSILON * 1e9); //0.01sec more buffer since green_light algorithm's timestamp picks the previous signal - Vehicle Estimation
     }
-    nearest_green_entry_time = nearest_green_entry_time + rclcpp::Duration(EPSILON * 1e9); //0.01sec more buffer since green_light algorithm's timestamp picks the previous signal - Vehicle Estimation
-    is_entry_time_within_green_or_tbd = true;
   }
   else if(config_.enable_carma_streets_connection ==true && scheduled_enter_time_ != 0 ) // UC3
   {
