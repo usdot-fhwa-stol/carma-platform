@@ -43,7 +43,7 @@
 #include <algorithm>
 #include <carma_guidance_plugins/strategic_plugin.hpp>
 #include <carma_ros2_utils/carma_lifecycle_node.hpp>
-
+#include <optional>
 
 namespace lci_strategic_plugin
 {
@@ -593,18 +593,29 @@ private:
   /**
    * \brief Provides the scheduled entry time for the vehicle in the future. This scheduled time is the earliest possible entry time that
    *        is during green phase and after timestamps both that is kinematically possible and required times for vehicle in front to pass through first
-   *        NOTE: if no valid entry time described above, it return RED with end time in the future 03:14:07 on Tuesday, 19 January 2038.
+   *        Returns std::nullopt if no valid green entry time found
    *
    * \param current_time Current state's ROS time
    * \param earliest_entry_time Earliest ROS entry time into the intersection kinematically possible
    * \param signal CARMATrafficSignal that is responsible for the intersection along route
    * \param minimum_required_green_time Minimum seconds required by other vehicles in front to pass through the intersection first
    *
-   * \return Nearest ROS entry time during green phase, and whether if tbd or not
+   * \return Nearest ROS entry time during green phase if it exists, std::nullopt if no valid green entry time found
    * NOTE: TSMO UC2: Algorithm 2. Entering time estimation algorithm for EVs in cooperation Class A when the SPaT plan is fixed-time (defined for C-ADS-equipped vehicles)
    */
 
-  std::tuple<rclcpp::Time, bool> get_nearest_valid_entry_time(const rclcpp::Time& current_time, const rclcpp::Time& earliest_entry_time, lanelet::CarmaTrafficSignalPtr signal, double minimum_required_green_time = 0.0) const;
+  std::optional<rclcpp::Time> get_nearest_green_entry_time(const rclcpp::Time& current_time, const rclcpp::Time& earliest_entry_time, const lanelet::CarmaTrafficSignalPtr& signal, double minimum_required_green_time = 0.0) const;
+
+  /**
+   * \brief Returns the later of earliest_entry_time or the end of the available signal states in the traffic_signal
+   *
+   * \param earliest_entry_time Earliest ROS entry time into the intersection kinematically possible
+   * \param signal CARMATrafficSignal that is responsible for the intersection along route
+   *
+   * \return Returns the later of earliest_entry_time or the end of the available signal states in the traffic_signal
+   */
+
+  rclcpp::Time get_eet_or_tbd(const rclcpp::Time& earliest_entry_time, const lanelet::CarmaTrafficSignalPtr& signal) const;
 
   /**
    * \brief Gets the earliest entry time into the intersection that is kinematically possible for the vehicle.
@@ -815,7 +826,8 @@ private:
   FRIEND_TEST(LCIStrategicTestFixture, calc_estimated_entry_time_left);
   FRIEND_TEST(LCIStrategicTestFixture, get_distance_to_accel_or_decel_twice);
   FRIEND_TEST(LCIStrategicTestFixture, get_distance_to_accel_or_decel_once);
-  FRIEND_TEST(LCIStrategicTestFixture, get_nearest_valid_entry_time);
+  FRIEND_TEST(LCIStrategicTestFixture, get_nearest_green_entry_time);
+  FRIEND_TEST(LCIStrategicTestFixture, get_eet_or_tbd);
   FRIEND_TEST(LCIStrategicTestFixture, get_earliest_entry_time);
   FRIEND_TEST(LCIStrategicTestFixture, handleFailureCase);
   FRIEND_TEST(LCIStrategicTestFixture, handleStopping);
