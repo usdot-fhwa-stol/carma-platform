@@ -370,7 +370,7 @@ namespace yield_plugin
 
     std::vector<double> original_traj_relative_downtracks = get_relative_downtracks(original_tp);
     std::vector<double> calculated_speeds = {};
-    std::vector<double> s = {};
+    std::vector<double> new_relative_downtracks = {};
     new_relative_downtracks.push_back(0.0);
     calculated_speeds.push_back(initial_velocity);
     auto original_planning_time = (rclcpp::Time(original_tp.trajectory_points.back().target_time) - rclcpp::Time(original_tp.trajectory_points.front().target_time)).seconds();
@@ -430,7 +430,7 @@ namespace yield_plugin
 
         jmt_trajectory_points.push_back(jmt_tpp);
       }
-      else (current_speed < config_.max_stop_speed)
+      else
       {
         RCLCPP_DEBUG(nh_->get_logger(),"Target speed is zero");
         // if speed is zero, the vehicle will stay in previous location.
