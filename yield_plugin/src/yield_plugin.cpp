@@ -433,9 +433,10 @@ namespace yield_plugin
       }
       else
       {
-        RCLCPP_DEBUG(nh_->get_logger(),"Target speed is zero");
+        RCLCPP_DEBUG(nh_->get_logger(),"Target speed is zero, applying constant time");
         // if speed is zero, the vehicle will stay in previous location.
         jmt_tpp = jmt_trajectory_points.back();
+        jmt_tpp.target_time = rclcpp::Time(jmt_tpp.target_time) + rclcpp::Duration(average_time_step * 1e9);
         RCLCPP_ERROR_STREAM(nh_->get_logger(), "empty x: " << jmt_tpp.x << ", y:" << jmt_tpp.y << ", t:" << std::to_string(rclcpp::Time(jmt_tpp.target_time).seconds()));
         jmt_trajectory_points.push_back(jmt_tpp);
       }
