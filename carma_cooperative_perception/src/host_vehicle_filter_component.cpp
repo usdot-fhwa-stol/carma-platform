@@ -154,13 +154,13 @@ auto HostVehicleFilterNode::handle_on_shutdown(const rclcpp_lifecycle::State & /
 }
 
 auto HostVehicleFilterNode::update_host_vehicle_pose(
-  const geometry_msgs::msg::PoseStamped & msg) noexcept -> void
+  const geometry_msgs::msg::PoseStamped & msg)  -> void
 {
   host_vehicle_pose_ = msg;
 }
 
 auto HostVehicleFilterNode::attempt_filter_and_republish(
-  carma_cooperative_perception_interfaces::msg::DetectionList msg) noexcept -> void
+  carma_cooperative_perception_interfaces::msg::DetectionList msg)  -> void
 {
   if (!host_vehicle_pose_.has_value()) {
     RCLCPP_WARN(get_logger(), "Could not filter detection list: host vehicle pose unknown");
@@ -181,7 +181,7 @@ auto HostVehicleFilterNode::attempt_filter_and_republish(
 }
 
 auto euclidean_distance_squared(
-  const geometry_msgs::msg::Pose & a, const geometry_msgs::msg::Pose & b) noexcept -> double
+  const geometry_msgs::msg::Pose & a, const geometry_msgs::msg::Pose & b)  -> double
 {
   return std::pow(a.position.x - b.position.x, 2) + std::pow(a.position.y - b.position.y, 2) +
          std::pow(a.position.z - b.position.z, 2) + std::pow(a.orientation.x - b.orientation.x, 2) +

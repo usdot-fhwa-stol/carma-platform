@@ -66,7 +66,7 @@ struct UtmDisplacement
  * @return Reference to the coordinate's updated position
 */
 inline constexpr auto operator+=(
-  UtmCoordinate & coordinate, const UtmDisplacement & displacement) noexcept -> UtmCoordinate &
+  UtmCoordinate & coordinate, const UtmDisplacement & displacement)  -> UtmCoordinate &
 {
   coordinate.easting += displacement.easting;
   coordinate.northing += displacement.northing;
@@ -84,7 +84,7 @@ inline constexpr auto operator+=(
  * @return A new UtmCoordinate representing the new position
 */
 inline constexpr auto operator+(
-  UtmCoordinate coordinate, const UtmDisplacement & displacement) noexcept -> UtmCoordinate
+  UtmCoordinate coordinate, const UtmDisplacement & displacement)  -> UtmCoordinate
 {
   return coordinate += displacement;
 }
@@ -98,7 +98,7 @@ inline constexpr auto operator+(
  * @return A new UtmCoordinate representing the new position
 */
 inline constexpr auto operator+(
-  const UtmDisplacement & displacement, UtmCoordinate coordinate) noexcept -> UtmCoordinate
+  const UtmDisplacement & displacement, UtmCoordinate coordinate)  -> UtmCoordinate
 {
   return coordinate += displacement;
 }
@@ -112,7 +112,7 @@ inline constexpr auto operator+(
  * @return Reference to the coordinate's updated position
 */
 inline constexpr auto operator-=(
-  UtmCoordinate & coordinate, const UtmDisplacement & displacement) noexcept -> UtmCoordinate &
+  UtmCoordinate & coordinate, const UtmDisplacement & displacement)  -> UtmCoordinate &
 {
   coordinate.easting += displacement.easting;
   coordinate.northing += displacement.northing;
@@ -130,7 +130,7 @@ inline constexpr auto operator-=(
  * @return A new UtmCoordinate representing the new position
 */
 inline constexpr auto operator-(
-  UtmCoordinate coordinate, const UtmDisplacement & displacement) noexcept -> UtmCoordinate
+  UtmCoordinate coordinate, const UtmDisplacement & displacement)  -> UtmCoordinate
 {
   return coordinate -= displacement;
 }
@@ -144,7 +144,7 @@ inline constexpr auto operator-(
  * @return A new UtmCoordinate representing the new position
 */
 inline constexpr auto operator-(
-  const UtmDisplacement & displacement, UtmCoordinate coordinate) noexcept -> UtmCoordinate
+  const UtmDisplacement & displacement, UtmCoordinate coordinate)  -> UtmCoordinate
 {
   return coordinate -= displacement;
 }

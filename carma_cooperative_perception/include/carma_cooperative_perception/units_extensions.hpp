@@ -22,7 +22,7 @@
 namespace carma_cooperative_perception
 {
 template <typename T>
-constexpr auto remove_units(const T & value) noexcept
+constexpr auto remove_units(const T & value)
 {
   return units::unit_cast<typename T::underlying_type>(value);
 }

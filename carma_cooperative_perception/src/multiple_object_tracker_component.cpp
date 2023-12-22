@@ -72,8 +72,8 @@ auto semantic_class_to_numeric_value(mot::SemanticClass semantic_class)
   return 0;
 }
 
-auto make_ctrv_detection(
-  const carma_cooperative_perception_interfaces::msg::Detection & msg) noexcept -> Detection
+auto make_ctrv_detection(const carma_cooperative_perception_interfaces::msg::Detection & msg)
+  -> Detection
 {
   const auto timestamp{
     units::time::second_t{static_cast<double>(msg.header.stamp.sec)} +
@@ -110,8 +110,8 @@ auto make_ctrv_detection(
     timestamp, state, covariance, mot::Uuid{msg.id}, make_semantic_class(msg.semantic_class)};
 }
 
-auto make_ctra_detection(
-  const carma_cooperative_perception_interfaces::msg::Detection & msg) noexcept -> Detection
+auto make_ctra_detection(const carma_cooperative_perception_interfaces::msg::Detection & msg)
+  -> Detection
 {
   const auto timestamp{
     units::time::second_t{static_cast<double>(msg.header.stamp.sec)} +
@@ -167,7 +167,7 @@ auto make_detection(const carma_cooperative_perception_interfaces::msg::Detectio
   throw std::runtime_error("unkown motion model type '" + std::to_string(msg.motion_model) + "'");
 }
 
-static auto to_ros_msg(const mot::CtraTrack & track) noexcept
+static auto to_ros_msg(const mot::CtraTrack & track)
 {
   carma_cooperative_perception_interfaces::msg::Track msg;
 
@@ -198,7 +198,7 @@ static auto to_ros_msg(const mot::CtraTrack & track) noexcept
   return msg;
 }
 
-static auto to_ros_msg(const mot::CtrvTrack & track) noexcept
+static auto to_ros_msg(const mot::CtrvTrack & track)
 {
   carma_cooperative_perception_interfaces::msg::Track msg;
 
@@ -405,7 +405,7 @@ auto MultipleObjectTrackerNode::handle_on_shutdown(
 }
 
 auto MultipleObjectTrackerNode::store_new_detections(
-  const carma_cooperative_perception_interfaces::msg::DetectionList & msg) noexcept -> void
+  const carma_cooperative_perception_interfaces::msg::DetectionList & msg) -> void
 {
   if (std::size(msg.detections) == 0) {
     RCLCPP_WARN(this->get_logger(), "Not storing detections: incoming detection list is empty");
@@ -435,14 +435,14 @@ auto MultipleObjectTrackerNode::store_new_detections(
 }
 
 static auto temporally_align_detections(
-  std::vector<Detection> & detections, units::time::second_t end_time) noexcept -> void
+  std::vector<Detection> & detections, units::time::second_t end_time) -> void
 {
   for (auto & detection : detections) {
     mot::propagate_to_time(detection, end_time, mot::default_unscented_transform);
   }
 }
 
-static auto predict_track_states(std::vector<Track> tracks, units::time::second_t end_time) noexcept
+static auto predict_track_states(std::vector<Track> tracks, units::time::second_t end_time)
 {
   for (auto & track : tracks) {
     mot::propagate_to_time(track, end_time, mot::default_unscented_transform);

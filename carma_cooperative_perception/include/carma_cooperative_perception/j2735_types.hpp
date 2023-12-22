@@ -43,7 +43,7 @@ struct DDateTime
   std::optional<units::time::second_t> second;
   std::optional<units::time::minute_t> time_zone_offset;
 
-  [[nodiscard]] static auto from_msg(const j2735_v2x_msgs::msg::DDateTime & msg) noexcept
+  [[nodiscard]] static auto from_msg(const j2735_v2x_msgs::msg::DDateTime & msg)
     -> DDateTime;
 };
 
@@ -54,10 +54,10 @@ struct AccelerationSet4Way
   units::acceleration::two_centi_standard_gravities_t vert;
   units::angular_velocity::centi_degrees_per_second_t yaw_rate;
 
-  [[nodiscard]] static auto from_msg(const j2735_v2x_msgs::msg::AccelerationSet4Way & msg) noexcept
+  [[nodiscard]] static auto from_msg(const j2735_v2x_msgs::msg::AccelerationSet4Way & msg)
     -> AccelerationSet4Way;
 
-  [[nodiscard]] static auto from_msg(const carma_v2x_msgs::msg::AccelerationSet4Way & msg) noexcept
+  [[nodiscard]] static auto from_msg(const carma_v2x_msgs::msg::AccelerationSet4Way & msg)
     -> AccelerationSet4Way;
 };
 
@@ -67,10 +67,10 @@ struct Position3D
   units::angle::deci_micro_degrees_t longitude{0.0};
   std::optional<units::length::deca_centimeters_t> elevation;
 
-  [[nodiscard]] static auto from_msg(const j2735_v2x_msgs::msg::Position3D & msg) noexcept
+  [[nodiscard]] static auto from_msg(const j2735_v2x_msgs::msg::Position3D & msg)
     -> Position3D;
 
-  [[nodiscard]] static auto from_msg(const carma_v2x_msgs::msg::Position3D & msg) noexcept
+  [[nodiscard]] static auto from_msg(const carma_v2x_msgs::msg::Position3D & msg)
     -> Position3D;
 };
 
@@ -78,10 +78,10 @@ struct Heading
 {
   units::angle::eighth_deci_degrees_t heading;
 
-  [[nodiscard]] static auto from_msg(const j2735_v2x_msgs::msg::Heading & heading) noexcept
+  [[nodiscard]] static auto from_msg(const j2735_v2x_msgs::msg::Heading & heading)
     -> Heading;
 
-  [[nodiscard]] static auto from_msg(const carma_v2x_msgs::msg::Heading & heading) noexcept
+  [[nodiscard]] static auto from_msg(const carma_v2x_msgs::msg::Heading & heading)
     -> Heading;
 };
 
@@ -89,9 +89,9 @@ struct Speed
 {
   units::velocity::two_centi_meters_per_second_t speed;
 
-  [[nodiscard]] static auto from_msg(const j2735_v2x_msgs::msg::Speed & speed) noexcept -> Speed;
+  [[nodiscard]] static auto from_msg(const j2735_v2x_msgs::msg::Speed & speed)  -> Speed;
 
-  [[nodiscard]] static auto from_msg(const carma_v2x_msgs::msg::Speed & speed) noexcept -> Speed;
+  [[nodiscard]] static auto from_msg(const carma_v2x_msgs::msg::Speed & speed)  -> Speed;
 };
 
 }  // namespace carma_cooperative_perception
