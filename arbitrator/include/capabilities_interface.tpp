@@ -47,7 +47,7 @@ namespace arbitrator
             {
                 RCLCPP_INFO_STREAM(rclcpp::get_logger("arbitrator")," Service call to get available strategic plugins successfully finished after retrying: " << retry_attempt);
             }
-            } catch (const std::exception& error) {
+            } catch (const rclcpp::exceptions::RCLError& error) {
                 RCLCPP_WARN_STREAM(rclcpp::get_logger("arbitrator"),
                             "Could not make a service call to get available strategic service topic names, with detected error: " << error.what() <<". So retrying, attempt no: " << retry_attempt);
                 retry_attempt ++;
@@ -57,7 +57,7 @@ namespace arbitrator
 
         if (!topics_call_successful)
         {
-            RCLCPP_WARN_STREAM(rclcpp::get_logger("arbitrator"),
+            RCLCPP_ERROR_STREAM(rclcpp::get_logger("arbitrator"),
                             "Failed to retrieve available strategic plugin service topics! Returning empty maneuver responses");
             return responses;
         }
@@ -66,7 +66,7 @@ namespace arbitrator
         while (!topics_to_retry.empty() && retry_attempt < MAX_RETRY_ATTEMPTS)
         {
             current_topics_to_check = topics_to_retry;
-            topics_to_retry = {};
+            topics_to_retry.clear();
             for (const auto & topic : current_topics_to_check)
             {
                 try {
@@ -77,7 +77,7 @@ namespace arbitrator
 
                     const auto response = client->async_send_request(msg);
 
-                    switch (const auto status{response.wait_for(500ms)}; status) {
+                    switch (const auto status{response.wait_for(500ms)}) {
                         case std::future_status::ready:
                             responses.emplace(topic, response.get());
                             break;
@@ -93,10 +93,6 @@ namespace arbitrator
                 } catch(const rclcpp::exceptions::RCLError& error) {
                     RCLCPP_WARN_STREAM(rclcpp::get_logger("arbitrator"),
                         "Cannot make service request for service '" << topic << "': " << error.what() <<". So retrying, attempt no: " << retry_attempt);
-                    // Fast repeated calls may fail and on average in one of our environment was failing at 70ms repeated calls
-                    // https://github.com/ros2/rmw_fastrtps/issues/46
-                    std::chrono::milliseconds duration(100);
-                    std::this_thread::sleep_for(duration);
                     topics_to_retry.push_back(topic);
                     continue;
                 }

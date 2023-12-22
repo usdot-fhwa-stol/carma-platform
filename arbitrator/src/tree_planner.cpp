@@ -103,8 +103,8 @@ namespace arbitrator
 
         if (final_open_list.empty())
         {
-            RCLCPP_ERROR_STREAM(rclcpp::get_logger("arbitrator"), "None of the strategic plugins generated any valid plans! Please check if any is turned and returning valid maneuvers, shutting down arbitrator...");
-            throw std::runtime_error("None of the strategic plugins generated any valid plans! Please check if any is turned and returning valid maneuvers, shutting down arbitrator...");
+            RCLCPP_ERROR_STREAM(rclcpp::get_logger("arbitrator"), "None of the strategic plugins generated any valid plans! Please check if any is turned and returning valid maneuvers...");
+            throw std::runtime_error("None of the strategic plugins generated any valid plans! Please check if any is turned and returning valid maneuvers...");
         }
 
         final_open_list = search_strategy_->prioritize_plans(final_open_list);
