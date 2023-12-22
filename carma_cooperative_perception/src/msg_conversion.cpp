@@ -273,15 +273,20 @@ auto to_detection_list_msg(const carma_v2x_msgs::msg::SensorDataSharingMessage &
     switch (common_data.obj_type.object_type) {
       case common_data.obj_type.ANIMAL:
         detection.motion_model = detection.MOTION_MODEL_CTRV;
+        // We don't have a good semantic class mapping for animals
+        detection.semantic_class = detection.SEMANTIC_CLASS_UNKNOWN;
         break;
       case common_data.obj_type.VRU:
         detection.motion_model = detection.MOTION_MODEL_CTRV;
+        detection.semantic_class = detection.SEMANTIC_CLASS_PEDESTRIAN;
         break;
       case common_data.obj_type.VEHICLE:
         detection.motion_model = detection.MOTION_MODEL_CTRV;
+        detection.semantic_class = detection.SEMANTIC_CLASS_SMALL_VEHICLE;
         break;
       default:
         detection.motion_model = detection.MOTION_MODEL_CTRV;
+        detection.semantic_class = detection.SEMANTIC_CLASS_UNKNOWN;
     }
 
     detection_list.detections.push_back(std::move(detection));
@@ -322,19 +327,24 @@ auto to_detection_msg(
     switch (object.object_type) {
       case object.SMALL_VEHICLE:
         detection.motion_model = motion_model_mapping.small_vehicle_model;
+        detection.semantic_class = detection.SEMANTIC_CLASS_SMALL_VEHICLE;
         break;
       case object.LARGE_VEHICLE:
         detection.motion_model = motion_model_mapping.large_vehicle_model;
+        detection.semantic_class = detection.SEMANTIC_CLASS_LARGE_VEHICLE;
         break;
       case object.MOTORCYCLE:
         detection.motion_model = motion_model_mapping.motorcycle_model;
+        detection.semantic_class = detection.SEMANTIC_CLASS_MOTORCYCLE;
         break;
       case object.PEDESTRIAN:
         detection.motion_model = motion_model_mapping.pedestrian_model;
+        detection.semantic_class = detection.SEMANTIC_CLASS_PEDESTRIAN;
         break;
       case object.UNKNOWN:
       default:
         detection.motion_model = motion_model_mapping.unknown_model;
+        detection.semantic_class = detection.SEMANTIC_CLASS_UNKNOWN;
     }
   }
 
@@ -396,6 +406,25 @@ auto to_external_object_msg(
   external_object.velocity.twist.linear.y = track_longitudinal_velocity * std::sin(yaw);
 
   external_object.object_type = track.semantic_class;
+
+  external_object.presence_vector |= external_object.OBJECT_TYPE_PRESENCE_VECTOR;
+  switch (track.semantic_class) {
+    case track.SEMANTIC_CLASS_SMALL_VEHICLE:
+      external_object.object_type = external_object.SMALL_VEHICLE;
+      break;
+    case track.SEMANTIC_CLASS_LARGE_VEHICLE:
+      external_object.object_type = external_object.LARGE_VEHICLE;
+      break;
+    case track.SEMANTIC_CLASS_MOTORCYCLE:
+      external_object.object_type = external_object.MOTORCYCLE;
+      break;
+    case track.SEMANTIC_CLASS_PEDESTRIAN:
+      external_object.object_type = external_object.PEDESTRIAN;
+      break;
+    case track.SEMANTIC_CLASS_UNKNOWN:
+    default:
+      external_object.object_type = external_object.UNKNOWN;
+  };
 
   return external_object;
 }
