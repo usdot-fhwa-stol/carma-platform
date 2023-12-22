@@ -265,15 +265,6 @@ auto MultipleObjectTrackerNode::handle_on_configure(
       }
     });
 
-  declare_parameter(
-    "execution_frequency_hz", mot::remove_units(units::frequency::hertz_t{1 / execution_period_}));
-
-  declare_parameter(
-    "track_promotion_threshold", static_cast<int>(track_manager_.get_promotion_threshold().value));
-
-  declare_parameter(
-    "track_removal_threshold", static_cast<int>(track_manager_.get_promotion_threshold().value));
-
   on_set_parameters_callback_ =
     add_on_set_parameters_callback([this](const std::vector<rclcpp::Parameter> & parameters) {
       rcl_interfaces::msg::SetParametersResult result;
@@ -337,6 +328,15 @@ auto MultipleObjectTrackerNode::handle_on_configure(
 
       return result;
     });
+
+  declare_parameter(
+    "execution_frequency_hz", mot::remove_units(units::frequency::hertz_t{1 / execution_period_}));
+
+  declare_parameter(
+    "track_promotion_threshold", static_cast<int>(track_manager_.get_promotion_threshold().value));
+
+  declare_parameter(
+    "track_removal_threshold", static_cast<int>(track_manager_.get_promotion_threshold().value));
 
   RCLCPP_INFO(get_logger(), "Lifecycle transition: successfully configured");
 
