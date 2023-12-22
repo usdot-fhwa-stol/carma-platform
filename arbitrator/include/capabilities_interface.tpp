@@ -35,13 +35,12 @@ namespace arbitrator
     {
         std::map<std::string, std::shared_ptr<MSrvRes>> responses;
         bool topics_call_successful = false;
-        std::vector<std::string> topics_to_retry;
-        std::vector<std::string> current_topics_to_check;
         int retry_attempt = 0;
+        std::vector<std::string> detected_topics;
         while (!topics_call_successful && retry_attempt < MAX_RETRY_ATTEMPTS)
         {
             try {
-            topics_to_retry = get_topics_for_capability(query_string);
+            detected_topics = get_topics_for_capability(query_string);
             topics_call_successful = true;
             if (retry_attempt > 0)
             {
@@ -62,6 +61,8 @@ namespace arbitrator
             return responses;
         }
 
+        std::vector<std::string> topics_to_retry = detected_topics;
+        std::vector<std::string> current_topics_to_check;
         retry_attempt = 0;
         while (!topics_to_retry.empty() && retry_attempt < MAX_RETRY_ATTEMPTS)
         {
@@ -81,8 +82,7 @@ namespace arbitrator
                         case std::future_status::ready:
                             responses.emplace(topic, response.get());
                             break;
-                        case std::future_status::deferred:
-                        case std::future_status::timeout:
+                        default:
                             RCLCPP_WARN_STREAM(rclcpp::get_logger("arbitrator"), "failed...: " << topic);
                     }
                     if (retry_attempt > 0)
@@ -94,13 +94,12 @@ namespace arbitrator
                     RCLCPP_WARN_STREAM(rclcpp::get_logger("arbitrator"),
                         "Cannot make service request for service '" << topic << "': " << error.what() <<". So retrying, attempt no: " << retry_attempt);
                     topics_to_retry.push_back(topic);
-                    continue;
                 }
             }
             retry_attempt ++;
         }
 
-        if (retry_attempt == MAX_RETRY_ATTEMPTS)
+        if (retry_attempt >= MAX_RETRY_ATTEMPTS)
         {
             RCLCPP_WARN_STREAM(rclcpp::get_logger("arbitrator"),
                             "Failed to get a valid response from one or all of the strategic plugins...");
