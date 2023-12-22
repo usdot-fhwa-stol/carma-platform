@@ -273,15 +273,20 @@ auto to_detection_list_msg(const carma_v2x_msgs::msg::SensorDataSharingMessage &
     switch (common_data.obj_type.object_type) {
       case common_data.obj_type.ANIMAL:
         detection.motion_model = detection.MOTION_MODEL_CTRV;
+        // We don't have a good semantic class mapping for animals
+        detection.semantic_class = detection.SEMANTIC_CLASS_UNKNOWN;
         break;
       case common_data.obj_type.VRU:
         detection.motion_model = detection.MOTION_MODEL_CTRV;
+        detection.semantic_class = detection.SEMANTIC_CLASS_PEDESTRIAN;
         break;
       case common_data.obj_type.VEHICLE:
         detection.motion_model = detection.MOTION_MODEL_CTRV;
+        detection.semantic_class = detection.SEMANTIC_CLASS_SMALL_VEHICLE;
         break;
       default:
         detection.motion_model = detection.MOTION_MODEL_CTRV;
+        detection.semantic_class = detection.SEMANTIC_CLASS_UNKNOWN;
     }
 
     detection_list.detections.push_back(std::move(detection));
