@@ -61,8 +61,6 @@ auto HostVehicleFilterNode::handle_on_configure(
 
   RCLCPP_INFO(get_logger(), "Lifecycle transition: successfully configured");
 
-  declare_parameter("distance_threshold_meters", 0.0);
-
   on_set_parameters_callback_ =
     add_on_set_parameters_callback([this](const std::vector<rclcpp::Parameter> & parameters) {
       rcl_interfaces::msg::SetParametersResult result;
@@ -103,6 +101,8 @@ auto HostVehicleFilterNode::handle_on_configure(
 
       return result;
     });
+
+  declare_parameter("distance_threshold_meters", 0.0);
 
   return carma_ros2_utils::CallbackReturn::SUCCESS;
 }
