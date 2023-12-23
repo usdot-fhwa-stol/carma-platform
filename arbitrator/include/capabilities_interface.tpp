@@ -73,8 +73,18 @@ namespace arbitrator
                 try {
                     using std::literals::chrono_literals::operator""ms;
 
-                    const auto client = nh_->create_client<carma_planning_msgs::srv::PlanManeuvers>(topic);
-                    RCLCPP_DEBUG_STREAM(rclcpp::get_logger("arbitrator"), "found client: " << topic);
+                    if (registered_strategic_plugins_.find(topic) == registered_strategic_plugins_.end())
+                        registered_strategic_plugins_[topic] = nh_->create_client<carma_planning_msgs::srv::PlanManeuvers>(topic);
+
+                    auto client = registered_strategic_plugins_[topic];
+
+                    if (client->wait_for_service(500ms))
+                        RCLCPP_DEBUG_STREAM(rclcpp::get_logger("arbitrator"), "found client: " << topic);
+                    else
+                    {
+                        topics_to_retry.push_back(topic);
+                        RCLCPP_WARN_STREAM(rclcpp::get_logger("arbitrator"), "Following client timed out: " << topic << ", retrying, attempt no: " << retry_attempt);
+                    }
 
                     const auto response = client->async_send_request(msg);
 
