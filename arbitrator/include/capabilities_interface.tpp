@@ -84,6 +84,7 @@ namespace arbitrator
                     {
                         topics_to_retry.push_back(topic);
                         RCLCPP_WARN_STREAM(rclcpp::get_logger("arbitrator"), "Following client timed out: " << topic << ", retrying, attempt no: " << retry_attempt);
+                        continue;
                     }
 
                     const auto response = client->async_send_request(msg);
