@@ -73,7 +73,7 @@ namespace arbitrator
                 try {
                     using std::literals::chrono_literals::operator""ms;
 
-                    if (registered_strategic_plugins_.find(topic) == registered_strategic_plugins_.end())
+                    if (registered_strategic_plugins_.count(topic) == 0)
                         registered_strategic_plugins_[topic] = nh_->create_client<carma_planning_msgs::srv::PlanManeuvers>(topic);
 
                     auto client = registered_strategic_plugins_[topic];
@@ -92,6 +92,8 @@ namespace arbitrator
                         case std::future_status::ready:
                             responses.emplace(topic, response.get());
                             break;
+                        case std::future_status::deferred:
+                        case std::future_status::timeout:
                         default:
                             RCLCPP_WARN_STREAM(rclcpp::get_logger("arbitrator"), "failed...: " << topic);
                     }
