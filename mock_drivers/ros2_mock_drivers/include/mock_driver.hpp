@@ -39,7 +39,9 @@ public:
             this->publish_gnss_driver_status();
         };
         int pub_rate = this->get_parameter("driver_status_pub_rate").as_int();
-        timer_ = this->create_wall_timer(std::chrono::milliseconds(1000 / pub_rate), timer_callback);
+        timer_ = rclcpp::create_timer(this,
+            this->get_clock(),
+            rclcpp::Duration(1000 / pub_rate * 1e6), timer_callback);
     }
 
 private:
