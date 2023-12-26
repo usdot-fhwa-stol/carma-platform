@@ -90,7 +90,7 @@ def generate_launch_description():
         ]
     )
 
-    # subsystem_controller which orchestrates the lifecycle of this subsystem's components
+    # if running in simulation with CARLA, publish driver status message automatically
     ros2_mock_drivers = Node(
         condition=IfCondition(use_sim_time),
         package='ros2_mock_drivers',
