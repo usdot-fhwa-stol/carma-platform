@@ -24,6 +24,7 @@ from launch_ros.actions import ComposableNodeContainer
 from launch_ros.descriptions import ComposableNode
 from carma_ros2_utils.launch.get_log_level import GetLogLevel
 from carma_ros2_utils.launch.get_current_namespace import GetCurrentNamespace
+from launch.conditions import IfCondition
 import os
 
 
@@ -90,6 +91,15 @@ def generate_launch_description():
     )
 
     # subsystem_controller which orchestrates the lifecycle of this subsystem's components
+    ros2_mock_drivers = Node(
+        condition=IfCondition(use_sim_time),
+        package='ros2_mock_drivers',
+        name='carma_carla_driver_status',
+        executable='mock_driver_exec',
+        output='screen'
+    )
+
+    # subsystem_controller which orchestrates the lifecycle of this subsystem's components
     subsystem_controller = Node(
         package='subsystem_controllers',
         name='drivers_controller',
@@ -107,5 +117,6 @@ def generate_launch_description():
         declare_vehicle_config_param_file_arg,
         declare_use_sim_time_arg,
         lightbar_manager_container,
+        ros2_mock_drivers,
         subsystem_controller
     ])
