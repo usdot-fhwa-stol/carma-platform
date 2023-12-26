@@ -1,0 +1,12 @@
+[Unit]
+Description=Rsync service to sync the contents of the carma-config-data volume to NFS export/carma_volume
+
+[Service]
+ExecStart=/home/dev/carma_ws/src/carma-platform/engineering_tools/rsync_carma_config.sh
+Restart=always
+RestartSec=1
+StandardOutput=syslog
+StandardError=syslog
+
+[Install]
+WantedBy=multi-user.target
