@@ -30,31 +30,57 @@ public:
 
         // Initialize parameters
         this->declare_parameter("driver_status_pub_rate", 10);
-        this->declare_parameter("lidar_enabled", true);
-        this->declare_parameter("controller_enabled", true);
-        this->declare_parameter("camera_enabled", true);
-        this->declare_parameter("gnss_enabled", true);
 
         // Create timer
         auto timer_callback = [this]() -> void {
-            this->publish_driver_status();
+            this->publish_controller_driver_status();
+            this->publish_lidar_driver_status();
+            this->publish_camera_driver_status();
+            this->publish_gnss_driver_status();
         };
         int pub_rate = this->get_parameter("driver_status_pub_rate").as_int();
         timer_ = this->create_wall_timer(std::chrono::milliseconds(1000 / pub_rate), timer_callback);
     }
 
 private:
-    void publish_driver_status() {
+    void publish_controller_driver_status() {
         auto message = carma_driver_msgs::msg::DriverStatus();
-
-        // Retrieve parameters
-        message.lidar = this->get_parameter("lidar_enabled").as_bool();
-        message.controller = this->get_parameter("controller_enabled").as_bool();
-        message.camera = this->get_parameter("camera_enabled").as_bool();
-        message.gnss = this->get_parameter("gnss_enabled").as_bool();
 
         // Set other message fields
         message.name = "/hardware_interface/carla_driver";
+        message.status = carma_driver_msgs::msg::DriverStatus::OPERATIONAL;
+
+        // Publish message
+        publisher_->publish(message);
+    }
+
+    void publish_camera_driver_status() {
+        auto message = carma_driver_msgs::msg::DriverStatus();
+
+        // Set other message fields
+        message.name = "/hardware_interface/carla_camera_driver";
+        message.status = carma_driver_msgs::msg::DriverStatus::OPERATIONAL;
+
+        // Publish message
+        publisher_->publish(message);
+    }
+
+    void publish_lidar_driver_status() {
+        auto message = carma_driver_msgs::msg::DriverStatus();
+
+        // Set other message fields
+        message.name = "/hardware_interface/carla_lidar_driver";
+        message.status = carma_driver_msgs::msg::DriverStatus::OPERATIONAL;
+
+        // Publish message
+        publisher_->publish(message);
+    }
+
+    void publish_gnss_driver_status() {
+        auto message = carma_driver_msgs::msg::DriverStatus();
+
+        // Set other message fields
+        message.name = "/hardware_interface/carla_gnss_driver";
         message.status = carma_driver_msgs::msg::DriverStatus::OPERATIONAL;
 
         // Publish message
