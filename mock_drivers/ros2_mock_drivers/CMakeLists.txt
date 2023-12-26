@@ -1,5 +1,5 @@
 
-# Copyright (C) 2022 LEIDOS.
+# Copyright (C) 2023 LEIDOS.
 #
 # Licensed under the Apache License, Version 2.0 (the "License"); you may not
 # use this file except in compliance with the License. You may obtain a copy of
@@ -27,26 +27,14 @@ ament_auto_find_build_dependencies()
 
 # Name build targets
 set(node_exec mock_driver_exec)
-set(node_lib mock_driver)
 
 # Includes
 include_directories(
   include
 )
 
-# Build
-ament_auto_add_library(${node_lib} SHARED
-        src/mock_driver.cpp
-)
-
 ament_auto_add_executable(${node_exec}
         src/main.cpp
-)
-
-# All locally created targets will need to be manually linked
-# ament auto will handle linking of external dependencies
-target_link_libraries(${node_exec}
-        ${node_lib}
 )
 
 # Install
