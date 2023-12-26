@@ -82,7 +82,7 @@ namespace arbitrator
         protected:
         private:
             std::shared_ptr<carma_ros2_utils::CarmaLifecycleNode> nh_;
-            std::unordered_map<std::string,carma_ros2_utils::ClientPtr<carma_planning_msgs::srv::PlanManeuvers>> strategic_plugins_;
+            std::unordered_map<std::string,carma_ros2_utils::ClientPtr<carma_planning_msgs::srv::PlanManeuvers>> registered_strategic_plugins_;
 
             carma_ros2_utils::ClientPtr<carma_planning_msgs::srv::GetPluginApi> sc_s_;
             std::unordered_set <std::string> capabilities_ ;

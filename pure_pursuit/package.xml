@@ -1,0 +1,33 @@
+<?xml version="1.0"?>
+<?xml-model href="http://download.ros.org/schema/package_format2.xsd" schematypens="http://www.w3.org/2001/XMLSchema"?>
+<package format="2">
+    <name>pure_pursuit</name>
+    <version>1.0.0</version>
+    <description>an implementation of a pure pursuit</description>
+    <maintainer email="opensource@apex.ai">Apex.AI, Inc.</maintainer>
+    <license>Apache License 2.0</license>
+
+    <buildtool_depend>ament_cmake_auto</buildtool_depend>
+    <buildtool_depend>autoware_auto_cmake</buildtool_depend>
+
+    <depend>autoware_auto_msgs</depend>
+    <depend>controller_common</depend>
+    <depend>autoware_auto_common</depend>
+    <depend>motion_model</depend>
+    <depend>state_vector</depend>
+    <depend>rclcpp</depend>
+
+
+    <build_depend>builtin_interfaces</build_depend>
+    <build_depend>motion_common</build_depend>
+    <build_depend>motion_testing</build_depend>
+    <build_depend>osrf_testing_tools_cpp</build_depend>
+    <build_depend>time_utils</build_depend>
+
+    <test_depend>ament_lint_common</test_depend>
+    <test_depend>ament_lint_auto</test_depend>
+    <test_depend>ament_cmake_gtest</test_depend>
+
+    <export><build_type>ament_cmake</build_type></export>
+    <build_depend>carma_cmake_common</build_depend>
+</package>

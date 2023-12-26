@@ -73,15 +73,19 @@ namespace arbitrator
                 try {
                     using std::literals::chrono_literals::operator""ms;
 
-                    if (strategic_plugins_.find(topic) == strategic_plugins_.end())
-                        strategic_plugins_[topic] = nh_->create_client<carma_planning_msgs::srv::PlanManeuvers>(topic);
+                    if (registered_strategic_plugins_.count(topic) == 0)
+                        registered_strategic_plugins_[topic] = nh_->create_client<carma_planning_msgs::srv::PlanManeuvers>(topic);
 
-                    auto client = strategic_plugins_[topic];
+                    auto client = registered_strategic_plugins_[topic];
 
                     if (client->wait_for_service(500ms))
                         RCLCPP_DEBUG_STREAM(rclcpp::get_logger("arbitrator"), "found client: " << topic);
                     else
-                        RCLCPP_ERROR_STREAM(rclcpp::get_logger("arbitrator"), "did NOT find client: " << topic);
+                    {
+                        topics_to_retry.push_back(topic);
+                        RCLCPP_WARN_STREAM(rclcpp::get_logger("arbitrator"), "Following client timed out: " << topic << ", retrying, attempt no: " << retry_attempt);
+                        continue;
+                    }
 
                     const auto response = client->async_send_request(msg);
 
@@ -89,8 +93,15 @@ namespace arbitrator
                         case std::future_status::ready:
                             responses.emplace(topic, response.get());
                             break;
+                        case std::future_status::deferred:
+                            RCLCPP_WARN_STREAM(rclcpp::get_logger("arbitrator"), "service call to " << topic << " is deferred... Please check if the plugin is active");
+                            break;
+                        case std::future_status::timeout:
+                            RCLCPP_WARN_STREAM(rclcpp::get_logger("arbitrator"), "service call to " << topic << " is timed out... Please check if the plugin is active");
+                            break;
                         default:
-                            RCLCPP_WARN_STREAM(rclcpp::get_logger("arbitrator"), "failed...: " << topic);
+                            RCLCPP_WARN_STREAM(rclcpp::get_logger("arbitrator"), "service call to " << topic << " is failed... Please check if the plugin is active");
+                            break;
                     }
                     if (retry_attempt > 0)
                     {

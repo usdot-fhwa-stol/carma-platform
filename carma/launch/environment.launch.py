@@ -303,17 +303,17 @@ def generate_launch_description():
                 ]
             ),
             ComposableNode( #CARMA Motion Prediction Visualizer Node
-                    package='motion_prediction_visualizer',
-                    plugin='motion_prediction_visualizer::Node',
-                    name='motion_prediction_visualizer',
-                    extra_arguments=[
-                        {'use_intra_process_comms': True},
-                        {'--log-level' : GetLogLevel('motion_prediction_visualizer', env_log_levels) }
-                    ],
-                    remappings=[
-                        ("external_objects", "external_object_predictions" ),
-                    ],
-                    parameters=[ vehicle_config_param_file ]
+                package='motion_prediction_visualizer',
+                plugin='motion_prediction_visualizer::Node',
+                name='motion_prediction_visualizer',
+                extra_arguments=[
+                    {'use_intra_process_comms': True},
+                    {'--log-level' : GetLogLevel('motion_prediction_visualizer', env_log_levels) }
+                ],
+                remappings=[
+                    ("external_objects", "external_object_predictions" ),
+                ],
+                parameters=[ vehicle_config_param_file ]
             ),
             ComposableNode(
                     package='roadway_objects',

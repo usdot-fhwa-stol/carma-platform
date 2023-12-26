@@ -2,7 +2,7 @@
 # Adjustment factor for safe and comfortable acceleration/deceleration
 # Value type: Desired
 # No unit
-acceleration_adjustment_factor: 2.0
+acceleration_adjustment_factor: 1.0
 # Time horizon for collision detection for vehicles on the route
 # NOTE: not applied for pedestrians or other non-vehicle obstacles on the road
 # Units: s
@@ -19,7 +19,7 @@ tpmin: 2.0
 # Deceleration value used for yielding trajectories
 # Units: m/s^2
 # Value type: Desired
-yield_max_deceleration: 3.0
+yield_max_deceleration: 4.0
 # Minimum safety gap with an Object/Obstacle
 # Units: meters
 # Value type: Desired
@@ -30,17 +30,17 @@ x_gap: 20.0
 max_stop_speed: 1.0
 # parameter to enable cooperative behavior
 # Value type: Desired
-enable_cooperative_behavior: true
+enable_cooperative_behavior: false
 # parameter to always accept mobility request
 # Value type: Desired
-always_accept_mobility_request: true
+always_accept_mobility_request: false
 # Acceptable number of timesteps to use the latest known mobility request before switching to yield
 # Value type: Desired
 acceptable_passed_timesteps: 5
 # Intervehicle distance that is considered a collision
 # Unit: m
 # Value type: Desired
-intervehicle_collision_distance: 3.0 #TODO account for obstacle + vehicle length into code
+intervehicle_collision_distance: 5.0 #TODO account for obstacle + vehicle length into code
 # Radius to check for potential collision
 # Unit: m
 # Value type: Desired

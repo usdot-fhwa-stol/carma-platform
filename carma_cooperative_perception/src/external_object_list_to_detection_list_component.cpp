@@ -183,6 +183,7 @@ auto ExternalObjectListToDetectionListNode::handle_on_shutdown(
 auto ExternalObjectListToDetectionListNode::publish_as_detection_list(
   const input_msg_type & msg) const -> void
 {
+  RCLCPP_ERROR_STREAM(this->get_logger(), "Received object list of size: " << msg.objects.size());
   try {
     publisher_->publish(to_detection_list_msg(msg, motion_model_mapping_));
   } catch (const std::invalid_argument & e) {
