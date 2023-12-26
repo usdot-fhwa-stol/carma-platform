@@ -49,6 +49,7 @@ private:
         // Set other message fields
         message.name = "/hardware_interface/carla_driver";
         message.status = carma_driver_msgs::msg::DriverStatus::OPERATIONAL;
+        message.controller = true;
 
         // Publish message
         publisher_->publish(message);
@@ -60,6 +61,7 @@ private:
         // Set other message fields
         message.name = "/hardware_interface/carla_camera_driver";
         message.status = carma_driver_msgs::msg::DriverStatus::OPERATIONAL;
+        message.camera = true;
 
         // Publish message
         publisher_->publish(message);
@@ -71,7 +73,7 @@ private:
         // Set other message fields
         message.name = "/hardware_interface/carla_lidar_driver";
         message.status = carma_driver_msgs::msg::DriverStatus::OPERATIONAL;
-
+        message.lidar = true;
         // Publish message
         publisher_->publish(message);
     }
@@ -82,6 +84,7 @@ private:
         // Set other message fields
         message.name = "/hardware_interface/carla_gnss_driver";
         message.status = carma_driver_msgs::msg::DriverStatus::OPERATIONAL;
+        message.gnss = true;
 
         // Publish message
         publisher_->publish(message);
