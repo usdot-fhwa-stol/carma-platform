@@ -94,9 +94,14 @@ namespace arbitrator
                             responses.emplace(topic, response.get());
                             break;
                         case std::future_status::deferred:
+                            RCLCPP_WARN_STREAM(rclcpp::get_logger("arbitrator"), "service call to " << topic << " is deferred... Please check if the plugin is active");
+                            break;
                         case std::future_status::timeout:
+                            RCLCPP_WARN_STREAM(rclcpp::get_logger("arbitrator"), "service call to " << topic << " is timed out... Please check if the plugin is active");
+                            break;
                         default:
-                            RCLCPP_WARN_STREAM(rclcpp::get_logger("arbitrator"), "failed...: " << topic);
+                            RCLCPP_WARN_STREAM(rclcpp::get_logger("arbitrator"), "service call to " << topic << " is failed... Please check if the plugin is active");
+                            break;
                     }
                     if (retry_attempt > 0)
                     {
