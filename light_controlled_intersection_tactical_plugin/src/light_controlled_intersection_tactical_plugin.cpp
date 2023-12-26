@@ -14,6 +14,7 @@
  * the License.
  */
 #include "light_controlled_intersection_tactical_plugin/light_controlled_intersection_tactical_plugin_node.hpp"
+#include <valarray>
 
 namespace light_controlled_intersection_tactical_plugin
 {
@@ -119,24 +120,25 @@ namespace light_controlled_intersection_tactical_plugin
             RCLCPP_DEBUG_STREAM(rclcpp::get_logger("light_controlled_intersection_tactical_plugin"), "Not all variables are set...");
         }
 
-        carma_planning_msgs::msg::TrajectoryPlan reduced_last_traj;
-        std::vector<double> reduced_final_speeds;
+
 
         RCLCPP_DEBUG_STREAM(rclcpp::get_logger("light_controlled_intersection_tactical_plugin"), "traj points size: " << last_trajectory_.trajectory_points.size() << ", last_final_speeds_ size: " <<
                             last_final_speeds_.size() );
 
+        size_t idx_to_start_new_traj = 0;
         for (size_t i = 0; i < last_trajectory_.trajectory_points.size(); i++)
         {
-            if ((rclcpp::Time(last_trajectory_.trajectory_points[i].target_time) > rclcpp::Time(req->header.stamp) - rclcpp::Duration(0.1 * 1e9))) // Duration is in nanoseconds
+            auto dist = sqrt(pow(veh_pos.x() - last_trajectory_.trajectory_points.at(i).x, 2) + std::pow(veh_pos.y() - last_trajectory_.trajectory_points.at(i).y, 2));
+
+            if (dist < 2.0) // reduce until if 2 meters away
             {
-                reduced_last_traj.trajectory_points.emplace_back(last_trajectory_.trajectory_points[i]);
-                reduced_final_speeds.emplace_back(last_final_speeds_[i]);
+                idx_to_start_new_traj = i;
+                break;
             }
         }
 
-        last_final_speeds_ = reduced_final_speeds;
-        last_trajectory_.trajectory_points = reduced_last_traj.trajectory_points;
-
+        last_final_speeds_ = std::vector<double>(last_final_speeds_.begin() + idx_to_start_new_traj, last_final_speeds_.end());
+        last_trajectory_.trajectory_points = std::vector<carma_planning_msgs::msg::TrajectoryPlanPoint>(last_trajectory_.trajectory_points.begin() + idx_to_start_new_traj, last_trajectory_.trajectory_points.end());
 
         if (is_last_case_successful_ != boost::none && last_case_ != boost::none
             && last_case_.get() == new_case
