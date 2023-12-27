@@ -28,9 +28,9 @@ namespace subsystem_controllers
 
     config_.startup_duration_ = declare_parameter<int>("startup_duration", config_.startup_duration_);
     config_.driver_timeout_ = declare_parameter<double>("required_driver_timeout", config_.driver_timeout_);
-    
+
     // carma-config parameters
-    config_.ros1_required_drivers_ = declare_parameter<std::vector<std::string>>("ros1_required_drivers", config_.ros1_required_drivers_); 
+    config_.ros1_required_drivers_ = declare_parameter<std::vector<std::string>>("ros1_required_drivers", config_.ros1_required_drivers_);
     config_.ros1_camera_drivers_ = declare_parameter<std::vector<std::string>>("ros1_camera_drivers", config_.ros1_camera_drivers_);
     config_.excluded_namespace_nodes_ = declare_parameter<std::vector<std::string>>("excluded_namespace_nodes", config_.excluded_namespace_nodes_);
 
@@ -48,8 +48,8 @@ namespace subsystem_controllers
     config_ = DriversControllerConfig();
 
     // Load required plugins and default enabled plugins
-    get_parameter<std::vector<std::string>>("ros1_required_drivers", config_.ros1_required_drivers_);  
-    get_parameter<std::vector<std::string>>("ros1_camera_drivers", config_.ros1_camera_drivers_); 
+    get_parameter<std::vector<std::string>>("ros1_required_drivers", config_.ros1_required_drivers_);
+    get_parameter<std::vector<std::string>>("ros1_camera_drivers", config_.ros1_camera_drivers_);
     get_parameter<int>("startup_duration", config_.startup_duration_);
     get_parameter<double>("required_driver_timeout", config_.driver_timeout_);
     get_parameter<std::vector<std::string>>("excluded_namespace_nodes", config_.excluded_namespace_nodes_);
@@ -66,7 +66,7 @@ namespace subsystem_controllers
     if (config_.excluded_namespace_nodes_.size() == 1 && config_.excluded_namespace_nodes_[0].empty()) {
       config_.excluded_namespace_nodes_.clear();
     }
-    
+
     auto base_managed_nodes = lifecycle_mgr_.get_managed_nodes();
     // Update managed nodes
     // Collect namespace nodes not managed by other subsystem controllers - manually specified in carma-config
@@ -75,21 +75,21 @@ namespace subsystem_controllers
     lifecycle_mgr_.set_managed_nodes(updated_managed_nodes);
 
     driver_manager_ = std::make_shared<DriverManager>(
-      config_.ros1_required_drivers_, 
-      config_.ros1_camera_drivers_, 
+      config_.ros1_required_drivers_,
+      config_.ros1_camera_drivers_,
       config_.driver_timeout_
     );
 
     // record starup time
     start_up_timestamp_ = this->now().nanoseconds() / 1e6;
 
-    driver_status_sub_ = create_subscription<carma_driver_msgs::msg::DriverStatus>("driver_discovery", 1, std::bind(&DriversControllerNode::driver_discovery_cb, this, std::placeholders::_1));
-    
+    driver_status_sub_ = create_subscription<carma_driver_msgs::msg::DriverStatus>("driver_discovery", 20, std::bind(&DriversControllerNode::driver_discovery_cb, this, std::placeholders::_1));
+
     timer_ = create_timer(get_clock(), std::chrono::milliseconds(1000), std::bind(&DriversControllerNode::timer_callback,this));
 
     // Configure our drivers
     bool success = lifecycle_mgr_.configure(std::chrono::milliseconds(base_config_.service_timeout_ms), std::chrono::milliseconds(base_config_.call_timeout_ms)).empty();
-    
+
     if (success)
     {
       RCLCPP_INFO_STREAM(get_logger(), "Subsystem able to configure");
@@ -106,21 +106,27 @@ namespace subsystem_controllers
   carma_ros2_utils::CallbackReturn DriversControllerNode::handle_on_activate(const rclcpp_lifecycle::State &prev_state)
   {
 
-    // Reset to automatically trigger state transitions from base class 
+    // Reset to automatically trigger state transitions from base class
     trigger_managed_nodes_configure_from_base_class_ = true;
 
+    // return only either SUCCESS or FAILURE
     auto base_return = BaseSubsystemController::handle_on_activate(prev_state); // This will activate all base_managed_nodes
-    
-    if (base_return != carma_ros2_utils::CallbackReturn::SUCCESS) {
-      RCLCPP_ERROR(get_logger(), "Driver Controller could not activate");
-      return base_return;
+
+    if (base_return == CallbackReturn::SUCCESS) {
+      RCLCPP_INFO(get_logger(), "Driver Controller activated!");
     }
+    else if (base_return == CallbackReturn::FAILURE)
+    {
+      RCLCPP_ERROR(get_logger(), "Driver Controller encountered FAILURE when trying to activate the subsystems... please check which driver failed to activate...");
+    }
+
+    return base_return;
 
   }
 
   void DriversControllerNode::timer_callback()
   {
-    
+
     long time_now = this->now().nanoseconds() / 1e6;
     rclcpp::Duration sd(config_.startup_duration_, 0);
     long start_duration = sd.nanoseconds()/1e6;
@@ -132,7 +138,7 @@ namespace subsystem_controllers
       if (!prev_alert) {
         prev_alert = dm;
         publish_system_alert(dm);
-      } 
+      }
       else if ( prev_alert->type == dm.type && prev_alert->description.compare(dm.description) == 0) { // Do not publish duplicate alerts
         RCLCPP_DEBUG_STREAM(get_logger(), "No change to alert status");
       }
