@@ -83,7 +83,7 @@ namespace subsystem_controllers
     // record starup time
     start_up_timestamp_ = this->now().nanoseconds() / 1e6;
 
-    driver_status_sub_ = create_subscription<carma_driver_msgs::msg::DriverStatus>("driver_discovery", 100, std::bind(&DriversControllerNode::driver_discovery_cb, this, std::placeholders::_1));
+    driver_status_sub_ = create_subscription<carma_driver_msgs::msg::DriverStatus>("driver_discovery", 120, std::bind(&DriversControllerNode::driver_discovery_cb, this, std::placeholders::_1));
 
     timer_ = create_timer(get_clock(), std::chrono::milliseconds(1000), std::bind(&DriversControllerNode::timer_callback,this));
 
