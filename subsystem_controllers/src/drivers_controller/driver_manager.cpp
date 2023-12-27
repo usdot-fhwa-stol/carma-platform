@@ -113,7 +113,7 @@ namespace subsystem_controllers
         std::vector<Entry> driver_list = em_->get_entries(); //Real time driver list from driver status
         for(auto i = driver_list.begin(); i < driver_list.end(); ++i)
         {
-            RCLCPP_ERROR_STREAM(rclcpp::get_logger("driver"), "i->name_: " << i->name_
+            RCLCPP_DEBUG_STREAM(rclcpp::get_logger("subsystem_controller"), "i->name_: " << i->name_
                 << ", current_time: " << current_time
                 << ", i->timestamp_: " << i->timestamp_
                 << ", difference: " << current_time-(i->timestamp_) );

@@ -109,25 +109,17 @@ namespace subsystem_controllers
     // Reset to automatically trigger state transitions from base class
     trigger_managed_nodes_configure_from_base_class_ = true;
 
+    // return only either SUCCESS or FAILURE
     auto base_return = BaseSubsystemController::handle_on_activate(prev_state); // This will activate all base_managed_nodes
 
     if (base_return == CallbackReturn::SUCCESS) {
-      RCLCPP_ERROR(get_logger(), "Driver Controller activated!");
-    }
-    else if (base_return == CallbackReturn::ERROR)
-    {
-      RCLCPP_ERROR(get_logger(), "ERROR: Driver Controller !");
-
+      RCLCPP_INFO(get_logger(), "Driver Controller activated!");
     }
     else if (base_return == CallbackReturn::FAILURE)
     {
-      RCLCPP_ERROR(get_logger(), "FAILURE: Driver Controller !");
-
-    }else
-    {
-      RCLCPP_ERROR(get_logger(), "it is something else... !");
-
+      RCLCPP_ERROR(get_logger(), "Driver Controller encountered FAILURE when trying to activate the subsystems... please check which driver failed to activate...");
     }
+
     return base_return;
 
   }
