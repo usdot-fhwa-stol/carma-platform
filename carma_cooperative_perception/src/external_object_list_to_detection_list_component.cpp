@@ -192,7 +192,7 @@ auto ExternalObjectListToDetectionListNode::publish_as_detection_list(
 }
 
 auto ExternalObjectListToDetectionListNode::update_georeference(
-  const std_msgs::msg::String & msg) noexcept -> void
+  const std_msgs::msg::String & msg)  -> void
 {
   map_georeference_ = msg.data;
 }

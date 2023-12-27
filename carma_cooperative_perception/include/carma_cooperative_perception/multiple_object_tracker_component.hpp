@@ -59,7 +59,7 @@ public:
     -> carma_ros2_utils::CallbackReturn override;
 
   auto store_new_detections(
-    const carma_cooperative_perception_interfaces::msg::DetectionList & msg) noexcept -> void;
+    const carma_cooperative_perception_interfaces::msg::DetectionList & msg)  -> void;
 
   auto execute_pipeline() -> void;
 

@@ -48,7 +48,7 @@
 
 namespace carma_cooperative_perception
 {
-auto to_time_msg(const DDateTime & d_date_time) noexcept -> builtin_interfaces::msg::Time
+auto to_time_msg(const DDateTime & d_date_time)  -> builtin_interfaces::msg::Time
 {
   double seconds;
   const auto fractional_secs{
@@ -61,7 +61,7 @@ auto to_time_msg(const DDateTime & d_date_time) noexcept -> builtin_interfaces::
   return msg;
 }
 
-auto calc_detection_time_stamp(DDateTime sdsm_time, const MeasurementTimeOffset & offset) noexcept
+auto calc_detection_time_stamp(DDateTime sdsm_time, const MeasurementTimeOffset & offset)
   -> DDateTime
 {
   sdsm_time.second.value() += offset.measurement_time_offset;
@@ -69,7 +69,7 @@ auto calc_detection_time_stamp(DDateTime sdsm_time, const MeasurementTimeOffset 
   return sdsm_time;
 }
 
-auto to_ddate_time_msg(const builtin_interfaces::msg::Time & builtin_time) noexcept
+auto to_ddate_time_msg(const builtin_interfaces::msg::Time & builtin_time)
   -> j2735_v2x_msgs::msg::DDateTime
 {
   j2735_v2x_msgs::msg::DDateTime ddate_time_output;
@@ -106,7 +106,7 @@ auto to_ddate_time_msg(const builtin_interfaces::msg::Time & builtin_time) noexc
 
 auto calc_sdsm_time_offset(
   const builtin_interfaces::msg::Time & external_object_list_stamp,
-  const builtin_interfaces::msg::Time & external_object_stamp) noexcept
+  const builtin_interfaces::msg::Time & external_object_stamp)
   -> carma_v2x_msgs::msg::MeasurementTimeOffset
 {
   carma_v2x_msgs::msg::MeasurementTimeOffset time_offset;
@@ -127,7 +127,7 @@ auto calc_sdsm_time_offset(
   return time_offset;
 }
 
-auto to_position_msg(const UtmCoordinate & position_utm) noexcept -> geometry_msgs::msg::Point
+auto to_position_msg(const UtmCoordinate & position_utm)  -> geometry_msgs::msg::Point
 {
   geometry_msgs::msg::Point msg;
 
@@ -138,14 +138,14 @@ auto to_position_msg(const UtmCoordinate & position_utm) noexcept -> geometry_ms
   return msg;
 }
 
-auto heading_to_enu_yaw(const units::angle::degree_t & heading) noexcept -> units::angle::degree_t
+auto heading_to_enu_yaw(const units::angle::degree_t & heading)  -> units::angle::degree_t
 {
   return units::angle::degree_t{std::fmod(-(remove_units(heading) - 90.0) + 360.0, 360.0)};
 }
 
 auto enu_orientation_to_true_heading(
   double yaw, const lanelet::BasicPoint3d & obj_pose,
-  const std::shared_ptr<lanelet::projection::LocalFrameProjector> & map_projection) noexcept
+  const std::shared_ptr<lanelet::projection::LocalFrameProjector> & map_projection)
   -> units::angle::degree_t
 {
   // Get object geodetic position
@@ -172,7 +172,7 @@ auto enu_orientation_to_true_heading(
 // in map frame and external object pose
 auto calc_relative_position(
   const geometry_msgs::msg::PoseStamped & source_pose,
-  const carma_v2x_msgs::msg::PositionOffsetXYZ & position_offset) noexcept
+  const carma_v2x_msgs::msg::PositionOffsetXYZ & position_offset)
   -> carma_v2x_msgs::msg::PositionOffsetXYZ
 {
   carma_v2x_msgs::msg::PositionOffsetXYZ adjusted_offset;
@@ -190,7 +190,7 @@ auto calc_relative_position(
 
 auto transform_pose_from_map_to_wgs84(
   const geometry_msgs::msg::PoseStamped & source_pose,
-  const std::shared_ptr<lanelet::projection::LocalFrameProjector> & map_projection) noexcept
+  const std::shared_ptr<lanelet::projection::LocalFrameProjector> & map_projection)
   -> carma_v2x_msgs::msg::Position3D
 {
   carma_v2x_msgs::msg::Position3D ref_pos;
@@ -207,7 +207,7 @@ auto transform_pose_from_map_to_wgs84(
   return ref_pos;
 }
 
-auto to_detection_list_msg(const carma_v2x_msgs::msg::SensorDataSharingMessage & sdsm) noexcept
+auto to_detection_list_msg(const carma_v2x_msgs::msg::SensorDataSharingMessage & sdsm)
   -> carma_cooperative_perception_interfaces::msg::DetectionList
 {
   carma_cooperative_perception_interfaces::msg::DetectionList detection_list;
@@ -297,7 +297,7 @@ auto to_detection_list_msg(const carma_v2x_msgs::msg::SensorDataSharingMessage &
 
 auto to_detection_msg(
   const carma_perception_msgs::msg::ExternalObject & object,
-  const MotionModelMapping & motion_model_mapping) noexcept
+  const MotionModelMapping & motion_model_mapping)
   -> carma_cooperative_perception_interfaces::msg::Detection
 {
   carma_cooperative_perception_interfaces::msg::Detection detection;
@@ -353,8 +353,7 @@ auto to_detection_msg(
 
 auto to_detection_list_msg(
   const carma_perception_msgs::msg::ExternalObjectList & object_list,
-  const MotionModelMapping & motion_model_mapping) noexcept
-  -> carma_cooperative_perception_interfaces::msg::DetectionList
+  const MotionModelMapping & motion_model_mapping) -> carma_cooperative_perception_interfaces::msg::DetectionList
 {
   carma_cooperative_perception_interfaces::msg::DetectionList detection_list;
 
@@ -369,23 +368,29 @@ auto to_detection_list_msg(
 }
 
 auto to_external_object_msg(
-  const carma_cooperative_perception_interfaces::msg::Track & track) noexcept
+  const carma_cooperative_perception_interfaces::msg::Track & track)
   -> carma_perception_msgs::msg::ExternalObject
 {
   carma_perception_msgs::msg::ExternalObject external_object;
   external_object.header = track.header;
   external_object.presence_vector = 0;
 
+
   try {
-    if (const auto numeric_id{std::stol(track.id)};
+    auto track_id_edited = track.id;
+    track_id_edited.erase(std::remove(track_id_edited.begin(), track_id_edited.end(), '-'), track_id_edited.end());
+    if (const auto numeric_id{std::stol(track_id_edited)};
         numeric_id >= 0 && numeric_id <= std::numeric_limits<std::uint32_t>::max()) {
       external_object.presence_vector |= external_object.ID_PRESENCE_VECTOR;
       external_object.id = static_cast<std::uint32_t>(numeric_id);
+      RCLCPP_ERROR_STREAM(rclcpp::get_logger("cp"), "assigned ID: " << numeric_id << ", where originally it was: " << track.id );
     }
   } catch (const std::invalid_argument & /* exception */) {
     external_object.presence_vector &= ~external_object.ID_PRESENCE_VECTOR;
+    RCLCPP_ERROR_STREAM(rclcpp::get_logger("cp"), "So this failed with invalid_argument where track.id: " << track.id );
   } catch (const std::out_of_range & /* exception */) {
     external_object.presence_vector &= ~external_object.ID_PRESENCE_VECTOR;
+    RCLCPP_ERROR_STREAM(rclcpp::get_logger("cp"), "So this failed with out_of_range where track.id: " << track.id );
   }
 
   external_object.presence_vector |= external_object.POSE_PRESENCE_VECTOR;
@@ -417,7 +422,7 @@ auto to_external_object_msg(
 }
 
 auto to_external_object_list_msg(
-  const carma_cooperative_perception_interfaces::msg::TrackList & track_list) noexcept
+  const carma_cooperative_perception_interfaces::msg::TrackList & track_list)
   -> carma_perception_msgs::msg::ExternalObjectList
 {
   carma_perception_msgs::msg::ExternalObjectList external_object_list;
@@ -432,7 +437,7 @@ auto to_external_object_list_msg(
 auto to_sdsm_msg(
   const carma_perception_msgs::msg::ExternalObjectList & external_object_list,
   const geometry_msgs::msg::PoseStamped & current_pose,
-  const std::shared_ptr<lanelet::projection::LocalFrameProjector> & map_projection) noexcept
+  const std::shared_ptr<lanelet::projection::LocalFrameProjector> & map_projection)
   -> carma_v2x_msgs::msg::SensorDataSharingMessage
 {
   carma_v2x_msgs::msg::SensorDataSharingMessage sdsm;
@@ -463,7 +468,7 @@ auto to_sdsm_msg(
 
 auto to_detected_object_data_msg(
   const carma_perception_msgs::msg::ExternalObject & external_object,
-  const std::shared_ptr<lanelet::projection::LocalFrameProjector> & map_projection) noexcept
+  const std::shared_ptr<lanelet::projection::LocalFrameProjector> & map_projection)
   -> carma_v2x_msgs::msg::DetectedObjectData
 {
   carma_v2x_msgs::msg::DetectedObjectData detected_object_data;
