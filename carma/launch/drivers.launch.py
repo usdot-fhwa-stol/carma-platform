@@ -96,7 +96,7 @@ def generate_launch_description():
         package='ros2_mock_drivers',
         name='carma_carla_driver_status',
         executable='mock_driver_exec',
-        output='screen'
+        parameters=[{"use_sim_time" : use_sim_time}],
     )
 
     # subsystem_controller which orchestrates the lifecycle of this subsystem's components

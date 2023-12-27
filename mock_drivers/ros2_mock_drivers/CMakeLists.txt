@@ -27,14 +27,26 @@ ament_auto_find_build_dependencies()
 
 # Name build targets
 set(node_exec mock_driver_exec)
+set(node_lib mock_driver)
 
 # Includes
 include_directories(
   include
 )
 
+# Build
+ament_auto_add_library(${node_lib} SHARED
+        src/mock_driver.cpp
+)
+
 ament_auto_add_executable(${node_exec}
         src/main.cpp
+)
+
+# All locally created targets will need to be manually linked
+# ament auto will handle linking of external dependencies
+target_link_libraries(${node_exec}
+        ${node_lib}
 )
 
 # Install

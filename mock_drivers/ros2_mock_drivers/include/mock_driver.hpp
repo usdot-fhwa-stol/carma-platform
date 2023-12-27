@@ -15,82 +15,27 @@
 #ifndef ROS2_MOCK_DRIVER_HPP_
 #define ROS2_MOCK_DRIVER_HPP_
 
+
 #include <memory>
 #include <rclcpp/rclcpp.hpp>
 #include <carma_driver_msgs/msg/driver_status.hpp>
 #include <carma_ros2_utils/carma_lifecycle_node.hpp>
+#include "mock_driver.hpp"
 
 namespace mock_driver{
 
 class DriverStatusPublisher : public rclcpp::Node {
 public:
-    DriverStatusPublisher() : Node("carma_carla_driver_status") {
-        // Initialize publisher
-        publisher_ = this->create_publisher<carma_driver_msgs::msg::DriverStatus>("/hardware_interface/driver_discovery", 10);
-
-        // Initialize parameters
-        this->declare_parameter("driver_status_pub_rate", 10);
-
-        // Create timer
-        auto timer_callback = [this]() -> void {
-            this->publish_controller_driver_status();
-            this->publish_lidar_driver_status();
-            this->publish_camera_driver_status();
-            this->publish_gnss_driver_status();
-        };
-        int pub_rate = this->get_parameter("driver_status_pub_rate").as_int();
-        timer_ = rclcpp::create_timer(this,
-            this->get_clock(),
-            rclcpp::Duration(1000 / pub_rate * 1e6), timer_callback);
+    DriverStatusPublisher(const rclcpp::NodeOptions &options) : rclcpp::Node("carla_carma_driver_status", options) {
+        init();
     }
 
 private:
-    void publish_controller_driver_status() {
-        auto message = carma_driver_msgs::msg::DriverStatus();
-
-        // Set other message fields
-        message.name = "/hardware_interface/carla_driver";
-        message.status = carma_driver_msgs::msg::DriverStatus::OPERATIONAL;
-        message.controller = true;
-
-        // Publish message
-        publisher_->publish(message);
-    }
-
-    void publish_camera_driver_status() {
-        auto message = carma_driver_msgs::msg::DriverStatus();
-
-        // Set other message fields
-        message.name = "/hardware_interface/carla_camera_driver";
-        message.status = carma_driver_msgs::msg::DriverStatus::OPERATIONAL;
-        message.camera = true;
-
-        // Publish message
-        publisher_->publish(message);
-    }
-
-    void publish_lidar_driver_status() {
-        auto message = carma_driver_msgs::msg::DriverStatus();
-
-        // Set other message fields
-        message.name = "/hardware_interface/carla_lidar_driver";
-        message.status = carma_driver_msgs::msg::DriverStatus::OPERATIONAL;
-        message.lidar = true;
-        // Publish message
-        publisher_->publish(message);
-    }
-
-    void publish_gnss_driver_status() {
-        auto message = carma_driver_msgs::msg::DriverStatus();
-
-        // Set other message fields
-        message.name = "/hardware_interface/carla_gnss_driver";
-        message.status = carma_driver_msgs::msg::DriverStatus::OPERATIONAL;
-        message.gnss = true;
-
-        // Publish message
-        publisher_->publish(message);
-    }
+    void init();
+    void publish_controller_driver_status();
+    void publish_camera_driver_status();
+    void publish_lidar_driver_status();
+    void publish_gnss_driver_status();
 
     rclcpp::Publisher<carma_driver_msgs::msg::DriverStatus>::SharedPtr publisher_;
     rclcpp::TimerBase::SharedPtr timer_;

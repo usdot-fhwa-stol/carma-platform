@@ -17,7 +17,10 @@
 
 int main(int argc, char **argv) {
     rclcpp::init(argc, argv);
-    rclcpp::spin(std::make_shared<mock_driver::DriverStatusPublisher>());
-    rclcpp::shutdown();
+    rclcpp::executors::SingleThreadedExecutor executor;
+    auto node = std::make_shared<mock_driver::DriverStatusPublisher>(rclcpp::NodeOptions());
+    executor.add_node(node);
+    executor.spin();
+
     return 0;
 }
