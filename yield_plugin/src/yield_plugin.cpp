@@ -264,7 +264,7 @@ namespace yield_plugin
     }
 
     // return original trajectory if no difference in trajectory points a.k.a no collision
-    if (fabs(rclcpp::Time(original_trajectory.trajectory_points.front().target_time).seconds() - rclcpp::Time(yield_trajectory.trajectory_points.front().target_time).seconds()) < 0.01)
+    if (fabs(rclcpp::Time(original_trajectory.trajectory_points.back().target_time).seconds() - rclcpp::Time(yield_trajectory.trajectory_points.back().target_time).seconds()) < 0.01)
     {
       resp->trajectory_plan = original_trajectory;
     }
