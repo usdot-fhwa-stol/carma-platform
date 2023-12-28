@@ -19,7 +19,7 @@ tpmin: 2.0
 # Deceleration value used for yielding trajectories
 # Units: m/s^2
 # Value type: Desired
-yield_max_deceleration: 4.0
+yield_max_deceleration: 3.0
 # Minimum safety gap with an Object/Obstacle
 # Units: meters
 # Value type: Desired
@@ -40,7 +40,7 @@ acceptable_passed_timesteps: 5
 # Intervehicle distance that is considered a collision
 # Unit: m
 # Value type: Desired
-intervehicle_collision_distance: 5.0 #TODO account for obstacle + vehicle length into code
+intervehicle_collision_distance: 6.0 #TODO account for obstacle + vehicle length into code
 # Radius to check for potential collision
 # Unit: m
 # Value type: Desired

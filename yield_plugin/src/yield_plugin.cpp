@@ -262,12 +262,20 @@ namespace yield_plugin
       RCLCPP_DEBUG(nh_->get_logger(),"Yield for object avoidance");
       yield_trajectory = update_traj_for_object(original_trajectory, external_objects_, req->vehicle_state.longitudinal_vel); // Compute the trajectory
     }
-    yield_trajectory.header.frame_id = "map";
-    yield_trajectory.header.stamp = nh_->now();
-    yield_trajectory.trajectory_id = original_trajectory.trajectory_id;
-    yield_trajectory.initial_longitudinal_velocity = original_trajectory.initial_longitudinal_velocity;//copy the original trajectory's desired speed for now.
 
-    resp->trajectory_plan = yield_trajectory;
+    // return original trajectory if no difference in trajectory points a.k.a no collision
+    if (fabs(rclcpp::Time(original_trajectory.trajectory_points.front().target_time).seconds() - rclcpp::Time(yield_trajectory.trajectory_points.front().target_time).seconds()) < 0.01)
+    {
+      resp->trajectory_plan = original_trajectory;
+    }
+    else
+    {
+      yield_trajectory.header.frame_id = "map";
+      yield_trajectory.header.stamp = nh_->now();
+      yield_trajectory.trajectory_id = original_trajectory.trajectory_id;
+      yield_trajectory.initial_longitudinal_velocity = req->vehicle_state.longitudinal_vel; //original trajectory's initial_longitudinal_velocity might be modified and different than the vehicle's actual velocity
+      resp->trajectory_plan = yield_trajectory;
+    }
 
     rclcpp::Time end_time = system_clock.now();  // Planning complete
 
@@ -435,8 +443,8 @@ namespace yield_plugin
       {
         RCLCPP_DEBUG(nh_->get_logger(),"Target speed is zero, applying constant time");
         // if speed is zero, the vehicle will stay in previous location.
-        jmt_tpp = jmt_trajectory_points.back();
-        jmt_tpp.target_time = rclcpp::Time(jmt_tpp.target_time) + rclcpp::Duration(average_time_step * 1e9);
+        jmt_tpp = original_tp.trajectory_points.at(i);
+        jmt_tpp.target_time = rclcpp::Time(jmt_trajectory_points.back().target_time) + rclcpp::Duration(6000 * 1e9); // normally 0.2 sec plan into 100 mins effectively making it stop, but keeping original points
         RCLCPP_ERROR_STREAM(nh_->get_logger(), "empty x: " << jmt_tpp.x << ", y:" << jmt_tpp.y << ", t:" << std::to_string(rclcpp::Time(jmt_tpp.target_time).seconds()));
         jmt_trajectory_points.push_back(jmt_tpp);
       }
@@ -513,7 +521,7 @@ namespace yield_plugin
         //RCLCPP_ERROR_STREAM(nh_->get_logger(), "p2a.x: " << p2a.predicted_position.position.x << ", p2a.y: " << p2a.predicted_position.position.y);
         //RCLCPP_ERROR_STREAM(nh_->get_logger(), "p2b.x: " << p2b.predicted_position.position.x << ", p2b.y: " << p2b.predicted_position.position.y);
 
-        // Linearly interpolate positions at a common timestamp for both trajectories
+        // Linearly interpolate positions at a common timestamp (p2a_t) for both trajectories
         double dt = (p2a_t - p1a_t) / (p1b_t - p1a_t);
         double x1 = p1a.x + dt * (p1b.x - p1a.x);
         double y1 = p1a.y + dt * (p1b.y - p1a.y);
