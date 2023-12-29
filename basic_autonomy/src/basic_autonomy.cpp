@@ -1247,7 +1247,7 @@ namespace basic_autonomy
                 autoware_point.longitudinal_velocity_mps = lag_speeds[i];
 
                 autoware_point.time_from_start = rclcpp::Duration(times[i] * 1e9);
-                RCLCPP_DEBUG_STREAM(rclcpp::get_logger(BASIC_AUTONOMY_LOGGER), "Setting waypoint idx: " << i <<", with planner: << " << trajectory_points[i].planner_plugin_name << ", x: " << trajectory_points[i].x <<
+                RCLCPP_ERROR_STREAM(rclcpp::get_logger(BASIC_AUTONOMY_LOGGER), "Setting waypoint idx: " << i <<", with planner: << " << trajectory_points[i].planner_plugin_name << ", x: " << trajectory_points[i].x <<
                                         ", y: " << trajectory_points[i].y <<
                                         ", speed: " << lag_speeds[i]* 2.23694 << "mph");
                 autoware_trajectory.points.push_back(autoware_point);

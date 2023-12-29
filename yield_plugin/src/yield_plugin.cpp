@@ -264,7 +264,7 @@ namespace yield_plugin
     }
 
     // return original trajectory if no difference in trajectory points a.k.a no collision
-    if (fabs(rclcpp::Time(original_trajectory.trajectory_points.back().target_time).seconds() - rclcpp::Time(yield_trajectory.trajectory_points.back().target_time).seconds()) < 0.01)
+    if (fabs(rclcpp::Time(original_trajectory.trajectory_points.back().target_time).seconds() - rclcpp::Time(yield_trajectory.trajectory_points.front().target_time).seconds()) < 0.01)
     {
       resp->trajectory_plan = original_trajectory;
     }
@@ -273,7 +273,6 @@ namespace yield_plugin
       yield_trajectory.header.frame_id = "map";
       yield_trajectory.header.stamp = nh_->now();
       yield_trajectory.trajectory_id = original_trajectory.trajectory_id;
-      yield_trajectory.initial_longitudinal_velocity = req->vehicle_state.longitudinal_vel; //original trajectory's initial_longitudinal_velocity might be modified and different than the vehicle's actual velocity
       resp->trajectory_plan = yield_trajectory;
     }
 
@@ -362,7 +361,7 @@ namespace yield_plugin
     jmt_trajectory_points.push_back(original_tp.trajectory_points[0]);
 
     double initial_time = 0;
-    double initial_accel = -3.0;
+    double initial_accel = 0.0;
     double goal_accel = 0.0;
 
     //double original_max_speed = max_trajectory_speed(original_tp.trajectory_points);
@@ -669,6 +668,10 @@ namespace yield_plugin
         auto dx = p1b.x - p1a.x;
         auto dy = p1b.y - p1a.y;
         tf2::Vector3 trajectory_direction(dx, dy, 0);
+        if (trajectory_direction.length() < 0.001) //EPSILON
+        {
+          return 0.0;
+        }
         tf2::Vector3 object_direction(object_velocity_in_map_frame.linear.x, object_velocity_in_map_frame.linear.y, 0);
 
         RCLCPP_ERROR_STREAM(nh_->get_logger(), "collision_timestamp_in_seconds: " << std::to_string(collision_timestamp_in_seconds)
@@ -744,6 +747,11 @@ namespace yield_plugin
 
     // determine the safety inter-vehicle gap based on speed
     double safety_gap = std::max(goal_velocity * gap_time, config_.x_gap);
+    if (!std::isnormal(safety_gap))
+    {
+      RCLCPP_WARN_STREAM(rclcpp::get_logger("yield_plugin"),"Detected non-normal (nan, inf, etc.) safety_gap. Making it desired safety gap configured at config_.x_gap: " << config_.x_gap);
+      safety_gap = config_.x_gap;
+    }
     if (config_.enable_adjustable_gap)
     {
       // check if a digital_gap is available
