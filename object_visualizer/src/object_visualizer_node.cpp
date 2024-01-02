@@ -139,6 +139,8 @@ namespace object_visualizer
       int marker_size_y = obj.size.y;
       int marker_size_z = obj.size.z;
 
+      marker.pose = obj.pose.pose;
+
       // overwrite size in case any previous stack doesn't provide size
       // such as carma_cooperative_perception at the moment
       if (obj.size.x < 0.01 || obj.size.y < 0.01 || obj.size.z < 0.01)
@@ -156,7 +158,6 @@ namespace object_visualizer
       }
       marker.type = config_.marker_shape;
       marker.action = visualization_msgs::msg::Marker::ADD;
-      marker.pose = obj.pose.pose;
 
       marker.scale.x = marker_size_x * 2; // Size in carma is half the length/width/height
       marker.scale.y = marker_size_y * 2;
