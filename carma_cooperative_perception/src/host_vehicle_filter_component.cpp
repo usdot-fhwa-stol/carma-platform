@@ -183,11 +183,13 @@ auto HostVehicleFilterNode::attempt_filter_and_republish(
 auto euclidean_distance_squared(
   const geometry_msgs::msg::Pose & a, const geometry_msgs::msg::Pose & b) -> double
 {
-  return std::pow(a.position.x - b.position.x, 2) + std::pow(a.position.y - b.position.y, 2) +
+  auto dist = std::pow(a.position.x - b.position.x, 2) + std::pow(a.position.y - b.position.y, 2) +
          std::pow(a.position.z - b.position.z, 2) + std::pow(a.orientation.x - b.orientation.x, 2) +
          std::pow(a.orientation.y - b.orientation.y, 2) +
          std::pow(a.orientation.z - b.orientation.z, 2) +
          std::pow(a.orientation.w - b.orientation.w, 2);
+  RCLCPP_ERROR_STREAM(rclcpp::get_logger("cp"), "dist: " << dist);
+  return dist;
 }
 
 }  // namespace carma_cooperative_perception
