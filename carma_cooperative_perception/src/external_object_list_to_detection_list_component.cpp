@@ -40,7 +40,8 @@ auto transform_from_map_to_utm(
 
   if (map_transformation == nullptr) {
     const std::string error_string{proj_errno_string(proj_context_errno(context))};
-    throw std::invalid_argument("Could not create PROJ transform: " + error_string + '.');
+    throw std::invalid_argument(
+      "Could not create PROJ transform to origin '" + map_origin + "': " + error_string + '.');
   }
 
   std::vector<carma_cooperative_perception_interfaces::msg::Detection> new_detections;
