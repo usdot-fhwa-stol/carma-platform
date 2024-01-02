@@ -139,20 +139,24 @@ namespace object_visualizer
       int marker_size_y = obj.size.y;
       int marker_size_z = obj.size.z;
 
-      // overwrite size in case any previous stackdoesn't provide size
+      // overwrite size in case any previous stack doesn't provide size
       // such as carma_cooperative_perception at the moment
       if (obj.size.x < 0.01 || obj.size.y < 0.01 || obj.size.z < 0.01)
       {
         marker_size_x = 1.0;
         marker_size_y = 1.0;
         marker_size_z = 1.0;
+        marker.pose.position.z = 1.0; // lifts the marker above ground so that it doesn't clip
       }
 
       marker.id = id;
-      marker.type = static_cast<visualization_msgs::msg::Marker>(config_.marker_shape);
+      if (static_cast<int>(config_.marker_shape) < 1 || static_cast<int>(config_.marker_shape) > 3)
+      {
+        throw std::invalid_argument("Marker shape is not valid: " + std::to_string(static_cast<int>(config_.marker_shape)) + ". Please choose from 1: CUBE, 2: SPHERE, 3: CYLINDER");
+      }
+      marker.type = config_.marker_shape;
       marker.action = visualization_msgs::msg::Marker::ADD;
       marker.pose = obj.pose.pose;
-      marker.pose.position.z = 1.0;
 
       marker.scale.x = marker_size_x * 2; // Size in carma is half the length/width/height
       marker.scale.y = marker_size_y * 2;
