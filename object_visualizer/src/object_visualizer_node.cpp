@@ -30,6 +30,7 @@ namespace object_visualizer
     config_.enable_roadway_objects_viz = declare_parameter<bool>("enable_roadway_objects_viz", config_.enable_roadway_objects_viz);
     config_.external_objects_viz_ns = declare_parameter<std::string>("external_objects_viz_ns", config_.external_objects_viz_ns);
     config_.roadway_obstacles_viz_ns = declare_parameter<std::string>("roadway_obstacles_viz_ns", config_.roadway_obstacles_viz_ns);
+    //TODO make the size configurable
   }
 
   rcl_interfaces::msg::SetParametersResult Node::parameter_update_callback(const std::vector<rclcpp::Parameter> &parameters)
@@ -100,12 +101,12 @@ namespace object_visualizer
     marker.action = visualization_msgs::msg::Marker::DELETEALL;
     viz_msg.markers.push_back(marker);
 
-    
+
     size_t id = 0; // We always count the id from zero so we can delete markers later in a consistent manner
 
     for (auto obj : msg->objects) {
       visualization_msgs::msg::Marker marker;
-      
+
       marker.header = msg->header;
 
       marker.ns = config_.external_objects_viz_ns;
@@ -118,7 +119,7 @@ namespace object_visualizer
         marker.color.b = 0.0;
         marker.color.a = 1.0;
 
-      } // All other detected objects will be blue 
+      } // All other detected objects will be blue
       else {
 
         marker.color.r = 0.0;
@@ -127,13 +128,31 @@ namespace object_visualizer
         marker.color.a = 1.0;
       }
 
+      int marker_scale_size = 1.0;
+      switch (obj.object_type)
+      {
+        case carma_perception_msgs::msg::ExternalObject::PEDESTRIAN:
+        case carma_perception_msgs::msg::ExternalObject::UNKNOWN:
+          marker_scale_size = 1.0;
+          break;
+        case carma_perception_msgs::msg::ExternalObject::SMALL_VEHICLE:
+        case carma_perception_msgs::msg::ExternalObject::MOTORCYCLE:
+          marker_scale_size = 1.0;
+          break;
+        case carma_perception_msgs::msg::ExternalObject::LARGE_VEHICLE:
+          marker_scale_size = 1.33;
+          break;
+      }
+
       marker.id = id;
-      marker.type = visualization_msgs::msg::Marker::CUBE;
+      marker.type = visualization_msgs::msg::Marker::SPHERE;
       marker.action = visualization_msgs::msg::Marker::ADD;
       marker.pose = obj.pose.pose;
-      marker.scale.x = obj.size.x * 2.0; // Size in carma is half the length/width/height 
-      marker.scale.y = obj.size.y * 2.0;
-      marker.scale.z = obj.size.z * 2.0;
+      marker.pose.position.z = 1.0;
+      // overwrite size because carma_cooperative_perception is not able to propagate it
+      marker.scale.x = marker_scale_size; // Size in carma is half the length/width/height
+      marker.scale.y = marker_scale_size;
+      marker.scale.z = marker_scale_size;
 
       viz_msg.markers.push_back(marker);
 
@@ -185,7 +204,7 @@ namespace object_visualizer
     size_t id = 0; // We always count the id from zero so we can delete markers later in a consistent manner
     for (auto obj : msg->roadway_obstacles) {
       visualization_msgs::msg::Marker marker;
-      
+
       marker.header = obj.object.header;
 
       marker.ns = config_.roadway_obstacles_viz_ns;
@@ -217,7 +236,7 @@ namespace object_visualizer
       marker.type = visualization_msgs::msg::Marker::CUBE;
       marker.action = visualization_msgs::msg::Marker::ADD;
       marker.pose = obj.object.pose.pose;
-      marker.scale.x = obj.object.size.x * 2.0; // Size in carma is half the length/width/height 
+      marker.scale.x = obj.object.size.x * 2.0; // Size in carma is half the length/width/height
       marker.scale.y = obj.object.size.y * 2.0;
       marker.scale.z = obj.object.size.z * 2.0;
 
