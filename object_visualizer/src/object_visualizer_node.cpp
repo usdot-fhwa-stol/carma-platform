@@ -30,7 +30,8 @@ namespace object_visualizer
     config_.enable_roadway_objects_viz = declare_parameter<bool>("enable_roadway_objects_viz", config_.enable_roadway_objects_viz);
     config_.external_objects_viz_ns = declare_parameter<std::string>("external_objects_viz_ns", config_.external_objects_viz_ns);
     config_.roadway_obstacles_viz_ns = declare_parameter<std::string>("roadway_obstacles_viz_ns", config_.roadway_obstacles_viz_ns);
-    //TODO make the size configurable
+    config_.marker_shape = declare_parameter<uint8_t>("marker_shape", config_.marker_shape);
+
   }
 
   rcl_interfaces::msg::SetParametersResult Node::parameter_update_callback(const std::vector<rclcpp::Parameter> &parameters)
@@ -48,9 +49,14 @@ namespace object_visualizer
         {"roadway_obstacles_viz_ns", config_.roadway_obstacles_viz_ns}
       }, parameters);
 
+    auto error3 = update_params<uint8_t>(
+      {
+        {"marker_shape", config_.marker_shape}
+      }, parameters);
+
     rcl_interfaces::msg::SetParametersResult result;
 
-    result.successful = !error && !error2;
+    result.successful = !error && !error2 && !error3;
 
     return result;
   }
@@ -65,6 +71,7 @@ namespace object_visualizer
     get_parameter<bool>("enable_roadway_objects_viz", config_.enable_roadway_objects_viz);
     get_parameter<std::string>("external_objects_viz_ns", config_.external_objects_viz_ns);
     get_parameter<std::string>("roadway_obstacles_viz_ns", config_.roadway_obstacles_viz_ns);
+    get_parameter<uint8_t>("marker_shape", config_.marker_shape);
 
     // Register runtime parameter update callback
     add_on_set_parameters_callback(std::bind(&Node::parameter_update_callback, this, std_ph::_1));
@@ -128,31 +135,28 @@ namespace object_visualizer
         marker.color.a = 1.0;
       }
 
-      int marker_scale_size = 1.0;
-      switch (obj.object_type)
+      int marker_size_x = obj.size.x;
+      int marker_size_y = obj.size.y;
+      int marker_size_z = obj.size.z;
+
+      // overwrite size in case any previous stackdoesn't provide size
+      // such as carma_cooperative_perception at the moment
+      if (obj.size.x < 0.01 || obj.size.y < 0.01 || obj.size.z < 0.01)
       {
-        case carma_perception_msgs::msg::ExternalObject::PEDESTRIAN:
-        case carma_perception_msgs::msg::ExternalObject::UNKNOWN:
-          marker_scale_size = 1.0;
-          break;
-        case carma_perception_msgs::msg::ExternalObject::SMALL_VEHICLE:
-        case carma_perception_msgs::msg::ExternalObject::MOTORCYCLE:
-          marker_scale_size = 1.0;
-          break;
-        case carma_perception_msgs::msg::ExternalObject::LARGE_VEHICLE:
-          marker_scale_size = 1.33;
-          break;
+        marker_size_x = 1.0;
+        marker_size_y = 1.0;
+        marker_size_z = 1.0;
       }
 
       marker.id = id;
-      marker.type = visualization_msgs::msg::Marker::SPHERE;
+      marker.type = static_cast<visualization_msgs::msg::Marker>(config_.marker_shape);
       marker.action = visualization_msgs::msg::Marker::ADD;
       marker.pose = obj.pose.pose;
       marker.pose.position.z = 1.0;
-      // overwrite size because carma_cooperative_perception is not able to propagate it
-      marker.scale.x = marker_scale_size; // Size in carma is half the length/width/height
-      marker.scale.y = marker_scale_size;
-      marker.scale.z = marker_scale_size;
+
+      marker.scale.x = marker_size_x * 2; // Size in carma is half the length/width/height
+      marker.scale.y = marker_size_y * 2;
+      marker.scale.z = marker_size_z * 2;
 
       viz_msg.markers.push_back(marker);
 
