@@ -497,7 +497,11 @@ auto MultipleObjectTrackerNode::execute_pipeline() -> void
     if (has_association(track)) {
       const auto detection_uuids{associations.at(get_uuid(track))};
       const auto first_detection{detection_map[detection_uuids.at(0)]};
-      track = std::visit(mot::covariance_intersection_visitor, track, first_detection);
+      auto predicted_track{track};
+      mot::propagate_to_time(predicted_track, current_time, mot::UnscentedTransform{1.0, 2.0, 0.0});
+      const auto fused_track{
+        std::visit(mot::covariance_intersection_visitor, track, first_detection)};
+      track_manager_.update_track(mot::get_uuid(track), fused_track);
     }
   }
 
