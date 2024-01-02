@@ -43,7 +43,7 @@ namespace trajectory_visualizer {
     // Return success if everything initialized successfully
     return CallbackReturn::SUCCESS;
   }
- 
+
     bool validateTime(const  rclcpp::Time& time) {
 
         int64_t sec64 = static_cast<int64_t>(floor(time.seconds()));
@@ -85,7 +85,7 @@ namespace trajectory_visualizer {
                 tmp_marker_array.markers.push_back(marker);
                 continue;
             }
-            
+
             double max_speed = config_.max_speed * MPH_TO_MS;
             double speed = max_speed;
 
@@ -94,7 +94,7 @@ namespace trajectory_visualizer {
 
             if (validateTime(t2) && validateTime(t1) && t2 > t1 ) {
                 rclcpp::Duration dt = t2 - t1;
-                
+
                 double dx = msg->trajectory_points[i].x - msg->trajectory_points[i-1].x;
                 double dy = msg->trajectory_points[i].y - msg->trajectory_points[i-1].y;
                 double dist = sqrt(dx * dx + dy * dy);
@@ -106,9 +106,9 @@ namespace trajectory_visualizer {
 
             // map color to the scale of the speed
             // red being the highest, green being the lowest (0ms)
-            
+
             RCLCPP_DEBUG_STREAM(this->get_logger(),"Speed:" << speed << "ms, max_speed:" << max_speed << "ms");
-            if (speed > max_speed) 
+            if (speed > max_speed)
             {
                 RCLCPP_DEBUG_STREAM(this->get_logger(),"Speed was big, so capped at " << max_speed << "ms");
                 speed = max_speed;
@@ -140,6 +140,14 @@ namespace trajectory_visualizer {
                 marker.color.g = 1.0f;
             }
 
+            if (speed < 1.0) // Less than 2.5 mph is usually stopping
+            {
+                // Gray
+                marker.color.r = 0.5f;
+                marker.color.g = 0.5f;
+                marker.color.b = 0.5f;
+            }
+
             marker.points = {};
             geometry_msgs::msg::Point start;
             start.x = msg->trajectory_points[i-1].x;
@@ -157,7 +165,7 @@ namespace trajectory_visualizer {
         prev_marker_list_size_ = msg->trajectory_points.size();
         traj_marker_pub_->publish(tmp_marker_array);
     }
-    
+
 }
 
 #include "rclcpp_components/register_node_macro.hpp"
