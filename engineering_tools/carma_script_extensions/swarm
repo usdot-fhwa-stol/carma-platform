@@ -57,7 +57,7 @@ swarm__install() {
     echo "$WORKER_COMPOSE" | docker-compose -f - pull
 
 
-    if [ -z $(docker volume ls | grep carma-config-data) ]; then
+    if [ -z "$(docker volume ls | grep carma-config-data)" ]; then
         echo "Missing 'carma-config-data' volume, add with \"carma swarm update-config <image tag>\""
         exit 1
     fi
@@ -66,10 +66,10 @@ swarm__install() {
         source ./opt/carma/vehicle/config/carma.env; eval $(cat /opt/carma/vehicle/config/carma.env);
         ( echo "$WORKER_USER"; echo "@"; echo "$WORKER_IP"; ) | tr -d "\n"')
 
-    if [ -z $(ssh "$WORKER_INFO" "docker volume ls | grep carma-config-data") ]; then
+    if [ -z "$(ssh "$WORKER_INFO" "docker volume ls | grep carma-config-data")" ]; then
         ssh "$WORKER_INFO" "docker volume create --driver local \
             --opt type=nfs \
-            --opt o=addr="$WORKER_INFO",nfsvers=4 \
+            --opt o=addr="'$WORKER_INFO'",nfsvers=4 \
             --opt device=:/export/carma_volume \
             carma-config-data"
     fi
@@ -152,10 +152,10 @@ swarm-config__set() {
         source ./opt/carma/vehicle/config/carma.env; eval $(cat /opt/carma/vehicle/config/carma.env);
         ( echo "$WORKER_USER"; echo "@"; echo "$WORKER_IP"; ) | tr -d "\n"')
 
-    if [ -z $(ssh "$WORKER_INFO" "docker volume ls | grep carma-config-data") ]; then
+    if [ -z "$(ssh "$WORKER_INFO" "docker volume ls | grep carma-config-data")" ]; then
         ssh "$WORKER_INFO" "docker volume create --driver local \
             --opt type=nfs \
-            --opt o=addr="$WORKER_INFO",nfsvers=4 \
+            --opt o=addr="'$WORKER_INFO'",nfsvers=4 \
             --opt device=:/export/carma_volume \
             carma-config-data"
     fi
@@ -302,7 +302,7 @@ swarm__register() {
     done
 
     # Registry images are then sent via an SSH call and the same process is followed as before but in reverse
-    ssh -R "$REGISTRY_PORT:$REGISTRY_HOST:$REGISTRY_PORT" "$WORKER_INFO" sh <<ENDSSH
+    ssh -R "$REGISTRY_PORT:$REGISTRY_HOST:$REGISTRY_PORT" "$WORKER_INFO" sh <<"ENDSSH"
         for TARGET_IMAGE_NAME in $IMAGE_NAMES
         do
             echo "Pulling $TARGET_IMAGE_NAME onto $WORKER_INFO from $REGISTRY_HOST:$REGISTRY_PORT"
