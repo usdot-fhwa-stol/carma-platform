@@ -22,7 +22,7 @@
 
 namespace arbitrator
 {
-    carma_planning_msgs::msg::ManeuverPlan TreePlanner::generate_plan(const VehicleState& start_state) 
+    carma_planning_msgs::msg::ManeuverPlan TreePlanner::generate_plan(const VehicleState& start_state)
     {
         carma_planning_msgs::msg::ManeuverPlan root;
         std::vector<std::pair<carma_planning_msgs::msg::ManeuverPlan, double>> open_list_to_evaluate;
@@ -33,7 +33,7 @@ namespace arbitrator
 
         carma_planning_msgs::msg::ManeuverPlan longest_plan = root; // Track longest plan in case target length is never reached
         rclcpp::Duration longest_plan_duration = rclcpp::Duration(0);
-        
+
 
         while (!open_list_to_evaluate.empty())
         {
@@ -45,39 +45,39 @@ namespace arbitrator
                 carma_planning_msgs::msg::ManeuverPlan cur_plan = it->first;
 
                 RCLCPP_DEBUG_STREAM(rclcpp::get_logger("arbitrator"), "START");
-                
+
                 for (auto mvr : cur_plan.maneuvers)
                 {
                     RCLCPP_DEBUG_STREAM(rclcpp::get_logger("arbitrator"), "Printing cur_plan: mvr: "<< (int)mvr.type);
-                }   
+                }
 
                 RCLCPP_DEBUG_STREAM(rclcpp::get_logger("arbitrator"), "PRINT END");
 
                 auto plan_duration = rclcpp::Duration(0, 0); // zero duration
 
                 // If we're not at the root, plan_duration is nonzero (our plan should have maneuvers)
-                if (!cur_plan.maneuvers.empty()) 
+                if (!cur_plan.maneuvers.empty())
                 {
                     // get plan duration
-                    plan_duration = arbitrator_utils::get_plan_end_time(cur_plan) - arbitrator_utils::get_plan_start_time(cur_plan); 
+                    plan_duration = arbitrator_utils::get_plan_end_time(cur_plan) - arbitrator_utils::get_plan_start_time(cur_plan);
                 }
-                
+
                 // save longest if none of the plans have enough target duration
-                if (plan_duration > longest_plan_duration) 
+                if (plan_duration > longest_plan_duration)
                 {
                     longest_plan_duration = plan_duration;
                     longest_plan = cur_plan;
                 }
 
                 // Evaluate plan_duration is sufficient do not expand more
-                if (plan_duration >= target_plan_duration_) 
+                if (plan_duration >= target_plan_duration_)
                 {
                     final_open_list.push_back((*it));
                     RCLCPP_DEBUG_STREAM(rclcpp::get_logger("arbitrator"), "Has enough duration, skipping that which has following mvrs..:");
                     for (auto mvr : it->first.maneuvers)
                     {
                         RCLCPP_DEBUG_STREAM(rclcpp::get_logger("arbitrator"), "Printing mvr: "<< (int)mvr.type);
-                    }  
+                    }
                     continue;
                 }
 
@@ -87,18 +87,24 @@ namespace arbitrator
                 // Compute cost for each child and store in open list
                 for (auto child = children.begin(); child != children.end(); child++)
                 {
-                    
+
                     if (child->maneuvers.empty())
                     {
                         RCLCPP_WARN_STREAM(rclcpp::get_logger("arbitrator"), "Child was empty for id: " << std::string(child->maneuver_plan_id));
-                        continue;   
+                        continue;
                     }
 
                     temp_open_list.push_back(std::make_pair(*child, cost_function_->compute_cost_per_unit_distance(*child)));
                 }
             }
-            
+
             open_list_to_evaluate = temp_open_list;
+        }
+
+        if (final_open_list.empty())
+        {
+            RCLCPP_ERROR_STREAM(rclcpp::get_logger("arbitrator"), "None of the strategic plugins generated any valid plans! Please check if any is turned and returning valid maneuvers...");
+            throw std::runtime_error("None of the strategic plugins generated any valid plans! Please check if any is turned and returning valid maneuvers...");
         }
 
         final_open_list = search_strategy_->prioritize_plans(final_open_list);
@@ -111,10 +117,10 @@ namespace arbitrator
             rclcpp::Duration plan_duration(0,0); // zero duration
 
             // get plan duration
-            plan_duration = arbitrator_utils::get_plan_end_time(cur_plan) - arbitrator_utils::get_plan_start_time(cur_plan); 
+            plan_duration = arbitrator_utils::get_plan_end_time(cur_plan) - arbitrator_utils::get_plan_start_time(cur_plan);
 
             // Evaluate plan_duration is sufficient do not expand more
-            if (plan_duration >= target_plan_duration_) 
+            if (plan_duration >= target_plan_duration_)
             {
                 return cur_plan;
             }

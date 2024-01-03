@@ -40,7 +40,8 @@ auto transform_from_map_to_utm(
 
   if (map_transformation == nullptr) {
     const std::string error_string{proj_errno_string(proj_context_errno(context))};
-    throw std::invalid_argument("Could not create PROJ transform: " + error_string + '.');
+    throw std::invalid_argument(
+      "Could not create PROJ transform to origin '" + map_origin + "': " + error_string + '.');
   }
 
   std::vector<carma_cooperative_perception_interfaces::msg::Detection> new_detections;
@@ -114,26 +115,6 @@ auto ExternalObjectListToDetectionListNode::handle_on_configure(
       }
     });
 
-  declare_parameter(
-    "small_vehicle_motion_model",
-    carma_cooperative_perception_interfaces::msg::Detection::MOTION_MODEL_CTRV);
-
-  declare_parameter(
-    "large_vehicle_motion_model",
-    carma_cooperative_perception_interfaces::msg::Detection::MOTION_MODEL_CTRV);
-
-  declare_parameter(
-    "motorcycle_motion_model",
-    carma_cooperative_perception_interfaces::msg::Detection::MOTION_MODEL_CTRA);
-
-  declare_parameter(
-    "pedestrian_motion_model",
-    carma_cooperative_perception_interfaces::msg::Detection::MOTION_MODEL_CV);
-
-  declare_parameter(
-    "unknown_motion_model",
-    carma_cooperative_perception_interfaces::msg::Detection::MOTION_MODEL_CV);
-
   on_set_parameters_callback_ =
     add_on_set_parameters_callback([this](const std::vector<rclcpp::Parameter> & parameters) {
       rcl_interfaces::msg::SetParametersResult result;
@@ -164,6 +145,19 @@ auto ExternalObjectListToDetectionListNode::handle_on_configure(
       return result;
     });
 
+  // TODO(Adam Morrissett): Look into how the motion model mapping can be re-architected
+  // to avoid requiring this sequence. Maybe something like a mapping class that calls the
+  // declared parameters. Then the to_detected_object() function could be templated on a
+  // mapping strategy.
+
+  // Declarations must come after on_set_parameters_callback_ assignment because the ROS
+  // runtime will call the callback if declare_parameter() succeeds.
+  declare_parameter("small_vehicle_motion_model", motion_model_mapping_.small_vehicle_model);
+  declare_parameter("large_vehicle_motion_model", motion_model_mapping_.large_vehicle_model);
+  declare_parameter("motorcycle_motion_model", motion_model_mapping_.motorcycle_model);
+  declare_parameter("pedestrian_motion_model", motion_model_mapping_.pedestrian_model);
+  declare_parameter("unknown_motion_model", motion_model_mapping_.unknown_model);
+
   return carma_ros2_utils::CallbackReturn::SUCCESS;
 }
 
@@ -191,10 +185,7 @@ auto ExternalObjectListToDetectionListNode::publish_as_detection_list(
   const input_msg_type & msg) const -> void
 {
   try {
-    const auto detection_list{transform_from_map_to_utm(
-      to_detection_list_msg(msg, motion_model_mapping_), map_georeference_)};
-
-    publisher_->publish(detection_list);
+    publisher_->publish(to_detection_list_msg(msg, motion_model_mapping_));
   } catch (const std::invalid_argument & e) {
     RCLCPP_ERROR(
       this->get_logger(), "Could not convert external object list to detection list: %s", e.what());

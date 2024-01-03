@@ -25,6 +25,8 @@
 #include <string>
 #include <carma_planning_msgs/srv/plugin_list.hpp>
 #include <carma_planning_msgs/srv/get_plugin_api.hpp>
+#include <carma_planning_msgs/srv/plan_maneuvers.hpp>
+
 
 
 namespace arbitrator
@@ -53,7 +55,7 @@ namespace arbitrator
             /**
              * \brief Get the list of topics that respond to the capability specified by
              *      the query string
-             * 
+             *
              * \param query_string The string name of the capability to look for
              * \return A list of all responding topics, if any are found.
              */
@@ -62,33 +64,34 @@ namespace arbitrator
 
             /**
              * \brief Template function for calling all nodes which respond to a service associated
-             *      with a particular capability. Will send the service request to all nodes and 
+             *      with a particular capability. Will send the service request to all nodes and
              *      aggregate the responses.
-             * 
+             *
              * \tparam MSrvReq The typename of the service message request
              * \tparam MSrvRes The typename of the service message response
-             * 
+             *
              * \param query_string The string name of the capability to look for
              * \param The message itself to send
              * \return A map matching the topic name that responded -> the response
              */
             template<typename MSrvReq, typename MSrvRes>
             std::map<std::string, std::shared_ptr<MSrvRes>> multiplex_service_call_for_capability(const std::string& query_string, std::shared_ptr<MSrvReq> msg);
-            
+
 
             const static std::string STRATEGIC_PLAN_CAPABILITY;
         protected:
         private:
             std::shared_ptr<carma_ros2_utils::CarmaLifecycleNode> nh_;
+            std::unordered_map<std::string,carma_ros2_utils::ClientPtr<carma_planning_msgs::srv::PlanManeuvers>> registered_strategic_plugins_;
 
             carma_ros2_utils::ClientPtr<carma_planning_msgs::srv::GetPluginApi> sc_s_;
-            std::unordered_set <std::string> capabilities_ ; 
+            std::unordered_set <std::string> capabilities_ ;
 
 
-            
+
     };
 
-};
+}
 
 #include "capabilities_interface.tpp"
 

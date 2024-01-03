@@ -46,6 +46,9 @@ namespace light_controlled_intersection_tactical_plugin
     config_.lateral_accel_limit = declare_parameter<double>("vehicle_lateral_accel_limit", config_.lateral_accel_limit);
     config_.vehicle_accel_limit = declare_parameter<double>("vehicle_acceleration_limit", config_.vehicle_accel_limit);
     config_.vehicle_decel_limit = declare_parameter<double>("vehicle_deceleration_limit", config_.vehicle_decel_limit);
+    config_.tactical_plugin_service_call_timeout = declare_parameter<int>("tactical_plugin_service_call_timeout", config_.tactical_plugin_service_call_timeout);
+    config_.enable_object_avoidance = declare_parameter<bool>("enable_object_avoidance", config_.enable_object_avoidance);
+
   }
 
   rcl_interfaces::msg::SetParametersResult LightControlledIntersectionTransitPluginNode::parameter_update_callback(const std::vector<rclcpp::Parameter> &parameters)
@@ -58,10 +61,10 @@ namespace light_controlled_intersection_tactical_plugin
        {"buffer_ending_downtrack", config_.buffer_ending_downtrack},
        {"vehicle_decel_limit_multiplier", config_.vehicle_decel_limit_multiplier},
        {"vehicle_accel_limit_multiplier", config_.vehicle_accel_limit_multiplier},
-       {"lat_accel_multiplier", config_.lat_accel_multiplier},      
-       {"stop_line_buffer", config_.stop_line_buffer},      
-       {"minimum_speed", config_.minimum_speed},      
-       {"algorithm_evaluation_distance", config_.algorithm_evaluation_distance},      
+       {"lat_accel_multiplier", config_.lat_accel_multiplier},
+       {"stop_line_buffer", config_.stop_line_buffer},
+       {"minimum_speed", config_.minimum_speed},
+       {"algorithm_evaluation_distance", config_.algorithm_evaluation_distance},
        {"algorithm_evaluation_period", config_.algorithm_evaluation_period}}, parameters); // Global acceleration limits not allowed to dynamically update
     auto error_2 = update_params<int>(
       {{"default_downsample_ratio", config_.default_downsample_ratio},
@@ -108,6 +111,8 @@ namespace light_controlled_intersection_tactical_plugin
     get_parameter<double>("vehicle_lateral_accel_limit", config_.lateral_accel_limit);
     get_parameter<double>("vehicle_acceleration_limit", config_.vehicle_accel_limit);
     get_parameter<double>("vehicle_deceleration_limit", config_.vehicle_decel_limit);
+    get_parameter<int>("tactical_plugin_service_call_timeout", config_.tactical_plugin_service_call_timeout);
+    get_parameter<bool>("enable_object_avoidance", config_.enable_object_avoidance);
 
     // Use the configured multipliers to update the accel limits
     config_.lateral_accel_limit = config_.lateral_accel_limit * config_.lat_accel_multiplier;
@@ -120,7 +125,11 @@ namespace light_controlled_intersection_tactical_plugin
     RCLCPP_INFO_STREAM(rclcpp::get_logger("light_controlled_intersection_tactical_plugin"), "Loaded params: " << config_);
 
     // Initialize worker object
-    worker_ = std::make_shared<LightControlledIntersectionTacticalPlugin>(get_world_model(), config_, get_plugin_name(), get_node_logging_interface());
+    worker_ = std::make_shared<LightControlledIntersectionTacticalPlugin>(get_world_model(), config_, get_plugin_name(), shared_from_this());
+
+    yield_client_ = create_client<carma_planning_msgs::srv::PlanTrajectory>("yield_plugin/plan_trajectory");
+    worker_->set_yield_client(yield_client_);
+    RCLCPP_INFO(rclcpp::get_logger("light_controlled_intersection_tactical_plugin"), "Yield Client Set");
 
     // Return success if everything initialized successfully
     return CallbackReturn::SUCCESS;
@@ -135,8 +144,8 @@ namespace light_controlled_intersection_tactical_plugin
   }
 
   void LightControlledIntersectionTransitPluginNode::plan_trajectory_callback(
-    std::shared_ptr<rmw_request_id_t>, 
-    carma_planning_msgs::srv::PlanTrajectory::Request::SharedPtr req, 
+    std::shared_ptr<rmw_request_id_t>,
+    carma_planning_msgs::srv::PlanTrajectory::Request::SharedPtr req,
     carma_planning_msgs::srv::PlanTrajectory::Response::SharedPtr resp)
   {
     worker_->planTrajectoryCB(req, resp);

@@ -19,6 +19,11 @@
 #include <carma_perception_msgs/msg/external_object.hpp>
 #include <carma_perception_msgs/msg/external_object_list.hpp>
 
+#include <proj.h>
+#include <gsl/pointers>
+#include <memory>
+#include <string>
+
 #include <numeric>
 
 TEST(ToTimeMsg, HasSeconds)
@@ -165,16 +170,16 @@ TEST(ToDetectionMsg, FromExternalObject)
   object.pose.pose.orientation.y = 12;
   object.pose.pose.orientation.z = 13;
   object.pose.pose.orientation.w = 14;
-  object.velocity_inst.twist.linear.x = 15;
-  object.velocity_inst.twist.linear.y = 16;
-  object.velocity_inst.twist.linear.z = 17;
-  object.velocity_inst.twist.angular.x = 18;
-  object.velocity_inst.twist.angular.y = 19;
-  object.velocity_inst.twist.angular.z = 20;
+  object.velocity.twist.linear.x = 15;
+  object.velocity.twist.linear.y = 16;
+  object.velocity.twist.linear.z = 17;
+  object.velocity.twist.angular.x = 18;
+  object.velocity.twist.angular.y = 19;
+  object.velocity.twist.angular.z = 20;
   object.object_type = object.SMALL_VEHICLE;
 
   object.presence_vector |= object.BSM_ID_PRESENCE_VECTOR | object.ID_PRESENCE_VECTOR |
-                            object.POSE_PRESENCE_VECTOR | object.VELOCITY_INST_PRESENCE_VECTOR |
+                            object.POSE_PRESENCE_VECTOR | object.VELOCITY_PRESENCE_VECTOR |
                             object.OBJECT_TYPE_PRESENCE_VECTOR;
 
   constexpr carma_cooperative_perception::MotionModelMapping motion_model_mapping{
@@ -190,7 +195,7 @@ TEST(ToDetectionMsg, FromExternalObject)
   EXPECT_EQ(detection.header, object.header);
   EXPECT_EQ(detection.id, "3456-7");
   EXPECT_EQ(detection.pose, object.pose);
-  EXPECT_EQ(detection.twist, object.velocity_inst);
+  EXPECT_EQ(detection.twist, object.velocity);
   EXPECT_EQ(detection.motion_model, detection.MOTION_MODEL_CTRV);
 }
 
@@ -390,4 +395,129 @@ TEST(ToExternalObjectList, FromTrackList)
     carma_cooperative_perception::to_external_object_list_msg(track_list)};
 
   ASSERT_EQ(std::size(external_object_list.objects), 3U);
+}
+
+TEST(ToDetectedObjectDataMsg, FromExternalObject)
+{
+  carma_perception_msgs::msg::ExternalObject object;
+  object.header.stamp.sec = 1;
+  object.header.stamp.nanosec = 2;
+  object.header.frame_id = "test_frame";
+  object.bsm_id = {3, 4, 5, 6};
+  object.id = 7;
+  object.pose.pose.position.x = 8;
+  object.pose.pose.position.y = 9;
+  object.pose.pose.position.z = 10;
+  object.pose.pose.orientation.x = 11;
+  object.pose.pose.orientation.y = 12;
+  object.pose.pose.orientation.z = 13;
+  object.pose.pose.orientation.w = 14;
+  object.velocity.twist.linear.x = 15;
+  object.velocity.twist.linear.y = 16;
+  object.velocity.twist.linear.z = 17;
+  object.velocity.twist.angular.x = 18;
+  object.velocity.twist.angular.y = 19;
+  object.velocity.twist.angular.z = 20;
+  object.size.x = 21;
+  object.size.y = 22;
+  object.size.z = 23;
+  object.confidence = 0.9;
+  object.object_type = object.SMALL_VEHICLE;
+
+  object.presence_vector |= object.BSM_ID_PRESENCE_VECTOR | object.ID_PRESENCE_VECTOR |
+                            object.POSE_PRESENCE_VECTOR | object.VELOCITY_PRESENCE_VECTOR |
+                            object.CONFIDENCE_PRESENCE_VECTOR | object.OBJECT_TYPE_PRESENCE_VECTOR |
+                            object.SIZE_PRESENCE_VECTOR;
+
+  std::string proj_string{
+    "+proj=tmerc +lat_0=42.24375605014171 +lon_0=-83.55739733422793 +k=1 +x_0=0 +y_0=0 "
+    "+datum=WGS84 +units=m +vunits=m +no_defs"};
+  auto shared_transform =
+    std::make_shared<lanelet::projection::LocalFrameProjector>(proj_string.c_str());
+  const auto detected_object{
+    carma_cooperative_perception::to_detected_object_data_msg(object, shared_transform)};
+
+  EXPECT_EQ(detected_object.detected_object_common_data.obj_type.object_type, 1);
+  EXPECT_EQ(detected_object.detected_object_common_data.obj_type_cfd.classification_confidence, 90);
+  EXPECT_EQ(detected_object.detected_object_common_data.detected_id.object_id, 7);
+  EXPECT_NEAR(detected_object.detected_object_common_data.speed.speed, std::sqrt(481), 1e-2);
+  EXPECT_EQ(
+    detected_object.detected_object_common_data.speed_z.speed, object.velocity.twist.linear.z);
+
+  EXPECT_EQ(detected_object.detected_object_optional_data.det_veh.size.vehicle_width, 22);
+  EXPECT_EQ(detected_object.detected_object_optional_data.det_veh.size.vehicle_length, 21);
+  EXPECT_EQ(detected_object.detected_object_optional_data.det_veh.height.vehicle_height, 23);
+}
+
+TEST(ToSdsmMsg, FromExternalObjectList)
+{
+  carma_perception_msgs::msg::ExternalObjectList object_list;
+  object_list.objects.emplace_back();
+  object_list.objects.emplace_back();
+
+  geometry_msgs::msg::PoseStamped current_pose;
+  current_pose.pose.position.x = 1;
+  current_pose.pose.position.y = 2;
+  current_pose.pose.position.z = 3;
+
+  lanelet::projection::LocalFrameProjector local_projector(
+    "+proj=tmerc +lat_0=39.46636844371259 +lon_0=-76.16919523566943 +k=1 +x_0=0 +y_0=0 "
+    "+datum=WGS84 +units=m +vunits=m +no_defs");
+  std::shared_ptr<lanelet::projection::LocalFrameProjector> map_projection;
+  map_projection = std::make_shared<lanelet::projection::LocalFrameProjector>(local_projector);
+
+  const auto sdsm{
+    carma_cooperative_perception::to_sdsm_msg(object_list, current_pose, map_projection)};
+
+  EXPECT_EQ(std::size(sdsm.objects.detected_object_data), 2U);
+}
+
+TEST(ToWgsHeading, FromMapYaw)
+{
+  std::string proj_string{
+    "+proj=tmerc +lat_0=42.24375605014171 +lon_0=-83.55739733422793 +k=1 +x_0=0 +y_0=0 "
+    "+datum=WGS84 +units=m +vunits=m +no_defs"};
+
+  // Test conversion from map to lat/lon
+  // Define map coordinates
+  lanelet::BasicPoint3d obj_map_coordinates;
+  obj_map_coordinates.x() = -69.7311856222;
+  obj_map_coordinates.y() = 331.419278969;
+  obj_map_coordinates.z() = 37.8485517148;
+
+  double yaw = 10.0;
+  auto shared_transform =
+    std::make_shared<lanelet::projection::LocalFrameProjector>(proj_string.c_str());
+  double heading = carma_cooperative_perception::remove_units(
+    carma_cooperative_perception::enu_orientation_to_true_heading(
+      yaw, obj_map_coordinates, shared_transform));
+
+  EXPECT_EQ(heading, 80);
+}
+
+TEST(toSdsmMsg, getSDSMOffset)
+{
+  builtin_interfaces::msg::Time external_object_list_stamp;
+  external_object_list_stamp.sec = 100;
+  builtin_interfaces::msg::Time external_object_stamp;
+  external_object_stamp.sec = 50;
+  auto time_offset = (carma_cooperative_perception::calc_sdsm_time_offset(
+                        external_object_list_stamp, external_object_stamp))
+                       .measurement_time_offset;
+
+  EXPECT_EQ(time_offset, 50);
+}
+
+TEST(ToSdsmMsg, getRelativePosition)
+{
+  geometry_msgs::msg::PoseStamped source_pose;
+  source_pose.pose.position.x = 100;
+  source_pose.pose.position.y = 100;
+  carma_v2x_msgs::msg::PositionOffsetXYZ position_offset;
+  position_offset.offset_x.object_distance = 110;
+  position_offset.offset_y.object_distance = 110;
+
+  carma_v2x_msgs::msg::PositionOffsetXYZ adjusted_pose =
+    carma_cooperative_perception::calc_relative_position(source_pose, position_offset);
+  EXPECT_EQ(adjusted_pose.offset_x.object_distance, 10);
 }

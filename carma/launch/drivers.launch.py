@@ -32,14 +32,21 @@ def generate_launch_description():
     Launch the subsystem controller for the hardware interface subsystem.
     The actual drivers will not be launched in this file and will instead be launched in the carma-config.
     """
-    
+
     vehicle_config_param_file = LaunchConfiguration('vehicle_config_param_file')
     declare_vehicle_config_param_file_arg = DeclareLaunchArgument(
         name = 'vehicle_config_param_file',
         default_value = "/opt/carma/vehicle/config/VehicleConfigParams.yaml",
         description = "Path to file contain vehicle configuration parameters"
     )
-    
+
+    use_sim_time = LaunchConfiguration('use_sim_time')
+    declare_use_sim_time_arg = DeclareLaunchArgument(
+        name = 'use_sim_time',
+        default_value = "False",
+        description = "True if simulation mode is on"
+    )
+
     env_log_levels = EnvironmentVariable('CARMA_ROS_LOGGING_CONFIG', default_value='{ "default_level" : "WARN" }')
 
     subsystem_controller_default_param_file = os.path.join(
@@ -66,7 +73,7 @@ def generate_launch_description():
                 plugin='lightbar_manager::LightBarManager',
                 name='lightbar_manager',
                 extra_arguments=[
-                    {'use_intra_process_comms': True}, 
+                    {'use_intra_process_comms': True},
                     {'--log-level' : GetLogLevel('lightbar_manager', env_log_levels) },
                     {'is_lifecycle_node': True} # Flag to allow lifecycle node loading in lifecycle wrapper
                 ],
@@ -74,7 +81,10 @@ def generate_launch_description():
                     ("state", [ EnvironmentVariable('CARMA_GUIDE_NS', default_value=''), "/state" ] ),
                     ("set_lights", [ EnvironmentVariable('CARMA_INTR_NS', default_value=''), "/lightbar/set_lights" ] )
                 ],
-                parameters=[ lightbar_manager_param_file ]
+                parameters=[
+                    lightbar_manager_param_file,
+                    vehicle_config_param_file
+                ]
             )
         ]
     )
@@ -84,7 +94,10 @@ def generate_launch_description():
         package='subsystem_controllers',
         name='drivers_controller',
         executable='drivers_controller',
-        parameters=[ subsystem_controller_default_param_file, subsystem_controller_param_file ],
+        parameters=[
+            subsystem_controller_default_param_file,
+            subsystem_controller_param_file,
+            {"use_sim_time" : use_sim_time}],
         on_exit= Shutdown(), # Mark the subsystem controller as required
         arguments=['--ros-args', '--log-level', GetLogLevel('subsystem_controllers', env_log_levels)]
     )
@@ -92,6 +105,7 @@ def generate_launch_description():
     return LaunchDescription([
         declare_subsystem_controller_param_file_arg,
         declare_vehicle_config_param_file_arg,
+        declare_use_sim_time_arg,
         lightbar_manager_container,
         subsystem_controller
     ])

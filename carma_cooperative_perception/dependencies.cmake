@@ -26,6 +26,8 @@ CPMAddPackage(NAME units
     "BUILD_DOCS FALSE"
 )
 
+find_package(multiple_object_tracking REQUIRED)
+
 # CARMA currently uses PROJ version 6.3.1, which is not designed to be incorporated
 # as a subdirectory into larger projects. If CARMA upgrades to a newer version, we
 # could use the CPMAddPackage(...) command to install PROJ as a source dependency

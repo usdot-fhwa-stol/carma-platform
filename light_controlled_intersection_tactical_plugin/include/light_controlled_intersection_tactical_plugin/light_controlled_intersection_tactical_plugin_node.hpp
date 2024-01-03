@@ -27,46 +27,47 @@ namespace light_controlled_intersection_tactical_plugin
 {
   /**
    * \brief ROS node for the LightControlledIntersectionTransitPluginNode
-   * 
+   *
    */
   class LightControlledIntersectionTransitPluginNode : public carma_guidance_plugins::TacticalPlugin
   {
-  private:    
+  private:
     // Config for this object
     Config config_;
 
+    carma_ros2_utils::ClientPtr<carma_planning_msgs::srv::PlanTrajectory> yield_client_;
 
     // Worker object
     std::shared_ptr<LightControlledIntersectionTacticalPlugin> worker_;
 
   public:
-  
+
     /**
-     * \brief LightControlledIntersectionTransitPluginNode constructor 
+     * \brief LightControlledIntersectionTransitPluginNode constructor
      */
     explicit LightControlledIntersectionTransitPluginNode(const rclcpp::NodeOptions &);
 
     /**
      * \brief Callback for dynamic parameter updates
      */
-    rcl_interfaces::msg::SetParametersResult 
+    rcl_interfaces::msg::SetParametersResult
     parameter_update_callback(const std::vector<rclcpp::Parameter> &parameters);
 
     ////
     // Overrides
     ////
     void plan_trajectory_callback(
-      std::shared_ptr<rmw_request_id_t>, 
-      carma_planning_msgs::srv::PlanTrajectory::Request::SharedPtr req, 
+      std::shared_ptr<rmw_request_id_t>,
+      carma_planning_msgs::srv::PlanTrajectory::Request::SharedPtr req,
       carma_planning_msgs::srv::PlanTrajectory::Response::SharedPtr resp) override;
 
     bool get_availability() override;
 
     std::string get_version_id() override;
-    
+
     /**
      * \brief This method should be used to load parameters and will be called on the configure state transition.
-     */ 
+     */
     carma_ros2_utils::CallbackReturn on_configure_plugin() override;
   };
 
