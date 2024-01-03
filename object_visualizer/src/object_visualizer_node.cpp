@@ -148,7 +148,7 @@ namespace object_visualizer
 
       // overwrite size in case any previous stack doesn't provide size
       // such as carma_cooperative_perception at the moment
-      marker.scale.x = std::max(1.0, obj.size.x) * 2;
+      marker.scale.x = std::max(1.0, obj.size.x) * 2;  // Size in carma is half the length/width/height
       marker.scale.y = std::max(1.0, obj.size.y) * 2;
       marker.scale.z = std::max(1.0, obj.size.z) * 2;
 
