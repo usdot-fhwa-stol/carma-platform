@@ -135,21 +135,8 @@ namespace object_visualizer
         marker.color.a = 1.0;
       }
 
-      int marker_size_x = obj.size.x;
-      int marker_size_y = obj.size.y;
-      int marker_size_z = obj.size.z;
-
       marker.pose = obj.pose.pose;
-
-      // overwrite size in case any previous stack doesn't provide size
-      // such as carma_cooperative_perception at the moment
-      if (obj.size.x < 0.01 || obj.size.y < 0.01 || obj.size.z < 0.01)
-      {
-        marker_size_x = 1.0;
-        marker_size_y = 1.0;
-        marker_size_z = 1.0;
-        marker.pose.position.z = 1.0; // lifts the marker above ground so that it doesn't clip
-      }
+      marker.pose.position.z = std::max(1.0, obj.size.z); // lifts the marker above ground so that it doesn't clip
 
       marker.id = id;
       if (static_cast<int>(config_.marker_shape) < 1 || static_cast<int>(config_.marker_shape) > 3)
@@ -159,9 +146,11 @@ namespace object_visualizer
       marker.type = config_.marker_shape;
       marker.action = visualization_msgs::msg::Marker::ADD;
 
-      marker.scale.x = marker_size_x * 2; // Size in carma is half the length/width/height
-      marker.scale.y = marker_size_y * 2;
-      marker.scale.z = marker_size_z * 2;
+      // overwrite size in case any previous stack doesn't provide size
+      // such as carma_cooperative_perception at the moment
+      marker.scale.x = std::max(1.0, obj.size.x) * 2;
+      marker.scale.y = std::max(1.0, obj.size.y) * 2;
+      marker.scale.z = std::max(1.0, obj.size.z) * 2;
 
       viz_msg.markers.push_back(marker);
 
