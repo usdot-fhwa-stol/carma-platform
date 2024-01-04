@@ -745,15 +745,10 @@ auto MultipleObjectTrackerNode::execute_pipeline() -> void
     track_manager_.add_tentative_track(std::visit(make_track_visitor, detection));
   }
 
-  std::stringstream confirmed_tracks;
-  confirmed_tracks << "Confirmed tracks: ";
   carma_cooperative_perception_interfaces::msg::TrackList track_list;
   for (const auto & track : track_manager_.get_confirmed_tracks()) {
-    confirmed_tracks << mot::get_uuid(track) << ' ';
     track_list.tracks.push_back(to_ros_msg(track));
   }
-  confirmed_tracks << '\n';
-  RCLCPP_ERROR(get_logger(), confirmed_tracks.str().c_str());
 
   track_list_pub_->publish(track_list);
 
