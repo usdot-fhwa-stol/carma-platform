@@ -43,10 +43,10 @@ public:
   auto handle_on_shutdown(const rclcpp_lifecycle::State & /* previous_state */)
     -> carma_ros2_utils::CallbackReturn override;
 
-  auto update_host_vehicle_pose(const geometry_msgs::msg::PoseStamped & msg) noexcept -> void;
+  auto update_host_vehicle_pose(const geometry_msgs::msg::PoseStamped & msg) -> void;
 
-  auto attempt_filter_and_republish(
-    carma_cooperative_perception_interfaces::msg::DetectionList msg) noexcept -> void;
+  auto attempt_filter_and_republish(carma_cooperative_perception_interfaces::msg::DetectionList msg)
+    -> void;
 
 private:
   rclcpp::Subscription<carma_cooperative_perception_interfaces::msg::DetectionList>::SharedPtr
@@ -66,7 +66,7 @@ private:
 };
 
 auto euclidean_distance_squared(
-  const geometry_msgs::msg::Pose & a, const geometry_msgs::msg::Pose & b) noexcept -> double;
+  const geometry_msgs::msg::Pose & a, const geometry_msgs::msg::Pose & b) -> double;
 
 }  // namespace carma_cooperative_perception
 

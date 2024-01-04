@@ -39,7 +39,7 @@ public:
   {
   }
 
-  auto sdsm_msg_callback(const input_msg_type & msg) const noexcept -> void
+  auto sdsm_msg_callback(const input_msg_type & msg) const -> void
   {
     publisher_->publish(to_detection_list_msg(msg));
   }

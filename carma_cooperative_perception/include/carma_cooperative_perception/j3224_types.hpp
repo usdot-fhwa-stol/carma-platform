@@ -31,10 +31,10 @@ struct PositionOffsetXYZ
   units::length::decimeter_t offset_y{0.0};
   std::optional<units::length::decimeter_t> offset_z;
 
-  [[nodiscard]] static auto from_msg(const j3224_v2x_msgs::msg::PositionOffsetXYZ & msg) noexcept
+  [[nodiscard]] static auto from_msg(const j3224_v2x_msgs::msg::PositionOffsetXYZ & msg)
     -> PositionOffsetXYZ;
 
-  [[nodiscard]] static auto from_msg(const carma_v2x_msgs::msg::PositionOffsetXYZ & msg) noexcept
+  [[nodiscard]] static auto from_msg(const carma_v2x_msgs::msg::PositionOffsetXYZ & msg)
     -> PositionOffsetXYZ;
 };
 
@@ -42,11 +42,11 @@ struct MeasurementTimeOffset
 {
   units::time::millisecond_t measurement_time_offset;
 
-  [[nodiscard]] static auto from_msg(
-    const j3224_v2x_msgs::msg::MeasurementTimeOffset & msg) noexcept -> MeasurementTimeOffset;
+  [[nodiscard]] static auto from_msg(const j3224_v2x_msgs::msg::MeasurementTimeOffset & msg)
+    -> MeasurementTimeOffset;
 
-  [[nodiscard]] static auto from_msg(
-    const carma_v2x_msgs::msg::MeasurementTimeOffset & msg) noexcept -> MeasurementTimeOffset;
+  [[nodiscard]] static auto from_msg(const carma_v2x_msgs::msg::MeasurementTimeOffset & msg)
+    -> MeasurementTimeOffset;
 };
 
 }  // namespace carma_cooperative_perception

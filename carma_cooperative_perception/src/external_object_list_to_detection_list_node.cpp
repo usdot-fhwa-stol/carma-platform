@@ -18,7 +18,7 @@
 
 #include <memory>
 
-auto main(int argc, char * argv[]) noexcept -> int
+auto main(int argc, char * argv[]) -> int
 {
   rclcpp::init(argc, argv);
 

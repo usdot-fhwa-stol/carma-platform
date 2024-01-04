@@ -17,8 +17,8 @@
 #include <rclcpp/rclcpp.hpp>
 #include <rclcpp_components/register_node_macro.hpp>
 
-#include "carma_cooperative_perception/msg_conversion.hpp"
 #include <memory>
+#include "carma_cooperative_perception/msg_conversion.hpp"
 
 namespace carma_cooperative_perception
 {
@@ -128,15 +128,13 @@ auto ExternalObjectListToSdsmNode::publish_as_sdsm(const external_objects_msg_ty
   }
 }
 
-auto ExternalObjectListToSdsmNode::update_georeference(const georeference_msg_type & msg) noexcept
-  -> void
+auto ExternalObjectListToSdsmNode::update_georeference(const georeference_msg_type & msg) -> void
 {
   map_georeference_ = msg.data;
   map_projector_ = std::make_shared<lanelet::projection::LocalFrameProjector>(msg.data.c_str());
 }
 
-auto ExternalObjectListToSdsmNode::update_current_pose(const pose_msg_type & msg) noexcept
-  -> void
+auto ExternalObjectListToSdsmNode::update_current_pose(const pose_msg_type & msg) -> void
 {
   current_pose_ = msg;
 }

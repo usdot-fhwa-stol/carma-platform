@@ -33,7 +33,8 @@ namespace carma_cooperative_perception
 
 using Detection =
   std::variant<multiple_object_tracking::CtrvDetection, multiple_object_tracking::CtraDetection>;
-using Track = std::variant<multiple_object_tracking::CtrvTrack, multiple_object_tracking::CtraTrack>;
+using Track =
+  std::variant<multiple_object_tracking::CtrvTrack, multiple_object_tracking::CtraTrack>;
 
 auto make_detection(const carma_cooperative_perception_interfaces::msg::Detection & msg)
   -> Detection;
@@ -58,8 +59,8 @@ public:
   auto handle_on_shutdown(const rclcpp_lifecycle::State & /* previous_state */)
     -> carma_ros2_utils::CallbackReturn override;
 
-  auto store_new_detections(
-    const carma_cooperative_perception_interfaces::msg::DetectionList & msg) noexcept -> void;
+  auto store_new_detections(const carma_cooperative_perception_interfaces::msg::DetectionList & msg)
+    -> void;
 
   auto execute_pipeline() -> void;
 
@@ -75,7 +76,8 @@ private:
   std::vector<Detection> detections_;
   std::unordered_map<multiple_object_tracking::Uuid, std::size_t> uuid_index_map_;
   multiple_object_tracking::FixedThresholdTrackManager<Track> track_manager_{
-    multiple_object_tracking::PromotionThreshold{3U}, multiple_object_tracking::RemovalThreshold{0U}};
+    multiple_object_tracking::PromotionThreshold{3U},
+    multiple_object_tracking::RemovalThreshold{0U}};
   units::time::nanosecond_t execution_period_{1 / units::frequency::hertz_t{2.0}};
   OnSetParametersCallbackHandle::SharedPtr on_set_parameters_callback_{nullptr};
 };

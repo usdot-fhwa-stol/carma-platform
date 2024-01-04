@@ -55,7 +55,7 @@ public:
 
   auto publish_as_detection_list(const input_msg_type & msg) const -> void;
 
-  auto update_georeference(const std_msgs::msg::String & msg) noexcept -> void;
+  auto update_georeference(const std_msgs::msg::String & msg) -> void;
 
 private:
   rclcpp_lifecycle::LifecyclePublisher<output_msg_type>::SharedPtr publisher_{nullptr};

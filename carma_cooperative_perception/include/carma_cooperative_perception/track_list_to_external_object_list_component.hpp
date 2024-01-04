@@ -44,7 +44,7 @@ public:
     -> carma_ros2_utils::CallbackReturn override;
 
   auto publish_as_external_object_list(
-    const carma_cooperative_perception_interfaces::msg::TrackList & msg) const noexcept -> void;
+    const carma_cooperative_perception_interfaces::msg::TrackList & msg) const -> void;
 
 private:
   rclcpp_lifecycle::LifecyclePublisher<carma_perception_msgs::msg::ExternalObjectList>::SharedPtr
