@@ -48,7 +48,7 @@
 
 namespace carma_cooperative_perception
 {
-auto to_time_msg(const DDateTime & d_date_time)  -> builtin_interfaces::msg::Time
+auto to_time_msg(const DDateTime & d_date_time) -> builtin_interfaces::msg::Time
 {
   double seconds;
   const auto fractional_secs{
@@ -127,7 +127,7 @@ auto calc_sdsm_time_offset(
   return time_offset;
 }
 
-auto to_position_msg(const UtmCoordinate & position_utm)  -> geometry_msgs::msg::Point
+auto to_position_msg(const UtmCoordinate & position_utm) -> geometry_msgs::msg::Point
 {
   geometry_msgs::msg::Point msg;
 
@@ -138,7 +138,7 @@ auto to_position_msg(const UtmCoordinate & position_utm)  -> geometry_msgs::msg:
   return msg;
 }
 
-auto heading_to_enu_yaw(const units::angle::degree_t & heading)  -> units::angle::degree_t
+auto heading_to_enu_yaw(const units::angle::degree_t & heading) -> units::angle::degree_t
 {
   return units::angle::degree_t{std::fmod(-(remove_units(heading) - 90.0) + 360.0, 360.0)};
 }
@@ -353,7 +353,8 @@ auto to_detection_msg(
 
 auto to_detection_list_msg(
   const carma_perception_msgs::msg::ExternalObjectList & object_list,
-  const MotionModelMapping & motion_model_mapping) -> carma_cooperative_perception_interfaces::msg::DetectionList
+  const MotionModelMapping & motion_model_mapping)
+  -> carma_cooperative_perception_interfaces::msg::DetectionList
 {
   carma_cooperative_perception_interfaces::msg::DetectionList detection_list;
 
@@ -367,8 +368,7 @@ auto to_detection_list_msg(
   return detection_list;
 }
 
-auto to_external_object_msg(
-  const carma_cooperative_perception_interfaces::msg::Track & track)
+auto to_external_object_msg(const carma_cooperative_perception_interfaces::msg::Track & track)
   -> carma_perception_msgs::msg::ExternalObject
 {
   carma_perception_msgs::msg::ExternalObject external_object;
@@ -501,8 +501,8 @@ auto to_detected_object_data_msg(
 
   // speed/speed_z - convert vector velocity to scalar speed val given x/y components
   if (external_object.presence_vector & external_object.VELOCITY_PRESENCE_VECTOR) {
-    detected_object_common_data.speed.speed = std::hypot(
-      external_object.velocity.twist.linear.x, external_object.velocity.twist.linear.y);
+    detected_object_common_data.speed.speed =
+      std::hypot(external_object.velocity.twist.linear.x, external_object.velocity.twist.linear.y);
 
     detected_object_common_data.presence_vector |=
       carma_v2x_msgs::msg::DetectedObjectCommonData::HAS_SPEED_Z;
