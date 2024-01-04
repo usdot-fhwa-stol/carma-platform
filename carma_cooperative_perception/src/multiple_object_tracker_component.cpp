@@ -607,9 +607,9 @@ auto MultipleObjectTrackerNode::execute_pipeline() -> void
     },
   };
 
-    if (track_manager_.get_all_tracks().empty()) {
-      RCLCPP_DEBUG(
-        get_logger(), "List of tracks is empty. Converting detections to tentative tracks");
+  if (track_manager_.get_all_tracks().empty()) {
+    RCLCPP_DEBUG(
+      get_logger(), "List of tracks is empty. Converting detections to tentative tracks");
 
     // This clustering distance is an arbitrarily-chosen heuristic. It is working well for our
     // current purposes, but there's no reason it couldn't be restricted or loosened.
@@ -619,94 +619,90 @@ auto MultipleObjectTrackerNode::execute_pipeline() -> void
       track_manager_.add_tentative_track(std::visit(make_track_visitor, detection));
     }
 
-      track_list_pub_->publish(carma_cooperative_perception_interfaces::msg::TrackList{});
+    track_list_pub_->publish(carma_cooperative_perception_interfaces::msg::TrackList{});
 
-      detections_.clear();
-      uuid_index_map_.clear();
-      return;
-    }
+    detections_.clear();
+    uuid_index_map_.clear();
+    return;
+  }
 
-    const units::time::second_t current_time{this->now().seconds()};
+  const units::time::second_t current_time{this->now().seconds()};
 
-    // Logging only
-    static constexpr mot::Visitor state_to_string{
-      [](mot::CtrvDetection const & detection) {
-        std::stringstream ss;
-        ss << "CtrvState: \n";
-        ss << "uuid: " << mot::get_uuid(detection) << '\n';
-        ss << "time: " << detection.timestamp << '\n';
-        ss << "x: " << detection.state.position_x << '\n';
-        ss << "y: " << detection.state.position_y << '\n';
-        ss << "velocity: " << detection.state.velocity << '\n';
-        ss << "yaw: " << detection.state.yaw.get_angle() << '\n';
-        ss << "yaw_rate: " << detection.state.yaw_rate << '\n';
-        ss << "covariance: " << detection.covariance << '\n';
-        ss << "semantic class: " << semantic_class_to_numeric_value(detection.semantic_class)
-           << '\n';
+  // Logging only
+  static constexpr mot::Visitor state_to_string{
+    [](mot::CtrvDetection const & detection) {
+      std::stringstream ss;
+      ss << "CtrvState: \n";
+      ss << "uuid: " << mot::get_uuid(detection) << '\n';
+      ss << "time: " << detection.timestamp << '\n';
+      ss << "x: " << detection.state.position_x << '\n';
+      ss << "y: " << detection.state.position_y << '\n';
+      ss << "velocity: " << detection.state.velocity << '\n';
+      ss << "yaw: " << detection.state.yaw.get_angle() << '\n';
+      ss << "yaw_rate: " << detection.state.yaw_rate << '\n';
+      ss << "covariance: " << detection.covariance << '\n';
+      ss << "semantic class: " << semantic_class_to_numeric_value(detection.semantic_class) << '\n';
 
-        return ss.str();
-      },
-      [](mot::CtraDetection const & detection) {
-        std::stringstream ss;
-        ss << "CtraState: \n";
-        ss << "uuid: " << mot::get_uuid(detection) << '\n';
-        ss << "time: " << detection.timestamp << '\n';
-        ss << "x: " << detection.state.position_x << '\n';
-        ss << "y: " << detection.state.position_y << '\n';
-        ss << "velocity: " << detection.state.velocity << '\n';
-        ss << "yaw: " << detection.state.yaw.get_angle() << '\n';
-        ss << "yaw_rate: " << detection.state.yaw_rate << '\n';
-        ss << "acceleration: " << detection.state.acceleration << '\n';
-        ss << "covariance: " << detection.covariance << '\n';
-        ss << "semantic class: " << semantic_class_to_numeric_value(detection.semantic_class)
-           << '\n';
+      return ss.str();
+    },
+    [](mot::CtraDetection const & detection) {
+      std::stringstream ss;
+      ss << "CtraState: \n";
+      ss << "uuid: " << mot::get_uuid(detection) << '\n';
+      ss << "time: " << detection.timestamp << '\n';
+      ss << "x: " << detection.state.position_x << '\n';
+      ss << "y: " << detection.state.position_y << '\n';
+      ss << "velocity: " << detection.state.velocity << '\n';
+      ss << "yaw: " << detection.state.yaw.get_angle() << '\n';
+      ss << "yaw_rate: " << detection.state.yaw_rate << '\n';
+      ss << "acceleration: " << detection.state.acceleration << '\n';
+      ss << "covariance: " << detection.covariance << '\n';
+      ss << "semantic class: " << semantic_class_to_numeric_value(detection.semantic_class) << '\n';
 
-        return ss.str();
-      }};
+      return ss.str();
+    }};
 
-    // Logging only
-    static constexpr mot::Visitor track_state_to_string{
-      [](mot::CtrvTrack const & detection) {
-        std::stringstream ss;
-        ss << "CtrvState: \n";
-        ss << "uuid: " << mot::get_uuid(detection) << '\n';
-        ss << "time: " << detection.timestamp << '\n';
-        ss << "x: " << detection.state.position_x << '\n';
-        ss << "y: " << detection.state.position_y << '\n';
-        ss << "velocity: " << detection.state.velocity << '\n';
-        ss << "yaw: " << detection.state.yaw.get_angle() << '\n';
-        ss << "yaw_rate: " << detection.state.yaw_rate << '\n';
-        ss << "covariance: " << detection.covariance << '\n';
-        ss << "semantic class: " << semantic_class_to_numeric_value(detection.semantic_class)
-           << '\n';
+  // Logging only
+  static constexpr mot::Visitor track_state_to_string{
+    [](mot::CtrvTrack const & detection) {
+      std::stringstream ss;
+      ss << "CtrvState: \n";
+      ss << "uuid: " << mot::get_uuid(detection) << '\n';
+      ss << "time: " << detection.timestamp << '\n';
+      ss << "x: " << detection.state.position_x << '\n';
+      ss << "y: " << detection.state.position_y << '\n';
+      ss << "velocity: " << detection.state.velocity << '\n';
+      ss << "yaw: " << detection.state.yaw.get_angle() << '\n';
+      ss << "yaw_rate: " << detection.state.yaw_rate << '\n';
+      ss << "covariance: " << detection.covariance << '\n';
+      ss << "semantic class: " << semantic_class_to_numeric_value(detection.semantic_class) << '\n';
 
-        return ss.str();
-      },
-      [](mot::CtraTrack const & detection) {
-        std::stringstream ss;
-        ss << "CtraState: \n";
-        ss << "uuid: " << mot::get_uuid(detection) << '\n';
-        ss << "time: " << detection.timestamp << '\n';
-        ss << "x: " << detection.state.position_x << '\n';
-        ss << "y: " << detection.state.position_y << '\n';
-        ss << "velocity: " << detection.state.velocity << '\n';
-        ss << "yaw: " << detection.state.yaw.get_angle() << '\n';
-        ss << "yaw_rate: " << detection.state.yaw_rate << '\n';
-        ss << "acceleration: " << detection.state.acceleration << '\n';
-        ss << "covariance: " << detection.covariance << '\n';
-        ss << "semantic class: " << semantic_class_to_numeric_value(detection.semantic_class)
-           << '\n';
+      return ss.str();
+    },
+    [](mot::CtraTrack const & detection) {
+      std::stringstream ss;
+      ss << "CtraState: \n";
+      ss << "uuid: " << mot::get_uuid(detection) << '\n';
+      ss << "time: " << detection.timestamp << '\n';
+      ss << "x: " << detection.state.position_x << '\n';
+      ss << "y: " << detection.state.position_y << '\n';
+      ss << "velocity: " << detection.state.velocity << '\n';
+      ss << "yaw: " << detection.state.yaw.get_angle() << '\n';
+      ss << "yaw_rate: " << detection.state.yaw_rate << '\n';
+      ss << "acceleration: " << detection.state.acceleration << '\n';
+      ss << "covariance: " << detection.covariance << '\n';
+      ss << "semantic class: " << semantic_class_to_numeric_value(detection.semantic_class) << '\n';
 
-        return ss.str();
-      }};
+      return ss.str();
+    }};
 
-    // Logging only
-    for (auto const & detection : detections_) {
-      RCLCPP_ERROR_STREAM(
-        get_logger(), "Detection (pre): " << std::visit(state_to_string, detection));
-    }
+  // Logging only
+  for (auto const & detection : detections_) {
+    RCLCPP_ERROR_STREAM(
+      get_logger(), "Detection (pre): " << std::visit(state_to_string, detection));
+  }
 
-    temporally_align_detections(detections_, current_time);
+  temporally_align_detections(detections_, current_time);
 
   const auto predicted_tracks{predict_track_states(track_manager_.get_all_tracks(), current_time)};
   auto scores{
@@ -721,10 +717,10 @@ auto MultipleObjectTrackerNode::execute_pipeline() -> void
 
   track_manager_.update_track_lists(associations);
 
-    std::unordered_map<mot::Uuid, Detection> detection_map;
-    for (const auto & detection : detections_) {
-      detection_map[mot::get_uuid(detection)] = detection;
-    }
+  std::unordered_map<mot::Uuid, Detection> detection_map;
+  for (const auto & detection : detections_) {
+    detection_map[mot::get_uuid(detection)] = detection;
+  }
 
   const mot::HasAssociation has_association{associations};
   for (auto & track : track_manager_.get_all_tracks()) {
@@ -737,14 +733,14 @@ auto MultipleObjectTrackerNode::execute_pipeline() -> void
     }
   }
 
-    // Unassociated detections don't influence the tracking pipeline, so we can add
-    // them to the tracker at the end.
-    std::vector<Detection> unassociated_detections;
-    for (const auto & [uuid, detection] : detection_map) {
-      if (!has_association(detection)) {
-        unassociated_detections.push_back(detection);
-      }
+  // Unassociated detections don't influence the tracking pipeline, so we can add
+  // them to the tracker at the end.
+  std::vector<Detection> unassociated_detections;
+  for (const auto & [uuid, detection] : detection_map) {
+    if (!has_association(detection)) {
+      unassociated_detections.push_back(detection);
     }
+  }
 
   // We want to remove unassociated tracks that are close enough to existing tracks
   // to avoid creating duplicates. Duplicate tracks will cause association inconsistencies
@@ -775,28 +771,20 @@ auto MultipleObjectTrackerNode::execute_pipeline() -> void
     track_manager_.add_tentative_track(std::visit(make_track_visitor, detection));
   }
 
-    std::stringstream confirmed_tracks;
-    confirmed_tracks << "Confirmed tracks: ";
-    carma_cooperative_perception_interfaces::msg::TrackList track_list;
-    for (const auto & track : track_manager_.get_confirmed_tracks()) {
-      confirmed_tracks << mot::get_uuid(track) << ' ';
-      track_list.tracks.push_back(to_ros_msg(track));
-    }
-    confirmed_tracks << '\n';
-    RCLCPP_ERROR(get_logger(), confirmed_tracks.str().c_str());
-
-    track_list_pub_->publish(track_list);
-
-    detections_.clear();
-    uuid_index_map_.clear();
-
-  } catch (std::out_of_range const & e) {
-    RCLCPP_FATAL_STREAM(this->get_logger(), "CAUGHT SOMETHING: std::out_of_range: " << e.what());
-  } catch (std::exception const & e) {
-    RCLCPP_FATAL_STREAM(this->get_logger(), "CAUGHT SOMETHING: std::exception: " << e.what());
-  } catch (...) {
-    RCLCPP_FATAL(this->get_logger(), "CAUGHT SOMETHING: non std::exception");
+  std::stringstream confirmed_tracks;
+  confirmed_tracks << "Confirmed tracks: ";
+  carma_cooperative_perception_interfaces::msg::TrackList track_list;
+  for (const auto & track : track_manager_.get_confirmed_tracks()) {
+    confirmed_tracks << mot::get_uuid(track) << ' ';
+    track_list.tracks.push_back(to_ros_msg(track));
   }
+  confirmed_tracks << '\n';
+  RCLCPP_ERROR(get_logger(), confirmed_tracks.str().c_str());
+
+  track_list_pub_->publish(track_list);
+
+  detections_.clear();
+  uuid_index_map_.clear();
 }
 
 }  // namespace carma_cooperative_perception
