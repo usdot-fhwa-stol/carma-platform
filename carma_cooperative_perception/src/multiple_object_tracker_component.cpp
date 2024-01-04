@@ -49,24 +49,6 @@ auto two_dimensional_distance(const CtraState & lhs, const CtraState & rhs) -> f
 
   return std::sqrt(x_diff_sq + y_diff_sq);
 }
-
-auto weighted_distance(const CtrvState & lhs, const CtrvState & rhs) -> float
-{
-  const auto x_diff_sq{std::pow(remove_units(lhs.position_x) - remove_units(rhs.position_x), 2)};
-  const auto y_diff_sq{std::pow(remove_units(lhs.position_y) - remove_units(rhs.position_y), 2)};
-  const auto v_diff_sq{100 * std::pow(remove_units(lhs.velocity) - remove_units(rhs.velocity), 2)};
-
-  return std::sqrt(x_diff_sq + y_diff_sq + v_diff_sq);
-}
-
-auto weighted_distance(const CtraState & lhs, const CtraState & rhs) -> float
-{
-  const auto x_diff_sq{std::pow(remove_units(lhs.position_x) - remove_units(rhs.position_x), 2)};
-  const auto y_diff_sq{std::pow(remove_units(lhs.position_y) - remove_units(rhs.position_y), 2)};
-  const auto v_diff_sq{100 * std::pow(remove_units(lhs.velocity) - remove_units(rhs.velocity), 2)};
-
-  return std::sqrt(x_diff_sq + y_diff_sq + v_diff_sq);
-}
 }  // namespace multiple_object_tracking
 
 namespace carma_cooperative_perception
@@ -628,7 +610,6 @@ auto MultipleObjectTrackerNode::execute_pipeline() -> void
 
   const units::time::second_t current_time{this->now().seconds()};
 
-  // Logging only
   static constexpr mot::Visitor state_to_string{
     [](mot::CtrvDetection const & detection) {
       std::stringstream ss;
@@ -662,7 +643,6 @@ auto MultipleObjectTrackerNode::execute_pipeline() -> void
       return ss.str();
     }};
 
-  // Logging only
   static constexpr mot::Visitor track_state_to_string{
     [](mot::CtrvTrack const & detection) {
       std::stringstream ss;
@@ -695,12 +675,6 @@ auto MultipleObjectTrackerNode::execute_pipeline() -> void
 
       return ss.str();
     }};
-
-  // Logging only
-  for (auto const & detection : detections_) {
-    RCLCPP_ERROR_STREAM(
-      get_logger(), "Detection (pre): " << std::visit(state_to_string, detection));
-  }
 
   temporally_align_detections(detections_, current_time);
 
