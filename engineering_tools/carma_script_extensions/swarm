@@ -91,10 +91,10 @@ swarm__start() {
     # format: <user>@<ip address>
     MANAGER_INFO=$(docker run -it --rm -v carma-config-data:/opt/carma/vehicle/config busybox:latest /bin/sh -c '
         source ./opt/carma/vehicle/config/carma.env; eval $(cat /opt/carma/vehicle/config/carma.env);
-        ( echo "$WORKER_USER"; echo "@"; echo "$WORKER_IP"; ) | tr -d "\n"')
+        ( echo "$MANAGER_USER"; echo "@"; echo "$MANAGER_IP"; ) | tr -d "\n"')
     WORKER_INFO=$(docker run -it --rm -v carma-config-data:/opt/carma/vehicle/config busybox:latest /bin/sh -c '
         source ./opt/carma/vehicle/config/carma.env; eval $(cat /opt/carma/vehicle/config/carma.env);
-        ( echo "$MANAGER_USER"; echo "@"; echo "$MANAGER_IP"; ) | tr -d "\n"')
+        ( echo "$WORKER_USER"; echo "@"; echo "$WORKER_IP"; ) | tr -d "\n"')
 
     MANAGER_IP=${MANAGER_INFO#*@}
 
