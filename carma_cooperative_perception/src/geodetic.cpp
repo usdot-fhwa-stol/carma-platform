@@ -63,11 +63,12 @@ auto project_to_utm(const Wgs84Coordinate & coordinate) -> UtmCoordinate
   }
 
   const auto utm_zone{calculate_utm_zone(coordinate)};
-  std::string proj_string{"+proj=utm +zone=" + std::to_string(utm_zone.number) + " +datum=WGS84"};
+  //std::string proj_string{"+proj=utm +zone=" + std::to_string(utm_zone.number) + " +datum=WGS84"};
+  std::string proj_string("+proj=tmerc +lat_0=0 +lon_0=0 +k=1 +x_0=0 +y_0=0 +datum=WGS84 +units=m +vunits=m +no_defs");
 
-  if (utm_zone.hemisphere == Hemisphere::kSouth) {
-    proj_string += " +south";
-  }
+  //if (utm_zone.hemisphere == Hemisphere::kSouth) {
+  //  proj_string += " +south";
+  //}
 
   gsl ::owner<PJ *> utm_transformation =
     proj_create_crs_to_crs(context, "EPSG:4326", proj_string.c_str(), nullptr);

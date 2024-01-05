@@ -589,13 +589,13 @@ def generate_launch_description():
         carma_stop_and_wait_plugin_container,
         #carma_sci_strategic_plugin_container,
         #carma_stop_and_dwell_strategic_plugin_container,
-        #carma_lci_strategic_plugin_container,
+        carma_lci_strategic_plugin_container,
         #carma_stop_controlled_intersection_tactical_plugin_container,
         #carma_cooperative_lanechange_plugins_container,
         carma_yield_plugin_container,
-        #carma_light_controlled_intersection_plugins_container,
+        carma_light_controlled_intersection_plugins_container,
         carma_pure_pursuit_wrapper_container,
         #platooning_strategic_plugin_container,
         #platooning_tactical_plugin_container,
-        #intersection_transit_maneuvering_container
+        intersection_transit_maneuvering_container
     ])
