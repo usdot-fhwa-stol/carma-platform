@@ -173,7 +173,7 @@ static auto to_ros_msg(const mot::CtraTrack & track)
 
   msg.header.stamp.sec = mot::remove_units(units::math::floor(track.timestamp));
   msg.header.stamp.nanosec = mot::remove_units(
-    units::time::nanosecond_t{units::math::fmod(track.timestamp, units::time::second_t{10.0})});
+    units::time::nanosecond_t{units::math::fmod(track.timestamp, units::time::second_t{1.0})});
   msg.header.frame_id = "map";
 
   msg.id = track.uuid.value();
@@ -204,7 +204,7 @@ static auto to_ros_msg(const mot::CtrvTrack & track)
 
   msg.header.stamp.sec = mot::remove_units(units::math::floor(track.timestamp));
   msg.header.stamp.nanosec = mot::remove_units(
-    units::time::nanosecond_t{units::math::fmod(track.timestamp, units::time::second_t{10.0})});
+    units::time::nanosecond_t{units::math::fmod(track.timestamp, units::time::second_t{1.0})});
   msg.header.frame_id = "map";
 
   msg.id = track.uuid.value();
