@@ -397,7 +397,20 @@ auto to_external_object_msg(
   external_object.pose = track.pose;
 
   external_object.presence_vector |= external_object.VELOCITY_PRESENCE_VECTOR;
-  external_object.velocity = track.twist;
+
+  const auto track_longitudinal_velocity{track.twist.twist.linear.x};
+  const auto track_orientation = track.pose.pose.orientation;
+
+  tf2::Quaternion q(
+    track_orientation.x, track_orientation.y, track_orientation.z, track_orientation.w);
+  tf2::Matrix3x3 m(q);
+  double roll, pitch, yaw;
+  m.getRPY(roll, pitch, yaw);
+
+  external_object.velocity.twist.linear.x = track_longitudinal_velocity * std::cos(yaw);
+  external_object.velocity.twist.linear.y = track_longitudinal_velocity * std::sin(yaw);
+
+  external_object.object_type = track.semantic_class;
 
   external_object.presence_vector |= external_object.OBJECT_TYPE_PRESENCE_VECTOR;
   switch (track.semantic_class) {
