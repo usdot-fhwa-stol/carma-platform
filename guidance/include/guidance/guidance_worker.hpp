@@ -34,7 +34,7 @@ namespace guidance
 
   /**
    * \brief Worker class for the Guidance node
-   *
+   * 
    */
   class GuidanceWorker : public carma_ros2_utils::CarmaLifecycleNode
   {
@@ -47,7 +47,6 @@ namespace guidance
 
     // Publishers
     carma_ros2_utils::PubPtr<carma_planning_msgs::msg::GuidanceState> state_publisher_;
-    carma_ros2_utils::PubPtr<autoware_msgs::msg::VehicleStatus> mph_publisher_;
 
     // Service Clients
     carma_ros2_utils::ClientPtr<carma_driver_msgs::srv::SetEnableRobotic> enable_client_;
@@ -66,14 +65,14 @@ namespace guidance
 
   public:
     /**
-     * \brief GuidanceWorker constructor
+     * \brief GuidanceWorker constructor 
      */
     explicit GuidanceWorker(const rclcpp::NodeOptions &);
 
     /**
      * \brief Callback for dynamic parameter updates
      */
-    rcl_interfaces::msg::SetParametersResult
+    rcl_interfaces::msg::SetParametersResult 
     parameter_update_callback(const std::vector<rclcpp::Parameter> &parameters);
 
     /**
@@ -83,7 +82,7 @@ namespace guidance
 
     /**
       * \brief Callback for route event messages
-      * \param msg Latest route event message
+      * \param msg Latest route event message 
       */
     void route_event_cb(carma_planning_msgs::msg::RouteEvent::UniquePtr msg);
 
@@ -101,8 +100,8 @@ namespace guidance
 
     /**
      * \brief Set_guidance_active service callback. User can attempt to activate the guidance system by calling this service
-     * \param req A carma_planning_msgs::srv::SetGuidanceActive::Request msg
-     * \param resp A carma_planning_msgs::srv::SetGuidanceActive::Response msg
+     * \param req A carma_planning_msgs::srv::SetGuidanceActive::Request msg 
+     * \param resp A carma_planning_msgs::srv::SetGuidanceActive::Response msg 
      */
     bool guidance_activation_cb(const std::shared_ptr<rmw_request_id_t>,
                                 const std::shared_ptr<carma_planning_msgs::srv::SetGuidanceActive::Request> req,

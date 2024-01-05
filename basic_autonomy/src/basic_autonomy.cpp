@@ -1247,7 +1247,7 @@ namespace basic_autonomy
                 autoware_point.longitudinal_velocity_mps = lag_speeds[i];
 
                 autoware_point.time_from_start = rclcpp::Duration(times[i] * 1e9);
-                RCLCPP_ERROR_STREAM(rclcpp::get_logger(BASIC_AUTONOMY_LOGGER), "Setting waypoint idx: " << i <<", with planner: << " << trajectory_points[i].planner_plugin_name << ", x: " << trajectory_points[i].x <<
+                RCLCPP_DEBUG_STREAM(rclcpp::get_logger(BASIC_AUTONOMY_LOGGER), "Setting waypoint idx: " << i <<", with planner: << " << trajectory_points[i].planner_plugin_name << ", x: " << trajectory_points[i].x <<
                                         ", y: " << trajectory_points[i].y <<
                                         ", speed: " << lag_speeds[i]* 2.23694 << "mph");
                 autoware_trajectory.points.push_back(autoware_point);
@@ -1305,14 +1305,14 @@ namespace basic_autonomy
             const carma_ros2_utils::ClientPtr<carma_planning_msgs::srv::PlanTrajectory>& yield_client,
             int yield_plugin_service_call_timeout)
         {
-            RCLCPP_ERROR(node_handler->get_logger(), "Activate Object Avoidance");
+            RCLCPP_DEBUG(node_handler->get_logger(), "Activate Object Avoidance");
 
             if (!yield_client || !yield_client->service_is_ready())
             {
                 throw std::runtime_error("Yield Client is not set or unavailable after configuration state of lifecycle");
             }
 
-            RCLCPP_ERROR(node_handler->get_logger(), "Yield Client is valid");
+            RCLCPP_DEBUG(node_handler->get_logger(), "Yield Client is valid");
 
             auto yield_srv = std::make_shared<carma_planning_msgs::srv::PlanTrajectory::Request>();
             yield_srv->initial_trajectory_plan = resp->trajectory_plan;
@@ -1330,11 +1330,11 @@ namespace basic_autonomy
                 return resp;
             }
 
-            RCLCPP_ERROR(node_handler->get_logger(), "Received Traj from Yield");
+            RCLCPP_DEBUG(node_handler->get_logger(), "Received Traj from Yield");
             carma_planning_msgs::msg::TrajectoryPlan yield_plan = yield_resp.get()->trajectory_plan;
             if (is_valid_yield_plan(node_handler, yield_plan))
             {
-                RCLCPP_ERROR(node_handler->get_logger(), "Yield trajectory validated");
+                RCLCPP_DEBUG(node_handler->get_logger(), "Yield trajectory validated");
                 resp->trajectory_plan = yield_plan;
             }
             else

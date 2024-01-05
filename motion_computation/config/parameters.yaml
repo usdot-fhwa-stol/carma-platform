@@ -1,5 +1,5 @@
 # Time between predicted states in seconds
-prediction_time_step: 0.1
+prediction_time_step: 0.2
 
 # Period of prediction in seconds
 prediction_period: 10.0

@@ -50,6 +50,7 @@ namespace object_visualizer
            << "enable_roadway_objects_viz: " << c.enable_roadway_objects_viz << std::endl
            << "external_objects_viz_ns: " << c.external_objects_viz_ns << std::endl
            << "roadway_obstacles_viz_ns: " << c.roadway_obstacles_viz_ns << std::endl
+           << "marker_shape: " << c.marker_shape << std::endl
            << "}" << std::endl;
       return output;
     }

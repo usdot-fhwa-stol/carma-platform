@@ -37,3 +37,4 @@ done
 
 cd ${dir}/src
 
+git clone https://github.com/usdot-fhwa-stol/carma-messenger --branch fix/sdsm --depth 1

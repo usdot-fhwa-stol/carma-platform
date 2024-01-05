@@ -72,9 +72,6 @@ void MotionComputationWorker::predictionLogic(
         obj, prediction_time_step_, prediction_period_, cv_x_accel_noise_, cv_y_accel_noise_,
         prediction_process_noise_max_, prediction_confidence_drop_rate_);
     }
-    RCLCPP_ERROR_STREAM(rclcpp::get_logger("motion_computation"), "main: obj.header.stamp: " << std::to_string(rclcpp::Time(obj.header.stamp).seconds()));
-    RCLCPP_ERROR_STREAM(rclcpp::get_logger("motion_computation"), "first state: " << std::to_string(rclcpp::Time(obj.predictions.front().header.stamp).seconds()));
-
     sensor_list.objects.emplace_back(obj);
   }  // end for-loop
 

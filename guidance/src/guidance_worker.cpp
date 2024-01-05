@@ -65,8 +65,6 @@ namespace guidance
                                                               std::bind(&GuidanceWorker::vehicle_status_cb, this, std_ph::_1));
 
     // Setup publishers
-    // TODO
-    mph_publisher_ = create_publisher<autoware_msgs::msg::VehicleStatus>("/hardware_interface/vehicle_status_mph", 5);
     state_publisher_  = create_publisher<carma_planning_msgs::msg::GuidanceState>("state", 5);
 
     // Setup service clients
@@ -103,7 +101,7 @@ namespace guidance
 
   bool GuidanceWorker::guidance_activation_cb(const std::shared_ptr<rmw_request_id_t>,
                                       const std::shared_ptr<carma_planning_msgs::srv::SetGuidanceActive::Request> req,
-                                      std::shared_ptr<carma_planning_msgs::srv::SetGuidanceActive::Response> resp)
+                                      std::shared_ptr<carma_planning_msgs::srv::SetGuidanceActive::Response> resp) 
   {
     // Translate message type from GuidanceActiveRequest to SetEnableRobotic
     if(!req->guidance_active)
@@ -115,7 +113,7 @@ namespace guidance
 
     gsm_.onSetGuidanceActive(req->guidance_active);
     resp->guidance_status = (gsm_.getCurrentState() == GuidanceStateMachine::ACTIVE);
-    return true;
+    return true;  
   }
 
   bool GuidanceWorker::spin_cb()
@@ -144,10 +142,6 @@ namespace guidance
 
   void GuidanceWorker::vehicle_status_cb(autoware_msgs::msg::VehicleStatus::UniquePtr msg)
   {
-    auto speed_mph = msg->speed * 2.23694;
-    auto new_msg = *msg;
-    new_msg.speed = speed_mph;
-    mph_publisher_->publish(new_msg);
     gsm_.onVehicleStatus(move(msg));
   }
 

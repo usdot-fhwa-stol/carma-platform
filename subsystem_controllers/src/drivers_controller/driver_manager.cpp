@@ -93,7 +93,7 @@ namespace subsystem_controllers
 
     void DriverManager::evaluate_sensor(int &sensor_input,bool available,long current_time,long timestamp,long driver_timeout)
     {
-        RCLCPP_ERROR_STREAM(rclcpp::get_logger("driver"), "current_time: " << std::to_string(current_time) << ", timestamp: " << std::to_string(timestamp) << ", difference: " << std::to_string(current_time-timestamp));
+
         if((!available) || (current_time-timestamp > driver_timeout))
         {
             sensor_input=0;
@@ -113,6 +113,10 @@ namespace subsystem_controllers
         std::vector<Entry> driver_list = em_->get_entries(); //Real time driver list from driver status
         for(auto i = driver_list.begin(); i < driver_list.end(); ++i)
         {
+            RCLCPP_DEBUG_STREAM(rclcpp::get_logger("subsystem_controller"), "i->name_: " << i->name_
+                << ", current_time: " << current_time
+                << ", i->timestamp_: " << i->timestamp_
+                << ", difference: " << current_time-(i->timestamp_) );
             if(em_->is_entry_required(i->name_))
             {
                 evaluate_sensor(ssc,i->available_,current_time,i->timestamp_,driver_timeout_);
