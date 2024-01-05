@@ -76,7 +76,7 @@ auto TrackListToExternalObjectListNode::handle_on_shutdown(
 }
 
 auto TrackListToExternalObjectListNode::publish_as_external_object_list(
-  const carma_cooperative_perception_interfaces::msg::TrackList & msg) const  -> void
+  const carma_cooperative_perception_interfaces::msg::TrackList & msg) const -> void
 {
   auto external_object_list{to_external_object_list_msg(msg)};
   external_object_list.header.stamp = now();
