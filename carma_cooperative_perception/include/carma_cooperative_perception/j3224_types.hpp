@@ -42,11 +42,11 @@ struct MeasurementTimeOffset
 {
   units::time::millisecond_t measurement_time_offset;
 
-  [[nodiscard]] static auto from_msg(const j3224_v2x_msgs::msg::MeasurementTimeOffset & msg)
-    -> MeasurementTimeOffset;
+  [[nodiscard]] static auto from_msg(
+    const j3224_v2x_msgs::msg::MeasurementTimeOffset & msg)  -> MeasurementTimeOffset;
 
-  [[nodiscard]] static auto from_msg(const carma_v2x_msgs::msg::MeasurementTimeOffset & msg)
-    -> MeasurementTimeOffset;
+  [[nodiscard]] static auto from_msg(
+    const carma_v2x_msgs::msg::MeasurementTimeOffset & msg)  -> MeasurementTimeOffset;
 };
 
 }  // namespace carma_cooperative_perception

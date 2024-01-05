@@ -296,24 +296,24 @@ def generate_launch_description():
                     ("incoming_psm", [ EnvironmentVariable('CARMA_MSG_NS', default_value=''), "/incoming_psm" ] ),
                     ("incoming_bsm", [ EnvironmentVariable('CARMA_MSG_NS', default_value=''), "/incoming_bsm" ] ),
                     ("georeference", [ EnvironmentVariable('CARMA_LOCZ_NS', default_value=''), "/map_param_loader/georeference" ] ),
-                    ("external_objects", "fused_external_objects")
+                    ("external_objects", "fused_external_objects") #TODO: directly listening to external objects
                 ],
                 parameters=[
                     motion_computation_param_file, vehicle_config_param_file
                 ]
             ),
             ComposableNode( #CARMA Motion Prediction Visualizer Node
-                    package='motion_prediction_visualizer',
-                    plugin='motion_prediction_visualizer::Node',
-                    name='motion_prediction_visualizer',
-                    extra_arguments=[
-                        {'use_intra_process_comms': True},
-                        {'--log-level' : GetLogLevel('motion_prediction_visualizer', env_log_levels) }
-                    ],
-                    remappings=[
-                        ("external_objects", "external_object_predictions" ),
-                    ],
-                    parameters=[ vehicle_config_param_file ]
+                package='motion_prediction_visualizer',
+                plugin='motion_prediction_visualizer::Node',
+                name='motion_prediction_visualizer',
+                extra_arguments=[
+                    {'use_intra_process_comms': True},
+                    {'--log-level' : GetLogLevel('motion_prediction_visualizer', env_log_levels) }
+                ],
+                remappings=[
+                    ("external_objects", "external_object_predictions" ),
+                ],
+                parameters=[ vehicle_config_param_file ]
             ),
             ComposableNode(
                     package='roadway_objects',
@@ -438,24 +438,24 @@ def generate_launch_description():
                     vehicle_config_param_file
                 ]
             ),
-            ComposableNode(
-                package='carma_cooperative_perception',
-                plugin='carma_cooperative_perception::ExternalObjectListToSdsmNode',
-                name='cp_external_object_list_to_sdsm_node',
-                extra_arguments=[
-                    {'use_intra_process_comms': True},
-                    {'--log-level' : GetLogLevel('cp_external_object_list_to_sdsm_node', env_log_levels) },
-                ],
-                remappings=[
-                    ("input/georeference", [EnvironmentVariable("CARMA_LOCZ_NS", default_value=""), "/map_param_loader/georeference"]),
-                    ("output/sdsms", [ EnvironmentVariable('CARMA_MSG_NS', default_value=''), "/outgoing_sdsm" ] ),
-                    ("input/pose_stamped", [ EnvironmentVariable('CARMA_LOCZ_NS', default_value=''), "/current_pose" ] ),
-                    ("input/external_objects", "external_objects"),
-                ],
-                parameters=[
-                    vehicle_config_param_file
-                ]
-            ),
+            #ComposableNode(
+            #    package='carma_cooperative_perception',
+            #    plugin='carma_cooperative_perception::ExternalObjectListToSdsmNode',
+            #    name='cp_external_object_list_to_sdsm_node',
+            #    extra_arguments=[
+            #        {'use_intra_process_comms': True},
+            #        {'--log-level' : GetLogLevel('cp_external_object_list_to_sdsm_node', env_log_levels) },
+            #    ],
+            #    remappings=[
+            #        ("input/georeference", [EnvironmentVariable("CARMA_LOCZ_NS", default_value=""), "/map_param_loader/georeference"]),
+            #        ("output/sdsms", [ EnvironmentVariable('CARMA_MSG_NS', default_value=''), "/outgoing_sdsm" ] ),
+            #        ("input/pose_stamped", [ EnvironmentVariable('CARMA_LOCZ_NS', default_value=''), "/current_pose" ] ),
+            #        ("input/external_objects", "external_objects"),
+            #    ],
+            #    parameters=[
+            #        vehicle_config_param_file
+            #    ]
+            #),
             ComposableNode(
                 package='carma_cooperative_perception',
                 plugin='carma_cooperative_perception::HostVehicleFilterNode',
@@ -506,23 +506,23 @@ def generate_launch_description():
                     vehicle_config_param_file
                 ]
             ),
-            ComposableNode(
-                package='carma_cooperative_perception',
-                plugin='carma_cooperative_perception::MultipleObjectTrackerNode',
-                name='cp_multiple_object_tracker_node',
-                extra_arguments=[
-                    {'use_intra_process_comms': True},
-                    {'--log-level' : GetLogLevel('cp_multiple_object_tracker_node', env_log_levels) },
-                ],
-                remappings=[
-                    ("output/track_list", "cooperative_perception_track_list"),
-                    ("input/detection_list", "filtered_detection_list"),
-                ],
-                parameters=[
-                    cp_multiple_object_tracker_node_file,
-                    vehicle_config_param_file
-                ]
-            ),
+            #ComposableNode(
+            #    package='carma_cooperative_perception',
+            #    plugin='carma_cooperative_perception::MultipleObjectTrackerNode',
+            #    name='cp_multiple_object_tracker_node',
+            #    extra_arguments=[
+            #        {'use_intra_process_comms': True},
+            #        {'--log-level' : GetLogLevel('cp_multiple_object_tracker_node', env_log_levels) },
+            #    ],
+            #    remappings=[
+            #        ("output/track_list", "cooperative_perception_track_list"),
+            #        ("input/detection_list", "filtered_detection_list"),
+            #    ],
+            #    parameters=[
+            #        cp_multiple_object_tracker_node_file,
+            #        vehicle_config_param_file
+            #    ]
+            #),
 
         ]
     )

@@ -1,11 +1,11 @@
 #  Copyright (C) 2018-2021 LEIDOS.
-# 
+#
 #  Licensed under the Apache License, Version 2.0 (the "License"); you may not
 #  use this file except in compliance with the License. You may obtain a copy of
 #  the License at
-# 
+#
 #  http://www.apache.org/licenses/LICENSE-2.0
-# 
+#
 #  Unless required by applicable law or agreed to in writing, software
 #  distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
 #  WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
@@ -15,17 +15,17 @@
 # CARMA Docker Configuration Script
 #
 # Performs all necessary tasks related to generation of a generic CARMA docker image
-# suitable for deployment to a vehicle. The generic image will still need to be 
+# suitable for deployment to a vehicle. The generic image will still need to be
 # configured for each vehicle by means of volume mapping configuration files and
 # networking mapping at run time
 #
 # Build Arguments:
 # SSH_PRIVATE_KEY - If the extra package repository to be used during the build requires
 #                   authentication, please pass in the necessary SSH private key in text
-#                   form here, most likely via "$(cat ~/.ssh/id_rsa)". This data is not 
+#                   form here, most likely via "$(cat ~/.ssh/id_rsa)". This data is not
 #                   present in the final output image. Default = none
 #
-# EXTRA_PACKAGES - The repo to checkout any additional packages from at build time. 
+# EXTRA_PACKAGES - The repo to checkout any additional packages from at build time.
 #                  Default = none
 
 
@@ -33,20 +33,20 @@
 # Stage 1 - Acquire the CARMA source as well as any extra packages
 # /////////////////////////////////////////////////////////////////////////////
 
-FROM usdotfhwastoldev/autoware.ai:develop AS base-image
+FROM b8f221003f36 AS base-image
 
-FROM base-image AS source-code
+FROM b8f221003f36 AS source-code
 
 RUN mkdir ~/src
 COPY --chown=carma . /home/carma/src/carma-platform/
 RUN ~/src/carma-platform/docker/checkout.bash
 
 # /////////////////////////////////////////////////////////////////////////////
-# Stage 2 - Build and install the software 
+# Stage 2 - Build and install the software
 # /////////////////////////////////////////////////////////////////////////////
 
 
-FROM base-image AS install
+FROM b8f221003f36 AS install
 ARG ROS1_PACKAGES=""
 ENV ROS1_PACKAGES=${ROS1_PACKAGES}
 ARG ROS2_PACKAGES=""
@@ -63,7 +63,7 @@ RUN ~/carma_ws/src/carma-platform/docker/install.sh
 # /////////////////////////////////////////////////////////////////////////////
 
 
-FROM base-image
+FROM b8f221003f36
 
 ARG BUILD_DATE="NULL"
 ARG VCS_REF="NULL"

@@ -2,7 +2,7 @@
 # Adjustment factor for safe and comfortable acceleration/deceleration
 # Value type: Desired
 # No unit
-acceleration_adjustment_factor: 4.0
+acceleration_adjustment_factor: 1.0
 # Time horizon for collision detection for vehicles on the route
 # NOTE: not applied for pedestrians or other non-vehicle obstacles on the road
 # Units: s
@@ -23,36 +23,24 @@ yield_max_deceleration: 3.0
 # Minimum safety gap with an Object/Obstacle
 # Units: meters
 # Value type: Desired
-x_gap: 10.0
-# Host vehicle length
-# Units: m
-# Value type: Measured
-vehicle_length: 5.0
-# Host vehicle width
-# Units: m
-# Value type: Measured
-vehicle_width: 2.5
-# Host vehicle height
-# Units: m
-# Value type: Measured
-vehicle_height: 3.0
+x_gap: 20.0
 # Maximum speed value to consider the ego vehicle stopped
 # Units: m/s
 # Value type: Desired
 max_stop_speed: 1.0
 # parameter to enable cooperative behavior
 # Value type: Desired
-enable_cooperative_behavior: true
+enable_cooperative_behavior: false
 # parameter to always accept mobility request
 # Value type: Desired
-always_accept_mobility_request: true
+always_accept_mobility_request: false
 # Acceptable number of timesteps to use the latest known mobility request before switching to yield
 # Value type: Desired
 acceptable_passed_timesteps: 5
 # Intervehicle distance that is considered a collision
 # Unit: m
 # Value type: Desired
-intervehicle_collision_distance: 6.0
+intervehicle_collision_distance: 6.0 #TODO account for obstacle + vehicle length into code
 # Radius to check for potential collision
 # Unit: m
 # Value type: Desired
@@ -69,4 +57,4 @@ enable_adjustable_gap: true
 acceptable_urgency: 5
 # Window size for speed moving average filter
 # Value type: Desired (must be odd)
-speed_moving_average_window_size: 7.0
+speed_moving_average_window_size: 3.0

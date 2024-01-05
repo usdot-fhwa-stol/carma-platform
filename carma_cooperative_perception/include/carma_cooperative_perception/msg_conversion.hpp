@@ -40,7 +40,7 @@
 
 namespace carma_cooperative_perception
 {
-auto to_time_msg(const DDateTime & d_date_time) -> builtin_interfaces::msg::Time;
+auto to_time_msg(const DDateTime & d_date_time)  -> builtin_interfaces::msg::Time;
 
 auto calc_detection_time_stamp(DDateTime d_date_time, const MeasurementTimeOffset & offset)
   -> DDateTime;
@@ -53,9 +53,9 @@ auto calc_sdsm_time_offset(
   const builtin_interfaces::msg::Time & external_object_time)
   -> carma_v2x_msgs::msg::MeasurementTimeOffset;
 
-auto to_position_msg(const UtmCoordinate & position_utm) -> geometry_msgs::msg::Point;
+auto to_position_msg(const UtmCoordinate & position_utm)  -> geometry_msgs::msg::Point;
 
-auto heading_to_enu_yaw(const units::angle::degree_t & heading) -> units::angle::degree_t;
+auto heading_to_enu_yaw(const units::angle::degree_t & heading)  -> units::angle::degree_t;
 
 auto calc_relative_position(
   const geometry_msgs::msg::PoseStamped & current_pose,
@@ -91,10 +91,10 @@ auto to_detection_msg(
 
 auto to_detection_list_msg(
   const carma_perception_msgs::msg::ExternalObjectList & object_list,
-  const MotionModelMapping & motion_model_mapping)
-  -> carma_cooperative_perception_interfaces::msg::DetectionList;
+  const MotionModelMapping & motion_model_mapping)   -> carma_cooperative_perception_interfaces::msg::DetectionList;
 
-auto to_external_object_msg(const carma_cooperative_perception_interfaces::msg::Track & track)
+auto to_external_object_msg(
+  const carma_cooperative_perception_interfaces::msg::Track & track)
   -> carma_perception_msgs::msg::ExternalObject;
 
 auto to_external_object_list_msg(
