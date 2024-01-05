@@ -354,7 +354,8 @@ auto MultipleObjectTrackerNode::handle_on_activate(
   }
 
   const std::chrono::duration<double, std::nano> period_ns{mot::remove_units(execution_period_)};
-  pipeline_execution_timer_ = create_wall_timer(period_ns, [this] { execute_pipeline(); });
+  pipeline_execution_timer_ =
+    rclcpp::create_timer(this, this->get_clock(), period_ns, [this] { execute_pipeline(); });
 
   RCLCPP_INFO(get_logger(), "Lifecycle transition: successfully activated");
 
