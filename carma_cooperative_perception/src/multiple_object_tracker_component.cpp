@@ -32,25 +32,6 @@
 #include <utility>
 #include <vector>
 
-namespace multiple_object_tracking
-{
-auto two_dimensional_distance(const CtrvState & lhs, const CtrvState & rhs) -> float
-{
-  const auto x_diff_sq{std::pow(remove_units(lhs.position_x) - remove_units(rhs.position_x), 2)};
-  const auto y_diff_sq{std::pow(remove_units(lhs.position_y) - remove_units(rhs.position_y), 2)};
-
-  return std::sqrt(x_diff_sq + y_diff_sq);
-}
-
-auto two_dimensional_distance(const CtraState & lhs, const CtraState & rhs) -> float
-{
-  const auto x_diff_sq{std::pow(remove_units(lhs.position_x) - remove_units(rhs.position_x), 2)};
-  const auto y_diff_sq{std::pow(remove_units(lhs.position_y) - remove_units(rhs.position_y), 2)};
-
-  return std::sqrt(x_diff_sq + y_diff_sq);
-}
-}  // namespace multiple_object_tracking
-
 namespace carma_cooperative_perception
 {
 
