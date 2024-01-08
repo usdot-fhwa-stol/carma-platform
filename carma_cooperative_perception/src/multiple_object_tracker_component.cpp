@@ -463,16 +463,14 @@ static auto temporally_align_detections(
   std::vector<Detection> & detections, units::time::second_t end_time) -> void
 {
   for (auto & detection : detections) {
-    // mot::propagate_to_time(detection, end_time, mot::default_unscented_transform);
-    mot::propagate_to_time(detection, end_time, mot::UnscentedTransform{1.0, 2.0, 0.0});
+    mot::propagate_to_time(detection, end_time, mot::default_unscented_transform);
   }
 }
 
 static auto predict_track_states(std::vector<Track> tracks, units::time::second_t end_time)
 {
   for (auto & track : tracks) {
-    // mot::propagate_to_time(track, end_time, mot::default_unscented_transform);
-    mot::propagate_to_time(track, end_time, mot::UnscentedTransform{1.0, 2.0, 0.0});
+    mot::propagate_to_time(track, end_time, mot::default_unscented_transform);
   }
 
   return tracks;
