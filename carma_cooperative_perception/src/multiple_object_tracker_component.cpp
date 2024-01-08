@@ -425,7 +425,6 @@ auto MultipleObjectTrackerNode::store_new_detections(
       if (uuid_index_map_.count(uuid) == 0) {
         detections_.push_back(std::move(detection));
         uuid_index_map_[uuid] = std::size(detections_) - 1;
-        RCLCPP_WARN_STREAM(this->get_logger(), "Storing detection with ID '" << uuid << "'.");
       } else {
         RCLCPP_WARN_STREAM(
           this->get_logger(),
