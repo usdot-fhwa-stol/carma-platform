@@ -518,7 +518,7 @@ private:
 };
 
 /**
- * @brief Calculates the distance between a point and detection's state in SE(2) space
+ * @brief Calculates distance between a point and detection in SE(2) (special Euclidean) space
 */
 struct MetricSe2
 {
