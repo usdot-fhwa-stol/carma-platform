@@ -453,6 +453,13 @@ static auto predict_track_states(std::vector<Track> tracks, units::time::second_
   return tracks;
 }
 
+/**
+ * @brief Calculate 2D Euclidean distance between track and detection
+ *
+ * If both the track and detection semantic classes are known, this function
+ * object returns the 2D Euclidean distance between their states. Otherwise,
+ * it returns std::nullopt.
+*/
 struct SemanticDistance2dScore
 {
   template <typename Track, typename Detection>
@@ -509,6 +516,9 @@ private:
   }
 };
 
+/**
+ * @brief Calculates the distance between a point and detection's state in SE(2) space
+*/
 struct MetricSe2
 {
   template <typename Detection>
@@ -572,6 +582,8 @@ auto MultipleObjectTrackerNode::execute_pipeline() -> void
   auto scores{
     mot::score_tracks_and_detections(predicted_tracks, detections_, SemanticDistance2dScore{})};
 
+  // This pruning distance is an arbitrarily-chosen heuristic. It is working well for our
+  // current purposes, but there's no reason it couldn't be restricted or loosened.
   mot::prune_track_and_detection_scores_if(scores, [](const auto & score) { return score > 5.0; });
 
   const auto associations{
