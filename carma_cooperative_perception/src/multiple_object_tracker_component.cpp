@@ -467,20 +467,19 @@ struct SemanticDistance2dScore
   {
     if constexpr (std::is_same_v<decltype(track.state), decltype(detection.state)>) {
       const auto dist{two_dimensional_distance(track.state, detection.state)};
+
       if (
         track.semantic_class == mot::SemanticClass::kUnknown ||
         detection.semantic_class == mot::SemanticClass::kUnknown) {
         return dist;
       }
 
-      if (track.semantic_class != detection.semantic_class) {
-        return std::nullopt;
+      if (track.semantic_class == detection.semantic_class) {
+        return dist;
       }
-
-      return dist;
-    } else {
-      return std::nullopt;
     }
+
+    return std::nullopt;
   }
 
   template <typename... TrackAlternatives, typename... DetectionAlternatives>
