@@ -630,6 +630,27 @@ auto MultipleObjectTrackerNode::execute_pipeline() -> void
     }
   }
 
+  // We want to remove unassociated tracks that are close enough to existing tracks
+  // to avoid creating duplicates. Duplicate tracks will cause association inconsistencies
+  // (flip flopping associations between the two tracks).
+  auto remove_start{std::remove_if(
+    std::begin(unassociated_detections), std::end(unassociated_detections),
+    [&scores](const auto & detection) {
+      const auto uuid{mot::get_uuid(detection)};
+      auto min_score{std::numeric_limits<float>::infinity()};
+      for (const auto & [uuid_pair, score] : scores) {
+        if (uuid_pair.second == uuid) {
+          min_score = std::min(min_score, score);
+        }
+      }
+
+      // This distance is an arbitrarily-chosen heuristic. It is working well for our
+      // current purposes, but there's no reason it couldn't be restricted or loosened.
+      return min_score < 1.0;
+    })};
+
+  unassociated_detections.erase(remove_start, std::end(unassociated_detections));
+
   // This clustering distance is an arbitrarily-chosen heuristic. It is working well for our
   // current purposes, but there's no reason it couldn't be restricted or loosened.
   const auto clusters{mot::cluster_detections(unassociated_detections, 0.75, MetricSe2{})};
