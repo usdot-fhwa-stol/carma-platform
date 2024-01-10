@@ -233,7 +233,10 @@ static auto to_ros_msg(const Track & track)
   static constexpr mot::Visitor visitor{
     [](const mot::CtrvTrack & t) { return to_ros_msg(t); },
     [](const mot::CtraTrack & t) { return to_ros_msg(t); },
-    [](const auto &) { throw std::runtime_error{"cannot make ROS 2 message from track type"}; }};
+    [](const auto &) {
+      // Currently on support CTRV and CTRA
+      throw std::runtime_error{"cannot make ROS 2 message from track type"};
+    }};
 
   return std::visit(visitor, track);
 }
@@ -544,7 +547,10 @@ struct MetricSe2
     const mot::Visitor visitor{
       [this](const mot::Point & p, const mot::CtrvDetection & d) { return this->operator()(p, d); },
       [this](const mot::Point & p, const mot::CtraDetection & d) { return this->operator()(p, d); },
-      [](const mot::Point &, const auto &) { return std::numeric_limits<double>::max(); }};
+      [](const mot::Point &, const auto &) {
+        // Currently on support CTRV and CTRA
+        return std::numeric_limits<double>::max();
+      }};
 
     return std::visit(visitor, std::variant<mot::Point>{point}, detection);
   }
@@ -555,7 +561,10 @@ auto MultipleObjectTrackerNode::execute_pipeline() -> void
   static constexpr mot::Visitor make_track_visitor{
     [](const mot::CtrvDetection & d) { return Track{mot::make_track<mot::CtrvTrack>(d)}; },
     [](const mot::CtraDetection & d) { return Track{mot::make_track<mot::CtraTrack>(d)}; },
-    [](const auto &) { throw std::runtime_error("cannot make track from given detection"); },
+    [](const auto &) {
+      // Currently on support CTRV and CTRA
+      throw std::runtime_error("cannot make track from given detection");
+    },
   };
 
   if (track_manager_.get_all_tracks().empty()) {
