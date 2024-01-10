@@ -1,21 +1,21 @@
 version: 2
 
 #  Copyright (C) 2018-2022 LEIDOS.
-# 
+#
 #  Licensed under the Apache License, Version 2.0 (the "License"); you may not
 #  use this file except in compliance with the License. You may obtain a copy of
 #  the License at
-# 
+#
 #  http://www.apache.org/licenses/LICENSE-2.0
-# 
+#
 #  Unless required by applicable law or agreed to in writing, software
 #  distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
 #  WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
 #  License for the specific language governing permissions and limitations under
 #  the License.
-# 
+#
 
-# Configuration file for Circle CI 
+# Configuration file for Circle CI
 # CI will report failure if any executed command returns and error status
 # Operations performed are as follows
 # Build source code
@@ -57,6 +57,7 @@ jobs:
           command: |
             source ${INIT_ENV}
             ./src/CARMAPlatform/docker/checkout.bash -r ${PWD}
+            sudo ./src/multiple_object_tracking/scripts/install_dependencies.sh
       - run:
           name: Build CARMA ROS 1
           command: |
@@ -77,7 +78,7 @@ jobs:
             mv /opt/carma/build/compile_commands.json /opt/carma/compile_commands.ros1.json
       - run:
           name: Cleanup before ROS 2 build
-          # Clear the build and install folders before building ROS 2 
+          # Clear the build and install folders before building ROS 2
           command: |
             rm -rf /opt/carma/install
             rm -rf /opt/carma/build
@@ -102,7 +103,7 @@ jobs:
       # Run SonarCloud analysis
       # PR Branches and number extracted from Circle variables and github api
       # Circle CI seems to make a change to the base branch, so we must fetch --force to ensure correct git file change stats
-      # SONAR_SCANNER_TOKEN MUST be secured as an environment variable in Circle CI NOT in this file. 
+      # SONAR_SCANNER_TOKEN MUST be secured as an environment variable in Circle CI NOT in this file.
       # The following sonar settings MUST be set in SonarCloud UI NOT in this file
       # sonar.pullrequest.provider
       # sonar.pullrequest.github.endpoint
@@ -116,7 +117,7 @@ jobs:
             if [ -z "${CIRCLE_PULL_REQUEST}" ]; then
               echo "Non-PR Build Detected. Running analysis on ${CIRCLE_BRANCH}"
               cd src/CARMAPlatform
-              sonar-scanner -Dproject.settings=.sonarqube/sonar-scanner.properties -Dsonar.login=${SONAR_SCANNER_TOKEN} 
+              sonar-scanner -Dproject.settings=.sonarqube/sonar-scanner.properties -Dsonar.login=${SONAR_SCANNER_TOKEN}
               exit 0;
             fi
             echo "PR branch ${CIRCLE_BRANCH}"
@@ -125,7 +126,7 @@ jobs:
             export PR_NUM=`echo ${CIRCLE_PULL_REQUEST} | cut -d'/' -f7`
             echo "PR number ${PR_NUM}"
             export BASE_BRANCH_URL="https://api.github.com/repos/${CIRCLE_PROJECT_USERNAME}/${CIRCLE_PROJECT_REPONAME}/pulls/${PR_NUM}"
-            export TARGET_BRANCH=$(curl "$BASE_BRANCH_URL" | jq '.base.ref' | tr -d '"') 
+            export TARGET_BRANCH=$(curl "$BASE_BRANCH_URL" | jq '.base.ref' | tr -d '"')
             echo "Target Branch = ${TARGET_BRANCH}"
             cd src/CARMAPlatform
             git fetch --force origin ${TARGET_BRANCH}:${TARGET_BRANCH}
