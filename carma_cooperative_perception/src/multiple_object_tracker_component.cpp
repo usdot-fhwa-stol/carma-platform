@@ -562,6 +562,8 @@ auto MultipleObjectTrackerNode::execute_pipeline() -> void
     RCLCPP_DEBUG(
       get_logger(), "List of tracks is empty. Converting detections to tentative tracks");
 
+    // This clustering distance is an arbitrarily-chosen heuristic. It is working well for our
+    // current purposes, but there's no reason it couldn't be restricted or loosened.
     const auto clusters{mot::cluster_detections(detections_, 0.75)};
     for (const auto & cluster : clusters) {
       const auto detection{std::cbegin(cluster.get_detections())->second};
@@ -619,6 +621,8 @@ auto MultipleObjectTrackerNode::execute_pipeline() -> void
     }
   }
 
+  // This clustering distance is an arbitrarily-chosen heuristic. It is working well for our
+  // current purposes, but there's no reason it couldn't be restricted or loosened.
   const auto clusters{mot::cluster_detections(unassociated_detections, 0.75, MetricSe2{})};
   for (const auto & cluster : clusters) {
     const auto detection{std::cbegin(cluster.get_detections())->second};
