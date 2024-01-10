@@ -630,6 +630,7 @@ auto MultipleObjectTrackerNode::execute_pipeline() -> void
     }
   }
 
+  // This is the erase-remove idiom (https://en.wikipedia.org/wiki/Erase%E2%80%93remove_idiom)
   auto remove_start{std::remove_if(
     std::begin(unassociated_detections), std::end(unassociated_detections),
     [&scores](const auto & detection) {
