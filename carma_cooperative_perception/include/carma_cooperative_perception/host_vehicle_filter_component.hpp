@@ -62,7 +62,7 @@ private:
 
   OnSetParametersCallbackHandle::SharedPtr on_set_parameters_callback_{nullptr};
 
-  double squared_distance_threshold_meters_{0.99};
+  double squared_distance_threshold_meters_{0.0};
 };
 
 auto euclidean_distance_squared(
