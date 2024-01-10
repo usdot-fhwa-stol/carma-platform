@@ -54,6 +54,7 @@ fi
 git clone https://github.com/usdot-fhwa-stol/carma-message-filters.git --branch develop
 
 git clone https://github.com/usdot-fhwa-stol/multiple_object_tracking --branch develop
+./multiple_object_tracking/scripts/install_dependencies.sh
 
 # add astuff messages
 # NOTE: The ibeo_msgs package is ignored because on build the cmake files in that package run a sed command
