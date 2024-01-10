@@ -118,6 +118,7 @@ public:
   /**
    * \brief calculates the maximum speed in a set of tajectory points
    * \param trajectory_points trajectory points
+   # \param time in seconds before which to look for max trajectory speed
    * \return maximum speed
    */
   double max_trajectory_speed(const std::vector<carma_planning_msgs::msg::TrajectoryPlanPoint>& trajectory_points, double earliest_collision_time) const;
@@ -174,7 +175,7 @@ public:
    * \param initial_velocity start velocity
    * \param goal_velocity end velocity
    * \param planning_time time duration of the planning
-   * \param original original_max_speed from original_tp accounting for the collision TODO
+   * \param original original_max_speed from original_tp accounting for the collision
    * \return updated JMT trajectory
    */
   carma_planning_msgs::msg::TrajectoryPlan generate_JMT_trajectory(const carma_planning_msgs::msg::TrajectoryPlan& original_tp, double initial_pos, double goal_pos,
@@ -239,9 +240,22 @@ public:
    */
   std::optional<rclcpp::Time> detect_collision_time(const carma_planning_msgs::msg::TrajectoryPlan& trajectory1, const std::vector<carma_perception_msgs::msg::PredictedState>& trajectory2, double collision_radius);
 
-
-  // TODO
+  /**
+   * \brief Return the earliest collision object and time of collision pair from the given trajectory and list of external objects with predicted states.
+            Function first filters obstacles based on whether if their any of predicted state will be on the route. Only then, the logic compares trajectory and predicted states.
+   * \param original_tp trajectory of the ego vehicle
+   * \param external_objects list of external objects with predicted states
+   * \return earliest collision object and its collision time if collision detected. std::nullopt if no collision is detected or if route is not available.
+   */
   std::optional<std::pair<carma_perception_msgs::msg::ExternalObject, double>> get_earliest_collision_object_and_time(const carma_planning_msgs::msg::TrajectoryPlan& original_tp, const std::vector<carma_perception_msgs::msg::ExternalObject>& external_objects);
+
+  /**
+   * \brief Given the object velocity in map frame with x,y components, this function returns the projected velocity along the trajectory at given time.
+   * \param object_velocity_in_map_frame trajectory of the ego vehicle
+   * \param original_tp trajectory of the ego vehicle
+   * \param collision_timestamp_in_seconds timestamp in seconds along the trajectory to return the projected velocity
+   * \return velocity_along_trajectory
+   */
   double get_object_velocity_along_trajectory(const geometry_msgs::msg::Twist& object_velocity_in_map_frame, const carma_planning_msgs::msg::TrajectoryPlan& original_tp, double collision_timestamp_in_seconds);
 
 private:

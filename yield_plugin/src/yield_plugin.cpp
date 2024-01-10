@@ -264,7 +264,7 @@ namespace yield_plugin
     }
 
     // return original trajectory if no difference in trajectory points a.k.a no collision
-    if (fabs(rclcpp::Time(original_trajectory.trajectory_points.back().target_time).seconds() - rclcpp::Time(yield_trajectory.trajectory_points.front().target_time).seconds()) < 0.01)
+    if (fabs(rclcpp::Time(original_trajectory.trajectory_points.back().target_time).seconds() - rclcpp::Time(yield_trajectory.trajectory_points.back().target_time).seconds()) < 0.01)
     {
       resp->trajectory_plan = original_trajectory;
     }
@@ -543,7 +543,6 @@ namespace yield_plugin
     std::set<int> checked_external_object_ids;
     rclcpp::Time plan_start_time = original_tp.trajectory_points[0].target_time;
 
-
     RCLCPP_DEBUG_STREAM(nh_->get_logger(), "ExternalObjects size: " << external_objects.size());
 
     if (wm_->getRoute() == nullptr)
@@ -619,7 +618,6 @@ namespace yield_plugin
 
       if (p1b_t >= collision_timestamp_in_seconds)
       {
-        // TODO GEOMETRY
         auto dx = p1b.x - p1a.x;
         auto dy = p1b.y - p1a.y;
         tf2::Vector3 trajectory_direction(dx, dy, 0);
@@ -638,7 +636,6 @@ namespace yield_plugin
         return return_value;
       }
     }
-    // TODO error
     return 0.0;
   }
 

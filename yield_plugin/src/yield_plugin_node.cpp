@@ -68,7 +68,7 @@ namespace yield_plugin
     get_parameter<double>("safety_collision_time_gap", config_.safety_collision_time_gap);
     get_parameter<bool>("enable_adjustable_gap", config_.enable_adjustable_gap);
     get_parameter<int>("acceptable_urgency", config_.acceptable_urgency);
-    get_parameter<double>("speed_moving_average_window_size", config_.speed_moving_average_window_size); //TODO not double
+    get_parameter<double>("speed_moving_average_window_size", config_.speed_moving_average_window_size);
     get_parameter<double>("tpmin", config_.tpmin);
     get_parameter<double>("vehicle_length", config_.vehicle_length);
     get_parameter<double>("vehicle_height", config_.vehicle_height);
