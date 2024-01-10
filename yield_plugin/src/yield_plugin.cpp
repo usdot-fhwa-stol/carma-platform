@@ -365,7 +365,6 @@ namespace yield_plugin
     double initial_accel = 0.0;
     double goal_accel = 0.0;
 
-    double original_max_speed = max_trajectory_speed(original_tp.trajectory_points);
     RCLCPP_DEBUG_STREAM(nh_->get_logger(),"original_max_speed" << original_max_speed);
     std::vector<double> values = quintic_coefficient_calculator::quintic_coefficient_calculator(initial_pos,
                                                                                                 goal_pos,
