@@ -481,15 +481,15 @@ namespace yield_plugin
         double p2a_t = rclcpp::Time(p2a.header.stamp).seconds();
         double p2b_t = rclcpp::Time(p2b.header.stamp).seconds();
 
-        //RCLCPP_DEBUG_STREAM(nh_->get_logger(), "p1a.target_time: " << std::to_string(p1a_t) << ", p1b.target_time: " << std::to_string(p1b_t));
-        //RCLCPP_DEBUG_STREAM(nh_->get_logger(), "p2a.target_time: " << std::to_string(p2a_t) << ", p2b.target_time: " << std::to_string(p2b_t));
-        //RCLCPP_DEBUG_STREAM(nh_->get_logger(), "p1a.x: " << p1a.x << ", p1a.y: " << p1a.y);
-        //RCLCPP_DEBUG_STREAM(nh_->get_logger(), "p1b.x: " << p1b.x << ", p1b.y: " << p1b.y);
-        //
-        //RCLCPP_DEBUG_STREAM(nh_->get_logger(), "p2a.x: " << p2a.predicted_position.position.x << ", p2a.y: " << p2a.predicted_position.position.y);
-        //RCLCPP_DEBUG_STREAM(nh_->get_logger(), "p2b.x: " << p2b.predicted_position.position.x << ", p2b.y: " << p2b.predicted_position.position.y);
+        RCLCPP_DEBUG_STREAM(nh_->get_logger(), "p1a.target_time: " << std::to_string(p1a_t) << ", p1b.target_time: " << std::to_string(p1b_t));
+        RCLCPP_DEBUG_STREAM(nh_->get_logger(), "p2a.target_time: " << std::to_string(p2a_t) << ", p2b.target_time: " << std::to_string(p2b_t));
+        RCLCPP_DEBUG_STREAM(nh_->get_logger(), "p1a.x: " << p1a.x << ", p1a.y: " << p1a.y);
+        RCLCPP_DEBUG_STREAM(nh_->get_logger(), "p1b.x: " << p1b.x << ", p1b.y: " << p1b.y);
 
-        // Linearly interpolate positions at a common timestamp (p2a_t) for both trajectories
+        RCLCPP_DEBUG_STREAM(nh_->get_logger(), "p2a.x: " << p2a.predicted_position.position.x << ", p2a.y: " << p2a.predicted_position.position.y);
+        RCLCPP_DEBUG_STREAM(nh_->get_logger(), "p2b.x: " << p2b.predicted_position.position.x << ", p2b.y: " << p2b.predicted_position.position.y);
+
+        // Linearly interpolate positions at a common timestamp for both trajectories
         double dt = (p2a_t - p1a_t) / (p1b_t - p1a_t);
         double x1 = p1a.x + dt * (p1b.x - p1a.x);
         double y1 = p1a.y + dt * (p1b.y - p1a.y);
@@ -525,23 +525,9 @@ namespace yield_plugin
         }
         else
         {
-
           RCLCPP_WARN_STREAM(nh_->get_logger(), "Collision detected at timestamp " << std::to_string(p2a_t) << ", x: " << x1 << ", y: " << y1 <<
             ", within actual downtrack distance: " << object_downtrack - vehicle_downtrack <<
             ", and collision distance: " << distance);
-
-          RCLCPP_DEBUG_STREAM(nh_->get_logger(), "======= COLLISION ORIGINAL START POINTS ==========");
-          // DEBUG
-          for (const auto& veh_point :  trajectory1.trajectory_points)
-          {
-            RCLCPP_DEBUG_STREAM(nh_->get_logger(), "veh_point.x: " << veh_point.x << ", veh_point.y: " << veh_point.y);
-          }
-
-          for (const auto& ped :  trajectory2)
-          {
-            RCLCPP_DEBUG_STREAM(nh_->get_logger(), "ped.x: " << ped.predicted_position.position.x << ", ped.y: " << ped.predicted_position.position.y);
-          }
-          RCLCPP_DEBUG_STREAM(nh_->get_logger(), "======= COLLISION ORIGINAL END POINTS ==========");
           return rclcpp::Time(p2a.header.stamp);
         }
       }
