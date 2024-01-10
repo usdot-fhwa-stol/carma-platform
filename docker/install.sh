@@ -67,6 +67,7 @@ cd ~/carma_ws
 
 echo "Building ROS2 CARMA Components"
 
+echo "Installing multiple object tracking dependencies"
 sudo ./multiple_object_tracking/scripts/install_dependencies.sh
 
 if [[ ! -z "$ROS1_PACKAGES$ROS2_PACKAGES" ]]; then
