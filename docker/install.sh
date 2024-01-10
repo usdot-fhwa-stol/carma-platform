@@ -1,13 +1,13 @@
 #!/bin/bash
 
 #  Copyright (C) 2018-2023 LEIDOS.
-# 
+#
 #  Licensed under the Apache License, Version 2.0 (the "License"); you may not
 #  use this file except in compliance with the License. You may obtain a copy of
 #  the License at
-# 
+#
 #  http://www.apache.org/licenses/LICENSE-2.0
-# 
+#
 #  Unless required by applicable law or agreed to in writing, software
 #  distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
 #  WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
@@ -66,6 +66,8 @@ fi
 cd ~/carma_ws
 
 echo "Building ROS2 CARMA Components"
+
+./multiple_object_tracking/scripts/install_dependencies.sh
 
 if [[ ! -z "$ROS1_PACKAGES$ROS2_PACKAGES" ]]; then
     if [[ ! -z "$ROS2_PACKAGES" ]]; then
