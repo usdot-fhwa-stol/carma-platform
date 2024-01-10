@@ -18,9 +18,6 @@ set -ex
 
 # Build the software and its dependencies
 
-echo "Installing multiple object tracking dependencies"
-sudo ./multiple_object_tracking/scripts/install_dependencies.sh
-
 ###
 # ROS1 installation
 ###
@@ -35,6 +32,9 @@ else
 fi
 
 cd ~/carma_ws
+
+echo "Installing multiple object tracking dependencies"
+sudo ./multiple_object_tracking/scripts/install_dependencies.sh
 
 sudo mkdir -p /opt/carma # Create install directory
 sudo chown carma /opt/carma # Set owner to expose permissions for build
