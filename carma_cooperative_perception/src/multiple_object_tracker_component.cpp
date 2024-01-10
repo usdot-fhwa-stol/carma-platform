@@ -630,7 +630,9 @@ auto MultipleObjectTrackerNode::execute_pipeline() -> void
     }
   }
 
-  // This is the erase-remove idiom (https://en.wikipedia.org/wiki/Erase%E2%80%93remove_idiom)
+  // We want to remove unassociated tracks that are close enough to existing tracks
+  // to avoid creating duplicates. Duplicate tracks will cause association inconsistencies
+  // (flip flopping associations between the two tracks).
   auto remove_start{std::remove_if(
     std::begin(unassociated_detections), std::end(unassociated_detections),
     [&scores](const auto & detection) {
