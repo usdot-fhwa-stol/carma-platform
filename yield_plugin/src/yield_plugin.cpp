@@ -656,12 +656,12 @@ namespace yield_plugin
     rclcpp::Time plan_start_time = original_tp.trajectory_points[0].target_time;
     carma_planning_msgs::msg::TrajectoryPlan update_tpp_vector;
 
-    // GET EARLIEST COLLISION OBJECT TODO
+    // Get earliest collision object
     std::optional<std::pair<carma_perception_msgs::msg::ExternalObject, double>> earliest_collision_obj_pair = get_earliest_collision_object_and_time(original_tp, external_objects);
 
-    if (!earliest_collision_obj_pair.has_value())
+    if (!earliest_collision_obj_pair)
     {
-      RCLCPP_DEBUG(nh_->get_logger(),"No collision detection, so trajectory not modified.");
+      RCLCPP_DEBUG(nh_->get_logger(),"No collision detected, so trajectory not modified.");
       return original_tp;
     }
 
