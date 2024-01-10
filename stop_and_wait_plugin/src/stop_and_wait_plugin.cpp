@@ -375,9 +375,9 @@ std::vector<carma_planning_msgs::msg::TrajectoryPlanPoint> StopandWait::compose_
   {
     if (times[i] != 0 && !std::isnormal(times[i]) && i != 0)
     {  // If the time
-      RCLCPP_WARN_STREAM(rclcpp::get_logger("stop_and_wait_plugin"),"Detected non-normal (nan, inf, etc.) time. Making it same as before: " << times[i-1]);
-      // NOTE: overriding the timestamps in assumption that pure_pursuit_wrapper will detect it as stopping case
-      times[i] = times[i - 1];
+      RCLCPP_WARN_STREAM(rclcpp::get_logger("stop_and_wait_plugin"),"Detected non-normal (nan, inf, etc.) time."
+        "This happens due to  dv = dx/0.0 = inf speed. Incrementing time by arbitrary large number to achieve stopping behavior");
+      times[i] = times[i - 1] + 3600.0; //assigning 10hr difference between what is normally 0.1-0.2 sec
     }
   }
 
