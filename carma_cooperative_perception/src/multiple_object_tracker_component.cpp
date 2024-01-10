@@ -25,6 +25,7 @@
 #include <multiple_object_tracking/ctra_model.hpp>
 #include <multiple_object_tracking/ctrv_model.hpp>
 #include <multiple_object_tracking/fusing.hpp>
+#include <multiple_object_tracking/gating.hpp>
 #include <multiple_object_tracking/scoring.hpp>
 #include <multiple_object_tracking/temporal_alignment.hpp>
 #include <unordered_map>
@@ -232,7 +233,10 @@ static auto to_ros_msg(const Track & track)
   static constexpr mot::Visitor visitor{
     [](const mot::CtrvTrack & t) { return to_ros_msg(t); },
     [](const mot::CtraTrack & t) { return to_ros_msg(t); },
-    [](const auto &) { throw std::runtime_error{"cannot make ROS 2 message from track type"}; }};
+    [](const auto &) {
+      // Currently on support CTRV and CTRA
+      throw std::runtime_error{"cannot make ROS 2 message from track type"};
+    }};
 
   return std::visit(visitor, track);
 }
@@ -354,7 +358,8 @@ auto MultipleObjectTrackerNode::handle_on_activate(
   }
 
   const std::chrono::duration<double, std::nano> period_ns{mot::remove_units(execution_period_)};
-  pipeline_execution_timer_ = create_wall_timer(period_ns, [this] { execute_pipeline(); });
+  pipeline_execution_timer_ =
+    rclcpp::create_timer(this, this->get_clock(), period_ns, [this] { execute_pipeline(); });
 
   RCLCPP_INFO(get_logger(), "Lifecycle transition: successfully activated");
 
@@ -451,18 +456,123 @@ static auto predict_track_states(std::vector<Track> tracks, units::time::second_
   return tracks;
 }
 
+/**
+ * @brief Calculate 2D Euclidean distance between track and detection
+ *
+ * If both the track and detection semantic classes are known, this function
+ * object returns the 2D Euclidean distance between their states. Otherwise,
+ * it returns std::nullopt.
+*/
+struct SemanticDistance2dScore
+{
+  template <typename Track, typename Detection>
+  auto operator()(const Track & track, const Detection & detection) const -> std::optional<float>
+  {
+    if constexpr (std::is_same_v<decltype(track.state), decltype(detection.state)>) {
+      const auto dist{two_dimensional_distance(track.state, detection.state)};
+
+      // Fall back to 2D Euclidean distance if either semantic class if unknown. The unknown
+      // track/detection may actually be the same other track/detection we are scoring against.
+      if (
+        track.semantic_class == mot::SemanticClass::kUnknown ||
+        detection.semantic_class == mot::SemanticClass::kUnknown) {
+        return dist;
+      }
+
+      if (track.semantic_class == detection.semantic_class) {
+        return dist;
+      }
+    }
+
+    return std::nullopt;
+  }
+
+  template <typename... TrackAlternatives, typename... DetectionAlternatives>
+  auto operator()(
+    const std::variant<TrackAlternatives...> & track,
+    const std::variant<DetectionAlternatives...> & detection) const -> std::optional<float>
+  {
+    return std::visit(
+      [this](const auto & t, const auto & d) { return (*this)(t, d); }, track, detection);
+  }
+
+private:
+  static auto two_dimensional_distance(const mot::CtrvState & lhs, const mot::CtrvState & rhs)
+    -> float
+  {
+    const auto x_diff_sq{
+      std::pow(mot::remove_units(lhs.position_x) - mot::remove_units(rhs.position_x), 2)};
+    const auto y_diff_sq{
+      std::pow(mot::remove_units(lhs.position_y) - mot::remove_units(rhs.position_y), 2)};
+
+    return std::sqrt(x_diff_sq + y_diff_sq);
+  }
+
+  static auto two_dimensional_distance(const mot::CtraState & lhs, const mot::CtraState & rhs)
+    -> float
+  {
+    const auto x_diff_sq{
+      std::pow(mot::remove_units(lhs.position_x) - mot::remove_units(rhs.position_x), 2)};
+    const auto y_diff_sq{
+      std::pow(mot::remove_units(lhs.position_y) - mot::remove_units(rhs.position_y), 2)};
+
+    return std::sqrt(x_diff_sq + y_diff_sq);
+  }
+};
+
+/**
+ * @brief Calculates distance between a point and detection in SE(2) (special Euclidean) space
+*/
+struct MetricSe2
+{
+  template <typename Detection>
+  auto operator()(const mot::Point & point, const Detection & detection) const -> double
+  {
+    double sum{0};
+
+    sum += std::pow(mot::remove_units(point.position_x - detection.state.position_x), 2);
+    sum += std::pow(mot::remove_units(point.position_y - detection.state.position_y), 2);
+
+    const auto p_yaw_rad{mot::remove_units(point.yaw.get_angle())};
+    const auto d_yaw_rad{mot::remove_units(detection.state.yaw.get_angle())};
+    const auto abs_diff{std::abs(p_yaw_rad - d_yaw_rad)};
+    sum += std::min(abs_diff, 2 * 3.14159265359 - abs_diff);
+
+    return sum;
+  }
+
+  template <typename... Alternatives>
+  auto operator()(mot::Point point, const std::variant<Alternatives...> & detection) const -> double
+  {
+    const mot::Visitor visitor{
+      [this](const mot::Point & p, const mot::CtrvDetection & d) { return this->operator()(p, d); },
+      [this](const mot::Point & p, const mot::CtraDetection & d) { return this->operator()(p, d); },
+      [](const mot::Point &, const auto &) {
+        // Currently on support CTRV and CTRA
+        return std::numeric_limits<double>::max();
+      }};
+
+    return std::visit(visitor, std::variant<mot::Point>{point}, detection);
+  }
+};
+
 auto MultipleObjectTrackerNode::execute_pipeline() -> void
 {
   static constexpr mot::Visitor make_track_visitor{
     [](const mot::CtrvDetection & d) { return Track{mot::make_track<mot::CtrvTrack>(d)}; },
     [](const mot::CtraDetection & d) { return Track{mot::make_track<mot::CtraTrack>(d)}; },
-    [](const auto &) { throw std::runtime_error("cannot make track from given detection"); },
+    [](const auto &) {
+      // Currently on support CTRV and CTRA
+      throw std::runtime_error("cannot make track from given detection");
+    },
   };
 
   if (track_manager_.get_all_tracks().empty()) {
     RCLCPP_DEBUG(
       get_logger(), "List of tracks is empty. Converting detections to tentative tracks");
 
+    // This clustering distance is an arbitrarily-chosen heuristic. It is working well for our
+    // current purposes, but there's no reason it couldn't be restricted or loosened.
     const auto clusters{mot::cluster_detections(detections_, 0.75)};
     for (const auto & cluster : clusters) {
       const auto detection{std::cbegin(cluster.get_detections())->second};
@@ -481,10 +591,16 @@ auto MultipleObjectTrackerNode::execute_pipeline() -> void
   temporally_align_detections(detections_, current_time);
 
   const auto predicted_tracks{predict_track_states(track_manager_.get_all_tracks(), current_time)};
-  const auto scores{
-    mot::score_tracks_and_detections(predicted_tracks, detections_, mot::euclidean_distance_score)};
+  auto scores{
+    mot::score_tracks_and_detections(predicted_tracks, detections_, SemanticDistance2dScore{})};
 
-  const auto associations{mot::associate_detections_to_tracks(scores, mot::gnn_associator)};
+  // This pruning distance is an arbitrarily-chosen heuristic. It is working well for our
+  // current purposes, but there's no reason it couldn't be restricted or loosened.
+  mot::prune_track_and_detection_scores_if(scores, [](const auto & score) { return score > 5.0; });
+
+  const auto associations{
+    mot::associate_detections_to_tracks(scores, mot::gnn_association_visitor)};
+
   track_manager_.update_track_lists(associations);
 
   std::unordered_map<mot::Uuid, Detection> detection_map;
@@ -514,7 +630,30 @@ auto MultipleObjectTrackerNode::execute_pipeline() -> void
     }
   }
 
-  const auto clusters{mot::cluster_detections(unassociated_detections, 0.75)};
+  // We want to remove unassociated tracks that are close enough to existing tracks
+  // to avoid creating duplicates. Duplicate tracks will cause association inconsistencies
+  // (flip flopping associations between the two tracks).
+  auto remove_start{std::remove_if(
+    std::begin(unassociated_detections), std::end(unassociated_detections),
+    [&scores](const auto & detection) {
+      const auto uuid{mot::get_uuid(detection)};
+      auto min_score{std::numeric_limits<float>::infinity()};
+      for (const auto & [uuid_pair, score] : scores) {
+        if (uuid_pair.second == uuid) {
+          min_score = std::min(min_score, score);
+        }
+      }
+
+      // This distance is an arbitrarily-chosen heuristic. It is working well for our
+      // current purposes, but there's no reason it couldn't be restricted or loosened.
+      return min_score < 1.0;
+    })};
+
+  unassociated_detections.erase(remove_start, std::end(unassociated_detections));
+
+  // This clustering distance is an arbitrarily-chosen heuristic. It is working well for our
+  // current purposes, but there's no reason it couldn't be restricted or loosened.
+  const auto clusters{mot::cluster_detections(unassociated_detections, 0.75, MetricSe2{})};
   for (const auto & cluster : clusters) {
     const auto detection{std::cbegin(cluster.get_detections())->second};
     track_manager_.add_tentative_track(std::visit(make_track_visitor, detection));
