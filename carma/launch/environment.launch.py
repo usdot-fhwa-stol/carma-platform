@@ -474,22 +474,22 @@ def generate_launch_description():
                     vehicle_config_param_file
                 ]
             ),
-            ComposableNode(
-                package='carma_cooperative_perception',
-                plugin='carma_cooperative_perception::SdsmToDetectionListNode',
-                name='cp_sdsm_to_detection_list_node',
-                extra_arguments=[
-                    {'use_intra_process_comms': True},
-                    {'--log-level' : GetLogLevel('cp_sdsm_to_detection_list_node', env_log_levels) },
-                ],
-                remappings=[
-                    ("input/sdsm", [ EnvironmentVariable('CARMA_MSG_NS', default_value=''), "/incoming_sdsm" ] ),
-                    ("output/detections", "full_detection_list"),
-                ],
-                parameters=[
-                    vehicle_config_param_file
-                ]
-            ),
+            #ComposableNode(
+            #    package='carma_cooperative_perception',
+            #    plugin='carma_cooperative_perception::SdsmToDetectionListNode',
+            #    name='cp_sdsm_to_detection_list_node',
+            #    extra_arguments=[
+            #        {'use_intra_process_comms': True},
+            #        {'--log-level' : GetLogLevel('cp_sdsm_to_detection_list_node', env_log_levels) },
+            #    ],
+            #    remappings=[
+            #        ("input/sdsm", [ EnvironmentVariable('CARMA_MSG_NS', default_value=''), "/incoming_sdsm" ] ),
+            #        ("output/detections", "full_detection_list"),
+            #    ],
+            #    parameters=[
+            #        vehicle_config_param_file
+            #    ]
+            #),
             ComposableNode(
                 package='carma_cooperative_perception',
                 plugin='carma_cooperative_perception::TrackListToExternalObjectListNode',
@@ -506,23 +506,23 @@ def generate_launch_description():
                     vehicle_config_param_file
                 ]
             ),
-            #ComposableNode(
-            #    package='carma_cooperative_perception',
-            #    plugin='carma_cooperative_perception::MultipleObjectTrackerNode',
-            #    name='cp_multiple_object_tracker_node',
-            #    extra_arguments=[
-            #        {'use_intra_process_comms': True},
-            #        {'--log-level' : GetLogLevel('cp_multiple_object_tracker_node', env_log_levels) },
-            #    ],
-            #    remappings=[
-            #        ("output/track_list", "cooperative_perception_track_list"),
-            #        ("input/detection_list", "filtered_detection_list"),
-            #    ],
-            #    parameters=[
-            #        cp_multiple_object_tracker_node_file,
-            #        vehicle_config_param_file
-            #    ]
-            #),
+            ComposableNode(
+                package='carma_cooperative_perception',
+                plugin='carma_cooperative_perception::MultipleObjectTrackerNode',
+                name='cp_multiple_object_tracker_node',
+                extra_arguments=[
+                    {'use_intra_process_comms': True},
+                    {'--log-level' : GetLogLevel('cp_multiple_object_tracker_node', env_log_levels) },
+                ],
+                remappings=[
+                    ("output/track_list", "cooperative_perception_track_list"),
+                    ("input/detection_list", "filtered_detection_list"),
+                ],
+                parameters=[
+                    cp_multiple_object_tracker_node_file,
+                    vehicle_config_param_file
+                ]
+            ),
 
         ]
     )
@@ -550,6 +550,6 @@ def generate_launch_description():
         carma_external_objects_container,
         lanelet2_map_loader_container,
         lanelet2_map_visualization_container,
-        carma_cooperative_perception_container,
+        #carma_cooperative_perception_container,
         subsystem_controller
     ])

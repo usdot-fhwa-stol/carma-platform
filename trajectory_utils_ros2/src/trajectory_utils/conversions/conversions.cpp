@@ -94,6 +94,8 @@ void speed_to_time(const std::vector<double>& downtrack, const std::vector<doubl
 void time_to_speed(const std::vector<double>& downtrack, const std::vector<double>& times, double initial_speed,
                    std::vector<double>* speeds)
 {
+  bool detected_negative_speed = false;
+  double detected_nagative_speed = 0.0;
   if (downtrack.size() != times.size())
   {
     throw std::invalid_argument("Input vector sizes do not match");
@@ -121,16 +123,32 @@ void time_to_speed(const std::vector<double>& downtrack, const std::vector<doubl
     double cur_speed;
 
     cur_speed = (2.0 * delta_d / dt) - prev_speed;
-    RCLCPP_ERROR_STREAM(rclcpp::get_logger("todo"), "time_to_speed: " << cur_speed );
+    // first speed value is often the measured speed, which can
+    // be small negative number if stopping (it happens in simulation for example)
+    // which is not an error and can be set to 0.0 safely. However, if large
+    // negative speed is detected, it most certainly has error in the given trajectory.
+    // The function throws in the end to indicate the user, while trying its best to
+    // continue converting by treating negative speed as 0.
+    if (cur_speed < -0.1)
+    {
+      detected_negative_speed = true;
+      detected_nagative_speed = std::min(cur_speed, detected_nagative_speed);
+    }
 
-    // can't have negative speed!
     cur_speed = std::max(0.0, cur_speed);
+
+    RCLCPP_ERROR_STREAM(rclcpp::get_logger("todo"), "time_to_speed: " << cur_speed );
 
     speeds->push_back(cur_speed);
 
     prev_position = cur_pos;
     prev_time = cur_time;
     prev_speed = cur_speed;
+  }
+
+  if (detected_negative_speed)
+  {
+    throw negative_speed_from_conversion("Detected negative speed while converting from time to speed in trajectory. The most negative value detected was: " + std::to_string(detected_nagative_speed));
   }
 }
 
