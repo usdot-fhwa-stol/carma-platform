@@ -785,7 +785,7 @@ namespace yield_plugin
     return result;
   }
 
-  double YieldPlugin::max_trajectory_speed(const std::vector<carma_planning_msgs::msg::TrajectoryPlanPoint>& trajectory_points, double earliest_collision_time) const
+  double YieldPlugin::max_trajectory_speed(const std::vector<carma_planning_msgs::msg::TrajectoryPlanPoint>& trajectory_points, double timestamp_to_search_until) const
   {
     double max_speed = 0;
     for(size_t i = 0; i < trajectory_points.size() - 2; i++ )
@@ -799,7 +799,7 @@ namespace yield_plugin
       {
         max_speed = v;
       }
-      if (rclcpp::Time(trajectory_points.at(i + 1).target_time).seconds() >= earliest_collision_time)
+      if (rclcpp::Time(trajectory_points.at(i + 1).target_time).seconds() >= timestamp_to_search_until)
       {
         break;
       }

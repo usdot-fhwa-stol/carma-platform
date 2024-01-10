@@ -40,7 +40,7 @@ acceptable_passed_timesteps: 5
 # Intervehicle distance that is considered a collision
 # Unit: m
 # Value type: Desired
-intervehicle_collision_distance: 6.0 #TODO account for obstacle + vehicle length into code
+intervehicle_collision_distance: 6.0
 # Radius to check for potential collision
 # Unit: m
 # Value type: Desired

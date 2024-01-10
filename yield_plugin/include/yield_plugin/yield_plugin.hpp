@@ -118,10 +118,10 @@ public:
   /**
    * \brief calculates the maximum speed in a set of tajectory points
    * \param trajectory_points trajectory points
-   # \param time in seconds before which to look for max trajectory speed
+   # \param timestamp_to_search_until in seconds before which to look for max trajectory speed
    * \return maximum speed
    */
-  double max_trajectory_speed(const std::vector<carma_planning_msgs::msg::TrajectoryPlanPoint>& trajectory_points, double earliest_collision_time) const;
+  double max_trajectory_speed(const std::vector<carma_planning_msgs::msg::TrajectoryPlanPoint>& trajectory_points, double timestamp_to_search_until) const;
 
   /**
    * \brief calculates distance between trajectory points in a plan
