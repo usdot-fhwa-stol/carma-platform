@@ -57,7 +57,7 @@ jobs:
           command: |
             source ${INIT_ENV}
             ./src/CARMAPlatform/docker/checkout.bash -r ${PWD}
-            ./src/multiple_object_tracking/scripts/install_dependencies.sh
+            sudo ./src/multiple_object_tracking/scripts/install_dependencies.sh
       - run:
           name: Build CARMA ROS 1
           command: |
