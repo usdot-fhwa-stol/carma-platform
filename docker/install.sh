@@ -18,6 +18,9 @@ set -ex
 
 # Build the software and its dependencies
 
+echo "Installing multiple object tracking dependencies"
+sudo ./multiple_object_tracking/scripts/install_dependencies.sh
+
 ###
 # ROS1 installation
 ###
@@ -66,9 +69,6 @@ fi
 cd ~/carma_ws
 
 echo "Building ROS2 CARMA Components"
-
-echo "Installing multiple object tracking dependencies"
-sudo ./multiple_object_tracking/scripts/install_dependencies.sh
 
 if [[ ! -z "$ROS1_PACKAGES$ROS2_PACKAGES" ]]; then
     if [[ ! -z "$ROS2_PACKAGES" ]]; then
