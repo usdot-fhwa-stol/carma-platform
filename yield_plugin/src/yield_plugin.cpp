@@ -434,7 +434,7 @@ namespace yield_plugin
         double dt = (2 * original_traj_relative_downtracks.at(i)) / (current_speed + prev_speed);
         jmt_tpp = original_tp.trajectory_points.at(i);
         jmt_tpp.target_time =  rclcpp::Time(jmt_trajectory_points.back().target_time) + rclcpp::Duration(dt * 1e9);
-        RCLCPP_ERROR_STREAM(nh_->get_logger(), "non-empty x: " << jmt_tpp.x << ", y:" << jmt_tpp.y << ", t:" << std::to_string(rclcpp::Time(jmt_tpp.target_time).seconds()) << ", current_speed:" << current_speed);
+        RCLCPP_ERROR_STREAM(nh_->get_logger(), "non-empty x: " << jmt_tpp.x << ", y:" << jmt_tpp.y << ", t:" << std::to_string(rclcpp::Time(jmt_tpp.target_time).seconds()) << ", prev_speed: " << prev_speed << ", current_speed: " << current_speed);
 
         jmt_trajectory_points.push_back(jmt_tpp);
       }
@@ -443,8 +443,17 @@ namespace yield_plugin
         RCLCPP_DEBUG(nh_->get_logger(),"Target speed is zero, applying constant time");
         // if speed is zero, the vehicle will stay in previous location.
         jmt_tpp = original_tp.trajectory_points.at(i);
-        jmt_tpp.target_time = rclcpp::Time(jmt_trajectory_points.back().target_time) + rclcpp::Duration(6000 * 1e9); // normally 0.2 sec plan into 100 mins effectively making it stop, but keeping original points
-        RCLCPP_ERROR_STREAM(nh_->get_logger(), "empty x: " << jmt_tpp.x << ", y:" << jmt_tpp.y << ", t:" << std::to_string(rclcpp::Time(jmt_tpp.target_time).seconds()));
+        current_speed = 0;
+        if (prev_speed > 0.01)
+        {
+          double dt = (2 * original_traj_relative_downtracks.at(i)) / (prev_speed);
+          jmt_tpp.target_time =  rclcpp::Time(jmt_trajectory_points.back().target_time) + rclcpp::Duration(dt * 1e9);
+        }
+        else
+        {
+          jmt_tpp.target_time = rclcpp::Time(jmt_trajectory_points.back().target_time) + rclcpp::Duration(6000 * 1e9); // normally 0.2 sec plan into 100 mins effectively making it stop, but keeping original points
+        }
+        RCLCPP_ERROR_STREAM(nh_->get_logger(), "empty x: " << jmt_tpp.x << ", y:" << jmt_tpp.y << ", t:" << std::to_string(rclcpp::Time(jmt_tpp.target_time).seconds()) << ", prev_speed: " << prev_speed << ", current_speed: " << current_speed);
         jmt_trajectory_points.push_back(jmt_tpp);
       }
 
