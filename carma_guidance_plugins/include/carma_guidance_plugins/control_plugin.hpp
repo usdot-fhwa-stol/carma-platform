@@ -21,19 +21,19 @@
 #include <geometry_msgs/msg/pose_stamped.hpp>
 #include <geometry_msgs/msg/twist_stamped.hpp>
 #include <autoware_msgs/msg/control_command_stamped.hpp>
-
+#include <carma_planning_msgs/msg/guidance_state.hpp>
 #include "carma_guidance_plugins/plugin_base_node.hpp"
 
 namespace carma_guidance_plugins
 {
 
   /**
-   * \brief ControlPlugin base class which can be extended by user provided plugins which wish to implement the Control Plugin ROS API. 
-   * 
-   * A control plugin is responsible for generating high frequency vehicle speed and steering commands to execute the currently planned trajectory. 
-   * This plugin provides default subscribers to track the pose, velocity, and current trajectory in the system. 
-   * Extending classes must implement the generate_command() method to use that data and or additional data to plan commands at a 30Hz frequency. 
-   * 
+   * \brief ControlPlugin base class which can be extended by user provided plugins which wish to implement the Control Plugin ROS API.
+   *
+   * A control plugin is responsible for generating high frequency vehicle speed and steering commands to execute the currently planned trajectory.
+   * This plugin provides default subscribers to track the pose, velocity, and current trajectory in the system.
+   * Extending classes must implement the generate_command() method to use that data and or additional data to plan commands at a 30Hz frequency.
+   *
    */
   class ControlPlugin : public PluginBaseNode
   {
@@ -43,6 +43,7 @@ namespace carma_guidance_plugins
     carma_ros2_utils::SubPtr<geometry_msgs::msg::PoseStamped> current_pose_sub_;
     carma_ros2_utils::SubPtr<geometry_msgs::msg::TwistStamped> current_velocity_sub_;
     carma_ros2_utils::SubPtr<carma_planning_msgs::msg::TrajectoryPlan> trajectory_plan_sub_;
+    carma_ros2_utils::SubPtr<carma_planning_msgs::msg::GuidanceState> guidance_state_sub_;
 
     // Publishers
     carma_ros2_utils::PubPtr<autoware_msgs::msg::ControlCommandStamped> vehicle_cmd_pub_;
@@ -54,7 +55,7 @@ namespace carma_guidance_plugins
     void current_pose_callback(geometry_msgs::msg::PoseStamped::UniquePtr msg);
     void current_twist_callback(geometry_msgs::msg::TwistStamped::UniquePtr msg);
     void current_trajectory_callback(carma_planning_msgs::msg::TrajectoryPlan::UniquePtr msg);
-
+    void guidance_state_callback(carma_planning_msgs::msg::GuidanceState::UniquePtr plan);
 
   protected:
 
@@ -71,7 +72,7 @@ namespace carma_guidance_plugins
 
   public:
     /**
-     * \brief ControlPlugin constructor 
+     * \brief ControlPlugin constructor
      */
     explicit ControlPlugin(const rclcpp::NodeOptions &);
 
@@ -79,13 +80,13 @@ namespace carma_guidance_plugins
     virtual ~ControlPlugin() = default;
 
     /**
-     * \brief Extending class provided method which should generate a command message 
+     * \brief Extending class provided method which should generate a command message
      *        which will be published to the required topic by the base class
-     * 
+     *
      * NOTE:  Implementer can determine if trajectory has changed based on current_trajectory_->trajectory_id
-     * 
+     *
      * \return The command message to publish
-     */ 
+     */
     virtual autoware_msgs::msg::ControlCommandStamped generate_command() = 0;
 
     ////
@@ -97,12 +98,12 @@ namespace carma_guidance_plugins
 
     // Final
     uint8_t get_type() override final;
-
+    bool guidance_engaged_ = false;
     carma_ros2_utils::CallbackReturn handle_on_configure(const rclcpp_lifecycle::State &) override final;
     carma_ros2_utils::CallbackReturn handle_on_activate(const rclcpp_lifecycle::State &) override final;
     carma_ros2_utils::CallbackReturn handle_on_deactivate(const rclcpp_lifecycle::State &) override final;
     carma_ros2_utils::CallbackReturn handle_on_cleanup(const rclcpp_lifecycle::State &) override final;
-    carma_ros2_utils::CallbackReturn handle_on_shutdown(const rclcpp_lifecycle::State &) override final; 
+    carma_ros2_utils::CallbackReturn handle_on_shutdown(const rclcpp_lifecycle::State &) override final;
     carma_ros2_utils::CallbackReturn handle_on_error(const rclcpp_lifecycle::State &, const std::string &exception_string) override final;
   };
 

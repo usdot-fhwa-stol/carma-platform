@@ -31,9 +31,9 @@ namespace carma_guidance_plugins
     return "control/trajectory_control";
   }
 
-  uint8_t ControlPlugin::get_type() 
+  uint8_t ControlPlugin::get_type()
   {
-    return carma_planning_msgs::msg::Plugin::CONTROL; 
+    return carma_planning_msgs::msg::Plugin::CONTROL;
   }
 
   void ControlPlugin::current_pose_callback(geometry_msgs::msg::PoseStamped::UniquePtr msg)
@@ -54,11 +54,19 @@ namespace carma_guidance_plugins
     current_trajectory_ = *msg;
   }
 
+  void ControlPlugin::guidance_state_callback(carma_planning_msgs::msg::GuidanceState::UniquePtr msg)
+  {
+    guidance_engaged_ = (msg->state == carma_planning_msgs::msg::GuidanceState::ENGAGED);
+  }
+
   carma_ros2_utils::CallbackReturn ControlPlugin::handle_on_configure(const rclcpp_lifecycle::State &prev_state)
   {
     // Initialize subscribers and publishers
     current_pose_sub_ = create_subscription<geometry_msgs::msg::PoseStamped>("current_pose", 1,
       std::bind(&ControlPlugin::current_pose_callback, this, std_ph::_1));
+
+    guidance_state_sub_ = create_subscription<carma_planning_msgs::msg::GuidanceState>("guidance_state", 5,
+      std::bind(&ControlPlugin::guidanceStateCallback, this, std_ph::_1));
 
     current_velocity_sub_ = create_subscription<geometry_msgs::msg::TwistStamped>("vehicle/twist", 1,
       std::bind(&ControlPlugin::current_twist_callback, this, std_ph::_1));
@@ -74,10 +82,14 @@ namespace carma_guidance_plugins
         [this]() {
           if (this->get_activation_status()) // Only trigger when activated
           {
+            if (guidance_engaged_)
+            {
+              current_trajectory_ = std::nullopt;
+            }
             this->vehicle_cmd_pub_->publish(this->generate_command());
           }
         });
-    
+
     return PluginBaseNode::handle_on_configure(prev_state);
   }
 
