@@ -65,8 +65,8 @@ namespace carma_guidance_plugins
     current_pose_sub_ = create_subscription<geometry_msgs::msg::PoseStamped>("current_pose", 1,
       std::bind(&ControlPlugin::current_pose_callback, this, std_ph::_1));
 
-    guidance_state_sub_ = create_subscription<carma_planning_msgs::msg::GuidanceState>("guidance_state", 5,
-      std::bind(&ControlPlugin::guidanceStateCallback, this, std_ph::_1));
+    guidance_state_sub_ = create_subscription<carma_planning_msgs::msg::GuidanceState>("/guidance/guidance_state", 5,
+      std::bind(&ControlPlugin::guidance_state_callback, this, std_ph::_1));
 
     current_velocity_sub_ = create_subscription<geometry_msgs::msg::TwistStamped>("vehicle/twist", 1,
       std::bind(&ControlPlugin::current_twist_callback, this, std_ph::_1));
@@ -84,7 +84,7 @@ namespace carma_guidance_plugins
           {
             if (guidance_engaged_)
             {
-              current_trajectory_ = std::nullopt;
+              current_trajectory_ = boost::none;
             }
             this->vehicle_cmd_pub_->publish(this->generate_command());
           }
