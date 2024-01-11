@@ -1195,38 +1195,13 @@ namespace basic_autonomy
 
             trajectory_utils::conversions::trajectory_to_downtrack_time(trajectory_points, &downtracks, &times);
 
-            //detect stopping case
-            size_t stopping_index = 0;
-            for (size_t i = 1; i < times.size(); i++)
-            {
-                if (times[i] == times[i - 1]) //if exactly same, it is stopping case
-                {
-                    RCLCPP_DEBUG_STREAM(rclcpp::get_logger(BASIC_AUTONOMY_LOGGER), "Detected a stopping case where times is exactly equal: " << times[i-1]);
-                    RCLCPP_DEBUG_STREAM(rclcpp::get_logger(BASIC_AUTONOMY_LOGGER), "And index of that is: " << i << ", where size is: " << times.size());
-                    stopping_index = i;
-                    break;
-                }
-            }
-
             std::vector<double> speeds;
+            int negative_speed_index = 0;
             trajectory_utils::conversions::time_to_speed(downtracks, times, tp.initial_longitudinal_velocity, &speeds);
 
             if (speeds.size() != trajectory_points.size())
             {
                 throw std::invalid_argument("Speeds and trajectory points sizes do not match");
-            }
-
-            for (size_t i = 0; i < speeds.size(); i++) { // Ensure 0 is min speed
-                if (stopping_index != 0 && i >= stopping_index - 1)
-                {
-                    RCLCPP_DEBUG_STREAM(rclcpp::get_logger(BASIC_AUTONOMY_LOGGER), "Made it to 0, i: " << i);
-
-                    speeds[i] = 0.0;  //stopping case
-                }
-                else
-                {
-                    speeds[i] = std::max(0.0, speeds[i]);
-                }
             }
 
             std::vector<double> lag_speeds;

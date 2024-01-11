@@ -345,7 +345,7 @@ std::vector<carma_planning_msgs::msg::TrajectoryPlanPoint> StopandWait::compose_
 
   std::vector<double> filtered_speeds = basic_autonomy::smoothing::moving_average_filter(speeds, config_.moving_average_window_size);
 
-  for (size_t i = 0; i < filtered_speeds.size(); i++)
+  for (size_t i = 1; i < filtered_speeds.size(); i++)
   {  // Apply minimum speed constraint
     double downtrack = downtracks[i];
 
@@ -375,9 +375,9 @@ std::vector<carma_planning_msgs::msg::TrajectoryPlanPoint> StopandWait::compose_
   {
     if (times[i] != 0 && !std::isnormal(times[i]) && i != 0)
     {  // If the time
-      RCLCPP_WARN_STREAM(rclcpp::get_logger("stop_and_wait_plugin"),"Detected non-normal (nan, inf, etc.) time. Making it same as before: " << times[i-1]);
-      // NOTE: overriding the timestamps in assumption that pure_pursuit_wrapper will detect it as stopping case
-      times[i] = times[i - 1];
+      RCLCPP_WARN_STREAM(rclcpp::get_logger("stop_and_wait_plugin"),"Detected non-normal (nan, inf, etc.) time."
+        "This happens due to  dv = dx/0.0 = inf speed. Incrementing time by arbitrary large number to achieve stopping behavior");
+      times[i] = times[i - 1] + 3600.0; //assigning 10hr difference between what is normally 0.1-0.2 sec
     }
   }
 
@@ -389,11 +389,27 @@ std::vector<carma_planning_msgs::msg::TrajectoryPlanPoint> StopandWait::compose_
   }
 
   auto traj = trajectory_from_points_times_orientations(raw_points, times, yaws, start_time);
-
+  bool is_first_extrapolation_point = true;
   while (rclcpp::Time(traj.back().target_time) - rclcpp::Time(traj.front().target_time) < rclcpp::Duration(config_.minimal_trajectory_duration * 1e9))
   {
     carma_planning_msgs::msg::TrajectoryPlanPoint new_point = traj.back();
-    new_point.target_time = rclcpp::Time(new_point.target_time) + rclcpp::Duration(config_.stop_timestep * 1e9);
+    auto new_target_time = rclcpp::Time(new_point.target_time) + rclcpp::Duration(config_.stop_timestep * 1e9);
+
+
+    // first dx must not be 0 when extrapolating
+    if (is_first_extrapolation_point)
+    {
+      double dt = filtered_speeds.back()/config_.accel_limit;
+      new_point.x += cos(yaws.back()) * filtered_speeds.back() * dt / 2;
+      new_point.y += sin(yaws.back()) * filtered_speeds.back() * dt / 2;
+      new_target_time = rclcpp::Time(new_point.target_time) + rclcpp::Duration(dt * 1e9);
+      RCLCPP_DEBUG_STREAM(rclcpp::get_logger("stop_and_wait_plugin"),"First extrapolation filtered_speeds.back(): " << filtered_speeds.back()
+        << ", yaws.back(): " << yaws.back() << ", cos(yaws.back()): " << cos(yaws.back())
+        << ", sin(yaws.back()): " << sin(yaws.back()) << ", new_point.x: " << new_point.x << ", new_point.y" << new_point.y << ", dt: " << dt);
+
+      is_first_extrapolation_point = false;
+    }
+    new_point.target_time = new_target_time;
     new_point.planner_plugin_name = plugin_name_;
     traj.push_back(new_point);
   }
