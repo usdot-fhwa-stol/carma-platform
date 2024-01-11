@@ -82,7 +82,7 @@ namespace carma_guidance_plugins
         [this]() {
           if (this->get_activation_status()) // Only trigger when activated
           {
-            if (guidance_engaged_)
+            if (!guidance_engaged_)
             {
               current_trajectory_ = boost::none;
             }
