@@ -55,7 +55,7 @@ namespace carma_guidance_plugins
     void current_pose_callback(geometry_msgs::msg::PoseStamped::UniquePtr msg);
     void current_twist_callback(geometry_msgs::msg::TwistStamped::UniquePtr msg);
     void current_trajectory_callback(carma_planning_msgs::msg::TrajectoryPlan::UniquePtr msg);
-    void guidance_state_callback(carma_planning_msgs::msg::GuidanceState::UniquePtr plan);
+    void guidance_state_callback(carma_planning_msgs::msg::GuidanceState::UniquePtr msg);
 
   protected:
 
