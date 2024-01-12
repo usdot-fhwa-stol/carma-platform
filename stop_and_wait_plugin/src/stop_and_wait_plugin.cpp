@@ -217,7 +217,6 @@ std::vector<carma_planning_msgs::msg::TrajectoryPlanPoint> StopandWait::trajecto
   {
     carma_planning_msgs::msg::TrajectoryPlanPoint tpp;
 
-
     if (times[i] != 0 && !std::isnormal(times[i]) && i != 0)
     {
       RCLCPP_WARN_STREAM(rclcpp::get_logger("stop_and_wait_plugin"),"Detected non-normal (nan, inf, etc.) time."
@@ -356,7 +355,7 @@ std::vector<carma_planning_msgs::msg::TrajectoryPlanPoint> StopandWait::compose_
   bool vehicle_in_buffer = downtracks.back() < stop_location_buffer;
 
   std::vector<double> filtered_speeds = basic_autonomy::smoothing::moving_average_filter(speeds, config_.moving_average_window_size);
-
+  bool first_stopping = true;
   for (size_t i = 1; i < filtered_speeds.size(); i++)
   {  // Apply minimum speed constraint
     double downtrack = downtracks[i];
@@ -368,7 +367,17 @@ std::vector<carma_planning_msgs::msg::TrajectoryPlanPoint> StopandWait::compose_
 
       // To avoid any issues in control plugin behavior we only command 0 if the vehicle is inside the buffer
       if (vehicle_in_buffer || (i == filtered_speeds.size() - 1)) { // Vehicle is in the buffer
+        if (first_stopping)
+        {
+          downtracks[i] = downtracks[i - 1] + pow(filtered_speeds[i - 1],2) / (2 * config_.accel_limit);  // distance required to stop at max acceleration
+          first_stopping = false;
+        }
+        else
+        {
+          downtracks[i] = downtracks[i - 1];
+        }
         filtered_speeds[i] = 0.0;
+
       } else { // Vehicle is not in the buffer so fill buffer with crawl speed
         filtered_speeds[i] = std::max(filtered_speeds[i], config_.crawl_speed);
       }
