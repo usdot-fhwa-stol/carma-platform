@@ -377,7 +377,6 @@ auto to_external_object_msg(const carma_cooperative_perception_interfaces::msg::
   external_object.header = track.header;
   external_object.presence_vector = 0;
 
-
   const auto to_numeric_id = [](std::string string_id) -> std::optional<uint32_t> {
     auto non_digit_start = std::remove_if(
       std::begin(string_id), std::end(string_id),
@@ -399,7 +398,6 @@ auto to_external_object_msg(const carma_cooperative_perception_interfaces::msg::
     external_object.id = numeric_id.value();
   } else {
     external_object.presence_vector &= ~external_object.ID_PRESENCE_VECTOR;
-    RCLCPP_ERROR_STREAM(rclcpp::get_logger("cp"), "So this failed with out_of_range where track.id: " << track.id );
   }
 
   external_object.presence_vector |= external_object.POSE_PRESENCE_VECTOR;
