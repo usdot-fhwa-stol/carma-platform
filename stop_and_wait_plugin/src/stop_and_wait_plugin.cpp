@@ -398,12 +398,17 @@ std::vector<carma_planning_msgs::msg::TrajectoryPlanPoint> StopandWait::compose_
     if (is_first_extrapolation_point)
     {
       double dt = filtered_speeds.back()/config_.accel_limit;
-      new_point.x += cos(yaws.back()) * filtered_speeds.back() * dt / 2;
-      new_point.y += sin(yaws.back()) * filtered_speeds.back() * dt / 2;
+      double dx = cos(yaws.back()) * filtered_speeds.back() * dt / 2;
+      double dy = sin(yaws.back()) * filtered_speeds.back() * dt / 2;
+      double dist = sqrt(pow(dx,2) + pow(dy,2));
+      new_point.x += dx;
+      new_point.y += dy;
       new_target_time = rclcpp::Time(new_point.target_time) + rclcpp::Duration(dt * 1e9);
       RCLCPP_DEBUG_STREAM(rclcpp::get_logger("stop_and_wait_plugin"),"First extrapolation filtered_speeds.back(): " << filtered_speeds.back()
+        << ", dist: " << dist << ", dx: " << dx << ", dy" << dy << ", dt: " << dt);
+      RCLCPP_DEBUG_STREAM(rclcpp::get_logger("stop_and_wait_plugin"),"First extrapolation filtered_speeds.back(): " << filtered_speeds.back()
         << ", yaws.back(): " << yaws.back() << ", cos(yaws.back()): " << cos(yaws.back())
-        << ", sin(yaws.back()): " << sin(yaws.back()) << ", new_point.x: " << new_point.x << ", new_point.y" << new_point.y << ", dt: " << dt);
+        << ", sin(yaws.back()): " << sin(yaws.back()) << ", new_point.x: " << new_point.x << ", new_point.y" << new_point.y << ", timestamp: " << std::to_string(new_target_time.seconds()));
 
       is_first_extrapolation_point = false;
     }
