@@ -216,16 +216,20 @@ std::vector<carma_planning_msgs::msg::TrajectoryPlanPoint> StopandWait::trajecto
   for (size_t i = 0; i < points.size(); i++)
   {
     carma_planning_msgs::msg::TrajectoryPlanPoint tpp;
-    rclcpp::Duration relative_time(times[i] * 1e9);
+
 
     if (times[i] != 0 && !std::isnormal(times[i]) && i != 0)
-    {  // If the time
+    {
       RCLCPP_WARN_STREAM(rclcpp::get_logger("stop_and_wait_plugin"),"Detected non-normal (nan, inf, etc.) time."
         "This happens due to 0 downtrack and 0 speed where dt = dx/dv = 0/0.0 = nan. Incremeneting time by little.");
-      relative_time = rclcpp::Duration(config_.stop_timestep * 1e9);
+      tpp.target_time = rclcpp::Time(traj.back().target_time) + rclcpp::Duration(config_.stop_timestep * 1e9);
+    }
+    else
+    {
+      rclcpp::Duration relative_time(times[i] * 1e9);
+      tpp.target_time = startTime + relative_time;
     }
 
-    tpp.target_time = startTime + relative_time;
     tpp.x = points[i].x();
     tpp.y = points[i].y();
     tpp.yaw = yaws[i];
