@@ -106,15 +106,14 @@ public:
                             std::vector<double>* speeds) const;
   /**
    * \brief Combines the points, times, and yaws to create a trajectory that starts from startTime
-   *  NOTE: If times has non-normal value (nan, inf etc), which can happen when speed is 0, it increments current time by 10hr from previous
    * \param points The list of points that define the trajectory
-   * \param times The list if times associated to points. The input is modified if times has inf or nan values
+   * \param times The list if times associated to points.
    * \param yaws The list if yaws associated to points
    * \param starTime start time of the trajectory
    * \return A trajectory plan
    */
   std::vector<carma_planning_msgs::msg::TrajectoryPlanPoint> trajectory_from_points_times_orientations(
-      const std::vector<lanelet::BasicPoint2d>& points, std::vector<double>& times,
+      const std::vector<lanelet::BasicPoint2d>& points, const std::vector<double>& times,
       const std::vector<double>& yaws, rclcpp::Time startTime);
 
   /**

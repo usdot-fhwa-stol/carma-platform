@@ -202,7 +202,7 @@ std::vector<PointSpeedPair> StopandWait::maneuvers_to_points(const std::vector<c
 }
 
 std::vector<carma_planning_msgs::msg::TrajectoryPlanPoint> StopandWait::trajectory_from_points_times_orientations(
-    const std::vector<lanelet::BasicPoint2d>& points, std::vector<double>& times, const std::vector<double>& yaws,
+    const std::vector<lanelet::BasicPoint2d>& points, const std::vector<double>& times, const std::vector<double>& yaws,
     rclcpp::Time startTime)
 {
   if (points.size() != times.size() || points.size() != yaws.size())
@@ -216,15 +216,15 @@ std::vector<carma_planning_msgs::msg::TrajectoryPlanPoint> StopandWait::trajecto
   for (size_t i = 0; i < points.size(); i++)
   {
     carma_planning_msgs::msg::TrajectoryPlanPoint tpp;
+    rclcpp::Duration relative_time(times[i] * 1e9);
 
     if (times[i] != 0 && !std::isnormal(times[i]) && i != 0)
     {  // If the time
       RCLCPP_WARN_STREAM(rclcpp::get_logger("stop_and_wait_plugin"),"Detected non-normal (nan, inf, etc.) time."
-        "This happens due to  dv = dx/0.0 = inf speed. Incrementing time by arbitrary large number to achieve stopping behavior");
-      times[i] = times[i - 1] + 3600.0; //assigning 10hr difference between what is normally 0.1-0.2 sec
+        "This happens due to 0 downtrack and 0 speed where dt = dx/dv = 0/0.0 = nan. Incremeneting time by little.");
+      relative_time = rclcpp::Duration(config_.stop_timestep * 1e9);
     }
 
-    rclcpp::Duration relative_time(times[i] * 1e9);
     tpp.target_time = startTime + relative_time;
     tpp.x = points[i].x();
     tpp.y = points[i].y();
@@ -385,7 +385,7 @@ std::vector<carma_planning_msgs::msg::TrajectoryPlanPoint> StopandWait::compose_
 
   for (size_t i = 0; i < points.size(); i++)
   {
-    RCLCPP_DEBUG_STREAM(rclcpp::get_logger("stop_and_wait_plugin"),"1d: " << downtracks[i] << " t: " << times[i] << " v: " << filtered_speeds[i]);
+    RCLCPP_DEBUG_STREAM(rclcpp::get_logger("stop_and_wait_plugin"),"1d: " << downtracks[i] << " t: " << (rclcpp::Time(traj[i].target_time) - start_time).seconds() << " v: " << filtered_speeds[i]);
   }
 
   bool is_first_extrapolation_point = true;
@@ -393,7 +393,6 @@ std::vector<carma_planning_msgs::msg::TrajectoryPlanPoint> StopandWait::compose_
   {
     carma_planning_msgs::msg::TrajectoryPlanPoint new_point = traj.back();
     auto new_target_time = rclcpp::Time(new_point.target_time) + rclcpp::Duration(config_.stop_timestep * 1e9);
-
 
     // first dx must not be 0 when extrapolating
     if (is_first_extrapolation_point)
