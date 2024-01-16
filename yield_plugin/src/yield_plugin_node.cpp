@@ -27,18 +27,18 @@ namespace yield_plugin
   {
     // Declare parameters
     config_.acceleration_adjustment_factor = declare_parameter<double>("acceleration_adjustment_factor", config_.acceleration_adjustment_factor);
-    config_.min_obstacle_speed = declare_parameter<double>("min_obstacle_speed", config_.min_obstacle_speed);
-    config_.on_route_vehicle_collision_horizon = declare_parameter<double>("on_route_vehicle_collision_horizon", config_.on_route_vehicle_collision_horizon);
-    config_.collision_check_radius = declare_parameter<double>("collision_check_radius", config_.collision_check_radius);
-    config_.yield_max_deceleration = declare_parameter<double>("yield_max_deceleration", config_.yield_max_deceleration);
-    config_.tpmin = declare_parameter<double>("tpmin", config_.tpmin);
-    config_.x_gap = declare_parameter<double>("x_gap", config_.x_gap);
-    config_.max_stop_speed= declare_parameter<double>("max_stop_speed", config_.max_stop_speed);
+    config_.min_obstacle_speed_in_ms = declare_parameter<double>("min_obstacle_speed_in_ms", config_.min_obstacle_speed_in_ms);
+    config_.on_route_vehicle_collision_horizon_in_s = declare_parameter<double>("on_route_vehicle_collision_horizon_in_s", config_.on_route_vehicle_collision_horizon_in_s);
+    config_.collision_check_radius_in_m = declare_parameter<double>("collision_check_radius_in_m", config_.collision_check_radius_in_m);
+    config_.yield_max_deceleration_in_ms2 = declare_parameter<double>("yield_max_deceleration_in_ms2", config_.yield_max_deceleration_in_ms2);
+    config_.min_obj_avoidance_plan_time_in_s = declare_parameter<double>("min_obj_avoidance_plan_time_in_s", config_.min_obj_avoidance_plan_time_in_s);
+    config_.minimum_safety_gap_in_meters = declare_parameter<double>("minimum_safety_gap_in_meters", config_.minimum_safety_gap_in_meters);
+    config_.max_stop_speed_in_ms= declare_parameter<double>("max_stop_speed_in_ms", config_.max_stop_speed_in_ms);
     config_.enable_cooperative_behavior = declare_parameter< bool>("enable_cooperative_behavior", config_.enable_cooperative_behavior);
     config_.always_accept_mobility_request = declare_parameter< bool>("always_accept_mobility_request", config_.always_accept_mobility_request);
     config_.acceptable_passed_timesteps = declare_parameter<int>("acceptable_passed_timesteps", config_.acceptable_passed_timesteps);
-    config_.intervehicle_collision_distance = declare_parameter<double>("intervehicle_collision_distance", config_.intervehicle_collision_distance);
-    config_.safety_collision_time_gap = declare_parameter<double>("safety_collision_time_gap", config_.safety_collision_time_gap);
+    config_.intervehicle_collision_distance_in_m = declare_parameter<double>("intervehicle_collision_distance_in_m", config_.intervehicle_collision_distance_in_m);
+    config_.safety_collision_time_gap_in_s = declare_parameter<double>("safety_collision_time_gap_in_s", config_.safety_collision_time_gap_in_s);
     config_.enable_adjustable_gap = declare_parameter<bool>("enable_adjustable_gap", config_.enable_adjustable_gap);
     config_.acceptable_urgency = declare_parameter<int>("acceptable_urgency", config_.acceptable_urgency);
     config_.speed_moving_average_window_size = declare_parameter<double>("speed_moving_average_window_size", config_.speed_moving_average_window_size);
@@ -54,22 +54,22 @@ namespace yield_plugin
     config_ = YieldPluginConfig();
 
     get_parameter<double>("acceleration_adjustment_factor", config_.acceleration_adjustment_factor);
-    get_parameter<double>("min_obstacle_speed", config_.min_obstacle_speed);
-    get_parameter<double>("on_route_vehicle_collision_horizon", config_.on_route_vehicle_collision_horizon);
-    get_parameter<double>("collision_check_radius", config_.collision_check_radius);
-    get_parameter<double>("yield_max_deceleration", config_.yield_max_deceleration);
-    get_parameter<double>("x_gap", config_.x_gap);
-    get_parameter<double>("max_stop_speed", config_.max_stop_speed);
+    get_parameter<double>("min_obstacle_speed_in_ms", config_.min_obstacle_speed_in_ms);
+    get_parameter<double>("on_route_vehicle_collision_horizon_in_s", config_.on_route_vehicle_collision_horizon_in_s);
+    get_parameter<double>("collision_check_radius_in_m", config_.collision_check_radius_in_m);
+    get_parameter<double>("yield_max_deceleration_in_ms2", config_.yield_max_deceleration_in_ms2);
+    get_parameter<double>("minimum_safety_gap_in_meters", config_.minimum_safety_gap_in_meters);
+    get_parameter<double>("max_stop_speed_in_ms", config_.max_stop_speed_in_ms);
     get_parameter<bool>("enable_cooperative_behavior", config_.enable_cooperative_behavior);
     get_parameter<bool>("always_accept_mobility_request", config_.always_accept_mobility_request);
     get_parameter<int>("acceptable_passed_timesteps", config_.acceptable_passed_timesteps);
-    get_parameter<double>("intervehicle_collision_distance", config_.intervehicle_collision_distance);
+    get_parameter<double>("intervehicle_collision_distance_in_m", config_.intervehicle_collision_distance_in_m);
 
-    get_parameter<double>("safety_collision_time_gap", config_.safety_collision_time_gap);
+    get_parameter<double>("safety_collision_time_gap_in_s", config_.safety_collision_time_gap_in_s);
     get_parameter<bool>("enable_adjustable_gap", config_.enable_adjustable_gap);
     get_parameter<int>("acceptable_urgency", config_.acceptable_urgency);
     get_parameter<double>("speed_moving_average_window_size", config_.speed_moving_average_window_size);
-    get_parameter<double>("tpmin", config_.tpmin);
+    get_parameter<double>("min_obj_avoidance_plan_time_in_s", config_.min_obj_avoidance_plan_time_in_s);
     get_parameter<double>("vehicle_length", config_.vehicle_length);
     get_parameter<double>("vehicle_height", config_.vehicle_height);
     get_parameter<double>("vehicle_width", config_.vehicle_width);

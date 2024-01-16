@@ -309,7 +309,7 @@ TEST(YieldPluginTest, detect_collision_time)
   config.vehicle_length = 4;
   config.vehicle_width = 2;
   config.vehicle_height = 1;
-  config.collision_check_radius = 90;
+  config.collision_check_radius_in_m = 90;
 
   // std::shared_ptr<carma_wm::CARMAWorldModel> wm = std::make_shared<carma_wm::CARMAWorldModel>();
   auto nh = std::make_shared<yield_plugin::YieldPluginNode>(rclcpp::NodeOptions());

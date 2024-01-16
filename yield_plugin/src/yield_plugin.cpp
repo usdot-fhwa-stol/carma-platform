@@ -61,7 +61,7 @@ namespace yield_plugin
     {
       double res = boost::geometry::distance(incoming_trajectory.at(i), self_traj);
 
-      if (fabs(res) <= config_.intervehicle_collision_distance)
+      if (fabs(res) <= config_.intervehicle_collision_distance_in_m)
       {
          intersection_points.push_back(std::make_pair(i, incoming_trajectory.at(i)));
       }
@@ -187,7 +187,7 @@ namespace yield_plugin
         set_incoming_request_info(req_traj_plan, req_traj_speed, req_plan_time, req_timestamp);
 
 
-        if (req_expiration_sec - current_time_sec >= config_.tpmin && cooperative_request_acceptable_)
+        if (req_expiration_sec - current_time_sec >= config_.min_obj_avoidance_plan_time_in_s && cooperative_request_acceptable_)
         {
           timesteps_since_last_req_ = 0;
           lc_status_msg.status = carma_planning_msgs::msg::LaneChangeStatus::REQUEST_ACCEPTED;
@@ -311,9 +311,9 @@ namespace yield_plugin
       // check if a digital_gap is available
       double digital_gap = check_traj_for_digital_min_gap(original_tp);
       RCLCPP_DEBUG_STREAM(nh_->get_logger(),"digital_gap: " << digital_gap);
-      goal_pos = sqrt(dx*dx + dy*dy) - config_.x_gap;
+      goal_pos = sqrt(dx*dx + dy*dy) - config_.minimum_safety_gap_in_meters;
       RCLCPP_DEBUG_STREAM(nh_->get_logger(),"Goal position (goal_pos): " << goal_pos);
-      double collision_time = req_timestamp_ + (intersection_points[0].first * ecef_traj_timestep_) - config_.safety_collision_time_gap;
+      double collision_time = req_timestamp_ + (intersection_points[0].first * ecef_traj_timestep_) - config_.safety_collision_time_gap_in_s;
       RCLCPP_DEBUG_STREAM(nh_->get_logger(),"req time stamp: " << req_timestamp_);
       RCLCPP_DEBUG_STREAM(nh_->get_logger(),"Collision time: " << collision_time);
       RCLCPP_DEBUG_STREAM(nh_->get_logger(),"intersection num: " << intersection_points[0].first);
@@ -325,7 +325,7 @@ namespace yield_plugin
       double incoming_trajectory_speed = sqrt(dx2*dx2 + dy2*dy2)/(intersection_points[0].first * ecef_traj_timestep_);
       // calculate goal velocity from request trajectory
       goal_velocity = std::min(goal_velocity, incoming_trajectory_speed);
-      double min_time = (initial_velocity - goal_velocity)/config_.yield_max_deceleration;
+      double min_time = (initial_velocity - goal_velocity)/config_.yield_max_deceleration_in_ms2;
 
       RCLCPP_DEBUG_STREAM(nh_->get_logger(),"goal_velocity: " << goal_velocity);
       RCLCPP_DEBUG_STREAM(nh_->get_logger(),"incoming_trajectory_speed: " << incoming_trajectory_speed);
@@ -399,7 +399,7 @@ namespace yield_plugin
       carma_planning_msgs::msg::TrajectoryPlanPoint jmt_tpp;
       double current_speed = filtered_speeds.at(i);
       double traj_target_time = i * planning_time / original_tp.trajectory_points.size();
-      if (current_speed >= config_.max_stop_speed)
+      if (current_speed >= config_.max_stop_speed_in_ms)
       {
         double dt = (2 * original_traj_downtracks.at(i)) / (current_speed + prev_speed);
         jmt_tpp = original_tp.trajectory_points.at(i);
@@ -501,7 +501,7 @@ namespace yield_plugin
         smallest_dist = std::min(distance, smallest_dist);
         RCLCPP_DEBUG_STREAM(nh_->get_logger(), "Smallest_dist: " << smallest_dist << ", distance: " << distance << ", dt: " << dt << ", x1: " << x1 << ", y1: " <<y1 <<  ", x2: " << x2 << ", y2: " << y2 << ", p2a_t:" << std::to_string(p2a_t));
 
-        if (i == 0 && j == 0 && distance > config_.collision_check_radius)
+        if (i == 0 && j == 0 && distance > config_.collision_check_radius_in_m)
         {
           RCLCPP_DEBUG(nh_->get_logger(), "Too far away" );
           return std::nullopt;
@@ -581,7 +581,7 @@ namespace yield_plugin
         new_list.push_back(curr_state);
         new_list.insert(new_list.end(), curr_obstacle.predictions.cbegin(), curr_obstacle.predictions.cend());
 
-        auto collision_time = detect_collision_time(original_tp, new_list, config_.intervehicle_collision_distance);
+        auto collision_time = detect_collision_time(original_tp, new_list, config_.intervehicle_collision_distance_in_m);
 
         if (collision_time != std::nullopt)
         {
@@ -669,7 +669,7 @@ namespace yield_plugin
     double earliest_collision_time = earliest_collision_obj_pair.value().second;
 
     // Issue (https://github.com/usdot-fhwa-stol/carma-platform/issues/2155): If the yield_plugin can detect if the roadway object is moving along the route,
-    // it is able to plan yielding much earlier and smoother using on_route_vehicle_collision_horizon.
+    // it is able to plan yielding much earlier and smoother using on_route_vehicle_collision_horizon_in_s.
 
     lanelet::BasicPoint2d point(original_tp.trajectory_points[0].x,original_tp.trajectory_points[0].y);
     double vehicle_downtrack = wm_->routeTrackPos(point).downtrack;
@@ -690,19 +690,19 @@ namespace yield_plugin
     RCLCPP_DEBUG_STREAM(nh_->get_logger(),"object's speed along trajectory at collision: " << goal_velocity);
 
     // roadway object position
-    double gap_time = std::max(0.0, x_lead - config_.x_gap)/initial_velocity;
+    double gap_time = std::max(0.0, x_lead - config_.minimum_safety_gap_in_meters)/initial_velocity;
 
-    if (goal_velocity <= config_.min_obstacle_speed){
+    if (goal_velocity <= config_.min_obstacle_speed_in_ms){
       RCLCPP_WARN_STREAM(nh_->get_logger(),"The obstacle is not moving, goal velocity is set to 0 from: " << goal_velocity);
       goal_velocity = 0.0;
     }
 
     // determine the safety inter-vehicle gap based on speed
-    double safety_gap = std::max(goal_velocity * gap_time, config_.x_gap);
+    double safety_gap = std::max(goal_velocity * gap_time, config_.minimum_safety_gap_in_meters);
     if (!std::isnormal(safety_gap))
     {
-      RCLCPP_WARN_STREAM(rclcpp::get_logger("yield_plugin"),"Detected non-normal (nan, inf, etc.) safety_gap. Making it desired safety gap configured at config_.x_gap: " << config_.x_gap);
-      safety_gap = config_.x_gap;
+      RCLCPP_WARN_STREAM(rclcpp::get_logger("yield_plugin"),"Detected non-normal (nan, inf, etc.) safety_gap. Making it desired safety gap configured at config_.minimum_safety_gap_in_meters: " << config_.minimum_safety_gap_in_meters);
+      safety_gap = config_.minimum_safety_gap_in_meters;
     }
     if (config_.enable_adjustable_gap)
     {
@@ -722,18 +722,18 @@ namespace yield_plugin
     // reference time, is the maximum time available to perform object avoidance (length of a trajectory)
     double t_ref = (rclcpp::Time(original_tp.trajectory_points[original_tp.trajectory_points.size() - 1].target_time).seconds() - plan_start_time.seconds());
     // time required for comfortable deceleration
-    double t_ph = config_.acceleration_adjustment_factor * delta_v_max / config_.yield_max_deceleration;
+    double t_ph = config_.acceleration_adjustment_factor * delta_v_max / config_.yield_max_deceleration_in_ms2;
 
     // planning time for object avoidance
     double tp = 0;
 
-    if(t_ph > config_.tpmin && t_ref > t_ph)
+    if(t_ph > config_.min_obj_avoidance_plan_time_in_s && t_ref > t_ph)
     {
       tp = t_ph;
     }
-    else if(t_ph < config_.tpmin)
+    else if(t_ph < config_.min_obj_avoidance_plan_time_in_s)
     {
-      tp = config_.tpmin;
+      tp = config_.min_obj_avoidance_plan_time_in_s;
     }
     else
     {

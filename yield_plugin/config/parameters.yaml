@@ -7,27 +7,27 @@ acceleration_adjustment_factor: 1.0
 # NOTE: not applied for pedestrians or other non-vehicle obstacles on the road
 # Units: s
 # Value type: Desired
-on_route_vehicle_collision_horizon: 10.0
+on_route_vehicle_collision_horizon_in_s: 10.0
 # Minimum speed for moving obstacle
 # Units: m/s
 # Value type: Desired
-min_obstacle_speed: 0.5
+min_obstacle_speed_in_ms: 0.5
 # Minimum object avoidance planning time
 # Units: s
 # Value type: Desired
-tpmin: 2.0
+min_obj_avoidance_plan_time_in_s: 2.0
 # Deceleration value used for yielding trajectories
 # Units: m/s^2
 # Value type: Desired
-yield_max_deceleration: 3.0
+yield_max_deceleration_in_ms2: 3.0
 # Minimum safety gap with an Object/Obstacle
 # Units: meters
 # Value type: Desired
-x_gap: 20.0
+minimum_safety_gap_in_meters: 20.0
 # Maximum speed value to consider the ego vehicle stopped
 # Units: m/s
 # Value type: Desired
-max_stop_speed: 1.0
+max_stop_speed_in_ms: 1.0
 # parameter to enable cooperative behavior
 # Value type: Desired
 enable_cooperative_behavior: false
@@ -40,15 +40,15 @@ acceptable_passed_timesteps: 5
 # Intervehicle distance that is considered a collision
 # Unit: m
 # Value type: Desired
-intervehicle_collision_distance: 6.0
+intervehicle_collision_distance_in_m: 6.0
 # Radius to check for potential collision
 # Unit: m
 # Value type: Desired
-collision_check_radius: 150.0
+collision_check_radius_in_m: 150.0
 # Time gap to finish planning a yield earlier than collision time
 # Unit: s
 # Value type: Desired
-safety_collision_time_gap: 2.0
+safety_collision_time_gap_in_s: 2.0
 # Flag to enable yield plugin to check for adjustable gap (for example digital gap from map)
 # Value type: Desired
 enable_adjustable_gap: true
