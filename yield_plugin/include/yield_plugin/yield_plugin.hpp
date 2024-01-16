@@ -118,10 +118,10 @@ public:
   /**
    * \brief calculates the maximum speed in a set of tajectory points
    * \param trajectory_points trajectory points
-   # \param timestamp_to_search_until in seconds before which to look for max trajectory speed
+   # \param timestamp_in_sec_to_search_until before which to look for max trajectory speed
    * \return maximum speed
    */
-  double max_trajectory_speed(const std::vector<carma_planning_msgs::msg::TrajectoryPlanPoint>& trajectory_points, double timestamp_to_search_until) const;
+  double max_trajectory_speed(const std::vector<carma_planning_msgs::msg::TrajectoryPlanPoint>& trajectory_points, double timestamp_in_sec_to_search_until) const;
 
   /**
    * \brief calculates distance between trajectory points in a plan
@@ -232,13 +232,21 @@ public:
   void set_external_objects(const std::vector<carma_perception_msgs::msg::ExternalObject>& object_list);
 
   /**
-   * \brief Return collision time given two trajectories
+   * \brief Return collision time given two trajectories with one being predicted steps
    * \param trajectory1 trajectory of the ego vehicle
-   * \param trajectory2 trajectory of the obstacle
+   * \param trajectory2 trajectory of predicted steps
    * \param collision_radius a distance to check between two trajectory points at a same timestamp that is considered a collision
    * \return time_of_collision if collision detected, otherwise, std::nullopt
    */
-  std::optional<rclcpp::Time> detect_collision_time(const carma_planning_msgs::msg::TrajectoryPlan& trajectory1, const std::vector<carma_perception_msgs::msg::PredictedState>& trajectory2, double collision_radius);
+  std::optional<rclcpp::Time> get_collision_time_using_predicted_steps(const carma_planning_msgs::msg::TrajectoryPlan& trajectory1, const std::vector<carma_perception_msgs::msg::PredictedState>& trajectory2, double collision_radius);
+
+  /**
+   * \brief Return collision time given two trajectories with one being external object with predicted steps
+   * \param trajectory1 trajectory of the ego vehicle
+   * \param trajectory2 trajectory of the obstacle
+   * \return time_of_collision if collision detected, otherwise, std::nullopt
+   */
+  std::optional<rclcpp::Time> get_collision_time_using_external_object(const carma_planning_msgs::msg::TrajectoryPlan& original_tp, const carma_perception_msgs::msg::ExternalObject& curr_obstacle);
 
   /**
    * \brief Return the earliest collision object and time of collision pair from the given trajectory and list of external objects with predicted states.
