@@ -26,6 +26,8 @@
 #include <j3224_v2x_msgs/msg/object_type.hpp>
 
 #include <algorithm>
+#include <cctype>
+#include <charconv>
 #include <chrono>
 #include <cmath>
 #include <limits>
@@ -375,15 +377,26 @@ auto to_external_object_msg(const carma_cooperative_perception_interfaces::msg::
   external_object.header = track.header;
   external_object.presence_vector = 0;
 
-  try {
-    if (const auto numeric_id{std::stol(track.id)};
-        numeric_id >= 0 && numeric_id <= std::numeric_limits<std::uint32_t>::max()) {
-      external_object.presence_vector |= external_object.ID_PRESENCE_VECTOR;
-      external_object.id = static_cast<std::uint32_t>(numeric_id);
+  const auto to_numeric_id = [](std::string string_id) -> std::optional<uint32_t> {
+    auto non_digit_start = std::remove_if(
+      std::begin(string_id), std::end(string_id),
+      [](const auto & ch) { return !std::isdigit(ch); });
+
+    std::uint32_t numeric_id;
+    const auto digit_substr_size{std::distance(std::begin(string_id), non_digit_start)};
+    if (
+      std::from_chars(string_id.c_str(), string_id.c_str() + digit_substr_size, numeric_id).ec ==
+      std::errc{}) {
+      return numeric_id;
     }
-  } catch (const std::invalid_argument & /* exception */) {
-    external_object.presence_vector &= ~external_object.ID_PRESENCE_VECTOR;
-  } catch (const std::out_of_range & /* exception */) {
+
+    return std::nullopt;
+  };
+
+  if (const auto numeric_id{to_numeric_id(track.id)}) {
+    external_object.presence_vector |= external_object.ID_PRESENCE_VECTOR;
+    external_object.id = numeric_id.value();
+  } else {
     external_object.presence_vector &= ~external_object.ID_PRESENCE_VECTOR;
   }
 
