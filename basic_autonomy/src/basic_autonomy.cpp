@@ -1215,9 +1215,11 @@ namespace basic_autonomy
             }
             catch(const std::runtime_error& error)
             {
-                // Please reference https://github.com/usdot-fhwa-stol/carma-utils/issues/211
+                // This can only happen if there was negative speed in trajectory generation which usually happens when intending to stop.
+                // The plugin is catching that error and logging it for the user to correct the origin plugin's logic, but continues
+                // the operation by forcing the negative values to be 0, which is the intention usually.
                 RCLCPP_WARN_STREAM(rclcpp::get_logger(BASIC_AUTONOMY_LOGGER), "Detected a negative speed from <point,time> to <point,speed> trajectory conversion with error: "
-                    << error.what() << ". Replacing the negative speed with 0.0 speed. "
+                    << error.what() << ". Replacing the negative speed with 0.0 speed, but please revisit the trajectory logic. "
                     "Responsible plugin is: " << trajectory_points[std::find(speeds.begin(), speeds.end(), 0.0) - speeds.begin()].planner_plugin_name);
             }
 
