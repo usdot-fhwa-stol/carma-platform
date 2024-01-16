@@ -216,19 +216,8 @@ std::vector<carma_planning_msgs::msg::TrajectoryPlanPoint> StopandWait::trajecto
   for (size_t i = 0; i < points.size(); i++)
   {
     carma_planning_msgs::msg::TrajectoryPlanPoint tpp;
-
-    if (times[i] != 0 && !std::isnormal(times[i]) && i != 0)
-    {
-      RCLCPP_WARN_STREAM(rclcpp::get_logger("stop_and_wait_plugin"),"Detected non-normal (nan, inf, etc.) time."
-        "This happens due to 0 downtrack and 0 speed where dt = dx/dv = 0/0.0 = nan. Incremeneting time by little.");
-      tpp.target_time = rclcpp::Time(traj.back().target_time) + rclcpp::Duration(config_.stop_timestep * 1e9);
-    }
-    else
-    {
-      rclcpp::Duration relative_time(times[i] * 1e9);
-      tpp.target_time = startTime + relative_time;
-    }
-
+    rclcpp::Duration relative_time(times[i] * 1e9);
+    tpp.target_time = startTime + relative_time;
     tpp.x = points[i].x();
     tpp.y = points[i].y();
     tpp.yaw = yaws[i];
@@ -355,8 +344,8 @@ std::vector<carma_planning_msgs::msg::TrajectoryPlanPoint> StopandWait::compose_
   bool vehicle_in_buffer = downtracks.back() < stop_location_buffer;
 
   std::vector<double> filtered_speeds = basic_autonomy::smoothing::moving_average_filter(speeds, config_.moving_average_window_size);
-  bool first_stopping = true;
-  for (size_t i = 1; i < filtered_speeds.size(); i++)
+
+  for (size_t i = 0; i < filtered_speeds.size(); i++)
   {  // Apply minimum speed constraint
     double downtrack = downtracks[i];
 
@@ -367,17 +356,7 @@ std::vector<carma_planning_msgs::msg::TrajectoryPlanPoint> StopandWait::compose_
 
       // To avoid any issues in control plugin behavior we only command 0 if the vehicle is inside the buffer
       if (vehicle_in_buffer || (i == filtered_speeds.size() - 1)) { // Vehicle is in the buffer
-        if (first_stopping)
-        {
-          downtracks[i] = downtracks[i - 1] + pow(filtered_speeds[i - 1],2) / (2 * config_.accel_limit);  // distance required to stop at max acceleration
-          first_stopping = false;
-        }
-        else
-        {
-          downtracks[i] = downtracks[i - 1];
-        }
         filtered_speeds[i] = 0.0;
-
       } else { // Vehicle is not in the buffer so fill buffer with crawl speed
         filtered_speeds[i] = std::max(filtered_speeds[i], config_.crawl_speed);
       }
@@ -392,40 +371,29 @@ std::vector<carma_planning_msgs::msg::TrajectoryPlanPoint> StopandWait::compose_
   std::vector<double> times;
   trajectory_utils::conversions::speed_to_time(downtracks, filtered_speeds, &times);
 
-  std::vector<double> yaws = carma_wm::geometry::compute_tangent_orientations(raw_points);
+  for (size_t i = 0; i < times.size(); i++)
+  {
+    if (times[i] != 0 && !std::isnormal(times[i]) && i != 0)
+    {  // If the time
+      RCLCPP_WARN_STREAM(rclcpp::get_logger("stop_and_wait_plugin"),"Detected non-normal (nan, inf, etc.) time. Making it same as before: " << times[i-1]);
+      // NOTE: overriding the timestamps in assumption that pure_pursuit_wrapper will detect it as stopping case
+      times[i] = times[i - 1];
+    }
+  }
 
-  auto traj = trajectory_from_points_times_orientations(raw_points, times, yaws, start_time);
+  std::vector<double> yaws = carma_wm::geometry::compute_tangent_orientations(raw_points);
 
   for (size_t i = 0; i < points.size(); i++)
   {
-    RCLCPP_DEBUG_STREAM(rclcpp::get_logger("stop_and_wait_plugin"),"1d: " << downtracks[i] << " t: " << (rclcpp::Time(traj[i].target_time) - start_time).seconds() << " v: " << filtered_speeds[i]);
+    RCLCPP_DEBUG_STREAM(rclcpp::get_logger("stop_and_wait_plugin"),"1d: " << downtracks[i] << " t: " << times[i] << " v: " << filtered_speeds[i]);
   }
 
-  bool is_first_extrapolation_point = true;
+  auto traj = trajectory_from_points_times_orientations(raw_points, times, yaws, start_time);
+
   while (rclcpp::Time(traj.back().target_time) - rclcpp::Time(traj.front().target_time) < rclcpp::Duration(config_.minimal_trajectory_duration * 1e9))
   {
     carma_planning_msgs::msg::TrajectoryPlanPoint new_point = traj.back();
-    auto new_target_time = rclcpp::Time(new_point.target_time) + rclcpp::Duration(config_.stop_timestep * 1e9);
-
-    // first dx must not be 0 when extrapolating
-    if (is_first_extrapolation_point)
-    {
-      double dt = filtered_speeds.back()/config_.accel_limit;
-      double dx = cos(yaws.back()) * filtered_speeds.back() * dt / 2;
-      double dy = sin(yaws.back()) * filtered_speeds.back() * dt / 2;
-      double dist = sqrt(pow(dx,2) + pow(dy,2));
-      new_point.x += dx;
-      new_point.y += dy;
-      new_target_time = rclcpp::Time(new_point.target_time) + rclcpp::Duration(dt * 1e9);
-      RCLCPP_DEBUG_STREAM(rclcpp::get_logger("stop_and_wait_plugin"),"First extrapolation filtered_speeds.back(): " << filtered_speeds.back()
-        << ", dist: " << dist << ", dx: " << dx << ", dy" << dy << ", dt: " << dt);
-      RCLCPP_DEBUG_STREAM(rclcpp::get_logger("stop_and_wait_plugin"),"First extrapolation filtered_speeds.back(): " << filtered_speeds.back()
-        << ", yaws.back(): " << yaws.back() << ", cos(yaws.back()): " << cos(yaws.back())
-        << ", sin(yaws.back()): " << sin(yaws.back()) << ", new_point.x: " << new_point.x << ", new_point.y" << new_point.y << ", timestamp: " << std::to_string(new_target_time.seconds()));
-
-      is_first_extrapolation_point = false;
-    }
-    new_point.target_time = new_target_time;
+    new_point.target_time = rclcpp::Time(new_point.target_time) + rclcpp::Duration(config_.stop_timestep * 1e9);
     new_point.planner_plugin_name = plugin_name_;
     traj.push_back(new_point);
   }

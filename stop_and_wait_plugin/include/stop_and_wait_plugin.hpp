@@ -104,14 +104,7 @@ public:
    */
   void splitPointSpeedPairs(const std::vector<PointSpeedPair>& points, std::vector<lanelet::BasicPoint2d>* basic_points,
                             std::vector<double>* speeds) const;
-  /**
-   * \brief Combines the points, times, and yaws to create a trajectory that starts from startTime
-   * \param points The list of points that define the trajectory
-   * \param times The list of times associated to points.
-   * \param yaws The list of yaws associated to points
-   * \param startTime start time of the trajectory
-   * \return A trajectory plan
-   */
+
   std::vector<carma_planning_msgs::msg::TrajectoryPlanPoint> trajectory_from_points_times_orientations(
       const std::vector<lanelet::BasicPoint2d>& points, const std::vector<double>& times,
       const std::vector<double>& yaws, rclcpp::Time startTime);
