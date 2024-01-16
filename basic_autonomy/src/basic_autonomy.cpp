@@ -1209,7 +1209,17 @@ namespace basic_autonomy
             }
 
             std::vector<double> speeds;
-            trajectory_utils::conversions::time_to_speed(downtracks, times, tp.initial_longitudinal_velocity, &speeds);
+            try
+            {
+                trajectory_utils::conversions::time_to_speed(downtracks, times, tp.initial_longitudinal_velocity, &speeds);
+            }
+            catch(const std::runtime_error& error)
+            {
+                // Please reference https://github.com/usdot-fhwa-stol/carma-utils/issues/211
+                RCLCPP_WARN_STREAM(rclcpp::get_logger(BASIC_AUTONOMY_LOGGER), "Detected a negative speed from <point,time> to <point,speed> trajectory conversion with error: "
+                    << error.what() << ". Replacing the negative speed with 0.0 speed. "
+                    "Responsible plugin is: " << trajectory_points[std::find(speeds.begin(), speeds.end(), 0.0) - speeds.begin()].planner_plugin_name);
+            }
 
             if (speeds.size() != trajectory_points.size())
             {
