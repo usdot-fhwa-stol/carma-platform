@@ -8,9 +8,10 @@ offsets, to the same local UTM zone’s coordinate frame.
 
 ## Subscriptions
 
-| Topic          | Message Type                                  | Description    |
-| -------------- | --------------------------------------------- | -------------- |
-| `~/input/sdsm` | `carma_v2x_msgs/SensorDataSharingMessage.msg` | Incoming SDSMs |
+| Topic                  | Message Type                                  | Description                            |
+| ---------------------- | --------------------------------------------- | -------------------------------------- |
+| `~/input/sdsm`         | `carma_v2x_msgs/SensorDataSharingMessage.msg` | Incoming SDSMs                         |
+| `~/input/georeference` | `std_msgs/String.msg`                         | CARMA's map georeference (PROJ string) |
 
 ## Publishers
 

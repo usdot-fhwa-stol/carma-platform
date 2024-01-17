@@ -15,10 +15,13 @@
 #ifndef CARMA_COOPERATIVE_PERCEPTION__SDSM_TO_DETECTION_LIST_COMPONENT_HPP_
 #define CARMA_COOPERATIVE_PERCEPTION__SDSM_TO_DETECTION_LIST_COMPONENT_HPP_
 
+#include <string>
+
 #include <carma_cooperative_perception_interfaces/msg/detection_list.hpp>
 #include <carma_ros2_utils/carma_lifecycle_node.hpp>
 #include <carma_v2x_msgs/msg/sensor_data_sharing_message.hpp>
 #include <rclcpp/rclcpp.hpp>
+#include <std_msgs/msg/string.hpp>
 
 #include "carma_cooperative_perception/msg_conversion.hpp"
 
@@ -35,7 +38,10 @@ public:
   : CarmaLifecycleNode{options},
     publisher_{create_publisher<output_msg_type>("output/detections", 1)},
     subscription_{create_subscription<input_msg_type>(
-      "input/sdsm", 1, [this](input_msg_shared_pointer msg_ptr) { sdsm_msg_callback(*msg_ptr); })}
+      "input/sdsm", 1, [this](input_msg_shared_pointer msg_ptr) { sdsm_msg_callback(*msg_ptr); })},
+    georeference_subscription_{create_subscription<std_msgs::msg::String>(
+      "input/georeference", 1,
+      [this](std_msgs::msg::String::SharedPtr msg_ptr) { georeference_ = msg_ptr->data; })}
   {
   }
 
@@ -47,6 +53,9 @@ public:
 private:
   rclcpp::Publisher<output_msg_type>::SharedPtr publisher_;
   rclcpp::Subscription<input_msg_type>::SharedPtr subscription_;
+  rclcpp::Subscription<std_msgs::msg::String>::SharedPtr georeference_subscription_;
+
+  std::string georeference_{""};
 };
 
 }  // namespace carma_cooperative_perception
