@@ -1,0 +1,4 @@
+/rosout:
+  history: keep_all
+  reliability: reliable
+  durability: volatile
