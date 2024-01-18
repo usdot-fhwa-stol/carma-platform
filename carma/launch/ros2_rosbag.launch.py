@@ -65,7 +65,7 @@ def record_ros2_rosbag(context: LaunchContext, vehicle_config_param_file, rosbag
                             exclude_topics_regex += str(topic) + "|"
 
                 proc = ExecuteProcess(
-                        cmd=['ros2', 'bag', 'record', '-s', ' mcap', '--qos-profile-overrides-path', overriding_qos_profiles, '-o', '/opt/carma/logs/rosbag2_' + str(datetime.now().strftime('%Y-%m-%d_%H%M%S')), '-a', '-x', exclude_topics_regex],
+                        cmd=['ros2', 'bag', 'record', '-s', 'mcap', '--qos-profile-overrides-path', overriding_qos_profiles, '-o', '/opt/carma/logs/rosbag2_' + str(datetime.now().strftime('%Y-%m-%d_%H%M%S')), '-a', '-x', exclude_topics_regex],
                         output='screen',
                         shell='true'
                     )
@@ -90,12 +90,12 @@ def generate_launch_description():
         description = "Path to file contain vehicle configuration parameters"
     )
 
-    rosbag2_qos_override_param_file = LaunchConfiguration('rosbag2_qos_override_param_file_dir')
+    rosbag2_qos_override_param_file = LaunchConfiguration('rosbag2_qos_override_param_file')
     declare_rosbag2_qos_override_param_file = DeclareLaunchArgument(
         name='rosbag2_qos_override_param_file',
         default_value = PathJoinSubstitution([
-                    FindPackageShare('launch_tutorial'),
-                    'example_substitutions.launch.py'
+                    FindPackageShare('carma'),'config',
+                    'rosbag2_qos_overrides.yaml'
                 ]),
         description = "Path to file contain vehicle configuration parameters"
     )
