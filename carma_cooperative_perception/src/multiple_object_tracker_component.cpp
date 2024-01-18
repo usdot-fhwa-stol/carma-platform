@@ -31,6 +31,7 @@
 #include <unordered_map>
 #include <utility>
 #include <vector>
+#include <limits>
 
 namespace carma_cooperative_perception
 {

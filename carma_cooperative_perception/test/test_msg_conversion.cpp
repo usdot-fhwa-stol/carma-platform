@@ -89,15 +89,17 @@ TEST(ToDetectionMsg, Simple)
   object_data.detected_object_common_data.accel_4_way.yaw_rate = 5.0;      // degrees/s
 
   sdsm_msg.objects.detected_object_data.push_back(object_data);
+  constexpr std::string_view georeference{"+proj=utm +zone=15 +datum=WGS84 +units=m +no_defs"};
 
-  const auto detection_list{carma_cooperative_perception::to_detection_list_msg(sdsm_msg)};
+  const auto detection_list{
+    carma_cooperative_perception::to_detection_list_msg(sdsm_msg, georeference)};
   ASSERT_EQ(std::size(detection_list.detections), 1U);
 
   const auto detection{detection_list.detections.at(0)};
 
   EXPECT_EQ(detection.header.stamp.sec, 0);
   EXPECT_NEAR(detection.header.stamp.nanosec, 900'000'000U, 2);  // +/- 2 ns is probably good enough
-  EXPECT_EQ(detection.header.frame_id, "15N");
+  EXPECT_EQ(detection.header.frame_id, "map");
 
   EXPECT_NEAR(detection.pose.pose.position.x, 715068.54 + 100.0, 1e-2);   // m (ref pos + offset)
   EXPECT_NEAR(detection.pose.pose.position.y, 3631576.38 + 100.0, 1e-2);  // m (ref pos + offset)
