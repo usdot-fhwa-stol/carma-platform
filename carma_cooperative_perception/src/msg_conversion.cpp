@@ -244,17 +244,19 @@ auto to_detection_list_msg(
 
     detection.header.stamp = to_time_msg(detection_time);
 
-    static constexpr auto to_string = [](const std::vector<std::uint8_t> bsm_id) {
-      std::string bsm_string;
+    // TemporaryID and octet string terms come from the SAE J2735 message definitions
+    static constexpr auto to_string = [](const std::vector<std::uint8_t> & temporary_id) {
+      std::string str;
+      str.reserve(2 * std::size(temporary_id));  // Two hex characters per octet string
 
       std::array<char, 2> buffer;
-      for (const auto & element : bsm_id) {
-        std::to_chars(std::begin(buffer), std::end(buffer), element, 16);
-        bsm_string.push_back(std::toupper(std::get<0>(buffer)));
-        bsm_string.push_back(std::toupper(std::get<1>(buffer)));
+      for (const auto & octet_string : temporary_id) {
+        std::to_chars(std::begin(buffer), std::end(buffer), octet_string, 16);
+        str.push_back(std::toupper(std::get<0>(buffer)));
+        str.push_back(std::toupper(std::get<1>(buffer)));
       }
 
-      return bsm_string;
+      return str;
     };
 
     detection.id =
