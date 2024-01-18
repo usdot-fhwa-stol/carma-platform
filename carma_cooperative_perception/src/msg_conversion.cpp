@@ -244,7 +244,21 @@ auto to_detection_list_msg(
 
     detection.header.stamp = to_time_msg(detection_time);
 
-    detection.id = std::to_string(common_data.detected_id.object_id);
+    static constexpr auto to_string = [](const std::vector<std::uint8_t> bsm_id) {
+      std::string bsm_string;
+
+      std::array<char, 2> buffer;
+      for (const auto & element : bsm_id) {
+        std::to_chars(std::begin(buffer), std::end(buffer), element, 16);
+        bsm_string.push_back(std::toupper(std::get<0>(buffer)));
+        bsm_string.push_back(std::toupper(std::get<1>(buffer)));
+      }
+
+      return bsm_string;
+    };
+
+    detection.id =
+      to_string(sdsm.source_id.id) + "-" + std::to_string(common_data.detected_id.object_id);
 
     const auto pos_offset{PositionOffsetXYZ::from_msg(common_data.pos)};
     detection.pose.pose.position = to_position_msg(MapCoordinate{
