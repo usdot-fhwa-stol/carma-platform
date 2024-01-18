@@ -1,3 +1,6 @@
+## This file defines Quality of Service settings for subscribers created in rosbag2 recording.
+## Topics defined here have multiple publishers with different QoS settings which may lead to the rosbag ignoring messages.
+## The QoS settings defined here give the subscriber less restrictive settings, so all messages from the topic are retained.
 /rosout:
   history: keep_all
   reliability: reliable
