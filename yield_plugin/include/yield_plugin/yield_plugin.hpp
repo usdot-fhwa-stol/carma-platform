@@ -238,7 +238,7 @@ public:
    * \param collision_radius a distance to check between two trajectory points at a same timestamp that is considered a collision
    * \return time_of_collision if collision detected, otherwise, std::nullopt
    */
-  std::optional<rclcpp::Time> get_collision_time_using_predicted_steps(const carma_planning_msgs::msg::TrajectoryPlan& trajectory1, const std::vector<carma_perception_msgs::msg::PredictedState>& trajectory2, double collision_radius);
+  std::optional<rclcpp::Time> get_collision_time(const carma_planning_msgs::msg::TrajectoryPlan& trajectory1, const std::vector<carma_perception_msgs::msg::PredictedState>& trajectory2, double collision_radius);
 
   /**
    * \brief Return collision time given two trajectories with one being external object with predicted steps
@@ -246,7 +246,7 @@ public:
    * \param trajectory2 trajectory of the obstacle
    * \return time_of_collision if collision detected, otherwise, std::nullopt
    */
-  std::optional<rclcpp::Time> get_collision_time_using_external_object(const carma_planning_msgs::msg::TrajectoryPlan& original_tp, const carma_perception_msgs::msg::ExternalObject& curr_obstacle);
+  std::optional<rclcpp::Time> get_collision_time(const carma_planning_msgs::msg::TrajectoryPlan& original_tp, const carma_perception_msgs::msg::ExternalObject& curr_obstacle);
 
   /**
    * \brief Return the earliest collision object and time of collision pair from the given trajectory and list of external objects with predicted states.
@@ -261,10 +261,10 @@ public:
    * \brief Given the object velocity in map frame with x,y components, this function returns the projected velocity along the trajectory at given time.
    * \param object_velocity_in_map_frame trajectory of the ego vehicle
    * \param original_tp trajectory of the ego vehicle
-   * \param collision_timestamp_in_seconds timestamp in seconds along the trajectory to return the projected velocity
-   * \return velocity_along_trajectory
+   * \param timestamp_in_sec_to_predict timestamp in seconds along the trajectory to return the projected velocity
+   * \return get_predicted_velocity_at_time
    */
-  double get_object_velocity_along_trajectory(const geometry_msgs::msg::Twist& object_velocity_in_map_frame, const carma_planning_msgs::msg::TrajectoryPlan& original_tp, double collision_timestamp_in_seconds);
+  double get_predicted_velocity_at_time(const geometry_msgs::msg::Twist& object_velocity_in_map_frame, const carma_planning_msgs::msg::TrajectoryPlan& original_tp, double timestamp_in_sec_to_predict);
 
 private:
 

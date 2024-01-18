@@ -297,7 +297,7 @@ TEST(YieldPluginTest, test_update_traj)
   EXPECT_EQ(7, tp.trajectory_points.size());
 }
 
-TEST(YieldPluginTest, get_collision_time_using_predicted_steps)
+TEST(YieldPluginTest, get_collision_time)
 {
   std::shared_ptr<carma_wm::CARMAWorldModel> wm = std::make_shared<carma_wm::CARMAWorldModel>();
   auto map = carma_wm::test::buildGuidanceTestMap(100,100);
@@ -421,7 +421,7 @@ TEST(YieldPluginTest, get_collision_time_using_predicted_steps)
   rwo_1.predictions = {ps_1,ps_2,ps_3};
   rwo_1.velocity.twist.linear.x = 10.0;
 
-  std::optional<rclcpp::Time> collision_time = plugin.get_collision_time_using_predicted_steps(tp, rwo_1.predictions, 6);
+  std::optional<rclcpp::Time> collision_time = plugin.get_collision_time(tp, rwo_1.predictions, 6);
 
   ASSERT_TRUE(collision_time == std::nullopt);
 
@@ -448,7 +448,7 @@ TEST(YieldPluginTest, get_collision_time_using_predicted_steps)
   rwo_1.predictions = {ps_1,ps_2,ps_3};
   //
 
-  collision_time = plugin.get_collision_time_using_predicted_steps(tp, rwo_1.predictions, 6);
+  collision_time = plugin.get_collision_time(tp, rwo_1.predictions, 6);
   ASSERT_TRUE(collision_time != std::nullopt);
   ASSERT_TRUE(collision_time.value() == rclcpp::Time(2, 0, collision_time.value().get_clock_type()));
 
@@ -467,7 +467,7 @@ TEST(YieldPluginTest, get_collision_time_using_predicted_steps)
 
   rwo_1.predictions = {ps_1,ps_2};
 
-  collision_time = plugin.get_collision_time_using_predicted_steps(tp, rwo_1.predictions, 6);
+  collision_time = plugin.get_collision_time(tp, rwo_1.predictions, 6);
   ASSERT_TRUE(collision_time == std::nullopt);
 
   // STATES ARE ON THE ROUTE, BUT TOO FAR AWAY
@@ -485,7 +485,7 @@ TEST(YieldPluginTest, get_collision_time_using_predicted_steps)
 
   rwo_1.predictions = {ps_1,ps_2};
 
-  collision_time = plugin.get_collision_time_using_predicted_steps(tp, rwo_1.predictions, 6);
+  collision_time = plugin.get_collision_time(tp, rwo_1.predictions, 6);
   ASSERT_TRUE(collision_time == std::nullopt);
 
   // STATES ARE ON THE ROUTE, BUT ALREADY PASSED
@@ -503,7 +503,7 @@ TEST(YieldPluginTest, get_collision_time_using_predicted_steps)
 
   rwo_1.predictions = {ps_1,ps_2};
 
-  collision_time = plugin.get_collision_time_using_predicted_steps(tp, rwo_1.predictions, 6);
+  collision_time = plugin.get_collision_time(tp, rwo_1.predictions, 6);
   ASSERT_TRUE(collision_time == std::nullopt);
 }
 
