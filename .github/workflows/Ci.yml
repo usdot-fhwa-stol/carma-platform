@@ -47,7 +47,7 @@ jobs:
 
     - name: Install external dependencies
       # Install the multiple object tracking deps
-      run: sudo bash /opt/carma/multiple_object_tracking/install_dependencies.sh
+      run: sudo bash /opt/carma//src/multiple_object_tracking/install_dependencies.sh
 
     - name: Build ROS1
       # Build ROS1 packages
