@@ -169,13 +169,14 @@ carma_ros2_utils::CallbackReturn WMBroadcasterNode::handle_on_activate(const rcl
 
   // Geofence Sub
   rclcpp::SubscriptionOptions geofence_sub_options;
+  // NOTE: Currently, intra-process comms must be disabled for subscribers that are transient_local: https://github.com/ros2/rclcpp/issues/1753
   geofence_sub_options.use_intra_process_comm = rclcpp::IntraProcessSetting::Disable;
   auto sub_qos_transient_local = rclcpp::QoS(rclcpp::KeepAll());
   sub_qos_transient_local.transient_local();
-  geofence_sub_ = create_subscription<carma_v2x_msgs::msg::TrafficControlMessage>("geofence", sub_qos_transient_local, std::bind(&WMBroadcaster::geofenceCallback, wmb_.get(), std_ph::_1));
+  geofence_sub_ = create_subscription<carma_v2x_msgs::msg::TrafficControlMessage>("geofence", sub_qos_transient_local, std::bind(&WMBroadcaster::geofenceCallback, wmb_.get(), std_ph::_1), geofence_sub_options);
 
   // External Map Msg Sub
-  incoming_map_sub_ = create_subscription<carma_v2x_msgs::msg::MapData>("incoming_map", 20, std::bind(&WMBroadcaster::externalMapMsgCallback, wmb_.get(), std_ph::_1), geofence_sub_options);
+  incoming_map_sub_ = create_subscription<carma_v2x_msgs::msg::MapData>("incoming_map", 20, std::bind(&WMBroadcaster::externalMapMsgCallback, wmb_.get(), std_ph::_1));
 
   //Route Message Sub
   route_callmsg_sub_ = create_subscription<carma_planning_msgs::msg::Route>("route", 1, std::bind(&WMBroadcaster::routeCallbackMessage, wmb_.get(), std_ph::_1));
