@@ -595,41 +595,27 @@ namespace yield_plugin
 
     RCLCPP_ERROR_STREAM(nh_->get_logger(),"External Object List (external_objects) size: " << external_objects.size());
 
-    std::vector<std::optional<rclcpp::Time>> collision_times = {};
-    for (const auto& obj : external_objects)
-    {
-      collision_times.push_back(get_collision_time(original_tp, obj));
-    }
-
-    // Custom comparator
-    const auto compare_collision_times =
-      [](const std::optional<rclcpp::Time>& collision_time1, const std::optional<rclcpp::Time>& collision_time2)
-        {
-          // Handle std::nullopt (no collision) cases
-          if (!collision_time1 || !collision_time2)
-          {
-            return false;
-          }
-
-          return collision_time1.value().seconds() < collision_time2.value().seconds();
-        };
-
-    // Find the external object with the earliest collision time using std::min_element
-    const auto earliest_collision_time_it = std::min_element(collision_times.cbegin(), collision_times.cend(), compare_collision_times);
-
-    if (earliest_collision_time_it != collision_times.end())
-    {
-      size_t earliest_collision_object_idx = earliest_collision_time_it - collision_times.begin();
-
-      if (*earliest_collision_time_it)
-      {
-        RCLCPP_ERROR_STREAM(nh_->get_logger(),"earliest object x: " << external_objects.at(earliest_collision_object_idx).velocity.twist.linear.x
-          << ", y: " << external_objects.at(earliest_collision_object_idx).velocity.twist.linear.y);
-        return std::make_pair(external_objects.at(earliest_collision_object_idx), earliest_collision_time_it->value().seconds());
+    std::map<std::uint32_t, rclcpp::Time> collision_times;
+    for (const auto & object : external_objects) {
+      if (const auto collision_time { get_collision_time(original_tp, object) } ) {
+        collision_times[object.id] = collision_time.value();
       }
     }
 
-    return std::nullopt;
+    if (collision_times.empty()) { return std::nullopt; }
+
+    const auto earliest_colliding_object_id{std::min_element(
+      std::cbegin(collision_times), std::cend(collision_times),
+      [](const auto & a, const auto & b){ return a.second < b.second; })->first};
+
+    const auto earliest_colliding_object{std::find_if(
+      std::cbegin(external_objects), std::cend(external_objects),
+      [&earliest_colliding_object_id](const auto & object) { return object.id == earliest_colliding_object_id; })};
+
+    RCLCPP_ERROR_STREAM(nh_->get_logger(),"earliest object x: " << earliest_colliding_object->velocity.twist.linear.x
+        << ", y: " << earliest_colliding_object->velocity.twist.linear.y);
+    return std::make_pair(*earliest_colliding_object, collision_times.at(earliest_colliding_object_id).seconds());
+
   }
 
   double YieldPlugin::get_predicted_velocity_at_time(const geometry_msgs::msg::Twist& object_velocity_in_map_frame, const carma_planning_msgs::msg::TrajectoryPlan& original_tp, double timestamp_in_sec_to_predict)
@@ -637,33 +623,41 @@ namespace yield_plugin
     RCLCPP_ERROR_STREAM(nh_->get_logger(), "timestamp_in_sec_to_predict: " << std::to_string(timestamp_in_sec_to_predict) <<
       ", trajectory_end_time: " << std::to_string(get_trajectory_end_time(original_tp)));
 
+    double point_b_time = 0.0;
+    carma_planning_msgs::msg::TrajectoryPlanPoint point_a;
+    carma_planning_msgs::msg::TrajectoryPlanPoint point_b;
+
+    // trajectory points' time is guaranteed to be increasing
+    // then find the corresponding point at timestamp_in_sec_to_predict
     for (size_t i = 0; i < original_tp.trajectory_points.size() - 1; ++i)
     {
-      auto p1a = original_tp.trajectory_points.at(i);
-      auto p1b = original_tp.trajectory_points.at(i + 1);
-      double p1b_t = rclcpp::Time(p1b.target_time).seconds();
-
-      if (p1b_t >= timestamp_in_sec_to_predict)
+      point_a = original_tp.trajectory_points.at(i);
+      point_b = original_tp.trajectory_points.at(i + 1);
+      point_b_time = rclcpp::Time(point_b.target_time).seconds();
+      if (point_b_time >= timestamp_in_sec_to_predict)
       {
-        auto dx = p1b.x - p1a.x;
-        auto dy = p1b.y - p1a.y;
-        const tf2::Vector3 trajectory_direction(dx, dy, 0);
-        if (trajectory_direction.length() < 0.001) //EPSILON
-        {
-          return 0.0;
-        }
-        const tf2::Vector3 object_direction(object_velocity_in_map_frame.linear.x, object_velocity_in_map_frame.linear.y, 0);
-
-        RCLCPP_ERROR_STREAM(nh_->get_logger(), "timestamp_in_sec_to_predict: " << std::to_string(timestamp_in_sec_to_predict)
-          << ", p1b_t: " << std::to_string(p1b_t)
-          << ", dx: " << dx << ", dy: " << dy << ", "
-          << ", object_velocity_in_map_frame.x: " << object_velocity_in_map_frame.linear.x
-          << ", object_velocity_in_map_frame.y: " << object_velocity_in_map_frame.linear.y);
-
-        return tf2::tf2Dot(object_direction, trajectory_direction)/ trajectory_direction.length();
+        break;
       }
     }
-    return 0.0;
+
+    auto dx = point_b.x - point_a.x;
+    auto dy = point_b.y - point_a.y;
+    const tf2::Vector3 trajectory_direction(dx, dy, 0);
+
+    RCLCPP_ERROR_STREAM(nh_->get_logger(), "timestamp_in_sec_to_predict: " << std::to_string(timestamp_in_sec_to_predict)
+      << ", point_b_time: " << std::to_string(point_b_time)
+      << ", dx: " << dx << ", dy: " << dy << ", "
+      << ", object_velocity_in_map_frame.x: " << object_velocity_in_map_frame.linear.x
+      << ", object_velocity_in_map_frame.y: " << object_velocity_in_map_frame.linear.y);
+
+    if (trajectory_direction.length() < 0.001) //EPSILON
+    {
+      return 0.0;
+    }
+
+    const tf2::Vector3 object_direction(object_velocity_in_map_frame.linear.x, object_velocity_in_map_frame.linear.y, 0);
+
+    return tf2::tf2Dot(object_direction, trajectory_direction) / trajectory_direction.length();
   }
 
   carma_planning_msgs::msg::TrajectoryPlan YieldPlugin::update_traj_for_object(const carma_planning_msgs::msg::TrajectoryPlan& original_tp, const std::vector<carma_perception_msgs::msg::ExternalObject>& external_objects, double initial_velocity)

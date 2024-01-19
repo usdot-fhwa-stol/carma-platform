@@ -262,6 +262,7 @@ public:
    * \param object_velocity_in_map_frame trajectory of the ego vehicle
    * \param original_tp trajectory of the ego vehicle
    * \param timestamp_in_sec_to_predict timestamp in seconds along the trajectory to return the projected velocity
+   * NOTE: returns the last point's speed if the specified time is past the trajectory's planning time
    * \return get_predicted_velocity_at_time
    */
   double get_predicted_velocity_at_time(const geometry_msgs::msg::Twist& object_velocity_in_map_frame, const carma_planning_msgs::msg::TrajectoryPlan& original_tp, double timestamp_in_sec_to_predict);

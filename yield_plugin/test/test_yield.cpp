@@ -319,7 +319,7 @@ TEST(YieldPluginTest, get_collision_time)
   carma_perception_msgs::msg::ExternalObjectList rwol;
   carma_planning_msgs::msg::TrajectoryPlan tp;
 
-  EXPECT_THROW(plugin.update_traj_for_object(tp, {}, 0.0), std::invalid_argument);
+  EXPECT_EQ(plugin.update_traj_for_object(tp, {}, 0.0), tp); //should return unchanged if received invalid trajectory
 
   carma_planning_msgs::msg::TrajectoryPlanPoint trajectory_point_1;
   carma_planning_msgs::msg::TrajectoryPlanPoint trajectory_point_2;
