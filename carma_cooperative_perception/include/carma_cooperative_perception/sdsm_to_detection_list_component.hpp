@@ -47,7 +47,13 @@ public:
 
   auto sdsm_msg_callback(const input_msg_type & msg) const -> void
   {
-    publisher_->publish(to_detection_list_msg(msg, georeference_));
+    try {
+      publisher_->publish(to_detection_list_msg(msg, georeference_));
+    } catch (const std::bad_optional_access &) {
+      RCLCPP_ERROR(
+        get_logger(),
+        "Not converting SDSM to detection list: missing at least one required optional-field");
+    }
   }
 
 private:
