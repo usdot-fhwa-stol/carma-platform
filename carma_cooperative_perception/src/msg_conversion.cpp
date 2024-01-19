@@ -244,7 +244,23 @@ auto to_detection_list_msg(
 
     detection.header.stamp = to_time_msg(detection_time);
 
-    detection.id = std::to_string(common_data.detected_id.object_id);
+    // TemporaryID and octet string terms come from the SAE J2735 message definitions
+    static constexpr auto to_string = [](const std::vector<std::uint8_t> & temporary_id) {
+      std::string str;
+      str.reserve(2 * std::size(temporary_id));  // Two hex characters per octet string
+
+      std::array<char, 2> buffer;
+      for (const auto & octet_string : temporary_id) {
+        std::to_chars(std::begin(buffer), std::end(buffer), octet_string, 16);
+        str.push_back(std::toupper(std::get<0>(buffer)));
+        str.push_back(std::toupper(std::get<1>(buffer)));
+      }
+
+      return str;
+    };
+
+    detection.id =
+      to_string(sdsm.source_id.id) + "-" + std::to_string(common_data.detected_id.object_id);
 
     const auto pos_offset{PositionOffsetXYZ::from_msg(common_data.pos)};
     detection.pose.pose.position = to_position_msg(MapCoordinate{

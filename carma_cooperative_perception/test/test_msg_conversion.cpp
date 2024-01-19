@@ -58,6 +58,7 @@ TEST(ToTimeMsg, NulloptSeconds)
 TEST(ToDetectionMsg, Simple)
 {
   carma_v2x_msgs::msg::SensorDataSharingMessage sdsm_msg;
+  sdsm_msg.source_id.id = {0xBA, 0xDD, 0xCA, 0xFE};
   sdsm_msg.sdsm_time_stamp.second.millisecond = 1000;
   sdsm_msg.sdsm_time_stamp.presence_vector |= sdsm_msg.sdsm_time_stamp.SECOND;
   sdsm_msg.ref_pos.longitude = -90.703125;  // degrees
@@ -66,7 +67,7 @@ TEST(ToDetectionMsg, Simple)
   sdsm_msg.ref_pos.elevation = 300.0;  // m
 
   carma_v2x_msgs::msg::DetectedObjectData object_data;
-  object_data.detected_object_common_data.detected_id.object_id = 0xBEEF;
+  object_data.detected_object_common_data.detected_id.object_id = 1;
   object_data.detected_object_common_data.measurement_time.measurement_time_offset = -0.1;  // s
 
   object_data.detected_object_common_data.heading.heading = 34;  // true heading; degrees
@@ -118,7 +119,7 @@ TEST(ToDetectionMsg, Simple)
   EXPECT_DOUBLE_EQ(detection.accel.accel.linear.y, 1.0);
   EXPECT_NEAR(detection.accel.accel.linear.z, 2.4 * 9.80665, 1e-4);
 
-  EXPECT_EQ(detection.id, std::to_string(0xBEEF));
+  EXPECT_EQ(detection.id, "BADDCAFE-1");
   EXPECT_EQ(detection.motion_model, detection.MOTION_MODEL_CTRV);
 }
 
