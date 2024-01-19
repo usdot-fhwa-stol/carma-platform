@@ -34,9 +34,6 @@ jobs:
         fetch-depth: 0
         path: src/${{ github.event.repository.name }}
 
-    - name: Install Dlib  # Install the Dlib library
-      run: sudo apt-get update && sudo apt-get install -y libdlib-dev   
-               
     - name: Move source code
       # Move the source code to the desired location
       run: mv $GITHUB_WORKSPACE/src /opt/carma/
@@ -46,6 +43,9 @@ jobs:
       run: |
         source "$INIT_ENV"
         ./src/${{ github.event.repository.name }}/docker/checkout.bash -r /opt/carma/
+
+    - name: Install Dlib  # Install the multiple object tracking deps
+      run: sudo bash /home/carma/src/multiple_object_tracking/install_dependencies.sh
 
     - name: Build ROS1
       # Build ROS1 packages
@@ -62,7 +62,7 @@ jobs:
       run: |
         source "$INIT_ENV"
         sed -i 's/colcon test /colcon test --packages-skip novatel_oem7_msgs tracetools tracetools_test /' /home/carma/.ci-image/engineering_tools/code_coverage/make_with_coverage.bash
-        make_with_coverage.bash -t -e /opt/carma/ -o ./coverage_reports/gcov 
+        make_with_coverage.bash -t -e /opt/carma/ -o ./coverage_reports/gcov
 
     - name: Backup ROS1 compile_commands.json
       # Backup the ROS1 compile_commands.json file for sonarcloud
@@ -70,10 +70,10 @@ jobs:
         mv /opt/carma/build/compile_commands.json /opt/carma/compile_commands.ros1.json
 
     - name: Cleanup before ROS 2 build
-      # Clear the build and install folders before building ROS 2 
+      # Clear the build and install folders before building ROS 2
       run: |
         rm -rf /opt/carma/install
-        rm -rf /opt/carma/build             
+        rm -rf /opt/carma/build
 
     - name: Build ROS2
       # Build ROS2 packages
@@ -90,14 +90,14 @@ jobs:
         source "$INIT_ENV"
         source "$ROS_2_ENV"
         sed -i '/colcon test/ s/$/ --parallel-workers 4 --event-handlers console_direct+ --cmake-args -DCMAKE_EXPORT_COMPILE_COMMANDS=ON -DCMAKE_CXX_FLAGS="${COVERAGE_FLAGS}" -DCMAKE_C_FLAGS="${COVERAGE_FLAGS}" -DCMAKE_BUILD_TYPE="Debug"/' /home/carma/.ci-image/engineering_tools/code_coverage/make_with_coverage.bash
-        make_with_coverage.bash -t -e /opt/carma/ -o ./coverage_reports/gcov 
+        make_with_coverage.bash -t -e /opt/carma/ -o ./coverage_reports/gcov
 
     - name: Combine ROS1 and ROS2 compile_commands.json files
       # Combine the ROS1 and ROS2 compile_commands.json files for sonarscan
       continue-on-error: true
-      run: |   
+      run: |
         mv /opt/carma/build/compile_commands.json /opt/carma/compile_commands.ros2.json
-        jq -s add /opt/carma/compile_commands.ros1.json /opt/carma/compile_commands.ros2.json > /opt/carma/build/compile_commands.json              
+        jq -s add /opt/carma/compile_commands.ros1.json /opt/carma/compile_commands.ros2.json > /opt/carma/build/compile_commands.json
 
     - name: Run SonarScanner
       # Run SonarScanner for code analysis
