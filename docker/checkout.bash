@@ -110,4 +110,4 @@ git sparse-checkout set ext/ccserver
 sudo apt-get update && sudo apt-get install -y libdlib-dev
 
 cd ${dir}/src
-sudo bash multiple_object_tracking/install_dependencies.sh
+sudo bash multiple_object_tracking/scripts/install_dependencies.sh
