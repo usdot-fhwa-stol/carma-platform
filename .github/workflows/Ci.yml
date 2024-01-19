@@ -5,7 +5,7 @@ on:
   pull_request:
     types: [opened, synchronize, reopened]
   push:
-    branches: [develop, master]
+    branches: [develop, master,feature/add_gha]
 
 jobs:
   build:
