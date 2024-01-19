@@ -44,9 +44,6 @@ jobs:
         source "$INIT_ENV"
         ./src/${{ github.event.repository.name }}/docker/checkout.bash -r /opt/carma/
 
-    - name: Install Dlib  # Install the multiple object tracking deps
-      run: sudo bash /home/carma/src/multiple_object_tracking/install_dependencies.sh
-
     - name: Build ROS1
       # Build ROS1 packages
       # The skipped ROS 1 packages here should match the ROS 1 packages that are skipped during the build in docker/install.sh
