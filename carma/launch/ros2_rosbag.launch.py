@@ -97,7 +97,7 @@ def generate_launch_description():
                     FindPackageShare('carma'),'config',
                     'rosbag2_qos_overrides.yaml'
                 ]),
-        description = "Path to file contain vehicle configuration parameters"
+        description = "Path to file containing rosbag2 override qos settings"
     )
 
     return LaunchDescription([
