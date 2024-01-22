@@ -374,8 +374,8 @@ namespace yield_plugin
   */
   double clamp(double input, double min, double max)
   {
-    auto clamped = std::max(input, max);
-    clamped = std::min(clamped, min);
+    auto clamped = std::min(input, max);
+    clamped = std::max(clamped, min);
     return clamped;
   }
 
@@ -803,7 +803,7 @@ namespace yield_plugin
       // if a digital gap is available, it is replaced as safety gap
       safety_gap = std::max(safety_gap, externally_commanded_safety_gap);
     }
-    //
+
     const double goal_pos = std::max(0.0, object_downtrack_lead - safety_gap);
     const double initial_pos = 0.0; //relative initial position (first trajectory point)
     const double original_max_speed = max_trajectory_speed(original_tp.trajectory_points, earliest_collision_time_in_seconds);
@@ -811,8 +811,7 @@ namespace yield_plugin
     RCLCPP_DEBUG_STREAM(nh_->get_logger(),"delta_v_max: " << delta_v_max << ", safety_gap: " << safety_gap);
 
     // reference time, is the maximum time available to perform object avoidance (length of a trajectory)
-    const auto plan_start_time = get_trajectory_start_time(original_tp);
-    const double max_allowed_trajectory_duration_in_s = (get_trajectory_end_time(original_tp) - plan_start_time);
+    const double max_allowed_trajectory_duration_in_s = get_trajectory_end_time(original_tp) - get_trajectory_start_time(original_tp);
     // time required for comfortable deceleration
     const double time_required_for_comfortable_decel_in_s = config_.acceleration_adjustment_factor * delta_v_max / config_.yield_max_deceleration_in_ms2;
 
