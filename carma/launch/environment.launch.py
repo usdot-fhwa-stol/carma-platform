@@ -296,7 +296,7 @@ def generate_launch_description():
                     ("incoming_psm", [ EnvironmentVariable('CARMA_MSG_NS', default_value=''), "/incoming_psm" ] ),
                     ("incoming_bsm", [ EnvironmentVariable('CARMA_MSG_NS', default_value=''), "/incoming_bsm" ] ),
                     ("georeference", [ EnvironmentVariable('CARMA_LOCZ_NS', default_value=''), "/map_param_loader/georeference" ] ),
-                    #("external_objects", "fused_external_objects")
+                    ("external_objects", "fused_external_objects")
                 ],
                 parameters=[
                     motion_computation_param_file, vehicle_config_param_file
@@ -438,24 +438,24 @@ def generate_launch_description():
                     vehicle_config_param_file
                 ]
             ),
-            #ComposableNode(
-            #    package='carma_cooperative_perception',
-            #    plugin='carma_cooperative_perception::ExternalObjectListToSdsmNode',
-            #    name='cp_external_object_list_to_sdsm_node',
-            #    extra_arguments=[
-            #        {'use_intra_process_comms': True},
-            #        {'--log-level' : GetLogLevel('cp_external_object_list_to_sdsm_node', env_log_levels) },
-            #    ],
-            #    remappings=[
-            #        ("input/georeference", [EnvironmentVariable("CARMA_LOCZ_NS", default_value=""), "/map_param_loader/georeference"]),
-            #        ("output/sdsms", [ EnvironmentVariable('CARMA_MSG_NS', default_value=''), "/outgoing_sdsm" ] ),
-            #        ("input/pose_stamped", [ EnvironmentVariable('CARMA_LOCZ_NS', default_value=''), "/current_pose" ] ),
-            #        ("input/external_objects", "external_objects"),
-            #    ],
-            #    parameters=[
-            #        vehicle_config_param_file
-            #    ]
-            #),
+            ComposableNode(
+                package='carma_cooperative_perception',
+                plugin='carma_cooperative_perception::ExternalObjectListToSdsmNode',
+                name='cp_external_object_list_to_sdsm_node',
+                extra_arguments=[
+                    {'use_intra_process_comms': True},
+                    {'--log-level' : GetLogLevel('cp_external_object_list_to_sdsm_node', env_log_levels) },
+                ],
+                remappings=[
+                    ("input/georeference", [EnvironmentVariable("CARMA_LOCZ_NS", default_value=""), "/map_param_loader/georeference"]),
+                    ("output/sdsms", [ EnvironmentVariable('CARMA_MSG_NS', default_value=''), "/outgoing_sdsm" ] ),
+                    ("input/pose_stamped", [ EnvironmentVariable('CARMA_LOCZ_NS', default_value=''), "/current_pose" ] ),
+                    ("input/external_objects", "external_objects"),
+                ],
+                parameters=[
+                    vehicle_config_param_file
+                ]
+            ),
             ComposableNode(
                 package='carma_cooperative_perception',
                 plugin='carma_cooperative_perception::HostVehicleFilterNode',
@@ -474,22 +474,22 @@ def generate_launch_description():
                     vehicle_config_param_file
                 ]
             ),
-            #ComposableNode(
-            #    package='carma_cooperative_perception',
-            #    plugin='carma_cooperative_perception::SdsmToDetectionListNode',
-            #    name='cp_sdsm_to_detection_list_node',
-            #    extra_arguments=[
-            #        {'use_intra_process_comms': True},
-            #        {'--log-level' : GetLogLevel('cp_sdsm_to_detection_list_node', env_log_levels) },
-            #    ],
-            #    remappings=[
-            #        ("input/sdsm", [ EnvironmentVariable('CARMA_MSG_NS', default_value=''), "/incoming_sdsm" ] ),
-            #        ("output/detections", "full_detection_list"),
-            #    ],
-            #    parameters=[
-            #        vehicle_config_param_file
-            #    ]
-            #),
+            ComposableNode(
+                package='carma_cooperative_perception',
+                plugin='carma_cooperative_perception::SdsmToDetectionListNode',
+                name='cp_sdsm_to_detection_list_node',
+                extra_arguments=[
+                    {'use_intra_process_comms': True},
+                    {'--log-level' : GetLogLevel('cp_sdsm_to_detection_list_node', env_log_levels) },
+                ],
+                remappings=[
+                    ("input/sdsm", [ EnvironmentVariable('CARMA_MSG_NS', default_value=''), "/incoming_sdsm" ] ),
+                    ("output/detections", "full_detection_list"),
+                ],
+                parameters=[
+                    vehicle_config_param_file
+                ]
+            ),
             ComposableNode(
                 package='carma_cooperative_perception',
                 plugin='carma_cooperative_perception::TrackListToExternalObjectListNode',
@@ -550,6 +550,6 @@ def generate_launch_description():
         carma_external_objects_container,
         lanelet2_map_loader_container,
         lanelet2_map_visualization_container,
-        #carma_cooperative_perception_container,
+        carma_cooperative_perception_container,
         subsystem_controller
     ])

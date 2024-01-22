@@ -2,7 +2,7 @@
 # Adjustment factor for safe and comfortable acceleration/deceleration
 # Value type: Desired
 # No unit
-acceleration_adjustment_factor: 2.0
+acceleration_adjustment_factor: 1.0
 # Time horizon for collision detection for vehicles on the route
 # NOTE: not applied for pedestrians or other non-vehicle obstacles on the road
 # Units: s
@@ -23,7 +23,7 @@ yield_max_deceleration_in_ms2: 3.0
 # Minimum safety gap with an Object/Obstacle
 # Units: meters
 # Value type: Desired
-minimum_safety_gap_in_meters: 5.0
+minimum_safety_gap_in_meters: 20.0
 # Maximum speed value to consider the ego vehicle stopped
 # Units: m/s
 # Value type: Desired
