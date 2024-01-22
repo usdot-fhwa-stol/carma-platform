@@ -407,8 +407,8 @@ namespace yield_plugin
     calculated_speeds.push_back(initial_velocity);
     const auto original_planning_time = std::max(planning_time, (get_trajectory_end_time(original_tp) - get_trajectory_start_time(original_tp)));
 
-    // Calculating time_step to generate trajectory, which can be constant
-    // Only using original trajectory size for potential performance improvement
+    // Calculating time_step to generate trajectory, which can be any constant.
+    // Only using original trajectory size here for potential performance improvement
     const double average_time_step = std::max(0.1, original_planning_time / original_tp.trajectory_points.size() / 2);
     double new_traj_accumulated_downtrack = 0.0;
     double original_traj_accumulated_downtrack = original_traj_relative_downtracks.at(1);
