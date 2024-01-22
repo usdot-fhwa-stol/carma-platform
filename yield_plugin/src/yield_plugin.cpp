@@ -818,7 +818,7 @@ namespace yield_plugin
     // planning time for object avoidance
     double planning_time_in_s = 0;
 
-    if( config_.min_obj_avoidance_plan_time_in_s < time_required_for_comfortable_decel_in_s
+    if (config_.min_obj_avoidance_plan_time_in_s < time_required_for_comfortable_decel_in_s
       && time_required_for_comfortable_decel_in_s < max_allowed_trajectory_duration_in_s)
     {
       planning_time_in_s = time_required_for_comfortable_decel_in_s;
