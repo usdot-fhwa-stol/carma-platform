@@ -66,7 +66,7 @@ TEST(YieldPluginTest, test_detect_trajectories_intersection)
   p3.y() = 3;
   v1 = {p1, p2, p3};
 
-  
+
   lanelet::BasicPoint2d p4;
   p4.x() = 2.5;
   p4.y() = 0;
@@ -85,7 +85,7 @@ TEST(YieldPluginTest, test_detect_trajectories_intersection)
 TEST(YieldPluginTest, test_update_clc_trajectory)
 {
   YieldPluginConfig config;
-  config.safety_collision_time_gap = 0.1;
+  config.safety_collision_time_gap_in_s = 0.1;
   std::shared_ptr<carma_wm::CARMAWorldModel> wm = std::make_shared<carma_wm::CARMAWorldModel>();
   auto nh = std::make_shared<yield_plugin::YieldPluginNode>(rclcpp::NodeOptions());
   auto map = carma_wm::test::buildGuidanceTestMap(100.0, 100.0);
@@ -93,7 +93,7 @@ TEST(YieldPluginTest, test_update_clc_trajectory)
 
   carma_wm::test::setRouteByIds({ 1200, 1201, 1202, 1203 }, wm);
   YieldPlugin plugin(nh,wm, config,[&](auto msg) {}, [&](auto msg) {});
-        
+
     lanelet::BasicPoint2d p1(10, 40);
     lanelet::BasicPoint2d p2(20, 40);
     lanelet::BasicPoint2d p3(30, 40);
@@ -126,7 +126,7 @@ TEST(YieldPluginTest, test_update_clc_trajectory)
     trajectory_point_3.x = 20.0;
     trajectory_point_3.y = 30.0;
     trajectory_point_3.target_time = rclcpp::Time(2*1e9);
-    
+
     trajectory_point_4.x = 20.0;
     trajectory_point_4.y = 40.0;
     trajectory_point_4.target_time = rclcpp::Time(3*1e9);
@@ -142,7 +142,7 @@ TEST(YieldPluginTest, test_update_clc_trajectory)
     trajectory_point_7.x = 20.0;
     trajectory_point_7.y = 70.0;
     trajectory_point_7.target_time = rclcpp::Time(6*1e9);
-    
+
     original_tp.trajectory_points = {trajectory_point_1, trajectory_point_2, trajectory_point_3, trajectory_point_4, trajectory_point_5, trajectory_point_6, trajectory_point_7};
 
     double current_speed = 10;
@@ -186,7 +186,7 @@ TEST(YieldPluginTest, test_traj_cb)
     trajectory_point_3.x = 20.0;
     trajectory_point_3.y = -20.0;
     trajectory_point_3.target_time = rclcpp::Time(2,0);
-    
+
     trajectory_point_4.x = 20.0;
     trajectory_point_4.y = -10.0;
     trajectory_point_4.target_time = rclcpp::Time(3,0);
@@ -202,7 +202,7 @@ TEST(YieldPluginTest, test_traj_cb)
     trajectory_point_7.x = 20.0;
     trajectory_point_7.y = 20.0;
     trajectory_point_7.target_time = rclcpp::Time(60,0);
-    
+
     original_tp.trajectory_points = {trajectory_point_1, trajectory_point_2, trajectory_point_3, trajectory_point_4, trajectory_point_5, trajectory_point_6, trajectory_point_7};
 
     std::shared_ptr<carma_planning_msgs::srv::PlanTrajectory::Request> req = std::make_shared<carma_planning_msgs::srv::PlanTrajectory::Request>();
