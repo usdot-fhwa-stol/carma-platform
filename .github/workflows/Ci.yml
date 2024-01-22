@@ -63,7 +63,7 @@ jobs:
       # The skipped ROS 1 packages here should match the ROS 1 packages that are skipped during the build in docker/install.sh"
       run: |
         source "$INIT_ENV"
-        sed -i 's/colcon test /colcon test --packages-skip novatel_oem7_msgs tracetools tracetools_test /' /home/carma/.ci-image/engineering_tools/code_coverage/make_with_coverage.bash
+        sed -i 's/colcon test /colcon test --packages-skip novatel_oem7_msgs tracetools tracetools_test carma_launch_testing carma_message_utilities ros2bag ros2trace tracetools_launch tracetools_read tracetools_trace /' /home/carma/.ci-image/engineering_tools/code_coverage/make_with_coverage.bash
         make_with_coverage.bash -t -e /opt/carma/ -o ./coverage_reports/gcov
 
     - name: Backup ROS1 compile_commands.json
