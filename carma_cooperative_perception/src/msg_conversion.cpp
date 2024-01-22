@@ -31,6 +31,7 @@
 #include <chrono>
 #include <cmath>
 #include <limits>
+#include <string>
 #include <utility>
 
 #include <proj.h>
@@ -140,6 +141,17 @@ auto to_position_msg(const UtmCoordinate & position_utm) -> geometry_msgs::msg::
   return msg;
 }
 
+auto to_position_msg(const MapCoordinate & position_map) -> geometry_msgs::msg::Point
+{
+  geometry_msgs::msg::Point msg;
+
+  msg.x = remove_units(position_map.easting);
+  msg.y = remove_units(position_map.northing);
+  msg.z = remove_units(position_map.elevation);
+
+  return msg;
+}
+
 auto heading_to_enu_yaw(const units::angle::degree_t & heading) -> units::angle::degree_t
 {
   return units::angle::degree_t{std::fmod(-(remove_units(heading) - 90.0) + 360.0, 360.0)};
@@ -209,7 +221,8 @@ auto transform_pose_from_map_to_wgs84(
   return ref_pos;
 }
 
-auto to_detection_list_msg(const carma_v2x_msgs::msg::SensorDataSharingMessage & sdsm)
+auto to_detection_list_msg(
+  const carma_v2x_msgs::msg::SensorDataSharingMessage & sdsm, std::string_view georeference)
   -> carma_cooperative_perception_interfaces::msg::DetectionList
 {
   carma_cooperative_perception_interfaces::msg::DetectionList detection_list;
@@ -217,13 +230,13 @@ auto to_detection_list_msg(const carma_v2x_msgs::msg::SensorDataSharingMessage &
   const auto ref_pos_3d{Position3D::from_msg(sdsm.ref_pos)};
   const Wgs84Coordinate ref_pos_wgs84{
     ref_pos_3d.latitude, ref_pos_3d.longitude, ref_pos_3d.elevation.value()};
-  const auto ref_pos_utm{project_to_utm(ref_pos_wgs84)};
+  const auto ref_pos_map{project_to_carma_map(ref_pos_wgs84, georeference)};
 
   for (const auto & object_data : sdsm.objects.detected_object_data) {
     const auto common_data{object_data.detected_object_common_data};
 
     carma_cooperative_perception_interfaces::msg::Detection detection;
-    detection.header.frame_id = to_string(ref_pos_utm.utm_zone);
+    detection.header.frame_id = "map";
 
     const auto detection_time{calc_detection_time_stamp(
       DDateTime::from_msg(sdsm.sdsm_time_stamp),
@@ -231,20 +244,35 @@ auto to_detection_list_msg(const carma_v2x_msgs::msg::SensorDataSharingMessage &
 
     detection.header.stamp = to_time_msg(detection_time);
 
-    detection.id = std::to_string(common_data.detected_id.object_id);
+    // TemporaryID and octet string terms come from the SAE J2735 message definitions
+    static constexpr auto to_string = [](const std::vector<std::uint8_t> & temporary_id) {
+      std::string str;
+      str.reserve(2 * std::size(temporary_id));  // Two hex characters per octet string
+
+      std::array<char, 2> buffer;
+      for (const auto & octet_string : temporary_id) {
+        std::to_chars(std::begin(buffer), std::end(buffer), octet_string, 16);
+        str.push_back(std::toupper(std::get<0>(buffer)));
+        str.push_back(std::toupper(std::get<1>(buffer)));
+      }
+
+      return str;
+    };
+
+    detection.id =
+      to_string(sdsm.source_id.id) + "-" + std::to_string(common_data.detected_id.object_id);
 
     const auto pos_offset{PositionOffsetXYZ::from_msg(common_data.pos)};
-    const auto utm_displacement{
-      UtmDisplacement{pos_offset.offset_x, pos_offset.offset_y, pos_offset.offset_z.value()}};
-
-    const auto detection_pos_utm{ref_pos_utm + utm_displacement};
-    detection.pose.pose.position = to_position_msg(detection_pos_utm);
+    detection.pose.pose.position = to_position_msg(MapCoordinate{
+      ref_pos_map.easting + pos_offset.offset_x, ref_pos_map.northing + pos_offset.offset_y,
+      ref_pos_map.elevation + pos_offset.offset_z.value_or(units::length::meter_t{0.0})});
 
     const auto true_heading{units::angle::degree_t{Heading::from_msg(common_data.heading).heading}};
 
     // Note: This should really use the detection's WGS-84 position, so the
     // convergence will be off slightly. TODO
-    const auto grid_convergence{calculate_grid_convergence(ref_pos_wgs84, ref_pos_utm.utm_zone)};
+    const units::angle::degree_t grid_convergence{
+      calculate_grid_convergence(ref_pos_wgs84, georeference)};
 
     const auto grid_heading{true_heading - grid_convergence};
     const auto enu_yaw{heading_to_enu_yaw(grid_heading)};
@@ -436,7 +464,7 @@ auto to_external_object_msg(const carma_cooperative_perception_interfaces::msg::
     case track.SEMANTIC_CLASS_UNKNOWN:
     default:
       external_object.object_type = external_object.UNKNOWN;
-  };
+  }
 
   return external_object;
 }

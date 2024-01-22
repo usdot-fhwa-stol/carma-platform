@@ -36,6 +36,13 @@ struct Wgs84Coordinate
   units::length::meter_t elevation; /** With respect to the reference ellipsoid. */
 };
 
+struct MapCoordinate
+{
+  units::length::meter_t easting;
+  units::length::meter_t northing;
+  units::length::meter_t elevation;
+};
+
 /**
  * @brief Represents a position using UTM coordinates
 */
@@ -161,6 +168,9 @@ inline constexpr auto operator-(const UtmDisplacement & displacement, UtmCoordin
 */
 auto calculate_utm_zone(const Wgs84Coordinate & coordinate) -> UtmZone;
 
+auto project_to_carma_map(const Wgs84Coordinate & coordinate, std::string_view proj_string)
+  -> MapCoordinate;
+
 /**
  * @brief Projects a Wgs84Coordinate to its corresponding UTM zone
  *
@@ -182,6 +192,9 @@ auto project_to_utm(const Wgs84Coordinate & coordinate) -> UtmCoordinate;
  * @return Grid convergence angle
 */
 auto calculate_grid_convergence(const Wgs84Coordinate & position, const UtmZone & zone)
+  -> units::angle::degree_t;
+
+auto calculate_grid_convergence(const Wgs84Coordinate & position, std::string_view georeference)
   -> units::angle::degree_t;
 
 }  // namespace carma_cooperative_perception
