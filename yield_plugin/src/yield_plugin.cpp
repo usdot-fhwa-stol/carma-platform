@@ -37,7 +37,7 @@
 #include <basic_autonomy/smoothing/filters.hpp>
 
 using oss = std::ostringstream;
-const double EPSILON {0.01}; //small value to compare doubles
+constexpr auto EPSILON {0.01}; //small value to compare doubles
 
 namespace yield_plugin
 {
@@ -47,6 +47,21 @@ namespace yield_plugin
     : nh_(nh), wm_(wm), config_(config),mobility_response_publisher_(mobility_response_publisher), lc_status_publisher_(lc_status_publisher)
   {
 
+  }
+
+  double get_trajectory_end_time(const carma_planning_msgs::msg::TrajectoryPlan& trajectory)
+  {
+    return rclcpp::Time(trajectory.trajectory_points.back().target_time).seconds();
+  }
+
+  double get_trajectory_start_time(const carma_planning_msgs::msg::TrajectoryPlan& trajectory)
+  {
+    return rclcpp::Time(trajectory.trajectory_points.front().target_time).seconds();
+  }
+
+  double get_trajectory_duration(const carma_planning_msgs::msg::TrajectoryPlan& trajectory)
+  {
+    return fabs(get_trajectory_end_time(trajectory) - get_trajectory_start_time(trajectory));
   }
 
   std::vector<std::pair<int, lanelet::BasicPoint2d>> YieldPlugin::detect_trajectories_intersection(std::vector<lanelet::BasicPoint2d> self_trajectory, std::vector<lanelet::BasicPoint2d> incoming_trajectory) const
@@ -228,17 +243,6 @@ namespace yield_plugin
     host_bsm_id_ = bsmIDtoString(bsm_core_);
   }
 
-  double get_trajectory_end_time(const carma_planning_msgs::msg::TrajectoryPlan& trajectory)
-  {
-    return rclcpp::Time(trajectory.trajectory_points.back().target_time).seconds();
-  }
-
-  double get_trajectory_start_time(const carma_planning_msgs::msg::TrajectoryPlan& trajectory)
-  {
-    return rclcpp::Time(trajectory.trajectory_points.front().target_time).seconds();
-  }
-
-
  void YieldPlugin::plan_trajectory_callback(
   carma_planning_msgs::srv::PlanTrajectory::Request::SharedPtr req,
   carma_planning_msgs::srv::PlanTrajectory::Response::SharedPtr resp)
@@ -365,19 +369,6 @@ namespace yield_plugin
 
     return cooperative_trajectory;
   }
-  /**
-  * Helper function to keep the input between given min and max
-  * \param input value to clamp between min and max
-  * \param min lower boundary
-  * \param max higher boundary
-  * \return clamped value
-  */
-  double clamp(double input, double min, double max)
-  {
-    auto clamped = std::min(input, max);
-    clamped = std::max(clamped, min);
-    return clamped;
-  }
 
   carma_planning_msgs::msg::TrajectoryPlan YieldPlugin::generate_JMT_trajectory(const carma_planning_msgs::msg::TrajectoryPlan& original_tp, double initial_pos, double goal_pos,
     double initial_velocity, double goal_velocity, double planning_time, double original_max_speed)
@@ -386,11 +377,28 @@ namespace yield_plugin
     std::vector<carma_planning_msgs::msg::TrajectoryPlanPoint> jmt_trajectory_points;
     jmt_trajectory_points.push_back(original_tp.trajectory_points[0]);
 
+    std::vector<double> original_traj_relative_downtracks = get_relative_downtracks(original_tp);
+    std::vector<double> calculated_speeds = {};
+    std::vector<double> new_relative_downtracks = {};
+    new_relative_downtracks.push_back(0.0);
+    calculated_speeds.push_back(initial_velocity);
+    const auto original_planning_duration = std::max(planning_time, get_trajectory_duration(original_tp));
+
+    // Calculating time_step to generate trajectory, which can be any constant.
+    // Only using original trajectory size here for potential performance improvement and dividing by 2 arbitrarily just to increase precision
+    const double average_time_step = std::max(0.1, original_planning_duration / original_tp.trajectory_points.size() / 2);
+    double new_traj_accumulated_downtrack = 0.0;
+    double original_traj_accumulated_downtrack = original_traj_relative_downtracks.at(1);
+
+    // Up until goal_pos (which also can be until end of the entire original trajectory), generate new speeds at
+    // or near original trajectory points by generating them at a fixed time interval using the JMT polynomial equation
     const double initial_time = 0;
     const double initial_accel = 0.0;
     const double goal_accel = 0.0;
+    int new_traj_idx = 1;
+    int original_traj_idx = 1;
 
-    RCLCPP_DEBUG_STREAM(nh_->get_logger(),"Used original_max_speed: " << original_max_speed);
+    // Get the polynomial solutions used to generate the trajectory
     std::vector<double> values = quintic_coefficient_calculator::quintic_coefficient_calculator(initial_pos,
                                                                                                 goal_pos,
                                                                                                 initial_velocity,
@@ -399,24 +407,7 @@ namespace yield_plugin
                                                                                                 goal_accel,
                                                                                                 initial_time,
                                                                                                 planning_time);
-
-    std::vector<double> original_traj_relative_downtracks = get_relative_downtracks(original_tp);
-    std::vector<double> calculated_speeds = {};
-    std::vector<double> new_relative_downtracks = {};
-    new_relative_downtracks.push_back(0.0);
-    calculated_speeds.push_back(initial_velocity);
-    const auto original_planning_time = std::max(planning_time, (get_trajectory_end_time(original_tp) - get_trajectory_start_time(original_tp)));
-
-    // Calculating time_step to generate trajectory, which can be any constant.
-    // Only using original trajectory size here for potential performance improvement
-    const double average_time_step = std::max(0.1, original_planning_time / original_tp.trajectory_points.size() / 2);
-    double new_traj_accumulated_downtrack = 0.0;
-    double original_traj_accumulated_downtrack = original_traj_relative_downtracks.at(1);
-
-    // Up until goal_pos (or until end of the entire original trajectory), generate new speeds at or near original trajectory points
-    // by generating them at a fixed time interval using the JMT polynomial equation
-    int new_traj_idx = 1;
-    int original_traj_idx = 1;
+    RCLCPP_DEBUG_STREAM(nh_->get_logger(),"Used original_max_speed: " << original_max_speed);
     while (new_traj_accumulated_downtrack < goal_pos && original_traj_idx < original_traj_relative_downtracks.size())
     {
       const double target_time = new_traj_idx * average_time_step;
@@ -427,7 +418,7 @@ namespace yield_plugin
         << ", downtrack_at_target_time: "<< downtrack_at_target_time << ", target_time: " << target_time);
 
       // Cannot have a negative speed or have a higher speed than that of the original trajectory
-      velocity_at_target_time = clamp(velocity_at_target_time, 0.0, original_max_speed);
+      velocity_at_target_time = std::clamp(velocity_at_target_time, 0.0, original_max_speed);
 
       // Pick the speed if it matches with the original downtracks
       if (downtrack_at_target_time >= original_traj_accumulated_downtrack)
@@ -811,7 +802,7 @@ namespace yield_plugin
     RCLCPP_DEBUG_STREAM(nh_->get_logger(),"delta_v_max: " << delta_v_max << ", safety_gap: " << safety_gap);
 
     // reference time, is the maximum time available to perform object avoidance (length of a trajectory)
-    const double max_allowed_trajectory_duration_in_s = get_trajectory_end_time(original_tp) - get_trajectory_start_time(original_tp);
+    const double max_allowed_trajectory_duration_in_s = get_trajectory_duration(original_tp);
     // time required for comfortable deceleration
     const double time_required_for_comfortable_decel_in_s = config_.acceleration_adjustment_factor * delta_v_max / config_.yield_max_deceleration_in_ms2;
 

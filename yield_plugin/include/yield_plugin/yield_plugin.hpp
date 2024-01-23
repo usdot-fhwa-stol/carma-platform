@@ -175,7 +175,7 @@ public:
    * \param initial_velocity start velocity
    * \param goal_velocity end velocity
    * \param planning_time time duration of the planning
-   * \param original original_max_speed from original_tp accounting for the
+   * \param original original_max_speed from original_tp up until the goal_pos portion
    * NOTE: the function would generate trajectory duration arbitrarily high if stopping motion is needed. This is to keep the original trajectory's
    * shape in terms of location so that the vehicle steers toward the direction of travel even when stopping.
    * \return updated JMT trajectory
