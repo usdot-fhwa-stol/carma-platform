@@ -93,7 +93,7 @@ jobs:
         source "$INIT_ENV"
         source "$ROS_2_ENV"
         source /opt/autoware.ai/ros/install_ros2/setup.bash
-        sed -i '/colcon test/ s/$/ --parallel-workers 4 --event-handlers console_direct+ --cmake-args -DCMAKE_EXPORT_COMPILE_COMMANDS=ON -DCMAKE_CXX_FLAGS="${COVERAGE_FLAGS}" -DCMAKE_C_FLAGS="${COVERAGE_FLAGS}" -DCMAKE_BUILD_TYPE="Debug"/' /home/carma/.ci-image/engineering_tools/code_coverage/make_with_coverage.bash
+        sed -i '/colcon test/ s/$/ --parallel-workers 4 --event-handlers console_direct+" -DCMAKE_BUILD_TYPE="Debug"/' /home/carma/.ci-image/engineering_tools/code_coverage/make_with_coverage.bash
         make_with_coverage.bash -t -e /opt/carma/ -o ./coverage_reports/gcov
 
     - name: Combine ROS1 and ROS2 compile_commands.json files
