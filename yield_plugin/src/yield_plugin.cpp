@@ -370,6 +370,16 @@ namespace yield_plugin
     return cooperative_trajectory;
   }
 
+  double get_smallest_time_step_of_traj(const carma_planning_msgs::msg::TrajectoryPlan& original_tp)
+  {
+    double smallest_time_step = std::numeric_limits<double>::max();
+    for (size_t i = 0; i < original_tp.trajectory_points.size() - 1; i ++)
+    {
+      smallest_time_step = std::min(smallest_time_step, (rclcpp::Time(original_tp[i + 1].target_time) - rclcpp::Time(original_tp[i].target_time)).seconds());
+    }
+    return smallest_time_step;
+  }
+
   carma_planning_msgs::msg::TrajectoryPlan YieldPlugin::generate_JMT_trajectory(const carma_planning_msgs::msg::TrajectoryPlan& original_tp, double initial_pos, double goal_pos,
     double initial_velocity, double goal_velocity, double planning_time, double original_max_speed)
   {
@@ -382,11 +392,7 @@ namespace yield_plugin
     std::vector<double> new_relative_downtracks = {};
     new_relative_downtracks.push_back(0.0);
     calculated_speeds.push_back(initial_velocity);
-    const auto original_planning_duration = std::max(planning_time, get_trajectory_duration(original_tp));
-
-    // Calculating time_step to generate trajectory, which can be any constant.
-    // Only using original trajectory size here for potential performance improvement and dividing by 2 arbitrarily just to increase precision
-    const double average_time_step = std::max(0.1, original_planning_duration / original_tp.trajectory_points.size() / 2);
+    const auto smallest_time_step = get_smallest_time_step_of_traj(original_tp);
     double new_traj_accumulated_downtrack = 0.0;
     double original_traj_accumulated_downtrack = original_traj_relative_downtracks.at(1);
 
@@ -399,7 +405,7 @@ namespace yield_plugin
     int original_traj_idx = 1;
 
     // Get the polynomial solutions used to generate the trajectory
-    std::vector<double> values = quintic_coefficient_calculator::quintic_coefficient_calculator(initial_pos,
+    std::vector<double> polynomial_coefficients = quintic_coefficient_calculator::quintic_coefficient_calculator(initial_pos,
                                                                                                 goal_pos,
                                                                                                 initial_velocity,
                                                                                                 goal_velocity,
@@ -410,9 +416,9 @@ namespace yield_plugin
     RCLCPP_DEBUG_STREAM(nh_->get_logger(),"Used original_max_speed: " << original_max_speed);
     while (new_traj_accumulated_downtrack < goal_pos && original_traj_idx < original_traj_relative_downtracks.size())
     {
-      const double target_time = new_traj_idx * average_time_step;
-      const double downtrack_at_target_time = polynomial_calc(values, target_time);
-      double velocity_at_target_time = polynomial_calc_d(values, target_time);
+      const double target_time = new_traj_idx * smallest_time_step;
+      const double downtrack_at_target_time = polynomial_calc(polynomial_coefficients, target_time);
+      double velocity_at_target_time = polynomial_calc_d(polynomial_coefficients, target_time);
 
       RCLCPP_DEBUG_STREAM(nh_->get_logger(), "Calculated speed velocity_at_target_time: " << velocity_at_target_time
         << ", downtrack_at_target_time: "<< downtrack_at_target_time << ", target_time: " << target_time);
