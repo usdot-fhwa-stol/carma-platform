@@ -375,7 +375,9 @@ namespace yield_plugin
     double smallest_time_step = std::numeric_limits<double>::max();
     for (size_t i = 0; i < original_tp.trajectory_points.size() - 1; i ++)
     {
-      smallest_time_step = std::min(smallest_time_step, (rclcpp::Time(original_tp[i + 1].target_time) - rclcpp::Time(original_tp[i].target_time)).seconds());
+      smallest_time_step = std::min(smallest_time_step,
+        (rclcpp::Time(original_tp.trajectory_points.at(i + 1).target_time)
+        - rclcpp::Time(original_tp.trajectory_points.at(i).target_time)).seconds());
     }
     return smallest_time_step;
   }
@@ -392,7 +394,6 @@ namespace yield_plugin
     std::vector<double> new_relative_downtracks = {};
     new_relative_downtracks.push_back(0.0);
     calculated_speeds.push_back(initial_velocity);
-    const auto smallest_time_step = get_smallest_time_step_of_traj(original_tp);
     double new_traj_accumulated_downtrack = 0.0;
     double original_traj_accumulated_downtrack = original_traj_relative_downtracks.at(1);
 
@@ -414,6 +415,7 @@ namespace yield_plugin
                                                                                                 initial_time,
                                                                                                 planning_time);
     RCLCPP_DEBUG_STREAM(nh_->get_logger(),"Used original_max_speed: " << original_max_speed);
+    const auto smallest_time_step = get_smallest_time_step_of_traj(original_tp);
     while (new_traj_accumulated_downtrack < goal_pos && original_traj_idx < original_traj_relative_downtracks.size())
     {
       const double target_time = new_traj_idx * smallest_time_step;
