@@ -49,10 +49,8 @@ public:
   {
     try {
       publisher_->publish(to_detection_list_msg(msg, georeference_));
-    } catch (const std::bad_optional_access &) {
-      RCLCPP_ERROR(
-        get_logger(),
-        "Not converting SDSM to detection list: missing at least one required optional-field");
+    } catch (const std::runtime_error & e) {
+      RCLCPP_ERROR_STREAM(get_logger(), "Not converting SDSM to detection list: " << e.what());
     }
   }
 
