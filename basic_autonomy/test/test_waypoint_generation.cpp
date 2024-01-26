@@ -647,8 +647,10 @@ namespace basic_autonomy
         const waypoint_generation::DetailedTrajConfig config = waypoint_generation::compose_detailed_trajectory_config(0, 0, 0, 0, 0, 5, 0, 0, 20);
         cav_msgs::VehicleState ending_state;
         
+        double controler_look_ahead_distance = 20;
         std::vector<basic_autonomy::waypoint_generation::PointSpeedPair> points = basic_autonomy::waypoint_generation::create_geometry_profile(maneuvers, 
-                                                                                    starting_downtrack, cwm, ending_state, state, general_config, config);
+                                                                                    starting_downtrack, cwm, ending_state, state, general_config, config,
+                                                                                    controler_look_ahead_distance);
         
         EXPECT_EQ(points.back().speed, state.longitudinal_vel);
 
@@ -658,7 +660,8 @@ namespace basic_autonomy
         maneuver.lane_change_maneuver.end_dist = cwm->routeTrackPos(shortest_path.back().centerline2d()[centerline_size/2]).downtrack;
         maneuvers[0] = maneuver;
         points = basic_autonomy::waypoint_generation::create_geometry_profile(maneuvers, 
-                                                                                    starting_downtrack, cwm, ending_state, state, general_config, config);
+                                                                                    starting_downtrack, cwm, ending_state, state, general_config, config,
+                                                                                    controler_look_ahead_distance);
         
         EXPECT_TRUE(points.size() > 4);
 
@@ -734,14 +737,16 @@ namespace basic_autonomy
         const waypoint_generation::DetailedTrajConfig config = waypoint_generation::compose_detailed_trajectory_config(0, 1, 0, 0, 0, 5, 0, 0, 20);
         cav_msgs::VehicleState ending_state;
         
+        double controler_look_ahead_distance = 20;
         std::vector<basic_autonomy::waypoint_generation::PointSpeedPair> points = basic_autonomy::waypoint_generation::create_geometry_profile(maneuvers, 
-                                                                                    starting_downtrack, cmw, ending_state, state, general_config, config);
+                                                                                    starting_downtrack, cmw, ending_state, state, general_config, config,
+                                                                                    controler_look_ahead_distance);
         ros::Time state_time = ros::Time::now();
         EXPECT_EQ(points.back().speed, state.longitudinal_vel);
         std::vector<cav_msgs::TrajectoryPlanPoint> trajectory_points = basic_autonomy::waypoint_generation::compose_lanechange_trajectory_from_path(points,
                                                                                                                                                           state, state_time, cmw, ending_state, config);
         EXPECT_TRUE(trajectory_points.size() > 2);
-        basic_autonomy::waypoint_generation::create_lanechange_geometry(start_id, end_id,starting_downtrack, ending_downtrack, cmw, 1, 5);
+        basic_autonomy::waypoint_generation::create_lanechange_geometry(start_id, end_id,starting_downtrack, ending_downtrack, cmw, 1, 5, controler_look_ahead_distance);
     } 
 
     TEST(BasicAutonomyTest, lanefollow_geometry_visited_lanelets)
