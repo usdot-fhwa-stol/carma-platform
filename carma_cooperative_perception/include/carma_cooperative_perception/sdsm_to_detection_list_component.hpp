@@ -47,7 +47,11 @@ public:
 
   auto sdsm_msg_callback(const input_msg_type & msg) const -> void
   {
-    publisher_->publish(to_detection_list_msg(msg, georeference_));
+    try {
+      publisher_->publish(to_detection_list_msg(msg, georeference_));
+    } catch (const std::runtime_error & e) {
+      RCLCPP_ERROR_STREAM(get_logger(), "Failed to convert SDSM to detection list: " << e.what());
+    }
   }
 
 private:

@@ -21,6 +21,7 @@
 #include <carma_perception_msgs/msg/external_object_list.hpp>
 #include <j2735_v2x_msgs/msg/d_date_time.hpp>
 #include <j2735_v2x_msgs/msg/personal_device_user_type.hpp>
+#include <j2735_v2x_msgs/to_floating_point.hpp>
 #include <j3224_v2x_msgs/msg/detected_object_data.hpp>
 #include <j3224_v2x_msgs/msg/measurement_time_offset.hpp>
 #include <j3224_v2x_msgs/msg/object_type.hpp>
@@ -31,6 +32,7 @@
 #include <chrono>
 #include <cmath>
 #include <limits>
+#include <numeric>
 #include <string>
 #include <utility>
 
@@ -267,6 +269,23 @@ auto to_detection_list_msg(
       ref_pos_map.easting + pos_offset.offset_x, ref_pos_map.northing + pos_offset.offset_y,
       ref_pos_map.elevation + pos_offset.offset_z.value_or(units::length::meter_t{0.0})});
 
+    // Pose covariance is flattened 6x6 matrix with rows/columns of x, y, z, roll, pitch, yaw
+    try {
+      detection.pose.covariance.at(0) =
+        0.5 * std::pow(j2735_v2x_msgs::to_double(common_data.pos_confidence.pos).value(), 2);
+      detection.pose.covariance.at(7) =
+        0.5 * std::pow(j2735_v2x_msgs::to_double(common_data.pos_confidence.pos).value(), 2);
+    } catch (const std::bad_optional_access &) {
+      throw std::runtime_error("missing position confidence");
+    }
+
+    try {
+      detection.pose.covariance.at(14) =
+        0.5 * std::pow(j2735_v2x_msgs::to_double(common_data.pos_confidence.elevation).value(), 2);
+    } catch (const std::bad_optional_access &) {
+      throw std::runtime_error("missing elevation confidence");
+    }
+
     const auto true_heading{units::angle::degree_t{Heading::from_msg(common_data.heading).heading}};
 
     // Note: This should really use the detection's WGS-84 position, so the
@@ -281,6 +300,14 @@ auto to_detection_list_msg(
     quat_tf.setRPY(0, 0, remove_units(units::angle::radian_t{enu_yaw}));
     detection.pose.pose.orientation = tf2::toMsg(quat_tf);
 
+    try {
+      // Pose covariance is flattened 6x6 matrix with rows/columns of x, y, z, roll, pitch, yaw
+      detection.pose.covariance.at(35) =
+        0.5 * std::pow(j2735_v2x_msgs::to_double(common_data.heading_conf).value(), 2);
+    } catch (const std::bad_optional_access &) {
+      throw std::runtime_error("missing heading confidence");
+    }
+
     const auto speed{Speed::from_msg(common_data.speed)};
     detection.twist.twist.linear.x =
       remove_units(units::velocity::meters_per_second_t{speed.speed});
@@ -289,16 +316,31 @@ auto to_detection_list_msg(
     detection.twist.twist.linear.z =
       remove_units(units::velocity::meters_per_second_t{speed_z.speed});
 
-    const auto accel_set{AccelerationSet4Way::from_msg(common_data.accel_4_way)};
-    detection.accel.accel.linear.x =
-      remove_units(units::acceleration::meters_per_second_squared_t{accel_set.longitudinal});
-    detection.accel.accel.linear.y =
-      remove_units(units::acceleration::meters_per_second_squared_t{accel_set.lateral});
-    detection.accel.accel.linear.z =
-      remove_units(units::acceleration::meters_per_second_squared_t{accel_set.vert});
+    try {
+      // Twist covariance is flattened 6x6 matrix with rows/columns of x, y, z, roll, pitch, yaw
+      detection.twist.covariance.at(0) =
+        0.5 * std::pow(j2735_v2x_msgs::to_double(common_data.speed_confidence).value(), 2);
+    } catch (const std::bad_optional_access &) {
+      throw std::runtime_error("missing speed confidence");
+    }
 
+    try {
+      detection.twist.covariance.at(14) =
+        0.5 * std::pow(j2735_v2x_msgs::to_double(common_data.speed_confidence_z).value(), 2);
+    } catch (const std::bad_optional_access &) {
+      throw std::runtime_error("missing z-speed confidence");
+    }
+
+    const auto accel_set{AccelerationSet4Way::from_msg(common_data.accel_4_way)};
     detection.twist.twist.angular.z =
       remove_units(units::angular_velocity::degrees_per_second_t{accel_set.yaw_rate});
+
+    try {
+      detection.twist.covariance.at(35) =
+        0.5 * std::pow(j2735_v2x_msgs::to_double(common_data.acc_cfd_yaw).value(), 2);
+    } catch (const std::bad_optional_access &) {
+      throw std::runtime_error("missing yaw-rate confidence");
+    }
 
     switch (common_data.obj_type.object_type) {
       case common_data.obj_type.ANIMAL:
