@@ -50,7 +50,7 @@ public:
     try {
       publisher_->publish(to_detection_list_msg(msg, georeference_));
     } catch (const std::runtime_error & e) {
-      RCLCPP_ERROR_STREAM(get_logger(), "Not converting SDSM to detection list: " << e.what());
+      RCLCPP_ERROR_STREAM(get_logger(), "Failed to convert SDSM to detection list: " << e.what());
     }
   }
 

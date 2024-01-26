@@ -269,7 +269,7 @@ auto to_detection_list_msg(
       ref_pos_map.easting + pos_offset.offset_x, ref_pos_map.northing + pos_offset.offset_y,
       ref_pos_map.elevation + pos_offset.offset_z.value_or(units::length::meter_t{0.0})});
 
-    // Pose covariance is x, y, z, roll, pitch, yaw
+    // Pose covariance is flattened 6x6 matrix with rows/columns of x, y, z, roll, pitch, yaw
     try {
       detection.pose.covariance.at(0) =
         0.5 * std::pow(j2735_v2x_msgs::to_double(common_data.pos_confidence.pos).value(), 2);
@@ -301,7 +301,7 @@ auto to_detection_list_msg(
     detection.pose.pose.orientation = tf2::toMsg(quat_tf);
 
     try {
-      // Pose covariance is x, y, z, roll, pitch, yaw
+      // Pose covariance is flattened 6x6 matrix with rows/columns of x, y, z, roll, pitch, yaw
       detection.pose.covariance.at(35) =
         0.5 * std::pow(j2735_v2x_msgs::to_double(common_data.heading_conf).value(), 2);
     } catch (const std::bad_optional_access &) {
@@ -317,7 +317,7 @@ auto to_detection_list_msg(
       remove_units(units::velocity::meters_per_second_t{speed_z.speed});
 
     try {
-      // Twist covariance is x, y, z, roll, pitch, yaw
+      // Twist covariance is flattened 6x6 matrix with rows/columns of x, y, z, roll, pitch, yaw
       detection.twist.covariance.at(0) =
         0.5 * std::pow(j2735_v2x_msgs::to_double(common_data.speed_confidence).value(), 2);
     } catch (const std::bad_optional_access &) {
