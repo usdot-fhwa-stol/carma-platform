@@ -42,4 +42,22 @@
     <remap from="/lanelet_map_bin" to="semantic_map"/>
   </node>
 
+  <!-- vision_darknet_detect -->
+  <group>
+    <remap from="/detection/image_detector/objects" to="detection/image_detector/objects"/>
+    <include file="$(find vision_darknet_detect)/launch/vision_yolo3_detect.launch">
+      <arg name="gpu_device_id" value="0"/>
+      <arg name="score_threshold" value="0.30"/>
+      <arg name="nms_threshold" value="0.30"/>
+
+      <arg name="network_definition_file" value="$(arg yolo_dir)/darknet/cfg/yolov3-police_flashing_medium_size.cfg"/>
+      <arg name="pretrained_model_file" value="$(arg yolo_dir)/darknet/data/yolov3-police_flashing_medium_size_1500.weights"/>
+      <arg name="names_file" value="$(arg yolo_dir)/darknet/cfg/police_flashing.names"/>
+
+      <arg name="camera_id" value="/"/>
+      <arg name="image_src" value="$(optenv CARMA_INTR_NS)/camera/image_rect_color"/>
+      <arg name="cuda" value="$(arg cuda)"/>
+    </include>
+  </group>
+  
 </launch>

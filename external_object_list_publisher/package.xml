@@ -1,0 +1,21 @@
+<?xml version="1.0"?>
+<package format="3">
+  <name>external_object_list_publisher</name>
+  <version>3.3.0</version>
+  <description>The node is to plan a platooning maneuver</description>
+  <maintainer email="CARMA@dot.gov">carma</maintainer>
+  <license>Apache 2.0 License</license>
+  <buildtool_depend>catkin</buildtool_depend>
+  <depend>carma_utils</depend>
+  <depend>cav_msgs</depend>
+  <depend>roscpp</depend>
+  <depend>std_msgs</depend>
+  <depend>carma_wm</depend>
+  <depend>cav_srvs</depend>
+  <depend>lanelet2_extension</depend>
+  <depend>tf</depend>
+  <depend>tf2</depend>
+  <depend>tf2_ros</depend>
+  <depend>tf2_geometry_msgs</depend>
+  <build_depend>carma_cmake_common</build_depend>
+</package>

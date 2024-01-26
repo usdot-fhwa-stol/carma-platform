@@ -558,19 +558,19 @@ namespace route {
             std::shared_ptr<geometry_msgs::msg::PoseStamped> pose_ptr(new geometry_msgs::msg::PoseStamped(*vehicle_pose_));
             
             // check if we left the seleted route by cross track error
-            if (crosstrackErrorCheck(pose_ptr, current_lanelet))
-            {
-                this->rs_worker_.onRouteEvent(RouteStateWorker::RouteEvent::ROUTE_DEPARTED);
-                publishRouteEvent(carma_planning_msgs::msg::RouteEvent::ROUTE_DEPARTED);
-            }
+            // if (crosstrackErrorCheck(pose_ptr, current_lanelet))
+            // {
+            //     this->rs_worker_.onRouteEvent(RouteStateWorker::RouteEvent::ROUTE_DEPARTED);
+            //     publishRouteEvent(carma_planning_msgs::msg::RouteEvent::ROUTE_DEPARTED);
+            // }
 
             // check if we reached our destination be remaining down track distance            
             double route_length_2d = world_model_->getRouteEndTrackPos().downtrack;
-            if((current_downtrack_distance_ > route_length_2d - down_track_target_range_ && current_speed_ < epsilon_) || (current_downtrack_distance_ > route_length_2d))
-            {
-                this->rs_worker_.onRouteEvent(RouteStateWorker::RouteEvent::ROUTE_COMPLETED);
-                publishRouteEvent(carma_planning_msgs::msg::RouteEvent::ROUTE_COMPLETED);
-            }
+            // if((current_downtrack_distance_ > route_length_2d - down_track_target_range_ && current_speed_ < epsilon_) || (current_downtrack_distance_ > route_length_2d))
+            // {
+            //     this->rs_worker_.onRouteEvent(RouteStateWorker::RouteEvent::ROUTE_COMPLETED);
+            //     publishRouteEvent(carma_planning_msgs::msg::RouteEvent::ROUTE_COMPLETED);
+            // }
         }
     }
 

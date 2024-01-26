@@ -1,3 +1,4 @@
+#params and values are based on the red CARMA Truck
 timeHeadway: 3.5
 standStillHeadway: 22.0
 maxAccel: 1.5
@@ -7,15 +8,22 @@ Ki: 0.03 #0.035
 maxValue: 2.0
 minValue: -10.0
 cmdTmestamp: 100
-adjustmentCap: 15.0
+adjustmentCap: 20.0
 dt: 0.1
 integratorMax: 30
 integratorMin: -30
-wheelBase: 3.39
+wheelBase: 5.5
 lowpassGain: 0.5 #1.0
-lookaheadRatio: 2.0 #1.7
-minLookaheadDist: 15.0
-correctionAngle: 0.0
+lookaheadRatio: 1.8 #1.5
+minLookaheadDist: 28.0 #15
+correctionAngle: -0.035 #-0.022 to turn right
 integratorMax_pp: 0.1
 integratorMin_pp: -0.1
-Ki_pp: 0.012
+Ki_pp: 0.00
+correctionAngle_10_15: -0.00
+correctionAngle_15_20: -0.00
+correctionAngle_20_25: -0.00 #-0.055 is a little large in T3T4 as the vehicle will go to the right side of the centerline a little bit. But -0.055 is not that enough for T1 uphill direction due to the road side gradient.
+#-0.05 is a little small as the vehicle still goes to the left side of the centerline
+correctionAngle_25_30: -0.00
+correctionAngle_30_35: -0.00
+correctionAngle_35_40: -0.00

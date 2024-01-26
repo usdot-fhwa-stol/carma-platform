@@ -37,6 +37,7 @@
 #include <cav_msgs/LaneChangeStatus.h>
 #include <basic_autonomy/basic_autonomy.h>
 #include <std_msgs/String.h>
+#include <std_msgs/Float32.h>
 #include <lanelet2_extension/projection/local_frame_projector.h>
 
 
@@ -176,6 +177,7 @@ namespace cooperative_lanechange
             cav_msgs::Plugin plugin_discovery_msg_;
             ros::Subscriber pose_sub_;
             ros::Subscriber twist_sub_;
+            ros::Subscriber controller_setting_sub_;
             
             ros::Subscriber incoming_mobility_response_;
             ros::Subscriber bsm_sub_;
@@ -233,6 +235,8 @@ namespace cooperative_lanechange
             double curve_resample_step_size_ = 0.0;
             double back_distance_ = 0.0;
             double buffer_ending_downtrack_ = 0.0;
+
+            double controler_look_ahead_distance_=20;
             
             
             
@@ -244,6 +248,8 @@ namespace cooperative_lanechange
              * \param msg Latest pose message
              */
             void pose_cb(const geometry_msgs::PoseStampedConstPtr& msg);
+
+            void controller_setting(const std_msgs::Float32& msg);
             
             /**
              * \brief Callback for the twist subscriber, which will store latest twist locally

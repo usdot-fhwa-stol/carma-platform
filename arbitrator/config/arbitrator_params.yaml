@@ -1,12 +1,12 @@
 # Float: The minimum amount of time that an arbitrated plan must cover for the 
 # system to proceed with execution
 # Unit: s
-min_plan_duration: 6.0
+min_plan_duration: 3.0
 
 # Float: The nominal amount of time that an arbitrated plan should cover for the 
 # system to operate at best performance
 # Unit: s
-target_plan_duration: 13.0
+target_plan_duration: 4.0
 
 # Float: The planning frequency for generation for arbitrated plans
 # Unit: Hz
@@ -26,4 +26,5 @@ use_fixed_costs: true
 # Map: The priorities associated with each plugin during the planning 
 # process, values will be normalized at runtime and inverted into costs
 # Unit: N/a
-plugin_priorities: {PlatooningStrategicIHPPlugin: 4.0, LCIStrategicPlugin: 3.0, SCIStrategicPlugin: 2.0, PlatooningStrategicPlugin: 2.0, RouteFollowingPlugin: 1.0}
+plugin_priorities: {EmergencyVehicleStrategicPlugin: 5.0}
+#plugin_priorities: {PlatooningStrategicIHPPlugin: 4.0, LCIStrategicPlugin: 3.0, SCIStrategicPlugin: 2.0, PlatooningStrategicPlugin: 2.0, RouteFollowingPlugin: 1.0}

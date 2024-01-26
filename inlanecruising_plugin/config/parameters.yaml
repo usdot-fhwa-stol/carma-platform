@@ -1,5 +1,5 @@
 # The length of the trajectory in time domain, in seconds
-trajectory_time_length: 6.0 # Trajectory length in seconds
+trajectory_time_length: 15.0 # Trajectory length in seconds
 curve_resample_step_size: 1.0 # Curve re-sampling step size in m
 default_downsample_ratio: 18 # Amount to downsample input lanelet centerline data. Value corresponds to saving each nth point.
 turn_downsample_ratio: 20 # Amount to downsample input lanelet centerline data on turns. Value corresponds to saving each nth point.

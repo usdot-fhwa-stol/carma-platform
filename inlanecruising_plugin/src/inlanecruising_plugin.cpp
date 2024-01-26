@@ -93,9 +93,10 @@ bool InLaneCruisingPlugin::plan_trajectory_cb(cav_srvs::PlanTrajectoryRequest& r
                                                                             config_.speed_moving_average_window_size, 
                                                                             config_.curvature_moving_average_window_size, config_.back_distance,
                                                                             config_.buffer_ending_downtrack);
-  
+  //Fang Zhou-JFL: add controler_look_ahead_distance for a robust trajectory following controller
+  double controler_look_ahead_distance=20;
   auto points_and_target_speeds = basic_autonomy::waypoint_generation::create_geometry_profile(maneuver_plan, std::max((double)0, current_downtrack - config_.back_distance),
-                                                                         wm_, ending_state_before_buffer_, req.vehicle_state, wpg_general_config, wpg_detail_config);
+                                                                         wm_, ending_state_before_buffer_, req.vehicle_state, wpg_general_config, wpg_detail_config,controler_look_ahead_distance);
 
   ROS_DEBUG_STREAM("points_and_target_speeds: " << points_and_target_speeds.size());
 

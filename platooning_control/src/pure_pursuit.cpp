@@ -96,8 +96,36 @@ namespace platoon_control
 		ROS_DEBUG_STREAM("Iout pp: " << Iout);
 		double steering = atan(config_.wheelBase * kappa)+Iout;
 
-
-		steering += config_.correctionAngle;
+		//Fang Zhou-JFL: corrections for the red CARMA Truck
+		double correction_angle=0;
+		double velocity_mph=velocity_*3.6/1.6;
+		ROS_DEBUG_STREAM("velocity_mph: " << velocity_mph);
+		if (velocity_mph<=10)//<10mph
+		{
+			correction_angle=config_.correctionAngle;
+		}else if (velocity_mph<=15)//<15mph
+		{
+			correction_angle=config_.correctionAngle_10_15;
+		}else if (velocity_mph<=20)//<20mph
+		{
+			correction_angle=config_.correctionAngle_15_20;
+		}else if (velocity_mph<=25)//25<mph
+		{
+			correction_angle=config_.correctionAngle_20_25;
+		}else if (velocity_mph<=30)//30mph
+		{
+			correction_angle=config_.correctionAngle_25_30;
+		}else if (velocity_mph<=35)//<35mph
+		{
+			correction_angle=config_.correctionAngle_30_35;
+		}else if (velocity_mph<=40)//<40mph
+		{
+			correction_angle=config_.correctionAngle_35_40;
+		}
+		ROS_DEBUG_STREAM("config_.correctionAngle: " << config_.correctionAngle);
+		ROS_DEBUG_STREAM("correction_angle: " << correction_angle);
+		steering += correction_angle;
+		
 		ROS_DEBUG_STREAM("calculated steering angle: " << steering);
 		double filtered_steering = lowPassfilter(config_.lowpassGain, prev_steering, steering);
 		ROS_DEBUG_STREAM("filtered steering: " << filtered_steering);

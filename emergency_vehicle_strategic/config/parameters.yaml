@@ -1,0 +1,16 @@
+# parameters for emergency vehicle plug-in
+vehicleID: "default_id"            
+lane_change_desired_steps: 1    
+maxCrosstrackError: 2.0
+time_step: 10.0
+lane_change_speed_adjustment: 0.7 
+maxLaneChangeDist: 22.0
+stopping_deceleration: 2.5
+lane_change_recheck_time: 1.5
+# parameters to check lane change status
+lane_width: 3.5
+vehicle_length: 20                     # Note: 20m with trailer; 7m if only tractor; 5m for Lincoln 
+double em_lane_ctd_check_ratio: 0.6   # ratio to determine successful lane change to emergency lane
+double em_lane_maintain_ratio: 1.5    # ratio to determine how long the host travel in emergency lane before stop
+left_path_safety_distance: 5
+following_lanelets_number: 5

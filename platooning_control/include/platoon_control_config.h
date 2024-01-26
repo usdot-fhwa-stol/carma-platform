@@ -49,6 +49,13 @@ struct PlatooningControlPluginConfig
   double integratorMax_pp = 0.0;
   double integratorMin_pp = 0.0;
   double Ki_pp = 0.0;
+  //Fang Zhou-JFL: corrections for the red CARMA Truck
+  double correctionAngle_10_15 = 0.0;//between 10-15
+  double correctionAngle_15_20 = 0.0;
+  double correctionAngle_20_25 = 0.0;
+  double correctionAngle_25_30 = 0.0;
+  double correctionAngle_30_35 = 0.0;
+  double correctionAngle_35_40 = 0.0;
   
   
   friend std::ostream& operator<<(std::ostream& output, const PlatooningControlPluginConfig& c)
@@ -79,6 +86,12 @@ struct PlatooningControlPluginConfig
            << "integratorMax_pp: " << c.integratorMax_pp << std::endl
            << "integratorMin_pp: " << c.integratorMin_pp << std::endl
            << "Ki_pp: " << c.Ki_pp << std::endl
+           << "correctionAngle_10_15: " << c.correctionAngle_10_15 << std::endl
+           << "correctionAngle_15_20: " << c.correctionAngle_15_20 << std::endl
+           << "correctionAngle_20_25: " << c.correctionAngle_20_25 << std::endl
+           << "correctionAngle_25_30: " << c.correctionAngle_25_30 << std::endl
+           << "correctionAngle_30_35: " << c.correctionAngle_30_35 << std::endl
+           << "correctionAngle_35_40: " << c.correctionAngle_35_40 << std::endl
            << "}" << std::endl;
     return output;
   }

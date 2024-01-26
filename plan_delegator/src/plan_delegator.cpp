@@ -400,28 +400,29 @@ namespace plan_delegator
             // const auto& maneuver = latest_maneuver_plan_.maneuvers[current_maneuver_index];
             auto& maneuver = latest_maneuver_plan_.maneuvers[current_maneuver_index];
 
-            // ignore expired maneuvers
-            if(isManeuverExpired(maneuver))
-            {
-                ROS_INFO_STREAM("Dropping expired maneuver: " << GET_MANEUVER_PROPERTY(maneuver, parameters.maneuver_id));
-                // Update the maneuver plan index for the next loop
-                ++current_maneuver_index;
-                continue;
-            }
+            // // ignore expired maneuvers
+            // if(isManeuverExpired(maneuver))
+            // {
+            //     ROS_INFO_STREAM("Dropping expired maneuver: " << GET_MANEUVER_PROPERTY(maneuver, parameters.maneuver_id));
+            //     // Update the maneuver plan index for the next loop
+            //     ++current_maneuver_index;
+            //     continue;
+            // }
+            
             lanelet::BasicPoint2d current_loc(latest_pose_.pose.position.x, latest_pose_.pose.position.y);
             double current_downtrack = wm_->routeTrackPos(current_loc).downtrack;
             ROS_DEBUG_STREAM("current_downtrack" << current_downtrack);
             double maneuver_end_dist = GET_MANEUVER_PROPERTY(maneuver, end_dist);
             ROS_DEBUG_STREAM("maneuver_end_dist" << maneuver_end_dist);
 
-            // ignore maneuver that is passed.
-            if (current_downtrack > maneuver_end_dist)
-            {
-                ROS_INFO_STREAM("Dropping passed maneuver: " << GET_MANEUVER_PROPERTY(maneuver, parameters.maneuver_id));
-                // Update the maneuver plan index for the next loop
-                ++current_maneuver_index;
-                continue;
-            }
+            // // ignore maneuver that is passed.
+            // if (current_downtrack > maneuver_end_dist)
+            // {
+            //     ROS_INFO_STREAM("Dropping passed maneuver: " << GET_MANEUVER_PROPERTY(maneuver, parameters.maneuver_id));
+            //     // Update the maneuver plan index for the next loop
+            //     ++current_maneuver_index;
+            //     continue;
+            // }
             
 
             // get corresponding ros service client for plan trajectory
@@ -499,7 +500,7 @@ namespace plan_delegator
         }
         else
         {
-            ROS_WARN_STREAM("Planned trajectory is empty. It will not be published!");
+            // ROS_WARN_STREAM("Planned trajectory is empty. It will not be published!");
         }
     }
 

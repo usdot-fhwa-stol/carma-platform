@@ -21,9 +21,12 @@ namespace basic_autonomy
 {
     namespace waypoint_generation
     {
+        //Fang Zhou-JFL: add controler_look_ahead_distance for a robust trajectory following controller
          std::vector<PointSpeedPair> create_geometry_profile(const std::vector<cav_msgs::Maneuver> &maneuvers, double max_starting_downtrack,const carma_wm::WorldModelConstPtr &wm,
                                                                    cav_msgs::VehicleState &ending_state_before_buffer,const cav_msgs::VehicleState& state,
-                                                                   const GeneralTrajConfig &general_config, const DetailedTrajConfig &detailed_config){
+                                                                   const GeneralTrajConfig &general_config, const DetailedTrajConfig &detailed_config,
+                                                                   double controler_look_ahead_distance)
+         {
             std::vector<PointSpeedPair> points_and_target_speeds;
             
             bool first = true;
@@ -47,7 +50,9 @@ namespace basic_autonomy
                 }
                 else if(maneuver.type == cav_msgs::Maneuver::LANE_CHANGE){
                     ROS_DEBUG_STREAM("Creating Lane Change Geometry");
-                    std::vector<PointSpeedPair> lane_change_points = get_lanechange_points_from_maneuver(maneuver, starting_downtrack, wm, ending_state_before_buffer, state, general_config, detailed_config);
+                    //Fang Zhou-JFL: add controler_look_ahead_distance for a robust trajectory following controller
+                    std::vector<PointSpeedPair> lane_change_points = get_lanechange_points_from_maneuver(maneuver, starting_downtrack, wm, 
+                                                                    ending_state_before_buffer, state, general_config, detailed_config, controler_look_ahead_distance);
                     points_and_target_speeds.insert(points_and_target_speeds.end(), lane_change_points.begin(), lane_change_points.end());
                 }
                 else{
@@ -80,9 +85,10 @@ namespace basic_autonomy
 
             //TODO: This fix is temporary and only applies on lane follow maneuvers from Platooning Strategic Plugin IHP. 
             // A general fix will be implemented soon. (issue #1863)
+            //Fang Zhou-JFL: use Emergency Vehicle Strategic Plugin instead for the lane follow maneuvers
             bool lanelets_defined = !maneuver.lane_following_maneuver.lane_ids.empty();
             ROS_DEBUG_STREAM("lanelets_defined: " << lanelets_defined);
-            bool isFromPlatooning = maneuver.lane_following_maneuver.parameters.planning_strategic_plugin == "PlatooningStrategicIHPPlugin";
+            bool isFromPlatooning = maneuver.lane_following_maneuver.parameters.planning_strategic_plugin == "EmergencyVehicleStrategicPlugin";
             ROS_DEBUG_STREAM("isFromPlatooning: " << isFromPlatooning);
 
             if (lanelets_defined && isFromPlatooning)
@@ -95,10 +101,13 @@ namespace basic_autonomy
 
                 if (maneuver.lane_following_maneuver.lane_ids.size()>1)
                 {
-                    lane_id = stoi(maneuver.lane_following_maneuver.lane_ids[1]);
-                    ROS_DEBUG_STREAM("more extracted id: " << lane_id);
-                    new_lanelet = wm->getMap()->laneletLayer.get(lane_id);
-                    lanelets.push_back(new_lanelet);
+                    for (int i = 1; i < maneuver.lane_following_maneuver.lane_ids.size(); ++i)
+                    {
+                        lane_id = stoi(maneuver.lane_following_maneuver.lane_ids[i]);
+                        ROS_DEBUG_STREAM("more extracted id: " << lane_id<<" , i = "<<i);
+                        new_lanelet = wm->getMap()->laneletLayer.get(lane_id);
+                        lanelets.push_back(new_lanelet);
+                    }
                 }
             } 
 
@@ -285,14 +294,78 @@ namespace basic_autonomy
             return constrained_points;
         }
 
+        //Fang Zhou-JFL: modification for a robust trajectory following controller
         std::vector<lanelet::BasicPoint2d> create_lanechange_geometry(lanelet::Id starting_lane_id, lanelet::Id ending_lane_id, double starting_downtrack, double ending_downtrack,
-                                                                   const carma_wm::WorldModelConstPtr &wm, int downsample_ratio, double buffer_ending_downtrack)
+                                                                   const carma_wm::WorldModelConstPtr &wm, int downsample_ratio, double buffer_ending_downtrack, 
+                                                                   double controler_look_ahead_distance)
         {
             std::vector<lanelet::BasicPoint2d> centerline_points;
+
+            std::vector<lanelet::BasicPoint2d> total_centerline_points;
 
             //Get starting lanelet and ending lanelets
             lanelet::ConstLanelet starting_lanelet = wm->getMap()->laneletLayer.get(starting_lane_id);
             lanelet::ConstLanelet ending_lanelet = wm->getMap()->laneletLayer.get(ending_lane_id);
+
+            double original_starting_downtrack=starting_downtrack;
+            double original_ending_downtrack=ending_downtrack;
+
+            starting_downtrack=starting_downtrack+controler_look_ahead_distance;
+            ending_downtrack=ending_downtrack+controler_look_ahead_distance;
+
+            lanelet::ConstLanelet original_starting_lanelet=starting_lanelet;
+
+            //first creat a in-lane cruising trajectory
+            //due to adding the controler_look_ahead_distance, the starting lanelet needs to be found.
+            auto starting_lanelet_centerline_original = starting_lanelet.centerline2d().basicLineString();
+
+            double first_starting_downtrack=wm->routeTrackPos(starting_lanelet_centerline_original.back()).downtrack;
+            double first_starting_downtrack_front=wm->routeTrackPos(starting_lanelet_centerline_original.front()).downtrack;
+
+            while (first_starting_downtrack<=starting_downtrack)
+            {
+                auto following_lanelets_after_starting_lanelet = wm->getMapRoutingGraph()->following(starting_lanelet, false);
+                auto following_lanelet_after_starting_lanelet=following_lanelets_after_starting_lanelet.front();
+                starting_lanelet=following_lanelet_after_starting_lanelet;
+                starting_lanelet_centerline_original = starting_lanelet.centerline2d().basicLineString();
+                first_starting_downtrack=wm->routeTrackPos(starting_lanelet_centerline_original.back()).downtrack;
+                first_starting_downtrack_front=wm->routeTrackPos(starting_lanelet_centerline_original.front()).downtrack;
+            }
+
+            //due to adding the controler_look_ahead_distance, the ending lanelet needs to be found.
+            auto ending_lanelet_centerline_original = ending_lanelet.centerline2d().basicLineString();
+
+            double first_ending_downtrack=wm->routeTrackPos(ending_lanelet_centerline_original.back()).downtrack;
+            double first_ending_downtrack_front=wm->routeTrackPos(ending_lanelet_centerline_original.front()).downtrack;
+
+            while (first_ending_downtrack<=ending_downtrack)
+            {
+                auto following_lanelets_after_ending_lanelet = wm->getMapRoutingGraph()->following(ending_lanelet, false);
+                auto following_lanelet_after_ending_lanelet=following_lanelets_after_ending_lanelet.front();
+                ending_lanelet=following_lanelet_after_ending_lanelet;
+                ending_lanelet_centerline_original = ending_lanelet.centerline2d().basicLineString();
+                first_ending_downtrack=wm->routeTrackPos(ending_lanelet_centerline_original.back()).downtrack;
+            }
+
+            auto inlane_cruising_centerline_original = original_starting_lanelet.centerline2d().basicLineString();
+            total_centerline_points.insert(total_centerline_points.end(), inlane_cruising_centerline_original.begin(),inlane_cruising_centerline_original.end());
+            while(!(original_starting_lanelet==starting_lanelet))
+            {
+                original_starting_lanelet=wm->getMapRoutingGraph()->following(original_starting_lanelet, false).front();
+                inlane_cruising_centerline_original = original_starting_lanelet.centerline2d().basicLineString();
+                total_centerline_points.insert(total_centerline_points.end(), inlane_cruising_centerline_original.begin(),inlane_cruising_centerline_original.end());
+            }
+
+            std::vector<lanelet::BasicPoint2d> downsampled_inlane_cruising_centerline;
+            downsampled_inlane_cruising_centerline.reserve(400);
+            downsampled_inlane_cruising_centerline = carma_utils::containers::downsample_vector(total_centerline_points, downsample_ratio);
+
+            //Constrain to starting and ending downtrack
+            //get start index of starting centerline xx
+            int start_index_inlane_cruising_centerline = waypoint_generation::get_nearest_index_by_downtrack(downsampled_inlane_cruising_centerline, wm, original_starting_downtrack);
+            int end_index_inlane_cruising_centerline = waypoint_generation::get_nearest_index_by_downtrack(downsampled_inlane_cruising_centerline, wm, starting_downtrack);
+
+            std::vector<lanelet::BasicPoint2d> constrained_inlane_cruising_centerline(downsampled_inlane_cruising_centerline.begin() + start_index_inlane_cruising_centerline, downsampled_inlane_cruising_centerline.begin() + end_index_inlane_cruising_centerline);
             
             lanelet::ConstLanelets starting_lane;
             starting_lane.push_back(starting_lanelet);
@@ -417,6 +490,9 @@ namespace basic_autonomy
             //Create Trajectory geometry
             double delta_step = 1.0 / constrained_start_centerline.size();
 
+            //Fang Zhou-JFL: get end_index of starting centerline xx
+            centerline_points.insert(centerline_points.end(), constrained_inlane_cruising_centerline.begin(), constrained_inlane_cruising_centerline.end());
+
             for (size_t i = 0; i < constrained_start_centerline.size(); ++i)
             {
                 lanelet::BasicPoint2d current_position;
@@ -435,16 +511,27 @@ namespace basic_autonomy
             
             // If the additional distance from the remaining length of the target lanelet does not provide more than the required
             // buffer_ending_downtrack, then also add points from the lanelet following the target lanelet
-            if (dist_to_target_lane_end < buffer_ending_downtrack) {
+            //Fang Zhou-JFL: adding in lane cruising after cooperative lane change
+            // if (dist_to_target_lane_end < buffer_ending_downtrack)
+            if (true)  
+            {
                 auto following_lanelets = wm->getMapRoutingGraph()->following(ending_lanelet, false);
+                auto following_lanelet_1=following_lanelets.front();
                 if(!following_lanelets.empty()){
                     //Arbitrarily choosing first following lanelet for buffer since points are only being used to fit spline
                     auto following_lanelet_centerline = following_lanelets.front().centerline2d().basicLineString();
                     centerline_points.insert(centerline_points.end(), following_lanelet_centerline.begin(), 
                                                                                 following_lanelet_centerline.end());
                 }
+                auto following_lanelets_1_= wm->getMapRoutingGraph()->following(following_lanelet_1, false);
+                if(!following_lanelets_1_.empty()){
+                    //Arbitrarily choosing first following lanelet for buffer since points are only being used to fit spline
+                    auto following_lanelet_centerline = following_lanelets_1_.front().centerline2d().basicLineString();
+                    centerline_points.insert(centerline_points.end(), following_lanelet_centerline.begin(), 
+                                                                                following_lanelet_centerline.end());
+                }
+                ROS_DEBUG_STREAM("test adding in lane cruising after cooperative lane change");
             }
-
             return centerline_points;
         }
 
@@ -508,10 +595,12 @@ namespace basic_autonomy
 
             return output;
         }
-        
+
+        //Fang Zhou-JFL: add controler_look_ahead_distance for a robust trajectory following controller
         std::vector<PointSpeedPair> get_lanechange_points_from_maneuver(const cav_msgs::Maneuver &maneuver, double starting_downtrack,
                                                                    const carma_wm::WorldModelConstPtr &wm, cav_msgs::VehicleState &ending_state_before_buffer,
-                                                                    const cav_msgs::VehicleState &state, const GeneralTrajConfig &general_config,const DetailedTrajConfig &detailed_config)
+                                                                    const cav_msgs::VehicleState &state, const GeneralTrajConfig &general_config,const DetailedTrajConfig &detailed_config,
+                                                                    double controler_look_ahead_distance)
         {
             if(maneuver.type != cav_msgs::Maneuver::LANE_CHANGE){
                 throw std::invalid_argument("Create_lanechange called on a maneuver type which is not LANE_CHANGE");
@@ -529,7 +618,8 @@ namespace basic_autonomy
 
             //get route between starting and ending downtracks - downtracks should be constant for complete length of maneuver
             std::vector<lanelet::BasicPoint2d> route_geometry = create_lanechange_geometry(std::stoi(lane_change_maneuver.starting_lane_id),std::stoi(lane_change_maneuver.ending_lane_id),
-                                                                                        starting_downtrack, ending_downtrack, wm, general_config.default_downsample_ratio, detailed_config.buffer_ending_downtrack);
+                                                                                        starting_downtrack, ending_downtrack, wm, general_config.default_downsample_ratio, 
+                                                                                        detailed_config.buffer_ending_downtrack,controler_look_ahead_distance);
             ROS_DEBUG_STREAM("Route geometry size:"<<route_geometry.size());
 
             lanelet::BasicPoint2d state_pos(state.x_pos_global, state.y_pos_global);
@@ -548,7 +638,8 @@ namespace basic_autonomy
             
             double route_length = wm->getRouteEndTrackPos().downtrack;
 
-            if (ending_downtrack + detailed_config.buffer_ending_downtrack < route_length)
+            // if (ending_downtrack + detailed_config.buffer_ending_downtrack < route_length)
+            if (false)
             {
                 ending_pt_index = get_nearest_index_by_downtrack(route_geometry, wm, ending_downtrack + detailed_config.buffer_ending_downtrack);
             }
@@ -1063,7 +1154,7 @@ namespace basic_autonomy
             return general_config;
         }
 
-
+        //Fang Zhou-JFL: modification for a robust trajectory following controller
         std::vector<cav_msgs::TrajectoryPlanPoint> compose_lanechange_trajectory_from_path(
             const std::vector<PointSpeedPair> &points, const cav_msgs::VehicleState &state, const ros::Time &state_time,
             const carma_wm::WorldModelConstPtr &wm, const cav_msgs::VehicleState &ending_state_before_buffer, const DetailedTrajConfig &detailed_config)
@@ -1080,11 +1171,11 @@ namespace basic_autonomy
             std::vector<double> final_actual_speeds;
             split_point_speed_pairs(future_points, &future_geom_points, &final_actual_speeds);
 
-            std::unique_ptr<smoothing::SplineI> fit_curve = compute_fit(future_geom_points);
-            if(!fit_curve){
-                throw std::invalid_argument("Could not fit a spline curve along the given trajectory!");
-            }
-            ROS_DEBUG("Got fit");
+            // std::unique_ptr<smoothing::SplineI> fit_curve = compute_fit(future_geom_points);
+            // if(!fit_curve){
+            //     throw std::invalid_argument("Could not fit a spline curve along the given trajectory!");
+            // }
+            // ROS_DEBUG("Got fit");
             std::vector<lanelet::BasicPoint2d> all_sampling_points;
             all_sampling_points.reserve(1 + future_geom_points.size() * 2);
 
@@ -1098,18 +1189,18 @@ namespace basic_autonomy
             //Compute points to local downtracks
             std::vector<double> downtracks = carma_wm::geometry::compute_arc_lengths(future_geom_points);
 
-            auto total_step_along_curve = static_cast<int>(downtracks.back() /detailed_config.curve_resample_step_size);
+            // auto total_step_along_curve = static_cast<int>(downtracks.back() /detailed_config.curve_resample_step_size);
 
-            double scaled_steps_along_curve = 0.0; //from 0 (start) to 1 (end) for the whole trajectory
+            // double scaled_steps_along_curve = 0.0; //from 0 (start) to 1 (end) for the whole trajectory
 
-            for(int steps_along_curve = 0; steps_along_curve < total_step_along_curve; steps_along_curve++){
-                lanelet::BasicPoint2d p = (*fit_curve)(scaled_steps_along_curve);
+            // for(int steps_along_curve = 0; steps_along_curve < total_step_along_curve; steps_along_curve++){
+            //     lanelet::BasicPoint2d p = (*fit_curve)(scaled_steps_along_curve);
 
-                all_sampling_points.push_back(p);
+            //     all_sampling_points.push_back(p);
 
-                scaled_steps_along_curve += 1.0 / total_step_along_curve; 
-            }
-            ROS_DEBUG_STREAM("Got sampled points with size:" << all_sampling_points.size());
+            //     scaled_steps_along_curve += 1.0 / total_step_along_curve; 
+            // }
+            // ROS_DEBUG_STREAM("Got sampled points with size:" << all_sampling_points.size());
 
             std::vector<double> final_yaw_values = carma_wm::geometry::compute_tangent_orientations(future_geom_points);
             if(final_yaw_values.size() > 0) {
@@ -1124,10 +1215,10 @@ namespace basic_autonomy
 
             //Remove extra points
             ROS_DEBUG_STREAM("Before removing extra buffer points, future_geom_points.size()"<< future_geom_points.size());
-            int end_dist_pt_index = get_nearest_index_by_downtrack(future_geom_points, wm, ending_state_before_buffer);
-            future_geom_points.resize(end_dist_pt_index + 1);
-            times.resize(end_dist_pt_index + 1);
-            final_yaw_values.resize(end_dist_pt_index + 1);
+            // int end_dist_pt_index = get_nearest_index_by_downtrack(future_geom_points, wm, ending_state_before_buffer);
+            // future_geom_points.resize(end_dist_pt_index + 1);
+            // times.resize(end_dist_pt_index + 1);
+            // final_yaw_values.resize(end_dist_pt_index + 1);
             ROS_DEBUG_STREAM("After removing extra buffer points, future_geom_points.size():"<< future_geom_points.size());
 
             std::vector<cav_msgs::TrajectoryPlanPoint> traj_points =

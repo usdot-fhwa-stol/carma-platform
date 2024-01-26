@@ -28,8 +28,10 @@
 #include <math.h>
 #include <carma_utils/CARMAUtils.h>
 #include "platoon_control_worker.h"
-
-
+#include <std_msgs/Bool.h>
+#include <std_msgs/Float32.h>
+#include <visualization_msgs/MarkerArray.h>
+#include <visualization_msgs/Marker.h>
 
 
 namespace platoon_control
@@ -69,6 +71,8 @@ namespace platoon_control
 			double current_speed_ = 0.0;
 			double trajectory_speed_ = 0.0;
 
+			bool emergency_stop_flag = false;
+
 			cav_msgs::TrajectoryPlan latest_trajectory_;
 
         
@@ -102,6 +106,8 @@ namespace platoon_control
 			// callback function for current twist
 			void currentTwist_cb(const geometry_msgs::TwistStamped::ConstPtr& twist);
 
+			void emergency_stop_cb(const std_msgs::BoolConstPtr& msg);
+
 			double getTrajectorySpeed(std::vector<cav_msgs::TrajectoryPlanPoint> trajectory_points);
 
         	// Plugin discovery message
@@ -112,11 +118,14 @@ namespace platoon_control
 			ros::Subscriber current_twist_sub_;
 			ros::Subscriber pose_sub_;
 			ros::Subscriber platoon_info_sub_;
+			ros::Subscriber emergency_stop_sub_;
         	// ROS Publisher
         	ros::Publisher twist_pub_;
+        	ros::Publisher controller_setting_pub_;
 			ros::Publisher ctrl_pub_;
         	ros::Publisher plugin_discovery_pub_;
 			ros::Publisher platoon_info_pub_;
+			ros::Publisher preview_point_pub_;
 			ros::Timer discovery_pub_timer_;
 			ros::Timer control_pub_timer_;
     };
