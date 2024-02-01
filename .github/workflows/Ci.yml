@@ -16,7 +16,7 @@ jobs:
         working-directory: "/opt/carma/"
 
     # Specify the runner environment
-    runs-on: ubuntu-latest-8-cores
+    runs-on: ubuntu-latest
 
     # Set up a Docker container for the job
     container:
