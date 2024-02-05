@@ -65,6 +65,7 @@ ament_auto_add_library(carma_cooperative_perception SHARED
   src/utm_zone.cpp
   src/multiple_object_tracker_component.cpp
   src/host_vehicle_filter_component.cpp
+  src/detection_list_viz_component.cpp
 )
 
 target_link_libraries(carma_cooperative_perception
@@ -101,6 +102,10 @@ ament_auto_add_executable(external_object_list_to_sdsm_node
 
 ament_auto_add_executable(host_vehicle_filter_node
   src/host_vehicle_filter_node.cpp
+)
+
+ament_auto_add_executable(detection_list_viz_node
+  src/detection_list_viz_node.cpp
 )
 
 # boost::posix_time definition for using nanoseconds
