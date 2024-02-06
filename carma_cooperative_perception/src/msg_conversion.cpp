@@ -74,6 +74,21 @@ auto calc_detection_time_stamp(DDateTime sdsm_time, const MeasurementTimeOffset 
   return sdsm_time;
 }
 
+auto ned_to_enu(const PositionOffsetXYZ & offset_ned) noexcept
+{
+  auto offset_enu{offset_ned};
+
+  // NED to ENU: swap x and y axis and negate z axis
+  offset_enu.offset_x = offset_ned.offset_y;
+  offset_enu.offset_y = offset_ned.offset_x;
+
+  if (offset_enu.offset_z) {
+    offset_enu.offset_z.value() *= -1;
+  }
+
+  return offset_enu;
+}
+
 auto to_ddate_time_msg(const builtin_interfaces::msg::Time & builtin_time)
   -> j2735_v2x_msgs::msg::DDateTime
 {
@@ -264,10 +279,10 @@ auto to_detection_list_msg(
     detection.id =
       to_string(sdsm.source_id.id) + "-" + std::to_string(common_data.detected_id.object_id);
 
-    const auto pos_offset{PositionOffsetXYZ::from_msg(common_data.pos)};
+    const auto pos_offset_enu{ned_to_enu(PositionOffsetXYZ::from_msg(common_data.pos))};
     detection.pose.pose.position = to_position_msg(MapCoordinate{
-      ref_pos_map.easting + pos_offset.offset_x, ref_pos_map.northing + pos_offset.offset_y,
-      ref_pos_map.elevation + pos_offset.offset_z.value_or(units::length::meter_t{0.0})});
+      ref_pos_map.easting + pos_offset_enu.offset_x, ref_pos_map.northing + pos_offset_enu.offset_y,
+      ref_pos_map.elevation + pos_offset_enu.offset_z.value_or(units::length::meter_t{0.0})});
 
     // Pose covariance is flattened 6x6 matrix with rows/columns of x, y, z, roll, pitch, yaw
     try {
