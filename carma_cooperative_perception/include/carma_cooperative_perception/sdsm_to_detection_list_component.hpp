@@ -59,7 +59,7 @@ public:
         // When in simulation, ROS time is CARLA time, but SDSMs use CDASim time
         const auto time_delta{now() - cdasim_time_.value()};
 
-        for (auto detection : detection_list_msg.detections) {
+        for (auto & detection : detection_list_msg.detections) {
           detection.header.stamp = rclcpp::Time(detection.header.stamp) + time_delta;
         }
       }
