@@ -484,6 +484,7 @@ def generate_launch_description():
                 ],
                 remappings=[
                     ("input/sdsm", [ EnvironmentVariable('CARMA_MSG_NS', default_value=''), "/incoming_sdsm" ] ),
+                    ("input/cdasim_clock", "/sim_clock"),
                     ("output/detections", "full_detection_list"),
                 ],
                 parameters=[
