@@ -483,6 +483,7 @@ def generate_launch_description():
                     {'--log-level' : GetLogLevel('cp_sdsm_to_detection_list_node', env_log_levels) },
                 ],
                 remappings=[
+                    ("input/georeference", [ EnvironmentVariable('CARMA_LOCZ_NS', default_value=''), "/map_param_loader/georeference" ] )
                     ("input/sdsm", [ EnvironmentVariable('CARMA_MSG_NS', default_value=''), "/incoming_sdsm" ] ),
                     ("input/cdasim_clock", "/sim_clock"),
                     ("output/detections", "full_detection_list"),
