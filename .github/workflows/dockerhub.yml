@@ -7,6 +7,8 @@ on:
     branches:
       - "develop"
       - "master"
+      - "release/*"
+      - "release/lavida"
 
 jobs:
   dockerhub:
