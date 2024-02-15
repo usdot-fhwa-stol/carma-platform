@@ -21,6 +21,7 @@
 
 #include <algorithm>
 #include <chrono>
+#include <limits>
 #include <multiple_object_tracking/clustering.hpp>
 #include <multiple_object_tracking/ctra_model.hpp>
 #include <multiple_object_tracking/ctrv_model.hpp>
@@ -31,7 +32,6 @@
 #include <unordered_map>
 #include <utility>
 #include <vector>
-#include <limits>
 
 namespace carma_cooperative_perception
 {
@@ -560,8 +560,12 @@ struct MetricSe2
 auto MultipleObjectTrackerNode::execute_pipeline() -> void
 {
   static constexpr mot::Visitor make_track_visitor{
-    [](const mot::CtrvDetection & d) { return Track{mot::make_track<mot::CtrvTrack>(d)}; },
-    [](const mot::CtraDetection & d) { return Track{mot::make_track<mot::CtraTrack>(d)}; },
+    [](const mot::CtrvDetection & d, const mot::Uuid & u) {
+      return Track{mot::make_track<mot::CtrvTrack>(d, u)};
+    },
+    [](const mot::CtraDetection & d, const mot::Uuid & u) {
+      return Track{mot::make_track<mot::CtraTrack>(d, u)};
+    },
     [](const auto &) {
       // Currently on support CTRV and CTRA
       throw std::runtime_error("cannot make track from given detection");
@@ -577,7 +581,14 @@ auto MultipleObjectTrackerNode::execute_pipeline() -> void
     const auto clusters{mot::cluster_detections(detections_, 0.75)};
     for (const auto & cluster : clusters) {
       const auto detection{std::cbegin(cluster.get_detections())->second};
-      track_manager_.add_tentative_track(std::visit(make_track_visitor, detection));
+      const auto uuid_str{mot::get_uuid(detection).value()};
+      // CARLA uses three-digit actor identifiers. We want to UUID scheme to be
+      // <track_number>-<carla_actor_id> for easier visual analysis by users.
+      const mot::Uuid new_uuid{
+        std::to_string(lifetime_generated_track_count_++) +
+        uuid_str.substr(std::size(uuid_str) - 4, 4)};
+      track_manager_.add_tentative_track(
+        std::visit(make_track_visitor, detection, std::variant<mot::Uuid>(new_uuid)));
     }
 
     track_list_pub_->publish(carma_cooperative_perception_interfaces::msg::TrackList{});
@@ -655,7 +666,14 @@ auto MultipleObjectTrackerNode::execute_pipeline() -> void
   const auto clusters{mot::cluster_detections(unassociated_detections, 0.75, MetricSe2{})};
   for (const auto & cluster : clusters) {
     const auto detection{std::cbegin(cluster.get_detections())->second};
-    track_manager_.add_tentative_track(std::visit(make_track_visitor, detection));
+    const auto uuid_str{mot::get_uuid(detection).value()};
+    // CARLA uses three-digit actor identifiers. We want to UUID scheme to be
+    // <track_number>-<carla_actor_id> for easier visual analysis by users.
+    const mot::Uuid new_uuid{
+      std::to_string(lifetime_generated_track_count_++) +
+      uuid_str.substr(std::size(uuid_str) - 4, 4)};
+    track_manager_.add_tentative_track(
+      std::visit(make_track_visitor, detection, std::variant<mot::Uuid>(new_uuid)));
   }
 
   carma_cooperative_perception_interfaces::msg::TrackList track_list;
