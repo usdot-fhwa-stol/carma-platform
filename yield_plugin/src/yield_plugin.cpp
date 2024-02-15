@@ -516,6 +516,10 @@ namespace yield_plugin
     bool on_route = false;
     int on_route_idx = 0;
 
+    // A flag to stop searching more than one lanelet if the object has no velocity
+    bool traj2_has_zero_velocity = trajectory2.front().predicted_velocity.linear.x < EPSILON &&
+      trajectory2.front().predicted_velocity.linear.y < EPSILON;
+
     for (size_t j = 0; j < trajectory2.size(); j+=4) // Checking every 4th point to save computation time
     {
       lanelet::BasicPoint2d curr_point;
@@ -535,7 +539,7 @@ namespace yield_plugin
           break;
         }
       }
-      if (on_route)
+      if (on_route || traj2_has_zero_velocity)
         break;
     }
 
@@ -550,6 +554,7 @@ namespace yield_plugin
     {
       auto p1a = trajectory1.trajectory_points.at(i);
       auto p1b = trajectory1.trajectory_points.at(i + 1);
+      double previous_distance_between_predictions = std::numeric_limits<double>::max();
       for (size_t j = on_route_idx; j < trajectory2.size() - 1; ++j)
       {
         auto p2a = trajectory2.at(j);
@@ -576,11 +581,23 @@ namespace yield_plugin
 
         // Calculate the distance between the two interpolated points
         double distance = std::sqrt((x1 - x2) * (x1 - x2) + (y1 - y2) * (y1 - y2));
+
         smallest_dist = std::min(distance, smallest_dist);
         RCLCPP_DEBUG_STREAM(nh_->get_logger(), "Smallest_dist: " << smallest_dist << ", distance: " << distance << ", dt: " << dt
           << ", x1: " << x1 << ", y1: " << y1
           << ", x2: " << x2 << ", y2: " << y2
           << ", p2a_t:" << std::to_string(p2a_t));
+
+        // Following if logic assumes the traj2 is a simple cv model, aka, traj2 point is a straight line over time.
+        // And current traj1 point is fixed in this iteration.
+        // Then once the distance between the two start to increase over traj2 iteration,
+        // the distance will always increase and unnecessary to continue the logic to find smallest_dist
+        if (previous_distance_between_predictions < distance)
+        {
+          RCLCPP_DEBUG_STREAM(nh_->get_logger(), "Stopping search here because the distance between predictions started to increase");
+          continue;
+        }
+        previous_distance_between_predictions = distance;
 
         if (i == 0 && j == 0 && distance > config_.collision_check_radius_in_m)
         {

@@ -238,6 +238,7 @@ public:
    * \param trajectory1 trajectory of the ego vehicle
    * \param trajectory2 trajectory of predicted steps
    * \param collision_radius a distance to check between two trajectory points at a same timestamp that is considered a collision
+   * NOTE: Currently Traj2 is assumed to be a simple cv model to save computational performance
    * \return time_of_collision if collision detected, otherwise, std::nullopt
    */
   std::optional<rclcpp::Time> get_collision_time(const carma_planning_msgs::msg::TrajectoryPlan& trajectory1, const std::vector<carma_perception_msgs::msg::PredictedState>& trajectory2, double collision_radius);
@@ -246,6 +247,7 @@ public:
    * \brief Return collision time given two trajectories with one being external object with predicted steps
    * \param trajectory1 trajectory of the ego vehicle
    * \param trajectory2 trajectory of the obstacle
+   * NOTE: Currently curr_obstacle is assumed to be using a simple cv model to save computational performance
    * \return time_of_collision if collision detected, otherwise, std::nullopt
    */
   std::optional<rclcpp::Time> get_collision_time(const carma_planning_msgs::msg::TrajectoryPlan& original_tp, const carma_perception_msgs::msg::ExternalObject& curr_obstacle);
