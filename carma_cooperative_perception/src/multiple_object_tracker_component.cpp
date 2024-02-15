@@ -582,6 +582,8 @@ auto MultipleObjectTrackerNode::execute_pipeline() -> void
     for (const auto & cluster : clusters) {
       const auto detection{std::cbegin(cluster.get_detections())->second};
       const auto uuid_str{mot::get_uuid(detection).value()};
+      // CARLA uses three-digit actor identifiers. We want to UUID scheme to be
+      // <track_number>-<carla_actor_id> for easier visual analysis by users.
       const mot::Uuid new_uuid{
         std::to_string(lifetime_generated_track_count_++) +
         uuid_str.substr(std::size(uuid_str) - 4, 4)};
@@ -665,6 +667,8 @@ auto MultipleObjectTrackerNode::execute_pipeline() -> void
   for (const auto & cluster : clusters) {
     const auto detection{std::cbegin(cluster.get_detections())->second};
     const auto uuid_str{mot::get_uuid(detection).value()};
+    // CARLA uses three-digit actor identifiers. We want to UUID scheme to be
+    // <track_number>-<carla_actor_id> for easier visual analysis by users.
     const mot::Uuid new_uuid{
       std::to_string(lifetime_generated_track_count_++) +
       uuid_str.substr(std::size(uuid_str) - 4, 4)};
