@@ -588,10 +588,10 @@ namespace yield_plugin
           << ", x2: " << x2 << ", y2: " << y2
           << ", p2a_t:" << std::to_string(p2a_t));
 
-        // Following if logic assumes the traj2 is a simple cv model, aka, traj2 point is a straight line over time.
+        // Following "if logic" assumes the traj2 is a simple cv model, aka, traj2 point is a straight line over time.
         // And current traj1 point is fixed in this iteration.
         // Then once the distance between the two start to increase over traj2 iteration,
-        // the distance will always increase and unnecessary to continue the logic to find smallest_dist
+        // the distance will always increase and it's unnecessary to continue the logic to find the smallest_dist
         if (previous_distance_between_predictions < distance)
         {
           RCLCPP_DEBUG_STREAM(nh_->get_logger(), "Stopping search here because the distance between predictions started to increase");
