@@ -39,6 +39,8 @@ DetectionListVizNode::DetectionListVizNode(const rclcpp::NodeOptions & options)
           marker.scale.x = 2.0;
           marker.scale.y = 2.0;
           marker.scale.z = 2.0;
+
+          markers.markers.push_back(marker);
         }
 
         marker_pub_->publish(markers);
