@@ -167,13 +167,13 @@ auto HostVehicleFilterNode::attempt_filter_and_republish(
     return;
   }
 
-  if (
-    detection.semantic_class != detection.SEMANTIC_CLASS_UNKNOWN &&
-    detection.semantic_class != detection.SEMANTIC_CLASS_SMALL_VEHICLE) {
-    return false;
-  }
-
   const auto is_within_distance = [this](const auto & detection) {
+    if (
+      detection.semantic_class != detection.SEMANTIC_CLASS_UNKNOWN &&
+      detection.semantic_class != detection.SEMANTIC_CLASS_SMALL_VEHICLE) {
+      return false;
+    }
+
     return euclidean_distance_squared(host_vehicle_pose_.value().pose, detection.pose.pose) <=
            this->squared_distance_threshold_meters_;
   };
