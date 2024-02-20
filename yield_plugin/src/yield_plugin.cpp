@@ -544,7 +544,7 @@ namespace yield_plugin
       {
         RCLCPP_DEBUG_STREAM(nh_->get_logger(), "Checking llt: " << llt.id());
 
-        if (remaining_route_llt_ids_.find(llt.id()) != remaining_route_llt_ids_.end())
+        if (route_llt_ids_.find(llt.id()) != route_llt_ids_.end())
         {
           on_route = true;
           on_route_idx = j;
@@ -698,7 +698,8 @@ namespace yield_plugin
     // save route Ids for faster access
     for (const auto& llt: wm_->getRoute()->shortestPath())
     {
-      remaining_route_llt_ids_.insert(llt.id());
+      // TODO: Enhancement https://github.com/usdot-fhwa-stol/carma-platform/issues/2316
+      route_llt_ids_.insert(llt.id());
     }
 
     RCLCPP_DEBUG_STREAM(nh_->get_logger(),"External Object List (external_objects) size: " << external_objects.size());
