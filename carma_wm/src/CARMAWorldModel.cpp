@@ -616,6 +616,15 @@ namespace carma_wm
   void CARMAWorldModel::setRos1Clock(const rclcpp::Time& time_now)
   {
     ros1_clock_ = time_now;
+    std::chrono::system_clock::time_point start_time = std::chrono::system_clock::now();
+    auto start_time_seconds = std::chrono::duration_cast<std::chrono::milliseconds>(start_time.time_since_epoch()).count();
+    if (ros1_clock_ && simulation_clock_)
+    {
+      RCLCPP_ERROR_STREAM(rclcpp::get_logger("sd"), "ros1_clock: " << std::to_string(ros1_clock_.value().seconds())
+                                          << ", simulation_clock: " << std::to_string(simulation_clock_.value().seconds())
+                                          << ", system_time:" << std::to_string(start_time_seconds));
+    }
+
   }
 
   void CARMAWorldModel::setSimulationClock(const rclcpp::Time& time_now)
@@ -1430,7 +1439,8 @@ namespace carma_wm
   boost::posix_time::ptime CARMAWorldModel::min_end_time_converter_minute_of_year(boost::posix_time::ptime min_end_time,bool moy_exists,uint32_t moy, bool is_simulation)
   {
     double simulation_time_difference_in_seconds = 0.0;
-
+    std::chrono::system_clock::time_point start_time = std::chrono::system_clock::now();
+    auto start_time_seconds = std::chrono::duration_cast<std::chrono::seconds>(start_time.time_since_epoch()).count();
     // NOTE: In simulation, ROS1 clock (often coming from CARLA) can have a large time ahead.
     // the timing calculated here is in Simulation time, which is behind. Therefore, the world model adds the offset to make it meaningful to carma-platform:
     // https://github.com/usdot-fhwa-stol/carma-platform/issues/2217

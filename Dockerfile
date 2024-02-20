@@ -33,7 +33,7 @@
 # Stage 1 - Acquire the CARMA source as well as any extra packages
 # /////////////////////////////////////////////////////////////////////////////
 
-FROM usdotfhwastolcandidate/autoware.ai:lavida AS base-image
+FROM usdotfhwastoldev/autoware.ai:develop AS base-image
 
 FROM base-image AS source-code
 
