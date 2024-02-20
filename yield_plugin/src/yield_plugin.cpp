@@ -519,8 +519,8 @@ namespace yield_plugin
     int on_route_idx = 0;
 
     // A flag to stop searching more than one lanelet if the object has no velocity
-    bool traj2_has_zero_velocity = trajectory2.front().predicted_velocity.linear.x < EPSILON &&
-      trajectory2.front().predicted_velocity.linear.y < EPSILON;
+    bool traj2_has_zero_velocity = trajectory2.front().predicted_velocity.linear.x < config_.min_obstacle_speed_in_ms &&
+      trajectory2.front().predicted_velocity.linear.y < config_.min_obstacle_speed_in_ms;
 
     for (size_t j = 0; j < trajectory2.size(); j+=4) // Checking every 4th point to save computation time
     {
@@ -552,12 +552,12 @@ namespace yield_plugin
     }
 
     double smallest_dist = std::numeric_limits<double>::max();
-    for (size_t i = 0; i < trajectory1.trajectory_points.size() - 1; ++i)
+    for (size_t i = 0; i < trajectory1.trajectory_points.size() - 1; ++4)
     {
       auto p1a = trajectory1.trajectory_points.at(i);
       auto p1b = trajectory1.trajectory_points.at(i + 1);
       double previous_distance_between_predictions = std::numeric_limits<double>::max();
-      for (size_t j = on_route_idx; j < trajectory2.size() - 1; ++j)
+      for (size_t j = on_route_idx; j < trajectory2.size() - 1; ++4)
       {
         auto p2a = trajectory2.at(j);
         auto p2b = trajectory2.at(j + 1);
