@@ -151,7 +151,7 @@ namespace yield_plugin
     if (incoming_request.strategy == "carma/cooperative-lane-change")
     {
       if (!map_projector_) {
-        RCLCPP_DEBUG(nh_->get_logger(),"Cannot process mobility request as map projection is not yet set!");
+        RCLCPP_ERROR(nh_->get_logger(),"Cannot process mobility request as map projection is not yet set!");
         return;
       }
       if (incoming_request.plan_type.type == carma_v2x_msgs::msg::PlanType::CHANGE_LANE_LEFT || incoming_request.plan_type.type == carma_v2x_msgs::msg::PlanType::CHANGE_LANE_RIGHT)
@@ -523,6 +523,10 @@ namespace yield_plugin
     bool traj2_has_zero_velocity = traj2_velocity < config_.min_obstacle_speed_in_ms;
     // For loop's number of predicted states to skip that is required to check every 1.5 meter of the traj2
     // 1.5 meter is experimental number which results in the best performance without significantly reducing precision
+    if (trajectory2.size() < 2)
+    {
+      throw std::invalid_argument("Object on ther road doesn't have enough predicted states! Please check motion_computation is correctly applying predicted states");
+    }
     const double predict_step_duration = fabs((rclcpp::Time(trajectory2.at(1).header.stamp) - rclcpp::Time(trajectory2.front().header.stamp)).seconds());
     const int steps_to_take = std::max(1, static_cast<int>(1.5 / (traj2_velocity * predict_step_duration)));
 
