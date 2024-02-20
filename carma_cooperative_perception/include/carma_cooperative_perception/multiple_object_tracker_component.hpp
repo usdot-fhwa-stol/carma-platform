@@ -80,6 +80,7 @@ private:
     multiple_object_tracking::RemovalThreshold{0U}};
   units::time::nanosecond_t execution_period_{1 / units::frequency::hertz_t{2.0}};
   OnSetParametersCallbackHandle::SharedPtr on_set_parameters_callback_{nullptr};
+  std::size_t lifetime_generated_track_count_{0U};
 };
 
 }  // namespace carma_cooperative_perception
