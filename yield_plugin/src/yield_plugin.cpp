@@ -151,18 +151,18 @@ namespace yield_plugin
     if (incoming_request.strategy == "carma/cooperative-lane-change")
     {
       if (!map_projector_) {
-        RCLCPP_ERROR(nh_->get_logger(),"Cannot process mobility request as map projection is not yet set!");
+        RCLCPP_DEBUG(nh_->get_logger(),"Cannot process mobility request as map projection is not yet set!");
         return;
       }
       if (incoming_request.plan_type.type == carma_v2x_msgs::msg::PlanType::CHANGE_LANE_LEFT || incoming_request.plan_type.type == carma_v2x_msgs::msg::PlanType::CHANGE_LANE_RIGHT)
       {
-        RCLCPP_ERROR(nh_->get_logger(),"Cooperative Lane Change Request Received");
+        RCLCPP_DEBUG(nh_->get_logger(),"Cooperative Lane Change Request Received");
         lc_status_msg.status = carma_planning_msgs::msg::LaneChangeStatus::REQUEST_RECEIVED;
         lc_status_msg.description = "Received lane merge request";
 
         if (incoming_request.m_header.recipient_id == config_.vehicle_id)
         {
-          RCLCPP_ERROR(nh_->get_logger(),"CLC Request correctly received");
+          RCLCPP_DEBUG(nh_->get_logger(),"CLC Request correctly received");
         }
 
         // extract mobility header
@@ -209,19 +209,19 @@ namespace yield_plugin
           lc_status_msg.status = carma_planning_msgs::msg::LaneChangeStatus::REQUEST_ACCEPTED;
           lc_status_msg.description = "Accepted lane merge request";
           response_to_clc_req = true;
-          RCLCPP_ERROR(nh_->get_logger(),"CLC accepted");
+          RCLCPP_DEBUG(nh_->get_logger(),"CLC accepted");
         }
         else
         {
           lc_status_msg.status = carma_planning_msgs::msg::LaneChangeStatus::REQUEST_REJECTED;
           lc_status_msg.description = "Rejected lane merge request";
           response_to_clc_req = false;
-          RCLCPP_ERROR(nh_->get_logger(),"CLC rejected");
+          RCLCPP_DEBUG(nh_->get_logger(),"CLC rejected");
         }
         carma_v2x_msgs::msg::MobilityResponse outgoing_response = compose_mobility_response(req_sender_id, req_plan_id, response_to_clc_req);
         mobility_response_publisher_(outgoing_response);
         lc_status_msg.status = carma_planning_msgs::msg::LaneChangeStatus::RESPONSE_SENT;
-        RCLCPP_ERROR(nh_->get_logger(),"response sent");
+        RCLCPP_DEBUG(nh_->get_logger(),"response sent");
       }
     }
     lc_status_publisher_(lc_status_msg);
@@ -247,7 +247,7 @@ namespace yield_plugin
   carma_planning_msgs::srv::PlanTrajectory::Request::SharedPtr req,
   carma_planning_msgs::srv::PlanTrajectory::Response::SharedPtr resp)
 {
-    RCLCPP_ERROR(nh_->get_logger(),"Yield_plugin was called!");
+    RCLCPP_DEBUG(nh_->get_logger(),"Yield_plugin was called!");
     if (req->initial_trajectory_plan.trajectory_points.size() < 2){
       throw std::invalid_argument("Empty Trajectory received by Yield");
     }
@@ -260,22 +260,22 @@ namespace yield_plugin
     // seperating cooperative yield with regular object detection for better performance.
     if (config_.enable_cooperative_behavior && clc_urgency_ > config_.acceptable_urgency)
     {
-      RCLCPP_ERROR(nh_->get_logger(),"Only consider high urgency clc");
+      RCLCPP_DEBUG(nh_->get_logger(),"Only consider high urgency clc");
       if (timesteps_since_last_req_ < config_.acceptable_passed_timesteps)
       {
-        RCLCPP_ERROR(nh_->get_logger(),"Yield for CLC. We haven't received an updated negotiation this timestep");
+        RCLCPP_DEBUG(nh_->get_logger(),"Yield for CLC. We haven't received an updated negotiation this timestep");
         yield_trajectory = update_traj_for_cooperative_behavior(original_trajectory, req->vehicle_state.longitudinal_vel);
         timesteps_since_last_req_++;
       }
       else
       {
-        RCLCPP_ERROR(nh_->get_logger(),"unreliable CLC communication, switching to object avoidance");
+        RCLCPP_DEBUG(nh_->get_logger(),"unreliable CLC communication, switching to object avoidance");
         yield_trajectory = update_traj_for_object(original_trajectory, external_objects_, req->vehicle_state.longitudinal_vel); // Compute the trajectory
       }
     }
     else
     {
-      RCLCPP_ERROR(nh_->get_logger(),"Yield for object avoidance");
+      RCLCPP_DEBUG(nh_->get_logger(),"Yield for object avoidance");
       yield_trajectory = update_traj_for_object(original_trajectory, external_objects_, req->vehicle_state.longitudinal_vel); // Compute the trajectory
     }
 
@@ -355,7 +355,7 @@ namespace yield_plugin
       else
       {
         cooperative_request_acceptable_ = false;
-        RCLCPP_ERROR(nh_->get_logger(),"The incoming requested trajectory is rejected, due to insufficient gap");
+        RCLCPP_DEBUG(nh_->get_logger(),"The incoming requested trajectory is rejected, due to insufficient gap");
         cooperative_trajectory = original_tp;
       }
 
@@ -363,7 +363,7 @@ namespace yield_plugin
     else
     {
       cooperative_request_acceptable_ = true;
-      RCLCPP_ERROR(nh_->get_logger(),"The incoming requested trajectory does not overlap with host vehicle's trajectory");
+      RCLCPP_DEBUG(nh_->get_logger(),"The incoming requested trajectory does not overlap with host vehicle's trajectory");
       cooperative_trajectory = original_tp;
     }
 
@@ -553,7 +553,7 @@ namespace yield_plugin
 
     if (!on_route)
     {
-      RCLCPP_ERROR(nh_->get_logger(), "Predicted states are not on the route! ignoring");
+      RCLCPP_DEBUG(nh_->get_logger(), "Predicted states are not on the route! ignoring");
       return std::nullopt;
     }
 
@@ -609,7 +609,7 @@ namespace yield_plugin
 
         if (i == 0 && j == 0 && distance > config_.collision_check_radius_in_m)
         {
-          RCLCPP_ERROR(nh_->get_logger(), "Too far away" );
+          RCLCPP_DEBUG(nh_->get_logger(), "Too far away" );
           return std::nullopt;
         }
 
@@ -779,7 +779,7 @@ namespace yield_plugin
 
     if (!earliest_collision_obj_pair)
     {
-      RCLCPP_ERROR(nh_->get_logger(),"No collision detected, so trajectory not modified.");
+      RCLCPP_DEBUG(nh_->get_logger(),"No collision detected, so trajectory not modified.");
       return original_tp;
     }
 
