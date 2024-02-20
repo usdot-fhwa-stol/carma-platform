@@ -278,7 +278,8 @@ private:
   MobilityResponseCB mobility_response_publisher_;
   LaneChangeStatusCB lc_status_publisher_;
   std::shared_ptr<carma_ros2_utils::CarmaLifecycleNode> nh_;
-  std::set<lanelet::Id> route_llt_ids_;
+  std::set<lanelet::Id> remaining_route_llt_ids_;
+  lanelet::Id previous_llt_id_;
   std::vector<carma_perception_msgs::msg::ExternalObject> external_objects_;
 
   // flag to show if it is possible for the vehicle to accept the cooperative request
