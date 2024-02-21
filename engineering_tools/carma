@@ -143,7 +143,7 @@ carma__attach() {
     local CARMA_DOCKER_FILE="`docker run --rm --volumes-from carma-config:ro --entrypoint sh busybox:latest -c 'cat /opt/carma/vehicle/config/docker-compose.yml'`"
 
     echo "Attaching to CARMA container STDOUT..."
-    echo "$CARMA_DOCKER_FILE" | docker-compose -p carma -f - logs --follow --tail=10
+    echo "$CARMA_DOCKER_FILE" | docker-compose -p carma logs -f - logs --follow --tail=10
 }
 
 carma-config__edit() {
