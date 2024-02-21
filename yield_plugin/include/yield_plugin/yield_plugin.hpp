@@ -262,6 +262,14 @@ public:
   std::optional<std::pair<carma_perception_msgs::msg::ExternalObject, double>> get_earliest_collision_object_and_time(const carma_planning_msgs::msg::TrajectoryPlan& original_tp, const std::vector<carma_perception_msgs::msg::ExternalObject>& external_objects);
 
   /**
+   * \brief Given the list of objects with predicted states, get all collision times concurrently using multi-threading
+   * \param original_tp trajectory of the ego vehicle
+   * \param external_objects list of external objects with predicted states
+   * \return mapping of objects' ids and their corresponding collision times (non-colliding objects are omitted)
+   */
+  std::map<uint32_t, rclcpp::Time> get_collision_times_concurrently(const carma_planning_msgs::msg::TrajectoryPlan& original_tp, const std::vector<carma_perception_msgs::msg::ExternalObject>& external_objects);
+
+  /**
    * \brief Given the object velocity in map frame with x,y components, this function returns the projected velocity along the trajectory at given time.
    * \param object_velocity_in_map_frame trajectory of the ego vehicle
    * \param original_tp trajectory of the ego vehicle
@@ -270,8 +278,7 @@ public:
    * \return get_predicted_velocity_at_time
    */
   double get_predicted_velocity_at_time(const geometry_msgs::msg::Twist& object_velocity_in_map_frame, const carma_planning_msgs::msg::TrajectoryPlan& original_tp, double timestamp_in_sec_to_predict);
-  // TODO
-  std::map<uint32_t, rclcpp::Time> check_collisions_concurrently(const std::vector<carma_perception_msgs::msg::ExternalObject>& external_objects, const carma_planning_msgs::msg::TrajectoryPlan& original_tp);
+
 private:
 
   carma_wm::WorldModelConstPtr wm_;

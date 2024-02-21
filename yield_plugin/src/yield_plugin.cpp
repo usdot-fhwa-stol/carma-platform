@@ -152,7 +152,7 @@ namespace yield_plugin
     if (incoming_request.strategy == "carma/cooperative-lane-change")
     {
       if (!map_projector_) {
-        RCLCPP_DEBUG(nh_->get_logger(),"Cannot process mobility request as map projection is not yet set!");
+        RCLCPP_ERROR(nh_->get_logger(),"Cannot process mobility request as map projection is not yet set!");
         return;
       }
       if (incoming_request.plan_type.type == carma_v2x_msgs::msg::PlanType::CHANGE_LANE_LEFT || incoming_request.plan_type.type == carma_v2x_msgs::msg::PlanType::CHANGE_LANE_RIGHT)
@@ -428,13 +428,6 @@ namespace yield_plugin
       RCLCPP_DEBUG_STREAM(nh_->get_logger(), "Calculated speed velocity_at_target_time: " << velocity_at_target_time
         << ", downtrack_at_target_time: "<< downtrack_at_target_time << ", target_time: " << target_time);
 
-      // if the speed becomes negative, the downtrack starts reversing to negative as well
-      // which will never reach the goal_pos, so break here.
-      if (velocity_at_target_time < 0.0)
-      {
-        break;
-      }
-
       // Cannot have a speed higher than that of the original trajectory
       velocity_at_target_time = std::clamp(velocity_at_target_time, 0.0, original_max_speed);
 
@@ -452,13 +445,6 @@ namespace yield_plugin
       new_traj_accumulated_downtrack = downtrack_at_target_time;
       new_traj_idx++;
 
-    }
-
-    // if the loop above finished prematurely due to negative speed, fill with 0.0 speeds
-    // since the speed crossed 0.0 and algorithm indicates stopping
-    for (size_t i = calculated_speeds.size(); i < original_traj_relative_downtracks.size(); i++)
-    {
-      calculated_speeds.push_back(0.0);
     }
 
     // Moving average filter to smoothen the speeds
@@ -710,7 +696,7 @@ namespace yield_plugin
     return collision_time;
   }
 
-  std::map<uint32_t, rclcpp::Time> YieldPlugin::check_collisions_concurrently(const std::vector<carma_perception_msgs::msg::ExternalObject>& external_objects,
+  std::map<uint32_t, rclcpp::Time> YieldPlugin::get_collision_times_concurrently(const std::vector<carma_perception_msgs::msg::ExternalObject>& external_objects,
     const carma_planning_msgs::msg::TrajectoryPlan& original_tp)
   {
 
@@ -756,7 +742,7 @@ namespace yield_plugin
 
     RCLCPP_DEBUG_STREAM(nh_->get_logger(),"External Object List (external_objects) size: " << external_objects.size());
 
-    std::map<uint32_t, rclcpp::Time> collision_times = check_collisions_concurrently(external_objects,original_tp);
+    std::map<uint32_t, rclcpp::Time> collision_times = get_collision_times_concurrently(external_objects,original_tp);
 
     if (collision_times.empty()) { return std::nullopt; }
 
