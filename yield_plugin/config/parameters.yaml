@@ -11,7 +11,7 @@ on_route_vehicle_collision_horizon_in_s: 10.0
 # Minimum speed for moving obstacle
 # Units: m/s
 # Value type: Desired
-min_obstacle_speed_in_ms: 0.25
+obstacle_zero_speed_threshold_in_ms: 0.25
 # Minimum object avoidance planning time
 # Units: s
 # Value type: Desired

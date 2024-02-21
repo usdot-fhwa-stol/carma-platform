@@ -372,7 +372,7 @@ namespace yield_plugin
 
   double get_smallest_time_step_of_traj(const carma_planning_msgs::msg::TrajectoryPlan& original_tp)
   {
-    double smallest_time_step = std::numeric_limits<double>::max();
+    double smallest_time_step = std::numeric_limits<double>::infinity();
     for (size_t i = 0; i < original_tp.trajectory_points.size() - 1; i ++)
     {
       smallest_time_step = std::min(smallest_time_step,
@@ -519,20 +519,28 @@ namespace yield_plugin
     int on_route_idx = 0;
 
     // A flag to stop searching more than one lanelet if the object has no velocity
-    double traj2_velocity = fabs(sqrt(pow(trajectory2.front().predicted_velocity.linear.x, 2) + pow(trajectory2.front().predicted_velocity.linear.y, 2)));
-    bool traj2_has_zero_velocity = traj2_velocity < config_.min_obstacle_speed_in_ms;
-    // For loop's number of predicted states to skip that is required to check every 1.5 meter of the traj2
-    // 1.5 meter is experimental number which results in the best performance without significantly reducing precision
+    const auto traj2_speed{std::hypot(trajectory2.front().predicted_velocity.linear.x,
+                                  trajectory2.front().predicted_velocity.linear.y)};
+    bool traj2_has_zero_speed = traj2_speed < config_.obstacle_zero_speed_threshold_in_ms;
+
     if (trajectory2.size() < 2)
     {
       throw std::invalid_argument("Object on ther road doesn't have enough predicted states! Please check motion_computation is correctly applying predicted states");
     }
-    const double predict_step_duration = fabs((rclcpp::Time(trajectory2.at(1).header.stamp) - rclcpp::Time(trajectory2.front().header.stamp)).seconds());
-    const int steps_to_take = std::max(1, static_cast<int>(1.5 / (traj2_velocity * predict_step_duration)));
+    const double predict_step_duration = (rclcpp::Time(trajectory2.at(1).header.stamp) - rclcpp::Time(trajectory2.front().header.stamp)).seconds();
+    if (predict_step_duration < 0.0)
+    {
+      throw std::invalid_argument("Predicted states of the object is malformed. Detected trajectory going backwards in time!");
+    }
 
-    RCLCPP_DEBUG_STREAM(nh_->get_logger(), "Determined steps_to_take: " << steps_to_take << ", with traj2_velocity: " << traj2_velocity << ", predict_step_duration: " << predict_step_duration);
+    //The method adjusts prediction strides to keep a 1.5-meter distance between obstacle's predicited positions (using constant velocity model).
+    //This strategy, tailored for obstacles' speeds, improves computational efficiency by minimizing iterations for slow objects.
+    //The 1.5-meter distance, experimentally chosen, fits within yield_plugin's collision threshold and is less than the narrowest US road lane (2.7 meters).
+    const int iteration_stride = std::max(1, static_cast<int>(1.5 / (traj2_speed * predict_step_duration)));
 
-    for (size_t j = 0; j < trajectory2.size(); j += steps_to_take) // Saving computation time aiming for 1.0 meter interval
+    RCLCPP_DEBUG_STREAM(nh_->get_logger(), "Determined iteration_stride: " << iteration_stride << ", with traj2_speed: " << traj2_speed << ", predict_step_duration: " << predict_step_duration);
+
+    for (size_t j = 0; j < trajectory2.size(); j += iteration_stride) // Saving computation time aiming for 1.5 meter interval
     {
       lanelet::BasicPoint2d curr_point;
       curr_point.x() = trajectory2.at(j).predicted_position.position.x;
@@ -551,7 +559,7 @@ namespace yield_plugin
           break;
         }
       }
-      if (on_route || traj2_has_zero_velocity)
+      if (on_route || traj2_has_zero_speed)
         break;
     }
 
@@ -561,13 +569,13 @@ namespace yield_plugin
       return std::nullopt;
     }
 
-    double smallest_dist = std::numeric_limits<double>::max();
+    double smallest_dist = std::numeric_limits<double>::infinity();
     for (size_t i = 0; i < trajectory1.trajectory_points.size() - 1; ++i)
     {
       auto p1a = trajectory1.trajectory_points.at(i);
       auto p1b = trajectory1.trajectory_points.at(i + 1);
-      double previous_distance_between_predictions = std::numeric_limits<double>::max();
-      for (size_t j = on_route_idx; j < trajectory2.size() - 1; j += steps_to_take)
+      double previous_distance_between_predictions = std::numeric_limits<double>::infinity();
+      for (size_t j = on_route_idx; j < trajectory2.size() - 1; j += iteration_stride)
       {
         auto p2a = trajectory2.at(j);
         auto p2b = trajectory2.at(j + 1);
@@ -592,7 +600,7 @@ namespace yield_plugin
         double y2 = p2a.predicted_position.position.y;
 
         // Calculate the distance between the two interpolated points
-        double distance = std::sqrt((x1 - x2) * (x1 - x2) + (y1 - y2) * (y1 - y2));
+        const auto distance{std::hypot(x1 - x2, y1 - y2)};
 
         smallest_dist = std::min(distance, smallest_dist);
         RCLCPP_DEBUG_STREAM(nh_->get_logger(), "Smallest_dist: " << smallest_dist << ", distance: " << distance << ", dt: " << dt
@@ -619,7 +627,7 @@ namespace yield_plugin
 
         if (distance > collision_radius)
         {
-          if (traj2_has_zero_velocity)
+          if (traj2_has_zero_speed)
           {
             // If no collision is detect by now, stop searching since traj2 is not moving
             return std::nullopt;
@@ -816,7 +824,7 @@ namespace yield_plugin
     // roadway object position
     const double gap_time_until_min_gap_distance = std::max(0.0, object_downtrack_lead - config_.minimum_safety_gap_in_meters)/initial_velocity;
 
-    if (goal_velocity <= config_.min_obstacle_speed_in_ms){
+    if (goal_velocity <= config_.obstacle_zero_speed_threshold_in_ms){
       RCLCPP_WARN_STREAM(nh_->get_logger(),"The obstacle is not moving, goal velocity is set to 0 from: " << goal_velocity);
       goal_velocity = 0.0;
     }
