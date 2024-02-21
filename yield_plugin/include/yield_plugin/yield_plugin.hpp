@@ -270,7 +270,8 @@ public:
    * \return get_predicted_velocity_at_time
    */
   double get_predicted_velocity_at_time(const geometry_msgs::msg::Twist& object_velocity_in_map_frame, const carma_planning_msgs::msg::TrajectoryPlan& original_tp, double timestamp_in_sec_to_predict);
-
+  // TODO
+  std::map<uint32_t, rclcpp::Time> check_collisions_concurrently(const std::vector<carma_perception_msgs::msg::ExternalObject>& external_objects, const carma_planning_msgs::msg::TrajectoryPlan& original_tp);
 private:
 
   carma_wm::WorldModelConstPtr wm_;
