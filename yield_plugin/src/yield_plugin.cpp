@@ -724,25 +724,12 @@ namespace yield_plugin
     std::vector<std::future<std::optional<rclcpp::Time>>> futures;
     std::map<uint32_t, rclcpp::Time> collision_times;
 
-//    std::vector<std::thread> threads;
-//    for (const auto& object : external_objects) {
-//        threads.emplace_back([this, &original_tp, &object, &collision_times]() {
-//            if (auto collision_time = get_collision_time(original_tp, object)) {
-//                collision_times[object.id] = collision_time.value();
-//            }
-//        });
-//    }
-//
-//    for (auto& thread : threads) {
-//        thread.join();
-//    }
-
     // Launch asynchronous tasks to check for collision times
     for (const auto& object : external_objects) {
-      auto action = [&]{
-          return get_collision_time(original_tp, object);
-        };
-      futures.push_back(std::async(std::launch::async,action));
+      futures.push_back(std::async(std::launch::async,[this, &original_tp, &object](){
+        return get_collision_time(original_tp, object);
+      })
+      );
     }
 
     // Collect results from futures and update collision_times
@@ -776,14 +763,7 @@ namespace yield_plugin
 
     RCLCPP_ERROR_STREAM(nh_->get_logger(),"External Object List (external_objects) size: " << external_objects.size());
 
-    // TODO: Enhancement
     std::map<uint32_t, rclcpp::Time> collision_times = check_collisions_concurrently(external_objects,original_tp);
-    //std::map<uint32_t, rclcpp::Time> collision_times;
-    //for (const auto & object : external_objects) {
-    //  if (const auto collision_time { get_collision_time(original_tp, object) } ) {
-    //    collision_times[object.id] = collision_time.value();
-    //  }
-    //}
 
     if (collision_times.empty()) { return std::nullopt; }
 
