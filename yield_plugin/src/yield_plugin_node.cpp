@@ -27,7 +27,7 @@ namespace yield_plugin
   {
     // Declare parameters
     config_.acceleration_adjustment_factor = declare_parameter<double>("acceleration_adjustment_factor", config_.acceleration_adjustment_factor);
-    config_.min_obstacle_speed_in_ms = declare_parameter<double>("min_obstacle_speed_in_ms", config_.min_obstacle_speed_in_ms);
+    config_.obstacle_zero_speed_threshold_in_ms = declare_parameter<double>("obstacle_zero_speed_threshold_in_ms", config_.obstacle_zero_speed_threshold_in_ms);
     config_.on_route_vehicle_collision_horizon_in_s = declare_parameter<double>("on_route_vehicle_collision_horizon_in_s", config_.on_route_vehicle_collision_horizon_in_s);
     config_.collision_check_radius_in_m = declare_parameter<double>("collision_check_radius_in_m", config_.collision_check_radius_in_m);
     config_.yield_max_deceleration_in_ms2 = declare_parameter<double>("yield_max_deceleration_in_ms2", config_.yield_max_deceleration_in_ms2);
@@ -54,7 +54,7 @@ namespace yield_plugin
     config_ = YieldPluginConfig();
 
     get_parameter<double>("acceleration_adjustment_factor", config_.acceleration_adjustment_factor);
-    get_parameter<double>("min_obstacle_speed_in_ms", config_.min_obstacle_speed_in_ms);
+    get_parameter<double>("obstacle_zero_speed_threshold_in_ms", config_.obstacle_zero_speed_threshold_in_ms);
     get_parameter<double>("on_route_vehicle_collision_horizon_in_s", config_.on_route_vehicle_collision_horizon_in_s);
     get_parameter<double>("collision_check_radius_in_m", config_.collision_check_radius_in_m);
     get_parameter<double>("yield_max_deceleration_in_ms2", config_.yield_max_deceleration_in_ms2);

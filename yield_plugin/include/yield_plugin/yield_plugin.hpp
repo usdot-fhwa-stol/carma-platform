@@ -238,6 +238,7 @@ public:
    * \param trajectory1 trajectory of the ego vehicle
    * \param trajectory2 trajectory of predicted steps
    * \param collision_radius a distance to check between two trajectory points at a same timestamp that is considered a collision
+   * NOTE: Currently Traj2 is assumed to be a simple cv model to save computational performance
    * \return time_of_collision if collision detected, otherwise, std::nullopt
    */
   std::optional<rclcpp::Time> get_collision_time(const carma_planning_msgs::msg::TrajectoryPlan& trajectory1, const std::vector<carma_perception_msgs::msg::PredictedState>& trajectory2, double collision_radius);
@@ -246,6 +247,7 @@ public:
    * \brief Return collision time given two trajectories with one being external object with predicted steps
    * \param trajectory1 trajectory of the ego vehicle
    * \param trajectory2 trajectory of the obstacle
+   * NOTE: Currently curr_obstacle is assumed to be using a simple cv model to save computational performance
    * \return time_of_collision if collision detected, otherwise, std::nullopt
    */
   std::optional<rclcpp::Time> get_collision_time(const carma_planning_msgs::msg::TrajectoryPlan& original_tp, const carma_perception_msgs::msg::ExternalObject& curr_obstacle);
@@ -258,6 +260,14 @@ public:
    * \return earliest collision object and its collision time if collision detected. std::nullopt if no collision is detected or if route is not available.
    */
   std::optional<std::pair<carma_perception_msgs::msg::ExternalObject, double>> get_earliest_collision_object_and_time(const carma_planning_msgs::msg::TrajectoryPlan& original_tp, const std::vector<carma_perception_msgs::msg::ExternalObject>& external_objects);
+
+  /**
+   * \brief Given the list of objects with predicted states, get all collision times concurrently using multi-threading
+   * \param original_tp trajectory of the ego vehicle
+   * \param external_objects list of external objects with predicted states
+   * \return mapping of objects' ids and their corresponding collision times (non-colliding objects are omitted)
+   */
+  std::unordered_map<uint32_t, rclcpp::Time> get_collision_times_concurrently(const carma_planning_msgs::msg::TrajectoryPlan& original_tp, const std::vector<carma_perception_msgs::msg::ExternalObject>& external_objects);
 
   /**
    * \brief Given the object velocity in map frame with x,y components, this function returns the projected velocity along the trajectory at given time.
@@ -277,6 +287,7 @@ private:
   LaneChangeStatusCB lc_status_publisher_;
   std::shared_ptr<carma_ros2_utils::CarmaLifecycleNode> nh_;
   std::set<lanelet::Id> route_llt_ids_;
+  lanelet::Id previous_llt_id_;
   std::vector<carma_perception_msgs::msg::ExternalObject> external_objects_;
 
   // flag to show if it is possible for the vehicle to accept the cooperative request
