@@ -267,7 +267,7 @@ public:
    * \param external_objects list of external objects with predicted states
    * \return mapping of objects' ids and their corresponding collision times (non-colliding objects are omitted)
    */
-  std::map<uint32_t, rclcpp::Time> get_collision_times_concurrently(const carma_planning_msgs::msg::TrajectoryPlan& original_tp, const std::vector<carma_perception_msgs::msg::ExternalObject>& external_objects);
+  std::unordered_map<uint32_t, rclcpp::Time> get_collision_times_concurrently(const carma_planning_msgs::msg::TrajectoryPlan& original_tp, const std::vector<carma_perception_msgs::msg::ExternalObject>& external_objects);
 
   /**
    * \brief Given the object velocity in map frame with x,y components, this function returns the projected velocity along the trajectory at given time.

@@ -696,26 +696,25 @@ namespace yield_plugin
     return get_collision_time(original_tp, new_list, config_.intervehicle_collision_distance_in_m);
   }
 
-  std::map<uint32_t, rclcpp::Time> YieldPlugin::get_collision_times_concurrently(const std::vector<carma_perception_msgs::msg::ExternalObject>& external_objects,
-    const carma_planning_msgs::msg::TrajectoryPlan& original_tp)
+  std::unordered_map<uint32_t, rclcpp::Time> YieldPlugin::get_collision_times_concurrently(const carma_planning_msgs::msg::TrajectoryPlan& original_tp,
+    const std::vector<carma_perception_msgs::msg::ExternalObject>& external_objects)
   {
 
-    std::vector<std::future<std::optional<rclcpp::Time>>> futures;
-    std::map<uint32_t, rclcpp::Time> collision_times;
+    std::unordered_map<uint32_t, std::future<std::optional<rclcpp::Time>>> futures;
+    std::unordered_map<uint32_t, rclcpp::Time> collision_times;
 
     // Launch asynchronous tasks to check for collision times
     for (const auto& object : external_objects) {
-      futures.push_back(std::async(std::launch::async,[this, &original_tp, &object](){
+      futures[object.id] = (std::async(std::launch::async,[this, &original_tp, &object](){
           return get_collision_time(original_tp, object);
         })
       );
     }
 
     // Collect results from futures and update collision_times
-    for (size_t i = 0; i < external_objects.size(); ++i) {
-      auto collision_time = futures[i].get(); // waits for the result
-      if (collision_time) {
-        collision_times[external_objects[i].id] = collision_time.value();
+    for (const auto& object : external_objects) {
+      if (const auto collision_time{futures.at(object.id).get()}) {
+        collision_times[object.id] = collision_time.value();
       }
     }
 
@@ -742,7 +741,7 @@ namespace yield_plugin
 
     RCLCPP_DEBUG_STREAM(nh_->get_logger(),"External Object List (external_objects) size: " << external_objects.size());
 
-    std::map<uint32_t, rclcpp::Time> collision_times = get_collision_times_concurrently(external_objects,original_tp);
+    std::unordered_map<uint32_t, rclcpp::Time> collision_times = get_collision_times_concurrently(original_tp,external_objects);
 
     if (collision_times.empty()) { return std::nullopt; }
 
