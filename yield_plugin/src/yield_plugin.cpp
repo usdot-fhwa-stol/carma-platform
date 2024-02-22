@@ -416,7 +416,7 @@ namespace yield_plugin
                                                                                                 planning_time);
     RCLCPP_DEBUG_STREAM(nh_->get_logger(),"Used original_max_speed: " << original_max_speed);
     const auto smallest_time_step = get_smallest_time_step_of_traj(original_tp);
-    while (new_traj_accumulated_downtrack < goal_pos && original_traj_idx < original_traj_relative_downtracks.size())
+    while (new_traj_accumulated_downtrack < goal_pos - EPSILON && original_traj_idx < original_traj_relative_downtracks.size())
     {
       const double target_time = new_traj_idx * smallest_time_step;
       const double downtrack_at_target_time = polynomial_calc(polynomial_coefficients, target_time);
@@ -424,6 +424,13 @@ namespace yield_plugin
 
       RCLCPP_DEBUG_STREAM(nh_->get_logger(), "Calculated speed velocity_at_target_time: " << velocity_at_target_time
         << ", downtrack_at_target_time: "<< downtrack_at_target_time << ", target_time: " << target_time);
+
+      // if the speed becomes negative, the downtrack starts reversing to negative as well
+      // which will never reach the goal_pos, so break here.
+      if (velocity_at_target_time < 0.0)
+      {
+        break;
+      }
 
       // Cannot have a negative speed or have a higher speed than that of the original trajectory
       velocity_at_target_time = std::clamp(velocity_at_target_time, 0.0, original_max_speed);
@@ -442,6 +449,12 @@ namespace yield_plugin
       new_traj_accumulated_downtrack = downtrack_at_target_time;
       new_traj_idx++;
     }
+
+    // if the loop above finished prematurely due to negative speed, fill with 0.0 speeds
+    // since the speed crossed 0.0 and algorithm indicates stopping
+    std::fill_n(std::back_inserter(calculated_speeds),
+                std::size(original_traj_relative_downtracks) - std::size(calculated_speeds),
+                0.0);
 
     // Moving average filter to smoothen the speeds
     std::vector<double> filtered_speeds = basic_autonomy::smoothing::moving_average_filter(calculated_speeds, config_.speed_moving_average_window_size);
