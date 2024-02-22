@@ -428,7 +428,7 @@ namespace yield_plugin
       RCLCPP_DEBUG_STREAM(nh_->get_logger(), "Calculated speed velocity_at_target_time: " << velocity_at_target_time
         << ", downtrack_at_target_time: "<< downtrack_at_target_time << ", target_time: " << target_time);
 
-      // Cannot have a speed higher than that of the original trajectory
+      // Cannot have a negative speed or have a higher speed than that of the original trajectory
       velocity_at_target_time = std::clamp(velocity_at_target_time, 0.0, original_max_speed);
 
       // Pick the speed if it matches with the original downtracks
@@ -538,6 +538,8 @@ namespace yield_plugin
     //The method adjusts prediction strides to keep a 1.5-meter distance between obstacle's predicited positions (using constant velocity model).
     //This strategy, tailored for obstacles' speeds, improves computational efficiency by minimizing iterations for slow objects.
     //The 1.5-meter distance, experimentally chosen, fits within yield_plugin's collision threshold and is less than the narrowest US road lane (2.7 meters).
+    // TODO: The explanation of this logic could be inaccurate or the representation can be done differently to achieve higher iteration_stride as intended
+    // Github Issue: https://github.com/usdot-fhwa-stol/carma-platform/issues/2317
     const int iteration_stride = std::max(1, static_cast<int>(1.5 / (traj2_speed * predict_step_duration)));
 
     RCLCPP_DEBUG_STREAM(nh_->get_logger(), "Determined iteration_stride: " << iteration_stride << ", with traj2_speed: " << traj2_speed << ", predict_step_duration: " << predict_step_duration);
@@ -691,9 +693,7 @@ namespace yield_plugin
     new_list.push_back(curr_state);
     new_list.insert(new_list.end(), curr_obstacle.predictions.cbegin(), curr_obstacle.predictions.cend());
 
-    auto collision_time = get_collision_time(original_tp, new_list, config_.intervehicle_collision_distance_in_m);
-
-    return collision_time;
+    return get_collision_time(original_tp, new_list, config_.intervehicle_collision_distance_in_m);
   }
 
   std::map<uint32_t, rclcpp::Time> YieldPlugin::get_collision_times_concurrently(const std::vector<carma_perception_msgs::msg::ExternalObject>& external_objects,
