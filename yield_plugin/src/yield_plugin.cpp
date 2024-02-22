@@ -452,10 +452,9 @@ namespace yield_plugin
 
     // if the loop above finished prematurely due to negative speed, fill with 0.0 speeds
     // since the speed crossed 0.0 and algorithm indicates stopping
-    for (size_t i = calculated_speeds.size(); i < original_traj_relative_downtracks.size(); i++)
-    {
-      calculated_speeds.push_back(0.0);
-    }
+    std::fill_n(std::back_inserter(calculated_speeds),
+                std::size(original_traj_relative_downtracks) - std::size(calculated_speeds),
+                0.0);
 
     // Moving average filter to smoothen the speeds
     std::vector<double> filtered_speeds = basic_autonomy::smoothing::moving_average_filter(calculated_speeds, config_.speed_moving_average_window_size);
