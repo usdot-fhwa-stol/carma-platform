@@ -705,10 +705,9 @@ namespace yield_plugin
 
     // Launch asynchronous tasks to check for collision times
     for (const auto& object : external_objects) {
-      futures[object.id] = (std::async(std::launch::async,[this, &original_tp, &object](){
+      futures[object.id] = std::async(std::launch::async,[this, &original_tp, &object]{
           return get_collision_time(original_tp, object);
-        })
-      );
+        });
     }
 
     // Collect results from futures and update collision_times
