@@ -425,6 +425,13 @@ namespace yield_plugin
       RCLCPP_DEBUG_STREAM(nh_->get_logger(), "Calculated speed velocity_at_target_time: " << velocity_at_target_time
         << ", downtrack_at_target_time: "<< downtrack_at_target_time << ", target_time: " << target_time);
 
+      // if the speed becomes negative, the downtrack starts reversing to negative as well
+      // which will never reach the goal_pos, so break here.
+      if (velocity_at_target_time < 0.0)
+      {
+        break;
+      }
+
       // Cannot have a negative speed or have a higher speed than that of the original trajectory
       velocity_at_target_time = std::clamp(velocity_at_target_time, 0.0, original_max_speed);
 
@@ -441,6 +448,13 @@ namespace yield_plugin
       }
       new_traj_accumulated_downtrack = downtrack_at_target_time;
       new_traj_idx++;
+    }
+
+    // if the loop above finished prematurely due to negative speed, fill with 0.0 speeds
+    // since the speed crossed 0.0 and algorithm indicates stopping
+    for (size_t i = calculated_speeds.size(); i < original_traj_relative_downtracks.size(); i++)
+    {
+      calculated_speeds.push_back(0.0);
     }
 
     // Moving average filter to smoothen the speeds
