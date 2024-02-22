@@ -416,7 +416,7 @@ namespace yield_plugin
                                                                                                 planning_time);
     RCLCPP_DEBUG_STREAM(nh_->get_logger(),"Used original_max_speed: " << original_max_speed);
     const auto smallest_time_step = get_smallest_time_step_of_traj(original_tp);
-    while (new_traj_accumulated_downtrack < goal_pos && original_traj_idx < original_traj_relative_downtracks.size())
+    while (new_traj_accumulated_downtrack < goal_pos - EPSILON && original_traj_idx < original_traj_relative_downtracks.size())
     {
       const double target_time = new_traj_idx * smallest_time_step;
       const double downtrack_at_target_time = polynomial_calc(polynomial_coefficients, target_time);
