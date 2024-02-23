@@ -2,11 +2,10 @@ name: "CI: Run tests"
 
 # GitHub Actions triggers based on the PR's and each commits on develop and master
 on:
-  workflow_dispatch:
   pull_request:
     types: [opened, synchronize, reopened]
   push:
-    branches: [develop, master,feature/add_gha]
+    branches: [develop, master]
 
 jobs:
   build:
@@ -47,14 +46,14 @@ jobs:
 
     - name: Install external dependencies
       # Install the multiple object tracking deps
-      run: sudo bash /opt/carma//src/multiple_object_tracking/scripts/install_dependencies.sh
+      run: sudo bash /opt/carma/src/multiple_object_tracking/scripts/install_dependencies.sh
 
     - name: Build ROS1
       # Build ROS1 packages
       # The skipped ROS 1 packages here should match the ROS 1 packages that are skipped during the build in docker/install.sh
       run: |
         source "$INIT_ENV"
-        PACKAGES=$(find . -maxdepth 2 -type f -name package.xml | sed 's/\.\///' | cut -d/ -f1)
+        PACKAGES=$(find . -maxdepth 2 -type f -name package.xml | sed 's/\.\///' | cut -d/ -f1) # maxdepth 2 Limits the search of package.xml to current directory and one level of subdirectories beneath it. find will not search beyond two levels deep from the starting point. Without this option, find would search the starting directory and all subdirectories recursively.
         sed -i 's/colcon build /colcon build --packages-skip novatel_oem7_msgs tracetools tracetools_test /' /home/carma/.ci-image/engineering_tools/code_coverage/make_with_coverage.bash
         make_with_coverage.bash -m -e /opt/carma/ -o ./coverage_reports/gcov
 
@@ -63,7 +62,6 @@ jobs:
       # The skipped ROS 1 packages here should match the ROS 1 packages that are skipped during the build in docker/install.sh"
       run: |
         source "$INIT_ENV"
-        sed -i 's/colcon test /colcon test --packages-skip novatel_oem7_msgs tracetools tracetools_test carma_launch_testing carma_message_utilities ros2bag ros2trace tracetools_launch tracetools_read tracetools_trace multiple_object_tracking platoon_control platoon_control_ihp rosbag_mock_drivers /' /home/carma/.ci-image/engineering_tools/code_coverage/make_with_coverage.bash
         make_with_coverage.bash -t -e /opt/carma/ -o ./coverage_reports/gcov
 
     - name: Backup ROS1 compile_commands.json
@@ -83,7 +81,6 @@ jobs:
         source "$INIT_ENV"
         source "$ROS_2_ENV"
         source /opt/autoware.ai/ros/install_ros2/setup.bash
-        sed -i '/colcon build/ s/$/ --parallel-workers 4 --event-handlers console_direct+ --cmake-args -DCMAKE_EXPORT_COMPILE_COMMANDS=ON -DCMAKE_CXX_FLAGS="${COVERAGE_FLAGS}" -DCMAKE_C_FLAGS="${COVERAGE_FLAGS}" -DCMAKE_BUILD_TYPE="Debug"/' /home/carma/.ci-image/engineering_tools/code_coverage/make_with_coverage.bash
         make_with_coverage.bash -m -e /opt/carma/ -o ./coverage_reports/gcov
 
     - name: Run ROS2 C++ Tests
@@ -92,7 +89,6 @@ jobs:
         source "$INIT_ENV"
         source "$ROS_2_ENV"
         source /opt/autoware.ai/ros/install_ros2/setup.bash
-        sed -i 's/colcon test /colcon test --packages-skip approaching_emergency_vehicle_plugin basic_autonomy carma_cooperative_perception carma_guidance_plugins carma_wm carma_wm_ctrl cooperative_lanechange emergency_response_vehicle_plugin gnss_to_map_convertor lci_strategic_plugin light_controlled_intersection_tactical_plugin mobilitypath_publisher motion_computation object_visualizer platoon_strategic_ihp pose_to_tf route route_following_plugin sci_strategic_plugin stop_and_dwell_strategic_plugin stop_and_wait_plugin subsystem_controllers system_controller traffic_incident_parser yield_plugin /' /home/carma/.ci-image/engineering_tools/code_coverage/make_with_coverage.bash
         make_with_coverage.bash -t -e /opt/carma/ -o ./coverage_reports/gcov
 
     - name: Combine ROS1 and ROS2 compile_commands.json files
