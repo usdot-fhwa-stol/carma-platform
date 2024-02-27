@@ -1,12 +1,10 @@
-name: "CI: Run tests"
-
 # GitHub Actions triggers based on the PR's and each commits on develop and master
+name: "CI: Run tests"
 on:
   pull_request:
     types: [opened, synchronize, reopened]
   push:
     branches: [develop, master]
-
 jobs:
   build:
     defaults:
