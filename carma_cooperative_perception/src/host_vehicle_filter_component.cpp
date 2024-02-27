@@ -61,8 +61,6 @@ auto HostVehicleFilterNode::handle_on_configure(
 
   RCLCPP_INFO(get_logger(), "Lifecycle transition: successfully configured");
 
-  declare_parameter("distance_threshold_meters", 0.0);
-
   on_set_parameters_callback_ =
     add_on_set_parameters_callback([this](const std::vector<rclcpp::Parameter> & parameters) {
       rcl_interfaces::msg::SetParametersResult result;
@@ -103,6 +101,8 @@ auto HostVehicleFilterNode::handle_on_configure(
 
       return result;
     });
+
+  declare_parameter("distance_threshold_meters", 0.0);
 
   return carma_ros2_utils::CallbackReturn::SUCCESS;
 }
@@ -153,14 +153,14 @@ auto HostVehicleFilterNode::handle_on_shutdown(const rclcpp_lifecycle::State & /
   return carma_ros2_utils::CallbackReturn::SUCCESS;
 }
 
-auto HostVehicleFilterNode::update_host_vehicle_pose(
-  const geometry_msgs::msg::PoseStamped & msg) noexcept -> void
+auto HostVehicleFilterNode::update_host_vehicle_pose(const geometry_msgs::msg::PoseStamped & msg)
+  -> void
 {
   host_vehicle_pose_ = msg;
 }
 
 auto HostVehicleFilterNode::attempt_filter_and_republish(
-  carma_cooperative_perception_interfaces::msg::DetectionList msg) noexcept -> void
+  carma_cooperative_perception_interfaces::msg::DetectionList msg) -> void
 {
   if (!host_vehicle_pose_.has_value()) {
     RCLCPP_WARN(get_logger(), "Could not filter detection list: host vehicle pose unknown");
@@ -181,7 +181,7 @@ auto HostVehicleFilterNode::attempt_filter_and_republish(
 }
 
 auto euclidean_distance_squared(
-  const geometry_msgs::msg::Pose & a, const geometry_msgs::msg::Pose & b) noexcept -> double
+  const geometry_msgs::msg::Pose & a, const geometry_msgs::msg::Pose & b) -> double
 {
   return std::pow(a.position.x - b.position.x, 2) + std::pow(a.position.y - b.position.y, 2) +
          std::pow(a.position.z - b.position.z, 2) + std::pow(a.orientation.x - b.orientation.x, 2) +

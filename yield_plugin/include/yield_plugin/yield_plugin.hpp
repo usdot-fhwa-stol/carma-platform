@@ -53,7 +53,7 @@ using LaneChangeStatusCB = std::function<void(const carma_planning_msgs::msg::La
 
 /**
  * \brief Convenience class for pairing 2d points with speeds
- */ 
+ */
 struct PointSpeedPair
 {
   lanelet::BasicPoint2d point;
@@ -62,19 +62,19 @@ struct PointSpeedPair
 
 /**
  * \brief Class containing primary business logic for the In-Lane Cruising Plugin
- * 
- */ 
+ *
+ */
 class YieldPlugin
 {
 public:
   /**
    * \brief Constructor
-   * 
+   *
    * \param wm Pointer to intialized instance of the carma world model for accessing semantic map data
    * \param config The configuration to be used for this object
    * \param mobility_response_publisher Callback which will publish the mobility response
    * \param lc_status_publisher Callback which will publish the cooperative lane change status
-   */ 
+   */
   YieldPlugin(std::shared_ptr<carma_ros2_utils::CarmaLifecycleNode> nh, carma_wm::WorldModelConstPtr wm, YieldPluginConfig config,
                        MobilityResponseCB mobility_response_publisher,
                        LaneChangeStatusCB lc_status_publisher);
@@ -84,17 +84,17 @@ public:
    * \param srv_header header
    * \param req The service request
    * \param resp The service response
-   * 
-   */ 
+   *
+   */
   void plan_trajectory_callback(
-    carma_planning_msgs::srv::PlanTrajectory::Request::SharedPtr req, 
+    carma_planning_msgs::srv::PlanTrajectory::Request::SharedPtr req,
     carma_planning_msgs::srv::PlanTrajectory::Response::SharedPtr resp);
 
   /**
    * \brief trajectory is modified to safely avoid obstacles on the road
    * \param original_tp original trajectory plan without object avoidance
    * \param current_speed_ current speed of the vehicle
-   * \param 
+   * \param
    * \return modified trajectory plan
    */
   carma_planning_msgs::msg::TrajectoryPlan update_traj_for_object(const carma_planning_msgs::msg::TrajectoryPlan& original_tp, const std::vector<carma_perception_msgs::msg::ExternalObject>& external_objects, double initial_velocity);
@@ -118,26 +118,27 @@ public:
   /**
    * \brief calculates the maximum speed in a set of tajectory points
    * \param trajectory_points trajectory points
+   # \param timestamp_in_sec_to_search_until before which to look for max trajectory speed
    * \return maximum speed
    */
-  double max_trajectory_speed(const std::vector<carma_planning_msgs::msg::TrajectoryPlanPoint>& trajectory_points) const;
+  double max_trajectory_speed(const std::vector<carma_planning_msgs::msg::TrajectoryPlanPoint>& trajectory_points, double timestamp_in_sec_to_search_until) const;
 
   /**
    * \brief calculates distance between trajectory points in a plan
-   * \param trajectory_plan input trajectory plan 
+   * \param trajectory_plan input trajectory plan
    * \return vector of relative distances between trajectory points
-   */                     
-  std::vector<double> get_relative_downtracks(const carma_planning_msgs::msg::TrajectoryPlan& trajectory_plan) const;  
+   */
+  std::vector<double> get_relative_downtracks(const carma_planning_msgs::msg::TrajectoryPlan& trajectory_plan) const;
 
   /**
    * \brief callback for mobility request
-   * \param msg mobility request message 
+   * \param msg mobility request message
    */
   void mobilityrequest_cb(const carma_v2x_msgs::msg::MobilityRequest::UniquePtr msg);
 
   /**
    * \brief callback for bsm message
-   * \param msg mobility bsm message 
+   * \param msg mobility bsm message
    */
   void bsm_cb(const carma_v2x_msgs::msg::BSM::UniquePtr msg);
 
@@ -148,11 +149,11 @@ public:
    * \return vector of 2d points in map frame
    */
   std::vector<lanelet::BasicPoint2d> convert_eceftrajectory_to_mappoints(const carma_v2x_msgs::msg::Trajectory& ecef_trajectory) const;
-  
+
   /**
    * \brief convert a point in ecef frame (in cm) into map frame (in meters)
    * \param ecef_point carma point ecef frame in cm
-   * \param map_in_earth translate frame 
+   * \param map_in_earth translate frame
    * \return 2d point in map frame
    */
   lanelet::BasicPoint2d ecef_to_map_point(const carma_v2x_msgs::msg::LocationECEF& ecef_point) const;
@@ -165,7 +166,7 @@ public:
    * \return filled mobility response
    */
   carma_v2x_msgs::msg::MobilityResponse compose_mobility_response(const std::string& resp_recipient_id, const std::string& req_plan_id, bool response) const;
-  
+
   /**
    * \brief generate a Jerk Minimizing Trajectory(JMT) with the provided start and end conditions
    * \param original_tp original trajectory plan
@@ -174,10 +175,14 @@ public:
    * \param initial_velocity start velocity
    * \param goal_velocity end velocity
    * \param planning_time time duration of the planning
-   * \return updated JMT trajectory 
+   * \param original original_max_speed from original_tp up until the goal_pos portion
+   * NOTE: the function would generate trajectory duration arbitrarily high if stopping motion is needed. This is to keep the original trajectory's
+   * shape in terms of location so that the vehicle steers toward the direction of travel even when stopping.
+   * \return updated JMT trajectory
    */
-  carma_planning_msgs::msg::TrajectoryPlan generate_JMT_trajectory(const carma_planning_msgs::msg::TrajectoryPlan& original_tp, double initial_pos, double goal_pos, double initial_velocity, double goal_velocity, double planning_time);
-  
+  carma_planning_msgs::msg::TrajectoryPlan generate_JMT_trajectory(const carma_planning_msgs::msg::TrajectoryPlan& original_tp, double initial_pos, double goal_pos,
+    double initial_velocity, double goal_velocity, double planning_time, double original_max_speed);
+
   /**
    * \brief update trajectory for yielding to an incoming cooperative behavior
    * \param original_tp original trajectory plan
@@ -193,14 +198,14 @@ public:
    * \return vector of pairs of 2d intersection points and index of the point in trajectory array
    */
   std::vector<std::pair<int, lanelet::BasicPoint2d>> detect_trajectories_intersection(std::vector<lanelet::BasicPoint2d> self_trajectory, std::vector<lanelet::BasicPoint2d> incoming_trajectory) const;
-  
+
 
   /**
    * \brief set values for member variables related to cooperative behavior
    * \param req_trajectory requested trajectory
    * \param req_speed speed of requested cooperative behavior
    * \param req_planning_time planning time for the requested cooperative behavior
-   * \param req_timestamp the mobility request time stamp 
+   * \param req_timestamp the mobility request time stamp
    */
   void set_incoming_request_info(std::vector <lanelet::BasicPoint2d> req_trajectory, double req_speed, double req_planning_time, double req_timestamp);
 
@@ -219,23 +224,50 @@ public:
   /**
    * \brief Setter for map projection string to define lat/lon -> map conversion
    * \param georeference The proj string defining the projection.
-   */ 
+   */
   void set_georeference_string(const std::string& georeference);
 
   /**
    * \brief Setter for external objects with predictions in the environment
    * \param object_list The object list.
-   */ 
+   */
   void set_external_objects(const std::vector<carma_perception_msgs::msg::ExternalObject>& object_list);
 
   /**
-   * \brief Return collision time given two trajectories
+   * \brief Return collision time given two trajectories with one being predicted steps
    * \param trajectory1 trajectory of the ego vehicle
-   * \param trajectory2 trajectory of the obstacle 
+   * \param trajectory2 trajectory of predicted steps
    * \param collision_radius a distance to check between two trajectory points at a same timestamp that is considered a collision
    * \return time_of_collision if collision detected, otherwise, std::nullopt
-   */ 
-  std::optional<rclcpp::Time> detect_collision_time(const carma_planning_msgs::msg::TrajectoryPlan& trajectory1, const std::vector<carma_perception_msgs::msg::PredictedState>& trajectory2, double collision_radius);
+   */
+  std::optional<rclcpp::Time> get_collision_time(const carma_planning_msgs::msg::TrajectoryPlan& trajectory1, const std::vector<carma_perception_msgs::msg::PredictedState>& trajectory2, double collision_radius);
+
+  /**
+   * \brief Return collision time given two trajectories with one being external object with predicted steps
+   * \param trajectory1 trajectory of the ego vehicle
+   * \param trajectory2 trajectory of the obstacle
+   * \return time_of_collision if collision detected, otherwise, std::nullopt
+   */
+  std::optional<rclcpp::Time> get_collision_time(const carma_planning_msgs::msg::TrajectoryPlan& original_tp, const carma_perception_msgs::msg::ExternalObject& curr_obstacle);
+
+  /**
+   * \brief Return the earliest collision object and time of collision pair from the given trajectory and list of external objects with predicted states.
+            Function first filters obstacles based on whether if their any of predicted state will be on the route. Only then, the logic compares trajectory and predicted states.
+   * \param original_tp trajectory of the ego vehicle
+   * \param external_objects list of external objects with predicted states
+   * \return earliest collision object and its collision time if collision detected. std::nullopt if no collision is detected or if route is not available.
+   */
+  std::optional<std::pair<carma_perception_msgs::msg::ExternalObject, double>> get_earliest_collision_object_and_time(const carma_planning_msgs::msg::TrajectoryPlan& original_tp, const std::vector<carma_perception_msgs::msg::ExternalObject>& external_objects);
+
+  /**
+   * \brief Given the object velocity in map frame with x,y components, this function returns the projected velocity along the trajectory at given time.
+   * \param object_velocity_in_map_frame trajectory of the ego vehicle
+   * \param original_tp trajectory of the ego vehicle
+   * \param timestamp_in_sec_to_predict timestamp in seconds along the trajectory to return the projected velocity
+   * NOTE: returns the last point's speed if the specified time is past the trajectory's planning time
+   * \return get_predicted_velocity_at_time
+   */
+  double get_predicted_velocity_at_time(const geometry_msgs::msg::Twist& object_velocity_in_map_frame, const carma_planning_msgs::msg::TrajectoryPlan& original_tp, double timestamp_in_sec_to_predict);
 
 private:
 
@@ -279,4 +311,4 @@ private:
   }
 
 };
-};  // namespace yield_plugin
+}  // namespace yield_plugin

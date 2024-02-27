@@ -1209,7 +1209,19 @@ namespace basic_autonomy
             }
 
             std::vector<double> speeds;
-            trajectory_utils::conversions::time_to_speed(downtracks, times, tp.initial_longitudinal_velocity, &speeds);
+            try
+            {
+                trajectory_utils::conversions::time_to_speed(downtracks, times, tp.initial_longitudinal_velocity, &speeds);
+            }
+            catch(const std::runtime_error& error)
+            {
+                // This can only happen if there was negative speed in trajectory generation which usually happens when intending to stop.
+                // The plugin is catching that error and logging it for the user to correct the origin plugin's logic, but continues
+                // the operation by forcing the negative values to be 0, which is the intention usually.
+                RCLCPP_WARN_STREAM(rclcpp::get_logger(BASIC_AUTONOMY_LOGGER), "Detected a negative speed from <point,time> to <point,speed> trajectory conversion with error: "
+                    << error.what() << ". Replacing the negative speed with 0.0 speed, but please revisit the trajectory logic. "
+                    "Responsible plugin is: " << trajectory_points[std::find(speeds.begin(), speeds.end(), 0.0) - speeds.begin()].planner_plugin_name);
+            }
 
             if (speeds.size() != trajectory_points.size())
             {

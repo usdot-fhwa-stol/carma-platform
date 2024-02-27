@@ -32,7 +32,10 @@ from launch.actions import OpaqueFunction
 from tracetools_launch.action import Trace
 
 from datetime import datetime
+
 import os
+
+from launch import LaunchDescription, LaunchContext
 
 def create_ros2_tracing_action(context, *args, **kwargs):
     """
@@ -44,7 +47,7 @@ def create_ros2_tracing_action(context, *args, **kwargs):
     """
     log_directory_string = launch.substitutions.EnvironmentVariable('ROS_LOG_DIR').perform(context)
 
-    trace = GroupAction( 
+    trace = GroupAction(
         condition=IfCondition(LaunchConfiguration('is_ros2_tracing_enabled')),
         actions=[
             Trace(
@@ -70,21 +73,21 @@ def generate_launch_description():
     # Declare the vehicle_calibration_dir launch argument
     vehicle_calibration_dir = LaunchConfiguration('vehicle_calibration_dir')
     declare_vehicle_calibration_dir_arg = DeclareLaunchArgument(
-        name = 'vehicle_calibration_dir', 
+        name = 'vehicle_calibration_dir',
         default_value = "/opt/carma/vehicle/calibration",
         description = "Path to folder containing vehicle calibration directories"
     )
 
     vehicle_config_dir = LaunchConfiguration('vehicle_config_dir')
     declare_vehicle_config_dir_arg = DeclareLaunchArgument(
-        name = 'vehicle_config_dir', 
+        name = 'vehicle_config_dir',
         default_value = "/opt/carma/vehicle/config",
         description = "Path to file containing vehicle config directories"
     )
 
     vehicle_characteristics_param_file = LaunchConfiguration('vehicle_characteristics_param_file')
     declare_vehicle_characteristics_param_file_arg = DeclareLaunchArgument(
-        name = 'vehicle_characteristics_param_file', 
+        name = 'vehicle_characteristics_param_file',
         default_value = [vehicle_calibration_dir, "/identifiers/UniqueVehicleParams.yaml"],
         description = "Path to file containing unique vehicle characteristics"
     )
@@ -95,6 +98,13 @@ def generate_launch_description():
         name = 'vehicle_config_param_file',
         default_value = [vehicle_config_dir, "/VehicleConfigParams.yaml"],
         description = "Path to file contain vehicle configuration parameters"
+    )
+
+    use_sim_time = LaunchConfiguration('use_sim_time')
+    declare_use_sim_time_arg = DeclareLaunchArgument(
+        name = 'use_sim_time',
+        default_value = 'False',
+        description = "True of simulation mode is on"
     )
 
     #Declare the route file folder launch argument
@@ -108,8 +118,8 @@ def generate_launch_description():
     # Declare enable_guidance_plugin_validate
     enable_guidance_plugin_validator = LaunchConfiguration('enable_guidance_plugin_validator')
     declare_enable_guidance_plugin_validator = DeclareLaunchArgument(
-        name = 'enable_guidance_plugin_validator', 
-        default_value='false', 
+        name = 'enable_guidance_plugin_validator',
+        default_value='false',
         description='Flag indicating whether the Guidance Plugin Validator node will actively validate guidance strategic, tactical, and control plugins'
     )
 
@@ -144,7 +154,7 @@ def generate_launch_description():
         default_value= 'False',
         description='Flag to enable opening http tunnesl to CARMA Cloud'
     )
-    
+
     # Declare port
     port = LaunchConfiguration('port')
     declare_port = DeclareLaunchArgument(
@@ -169,13 +179,10 @@ def generate_launch_description():
     vector_map_file = LaunchConfiguration('vector_map_file')
     declare_vector_map_file = DeclareLaunchArgument(name='vector_map_file', default_value='/opt/carma/maps/vector_map.osm')
 
-    simulation_mode = LaunchConfiguration('simulation_mode')
-    declare_simulation_mode = DeclareLaunchArgument(name='simulation_mode', default_value = 'False', description = 'True if CARMA Platform is launched with CARLA Simulator')
-
     is_ros2_tracing_enabled = LaunchConfiguration('is_ros2_tracing_enabled')
     declare_is_ros2_tracing_enabled = DeclareLaunchArgument(
-        name='is_ros2_tracing_enabled', 
-        default_value = 'False', 
+        name='is_ros2_tracing_enabled',
+        default_value = 'False',
         description = 'True if user wants ROS 2 Tracing logs to be generated from CARMA Platform.')
 
     # Launch ROS2 rosbag logging
@@ -197,7 +204,11 @@ def generate_launch_description():
         actions=[
             PushRosNamespace(EnvironmentVariable('CARMA_TF_NS', default_value='/')),
             IncludeLaunchDescription(
-                PythonLaunchDescriptionSource([ThisLaunchFileDir(), '/transforms.launch.py'])
+                PythonLaunchDescriptionSource([ThisLaunchFileDir(), '/transforms.launch.py']),
+                launch_arguments = {
+                    'vehicle_config_param_file' : vehicle_config_param_file,
+                    'use_sim_time' : use_sim_time
+                }.items()
             ),
         ]
     )
@@ -207,11 +218,12 @@ def generate_launch_description():
             PushRosNamespace(EnvironmentVariable('CARMA_ENV_NS', default_value='environment')),
             IncludeLaunchDescription(
                 PythonLaunchDescriptionSource([ThisLaunchFileDir(), '/environment.launch.py']),
-                launch_arguments = { 
+                launch_arguments = {
                     'subsystem_controller_param_file' : [vehicle_config_dir, '/SubsystemControllerParams.yaml'],
                     'vehicle_config_param_file' : vehicle_config_param_file,
                     'vehicle_characteristics_param_file' : vehicle_characteristics_param_file,
-                    'vector_map_file' : vector_map_file
+                    'vector_map_file' : vector_map_file,
+                    'use_sim_time' : use_sim_time
                     }.items()
             ),
         ]
@@ -222,7 +234,8 @@ def generate_launch_description():
             PushRosNamespace(EnvironmentVariable('CARMA_LOCZ_NS', default_value='localization')),
             IncludeLaunchDescription(
                 PythonLaunchDescriptionSource([ThisLaunchFileDir(), '/localization.launch.py']),
-                launch_arguments = { 
+                launch_arguments = {
+                    'vehicle_config_param_file' : vehicle_config_param_file,
                     'subsystem_controller_param_file' : [vehicle_config_dir, '/SubsystemControllerParams.yaml'],
                     'load_type' : load_type,
                     'single_pcd_path' : single_pcd_path,
@@ -230,7 +243,7 @@ def generate_launch_description():
                     'arealist_path' : arealist_path,
                     'vector_map_file' : vector_map_file,
                     'vehicle_calibration_dir': vehicle_calibration_dir,
-                    'simulation_mode': simulation_mode,
+                    'use_sim_time' : use_sim_time
                 }.items()
             )
         ]
@@ -241,11 +254,12 @@ def generate_launch_description():
             PushRosNamespace(EnvironmentVariable('CARMA_MSG_NS', default_value='message')),
             IncludeLaunchDescription(
                 PythonLaunchDescriptionSource([ThisLaunchFileDir(), '/message.launch.py']),
-                launch_arguments = { 
+                launch_arguments = {
                     'vehicle_characteristics_param_file' : vehicle_characteristics_param_file,
                     'vehicle_config_param_file' : vehicle_config_param_file,
                     'enable_opening_tunnels'  : enable_opening_tunnels,
-                    'subsystem_controller_param_file' : [vehicle_config_dir, '/SubsystemControllerParams.yaml']
+                    'subsystem_controller_param_file' : [vehicle_config_dir, '/SubsystemControllerParams.yaml'],
+                    'use_sim_time' : use_sim_time
                 }.items()
             ),
         ]
@@ -254,18 +268,19 @@ def generate_launch_description():
     guidance_group = GroupAction(
         actions=[
             PushRosNamespace(EnvironmentVariable('CARMA_GUIDE_NS', default_value='guidance')),
-            
+
             IncludeLaunchDescription(
                 PythonLaunchDescriptionSource([ThisLaunchFileDir(), '/guidance.launch.py']),
                 launch_arguments={
                     'route_file_folder' : route_file_folder,
-                    'vehicle_characteristics_param_file' : vehicle_characteristics_param_file, 
+                    'vehicle_characteristics_param_file' : vehicle_characteristics_param_file,
                     'vehicle_config_param_file' : vehicle_config_param_file,
                     'enable_guidance_plugin_validator' : enable_guidance_plugin_validator,
                     'strategic_plugins_to_validate' : strategic_plugins_to_validate,
                     'tactical_plugins_to_validate' : tactical_plugins_to_validate,
                     'control_plugins_to_validate' : control_plugins_to_validate,
                     'subsystem_controller_param_file' : [vehicle_config_dir, '/SubsystemControllerParams.yaml'],
+                    'use_sim_time' : use_sim_time
                 }.items()
             ),
         ]
@@ -276,9 +291,10 @@ def generate_launch_description():
             PushRosNamespace(EnvironmentVariable('CARMA_INTR_NS', default_value='hardware_interface')),
             IncludeLaunchDescription(
                 PythonLaunchDescriptionSource([ThisLaunchFileDir(), '/drivers.launch.py']),
-                launch_arguments = { 
-                    'vehicle_config_param_file' : vehicle_config_param_file,
+                launch_arguments = {
                     'subsystem_controller_param_file' : [vehicle_config_dir, '/SubsystemControllerParams.yaml'],
+                    'vehicle_config_param_file' : vehicle_config_param_file,
+                    'use_sim_time' : use_sim_time
                 }.items()
             ),
         ]
@@ -288,7 +304,9 @@ def generate_launch_description():
         package='system_controller',
         name='system_controller',
         executable='system_controller',
-        parameters=[ system_controller_param_file ],
+        parameters=[
+                    system_controller_param_file,
+                    {"use_sim_time" : use_sim_time}],
         on_exit = Shutdown(), # Mark the subsystem controller as required for segfaults
         arguments=['--ros-args', '--log-level', GetLogLevel('system_controller', env_log_levels)]
     )
@@ -296,7 +314,7 @@ def generate_launch_description():
     ui_group = GroupAction(
         actions=[
             PushRosNamespace(EnvironmentVariable('CARMA_UI_NS', default_value='ui')),
-            
+
             IncludeLaunchDescription(
                 PythonLaunchDescriptionSource([ThisLaunchFileDir(), '/ui.launch.py']),
                 launch_arguments={
@@ -311,6 +329,7 @@ def generate_launch_description():
         declare_vehicle_config_dir_arg,
         declare_vehicle_characteristics_param_file_arg,
         declare_vehicle_config_param_file_arg,
+        declare_use_sim_time_arg,
         declare_route_file_folder,
         declare_enable_guidance_plugin_validator,
         declare_strategic_plugins_to_validate,
@@ -323,14 +342,13 @@ def generate_launch_description():
         declare_area,
         declare_arealist_path,
         declare_vector_map_file,
-        declare_simulation_mode,
         declare_is_ros2_tracing_enabled,
         drivers_group,
         transform_group,
         environment_group,
         localization_group,
         v2x_group,
-        guidance_group, 
+        guidance_group,
         ros2_rosbag_launch,
         ui_group,
         system_controller,

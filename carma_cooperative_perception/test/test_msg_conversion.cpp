@@ -58,6 +58,7 @@ TEST(ToTimeMsg, NulloptSeconds)
 TEST(ToDetectionMsg, Simple)
 {
   carma_v2x_msgs::msg::SensorDataSharingMessage sdsm_msg;
+  sdsm_msg.source_id.id = {0xBA, 0xDD, 0xCA, 0xFE};
   sdsm_msg.sdsm_time_stamp.second.millisecond = 1000;
   sdsm_msg.sdsm_time_stamp.presence_vector |= sdsm_msg.sdsm_time_stamp.SECOND;
   sdsm_msg.ref_pos.longitude = -90.703125;  // degrees
@@ -66,7 +67,7 @@ TEST(ToDetectionMsg, Simple)
   sdsm_msg.ref_pos.elevation = 300.0;  // m
 
   carma_v2x_msgs::msg::DetectedObjectData object_data;
-  object_data.detected_object_common_data.detected_id.object_id = 0xBEEF;
+  object_data.detected_object_common_data.detected_id.object_id = 1;
   object_data.detected_object_common_data.measurement_time.measurement_time_offset = -0.1;  // s
 
   object_data.detected_object_common_data.heading.heading = 34;  // true heading; degrees
@@ -89,15 +90,17 @@ TEST(ToDetectionMsg, Simple)
   object_data.detected_object_common_data.accel_4_way.yaw_rate = 5.0;      // degrees/s
 
   sdsm_msg.objects.detected_object_data.push_back(object_data);
+  constexpr std::string_view georeference{"+proj=utm +zone=15 +datum=WGS84 +units=m +no_defs"};
 
-  const auto detection_list{carma_cooperative_perception::to_detection_list_msg(sdsm_msg)};
+  const auto detection_list{
+    carma_cooperative_perception::to_detection_list_msg(sdsm_msg, georeference)};
   ASSERT_EQ(std::size(detection_list.detections), 1U);
 
   const auto detection{detection_list.detections.at(0)};
 
   EXPECT_EQ(detection.header.stamp.sec, 0);
   EXPECT_NEAR(detection.header.stamp.nanosec, 900'000'000U, 2);  // +/- 2 ns is probably good enough
-  EXPECT_EQ(detection.header.frame_id, "15N");
+  EXPECT_EQ(detection.header.frame_id, "map");
 
   EXPECT_NEAR(detection.pose.pose.position.x, 715068.54 + 100.0, 1e-2);   // m (ref pos + offset)
   EXPECT_NEAR(detection.pose.pose.position.y, 3631576.38 + 100.0, 1e-2);  // m (ref pos + offset)
@@ -116,7 +119,7 @@ TEST(ToDetectionMsg, Simple)
   EXPECT_DOUBLE_EQ(detection.accel.accel.linear.y, 1.0);
   EXPECT_NEAR(detection.accel.accel.linear.z, 2.4 * 9.80665, 1e-4);
 
-  EXPECT_EQ(detection.id, std::to_string(0xBEEF));
+  EXPECT_EQ(detection.id, "BADDCAFE-1");
   EXPECT_EQ(detection.motion_model, detection.MOTION_MODEL_CTRV);
 }
 
@@ -170,16 +173,16 @@ TEST(ToDetectionMsg, FromExternalObject)
   object.pose.pose.orientation.y = 12;
   object.pose.pose.orientation.z = 13;
   object.pose.pose.orientation.w = 14;
-  object.velocity_inst.twist.linear.x = 15;
-  object.velocity_inst.twist.linear.y = 16;
-  object.velocity_inst.twist.linear.z = 17;
-  object.velocity_inst.twist.angular.x = 18;
-  object.velocity_inst.twist.angular.y = 19;
-  object.velocity_inst.twist.angular.z = 20;
+  object.velocity.twist.linear.x = 15;
+  object.velocity.twist.linear.y = 16;
+  object.velocity.twist.linear.z = 17;
+  object.velocity.twist.angular.x = 18;
+  object.velocity.twist.angular.y = 19;
+  object.velocity.twist.angular.z = 20;
   object.object_type = object.SMALL_VEHICLE;
 
   object.presence_vector |= object.BSM_ID_PRESENCE_VECTOR | object.ID_PRESENCE_VECTOR |
-                            object.POSE_PRESENCE_VECTOR | object.VELOCITY_INST_PRESENCE_VECTOR |
+                            object.POSE_PRESENCE_VECTOR | object.VELOCITY_PRESENCE_VECTOR |
                             object.OBJECT_TYPE_PRESENCE_VECTOR;
 
   constexpr carma_cooperative_perception::MotionModelMapping motion_model_mapping{
@@ -195,7 +198,7 @@ TEST(ToDetectionMsg, FromExternalObject)
   EXPECT_EQ(detection.header, object.header);
   EXPECT_EQ(detection.id, "3456-7");
   EXPECT_EQ(detection.pose, object.pose);
-  EXPECT_EQ(detection.twist, object.velocity_inst);
+  EXPECT_EQ(detection.twist, object.velocity);
   EXPECT_EQ(detection.motion_model, detection.MOTION_MODEL_CTRV);
 }
 
@@ -412,12 +415,12 @@ TEST(ToDetectedObjectDataMsg, FromExternalObject)
   object.pose.pose.orientation.y = 12;
   object.pose.pose.orientation.z = 13;
   object.pose.pose.orientation.w = 14;
-  object.velocity_inst.twist.linear.x = 15;
-  object.velocity_inst.twist.linear.y = 16;
-  object.velocity_inst.twist.linear.z = 17;
-  object.velocity_inst.twist.angular.x = 18;
-  object.velocity_inst.twist.angular.y = 19;
-  object.velocity_inst.twist.angular.z = 20;
+  object.velocity.twist.linear.x = 15;
+  object.velocity.twist.linear.y = 16;
+  object.velocity.twist.linear.z = 17;
+  object.velocity.twist.angular.x = 18;
+  object.velocity.twist.angular.y = 19;
+  object.velocity.twist.angular.z = 20;
   object.size.x = 21;
   object.size.y = 22;
   object.size.z = 23;
@@ -425,7 +428,7 @@ TEST(ToDetectedObjectDataMsg, FromExternalObject)
   object.object_type = object.SMALL_VEHICLE;
 
   object.presence_vector |= object.BSM_ID_PRESENCE_VECTOR | object.ID_PRESENCE_VECTOR |
-                            object.POSE_PRESENCE_VECTOR | object.VELOCITY_INST_PRESENCE_VECTOR |
+                            object.POSE_PRESENCE_VECTOR | object.VELOCITY_PRESENCE_VECTOR |
                             object.CONFIDENCE_PRESENCE_VECTOR | object.OBJECT_TYPE_PRESENCE_VECTOR |
                             object.SIZE_PRESENCE_VECTOR;
 
@@ -442,7 +445,7 @@ TEST(ToDetectedObjectDataMsg, FromExternalObject)
   EXPECT_EQ(detected_object.detected_object_common_data.detected_id.object_id, 7);
   EXPECT_NEAR(detected_object.detected_object_common_data.speed.speed, std::sqrt(481), 1e-2);
   EXPECT_EQ(
-    detected_object.detected_object_common_data.speed_z.speed, object.velocity_inst.twist.linear.z);
+    detected_object.detected_object_common_data.speed_z.speed, object.velocity.twist.linear.z);
 
   EXPECT_EQ(detected_object.detected_object_optional_data.det_veh.size.vehicle_width, 22);
   EXPECT_EQ(detected_object.detected_object_optional_data.det_veh.size.vehicle_length, 21);

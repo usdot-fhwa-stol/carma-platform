@@ -23,49 +23,49 @@
  */
 struct YieldPluginConfig
 {
-  double acceleration_adjustment_factor = 4.0;  // Adjustment factor for safe and comfortable acceleration/deceleration 
-  double on_route_vehicle_collision_horizon = 10.0;        // time horizon for collision detection in s
-  double min_obstacle_speed = 2.0;       // Minimum speed for moving obstacle in m/s
-  double tpmin = 2.0;                     // minimum object avoidance planning time in s
-  double yield_max_deceleration = 3.0;  // max deceleration value in m/s^2
-  double x_gap = 2.0;                       // minimum safety gap in m
+  double acceleration_adjustment_factor = 4.0;  // Adjustment factor for safe and comfortable acceleration/deceleration
+  double on_route_vehicle_collision_horizon_in_s = 10.0;        // time horizon for collision detection in s
+  double min_obstacle_speed_in_ms = 2.0;       // Minimum speed for moving obstacle in m/s
+  double min_obj_avoidance_plan_time_in_s = 2.0;                     // minimum object avoidance planning time in s
+  double yield_max_deceleration_in_ms2 = 3.0;  // max deceleration value in m/s^2
+  double minimum_safety_gap_in_meters = 2.0;                       // minimum safety gap in m
   double vehicle_length = 5.0;              // Host vehicle length in m
   double vehicle_height = 3.0;              // Host vehicle height in m
   double vehicle_width = 2.5;              // Host vehicle width in m
-  double max_stop_speed = 1.0;           //  Maximum speed value to consider the ego vehicle stopped in m/s
+  double max_stop_speed_in_ms = 1.0;           //  Maximum speed value to consider the ego vehicle stopped in m/s
   bool enable_cooperative_behavior = true;       //parameter to enable cooperative behavior
   bool always_accept_mobility_request = true;       //parameter to always accept mobility request
   std::string vehicle_id = "DEFAULT_VEHICLE_ID";         // Vehicle id is the license plate of the vehicle
   int acceptable_passed_timesteps = 10;              // acceptable number of timesteps to use the latest known mobility request before switching to yield
-  double intervehicle_collision_distance = 10.0;    //Intervehicle distance that is considered a collision
-  double safety_collision_time_gap = 2.0;          // Time gap to finish planning a yield earlier than collision time
+  double intervehicle_collision_distance_in_m = 10.0;    //Intervehicle distance that is considered a collision
+  double safety_collision_time_gap_in_s = 2.0;          // Time gap to finish planning a yield earlier than collision time
   bool enable_adjustable_gap = true;          // Flag to enable yield plugin to check for adjustable gap for example digital gap from map
   int acceptable_urgency = 5;                 //Minimum urgency value to consider the mobility request
   double speed_moving_average_window_size = 3.0;  //Window size for speed moving average filter
-  double collision_check_radius = 150.0;  //Radius to check for potential collision
+  double collision_check_radius_in_m = 150.0;  //Radius to check for potential collision
 
   friend std::ostream& operator<<(std::ostream& output, const YieldPluginConfig& c)
   {
     output << "YieldPluginConfig { " << std::endl
           << "acceleration_adjustment_factor: " << c.acceleration_adjustment_factor << std::endl
-          << "on_route_vehicle_collision_horizon: " << c.on_route_vehicle_collision_horizon << std::endl
-          << "min_obstacle_speed: " << c.min_obstacle_speed << std::endl
-          << "yield_max_deceleration: " << c.yield_max_deceleration << std::endl
-          << "x_gap: " << c.x_gap << std::endl
+          << "on_route_vehicle_collision_horizon_in_s: " << c.on_route_vehicle_collision_horizon_in_s << std::endl
+          << "min_obstacle_speed_in_ms: " << c.min_obstacle_speed_in_ms << std::endl
+          << "yield_max_deceleration_in_ms2: " << c.yield_max_deceleration_in_ms2 << std::endl
+          << "minimum_safety_gap_in_meters: " << c.minimum_safety_gap_in_meters << std::endl
           << "vehicle_length: " << c.vehicle_length << std::endl
           << "vehicle_height: " << c.vehicle_height << std::endl
           << "vehicle_width: " << c.vehicle_width << std::endl
-          << "max_stop_speed: " << c.max_stop_speed << std::endl
+          << "max_stop_speed_in_ms: " << c.max_stop_speed_in_ms << std::endl
           << "enable_cooperative_behavior: " << c.enable_cooperative_behavior << std::endl
           << "always_accept_mobility_request: " << c.always_accept_mobility_request << std::endl
           << "vehicle_id: " << c.vehicle_id << std::endl
           << "acceptable_passed_timesteps: " << c.acceptable_passed_timesteps << std::endl
-          << "intervehicle_collision_distance: " << c.intervehicle_collision_distance << std::endl
-          << "safety_collision_time_gap: " << c.safety_collision_time_gap << std::endl
+          << "intervehicle_collision_distance_in_m: " << c.intervehicle_collision_distance_in_m << std::endl
+          << "safety_collision_time_gap_in_s: " << c.safety_collision_time_gap_in_s << std::endl
           << "enable_adjustable_gap: " << c.enable_adjustable_gap << std::endl
           << "acceptable_urgency: " << c.acceptable_urgency << std::endl
           << "speed_moving_average_window_size: " << c.speed_moving_average_window_size << std::endl
-          << "collision_check_radius: " << c.collision_check_radius << std::endl
+          << "collision_check_radius_in_m: " << c.collision_check_radius_in_m << std::endl
           << "}" << std::endl;
     return output;
   }

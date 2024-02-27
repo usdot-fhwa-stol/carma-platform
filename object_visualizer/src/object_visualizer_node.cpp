@@ -30,6 +30,8 @@ namespace object_visualizer
     config_.enable_roadway_objects_viz = declare_parameter<bool>("enable_roadway_objects_viz", config_.enable_roadway_objects_viz);
     config_.external_objects_viz_ns = declare_parameter<std::string>("external_objects_viz_ns", config_.external_objects_viz_ns);
     config_.roadway_obstacles_viz_ns = declare_parameter<std::string>("roadway_obstacles_viz_ns", config_.roadway_obstacles_viz_ns);
+    config_.marker_shape = declare_parameter<uint8_t>("marker_shape", config_.marker_shape);
+
   }
 
   rcl_interfaces::msg::SetParametersResult Node::parameter_update_callback(const std::vector<rclcpp::Parameter> &parameters)
@@ -47,9 +49,14 @@ namespace object_visualizer
         {"roadway_obstacles_viz_ns", config_.roadway_obstacles_viz_ns}
       }, parameters);
 
+    auto error3 = update_params<uint8_t>(
+      {
+        {"marker_shape", config_.marker_shape}
+      }, parameters);
+
     rcl_interfaces::msg::SetParametersResult result;
 
-    result.successful = !error && !error2;
+    result.successful = !error && !error2 && !error3;
 
     return result;
   }
@@ -64,6 +71,7 @@ namespace object_visualizer
     get_parameter<bool>("enable_roadway_objects_viz", config_.enable_roadway_objects_viz);
     get_parameter<std::string>("external_objects_viz_ns", config_.external_objects_viz_ns);
     get_parameter<std::string>("roadway_obstacles_viz_ns", config_.roadway_obstacles_viz_ns);
+    get_parameter<uint8_t>("marker_shape", config_.marker_shape);
 
     // Register runtime parameter update callback
     add_on_set_parameters_callback(std::bind(&Node::parameter_update_callback, this, std_ph::_1));
@@ -100,12 +108,12 @@ namespace object_visualizer
     marker.action = visualization_msgs::msg::Marker::DELETEALL;
     viz_msg.markers.push_back(marker);
 
-    
+
     size_t id = 0; // We always count the id from zero so we can delete markers later in a consistent manner
 
     for (auto obj : msg->objects) {
       visualization_msgs::msg::Marker marker;
-      
+
       marker.header = msg->header;
 
       marker.ns = config_.external_objects_viz_ns;
@@ -118,7 +126,7 @@ namespace object_visualizer
         marker.color.b = 0.0;
         marker.color.a = 1.0;
 
-      } // All other detected objects will be blue 
+      } // All other detected objects will be blue
       else {
 
         marker.color.r = 0.0;
@@ -127,13 +135,22 @@ namespace object_visualizer
         marker.color.a = 1.0;
       }
 
-      marker.id = id;
-      marker.type = visualization_msgs::msg::Marker::CUBE;
-      marker.action = visualization_msgs::msg::Marker::ADD;
       marker.pose = obj.pose.pose;
-      marker.scale.x = obj.size.x * 2.0; // Size in carma is half the length/width/height 
-      marker.scale.y = obj.size.y * 2.0;
-      marker.scale.z = obj.size.z * 2.0;
+      marker.pose.position.z = std::max(1.0, obj.size.z); // lifts the marker above ground so that it doesn't clip
+
+      marker.id = id;
+      if (static_cast<int>(config_.marker_shape) < 1 || static_cast<int>(config_.marker_shape) > 3)
+      {
+        throw std::invalid_argument("Marker shape is not valid: " + std::to_string(static_cast<int>(config_.marker_shape)) + ". Please choose from 1: CUBE, 2: SPHERE, 3: CYLINDER");
+      }
+      marker.type = config_.marker_shape;
+      marker.action = visualization_msgs::msg::Marker::ADD;
+
+      // overwrite size in case any previous stack doesn't provide size
+      // such as carma_cooperative_perception at the moment
+      marker.scale.x = std::max(1.0, obj.size.x) * 2;  // Size in carma is half the length/width/height
+      marker.scale.y = std::max(1.0, obj.size.y) * 2;
+      marker.scale.z = std::max(1.0, obj.size.z) * 2;
 
       viz_msg.markers.push_back(marker);
 
@@ -185,7 +202,7 @@ namespace object_visualizer
     size_t id = 0; // We always count the id from zero so we can delete markers later in a consistent manner
     for (auto obj : msg->roadway_obstacles) {
       visualization_msgs::msg::Marker marker;
-      
+
       marker.header = obj.object.header;
 
       marker.ns = config_.roadway_obstacles_viz_ns;
@@ -217,7 +234,7 @@ namespace object_visualizer
       marker.type = visualization_msgs::msg::Marker::CUBE;
       marker.action = visualization_msgs::msg::Marker::ADD;
       marker.pose = obj.object.pose.pose;
-      marker.scale.x = obj.object.size.x * 2.0; // Size in carma is half the length/width/height 
+      marker.scale.x = obj.object.size.x * 2.0; // Size in carma is half the length/width/height
       marker.scale.y = obj.object.size.y * 2.0;
       marker.scale.z = obj.object.size.z * 2.0;
 

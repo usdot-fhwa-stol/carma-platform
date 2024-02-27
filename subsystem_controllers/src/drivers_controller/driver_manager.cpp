@@ -34,12 +34,12 @@ namespace subsystem_controllers
             : critical_drivers_(critical_driver_names.begin(), critical_driver_names.end()),
             camera_entries_(camera_entries.begin(), camera_entries.end()),
             driver_timeout_(driver_timeout)
-    { 
+    {
         // Intialize entry manager
         em_ = std::make_shared<EntryManager>(critical_driver_names, camera_entries);
 
     }
-    
+
 
     carma_msgs::msg::SystemAlert DriverManager::handle_spin(long time_now,long start_up_timestamp,long startup_duration)
     {
@@ -52,7 +52,7 @@ namespace subsystem_controllers
             alert.description = "All essential drivers are ready";
             alert.type = carma_msgs::msg::SystemAlert::DRIVERS_READY;
             return alert;
-        } 
+        }
         else if(starting_up_ && (time_now - start_up_timestamp <= startup_duration))
         {
             alert.description = "System is starting up...";
@@ -75,9 +75,9 @@ namespace subsystem_controllers
         {
             alert.description = "Unknown problem assessing essential driver availability";
             alert.type = carma_msgs::msg::SystemAlert::FATAL;
-            return alert;  
+            return alert;
         }
-    
+
     }
 
 
@@ -87,13 +87,13 @@ namespace subsystem_controllers
         Entry driver_status(msg->status == carma_driver_msgs::msg::DriverStatus::OPERATIONAL || msg->status == carma_driver_msgs::msg::DriverStatus::DEGRADED,
                             msg->name,current_time);
 
-        em_->update_entry(driver_status);                            
+        em_->update_entry(driver_status);
     }
 
 
     void DriverManager::evaluate_sensor(int &sensor_input,bool available,long current_time,long timestamp,long driver_timeout)
     {
-        
+
         if((!available) || (current_time-timestamp > driver_timeout))
         {
             sensor_input=0;
@@ -102,7 +102,7 @@ namespace subsystem_controllers
         {
             sensor_input=1;
         }
-        
+
     }
 
     std::string DriverManager::are_critical_drivers_operational(long current_time)
@@ -113,6 +113,10 @@ namespace subsystem_controllers
         std::vector<Entry> driver_list = em_->get_entries(); //Real time driver list from driver status
         for(auto i = driver_list.begin(); i < driver_list.end(); ++i)
         {
+            RCLCPP_DEBUG_STREAM(rclcpp::get_logger("subsystem_controller"), "i->name_: " << i->name_
+                << ", current_time: " << current_time
+                << ", i->timestamp_: " << i->timestamp_
+                << ", difference: " << current_time-(i->timestamp_) );
             if(em_->is_entry_required(i->name_))
             {
                 evaluate_sensor(ssc,i->available_,current_time,i->timestamp_,driver_timeout_);
@@ -130,7 +134,7 @@ namespace subsystem_controllers
         }
 
         /////////////////////
-        //Decision making 
+        //Decision making
         if (ssc == 1 && camera == 1)
         {
             return "s_1_c_1";

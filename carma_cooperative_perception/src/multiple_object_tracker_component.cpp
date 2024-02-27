@@ -25,19 +25,57 @@
 #include <multiple_object_tracking/ctra_model.hpp>
 #include <multiple_object_tracking/ctrv_model.hpp>
 #include <multiple_object_tracking/fusing.hpp>
+#include <multiple_object_tracking/gating.hpp>
 #include <multiple_object_tracking/scoring.hpp>
 #include <multiple_object_tracking/temporal_alignment.hpp>
 #include <unordered_map>
 #include <utility>
 #include <vector>
+#include <limits>
 
 namespace carma_cooperative_perception
 {
 
 namespace mot = multiple_object_tracking;
 
-auto make_ctrv_detection(
-  const carma_cooperative_perception_interfaces::msg::Detection & msg) noexcept -> Detection
+auto make_semantic_class(std::size_t numeric_value)
+{
+  switch (numeric_value) {
+    case 0:
+      return mot::SemanticClass::kUnknown;
+    case 1:
+      return mot::SemanticClass::kSmallVehicle;
+    case 2:
+      return mot::SemanticClass::kLargeVehicle;
+    case 3:
+      return mot::SemanticClass::kPedestrian;
+    case 4:
+      return mot::SemanticClass::kMotorcycle;
+  }
+
+  return mot::SemanticClass::kUnknown;
+}
+
+auto semantic_class_to_numeric_value(mot::SemanticClass semantic_class)
+{
+  switch (semantic_class) {
+    case mot::SemanticClass::kUnknown:
+      return 0;
+    case mot::SemanticClass::kSmallVehicle:
+      return 1;
+    case mot::SemanticClass::kLargeVehicle:
+      return 2;
+    case mot::SemanticClass::kPedestrian:
+      return 3;
+    case mot::SemanticClass::kMotorcycle:
+      return 4;
+  }
+
+  return 0;
+}
+
+auto make_ctrv_detection(const carma_cooperative_perception_interfaces::msg::Detection & msg)
+  -> Detection
 {
   const auto timestamp{
     units::time::second_t{static_cast<double>(msg.header.stamp.sec)} +
@@ -63,13 +101,19 @@ auto make_ctrv_detection(
     mot::Angle{units::angle::radian_t{yaw}},
     units::angular_velocity::radians_per_second_t{msg.twist.twist.angular.z}};
 
-  const mot::CtrvStateCovariance covariance = mot::CtrvStateCovariance::Zero();
+  mot::CtrvStateCovariance covariance = mot::CtrvStateCovariance::Zero();
+  covariance(0, 0) = msg.pose.covariance.at(0);
+  covariance(1, 1) = msg.pose.covariance.at(7);
+  covariance(2, 2) = msg.twist.covariance.at(0);
+  covariance(3, 3) = msg.pose.covariance.at(35);
+  covariance(4, 4) = msg.twist.covariance.at(35);
 
-  return mot::CtrvDetection{timestamp, state, covariance, mot::Uuid{msg.id}};
+  return mot::CtrvDetection{
+    timestamp, state, covariance, mot::Uuid{msg.id}, make_semantic_class(msg.semantic_class)};
 }
 
-auto make_ctra_detection(
-  const carma_cooperative_perception_interfaces::msg::Detection & msg) noexcept -> Detection
+auto make_ctra_detection(const carma_cooperative_perception_interfaces::msg::Detection & msg)
+  -> Detection
 {
   const auto timestamp{
     units::time::second_t{static_cast<double>(msg.header.stamp.sec)} +
@@ -96,9 +140,16 @@ auto make_ctra_detection(
     units::angular_velocity::radians_per_second_t{msg.twist.twist.angular.z},
     units::acceleration::meters_per_second_squared_t{msg.accel.accel.linear.x}};
 
-  const mot::CtraStateCovariance covariance = mot::CtraStateCovariance::Zero();
+  mot::CtraStateCovariance covariance = mot::CtraStateCovariance::Zero();
+  covariance(0, 0) = msg.pose.covariance.at(0);
+  covariance(1, 1) = msg.pose.covariance.at(7);
+  covariance(2, 2) = msg.twist.covariance.at(0);
+  covariance(3, 3) = msg.pose.covariance.at(35);
+  covariance(4, 4) = msg.twist.covariance.at(35);
+  covariance(5, 5) = msg.accel.covariance.at(0);
 
-  return mot::CtraDetection{timestamp, state, covariance, mot::Uuid{msg.id}};
+  return mot::CtraDetection{
+    timestamp, state, covariance, mot::Uuid{msg.id}, make_semantic_class(msg.semantic_class)};
 }
 
 auto make_detection(const carma_cooperative_perception_interfaces::msg::Detection & msg)
@@ -118,13 +169,13 @@ auto make_detection(const carma_cooperative_perception_interfaces::msg::Detectio
   throw std::runtime_error("unkown motion model type '" + std::to_string(msg.motion_model) + "'");
 }
 
-static auto to_ros_msg(const mot::CtraTrack & track) noexcept
+static auto to_ros_msg(const mot::CtraTrack & track)
 {
   carma_cooperative_perception_interfaces::msg::Track msg;
 
   msg.header.stamp.sec = mot::remove_units(units::math::floor(track.timestamp));
   msg.header.stamp.nanosec = mot::remove_units(
-    units::time::nanosecond_t{units::math::fmod(track.timestamp, units::time::second_t{10.0})});
+    units::time::nanosecond_t{units::math::fmod(track.timestamp, units::time::second_t{1.0})});
   msg.header.frame_id = "map";
 
   msg.id = track.uuid.value();
@@ -144,16 +195,18 @@ static auto to_ros_msg(const mot::CtraTrack & track) noexcept
 
   msg.accel.accel.linear.x = mot::remove_units(track.state.acceleration);
 
+  msg.semantic_class = semantic_class_to_numeric_value(mot::get_semantic_class(track));
+
   return msg;
 }
 
-static auto to_ros_msg(const mot::CtrvTrack & track) noexcept
+static auto to_ros_msg(const mot::CtrvTrack & track)
 {
   carma_cooperative_perception_interfaces::msg::Track msg;
 
   msg.header.stamp.sec = mot::remove_units(units::math::floor(track.timestamp));
   msg.header.stamp.nanosec = mot::remove_units(
-    units::time::nanosecond_t{units::math::fmod(track.timestamp, units::time::second_t{10.0})});
+    units::time::nanosecond_t{units::math::fmod(track.timestamp, units::time::second_t{1.0})});
   msg.header.frame_id = "map";
 
   msg.id = track.uuid.value();
@@ -171,6 +224,8 @@ static auto to_ros_msg(const mot::CtrvTrack & track) noexcept
   msg.twist.twist.linear.x = mot::remove_units(track.state.velocity);
   msg.twist.twist.angular.z = mot::remove_units(track.state.yaw_rate);
 
+  msg.semantic_class = semantic_class_to_numeric_value(mot::get_semantic_class(track));
+
   return msg;
 }
 
@@ -179,7 +234,10 @@ static auto to_ros_msg(const Track & track)
   static constexpr mot::Visitor visitor{
     [](const mot::CtrvTrack & t) { return to_ros_msg(t); },
     [](const mot::CtraTrack & t) { return to_ros_msg(t); },
-    [](const auto &) { throw std::runtime_error{"cannot make ROS 2 message from track type"}; }};
+    [](const auto &) {
+      // Currently on support CTRV and CTRA
+      throw std::runtime_error{"cannot make ROS 2 message from track type"};
+    }};
 
   return std::visit(visitor, track);
 }
@@ -211,15 +269,6 @@ auto MultipleObjectTrackerNode::handle_on_configure(
           this->detection_list_sub_->get_topic_name(), current_state.c_str());
       }
     });
-
-  declare_parameter(
-    "execution_frequency_hz", mot::remove_units(units::frequency::hertz_t{1 / execution_period_}));
-
-  declare_parameter(
-    "track_promotion_threshold", static_cast<int>(track_manager_.get_promotion_threshold().value));
-
-  declare_parameter(
-    "track_removal_threshold", static_cast<int>(track_manager_.get_promotion_threshold().value));
 
   on_set_parameters_callback_ =
     add_on_set_parameters_callback([this](const std::vector<rclcpp::Parameter> & parameters) {
@@ -285,6 +334,15 @@ auto MultipleObjectTrackerNode::handle_on_configure(
       return result;
     });
 
+  declare_parameter(
+    "execution_frequency_hz", mot::remove_units(units::frequency::hertz_t{1 / execution_period_}));
+
+  declare_parameter(
+    "track_promotion_threshold", static_cast<int>(track_manager_.get_promotion_threshold().value));
+
+  declare_parameter(
+    "track_removal_threshold", static_cast<int>(track_manager_.get_promotion_threshold().value));
+
   RCLCPP_INFO(get_logger(), "Lifecycle transition: successfully configured");
 
   return carma_ros2_utils::CallbackReturn::SUCCESS;
@@ -301,7 +359,8 @@ auto MultipleObjectTrackerNode::handle_on_activate(
   }
 
   const std::chrono::duration<double, std::nano> period_ns{mot::remove_units(execution_period_)};
-  pipeline_execution_timer_ = create_wall_timer(period_ns, [this] { execute_pipeline(); });
+  pipeline_execution_timer_ =
+    rclcpp::create_timer(this, this->get_clock(), period_ns, [this] { execute_pipeline(); });
 
   RCLCPP_INFO(get_logger(), "Lifecycle transition: successfully activated");
 
@@ -352,7 +411,7 @@ auto MultipleObjectTrackerNode::handle_on_shutdown(
 }
 
 auto MultipleObjectTrackerNode::store_new_detections(
-  const carma_cooperative_perception_interfaces::msg::DetectionList & msg) noexcept -> void
+  const carma_cooperative_perception_interfaces::msg::DetectionList & msg) -> void
 {
   if (std::size(msg.detections) == 0) {
     RCLCPP_WARN(this->get_logger(), "Not storing detections: incoming detection list is empty");
@@ -382,14 +441,14 @@ auto MultipleObjectTrackerNode::store_new_detections(
 }
 
 static auto temporally_align_detections(
-  std::vector<Detection> & detections, units::time::second_t end_time) noexcept -> void
+  std::vector<Detection> & detections, units::time::second_t end_time) -> void
 {
   for (auto & detection : detections) {
     mot::propagate_to_time(detection, end_time, mot::default_unscented_transform);
   }
 }
 
-static auto predict_track_states(std::vector<Track> tracks, units::time::second_t end_time) noexcept
+static auto predict_track_states(std::vector<Track> tracks, units::time::second_t end_time)
 {
   for (auto & track : tracks) {
     mot::propagate_to_time(track, end_time, mot::default_unscented_transform);
@@ -398,18 +457,123 @@ static auto predict_track_states(std::vector<Track> tracks, units::time::second_
   return tracks;
 }
 
+/**
+ * @brief Calculate 2D Euclidean distance between track and detection
+ *
+ * If both the track and detection semantic classes are known, this function
+ * object returns the 2D Euclidean distance between their states. Otherwise,
+ * it returns std::nullopt.
+*/
+struct SemanticDistance2dScore
+{
+  template <typename Track, typename Detection>
+  auto operator()(const Track & track, const Detection & detection) const -> std::optional<float>
+  {
+    if constexpr (std::is_same_v<decltype(track.state), decltype(detection.state)>) {
+      const auto dist{two_dimensional_distance(track.state, detection.state)};
+
+      // Fall back to 2D Euclidean distance if either semantic class if unknown. The unknown
+      // track/detection may actually be the same other track/detection we are scoring against.
+      if (
+        track.semantic_class == mot::SemanticClass::kUnknown ||
+        detection.semantic_class == mot::SemanticClass::kUnknown) {
+        return dist;
+      }
+
+      if (track.semantic_class == detection.semantic_class) {
+        return dist;
+      }
+    }
+
+    return std::nullopt;
+  }
+
+  template <typename... TrackAlternatives, typename... DetectionAlternatives>
+  auto operator()(
+    const std::variant<TrackAlternatives...> & track,
+    const std::variant<DetectionAlternatives...> & detection) const -> std::optional<float>
+  {
+    return std::visit(
+      [this](const auto & t, const auto & d) { return (*this)(t, d); }, track, detection);
+  }
+
+private:
+  static auto two_dimensional_distance(const mot::CtrvState & lhs, const mot::CtrvState & rhs)
+    -> float
+  {
+    const auto x_diff_sq{
+      std::pow(mot::remove_units(lhs.position_x) - mot::remove_units(rhs.position_x), 2)};
+    const auto y_diff_sq{
+      std::pow(mot::remove_units(lhs.position_y) - mot::remove_units(rhs.position_y), 2)};
+
+    return std::sqrt(x_diff_sq + y_diff_sq);
+  }
+
+  static auto two_dimensional_distance(const mot::CtraState & lhs, const mot::CtraState & rhs)
+    -> float
+  {
+    const auto x_diff_sq{
+      std::pow(mot::remove_units(lhs.position_x) - mot::remove_units(rhs.position_x), 2)};
+    const auto y_diff_sq{
+      std::pow(mot::remove_units(lhs.position_y) - mot::remove_units(rhs.position_y), 2)};
+
+    return std::sqrt(x_diff_sq + y_diff_sq);
+  }
+};
+
+/**
+ * @brief Calculates distance between a point and detection in SE(2) (special Euclidean) space
+*/
+struct MetricSe2
+{
+  template <typename Detection>
+  auto operator()(const mot::Point & point, const Detection & detection) const -> double
+  {
+    double sum{0};
+
+    sum += std::pow(mot::remove_units(point.position_x - detection.state.position_x), 2);
+    sum += std::pow(mot::remove_units(point.position_y - detection.state.position_y), 2);
+
+    const auto p_yaw_rad{mot::remove_units(point.yaw.get_angle())};
+    const auto d_yaw_rad{mot::remove_units(detection.state.yaw.get_angle())};
+    const auto abs_diff{std::abs(p_yaw_rad - d_yaw_rad)};
+    sum += std::min(abs_diff, 2 * 3.14159265359 - abs_diff);
+
+    return sum;
+  }
+
+  template <typename... Alternatives>
+  auto operator()(mot::Point point, const std::variant<Alternatives...> & detection) const -> double
+  {
+    const mot::Visitor visitor{
+      [this](const mot::Point & p, const mot::CtrvDetection & d) { return this->operator()(p, d); },
+      [this](const mot::Point & p, const mot::CtraDetection & d) { return this->operator()(p, d); },
+      [](const mot::Point &, const auto &) {
+        // Currently on support CTRV and CTRA
+        return std::numeric_limits<double>::max();
+      }};
+
+    return std::visit(visitor, std::variant<mot::Point>{point}, detection);
+  }
+};
+
 auto MultipleObjectTrackerNode::execute_pipeline() -> void
 {
   static constexpr mot::Visitor make_track_visitor{
     [](const mot::CtrvDetection & d) { return Track{mot::make_track<mot::CtrvTrack>(d)}; },
     [](const mot::CtraDetection & d) { return Track{mot::make_track<mot::CtraTrack>(d)}; },
-    [](const auto &) { throw std::runtime_error("cannot make track from given detection"); },
+    [](const auto &) {
+      // Currently on support CTRV and CTRA
+      throw std::runtime_error("cannot make track from given detection");
+    },
   };
 
   if (track_manager_.get_all_tracks().empty()) {
     RCLCPP_DEBUG(
       get_logger(), "List of tracks is empty. Converting detections to tentative tracks");
 
+    // This clustering distance is an arbitrarily-chosen heuristic. It is working well for our
+    // current purposes, but there's no reason it couldn't be restricted or loosened.
     const auto clusters{mot::cluster_detections(detections_, 0.75)};
     for (const auto & cluster : clusters) {
       const auto detection{std::cbegin(cluster.get_detections())->second};
@@ -428,10 +592,16 @@ auto MultipleObjectTrackerNode::execute_pipeline() -> void
   temporally_align_detections(detections_, current_time);
 
   const auto predicted_tracks{predict_track_states(track_manager_.get_all_tracks(), current_time)};
-  const auto scores{
-    mot::score_tracks_and_detections(predicted_tracks, detections_, mot::euclidean_distance_score)};
+  auto scores{
+    mot::score_tracks_and_detections(predicted_tracks, detections_, SemanticDistance2dScore{})};
 
-  const auto associations{mot::associate_detections_to_tracks(scores, mot::gnn_associator)};
+  // This pruning distance is an arbitrarily-chosen heuristic. It is working well for our
+  // current purposes, but there's no reason it couldn't be restricted or loosened.
+  mot::prune_track_and_detection_scores_if(scores, [](const auto & score) { return score > 5.0; });
+
+  const auto associations{
+    mot::associate_detections_to_tracks(scores, mot::gnn_association_visitor)};
+
   track_manager_.update_track_lists(associations);
 
   std::unordered_map<mot::Uuid, Detection> detection_map;
@@ -444,7 +614,9 @@ auto MultipleObjectTrackerNode::execute_pipeline() -> void
     if (has_association(track)) {
       const auto detection_uuids{associations.at(get_uuid(track))};
       const auto first_detection{detection_map[detection_uuids.at(0)]};
-      track = std::visit(mot::covariance_intersection_visitor, track, first_detection);
+      const auto fused_track{
+        std::visit(mot::covariance_intersection_visitor, track, first_detection)};
+      track_manager_.update_track(mot::get_uuid(track), fused_track);
     }
   }
 
@@ -457,7 +629,30 @@ auto MultipleObjectTrackerNode::execute_pipeline() -> void
     }
   }
 
-  const auto clusters{mot::cluster_detections(unassociated_detections, 0.75)};
+  // We want to remove unassociated tracks that are close enough to existing tracks
+  // to avoid creating duplicates. Duplicate tracks will cause association inconsistencies
+  // (flip flopping associations between the two tracks).
+  auto remove_start{std::remove_if(
+    std::begin(unassociated_detections), std::end(unassociated_detections),
+    [&scores](const auto & detection) {
+      const auto uuid{mot::get_uuid(detection)};
+      auto min_score{std::numeric_limits<float>::infinity()};
+      for (const auto & [uuid_pair, score] : scores) {
+        if (uuid_pair.second == uuid) {
+          min_score = std::min(min_score, score);
+        }
+      }
+
+      // This distance is an arbitrarily-chosen heuristic. It is working well for our
+      // current purposes, but there's no reason it couldn't be restricted or loosened.
+      return min_score < 1.0;
+    })};
+
+  unassociated_detections.erase(remove_start, std::end(unassociated_detections));
+
+  // This clustering distance is an arbitrarily-chosen heuristic. It is working well for our
+  // current purposes, but there's no reason it couldn't be restricted or loosened.
+  const auto clusters{mot::cluster_detections(unassociated_detections, 0.75, MetricSe2{})};
   for (const auto & cluster : clusters) {
     const auto detection{std::cbegin(cluster.get_detections())->second};
     track_manager_.add_tentative_track(std::visit(make_track_visitor, detection));

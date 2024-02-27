@@ -17,20 +17,24 @@ from launch_ros.actions import Node
 from launch.actions import OpaqueFunction
 from launch.substitutions import LaunchConfiguration
 from launch.actions import DeclareLaunchArgument, ExecuteProcess
+from launch.substitutions import PathJoinSubstitution
+from launch_ros.substitutions import FindPackageShare
 
 from datetime import datetime
 import pathlib
 import yaml
 
 # This function is used to generate a command to record a ROS 2 rosbag that excludes topics
-# topics as provided in the appropriate configuration file. 
-def record_ros2_rosbag(context: LaunchContext, vehicle_config_param_file):
+# topics as provided in the appropriate configuration file.
+def record_ros2_rosbag(context: LaunchContext, vehicle_config_param_file, rosbag2_qos_override_param_file):
 
     # Convert LaunchConfiguration object to its string representation
     vehicle_config_param_file_string = context.perform_substitution(vehicle_config_param_file)
 
     # Initialize string that will contain the regex for topics to exclude from the ROS 2 rosbag
     exclude_topics_regex = ""
+
+    overriding_qos_profiles = context.perform_substitution(rosbag2_qos_override_param_file)
 
     # Open vehicle config params file to process various rosbag settings
     with open(vehicle_config_param_file_string, 'r') as f:
@@ -61,7 +65,7 @@ def record_ros2_rosbag(context: LaunchContext, vehicle_config_param_file):
                             exclude_topics_regex += str(topic) + "|"
 
                 proc = ExecuteProcess(
-                        cmd=['ros2', 'bag', 'record', '-o', '/opt/carma/logs/rosbag2_' + str(datetime.now().strftime('%Y-%m-%d_%H%M%S')), '-a', '-x', exclude_topics_regex],
+                        cmd=['ros2', 'bag', 'record', '-s', 'mcap', '--qos-profile-overrides-path', overriding_qos_profiles, '-o', '/opt/carma/logs/rosbag2_' + str(datetime.now().strftime('%Y-%m-%d_%H%M%S')), '-a', '-x', exclude_topics_regex],
                         output='screen',
                         shell='true'
                     )
@@ -73,7 +77,7 @@ def generate_launch_description():
     # Declare the vehicle_config_dir launch argument
     vehicle_config_dir = LaunchConfiguration('vehicle_config_dir')
     declare_vehicle_config_dir_arg = DeclareLaunchArgument(
-        name = 'vehicle_config_dir', 
+        name = 'vehicle_config_dir',
         default_value = "/opt/carma/vehicle/config",
         description = "Path to file containing vehicle config directories"
     )
@@ -86,8 +90,19 @@ def generate_launch_description():
         description = "Path to file contain vehicle configuration parameters"
     )
 
+    rosbag2_qos_override_param_file = LaunchConfiguration('rosbag2_qos_override_param_file')
+    declare_rosbag2_qos_override_param_file = DeclareLaunchArgument(
+        name='rosbag2_qos_override_param_file',
+        default_value = PathJoinSubstitution([
+                    FindPackageShare('carma'),'config',
+                    'rosbag2_qos_overrides.yaml'
+                ]),
+        description = "Path to file containing rosbag2 override qos settings"
+    )
+
     return LaunchDescription([
         declare_vehicle_config_dir_arg,
         declare_vehicle_config_param_file_arg,
-        OpaqueFunction(function=record_ros2_rosbag, args=[LaunchConfiguration('vehicle_config_param_file')])
+        declare_rosbag2_qos_override_param_file,
+        OpaqueFunction(function=record_ros2_rosbag, args=[vehicle_config_param_file, rosbag2_qos_override_param_file])
     ])

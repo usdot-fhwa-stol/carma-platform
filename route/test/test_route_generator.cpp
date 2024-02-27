@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2022 LEIDOS.
+ * Copyright (C) 2020-2024 LEIDOS.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -14,6 +14,7 @@
  * the License.
  */
 
+#include <ament_index_cpp/get_package_share_directory.hpp>
 #include <gtest/gtest.h>
 #include <carma_wm/WMTestLibForGuidance.hpp>
 #include <lanelet2_core/primitives/Lanelet.h>
@@ -48,10 +49,13 @@ TEST(RouteGeneratorTest, testRouteVisualizerCenterLineParser)
     lanelet::ErrorMessages load_errors;
 
     // If the output is an error about the geoReference field in the osm file, here is a correct example. If the lat/lon coordinates are already correct, simply add:
-    // <geoReference>+proj=tmerc +lat_0=0 +lon_0=0 +k=1 +x_0=0 +y_0=0 +datum=WGS84 +units=m +geoidgrids=egm96_15.gtx +vunits=m +no_defs</geoReference>
+    // <geoReference>+proj=tmerc +lat_0=0 +lon_0=0 +k=1 +x_0=0 +y_0=0 +datum=WGS84 +units=m +geoidgrids=egm96_15.gtx +vunits=m +no_defs</geoReference> 
 
-    // File location of osm file
-    std::string file = "../../install_ros2/route/share/route/resource/map/vector_map.osm";   
+    // Set file containing lanelet2 map
+    std::string path = ament_index_cpp::get_package_share_directory("route");
+    std::string file = "/resource/map/vector_map.osm";
+    file = path.append(file);
+
     // Starting and ending lanelet IDs. It's easiest to grab these from JOSM
     lanelet::Id start_id = 1346;
     lanelet::Id end_id = 1351;
@@ -150,8 +154,11 @@ TEST(RouteGeneratorTest, testLaneletRoutingVectorMap)
     // If the output is an error about the geoReference field in the osm file, here is a correct example. If the lat/lon coordinates are already correct, simply add:
     // <geoReference>+proj=tmerc +lat_0=0 +lon_0=0 +k=1 +x_0=0 +y_0=0 +datum=WGS84 +units=m +geoidgrids=egm96_15.gtx +vunits=m +no_defs</geoReference>
 
-    // File location of osm file
-    std::string file = "../../install_ros2/route/share/route/resource/map/vector_map.osm";   
+    // Set file containing lanelet2 map
+    std::string path = ament_index_cpp::get_package_share_directory("route");
+    std::string file = "/resource/map/vector_map.osm";
+    file = path.append(file);
+
     // Starting and ending lanelet IDs. It's easiest to grab these from JOSM
     lanelet::Id start_id = 1346;
     lanelet::Id end_id = 1349;
@@ -219,8 +226,11 @@ TEST(RouteGeneratorTest, testLaneletRoutingTown02VectorMap)
     // If the output is an error about the geoReference field in the osm file, here is a correct example. If the lat/lon coordinates are already correct, simply add:
     // <geoReference>+proj=tmerc +lat_0=0 +lon_0=0 +k=1 +x_0=0 +y_0=0 +datum=WGS84 +units=m +geoidgrids=egm96_15.gtx +vunits=m +no_defs</geoReference>
 
-    // File location of osm file
-    std::string file = "../../install_ros2/route/share/route/resource/map/town01_vector_map_1.osm";
+    // Set file containing lanelet2 map
+    std::string path = ament_index_cpp::get_package_share_directory("route");
+    std::string file = "/resource/map/town01_vector_map_1.osm";
+    file = path.append(file);
+
     // Starting and ending lanelet IDs. It's easiest to grab these from JOSM
     lanelet::Id start_id = 101;
     lanelet::Id end_id = 111;
@@ -299,21 +309,23 @@ TEST(RouteGeneratorTest, test_crosstrack_error_check)
     std::string target_frame;
     lanelet::ErrorMessages load_errors;
 
-    //Create route msg
+    // Create route msg
     carma_planning_msgs::msg::Route route_msg;
 
-   // File location of osm file
-    std::string file = "../../install_ros2/route/share/route/resource/map/town01_vector_map_1.osm";
-     // Starting and ending lanelet IDs. It's easiest to grab these from JOSM
-    lanelet::Id start_id = 101;
-    lanelet::Id end_id = 111;
+    // Set file containing lanelet2 map
+    std::string path = ament_index_cpp::get_package_share_directory("route");
+    std::string file = "/resource/map/town01_vector_map_1.osm";
+    file = path.append(file);
 
-    //Load map parameters
-
+    // Load map parameters
     lanelet::io_handlers::AutowareOsmParser::parseMapParams(file, &projector_type, &target_frame);
     lanelet::projection::LocalFrameProjector local_projector(target_frame.c_str());
     lanelet::LaneletMapPtr map = lanelet::load(file, local_projector, &load_errors);
     cmw->carma_wm::CARMAWorldModel::setMap(map);
+
+    // Starting and ending lanelet IDs. It's easiest to grab these from JOSM
+    lanelet::Id start_id = 101;
+    lanelet::Id end_id = 111;
 
      // Grabs lanelet elements from the start and end IDs. Fails the unit test if there is no lanelet with the matching ID
     lanelet::Lanelet start_lanelet;
@@ -420,9 +432,12 @@ TEST(RouteGeneratorTest, test_set_active_route_cb)
     std::string target_frame;
     lanelet::ErrorMessages load_errors;
 
-    // Load map file and parameters
-    std::string file = "../../install_ros2/route/share/route/resource/map/town01_vector_map_1.osm";
+    // Set file containing lanelet2 map
+    std::string path = ament_index_cpp::get_package_share_directory("route");
+    std::string file = "/resource/map/town01_vector_map_1.osm";
+    file = path.append(file);
 
+    // Load map parameters
     lanelet::io_handlers::AutowareOsmParser::parseMapParams(file, &projector_type, &target_frame);
     lanelet::projection::LocalFrameProjector local_projector(target_frame.c_str());
     lanelet::LaneletMapPtr map = lanelet::load(file, local_projector, &load_errors);
@@ -530,8 +545,10 @@ TEST(RouteGeneratorTest, test_duplicate_lanelets_in_shortest_path)
     std::string target_frame;
     lanelet::ErrorMessages load_errors;
 
-    // File location of the osm file for this test case:
-    std::string file = "../../install_ros2/route/share/route/resource/map/town01_vector_map_1.osm";
+    // Set file containing lanelet2 map
+    std::string path = ament_index_cpp::get_package_share_directory("route");
+    std::string file = "/resource/map/town01_vector_map_1.osm";
+    file = path.append(file);
 
     // The parsing in this file was copied from https://github.com/usdot-fhwa-stol/carma-platform/blob/develop/carma_wm_ctrl/test/MapToolsTest.cpp
     lanelet::io_handlers::AutowareOsmParser::parseMapParams(file, &projector_type, &target_frame);
@@ -635,8 +652,10 @@ TEST(RouteGeneratorTest, test_get_closest_lanelet_from_route_llts)
     //Create route msg
     carma_planning_msgs::msg::Route route_msg;
 
-    // File location of osm file
-    std::string file = "../../install_ros2/route/share/route/resource/map/town01_vector_map_1.osm";
+    // Set file containing lanelet2 map
+    std::string path = ament_index_cpp::get_package_share_directory("route");
+    std::string file = "/resource/map/town01_vector_map_1.osm";
+    file = path.append(file);
     
     // Starting and ending lanelet IDs. It's easiest to grab these from JOSM
     lanelet::Id start_id = 101;

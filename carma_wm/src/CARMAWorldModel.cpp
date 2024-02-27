@@ -613,6 +613,16 @@ namespace carma_wm
     return semantic_map_;
   }
 
+  void CARMAWorldModel::setRos1Clock(const rclcpp::Time& time_now)
+  {
+    ros1_clock_ = time_now;
+  }
+
+  void CARMAWorldModel::setSimulationClock(const rclcpp::Time& time_now)
+  {
+    simulation_clock_ = time_now;
+  }
+
   void CARMAWorldModel::setRoute(LaneletRoutePtr route)
   {
     route_ = route;
@@ -1419,6 +1429,18 @@ namespace carma_wm
 
   boost::posix_time::ptime CARMAWorldModel::min_end_time_converter_minute_of_year(boost::posix_time::ptime min_end_time,bool moy_exists,uint32_t moy, bool is_simulation)
   {
+    double simulation_time_difference_in_seconds = 0.0;
+
+    // NOTE: In simulation, ROS1 clock (often coming from CARLA) can have a large time ahead.
+    // the timing calculated here is in Simulation time, which is behind. Therefore, the world model adds the offset to make it meaningful to carma-platform:
+    // https://github.com/usdot-fhwa-stol/carma-platform/issues/2217
+    if (is_simulation && ros1_clock_ && simulation_clock_)
+    {
+      simulation_time_difference_in_seconds = ros1_clock_.value().seconds() - simulation_clock_.value().seconds();
+    }
+
+    min_end_time += lanelet::time::durationFromSec(simulation_time_difference_in_seconds);
+
     if (moy_exists) //account for minute of the year
     {
       auto inception_boost(boost::posix_time::time_from_string("1970-01-01 00:00:00.000")); // inception of epoch

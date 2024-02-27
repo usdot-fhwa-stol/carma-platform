@@ -1,4 +1,4 @@
-// Copyright 2023 Leidos
+// Copyright 2024 Leidos
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -14,7 +14,7 @@
 
 #include <rclcpp/rclcpp.hpp>
 
-#include <carma_cooperative_perception/external_object_list_to_detection_list_component.hpp>
+#include <carma_cooperative_perception/detection_list_viz_component.hpp>
 
 #include <memory>
 
@@ -22,12 +22,8 @@ auto main(int argc, char * argv[]) -> int
 {
   rclcpp::init(argc, argv);
 
-  auto node{std::make_shared<carma_cooperative_perception::ExternalObjectListToDetectionListNode>(
-    rclcpp::NodeOptions{})};
-
-  rclcpp::executors::SingleThreadedExecutor executor;
-  executor.add_node(node->get_node_base_interface());
-  executor.spin();
+  rclcpp::spin(
+    std::make_shared<carma_cooperative_perception::DetectionListVizNode>(rclcpp::NodeOptions{}));
 
   rclcpp::shutdown();
 

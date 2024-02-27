@@ -52,6 +52,38 @@ auto calculate_utm_zone(const Wgs84Coordinate & coordinate) -> UtmZone
   return zone;
 }
 
+auto project_to_carma_map(const Wgs84Coordinate & coordinate, std::string_view proj_string)
+  -> MapCoordinate
+{
+  gsl::owner<PJ_CONTEXT *> context = proj_context_create();
+  proj_log_level(context, PJ_LOG_NONE);
+
+  if (!context) {
+    const std::string error_string{proj_errno_string(proj_context_errno(context))};
+    throw std::invalid_argument("Could not create PROJ context: " + error_string + '.');
+  }
+
+  gsl ::owner<PJ *> transformation =
+    proj_create_crs_to_crs(context, "EPSG:4326", proj_string.data(), nullptr);
+
+  if (!transformation) {
+    const std::string error_string{proj_errno_string(proj_context_errno(context))};
+    throw std::invalid_argument("Could not create PROJ transform: " + error_string + '.');
+  }
+
+  const auto coord_wgs84 = proj_coord(
+    carma_cooperative_perception::remove_units(coordinate.latitude),
+    carma_cooperative_perception::remove_units(coordinate.longitude), 0, 0);
+  const auto coord_projected = proj_trans(transformation, PJ_FWD, coord_wgs84);
+
+  proj_destroy(transformation);
+  proj_context_destroy(context);
+
+  return {
+    units::length::meter_t{coord_projected.enu.e}, units::length::meter_t{coord_projected.enu.n},
+    units::length::meter_t{coordinate.elevation}};
+}
+
 auto project_to_utm(const Wgs84Coordinate & coordinate) -> UtmCoordinate
 {
   gsl::owner<PJ_CONTEXT *> context = proj_context_create();
@@ -90,7 +122,7 @@ auto project_to_utm(const Wgs84Coordinate & coordinate) -> UtmCoordinate
     units::length::meter_t{coordinate.elevation}};
 }
 
-auto calculate_grid_convergence(const Wgs84Coordinate & position, const UtmZone & zone)
+auto calculate_grid_convergence(const Wgs84Coordinate & position, std::string_view georeference)
   -> units::angle::degree_t
 {
   gsl::owner<PJ_CONTEXT *> context = proj_context_create();
@@ -101,16 +133,7 @@ auto calculate_grid_convergence(const Wgs84Coordinate & position, const UtmZone 
     throw std::invalid_argument("Could not create PROJ context: " + error_string + '.');
   }
 
-  // N.B. developers: PROJ and the related geodetic calculations seem particularly sensitive
-  // to the parameters in this PROJ string. If you run into problems with you calculation
-  // results, carefully check this or any other PROJ string.
-  std::string proj_string{
-    "+proj=utm +zone=" + std::to_string(zone.number) + " +datum=WGS84 +units=m +no_defs"};
-  if (zone.hemisphere == Hemisphere::kSouth) {
-    proj_string += " +south";
-  }
-
-  gsl::owner<PJ *> transform = proj_create(context, proj_string.c_str());
+  gsl::owner<PJ *> transform = proj_create(context, georeference.data());
 
   const auto factors = proj_factors(
     transform, proj_coord(
@@ -126,6 +149,22 @@ auto calculate_grid_convergence(const Wgs84Coordinate & position, const UtmZone 
   proj_context_destroy(context);
 
   return units::angle::degree_t{proj_todeg(factors.meridian_convergence)};
+}
+
+auto calculate_grid_convergence(const Wgs84Coordinate & position, const UtmZone & zone)
+  -> units::angle::degree_t
+{
+  // N.B. developers: PROJ and the related geodetic calculations seem particularly sensitive
+  // to the parameters in this PROJ string. If you run into problems with you calculation
+  // results, carefully check this or any other PROJ string.
+  std::string proj_string{
+    "+proj=utm +zone=" + std::to_string(zone.number) + " +datum=WGS84 +units=m +no_defs"};
+
+  if (zone.hemisphere == Hemisphere::kSouth) {
+    proj_string += " +south";
+  }
+
+  return calculate_grid_convergence(position, proj_string.c_str());
 }
 
 }  // namespace carma_cooperative_perception

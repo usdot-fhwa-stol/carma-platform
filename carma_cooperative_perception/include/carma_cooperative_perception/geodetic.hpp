@@ -36,6 +36,13 @@ struct Wgs84Coordinate
   units::length::meter_t elevation; /** With respect to the reference ellipsoid. */
 };
 
+struct MapCoordinate
+{
+  units::length::meter_t easting;
+  units::length::meter_t northing;
+  units::length::meter_t elevation;
+};
+
 /**
  * @brief Represents a position using UTM coordinates
 */
@@ -65,8 +72,8 @@ struct UtmDisplacement
  *
  * @return Reference to the coordinate's updated position
 */
-inline constexpr auto operator+=(
-  UtmCoordinate & coordinate, const UtmDisplacement & displacement) noexcept -> UtmCoordinate &
+inline constexpr auto operator+=(UtmCoordinate & coordinate, const UtmDisplacement & displacement)
+  -> UtmCoordinate &
 {
   coordinate.easting += displacement.easting;
   coordinate.northing += displacement.northing;
@@ -83,8 +90,8 @@ inline constexpr auto operator+=(
  *
  * @return A new UtmCoordinate representing the new position
 */
-inline constexpr auto operator+(
-  UtmCoordinate coordinate, const UtmDisplacement & displacement) noexcept -> UtmCoordinate
+inline constexpr auto operator+(UtmCoordinate coordinate, const UtmDisplacement & displacement)
+  -> UtmCoordinate
 {
   return coordinate += displacement;
 }
@@ -97,8 +104,8 @@ inline constexpr auto operator+(
  *
  * @return A new UtmCoordinate representing the new position
 */
-inline constexpr auto operator+(
-  const UtmDisplacement & displacement, UtmCoordinate coordinate) noexcept -> UtmCoordinate
+inline constexpr auto operator+(const UtmDisplacement & displacement, UtmCoordinate coordinate)
+  -> UtmCoordinate
 {
   return coordinate += displacement;
 }
@@ -111,8 +118,8 @@ inline constexpr auto operator+(
  *
  * @return Reference to the coordinate's updated position
 */
-inline constexpr auto operator-=(
-  UtmCoordinate & coordinate, const UtmDisplacement & displacement) noexcept -> UtmCoordinate &
+inline constexpr auto operator-=(UtmCoordinate & coordinate, const UtmDisplacement & displacement)
+  -> UtmCoordinate &
 {
   coordinate.easting += displacement.easting;
   coordinate.northing += displacement.northing;
@@ -129,8 +136,8 @@ inline constexpr auto operator-=(
  *
  * @return A new UtmCoordinate representing the new position
 */
-inline constexpr auto operator-(
-  UtmCoordinate coordinate, const UtmDisplacement & displacement) noexcept -> UtmCoordinate
+inline constexpr auto operator-(UtmCoordinate coordinate, const UtmDisplacement & displacement)
+  -> UtmCoordinate
 {
   return coordinate -= displacement;
 }
@@ -143,8 +150,8 @@ inline constexpr auto operator-(
  *
  * @return A new UtmCoordinate representing the new position
 */
-inline constexpr auto operator-(
-  const UtmDisplacement & displacement, UtmCoordinate coordinate) noexcept -> UtmCoordinate
+inline constexpr auto operator-(const UtmDisplacement & displacement, UtmCoordinate coordinate)
+  -> UtmCoordinate
 {
   return coordinate -= displacement;
 }
@@ -160,6 +167,9 @@ inline constexpr auto operator-(
  * @return The UTM zone containing the coordinate
 */
 auto calculate_utm_zone(const Wgs84Coordinate & coordinate) -> UtmZone;
+
+auto project_to_carma_map(const Wgs84Coordinate & coordinate, std::string_view proj_string)
+  -> MapCoordinate;
 
 /**
  * @brief Projects a Wgs84Coordinate to its corresponding UTM zone
@@ -182,6 +192,9 @@ auto project_to_utm(const Wgs84Coordinate & coordinate) -> UtmCoordinate;
  * @return Grid convergence angle
 */
 auto calculate_grid_convergence(const Wgs84Coordinate & position, const UtmZone & zone)
+  -> units::angle::degree_t;
+
+auto calculate_grid_convergence(const Wgs84Coordinate & position, std::string_view georeference)
   -> units::angle::degree_t;
 
 }  // namespace carma_cooperative_perception

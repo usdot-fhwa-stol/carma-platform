@@ -36,14 +36,14 @@ public:
    *
    * @param[in] month_value Numerical value of the month; typically between [1, 12]
   */
-  constexpr explicit Month(std::uint8_t month_value) noexcept : month_value_{month_value} {}
+  constexpr explicit Month(std::uint8_t month_value) : month_value_{month_value} {}
 
   /**
    * @brief Pre-increment operator overload
    *
    * @return Reference to Month instance being incremented
   */
-  constexpr auto operator++() noexcept -> Month &
+  constexpr auto operator++() -> Month &
   {
     constexpr auto jan_value{1U};
     constexpr auto dec_value{12U};
@@ -64,7 +64,7 @@ public:
    *
    * @return Copy of Month instance before it was incremented
   */
-  constexpr auto operator++(int /* dummy parameter */) noexcept -> Month
+  constexpr auto operator++(int /* dummy parameter */) -> Month
   {
     Month previous{*this};
     ++(*this);
@@ -77,7 +77,7 @@ public:
    *
    * @return Reference to Month instance being decremented
   */
-  constexpr auto operator--() noexcept -> Month &
+  constexpr auto operator--() -> Month &
   {
     constexpr auto dec_value{12U};
 
@@ -97,7 +97,7 @@ public:
    *
    * @return Copy of Month instance before it was decremented
   */
-  constexpr auto operator--(int /* dummy parameter */) noexcept -> Month
+  constexpr auto operator--(int /* dummy parameter */) -> Month
   {
     Month previous{*this};
     --(*this);
@@ -108,17 +108,14 @@ public:
   /**
    * @brief Conversion function to convert Month instance to unsigned type
   */
-  constexpr explicit operator unsigned() const noexcept
-  {
-    return static_cast<unsigned>(month_value_);
-  }
+  constexpr explicit operator unsigned() const { return static_cast<unsigned>(month_value_); }
 
   /**
    * @brief Checks if Month instance's value is within valid Gregorian calendar range
    *
    * @return true if Month instance's value is within [1, 12]; false otherwise
   */
-  [[nodiscard]] constexpr auto ok() const noexcept -> bool
+  [[nodiscard]] constexpr auto ok() const -> bool
   {
     constexpr auto jan_value{1U};
     constexpr auto dec_value{12U};
@@ -134,7 +131,7 @@ public:
    *
    * @return true is Month instances are equal; false otherwise
   */
-  friend constexpr auto operator==(const Month & x, const Month & y) noexcept -> bool
+  friend constexpr auto operator==(const Month & x, const Month & y) -> bool
   {
     return x.month_value_ == y.month_value_;
   }
@@ -147,10 +144,7 @@ public:
    *
    * @return true is Month instances are not equal; false otherwise
   */
-  friend constexpr auto operator!=(const Month & x, const Month & y) noexcept -> bool
-  {
-    return !(x == y);
-  }
+  friend constexpr auto operator!=(const Month & x, const Month & y) -> bool { return !(x == y); }
 
   /**
    * @brief Check if one Month instance is less than another
@@ -160,7 +154,7 @@ public:
    *
    * @return true is x comes before y in the calendar; false otherwise
   */
-  friend constexpr auto operator<(const Month & x, const Month & y) noexcept -> bool
+  friend constexpr auto operator<(const Month & x, const Month & y) -> bool
   {
     return x.month_value_ < y.month_value_;
   }
@@ -173,7 +167,7 @@ public:
    *
    * @return true is x comes before y in the calendar or if instances are equal; false otherwise
   */
-  friend constexpr auto operator<=(const Month & x, const Month & y) noexcept -> bool
+  friend constexpr auto operator<=(const Month & x, const Month & y) -> bool
   {
     return x < y || x == y;
   }
@@ -186,7 +180,7 @@ public:
    *
    * @return true is x comes after y in the calendar; false otherwise
   */
-  friend constexpr auto operator>(const Month & x, const Month & y) noexcept -> bool
+  friend constexpr auto operator>(const Month & x, const Month & y) -> bool
   {
     return x.month_value_ > y.month_value_;
   }
@@ -199,7 +193,7 @@ public:
    *
    * @return true is x comes after y in the calendar or if instances are equal; false otherwise
   */
-  friend constexpr auto operator>=(const Month & x, const Month & y) noexcept -> bool
+  friend constexpr auto operator>=(const Month & x, const Month & y) -> bool
   {
     return x > y || x == y;
   }

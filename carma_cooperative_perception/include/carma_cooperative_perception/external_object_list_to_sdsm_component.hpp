@@ -53,9 +53,9 @@ public:
 
   auto publish_as_sdsm(const external_objects_msg_type & msg) const -> void;
 
-  auto update_georeference(const georeference_msg_type & proj_string) noexcept -> void;
+  auto update_georeference(const georeference_msg_type & proj_string) -> void;
 
-  auto update_current_pose(const pose_msg_type & pose) noexcept -> void;
+  auto update_current_pose(const pose_msg_type & pose) -> void;
 
 private:
   rclcpp_lifecycle::LifecyclePublisher<sdsm_msg_type>::SharedPtr sdsm_publisher_{nullptr};

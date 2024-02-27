@@ -21,14 +21,19 @@
 #include <carma_perception_msgs/msg/external_object_list.hpp>
 #include <j2735_v2x_msgs/msg/d_date_time.hpp>
 #include <j2735_v2x_msgs/msg/personal_device_user_type.hpp>
+#include <j2735_v2x_msgs/to_floating_point.hpp>
 #include <j3224_v2x_msgs/msg/detected_object_data.hpp>
 #include <j3224_v2x_msgs/msg/measurement_time_offset.hpp>
 #include <j3224_v2x_msgs/msg/object_type.hpp>
 
 #include <algorithm>
+#include <cctype>
+#include <charconv>
 #include <chrono>
 #include <cmath>
 #include <limits>
+#include <numeric>
+#include <string>
 #include <utility>
 
 #include <proj.h>
@@ -48,7 +53,7 @@
 
 namespace carma_cooperative_perception
 {
-auto to_time_msg(const DDateTime & d_date_time) noexcept -> builtin_interfaces::msg::Time
+auto to_time_msg(const DDateTime & d_date_time) -> builtin_interfaces::msg::Time
 {
   double seconds;
   const auto fractional_secs{
@@ -61,7 +66,7 @@ auto to_time_msg(const DDateTime & d_date_time) noexcept -> builtin_interfaces::
   return msg;
 }
 
-auto calc_detection_time_stamp(DDateTime sdsm_time, const MeasurementTimeOffset & offset) noexcept
+auto calc_detection_time_stamp(DDateTime sdsm_time, const MeasurementTimeOffset & offset)
   -> DDateTime
 {
   sdsm_time.second.value() += offset.measurement_time_offset;
@@ -69,7 +74,22 @@ auto calc_detection_time_stamp(DDateTime sdsm_time, const MeasurementTimeOffset 
   return sdsm_time;
 }
 
-auto to_ddate_time_msg(const builtin_interfaces::msg::Time & builtin_time) noexcept
+auto ned_to_enu(const PositionOffsetXYZ & offset_ned) noexcept
+{
+  auto offset_enu{offset_ned};
+
+  // NED to ENU: swap x and y axis and negate z axis
+  offset_enu.offset_x = offset_ned.offset_y;
+  offset_enu.offset_y = offset_ned.offset_x;
+
+  if (offset_enu.offset_z) {
+    offset_enu.offset_z.value() *= -1;
+  }
+
+  return offset_enu;
+}
+
+auto to_ddate_time_msg(const builtin_interfaces::msg::Time & builtin_time)
   -> j2735_v2x_msgs::msg::DDateTime
 {
   j2735_v2x_msgs::msg::DDateTime ddate_time_output;
@@ -106,7 +126,7 @@ auto to_ddate_time_msg(const builtin_interfaces::msg::Time & builtin_time) noexc
 
 auto calc_sdsm_time_offset(
   const builtin_interfaces::msg::Time & external_object_list_stamp,
-  const builtin_interfaces::msg::Time & external_object_stamp) noexcept
+  const builtin_interfaces::msg::Time & external_object_stamp)
   -> carma_v2x_msgs::msg::MeasurementTimeOffset
 {
   carma_v2x_msgs::msg::MeasurementTimeOffset time_offset;
@@ -127,7 +147,7 @@ auto calc_sdsm_time_offset(
   return time_offset;
 }
 
-auto to_position_msg(const UtmCoordinate & position_utm) noexcept -> geometry_msgs::msg::Point
+auto to_position_msg(const UtmCoordinate & position_utm) -> geometry_msgs::msg::Point
 {
   geometry_msgs::msg::Point msg;
 
@@ -138,14 +158,25 @@ auto to_position_msg(const UtmCoordinate & position_utm) noexcept -> geometry_ms
   return msg;
 }
 
-auto heading_to_enu_yaw(const units::angle::degree_t & heading) noexcept -> units::angle::degree_t
+auto to_position_msg(const MapCoordinate & position_map) -> geometry_msgs::msg::Point
+{
+  geometry_msgs::msg::Point msg;
+
+  msg.x = remove_units(position_map.easting);
+  msg.y = remove_units(position_map.northing);
+  msg.z = remove_units(position_map.elevation);
+
+  return msg;
+}
+
+auto heading_to_enu_yaw(const units::angle::degree_t & heading) -> units::angle::degree_t
 {
   return units::angle::degree_t{std::fmod(-(remove_units(heading) - 90.0) + 360.0, 360.0)};
 }
 
 auto enu_orientation_to_true_heading(
   double yaw, const lanelet::BasicPoint3d & obj_pose,
-  const std::shared_ptr<lanelet::projection::LocalFrameProjector> & map_projection) noexcept
+  const std::shared_ptr<lanelet::projection::LocalFrameProjector> & map_projection)
   -> units::angle::degree_t
 {
   // Get object geodetic position
@@ -172,7 +203,7 @@ auto enu_orientation_to_true_heading(
 // in map frame and external object pose
 auto calc_relative_position(
   const geometry_msgs::msg::PoseStamped & source_pose,
-  const carma_v2x_msgs::msg::PositionOffsetXYZ & position_offset) noexcept
+  const carma_v2x_msgs::msg::PositionOffsetXYZ & position_offset)
   -> carma_v2x_msgs::msg::PositionOffsetXYZ
 {
   carma_v2x_msgs::msg::PositionOffsetXYZ adjusted_offset;
@@ -190,7 +221,7 @@ auto calc_relative_position(
 
 auto transform_pose_from_map_to_wgs84(
   const geometry_msgs::msg::PoseStamped & source_pose,
-  const std::shared_ptr<lanelet::projection::LocalFrameProjector> & map_projection) noexcept
+  const std::shared_ptr<lanelet::projection::LocalFrameProjector> & map_projection)
   -> carma_v2x_msgs::msg::Position3D
 {
   carma_v2x_msgs::msg::Position3D ref_pos;
@@ -207,7 +238,8 @@ auto transform_pose_from_map_to_wgs84(
   return ref_pos;
 }
 
-auto to_detection_list_msg(const carma_v2x_msgs::msg::SensorDataSharingMessage & sdsm) noexcept
+auto to_detection_list_msg(
+  const carma_v2x_msgs::msg::SensorDataSharingMessage & sdsm, std::string_view georeference)
   -> carma_cooperative_perception_interfaces::msg::DetectionList
 {
   carma_cooperative_perception_interfaces::msg::DetectionList detection_list;
@@ -215,13 +247,13 @@ auto to_detection_list_msg(const carma_v2x_msgs::msg::SensorDataSharingMessage &
   const auto ref_pos_3d{Position3D::from_msg(sdsm.ref_pos)};
   const Wgs84Coordinate ref_pos_wgs84{
     ref_pos_3d.latitude, ref_pos_3d.longitude, ref_pos_3d.elevation.value()};
-  const auto ref_pos_utm{project_to_utm(ref_pos_wgs84)};
+  const auto ref_pos_map{project_to_carma_map(ref_pos_wgs84, georeference)};
 
   for (const auto & object_data : sdsm.objects.detected_object_data) {
     const auto common_data{object_data.detected_object_common_data};
 
     carma_cooperative_perception_interfaces::msg::Detection detection;
-    detection.header.frame_id = to_string(ref_pos_utm.utm_zone);
+    detection.header.frame_id = "map";
 
     const auto detection_time{calc_detection_time_stamp(
       DDateTime::from_msg(sdsm.sdsm_time_stamp),
@@ -229,20 +261,52 @@ auto to_detection_list_msg(const carma_v2x_msgs::msg::SensorDataSharingMessage &
 
     detection.header.stamp = to_time_msg(detection_time);
 
-    detection.id = std::to_string(common_data.detected_id.object_id);
+    // TemporaryID and octet string terms come from the SAE J2735 message definitions
+    static constexpr auto to_string = [](const std::vector<std::uint8_t> & temporary_id) {
+      std::string str;
+      str.reserve(2 * std::size(temporary_id));  // Two hex characters per octet string
 
-    const auto pos_offset{PositionOffsetXYZ::from_msg(common_data.pos)};
-    const auto utm_displacement{
-      UtmDisplacement{pos_offset.offset_x, pos_offset.offset_y, pos_offset.offset_z.value()}};
+      std::array<char, 2> buffer;
+      for (const auto & octet_string : temporary_id) {
+        std::to_chars(std::begin(buffer), std::end(buffer), octet_string, 16);
+        str.push_back(std::toupper(std::get<0>(buffer)));
+        str.push_back(std::toupper(std::get<1>(buffer)));
+      }
 
-    const auto detection_pos_utm{ref_pos_utm + utm_displacement};
-    detection.pose.pose.position = to_position_msg(detection_pos_utm);
+      return str;
+    };
+
+    detection.id =
+      to_string(sdsm.source_id.id) + "-" + std::to_string(common_data.detected_id.object_id);
+
+    const auto pos_offset_enu{ned_to_enu(PositionOffsetXYZ::from_msg(common_data.pos))};
+    detection.pose.pose.position = to_position_msg(MapCoordinate{
+      ref_pos_map.easting + pos_offset_enu.offset_x, ref_pos_map.northing + pos_offset_enu.offset_y,
+      ref_pos_map.elevation + pos_offset_enu.offset_z.value_or(units::length::meter_t{0.0})});
+
+    // Pose covariance is flattened 6x6 matrix with rows/columns of x, y, z, roll, pitch, yaw
+    try {
+      detection.pose.covariance.at(0) =
+        0.5 * std::pow(j2735_v2x_msgs::to_double(common_data.pos_confidence.pos).value(), 2);
+      detection.pose.covariance.at(7) =
+        0.5 * std::pow(j2735_v2x_msgs::to_double(common_data.pos_confidence.pos).value(), 2);
+    } catch (const std::bad_optional_access &) {
+      throw std::runtime_error("missing position confidence");
+    }
+
+    try {
+      detection.pose.covariance.at(14) =
+        0.5 * std::pow(j2735_v2x_msgs::to_double(common_data.pos_confidence.elevation).value(), 2);
+    } catch (const std::bad_optional_access &) {
+      throw std::runtime_error("missing elevation confidence");
+    }
 
     const auto true_heading{units::angle::degree_t{Heading::from_msg(common_data.heading).heading}};
 
     // Note: This should really use the detection's WGS-84 position, so the
     // convergence will be off slightly. TODO
-    const auto grid_convergence{calculate_grid_convergence(ref_pos_wgs84, ref_pos_utm.utm_zone)};
+    const units::angle::degree_t grid_convergence{
+      calculate_grid_convergence(ref_pos_wgs84, georeference)};
 
     const auto grid_heading{true_heading - grid_convergence};
     const auto enu_yaw{heading_to_enu_yaw(grid_heading)};
@@ -250,6 +314,14 @@ auto to_detection_list_msg(const carma_v2x_msgs::msg::SensorDataSharingMessage &
     tf2::Quaternion quat_tf;
     quat_tf.setRPY(0, 0, remove_units(units::angle::radian_t{enu_yaw}));
     detection.pose.pose.orientation = tf2::toMsg(quat_tf);
+
+    try {
+      // Pose covariance is flattened 6x6 matrix with rows/columns of x, y, z, roll, pitch, yaw
+      detection.pose.covariance.at(35) =
+        0.5 * std::pow(j2735_v2x_msgs::to_double(common_data.heading_conf).value(), 2);
+    } catch (const std::bad_optional_access &) {
+      throw std::runtime_error("missing heading confidence");
+    }
 
     const auto speed{Speed::from_msg(common_data.speed)};
     detection.twist.twist.linear.x =
@@ -259,29 +331,49 @@ auto to_detection_list_msg(const carma_v2x_msgs::msg::SensorDataSharingMessage &
     detection.twist.twist.linear.z =
       remove_units(units::velocity::meters_per_second_t{speed_z.speed});
 
-    const auto accel_set{AccelerationSet4Way::from_msg(common_data.accel_4_way)};
-    detection.accel.accel.linear.x =
-      remove_units(units::acceleration::meters_per_second_squared_t{accel_set.longitudinal});
-    detection.accel.accel.linear.y =
-      remove_units(units::acceleration::meters_per_second_squared_t{accel_set.lateral});
-    detection.accel.accel.linear.z =
-      remove_units(units::acceleration::meters_per_second_squared_t{accel_set.vert});
+    try {
+      // Twist covariance is flattened 6x6 matrix with rows/columns of x, y, z, roll, pitch, yaw
+      detection.twist.covariance.at(0) =
+        0.5 * std::pow(j2735_v2x_msgs::to_double(common_data.speed_confidence).value(), 2);
+    } catch (const std::bad_optional_access &) {
+      throw std::runtime_error("missing speed confidence");
+    }
 
+    try {
+      detection.twist.covariance.at(14) =
+        0.5 * std::pow(j2735_v2x_msgs::to_double(common_data.speed_confidence_z).value(), 2);
+    } catch (const std::bad_optional_access &) {
+      throw std::runtime_error("missing z-speed confidence");
+    }
+
+    const auto accel_set{AccelerationSet4Way::from_msg(common_data.accel_4_way)};
     detection.twist.twist.angular.z =
       remove_units(units::angular_velocity::degrees_per_second_t{accel_set.yaw_rate});
+
+    try {
+      detection.twist.covariance.at(35) =
+        0.5 * std::pow(j2735_v2x_msgs::to_double(common_data.acc_cfd_yaw).value(), 2);
+    } catch (const std::bad_optional_access &) {
+      throw std::runtime_error("missing yaw-rate confidence");
+    }
 
     switch (common_data.obj_type.object_type) {
       case common_data.obj_type.ANIMAL:
         detection.motion_model = detection.MOTION_MODEL_CTRV;
+        // We don't have a good semantic class mapping for animals
+        detection.semantic_class = detection.SEMANTIC_CLASS_UNKNOWN;
         break;
       case common_data.obj_type.VRU:
         detection.motion_model = detection.MOTION_MODEL_CTRV;
+        detection.semantic_class = detection.SEMANTIC_CLASS_PEDESTRIAN;
         break;
       case common_data.obj_type.VEHICLE:
         detection.motion_model = detection.MOTION_MODEL_CTRV;
+        detection.semantic_class = detection.SEMANTIC_CLASS_SMALL_VEHICLE;
         break;
       default:
         detection.motion_model = detection.MOTION_MODEL_CTRV;
+        detection.semantic_class = detection.SEMANTIC_CLASS_UNKNOWN;
     }
 
     detection_list.detections.push_back(std::move(detection));
@@ -292,7 +384,7 @@ auto to_detection_list_msg(const carma_v2x_msgs::msg::SensorDataSharingMessage &
 
 auto to_detection_msg(
   const carma_perception_msgs::msg::ExternalObject & object,
-  const MotionModelMapping & motion_model_mapping) noexcept
+  const MotionModelMapping & motion_model_mapping)
   -> carma_cooperative_perception_interfaces::msg::Detection
 {
   carma_cooperative_perception_interfaces::msg::Detection detection;
@@ -314,27 +406,32 @@ auto to_detection_msg(
     detection.pose = object.pose;
   }
 
-  if (object.presence_vector & object.VELOCITY_INST_PRESENCE_VECTOR) {
-    detection.twist = object.velocity_inst;
+  if (object.presence_vector & object.VELOCITY_PRESENCE_VECTOR) {
+    detection.twist = object.velocity;
   }
 
   if (object.presence_vector & object.OBJECT_TYPE_PRESENCE_VECTOR) {
     switch (object.object_type) {
       case object.SMALL_VEHICLE:
         detection.motion_model = motion_model_mapping.small_vehicle_model;
+        detection.semantic_class = detection.SEMANTIC_CLASS_SMALL_VEHICLE;
         break;
       case object.LARGE_VEHICLE:
         detection.motion_model = motion_model_mapping.large_vehicle_model;
+        detection.semantic_class = detection.SEMANTIC_CLASS_LARGE_VEHICLE;
         break;
       case object.MOTORCYCLE:
         detection.motion_model = motion_model_mapping.motorcycle_model;
+        detection.semantic_class = detection.SEMANTIC_CLASS_MOTORCYCLE;
         break;
       case object.PEDESTRIAN:
         detection.motion_model = motion_model_mapping.pedestrian_model;
+        detection.semantic_class = detection.SEMANTIC_CLASS_PEDESTRIAN;
         break;
       case object.UNKNOWN:
       default:
         detection.motion_model = motion_model_mapping.unknown_model;
+        detection.semantic_class = detection.SEMANTIC_CLASS_UNKNOWN;
     }
   }
 
@@ -343,7 +440,7 @@ auto to_detection_msg(
 
 auto to_detection_list_msg(
   const carma_perception_msgs::msg::ExternalObjectList & object_list,
-  const MotionModelMapping & motion_model_mapping) noexcept
+  const MotionModelMapping & motion_model_mapping)
   -> carma_cooperative_perception_interfaces::msg::DetectionList
 {
   carma_cooperative_perception_interfaces::msg::DetectionList detection_list;
@@ -358,23 +455,33 @@ auto to_detection_list_msg(
   return detection_list;
 }
 
-auto to_external_object_msg(
-  const carma_cooperative_perception_interfaces::msg::Track & track) noexcept
+auto to_external_object_msg(const carma_cooperative_perception_interfaces::msg::Track & track)
   -> carma_perception_msgs::msg::ExternalObject
 {
   carma_perception_msgs::msg::ExternalObject external_object;
   external_object.header = track.header;
   external_object.presence_vector = 0;
 
-  try {
-    if (const auto numeric_id{std::stol(track.id)};
-        numeric_id >= 0 && numeric_id <= std::numeric_limits<std::uint32_t>::max()) {
-      external_object.presence_vector |= external_object.ID_PRESENCE_VECTOR;
-      external_object.id = static_cast<std::uint32_t>(numeric_id);
+  const auto to_numeric_id = [](std::string string_id) -> std::optional<uint32_t> {
+    auto non_digit_start = std::remove_if(
+      std::begin(string_id), std::end(string_id),
+      [](const auto & ch) { return !std::isdigit(ch); });
+
+    std::uint32_t numeric_id;
+    const auto digit_substr_size{std::distance(std::begin(string_id), non_digit_start)};
+    if (
+      std::from_chars(string_id.c_str(), string_id.c_str() + digit_substr_size, numeric_id).ec ==
+      std::errc{}) {
+      return numeric_id;
     }
-  } catch (const std::invalid_argument & /* exception */) {
-    external_object.presence_vector &= ~external_object.ID_PRESENCE_VECTOR;
-  } catch (const std::out_of_range & /* exception */) {
+
+    return std::nullopt;
+  };
+
+  if (const auto numeric_id{to_numeric_id(track.id)}) {
+    external_object.presence_vector |= external_object.ID_PRESENCE_VECTOR;
+    external_object.id = numeric_id.value();
+  } else {
     external_object.presence_vector &= ~external_object.ID_PRESENCE_VECTOR;
   }
 
@@ -382,13 +489,45 @@ auto to_external_object_msg(
   external_object.pose = track.pose;
 
   external_object.presence_vector |= external_object.VELOCITY_PRESENCE_VECTOR;
-  external_object.velocity = track.twist;
+
+  const auto track_longitudinal_velocity{track.twist.twist.linear.x};
+  const auto track_orientation = track.pose.pose.orientation;
+
+  tf2::Quaternion q(
+    track_orientation.x, track_orientation.y, track_orientation.z, track_orientation.w);
+  tf2::Matrix3x3 m(q);
+  double roll, pitch, yaw;
+  m.getRPY(roll, pitch, yaw);
+
+  external_object.velocity.twist.linear.x = track_longitudinal_velocity * std::cos(yaw);
+  external_object.velocity.twist.linear.y = track_longitudinal_velocity * std::sin(yaw);
+
+  external_object.object_type = track.semantic_class;
+
+  external_object.presence_vector |= external_object.OBJECT_TYPE_PRESENCE_VECTOR;
+  switch (track.semantic_class) {
+    case track.SEMANTIC_CLASS_SMALL_VEHICLE:
+      external_object.object_type = external_object.SMALL_VEHICLE;
+      break;
+    case track.SEMANTIC_CLASS_LARGE_VEHICLE:
+      external_object.object_type = external_object.LARGE_VEHICLE;
+      break;
+    case track.SEMANTIC_CLASS_MOTORCYCLE:
+      external_object.object_type = external_object.MOTORCYCLE;
+      break;
+    case track.SEMANTIC_CLASS_PEDESTRIAN:
+      external_object.object_type = external_object.PEDESTRIAN;
+      break;
+    case track.SEMANTIC_CLASS_UNKNOWN:
+    default:
+      external_object.object_type = external_object.UNKNOWN;
+  }
 
   return external_object;
 }
 
 auto to_external_object_list_msg(
-  const carma_cooperative_perception_interfaces::msg::TrackList & track_list) noexcept
+  const carma_cooperative_perception_interfaces::msg::TrackList & track_list)
   -> carma_perception_msgs::msg::ExternalObjectList
 {
   carma_perception_msgs::msg::ExternalObjectList external_object_list;
@@ -403,7 +542,7 @@ auto to_external_object_list_msg(
 auto to_sdsm_msg(
   const carma_perception_msgs::msg::ExternalObjectList & external_object_list,
   const geometry_msgs::msg::PoseStamped & current_pose,
-  const std::shared_ptr<lanelet::projection::LocalFrameProjector> & map_projection) noexcept
+  const std::shared_ptr<lanelet::projection::LocalFrameProjector> & map_projection)
   -> carma_v2x_msgs::msg::SensorDataSharingMessage
 {
   carma_v2x_msgs::msg::SensorDataSharingMessage sdsm;
@@ -434,7 +573,7 @@ auto to_sdsm_msg(
 
 auto to_detected_object_data_msg(
   const carma_perception_msgs::msg::ExternalObject & external_object,
-  const std::shared_ptr<lanelet::projection::LocalFrameProjector> & map_projection) noexcept
+  const std::shared_ptr<lanelet::projection::LocalFrameProjector> & map_projection)
   -> carma_v2x_msgs::msg::DetectedObjectData
 {
   carma_v2x_msgs::msg::DetectedObjectData detected_object_data;
@@ -472,13 +611,13 @@ auto to_detected_object_data_msg(
   }
 
   // speed/speed_z - convert vector velocity to scalar speed val given x/y components
-  if (external_object.presence_vector & external_object.VELOCITY_INST_PRESENCE_VECTOR) {
-    detected_object_common_data.speed.speed = std::hypot(
-      external_object.velocity_inst.twist.linear.x, external_object.velocity_inst.twist.linear.y);
+  if (external_object.presence_vector & external_object.VELOCITY_PRESENCE_VECTOR) {
+    detected_object_common_data.speed.speed =
+      std::hypot(external_object.velocity.twist.linear.x, external_object.velocity.twist.linear.y);
 
     detected_object_common_data.presence_vector |=
       carma_v2x_msgs::msg::DetectedObjectCommonData::HAS_SPEED_Z;
-    detected_object_common_data.speed_z.speed = external_object.velocity_inst.twist.linear.z;
+    detected_object_common_data.speed_z.speed = external_object.velocity.twist.linear.z;
 
     // heading - convert ang vel to scale heading
     lanelet::BasicPoint3d external_object_position{

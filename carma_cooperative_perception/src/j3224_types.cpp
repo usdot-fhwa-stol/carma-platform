@@ -16,7 +16,7 @@
 
 namespace carma_cooperative_perception
 {
-auto PositionOffsetXYZ::from_msg(const j3224_v2x_msgs::msg::PositionOffsetXYZ & msg) noexcept
+auto PositionOffsetXYZ::from_msg(const j3224_v2x_msgs::msg::PositionOffsetXYZ & msg)
   -> PositionOffsetXYZ
 {
   PositionOffsetXYZ offset{
@@ -30,7 +30,7 @@ auto PositionOffsetXYZ::from_msg(const j3224_v2x_msgs::msg::PositionOffsetXYZ & 
   return offset;
 }
 
-auto PositionOffsetXYZ::from_msg(const carma_v2x_msgs::msg::PositionOffsetXYZ & msg) noexcept
+auto PositionOffsetXYZ::from_msg(const carma_v2x_msgs::msg::PositionOffsetXYZ & msg)
   -> PositionOffsetXYZ
 {
   PositionOffsetXYZ offset{
@@ -44,14 +44,14 @@ auto PositionOffsetXYZ::from_msg(const carma_v2x_msgs::msg::PositionOffsetXYZ & 
   return offset;
 }
 
-auto MeasurementTimeOffset::from_msg(
-  const j3224_v2x_msgs::msg::MeasurementTimeOffset & msg) noexcept -> MeasurementTimeOffset
+auto MeasurementTimeOffset::from_msg(const j3224_v2x_msgs::msg::MeasurementTimeOffset & msg)
+  -> MeasurementTimeOffset
 {
   return {units::time::millisecond_t{static_cast<double>(msg.measurement_time_offset)}};
 }
 
-auto MeasurementTimeOffset::from_msg(
-  const carma_v2x_msgs::msg::MeasurementTimeOffset & msg) noexcept -> MeasurementTimeOffset
+auto MeasurementTimeOffset::from_msg(const carma_v2x_msgs::msg::MeasurementTimeOffset & msg)
+  -> MeasurementTimeOffset
 {
   return {units::time::second_t{static_cast<double>(msg.measurement_time_offset)}};
 }
