@@ -276,7 +276,7 @@ namespace basic_autonomy
                 {
 
                     RCLCPP_DEBUG_STREAM(rclcpp::get_logger(BASIC_AUTONOMY_LOGGER), "Extending trajectory using buffer beyond end of target lanelet");
-                    size_t j = i - 1;
+                    int j = i - 1;
                     while (delta_d < epsilon_ && j >= 0 && !delta_point)
                     {
                         RCLCPP_DEBUG_STREAM(rclcpp::get_logger(BASIC_AUTONOMY_LOGGER), "Looking at index j: " << j << ", where i: " << i);
