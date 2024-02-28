@@ -285,7 +285,7 @@ namespace basic_autonomy
                         delta_d = lanelet::geometry::distance2d(prev_point, current_point);
                     }
 
-                    if (j < 0 && delta_d < epsilon_) //a very rare case where only duplicate points exist, so it wasn't possible to extend
+                    if (j < 0 && delta_d < epsilon_) //a very rare case where only duplicate points exist in the entire trajectory, so it wasn't possible to extend
                         break;
 
                     if (!delta_point) { // Set the step size based on last two distinct points
