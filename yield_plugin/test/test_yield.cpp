@@ -421,7 +421,7 @@ TEST(YieldPluginTest, get_collision_time)
   rwo_1.predictions = {ps_1,ps_2,ps_3};
   rwo_1.velocity.twist.linear.x = 10.0;
 
-  std::optional<rclcpp::Time> collision_time = plugin.get_collision_time(tp, rwo_1.predictions, 6);
+  std::optional<rclcpp::Time> collision_time = plugin.get_collision_time(rwo_1.id, tp, rwo_1.predictions, 6);
 
   ASSERT_TRUE(collision_time == std::nullopt);
 
@@ -448,7 +448,7 @@ TEST(YieldPluginTest, get_collision_time)
   rwo_1.predictions = {ps_1,ps_2,ps_3};
   //
 
-  collision_time = plugin.get_collision_time(tp, rwo_1.predictions, 6);
+  collision_time = plugin.get_collision_time(rwo_1.id, tp, rwo_1.predictions, 6);
   ASSERT_TRUE(collision_time != std::nullopt);
   ASSERT_TRUE(collision_time.value() == rclcpp::Time(2, 0, collision_time.value().get_clock_type()));
 
@@ -467,7 +467,7 @@ TEST(YieldPluginTest, get_collision_time)
 
   rwo_1.predictions = {ps_1,ps_2};
 
-  collision_time = plugin.get_collision_time(tp, rwo_1.predictions, 6);
+  collision_time = plugin.get_collision_time(rwo_1.id, tp, rwo_1.predictions, 6);
   ASSERT_TRUE(collision_time == std::nullopt);
 
   // STATES ARE ON THE ROUTE, BUT TOO FAR AWAY
@@ -485,7 +485,7 @@ TEST(YieldPluginTest, get_collision_time)
 
   rwo_1.predictions = {ps_1,ps_2};
 
-  collision_time = plugin.get_collision_time(tp, rwo_1.predictions, 6);
+  collision_time = plugin.get_collision_time(rwo_1.id, tp, rwo_1.predictions, 6);
   ASSERT_TRUE(collision_time == std::nullopt);
 
   // STATES ARE ON THE ROUTE, BUT ALREADY PASSED
@@ -503,7 +503,11 @@ TEST(YieldPluginTest, get_collision_time)
 
   rwo_1.predictions = {ps_1,ps_2};
 
-  collision_time = plugin.get_collision_time(tp, rwo_1.predictions, 6);
+  collision_time = plugin.get_collision_time(rwo_1.id, tp, rwo_1.predictions, 6);
+  collision_time = plugin.get_collision_time(rwo_1.id, tp, rwo_1.predictions, 6);
+  collision_time = plugin.get_collision_time(rwo_1.id, tp, rwo_1.predictions, 6);
+  collision_time = plugin.get_collision_time(rwo_1.id, tp, rwo_1.predictions, 6);
+  collision_time = plugin.get_collision_time(rwo_1.id, tp, rwo_1.predictions, 6); //consecutive amount of time required to confirm vehicle passed
   ASSERT_TRUE(collision_time == std::nullopt);
 }
 

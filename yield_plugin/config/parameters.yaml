@@ -37,6 +37,10 @@ always_accept_mobility_request: false
 # Acceptable number of timesteps to use the latest known mobility request before switching to yield
 # Value type: Desired
 acceptable_passed_timesteps: 5
+# Number of consecutive times the vehicle detects that the obstacle is behind
+# to confirm the obstacle is actually behind
+# Value type: Desired
+consecutive_clearance_count_for_obstacles_threshold: 10
 # Intervehicle distance that is considered a collision
 # Unit: m
 # Value type: Desired

@@ -235,13 +235,14 @@ public:
 
   /**
    * \brief Return collision time given two trajectories with one being predicted steps
+   * \param object_id object id corresponding to the trajectory2
    * \param trajectory1 trajectory of the ego vehicle
    * \param trajectory2 trajectory of predicted steps
    * \param collision_radius a distance to check between two trajectory points at a same timestamp that is considered a collision
    * NOTE: Currently Traj2 is assumed to be a simple cv model to save computational performance
    * \return time_of_collision if collision detected, otherwise, std::nullopt
    */
-  std::optional<rclcpp::Time> get_collision_time(const carma_planning_msgs::msg::TrajectoryPlan& trajectory1, const std::vector<carma_perception_msgs::msg::PredictedState>& trajectory2, double collision_radius);
+  std::optional<rclcpp::Time> get_collision_time(uint32_t object_id, const carma_planning_msgs::msg::TrajectoryPlan& trajectory1, const std::vector<carma_perception_msgs::msg::PredictedState>& trajectory2, double collision_radius);
 
   /**
    * \brief Return collision time given two trajectories with one being external object with predicted steps
@@ -289,7 +290,7 @@ private:
   std::set<lanelet::Id> route_llt_ids_;
   lanelet::Id previous_llt_id_;
   std::vector<carma_perception_msgs::msg::ExternalObject> external_objects_;
-
+  std::unordered_map<uint32_t, int> consecutive_clearance_count_for_obstacles_;
   // flag to show if it is possible for the vehicle to accept the cooperative request
   bool cooperative_request_acceptable_ = false;
 

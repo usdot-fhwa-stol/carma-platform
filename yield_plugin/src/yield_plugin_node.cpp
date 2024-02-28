@@ -37,6 +37,8 @@ namespace yield_plugin
     config_.enable_cooperative_behavior = declare_parameter< bool>("enable_cooperative_behavior", config_.enable_cooperative_behavior);
     config_.always_accept_mobility_request = declare_parameter< bool>("always_accept_mobility_request", config_.always_accept_mobility_request);
     config_.acceptable_passed_timesteps = declare_parameter<int>("acceptable_passed_timesteps", config_.acceptable_passed_timesteps);
+    config_.consecutive_clearance_count_for_obstacles_threshold = declare_parameter<int>("consecutive_clearance_count_for_obstacles_threshold",
+      config_.consecutive_clearance_count_for_obstacles_threshold);
     config_.intervehicle_collision_distance_in_m = declare_parameter<double>("intervehicle_collision_distance_in_m", config_.intervehicle_collision_distance_in_m);
     config_.safety_collision_time_gap_in_s = declare_parameter<double>("safety_collision_time_gap_in_s", config_.safety_collision_time_gap_in_s);
     config_.enable_adjustable_gap = declare_parameter<bool>("enable_adjustable_gap", config_.enable_adjustable_gap);
@@ -63,8 +65,8 @@ namespace yield_plugin
     get_parameter<bool>("enable_cooperative_behavior", config_.enable_cooperative_behavior);
     get_parameter<bool>("always_accept_mobility_request", config_.always_accept_mobility_request);
     get_parameter<int>("acceptable_passed_timesteps", config_.acceptable_passed_timesteps);
+    get_parameter<int>("consecutive_clearance_count_for_obstacles_threshold", config_.consecutive_clearance_count_for_obstacles_threshold);
     get_parameter<double>("intervehicle_collision_distance_in_m", config_.intervehicle_collision_distance_in_m);
-
     get_parameter<double>("safety_collision_time_gap_in_s", config_.safety_collision_time_gap_in_s);
     get_parameter<bool>("enable_adjustable_gap", config_.enable_adjustable_gap);
     get_parameter<int>("acceptable_urgency", config_.acceptable_urgency);
