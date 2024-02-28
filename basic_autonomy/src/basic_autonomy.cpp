@@ -252,7 +252,7 @@ namespace basic_autonomy
                 }
 
                 double delta_d = lanelet::geometry::distance2d(prev_point, current_point);
-
+                
                 dist_accumulator += delta_d;
                 RCLCPP_DEBUG_STREAM(rclcpp::get_logger(BASIC_AUTONOMY_LOGGER), "Index i: " << i << ", delta_d: " << delta_d << ", dist_accumulator:" << dist_accumulator <<", current_point.x():" << current_point.x() <<
                 "current_point.y():" << current_point.y());
@@ -276,8 +276,19 @@ namespace basic_autonomy
                 {
 
                     RCLCPP_DEBUG_STREAM(rclcpp::get_logger(BASIC_AUTONOMY_LOGGER), "Extending trajectory using buffer beyond end of target lanelet");
+                    size_t j = i - 1;
+                    while (delta_d < epsilon_ && j >= 0 && !delta_point)
+                    {
+                        RCLCPP_DEBUG_STREAM(rclcpp::get_logger(BASIC_AUTONOMY_LOGGER), "Looking at index j: " << j << ", where i: " << i);
+                        prev_point = points_and_target_speeds.at(j).point;
+                        j--;
+                        delta_d = lanelet::geometry::distance2d(prev_point, current_point);
+                    }
 
-                    if (!delta_point) { // Set the step size based on last two points
+                    if (j < 0 && delta_d < epsilon_) //a very rare case where only duplicate points exist, so it wasn't possible to extend
+                        break;
+
+                    if (!delta_point) { // Set the step size based on last two distinct points
                         delta_point = (current_point - prev_point) * 0.25; // Use a smaller step size then default to help ensure enough points are generated;
                     }
 
@@ -287,6 +298,7 @@ namespace basic_autonomy
                     PointSpeedPair new_pair;
                     new_pair.point = new_point;
                     new_pair.speed = points_and_target_speeds.back().speed;
+
 
                     points_and_target_speeds.push_back(new_pair);
                 }
