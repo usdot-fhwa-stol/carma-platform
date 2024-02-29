@@ -662,7 +662,7 @@ namespace yield_plugin
         double vehicle_downtrack = wm_->routeTrackPos(vehicle_point).downtrack;
         double object_downtrack = wm_->routeTrackPos(object_point).downtrack;
 
-        if (vehicle_downtrack > object_downtrack + config_.vehicle_length / 2) // if half a length of the vehicle past, it maybe considered behind
+        if (vehicle_downtrack >= object_downtrack + config_.vehicle_length / 2) // if half a length of the vehicle past the rear-axle, it is considered behind
         {
           consecutive_clearance_count_for_obstacles_[object_id] = std::min(consecutive_clearance_count_for_obstacles_[object_id] + 1, config_.consecutive_clearance_count_for_obstacles_threshold);
           RCLCPP_INFO_STREAM(nh_->get_logger(), "Detected an object nearby might be behind the vehicle at timestamp " << std::to_string(p2a_t)
