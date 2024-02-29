@@ -69,7 +69,7 @@ namespace waypoint_generation
 
         // Find first point with a downtrack greater than target_downtrack
         const auto itr = std::find_if(std::cbegin(points), std::cend(points), 
-            [&](const auto & point) { return wm->routeTrackPos(point).downtrack > target_downtrack; });
+            [&wm = std::as_const(wm), target_downtrack](const auto & point) { return wm->routeTrackPos(point).downtrack > target_downtrack; });
 
         // Set best_index to the last point with a downtrack less than target_downtrack without going below index 0
         if(itr != points.begin()){
