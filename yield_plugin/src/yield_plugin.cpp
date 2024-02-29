@@ -899,7 +899,7 @@ namespace yield_plugin
       safety_gap = std::max(safety_gap, externally_commanded_safety_gap);
     }
 
-    const double goal_pos = std::max(0.0, object_downtrack_lead - safety_gap - config_.vehicle_length); // need to stop before vehicle_length
+    const double goal_pos = std::max(0.0, object_downtrack_lead - safety_gap);
     const double initial_pos = 0.0; //relative initial position (first trajectory point)
     const double original_max_speed = max_trajectory_speed(original_tp.trajectory_points, earliest_collision_time_in_seconds);
     const double delta_v_max = fabs(goal_velocity - original_max_speed);
