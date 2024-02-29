@@ -277,10 +277,10 @@ namespace basic_autonomy
         carma_wm::test::setRouteByIds({1200, 1201, 1202, 1203}, wm);
 
         // Create vector of points; this will remain empty
-        std::vector<lanelet::BasicPoint2d> points;
+        const std::vector<lanelet::BasicPoint2d> points;
 
         // Test with arbitrary target_downtrack to verify proper return value due to empty points vector
-        double target_downtrack = 4.0;
+        static constexpr auto target_downtrack{4.0};
         ASSERT_EQ(-1, waypoint_generation::get_nearest_index_by_downtrack(points, wm, target_downtrack));
     }
 
