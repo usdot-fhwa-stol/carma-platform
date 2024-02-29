@@ -65,7 +65,7 @@ namespace waypoint_generation
 
     int get_nearest_index_by_downtrack(const std::vector<lanelet::BasicPoint2d>& points, const carma_wm::WorldModelConstPtr& wm, double target_downtrack)
     {
-        if(points.empty()){
+        if(std::empty(points)){
             RCLCPP_WARN_STREAM(rclcpp::get_logger(BASIC_AUTONOMY_LOGGER), "Empty points vector received, returning -1");
             return -1;
         }
@@ -74,7 +74,7 @@ namespace waypoint_generation
         const auto itr = std::find_if(std::cbegin(points), std::cend(points), 
             [&wm = std::as_const(wm), target_downtrack](const auto & point) { return wm->routeTrackPos(point).downtrack > target_downtrack; });
 
-        int best_index = points.size() - 1;
+        int best_index = std::size(points) - 1;
 
         // Set best_index to the last point with a downtrack less than target_downtrack
         if(itr != std::cbegin(points)){
