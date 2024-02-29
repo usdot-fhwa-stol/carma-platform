@@ -65,13 +65,18 @@ namespace waypoint_generation
 
     int get_nearest_index_by_downtrack(const std::vector<lanelet::BasicPoint2d>& points, const carma_wm::WorldModelConstPtr& wm, double target_downtrack)
     {
-        size_t best_index = points.size() - 1;
+        int best_index = points.size() - 1;
+
+        if(points.empty()){
+            RCLCPP_WARN_STREAM(rclcpp::get_logger(BASIC_AUTONOMY_LOGGER), "Empty points vector received, returning best_index of " << best_index);
+            return best_index;
+        }
 
         // Find first point with a downtrack greater than target_downtrack
         const auto itr = std::find_if(std::cbegin(points), std::cend(points), 
             [&wm = std::as_const(wm), target_downtrack](const auto & point) { return wm->routeTrackPos(point).downtrack > target_downtrack; });
 
-        // Set best_index to the last point with a downtrack less than target_downtrack without going below index 0
+        // Set best_index to the last point with a downtrack less than target_downtrack
         if(itr != std::cbegin(points)){
             best_index = std::distance(std::cbegin(points), itr) - 1;
         }
@@ -81,7 +86,7 @@ namespace waypoint_generation
 
         RCLCPP_DEBUG_STREAM(rclcpp::get_logger(BASIC_AUTONOMY_LOGGER), "get_nearest_index_by_downtrack>> Found best_index: " << best_index<<", points[i].x(): " << points[best_index].x() << ", points[i].y(): " << points[best_index].y());
         
-        return static_cast<int>(best_index);
+        return best_index;
     }
 
     void split_point_speed_pairs(const std::vector<PointSpeedPair>& points,

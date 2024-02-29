@@ -231,7 +231,7 @@ namespace basic_autonomy
         ASSERT_EQ(3, waypoint_generation::get_nearest_point_index(points, state));
     }
 
-    TEST(BasicAutonomyTest, get_nearest_index_by_downtrack)
+    TEST(BasicAutonomyTest, get_nearest_index_by_downtrack_with_nonempty_points)
     {
         // Create CARMA World Model with custom Guidance Test Map
         std::shared_ptr<carma_wm::CARMAWorldModel> wm = std::make_shared<carma_wm::CARMAWorldModel>();
@@ -267,7 +267,23 @@ namespace basic_autonomy
         target_downtrack = 22.0;
         ASSERT_EQ(3, waypoint_generation::get_nearest_index_by_downtrack(points, wm, target_downtrack));
     }
-    
+
+    TEST(BasicAutonomyTest, get_nearest_index_by_downtrack_with_empty_points)
+    {
+        // Create CARMA World Model with custom Guidance Test Map
+        std::shared_ptr<carma_wm::CARMAWorldModel> wm = std::make_shared<carma_wm::CARMAWorldModel>();
+        auto map = carma_wm::test::buildGuidanceTestMap(5.0, 10.0); // Lanelet width 5.0 meters; Lanelet length 10.0 meters
+        wm->setMap(map);
+        carma_wm::test::setRouteByIds({1200, 1201, 1202, 1203}, wm);
+
+        // Create vector of points; this will remain empty
+        std::vector<lanelet::BasicPoint2d> points;
+
+        // Test with arbitrary target_downtrack to verify proper return value due to empty points vector
+        double target_downtrack = 4.0;
+        ASSERT_EQ(-1, waypoint_generation::get_nearest_index_by_downtrack(points, wm, target_downtrack));
+    }
+
     TEST(BasicAutonomyTest, split_point_speed_pairs)
     {
         std::vector<waypoint_generation::PointSpeedPair> points;
