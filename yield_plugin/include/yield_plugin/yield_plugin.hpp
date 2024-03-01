@@ -254,6 +254,17 @@ public:
   std::optional<rclcpp::Time> get_collision_time(const carma_planning_msgs::msg::TrajectoryPlan& original_tp, const carma_perception_msgs::msg::ExternalObject& curr_obstacle);
 
   /**
+   * \brief Check if object location is behind the vehicle using estimates of the vehicle's length
+   * \param object_id object id to use for the consecutive_clearance_count_for_obstacles_
+   * \param vehicle_downtrack vehicle downtrack of its back axle along the route
+   * \param object_downtrack object downtrack along the route
+   * NOTE: Uses internal counter low pass filter to confirm the object is behind only if it counted continuously above
+           config_.consecutive_clearance_count_for_obstacles_threshold
+   * \return return true if object is behind the vehicle
+   */
+  bool is_object_behind_the_vehicle(uint32_t object_id, double vehicle_downtrack, double object_downtrack);
+
+  /**
    * \brief Return the earliest collision object and time of collision pair from the given trajectory and list of external objects with predicted states.
             Function first filters obstacles based on whether if their any of predicted state will be on the route. Only then, the logic compares trajectory and predicted states.
    * \param original_tp trajectory of the ego vehicle
@@ -279,6 +290,7 @@ public:
    * \return get_predicted_velocity_at_time
    */
   double get_predicted_velocity_at_time(const geometry_msgs::msg::Twist& object_velocity_in_map_frame, const carma_planning_msgs::msg::TrajectoryPlan& original_tp, double timestamp_in_sec_to_predict);
+
 
 private:
 

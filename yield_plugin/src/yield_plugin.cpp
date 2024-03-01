@@ -527,7 +527,6 @@ namespace yield_plugin
     // Iterate through each pair of consecutive points in the trajectories
     RCLCPP_DEBUG_STREAM(nh_->get_logger(), "Starting a new collision detection, trajectory size: "
       << trajectory1.trajectory_points.size() << ". prediction size: " << trajectory2.size());
-    auto previous_clearance_count = consecutive_clearance_count_for_obstacles_[object_id];
 
     // Iterate through the object to check if it's on the route
     bool on_route = false;
@@ -657,41 +656,55 @@ namespace yield_plugin
         }
 
         // if within collision radius
-        lanelet::BasicPoint2d vehicle_point(x1,y1);
-        lanelet::BasicPoint2d object_point(x2,y2);
-        double vehicle_downtrack = wm_->routeTrackPos(vehicle_point).downtrack;
-        double object_downtrack = wm_->routeTrackPos(object_point).downtrack;
+        const lanelet::BasicPoint2d vehicle_point(x1,y1);
+        const lanelet::BasicPoint2d object_point(x2,y2);
+        const double vehicle_downtrack = wm_->routeTrackPos(vehicle_point).downtrack;
+        const double object_downtrack = wm_->routeTrackPos(object_point).downtrack;
 
-        if (vehicle_downtrack >= object_downtrack + config_.vehicle_length / 2) // if half a length of the vehicle past the rear-axle, it is considered behind
+        if (is_object_behind_the_vehicle(object_id, vehicle_downtrack, object_downtrack))
         {
-          consecutive_clearance_count_for_obstacles_[object_id] = std::min(consecutive_clearance_count_for_obstacles_[object_id] + 1, config_.consecutive_clearance_count_for_obstacles_threshold);
-          RCLCPP_INFO_STREAM(nh_->get_logger(), "Detected an object nearby might be behind the vehicle at timestamp " << std::to_string(p2a_t)
-            <<", and consecutive_clearance_count_for obstacle: " <<  object_id << ", is: " << consecutive_clearance_count_for_obstacles_[object_id]);
-        }
-
-        // confirmed false positive for a collision
-        if (consecutive_clearance_count_for_obstacles_[object_id] >= config_.consecutive_clearance_count_for_obstacles_threshold)
-        {
-          RCLCPP_INFO_STREAM(nh_->get_logger(), "Confirmed that an object nearby is behind the vehicle at timestamp " << std::to_string(p2a_t));
+          RCLCPP_INFO_STREAM(nh_->get_logger(), "Confirmed that the object: " << object_id << " is behind the vehicle at timestamp " << std::to_string(p2a_t));
           return std::nullopt;
         }
-
-        // reset the counter if true collision was detected in this iteration
-        if (consecutive_clearance_count_for_obstacles_[object_id] == previous_clearance_count)
+        else
         {
-          consecutive_clearance_count_for_obstacles_[object_id] = 0;
+          RCLCPP_WARN_STREAM(nh_->get_logger(), "Collision detected for object: " << object_id << ", at timestamp " << std::to_string(p2a_t) <<
+            ", x: " << x1 << ", y: " << y1 <<
+            ", within actual downtrack distance: " << object_downtrack - vehicle_downtrack <<
+            ", and collision distance: " << distance);
+          return rclcpp::Time(p2a.header.stamp);
         }
-
-        RCLCPP_WARN_STREAM(nh_->get_logger(), "Collision detected at timestamp " << std::to_string(p2a_t) << ", x: " << x1 << ", y: " << y1 <<
-          ", within actual downtrack distance: " << object_downtrack - vehicle_downtrack <<
-          ", and collision distance: " << distance);
-        return rclcpp::Time(p2a.header.stamp);
       }
     }
 
     // No collision detected
     consecutive_clearance_count_for_obstacles_[object_id] = 0;
     return std::nullopt;
+  }
+
+  bool YieldPlugin::is_object_behind_the_vehicle(uint32_t object_id, double vehicle_downtrack, double object_downtrack)
+  {
+    auto previous_clearance_count = consecutive_clearance_count_for_obstacles_[object_id];
+    // if the object's location is half a length of the vehicle past its rear-axle, it is considered behind
+    // half a length of the vehicle to conservatively estimate the rear axle to rear bumper length
+    if (object_downtrack < vehicle_downtrack - config_.vehicle_length / 2)
+    {
+      consecutive_clearance_count_for_obstacles_[object_id] = std::min(consecutive_clearance_count_for_obstacles_[object_id] + 1, config_.consecutive_clearance_count_for_obstacles_threshold);
+      RCLCPP_INFO_STREAM(nh_->get_logger(), "Detected an object nearby might be behind the vehicle "
+        << ", and consecutive_clearance_count_for obstacle: " <<  object_id << ", is: " << consecutive_clearance_count_for_obstacles_[object_id]);
+    }
+    // confirmed false positive for a collision
+    if (consecutive_clearance_count_for_obstacles_[object_id] >= config_.consecutive_clearance_count_for_obstacles_threshold)
+    {
+      return true;
+    }
+    // reset the counter if true collision was detected in this iteration
+    if (consecutive_clearance_count_for_obstacles_[object_id] == previous_clearance_count)
+    {
+      consecutive_clearance_count_for_obstacles_[object_id] = 0;
+    }
+
+    return false;
   }
 
   std::optional<rclcpp::Time> YieldPlugin::get_collision_time(const carma_planning_msgs::msg::TrajectoryPlan& original_tp,
