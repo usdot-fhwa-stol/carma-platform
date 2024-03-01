@@ -65,7 +65,7 @@ struct PointSpeedPair
  */
 struct CollisionData
 {
-  rclcpp::Time collision_time;  // possibly unneeded
+  rclcpp::Time collision_time;
   lanelet::BasicPoint2d predicted_vehicle_collision_point;
   lanelet::BasicPoint2d predicted_obstacle_collision_point;
 };
