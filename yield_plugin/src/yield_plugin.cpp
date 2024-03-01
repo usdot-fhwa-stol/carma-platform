@@ -520,7 +520,7 @@ namespace yield_plugin
     return jmt_trajectory;
   }
 
-  std::optional<rclcpp::Time> YieldPlugin::get_collision_time(uint32_t object_id, const carma_planning_msgs::msg::TrajectoryPlan& trajectory1,
+  std::optional<CollisionData> YieldPlugin::get_collision_data(uint32_t object_id, const carma_planning_msgs::msg::TrajectoryPlan& trajectory1,
     const std::vector<carma_perception_msgs::msg::PredictedState>& trajectory2, double collision_radius)
   {
 
@@ -582,7 +582,6 @@ namespace yield_plugin
     if (!on_route)
     {
       RCLCPP_DEBUG(nh_->get_logger(), "Predicted states are not on the route! ignoring");
-      consecutive_clearance_count_for_obstacles_[object_id] = 0;
       return std::nullopt;
     }
 
@@ -639,7 +638,6 @@ namespace yield_plugin
         if (i == 0 && j == 0 && distance > config_.collision_check_radius_in_m)
         {
           RCLCPP_DEBUG(nh_->get_logger(), "Too far away" );
-          consecutive_clearance_count_for_obstacles_[object_id] = 0;
           return std::nullopt;
         }
 
@@ -648,61 +646,60 @@ namespace yield_plugin
           if (traj2_has_zero_speed)
           {
             // If no collision is detect by now, stop searching since traj2 is not moving
-            consecutive_clearance_count_for_obstacles_[object_id] = 0;
             return std::nullopt;
           }
           // continue searching for collision
           continue;
         }
 
-        // if within collision radius
-        const lanelet::BasicPoint2d vehicle_point(x1,y1);
-        const lanelet::BasicPoint2d object_point(x2,y2);
-        const double vehicle_downtrack = wm_->routeTrackPos(vehicle_point).downtrack;
-        const double object_downtrack = wm_->routeTrackPos(object_point).downtrack;
-
-        if (is_object_behind_the_vehicle(object_id, vehicle_downtrack, object_downtrack))
-        {
-          RCLCPP_INFO_STREAM(nh_->get_logger(), "Confirmed that the object: " << object_id << " is behind the vehicle at timestamp " << std::to_string(p2a_t));
-          return std::nullopt;
-        }
-        else
-        {
-          RCLCPP_WARN_STREAM(nh_->get_logger(), "Collision detected for object: " << object_id << ", at timestamp " << std::to_string(p2a_t) <<
-            ", x: " << x1 << ", y: " << y1 <<
-            ", within actual downtrack distance: " << object_downtrack - vehicle_downtrack <<
-            ", and collision distance: " << distance);
-          return rclcpp::Time(p2a.header.stamp);
-        }
+        CollisionData collision_data;
+        collision_data.predicted_vehicle_collision_point = lanelet::BasicPoint2d(x1,y1);
+        collision_data.predicted_obstacle_collision_point = lanelet::BasicPoint2d(x2,y2);
+        collision_data.collision_time = rclcpp::Time(p2a.header.stamp);
+        return collision_data;
       }
     }
 
     // No collision detected
-    consecutive_clearance_count_for_obstacles_[object_id] = 0;
     return std::nullopt;
   }
 
-  bool YieldPlugin::is_object_behind_the_vehicle(uint32_t object_id, double vehicle_downtrack, double object_downtrack)
+  bool YieldPlugin::is_object_behind_the_vehicle(uint32_t object_id, const CollisionData& collision_data)
   {
+    const double vehicle_downtrack = wm_->routeTrackPos(collision_data.predicted_vehicle_collision_point).downtrack;
+    const double object_downtrack = wm_->routeTrackPos(collision_data.predicted_obstacle_collision_point).downtrack;
+
     auto previous_clearance_count = consecutive_clearance_count_for_obstacles_[object_id];
     // if the object's location is half a length of the vehicle past its rear-axle, it is considered behind
     // half a length of the vehicle to conservatively estimate the rear axle to rear bumper length
     if (object_downtrack < vehicle_downtrack - config_.vehicle_length / 2)
     {
       consecutive_clearance_count_for_obstacles_[object_id] = std::min(consecutive_clearance_count_for_obstacles_[object_id] + 1, config_.consecutive_clearance_count_for_obstacles_threshold);
-      RCLCPP_INFO_STREAM(nh_->get_logger(), "Detected an object nearby might be behind the vehicle "
-        << ", and consecutive_clearance_count_for obstacle: " <<  object_id << ", is: " << consecutive_clearance_count_for_obstacles_[object_id]);
+      RCLCPP_INFO_STREAM(nh_->get_logger(), "Detected an object nearby might be behind the vehicle at timestamp: " << std::to_string(collision_data.collision_time.seconds()) <<
+        ", and consecutive_clearance_count_for obstacle: " <<  object_id << ", is: " << consecutive_clearance_count_for_obstacles_[object_id]);
     }
     // confirmed false positive for a collision
     if (consecutive_clearance_count_for_obstacles_[object_id] >= config_.consecutive_clearance_count_for_obstacles_threshold)
     {
+      RCLCPP_INFO_STREAM(nh_->get_logger(), "Confirmed that the object: " << object_id << " is behind the vehicle at timestamp " << std::to_string(collision_data.collision_time.seconds()));
       return true;
     }
-    // reset the counter if true collision was detected in this iteration
+    // if the clearance counter didn't increase by this point, true collision was detected
+    // therefore reset the consecutive clearance counter as it is no longer consecutive
     if (consecutive_clearance_count_for_obstacles_[object_id] == previous_clearance_count)
     {
       consecutive_clearance_count_for_obstacles_[object_id] = 0;
     }
+
+    const auto distance{std::hypot(
+      collision_data.predicted_vehicle_collision_point.x() - collision_data.predicted_obstacle_collision_point.x(),
+      collision_data.predicted_vehicle_collision_point.y() - collision_data.predicted_obstacle_collision_point.y()
+    )}; //for debug
+
+    RCLCPP_WARN_STREAM(nh_->get_logger(), "Collision detected for object: " << object_id << ", at timestamp " << std::to_string(collision_data.collision_time.seconds()) <<
+      ", x: " << collision_data.predicted_vehicle_collision_point.x() << ", y: " << collision_data.predicted_vehicle_collision_point.y() <<
+      ", within actual downtrack distance: " << object_downtrack - vehicle_downtrack <<
+      ", and collision distance: " << distance);
 
     return false;
   }
@@ -735,7 +732,22 @@ namespace yield_plugin
     new_list.push_back(curr_state);
     new_list.insert(new_list.end(), curr_obstacle.predictions.cbegin(), curr_obstacle.predictions.cend());
 
-    return get_collision_time(curr_obstacle.id, original_tp, new_list, config_.intervehicle_collision_distance_in_m);
+    const auto collision_data = get_collision_data(curr_obstacle.id, original_tp, new_list, config_.intervehicle_collision_distance_in_m);
+
+    if (!collision_data)
+    {
+      // reset the consecutive clearance counter because no collision was detected at this iteration
+      consecutive_clearance_count_for_obstacles_[curr_obstacle.id] = 0;
+      return std::nullopt;
+    }
+
+    // if within collision radius, it is not a collision if obstacle is behind the vehicle despite being in collision radius
+    if (is_object_behind_the_vehicle(curr_obstacle.id, collision_data.value()))
+    {
+      return std::nullopt;
+    }
+
+    return collision_data.value().collision_time;
   }
 
   std::unordered_map<uint32_t, rclcpp::Time> YieldPlugin::get_collision_times_concurrently(const carma_planning_msgs::msg::TrajectoryPlan& original_tp,

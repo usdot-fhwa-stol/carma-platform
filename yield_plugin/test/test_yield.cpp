@@ -297,7 +297,7 @@ TEST(YieldPluginTest, test_update_traj)
   EXPECT_EQ(7, tp.trajectory_points.size());
 }
 
-TEST(YieldPluginTest, get_collision_time)
+TEST(YieldPluginTest, get_collision_data)
 {
   std::shared_ptr<carma_wm::CARMAWorldModel> wm = std::make_shared<carma_wm::CARMAWorldModel>();
   auto map = carma_wm::test::buildGuidanceTestMap(100,100);
@@ -421,9 +421,9 @@ TEST(YieldPluginTest, get_collision_time)
   rwo_1.predictions = {ps_1,ps_2,ps_3};
   rwo_1.velocity.twist.linear.x = 10.0;
 
-  std::optional<rclcpp::Time> collision_time = plugin.get_collision_time(rwo_1.id, tp, rwo_1.predictions, 6);
+  auto collision_data = plugin.get_collision_data(rwo_1.id, tp, rwo_1.predictions, 6);
 
-  ASSERT_TRUE(collision_time == std::nullopt);
+  ASSERT_TRUE(collision_data == std::nullopt);
 
   // DETECT COLLISION
 
@@ -432,25 +432,28 @@ TEST(YieldPluginTest, get_collision_time)
   ps_1.predicted_position.position.x = 10;
   ps_1.predicted_position.position.y = 30;
   ps_1.predicted_position.position.z = 0;
+  ps_1.predicted_velocity.linear.x = 0;
+  ps_1.predicted_velocity.linear.y = 1;
 
   ps_2.header.stamp.sec = 2;
 
   ps_2.predicted_position.position.x = 10;
   ps_2.predicted_position.position.y = 31;
   ps_2.predicted_position.position.z = 0;
+  ps_2.predicted_velocity = ps_1.predicted_velocity;
 
   ps_3.header.stamp.sec = 3;
 
   ps_3.predicted_position.position.x = 10;
   ps_3.predicted_position.position.y = 32;
   ps_3.predicted_position.position.z = 0;
+  ps_3.predicted_velocity = ps_1.predicted_velocity;
 
   rwo_1.predictions = {ps_1,ps_2,ps_3};
-  //
 
-  collision_time = plugin.get_collision_time(rwo_1.id, tp, rwo_1.predictions, 6);
-  ASSERT_TRUE(collision_time != std::nullopt);
-  ASSERT_TRUE(collision_time.value() == rclcpp::Time(2, 0, collision_time.value().get_clock_type()));
+  collision_data = plugin.get_collision_data(rwo_1.id, tp, rwo_1.predictions, 6);
+  ASSERT_TRUE(collision_data != std::nullopt);
+  ASSERT_TRUE(collision_data.value().collision_time == rclcpp::Time(2, 0, collision_data.value().collision_time.get_clock_type()));
 
   // STATES ARE NOT ON ROUTE
   ps_1.header.stamp.sec = 1;
@@ -467,8 +470,8 @@ TEST(YieldPluginTest, get_collision_time)
 
   rwo_1.predictions = {ps_1,ps_2};
 
-  collision_time = plugin.get_collision_time(rwo_1.id, tp, rwo_1.predictions, 6);
-  ASSERT_TRUE(collision_time == std::nullopt);
+  collision_data = plugin.get_collision_data(rwo_1.id, tp, rwo_1.predictions, 6);
+  ASSERT_TRUE(collision_data == std::nullopt);
 
   // STATES ARE ON THE ROUTE, BUT TOO FAR AWAY
   ps_1.header.stamp.sec = 1;
@@ -485,8 +488,119 @@ TEST(YieldPluginTest, get_collision_time)
 
   rwo_1.predictions = {ps_1,ps_2};
 
-  collision_time = plugin.get_collision_time(rwo_1.id, tp, rwo_1.predictions, 6);
-  ASSERT_TRUE(collision_time == std::nullopt);
+  collision_data = plugin.get_collision_data(rwo_1.id, tp, rwo_1.predictions, 6);
+  ASSERT_TRUE(collision_data == std::nullopt);
+
+  // STATES ARE ON THE ROUTE, BUT ALREADY PASSED
+  // HOWEVER, AS A NAIVE TEST, IT SHOULD STILL RETURN COLLISION (can be removed if algorithm gets improved)
+  ps_1.header.stamp.sec = 2;
+
+  ps_1.predicted_position.position.x = 10;
+  ps_1.predicted_position.position.y = 25;
+  ps_1.predicted_position.position.z = 0;
+  ps_1.predicted_velocity.linear.x = 0;
+  ps_1.predicted_velocity.linear.y = 10;
+
+  ps_2.header.stamp.sec = 3;
+
+  ps_2.predicted_position.position.x = 10;
+  ps_2.predicted_position.position.y = 35;
+  ps_2.predicted_position.position.z = 0;
+  ps_2.predicted_velocity = ps_1.predicted_velocity;
+
+  rwo_1.predictions = {ps_1,ps_2};
+
+  collision_data = plugin.get_collision_data(rwo_1.id, tp, rwo_1.predictions, 6);
+  ASSERT_TRUE(collision_data != std::nullopt);
+}
+
+TEST(YieldPluginTest, is_object_behind_the_vehicle)
+{
+  std::shared_ptr<carma_wm::CARMAWorldModel> wm = std::make_shared<carma_wm::CARMAWorldModel>();
+  auto map = carma_wm::test::buildGuidanceTestMap(100,100);
+
+  wm->setMap(map);
+  carma_wm::test::setRouteByIds({ 1200, 1201, 1202, 1203 }, wm);
+
+  YieldPluginConfig config;
+  config.vehicle_length = 4;
+  config.vehicle_width = 2;
+  config.vehicle_height = 1;
+  config.collision_check_radius_in_m = 90;
+
+  // std::shared_ptr<carma_wm::CARMAWorldModel> wm = std::make_shared<carma_wm::CARMAWorldModel>();
+  auto nh = std::make_shared<yield_plugin::YieldPluginNode>(rclcpp::NodeOptions());
+
+  YieldPlugin plugin(nh,wm, config,[](const auto& msg) {}, [](const auto& msg) {});
+
+  carma_perception_msgs::msg::ExternalObjectList rwol;
+  carma_planning_msgs::msg::TrajectoryPlan tp;
+
+  EXPECT_EQ(plugin.update_traj_for_object(tp, {}, 0.0), tp); //should return unchanged if received invalid trajectory
+
+  carma_planning_msgs::msg::TrajectoryPlanPoint trajectory_point_1;
+  carma_planning_msgs::msg::TrajectoryPlanPoint trajectory_point_2;
+  carma_planning_msgs::msg::TrajectoryPlanPoint trajectory_point_3;
+  carma_planning_msgs::msg::TrajectoryPlanPoint trajectory_point_4;
+  carma_planning_msgs::msg::TrajectoryPlanPoint trajectory_point_5;
+  carma_planning_msgs::msg::TrajectoryPlanPoint trajectory_point_6;
+  carma_planning_msgs::msg::TrajectoryPlanPoint trajectory_point_7;
+
+  trajectory_point_1.x = 10.0;
+  trajectory_point_1.y = 0.0001;
+  trajectory_point_1.target_time = rclcpp::Time(0);
+
+  trajectory_point_2.x = 10.0;
+  trajectory_point_2.y = 20.0;
+  trajectory_point_2.target_time = rclcpp::Time(1,0);
+
+  trajectory_point_3.x = 10.0;
+  trajectory_point_3.y = 30.0;
+  trajectory_point_3.target_time = rclcpp::Time(2,0);
+
+  trajectory_point_4.x = 10.0;
+  trajectory_point_4.y = 40.0;
+  trajectory_point_4.target_time = rclcpp::Time(3,0);
+
+  trajectory_point_5.x = 10.0;
+  trajectory_point_5.y = 50.0;
+  trajectory_point_5.target_time = rclcpp::Time(4,0);
+
+  trajectory_point_6.x = 10.0;
+  trajectory_point_6.y = 60.0;
+  trajectory_point_6.target_time = rclcpp::Time(5,0);
+
+  trajectory_point_7.x = 10.0;
+  trajectory_point_7.y = 70.0;
+  trajectory_point_7.target_time = rclcpp::Time(6,0);
+
+  tp.trajectory_points = {trajectory_point_1, trajectory_point_2, trajectory_point_3, trajectory_point_4, trajectory_point_5, trajectory_point_6, trajectory_point_7};
+
+  carma_perception_msgs::msg::ExternalObject rwo_1;
+
+  // Set route but also test no throw
+  EXPECT_NO_THROW(plugin.update_traj_for_object(tp, {}, 0.0));
+
+  // ON ROUTE, BUT NO COLLISION DUE TO BEING AHEAD
+
+  tf2::Quaternion tf_orientation;
+  tf_orientation.setRPY(0, 0, 1.5708);
+
+  rwo_1.pose.pose.position.x = 60;
+  rwo_1.pose.pose.position.y = 50;
+  rwo_1.pose.pose.position.z = 0;
+
+  rwo_1.pose.pose.orientation.x = tf_orientation.getX();
+  rwo_1.pose.pose.orientation.y = tf_orientation.getY();
+  rwo_1.pose.pose.orientation.z = tf_orientation.getZ();
+  rwo_1.pose.pose.orientation.w = tf_orientation.getW();
+
+  rwo_1.size.x = 1;
+  rwo_1.size.y = 1;
+  rwo_1.size.z = 1;
+
+  carma_perception_msgs::msg::PredictedState ps_1;
+  carma_perception_msgs::msg::PredictedState ps_2;
 
   // STATES ARE ON THE ROUTE, BUT ALREADY PASSED
   ps_1.header.stamp.sec = 2;
@@ -494,21 +608,35 @@ TEST(YieldPluginTest, get_collision_time)
   ps_1.predicted_position.position.x = 10;
   ps_1.predicted_position.position.y = 25;
   ps_1.predicted_position.position.z = 0;
+  ps_1.predicted_velocity.linear.x = 0;
+  ps_1.predicted_velocity.linear.y = 10;
+
+  ps_1.predicted_position.orientation.x = tf_orientation.getX();
+  ps_1.predicted_position.orientation.y = tf_orientation.getY();
+  ps_1.predicted_position.orientation.z = tf_orientation.getZ();
+  ps_1.predicted_position.orientation.w = tf_orientation.getW();
 
   ps_2.header.stamp.sec = 3;
 
   ps_2.predicted_position.position.x = 10;
   ps_2.predicted_position.position.y = 35;
   ps_2.predicted_position.position.z = 0;
+  ps_2.predicted_velocity = ps_1.predicted_velocity;
+
+  ps_2.predicted_position.orientation.x = tf_orientation.getX();
+  ps_2.predicted_position.orientation.y = tf_orientation.getY();
+  ps_2.predicted_position.orientation.z = tf_orientation.getZ();
+  ps_2.predicted_position.orientation.w = tf_orientation.getW();
 
   rwo_1.predictions = {ps_1,ps_2};
 
-  collision_time = plugin.get_collision_time(rwo_1.id, tp, rwo_1.predictions, 6);
-  collision_time = plugin.get_collision_time(rwo_1.id, tp, rwo_1.predictions, 6);
-  collision_time = plugin.get_collision_time(rwo_1.id, tp, rwo_1.predictions, 6);
-  collision_time = plugin.get_collision_time(rwo_1.id, tp, rwo_1.predictions, 6);
-  collision_time = plugin.get_collision_time(rwo_1.id, tp, rwo_1.predictions, 6); //consecutive amount of time required to confirm vehicle passed
-  ASSERT_TRUE(collision_time == std::nullopt);
+  auto collision_data = plugin.get_collision_data(rwo_1.id, tp, rwo_1.predictions, 6);
+  ASSERT_TRUE(collision_data != std::nullopt); //make sure collision happens
+  ASSERT_FALSE(plugin.is_object_behind_the_vehicle(rwo_1.id, collision_data.value()));
+  ASSERT_FALSE(plugin.is_object_behind_the_vehicle(rwo_1.id, collision_data.value()));
+  ASSERT_FALSE(plugin.is_object_behind_the_vehicle(rwo_1.id, collision_data.value()));
+  ASSERT_FALSE(plugin.is_object_behind_the_vehicle(rwo_1.id, collision_data.value()));
+  ASSERT_TRUE(plugin.is_object_behind_the_vehicle(rwo_1.id, collision_data.value())); //need consecutive 5 times required to confirm vehicle passed
 }
 
 TEST(YieldPluginTest, test_update_traj2)
