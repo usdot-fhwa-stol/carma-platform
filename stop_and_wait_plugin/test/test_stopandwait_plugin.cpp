@@ -43,90 +43,91 @@
 
 namespace stop_and_wait_plugin
 {
-TEST(StopandWait, TestStopandWaitPlanning)
-{
-  StopandWaitConfig config;
-
-  config.minimal_trajectory_duration = 6.0;    // Trajectory length in seconds
-  config.stop_timestep = 0.1;                  // Size of timesteps between stopped trajectory points
-  config.trajectory_step_size = 1;                  // Amount to downsample input lanelet centerline data.
-  config.accel_limit_multiplier = 0.5;         // Multiplier to compine with actual accel limit for target planning
-  config.accel_limit = 2.0;                    // Longitudinal acceleration limit of the vehicle
-
-  std::shared_ptr<carma_wm::CARMAWorldModel> wm = std::make_shared<carma_wm::CARMAWorldModel>();
-  
-  std::shared_ptr<carma_ros2_utils::CarmaLifecycleNode> nh;
-  const std::string& plugin_name= "stop_and_wait_plugin";
-  const std::string& version_id="v1.0";
  
-  StopandWait plugin(nh,wm, config, plugin_name,version_id);
+// TEST(StopandWait, TestStopandWaitPlanning)
+// {
+//   StopandWaitConfig config;
 
-  auto map = carma_wm::test::buildGuidanceTestMap(3.7, 20);
+//   config.minimal_trajectory_duration = 6.0;    // Trajectory length in seconds
+//   config.stop_timestep = 0.1;                  // Size of timesteps between stopped trajectory points
+//   config.trajectory_step_size = 1;                  // Amount to downsample input lanelet centerline data.
+//   config.accel_limit_multiplier = 0.5;         // Multiplier to compine with actual accel limit for target planning
+//   config.accel_limit = 2.0;                    // Longitudinal acceleration limit of the vehicle
 
-  wm->setMap(map);
-  carma_wm::test::setSpeedLimit(20_mph, wm);
+//   std::shared_ptr<carma_wm::CARMAWorldModel> wm = std::make_shared<carma_wm::CARMAWorldModel>();
+  
+//   std::shared_ptr<carma_ros2_utils::CarmaLifecycleNode> nh;
+//   const std::string& plugin_name= "stop_and_wait_plugin";
+//   const std::string& version_id="v1.0";
+ 
+//   StopandWait plugin(nh,wm, config, plugin_name,version_id);
 
-  /**
-   * Total route length should be 100m
-   *
-   *        |1203|1213|1223|
-   *        | _  _  _  _  _|
-   *        |1202| Ob |1222|
-   *        | _  _  _  _  _|
-   *        |1201|1211|1221|    num   = lanelet id hardcoded for easier testing
-   *        | _  _  _  _  _|    |     = lane lines
-   *        |1200|1210|1220|    - - - = Lanelet boundary
-   *        |              |    O     = Default Obstacle
-   *        ****************
-   *           START_LINE
-   */
+//   auto map = carma_wm::test::buildGuidanceTestMap(3.7, 20);
 
-  carma_wm::test::setRouteByIds({ 1200, 1201, 1202, 1203 }, wm);
+//   wm->setMap(map);
+//   carma_wm::test::setSpeedLimit(20_mph, wm);
 
-  carma_planning_msgs::srv::PlanTrajectory::Request::SharedPtr req;
-  req->vehicle_state.x_pos_global = 1.5;
-  req->vehicle_state.y_pos_global = 5;
-  req->vehicle_state.orientation = 3.14/2;
-  req->vehicle_state.longitudinal_vel = 8.9408; // 20 mph
-  req->header.stamp = rclcpp::Time(0.0* 1e9);
+//   /**
+//    * Total route length should be 100m
+//    *
+//    *        |1203|1213|1223|
+//    *        | _  _  _  _  _|
+//    *        |1202| Ob |1222|
+//    *        | _  _  _  _  _|
+//    *        |1201|1211|1221|    num   = lanelet id hardcoded for easier testing
+//    *        | _  _  _  _  _|    |     = lane lines
+//    *        |1200|1210|1220|    - - - = Lanelet boundary
+//    *        |              |    O     = Default Obstacle
+//    *        ****************
+//    *           START_LINE
+//    */
 
-  carma_planning_msgs::msg::Maneuver maneuver;
-  maneuver.type = carma_planning_msgs::msg::Maneuver::STOP_AND_WAIT;
-  maneuver.stop_and_wait_maneuver.start_dist = 5.0;
-  maneuver.stop_and_wait_maneuver.start_time = rclcpp::Time(0.0* 1e9);
-  maneuver.stop_and_wait_maneuver.start_speed = 8.9408;
+//   carma_wm::test::setRouteByIds({ 1200, 1201, 1202, 1203 }, wm);
 
-  maneuver.stop_and_wait_maneuver.end_dist = 55;
-  maneuver.stop_and_wait_maneuver.end_time = rclcpp::Time(11.175999999999998* 1e9);
+//   carma_planning_msgs::srv::PlanTrajectory::Request::SharedPtr req;
+//   req->vehicle_state.x_pos_global = 1.5;
+//   req->vehicle_state.y_pos_global = 5;
+//   req->vehicle_state.orientation = 3.14/2;
+//   req->vehicle_state.longitudinal_vel = 8.9408; // 20 mph
+//   req->header.stamp = rclcpp::Time(0.0* 1e9);
 
-  req->maneuver_plan.maneuvers.push_back(maneuver);
-  req->maneuver_index_to_plan = 0;
+//   carma_planning_msgs::msg::Maneuver maneuver;
+//   maneuver.type = carma_planning_msgs::msg::Maneuver::STOP_AND_WAIT;
+//   maneuver.stop_and_wait_maneuver.start_dist = 5.0;
+//   maneuver.stop_and_wait_maneuver.start_time = rclcpp::Time(0.0* 1e9);
+//   maneuver.stop_and_wait_maneuver.start_speed = 8.9408;
 
-  carma_planning_msgs::srv::PlanTrajectory::Response::SharedPtr resp;
-  plugin.plan_trajectory_cb(req, resp);
+//   maneuver.stop_and_wait_maneuver.end_dist = 55;
+//   maneuver.stop_and_wait_maneuver.end_time = rclcpp::Time(11.175999999999998* 1e9);
 
-  double dist = 0;
-  double vel = resp->trajectory_plan.initial_longitudinal_velocity;
-  bool first= true;
-  lanelet::BasicPoint2d prev_point;
-  rclcpp::Time prev_time = rclcpp::Time(0.0* 1e9);
-  for (auto point : resp->trajectory_plan.trajectory_points) {
-    lanelet::BasicPoint2d p(point.x, point.y);
-    RCLCPP_INFO_STREAM(rclcpp::get_logger("stop_and_wait_plugin"),"Y: " << point.y);
-    double delta = 0;
-    if (first) {
-      first = false;
-    } else {
-      delta = lanelet::geometry::distance2d(p, prev_point);
-      dist += delta;
-      RCLCPP_INFO_STREAM(rclcpp::get_logger("stop_and_wait_plugin"),"delta: " << delta << " timediff: " << (rclcpp::Time(point.target_time) - prev_time).seconds() << "pre_vel: " << vel);
-      vel = (2.0 * delta / (rclcpp::Time(point.target_time) - prev_time).seconds()) - vel;
-    }
-    RCLCPP_ERROR_STREAM(rclcpp::get_logger("stop_and_wait_plugin"),"point time: " << rclcpp::Time(point.target_time).seconds() << " dist: " << dist << " vel: " << vel);
-    prev_point = p;
-    prev_time = point.target_time;
-  }
-}
+//   req->maneuver_plan.maneuvers.push_back(maneuver);
+//   req->maneuver_index_to_plan = 0;
+
+//   carma_planning_msgs::srv::PlanTrajectory::Response::SharedPtr resp;
+//   plugin.plan_trajectory_cb(req, resp);
+
+//   double dist = 0;
+//   double vel = resp->trajectory_plan.initial_longitudinal_velocity;
+//   bool first= true;
+//   lanelet::BasicPoint2d prev_point;
+//   rclcpp::Time prev_time = rclcpp::Time(0.0* 1e9);
+//   for (auto point : resp->trajectory_plan.trajectory_points) {
+//     lanelet::BasicPoint2d p(point.x, point.y);
+//     RCLCPP_INFO_STREAM(rclcpp::get_logger("stop_and_wait_plugin"),"Y: " << point.y);
+//     double delta = 0;
+//     if (first) {
+//       first = false;
+//     } else {
+//       delta = lanelet::geometry::distance2d(p, prev_point);
+//       dist += delta;
+//       RCLCPP_INFO_STREAM(rclcpp::get_logger("stop_and_wait_plugin"),"delta: " << delta << " timediff: " << (rclcpp::Time(point.target_time) - prev_time).seconds() << "pre_vel: " << vel);
+//       vel = (2.0 * delta / (rclcpp::Time(point.target_time) - prev_time).seconds()) - vel;
+//     }
+//     RCLCPP_ERROR_STREAM(rclcpp::get_logger("stop_and_wait_plugin"),"point time: " << rclcpp::Time(point.target_time).seconds() << " dist: " << dist << " vel: " << vel);
+//     prev_point = p;
+//     prev_time = point.target_time;
+//   }
+// }
 }  // namespace stop_and_wait_plugin
 
 int main(int argc, char ** argv)

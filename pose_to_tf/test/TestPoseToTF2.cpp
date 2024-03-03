@@ -157,3 +157,4 @@ TEST(PoseToTF2, test_methods)
   ASSERT_EQ(0, msg.child_frame_id.compare(config.child_frame));
   ASSERT_NEAR(rclcpp::Time(poseD.header.stamp).seconds(), rclcpp::Time(msg.header.stamp).seconds(), 0.000000001);
 }
+

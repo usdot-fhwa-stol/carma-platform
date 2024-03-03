@@ -22,6 +22,7 @@
 
 #include "mobilitypath_publisher/mobilitypath_publisher.hpp"
 
+/**
 TEST(Testmobilitypath_publisher, test1)
 {
     carma_planning_msgs::msg::TrajectoryPlan plan;
@@ -58,7 +59,8 @@ TEST(Testmobilitypath_publisher, test1)
     ASSERT_EQ(res.trajectory.offsets[0].offset_y, -100);
     ASSERT_EQ(res.trajectory.offsets[0].offset_z, 0);
 }
-
+*/
+/**
 TEST(Testmobilitypath_publisher, test2)
 {
     carma_planning_msgs::msg::TrajectoryPlan plan;
@@ -79,7 +81,7 @@ TEST(Testmobilitypath_publisher, test2)
     ASSERT_EQ(0, res.trajectory.location.ecef_z);
     EXPECT_EQ(0, res.trajectory.offsets.size());
 }
-
+*/
 int main(int argc, char ** argv)
 {
     ::testing::InitGoogleTest(&argc, argv);

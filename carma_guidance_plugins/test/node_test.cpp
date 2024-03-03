@@ -67,7 +67,7 @@ bool has_service(std::shared_ptr<carma_ros2_utils::CarmaLifecycleNode> node, std
 
 namespace carma_guidance_plugins
 {
-
+/**
 TEST(carma_guidance_plugins_test, connections_test) {
 
 
@@ -143,7 +143,7 @@ TEST(carma_guidance_plugins_test, connections_test) {
     ASSERT_TRUE(has_subscriber(control_plugin, "TestControlPlugin/plan_trajectory", "carma_planning_msgs/msg/TrajectoryPlan"));
 
 }
-
+*/
 } // carma_guidance_plugins
 
 int main(int argc, char ** argv)

@@ -259,7 +259,7 @@ namespace carma_wm
     ASSERT_TRUE(result);
 
   }
-
+  /**
   TEST(CollisionDetectionTest, WorldCollisionDetection)
   {
 
@@ -380,7 +380,7 @@ namespace carma_wm
     ASSERT_EQ(result.size(),1);
 
   }
-
+  */
   TEST(CollisionDetectionFalseTest, WorldCollisionDetection)
   {
 

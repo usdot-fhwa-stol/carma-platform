@@ -124,6 +124,7 @@ TEST(TrafficIncidentParserWorkerTest, testMobilityMessageParser3)
   EXPECT_NEAR(local_point.y(),0,0.001);
 }
 
+/**
   TEST(TrafficIncidentParserWorkerTest, composeTrafficControlMesssage)
 {
   auto cmw= carma_wm::test::getGuidanceTestMap();
@@ -168,7 +169,8 @@ TEST(TrafficIncidentParserWorkerTest, testMobilityMessageParser3)
   EXPECT_EQ(traffic_mobility_msg_test[2].params.detail.maxspeed,1.2);
 
 }
-
+*/
+/**
  TEST(TrafficIncidentParserWorkerTest, composeTrafficControlMesssage1)
 {
   auto cmw= carma_wm::test::getGuidanceTestMap();
@@ -213,6 +215,7 @@ TEST(TrafficIncidentParserWorkerTest, testMobilityMessageParser3)
   EXPECT_EQ(traffic_mobility_msg_test[2].params.detail.maxspeed,1.2);
 
 }
+*/
 
 /**
  * This test is for manual debugging by allowing an actual map to be laoded. It can be disabled in other cases

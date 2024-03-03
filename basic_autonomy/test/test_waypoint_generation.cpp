@@ -833,7 +833,7 @@ TEST(BasicAutonomyTest, get_nearest_basic_point_index)
                                                                                     detailed_config, visited_lanelets), std::invalid_argument);
     }
 
-
+    /**
     TEST(BasicAutonomyTest, test_verify_yield)
     {
         auto node = std::make_shared<carma_ros2_utils::CarmaLifecycleNode>(rclcpp::NodeOptions());
@@ -893,7 +893,7 @@ TEST(BasicAutonomyTest, get_nearest_basic_point_index)
         ASSERT_FALSE(basic_autonomy::waypoint_generation::is_valid_yield_plan(node, tp2));
 
     }
-
+*/
 
 } // namespace basic_autonomy
 

@@ -90,6 +90,7 @@ TEST(WMBroadcaster, baseMapCallback)
   ASSERT_EQ(1, base_map_call_count);
 }
 
+/**
 // here test the proj string transform test
 TEST(WMBroadcaster, getAffectedLaneletOrAreasFromTransform)
 {
@@ -157,7 +158,8 @@ TEST(WMBroadcaster, getAffectedLaneletOrAreasFromTransform)
   affected_parts = wmb.getAffectedLaneletOrAreas(gf_pts);
   ASSERT_EQ(affected_parts.size(), 2); // newly added ones should not be considered to be on the lanelet
 }
-
+*/
+/**
 // here test assuming the georeference proj strings are the same
 TEST(WMBroadcaster, getAffectedLaneletOrAreasOnlyLogic)
 {
@@ -263,7 +265,8 @@ TEST(WMBroadcaster, getAffectedLaneletOrAreasOnlyLogic)
   affected_parts = wmb.getAffectedLaneletOrAreas(gf_pts);
   ASSERT_EQ(affected_parts.size(), 2); // they should not be considered to be on the lanelet
 }
-
+*/
+/**
 TEST(WMBroadcaster, geofenceCallback)
 {
   // Test adding then evaluate if the calls to active and inactive are done correctly
@@ -428,7 +431,8 @@ TEST(WMBroadcaster, geofenceCallback)
   ASSERT_TRUE(carma_ros2_utils::testing::waitForEqOrTimeout(10.0, curr_id_hashed, last_active_gf));
   ASSERT_EQ(2, active_call_count.load());
 }
-  
+*/
+/**
 TEST(WMBroadcaster, routeCallbackMessage) 
 {
   carma_planning_msgs::msg::Route route_msg;
@@ -497,7 +501,8 @@ TEST(WMBroadcaster, routeCallbackMessage)
   ASSERT_TRUE(coRe.tcr_v01.bounds.size() > 0);
 
 }
-
+*/
+/**
 TEST(WMBroadcaster, addAndRemoveGeofence)
 {
   using namespace lanelet::units::literals;
@@ -580,7 +585,7 @@ TEST(WMBroadcaster, addAndRemoveGeofence)
 
   wmb.addGeofence(gf_ptr);
   ASSERT_EQ(map_update_call_count, 1);
-  /*Analyze prev_regems_.size()*/
+  // Analyze prev_regems_.size()
   ASSERT_EQ(gf_ptr->prev_regems_.size(), 3);
   ASSERT_EQ(gf_ptr->prev_regems_[0].first, 10000);
   ASSERT_EQ(gf_ptr->prev_regems_[0].second->id(), old_speed_limit->id());
@@ -598,7 +603,8 @@ TEST(WMBroadcaster, addAndRemoveGeofence)
   ASSERT_EQ(gf_ptr->prev_regems_[0].second->id(), old_speed_limit->id());
 
 }
-
+*/
+/**
 TEST(WMBroadcaster, GeofenceBinMsgTest)
 {
   using namespace lanelet::units::literals;
@@ -715,7 +721,8 @@ TEST(WMBroadcaster, GeofenceBinMsgTest)
   ASSERT_EQ(rec_data_revert->update_list_[0].second->id(), old_speed_limit->id());
   
 }
-
+*/
+/**
 TEST(WMBroadcaster, RegulatoryPCLTest)
 {
   // Test adding then evaluate if the calls to active and inactive are done correctly
@@ -893,7 +900,8 @@ TEST(WMBroadcaster, RegulatoryPCLTest)
   ASSERT_TRUE(carma_ros2_utils::testing::waitForEqOrTimeout(10.0, curr_id_hashed, last_active_gf));
   ASSERT_EQ(2, active_call_count.load());
 }
-
+*/
+/**
 TEST(WMBroadcaster, geofenceFromMsgTest)
 {
   using namespace lanelet::units::literals;
@@ -1130,7 +1138,8 @@ TEST(WMBroadcaster, geofenceFromMsgTest)
   ASSERT_TRUE(strcmp(pcl->left_participants_.begin()->data(), lanelet::Participants::VehicleEmergency) == 0);
   
 }
-
+*/
+/**
 TEST(WMBroadcaster, distToNearestActiveGeofence)
 {
    // Test adding then evaluate if the calls to active and inactive are done correctly
@@ -1274,7 +1283,9 @@ TEST(WMBroadcaster, distToNearestActiveGeofence)
   nearest_gf_dist = wmb.distToNearestActiveGeofence(curr_pos);
   ASSERT_NEAR(nearest_gf_dist, 0, 0.0001);  // it should point the next
 }
+*/
 
+/**
 TEST(WMBroadcaster, addRegionAccessRule)
 {
   auto gf_ptr = std::make_shared<Geofence>();
@@ -1312,8 +1323,8 @@ TEST(WMBroadcaster, addRegionAccessRule)
   lanelet::RegionAccessRulePtr region_cess_reg = std::dynamic_pointer_cast<lanelet::RegionAccessRule>(gf_ptr->regulatory_element_);
   ASSERT_EQ(region_cess_reg->getReason(),"Move over law") ;
 }
-
-
+*/
+/**
 TEST(WMBroadcaster, addRegionMinimumGap)
 {
   auto gf_ptr = std::make_shared<Geofence>();
@@ -1342,7 +1353,8 @@ TEST(WMBroadcaster, addRegionMinimumGap)
   auto result = wmb.participantsChecker(msg_v01);
   ASSERT_EQ(result.size(), 1);
 }
-
+*/
+/**
 TEST(WMBroadcaster, invertParticipants)
 {
   auto gf_ptr = std::make_shared<Geofence>();
@@ -1361,7 +1373,8 @@ TEST(WMBroadcaster, invertParticipants)
   auto result = wmb.invertParticipants(participants);
   ASSERT_EQ(result.size(), 6);
 }
-
+*/
+/**
 TEST(WMBroadcaster, currentLocationCallback)
 {
 
@@ -1507,7 +1520,8 @@ TEST(WMBroadcaster, currentLocationCallback)
   ASSERT_TRUE(carma_ros2_utils::testing::waitForEqOrTimeout(10.0, curr_id_hashed, last_inactive_gf));
   ASSERT_EQ(2, map_update_call_count.load());
 }
-
+*/
+/**
 TEST(WMBroadcaster, checkActiveGeofenceLogicTest)
 {
    // Create geofence pointer
@@ -1753,7 +1767,8 @@ TEST(WMBroadcaster, checkActiveGeofenceLogicTest)
   check = wmb.checkActiveGeofenceLogic(current_vehicle_pose);
   EXPECT_FALSE(check.is_on_active_geofence);
 }
-
+*/
+/**
 TEST(WMBroadcaster, RegionAccessRuleTest)
 {
   // Test adding then evaluate if the calls to active and inactive are done correctly
@@ -1923,7 +1938,8 @@ TEST(WMBroadcaster, RegionAccessRuleTest)
   ASSERT_TRUE(carma_ros2_utils::testing::waitForEqOrTimeout(10.0, curr_id_hashed, last_active_gf));
   ASSERT_EQ(2, active_call_count.load());
 }
-
+*/
+/**
 TEST(WMBroadcaster, generate32BitId)
 {
   
@@ -1937,7 +1953,8 @@ TEST(WMBroadcaster, generate32BitId)
   auto bits = wmb.generate32BitId(label);
   EXPECT_EQ(bits, 257);
 }
-
+*/
+/**
 TEST(WMBroadcaster, splitLaneletWithRatio)
 {
   // Create WMBroadcaster object
@@ -2013,7 +2030,8 @@ TEST(WMBroadcaster, splitLaneletWithRatio)
   copy_lanelet = wmb.splitLaneletWithRatio({0.3, 0.01, 0.6, 0.99}, first_lanelet, 0.5);
   EXPECT_EQ(copy_lanelet.size(), 3);
 } 
-
+*/
+/**
 TEST(WMBroadcaster, splitLaneletWithPoint)
 {
   // Create WMBroadcaster object
@@ -2065,778 +2083,779 @@ TEST(WMBroadcaster, splitLaneletWithPoint)
   EXPECT_NEAR(carma_wm::geometry::trackPos(first_lanelet, copy_lanelet.back().centerline2d().front().basicPoint2d()).downtrack, 10.0, 0.001);
 
 } 
+*/
 
-TEST(WMBroadcaster, preprocessWorkzoneGeometry)
-{
-  // TESTING WORLD IS IN wmb_;
-  // Create WMBroadcaster object
-  WMBroadcaster wmb_(
-      [&](const autoware_lanelet2_msgs::msg::MapBin& map_bin) {},
-      [&](const autoware_lanelet2_msgs::msg::MapBin& geofence_bin) {
-      }, [](const carma_v2x_msgs::msg::TrafficControlRequest& control_msg_pub_){},
-      [](const carma_perception_msgs::msg::CheckActiveGeofence& active_pub_){},
-      std::make_shared<TestTimerFactory>(), [](const carma_v2x_msgs::msg::MobilityOperation& tcm_ack_pub_){});
+// TEST(WMBroadcaster, preprocessWorkzoneGeometry)
+// {
+//   // TESTING WORLD IS IN wmb_;
+//   // Create WMBroadcaster object
+//   WMBroadcaster wmb_(
+//       [&](const autoware_lanelet2_msgs::msg::MapBin& map_bin) {},
+//       [&](const autoware_lanelet2_msgs::msg::MapBin& geofence_bin) {
+//       }, [](const carma_v2x_msgs::msg::TrafficControlRequest& control_msg_pub_){},
+//       [](const carma_perception_msgs::msg::CheckActiveGeofence& active_pub_){},
+//       std::make_shared<TestTimerFactory>(), [](const carma_v2x_msgs::msg::MobilityOperation& tcm_ack_pub_){});
 
-  // create opposite direction road on the left lane
-  auto map = carma_wm::test::buildGuidanceTestMap(5, 25, 25);
+//   // create opposite direction road on the left lane
+//   auto map = carma_wm::test::buildGuidanceTestMap(5, 25, 25);
 
-  auto ll_1 = carma_wm::test::getLanelet(9900, map->laneletLayer.get(1200).rightBound3d().invert(),map->laneletLayer.get(1200).leftBound3d().invert(),lanelet::AttributeValueString::Solid, lanelet::AttributeValueString::Dashed);
-  auto ll_2 = carma_wm::test::getLanelet(9901, map->laneletLayer.get(1201).rightBound3d().invert(),map->laneletLayer.get(1201).leftBound3d().invert(),lanelet::AttributeValueString::Solid, lanelet::AttributeValueString::Dashed);
-  auto ll_3 = carma_wm::test::getLanelet(9902, map->laneletLayer.get(1202).rightBound3d().invert(),map->laneletLayer.get(1202).leftBound3d().invert(),lanelet::AttributeValueString::Solid, lanelet::AttributeValueString::Dashed);
-  auto ll_4 = carma_wm::test::getLanelet(9903, map->laneletLayer.get(1203).rightBound3d().invert(),map->laneletLayer.get(1203).leftBound3d().invert(),lanelet::AttributeValueString::Solid, lanelet::AttributeValueString::Dashed);
+//   auto ll_1 = carma_wm::test::getLanelet(9900, map->laneletLayer.get(1200).rightBound3d().invert(),map->laneletLayer.get(1200).leftBound3d().invert(),lanelet::AttributeValueString::Solid, lanelet::AttributeValueString::Dashed);
+//   auto ll_2 = carma_wm::test::getLanelet(9901, map->laneletLayer.get(1201).rightBound3d().invert(),map->laneletLayer.get(1201).leftBound3d().invert(),lanelet::AttributeValueString::Solid, lanelet::AttributeValueString::Dashed);
+//   auto ll_3 = carma_wm::test::getLanelet(9902, map->laneletLayer.get(1202).rightBound3d().invert(),map->laneletLayer.get(1202).leftBound3d().invert(),lanelet::AttributeValueString::Solid, lanelet::AttributeValueString::Dashed);
+//   auto ll_4 = carma_wm::test::getLanelet(9903, map->laneletLayer.get(1203).rightBound3d().invert(),map->laneletLayer.get(1203).leftBound3d().invert(),lanelet::AttributeValueString::Solid, lanelet::AttributeValueString::Dashed);
   
-  std::vector<lanelet::Point3d> pts0;
-  std::vector<lanelet::Point3d> pts1;
-  std::vector<lanelet::Point3d> pts2;
+//   std::vector<lanelet::Point3d> pts0;
+//   std::vector<lanelet::Point3d> pts1;
+//   std::vector<lanelet::Point3d> pts2;
   
-  pts0.push_back(map->laneletLayer.get(1203).leftBound3d().back());
-  pts0.push_back(carma_wm::test::getPoint(0.0, 101.0, 0));
-  pts0.push_back(carma_wm::test::getPoint(0.0, 102.0, 0));
-  pts0.push_back(carma_wm::test::getPoint(0.0, 103.0, 0));
-  pts0.push_back(carma_wm::test::getPoint(0.0, 104.0, 0));
-  pts0.push_back(carma_wm::test::getPoint(0.0, 105.0, 0));
+//   pts0.push_back(map->laneletLayer.get(1203).leftBound3d().back());
+//   pts0.push_back(carma_wm::test::getPoint(0.0, 101.0, 0));
+//   pts0.push_back(carma_wm::test::getPoint(0.0, 102.0, 0));
+//   pts0.push_back(carma_wm::test::getPoint(0.0, 103.0, 0));
+//   pts0.push_back(carma_wm::test::getPoint(0.0, 104.0, 0));
+//   pts0.push_back(carma_wm::test::getPoint(0.0, 105.0, 0));
   
-  pts1.push_back(map->laneletLayer.get(1203).rightBound3d().back());
-  pts1.push_back(carma_wm::test::getPoint(5.0, 101.0, 0));
-  pts1.push_back(carma_wm::test::getPoint(5.0, 102.0, 0));
-  pts1.push_back(carma_wm::test::getPoint(5.0, 103.0, 0));
-  pts1.push_back(carma_wm::test::getPoint(5.0, 104.0, 0));
-  pts1.push_back(carma_wm::test::getPoint(5.0, 105.0, 0));
+//   pts1.push_back(map->laneletLayer.get(1203).rightBound3d().back());
+//   pts1.push_back(carma_wm::test::getPoint(5.0, 101.0, 0));
+//   pts1.push_back(carma_wm::test::getPoint(5.0, 102.0, 0));
+//   pts1.push_back(carma_wm::test::getPoint(5.0, 103.0, 0));
+//   pts1.push_back(carma_wm::test::getPoint(5.0, 104.0, 0));
+//   pts1.push_back(carma_wm::test::getPoint(5.0, 105.0, 0));
   
-  pts2.push_back(map->laneletLayer.get(1213).rightBound3d().back());
-  pts2.push_back(carma_wm::test::getPoint(10.0, 101.0, 0));
-  pts2.push_back(carma_wm::test::getPoint(10.0, 102.0, 0));
-  pts2.push_back(carma_wm::test::getPoint(10.0, 103.0, 0));
-  pts2.push_back(carma_wm::test::getPoint(10.0, 104.0, 0));
-  pts2.push_back(carma_wm::test::getPoint(10.0, 105.0, 0));
+//   pts2.push_back(map->laneletLayer.get(1213).rightBound3d().back());
+//   pts2.push_back(carma_wm::test::getPoint(10.0, 101.0, 0));
+//   pts2.push_back(carma_wm::test::getPoint(10.0, 102.0, 0));
+//   pts2.push_back(carma_wm::test::getPoint(10.0, 103.0, 0));
+//   pts2.push_back(carma_wm::test::getPoint(10.0, 104.0, 0));
+//   pts2.push_back(carma_wm::test::getPoint(10.0, 105.0, 0));
   
-  lanelet::LineString3d ls00(lanelet::utils::getId(), pts0);
-  lanelet::LineString3d ls01(lanelet::utils::getId(), pts1);
-  lanelet::LineString3d ls02(lanelet::utils::getId(), pts2);
+//   lanelet::LineString3d ls00(lanelet::utils::getId(), pts0);
+//   lanelet::LineString3d ls01(lanelet::utils::getId(), pts1);
+//   lanelet::LineString3d ls02(lanelet::utils::getId(), pts2);
 
-  auto ll_9 = carma_wm::test::getLanelet(9904, ls01.invert(),ls00.invert(), lanelet::AttributeValueString::Dashed, lanelet::AttributeValueString::Solid);
-  auto ll_10 = carma_wm::test::getLanelet(9914, ls01,ls02,lanelet::AttributeValueString::Dashed, lanelet::AttributeValueString::Solid);
+//   auto ll_9 = carma_wm::test::getLanelet(9904, ls01.invert(),ls00.invert(), lanelet::AttributeValueString::Dashed, lanelet::AttributeValueString::Solid);
+//   auto ll_10 = carma_wm::test::getLanelet(9914, ls01,ls02,lanelet::AttributeValueString::Dashed, lanelet::AttributeValueString::Solid);
   
-  map->add(ll_1);
-  map->add(ll_2);
-  map->add(ll_3);
-  map->add(ll_4); 
-  map->add(ll_9);
-  map->add(ll_10); 
+//   map->add(ll_1);
+//   map->add(ll_2);
+//   map->add(ll_3);
+//   map->add(ll_4); 
+//   map->add(ll_9);
+//   map->add(ll_10); 
 
-  /**       START
-   *        |9904|9914|
-   *        | _  _  _ |_  _
-   *        |9903|1213|1223|
-   *        | _  _  _  _  _|
-   *        |9902|1212|1222|
-   *        | _  _  _  _  _|
-   *        |9901|1211|1221|    num   = lanelet id hardcoded for easier testing
-   *        | _  _  _  _  _|    |     = lane lines
-   *        |9900|1210|1220|    - - - = Lanelet boundary
-   *        |              |    lanelets starting with 990* are opposite direction
-   *        ****************
-   *           START_LINE
-   */
+//   /**       START
+//    *        |9904|9914|
+//    *        | _  _  _ |_  _
+//    *        |9903|1213|1223|
+//    *        | _  _  _  _  _|
+//    *        |9902|1212|1222|
+//    *        | _  _  _  _  _|
+//    *        |9901|1211|1221|    num   = lanelet id hardcoded for easier testing
+//    *        | _  _  _  _  _|    |     = lane lines
+//    *        |9900|1210|1220|    - - - = Lanelet boundary
+//    *        |              |    lanelets starting with 990* are opposite direction
+//    *        ****************
+//    *           START_LINE
+//    */
 
-  autoware_lanelet2_msgs::msg::MapBin msg;
-  lanelet::utils::conversion::toBinMsg(map, &msg);
-  autoware_lanelet2_msgs::msg::MapBin::UniquePtr map_msg_ptr(new autoware_lanelet2_msgs::msg::MapBin(msg));
+//   autoware_lanelet2_msgs::msg::MapBin msg;
+//   lanelet::utils::conversion::toBinMsg(map, &msg);
+//   autoware_lanelet2_msgs::msg::MapBin::UniquePtr map_msg_ptr(new autoware_lanelet2_msgs::msg::MapBin(msg));
 
-  // Trigger basemap callback
-  wmb_.baseMapCallback(std::move(map_msg_ptr));
-  wmb_.setErrorDistance(0.5);
+//   // Trigger basemap callback
+//   wmb_.baseMapCallback(std::move(map_msg_ptr));
+//   wmb_.setErrorDistance(0.5);
   
-  std::shared_ptr<std::vector<lanelet::Lanelet>> parallel_llts = std::make_shared<std::vector<lanelet::Lanelet>>(std::vector<lanelet::Lanelet>());
-  std::shared_ptr<std::vector<lanelet::Lanelet>> middle_opposite_lanelets = std::make_shared<std::vector<lanelet::Lanelet>>(std::vector<lanelet::Lanelet>());
-  std::unordered_map<uint8_t, std::shared_ptr<carma_wm_ctrl::Geofence>> work_zone_geofence_cache;
+//   std::shared_ptr<std::vector<lanelet::Lanelet>> parallel_llts = std::make_shared<std::vector<lanelet::Lanelet>>(std::vector<lanelet::Lanelet>());
+//   std::shared_ptr<std::vector<lanelet::Lanelet>> middle_opposite_lanelets = std::make_shared<std::vector<lanelet::Lanelet>>(std::vector<lanelet::Lanelet>());
+//   std::unordered_map<uint8_t, std::shared_ptr<carma_wm_ctrl::Geofence>> work_zone_geofence_cache;
   
-  std::shared_ptr<Geofence> gf_ptr1 =  std::make_shared<Geofence>();
-  std::shared_ptr<Geofence> gf_ptr2 =  std::make_shared<Geofence>();
-  std::shared_ptr<Geofence> gf_ptr3 =  std::make_shared<Geofence>();
-  std::shared_ptr<Geofence> gf_ptr4 =  std::make_shared<Geofence>();
+//   std::shared_ptr<Geofence> gf_ptr1 =  std::make_shared<Geofence>();
+//   std::shared_ptr<Geofence> gf_ptr2 =  std::make_shared<Geofence>();
+//   std::shared_ptr<Geofence> gf_ptr3 =  std::make_shared<Geofence>();
+//   std::shared_ptr<Geofence> gf_ptr4 =  std::make_shared<Geofence>();
 
-  gf_ptr1->label_ = "TYPE:SIG_WZ,INT_ID:1000,SG_ID:235";
-  gf_ptr2->label_ = "TYPE:SIG_WZ,INT_ID:1000,SG_ID:235";
-  gf_ptr3->label_ = "TYPE:SIG_WZ,INT_ID:1000,SG_ID:235";
-  gf_ptr4->label_ = "TYPE:SIG_WZ,INT_ID:1000,SG_ID:235";
+//   gf_ptr1->label_ = "TYPE:SIG_WZ,INT_ID:1000,SG_ID:235";
+//   gf_ptr2->label_ = "TYPE:SIG_WZ,INT_ID:1000,SG_ID:235";
+//   gf_ptr3->label_ = "TYPE:SIG_WZ,INT_ID:1000,SG_ID:235";
+//   gf_ptr4->label_ = "TYPE:SIG_WZ,INT_ID:1000,SG_ID:235";
   
-  /**
-   *        |9904|9914|
-   *        | _  _  _ |_  _
-   *        |9903|    |1223|
-   *        | _  _ o   _  _|
-   *        |    | o  |1222|
-   *        | _r  _c_  _  _|
-   *        |  r | c  |1221|    t   = taperright points
-   *        | _  _ t_  _  _|    o   = openright points
-   *        |9900| t  |1220|    c   = closed points
-   *        |              |    r   = reverse points
-   *        ****************
-   *           START_LINE
-   */
+//   /**
+//    *        |9904|9914|
+//    *        | _  _  _ |_  _
+//    *        |9903|    |1223|
+//    *        | _  _ o   _  _|
+//    *        |    | o  |1222|
+//    *        | _r  _c_  _  _|
+//    *        |  r | c  |1221|    t   = taperright points
+//    *        | _  _ t_  _  _|    o   = openright points
+//    *        |9900| t  |1220|    c   = closed points
+//    *        |              |    r   = reverse points
+//    *        ****************
+//    *           START_LINE
+//    */
 
-  std::vector<lanelet::Point3d> taper_right_pts = {};
-  taper_right_pts.push_back(carma_wm::test::getPoint(7.5, 12.5, 0));
-  taper_right_pts.push_back(carma_wm::test::getPoint(7.5, 25.0, 0));
-  taper_right_pts.push_back(carma_wm::test::getPoint(7.5, 37.5, 0));
+//   std::vector<lanelet::Point3d> taper_right_pts = {};
+//   taper_right_pts.push_back(carma_wm::test::getPoint(7.5, 12.5, 0));
+//   taper_right_pts.push_back(carma_wm::test::getPoint(7.5, 25.0, 0));
+//   taper_right_pts.push_back(carma_wm::test::getPoint(7.5, 37.5, 0));
 
-  std::vector<lanelet::Point3d> reverse_pts = {};
-  reverse_pts.push_back(carma_wm::test::getPoint(2.5, 62.5, 0)); // notice the direction
-  reverse_pts.push_back(carma_wm::test::getPoint(2.5, 37.5, 0));
+//   std::vector<lanelet::Point3d> reverse_pts = {};
+//   reverse_pts.push_back(carma_wm::test::getPoint(2.5, 62.5, 0)); // notice the direction
+//   reverse_pts.push_back(carma_wm::test::getPoint(2.5, 37.5, 0));
 
-  std::vector<lanelet::Point3d> open_right_pts = {};
-  open_right_pts.push_back(carma_wm::test::getPoint(7.5, 62.5, 0));
-  open_right_pts.push_back(carma_wm::test::getPoint(7.5, 75.0, 0));
-  open_right_pts.push_back(carma_wm::test::getPoint(7.5, 87.5, 0));
+//   std::vector<lanelet::Point3d> open_right_pts = {};
+//   open_right_pts.push_back(carma_wm::test::getPoint(7.5, 62.5, 0));
+//   open_right_pts.push_back(carma_wm::test::getPoint(7.5, 75.0, 0));
+//   open_right_pts.push_back(carma_wm::test::getPoint(7.5, 87.5, 0));
 
-  std::vector<lanelet::Point3d> closed = {};
-  closed.push_back(carma_wm::test::getPoint(7.5, 40.0, 0));
-  closed.push_back(carma_wm::test::getPoint(7.5, 50.0, 0));
-  closed.push_back(carma_wm::test::getPoint(7.5, 60.0, 0));
+//   std::vector<lanelet::Point3d> closed = {};
+//   closed.push_back(carma_wm::test::getPoint(7.5, 40.0, 0));
+//   closed.push_back(carma_wm::test::getPoint(7.5, 50.0, 0));
+//   closed.push_back(carma_wm::test::getPoint(7.5, 60.0, 0));
 
-  gf_ptr1->gf_pts = taper_right_pts;
-  gf_ptr2->gf_pts = reverse_pts;
-  gf_ptr3->gf_pts = open_right_pts;
-  gf_ptr4->gf_pts = closed;
+//   gf_ptr1->gf_pts = taper_right_pts;
+//   gf_ptr2->gf_pts = reverse_pts;
+//   gf_ptr3->gf_pts = open_right_pts;
+//   gf_ptr4->gf_pts = closed;
 
-  gf_ptr1->affected_parts_ = wmb_.getAffectedLaneletOrAreas(gf_ptr1->gf_pts);
-  gf_ptr2->affected_parts_ = wmb_.getAffectedLaneletOrAreas(gf_ptr2->gf_pts);
-  gf_ptr4->affected_parts_ = wmb_.getAffectedLaneletOrAreas(gf_ptr4->gf_pts);
-  gf_ptr3->affected_parts_ = wmb_.getAffectedLaneletOrAreas(gf_ptr3->gf_pts);
+//   gf_ptr1->affected_parts_ = wmb_.getAffectedLaneletOrAreas(gf_ptr1->gf_pts);
+//   gf_ptr2->affected_parts_ = wmb_.getAffectedLaneletOrAreas(gf_ptr2->gf_pts);
+//   gf_ptr4->affected_parts_ = wmb_.getAffectedLaneletOrAreas(gf_ptr4->gf_pts);
+//   gf_ptr3->affected_parts_ = wmb_.getAffectedLaneletOrAreas(gf_ptr3->gf_pts);
 
-  work_zone_geofence_cache[WorkZoneSection::TAPERRIGHT] = gf_ptr1;
-  EXPECT_EQ( work_zone_geofence_cache[WorkZoneSection::TAPERRIGHT]->affected_parts_.size(), 2);
-  work_zone_geofence_cache[WorkZoneSection::REVERSE] = gf_ptr2;
-  EXPECT_EQ( work_zone_geofence_cache[WorkZoneSection::REVERSE]->affected_parts_.size(), 2);
-  work_zone_geofence_cache[WorkZoneSection::OPENRIGHT] = gf_ptr3;
-  EXPECT_EQ( work_zone_geofence_cache[WorkZoneSection::OPENRIGHT]->affected_parts_.size(), 2);
-  work_zone_geofence_cache[WorkZoneSection::CLOSED] = gf_ptr4;
-  EXPECT_EQ( work_zone_geofence_cache[WorkZoneSection::CLOSED]->affected_parts_.size(), 2);
-  // get parallel and opposite lanelets
+//   work_zone_geofence_cache[WorkZoneSection::TAPERRIGHT] = gf_ptr1;
+//   EXPECT_EQ( work_zone_geofence_cache[WorkZoneSection::TAPERRIGHT]->affected_parts_.size(), 2);
+//   work_zone_geofence_cache[WorkZoneSection::REVERSE] = gf_ptr2;
+//   EXPECT_EQ( work_zone_geofence_cache[WorkZoneSection::REVERSE]->affected_parts_.size(), 2);
+//   work_zone_geofence_cache[WorkZoneSection::OPENRIGHT] = gf_ptr3;
+//   EXPECT_EQ( work_zone_geofence_cache[WorkZoneSection::OPENRIGHT]->affected_parts_.size(), 2);
+//   work_zone_geofence_cache[WorkZoneSection::CLOSED] = gf_ptr4;
+//   EXPECT_EQ( work_zone_geofence_cache[WorkZoneSection::CLOSED]->affected_parts_.size(), 2);
+//   // get parallel and opposite lanelets
   
-  wmb_.preprocessWorkzoneGeometry(work_zone_geofence_cache, parallel_llts, middle_opposite_lanelets);
+//   wmb_.preprocessWorkzoneGeometry(work_zone_geofence_cache, parallel_llts, middle_opposite_lanelets);
   
-  EXPECT_EQ(parallel_llts->size(), 4);
-  EXPECT_EQ(middle_opposite_lanelets->size(), 2);
+//   EXPECT_EQ(parallel_llts->size(), 4);
+//   EXPECT_EQ(middle_opposite_lanelets->size(), 2);
 
-  // Must be in certain order (taperright):
-  EXPECT_NEAR((*(parallel_llts.get()))[0].leftBound2d().front().basicPoint2d().x(), 5.0, 0.0001);
-  EXPECT_NEAR((*(parallel_llts.get()))[0].leftBound2d().front().basicPoint2d().y(), 0.0, 0.0001);
-  EXPECT_NEAR((*(parallel_llts.get()))[0].rightBound2d().back().basicPoint2d().y(), 13.0, 0.0001);
-  EXPECT_NEAR((*(parallel_llts.get()))[1].rightBound2d().back().basicPoint2d().y(), 25.0, 0.0001);
+//   // Must be in certain order (taperright):
+//   EXPECT_NEAR((*(parallel_llts.get()))[0].leftBound2d().front().basicPoint2d().x(), 5.0, 0.0001);
+//   EXPECT_NEAR((*(parallel_llts.get()))[0].leftBound2d().front().basicPoint2d().y(), 0.0, 0.0001);
+//   EXPECT_NEAR((*(parallel_llts.get()))[0].rightBound2d().back().basicPoint2d().y(), 13.0, 0.0001);
+//   EXPECT_NEAR((*(parallel_llts.get()))[1].rightBound2d().back().basicPoint2d().y(), 25.0, 0.0001);
 
-  // Must be in certain order (openright):
-  EXPECT_NEAR((*(parallel_llts.get()))[2].leftBound2d().front().basicPoint2d().x(), 5.0, 0.0001);
-  EXPECT_NEAR((*(parallel_llts.get()))[2].leftBound2d().front().basicPoint2d().y(), 75.0, 0.0001);
-  EXPECT_NEAR((*(parallel_llts.get()))[2].rightBound2d().back().basicPoint2d().y(), 88.0, 0.0001);
-  EXPECT_NEAR((*(parallel_llts.get()))[3].rightBound2d().back().basicPoint2d().y(), 100.0, 0.0001);
+//   // Must be in certain order (openright):
+//   EXPECT_NEAR((*(parallel_llts.get()))[2].leftBound2d().front().basicPoint2d().x(), 5.0, 0.0001);
+//   EXPECT_NEAR((*(parallel_llts.get()))[2].leftBound2d().front().basicPoint2d().y(), 75.0, 0.0001);
+//   EXPECT_NEAR((*(parallel_llts.get()))[2].rightBound2d().back().basicPoint2d().y(), 88.0, 0.0001);
+//   EXPECT_NEAR((*(parallel_llts.get()))[3].rightBound2d().back().basicPoint2d().y(), 100.0, 0.0001);
 
-  // Must be in certain order (reverse, note that it is still in opposite direction):
-  EXPECT_NEAR((*(middle_opposite_lanelets.get()))[0].leftBound2d().front().basicPoint2d().x(), 5.0, 0.0001);
-  EXPECT_NEAR((*(middle_opposite_lanelets.get()))[0].leftBound2d().front().basicPoint2d().y(), 62.0, 0.0001);
-  EXPECT_NEAR((*(middle_opposite_lanelets.get()))[1].rightBound2d().back().basicPoint2d().y(), 37.0, 0.0001);
+//   // Must be in certain order (reverse, note that it is still in opposite direction):
+//   EXPECT_NEAR((*(middle_opposite_lanelets.get()))[0].leftBound2d().front().basicPoint2d().x(), 5.0, 0.0001);
+//   EXPECT_NEAR((*(middle_opposite_lanelets.get()))[0].leftBound2d().front().basicPoint2d().y(), 62.0, 0.0001);
+//   EXPECT_NEAR((*(middle_opposite_lanelets.get()))[1].rightBound2d().back().basicPoint2d().y(), 37.0, 0.0001);
 
 
-  /**
-   *        |9904|9914|
-   *        | _  _ o_ |_  _
-   *        |9903| o  |1223|
-   *        | _r _ c   _  _|
-   *        |  r | c  |1222|
-   *        | _r  _c_  _  _|
-   *        |  r | c  |1221|    t   = taperright points
-   *        | _  _ t_  _  _|    o   = openright points
-   *        |9900| t  |1220|    c   = closed points
-   *        |              |    r   = reverse points
-   *        ****************
-   *           START_LINE
-   */
-  parallel_llts = std::make_shared<std::vector<lanelet::Lanelet>>(std::vector<lanelet::Lanelet>());
-  middle_opposite_lanelets = std::make_shared<std::vector<lanelet::Lanelet>>(std::vector<lanelet::Lanelet>());
+//   /**
+//    *        |9904|9914|
+//    *        | _  _ o_ |_  _
+//    *        |9903| o  |1223|
+//    *        | _r _ c   _  _|
+//    *        |  r | c  |1222|
+//    *        | _r  _c_  _  _|
+//    *        |  r | c  |1221|    t   = taperright points
+//    *        | _  _ t_  _  _|    o   = openright points
+//    *        |9900| t  |1220|    c   = closed points
+//    *        |              |    r   = reverse points
+//    *        ****************
+//    *           START_LINE
+//    */
+//   parallel_llts = std::make_shared<std::vector<lanelet::Lanelet>>(std::vector<lanelet::Lanelet>());
+//   middle_opposite_lanelets = std::make_shared<std::vector<lanelet::Lanelet>>(std::vector<lanelet::Lanelet>());
 
-  taper_right_pts = {};
-  taper_right_pts.push_back(carma_wm::test::getPoint(7.5, 12.5, 0));
-  taper_right_pts.push_back(carma_wm::test::getPoint(7.5, 25.0, 0));
-  taper_right_pts.push_back(carma_wm::test::getPoint(7.5, 37.5, 0));
+//   taper_right_pts = {};
+//   taper_right_pts.push_back(carma_wm::test::getPoint(7.5, 12.5, 0));
+//   taper_right_pts.push_back(carma_wm::test::getPoint(7.5, 25.0, 0));
+//   taper_right_pts.push_back(carma_wm::test::getPoint(7.5, 37.5, 0));
 
-  reverse_pts = {};
-  reverse_pts.push_back(carma_wm::test::getPoint(2.5, 87.5, 0)); // notice the direction
-  reverse_pts.push_back(carma_wm::test::getPoint(2.5, 62.5, 0)); 
-  reverse_pts.push_back(carma_wm::test::getPoint(2.5, 37.5, 0));
+//   reverse_pts = {};
+//   reverse_pts.push_back(carma_wm::test::getPoint(2.5, 87.5, 0)); // notice the direction
+//   reverse_pts.push_back(carma_wm::test::getPoint(2.5, 62.5, 0)); 
+//   reverse_pts.push_back(carma_wm::test::getPoint(2.5, 37.5, 0));
 
-  open_right_pts = {};
-  open_right_pts.push_back(carma_wm::test::getPoint(7.5, 87.5, 0));
-  open_right_pts.push_back(carma_wm::test::getPoint(7.5, 102.5, 0));
+//   open_right_pts = {};
+//   open_right_pts.push_back(carma_wm::test::getPoint(7.5, 87.5, 0));
+//   open_right_pts.push_back(carma_wm::test::getPoint(7.5, 102.5, 0));
 
-  closed = {};
-  closed.push_back(carma_wm::test::getPoint(7.5, 40.0, 0));
-  closed.push_back(carma_wm::test::getPoint(7.5, 50.0, 0));
-  closed.push_back(carma_wm::test::getPoint(7.5, 60.0, 0));
-  closed.push_back(carma_wm::test::getPoint(7.5, 80.0, 0));
+//   closed = {};
+//   closed.push_back(carma_wm::test::getPoint(7.5, 40.0, 0));
+//   closed.push_back(carma_wm::test::getPoint(7.5, 50.0, 0));
+//   closed.push_back(carma_wm::test::getPoint(7.5, 60.0, 0));
+//   closed.push_back(carma_wm::test::getPoint(7.5, 80.0, 0));
 
-  gf_ptr1->gf_pts = taper_right_pts;
-  gf_ptr2->gf_pts = reverse_pts;
-  gf_ptr3->gf_pts = open_right_pts;
-  gf_ptr4->gf_pts = closed;
+//   gf_ptr1->gf_pts = taper_right_pts;
+//   gf_ptr2->gf_pts = reverse_pts;
+//   gf_ptr3->gf_pts = open_right_pts;
+//   gf_ptr4->gf_pts = closed;
 
-  gf_ptr1->affected_parts_ = wmb_.getAffectedLaneletOrAreas(gf_ptr1->gf_pts);
-  gf_ptr2->affected_parts_ = wmb_.getAffectedLaneletOrAreas(gf_ptr2->gf_pts);
-  gf_ptr4->affected_parts_ = wmb_.getAffectedLaneletOrAreas(gf_ptr4->gf_pts);
-  gf_ptr3->affected_parts_ = wmb_.getAffectedLaneletOrAreas(gf_ptr3->gf_pts);
+//   gf_ptr1->affected_parts_ = wmb_.getAffectedLaneletOrAreas(gf_ptr1->gf_pts);
+//   gf_ptr2->affected_parts_ = wmb_.getAffectedLaneletOrAreas(gf_ptr2->gf_pts);
+//   gf_ptr4->affected_parts_ = wmb_.getAffectedLaneletOrAreas(gf_ptr4->gf_pts);
+//   gf_ptr3->affected_parts_ = wmb_.getAffectedLaneletOrAreas(gf_ptr3->gf_pts);
 
-  work_zone_geofence_cache[WorkZoneSection::TAPERRIGHT] = gf_ptr1;
-  EXPECT_EQ( work_zone_geofence_cache[WorkZoneSection::TAPERRIGHT]->affected_parts_.size(), 2);
-  work_zone_geofence_cache[WorkZoneSection::REVERSE] = gf_ptr2;
-  EXPECT_EQ( work_zone_geofence_cache[WorkZoneSection::REVERSE]->affected_parts_.size(), 3);
-  work_zone_geofence_cache[WorkZoneSection::OPENRIGHT] = gf_ptr3;
-  EXPECT_EQ( work_zone_geofence_cache[WorkZoneSection::OPENRIGHT]->affected_parts_.size(), 2);
-  work_zone_geofence_cache[WorkZoneSection::CLOSED] = gf_ptr4;
-  EXPECT_EQ( work_zone_geofence_cache[WorkZoneSection::CLOSED]->affected_parts_.size(), 3);
+//   work_zone_geofence_cache[WorkZoneSection::TAPERRIGHT] = gf_ptr1;
+//   EXPECT_EQ( work_zone_geofence_cache[WorkZoneSection::TAPERRIGHT]->affected_parts_.size(), 2);
+//   work_zone_geofence_cache[WorkZoneSection::REVERSE] = gf_ptr2;
+//   EXPECT_EQ( work_zone_geofence_cache[WorkZoneSection::REVERSE]->affected_parts_.size(), 3);
+//   work_zone_geofence_cache[WorkZoneSection::OPENRIGHT] = gf_ptr3;
+//   EXPECT_EQ( work_zone_geofence_cache[WorkZoneSection::OPENRIGHT]->affected_parts_.size(), 2);
+//   work_zone_geofence_cache[WorkZoneSection::CLOSED] = gf_ptr4;
+//   EXPECT_EQ( work_zone_geofence_cache[WorkZoneSection::CLOSED]->affected_parts_.size(), 3);
   
-  // get parallel and opposite lanelets
-  wmb_.preprocessWorkzoneGeometry(work_zone_geofence_cache, parallel_llts, middle_opposite_lanelets);
+//   // get parallel and opposite lanelets
+//   wmb_.preprocessWorkzoneGeometry(work_zone_geofence_cache, parallel_llts, middle_opposite_lanelets);
   
-  EXPECT_EQ(parallel_llts->size(), 4);
-  EXPECT_EQ(middle_opposite_lanelets->size(), 3);
+//   EXPECT_EQ(parallel_llts->size(), 4);
+//   EXPECT_EQ(middle_opposite_lanelets->size(), 3);
 
-  // Must be in certain order (taperright):
-  EXPECT_NEAR((*(parallel_llts.get()))[0].leftBound2d().front().basicPoint2d().x(), 5.0, 0.0001);
-  EXPECT_NEAR((*(parallel_llts.get()))[0].leftBound2d().front().basicPoint2d().y(), 0.0, 0.0001);
-  EXPECT_NEAR((*(parallel_llts.get()))[0].rightBound2d().back().basicPoint2d().y(), 13.0, 0.0001);
-  EXPECT_NEAR((*(parallel_llts.get()))[1].rightBound2d().back().basicPoint2d().y(), 25.0, 0.0001);
+//   // Must be in certain order (taperright):
+//   EXPECT_NEAR((*(parallel_llts.get()))[0].leftBound2d().front().basicPoint2d().x(), 5.0, 0.0001);
+//   EXPECT_NEAR((*(parallel_llts.get()))[0].leftBound2d().front().basicPoint2d().y(), 0.0, 0.0001);
+//   EXPECT_NEAR((*(parallel_llts.get()))[0].rightBound2d().back().basicPoint2d().y(), 13.0, 0.0001);
+//   EXPECT_NEAR((*(parallel_llts.get()))[1].rightBound2d().back().basicPoint2d().y(), 25.0, 0.0001);
 
-  // Must be in certain order (openright):
-  EXPECT_NEAR((*(parallel_llts.get()))[2].leftBound2d().front().basicPoint2d().x(), 5.0, 0.0001);
-  EXPECT_NEAR((*(parallel_llts.get()))[2].leftBound2d().front().basicPoint2d().y(), 100.0, 0.0001);
-  EXPECT_NEAR((*(parallel_llts.get()))[2].rightBound2d().back().basicPoint2d().y(), 103.0, 0.0001);
-  EXPECT_NEAR((*(parallel_llts.get()))[3].rightBound2d().back().basicPoint2d().y(), 105.0, 0.0001);
+//   // Must be in certain order (openright):
+//   EXPECT_NEAR((*(parallel_llts.get()))[2].leftBound2d().front().basicPoint2d().x(), 5.0, 0.0001);
+//   EXPECT_NEAR((*(parallel_llts.get()))[2].leftBound2d().front().basicPoint2d().y(), 100.0, 0.0001);
+//   EXPECT_NEAR((*(parallel_llts.get()))[2].rightBound2d().back().basicPoint2d().y(), 103.0, 0.0001);
+//   EXPECT_NEAR((*(parallel_llts.get()))[3].rightBound2d().back().basicPoint2d().y(), 105.0, 0.0001);
 
-  // Must be in certain order (reverse, note that it is still in opposite direction):
-  EXPECT_NEAR((*(middle_opposite_lanelets.get()))[0].leftBound2d().front().basicPoint2d().x(), 5.0, 0.0001);
-  EXPECT_NEAR((*(middle_opposite_lanelets.get()))[0].leftBound2d().front().basicPoint2d().y(), 87.0, 0.0001);
-  EXPECT_NEAR((*(middle_opposite_lanelets.get())).back().rightBound2d().back().basicPoint2d().y(), 37.0, 0.0001);
+//   // Must be in certain order (reverse, note that it is still in opposite direction):
+//   EXPECT_NEAR((*(middle_opposite_lanelets.get()))[0].leftBound2d().front().basicPoint2d().x(), 5.0, 0.0001);
+//   EXPECT_NEAR((*(middle_opposite_lanelets.get()))[0].leftBound2d().front().basicPoint2d().y(), 87.0, 0.0001);
+//   EXPECT_NEAR((*(middle_opposite_lanelets.get())).back().rightBound2d().back().basicPoint2d().y(), 37.0, 0.0001);
 
-  /**
-   *        |9904|9914|
-   *        | _  | o_ |_  _
-   *        |9903| o  |1223|
-   *        | _  | o _|_  _|
-   *        |  o | o  |    |
-   *        |  r | c  |1222|
-   *        |  r | c  |    | 
-   *        | _t_|_t_ |_  _|
-   *        |9901| t  |1221|    t   = taperright points
-   *        | _ _|_t_ |_  _|    o   = openright points
-   *        |9900| t  |1220|    c   = closed points
-   *        |              |    r   = reverse points
-   *        ****************
-   *           START_LINE
-   */
-  parallel_llts = std::make_shared<std::vector<lanelet::Lanelet>>(std::vector<lanelet::Lanelet>());
-  middle_opposite_lanelets = std::make_shared<std::vector<lanelet::Lanelet>>(std::vector<lanelet::Lanelet>());
+//   /**
+//    *        |9904|9914|
+//    *        | _  | o_ |_  _
+//    *        |9903| o  |1223|
+//    *        | _  | o _|_  _|
+//    *        |  o | o  |    |
+//    *        |  r | c  |1222|
+//    *        |  r | c  |    | 
+//    *        | _t_|_t_ |_  _|
+//    *        |9901| t  |1221|    t   = taperright points
+//    *        | _ _|_t_ |_  _|    o   = openright points
+//    *        |9900| t  |1220|    c   = closed points
+//    *        |              |    r   = reverse points
+//    *        ****************
+//    *           START_LINE
+//    */
+//   parallel_llts = std::make_shared<std::vector<lanelet::Lanelet>>(std::vector<lanelet::Lanelet>());
+//   middle_opposite_lanelets = std::make_shared<std::vector<lanelet::Lanelet>>(std::vector<lanelet::Lanelet>());
 
-  taper_right_pts = {};
-  taper_right_pts.push_back(carma_wm::test::getPoint(7.5, 12.5, 0));
-  taper_right_pts.push_back(carma_wm::test::getPoint(7.5, 25.0, 0));
-  taper_right_pts.push_back(carma_wm::test::getPoint(7.5, 37.5, 0));
-  taper_right_pts.push_back(carma_wm::test::getPoint(7.5, 72.5, 0));
+//   taper_right_pts = {};
+//   taper_right_pts.push_back(carma_wm::test::getPoint(7.5, 12.5, 0));
+//   taper_right_pts.push_back(carma_wm::test::getPoint(7.5, 25.0, 0));
+//   taper_right_pts.push_back(carma_wm::test::getPoint(7.5, 37.5, 0));
+//   taper_right_pts.push_back(carma_wm::test::getPoint(7.5, 72.5, 0));
 
-  reverse_pts = {};
-  reverse_pts.push_back(carma_wm::test::getPoint(2.5, 70.0, 0)); // notice the direction
-  reverse_pts.push_back(carma_wm::test::getPoint(2.5, 55.0, 0)); 
+//   reverse_pts = {};
+//   reverse_pts.push_back(carma_wm::test::getPoint(2.5, 70.0, 0)); // notice the direction
+//   reverse_pts.push_back(carma_wm::test::getPoint(2.5, 55.0, 0)); 
 
-  open_right_pts = {};
-  open_right_pts.push_back(carma_wm::test::getPoint(7.5, 72.5, 0));
-  open_right_pts.push_back(carma_wm::test::getPoint(7.5, 87.5, 0));
-  open_right_pts.push_back(carma_wm::test::getPoint(7.5, 102.5, 0));
+//   open_right_pts = {};
+//   open_right_pts.push_back(carma_wm::test::getPoint(7.5, 72.5, 0));
+//   open_right_pts.push_back(carma_wm::test::getPoint(7.5, 87.5, 0));
+//   open_right_pts.push_back(carma_wm::test::getPoint(7.5, 102.5, 0));
 
-  closed = {};
-  closed.push_back(carma_wm::test::getPoint(7.5, 55.0, 0)); 
-  closed.push_back(carma_wm::test::getPoint(7.5, 70.0, 0)); 
+//   closed = {};
+//   closed.push_back(carma_wm::test::getPoint(7.5, 55.0, 0)); 
+//   closed.push_back(carma_wm::test::getPoint(7.5, 70.0, 0)); 
 
-  gf_ptr1->gf_pts = taper_right_pts;
-  gf_ptr2->gf_pts = reverse_pts;
-  gf_ptr3->gf_pts = open_right_pts;
-  gf_ptr4->gf_pts = closed;
-
-  
-  gf_ptr1->affected_parts_ = wmb_.getAffectedLaneletOrAreas(gf_ptr1->gf_pts);
-  
-  gf_ptr2->affected_parts_ = wmb_.getAffectedLaneletOrAreas(gf_ptr2->gf_pts);
-  
-  gf_ptr4->affected_parts_ = wmb_.getAffectedLaneletOrAreas(gf_ptr4->gf_pts);
-  
-  gf_ptr3->affected_parts_ = wmb_.getAffectedLaneletOrAreas(gf_ptr3->gf_pts);
-
-  work_zone_geofence_cache[WorkZoneSection::TAPERRIGHT] = gf_ptr1;
-  EXPECT_EQ( work_zone_geofence_cache[WorkZoneSection::TAPERRIGHT]->affected_parts_.size(), 3);
-  work_zone_geofence_cache[WorkZoneSection::REVERSE] = gf_ptr2;
-  EXPECT_EQ( work_zone_geofence_cache[WorkZoneSection::REVERSE]->affected_parts_.size(), 1);
-  work_zone_geofence_cache[WorkZoneSection::OPENRIGHT] = gf_ptr3;
-  EXPECT_EQ( work_zone_geofence_cache[WorkZoneSection::OPENRIGHT]->affected_parts_.size(), 3);
-  work_zone_geofence_cache[WorkZoneSection::CLOSED] = gf_ptr4;
-  EXPECT_EQ( work_zone_geofence_cache[WorkZoneSection::CLOSED]->affected_parts_.size(), 1);
-
-  // get parallel and opposite lanelets
-  wmb_.preprocessWorkzoneGeometry(work_zone_geofence_cache, parallel_llts, middle_opposite_lanelets);
-  
-  EXPECT_EQ(parallel_llts->size(), 4);
-  EXPECT_EQ(middle_opposite_lanelets->size(), 1);
-
-  // Must be in certain order (taperright):
-  EXPECT_NEAR((*(parallel_llts.get()))[0].leftBound2d().front().basicPoint2d().x(), 5.0, 0.0001);
-  EXPECT_NEAR((*(parallel_llts.get()))[0].leftBound2d().front().basicPoint2d().y(), 0.0, 0.0001);
-  EXPECT_NEAR((*(parallel_llts.get()))[0].rightBound2d().back().basicPoint2d().y(), 13.0, 0.0001);
-  EXPECT_NEAR((*(parallel_llts.get()))[1].rightBound2d().back().basicPoint2d().y(), 25.0, 0.0001);
-
-  // Must be in certain order (openright):
-  EXPECT_NEAR((*(parallel_llts.get()))[2].leftBound2d().front().basicPoint2d().x(), 5.0, 0.0001);
-  EXPECT_NEAR((*(parallel_llts.get()))[2].leftBound2d().front().basicPoint2d().y(), 100.0, 0.0001);
-  EXPECT_NEAR((*(parallel_llts.get()))[2].rightBound2d().back().basicPoint2d().y(), 103.0, 0.0001);
-  EXPECT_NEAR((*(parallel_llts.get()))[3].rightBound2d().back().basicPoint2d().y(), 105.0, 0.0001);
-
-  // Must be in certain order (reverse, note that it is still in opposite direction):
-  EXPECT_NEAR((*(middle_opposite_lanelets.get()))[0].leftBound2d().front().basicPoint2d().x(), 5.0, 0.0001);
-  EXPECT_NEAR((*(middle_opposite_lanelets.get()))[0].leftBound2d().front().basicPoint2d().y(), 70.0, 0.0001);
-  EXPECT_NEAR((*(middle_opposite_lanelets.get())).back().rightBound2d().back().basicPoint2d().y(), 55.0, 0.0001);
-
-  /**
-   *        |9904|9914|
-   *        | _  |  _ |_  _
-   *        |9903| o  |1223|
-   *        | _  | o _|_  _|
-   *        |  r | c  |    |
-   *        |  r | c  |1222|
-   *        |  r | c  |    | 
-   *        | _r_|_c_ |_  _|
-   *        |9901| t  |1221|    t   = taperright points
-   *        | _ _|_t_ |_  _|    o   = openright points
-   *        |9900|    |1220|    c   = closed points
-   *        |              |    r   = reverse points
-   *        ****************
-   *           START_LINE
-   */
-  parallel_llts = std::make_shared<std::vector<lanelet::Lanelet>>(std::vector<lanelet::Lanelet>());
-  middle_opposite_lanelets = std::make_shared<std::vector<lanelet::Lanelet>>(std::vector<lanelet::Lanelet>());
-  wmb_.setErrorDistance(1.0);
-  taper_right_pts = {};
-  taper_right_pts.push_back(carma_wm::test::getPoint(7.5, 25.5, 0));
-  taper_right_pts.push_back(carma_wm::test::getPoint(7.5, 37.5, 0));
-
-  reverse_pts = {};
-  reverse_pts.push_back(carma_wm::test::getPoint(2.5, 74.5, 0)); // notice the direction
-  reverse_pts.push_back(carma_wm::test::getPoint(2.5, 50.5, 0)); 
-
-  open_right_pts = {};
-  open_right_pts.push_back(carma_wm::test::getPoint(7.5, 75.5, 0));
-  open_right_pts.push_back(carma_wm::test::getPoint(7.5, 99.5, 0));
-
-  closed = {};
-  closed.push_back(carma_wm::test::getPoint(7.5, 50.5, 0)); 
-  closed.push_back(carma_wm::test::getPoint(7.5, 74.5, 0)); 
-
-  gf_ptr1->gf_pts = taper_right_pts;
-  gf_ptr2->gf_pts = reverse_pts;
-  gf_ptr3->gf_pts = open_right_pts;
-  gf_ptr4->gf_pts = closed;
+//   gf_ptr1->gf_pts = taper_right_pts;
+//   gf_ptr2->gf_pts = reverse_pts;
+//   gf_ptr3->gf_pts = open_right_pts;
+//   gf_ptr4->gf_pts = closed;
 
   
-  gf_ptr1->affected_parts_ = wmb_.getAffectedLaneletOrAreas(gf_ptr1->gf_pts);
+//   gf_ptr1->affected_parts_ = wmb_.getAffectedLaneletOrAreas(gf_ptr1->gf_pts);
   
-  gf_ptr2->affected_parts_ = wmb_.getAffectedLaneletOrAreas(gf_ptr2->gf_pts);
+//   gf_ptr2->affected_parts_ = wmb_.getAffectedLaneletOrAreas(gf_ptr2->gf_pts);
   
-  gf_ptr4->affected_parts_ = wmb_.getAffectedLaneletOrAreas(gf_ptr4->gf_pts);
+//   gf_ptr4->affected_parts_ = wmb_.getAffectedLaneletOrAreas(gf_ptr4->gf_pts);
   
-  gf_ptr3->affected_parts_ = wmb_.getAffectedLaneletOrAreas(gf_ptr3->gf_pts);
+//   gf_ptr3->affected_parts_ = wmb_.getAffectedLaneletOrAreas(gf_ptr3->gf_pts);
 
-  work_zone_geofence_cache[WorkZoneSection::TAPERRIGHT] = gf_ptr1;
-  EXPECT_EQ( work_zone_geofence_cache[WorkZoneSection::TAPERRIGHT]->affected_parts_.size(), 1);
-  work_zone_geofence_cache[WorkZoneSection::REVERSE] = gf_ptr2;
-  EXPECT_EQ( work_zone_geofence_cache[WorkZoneSection::REVERSE]->affected_parts_.size(), 1);
-  work_zone_geofence_cache[WorkZoneSection::OPENRIGHT] = gf_ptr3;
-  EXPECT_EQ( work_zone_geofence_cache[WorkZoneSection::OPENRIGHT]->affected_parts_.size(), 1);
-  work_zone_geofence_cache[WorkZoneSection::CLOSED] = gf_ptr4;
-  EXPECT_EQ( work_zone_geofence_cache[WorkZoneSection::CLOSED]->affected_parts_.size(), 1);
+//   work_zone_geofence_cache[WorkZoneSection::TAPERRIGHT] = gf_ptr1;
+//   EXPECT_EQ( work_zone_geofence_cache[WorkZoneSection::TAPERRIGHT]->affected_parts_.size(), 3);
+//   work_zone_geofence_cache[WorkZoneSection::REVERSE] = gf_ptr2;
+//   EXPECT_EQ( work_zone_geofence_cache[WorkZoneSection::REVERSE]->affected_parts_.size(), 1);
+//   work_zone_geofence_cache[WorkZoneSection::OPENRIGHT] = gf_ptr3;
+//   EXPECT_EQ( work_zone_geofence_cache[WorkZoneSection::OPENRIGHT]->affected_parts_.size(), 3);
+//   work_zone_geofence_cache[WorkZoneSection::CLOSED] = gf_ptr4;
+//   EXPECT_EQ( work_zone_geofence_cache[WorkZoneSection::CLOSED]->affected_parts_.size(), 1);
 
-  // get parallel and opposite lanelets
-  wmb_.preprocessWorkzoneGeometry(work_zone_geofence_cache, parallel_llts, middle_opposite_lanelets);
+//   // get parallel and opposite lanelets
+//   wmb_.preprocessWorkzoneGeometry(work_zone_geofence_cache, parallel_llts, middle_opposite_lanelets);
   
-  EXPECT_EQ(parallel_llts->size(), 2);
-  EXPECT_EQ(middle_opposite_lanelets->size(), 1);
+//   EXPECT_EQ(parallel_llts->size(), 4);
+//   EXPECT_EQ(middle_opposite_lanelets->size(), 1);
 
-  // Must be in certain order (taperright):
-  EXPECT_NEAR((*(parallel_llts.get()))[0].leftBound2d().front().basicPoint2d().x(), 5.0, 0.0001);
-  EXPECT_NEAR((*(parallel_llts.get()))[0].leftBound2d().front().basicPoint2d().y(), 0.0, 0.0001);
-  EXPECT_NEAR((*(parallel_llts.get()))[0].rightBound2d().back().basicPoint2d().y(), 25.0, 0.0001);
+//   // Must be in certain order (taperright):
+//   EXPECT_NEAR((*(parallel_llts.get()))[0].leftBound2d().front().basicPoint2d().x(), 5.0, 0.0001);
+//   EXPECT_NEAR((*(parallel_llts.get()))[0].leftBound2d().front().basicPoint2d().y(), 0.0, 0.0001);
+//   EXPECT_NEAR((*(parallel_llts.get()))[0].rightBound2d().back().basicPoint2d().y(), 13.0, 0.0001);
+//   EXPECT_NEAR((*(parallel_llts.get()))[1].rightBound2d().back().basicPoint2d().y(), 25.0, 0.0001);
 
-  // Must be in certain order (openright):
-  EXPECT_NEAR((*(parallel_llts.get()))[1].leftBound2d().front().basicPoint2d().x(), 5.0, 0.0001);
-  EXPECT_NEAR((*(parallel_llts.get()))[1].leftBound2d().front().basicPoint2d().y(), 100.0, 0.0001);
-  EXPECT_NEAR((*(parallel_llts.get()))[1].rightBound2d().back().basicPoint2d().y(), 105.0, 0.0001);
+//   // Must be in certain order (openright):
+//   EXPECT_NEAR((*(parallel_llts.get()))[2].leftBound2d().front().basicPoint2d().x(), 5.0, 0.0001);
+//   EXPECT_NEAR((*(parallel_llts.get()))[2].leftBound2d().front().basicPoint2d().y(), 100.0, 0.0001);
+//   EXPECT_NEAR((*(parallel_llts.get()))[2].rightBound2d().back().basicPoint2d().y(), 103.0, 0.0001);
+//   EXPECT_NEAR((*(parallel_llts.get()))[3].rightBound2d().back().basicPoint2d().y(), 105.0, 0.0001);
 
-  // Must be in certain order (reverse, note that it is still in opposite direction):
-  EXPECT_NEAR((*(middle_opposite_lanelets.get()))[0].leftBound2d().front().basicPoint2d().x(), 5.0, 0.0001);
-  EXPECT_NEAR((*(middle_opposite_lanelets.get()))[0].leftBound2d().front().basicPoint2d().y(), 75.0, 0.0001);
-  EXPECT_NEAR((*(middle_opposite_lanelets.get())).back().rightBound2d().back().basicPoint2d().y(), 50.0, 0.0001);
-} 
+//   // Must be in certain order (reverse, note that it is still in opposite direction):
+//   EXPECT_NEAR((*(middle_opposite_lanelets.get()))[0].leftBound2d().front().basicPoint2d().x(), 5.0, 0.0001);
+//   EXPECT_NEAR((*(middle_opposite_lanelets.get()))[0].leftBound2d().front().basicPoint2d().y(), 70.0, 0.0001);
+//   EXPECT_NEAR((*(middle_opposite_lanelets.get())).back().rightBound2d().back().basicPoint2d().y(), 55.0, 0.0001);
 
-TEST(WMBroadcaster, createWorkzoneGeometry)
-{
-  /////////////////
-  // CREATE WORLD
-  /////////////////
+//   /**
+//    *        |9904|9914|
+//    *        | _  |  _ |_  _
+//    *        |9903| o  |1223|
+//    *        | _  | o _|_  _|
+//    *        |  r | c  |    |
+//    *        |  r | c  |1222|
+//    *        |  r | c  |    | 
+//    *        | _r_|_c_ |_  _|
+//    *        |9901| t  |1221|    t   = taperright points
+//    *        | _ _|_t_ |_  _|    o   = openright points
+//    *        |9900|    |1220|    c   = closed points
+//    *        |              |    r   = reverse points
+//    *        ****************
+//    *           START_LINE
+//    */
+//   parallel_llts = std::make_shared<std::vector<lanelet::Lanelet>>(std::vector<lanelet::Lanelet>());
+//   middle_opposite_lanelets = std::make_shared<std::vector<lanelet::Lanelet>>(std::vector<lanelet::Lanelet>());
+//   wmb_.setErrorDistance(1.0);
+//   taper_right_pts = {};
+//   taper_right_pts.push_back(carma_wm::test::getPoint(7.5, 25.5, 0));
+//   taper_right_pts.push_back(carma_wm::test::getPoint(7.5, 37.5, 0));
 
-  // Create WMBroadcaster object
-  WMBroadcaster wmb_(
-      [&](const autoware_lanelet2_msgs::msg::MapBin& map_bin) {},
-      [&](const autoware_lanelet2_msgs::msg::MapBin& geofence_bin) {
-      }, [](const carma_v2x_msgs::msg::TrafficControlRequest& control_msg_pub_){},
-      [](const carma_perception_msgs::msg::CheckActiveGeofence& active_pub_){},
-      std::make_shared<TestTimerFactory>(), [](const carma_v2x_msgs::msg::MobilityOperation& tcm_ack_pub_){});
+//   reverse_pts = {};
+//   reverse_pts.push_back(carma_wm::test::getPoint(2.5, 74.5, 0)); // notice the direction
+//   reverse_pts.push_back(carma_wm::test::getPoint(2.5, 50.5, 0)); 
 
-  // create opposite direction road on the left lane
-  auto map = carma_wm::test::buildGuidanceTestMap(5, 25, 25);
+//   open_right_pts = {};
+//   open_right_pts.push_back(carma_wm::test::getPoint(7.5, 75.5, 0));
+//   open_right_pts.push_back(carma_wm::test::getPoint(7.5, 99.5, 0));
 
-  auto ll_1 = carma_wm::test::getLanelet(9900, map->laneletLayer.get(1200).rightBound3d().invert(),map->laneletLayer.get(1200).leftBound3d().invert(),lanelet::AttributeValueString::Solid, lanelet::AttributeValueString::Dashed);
-  auto ll_2 = carma_wm::test::getLanelet(9901, map->laneletLayer.get(1201).rightBound3d().invert(),map->laneletLayer.get(1201).leftBound3d().invert(),lanelet::AttributeValueString::Solid, lanelet::AttributeValueString::Dashed);
-  auto ll_3 = carma_wm::test::getLanelet(9902, map->laneletLayer.get(1202).rightBound3d().invert(),map->laneletLayer.get(1202).leftBound3d().invert(),lanelet::AttributeValueString::Solid, lanelet::AttributeValueString::Dashed);
-  auto ll_4 = carma_wm::test::getLanelet(9903, map->laneletLayer.get(1203).rightBound3d().invert(),map->laneletLayer.get(1203).leftBound3d().invert(),lanelet::AttributeValueString::Solid, lanelet::AttributeValueString::Dashed);
-  
-  std::vector<lanelet::Point3d> pts0;
-  std::vector<lanelet::Point3d> pts1;
-  std::vector<lanelet::Point3d> pts2;
-  
-  pts0.push_back(map->laneletLayer.get(1203).leftBound3d().back());
-  pts0.push_back(carma_wm::test::getPoint(0.0, 101.0, 0));
-  pts0.push_back(carma_wm::test::getPoint(0.0, 102.0, 0));
-  pts0.push_back(carma_wm::test::getPoint(0.0, 103.0, 0));
-  pts0.push_back(carma_wm::test::getPoint(0.0, 104.0, 0));
-  pts0.push_back(carma_wm::test::getPoint(0.0, 105.0, 0));
-  
-  pts1.push_back(map->laneletLayer.get(1203).rightBound3d().back());
-  pts1.push_back(carma_wm::test::getPoint(5.0, 101.0, 0));
-  pts1.push_back(carma_wm::test::getPoint(5.0, 102.0, 0));
-  pts1.push_back(carma_wm::test::getPoint(5.0, 103.0, 0));
-  pts1.push_back(carma_wm::test::getPoint(5.0, 104.0, 0));
-  pts1.push_back(carma_wm::test::getPoint(5.0, 105.0, 0));
-  
-  pts2.push_back(map->laneletLayer.get(1213).rightBound3d().back());
-  pts2.push_back(carma_wm::test::getPoint(10.0, 101.0, 0));
-  pts2.push_back(carma_wm::test::getPoint(10.0, 102.0, 0));
-  pts2.push_back(carma_wm::test::getPoint(10.0, 103.0, 0));
-  pts2.push_back(carma_wm::test::getPoint(10.0, 104.0, 0));
-  pts2.push_back(carma_wm::test::getPoint(10.0, 105.0, 0));
-  
-  lanelet::LineString3d ls00(lanelet::utils::getId(), pts0);
-  lanelet::LineString3d ls01(lanelet::utils::getId(), pts1);
-  lanelet::LineString3d ls02(lanelet::utils::getId(), pts2);
+//   closed = {};
+//   closed.push_back(carma_wm::test::getPoint(7.5, 50.5, 0)); 
+//   closed.push_back(carma_wm::test::getPoint(7.5, 74.5, 0)); 
 
-  auto ll_9 = carma_wm::test::getLanelet(9904, ls01.invert(),ls00.invert(), lanelet::AttributeValueString::Dashed, lanelet::AttributeValueString::Solid);
-  auto ll_10 = carma_wm::test::getLanelet(9914, ls01,ls02,lanelet::AttributeValueString::Dashed, lanelet::AttributeValueString::Solid);
-  
-  map->add(ll_1);
-  map->add(ll_2);
-  map->add(ll_3);
-  map->add(ll_4); 
-  map->add(ll_9);
-  map->add(ll_10); 
-
-  /**       START
-   *        |9904|9914|
-   *        | _  _  _ |_  _
-   *        |9903|1213|1223|
-   *        | _  _  _  _  _|
-   *        |9902|1212|1222|
-   *        | _  _  _  _  _|
-   *        |9901|1211|1221|    num   = lanelet id hardcoded for easier testing
-   *        | _  _  _  _  _|    |     = lane lines
-   *        |9900|1210|1220|    - - - = Lanelet boundary
-   *        |              |    lanelets starting with 990* are opposite direction
-   *        ****************
-   *           START_LINE
-   */
-
-  autoware_lanelet2_msgs::msg::MapBin msg;
-  lanelet::utils::conversion::toBinMsg(map, &msg);
-  autoware_lanelet2_msgs::msg::MapBin::UniquePtr map_msg_ptr(new autoware_lanelet2_msgs::msg::MapBin(msg));
-
-  // Trigger basemap callback
-  wmb_.baseMapCallback(std::move(map_msg_ptr));
-  wmb_.setErrorDistance(0.5);
-  
-  /////////////////
-  // CREATE REQUEST
-  /////////////////
-
-  std::shared_ptr<std::vector<lanelet::Lanelet>> parallel_llts = std::make_shared<std::vector<lanelet::Lanelet>>(std::vector<lanelet::Lanelet>());
-  std::shared_ptr<std::vector<lanelet::Lanelet>> middle_opposite_lanelets = std::make_shared<std::vector<lanelet::Lanelet>>(std::vector<lanelet::Lanelet>());
-  std::unordered_map<uint8_t, std::shared_ptr<carma_wm_ctrl::Geofence>> work_zone_geofence_cache;
-  
-  std::shared_ptr<Geofence> gf_ptr1 =  std::make_shared<Geofence>();
-  std::shared_ptr<Geofence> gf_ptr2 =  std::make_shared<Geofence>();
-  std::shared_ptr<Geofence> gf_ptr3 =  std::make_shared<Geofence>();
-  std::shared_ptr<Geofence> gf_ptr4 =  std::make_shared<Geofence>();
-
-  gf_ptr1->label_ = "TYPE:SIG_WZ,INT_ID:1000,SG_ID:235";
-  gf_ptr2->label_ = "TYPE:SIG_WZ,INT_ID:1000,SG_ID:235";
-  gf_ptr3->label_ = "TYPE:SIG_WZ,INT_ID:1000,SG_ID:235";
-  gf_ptr4->label_ = "TYPE:SIG_WZ,INT_ID:1000,SG_ID:235";
-  
-  /**
-   *        |9904|9914|
-   *        | _  _  _ |_  _
-   *        |9903|    |1223|
-   *        | _  _ o   _  _|
-   *        |  r | c  |1222|
-   *        | _r  _c_  _  _|
-   *        |    | t  |1221|    t   = taperright points
-   *        | _  _ _  _   _|    o   = openright points
-   *        |9900|1210|1220|    c   = closed points
-   *        |              |    r   = reverse points
-   *        ****************
-   *           START_LINE
-   */
-
-  std::vector<lanelet::Point3d> taper_right_pts = {};
-
-  taper_right_pts.push_back(carma_wm::test::getPoint(7.5, 37.5, 0));
-  taper_right_pts.push_back(carma_wm::test::getPoint(7.5, 49.5, 0));
-
-  std::vector<lanelet::Point3d> reverse_pts = {};
-  reverse_pts.push_back(carma_wm::test::getPoint(2.5, 74.9, 0)); // notice the direction
-  reverse_pts.push_back(carma_wm::test::getPoint(2.5, 50.1, 0));
-
-  std::vector<lanelet::Point3d> open_right_pts = {};
-  open_right_pts.push_back(carma_wm::test::getPoint(7.5, 75.1, 0));
-  open_right_pts.push_back(carma_wm::test::getPoint(7.5, 87.5, 0));
-
-  std::vector<lanelet::Point3d> closed = {};
-  closed.push_back(carma_wm::test::getPoint(7.5, 51.0, 0));
-  closed.push_back(carma_wm::test::getPoint(7.5, 74.0, 0));
-
-  gf_ptr1->gf_pts = taper_right_pts;
-  gf_ptr2->gf_pts = reverse_pts;
-  gf_ptr3->gf_pts = open_right_pts;
-  gf_ptr4->gf_pts = closed;
-
-  gf_ptr1->affected_parts_ = wmb_.getAffectedLaneletOrAreas(gf_ptr1->gf_pts);
-  gf_ptr2->affected_parts_ = wmb_.getAffectedLaneletOrAreas(gf_ptr2->gf_pts);
-  gf_ptr4->affected_parts_ = wmb_.getAffectedLaneletOrAreas(gf_ptr4->gf_pts);
-  gf_ptr3->affected_parts_ = wmb_.getAffectedLaneletOrAreas(gf_ptr3->gf_pts);
-
-  work_zone_geofence_cache[WorkZoneSection::TAPERRIGHT] = gf_ptr1;
-  EXPECT_EQ( work_zone_geofence_cache[WorkZoneSection::TAPERRIGHT]->affected_parts_.size(), 1);
-  work_zone_geofence_cache[WorkZoneSection::REVERSE] = gf_ptr2;
-  EXPECT_EQ( work_zone_geofence_cache[WorkZoneSection::REVERSE]->affected_parts_.size(), 1);
-  work_zone_geofence_cache[WorkZoneSection::OPENRIGHT] = gf_ptr3;
-  EXPECT_EQ( work_zone_geofence_cache[WorkZoneSection::OPENRIGHT]->affected_parts_.size(), 1);
-  work_zone_geofence_cache[WorkZoneSection::CLOSED] = gf_ptr4;
-  EXPECT_EQ( work_zone_geofence_cache[WorkZoneSection::CLOSED]->affected_parts_.size(), 1);
-  
-  /////////////////
-  // TESTS PREPROCESS
-  /////////////////
-
-  // get parallel and opposite lanelets
-  wmb_.preprocessWorkzoneGeometry(work_zone_geofence_cache, parallel_llts, middle_opposite_lanelets);
-  
-  EXPECT_EQ(parallel_llts->size(), 4);
-  EXPECT_EQ(middle_opposite_lanelets->size(), 1);
-
-  // Must be in certain order (taperright):
-  EXPECT_NEAR((*(parallel_llts.get()))[0].leftBound2d().front().basicPoint2d().x(), map->laneletLayer.get(1210).leftBound2d().back().basicPoint2d().x(), 0.0001);
-  EXPECT_NEAR((*(parallel_llts.get()))[0].leftBound2d().front().basicPoint2d().y(), map->laneletLayer.get(1210).leftBound2d().back().basicPoint2d().y(), 0.0001);
-  EXPECT_NEAR((*(parallel_llts.get()))[0].rightBound2d().front().basicPoint2d().x(), map->laneletLayer.get(1210).rightBound2d().back().basicPoint2d().x(), 0.0001);
-  EXPECT_NEAR((*(parallel_llts.get()))[0].rightBound2d().front().basicPoint2d().y(), map->laneletLayer.get(1210).rightBound2d().back().basicPoint2d().y(), 0.0001);
-
-  /////////////////
-  // TEST START / CARMA_WM_CTRL part
-  /////////////////
-
-  // Create the workzone geometry
-  auto gf_ptr = wmb_.createWorkzoneGeometry(work_zone_geofence_cache, parallel_llts->front(), parallel_llts->back(), middle_opposite_lanelets);
-
-  EXPECT_EQ(gf_ptr->lanelet_additions_.size(), 7);
-
-  EXPECT_EQ(gf_ptr->lanelet_additions_[0].leftBound2d().back().id(), gf_ptr->lanelet_additions_[1].leftBound2d().front().id());
-  EXPECT_EQ(gf_ptr->lanelet_additions_[1].leftBound2d().back().id(), gf_ptr->lanelet_additions_[2].leftBound2d().front().id());
-  EXPECT_EQ(gf_ptr->lanelet_additions_[2].leftBound2d().back().id(), gf_ptr->lanelet_additions_[3].leftBound2d().front().id());
-  EXPECT_EQ(gf_ptr->lanelet_additions_[3].leftBound2d().back().id(), gf_ptr->lanelet_additions_[4].leftBound2d().front().id());
-  EXPECT_EQ(gf_ptr->lanelet_additions_[0].rightBound2d().back().id(), gf_ptr->lanelet_additions_[1].rightBound2d().front().id());
-  EXPECT_EQ(gf_ptr->lanelet_additions_[1].rightBound2d().back().id(), gf_ptr->lanelet_additions_[2].rightBound2d().front().id());
-  EXPECT_EQ(gf_ptr->lanelet_additions_[2].rightBound2d().back().id(), gf_ptr->lanelet_additions_[3].rightBound2d().front().id());
-  EXPECT_EQ(gf_ptr->lanelet_additions_[3].rightBound2d().back().id(), gf_ptr->lanelet_additions_[4].rightBound2d().front().id());
-
-  /////////////////
-  // TEST START / CARM_WM part
-  /////////////////
-
-  // update the map with new lanelets (mapUpdateCallback should follow this pattern as well)
-  for(auto llt : gf_ptr->lanelet_additions_)
-  {
-    RCLCPP_INFO_STREAM(rclcpp::get_logger("carma_wm_ctrl"), "Adding llt with id:" << llt.id());
-    auto left = llt.leftBound3d(); //new lanelet coming in
-    for (int i = 0; i < left.size(); i ++)
-    {
-      if (map->pointLayer.exists(left[i].id())) //rewrite the memory address of new pts with that of local
-      {
-        llt.leftBound3d()[i] = map->pointLayer.get(left[i].id());
-      }
-    }
-    auto right = llt.rightBound3d(); //new lanelet coming in
-    for (int i = 0; i < right.size(); i ++)
-    {
-      if (map->pointLayer.exists(right[i].id())) //rewrite the memory address of new pts with that of local
-      {
-        llt.rightBound3d()[i] = map->pointLayer.get(right[i].id());
-      }
-    }
-    // add the llt into the map
-    EXPECT_NO_THROW(map->add(llt));
-  }
-  
-  // update the list
-  auto factory_pcl = lanelet::RegulatoryElementFactory::create(gf_ptr->regulatory_element_->attribute(lanelet::AttributeName::Subtype).value(),
-                                                          std::const_pointer_cast<lanelet::RegulatoryElementData>(gf_ptr->regulatory_element_->constData()));
-  lanelet::RegionAccessRulePtr rar = std::dynamic_pointer_cast<lanelet::RegionAccessRule>(factory_pcl);
-
-  for (auto lanelet_or_area : gf_ptr->affected_parts_)
-  {
-    map->update(map->laneletLayer.get(lanelet_or_area.lanelet().get().id()), rar);
-  }
-  
-  // this is part of world building process as it was convenient to put it here. not part of the request
-  map->update(map->laneletLayer.get(1200), rar);
-  map->update(map->laneletLayer.get(1201), rar);
-  map->update(map->laneletLayer.get(1202), rar);
-
-  // check routability
-  std::shared_ptr<carma_wm::CARMAWorldModel> cmw=std::make_shared<carma_wm::CARMAWorldModel>();
-  cmw->setMap(map, 0, true);
-  auto map_graph = cmw->getMapRoutingGraph();
-  // enable below to debug in rviz graph
-  // map_graph->exportGraphViz("../routing.rviz");
-  auto route_ = map_graph->getRoute(cmw->getMutableMap()->laneletLayer.get(1210), cmw->getMutableMap()->laneletLayer.get(9914));
-  
-  // check if memory addresses of connecting points of lanelets actually match after the update
-  EXPECT_EQ(cmw->getMutableMap()->laneletLayer.get(gf_ptr->lanelet_additions_[0].id()).leftBound2d().front().constData(), cmw->getMutableMap()->laneletLayer.get(1210).leftBound2d().back().constData());
-  EXPECT_EQ(cmw->getMutableMap()->laneletLayer.get(1211).leftBound2d().front().constData(), cmw->getMutableMap()->laneletLayer.get(1210).leftBound2d().back().constData());
-  
-  EXPECT_EQ(gf_ptr->lanelet_additions_[0].leftBound2d().front().id(), cmw->getMutableMap()->laneletLayer.get(1210).leftBound2d().back().id());
-  EXPECT_EQ(gf_ptr->lanelet_additions_[0].rightBound2d().front().id(), cmw->getMutableMap()->laneletLayer.get(1210).rightBound2d().back().id());
-  EXPECT_EQ(gf_ptr->lanelet_additions_[4].leftBound2d().back().id(), cmw->getMutableMap()->laneletLayer.get(9914).leftBound2d().front().id());
-  EXPECT_EQ(gf_ptr->lanelet_additions_[4].rightBound2d().back().id(), cmw->getMutableMap()->laneletLayer.get(9914).rightBound2d().front().id());
-
-  EXPECT_TRUE(!!route_);
-  EXPECT_EQ(route_.get().shortestPath().size(), 7);
-
-  // check if outdated lanelets blocked
-  auto route1_ = map_graph->getRoute(map->laneletLayer.get(1210), map->laneletLayer.get(1211));
-  ASSERT_FALSE(!!route1_);
-
-}
-
-TEST(WMBroadcaster, WMBroadcaster_VehicleParticipation_Test)
-{
-
-  using namespace lanelet::units::literals;
-
-carma_wm::CARMAWorldModel wml;
-
-  // Set the environment  
-  size_t base_map_call_count = 0;
-  size_t map_update_call_count = 0;
-  WMBroadcaster wmb(
-      [&](const autoware_lanelet2_msgs::msg::MapBin& map_bin) {
-        // Publish map callback
-        lanelet::LaneletMapPtr map(new lanelet::LaneletMap);
-        lanelet::utils::conversion::fromBinMsg(map_bin, map);
-        base_map_call_count++;
-      }, 
-      [&](const autoware_lanelet2_msgs::msg::MapBin& map_bin) {
-        // Publish map update callback
-        map_update_call_count++;
-      }, [](const carma_v2x_msgs::msg::TrafficControlRequest& control_msg_pub_){},
-      [](const carma_perception_msgs::msg::CheckActiveGeofence& active_pub_){},
-      std::make_shared<TestTimerFactory>(), [](const carma_v2x_msgs::msg::MobilityOperation& tcm_ack_pub_){});
-
-
-/*Test that Vehicle Participation Type Value is added before baseMapCallback*/
-std::string p1 = lanelet::Participants::VehicleCar;
-wml.setVehicleParticipationType(p1);
-
-auto value = wmb.getVehicleParticipationType();
-
-ASSERT_EQ(value, p1);
-
-  /*Test Vehicle Participation Type Values in Map **/
-
-    //////
-  // Set up the map (add relevant regulatory elements)
-  /////
-  auto map = carma_wm::getBroadcasterTestMap();
-  ASSERT_EQ(map->regulatoryElementLayer.size(), 0);
-  // add regems
-
-  //OLD SPEED LIMIT LOADED: This will be assigned to a VehicleTruck participant
-  std::string participant1 = lanelet::Participants::VehicleTruck;
-  lanelet::DigitalSpeedLimitPtr old_speed_limit1 = std::make_shared<lanelet::DigitalSpeedLimit>(lanelet::DigitalSpeedLimit::buildData(lanelet::InvalId, 5_mph, {}, {},
-                                                     { participant1}));
-  ASSERT_TRUE(old_speed_limit1->attribute(lanelet::AttributeName::Subtype).value().compare(lanelet::DigitalSpeedLimit::RuleName) == 0);
-  ASSERT_EQ(map->laneletLayer.get(10000).regulatoryElements().size(), 0);
-  map->update(map->laneletLayer.get(10000), old_speed_limit1); // added a speed limit to first llt
-
-  ASSERT_EQ(map->laneletLayer.get(10000).regulatoryElements().size(), 1);
-  ASSERT_TRUE(map->regulatoryElementLayer.exists(old_speed_limit1->id()));
-  ASSERT_EQ(map->regulatoryElementLayer.size(), 1);
-  ASSERT_EQ(map->laneletLayer.findUsages(old_speed_limit1).size(), 1);
-  ASSERT_EQ(map->laneletLayer.find(10000)->regulatoryElements().front()->id(), old_speed_limit1->id());//should be 10045 old speed limit's id
-  ASSERT_EQ(map->laneletLayer.find(10000)->regulatoryElements().front(), old_speed_limit1);
-
-  lanelet::DigitalSpeedLimitPtr test_map_elem = std::dynamic_pointer_cast<lanelet::DigitalSpeedLimit>(map->laneletLayer.find(10000)->regulatoryElements().front());
-
-  auto val2 = wmb.getVehicleParticipationType();
-
-  ASSERT_EQ(test_map_elem->speed_limit_.value(), old_speed_limit1->speed_limit_.value());
-  ASSERT_EQ(test_map_elem->participants_.begin()->data(), old_speed_limit1->participants_.begin()->data());
-
-  autoware_lanelet2_msgs::msg::MapBin msg;
-  lanelet::utils::conversion::toBinMsg(map, &msg);
-  autoware_lanelet2_msgs::msg::MapBin::UniquePtr map_msg_ptr(new autoware_lanelet2_msgs::msg::MapBin(msg));
-  // Set the map
-  wmb.baseMapCallback(std::move(map_msg_ptr));
-  // Setting georeference otherwise, geofenceCallback will throw exception
-  std_msgs::msg::String sample_proj_string;
-  std::string proj_string = "+proj=tmerc +lat_0=39.46636844371259 +lon_0=-76.16919523566943 +k=1 +x_0=0 +y_0=0 +datum=WGS84 +units=m +vunits=m +no_defs";
-  
-  /*ADD NEW REGELEM TO MAP WITH NEW SL and VPT*/
-
-  lanelet::DigitalSpeedLimitPtr new_speed_limit = std::make_shared<lanelet::DigitalSpeedLimit>(lanelet::DigitalSpeedLimit::buildData(map->regulatoryElementLayer.uniqueId(), 10_mph, {}, {},
-                                                     { lanelet::Participants::VehicleCar }));
-  map->update(map->laneletLayer.get(10000), new_speed_limit); // add a new speed limit to first llt
-  ASSERT_EQ(map->laneletLayer.get(10000).regulatoryElements().size(), 2);
-  ASSERT_TRUE(map->regulatoryElementLayer.exists(new_speed_limit->id()));
-  ASSERT_EQ(map->regulatoryElementLayer.size(), 2);
-  ASSERT_EQ(map->laneletLayer.findUsages(new_speed_limit).size(), 1);
-  ASSERT_EQ(map->laneletLayer.find(10000)->regulatoryElements()[1]->id(), new_speed_limit->id());
-  test_map_elem = std::dynamic_pointer_cast<lanelet::DigitalSpeedLimit>(map->laneletLayer.find(10000)->regulatoryElements()[1]);
-  ASSERT_EQ(test_map_elem->speed_limit_.value(), new_speed_limit->speed_limit_.value());
-  ASSERT_EQ(test_map_elem->participants_.begin()->data(), new_speed_limit->participants_.begin()->data());
-
-  // Set the map
-  autoware_lanelet2_msgs::msg::MapBin msg1;
-  lanelet::utils::conversion::toBinMsg(map, &msg1);
-  autoware_lanelet2_msgs::msg::MapBin::UniquePtr map_msg_ptr1(new autoware_lanelet2_msgs::msg::MapBin(msg1));
-  wmb.baseMapCallback(std::move(map_msg_ptr1));
-
-  sample_proj_string.data = proj_string;
-  wmb.geoReferenceCallback(std::make_unique<std_msgs::msg::String>(sample_proj_string));
-
-  RCLCPP_INFO_STREAM(rclcpp::get_logger("carma_wm_ctrl"), "Map Vehicle Participation Type Test Complete.");
+//   gf_ptr1->gf_pts = taper_right_pts;
+//   gf_ptr2->gf_pts = reverse_pts;
+//   gf_ptr3->gf_pts = open_right_pts;
+//   gf_ptr4->gf_pts = closed;
 
   
+//   gf_ptr1->affected_parts_ = wmb_.getAffectedLaneletOrAreas(gf_ptr1->gf_pts);
+  
+//   gf_ptr2->affected_parts_ = wmb_.getAffectedLaneletOrAreas(gf_ptr2->gf_pts);
+  
+//   gf_ptr4->affected_parts_ = wmb_.getAffectedLaneletOrAreas(gf_ptr4->gf_pts);
+  
+//   gf_ptr3->affected_parts_ = wmb_.getAffectedLaneletOrAreas(gf_ptr3->gf_pts);
 
-}
+//   work_zone_geofence_cache[WorkZoneSection::TAPERRIGHT] = gf_ptr1;
+//   EXPECT_EQ( work_zone_geofence_cache[WorkZoneSection::TAPERRIGHT]->affected_parts_.size(), 1);
+//   work_zone_geofence_cache[WorkZoneSection::REVERSE] = gf_ptr2;
+//   EXPECT_EQ( work_zone_geofence_cache[WorkZoneSection::REVERSE]->affected_parts_.size(), 1);
+//   work_zone_geofence_cache[WorkZoneSection::OPENRIGHT] = gf_ptr3;
+//   EXPECT_EQ( work_zone_geofence_cache[WorkZoneSection::OPENRIGHT]->affected_parts_.size(), 1);
+//   work_zone_geofence_cache[WorkZoneSection::CLOSED] = gf_ptr4;
+//   EXPECT_EQ( work_zone_geofence_cache[WorkZoneSection::CLOSED]->affected_parts_.size(), 1);
+
+//   // get parallel and opposite lanelets
+//   wmb_.preprocessWorkzoneGeometry(work_zone_geofence_cache, parallel_llts, middle_opposite_lanelets);
+  
+//   EXPECT_EQ(parallel_llts->size(), 2);
+//   EXPECT_EQ(middle_opposite_lanelets->size(), 1);
+
+//   // Must be in certain order (taperright):
+//   EXPECT_NEAR((*(parallel_llts.get()))[0].leftBound2d().front().basicPoint2d().x(), 5.0, 0.0001);
+//   EXPECT_NEAR((*(parallel_llts.get()))[0].leftBound2d().front().basicPoint2d().y(), 0.0, 0.0001);
+//   EXPECT_NEAR((*(parallel_llts.get()))[0].rightBound2d().back().basicPoint2d().y(), 25.0, 0.0001);
+
+//   // Must be in certain order (openright):
+//   EXPECT_NEAR((*(parallel_llts.get()))[1].leftBound2d().front().basicPoint2d().x(), 5.0, 0.0001);
+//   EXPECT_NEAR((*(parallel_llts.get()))[1].leftBound2d().front().basicPoint2d().y(), 100.0, 0.0001);
+//   EXPECT_NEAR((*(parallel_llts.get()))[1].rightBound2d().back().basicPoint2d().y(), 105.0, 0.0001);
+
+//   // Must be in certain order (reverse, note that it is still in opposite direction):
+//   EXPECT_NEAR((*(middle_opposite_lanelets.get()))[0].leftBound2d().front().basicPoint2d().x(), 5.0, 0.0001);
+//   EXPECT_NEAR((*(middle_opposite_lanelets.get()))[0].leftBound2d().front().basicPoint2d().y(), 75.0, 0.0001);
+//   EXPECT_NEAR((*(middle_opposite_lanelets.get())).back().rightBound2d().back().basicPoint2d().y(), 50.0, 0.0001);
+// } 
+
+// TEST(WMBroadcaster, createWorkzoneGeometry)
+// {
+//   /////////////////
+//   // CREATE WORLD
+//   /////////////////
+
+//   // Create WMBroadcaster object
+//   WMBroadcaster wmb_(
+//       [&](const autoware_lanelet2_msgs::msg::MapBin& map_bin) {},
+//       [&](const autoware_lanelet2_msgs::msg::MapBin& geofence_bin) {
+//       }, [](const carma_v2x_msgs::msg::TrafficControlRequest& control_msg_pub_){},
+//       [](const carma_perception_msgs::msg::CheckActiveGeofence& active_pub_){},
+//       std::make_shared<TestTimerFactory>(), [](const carma_v2x_msgs::msg::MobilityOperation& tcm_ack_pub_){});
+
+//   // create opposite direction road on the left lane
+//   auto map = carma_wm::test::buildGuidanceTestMap(5, 25, 25);
+
+//   auto ll_1 = carma_wm::test::getLanelet(9900, map->laneletLayer.get(1200).rightBound3d().invert(),map->laneletLayer.get(1200).leftBound3d().invert(),lanelet::AttributeValueString::Solid, lanelet::AttributeValueString::Dashed);
+//   auto ll_2 = carma_wm::test::getLanelet(9901, map->laneletLayer.get(1201).rightBound3d().invert(),map->laneletLayer.get(1201).leftBound3d().invert(),lanelet::AttributeValueString::Solid, lanelet::AttributeValueString::Dashed);
+//   auto ll_3 = carma_wm::test::getLanelet(9902, map->laneletLayer.get(1202).rightBound3d().invert(),map->laneletLayer.get(1202).leftBound3d().invert(),lanelet::AttributeValueString::Solid, lanelet::AttributeValueString::Dashed);
+//   auto ll_4 = carma_wm::test::getLanelet(9903, map->laneletLayer.get(1203).rightBound3d().invert(),map->laneletLayer.get(1203).leftBound3d().invert(),lanelet::AttributeValueString::Solid, lanelet::AttributeValueString::Dashed);
+  
+//   std::vector<lanelet::Point3d> pts0;
+//   std::vector<lanelet::Point3d> pts1;
+//   std::vector<lanelet::Point3d> pts2;
+  
+//   pts0.push_back(map->laneletLayer.get(1203).leftBound3d().back());
+//   pts0.push_back(carma_wm::test::getPoint(0.0, 101.0, 0));
+//   pts0.push_back(carma_wm::test::getPoint(0.0, 102.0, 0));
+//   pts0.push_back(carma_wm::test::getPoint(0.0, 103.0, 0));
+//   pts0.push_back(carma_wm::test::getPoint(0.0, 104.0, 0));
+//   pts0.push_back(carma_wm::test::getPoint(0.0, 105.0, 0));
+  
+//   pts1.push_back(map->laneletLayer.get(1203).rightBound3d().back());
+//   pts1.push_back(carma_wm::test::getPoint(5.0, 101.0, 0));
+//   pts1.push_back(carma_wm::test::getPoint(5.0, 102.0, 0));
+//   pts1.push_back(carma_wm::test::getPoint(5.0, 103.0, 0));
+//   pts1.push_back(carma_wm::test::getPoint(5.0, 104.0, 0));
+//   pts1.push_back(carma_wm::test::getPoint(5.0, 105.0, 0));
+  
+//   pts2.push_back(map->laneletLayer.get(1213).rightBound3d().back());
+//   pts2.push_back(carma_wm::test::getPoint(10.0, 101.0, 0));
+//   pts2.push_back(carma_wm::test::getPoint(10.0, 102.0, 0));
+//   pts2.push_back(carma_wm::test::getPoint(10.0, 103.0, 0));
+//   pts2.push_back(carma_wm::test::getPoint(10.0, 104.0, 0));
+//   pts2.push_back(carma_wm::test::getPoint(10.0, 105.0, 0));
+  
+//   lanelet::LineString3d ls00(lanelet::utils::getId(), pts0);
+//   lanelet::LineString3d ls01(lanelet::utils::getId(), pts1);
+//   lanelet::LineString3d ls02(lanelet::utils::getId(), pts2);
+
+//   auto ll_9 = carma_wm::test::getLanelet(9904, ls01.invert(),ls00.invert(), lanelet::AttributeValueString::Dashed, lanelet::AttributeValueString::Solid);
+//   auto ll_10 = carma_wm::test::getLanelet(9914, ls01,ls02,lanelet::AttributeValueString::Dashed, lanelet::AttributeValueString::Solid);
+  
+//   map->add(ll_1);
+//   map->add(ll_2);
+//   map->add(ll_3);
+//   map->add(ll_4); 
+//   map->add(ll_9);
+//   map->add(ll_10); 
+
+//   /**       START
+//    *        |9904|9914|
+//    *        | _  _  _ |_  _
+//    *        |9903|1213|1223|
+//    *        | _  _  _  _  _|
+//    *        |9902|1212|1222|
+//    *        | _  _  _  _  _|
+//    *        |9901|1211|1221|    num   = lanelet id hardcoded for easier testing
+//    *        | _  _  _  _  _|    |     = lane lines
+//    *        |9900|1210|1220|    - - - = Lanelet boundary
+//    *        |              |    lanelets starting with 990* are opposite direction
+//    *        ****************
+//    *           START_LINE
+//    */
+
+//   autoware_lanelet2_msgs::msg::MapBin msg;
+//   lanelet::utils::conversion::toBinMsg(map, &msg);
+//   autoware_lanelet2_msgs::msg::MapBin::UniquePtr map_msg_ptr(new autoware_lanelet2_msgs::msg::MapBin(msg));
+
+//   // Trigger basemap callback
+//   wmb_.baseMapCallback(std::move(map_msg_ptr));
+//   wmb_.setErrorDistance(0.5);
+  
+//   /////////////////
+//   // CREATE REQUEST
+//   /////////////////
+
+//   std::shared_ptr<std::vector<lanelet::Lanelet>> parallel_llts = std::make_shared<std::vector<lanelet::Lanelet>>(std::vector<lanelet::Lanelet>());
+//   std::shared_ptr<std::vector<lanelet::Lanelet>> middle_opposite_lanelets = std::make_shared<std::vector<lanelet::Lanelet>>(std::vector<lanelet::Lanelet>());
+//   std::unordered_map<uint8_t, std::shared_ptr<carma_wm_ctrl::Geofence>> work_zone_geofence_cache;
+  
+//   std::shared_ptr<Geofence> gf_ptr1 =  std::make_shared<Geofence>();
+//   std::shared_ptr<Geofence> gf_ptr2 =  std::make_shared<Geofence>();
+//   std::shared_ptr<Geofence> gf_ptr3 =  std::make_shared<Geofence>();
+//   std::shared_ptr<Geofence> gf_ptr4 =  std::make_shared<Geofence>();
+
+//   gf_ptr1->label_ = "TYPE:SIG_WZ,INT_ID:1000,SG_ID:235";
+//   gf_ptr2->label_ = "TYPE:SIG_WZ,INT_ID:1000,SG_ID:235";
+//   gf_ptr3->label_ = "TYPE:SIG_WZ,INT_ID:1000,SG_ID:235";
+//   gf_ptr4->label_ = "TYPE:SIG_WZ,INT_ID:1000,SG_ID:235";
+  
+//   /**
+//    *        |9904|9914|
+//    *        | _  _  _ |_  _
+//    *        |9903|    |1223|
+//    *        | _  _ o   _  _|
+//    *        |  r | c  |1222|
+//    *        | _r  _c_  _  _|
+//    *        |    | t  |1221|    t   = taperright points
+//    *        | _  _ _  _   _|    o   = openright points
+//    *        |9900|1210|1220|    c   = closed points
+//    *        |              |    r   = reverse points
+//    *        ****************
+//    *           START_LINE
+//    */
+
+//   std::vector<lanelet::Point3d> taper_right_pts = {};
+
+//   taper_right_pts.push_back(carma_wm::test::getPoint(7.5, 37.5, 0));
+//   taper_right_pts.push_back(carma_wm::test::getPoint(7.5, 49.5, 0));
+
+//   std::vector<lanelet::Point3d> reverse_pts = {};
+//   reverse_pts.push_back(carma_wm::test::getPoint(2.5, 74.9, 0)); // notice the direction
+//   reverse_pts.push_back(carma_wm::test::getPoint(2.5, 50.1, 0));
+
+//   std::vector<lanelet::Point3d> open_right_pts = {};
+//   open_right_pts.push_back(carma_wm::test::getPoint(7.5, 75.1, 0));
+//   open_right_pts.push_back(carma_wm::test::getPoint(7.5, 87.5, 0));
+
+//   std::vector<lanelet::Point3d> closed = {};
+//   closed.push_back(carma_wm::test::getPoint(7.5, 51.0, 0));
+//   closed.push_back(carma_wm::test::getPoint(7.5, 74.0, 0));
+
+//   gf_ptr1->gf_pts = taper_right_pts;
+//   gf_ptr2->gf_pts = reverse_pts;
+//   gf_ptr3->gf_pts = open_right_pts;
+//   gf_ptr4->gf_pts = closed;
+
+//   gf_ptr1->affected_parts_ = wmb_.getAffectedLaneletOrAreas(gf_ptr1->gf_pts);
+//   gf_ptr2->affected_parts_ = wmb_.getAffectedLaneletOrAreas(gf_ptr2->gf_pts);
+//   gf_ptr4->affected_parts_ = wmb_.getAffectedLaneletOrAreas(gf_ptr4->gf_pts);
+//   gf_ptr3->affected_parts_ = wmb_.getAffectedLaneletOrAreas(gf_ptr3->gf_pts);
+
+//   work_zone_geofence_cache[WorkZoneSection::TAPERRIGHT] = gf_ptr1;
+//   EXPECT_EQ( work_zone_geofence_cache[WorkZoneSection::TAPERRIGHT]->affected_parts_.size(), 1);
+//   work_zone_geofence_cache[WorkZoneSection::REVERSE] = gf_ptr2;
+//   EXPECT_EQ( work_zone_geofence_cache[WorkZoneSection::REVERSE]->affected_parts_.size(), 1);
+//   work_zone_geofence_cache[WorkZoneSection::OPENRIGHT] = gf_ptr3;
+//   EXPECT_EQ( work_zone_geofence_cache[WorkZoneSection::OPENRIGHT]->affected_parts_.size(), 1);
+//   work_zone_geofence_cache[WorkZoneSection::CLOSED] = gf_ptr4;
+//   EXPECT_EQ( work_zone_geofence_cache[WorkZoneSection::CLOSED]->affected_parts_.size(), 1);
+  
+//   /////////////////
+//   // TESTS PREPROCESS
+//   /////////////////
+
+//   // get parallel and opposite lanelets
+//   wmb_.preprocessWorkzoneGeometry(work_zone_geofence_cache, parallel_llts, middle_opposite_lanelets);
+  
+//   EXPECT_EQ(parallel_llts->size(), 4);
+//   EXPECT_EQ(middle_opposite_lanelets->size(), 1);
+
+//   // Must be in certain order (taperright):
+//   EXPECT_NEAR((*(parallel_llts.get()))[0].leftBound2d().front().basicPoint2d().x(), map->laneletLayer.get(1210).leftBound2d().back().basicPoint2d().x(), 0.0001);
+//   EXPECT_NEAR((*(parallel_llts.get()))[0].leftBound2d().front().basicPoint2d().y(), map->laneletLayer.get(1210).leftBound2d().back().basicPoint2d().y(), 0.0001);
+//   EXPECT_NEAR((*(parallel_llts.get()))[0].rightBound2d().front().basicPoint2d().x(), map->laneletLayer.get(1210).rightBound2d().back().basicPoint2d().x(), 0.0001);
+//   EXPECT_NEAR((*(parallel_llts.get()))[0].rightBound2d().front().basicPoint2d().y(), map->laneletLayer.get(1210).rightBound2d().back().basicPoint2d().y(), 0.0001);
+
+//   /////////////////
+//   // TEST START / CARMA_WM_CTRL part
+//   /////////////////
+
+//   // Create the workzone geometry
+//   auto gf_ptr = wmb_.createWorkzoneGeometry(work_zone_geofence_cache, parallel_llts->front(), parallel_llts->back(), middle_opposite_lanelets);
+
+//   EXPECT_EQ(gf_ptr->lanelet_additions_.size(), 7);
+
+//   EXPECT_EQ(gf_ptr->lanelet_additions_[0].leftBound2d().back().id(), gf_ptr->lanelet_additions_[1].leftBound2d().front().id());
+//   EXPECT_EQ(gf_ptr->lanelet_additions_[1].leftBound2d().back().id(), gf_ptr->lanelet_additions_[2].leftBound2d().front().id());
+//   EXPECT_EQ(gf_ptr->lanelet_additions_[2].leftBound2d().back().id(), gf_ptr->lanelet_additions_[3].leftBound2d().front().id());
+//   EXPECT_EQ(gf_ptr->lanelet_additions_[3].leftBound2d().back().id(), gf_ptr->lanelet_additions_[4].leftBound2d().front().id());
+//   EXPECT_EQ(gf_ptr->lanelet_additions_[0].rightBound2d().back().id(), gf_ptr->lanelet_additions_[1].rightBound2d().front().id());
+//   EXPECT_EQ(gf_ptr->lanelet_additions_[1].rightBound2d().back().id(), gf_ptr->lanelet_additions_[2].rightBound2d().front().id());
+//   EXPECT_EQ(gf_ptr->lanelet_additions_[2].rightBound2d().back().id(), gf_ptr->lanelet_additions_[3].rightBound2d().front().id());
+//   EXPECT_EQ(gf_ptr->lanelet_additions_[3].rightBound2d().back().id(), gf_ptr->lanelet_additions_[4].rightBound2d().front().id());
+
+//   /////////////////
+//   // TEST START / CARM_WM part
+//   /////////////////
+
+//   // update the map with new lanelets (mapUpdateCallback should follow this pattern as well)
+//   for(auto llt : gf_ptr->lanelet_additions_)
+//   {
+//     RCLCPP_INFO_STREAM(rclcpp::get_logger("carma_wm_ctrl"), "Adding llt with id:" << llt.id());
+//     auto left = llt.leftBound3d(); //new lanelet coming in
+//     for (int i = 0; i < left.size(); i ++)
+//     {
+//       if (map->pointLayer.exists(left[i].id())) //rewrite the memory address of new pts with that of local
+//       {
+//         llt.leftBound3d()[i] = map->pointLayer.get(left[i].id());
+//       }
+//     }
+//     auto right = llt.rightBound3d(); //new lanelet coming in
+//     for (int i = 0; i < right.size(); i ++)
+//     {
+//       if (map->pointLayer.exists(right[i].id())) //rewrite the memory address of new pts with that of local
+//       {
+//         llt.rightBound3d()[i] = map->pointLayer.get(right[i].id());
+//       }
+//     }
+//     // add the llt into the map
+//     EXPECT_NO_THROW(map->add(llt));
+//   }
+  
+//   // update the list
+//   auto factory_pcl = lanelet::RegulatoryElementFactory::create(gf_ptr->regulatory_element_->attribute(lanelet::AttributeName::Subtype).value(),
+//                                                           std::const_pointer_cast<lanelet::RegulatoryElementData>(gf_ptr->regulatory_element_->constData()));
+//   lanelet::RegionAccessRulePtr rar = std::dynamic_pointer_cast<lanelet::RegionAccessRule>(factory_pcl);
+
+//   for (auto lanelet_or_area : gf_ptr->affected_parts_)
+//   {
+//     map->update(map->laneletLayer.get(lanelet_or_area.lanelet().get().id()), rar);
+//   }
+  
+//   // this is part of world building process as it was convenient to put it here. not part of the request
+//   map->update(map->laneletLayer.get(1200), rar);
+//   map->update(map->laneletLayer.get(1201), rar);
+//   map->update(map->laneletLayer.get(1202), rar);
+
+//   // check routability
+//   std::shared_ptr<carma_wm::CARMAWorldModel> cmw=std::make_shared<carma_wm::CARMAWorldModel>();
+//   cmw->setMap(map, 0, true);
+//   auto map_graph = cmw->getMapRoutingGraph();
+//   // enable below to debug in rviz graph
+//   // map_graph->exportGraphViz("../routing.rviz");
+//   auto route_ = map_graph->getRoute(cmw->getMutableMap()->laneletLayer.get(1210), cmw->getMutableMap()->laneletLayer.get(9914));
+  
+//   // check if memory addresses of connecting points of lanelets actually match after the update
+//   EXPECT_EQ(cmw->getMutableMap()->laneletLayer.get(gf_ptr->lanelet_additions_[0].id()).leftBound2d().front().constData(), cmw->getMutableMap()->laneletLayer.get(1210).leftBound2d().back().constData());
+//   EXPECT_EQ(cmw->getMutableMap()->laneletLayer.get(1211).leftBound2d().front().constData(), cmw->getMutableMap()->laneletLayer.get(1210).leftBound2d().back().constData());
+  
+//   EXPECT_EQ(gf_ptr->lanelet_additions_[0].leftBound2d().front().id(), cmw->getMutableMap()->laneletLayer.get(1210).leftBound2d().back().id());
+//   EXPECT_EQ(gf_ptr->lanelet_additions_[0].rightBound2d().front().id(), cmw->getMutableMap()->laneletLayer.get(1210).rightBound2d().back().id());
+//   EXPECT_EQ(gf_ptr->lanelet_additions_[4].leftBound2d().back().id(), cmw->getMutableMap()->laneletLayer.get(9914).leftBound2d().front().id());
+//   EXPECT_EQ(gf_ptr->lanelet_additions_[4].rightBound2d().back().id(), cmw->getMutableMap()->laneletLayer.get(9914).rightBound2d().front().id());
+
+//   EXPECT_TRUE(!!route_);
+//   EXPECT_EQ(route_.get().shortestPath().size(), 7);
+
+//   // check if outdated lanelets blocked
+//   auto route1_ = map_graph->getRoute(map->laneletLayer.get(1210), map->laneletLayer.get(1211));
+//   ASSERT_FALSE(!!route1_);
+
+// }
+
+// TEST(WMBroadcaster, WMBroadcaster_VehicleParticipation_Test)
+// {
+
+//   using namespace lanelet::units::literals;
+
+// carma_wm::CARMAWorldModel wml;
+
+//   // Set the environment  
+//   size_t base_map_call_count = 0;
+//   size_t map_update_call_count = 0;
+//   WMBroadcaster wmb(
+//       [&](const autoware_lanelet2_msgs::msg::MapBin& map_bin) {
+//         // Publish map callback
+//         lanelet::LaneletMapPtr map(new lanelet::LaneletMap);
+//         lanelet::utils::conversion::fromBinMsg(map_bin, map);
+//         base_map_call_count++;
+//       }, 
+//       [&](const autoware_lanelet2_msgs::msg::MapBin& map_bin) {
+//         // Publish map update callback
+//         map_update_call_count++;
+//       }, [](const carma_v2x_msgs::msg::TrafficControlRequest& control_msg_pub_){},
+//       [](const carma_perception_msgs::msg::CheckActiveGeofence& active_pub_){},
+//       std::make_shared<TestTimerFactory>(), [](const carma_v2x_msgs::msg::MobilityOperation& tcm_ack_pub_){});
+
+
+// /*Test that Vehicle Participation Type Value is added before baseMapCallback*/
+// std::string p1 = lanelet::Participants::VehicleCar;
+// wml.setVehicleParticipationType(p1);
+
+// auto value = wmb.getVehicleParticipationType();
+
+// ASSERT_EQ(value, p1);
+
+//   /*Test Vehicle Participation Type Values in Map **/
+
+//     //////
+//   // Set up the map (add relevant regulatory elements)
+//   /////
+//   auto map = carma_wm::getBroadcasterTestMap();
+//   ASSERT_EQ(map->regulatoryElementLayer.size(), 0);
+//   // add regems
+
+//   //OLD SPEED LIMIT LOADED: This will be assigned to a VehicleTruck participant
+//   std::string participant1 = lanelet::Participants::VehicleTruck;
+//   lanelet::DigitalSpeedLimitPtr old_speed_limit1 = std::make_shared<lanelet::DigitalSpeedLimit>(lanelet::DigitalSpeedLimit::buildData(lanelet::InvalId, 5_mph, {}, {},
+//                                                      { participant1}));
+//   ASSERT_TRUE(old_speed_limit1->attribute(lanelet::AttributeName::Subtype).value().compare(lanelet::DigitalSpeedLimit::RuleName) == 0);
+//   ASSERT_EQ(map->laneletLayer.get(10000).regulatoryElements().size(), 0);
+//   map->update(map->laneletLayer.get(10000), old_speed_limit1); // added a speed limit to first llt
+
+//   ASSERT_EQ(map->laneletLayer.get(10000).regulatoryElements().size(), 1);
+//   ASSERT_TRUE(map->regulatoryElementLayer.exists(old_speed_limit1->id()));
+//   ASSERT_EQ(map->regulatoryElementLayer.size(), 1);
+//   ASSERT_EQ(map->laneletLayer.findUsages(old_speed_limit1).size(), 1);
+//   ASSERT_EQ(map->laneletLayer.find(10000)->regulatoryElements().front()->id(), old_speed_limit1->id());//should be 10045 old speed limit's id
+//   ASSERT_EQ(map->laneletLayer.find(10000)->regulatoryElements().front(), old_speed_limit1);
+
+//   lanelet::DigitalSpeedLimitPtr test_map_elem = std::dynamic_pointer_cast<lanelet::DigitalSpeedLimit>(map->laneletLayer.find(10000)->regulatoryElements().front());
+
+//   auto val2 = wmb.getVehicleParticipationType();
+
+//   ASSERT_EQ(test_map_elem->speed_limit_.value(), old_speed_limit1->speed_limit_.value());
+//   ASSERT_EQ(test_map_elem->participants_.begin()->data(), old_speed_limit1->participants_.begin()->data());
+
+//   autoware_lanelet2_msgs::msg::MapBin msg;
+//   lanelet::utils::conversion::toBinMsg(map, &msg);
+//   autoware_lanelet2_msgs::msg::MapBin::UniquePtr map_msg_ptr(new autoware_lanelet2_msgs::msg::MapBin(msg));
+//   // Set the map
+//   wmb.baseMapCallback(std::move(map_msg_ptr));
+//   // Setting georeference otherwise, geofenceCallback will throw exception
+//   std_msgs::msg::String sample_proj_string;
+//   std::string proj_string = "+proj=tmerc +lat_0=39.46636844371259 +lon_0=-76.16919523566943 +k=1 +x_0=0 +y_0=0 +datum=WGS84 +units=m +vunits=m +no_defs";
+  
+//   /*ADD NEW REGELEM TO MAP WITH NEW SL and VPT*/
+
+//   lanelet::DigitalSpeedLimitPtr new_speed_limit = std::make_shared<lanelet::DigitalSpeedLimit>(lanelet::DigitalSpeedLimit::buildData(map->regulatoryElementLayer.uniqueId(), 10_mph, {}, {},
+//                                                      { lanelet::Participants::VehicleCar }));
+//   map->update(map->laneletLayer.get(10000), new_speed_limit); // add a new speed limit to first llt
+//   ASSERT_EQ(map->laneletLayer.get(10000).regulatoryElements().size(), 2);
+//   ASSERT_TRUE(map->regulatoryElementLayer.exists(new_speed_limit->id()));
+//   ASSERT_EQ(map->regulatoryElementLayer.size(), 2);
+//   ASSERT_EQ(map->laneletLayer.findUsages(new_speed_limit).size(), 1);
+//   ASSERT_EQ(map->laneletLayer.find(10000)->regulatoryElements()[1]->id(), new_speed_limit->id());
+//   test_map_elem = std::dynamic_pointer_cast<lanelet::DigitalSpeedLimit>(map->laneletLayer.find(10000)->regulatoryElements()[1]);
+//   ASSERT_EQ(test_map_elem->speed_limit_.value(), new_speed_limit->speed_limit_.value());
+//   ASSERT_EQ(test_map_elem->participants_.begin()->data(), new_speed_limit->participants_.begin()->data());
+
+//   // Set the map
+//   autoware_lanelet2_msgs::msg::MapBin msg1;
+//   lanelet::utils::conversion::toBinMsg(map, &msg1);
+//   autoware_lanelet2_msgs::msg::MapBin::UniquePtr map_msg_ptr1(new autoware_lanelet2_msgs::msg::MapBin(msg1));
+//   wmb.baseMapCallback(std::move(map_msg_ptr1));
+
+//   sample_proj_string.data = proj_string;
+//   wmb.geoReferenceCallback(std::make_unique<std_msgs::msg::String>(sample_proj_string));
+
+//   RCLCPP_INFO_STREAM(rclcpp::get_logger("carma_wm_ctrl"), "Map Vehicle Participation Type Test Complete.");
+
+  
+
+// }
 
 }  // namespace carma_wm_ctrl

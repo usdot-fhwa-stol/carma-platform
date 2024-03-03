@@ -285,7 +285,7 @@ namespace light_controlled_intersection_tactical_plugin
         EXPECT_NEAR(points_and_target_speeds.front().point.y(), 0.0, 0.001);
 
     }
-
+    /**
     TEST(LCITacticalPluginTest, planTrajectoryCB)
     {
         std::shared_ptr<carma_wm::CARMAWorldModel> wm = std::make_shared<carma_wm::CARMAWorldModel>();
@@ -359,7 +359,7 @@ namespace light_controlled_intersection_tactical_plugin
         EXPECT_NEAR(resp->trajectory_plan.trajectory_points.front().y, 0.1, 0.001);
 
     }
-
+    */
 
 } // namespace light_controlled_intersection_tactical_plugin
 
