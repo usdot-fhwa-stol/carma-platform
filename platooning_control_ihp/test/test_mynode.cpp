@@ -57,15 +57,15 @@
 
 
 
-int main (int argc, char **argv) {
-    testing::InitGoogleTest(&argc, argv);
-    ros::init(argc, argv, "test_platoon_control");
+// int main (int argc, char **argv) {
+//     testing::InitGoogleTest(&argc, argv);
+//     ros::init(argc, argv, "test_platoon_control");
 
-    // std::thread spinner([] {while (ros::ok()) ros::spin();});
+//     // std::thread spinner([] {while (ros::ok()) ros::spin();});
 
-    auto res = RUN_ALL_TESTS();
+//     auto res = RUN_ALL_TESTS();
 
-    // ros::shutdown();
+//     // ros::shutdown();
 
-    return res;
-}
+//     return res;
+// }
