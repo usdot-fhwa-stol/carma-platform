@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022-2023 LEIDOS.
+ * Copyright (C) 2022-2024 LEIDOS.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -14,6 +14,7 @@
  * the License.
  */
 
+#include <ament_index_cpp/get_package_share_directory.hpp>
 #include <gtest/gtest.h>
 #include <memory>
 #include <chrono>
@@ -208,8 +209,10 @@ namespace approaching_emergency_vehicle_plugin{
         std::string target_frame;
         lanelet::ErrorMessages load_errors;
 
-        // Load map file and parameters
-        std::string file = "../../install_ros2/approaching_emergency_vehicle_plugin/share/approaching_emergency_vehicle_plugin/resource/town01_vector_map_1.osm";
+        // Set file containing lanelet2 map
+        std::string path = ament_index_cpp::get_package_share_directory("approaching_emergency_vehicle_plugin");
+        std::string file = "/resource/town01_vector_map_1.osm";
+        file = path.append(file);
 
         lanelet::io_handlers::AutowareOsmParser::parseMapParams(file, &projector_type, &target_frame);
         lanelet::projection::LocalFrameProjector local_projector(target_frame.c_str());
@@ -429,8 +432,10 @@ namespace approaching_emergency_vehicle_plugin{
         std::string target_frame;
         lanelet::ErrorMessages load_errors;
 
-        // Load map file and parameters
-        std::string file = "../../install_ros2/approaching_emergency_vehicle_plugin/share/approaching_emergency_vehicle_plugin/resource/town01_vector_map_1.osm";
+        // Set file containing lanelet2 map
+        std::string path = ament_index_cpp::get_package_share_directory("approaching_emergency_vehicle_plugin");
+        std::string file = "/resource/town01_vector_map_1.osm";
+        file = path.append(file);
 
         lanelet::io_handlers::AutowareOsmParser::parseMapParams(file, &projector_type, &target_frame);
         lanelet::projection::LocalFrameProjector local_projector(target_frame.c_str());
@@ -634,8 +639,10 @@ namespace approaching_emergency_vehicle_plugin{
         std::string target_frame;
         lanelet::ErrorMessages load_errors;
 
-        // Load map file and parameters
-        std::string file = "../../install_ros2/approaching_emergency_vehicle_plugin/share/approaching_emergency_vehicle_plugin/resource/town01_vector_map_1.osm";
+        // Set file containing lanelet2 map
+        std::string path = ament_index_cpp::get_package_share_directory("approaching_emergency_vehicle_plugin");
+        std::string file = "/resource/town01_vector_map_1.osm";
+        file = path.append(file);
 
         lanelet::io_handlers::AutowareOsmParser::parseMapParams(file, &projector_type, &target_frame);
         lanelet::projection::LocalFrameProjector local_projector(target_frame.c_str());
@@ -888,8 +895,10 @@ namespace approaching_emergency_vehicle_plugin{
         std::string target_frame;
         lanelet::ErrorMessages load_errors;
 
-        // Load map file and parameters
-        std::string file = "../../install_ros2/approaching_emergency_vehicle_plugin/share/approaching_emergency_vehicle_plugin/resource/town01_vector_map_1.osm";
+        // Set file containing lanelet2 map
+        std::string path = ament_index_cpp::get_package_share_directory("approaching_emergency_vehicle_plugin");
+        std::string file = "/resource/town01_vector_map_1.osm";
+        file = path.append(file);
 
         lanelet::io_handlers::AutowareOsmParser::parseMapParams(file, &projector_type, &target_frame);
         lanelet::projection::LocalFrameProjector local_projector(target_frame.c_str());
