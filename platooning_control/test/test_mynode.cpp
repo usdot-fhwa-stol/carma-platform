@@ -63,8 +63,7 @@ int main (int argc, char **argv) {
 
     // std::thread spinner([] {while (ros::ok()) ros::spin();});
 
-    // auto res = RUN_ALL_TESTS();
-    int res = 0; //TODO: Temporary, until the ROS test is fixed.
+    auto res = RUN_ALL_TESTS();
 
     // ros::shutdown();
 
