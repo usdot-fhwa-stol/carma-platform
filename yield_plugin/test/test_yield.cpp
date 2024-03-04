@@ -297,7 +297,7 @@ TEST(YieldPluginTest, test_update_traj)
   EXPECT_EQ(7, tp.trajectory_points.size());
 }
 
-TEST(YieldPluginTest, get_collision_data)
+TEST(YieldPluginTest, get_collision)
 {
   std::shared_ptr<carma_wm::CARMAWorldModel> wm = std::make_shared<carma_wm::CARMAWorldModel>();
   auto map = carma_wm::test::buildGuidanceTestMap(100,100);
@@ -421,9 +421,9 @@ TEST(YieldPluginTest, get_collision_data)
   rwo_1.predictions = {ps_1,ps_2,ps_3};
   rwo_1.velocity.twist.linear.x = 10.0;
 
-  auto collision_data = plugin.get_collision_data(rwo_1.id, tp, rwo_1.predictions, 6);
+  auto collision_result = plugin.get_collision(tp, rwo_1.predictions, 6);
 
-  ASSERT_TRUE(collision_data == std::nullopt);
+  ASSERT_TRUE(collision_result == std::nullopt);
 
   // DETECT COLLISION
 
@@ -451,9 +451,9 @@ TEST(YieldPluginTest, get_collision_data)
 
   rwo_1.predictions = {ps_1,ps_2,ps_3};
 
-  collision_data = plugin.get_collision_data(rwo_1.id, tp, rwo_1.predictions, 6);
-  ASSERT_TRUE(collision_data != std::nullopt);
-  ASSERT_TRUE(collision_data.value().collision_time == rclcpp::Time(2, 0, collision_data.value().collision_time.get_clock_type()));
+  collision_result = plugin.get_collision(tp, rwo_1.predictions, 6);
+  ASSERT_TRUE(collision_result != std::nullopt);
+  ASSERT_TRUE(collision_result.value().collision_time == rclcpp::Time(2, 0, collision_result.value().collision_time.get_clock_type()));
 
   // STATES ARE NOT ON ROUTE
   ps_1.header.stamp.sec = 1;
@@ -470,8 +470,8 @@ TEST(YieldPluginTest, get_collision_data)
 
   rwo_1.predictions = {ps_1,ps_2};
 
-  collision_data = plugin.get_collision_data(rwo_1.id, tp, rwo_1.predictions, 6);
-  ASSERT_TRUE(collision_data == std::nullopt);
+  collision_result = plugin.get_collision(tp, rwo_1.predictions, 6);
+  ASSERT_TRUE(collision_result == std::nullopt);
 
   // STATES ARE ON THE ROUTE, BUT TOO FAR AWAY
   ps_1.header.stamp.sec = 1;
@@ -488,8 +488,8 @@ TEST(YieldPluginTest, get_collision_data)
 
   rwo_1.predictions = {ps_1,ps_2};
 
-  collision_data = plugin.get_collision_data(rwo_1.id, tp, rwo_1.predictions, 6);
-  ASSERT_TRUE(collision_data == std::nullopt);
+  collision_result = plugin.get_collision(tp, rwo_1.predictions, 6);
+  ASSERT_TRUE(collision_result == std::nullopt);
 
   // STATES ARE ON THE ROUTE, BUT ALREADY PASSED
   // HOWEVER, AS A NAIVE TEST, IT SHOULD STILL RETURN COLLISION (can be removed if algorithm gets improved)
@@ -510,11 +510,11 @@ TEST(YieldPluginTest, get_collision_data)
 
   rwo_1.predictions = {ps_1,ps_2};
 
-  collision_data = plugin.get_collision_data(rwo_1.id, tp, rwo_1.predictions, 6);
-  ASSERT_TRUE(collision_data != std::nullopt);
+  collision_result = plugin.get_collision(tp, rwo_1.predictions, 6);
+  ASSERT_TRUE(collision_result != std::nullopt);
 }
 
-TEST(YieldPluginTest, is_object_behind_the_vehicle)
+TEST(YieldPluginTest, is_object_behind_vehicle)
 {
   std::shared_ptr<carma_wm::CARMAWorldModel> wm = std::make_shared<carma_wm::CARMAWorldModel>();
   auto map = carma_wm::test::buildGuidanceTestMap(100,100);
@@ -581,62 +581,14 @@ TEST(YieldPluginTest, is_object_behind_the_vehicle)
   // Set route but also test no throw
   EXPECT_NO_THROW(plugin.update_traj_for_object(tp, {}, 0.0));
 
-  // ON ROUTE, BUT NO COLLISION DUE TO BEING AHEAD
 
-  tf2::Quaternion tf_orientation;
-  tf_orientation.setRPY(0, 0, 1.5708);
-
-  rwo_1.pose.pose.position.x = 60;
-  rwo_1.pose.pose.position.y = 50;
-  rwo_1.pose.pose.position.z = 0;
-
-  rwo_1.pose.pose.orientation.x = tf_orientation.getX();
-  rwo_1.pose.pose.orientation.y = tf_orientation.getY();
-  rwo_1.pose.pose.orientation.z = tf_orientation.getZ();
-  rwo_1.pose.pose.orientation.w = tf_orientation.getW();
-
-  rwo_1.size.x = 1;
-  rwo_1.size.y = 1;
-  rwo_1.size.z = 1;
-
-  carma_perception_msgs::msg::PredictedState ps_1;
-  carma_perception_msgs::msg::PredictedState ps_2;
-
-  // STATES ARE ON THE ROUTE, BUT ALREADY PASSED
-  ps_1.header.stamp.sec = 2;
-
-  ps_1.predicted_position.position.x = 10;
-  ps_1.predicted_position.position.y = 25;
-  ps_1.predicted_position.position.z = 0;
-  ps_1.predicted_velocity.linear.x = 0;
-  ps_1.predicted_velocity.linear.y = 10;
-
-  ps_1.predicted_position.orientation.x = tf_orientation.getX();
-  ps_1.predicted_position.orientation.y = tf_orientation.getY();
-  ps_1.predicted_position.orientation.z = tf_orientation.getZ();
-  ps_1.predicted_position.orientation.w = tf_orientation.getW();
-
-  ps_2.header.stamp.sec = 3;
-
-  ps_2.predicted_position.position.x = 10;
-  ps_2.predicted_position.position.y = 35;
-  ps_2.predicted_position.position.z = 0;
-  ps_2.predicted_velocity = ps_1.predicted_velocity;
-
-  ps_2.predicted_position.orientation.x = tf_orientation.getX();
-  ps_2.predicted_position.orientation.y = tf_orientation.getY();
-  ps_2.predicted_position.orientation.z = tf_orientation.getZ();
-  ps_2.predicted_position.orientation.w = tf_orientation.getW();
-
-  rwo_1.predictions = {ps_1,ps_2};
-
-  auto collision_data = plugin.get_collision_data(rwo_1.id, tp, rwo_1.predictions, 6);
-  ASSERT_TRUE(collision_data != std::nullopt); //make sure collision happens
-  ASSERT_FALSE(plugin.is_object_behind_the_vehicle(rwo_1.id, collision_data.value()));
-  ASSERT_FALSE(plugin.is_object_behind_the_vehicle(rwo_1.id, collision_data.value()));
-  ASSERT_FALSE(plugin.is_object_behind_the_vehicle(rwo_1.id, collision_data.value()));
-  ASSERT_FALSE(plugin.is_object_behind_the_vehicle(rwo_1.id, collision_data.value()));
-  ASSERT_TRUE(plugin.is_object_behind_the_vehicle(rwo_1.id, collision_data.value())); //need consecutive 5 times required to confirm vehicle passed
+  auto collision_result = plugin.get_collision(tp, rwo_1.predictions, 6);
+  ASSERT_TRUE(collision_result != std::nullopt); //make sure collision happens
+  ASSERT_FALSE(plugin.is_object_behind_vehicle(rwo_1.id, collision_result.value().collision_time, 12.0, 11.0));
+  ASSERT_FALSE(plugin.is_object_behind_vehicle(rwo_1.id, collision_result.value().collision_time, 12.0, 11.0));
+  ASSERT_FALSE(plugin.is_object_behind_vehicle(rwo_1.id, collision_result.value().collision_time, 12.0, 11.0));
+  ASSERT_FALSE(plugin.is_object_behind_vehicle(rwo_1.id, collision_result.value().collision_time, 12.0, 11.0));
+  ASSERT_TRUE(plugin.is_object_behind_vehicle(rwo_1.id, collision_result.value().collision_time, 12.0, 11.0)); //need consecutive 5 times required to confirm vehicle passed
 }
 
 TEST(YieldPluginTest, test_update_traj2)

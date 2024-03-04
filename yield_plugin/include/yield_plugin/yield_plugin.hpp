@@ -63,11 +63,11 @@ struct PointSpeedPair
 /**
  * \brief Convenience class for saving collision results
  */
-struct CollisionData
+struct GetCollisionResult
 {
   rclcpp::Time collision_time;
-  lanelet::BasicPoint2d predicted_vehicle_collision_point;
-  lanelet::BasicPoint2d predicted_obstacle_collision_point;
+  lanelet::BasicPoint2d point1;
+  lanelet::BasicPoint2d point2;
 };
 
 /**
@@ -245,15 +245,14 @@ public:
 
   /**
    * \brief Return naive collision time and locations based on collision radius given two trajectories with one being obstacle's predicted steps
-   * \param object_id object id corresponding to the trajectory2
    * \param trajectory1 trajectory of the ego vehicle
    * \param trajectory2 trajectory of predicted steps
    * \param collision_radius a distance to check between two trajectory points at a same timestamp that is considered a collision
    * NOTE: Currently Traj2 is assumed to be a simple cv model to save computational performance
-   * NOTE: Collisions are based on only collision radius at the same predicted time even if ego vehicle maybe past the obstacle. To filter these cases, see `is_object_behind_the_vehicle()`
+   * NOTE: Collisions are based on only collision radius at the same predicted time even if ego vehicle maybe past the obstacle. To filter these cases, see `is_object_behind_vehicle()`
    * \return data of time of collision if detected, otherwise, std::nullopt
    */
-  std::optional<CollisionData> get_collision_data(uint32_t object_id, const carma_planning_msgs::msg::TrajectoryPlan& trajectory1, const std::vector<carma_perception_msgs::msg::PredictedState>& trajectory2, double collision_radius);
+  std::optional<GetCollisionResult> get_collision(const carma_planning_msgs::msg::TrajectoryPlan& trajectory1, const std::vector<carma_perception_msgs::msg::PredictedState>& trajectory2, double collision_radius);
 
   /**
    * \brief Return collision time given two trajectories with one being external object with predicted steps
@@ -267,12 +266,14 @@ public:
   /**
    * \brief Check if object location is behind the vehicle using estimates of the vehicle's length and route downtracks
    * \param object_id object id to use for the consecutive_clearance_count_for_obstacles_
-   * \param collision_data info about collision such as collision_time, vehicle and obstacle positions at the time of collision
+   * \param collision_time predicted time of collision
+   * \param vehicle_downtrack at the time of collision
+   * \param object_downtrack at the time of collision
    * NOTE: Uses internal counter low pass filter to confirm the object is behind only if it counted continuously above
            config_.consecutive_clearance_count_for_obstacles_threshold
    * \return return true if object is behind the vehicle
    */
-  bool is_object_behind_the_vehicle(uint32_t object_id, const CollisionData& collision_data);
+  bool is_object_behind_vehicle(uint32_t object_id, const rclcpp::Time& collision_time, double vehicle_point, double object_downtrack);
 
   /**
    * \brief Return the earliest collision object and time of collision pair from the given trajectory and list of external objects with predicted states.
