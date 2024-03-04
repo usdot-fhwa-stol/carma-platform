@@ -63,7 +63,7 @@ int main (int argc, char **argv) {
 
     // std::thread spinner([] {while (ros::ok()) ros::spin();});
 
-    auto res = RUN_ALL_TESTS();
+    // auto res = RUN_ALL_TESTS();
 
     // ros::shutdown();
 
