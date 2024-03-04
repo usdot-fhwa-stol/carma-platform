@@ -580,15 +580,15 @@ TEST(YieldPluginTest, is_object_behind_vehicle)
 
   // Set route but also test no throw
   EXPECT_NO_THROW(plugin.update_traj_for_object(tp, {}, 0.0));
+  // not actually passed
+  ASSERT_FALSE(plugin.is_object_behind_vehicle(rwo_1.id, rclcpp::Time(9,0), 12.0, 11.0)); //dummy time and id
 
-
-  auto collision_result = plugin.get_collision(tp, rwo_1.predictions, 6);
-  ASSERT_TRUE(collision_result != std::nullopt); //make sure collision happens
-  ASSERT_FALSE(plugin.is_object_behind_vehicle(rwo_1.id, collision_result.value().collision_time, 12.0, 11.0));
-  ASSERT_FALSE(plugin.is_object_behind_vehicle(rwo_1.id, collision_result.value().collision_time, 12.0, 11.0));
-  ASSERT_FALSE(plugin.is_object_behind_vehicle(rwo_1.id, collision_result.value().collision_time, 12.0, 11.0));
-  ASSERT_FALSE(plugin.is_object_behind_vehicle(rwo_1.id, collision_result.value().collision_time, 12.0, 11.0));
-  ASSERT_TRUE(plugin.is_object_behind_vehicle(rwo_1.id, collision_result.value().collision_time, 12.0, 11.0)); //need consecutive 5 times required to confirm vehicle passed
+  // passed but needs confirmation
+  ASSERT_FALSE(plugin.is_object_behind_vehicle(rwo_1.id, rclcpp::Time(9,0), 14.0, 11.0));
+  ASSERT_FALSE(plugin.is_object_behind_vehicle(rwo_1.id, rclcpp::Time(9,0), 14.0, 11.0));
+  ASSERT_FALSE(plugin.is_object_behind_vehicle(rwo_1.id, rclcpp::Time(9,0), 14.0, 11.0));
+  ASSERT_FALSE(plugin.is_object_behind_vehicle(rwo_1.id, rclcpp::Time(9,0), 14.0, 11.0));
+  ASSERT_TRUE(plugin.is_object_behind_vehicle(rwo_1.id, rclcpp::Time(9,0), 14.0, 11.0)); //need consecutive 5 times required to confirm vehicle passed
 }
 
 TEST(YieldPluginTest, test_update_traj2)
