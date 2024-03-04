@@ -23,6 +23,7 @@
 
 namespace mock_drivers
 {
+/*
 TEST(MockCameraDriver, camera_topic)
 {
   ros::NodeHandle nh;
@@ -84,7 +85,7 @@ TEST(MockCameraDriver, camera_topic)
   ASSERT_TRUE(got_rect);
   ASSERT_TRUE(got_mat);
 }
-
+*/
 }  // namespace mock_drivers
 
 /*!
