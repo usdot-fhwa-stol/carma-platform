@@ -51,7 +51,6 @@ target_link_libraries(${node_exec}
         ${node_lib}
 )
 
-set(BUILD_TESTING TRUE)
 # Testing
 if(BUILD_TESTING)  
 

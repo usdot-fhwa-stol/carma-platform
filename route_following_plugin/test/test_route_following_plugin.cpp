@@ -149,116 +149,116 @@ namespace route_following_plugin
 
     }
 
-    // TEST(RouteFollowingPlugin, TestAssociateSpeedLimitusingosm)
-    // {
-    //     // File to process. Path is relative to test folder
-    //     std::string file = "../../install_ros2/route_following_plugin/share/route_following_plugin/resource/map/town01_vector_map_1.osm";
-    //     lanelet::Id start_id = 100;
-    //     lanelet::Id end_id = 111;
-    //     /***
-    //      * VAVLID PATHs (consists of lanenet ids): (This is also the shortest path because certain Lanelets missing)
-    //      * 159->160->164->136->135->137->144->121; 
-    //      * 159->160->164->136->135->137->144->118;
-    //      * 168->170->111
-    //      * 159->161->168->170->111
-    //      * 167->169->168->170->111
-    //      * 115->146->140->139->143->167->169->168->170->111 
-    //      * 141->139->143->167->169->168->170->111 
-    //      * 127->146->140->139->143->167->169->168->170->111 
-    //      * 101->100->104->167->169->168->170->111 (a counter cLock circle) 
-    //      * **/
-    //     // Write new map to file
-    //     int projector_type = 0;
-    //     std::string target_frame;
-    //     lanelet::ErrorMessages load_errors;
-    //     // Parse geo reference info from the original lanelet map (.osm)
-    //     lanelet::io_handlers::AutowareOsmParser::parseMapParams(file, &projector_type, &target_frame);
-    //     lanelet::projection::LocalFrameProjector local_projector(target_frame.c_str());
-    //     lanelet::LaneletMapPtr map = lanelet::load(file, local_projector, &load_errors);
-    //     if (map->laneletLayer.size() == 0)
-    //     {
-    //         FAIL() << "Input map does not contain any lanelets";
-    //     }
-    //     std::shared_ptr<carma_wm::CARMAWorldModel> cmw = std::make_shared<carma_wm::CARMAWorldModel>();
-    //     cmw->carma_wm::CARMAWorldModel::setMap(map);
+    TEST(RouteFollowingPlugin, TestAssociateSpeedLimitusingosm)
+    {
+        // File to process. Path is relative to test folder
+        std::string file = "../../install_ros2/route_following_plugin/share/route_following_plugin/resource/map/town01_vector_map_1.osm";
+        lanelet::Id start_id = 100;
+        lanelet::Id end_id = 111;
+        /***
+         * VAVLID PATHs (consists of lanenet ids): (This is also the shortest path because certain Lanelets missing)
+         * 159->160->164->136->135->137->144->121; 
+         * 159->160->164->136->135->137->144->118;
+         * 168->170->111
+         * 159->161->168->170->111
+         * 167->169->168->170->111
+         * 115->146->140->139->143->167->169->168->170->111 
+         * 141->139->143->167->169->168->170->111 
+         * 127->146->140->139->143->167->169->168->170->111 
+         * 101->100->104->167->169->168->170->111 (a counter cLock circle) 
+         * **/
+        // Write new map to file
+        int projector_type = 0;
+        std::string target_frame;
+        lanelet::ErrorMessages load_errors;
+        // Parse geo reference info from the original lanelet map (.osm)
+        lanelet::io_handlers::AutowareOsmParser::parseMapParams(file, &projector_type, &target_frame);
+        lanelet::projection::LocalFrameProjector local_projector(target_frame.c_str());
+        lanelet::LaneletMapPtr map = lanelet::load(file, local_projector, &load_errors);
+        if (map->laneletLayer.size() == 0)
+        {
+            FAIL() << "Input map does not contain any lanelets";
+        }
+        std::shared_ptr<carma_wm::CARMAWorldModel> cmw = std::make_shared<carma_wm::CARMAWorldModel>();
+        cmw->carma_wm::CARMAWorldModel::setMap(map);
 
-    //     auto worker = std::make_shared<RouteFollowingPlugin>(rclcpp::NodeOptions());
-    //     //get position on map
-    //     auto llt = map.get()->laneletLayer.get(start_id);
-    //     lanelet::LineString3d left_bound = llt.leftBound();
-    //     lanelet::LineString3d right_bound = llt.rightBound();
-    //     geometry_msgs::msg::PoseStamped left;
-    //     geometry_msgs::msg::PoseStamped right;
-    //     for (lanelet::Point3d &p : left_bound)
-    //     {
-    //         left.pose.position.x = p.x();
-    //         left.pose.position.y = p.y();
-    //         left.pose.position.z = p.z();
-    //     }
-    //     for (lanelet::Point3d &p : right_bound)
-    //     {
-    //         right.pose.position.x = p.x();
-    //         right.pose.position.y = p.y();
-    //         right.pose.position.z = p.z();
-    //     }
-    //     //Assign start of centerline of start lanelet as current position
-    //     lanelet::BasicPoint2d start_location;
-    //     start_location = llt.centerline2d().back();
-    //     worker->current_loc_ = start_location;
+        auto worker = std::make_shared<RouteFollowingPlugin>(rclcpp::NodeOptions());
+        //get position on map
+        auto llt = map.get()->laneletLayer.get(start_id);
+        lanelet::LineString3d left_bound = llt.leftBound();
+        lanelet::LineString3d right_bound = llt.rightBound();
+        geometry_msgs::msg::PoseStamped left;
+        geometry_msgs::msg::PoseStamped right;
+        for (lanelet::Point3d &p : left_bound)
+        {
+            left.pose.position.x = p.x();
+            left.pose.position.y = p.y();
+            left.pose.position.z = p.z();
+        }
+        for (lanelet::Point3d &p : right_bound)
+        {
+            right.pose.position.x = p.x();
+            right.pose.position.y = p.y();
+            right.pose.position.z = p.z();
+        }
+        //Assign start of centerline of start lanelet as current position
+        lanelet::BasicPoint2d start_location;
+        start_location = llt.centerline2d().back();
+        worker->current_loc_ = start_location;
 
-    //     //define twist
-    //     worker->current_speed_ = 0.0;
+        //define twist
+        worker->current_speed_ = 0.0;
 
-    //     //Set Route
-    //     carma_wm::test::setRouteByIds({start_id, end_id}, cmw);
-    //     cmw->carma_wm::CARMAWorldModel::setMap(map);
-    //     worker->wm_ = cmw;
-    //     auto shortest_path = cmw->getRoute()->shortestPath();
-    //     //Define plan for request and response
-    //     //PlanManeuversRequest
-    //     auto plan_request = std::make_shared<carma_planning_msgs::srv::PlanManeuvers::Request>();
-    //     auto plan_response = std::make_shared<carma_planning_msgs::srv::PlanManeuvers::Response>();
-    //     auto pplan = std::make_shared<carma_planning_msgs::srv::PlanManeuvers::Request>();
+        //Set Route
+        carma_wm::test::setRouteByIds({start_id, end_id}, cmw);
+        cmw->carma_wm::CARMAWorldModel::setMap(map);
+        worker->wm_ = cmw;
+        auto shortest_path = cmw->getRoute()->shortestPath();
+        //Define plan for request and response
+        //PlanManeuversRequest
+        auto plan_request = std::make_shared<carma_planning_msgs::srv::PlanManeuvers::Request>();
+        auto plan_response = std::make_shared<carma_planning_msgs::srv::PlanManeuvers::Response>();
+        auto pplan = std::make_shared<carma_planning_msgs::srv::PlanManeuvers::Request>();
 
-    //     carma_planning_msgs::msg::ManeuverPlan plan_req1;
-    //     plan_req1.header;
-    //     plan_req1.maneuver_plan_id;
-    //     plan_req1.planning_start_time;
-    //     plan_req1.planning_completion_time;
-    //     rclcpp::Time current_time = worker->now();
-    //     plan_req1.maneuvers.push_back(worker->composeLaneFollowingManeuverMessage(0.0, 100.0, 0, 11.176, {start_id}));
-    //     pplan->prior_plan = plan_req1;
-    //     plan_request = pplan;
-    //     //PlanManeuversResponse
-    //     auto newplan = std::make_shared<carma_planning_msgs::srv::PlanManeuvers::Response>();
-    //     for (auto i = 0; i < plan_req1.maneuvers.size(); i++)
-    //         newplan->new_plan.maneuvers.push_back(plan_req1.maneuvers[i]);
+        carma_planning_msgs::msg::ManeuverPlan plan_req1;
+        plan_req1.header;
+        plan_req1.maneuver_plan_id;
+        plan_req1.planning_start_time;
+        plan_req1.planning_completion_time;
+        rclcpp::Time current_time = worker->now();
+        plan_req1.maneuvers.push_back(worker->composeLaneFollowingManeuverMessage(0.0, 100.0, 0, 11.176, {start_id}));
+        pplan->prior_plan = plan_req1;
+        plan_request = pplan;
+        //PlanManeuversResponse
+        auto newplan = std::make_shared<carma_planning_msgs::srv::PlanManeuvers::Response>();
+        for (auto i = 0; i < plan_req1.maneuvers.size(); i++)
+            newplan->new_plan.maneuvers.push_back(plan_req1.maneuvers[i]);
 
-    //     plan_response = newplan;
-    //     worker->latest_maneuver_plan_ = worker->routeCb(shortest_path);
+        plan_response = newplan;
+        worker->latest_maneuver_plan_ = worker->routeCb(shortest_path);
 
-    //     std::shared_ptr<rmw_request_id_t> srv_header;
+        std::shared_ptr<rmw_request_id_t> srv_header;
 
-    //     worker->plan_maneuvers_callback(srv_header,plan_request, plan_response);
-    //     //check target speeds in updated response
-    //     lanelet::Velocity limit = 25_mph;
+        worker->plan_maneuvers_callback(srv_header,plan_request, plan_response);
+        //check target speeds in updated response
+        lanelet::Velocity limit = 25_mph;
 
-    //     for (auto i = 0; i < plan_response->new_plan.maneuvers.size() - 1; i++)
-    //     {
-    //       ASSERT_EQ(plan_response->new_plan.maneuvers[i].lane_following_maneuver.end_speed, limit.value());
-    //     }
+        for (auto i = 0; i < plan_response->new_plan.maneuvers.size() - 1; i++)
+        {
+          ASSERT_EQ(plan_response->new_plan.maneuvers[i].lane_following_maneuver.end_speed, limit.value());
+        }
 
-    //     //Test findSpeedLimit function
-    //     auto current_lanelets = lanelet::geometry::findNearest(worker->wm_->getMap()->laneletLayer, worker->current_loc_, 10);
-    //     lanelet::ConstLanelet current_lanelet = current_lanelets[0].second;
-    //     double speed = worker->findSpeedLimit(current_lanelet);
-    //     if (speed < 11.176)
-    //     {
-    //         ASSERT_EQ(speed, 0.0);
-    //     }
-    //     else
-    //         ASSERT_EQ(speed, 11.176);
-    // }
+        //Test findSpeedLimit function
+        auto current_lanelets = lanelet::geometry::findNearest(worker->wm_->getMap()->laneletLayer, worker->current_loc_, 10);
+        lanelet::ConstLanelet current_lanelet = current_lanelets[0].second;
+        double speed = worker->findSpeedLimit(current_lanelet);
+        if (speed < 11.176)
+        {
+            ASSERT_EQ(speed, 0.0);
+        }
+        else
+            ASSERT_EQ(speed, 11.176);
+    }
     
     TEST(RouteFollowingPlugin, TestHelperfunctions)
     {
