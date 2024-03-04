@@ -38,6 +38,7 @@ struct YieldPluginConfig
   std::string vehicle_id = "DEFAULT_VEHICLE_ID";         // Vehicle id is the license plate of the vehicle
   int acceptable_passed_timesteps = 10;              // acceptable number of timesteps to use the latest known mobility request before switching to yield
   double intervehicle_collision_distance_in_m = 10.0;    //Intervehicle distance that is considered a collision
+  int consecutive_clearance_count_for_obstacles_threshold = 5; //Number of consecutive times the vehicle detects that the obstacle is behind to confirm the obstacle is actually behind
   double safety_collision_time_gap_in_s = 2.0;          // Time gap to finish planning a yield earlier than collision time
   bool enable_adjustable_gap = true;          // Flag to enable yield plugin to check for adjustable gap for example digital gap from map
   int acceptable_urgency = 5;                 //Minimum urgency value to consider the mobility request
@@ -61,6 +62,7 @@ struct YieldPluginConfig
           << "vehicle_id: " << c.vehicle_id << std::endl
           << "acceptable_passed_timesteps: " << c.acceptable_passed_timesteps << std::endl
           << "intervehicle_collision_distance_in_m: " << c.intervehicle_collision_distance_in_m << std::endl
+          << "consecutive_clearance_count_for_obstacles_threshold: " << c.consecutive_clearance_count_for_obstacles_threshold << std::endl
           << "safety_collision_time_gap_in_s: " << c.safety_collision_time_gap_in_s << std::endl
           << "enable_adjustable_gap: " << c.enable_adjustable_gap << std::endl
           << "acceptable_urgency: " << c.acceptable_urgency << std::endl

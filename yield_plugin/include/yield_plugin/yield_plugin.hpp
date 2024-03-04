@@ -61,6 +61,16 @@ struct PointSpeedPair
 };
 
 /**
+ * \brief Convenience class for saving collision results
+ */
+struct GetCollisionResult
+{
+  rclcpp::Time collision_time;
+  lanelet::BasicPoint2d point1;
+  lanelet::BasicPoint2d point2;
+};
+
+/**
  * \brief Class containing primary business logic for the In-Lane Cruising Plugin
  *
  */
@@ -234,14 +244,15 @@ public:
   void set_external_objects(const std::vector<carma_perception_msgs::msg::ExternalObject>& object_list);
 
   /**
-   * \brief Return collision time given two trajectories with one being predicted steps
+   * \brief Return naive collision time and locations based on collision radius given two trajectories with one being obstacle's predicted steps
    * \param trajectory1 trajectory of the ego vehicle
    * \param trajectory2 trajectory of predicted steps
    * \param collision_radius a distance to check between two trajectory points at a same timestamp that is considered a collision
    * NOTE: Currently Traj2 is assumed to be a simple cv model to save computational performance
-   * \return time_of_collision if collision detected, otherwise, std::nullopt
+   * NOTE: Collisions are based on only collision radius at the same predicted time even if ego vehicle maybe past the obstacle. To filter these cases, see `is_object_behind_vehicle()`
+   * \return data of time of collision if detected, otherwise, std::nullopt
    */
-  std::optional<rclcpp::Time> get_collision_time(const carma_planning_msgs::msg::TrajectoryPlan& trajectory1, const std::vector<carma_perception_msgs::msg::PredictedState>& trajectory2, double collision_radius);
+  std::optional<GetCollisionResult> get_collision(const carma_planning_msgs::msg::TrajectoryPlan& trajectory1, const std::vector<carma_perception_msgs::msg::PredictedState>& trajectory2, double collision_radius);
 
   /**
    * \brief Return collision time given two trajectories with one being external object with predicted steps
@@ -251,6 +262,18 @@ public:
    * \return time_of_collision if collision detected, otherwise, std::nullopt
    */
   std::optional<rclcpp::Time> get_collision_time(const carma_planning_msgs::msg::TrajectoryPlan& original_tp, const carma_perception_msgs::msg::ExternalObject& curr_obstacle);
+
+  /**
+   * \brief Check if object location is behind the vehicle using estimates of the vehicle's length and route downtracks
+   * \param object_id object id to use for the consecutive_clearance_count_for_obstacles_
+   * \param collision_time predicted time of collision
+   * \param vehicle_downtrack at the time of collision
+   * \param object_downtrack at the time of collision
+   * NOTE: Uses internal counter low pass filter to confirm the object is behind only if it counted continuously above
+           config_.consecutive_clearance_count_for_obstacles_threshold
+   * \return return true if object is behind the vehicle
+   */
+  bool is_object_behind_vehicle(uint32_t object_id, const rclcpp::Time& collision_time, double vehicle_point, double object_downtrack);
 
   /**
    * \brief Return the earliest collision object and time of collision pair from the given trajectory and list of external objects with predicted states.
@@ -279,6 +302,7 @@ public:
    */
   double get_predicted_velocity_at_time(const geometry_msgs::msg::Twist& object_velocity_in_map_frame, const carma_planning_msgs::msg::TrajectoryPlan& original_tp, double timestamp_in_sec_to_predict);
 
+
 private:
 
   carma_wm::WorldModelConstPtr wm_;
@@ -289,7 +313,7 @@ private:
   std::set<lanelet::Id> route_llt_ids_;
   lanelet::Id previous_llt_id_;
   std::vector<carma_perception_msgs::msg::ExternalObject> external_objects_;
-
+  std::unordered_map<uint32_t, int> consecutive_clearance_count_for_obstacles_;
   // flag to show if it is possible for the vehicle to accept the cooperative request
   bool cooperative_request_acceptable_ = false;
 
