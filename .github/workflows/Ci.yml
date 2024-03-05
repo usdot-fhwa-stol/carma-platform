@@ -52,7 +52,7 @@ jobs:
       run: |
         source "$INIT_ENV"
         PACKAGES=$(find . -maxdepth 2 -type f -name package.xml | sed 's/\.\///' | cut -d/ -f1) # maxdepth 2 Limits the search of package.xml to current directory and one level of subdirectories beneath it. find will not search beyond two levels deep from the starting point. Without this option, find would search the starting directory and all subdirectories recursively.
-        sed -i 's/colcon build /colcon build --packages-skip novatel_oem7_msgs tracetools tracetools_test carma_launch_testing carma_message_utilities ros2trace tracetools_launch tracetools_read tracetools_trace /' /home/carma/.ci-image/engineering_tools/code_coverage/make_with_coverage.bash
+        sed -i 's/colcon build /colcon build --packages-skip novatel_oem7_msgs tracetools tracetools_test /' /home/carma/.ci-image/engineering_tools/code_coverage/make_with_coverage.bash
         make_with_coverage.bash -m -e /opt/carma/ -o ./coverage_reports/gcov
 
     - name: Run ROS1 C++ Tests
