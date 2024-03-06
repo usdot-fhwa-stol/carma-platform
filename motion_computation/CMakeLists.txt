@@ -13,6 +13,7 @@
 # limitations under the License.
 
 cmake_minimum_required(VERSION 3.5)
+option(BUILD_TESTING "Build tests" OFF)
 project(motion_computation)
 
 # CARMA builds packages in an environment with both ROS 1 and ROS 2 installed.
@@ -65,8 +66,6 @@ ament_auto_add_executable(motion_computation_node_exec
 rclcpp_components_register_nodes(motion_computation
   "motion_computation::MotionComputationNode"
 )
-
-set(motion_computation_BUILD_TESTS OFF) #TODO disabling unit test temporarily, since cannot turn off the ctest that is failing.
 
 if(motion_computation_BUILD_TESTS)
 
