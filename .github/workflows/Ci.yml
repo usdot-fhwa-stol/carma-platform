@@ -88,7 +88,7 @@ jobs:
         source "$INIT_ENV"
         source "$ROS_2_ENV"
         source /opt/autoware.ai/ros/install_ros2/setup.bash
-        sed -i 's/colcon test /colcon test --packages-skip approaching_emergency_vehicle_plugin carma_cooperative_perception cooperative_lanechange emergency_response_vehicle_plugin lci_strategic_plugin motion_computation plan_delegator pose_to_tf subsystem_controllers system_controller yield_plugin /' /home/carma/.ci-image/engineering_tools/code_coverage/make_with_coverage.bash
+        sed -i 's/colcon test /colcon test --packages-skip approaching_emergency_vehicle_plugin carma_cooperative_perception cooperative_lanechange emergency_response_vehicle_plugin lci_strategic_plugin motion_computation plan_delegator pose_to_tf subsystem_controllers system_controller /' /home/carma/.ci-image/engineering_tools/code_coverage/make_with_coverage.bash
         make_with_coverage.bash -t -e /opt/carma/ -o ./coverage_reports/gcov
 
     - name: Combine ROS1 and ROS2 compile_commands.json files

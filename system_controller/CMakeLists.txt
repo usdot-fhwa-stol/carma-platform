@@ -1,4 +1,5 @@
 cmake_minimum_required(VERSION 3.5)
+option(BUILD_TESTING "Build tests" OFF)
 project(system_controller)
 
 
@@ -26,6 +27,7 @@ ament_auto_add_executable(${executable_name} src/main.cpp)
 target_link_libraries(${executable_name} ${library_name})
 
 # Test
+
 if(BUILD_TESTING)
 
   add_subdirectory(test)
