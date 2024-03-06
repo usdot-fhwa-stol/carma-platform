@@ -13,7 +13,6 @@
 # limitations under the License.
 
 cmake_minimum_required(VERSION 3.5)
-option(BUILD_TESTING "Build tests" OFF)
 project(motion_computation)
 
 # CARMA builds packages in an environment with both ROS 1 and ROS 2 installed.

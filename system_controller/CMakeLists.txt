@@ -1,5 +1,4 @@
 cmake_minimum_required(VERSION 3.5)
-option(BUILD_TESTING "Build tests" OFF)
 project(system_controller)
 
 
