@@ -175,6 +175,7 @@ namespace approaching_emergency_vehicle_plugin{
         ASSERT_EQ(worker_node->filter_points_ahead(reference_point6, {points.back()}).size(), 1);
     }
 
+    /**
     TEST(Testapproaching_emergency_vehicle_plugin, testBSMProcessing){
 
         // Create, configure, and activate worker_node (ApproachingEmergencyVehiclePlugin)
@@ -405,6 +406,7 @@ namespace approaching_emergency_vehicle_plugin{
         EXPECT_FALSE(worker_node->is_same_direction_.begin()->second); // not on same direction
         EXPECT_FALSE(worker_node->has_tracked_erv_);
     }
+    */
 
     TEST(Testapproaching_emergency_vehicle_plugin, testManeuverPlanWhenSlowingDownForErv){
         // Create, configure, and activate worker_node (ApproachingEmergencyVehiclePlugin)

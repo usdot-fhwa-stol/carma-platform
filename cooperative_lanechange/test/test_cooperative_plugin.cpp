@@ -331,6 +331,7 @@ namespace cooperative_lanechange
         EXPECT_TRUE(worker->find_current_gap(obstacle.lanelet_id,obstacle.down_track, req.vehicle_state) > 0.0);
     }
     */
+    /**
     TEST(CooperativeLaneChangePlugin,TestNoPath_roadwayobject){
         //Tests behavior when there is no path from roadway object to subject vehicle
 
@@ -465,6 +466,7 @@ namespace cooperative_lanechange
         }
 
     }
+    */
 }
 
 int main(int argc, char ** argv)

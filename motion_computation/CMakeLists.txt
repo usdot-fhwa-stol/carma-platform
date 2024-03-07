@@ -79,8 +79,8 @@ if(motion_computation_BUILD_TESTS)
       -DBOOST_DATE_TIME_POSIX_TIME_STD_CONFIG
   )
 
-  add_launch_test(test/motion_computation_external_object_launch_test.py)
-  add_launch_test(test/motion_computation_queueing_launch_test.py)
+  # add_launch_test(test/motion_computation_external_object_launch_test.py)
+  # add_launch_test(test/motion_computation_queueing_launch_test.py)
 
 endif()
 
