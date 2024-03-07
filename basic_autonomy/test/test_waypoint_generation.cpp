@@ -833,6 +833,9 @@ TEST(BasicAutonomyTest, get_nearest_basic_point_index)
                                                                                     detailed_config, visited_lanelets), std::invalid_argument);
     }
 
+    // These tests has been temporarily disabled to support Continuous Improvement (CI) processes.
+    // Related GitHub Issue: <https://github.com/usdot-fhwa-stol/carma-platform/issues/2335>
+
     /**
     TEST(BasicAutonomyTest, test_verify_yield)
     {

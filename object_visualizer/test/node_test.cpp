@@ -21,7 +21,8 @@
 #include <future>
 
 #include "object_visualizer/object_visualizer_node.hpp"
-
+// These tests has been temporarily disabled to support Continuous Improvement (CI) processes.
+// Related GitHub Issue: <https://github.com/usdot-fhwa-stol/carma-platform/issues/2335>
 /**
 TEST(Testobject_visualizer, external_objects_test){
 
@@ -32,7 +33,7 @@ TEST(Testobject_visualizer, external_objects_test){
     worker_node->activate();  //Call activate state transition to get not read for runtime
 
     std::unique_ptr<carma_perception_msgs::msg::ExternalObjectList> msg = std::make_unique<carma_perception_msgs::msg::ExternalObjectList>();
-    
+
     msg->header.frame_id = "map";
 
     carma_perception_msgs::msg::ExternalObject obj;
@@ -74,7 +75,7 @@ TEST(Testobject_visualizer, external_objects_test){
 
     worker_node->external_objects_callback(move(msg)); // Manually drive topic callbacks
 
-    
+
     // Provide some time for publication to occur
     std::this_thread::sleep_for(std::chrono::seconds(2));
 
@@ -116,10 +117,10 @@ TEST(Testobject_visualizer, external_objects_test){
 
     // Verify clearing of old markers
     std::unique_ptr<carma_perception_msgs::msg::ExternalObjectList> msg_empty = std::make_unique<carma_perception_msgs::msg::ExternalObjectList>();
-    
+
     worker_node->external_objects_callback(move(msg_empty)); // Manually drive topic callbacks
 
-    
+
     // Provide some time for publication to occur
     std::this_thread::sleep_for(std::chrono::seconds(2));
 
@@ -199,7 +200,7 @@ TEST(Testobject_visualizer, roadway_obstacles_test){
 
     worker_node->roadway_obstacles_callback(move(msg)); // Manually drive topic callbacks
 
-    
+
     // Provide some time for publication to occur
     std::this_thread::sleep_for(std::chrono::seconds(2));
 
@@ -247,10 +248,10 @@ TEST(Testobject_visualizer, roadway_obstacles_test){
 
     // Verify clearing of old markers
     std::unique_ptr<carma_perception_msgs::msg::RoadwayObstacleList> msg_empty = std::make_unique<carma_perception_msgs::msg::RoadwayObstacleList>();
-    
+
     worker_node->roadway_obstacles_callback(move(msg_empty)); // Manually drive topic callbacks
 
-    
+
     // Provide some time for publication to occur
     std::this_thread::sleep_for(std::chrono::seconds(2));
 
@@ -276,4 +277,4 @@ int main(int argc, char ** argv)
     rclcpp::shutdown();
 
     return success;
-} 
+}

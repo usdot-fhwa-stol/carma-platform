@@ -32,8 +32,8 @@ TEST(PlatoonManagerTest, test_construct)
     PlatoonPluginConfig config;
     std::shared_ptr<carma_wm::CARMAWorldModel> wm = std::make_shared<carma_wm::CARMAWorldModel>();
 
-    PlatoonStrategicIHPPlugin plugin(wm, config, [&](auto) {}, [&](auto) {}, [&](auto) {}, [&](auto) {}, 
-        std::make_shared<carma_ros2_utils::timers::testing::TestTimerFactory>()); 
+    PlatoonStrategicIHPPlugin plugin(wm, config, [&](auto) {}, [&](auto) {}, [&](auto) {}, [&](auto) {},
+        std::make_shared<carma_ros2_utils::timers::testing::TestTimerFactory>());
     // Use Getter to retrieve host Platoon Manager class
     PlatoonManager pm_ = plugin.getHostPM();
     pm_.current_platoon_state = PlatoonState::LEADER;
@@ -74,6 +74,8 @@ TEST(PlatoonManagerTest, test_split)
     std::cout << "rearVehicleDtd: " << rearVehicleDtd << std::endl;
 }
 
+// These tests has been temporarily disabled to support Continuous Improvement (CI) processes.
+// Related GitHub Issue: <https://github.com/usdot-fhwa-stol/carma-platform/issues/2335>
 
 // TEST(PlatoonManagerTest, test_states)
 // {
@@ -121,8 +123,11 @@ TEST(PlatoonStrategicIHPPlugin, mob_resp_cb)
     pm_.current_platoon_state = PlatoonState::FOLLOWER;
 
     plugin.onSpin();
-   
+
 }
+
+// These tests has been temporarily disabled to support Continuous Improvement (CI) processes.
+// Related GitHub Issue: <https://github.com/usdot-fhwa-stol/carma-platform/issues/2335>
 
 // TEST(PlatoonStrategicIHPPlugin, platoon_info_pub)
 // {
@@ -144,7 +149,7 @@ TEST(PlatoonStrategicIHPPlugin, mob_resp_cb)
 //     std::vector<PlatoonMember> cur_pl;
 //     cur_pl.push_back(member);
 //     pm_.host_platoon_ = cur_pl;
-    
+
 //     carma_planning_msgs::msg::PlatooningInfo info_msg2 = plugin.composePlatoonInfoMsg();
 //     EXPECT_EQ(info_msg2.leader_id, "1");
 // }

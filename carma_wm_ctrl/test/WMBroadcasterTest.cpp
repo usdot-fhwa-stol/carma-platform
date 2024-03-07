@@ -90,6 +90,9 @@ TEST(WMBroadcaster, baseMapCallback)
   ASSERT_EQ(1, base_map_call_count);
 }
 
+// These tests has been temporarily disabled to support Continuous Improvement (CI) processes.
+// Related GitHub Issue: <https://github.com/usdot-fhwa-stol/carma-platform/issues/2335>
+
 /**
 // here test the proj string transform test
 TEST(WMBroadcaster, getAffectedLaneletOrAreasFromTransform)
@@ -153,7 +156,7 @@ TEST(WMBroadcaster, getAffectedLaneletOrAreasFromTransform)
   gf_msg.geometry.nodes.push_back(pt);
   pt.x = 9; pt.y = 8.5; pt.z = 0; // 0 0
   gf_msg.geometry.nodes.push_back(pt);
-  
+
   gf_pts = wmb.getPointsInLocalFrame(gf_msg);
   affected_parts = wmb.getAffectedLaneletOrAreas(gf_pts);
   ASSERT_EQ(affected_parts.size(), 2); // newly added ones should not be considered to be on the lanelet
@@ -164,14 +167,14 @@ TEST(WMBroadcaster, getAffectedLaneletOrAreasFromTransform)
 TEST(WMBroadcaster, getAffectedLaneletOrAreasOnlyLogic)
 {
   using namespace lanelet::units::literals;
-  // Set the environment  
+  // Set the environment
   size_t base_map_call_count = 0;
   WMBroadcaster wmb(
       [&](const autoware_lanelet2_msgs::msg::MapBin& map_bin) {
         // Publish map callback
         lanelet::LaneletMapPtr map(new lanelet::LaneletMap);
         lanelet::utils::conversion::fromBinMsg(map_bin, map);
-        
+
         base_map_call_count++;
       }, [](const autoware_lanelet2_msgs::msg::MapBin& map_bin) {}, [](const carma_v2x_msgs::msg::TrafficControlRequest& control_msg_pub_){},
       [](const carma_perception_msgs::msg::CheckActiveGeofence& active_pub_){},
@@ -193,9 +196,9 @@ TEST(WMBroadcaster, getAffectedLaneletOrAreasOnlyLogic)
   // Set the map
   wmb.baseMapCallback(std::move(map_msg_ptr));
   ASSERT_EQ(1, base_map_call_count);
-  
+
   EXPECT_THROW(wmb.getPointsInLocalFrame(gf_msg), lanelet::InvalidObjectStateError);
-  
+
   // Setting georeference otherwise, geofenceCallback will throw exception
   std_msgs::msg::String sample_proj_string;
   std::string proj_string = "+proj=tmerc +lat_0=39.46636844371259 +lon_0=-76.16919523566943 +k=1 +x_0=0 +y_0=0 +datum=WGS84 +units=m +vunits=m +no_defs";
@@ -214,7 +217,7 @@ TEST(WMBroadcaster, getAffectedLaneletOrAreasOnlyLogic)
 
   lanelet::ConstLaneletOrAreas affected_parts = wmb.getAffectedLaneletOrAreas(gf_pts);
   ASSERT_EQ(affected_parts.size(), 0); // this is 0 because there will never be geofence with only 1 pt
-                                       // if there is, it won't apply to the map as it doesn't have any direction information, 
+                                       // if there is, it won't apply to the map as it doesn't have any direction information,
                                        // which makes it confusing for overlapping lanelets
   pt.x = 0.0; pt.y = -0.05; pt.z = 0; //1.75 0.45
   gf_msg.geometry.nodes.push_back(pt);
@@ -260,7 +263,7 @@ TEST(WMBroadcaster, getAffectedLaneletOrAreasOnlyLogic)
   gf_msg.geometry.nodes.push_back(pt);
   pt.x = 9; pt.y = 10; pt.z = 0; // 10 10
   gf_msg.geometry.nodes.push_back(pt);
-  
+
   gf_pts = wmb.getPointsInLocalFrame(gf_msg);
   affected_parts = wmb.getAffectedLaneletOrAreas(gf_pts);
   ASSERT_EQ(affected_parts.size(), 2); // they should not be considered to be on the lanelet
@@ -272,7 +275,7 @@ TEST(WMBroadcaster, geofenceCallback)
   // Test adding then evaluate if the calls to active and inactive are done correctly
   auto gf = std::make_shared<Geofence>();
 
-  boost::uuids::uuid curr_id = boost::uuids::random_generator()(); 
+  boost::uuids::uuid curr_id = boost::uuids::random_generator()();
   std::size_t curr_id_hashed = boost::hash<boost::uuids::uuid>()(curr_id);
   gf->id_ = curr_id;
 
@@ -291,7 +294,7 @@ TEST(WMBroadcaster, geofenceCallback)
   msg_v01.params.schedule.end_exists = true;
   msg_v01.params.schedule.between_exists = true;
   msg_v01.params.schedule.repeat_exists = true;
-  
+
   carma_v2x_msgs::msg::DailySchedule daily_schedule;
   daily_schedule.begin = gf->schedules[0].control_start_;
   daily_schedule.duration = gf->schedules[0].control_duration_;
@@ -328,7 +331,7 @@ TEST(WMBroadcaster, geofenceCallback)
         active_call_count.store(active_call_count.load() + 1);
         // atomic is not working for boost::uuids::uuid, so hash it
         last_active_gf.store(boost::hash<boost::uuids::uuid>()(data_received->id_));
-        
+
       }, [](const carma_v2x_msgs::msg::TrafficControlRequest& control_msg_pub_){},
       [](const carma_perception_msgs::msg::CheckActiveGeofence& active_pub_){},
       timer, [](const carma_v2x_msgs::msg::MobilityOperation& tcm_ack_pub_){});
@@ -362,7 +365,7 @@ TEST(WMBroadcaster, geofenceCallback)
 
   timer->setNow(rclcpp::Time(1.0e9));  // Set current time
   wmb.geofenceCallback(std::make_unique<carma_v2x_msgs::msg::TrafficControlMessage>(gf_msg));
-  
+
   ASSERT_EQ(0, active_call_count.load());
   ASSERT_EQ(0, last_active_gf.load());
 
@@ -370,12 +373,12 @@ TEST(WMBroadcaster, geofenceCallback)
 
 
   timer->setNow(rclcpp::Time(2.1e9));// Geofence should have started by now
-  wmb.geofenceCallback(std::make_unique<carma_v2x_msgs::msg::TrafficControlMessage>(gf_msg)); 
+  wmb.geofenceCallback(std::make_unique<carma_v2x_msgs::msg::TrafficControlMessage>(gf_msg));
 
   ASSERT_EQ(0, active_call_count.load());
   ASSERT_EQ(0, last_active_gf.load());
-  
-  
+
+
   gf_msg.choice = carma_v2x_msgs::msg::TrafficControlMessage::TCMV01;
   // create the geofence request
   msg_v01.geometry.proj = geofence_proj_string;
@@ -395,7 +398,7 @@ TEST(WMBroadcaster, geofenceCallback)
 
   ASSERT_FALSE(carma_ros2_utils::testing::waitForEqOrTimeout(10.0, curr_id_hashed, last_active_gf));
   ASSERT_EQ(0, active_call_count.load());
-  
+
   // set the points
   carma_v2x_msgs::msg::PathNode pt;
   // check points that are inside lanelets
@@ -404,7 +407,7 @@ TEST(WMBroadcaster, geofenceCallback)
   pt.x = 0.0; pt.y = 1.0; pt.z = 0; // offset from last point
   msg_v01.geometry.nodes.push_back(pt);
   // update id to continue testing
-  curr_id = boost::uuids::random_generator()(); 
+  curr_id = boost::uuids::random_generator()();
   curr_id_hashed = boost::hash<boost::uuids::uuid>()(curr_id);
   std::copy(curr_id.begin(), curr_id.end(), msg_v01.id.id.begin());
   msg_v01.reqid = *req_id;
@@ -418,14 +421,14 @@ TEST(WMBroadcaster, geofenceCallback)
   ASSERT_EQ(1, active_call_count.load());
 
   // update id to continue testing
-  curr_id = boost::uuids::random_generator()(); 
+  curr_id = boost::uuids::random_generator()();
   curr_id_hashed = boost::hash<boost::uuids::uuid>()(curr_id);
   std::copy(curr_id.begin(),  curr_id.end(), msg_v01.id.id.begin());
   gf_msg.tcm_v01 = msg_v01;
   timer->setNow(rclcpp::Time(2.1e9)); // set active
   wmb.geofenceCallback(std::make_unique<carma_v2x_msgs::msg::TrafficControlMessage>(gf_msg));
   timer->setNow(rclcpp::Time(100.0e9)); // set it past control_end so that it does't trigger again
-  
+
   // check if different geofence id is working
   timer->setNow(rclcpp::Time(3.0e9)); // right before finishing at 3.1
   ASSERT_TRUE(carma_ros2_utils::testing::waitForEqOrTimeout(10.0, curr_id_hashed, last_active_gf));
@@ -433,19 +436,19 @@ TEST(WMBroadcaster, geofenceCallback)
 }
 */
 /**
-TEST(WMBroadcaster, routeCallbackMessage) 
+TEST(WMBroadcaster, routeCallbackMessage)
 {
   carma_planning_msgs::msg::Route route_msg;
-  
+
   route_msg.route_path_lanelet_ids.push_back(1346);
   route_msg.route_path_lanelet_ids.push_back(1349);
 
   RCLCPP_INFO_STREAM(rclcpp::get_logger("carma_wm_ctrl"), "This is a test: ");
-  
+
   size_t base_map_call_count = 0;
   WMBroadcaster wmb(
       [&](const autoware_lanelet2_msgs::msg::MapBin& map_bin) {
-        // Publish map callback  
+        // Publish map callback
         lanelet::LaneletMapPtr map(new lanelet::LaneletMap);
         lanelet::utils::conversion::fromBinMsg(map_bin, map);
 
@@ -455,13 +458,13 @@ TEST(WMBroadcaster, routeCallbackMessage)
       }, [](const autoware_lanelet2_msgs::msg::MapBin& map_bin) {}, [](const carma_v2x_msgs::msg::TrafficControlRequest& control_msg_pub_){},
       [](const carma_perception_msgs::msg::CheckActiveGeofence& active_pub_){},
       std::make_shared<TestTimerFactory>(), [](const carma_v2x_msgs::msg::MobilityOperation& tcm_ack_pub_){});
- 
-  
+
+
   //Test throw exceptions
   ASSERT_THROW(wmb.routeCallbackMessage(std::make_unique<carma_planning_msgs::msg::Route>(route_msg)), lanelet::InvalidObjectStateError);
   RCLCPP_INFO_STREAM(rclcpp::get_logger("carma_wm_ctrl"), "Throw Exceptions Test Passed.");
-  
-  // Load vector map from a file start 
+
+  // Load vector map from a file start
   std::string file = "resource/test_vector_map1.osm";
   int projector_type = 0;
   std::string target_frame;
@@ -492,7 +495,7 @@ TEST(WMBroadcaster, routeCallbackMessage)
   wmb.geoReferenceCallback(std::make_unique<std_msgs::msg::String>(target));
   ASSERT_FALSE(target_frame.empty());
   // loading end
-  
+
   carma_v2x_msgs::msg::TrafficControlRequest coRe;
 
   ///// Test without user defined route callback
@@ -506,7 +509,7 @@ TEST(WMBroadcaster, routeCallbackMessage)
 TEST(WMBroadcaster, addAndRemoveGeofence)
 {
   using namespace lanelet::units::literals;
-  // Set the environment  
+  // Set the environment
   size_t base_map_call_count = 0;
   size_t map_update_call_count = 0;
   WMBroadcaster wmb(
@@ -515,7 +518,7 @@ TEST(WMBroadcaster, addAndRemoveGeofence)
         lanelet::LaneletMapPtr map(new lanelet::LaneletMap);
         lanelet::utils::conversion::fromBinMsg(map_bin, map);
         base_map_call_count++;
-      }, 
+      },
       [&](const autoware_lanelet2_msgs::msg::MapBin& map_bin) {
         // Publish map update callback
         map_update_call_count++;
@@ -534,14 +537,14 @@ TEST(WMBroadcaster, addAndRemoveGeofence)
   ASSERT_TRUE(old_speed_limit->attribute(lanelet::AttributeName::Subtype).value().compare(lanelet::DigitalSpeedLimit::RuleName) == 0);
   ASSERT_EQ(map->laneletLayer.get(10000).regulatoryElements().size(), 0);
   map->update(map->laneletLayer.get(10000), old_speed_limit); // added a speed limit to first llt
-  
+
   ASSERT_EQ(map->laneletLayer.get(10000).regulatoryElements().size(), 1);
   ASSERT_TRUE(map->regulatoryElementLayer.exists(old_speed_limit->id()));
   ASSERT_EQ(map->regulatoryElementLayer.size(), 1);
   ASSERT_EQ(map->laneletLayer.findUsages(old_speed_limit).size(), 1);
   ASSERT_EQ(map->laneletLayer.find(10000)->regulatoryElements().front()->id(), old_speed_limit->id());//should be 10045 old speed limit's id
-  
-  
+
+
   autoware_lanelet2_msgs::msg::MapBin msg;
   lanelet::utils::conversion::toBinMsg(map, &msg);
   autoware_lanelet2_msgs::msg::MapBin::UniquePtr map_msg_ptr(new autoware_lanelet2_msgs::msg::MapBin(msg));
@@ -550,14 +553,14 @@ TEST(WMBroadcaster, addAndRemoveGeofence)
   // Setting georeference otherwise, geofenceCallback will throw exception
   std_msgs::msg::String sample_proj_string;
   std::string proj_string = "+proj=tmerc +lat_0=39.46636844371259 +lon_0=-76.16919523566943 +k=1 +x_0=0 +y_0=0 +datum=WGS84 +units=m +vunits=m +no_defs";
-  
+
   sample_proj_string.data = proj_string;
   wmb.geoReferenceCallback(std::make_unique<std_msgs::msg::String>(sample_proj_string));
 
   // Create the geofence object
   auto gf_ptr = std::make_shared<carma_wm_ctrl::Geofence>(carma_wm_ctrl::Geofence());
   gf_ptr->id_ = boost::uuids::random_generator()();
-  
+
   carma_v2x_msgs::msg::TrafficControlMessageV01 gf_msg;
   gf_msg.geometry.datum = "+proj=tmerc +lat_0=39.46636844371259 +lon_0=-76.16919523566943 +k=1 +x_0=0 +y_0=0 +datum=WGS84 +units=m +vunits=m +no_defs";
   lanelet::DigitalSpeedLimitPtr new_speed_limit = std::make_shared<lanelet::DigitalSpeedLimit>(lanelet::DigitalSpeedLimit::buildData(map->regulatoryElementLayer.uniqueId(), 10_mph, {}, {},
@@ -608,7 +611,7 @@ TEST(WMBroadcaster, addAndRemoveGeofence)
 TEST(WMBroadcaster, GeofenceBinMsgTest)
 {
   using namespace lanelet::units::literals;
-  // Set the environment  
+  // Set the environment
   size_t base_map_call_count = 0;
   WMBroadcaster wmb(
       [&](const autoware_lanelet2_msgs::msg::MapBin& map_bin) {
@@ -620,7 +623,7 @@ TEST(WMBroadcaster, GeofenceBinMsgTest)
       [](const autoware_lanelet2_msgs::msg::MapBin& map_bin) {}, [](const carma_v2x_msgs::msg::TrafficControlRequest& control_msg_pub_){},
       [](const carma_perception_msgs::msg::CheckActiveGeofence& active_pub_){},
       std::make_shared<TestTimerFactory>(), [](const carma_v2x_msgs::msg::MobilityOperation& tcm_ack_pub_){});
-  
+
   /////
   // Set up the map (add relevant regulatory elements)
   /////
@@ -632,13 +635,13 @@ TEST(WMBroadcaster, GeofenceBinMsgTest)
   ASSERT_TRUE(old_speed_limit->attribute(lanelet::AttributeName::Subtype).value().compare(lanelet::DigitalSpeedLimit::RuleName) == 0);
   ASSERT_EQ(map->laneletLayer.get(10000).regulatoryElements().size(), 0);
   map->update(map->laneletLayer.get(10000), old_speed_limit); // added a speed limit to first llt
-  
+
   ASSERT_EQ(map->laneletLayer.get(10000).regulatoryElements().size(), 1);
   ASSERT_TRUE(map->regulatoryElementLayer.exists(old_speed_limit->id()));
   ASSERT_EQ(map->regulatoryElementLayer.size(), 1);
   ASSERT_EQ(map->laneletLayer.findUsages(old_speed_limit).size(), 1);
   ASSERT_EQ(map->laneletLayer.find(10000)->regulatoryElements().front()->id(), old_speed_limit->id());//should be 10045 old speed limit's id
-  
+
   autoware_lanelet2_msgs::msg::MapBin msg;
   lanelet::utils::conversion::toBinMsg(map, &msg);
   autoware_lanelet2_msgs::msg::MapBin::UniquePtr map_msg_ptr(new autoware_lanelet2_msgs::msg::MapBin(msg));
@@ -653,7 +656,7 @@ TEST(WMBroadcaster, GeofenceBinMsgTest)
   // Create the geofence object
   auto gf_ptr = std::make_shared<carma_wm_ctrl::Geofence>(carma_wm_ctrl::Geofence());
   gf_ptr->id_ = boost::uuids::random_generator()();
-  
+
   carma_v2x_msgs::msg::TrafficControlMessageV01 gf_msg;
   gf_msg.geometry.datum = "+proj=tmerc +lat_0=39.46636844371259 +lon_0=-76.16919523566943 +k=1 +x_0=0 +y_0=0 +datum=WGS84 +units=m +vunits=m +no_defs";
   lanelet::DigitalSpeedLimitPtr new_speed_limit = std::make_shared<lanelet::DigitalSpeedLimit>(lanelet::DigitalSpeedLimit::buildData(map->regulatoryElementLayer.uniqueId(), 10_mph, {}, {},
@@ -719,7 +722,7 @@ TEST(WMBroadcaster, GeofenceBinMsgTest)
   ASSERT_EQ(rec_data_revert->update_list_.size(), 3);
   ASSERT_EQ(rec_data_revert->update_list_[0].first, 10000);
   ASSERT_EQ(rec_data_revert->update_list_[0].second->id(), old_speed_limit->id());
-  
+
 }
 */
 /**
@@ -728,7 +731,7 @@ TEST(WMBroadcaster, RegulatoryPCLTest)
   // Test adding then evaluate if the calls to active and inactive are done correctly
   auto gf_ptr = std::make_shared<Geofence>();
 
-  boost::uuids::uuid curr_id = boost::uuids::random_generator()(); 
+  boost::uuids::uuid curr_id = boost::uuids::random_generator()();
   std::size_t curr_id_hashed = boost::hash<boost::uuids::uuid>()(curr_id);
   gf_ptr->id_ = curr_id;
 
@@ -764,7 +767,7 @@ TEST(WMBroadcaster, RegulatoryPCLTest)
 
   // Get and convert map to binary message
   auto map = carma_wm::getBroadcasterTestMap();
-  
+
   ASSERT_EQ(map->regulatoryElementLayer.size(), 0);
   // add regems
   lanelet::PassingControlLinePtr old_pcl = std::make_shared<lanelet::PassingControlLine>(lanelet::PassingControlLine::buildData(10082, {map->laneletLayer.get(10000).leftBound()}, {},
@@ -801,7 +804,7 @@ TEST(WMBroadcaster, RegulatoryPCLTest)
           lanelet::PassingControlLinePtr control_line = std::dynamic_pointer_cast<lanelet::PassingControlLine>(factory_pcl);
           control_lines.push_back(control_line);
         }
-        
+
         if (testing_forward_direction)
         {
           ASSERT_FALSE(lanelet::PassingControlLine::boundPassable(map->laneletLayer.get(10000).leftBound(), control_lines,
@@ -816,7 +819,7 @@ TEST(WMBroadcaster, RegulatoryPCLTest)
           ASSERT_TRUE(lanelet::PassingControlLine::boundPassable(map->laneletLayer.get(10000).leftBound(), control_lines, false,
                                                       lanelet::Participants::VehicleCar));
         }
-       
+
         active_call_count.store(active_call_count.load() + 1);
         // atomic is not working for boost::uuids::uuid, so hash it
         last_active_gf.store(boost::hash<boost::uuids::uuid>()(data_received->id_));
@@ -832,7 +835,7 @@ TEST(WMBroadcaster, RegulatoryPCLTest)
   // Setting georeference otherwise, geofenceCallback will throw exception
   std_msgs::msg::String sample_proj_string;
   std::string proj_string = "+proj=tmerc +lat_0=39.46636844371259 +lon_0=-76.16919523566943 +k=1 +x_0=0 +y_0=0 +datum=WGS84 +units=m +vunits=m +no_defs";
-  
+
   sample_proj_string.data = proj_string;
   wmb.geoReferenceCallback(std::make_unique<std_msgs::msg::String>(sample_proj_string));
 
@@ -843,7 +846,7 @@ TEST(WMBroadcaster, RegulatoryPCLTest)
   veh_class.vehicle_class = j2735_v2x_msgs::msg::TrafficControlVehClass::PASSENGER_CAR;
   msg_v01.params.vclasses.push_back(veh_class);
   msg_v01.params.detail.choice = carma_v2x_msgs::msg::TrafficControlDetail::LATAFFINITY_CHOICE;
-  msg_v01.params.detail.lataffinity = carma_v2x_msgs::msg::TrafficControlDetail::LEFT; // applies to the left boundaries of the 
+  msg_v01.params.detail.lataffinity = carma_v2x_msgs::msg::TrafficControlDetail::LEFT; // applies to the left boundaries of the
   msg_v01.params.detail.latperm[0] = carma_v2x_msgs::msg::TrafficControlDetail::NONE; // not accessible from left
   msg_v01.params.detail.latperm[1] = carma_v2x_msgs::msg::TrafficControlDetail::PERMITTED; // accessible from right
 
@@ -852,7 +855,7 @@ TEST(WMBroadcaster, RegulatoryPCLTest)
   // set the points
   carma_v2x_msgs::msg::PathNode pt;
   // check points that are inside lanelets, thauto gf_ptr = std::make_shared<Geofence>();ese correspond to id 10000, 10007
-  pt.x = 0.5; pt.y = 0.5; pt.z = 0;  
+  pt.x = 0.5; pt.y = 0.5; pt.z = 0;
   msg_v01.geometry.nodes.push_back(pt);
   pt.x = 0.5; pt.y = 1.5; pt.z = 0;
   msg_v01.geometry.nodes.push_back(pt);
@@ -883,7 +886,7 @@ TEST(WMBroadcaster, RegulatoryPCLTest)
   testing_reverse_direction = true;
 
   // update id to continue testing
-  curr_id = boost::uuids::random_generator()(); 
+  curr_id = boost::uuids::random_generator()();
   curr_id_hashed = boost::hash<boost::uuids::uuid>()(curr_id);
   std::copy(curr_id.begin(), curr_id.end(), msg_v01.id.id.begin());
   msg_v01.geometry.nodes = {};
@@ -896,7 +899,7 @@ TEST(WMBroadcaster, RegulatoryPCLTest)
   timer->setNow(rclcpp::Time(2.1e9));  // Set current time
   wmb.geofenceCallback(std::make_unique<carma_v2x_msgs::msg::TrafficControlMessage>(gf_msg));
   timer->setNow(rclcpp::Time(100.0e9));  // Set current time
-  
+
   ASSERT_TRUE(carma_ros2_utils::testing::waitForEqOrTimeout(10.0, curr_id_hashed, last_active_gf));
   ASSERT_EQ(2, active_call_count.load());
 }
@@ -907,7 +910,7 @@ TEST(WMBroadcaster, geofenceFromMsgTest)
   using namespace lanelet::units::literals;
   // Start creating ROS msg
   carma_v2x_msgs::msg::TrafficControlMessageV01 msg_v01;
-  boost::uuids::uuid curr_id = boost::uuids::random_generator()(); 
+  boost::uuids::uuid curr_id = boost::uuids::random_generator()();
   std::copy(curr_id.begin(),  curr_id.end(), msg_v01.id.id.begin());
   msg_v01.params.schedule.start = rclcpp::Time(1);  // Schedule between 1 ...
   msg_v01.params.schedule.end = rclcpp::Time(8);    // and 8
@@ -925,7 +928,7 @@ TEST(WMBroadcaster, geofenceFromMsgTest)
   // Get map and convert map to binary message
   auto map = carma_wm::getBroadcasterTestMap();
 
-  // Set a basic environment  
+  // Set a basic environment
   size_t base_map_call_count = 0;
   WMBroadcaster wmb(
       [&](const autoware_lanelet2_msgs::msg::MapBin& map_bin) {
@@ -946,7 +949,7 @@ TEST(WMBroadcaster, geofenceFromMsgTest)
   // Setting georeference otherwise, geofenceCallback will throw exception
   std_msgs::msg::String sample_proj_string;
   std::string proj_string = "+proj=tmerc +lat_0=39.46636844371259 +lon_0=-76.16919523566943 +k=1 +x_0=0 +y_0=0 +datum=WGS84 +units=m +vunits=m +no_defs";
-  
+
   sample_proj_string.data = proj_string;
   wmb.geoReferenceCallback(std::make_unique<std_msgs::msg::String>(sample_proj_string));
 
@@ -956,7 +959,7 @@ TEST(WMBroadcaster, geofenceFromMsgTest)
   // set the points
   carma_v2x_msgs::msg::PathNode pt;
   // check points that are inside lanelets, these correspond to id 10000, 10007
-  pt.x = 0.5; pt.y = 0.5; pt.z = 0;  
+  pt.x = 0.5; pt.y = 0.5; pt.z = 0;
   msg_v01.geometry.nodes.push_back(pt);
   pt.x = 0.5; pt.y = 1.5; pt.z = 0;
   msg_v01.geometry.nodes.push_back(pt);
@@ -980,7 +983,7 @@ TEST(WMBroadcaster, geofenceFromMsgTest)
   ASSERT_EQ(region_access_rule->accessable(lanelet::Participants::VehicleTruck), false); // Truck does not have access
   ASSERT_EQ(region_access_rule->accessable(lanelet::Participants::VehicleCar), true);    // Car has access
   msg_v01.params.vclasses = {}; // Clear the set vclasses for msg_v01
-  
+
   // test maxspeed - config limit inactive
   msg_v01.params.detail.choice = carma_v2x_msgs::msg::TrafficControlDetail::MAXSPEED_CHOICE;
   msg_v01.params.detail.maxspeed = 99;
@@ -1026,7 +1029,7 @@ TEST(WMBroadcaster, geofenceFromMsgTest)
   ASSERT_GE(min_speed->speed_limit_, 0_mph);
   RCLCPP_WARN_STREAM(rclcpp::get_logger("carma_wm_ctrl"), "Minimum speed limit is valid.(2)");
 
-  
+
 
 // test maxspeed - config limit active
   wmb.setConfigSpeedLimit(55.0);//Set the config speed limit
@@ -1060,12 +1063,12 @@ TEST(WMBroadcaster, geofenceFromMsgTest)
   // TEST passing control line
   // Test lataffinity
   msg_v01.params.detail.choice = carma_v2x_msgs::msg::TrafficControlDetail::LATAFFINITY_CHOICE;
-  msg_v01.params.detail.lataffinity = carma_v2x_msgs::msg::TrafficControlDetail::LEFT; // applies to the left boundaries of the 
+  msg_v01.params.detail.lataffinity = carma_v2x_msgs::msg::TrafficControlDetail::LEFT; // applies to the left boundaries of the
   wmb.geofenceFromMsg(gf_ptr, msg_v01);
   ASSERT_TRUE(gf_ptr->regulatory_element_->attribute(lanelet::AttributeName::Subtype).value().compare(lanelet::PassingControlLine::RuleName) == 0);
   ASSERT_TRUE(gf_ptr->pcl_affects_left_);
 
-  msg_v01.params.detail.lataffinity = carma_v2x_msgs::msg::TrafficControlDetail::RIGHT; // applies to the right boundaries of the 
+  msg_v01.params.detail.lataffinity = carma_v2x_msgs::msg::TrafficControlDetail::RIGHT; // applies to the right boundaries of the
   wmb.geofenceFromMsg(gf_ptr, msg_v01);
   ASSERT_TRUE(gf_ptr->pcl_affects_right_);
 
@@ -1086,21 +1089,21 @@ TEST(WMBroadcaster, geofenceFromMsgTest)
   wmb.geofenceFromMsg(gf_ptr, msg_v01);
   pcl = std::dynamic_pointer_cast<lanelet::PassingControlLine>(gf_ptr->regulatory_element_);
   ASSERT_TRUE(strcmp(pcl->right_participants_.begin()->data(), lanelet::Participants::Pedestrian) == 0);
-  
+
   msg_v01.params.vclasses = {};
   veh_class.vehicle_class = j2735_v2x_msgs::msg::TrafficControlVehClass::BICYCLE;
   msg_v01.params.vclasses.push_back(veh_class);
   wmb.geofenceFromMsg(gf_ptr, msg_v01);
   pcl = std::dynamic_pointer_cast<lanelet::PassingControlLine>(gf_ptr->regulatory_element_);
   ASSERT_TRUE(strcmp(pcl->right_participants_.begin()->data(), lanelet::Participants::Bicycle) == 0);
-  
+
   msg_v01.params.vclasses = {};
   veh_class.vehicle_class = j2735_v2x_msgs::msg::TrafficControlVehClass::MOTORCYCLE;
   msg_v01.params.vclasses.push_back(veh_class);
   wmb.geofenceFromMsg(gf_ptr, msg_v01);
   pcl = std::dynamic_pointer_cast<lanelet::PassingControlLine>(gf_ptr->regulatory_element_);
   ASSERT_TRUE(strcmp(pcl->right_participants_.begin()->data(), lanelet::Participants::VehicleMotorcycle) == 0);
-  
+
   msg_v01.params.vclasses = {};
   veh_class.vehicle_class = j2735_v2x_msgs::msg::TrafficControlVehClass::BUS;
   msg_v01.params.vclasses.push_back(veh_class);
@@ -1122,7 +1125,7 @@ TEST(WMBroadcaster, geofenceFromMsgTest)
   pcl = std::dynamic_pointer_cast<lanelet::PassingControlLine>(gf_ptr->regulatory_element_);
   ASSERT_TRUE(strcmp(pcl->right_participants_.begin()->data(), lanelet::Participants::VehicleTruck) == 0);
   ASSERT_EQ(pcl->left_participants_.size(), 0);
-  
+
   msg_v01.params.detail.latperm[0] = carma_v2x_msgs::msg::TrafficControlDetail::PERMITTED; // accessible from left
   msg_v01.params.detail.latperm[1] = carma_v2x_msgs::msg::TrafficControlDetail::NONE; // not accessible from right
   wmb.geofenceFromMsg(gf_ptr, msg_v01);
@@ -1130,13 +1133,13 @@ TEST(WMBroadcaster, geofenceFromMsgTest)
   ASSERT_TRUE(strcmp(pcl->left_participants_.begin()->data(), lanelet::Participants::VehicleTruck) == 0);
   ASSERT_EQ(pcl->right_participants_.size(), 0);
 
-  msg_v01.params.detail.latperm[0] = carma_v2x_msgs::msg::TrafficControlDetail::EMERGENCYONLY; 
-  msg_v01.params.detail.latperm[1] = carma_v2x_msgs::msg::TrafficControlDetail::EMERGENCYONLY; 
+  msg_v01.params.detail.latperm[0] = carma_v2x_msgs::msg::TrafficControlDetail::EMERGENCYONLY;
+  msg_v01.params.detail.latperm[1] = carma_v2x_msgs::msg::TrafficControlDetail::EMERGENCYONLY;
   wmb.geofenceFromMsg(gf_ptr, msg_v01);
   pcl = std::dynamic_pointer_cast<lanelet::PassingControlLine>(gf_ptr->regulatory_element_);
   ASSERT_TRUE(strcmp(pcl->right_participants_.begin()->data(), lanelet::Participants::VehicleEmergency) == 0);
   ASSERT_TRUE(strcmp(pcl->left_participants_.begin()->data(), lanelet::Participants::VehicleEmergency) == 0);
-  
+
 }
 */
 /**
@@ -1145,7 +1148,7 @@ TEST(WMBroadcaster, distToNearestActiveGeofence)
    // Test adding then evaluate if the calls to active and inactive are done correctly
   auto gf = std::make_shared<Geofence>();
 
-  boost::uuids::uuid curr_id = boost::uuids::random_generator()(); 
+  boost::uuids::uuid curr_id = boost::uuids::random_generator()();
   std::size_t curr_id_hashed = boost::hash<boost::uuids::uuid>()(curr_id);
   gf->id_ = curr_id;
 
@@ -1217,7 +1220,7 @@ TEST(WMBroadcaster, distToNearestActiveGeofence)
   geofence_proj_string = "+proj=tmerc +lat_0=39.46636844371259 +lon_0=-76.16919523566943 +k=1 +x_0=0 +y_0=0 +datum=WGS84 +units=m +vunits=m +no_defs";
   base_map_proj.data = base_map_proj_string;
   wmb.geoReferenceCallback(std::make_unique<std_msgs::msg::String>(base_map_proj));
-  
+
   carma_v2x_msgs::msg::TrafficControlMessage gf_msg;
   gf_msg.choice = carma_v2x_msgs::msg::TrafficControlMessage::TCMV01;
   // create the geofence request
@@ -1243,7 +1246,7 @@ TEST(WMBroadcaster, distToNearestActiveGeofence)
   pt.x = 1.5; pt.y = 2.5; pt.z = 0;
   msg_v01.geometry.nodes.push_back(pt);
   // update id to continue testing
-  curr_id = boost::uuids::random_generator()(); 
+  curr_id = boost::uuids::random_generator()();
   curr_id_hashed = boost::hash<boost::uuids::uuid>()(curr_id);
   std::copy(curr_id.begin(), curr_id.end(), msg_v01.id.id.begin());
 
@@ -1255,7 +1258,7 @@ TEST(WMBroadcaster, distToNearestActiveGeofence)
   activated = true;
   timer->setNow(rclcpp::Time(2.1e9));  // Set current time so that geofence is active
   wmb.geofenceCallback(std::make_unique<carma_v2x_msgs::msg::TrafficControlMessage>(gf_msg));
-  
+
   ASSERT_TRUE(carma_ros2_utils::testing::waitForEqOrTimeout(10.0, curr_id_hashed, last_active_gf));
   ASSERT_EQ(1, map_update_call_count.load());
 
@@ -1368,7 +1371,7 @@ TEST(WMBroadcaster, invertParticipants)
       [&](const carma_v2x_msgs::msg::TrafficControlRequest& control_msg_pub_){},
       [&](const carma_perception_msgs::msg::CheckActiveGeofence& active_pub_){},
       std::make_shared<TestTimerFactory>(), [](const carma_v2x_msgs::msg::MobilityOperation& tcm_ack_pub_){});
-  
+
   std::vector<std::string> participants;
   auto result = wmb.invertParticipants(participants);
   ASSERT_EQ(result.size(), 6);
@@ -1381,7 +1384,7 @@ TEST(WMBroadcaster, currentLocationCallback)
    // Test adding then evaluate if the calls to active and inactive are done correctly
   auto gf = std::make_shared<Geofence>();
 
-  boost::uuids::uuid curr_id = boost::uuids::random_generator()(); 
+  boost::uuids::uuid curr_id = boost::uuids::random_generator()();
   std::size_t curr_id_hashed = boost::hash<boost::uuids::uuid>()(curr_id);
   gf->id_ = curr_id;
 
@@ -1465,7 +1468,7 @@ TEST(WMBroadcaster, currentLocationCallback)
   geofence_proj_string = "+proj=tmerc +lat_0=39.46636844371259 +lon_0=-76.16919523566943 +k=1 +x_0=0 +y_0=0 +datum=WGS84 +units=m +vunits=m +no_defs";
   base_map_proj.data = base_map_proj_string;
   wmb.geoReferenceCallback(std::make_unique<std_msgs::msg::String>(base_map_proj));
-  
+
   carma_v2x_msgs::msg::TrafficControlMessage gf_msg;
   gf_msg.choice = carma_v2x_msgs::msg::TrafficControlMessage::TCMV01;
   // create the geofence request
@@ -1490,7 +1493,7 @@ TEST(WMBroadcaster, currentLocationCallback)
   pt.x = 1.5; pt.y = 2.5; pt.z = 0;
   msg_v01.geometry.nodes.push_back(pt);
   // update id to continue testing
-  curr_id = boost::uuids::random_generator()(); 
+  curr_id = boost::uuids::random_generator()();
   curr_id_hashed = boost::hash<boost::uuids::uuid>()(curr_id);
   std::copy(curr_id.begin(), curr_id.end(), msg_v01.id.id.begin());
 
@@ -1618,7 +1621,7 @@ TEST(WMBroadcaster, checkActiveGeofenceLogicTest)
   msg_v01.params.detail.maxspeed = 22.352; // 50 mph
 
   // Set the ID for geofence 1
-  boost::uuids::uuid curr_id = boost::uuids::random_generator()(); 
+  boost::uuids::uuid curr_id = boost::uuids::random_generator()();
   std::size_t curr_id_hashed_gf1 = boost::hash<boost::uuids::uuid>()(curr_id);
   std::copy(curr_id.begin(), curr_id.end(), msg_v01.id.id.begin());
   gf_msg.tcm_v01 = msg_v01;
@@ -1629,7 +1632,7 @@ TEST(WMBroadcaster, checkActiveGeofenceLogicTest)
   gf_msg2.tcm_v01.params.detail.minhdwy = 5;
 
   // Set the ID for geofence 2
-  curr_id = boost::uuids::random_generator()(); 
+  curr_id = boost::uuids::random_generator()();
   std::size_t curr_id_hashed_gf2 = boost::hash<boost::uuids::uuid>()(curr_id);
   std::copy(curr_id.begin(), curr_id.end(), gf_msg2.tcm_v01.id.id.begin());
 
@@ -1649,7 +1652,7 @@ TEST(WMBroadcaster, checkActiveGeofenceLogicTest)
   gf_msg3.tcm_v01.geometry.nodes[1] = pt;
 
   // Set the ID for geofence 3
-  curr_id = boost::uuids::random_generator()(); 
+  curr_id = boost::uuids::random_generator()();
   std::size_t curr_id_hashed_gf3 = boost::hash<boost::uuids::uuid>()(curr_id);
   std::copy(curr_id.begin(), curr_id.end(), gf_msg3.tcm_v01.id.id.begin());
 
@@ -1665,7 +1668,7 @@ TEST(WMBroadcaster, checkActiveGeofenceLogicTest)
   gf_msg4.tcm_v01.geometry.nodes[1] = pt;
 
   // Set the ID for geofence 4
-  curr_id = boost::uuids::random_generator()(); 
+  curr_id = boost::uuids::random_generator()();
   std::size_t curr_id_hashed_gf4 = boost::hash<boost::uuids::uuid>()(curr_id);
   std::copy(curr_id.begin(), curr_id.end(), gf_msg4.tcm_v01.id.id.begin());
 
@@ -1675,7 +1678,7 @@ TEST(WMBroadcaster, checkActiveGeofenceLogicTest)
   gf_msg5.tcm_v01.params.detail.minhdwy = 5;
 
   // Set the ID for geofence 5
-  curr_id = boost::uuids::random_generator()(); 
+  curr_id = boost::uuids::random_generator()();
   std::size_t curr_id_hashed_gf5 = boost::hash<boost::uuids::uuid>()(curr_id);
   std::copy(curr_id.begin(), curr_id.end(), gf_msg5.tcm_v01.id.id.begin());
 
@@ -1683,7 +1686,7 @@ TEST(WMBroadcaster, checkActiveGeofenceLogicTest)
   timer->setNow(rclcpp::Time(2.1e9));
   activated = true;
 
-  // Set callback for geofence 1 
+  // Set callback for geofence 1
   wmb.geofenceCallback(std::make_unique<carma_v2x_msgs::msg::TrafficControlMessage>(gf_msg));
 
   ASSERT_TRUE(carma_ros2_utils::testing::waitForEqOrTimeout(10.0, curr_id_hashed_gf1, last_active_gf));
@@ -1759,11 +1762,11 @@ TEST(WMBroadcaster, checkActiveGeofenceLogicTest)
   ASSERT_EQ(check.type, 2); // Type 2 is "LANE_CLOSED" since adjacent left lane is closed
   ASSERT_EQ(check.reason, ""); // 1220 lanelet was not set reason as copied from gf_msg
 
-  // Create current vehicle pose message for Lanelet 1203 
+  // Create current vehicle pose message for Lanelet 1203
   current_vehicle_pose.pose.position.x = 1.5;
   current_vehicle_pose.pose.position.y = 85;
 
-  // Check active geofence result for Lanelet 1203 
+  // Check active geofence result for Lanelet 1203
   check = wmb.checkActiveGeofenceLogic(current_vehicle_pose);
   EXPECT_FALSE(check.is_on_active_geofence);
 }
@@ -1774,7 +1777,7 @@ TEST(WMBroadcaster, RegionAccessRuleTest)
   // Test adding then evaluate if the calls to active and inactive are done correctly
   auto gf_ptr = std::make_shared<Geofence>();
 
-  boost::uuids::uuid curr_id = boost::uuids::random_generator()(); 
+  boost::uuids::uuid curr_id = boost::uuids::random_generator()();
   std::size_t curr_id_hashed = boost::hash<boost::uuids::uuid>()(curr_id);
   gf_ptr->id_ = curr_id;
 
@@ -1810,7 +1813,7 @@ TEST(WMBroadcaster, RegionAccessRuleTest)
 
   // Get and convert map to binary message
   auto map = carma_wm::getBroadcasterTestMap();
-  
+
   ASSERT_EQ(map->regulatoryElementLayer.size(), 0);
 
   const std::string& reason = "Move over law";
@@ -1857,7 +1860,7 @@ TEST(WMBroadcaster, RegionAccessRuleTest)
           ASSERT_TRUE(region_acc->accessable(lanelet::Participants::VehicleBus));
           ASSERT_FALSE(region_acc->accessable(lanelet::Participants::VehicleCar));
         }
-             
+
         active_call_count.store(active_call_count.load() + 1);
         // atomic is not working for boost::uuids::uuid, so hash it
         last_active_gf.store(boost::hash<boost::uuids::uuid>()(data_received->id_));
@@ -1880,7 +1883,7 @@ TEST(WMBroadcaster, RegionAccessRuleTest)
   msg_v01.geometry_exists=true;
   msg_v01.params_exists=true;
   j2735_v2x_msgs::msg::TrafficControlVehClass veh_type;
-  veh_type.vehicle_class = j2735_v2x_msgs::msg::TrafficControlVehClass::PASSENGER_CAR; 
+  veh_type.vehicle_class = j2735_v2x_msgs::msg::TrafficControlVehClass::PASSENGER_CAR;
   msg_v01.params.vclasses.push_back(veh_type);
   msg_v01.params.detail.choice=carma_v2x_msgs::msg::TrafficControlDetail::CLOSED_CHOICE;
   msg_v01.params.detail.closed=carma_v2x_msgs::msg::TrafficControlDetail::CLOSED;
@@ -1893,7 +1896,7 @@ TEST(WMBroadcaster, RegionAccessRuleTest)
   // set the points
   carma_v2x_msgs::msg::PathNode pt;
   // check points that are inside lanelets, thauto gf_ptr = std::make_shared<Geofence>();ese correspond to id 10000, 10007
-  pt.x = 0.5; pt.y = 0.5; pt.z = 0;  
+  pt.x = 0.5; pt.y = 0.5; pt.z = 0;
   msg_v01.geometry.nodes.push_back(pt);
   pt.x = 0.5; pt.y = 1.5; pt.z = 0;
   msg_v01.geometry.nodes.push_back(pt);
@@ -1922,7 +1925,7 @@ TEST(WMBroadcaster, RegionAccessRuleTest)
   testing_reverse_direction = true;
 
   // update id to continue testing
-  curr_id = boost::uuids::random_generator()(); 
+  curr_id = boost::uuids::random_generator()();
   curr_id_hashed = boost::hash<boost::uuids::uuid>()(curr_id);
   std::copy(curr_id.begin(), curr_id.end(), msg_v01.id.id.begin());
   msg_v01.geometry.nodes = {};
@@ -1934,7 +1937,7 @@ TEST(WMBroadcaster, RegionAccessRuleTest)
 
   wmb.geofenceCallback(std::make_unique<carma_v2x_msgs::msg::TrafficControlMessage>(gf_msg));
   timer->setNow(rclcpp::Time(2.1e9));  // Set current time
-  
+
   ASSERT_TRUE(carma_ros2_utils::testing::waitForEqOrTimeout(10.0, curr_id_hashed, last_active_gf));
   ASSERT_EQ(2, active_call_count.load());
 }
@@ -1942,7 +1945,7 @@ TEST(WMBroadcaster, RegionAccessRuleTest)
 /**
 TEST(WMBroadcaster, generate32BitId)
 {
-  
+
   WMBroadcaster wmb(
       [&](const autoware_lanelet2_msgs::msg::MapBin& map_bin) {},
       [&](const autoware_lanelet2_msgs::msg::MapBin& geofence_bin) {}, [](const carma_v2x_msgs::msg::TrafficControlRequest& control_msg_pub_){},
@@ -1995,7 +1998,7 @@ TEST(WMBroadcaster, splitLaneletWithRatio)
   EXPECT_EQ(copy_lanelet.size(), 2);
   EXPECT_NE(copy_lanelet.front().id(), first_lanelet.id());
   EXPECT_NE(copy_lanelet.back().id(), first_lanelet.id());
-  
+
   // check connection of two new lanelets using ids
   EXPECT_EQ(copy_lanelet.front().leftBound2d().front().id(), first_lanelet.leftBound2d().front().id());
   EXPECT_EQ(copy_lanelet.front().rightBound2d().front().id(), first_lanelet.rightBound2d().front().id());
@@ -2003,7 +2006,7 @@ TEST(WMBroadcaster, splitLaneletWithRatio)
   EXPECT_EQ(copy_lanelet.back().rightBound2d().back().id(), first_lanelet.rightBound2d().back().id());
   EXPECT_EQ(copy_lanelet.front().leftBound2d().back().id(), copy_lanelet.back().leftBound2d().front().id());
   EXPECT_EQ(copy_lanelet.front().rightBound2d().back().id(), copy_lanelet.back().rightBound2d().front().id());
-  
+
   // check if matches previous original lanelet using geometry
   EXPECT_NEAR(lanelet::geometry::distance2d(copy_lanelet.front().leftBound2d().front().basicPoint2d(), first_lanelet.leftBound2d().front().basicPoint2d()), 0.0, 0.0001);
   EXPECT_NEAR(lanelet::geometry::distance2d(copy_lanelet.front().rightBound2d().front().basicPoint2d(), first_lanelet.rightBound2d().front().basicPoint2d()), 0.0, 0.0001);
@@ -2029,7 +2032,7 @@ TEST(WMBroadcaster, splitLaneletWithRatio)
   // check multiple valid ratios of mixed and not sorted
   copy_lanelet = wmb.splitLaneletWithRatio({0.3, 0.01, 0.6, 0.99}, first_lanelet, 0.5);
   EXPECT_EQ(copy_lanelet.size(), 3);
-} 
+}
 */
 /**
 TEST(WMBroadcaster, splitLaneletWithPoint)
@@ -2082,7 +2085,7 @@ TEST(WMBroadcaster, splitLaneletWithPoint)
   EXPECT_NEAR(carma_wm::geometry::trackPos(first_lanelet, copy_lanelet.front().centerline2d().back().basicPoint2d()).downtrack, 10.0, 0.001);
   EXPECT_NEAR(carma_wm::geometry::trackPos(first_lanelet, copy_lanelet.back().centerline2d().front().basicPoint2d()).downtrack, 10.0, 0.001);
 
-} 
+}
 */
 
 // TEST(WMBroadcaster, preprocessWorkzoneGeometry)
@@ -2103,45 +2106,45 @@ TEST(WMBroadcaster, splitLaneletWithPoint)
 //   auto ll_2 = carma_wm::test::getLanelet(9901, map->laneletLayer.get(1201).rightBound3d().invert(),map->laneletLayer.get(1201).leftBound3d().invert(),lanelet::AttributeValueString::Solid, lanelet::AttributeValueString::Dashed);
 //   auto ll_3 = carma_wm::test::getLanelet(9902, map->laneletLayer.get(1202).rightBound3d().invert(),map->laneletLayer.get(1202).leftBound3d().invert(),lanelet::AttributeValueString::Solid, lanelet::AttributeValueString::Dashed);
 //   auto ll_4 = carma_wm::test::getLanelet(9903, map->laneletLayer.get(1203).rightBound3d().invert(),map->laneletLayer.get(1203).leftBound3d().invert(),lanelet::AttributeValueString::Solid, lanelet::AttributeValueString::Dashed);
-  
+
 //   std::vector<lanelet::Point3d> pts0;
 //   std::vector<lanelet::Point3d> pts1;
 //   std::vector<lanelet::Point3d> pts2;
-  
+
 //   pts0.push_back(map->laneletLayer.get(1203).leftBound3d().back());
 //   pts0.push_back(carma_wm::test::getPoint(0.0, 101.0, 0));
 //   pts0.push_back(carma_wm::test::getPoint(0.0, 102.0, 0));
 //   pts0.push_back(carma_wm::test::getPoint(0.0, 103.0, 0));
 //   pts0.push_back(carma_wm::test::getPoint(0.0, 104.0, 0));
 //   pts0.push_back(carma_wm::test::getPoint(0.0, 105.0, 0));
-  
+
 //   pts1.push_back(map->laneletLayer.get(1203).rightBound3d().back());
 //   pts1.push_back(carma_wm::test::getPoint(5.0, 101.0, 0));
 //   pts1.push_back(carma_wm::test::getPoint(5.0, 102.0, 0));
 //   pts1.push_back(carma_wm::test::getPoint(5.0, 103.0, 0));
 //   pts1.push_back(carma_wm::test::getPoint(5.0, 104.0, 0));
 //   pts1.push_back(carma_wm::test::getPoint(5.0, 105.0, 0));
-  
+
 //   pts2.push_back(map->laneletLayer.get(1213).rightBound3d().back());
 //   pts2.push_back(carma_wm::test::getPoint(10.0, 101.0, 0));
 //   pts2.push_back(carma_wm::test::getPoint(10.0, 102.0, 0));
 //   pts2.push_back(carma_wm::test::getPoint(10.0, 103.0, 0));
 //   pts2.push_back(carma_wm::test::getPoint(10.0, 104.0, 0));
 //   pts2.push_back(carma_wm::test::getPoint(10.0, 105.0, 0));
-  
+
 //   lanelet::LineString3d ls00(lanelet::utils::getId(), pts0);
 //   lanelet::LineString3d ls01(lanelet::utils::getId(), pts1);
 //   lanelet::LineString3d ls02(lanelet::utils::getId(), pts2);
 
 //   auto ll_9 = carma_wm::test::getLanelet(9904, ls01.invert(),ls00.invert(), lanelet::AttributeValueString::Dashed, lanelet::AttributeValueString::Solid);
 //   auto ll_10 = carma_wm::test::getLanelet(9914, ls01,ls02,lanelet::AttributeValueString::Dashed, lanelet::AttributeValueString::Solid);
-  
+
 //   map->add(ll_1);
 //   map->add(ll_2);
 //   map->add(ll_3);
-//   map->add(ll_4); 
+//   map->add(ll_4);
 //   map->add(ll_9);
-//   map->add(ll_10); 
+//   map->add(ll_10);
 
 //   /**       START
 //    *        |9904|9914|
@@ -2165,11 +2168,11 @@ TEST(WMBroadcaster, splitLaneletWithPoint)
 //   // Trigger basemap callback
 //   wmb_.baseMapCallback(std::move(map_msg_ptr));
 //   wmb_.setErrorDistance(0.5);
-  
+
 //   std::shared_ptr<std::vector<lanelet::Lanelet>> parallel_llts = std::make_shared<std::vector<lanelet::Lanelet>>(std::vector<lanelet::Lanelet>());
 //   std::shared_ptr<std::vector<lanelet::Lanelet>> middle_opposite_lanelets = std::make_shared<std::vector<lanelet::Lanelet>>(std::vector<lanelet::Lanelet>());
 //   std::unordered_map<uint8_t, std::shared_ptr<carma_wm_ctrl::Geofence>> work_zone_geofence_cache;
-  
+
 //   std::shared_ptr<Geofence> gf_ptr1 =  std::make_shared<Geofence>();
 //   std::shared_ptr<Geofence> gf_ptr2 =  std::make_shared<Geofence>();
 //   std::shared_ptr<Geofence> gf_ptr3 =  std::make_shared<Geofence>();
@@ -2179,7 +2182,7 @@ TEST(WMBroadcaster, splitLaneletWithPoint)
 //   gf_ptr2->label_ = "TYPE:SIG_WZ,INT_ID:1000,SG_ID:235";
 //   gf_ptr3->label_ = "TYPE:SIG_WZ,INT_ID:1000,SG_ID:235";
 //   gf_ptr4->label_ = "TYPE:SIG_WZ,INT_ID:1000,SG_ID:235";
-  
+
 //   /**
 //    *        |9904|9914|
 //    *        | _  _  _ |_  _
@@ -2233,9 +2236,9 @@ TEST(WMBroadcaster, splitLaneletWithPoint)
 //   work_zone_geofence_cache[WorkZoneSection::CLOSED] = gf_ptr4;
 //   EXPECT_EQ( work_zone_geofence_cache[WorkZoneSection::CLOSED]->affected_parts_.size(), 2);
 //   // get parallel and opposite lanelets
-  
+
 //   wmb_.preprocessWorkzoneGeometry(work_zone_geofence_cache, parallel_llts, middle_opposite_lanelets);
-  
+
 //   EXPECT_EQ(parallel_llts->size(), 4);
 //   EXPECT_EQ(middle_opposite_lanelets->size(), 2);
 
@@ -2281,7 +2284,7 @@ TEST(WMBroadcaster, splitLaneletWithPoint)
 
 //   reverse_pts = {};
 //   reverse_pts.push_back(carma_wm::test::getPoint(2.5, 87.5, 0)); // notice the direction
-//   reverse_pts.push_back(carma_wm::test::getPoint(2.5, 62.5, 0)); 
+//   reverse_pts.push_back(carma_wm::test::getPoint(2.5, 62.5, 0));
 //   reverse_pts.push_back(carma_wm::test::getPoint(2.5, 37.5, 0));
 
 //   open_right_pts = {};
@@ -2312,10 +2315,10 @@ TEST(WMBroadcaster, splitLaneletWithPoint)
 //   EXPECT_EQ( work_zone_geofence_cache[WorkZoneSection::OPENRIGHT]->affected_parts_.size(), 2);
 //   work_zone_geofence_cache[WorkZoneSection::CLOSED] = gf_ptr4;
 //   EXPECT_EQ( work_zone_geofence_cache[WorkZoneSection::CLOSED]->affected_parts_.size(), 3);
-  
+
 //   // get parallel and opposite lanelets
 //   wmb_.preprocessWorkzoneGeometry(work_zone_geofence_cache, parallel_llts, middle_opposite_lanelets);
-  
+
 //   EXPECT_EQ(parallel_llts->size(), 4);
 //   EXPECT_EQ(middle_opposite_lanelets->size(), 3);
 
@@ -2343,7 +2346,7 @@ TEST(WMBroadcaster, splitLaneletWithPoint)
 //    *        | _  | o _|_  _|
 //    *        |  o | o  |    |
 //    *        |  r | c  |1222|
-//    *        |  r | c  |    | 
+//    *        |  r | c  |    |
 //    *        | _t_|_t_ |_  _|
 //    *        |9901| t  |1221|    t   = taperright points
 //    *        | _ _|_t_ |_  _|    o   = openright points
@@ -2363,7 +2366,7 @@ TEST(WMBroadcaster, splitLaneletWithPoint)
 
 //   reverse_pts = {};
 //   reverse_pts.push_back(carma_wm::test::getPoint(2.5, 70.0, 0)); // notice the direction
-//   reverse_pts.push_back(carma_wm::test::getPoint(2.5, 55.0, 0)); 
+//   reverse_pts.push_back(carma_wm::test::getPoint(2.5, 55.0, 0));
 
 //   open_right_pts = {};
 //   open_right_pts.push_back(carma_wm::test::getPoint(7.5, 72.5, 0));
@@ -2371,21 +2374,21 @@ TEST(WMBroadcaster, splitLaneletWithPoint)
 //   open_right_pts.push_back(carma_wm::test::getPoint(7.5, 102.5, 0));
 
 //   closed = {};
-//   closed.push_back(carma_wm::test::getPoint(7.5, 55.0, 0)); 
-//   closed.push_back(carma_wm::test::getPoint(7.5, 70.0, 0)); 
+//   closed.push_back(carma_wm::test::getPoint(7.5, 55.0, 0));
+//   closed.push_back(carma_wm::test::getPoint(7.5, 70.0, 0));
 
 //   gf_ptr1->gf_pts = taper_right_pts;
 //   gf_ptr2->gf_pts = reverse_pts;
 //   gf_ptr3->gf_pts = open_right_pts;
 //   gf_ptr4->gf_pts = closed;
 
-  
+
 //   gf_ptr1->affected_parts_ = wmb_.getAffectedLaneletOrAreas(gf_ptr1->gf_pts);
-  
+
 //   gf_ptr2->affected_parts_ = wmb_.getAffectedLaneletOrAreas(gf_ptr2->gf_pts);
-  
+
 //   gf_ptr4->affected_parts_ = wmb_.getAffectedLaneletOrAreas(gf_ptr4->gf_pts);
-  
+
 //   gf_ptr3->affected_parts_ = wmb_.getAffectedLaneletOrAreas(gf_ptr3->gf_pts);
 
 //   work_zone_geofence_cache[WorkZoneSection::TAPERRIGHT] = gf_ptr1;
@@ -2399,7 +2402,7 @@ TEST(WMBroadcaster, splitLaneletWithPoint)
 
 //   // get parallel and opposite lanelets
 //   wmb_.preprocessWorkzoneGeometry(work_zone_geofence_cache, parallel_llts, middle_opposite_lanelets);
-  
+
 //   EXPECT_EQ(parallel_llts->size(), 4);
 //   EXPECT_EQ(middle_opposite_lanelets->size(), 1);
 
@@ -2427,7 +2430,7 @@ TEST(WMBroadcaster, splitLaneletWithPoint)
 //    *        | _  | o _|_  _|
 //    *        |  r | c  |    |
 //    *        |  r | c  |1222|
-//    *        |  r | c  |    | 
+//    *        |  r | c  |    |
 //    *        | _r_|_c_ |_  _|
 //    *        |9901| t  |1221|    t   = taperright points
 //    *        | _ _|_t_ |_  _|    o   = openright points
@@ -2445,28 +2448,28 @@ TEST(WMBroadcaster, splitLaneletWithPoint)
 
 //   reverse_pts = {};
 //   reverse_pts.push_back(carma_wm::test::getPoint(2.5, 74.5, 0)); // notice the direction
-//   reverse_pts.push_back(carma_wm::test::getPoint(2.5, 50.5, 0)); 
+//   reverse_pts.push_back(carma_wm::test::getPoint(2.5, 50.5, 0));
 
 //   open_right_pts = {};
 //   open_right_pts.push_back(carma_wm::test::getPoint(7.5, 75.5, 0));
 //   open_right_pts.push_back(carma_wm::test::getPoint(7.5, 99.5, 0));
 
 //   closed = {};
-//   closed.push_back(carma_wm::test::getPoint(7.5, 50.5, 0)); 
-//   closed.push_back(carma_wm::test::getPoint(7.5, 74.5, 0)); 
+//   closed.push_back(carma_wm::test::getPoint(7.5, 50.5, 0));
+//   closed.push_back(carma_wm::test::getPoint(7.5, 74.5, 0));
 
 //   gf_ptr1->gf_pts = taper_right_pts;
 //   gf_ptr2->gf_pts = reverse_pts;
 //   gf_ptr3->gf_pts = open_right_pts;
 //   gf_ptr4->gf_pts = closed;
 
-  
+
 //   gf_ptr1->affected_parts_ = wmb_.getAffectedLaneletOrAreas(gf_ptr1->gf_pts);
-  
+
 //   gf_ptr2->affected_parts_ = wmb_.getAffectedLaneletOrAreas(gf_ptr2->gf_pts);
-  
+
 //   gf_ptr4->affected_parts_ = wmb_.getAffectedLaneletOrAreas(gf_ptr4->gf_pts);
-  
+
 //   gf_ptr3->affected_parts_ = wmb_.getAffectedLaneletOrAreas(gf_ptr3->gf_pts);
 
 //   work_zone_geofence_cache[WorkZoneSection::TAPERRIGHT] = gf_ptr1;
@@ -2480,7 +2483,7 @@ TEST(WMBroadcaster, splitLaneletWithPoint)
 
 //   // get parallel and opposite lanelets
 //   wmb_.preprocessWorkzoneGeometry(work_zone_geofence_cache, parallel_llts, middle_opposite_lanelets);
-  
+
 //   EXPECT_EQ(parallel_llts->size(), 2);
 //   EXPECT_EQ(middle_opposite_lanelets->size(), 1);
 
@@ -2498,7 +2501,7 @@ TEST(WMBroadcaster, splitLaneletWithPoint)
 //   EXPECT_NEAR((*(middle_opposite_lanelets.get()))[0].leftBound2d().front().basicPoint2d().x(), 5.0, 0.0001);
 //   EXPECT_NEAR((*(middle_opposite_lanelets.get()))[0].leftBound2d().front().basicPoint2d().y(), 75.0, 0.0001);
 //   EXPECT_NEAR((*(middle_opposite_lanelets.get())).back().rightBound2d().back().basicPoint2d().y(), 50.0, 0.0001);
-// } 
+// }
 
 // TEST(WMBroadcaster, createWorkzoneGeometry)
 // {
@@ -2521,45 +2524,45 @@ TEST(WMBroadcaster, splitLaneletWithPoint)
 //   auto ll_2 = carma_wm::test::getLanelet(9901, map->laneletLayer.get(1201).rightBound3d().invert(),map->laneletLayer.get(1201).leftBound3d().invert(),lanelet::AttributeValueString::Solid, lanelet::AttributeValueString::Dashed);
 //   auto ll_3 = carma_wm::test::getLanelet(9902, map->laneletLayer.get(1202).rightBound3d().invert(),map->laneletLayer.get(1202).leftBound3d().invert(),lanelet::AttributeValueString::Solid, lanelet::AttributeValueString::Dashed);
 //   auto ll_4 = carma_wm::test::getLanelet(9903, map->laneletLayer.get(1203).rightBound3d().invert(),map->laneletLayer.get(1203).leftBound3d().invert(),lanelet::AttributeValueString::Solid, lanelet::AttributeValueString::Dashed);
-  
+
 //   std::vector<lanelet::Point3d> pts0;
 //   std::vector<lanelet::Point3d> pts1;
 //   std::vector<lanelet::Point3d> pts2;
-  
+
 //   pts0.push_back(map->laneletLayer.get(1203).leftBound3d().back());
 //   pts0.push_back(carma_wm::test::getPoint(0.0, 101.0, 0));
 //   pts0.push_back(carma_wm::test::getPoint(0.0, 102.0, 0));
 //   pts0.push_back(carma_wm::test::getPoint(0.0, 103.0, 0));
 //   pts0.push_back(carma_wm::test::getPoint(0.0, 104.0, 0));
 //   pts0.push_back(carma_wm::test::getPoint(0.0, 105.0, 0));
-  
+
 //   pts1.push_back(map->laneletLayer.get(1203).rightBound3d().back());
 //   pts1.push_back(carma_wm::test::getPoint(5.0, 101.0, 0));
 //   pts1.push_back(carma_wm::test::getPoint(5.0, 102.0, 0));
 //   pts1.push_back(carma_wm::test::getPoint(5.0, 103.0, 0));
 //   pts1.push_back(carma_wm::test::getPoint(5.0, 104.0, 0));
 //   pts1.push_back(carma_wm::test::getPoint(5.0, 105.0, 0));
-  
+
 //   pts2.push_back(map->laneletLayer.get(1213).rightBound3d().back());
 //   pts2.push_back(carma_wm::test::getPoint(10.0, 101.0, 0));
 //   pts2.push_back(carma_wm::test::getPoint(10.0, 102.0, 0));
 //   pts2.push_back(carma_wm::test::getPoint(10.0, 103.0, 0));
 //   pts2.push_back(carma_wm::test::getPoint(10.0, 104.0, 0));
 //   pts2.push_back(carma_wm::test::getPoint(10.0, 105.0, 0));
-  
+
 //   lanelet::LineString3d ls00(lanelet::utils::getId(), pts0);
 //   lanelet::LineString3d ls01(lanelet::utils::getId(), pts1);
 //   lanelet::LineString3d ls02(lanelet::utils::getId(), pts2);
 
 //   auto ll_9 = carma_wm::test::getLanelet(9904, ls01.invert(),ls00.invert(), lanelet::AttributeValueString::Dashed, lanelet::AttributeValueString::Solid);
 //   auto ll_10 = carma_wm::test::getLanelet(9914, ls01,ls02,lanelet::AttributeValueString::Dashed, lanelet::AttributeValueString::Solid);
-  
+
 //   map->add(ll_1);
 //   map->add(ll_2);
 //   map->add(ll_3);
-//   map->add(ll_4); 
+//   map->add(ll_4);
 //   map->add(ll_9);
-//   map->add(ll_10); 
+//   map->add(ll_10);
 
 //   /**       START
 //    *        |9904|9914|
@@ -2583,7 +2586,7 @@ TEST(WMBroadcaster, splitLaneletWithPoint)
 //   // Trigger basemap callback
 //   wmb_.baseMapCallback(std::move(map_msg_ptr));
 //   wmb_.setErrorDistance(0.5);
-  
+
 //   /////////////////
 //   // CREATE REQUEST
 //   /////////////////
@@ -2591,7 +2594,7 @@ TEST(WMBroadcaster, splitLaneletWithPoint)
 //   std::shared_ptr<std::vector<lanelet::Lanelet>> parallel_llts = std::make_shared<std::vector<lanelet::Lanelet>>(std::vector<lanelet::Lanelet>());
 //   std::shared_ptr<std::vector<lanelet::Lanelet>> middle_opposite_lanelets = std::make_shared<std::vector<lanelet::Lanelet>>(std::vector<lanelet::Lanelet>());
 //   std::unordered_map<uint8_t, std::shared_ptr<carma_wm_ctrl::Geofence>> work_zone_geofence_cache;
-  
+
 //   std::shared_ptr<Geofence> gf_ptr1 =  std::make_shared<Geofence>();
 //   std::shared_ptr<Geofence> gf_ptr2 =  std::make_shared<Geofence>();
 //   std::shared_ptr<Geofence> gf_ptr3 =  std::make_shared<Geofence>();
@@ -2601,7 +2604,7 @@ TEST(WMBroadcaster, splitLaneletWithPoint)
 //   gf_ptr2->label_ = "TYPE:SIG_WZ,INT_ID:1000,SG_ID:235";
 //   gf_ptr3->label_ = "TYPE:SIG_WZ,INT_ID:1000,SG_ID:235";
 //   gf_ptr4->label_ = "TYPE:SIG_WZ,INT_ID:1000,SG_ID:235";
-  
+
 //   /**
 //    *        |9904|9914|
 //    *        | _  _  _ |_  _
@@ -2652,14 +2655,14 @@ TEST(WMBroadcaster, splitLaneletWithPoint)
 //   EXPECT_EQ( work_zone_geofence_cache[WorkZoneSection::OPENRIGHT]->affected_parts_.size(), 1);
 //   work_zone_geofence_cache[WorkZoneSection::CLOSED] = gf_ptr4;
 //   EXPECT_EQ( work_zone_geofence_cache[WorkZoneSection::CLOSED]->affected_parts_.size(), 1);
-  
+
 //   /////////////////
 //   // TESTS PREPROCESS
 //   /////////////////
 
 //   // get parallel and opposite lanelets
 //   wmb_.preprocessWorkzoneGeometry(work_zone_geofence_cache, parallel_llts, middle_opposite_lanelets);
-  
+
 //   EXPECT_EQ(parallel_llts->size(), 4);
 //   EXPECT_EQ(middle_opposite_lanelets->size(), 1);
 
@@ -2714,7 +2717,7 @@ TEST(WMBroadcaster, splitLaneletWithPoint)
 //     // add the llt into the map
 //     EXPECT_NO_THROW(map->add(llt));
 //   }
-  
+
 //   // update the list
 //   auto factory_pcl = lanelet::RegulatoryElementFactory::create(gf_ptr->regulatory_element_->attribute(lanelet::AttributeName::Subtype).value(),
 //                                                           std::const_pointer_cast<lanelet::RegulatoryElementData>(gf_ptr->regulatory_element_->constData()));
@@ -2724,7 +2727,7 @@ TEST(WMBroadcaster, splitLaneletWithPoint)
 //   {
 //     map->update(map->laneletLayer.get(lanelet_or_area.lanelet().get().id()), rar);
 //   }
-  
+
 //   // this is part of world building process as it was convenient to put it here. not part of the request
 //   map->update(map->laneletLayer.get(1200), rar);
 //   map->update(map->laneletLayer.get(1201), rar);
@@ -2737,11 +2740,11 @@ TEST(WMBroadcaster, splitLaneletWithPoint)
 //   // enable below to debug in rviz graph
 //   // map_graph->exportGraphViz("../routing.rviz");
 //   auto route_ = map_graph->getRoute(cmw->getMutableMap()->laneletLayer.get(1210), cmw->getMutableMap()->laneletLayer.get(9914));
-  
+
 //   // check if memory addresses of connecting points of lanelets actually match after the update
 //   EXPECT_EQ(cmw->getMutableMap()->laneletLayer.get(gf_ptr->lanelet_additions_[0].id()).leftBound2d().front().constData(), cmw->getMutableMap()->laneletLayer.get(1210).leftBound2d().back().constData());
 //   EXPECT_EQ(cmw->getMutableMap()->laneletLayer.get(1211).leftBound2d().front().constData(), cmw->getMutableMap()->laneletLayer.get(1210).leftBound2d().back().constData());
-  
+
 //   EXPECT_EQ(gf_ptr->lanelet_additions_[0].leftBound2d().front().id(), cmw->getMutableMap()->laneletLayer.get(1210).leftBound2d().back().id());
 //   EXPECT_EQ(gf_ptr->lanelet_additions_[0].rightBound2d().front().id(), cmw->getMutableMap()->laneletLayer.get(1210).rightBound2d().back().id());
 //   EXPECT_EQ(gf_ptr->lanelet_additions_[4].leftBound2d().back().id(), cmw->getMutableMap()->laneletLayer.get(9914).leftBound2d().front().id());
@@ -2763,7 +2766,7 @@ TEST(WMBroadcaster, splitLaneletWithPoint)
 
 // carma_wm::CARMAWorldModel wml;
 
-//   // Set the environment  
+//   // Set the environment
 //   size_t base_map_call_count = 0;
 //   size_t map_update_call_count = 0;
 //   WMBroadcaster wmb(
@@ -2772,7 +2775,7 @@ TEST(WMBroadcaster, splitLaneletWithPoint)
 //         lanelet::LaneletMapPtr map(new lanelet::LaneletMap);
 //         lanelet::utils::conversion::fromBinMsg(map_bin, map);
 //         base_map_call_count++;
-//       }, 
+//       },
 //       [&](const autoware_lanelet2_msgs::msg::MapBin& map_bin) {
 //         // Publish map update callback
 //         map_update_call_count++;
@@ -2828,7 +2831,7 @@ TEST(WMBroadcaster, splitLaneletWithPoint)
 //   // Setting georeference otherwise, geofenceCallback will throw exception
 //   std_msgs::msg::String sample_proj_string;
 //   std::string proj_string = "+proj=tmerc +lat_0=39.46636844371259 +lon_0=-76.16919523566943 +k=1 +x_0=0 +y_0=0 +datum=WGS84 +units=m +vunits=m +no_defs";
-  
+
 //   /*ADD NEW REGELEM TO MAP WITH NEW SL and VPT*/
 
 //   lanelet::DigitalSpeedLimitPtr new_speed_limit = std::make_shared<lanelet::DigitalSpeedLimit>(lanelet::DigitalSpeedLimit::buildData(map->regulatoryElementLayer.uniqueId(), 10_mph, {}, {},
@@ -2854,7 +2857,7 @@ TEST(WMBroadcaster, splitLaneletWithPoint)
 
 //   RCLCPP_INFO_STREAM(rclcpp::get_logger("carma_wm_ctrl"), "Map Vehicle Participation Type Test Complete.");
 
-  
+
 
 // }
 

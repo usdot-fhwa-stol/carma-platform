@@ -36,12 +36,15 @@ public:
     carma_ros2_utils::CallbackReturn handle_on_configure(const rclcpp_lifecycle::State &){return CallbackReturn::SUCCESS;}
 };
 
+// These tests has been temporarily disabled to support Continuous Improvement (CI) processes.
+// Related GitHub Issue: <https://github.com/usdot-fhwa-stol/carma-platform/issues/2335>
+
 /**
 TEST(SCIStrategicPlugin, UnitTest1)
 {
     auto nh1 = std::make_shared<DummyNode>(rclcpp::NodeOptions());
     auto nh2 = std::make_shared<sci_strategic_plugin::SCIStrategicPlugin>(rclcpp::NodeOptions());
-    
+
     nh2->configure();
     nh2->activate();
 
@@ -58,10 +61,9 @@ TEST(SCIStrategicPlugin, UnitTest1)
     while(std::chrono::system_clock::now() < end_time){
         executor.spin_once();
     }
-    
+
     EXPECT_EQ(1, mob_op_pub->get_subscription_count());
     EXPECT_EQ(1, pose_pub->get_subscription_count());
 }
 */
 } // namespace sci_strategic_plugin
-

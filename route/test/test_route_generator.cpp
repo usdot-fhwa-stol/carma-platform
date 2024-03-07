@@ -34,6 +34,10 @@
 #include "route/route_generator_worker.hpp"
 #include "route/route_state_worker.hpp"
 #include "route/route_node.hpp"
+
+// These tests has been temporarily disabled to support Continuous Improvement (CI) processes.
+// Related GitHub Issue: <https://github.com/usdot-fhwa-stol/carma-platform/issues/2335>
+
 /**
 TEST(RouteGeneratorTest, testRouteVisualizerCenterLineParser)
 {
@@ -49,7 +53,7 @@ TEST(RouteGeneratorTest, testRouteVisualizerCenterLineParser)
     lanelet::ErrorMessages load_errors;
 
     // If the output is an error about the geoReference field in the osm file, here is a correct example. If the lat/lon coordinates are already correct, simply add:
-    // <geoReference>+proj=tmerc +lat_0=0 +lon_0=0 +k=1 +x_0=0 +y_0=0 +datum=WGS84 +units=m +geoidgrids=egm96_15.gtx +vunits=m +no_defs</geoReference> 
+    // <geoReference>+proj=tmerc +lat_0=0 +lon_0=0 +k=1 +x_0=0 +y_0=0 +datum=WGS84 +units=m +geoidgrids=egm96_15.gtx +vunits=m +no_defs</geoReference>
 
     // Set file containing lanelet2 map
     std::string path = ament_index_cpp::get_package_share_directory("route");
@@ -85,7 +89,7 @@ TEST(RouteGeneratorTest, testRouteVisualizerCenterLineParser)
     lanelet::LaneletMapConstPtr const_map(map);
     lanelet::traffic_rules::TrafficRulesUPtr traffic_rules = lanelet::traffic_rules::TrafficRulesFactory::create(lanelet::Locations::Germany, lanelet::Participants::VehicleCar);
     lanelet::routing::RoutingGraphUPtr map_graph = lanelet::routing::RoutingGraph::build(*map, *traffic_rules);
-    
+
     // Create MarkerArray to test
 
     visualization_msgs::msg::Marker marker;
@@ -238,15 +242,15 @@ TEST(RouteGeneratorTest, testLaneletRoutingVectorMap)
 //     lanelet::Id end_id = 111;
 //     /***
 //      * VALID PATHs (consists of lanenet ids): (This is also the shortest path because certain Lanelets missing)
-//      * 159->160->164->136->135->137->144->121; 
+//      * 159->160->164->136->135->137->144->121;
 //      * 159->160->164->136->135->137->144->118;
 //      * 168->170->111
 //      * 159->161->168->170->111
 //      * 167->169->168->170->111
-//      * 115->146->140->139->143->167->169->168->170->111 
-//      * 141->139->143->167->169->168->170->111 
-//      * 127->146->140->139->143->167->169->168->170->111 
-//      * 101->100->104->167->169->168->170->111 (a counter cLock circle) 
+//      * 115->146->140->139->143->167->169->168->170->111
+//      * 141->139->143->167->169->168->170->111
+//      * 127->146->140->139->143->167->169->168->170->111
+//      * 101->100->104->167->169->168->170->111 (a counter cLock circle)
 //      * **/
 
 //     // The parsing in this file was copied from https://github.com/usdot-fhwa-stol/carma-platform/blob/develop/carma_wm_ctrl/test/MapToolsTest.cpp
@@ -258,10 +262,10 @@ TEST(RouteGeneratorTest, testLaneletRoutingVectorMap)
 //     lanelet::Lanelet start_lanelet;
 //     lanelet::Lanelet end_lanelet;
 
-//     try 
+//     try
 //     {
 //         //get lanelet layer
-//         start_lanelet = map->laneletLayer.get(start_id);        
+//         start_lanelet = map->laneletLayer.get(start_id);
 //     }
 //     catch (const lanelet::NoSuchPrimitiveError& e) {
 //         FAIL() << "The specified starting lanelet Id of " << start_id << " does not exist in the provided map.";
@@ -334,10 +338,10 @@ TEST(RouteGeneratorTest, test_crosstrack_error_check)
     lanelet::Lanelet start_lanelet;
     lanelet::Lanelet end_lanelet;
 
-    try 
+    try
     {
         //get lanelet layer
-        start_lanelet = map->laneletLayer.get(start_id);        
+        start_lanelet = map->laneletLayer.get(start_id);
     }
     catch (const lanelet::NoSuchPrimitiveError& e) {
         FAIL() << "The specified starting lanelet Id of " << start_id << " does not exist in the provided map.";
@@ -348,14 +352,14 @@ TEST(RouteGeneratorTest, test_crosstrack_error_check)
     catch (const lanelet::NoSuchPrimitiveError& e) {
         FAIL() << "The specified ending lanelet Id of " << end_id << " does not exist in the provided map.";
     }
-    
+
     lanelet::LaneletMapConstPtr const_map(map);
     lanelet::traffic_rules::TrafficRulesUPtr traffic_rules = lanelet::traffic_rules::TrafficRulesFactory::create(lanelet::Locations::Germany, lanelet::Participants::VehicleCar);
     lanelet::routing::RoutingGraphUPtr map_graph = lanelet::routing::RoutingGraph::build(*map, *traffic_rules);
     const auto route = map_graph->getRoute(start_lanelet, end_lanelet);
     route_msg = worker.composeRouteMsg(route);
     ASSERT_TRUE(route_msg.route_path_lanelet_ids.size() > 0);
-    
+
     //Test 1: Vehicle is out of bounds//
 
     //Assign vehicle position
@@ -366,7 +370,7 @@ TEST(RouteGeneratorTest, test_crosstrack_error_check)
     worker.setWorldModelPtr(cmw);
     worker.setCrosstrackErrorCountMax(0);
     worker.setCrosstrackErrorDistance(1.0);
-    
+
     std::shared_ptr<geometry_msgs::msg::PoseStamped> mpt(new geometry_msgs::msg::PoseStamped(msg));
 
     //Compare vehicle position to the route bounds //
@@ -383,7 +387,7 @@ TEST(RouteGeneratorTest, test_crosstrack_error_check)
 
     ASSERT_EQ(boost::geometry::within(position, start_lanelet.polygon2d()), false);
     ASSERT_EQ(worker.crosstrackErrorCheck(mpt, start_lanelet), true); //The vehicle will show crosstrack error, so the value should return true
-    
+
     //Test 2: Vehicle is in bounds, no crosstrack error//
 
     //Use position values to show the case when there is no crosstrack error
@@ -395,7 +399,7 @@ TEST(RouteGeneratorTest, test_crosstrack_error_check)
 
     position.x()= msg.pose.position.x;
     position.y()= msg.pose.position.y;
-    
+
     std::shared_ptr<geometry_msgs::msg::PoseStamped> mpt2(new geometry_msgs::msg::PoseStamped(msg));
 
     ASSERT_EQ(boost::geometry::within(position, start_lanelet.polygon2d()), true);
@@ -427,10 +431,10 @@ TEST(RouteGeneratorTest, test_set_active_route_cb)
     route::RouteGeneratorWorker worker(tf2_buffer);
     worker.setLoggerInterface(node->get_node_logging_interface());
 
-    std::shared_ptr<carma_wm::CARMAWorldModel> cmw = std::make_shared<carma_wm::CARMAWorldModel>();    
+    std::shared_ptr<carma_wm::CARMAWorldModel> cmw = std::make_shared<carma_wm::CARMAWorldModel>();
     worker.setRouteFilePath("../../install_ros2/route/share/route/resource/route/");
     worker.setWorldModelPtr(cmw);
-    
+
     // Set projection
     int projector_type = 0;
     std::string target_frame;
@@ -454,7 +458,7 @@ TEST(RouteGeneratorTest, test_set_active_route_cb)
     std_msgs::msg::String str_msg;
     str_msg.data = proj;
     std::unique_ptr<std_msgs::msg::String> msg_ptr = std::make_unique<std_msgs::msg::String>(str_msg);
-    worker.georeferenceCb(move(msg_ptr));  
+    worker.georeferenceCb(move(msg_ptr));
 
     // Conduct tests for getAvailableRouteCb()
     std::shared_ptr<rmw_request_id_t> header;
@@ -462,11 +466,11 @@ TEST(RouteGeneratorTest, test_set_active_route_cb)
     carma_planning_msgs::srv::GetAvailableRoutes::Response resp;
     auto req_ptr = std::make_shared<carma_planning_msgs::srv::GetAvailableRoutes::Request>(req);
     auto resp_ptr = std::make_shared<carma_planning_msgs::srv::GetAvailableRoutes::Response>(resp);
-    
+
     ASSERT_TRUE(worker.getAvailableRouteCb(header, req_ptr, resp_ptr));
     ASSERT_EQ(5, resp_ptr->available_routes.size());
 
-    for(auto i = 0; i < resp_ptr->available_routes.size();i++)    
+    for(auto i = 0; i < resp_ptr->available_routes.size();i++)
     {
         if(resp_ptr->available_routes[i].route_id  == "Test_town01_route_1")
         {
@@ -475,13 +479,13 @@ TEST(RouteGeneratorTest, test_set_active_route_cb)
             auto map_points = worker.loadRouteDestinationsInMapFrame(gps_points);
 
             // TODO: temporarily disabled since map isnt loaded properly
-            // ASSERT_EQ(3, map_points.size()); 
+            // ASSERT_EQ(3, map_points.size());
             // ASSERT_NEAR(-9.45542, map_points[0].x(), 0.001);
-            // ASSERT_NEAR(-182.324, map_points[0].y(), 0.001);  
+            // ASSERT_NEAR(-182.324, map_points[0].y(), 0.001);
             // ASSERT_NEAR(72, map_points[0].z(), 0.001);
         }
     }
-    
+
     //Assign vehicle position
     geometry_msgs::msg::PoseStamped msg;
     msg.pose.position.x = -9.45542;
@@ -505,24 +509,24 @@ TEST(RouteGeneratorTest, test_set_active_route_cb)
             // ASSERT_EQ(resp2.error_status, cav_srvs::SetActiveRouteResponse::NO_ERROR);
         }
     }
-    
+
     ////////////
     // Conduct tests for set_active_route_cb() using an array of destination points in the service request
     ////////////
     route::RouteGeneratorWorker worker2(tf2_buffer);
     std::unique_ptr<std_msgs::msg::String> msg_ptr2 = std::make_unique<std_msgs::msg::String>(str_msg);
     worker2.setLoggerInterface(node->get_node_logging_interface());
-    worker2.georeferenceCb(move(msg_ptr2)); 
+    worker2.georeferenceCb(move(msg_ptr2));
     worker2.setWorldModelPtr(cmw);
     worker2.setRouteFilePath("../../install_ros2/route/share/route/resource/route/");
     worker2.vehicle_pose_ = msg;
-    
+
     // Create array of destination points for the SetActiveRoute request
     carma_v2x_msgs::msg::Position3D destination;
     destination.latitude = -10440.3912269;
     destination.longitude = -541.755427;
     destination.elevation_exists = false;
-    
+
     // Create SetActiveRoute request and response, and set necessary fields in the request
     carma_planning_msgs::srv::SetActiveRoute::Request req3;
     carma_planning_msgs::srv::SetActiveRoute::Response resp3;
@@ -628,7 +632,7 @@ TEST(RouteGeneratorTest, test_setReroutingChecker)
     tf2_ros::Buffer tf2_buffer(clock->get_clock());
     route::RouteGeneratorWorker worker(tf2_buffer);
     worker.setLoggerInterface(node->get_node_logging_interface());
-    
+
     bool flag = false;
     worker.setReroutingChecker([&]{
         flag = true;
@@ -664,7 +668,7 @@ TEST(RouteGeneratorTest, test_get_closest_lanelet_from_route_llts)
     std::string path = ament_index_cpp::get_package_share_directory("route");
     std::string file = "/resource/map/town01_vector_map_1.osm";
     file = path.append(file);
-    
+
     // Starting and ending lanelet IDs. It's easiest to grab these from JOSM
     lanelet::Id start_id = 101;
     lanelet::Id end_id = 111;
@@ -679,10 +683,10 @@ TEST(RouteGeneratorTest, test_get_closest_lanelet_from_route_llts)
     lanelet::Lanelet start_lanelet;
     lanelet::Lanelet end_lanelet;
 
-    try 
+    try
     {
         //get lanelet layer
-        start_lanelet = map->laneletLayer.get(start_id);        
+        start_lanelet = map->laneletLayer.get(start_id);
     }
     catch (const lanelet::NoSuchPrimitiveError& e) {
         FAIL() << "The specified starting lanelet Id of " << start_id << " does not exist in the provided map.";
@@ -736,4 +740,4 @@ int main(int argc, char ** argv)
     rclcpp::shutdown();
 
     return success;
-} 
+}

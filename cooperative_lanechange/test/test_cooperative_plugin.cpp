@@ -204,6 +204,10 @@ namespace cooperative_lanechange
         EXPECT_EQ(10.0, resp_ptr->trajectory_plan.initial_longitudinal_velocity);
         EXPECT_EQ(0, resp_ptr->related_maneuvers.back());
     }
+
+    // These tests has been temporarily disabled to support Continuous Improvement (CI) processes.
+    // Related GitHub Issue: <https://github.com/usdot-fhwa-stol/carma-platform/issues/2335>
+
     /*
     TEST(CooperativeLaneChangePlugin,Testcurrentgapcb){
         // File to process.

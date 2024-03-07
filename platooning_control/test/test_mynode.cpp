@@ -26,7 +26,8 @@
 #include "platoon_control.h"
 
 
-
+// These tests has been temporarily disabled to support Continuous Improvement (CI) processes.
+// Related GitHub Issue: <https://github.com/usdot-fhwa-stol/carma-platform/issues/2335>
 
 // Declare a test
 // TEST(TestSuite, testCase1)

@@ -37,7 +37,7 @@ TEST(TestSuite, testCase1)
     traj_pub_.publish(tp);
     std::this_thread::sleep_for(std::chrono::milliseconds(5000));
     auto num = traj_pub_.getNumSubscribers();
-    // EXPECT_EQ(1, num);
+    EXPECT_EQ(1, num);
 
 }
 
@@ -50,7 +50,7 @@ TEST(TestSuite, testCase2)
     twist_pub_.publish(twist1);
     std::this_thread::sleep_for(std::chrono::milliseconds(5000));
     auto num = twist_pub_.getNumSubscribers();
-    // EXPECT_EQ(1, num);
+    EXPECT_EQ(1, num);
 
 }
 

@@ -43,7 +43,10 @@
 
 namespace stop_and_wait_plugin
 {
- 
+
+// These tests has been temporarily disabled to support Continuous Improvement (CI) processes.
+// Related GitHub Issue: <https://github.com/usdot-fhwa-stol/carma-platform/issues/2335>
+
 // TEST(StopandWait, TestStopandWaitPlanning)
 // {
 //   StopandWaitConfig config;
@@ -55,11 +58,11 @@ namespace stop_and_wait_plugin
 //   config.accel_limit = 2.0;                    // Longitudinal acceleration limit of the vehicle
 
 //   std::shared_ptr<carma_wm::CARMAWorldModel> wm = std::make_shared<carma_wm::CARMAWorldModel>();
-  
+
 //   std::shared_ptr<carma_ros2_utils::CarmaLifecycleNode> nh;
 //   const std::string& plugin_name= "stop_and_wait_plugin";
 //   const std::string& version_id="v1.0";
- 
+
 //   StopandWait plugin(nh,wm, config, plugin_name,version_id);
 
 //   auto map = carma_wm::test::buildGuidanceTestMap(3.7, 20);
@@ -143,4 +146,4 @@ int main(int argc, char ** argv)
     rclcpp::shutdown();
 
     return success;
-} 
+}

@@ -123,6 +123,9 @@ namespace subsystem_controllers
 
     };
 
+    // These tests has been temporarily disabled to support Continuous Improvement (CI) processes.
+    // Related GitHub Issue: <https://github.com/usdot-fhwa-stol/carma-platform/issues/2335>
+
     // TEST(plugin_manager_test, transitions_test)
     // {
     //     std::vector<std::string> req_plugins = {"plg_1"};

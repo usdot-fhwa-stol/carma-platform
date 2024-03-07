@@ -28,9 +28,9 @@ class PoseToTfNodeTest : public carma_ros2_utils::CarmaLifecycleNode
   private:
 
     rclcpp::Time current_time_;
-  
+
   public:
-  
+
   explicit PoseToTfNodeTest(const rclcpp::NodeOptions &options)
       : carma_ros2_utils::CarmaLifecycleNode(options)
   {
@@ -49,6 +49,9 @@ class PoseToTfNodeTest : public carma_ros2_utils::CarmaLifecycleNode
 
   };
 
+// These tests has been temporarily disabled to support Continuous Improvement (CI) processes.
+// Related GitHub Issue: <https://github.com/usdot-fhwa-stol/carma-platform/issues/2335>
+
 /**
 TEST(PoseToTF2, test_methods)
 {
@@ -58,9 +61,9 @@ TEST(PoseToTF2, test_methods)
   bool msg_set = false;
   geometry_msgs::msg::TransformStamped msg;
   auto node = std::make_shared<PoseToTfNodeTest>(rclcpp::NodeOptions());
-  
+
   PoseToTF2 manager(config, [&msg, &msg_set](auto in) { msg_set = true; msg = in; },node);
-  
+
   rclcpp::Time now(1.5*1e9);
   node->setNow(now);
 
@@ -119,7 +122,7 @@ TEST(PoseToTF2, test_methods)
   ASSERT_EQ(poseB.pose.orientation.y, msg.transform.rotation.y);
   ASSERT_EQ(poseB.pose.orientation.z, msg.transform.rotation.z);
   ASSERT_EQ(poseB.pose.orientation.w, msg.transform.rotation.w);
-  
+
   ASSERT_EQ(0, msg.header.frame_id.compare(poseB.header.frame_id));
   ASSERT_EQ(0, msg.child_frame_id.compare(config.child_frame));
   ASSERT_NEAR(rclcpp::Time(poseB.header.stamp).seconds(), rclcpp::Time(msg.header.stamp).seconds(), 0.000000001);
@@ -136,7 +139,7 @@ TEST(PoseToTF2, test_methods)
   ASSERT_EQ(poseC.pose.orientation.y, msg.transform.rotation.y);
   ASSERT_EQ(poseC.pose.orientation.z, msg.transform.rotation.z);
   ASSERT_EQ(poseC.pose.orientation.w, msg.transform.rotation.w);
-  
+
   ASSERT_EQ(0, msg.header.frame_id.compare(config.default_parent_frame));
   ASSERT_EQ(0, msg.child_frame_id.compare(config.child_frame));
   ASSERT_NEAR(1.5, rclcpp::Time(msg.header.stamp).seconds(), 0.000000001);
@@ -153,7 +156,7 @@ TEST(PoseToTF2, test_methods)
   ASSERT_EQ(poseD.pose.pose.orientation.y, msg.transform.rotation.y);
   ASSERT_EQ(poseD.pose.pose.orientation.z, msg.transform.rotation.z);
   ASSERT_EQ(poseD.pose.pose.orientation.w, msg.transform.rotation.w);
-  
+
   ASSERT_EQ(0, msg.header.frame_id.compare(poseD.header.frame_id));
   ASSERT_EQ(0, msg.child_frame_id.compare(config.child_frame));
   ASSERT_NEAR(rclcpp::Time(poseD.header.stamp).seconds(), rclcpp::Time(msg.header.stamp).seconds(), 0.000000001);

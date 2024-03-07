@@ -43,13 +43,16 @@ public:
     {
       RCLCPP_INFO(get_logger(),"Test lc callback..");
     }
-    
+
 };
+
+// These tests has been temporarily disabled to support Continuous Improvement (CI) processes.
+// Related GitHub Issue: <https://github.com/usdot-fhwa-stol/carma-platform/issues/2335>
 
 /**
 TEST(YieldPlugin, UnitTestYield)
 {
-    // Note: Comment out the transform lookup before ros test. Since there is no map, it will break the tests   
+    // Note: Comment out the transform lookup before ros test. Since there is no map, it will break the tests
     carma_planning_msgs::msg::TrajectoryPlan original_tp;
 
     carma_planning_msgs::msg::TrajectoryPlanPoint trajectory_point_1;
@@ -71,7 +74,7 @@ TEST(YieldPlugin, UnitTestYield)
     trajectory_point_3.x = 10.0;
     trajectory_point_3.y = 1.0;
     trajectory_point_3.target_time = rclcpp::Time(2,0);
-    
+
     trajectory_point_4.x = 15.0;
     trajectory_point_4.y = 1.0;
     trajectory_point_4.target_time = rclcpp::Time(3,0);
@@ -87,7 +90,7 @@ TEST(YieldPlugin, UnitTestYield)
     trajectory_point_7.x = 30.0;
     trajectory_point_7.y = 1.0;
     trajectory_point_7.target_time = rclcpp::Time(6,0);
-    
+
     original_tp.trajectory_points = {trajectory_point_1, trajectory_point_2, trajectory_point_3, trajectory_point_4, trajectory_point_5, trajectory_point_6, trajectory_point_7};
     original_tp.trajectory_id = "test";
 
@@ -103,7 +106,7 @@ TEST(YieldPlugin, UnitTestYield)
     traj_srv->vehicle_state.y_pos_global = 1;
     traj_srv->vehicle_state.longitudinal_vel = 11;
     traj_srv->maneuver_plan = plan;
-       
+
     double res = 0;
     std::string id = "test";
 
@@ -113,10 +116,10 @@ TEST(YieldPlugin, UnitTestYield)
     nh2->activate();
 
     auto yield_client= nh1->create_client<carma_planning_msgs::srv::PlanTrajectory>("yield_plugin/plan_trajectory");
-  
-    auto mob_resp_sub = nh1->create_subscription<carma_v2x_msgs::msg::MobilityResponse>("outgoing_mobility_response", 5, std::bind(&YieldNode::callback,nh1.get(),std_ph::_1));  
+
+    auto mob_resp_sub = nh1->create_subscription<carma_v2x_msgs::msg::MobilityResponse>("outgoing_mobility_response", 5, std::bind(&YieldNode::callback,nh1.get(),std_ph::_1));
     auto lc_status_sub = nh1->create_subscription<carma_planning_msgs::msg::LaneChangeStatus>("cooperative_lane_change_status", 5,std::bind(&YieldNode::status_callback,nh1.get(),std_ph::_1));
-    
+
     auto mob_req_pub = nh1->create_publisher<carma_v2x_msgs::msg::MobilityRequest>("incoming_mobility_request", 5);
     auto bsm_pub = nh1->create_publisher<carma_v2x_msgs::msg::BSM>("bsm_outbound", 5);
     carma_v2x_msgs::msg::MobilityRequest req1;
@@ -125,7 +128,7 @@ TEST(YieldPlugin, UnitTestYield)
     nh1->configure();
     nh1->activate();
     mob_req_pub->publish(req1);
-    
+
     rclcpp::executors::MultiThreadedExecutor executor;
     executor.add_node(nh1->get_node_base_interface());
     executor.add_node(nh2->get_node_base_interface());
@@ -135,15 +138,15 @@ TEST(YieldPlugin, UnitTestYield)
     while(std::chrono::system_clock::now() < end_time){
       executor.spin_once();
     }
-    
-    EXPECT_EQ(1, mob_req_pub->get_subscription_count()); 
-    
+
+    EXPECT_EQ(1, mob_req_pub->get_subscription_count());
+
     EXPECT_EQ(1, bsm_pub->get_subscription_count());
 
-    EXPECT_EQ(1, mob_resp_sub->get_publisher_count()); 
+    EXPECT_EQ(1, mob_resp_sub->get_publisher_count());
 
-    EXPECT_EQ(1, lc_status_sub->get_publisher_count()); 
-  
+    EXPECT_EQ(1, lc_status_sub->get_publisher_count());
+
     auto traj_resp = yield_client->async_send_request(traj_srv);
 
     auto future_status = traj_resp.wait_for(std::chrono::milliseconds(100));
@@ -178,5 +181,4 @@ int main(int argc, char ** argv)
   rclcpp::shutdown();
 
   return success;
-} 
-
+}

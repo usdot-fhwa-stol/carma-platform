@@ -66,14 +66,14 @@ TEST(GeometryTest, computeCurvature)
 
 /*!
  * \brief Test utility function to generate a lanelet of fixed curvature
- * 
+ *
  * \param center_of_curvature The center of the circle that will generate the lanelet
  * \param radius_of_curvature The radius size of the circle that describes
  * \param arc_radians The number of radians to traverse the sweep of the circle
  * \param sample_count  How many points to sample evenly spaced across the arc
  * \return A lanelet matching the input geometry description
  */
-std::vector<lanelet::Point3d> 
+std::vector<lanelet::Point3d>
 generate_const_curvature_linestring(
   lanelet::BasicPoint2d center_of_curvature,
   double radius_of_curvature,
@@ -85,18 +85,21 @@ generate_const_curvature_linestring(
 
   double x, y;
   for (int i = 0; i < sample_count; i++) {
-    x = center_of_curvature[0] 
-      + radius_of_curvature 
+    x = center_of_curvature[0]
+      + radius_of_curvature
       * std::cos(arc_radians / sample_count * i);
     y = center_of_curvature[1]
       + radius_of_curvature
       * std::sin(arc_radians / sample_count * i);
-    
+
     out.push_back(getPoint(x, y, 0.0));
   }
 
   return out;
 }
+
+// These tests has been temporarily disabled to support Continuous Improvement (CI) processes.
+// Related GitHub Issue: <https://github.com/usdot-fhwa-stol/carma-platform/issues/2335>
 /**
 TEST(Geometry, local_curvatures)
 {
@@ -123,7 +126,7 @@ TEST(Geometry, local_curvatures)
   // Test single lanelet constant curvature
   lanelet::BasicPoint2d origin = getBasicPoint(0.0, 0.0);
   // Curve with centerline at radius 10, curvature 1/10
-  std::vector<lanelet::Point3d> left_2 = generate_const_curvature_linestring(origin, 5, M_PI / 2.0, 20); 
+  std::vector<lanelet::Point3d> left_2 = generate_const_curvature_linestring(origin, 5, M_PI / 2.0, 20);
   std::vector<lanelet::Point3d> right_2 = generate_const_curvature_linestring(origin, 15, M_PI / 2.0, 20);
   auto ll_2 = getLanelet(left_2, right_2);
   std::vector<lanelet::ConstLanelet> lanelets2 = { lanelet::utils::toConst(ll_2) };
@@ -140,7 +143,7 @@ TEST(Geometry, local_curvatures)
 
   // Test single lanelet constant curvature 2
   // Curve with centerline at radius 20, curvature 1/20
-  std::vector<lanelet::Point3d> left_3 = generate_const_curvature_linestring(origin, 10, M_PI / 2.0, 10); 
+  std::vector<lanelet::Point3d> left_3 = generate_const_curvature_linestring(origin, 10, M_PI / 2.0, 10);
   std::vector<lanelet::Point3d> right_3 = generate_const_curvature_linestring(origin, 30, M_PI / 2.0, 10);
   auto ll_3 = getLanelet(left_3, right_3);
   //lanelet::LineString3d center_ls3(lanelet::utils::getId(), center_3);
@@ -161,7 +164,7 @@ TEST(Geometry, local_curvatures)
 
   // Test single lanelet constant curvature 3
   // Curve with centerline at radius 1, curvature 1
-  std::vector<lanelet::Point3d> left_4 = generate_const_curvature_linestring(origin, 0.5, M_PI / 2.0, 5); 
+  std::vector<lanelet::Point3d> left_4 = generate_const_curvature_linestring(origin, 0.5, M_PI / 2.0, 5);
   std::vector<lanelet::Point3d> right_4 = generate_const_curvature_linestring(origin, 1.5, M_PI / 2.0, 5);
   auto ll_4 = getLanelet(left_4, right_4);
 
@@ -636,7 +639,7 @@ TEST(GeometryTest, compute_tangent_orientations_straight)
   }
 
   std::vector<double> result;
-  lanelet::BasicLineString2d centerline = carma_wm::geometry::concatenate_lanelets(lanelets_as_vec);  
+  lanelet::BasicLineString2d centerline = carma_wm::geometry::concatenate_lanelets(lanelets_as_vec);
   result = carma_wm::geometry::compute_tangent_orientations(centerline);
   ASSERT_EQ(9, result.size());
 
@@ -646,7 +649,7 @@ TEST(GeometryTest, compute_tangent_orientations_straight)
   }
 }
 
-TEST(GeometryTest, concatenate_line_string_dedupe) 
+TEST(GeometryTest, concatenate_line_string_dedupe)
 {
   auto p1 = Eigen::Vector2d(-1, 0);
   auto p2 = Eigen::Vector2d(-1, 1);

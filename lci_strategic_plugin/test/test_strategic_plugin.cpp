@@ -42,6 +42,8 @@ namespace lci_strategic_plugin
  *           START_LINE
  */
 
+// These tests has been temporarily disabled to support Continuous Improvement (CI) processes.
+// Related GitHub Issue: <https://github.com/usdot-fhwa-stol/carma-platform/issues/2335>
 /*
 TEST_F(LCIStrategicTestFixture, planManeuverCb)
 {

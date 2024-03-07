@@ -211,6 +211,9 @@ TEST(MotionComputationWorker, ComposePredictedState)
   ASSERT_NEAR(test_result.predicted_velocity.linear.x, 5.0 * sqrt(2) / 0.1, 0.0001);
   ASSERT_EQ(test_result.header.stamp, time_stamp);
 }
+// These tests has been temporarily disabled to support Continuous Improvement (CI) processes.
+// Related GitHub Issue: <https://github.com/usdot-fhwa-stol/carma-platform/issues/2335>
+
 /*
 TEST(MotionComputationWorker, PsmToExternalObject)
 {

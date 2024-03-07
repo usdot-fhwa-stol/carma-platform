@@ -24,6 +24,9 @@
 #include "plan_delegator.hpp"
 
 namespace plan_delegator{
+
+    // These tests has been temporarily disabled to support Continuous Improvement (CI) processes.
+    // Related GitHub Issue: <https://github.com/usdot-fhwa-stol/carma-platform/issues/2335>
     /**
     TEST(TestPlanDelegator, UnitTestPlanDelegator) {
         rclcpp::NodeOptions node_options;
@@ -128,7 +131,7 @@ namespace plan_delegator{
         auto pd = std::make_shared<plan_delegator::PlanDelegator>(node_options);
         pd->configure();
         pd->activate();
-        
+
         carma_planning_msgs::msg::TrajectoryPlan res_plan;
 
         auto maneuver_pub = pd->create_publisher<carma_planning_msgs::msg::ManeuverPlan>("final_maneuver_plan", 5);
@@ -183,7 +186,7 @@ namespace plan_delegator{
 
         // Create pose message with vehicle placed in lanelet 1210
         geometry_msgs::msg::PoseStamped pose_msg;
-        pose_msg.pose.position.x = 5.0;  
+        pose_msg.pose.position.x = 5.0;
         pose_msg.pose.position.y = 10.0;
 
         std::unique_ptr<geometry_msgs::msg::PoseStamped> pose_msg_ptr = std::make_unique<geometry_msgs::msg::PoseStamped>(pose_msg);
@@ -288,7 +291,7 @@ namespace plan_delegator{
 
         // Create pose message with vehicle placed in lanelet 1210
         geometry_msgs::msg::PoseStamped pose_msg;
-        pose_msg.pose.position.x = 5.0;  
+        pose_msg.pose.position.x = 5.0;
         pose_msg.pose.position.y = 10.0;
 
         std::unique_ptr<geometry_msgs::msg::PoseStamped> pose_msg_ptr = std::make_unique<geometry_msgs::msg::PoseStamped>(pose_msg);
@@ -348,7 +351,7 @@ namespace plan_delegator{
         ASSERT_EQ(pd->latest_turn_signal_command_.l, 0);
 
         // Set the vehicle pose to lanelet 1211
-        pose_msg.pose.position.x = 5.0;  
+        pose_msg.pose.position.x = 5.0;
         pose_msg.pose.position.y = 29.0;
 
         std::unique_ptr<geometry_msgs::msg::PoseStamped> pose_msg_ptr4 = std::make_unique<geometry_msgs::msg::PoseStamped>(pose_msg);
@@ -360,7 +363,7 @@ namespace plan_delegator{
         pd->maneuverPlanCallback(std::move(maneuver_plan_ptr2));
 
         // Update vehicle pose again (lanelet 1211) so that internal data members related to lane changes and turn signals
-        pose_msg.pose.position.x = 5.0;  
+        pose_msg.pose.position.x = 5.0;
         pose_msg.pose.position.y = 30.0;
 
         std::unique_ptr<geometry_msgs::msg::PoseStamped> pose_msg_ptr5 = std::make_unique<geometry_msgs::msg::PoseStamped>(pose_msg);
