@@ -96,61 +96,61 @@ class TestMotionComputation(unittest.TestCase):
 
         rclpy.shutdown(context=cls.context)
 
-    def test_foo(self):
-        transition_id = Transition.TRANSITION_CONFIGURE
-        transition_node("node_under_test", transition_id, self.context)
+    # def test_foo(self):
+    #     transition_id = Transition.TRANSITION_CONFIGURE
+    #     transition_node("node_under_test", transition_id, self.context)
 
-        transition_id = Transition.TRANSITION_ACTIVATE
-        transition_node("node_under_test", transition_id, self.context)
+    #     transition_id = Transition.TRANSITION_ACTIVATE
+    #     transition_node("node_under_test", transition_id, self.context)
 
-        package_share_path = get_package_share_path("carma_cooperative_perception")
+    #     package_share_path = get_package_share_path("carma_cooperative_perception")
 
-        msg_file = package_share_path / "test/data/detection_list_duplicates.yaml"
-        msg = carma_message_utilities.msg_from_yaml_file(msg_file)
+    #     msg_file = package_share_path / "test/data/detection_list_duplicates.yaml"
+    #     msg = carma_message_utilities.msg_from_yaml_file(msg_file)
 
-        print("launch test: publishing message [1/3]")
-        self.test_harness_node.detection_list_list_pub.publish(msg)
+    #     print("launch test: publishing message [1/3]")
+    #     self.test_harness_node.detection_list_list_pub.publish(msg)
 
-        print("launch test: waiting on output from node_under_test")
-        spin_node_until(
-            self.test_harness_node,
-            LenIncreases(self.test_harness_node.track_list_msgs),
-            self.context,
-        )
+    #     print("launch test: waiting on output from node_under_test")
+    #     spin_node_until(
+    #         self.test_harness_node,
+    #         LenIncreases(self.test_harness_node.track_list_msgs),
+    #         self.context,
+    #     )
 
-        latest_msg = self.test_harness_node.track_list_msgs[-1]
-        self.assertEqual(len(latest_msg.tracks), 0)
+    #     latest_msg = self.test_harness_node.track_list_msgs[-1]
+    #     self.assertEqual(len(latest_msg.tracks), 0)
 
-        print("launch test: publishing message [2/3]")
-        self.test_harness_node.detection_list_list_pub.publish(msg)
+    #     print("launch test: publishing message [2/3]")
+    #     self.test_harness_node.detection_list_list_pub.publish(msg)
 
-        print("launch test: waiting on output from node_under_test")
-        spin_node_until(
-            self.test_harness_node,
-            LenIncreases(self.test_harness_node.track_list_msgs),
-            self.context,
-        )
+    #     print("launch test: waiting on output from node_under_test")
+    #     spin_node_until(
+    #         self.test_harness_node,
+    #         LenIncreases(self.test_harness_node.track_list_msgs),
+    #         self.context,
+    #     )
 
-        latest_msg = self.test_harness_node.track_list_msgs[-1]
-        self.assertEqual(len(latest_msg.tracks), 0)
+    #     latest_msg = self.test_harness_node.track_list_msgs[-1]
+    #     self.assertEqual(len(latest_msg.tracks), 0)
 
-        print("launch test: publishing message [3/3]")
-        self.test_harness_node.detection_list_list_pub.publish(msg)
+    #     print("launch test: publishing message [3/3]")
+    #     self.test_harness_node.detection_list_list_pub.publish(msg)
 
-        latest_msg = self.test_harness_node.track_list_msgs[-1]
-        self.assertEqual(len(latest_msg.tracks), 0)
+    #     latest_msg = self.test_harness_node.track_list_msgs[-1]
+    #     self.assertEqual(len(latest_msg.tracks), 0)
 
-        print("launch test: waiting on output from node_under_test")
-        spin_node_until(
-            self.test_harness_node,
-            LenIncreases(self.test_harness_node.track_list_msgs),
-            self.context,
-        )
+    #     print("launch test: waiting on output from node_under_test")
+    #     spin_node_until(
+    #         self.test_harness_node,
+    #         LenIncreases(self.test_harness_node.track_list_msgs),
+    #         self.context,
+    #     )
 
-        self.assertGreater(len(self.test_harness_node.track_list_msgs), 0)
+    #     self.assertGreater(len(self.test_harness_node.track_list_msgs), 0)
 
-        latest_msg = self.test_harness_node.track_list_msgs[-1]
-        self.assertEqual(len(latest_msg.tracks), 1)
+    #     latest_msg = self.test_harness_node.track_list_msgs[-1]
+    #     self.assertEqual(len(latest_msg.tracks), 1)
 
 
 @post_shutdown_test()

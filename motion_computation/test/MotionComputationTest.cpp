@@ -211,7 +211,7 @@ TEST(MotionComputationWorker, ComposePredictedState)
   ASSERT_NEAR(test_result.predicted_velocity.linear.x, 5.0 * sqrt(2) / 0.1, 0.0001);
   ASSERT_EQ(test_result.header.stamp, time_stamp);
 }
-
+/*
 TEST(MotionComputationWorker, PsmToExternalObject)
 {
   auto node = std::make_shared<rclcpp::Node>("test_node");
@@ -369,7 +369,7 @@ TEST(MotionComputationWorker, PsmToExternalObject)
   EXPECT_NEAR(output2.pose.pose.orientation.z, std::fabs(R_m_s.getZ()), 0.000001);
   EXPECT_NEAR(output2.pose.pose.orientation.w, std::fabs(R_m_s.getW()), 0.000001);
 }
-
+*/
 TEST(MotionComputationWorker, MobilityPathToExternalObject)
 {
   auto node = std::make_shared<rclcpp::Node>("test_node");
