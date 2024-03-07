@@ -5,8 +5,8 @@ find_package(std_srvs REQUIRED)
 find_package(rapidjson REQUIRED)
 find_package(launch_testing_ament_cmake REQUIRED)
 
-// These tests has been temporarily disabled to support Continuous Improvement (CI) processes.
-// Related GitHub Issue: <https://github.com/usdot-fhwa-stol/carma-platform/issues/2335>
+# These tests has been temporarily disabled to support Continuous Improvement (CI) processes.
+# Related GitHub Issue: <https://github.com/usdot-fhwa-stol/carma-platform/issues/2335>
 
 #add_launch_test(
 #  launch_test_nominal.py
