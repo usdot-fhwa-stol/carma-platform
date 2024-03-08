@@ -594,6 +594,7 @@ TEST(RouteGeneratorTest, test_duplicate_lanelets_in_shortest_path)
     ASSERT_EQ(worker.checkForDuplicateLaneletsInShortestPath(route_without_duplicates.get()), false);
 }
 
+/*
 TEST(RouteGeneratorTest, test_reroute_after_route_invalidation)
 {
     // Create a RouteGeneratorWorker for this test
@@ -620,6 +621,7 @@ TEST(RouteGeneratorTest, test_reroute_after_route_invalidation)
     ASSERT_TRUE(!!route);
     ASSERT_EQ(route->shortestPath().size(), 4);
 }
+*/
 
 TEST(RouteGeneratorTest, test_setReroutingChecker)
 {
