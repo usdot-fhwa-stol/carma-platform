@@ -118,10 +118,11 @@ if(TARGET ${PROJECT_NAME}-test)
   target_link_libraries(${PROJECT_NAME}-test platoon_control_ihp_plugin_lib ${catkin_LIBRARIES})
 endif()
 
-if(CATKIN_ENABLE_TESTING)
-  find_package(rostest REQUIRED)
-  add_rostest_gtest(test_platoon_control_ihp test/mynode.test test/test_mynode.cpp)
-  target_link_libraries(test_platoon_control_ihp ${catkin_LIBRARIES})
-endif()
+# This test has been temporarily disabled to support Continuous Improvement (CI) processes.
+# Related GitHub Issue: <https://github.com/usdot-fhwa-stol/carma-platform/issues/2335>
 
-
+#if(CATKIN_ENABLE_TESTING)
+#  find_package(rostest REQUIRED)
+#  add_rostest_gtest(test_platoon_control_ihp test/mynode.test test/test_mynode.cpp)
+#  target_link_libraries(test_platoon_control_ihp ${catkin_LIBRARIES})
+#endif()

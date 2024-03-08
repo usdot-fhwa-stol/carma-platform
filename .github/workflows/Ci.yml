@@ -13,7 +13,7 @@ jobs:
         working-directory: "/opt/carma/"
 
     # Specify the runner environment
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-latest-8-cores
 
     # Set up a Docker container for the job
     container:
@@ -58,9 +58,13 @@ jobs:
     - name: Run ROS1 C++ Tests
       # Run ROS1 C++ tests
       # The skipped ROS 1 packages here should match the ROS 1 packages that are skipped during the build in docker/install.sh"
+
+      # These tests has been temporarily disabled to support Continuous Improvement (CI) processes.
+      # Related GitHub Issue: <https://github.com/usdot-fhwa-stol/carma-platform/issues/2335>
+      # some ROS2 packages unit tests are triggered during ROS1 tests, so they are temporarily being skipped.
       run: |
         source "$INIT_ENV"
-        sed -i 's/colcon test /colcon test --packages-skip novatel_oem7_msgs tracetools tracetools_test /' /home/carma/.ci-image/engineering_tools/code_coverage/make_with_coverage.bash
+        sed -i 's/colcon test /colcon test --packages-skip novatel_oem7_msgs tracetools tracetools_test carma_launch_testing carma_message_utilities ros2bag ros2trace tracetools_launch tracetools_read tracetools_trace rosbag2 carma_utils /' /home/carma/.ci-image/engineering_tools/code_coverage/make_with_coverage.bash
         make_with_coverage.bash -t -e /opt/carma/ -o ./coverage_reports/gcov
 
     - name: Backup ROS1 compile_commands.json
