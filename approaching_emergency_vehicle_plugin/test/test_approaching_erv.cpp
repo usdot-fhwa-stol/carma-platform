@@ -874,8 +874,7 @@ namespace approaching_emergency_vehicle_plugin{
         ASSERT_EQ(resp3->new_plan.maneuvers[0].lane_following_maneuver.parameters.planning_tactical_plugin, "inlanecruising_plugin");
     }
 
-    // These tests has been temporarily disabled to support Continuous Improvement (CI) processes.
-    // Related GitHub Issue: <https://github.com/usdot-fhwa-stol/carma-platform/issues/2335>
+
     TEST(Testapproaching_emergency_vehicle_plugin, testWarningBroadcast){
         // Create, configure, and activate worker_node (ApproachingEmergencyVehiclePlugin)
         rclcpp::NodeOptions options;

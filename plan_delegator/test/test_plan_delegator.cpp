@@ -25,9 +25,6 @@
 
 namespace plan_delegator{
 
-    // These tests has been temporarily disabled to support Continuous Improvement (CI) processes.
-    // Related GitHub Issue: <https://github.com/usdot-fhwa-stol/carma-platform/issues/2335>
-
 
     TEST(TestPlanDelegator, UnitTestPlanDelegator) {
         rclcpp::NodeOptions node_options;
@@ -148,6 +145,9 @@ namespace plan_delegator{
         auto num = maneuver_pub->get_subscription_count();
         EXPECT_EQ(1, num);
     }
+
+    // These tests has been temporarily disabled to support Continuous Improvement (CI) processes.
+    // Related GitHub Issue: <https://github.com/usdot-fhwa-stol/carma-platform/issues/2335>
 
     /**
     TEST(TestPlanDelegator, TestLaneChangeInformation){

@@ -61,7 +61,6 @@ jobs:
 
       # These tests has been temporarily disabled to support Continuous Improvement (CI) processes.
       # Related GitHub Issue: <https://github.com/usdot-fhwa-stol/carma-platform/issues/2335>
-      # TODO carma_utils ros test doesnt run sometimes, so temporatily disabled
       # some ROS2 packages unit tests are triggered during ROS1 tests, so they are temporarily being skipped.
       run: |
         source "$INIT_ENV"
