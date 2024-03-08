@@ -876,270 +876,270 @@ namespace approaching_emergency_vehicle_plugin{
 
     // These tests has been temporarily disabled to support Continuous Improvement (CI) processes.
     // Related GitHub Issue: <https://github.com/usdot-fhwa-stol/carma-platform/issues/2335>
-    // TEST(Testapproaching_emergency_vehicle_plugin, testWarningBroadcast){
-    //     // Create, configure, and activate worker_node (ApproachingEmergencyVehiclePlugin)
-    //     rclcpp::NodeOptions options;
-    //     auto worker_node = std::make_shared<approaching_emergency_vehicle_plugin::ApproachingEmergencyVehiclePlugin>(options);
+    TEST(Testapproaching_emergency_vehicle_plugin, testWarningBroadcast){
+        // Create, configure, and activate worker_node (ApproachingEmergencyVehiclePlugin)
+        rclcpp::NodeOptions options;
+        auto worker_node = std::make_shared<approaching_emergency_vehicle_plugin::ApproachingEmergencyVehiclePlugin>(options);
 
-    //     worker_node->configure(); //Call configure state transition
-    //     worker_node->activate();  //Call activate state transition to get not read for runtime
+        worker_node->configure(); //Call configure state transition
+        worker_node->activate();  //Call activate state transition to get not read for runtime
 
-    //     // Verify that initial state is NO_APPROACHING_ERV
-    //     ASSERT_EQ(worker_node->transition_table_.getState(), ApproachingEmergencyVehicleState::NO_APPROACHING_ERV);
+        // Verify that initial state is NO_APPROACHING_ERV
+        ASSERT_EQ(worker_node->transition_table_.getState(), ApproachingEmergencyVehicleState::NO_APPROACHING_ERV);
 
-    //     // Set georeference for worker_node so that it can convert ERV BSM lat/lon coordinates to map coordinates
-    //     std::string proj = "+proj=tmerc +lat_0=0 +lon_0=0 +k=1 +x_0=0 +y_0=0 +datum=WGS84 +units=m +geoidgrids=egm96_15.gtx +vunits=m +no_defs";
-    //     std_msgs::msg::String str_msg;
-    //     str_msg.data = proj;
-    //     std::unique_ptr<std_msgs::msg::String> msg_ptr = std::make_unique<std_msgs::msg::String>(str_msg);
-    //     worker_node->georeferenceCallback(std::move(msg_ptr));
+        // Set georeference for worker_node so that it can convert ERV BSM lat/lon coordinates to map coordinates
+        std::string proj = "+proj=tmerc +lat_0=0 +lon_0=0 +k=1 +x_0=0 +y_0=0 +datum=WGS84 +units=m +geoidgrids=egm96_15.gtx +vunits=m +no_defs";
+        std_msgs::msg::String str_msg;
+        str_msg.data = proj;
+        std::unique_ptr<std_msgs::msg::String> msg_ptr = std::make_unique<std_msgs::msg::String>(str_msg);
+        worker_node->georeferenceCallback(std::move(msg_ptr));
 
-    //     // Create a world model object for worker_node and set its map
-    //     std::shared_ptr<carma_wm::CARMAWorldModel> cmw = std::make_shared<carma_wm::CARMAWorldModel>();
+        // Create a world model object for worker_node and set its map
+        std::shared_ptr<carma_wm::CARMAWorldModel> cmw = std::make_shared<carma_wm::CARMAWorldModel>();
 
-    //     // Set projection
-    //     int projector_type = 0;
-    //     std::string target_frame;
-    //     lanelet::ErrorMessages load_errors;
+        // Set projection
+        int projector_type = 0;
+        std::string target_frame;
+        lanelet::ErrorMessages load_errors;
 
-    //     // Set file containing lanelet2 map
-    //     std::string path = ament_index_cpp::get_package_share_directory("approaching_emergency_vehicle_plugin");
-    //     std::string file = "/resource/town01_vector_map_1.osm";
-    //     file = path.append(file);
+        // Set file containing lanelet2 map
+        std::string path = ament_index_cpp::get_package_share_directory("approaching_emergency_vehicle_plugin");
+        std::string file = "/resource/town01_vector_map_1.osm";
+        file = path.append(file);
 
-    //     lanelet::io_handlers::AutowareOsmParser::parseMapParams(file, &projector_type, &target_frame);
-    //     lanelet::projection::LocalFrameProjector local_projector(target_frame.c_str());
-    //     lanelet::LaneletMapPtr map = lanelet::load(file, local_projector, &load_errors);
+        lanelet::io_handlers::AutowareOsmParser::parseMapParams(file, &projector_type, &target_frame);
+        lanelet::projection::LocalFrameProjector local_projector(target_frame.c_str());
+        lanelet::LaneletMapPtr map = lanelet::load(file, local_projector, &load_errors);
 
-    //     // Set map
-    //     cmw->carma_wm::CARMAWorldModel::setMap(map);
+        // Set map
+        cmw->carma_wm::CARMAWorldModel::setMap(map);
 
-    //     // Build routing graph from map
-    //     auto traffic_rules = cmw->getTrafficRules();
-    //     lanelet::routing::RoutingGraphUPtr map_graph = lanelet::routing::RoutingGraph::build(*cmw->getMap(), *traffic_rules.get());
+        // Build routing graph from map
+        auto traffic_rules = cmw->getTrafficRules();
+        lanelet::routing::RoutingGraphUPtr map_graph = lanelet::routing::RoutingGraph::build(*cmw->getMap(), *traffic_rules.get());
 
-    //     // Place ego vehicle in left lane on route with shortest path 164->165->171->109->106->107
-    //     lanelet::ConstLanelet starting_lanelet = cmw->getMap()->laneletLayer.get(164);
-    //     lanelet::ConstLanelet ending_lanelet = cmw->getMap()->laneletLayer.get(107);
-    //     lanelet::Optional<lanelet::routing::Route> optional_route = map_graph->getRoute(starting_lanelet, ending_lanelet);
-    //     lanelet::routing::Route route = std::move(*optional_route);
-    //     carma_wm::LaneletRoutePtr route_ptr = std::make_shared<lanelet::routing::Route>(std::move(route));
-    //     cmw->setRoute(route_ptr);
+        // Place ego vehicle in left lane on route with shortest path 164->165->171->109->106->107
+        lanelet::ConstLanelet starting_lanelet = cmw->getMap()->laneletLayer.get(164);
+        lanelet::ConstLanelet ending_lanelet = cmw->getMap()->laneletLayer.get(107);
+        lanelet::Optional<lanelet::routing::Route> optional_route = map_graph->getRoute(starting_lanelet, ending_lanelet);
+        lanelet::routing::Route route = std::move(*optional_route);
+        carma_wm::LaneletRoutePtr route_ptr = std::make_shared<lanelet::routing::Route>(std::move(route));
+        cmw->setRoute(route_ptr);
 
-    //     // Set worker_node's world model to cmw
-    //     worker_node->wm_ = cmw;
+        // Set worker_node's world model to cmw
+        worker_node->wm_ = cmw;
 
-    //     // Set configuration parameters relevant to this unit test
-    //     worker_node->config_.passing_threshold = 10.0; // Seconds
-    //     worker_node->config_.warning_broadcast_frequency = 1.1; // Hz
-    //     worker_node->config_.max_warning_broadcasts = 3;
+        // Set configuration parameters relevant to this unit test
+        worker_node->config_.passing_threshold = 10.0; // Seconds
+        worker_node->config_.warning_broadcast_frequency = 1.1; // Hz
+        worker_node->config_.max_warning_broadcasts = 3;
 
-    //     //**********************//
-    //     // TEST 1: The plugin transitions to the SLOWING_DOWN_FOR_ERV state when the ego vehicle is in the same lane as the approaching
-    //     //         ERV. As a result, the ego vehicle will broadcast warning messages until the maximum amount has been broadcasted.
-    //     //**********************//
+        //**********************//
+        // TEST 1: The plugin transitions to the SLOWING_DOWN_FOR_ERV state when the ego vehicle is in the same lane as the approaching
+        //         ERV. As a result, the ego vehicle will broadcast warning messages until the maximum amount has been broadcasted.
+        //**********************//
 
-    //     worker_node->has_tracked_erv_ = true;
-    //     worker_node->tracked_erv_.lane_index = 0; // Plan maneuvers request will place ego vehicle in rightmost lane as well
-    //     worker_node->tracked_erv_.seconds_until_passing = 9.0;
+        worker_node->has_tracked_erv_ = true;
+        worker_node->tracked_erv_.lane_index = 0; // Plan maneuvers request will place ego vehicle in rightmost lane as well
+        worker_node->tracked_erv_.seconds_until_passing = 9.0;
 
-    //     // Verify the correct default values of the plugin's internal data members related to broadcasted warning messages
-    //     ASSERT_EQ(worker_node->num_warnings_broadcasted_, 0);
-    //     ASSERT_FALSE(worker_node->should_broadcast_warnings_);
-    //     ASSERT_FALSE(worker_node->has_broadcasted_warning_messages_);
+        // Verify the correct default values of the plugin's internal data members related to broadcasted warning messages
+        ASSERT_EQ(worker_node->num_warnings_broadcasted_, 0);
+        ASSERT_FALSE(worker_node->should_broadcast_warnings_);
+        ASSERT_FALSE(worker_node->has_broadcasted_warning_messages_);
 
-    //     // Create plan maneuvers service request for worker_node
-    //     auto req = std::make_shared<carma_planning_msgs::srv::PlanManeuvers::Request>();
+        // Create plan maneuvers service request for worker_node
+        auto req = std::make_shared<carma_planning_msgs::srv::PlanManeuvers::Request>();
 
-    //     // Set maneuver plan service request's vehicle state parameters to place ego vehicle in right lane to verify that it can remain off its
-    //     //     shortest path (but still on its route) when generating a plan that keeps the ego vehicle in its lane.
-    //     req->veh_x = 585277.966793666; // Lanelet 167 (rightmost lane; right adjacent to 164)
-    //     req->veh_y = 5460258.19308606; // Lanelet 167 (rightmost lane; right adjacent to 164)
-    //     req->veh_downtrack = 88.11799880; // (meters) Matches downtrack of (veh_x, veh_y) on ego vehicle's route
-    //     req->veh_logitudinal_velocity = 10.0; // (m/s)
-    //     req->veh_lane_id = "167";
+        // Set maneuver plan service request's vehicle state parameters to place ego vehicle in right lane to verify that it can remain off its
+        //     shortest path (but still on its route) when generating a plan that keeps the ego vehicle in its lane.
+        req->veh_x = 585277.966793666; // Lanelet 167 (rightmost lane; right adjacent to 164)
+        req->veh_y = 5460258.19308606; // Lanelet 167 (rightmost lane; right adjacent to 164)
+        req->veh_downtrack = 88.11799880; // (meters) Matches downtrack of (veh_x, veh_y) on ego vehicle's route
+        req->veh_logitudinal_velocity = 10.0; // (m/s)
+        req->veh_lane_id = "167";
 
-    //     auto resp = std::make_shared<carma_planning_msgs::srv::PlanManeuvers::Response>();
-    //     auto header_srv = std::make_shared<rmw_request_id_t>();
-    //     worker_node->plan_maneuvers_callback(header_srv, req, resp);
+        auto resp = std::make_shared<carma_planning_msgs::srv::PlanManeuvers::Response>();
+        auto header_srv = std::make_shared<rmw_request_id_t>();
+        worker_node->plan_maneuvers_callback(header_srv, req, resp);
 
-    //     ASSERT_EQ(worker_node->transition_table_.getState(), ApproachingEmergencyVehicleState::SLOWING_DOWN_FOR_ERV);
+        ASSERT_EQ(worker_node->transition_table_.getState(), ApproachingEmergencyVehicleState::SLOWING_DOWN_FOR_ERV);
 
-    //     // Set parameters so that ERV remains tracked throughout this unit test
-    //     worker_node->tracked_erv_.latest_update_time = worker_node->now();
-    //     worker_node->config_.timeout_duration = 30.0; // (Seconds) Increase timeout duration so that ERV is still tracked throughout this unit test
+        // Set parameters so that ERV remains tracked throughout this unit test
+        worker_node->tracked_erv_.latest_update_time = worker_node->now();
+        worker_node->config_.timeout_duration = 30.0; // (Seconds) Increase timeout duration so that ERV is still tracked throughout this unit test
 
-    //     // Verify that the state transition resulting from the plan maneuvers request triggers the node to set should_broadcast_warnings to true
-    //     ASSERT_EQ(worker_node->num_warnings_broadcasted_, 0);
-    //     ASSERT_TRUE(worker_node->should_broadcast_warnings_);
-    //     ASSERT_TRUE(worker_node->has_broadcasted_warning_messages_);
+        // Verify that the state transition resulting from the plan maneuvers request triggers the node to set should_broadcast_warnings to true
+        ASSERT_EQ(worker_node->num_warnings_broadcasted_, 0);
+        ASSERT_TRUE(worker_node->should_broadcast_warnings_);
+        ASSERT_TRUE(worker_node->has_broadcasted_warning_messages_);
 
-    //     // Add Node to an executor and spin it to trigger timer callbacks
-    //     rclcpp::executors::MultiThreadedExecutor executor;
-    //     executor.add_node(worker_node->get_node_base_interface());
+        // Add Node to an executor and spin it to trigger timer callbacks
+        rclcpp::executors::MultiThreadedExecutor executor;
+        executor.add_node(worker_node->get_node_base_interface());
 
-    //     // Spin executor for 1 second
-    //     auto end_time = std::chrono::system_clock::now() + std::chrono::seconds(1);
-    //     while(std::chrono::system_clock::now() < end_time){
-    //         executor.spin_once();
-    //     }
+        // Spin executor for 1 second
+        auto end_time = std::chrono::system_clock::now() + std::chrono::seconds(1);
+        while(std::chrono::system_clock::now() < end_time){
+            executor.spin_once();
+        }
 
-    //     // Verify that node has broadcasted 2 (of 3) warning messages
-    //     ASSERT_EQ(worker_node->num_warnings_broadcasted_, 2);
+        // Verify that node has broadcasted 2 (of 3) warning messages
+        ASSERT_EQ(worker_node->num_warnings_broadcasted_, 2);
 
-    //     // Spin executor for 2 seconds
-    //     end_time = std::chrono::system_clock::now() + std::chrono::seconds(2);
-    //     while(std::chrono::system_clock::now() < end_time){
-    //         executor.spin_once();
-    //     }
+        // Spin executor for 2 seconds
+        end_time = std::chrono::system_clock::now() + std::chrono::seconds(2);
+        while(std::chrono::system_clock::now() < end_time){
+            executor.spin_once();
+        }
 
-    //     // Verify that node has broadcasted all warning messages and counter has been reset to 0
-    //     ASSERT_EQ(worker_node->num_warnings_broadcasted_, 0);
-    //     ASSERT_FALSE(worker_node->should_broadcast_warnings_); // Node should no longer be broadcasting warnings since all have been broadcasted
+        // Verify that node has broadcasted all warning messages and counter has been reset to 0
+        ASSERT_EQ(worker_node->num_warnings_broadcasted_, 0);
+        ASSERT_FALSE(worker_node->should_broadcast_warnings_); // Node should no longer be broadcasting warnings since all have been broadcasted
 
-    //     //**********************//
-    //     // TEST 2: The plugin transitions to the SLOWING_DOWN_FOR_ERV state when the ego vehicle is in the same lane as the approaching
-    //     //         ERV. As a result, the ego vehicle will broadcast warning messages until a proper EmergencyVehicleAck message is received.
-    //     //**********************//
+        //**********************//
+        // TEST 2: The plugin transitions to the SLOWING_DOWN_FOR_ERV state when the ego vehicle is in the same lane as the approaching
+        //         ERV. As a result, the ego vehicle will broadcast warning messages until a proper EmergencyVehicleAck message is received.
+        //**********************//
 
-    //     // Reset the internal data members related to broadcasted warning messages to their default values
-    //     worker_node->num_warnings_broadcasted_ = 0;
-    //     worker_node->should_broadcast_warnings_ = false;
-    //     worker_node->has_broadcasted_warning_messages_ = false;
+        // Reset the internal data members related to broadcasted warning messages to their default values
+        worker_node->num_warnings_broadcasted_ = 0;
+        worker_node->should_broadcast_warnings_ = false;
+        worker_node->has_broadcasted_warning_messages_ = false;
 
-    //     // Set configuration parameters relevant to this unit test
-    //     worker_node->config_.passing_threshold = 10.0; // Seconds
-    //     worker_node->config_.warning_broadcast_frequency = 1; // Hz
-    //     worker_node->config_.max_warning_broadcasts = 3;
+        // Set configuration parameters relevant to this unit test
+        worker_node->config_.passing_threshold = 10.0; // Seconds
+        worker_node->config_.warning_broadcast_frequency = 1; // Hz
+        worker_node->config_.max_warning_broadcasts = 3;
 
-    //     auto resp2 = std::make_shared<carma_planning_msgs::srv::PlanManeuvers::Response>();
-    //     worker_node->plan_maneuvers_callback(header_srv, req, resp2);
+        auto resp2 = std::make_shared<carma_planning_msgs::srv::PlanManeuvers::Response>();
+        worker_node->plan_maneuvers_callback(header_srv, req, resp2);
 
-    //     ASSERT_EQ(worker_node->transition_table_.getState(), ApproachingEmergencyVehicleState::SLOWING_DOWN_FOR_ERV);
+        ASSERT_EQ(worker_node->transition_table_.getState(), ApproachingEmergencyVehicleState::SLOWING_DOWN_FOR_ERV);
 
-    //     // Spin executor for 1 second
-    //     end_time = std::chrono::system_clock::now() + std::chrono::seconds(1);
-    //     while(std::chrono::system_clock::now() < end_time){
-    //         executor.spin_once();
-    //     }
+        // Spin executor for 1 second
+        end_time = std::chrono::system_clock::now() + std::chrono::seconds(1);
+        while(std::chrono::system_clock::now() < end_time){
+            executor.spin_once();
+        }
 
-    //     // Verify that node has broadcasted 1 (of 3) warning messages
-    //     ASSERT_EQ(worker_node->num_warnings_broadcasted_, 1);
+        // Verify that node has broadcasted 1 (of 3) warning messages
+        ASSERT_EQ(worker_node->num_warnings_broadcasted_, 1);
 
-    //     // Set the internal data members of the plugin to match the incoming EmergencyVehicleAck message contents
-    //     worker_node->tracked_erv_.vehicle_id = "ERV";
-    //     worker_node->config_.vehicle_id = "HOST_VEHICLE";
+        // Set the internal data members of the plugin to match the incoming EmergencyVehicleAck message contents
+        worker_node->tracked_erv_.vehicle_id = "ERV";
+        worker_node->config_.vehicle_id = "HOST_VEHICLE";
 
-    //     // Create mock EmergencyVehicleAck message that would be sent by the ERV
-    //     carma_v2x_msgs::msg::EmergencyVehicleAck ack_msg;
-    //     ack_msg.m_header.sender_id = "ERV";
-    //     ack_msg.m_header.recipient_id = "HOST_VEHICLE";
+        // Create mock EmergencyVehicleAck message that would be sent by the ERV
+        carma_v2x_msgs::msg::EmergencyVehicleAck ack_msg;
+        ack_msg.m_header.sender_id = "ERV";
+        ack_msg.m_header.recipient_id = "HOST_VEHICLE";
 
-    //     std::unique_ptr<carma_v2x_msgs::msg::EmergencyVehicleAck> ack_msg_ptr = std::make_unique<carma_v2x_msgs::msg::EmergencyVehicleAck>(ack_msg);
-    //     worker_node->incomingEmergencyVehicleAckCallback(std::move(ack_msg_ptr));
+        std::unique_ptr<carma_v2x_msgs::msg::EmergencyVehicleAck> ack_msg_ptr = std::make_unique<carma_v2x_msgs::msg::EmergencyVehicleAck>(ack_msg);
+        worker_node->incomingEmergencyVehicleAckCallback(std::move(ack_msg_ptr));
 
-    //     ASSERT_EQ(worker_node->num_warnings_broadcasted_, 0);
-    //     ASSERT_FALSE(worker_node->should_broadcast_warnings_); // Node should no longer be broadcasting warnings since an EmergencyVehicleAck was received
-    //     ASSERT_TRUE(worker_node->has_broadcasted_warning_messages_);
-    // }
+        ASSERT_EQ(worker_node->num_warnings_broadcasted_, 0);
+        ASSERT_FALSE(worker_node->should_broadcast_warnings_); // Node should no longer be broadcasting warnings since an EmergencyVehicleAck was received
+        ASSERT_TRUE(worker_node->has_broadcasted_warning_messages_);
+    }
 
-    // TEST(Testapproaching_emergency_vehicle_plugin, testApproachingErvStatusMessage){
+    TEST(Testapproaching_emergency_vehicle_plugin, testApproachingErvStatusMessage){
 
-    //     // Create, configure, and activate worker_node (ApproachingEmergencyVehiclePlugin)
-    //     rclcpp::NodeOptions options;
-    //     auto worker_node = std::make_shared<approaching_emergency_vehicle_plugin::ApproachingEmergencyVehiclePlugin>(options);
+        // Create, configure, and activate worker_node (ApproachingEmergencyVehiclePlugin)
+        rclcpp::NodeOptions options;
+        auto worker_node = std::make_shared<approaching_emergency_vehicle_plugin::ApproachingEmergencyVehiclePlugin>(options);
 
-    //     worker_node->configure(); //Call configure state transition
-    //     worker_node->activate();  //Call activate state transition to get not read for runtime
+        worker_node->configure(); //Call configure state transition
+        worker_node->activate();  //Call activate state transition to get not read for runtime
 
-    //     // Explicitly set the "approaching_threshold" parameter for these unit tests
-    //     worker_node->config_.approaching_threshold = 20.0;
-    //     worker_node->config_.passing_threshold = 10.0;
+        // Explicitly set the "approaching_threshold" parameter for these unit tests
+        worker_node->config_.approaching_threshold = 20.0;
+        worker_node->config_.passing_threshold = 10.0;
 
-    //     // Generate status message after initial node activation (no ERV is being tracked) and verify the output
-    //     carma_msgs::msg::UIInstructions status_msg = worker_node->generateApproachingErvStatusMessage();
-    //     ASSERT_EQ(status_msg.type, carma_msgs::msg::UIInstructions::INFO);
-    //     ASSERT_EQ(status_msg.msg.substr(0,22), "HAS_APPROACHING_ERV:0,");
+        // Generate status message after initial node activation (no ERV is being tracked) and verify the output
+        carma_msgs::msg::UIInstructions status_msg = worker_node->generateApproachingErvStatusMessage();
+        ASSERT_EQ(status_msg.type, carma_msgs::msg::UIInstructions::INFO);
+        ASSERT_EQ(status_msg.msg.substr(0,22), "HAS_APPROACHING_ERV:0,");
 
-    //     // Generate status message when an approaching ERV is being tracked in state MOVING_OVER_FOR_APPROACHING_ERV (left lane change) and verify the output
-    //     worker_node->has_tracked_erv_ = true;
-    //     worker_node->tracked_erv_.lane_index = 0;
-    //     worker_node->ego_lane_index_ = 0;
-    //     worker_node->tracked_erv_.seconds_until_passing = 11.56342;
-    //     worker_node->transition_table_.event(ApproachingEmergencyVehicleEvent::APPROACHING_ERV_IN_PATH);
-    //     worker_node->has_planned_upcoming_lc_ = true;
-    //     worker_node->upcoming_lc_params_.is_right_lane_change = false;
+        // Generate status message when an approaching ERV is being tracked in state MOVING_OVER_FOR_APPROACHING_ERV (left lane change) and verify the output
+        worker_node->has_tracked_erv_ = true;
+        worker_node->tracked_erv_.lane_index = 0;
+        worker_node->ego_lane_index_ = 0;
+        worker_node->tracked_erv_.seconds_until_passing = 11.56342;
+        worker_node->transition_table_.event(ApproachingEmergencyVehicleEvent::APPROACHING_ERV_IN_PATH);
+        worker_node->has_planned_upcoming_lc_ = true;
+        worker_node->upcoming_lc_params_.is_right_lane_change = false;
 
-    //     status_msg = worker_node->generateApproachingErvStatusMessage();
-    //     ASSERT_EQ(status_msg.type, carma_msgs::msg::UIInstructions::INFO);
-    //     ASSERT_EQ(status_msg.msg, "HAS_APPROACHING_ERV:1,TIME_UNTIL_PASSING:11.6,EGO_VEHICLE_ACTION:Approaching ERV is in our lane. Attempting to change lanes to the left.");
+        status_msg = worker_node->generateApproachingErvStatusMessage();
+        ASSERT_EQ(status_msg.type, carma_msgs::msg::UIInstructions::INFO);
+        ASSERT_EQ(status_msg.msg, "HAS_APPROACHING_ERV:1,TIME_UNTIL_PASSING:11.6,EGO_VEHICLE_ACTION:Approaching ERV is in our lane. Attempting to change lanes to the left.");
 
-    //     // Generate status message when an ERV is being tracked with "time_until_passing" greater than config_.approaching_threshold
-    //     worker_node->tracked_erv_.seconds_until_passing = 25.0;
+        // Generate status message when an ERV is being tracked with "time_until_passing" greater than config_.approaching_threshold
+        worker_node->tracked_erv_.seconds_until_passing = 25.0;
 
-    //     status_msg = worker_node->generateApproachingErvStatusMessage();
-    //     ASSERT_EQ(status_msg.type, carma_msgs::msg::UIInstructions::INFO);
-    //     ASSERT_EQ(status_msg.msg.substr(0,22), "HAS_APPROACHING_ERV:0,");
+        status_msg = worker_node->generateApproachingErvStatusMessage();
+        ASSERT_EQ(status_msg.type, carma_msgs::msg::UIInstructions::INFO);
+        ASSERT_EQ(status_msg.msg.substr(0,22), "HAS_APPROACHING_ERV:0,");
 
-    //     // Generate status message when an approaching ERV is being tracked in state MOVING_OVER_FOR_APPROACHING_ERV (right lane change) and verify the output
-    //     worker_node->tracked_erv_.seconds_until_passing = 11.56342;
-    //     worker_node->tracked_erv_.lane_index = 1;
-    //     worker_node->ego_lane_index_ = 1;
-    //     worker_node->has_planned_upcoming_lc_ = true;
-    //     worker_node->upcoming_lc_params_.is_right_lane_change = true;
+        // Generate status message when an approaching ERV is being tracked in state MOVING_OVER_FOR_APPROACHING_ERV (right lane change) and verify the output
+        worker_node->tracked_erv_.seconds_until_passing = 11.56342;
+        worker_node->tracked_erv_.lane_index = 1;
+        worker_node->ego_lane_index_ = 1;
+        worker_node->has_planned_upcoming_lc_ = true;
+        worker_node->upcoming_lc_params_.is_right_lane_change = true;
 
-    //     status_msg = worker_node->generateApproachingErvStatusMessage();
-    //     ASSERT_EQ(status_msg.type, carma_msgs::msg::UIInstructions::INFO);
-    //     ASSERT_EQ(status_msg.msg, "HAS_APPROACHING_ERV:1,TIME_UNTIL_PASSING:11.6,EGO_VEHICLE_ACTION:Approaching ERV is in our lane. Attempting to change lanes to the right.");
+        status_msg = worker_node->generateApproachingErvStatusMessage();
+        ASSERT_EQ(status_msg.type, carma_msgs::msg::UIInstructions::INFO);
+        ASSERT_EQ(status_msg.msg, "HAS_APPROACHING_ERV:1,TIME_UNTIL_PASSING:11.6,EGO_VEHICLE_ACTION:Approaching ERV is in our lane. Attempting to change lanes to the right.");
 
-    //     // Generate status message when an approaching ERV is being tracked in state SLOWING_DOWN_FOR_ERV with ego vehicle travelling significantly above the target reduced speed, and verify the output
-    //     worker_node->transition_table_.event(ApproachingEmergencyVehicleEvent::ERV_PASSING_IN_PATH);
-    //     worker_node->tracked_erv_.seconds_until_passing = 9.578;
+        // Generate status message when an approaching ERV is being tracked in state SLOWING_DOWN_FOR_ERV with ego vehicle travelling significantly above the target reduced speed, and verify the output
+        worker_node->transition_table_.event(ApproachingEmergencyVehicleEvent::ERV_PASSING_IN_PATH);
+        worker_node->tracked_erv_.seconds_until_passing = 9.578;
 
-    //     carma_planning_msgs::msg::ManeuverPlan maneuver_plan;
-    //     carma_planning_msgs::msg::Maneuver maneuver;
-    //     maneuver.type = carma_planning_msgs::msg::Maneuver::LANE_FOLLOWING;
-    //     maneuver.lane_following_maneuver.end_speed = 6.7056; // (m/s) equal to 15 mph
-    //     maneuver_plan.maneuvers.push_back(maneuver);
-    //     worker_node->latest_maneuver_plan_ = maneuver_plan;
-    //     worker_node->tracked_erv_.lane_index = 0;
-    //     worker_node->ego_lane_index_ = 1;
+        carma_planning_msgs::msg::ManeuverPlan maneuver_plan;
+        carma_planning_msgs::msg::Maneuver maneuver;
+        maneuver.type = carma_planning_msgs::msg::Maneuver::LANE_FOLLOWING;
+        maneuver.lane_following_maneuver.end_speed = 6.7056; // (m/s) equal to 15 mph
+        maneuver_plan.maneuvers.push_back(maneuver);
+        worker_node->latest_maneuver_plan_ = maneuver_plan;
+        worker_node->tracked_erv_.lane_index = 0;
+        worker_node->ego_lane_index_ = 1;
 
-    //     worker_node->current_speed_ = 15.0; // (m/s), not within threshold (config_.reduced_speed_buffer) of first maneuver's target speed (end_speed)
+        worker_node->current_speed_ = 15.0; // (m/s), not within threshold (config_.reduced_speed_buffer) of first maneuver's target speed (end_speed)
 
-    //     status_msg = worker_node->generateApproachingErvStatusMessage();
-    //     ASSERT_EQ(status_msg.type, carma_msgs::msg::UIInstructions::INFO);
-    //     ASSERT_EQ(status_msg.msg, "HAS_APPROACHING_ERV:1,TIME_UNTIL_PASSING:9.6,EGO_VEHICLE_ACTION:Approaching ERV is in adjacent lane. Remaining in the current lane and slowing down to a reduced speed of 15 mph.");
+        status_msg = worker_node->generateApproachingErvStatusMessage();
+        ASSERT_EQ(status_msg.type, carma_msgs::msg::UIInstructions::INFO);
+        ASSERT_EQ(status_msg.msg, "HAS_APPROACHING_ERV:1,TIME_UNTIL_PASSING:9.6,EGO_VEHICLE_ACTION:Approaching ERV is in adjacent lane. Remaining in the current lane and slowing down to a reduced speed of 15 mph.");
 
-    //     // Generate status message when an approaching ERV is being tracked in state SLOWING_DOWN_FOR_ERV with ego vehicle travelling near the the target reduced speed, and verify the output
-    //     worker_node->current_speed_ = 6.8; // (m/s), within threshold (config_.reduced_speed_buffer) of first maneuver's target speed (end_speed)
+        // Generate status message when an approaching ERV is being tracked in state SLOWING_DOWN_FOR_ERV with ego vehicle travelling near the the target reduced speed, and verify the output
+        worker_node->current_speed_ = 6.8; // (m/s), within threshold (config_.reduced_speed_buffer) of first maneuver's target speed (end_speed)
 
-    //     status_msg = worker_node->generateApproachingErvStatusMessage();
-    //     ASSERT_EQ(status_msg.type, carma_msgs::msg::UIInstructions::INFO);
-    //     ASSERT_EQ(status_msg.msg, "HAS_APPROACHING_ERV:1,TIME_UNTIL_PASSING:9.6,EGO_VEHICLE_ACTION:Approaching ERV is in adjacent lane. Remaining in the current lane at a reduced speed of 15 mph.");
+        status_msg = worker_node->generateApproachingErvStatusMessage();
+        ASSERT_EQ(status_msg.type, carma_msgs::msg::UIInstructions::INFO);
+        ASSERT_EQ(status_msg.msg, "HAS_APPROACHING_ERV:1,TIME_UNTIL_PASSING:9.6,EGO_VEHICLE_ACTION:Approaching ERV is in adjacent lane. Remaining in the current lane at a reduced speed of 15 mph.");
 
-    //     // Generate a status message when an approaching ERV is in the same lane as the ego vehicle, but its passing in less than config_.passing_threshold and more than MAINTAIN_SPEED_THRESHOLD
-    //     worker_node->tracked_erv_.lane_index = 0;
-    //     worker_node->ego_lane_index_ = 0;
+        // Generate a status message when an approaching ERV is in the same lane as the ego vehicle, but its passing in less than config_.passing_threshold and more than MAINTAIN_SPEED_THRESHOLD
+        worker_node->tracked_erv_.lane_index = 0;
+        worker_node->ego_lane_index_ = 0;
 
-    //     status_msg = worker_node->generateApproachingErvStatusMessage();
-    //     ASSERT_EQ(status_msg.type, carma_msgs::msg::UIInstructions::INFO);
-    //     ASSERT_EQ(status_msg.msg, "HAS_APPROACHING_ERV:1,TIME_UNTIL_PASSING:9.6,EGO_VEHICLE_ACTION:Approaching ERV is in our lane and a lane change is not possible. Remaining in the current lane at a reduced speed of 15 mph.");
+        status_msg = worker_node->generateApproachingErvStatusMessage();
+        ASSERT_EQ(status_msg.type, carma_msgs::msg::UIInstructions::INFO);
+        ASSERT_EQ(status_msg.msg, "HAS_APPROACHING_ERV:1,TIME_UNTIL_PASSING:9.6,EGO_VEHICLE_ACTION:Approaching ERV is in our lane and a lane change is not possible. Remaining in the current lane at a reduced speed of 15 mph.");
 
-    //     // Generate a status message when an approaching ERV is in the same lane as the ego vehicle, but its passing in less than MAINTAIN_SPEED_THRESHOLD
-    //     worker_node->is_maintaining_non_reduced_speed_ = true;
-    //     worker_node->non_reduced_speed_to_maintain_ = 6.25856; // (m/s); equates to 14 mph
+        // Generate a status message when an approaching ERV is in the same lane as the ego vehicle, but its passing in less than MAINTAIN_SPEED_THRESHOLD
+        worker_node->is_maintaining_non_reduced_speed_ = true;
+        worker_node->non_reduced_speed_to_maintain_ = 6.25856; // (m/s); equates to 14 mph
 
-    //     status_msg = worker_node->generateApproachingErvStatusMessage();
-    //     ASSERT_EQ(status_msg.type, carma_msgs::msg::UIInstructions::INFO);
-    //     ASSERT_EQ(status_msg.msg, "HAS_APPROACHING_ERV:1,TIME_UNTIL_PASSING:9.6,EGO_VEHICLE_ACTION:Approaching ERV is in our lane and a lane change is not possible. Remaining in the current lane and maintaining a speed of 14 mph.");
+        status_msg = worker_node->generateApproachingErvStatusMessage();
+        ASSERT_EQ(status_msg.type, carma_msgs::msg::UIInstructions::INFO);
+        ASSERT_EQ(status_msg.msg, "HAS_APPROACHING_ERV:1,TIME_UNTIL_PASSING:9.6,EGO_VEHICLE_ACTION:Approaching ERV is in our lane and a lane change is not possible. Remaining in the current lane and maintaining a speed of 14 mph.");
 
-    //     // Generate status message when an approaching ERV is being tracked in state SLOWING_DOWN_FOR_ERV without a generated maneuver plan, and verify an exception is thrown
-    //     carma_planning_msgs::msg::ManeuverPlan empty_maneuver_plan;
-    //     worker_node->latest_maneuver_plan_ = empty_maneuver_plan;
+        // Generate status message when an approaching ERV is being tracked in state SLOWING_DOWN_FOR_ERV without a generated maneuver plan, and verify an exception is thrown
+        carma_planning_msgs::msg::ManeuverPlan empty_maneuver_plan;
+        worker_node->latest_maneuver_plan_ = empty_maneuver_plan;
 
-    //     EXPECT_THROW(worker_node->generateApproachingErvStatusMessage(), std::invalid_argument);
-    // }
+        EXPECT_THROW(worker_node->generateApproachingErvStatusMessage(), std::invalid_argument);
+    }
 
 } // namespace approaching_emergency_vehicle_plugin
 

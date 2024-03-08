@@ -22,6 +22,8 @@
 
 #include "mobilitypath_publisher/mobilitypath_publisher.hpp"
 
+// These tests has been temporarily disabled to support Continuous Improvement (CI) processes.
+// Related GitHub Issue: <https://github.com/usdot-fhwa-stol/carma-platform/issues/2335>
 /**
 TEST(Testmobilitypath_publisher, test1)
 {
@@ -38,7 +40,7 @@ TEST(Testmobilitypath_publisher, test1)
 
     plan.trajectory_points.push_back(p1);
     plan.trajectory_points.push_back(p2);
-    
+
     rclcpp::NodeOptions options;
     auto worker = std::make_shared<mobilitypath_publisher::MobilityPathPublication>(options);
 
@@ -95,4 +97,4 @@ int main(int argc, char ** argv)
     rclcpp::shutdown();
 
     return success;
-} 
+}

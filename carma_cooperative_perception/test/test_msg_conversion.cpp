@@ -54,6 +54,9 @@ TEST(ToTimeMsg, NulloptSeconds)
   EXPECT_DOUBLE_EQ(actual_msg.sec, expected_msg.sec);
   EXPECT_DOUBLE_EQ(actual_msg.nanosec, expected_msg.nanosec);
 }
+// These tests has been temporarily disabled to support Continuous Improvement (CI) processes.
+// Related GitHub Issue: <https://github.com/usdot-fhwa-stol/carma-platform/issues/2335>
+
 /**
 TEST(ToDetectionMsg, Simple)
 {
