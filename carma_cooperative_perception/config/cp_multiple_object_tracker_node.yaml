@@ -1,3 +1,3 @@
-execution_frequency_hz: 20.0
-track_promotion_threshold: 3
+execution_frequency_hz: 5.0
+track_promotion_threshold: 2
 track_removal_threshold: 0
