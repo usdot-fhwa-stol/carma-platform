@@ -35,13 +35,13 @@ namespace carma_cooperative_perception
 {
 struct DDateTime
 {
-  std::optional<units::time::year_t> year;
-  std::optional<Month> month;
-  std::optional<units::time::day_t> day;
-  std::optional<units::time::hour_t> hour;
-  std::optional<units::time::minute_t> minute;
-  std::optional<units::time::second_t> second;
-  std::optional<units::time::minute_t> time_zone_offset;
+  std::optional<units::time::year_t> year{std::nullopt};
+  std::optional<Month> month{std::nullopt};
+  std::optional<units::time::day_t> day{std::nullopt};
+  std::optional<units::time::hour_t> hour{std::nullopt};
+  std::optional<units::time::minute_t> minute{std::nullopt};
+  std::optional<units::time::second_t> second{std::nullopt};
+  std::optional<units::time::minute_t> time_zone_offset{std::nullopt};
 
   [[nodiscard]] static auto from_msg(const j2735_v2x_msgs::msg::DDateTime & msg) -> DDateTime;
 };
