@@ -58,8 +58,11 @@ namespace carma_cooperative_perception
 auto to_time_msg(const DDateTime & d_date_time) -> builtin_interfaces::msg::Time
 {
   double seconds;
-  const auto fractional_secs{
-    std::modf(remove_units(d_date_time.second.value_or(units::time::second_t{0.0})), &seconds)};
+  const auto fractional_secs{std::modf(
+    remove_units(units::time::second_t{d_date_time.hour.value_or(units::time::second_t{0.0})}) +
+      remove_units(units::time::second_t{d_date_time.minute.value_or(units::time::second_t{0.0})}) +
+      remove_units(units::time::second_t{d_date_time.second.value_or(units::time::second_t{0.0})}),
+    &seconds)};
 
   builtin_interfaces::msg::Time msg;
   msg.sec = static_cast<std::int32_t>(seconds);
