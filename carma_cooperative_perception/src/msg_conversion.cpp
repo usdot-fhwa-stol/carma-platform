@@ -25,6 +25,8 @@
 #include <j3224_v2x_msgs/msg/detected_object_data.hpp>
 #include <j3224_v2x_msgs/msg/measurement_time_offset.hpp>
 #include <j3224_v2x_msgs/msg/object_type.hpp>
+#include <j2735_v2x_msgs/msg/positional_accuracy.hpp>
+#include <j3224_v2x_msgs/msg/equipment_type.hpp>
 
 #include <algorithm>
 #include <cctype>
@@ -566,6 +568,13 @@ auto to_sdsm_msg(
 
     detected_object_list.detected_object_data.push_back(sdsm_detected_object);
   }
+
+  std::vector<uint8_t> id = {0x00, 0x00, 0x00, 0x01};
+  sdsm.source_id.id = id;
+  sdsm.equipment_type.equipment_type = j3224_v2x_msgs::msg::EquipmentType::OBU;
+  sdsm.ref_pos_xy_conf.semi_major = j2735_v2x_msgs::msg::PositionalAccuracy::ACCURACY_UNAVAILABLE;
+  sdsm.ref_pos_xy_conf.semi_minor = j2735_v2x_msgs::msg::PositionalAccuracy::ACCURACY_UNAVAILABLE;
+  sdsm.ref_pos_xy_conf.orientation = j2735_v2x_msgs::msg::PositionalAccuracy::ACCURACY_ORIENTATION_UNAVAILABLE;
   sdsm.objects = detected_object_list;
 
   return sdsm;
