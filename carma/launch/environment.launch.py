@@ -295,8 +295,8 @@ def generate_launch_description():
                     ("incoming_mobility_path", [ EnvironmentVariable('CARMA_MSG_NS', default_value=''), "/incoming_mobility_path" ] ),
                     ("incoming_psm", [ EnvironmentVariable('CARMA_MSG_NS', default_value=''), "/incoming_psm" ] ),
                     ("incoming_bsm", [ EnvironmentVariable('CARMA_MSG_NS', default_value=''), "/incoming_bsm" ] ),
-                    ("georeference", [ EnvironmentVariable('CARMA_LOCZ_NS', default_value=''), "/map_param_loader/georeference" ] ),
-                    ("external_objects", "fused_external_objects")
+                    ("georeference", [ EnvironmentVariable('CARMA_LOCZ_NS', default_value=''), "/map_param_loader/georeference" ] )
+                    # ("external_objects", "fused_external_objects")
                 ],
                 parameters=[
                     motion_computation_param_file, vehicle_config_param_file
@@ -453,7 +453,6 @@ def generate_launch_description():
                     ("input/external_objects", "external_objects"),
                 ],
                 parameters=[
-                    vehicle_config_param_file
                 ]
             ),
             ComposableNode(
@@ -499,8 +498,8 @@ def generate_launch_description():
                     {'--log-level' : GetLogLevel('cp_track_list_to_external_object_list_node', env_log_levels) },
                 ],
                 remappings=[
-                    ("input/track_list", "cooperative_perception_track_list"),
-                    ("output/external_object_list", "fused_external_objects"),
+                    ("input/track_list", "cooperative_perception_track_list")
+                    # ("output/external_object_list", "fused_external_objects"),
                 ],
                 parameters=[
                     vehicle_config_param_file
@@ -550,6 +549,6 @@ def generate_launch_description():
         carma_external_objects_container,
         lanelet2_map_loader_container,
         lanelet2_map_visualization_container,
-        carma_cooperative_perception_container,
+        # carma_cooperative_perception_container,
         subsystem_controller
     ])
