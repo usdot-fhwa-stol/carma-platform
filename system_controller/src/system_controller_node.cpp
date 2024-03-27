@@ -23,7 +23,7 @@ namespace system_controller
   using std_msec = std::chrono::milliseconds;
 
   SystemControllerNode::SystemControllerNode(const rclcpp::NodeOptions &options, bool auto_init)
-      : rclcpp::Node("system_controller", options), 
+      : rclcpp::Node("system_controller", options),
       lifecycle_mgr_(get_node_base_interface(), get_node_graph_interface(), get_node_logging_interface(), get_node_services_interface())
   {
 
@@ -81,8 +81,8 @@ namespace system_controller
   {
 
     if (startup_timer_)
-        startup_timer_->cancel(); // Cancel the timer to ensure we are not interrupted 
-    
+        startup_timer_->cancel(); // Cancel the timer to ensure we are not interrupted
+
     std::string reason = "Uncaught exception: " + std::string(e.what());
 
     RCLCPP_ERROR_STREAM(
@@ -98,7 +98,7 @@ namespace system_controller
     try
     {
       RCLCPP_INFO(get_logger(), "Attempting to configure system...");
-      
+
       if (startup_timer_)
         startup_timer_->cancel(); // Cancel the timer as this callback should only trigger once
 
@@ -143,7 +143,7 @@ namespace system_controller
 
     msg.source_node = get_node_base_interface()->get_fully_qualified_name(); // The the source name for the message
 
-    system_alert_pub_->publish(msg); 
+    system_alert_pub_->publish(msg);
   }
 
   void SystemControllerNode::on_system_alert(const carma_msgs::msg::SystemAlert::UniquePtr msg)
@@ -155,16 +155,13 @@ namespace system_controller
       RCLCPP_INFO_STREAM(
           get_logger(), "Received SystemAlert message of type: " << static_cast<int>(msg->type) << " with message: " << msg->description);
 
-      
       if (msg->type == carma_msgs::msg::SystemAlert::SHUTDOWN // If a SHUTDOWN signal was received
           || ( msg->type == carma_msgs::msg::SystemAlert::FATAL // OR if a required node notified FATAL
               && std::find(config_.required_subsystem_nodes.begin(), config_.required_subsystem_nodes.end(), msg->source_node)
                 != config_.required_subsystem_nodes.end() ) )
-      { 
-        // TODO might make more sense for external shutdown to be a service call and remove SHUTDOWN from system alert entirely
+      {
+       // TODO might make more sense for external shutdown to be a service call and remove SHUTDOWN from system alert entirely
        RCLCPP_INFO_STREAM( get_logger(), "Shutting down");
-
-       lifecycle_mgr_.shutdown(std_msec(config_.service_timeout_ms), std_msec(config_.call_timeout_ms), false);
 
        carma_msgs::msg::SystemAlert shutdown_msg; // Notify ros1 nodes of shutdown
 
@@ -175,6 +172,8 @@ namespace system_controller
 
        std::this_thread::sleep_for(std::chrono::milliseconds(5)); // Add a bit of sleep to allow message publication
 
+       lifecycle_mgr_.shutdown(std_msec(config_.service_timeout_ms), std_msec(config_.call_timeout_ms), false);
+
        rclcpp::shutdown(nullptr, "System Alert requested shutdown"); // Fully shutdown this node
       }
     }
@@ -183,7 +182,7 @@ namespace system_controller
       on_error(e);
     }
   }
-  
+
 } // namespace system_controller
 
 #include "rclcpp_components/register_node_macro.hpp"
