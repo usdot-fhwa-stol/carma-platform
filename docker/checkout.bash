@@ -47,7 +47,7 @@ if [[ "$BRANCH" = "develop" ]]; then
 else
       git clone --depth=1 https://github.com/usdot-fhwa-stol/carma-msgs.git --branch develop
       git clone --depth=1 https://github.com/usdot-fhwa-stol/carma-utils.git --branch develop
-      git clone --depth=1 https://github.com/usdot-fhwa-stol/carma-messenger.git --branch develop
+      git clone --depth=1 https://github.com/usdot-fhwa-stol/carma-messenger.git --branch fix-erv-unit-test
 fi
 
 # Get humble branch of message filters which supports template Node arguments (foxy version supports rclcpp::Node only)
