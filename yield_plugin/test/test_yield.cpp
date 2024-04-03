@@ -421,7 +421,7 @@ TEST(YieldPluginTest, get_collision)
   rwo_1.predictions = {ps_1,ps_2,ps_3};
   rwo_1.velocity.twist.linear.x = 10.0;
 
-  auto collision_result = plugin.get_collision(tp, rwo_1.predictions, 6);
+  auto collision_result = plugin.get_collision(tp, rwo_1.predictions, 6, 10);
 
   ASSERT_TRUE(collision_result == std::nullopt);
 
@@ -451,7 +451,7 @@ TEST(YieldPluginTest, get_collision)
 
   rwo_1.predictions = {ps_1,ps_2,ps_3};
 
-  collision_result = plugin.get_collision(tp, rwo_1.predictions, 6);
+  collision_result = plugin.get_collision(tp, rwo_1.predictions, 6, 10);
   ASSERT_TRUE(collision_result != std::nullopt);
   ASSERT_TRUE(collision_result.value().collision_time == rclcpp::Time(2, 0, collision_result.value().collision_time.get_clock_type()));
 
@@ -470,7 +470,7 @@ TEST(YieldPluginTest, get_collision)
 
   rwo_1.predictions = {ps_1,ps_2};
 
-  collision_result = plugin.get_collision(tp, rwo_1.predictions, 6);
+  collision_result = plugin.get_collision(tp, rwo_1.predictions, 6, 10);
   ASSERT_TRUE(collision_result == std::nullopt);
 
   // STATES ARE ON THE ROUTE, BUT TOO FAR AWAY
@@ -488,7 +488,7 @@ TEST(YieldPluginTest, get_collision)
 
   rwo_1.predictions = {ps_1,ps_2};
 
-  collision_result = plugin.get_collision(tp, rwo_1.predictions, 6);
+  collision_result = plugin.get_collision(tp, rwo_1.predictions, 6, 10);
   ASSERT_TRUE(collision_result == std::nullopt);
 
   // STATES ARE ON THE ROUTE, BUT ALREADY PASSED
@@ -510,7 +510,7 @@ TEST(YieldPluginTest, get_collision)
 
   rwo_1.predictions = {ps_1,ps_2};
 
-  collision_result = plugin.get_collision(tp, rwo_1.predictions, 6);
+  collision_result = plugin.get_collision(tp, rwo_1.predictions, 6, 10);
   ASSERT_TRUE(collision_result != std::nullopt);
 }
 
