@@ -30,4 +30,4 @@ enable_mobility_path_processing: false
 
 # Boolean: If true then ExternalObjects generated from sensor data will be processed.
 #          If other object sources are enabled, they will be synchronized but no fusion will occur (objects may be duplicated)
-enable_sensor_processing: true
+enable_sensor_processing: false
