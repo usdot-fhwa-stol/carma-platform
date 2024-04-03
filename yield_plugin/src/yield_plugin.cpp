@@ -930,31 +930,16 @@ namespace yield_plugin
     const double delta_v_max = fabs(goal_velocity - original_max_speed);
     RCLCPP_DEBUG_STREAM(nh_->get_logger(),"delta_v_max: " << delta_v_max << ", safety_gap: " << safety_gap);
 
-    // reference time, is the maximum time available to perform object avoidance (length of a trajectory)
-    const double max_allowed_trajectory_duration_in_s = get_trajectory_duration(original_tp);
-    // time required for comfortable deceleration
-    const double time_required_for_comfortable_decel_in_s = config_.acceleration_adjustment_factor * delta_v_max / config_.yield_max_deceleration_in_ms2;
+    const double time_required_for_comfortable_decel_in_s = config_.acceleration_adjustment_factor * 2 * goal_pos / delta_v_max;
+    const double min_time_required_for_comfortable_decel_in_s = delta_v_max / config_.yield_max_deceleration_in_ms2;
 
     // planning time for object avoidance
-    double planning_time_in_s = 0;
-
-    if (config_.min_obj_avoidance_plan_time_in_s < time_required_for_comfortable_decel_in_s
-      && time_required_for_comfortable_decel_in_s < max_allowed_trajectory_duration_in_s)
-    {
-      planning_time_in_s = time_required_for_comfortable_decel_in_s;
-    }
-    else if(time_required_for_comfortable_decel_in_s < config_.min_obj_avoidance_plan_time_in_s)
-    {
-      planning_time_in_s = config_.min_obj_avoidance_plan_time_in_s;
-    }
-    else
-    {
-      planning_time_in_s = max_allowed_trajectory_duration_in_s;
-    }
+    double planning_time_in_s = std::max({config_.min_obj_avoidance_plan_time_in_s, time_required_for_comfortable_decel_in_s, min_time_required_for_comfortable_decel_in_s});
+    RCLCPP_DEBUG_STREAM(nh_->get_logger(),"time_required_for_comfortable_decel_in_s: " << time_required_for_comfortable_decel_in_s << ", min_time_required_for_comfortable_decel_in_s: " << min_time_required_for_comfortable_decel_in_s);
 
     RCLCPP_DEBUG_STREAM(nh_->get_logger(),"Object avoidance planning time: " << planning_time_in_s);
 
-    return generate_JMT_trajectory(original_tp, initial_pos, goal_pos, initial_velocity, goal_velocity, planning_time_in_s, original_max_speed);;
+    return generate_JMT_trajectory(original_tp, initial_pos, goal_pos, initial_velocity, goal_velocity, planning_time_in_s, original_max_speed);
   }
 
 
