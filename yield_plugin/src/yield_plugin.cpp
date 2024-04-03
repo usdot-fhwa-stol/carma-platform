@@ -569,7 +569,7 @@ namespace yield_plugin
       throw std::invalid_argument("Object on ther road doesn't have enough predicted states! Please check motion_computation is correctly applying predicted states");
     }
     const double predict_step_duration = (rclcpp::Time(trajectory2.at(1).header.stamp) - rclcpp::Time(trajectory2.front().header.stamp)).seconds();
-    const double predict_total_duration = get_predicted_steps_duration(trajectory2);
+    const double predict_total_duration = get_trajectory_duration(trajectory2);
 
     if (predict_step_duration < 0.0)
     {
