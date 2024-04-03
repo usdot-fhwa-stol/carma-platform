@@ -65,7 +65,7 @@ namespace yield_plugin
     return fabs(get_trajectory_end_time(trajectory) - get_trajectory_start_time(trajectory));
   }
 
-  double get_predicted_steps_duration(const std::vector<carma_perception_msgs::msg::PredictedState>& trajectory)
+  double get_trajectory_duration(const std::vector<carma_perception_msgs::msg::PredictedState>& trajectory)
   {
     return (rclcpp::Time(trajectory.back().header.stamp) - rclcpp::Time(trajectory.front().header.stamp)).seconds();
   }
