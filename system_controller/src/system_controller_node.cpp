@@ -45,8 +45,17 @@ namespace system_controller
           system_alert_topic_, 100,
           std::bind(&SystemControllerNode::on_system_alert, this, std::placeholders::_1));
 
+
+      // NOTE: Currently, intra-process comms must be disabled for a publisher that is transient_local: https://github.com/ros2/rclcpp/issues/1753
+      rclcpp::PublisherOptions intra_proc_disabled; 
+      intra_proc_disabled.use_intra_process_comm = rclcpp::IntraProcessSetting::Disable;
+      
+      // Create a publisher that will send all previously published messages to late-joining subscribers ONLY If the subscriber is transient_local too
+      auto pub_qos_transient_local = rclcpp::QoS(rclcpp::KeepLast(5)); // A publisher with this QoS will store the last 5 messages that it has sent on the topic
+      pub_qos_transient_local.transient_local();
+
       system_alert_pub_ = create_publisher<carma_msgs::msg::SystemAlert>(
-        system_alert_topic_, 10);
+        system_alert_topic_, pub_qos_transient_local, intra_proc_disabled);
 
       config_.signal_configure_delay = this->declare_parameter<double>("signal_configure_delay", config_.signal_configure_delay);
       config_.service_timeout_ms = this->declare_parameter<int64_t>("service_timeout_ms", config_.service_timeout_ms);
