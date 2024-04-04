@@ -11,7 +11,7 @@ on_route_vehicle_collision_horizon_in_s: 10.0
 # Minimum speed for moving obstacle
 # Units: m/s
 # Value type: Desired
-min_obstacle_speed_in_ms: 0.5
+min_obstacle_speed_in_ms: -0.5
 # Minimum object avoidance planning time
 # Units: s
 # Value type: Desired
@@ -23,7 +23,7 @@ yield_max_deceleration_in_ms2: 3.0
 # Minimum safety gap with an Object/Obstacle
 # Units: meters
 # Value type: Desired
-minimum_safety_gap_in_meters: 20.0
+minimum_safety_gap_in_meters: 10.0
 # Maximum speed value to consider the ego vehicle stopped
 # Units: m/s
 # Value type: Desired
@@ -37,14 +37,18 @@ always_accept_mobility_request: false
 # Acceptable number of timesteps to use the latest known mobility request before switching to yield
 # Value type: Desired
 acceptable_passed_timesteps: 5
+# Number of consecutive times the vehicle detects that the obstacle is behind
+# to confirm the obstacle is actually behind
+# Value type: Desired #TODO ONLY ON LAVIDA
+consecutive_clearance_count_for_obstacles_threshold: 20
 # Intervehicle distance that is considered a collision
 # Unit: m
 # Value type: Desired
-intervehicle_collision_distance_in_m: 6.0
+intervehicle_collision_distance_in_m: 20.0
 # Radius to check for potential collision
 # Unit: m
 # Value type: Desired
-collision_check_radius_in_m: 150.0
+collision_check_radius_in_m: 30.0
 # Time gap to finish planning a yield earlier than collision time
 # Unit: s
 # Value type: Desired
