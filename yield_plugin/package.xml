@@ -41,6 +41,7 @@
   <depend>carma_perception_msgs</depend>
   <depend>carma_guidance_plugins</depend>
   <depend>tf2</depend>
+  <depend>basic_autonomy</depend>
   <test_depend>ament_lint_auto</test_depend>
   <test_depend>ament_cmake_gtest</test_depend>
 

@@ -40,7 +40,8 @@ struct InLaneCruisingPluginConfig
   bool enable_object_avoidance = true;    // Activate object avoidance logic
   bool publish_debug = false; // True if debug publishing will be enabled
   double buffer_ending_downtrack = 20.0;
-  
+  int tactical_plugin_service_call_timeout = 100;      // Tactical plugin service call request timeout in milliseconds
+
   friend std::ostream& operator<<(std::ostream& output, const InLaneCruisingPluginConfig& c)
   {
     output << "InLaneCruisingPluginConfig { " << std::endl
@@ -59,6 +60,7 @@ struct InLaneCruisingPluginConfig
            << "enable_object_avoidance: " << c.enable_object_avoidance << std::endl
            << "publish_debug: " << c.publish_debug << std::endl
            << "buffer_ending_downtrack: " << c.buffer_ending_downtrack << std::endl
+           << "tactical_plugin_service_call_timeout: " << c.tactical_plugin_service_call_timeout << std::endl
            << "}" << std::endl;
     return output;
   }

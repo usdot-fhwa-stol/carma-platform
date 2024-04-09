@@ -1,57 +1,33 @@
-/*
- * Copyright (C) 2019-2022 LEIDOS.
- *
- * Licensed under the Apache License, Version 2.0 (the "License"); you may not
- * use this file except in compliance with the License. You may obtain a copy of
- * the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
- * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
- * License for the specific language governing permissions and limitations under
- * the License.
- */
-#include "roadway_objects/roadway_objects_node.hpp"
+// Copyright 2019-2023 Leidos
+//
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+//
+//     http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
 
-namespace roadway_objects
+#include <rclcpp/rclcpp.hpp>
+#include <roadway_objects/roadway_objects_component.hpp>
+
+#include <memory>
+
+int main(int argc, char ** argv)
 {
-  namespace std_ph = std::placeholders;
+  rclcpp::init(argc, argv);
 
-  RoadwayObjectsNode::RoadwayObjectsNode(const rclcpp::NodeOptions &options)
-      : carma_ros2_utils::CarmaLifecycleNode(options)
-  {
-  }
+  auto node = std::make_shared<roadway_objects::RoadwayObjectsNode>(rclcpp::NodeOptions());
 
-  carma_ros2_utils::CallbackReturn RoadwayObjectsNode::handle_on_configure(const rclcpp_lifecycle::State &)
-  {
-    RCLCPP_INFO_STREAM(get_logger(), "RoadwayObjectsNode trying to configure");
+  rclcpp::executors::MultiThreadedExecutor executor;
+  executor.add_node(node->get_node_base_interface());
+  executor.spin();
 
-    wm_listener_ = std::make_shared<carma_wm::WMListener>(get_node_base_interface(), get_node_logging_interface(), 
-                    get_node_topics_interface(), get_node_parameters_interface());
-    
-    object_worker_ = std::make_shared<RoadwayObjectsWorker>(wm_listener_->getWorldModel(), std::bind(&RoadwayObjectsNode::publishObstacles, this, std_ph::_1), get_node_logging_interface());
-    
-    // Setup publishers
-    roadway_obs_pub_ = create_publisher<carma_perception_msgs::msg::RoadwayObstacleList>("roadway_objects", 10);
+  rclcpp::shutdown();
 
-    // Setup subscribers
-    external_objects_sub_ = create_subscription<carma_perception_msgs::msg::ExternalObjectList>("external_objects", 10,
-                                                              std::bind(&RoadwayObjectsWorker::externalObjectsCallback, object_worker_.get(), std_ph::_1));
-
-    // Return success if everthing initialized successfully
-    return CallbackReturn::SUCCESS;
-  }
-
-  void RoadwayObjectsNode::publishObstacles(const carma_perception_msgs::msg::RoadwayObstacleList& msg)
-  {
-    roadway_obs_pub_->publish(msg);
-  }
-
-} // roadway_objects
-
-#include "rclcpp_components/register_node_macro.hpp"
-
-// Register the component with class_loader
-RCLCPP_COMPONENTS_REGISTER_NODE(roadway_objects::RoadwayObjectsNode)
+  return 0;
+}

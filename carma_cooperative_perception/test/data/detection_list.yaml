@@ -1,0 +1,19 @@
+---
+message_type: carma_cooperative_perception_interfaces/msg/DetectionList
+message_fields:
+  detections:
+    - id: "1"
+      pose:
+        pose:
+          position:
+            x: 1.0
+    - id: "2"
+      pose:
+        pose:
+          position:
+            x: 10.0
+    - id: "3"
+      pose:
+        pose:
+          position:
+            x: 20.0

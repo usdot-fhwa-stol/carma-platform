@@ -53,6 +53,13 @@ def generate_launch_description():
         description = "Path to file contain vehicle configuration parameters"
     )
 
+    use_sim_time = LaunchConfiguration('use_sim_time')
+    declare_use_sim_time_arg = DeclareLaunchArgument(
+        name = 'use_sim_time',
+        default_value = "False",
+        description = "True if simulation mode is on"
+    )
+
     subsystem_controller_default_param_file = os.path.join(
         get_package_share_directory('subsystem_controllers'), 'config/guidance_controller_config.yaml')
 
@@ -61,7 +68,7 @@ def generate_launch_description():
 
     trajectory_executor_param_file = os.path.join(
         get_package_share_directory('trajectory_executor'), 'config/parameters.yaml')
-    
+
     route_param_file = os.path.join(
         get_package_share_directory('route'), 'config/parameters.yaml')
 
@@ -70,13 +77,13 @@ def generate_launch_description():
 
     guidance_param_file = os.path.join(
         get_package_share_directory('guidance'), 'config/parameters.yaml')
-    
+
     arbitrator_param_file_path = os.path.join(
         get_package_share_directory('arbitrator'), 'config/arbitrator_params.yaml')
 
     plan_delegator_param_file = os.path.join(
         get_package_share_directory('plan_delegator'), 'config/plan_delegator_params.yaml')
-        
+
     port_drayage_plugin_param_file = os.path.join(
         get_package_share_directory('port_drayage_plugin'), 'config/parameters.yaml')
 
@@ -92,7 +99,7 @@ def generate_launch_description():
     # Below nodes are separated to individual container such that the nodes with reentrant services are within their separate container.
     # When all nodes are within single container, it is prone to fail throwing runtime_error, and it is currently hypothesized to be
     # because of this issue: https://github.com/ros2/rclcpp/issues/1212, where fix in the rclcpp library, so not able to be integrated at this moment:
-    # https://github.com/ros2/rclcpp/pull/1241. This issue was first discovered in this carma issue: https://github.com/usdot-fhwa-stol/carma-platform/issues/1961  
+    # https://github.com/ros2/rclcpp/pull/1241. This issue was first discovered in this carma issue: https://github.com/usdot-fhwa-stol/carma-platform/issues/1961
 
     # Nodes
     carma_guidance_visualizer_container = ComposableNodeContainer(
@@ -106,7 +113,7 @@ def generate_launch_description():
                 plugin='mobilitypath_visualizer::MobilityPathVisualizer',
                 name='mobilitypath_visualizer_node',
                 extra_arguments=[
-                    {'use_intra_process_comms': True}, 
+                    {'use_intra_process_comms': True},
                     {'--log-level' : GetLogLevel('mobilitypath_visualizer', env_log_levels) }
                 ],
                 remappings = [
@@ -125,11 +132,12 @@ def generate_launch_description():
                 plugin='trajectory_visualizer::TrajectoryVisualizer',
                 name='trajectory_visualizer_node',
                 extra_arguments=[
-                    {'use_intra_process_comms': True}, 
+                    {'use_intra_process_comms': True},
                     {'--log-level' : GetLogLevel('trajectory_visualizer', env_log_levels) }
                 ],
                 parameters=[
-                    trajectory_visualizer_param_file
+                    trajectory_visualizer_param_file,
+                    vehicle_config_param_file
                 ]
             )
         ]
@@ -146,7 +154,7 @@ def generate_launch_description():
                 plugin='plan_delegator::PlanDelegator',
                 name='plan_delegator',
                 extra_arguments=[
-                    {'use_intra_process_comms': True}, 
+                    {'use_intra_process_comms': True},
                     {'--log-level' : GetLogLevel('plan_delegator', env_log_levels) }
                 ],
                 remappings = [
@@ -166,7 +174,7 @@ def generate_launch_description():
             )
         ]
     )
-    
+
     carma_trajectory_executor_and_route_container = ComposableNodeContainer(
         package='carma_ros2_utils',
         name='carma_trajectory_executor_and_route_container',
@@ -178,7 +186,7 @@ def generate_launch_description():
                 plugin='route::Route',
                 name='route_node',
                 extra_arguments=[
-                    {'use_intra_process_comms': True}, 
+                    {'use_intra_process_comms': True},
                     {'--log-level' : GetLogLevel('route', env_log_levels) }
                 ],
                 remappings = [
@@ -200,7 +208,7 @@ def generate_launch_description():
                 plugin='trajectory_executor::TrajectoryExecutor',
                 name='trajectory_executor_node',
                 extra_arguments=[
-                    {'use_intra_process_comms': True}, 
+                    {'use_intra_process_comms': True},
                     {'--log-level' : GetLogLevel('trajectory_executor', env_log_levels) }
                 ],
                 remappings = [
@@ -213,13 +221,13 @@ def generate_launch_description():
             )
         ]
     )
-    
+
     carma_arbitrator_container = ComposableNodeContainer(
         package='carma_ros2_utils',
         name='carma_arbitrator_container',
         executable='carma_component_container_mt',
         namespace=GetCurrentNamespace(),
-        composable_node_descriptions=[    
+        composable_node_descriptions=[
             ComposableNode(
                 package='arbitrator',
                 plugin='arbitrator::ArbitratorNode',
@@ -236,7 +244,7 @@ def generate_launch_description():
                     ("roadway_objects", [ EnvironmentVariable('CARMA_ENV_NS', default_value=''), "/roadway_objects" ] ),
                     ("incoming_spat", [ EnvironmentVariable('CARMA_MSG_NS', default_value=''), "/incoming_spat" ] )
                 ],
-                parameters=[ 
+                parameters=[
                     arbitrator_param_file_path,
                     vehicle_config_param_file
                 ]
@@ -254,7 +262,7 @@ def generate_launch_description():
                 plugin='guidance::GuidanceWorker',
                 name='guidance_node',
                 extra_arguments=[
-                    {'use_intra_process_comms': True}, 
+                    {'use_intra_process_comms': True},
                     {'--log-level' : GetLogLevel('route', env_log_levels) }
                 ],
                 remappings = [
@@ -263,12 +271,13 @@ def generate_launch_description():
                     ("enable_robotic", [ EnvironmentVariable('CARMA_INTR_NS', default_value=''), "/controller/enable_robotic" ] ),
                 ],
                 parameters=[
-                    guidance_param_file
+                    guidance_param_file,
+                    vehicle_config_param_file
                 ]
             )
         ]
     )
-    
+
     carma_port_drayage_plugin_container = ComposableNodeContainer(
         package='carma_ros2_utils',
         name='carma_port_drayage_plugin_container',
@@ -280,21 +289,22 @@ def generate_launch_description():
                 plugin='port_drayage_plugin::PortDrayagePlugin',
                 name='port_drayage_plugin_node',
                 extra_arguments=[
-                    {'use_intra_process_comms': True}, 
+                    {'use_intra_process_comms': True},
                     {'--log-level' : GetLogLevel('port_drayage_plugin', env_log_levels) }
                 ],
                 remappings = [
                     ("guidance_state", [ EnvironmentVariable('CARMA_GUIDE_NS', default_value=''), "/state" ] ),
                     ("georeference", [ EnvironmentVariable('CARMA_LOCZ_NS', default_value=''), "/map_param_loader/georeference" ] ),
                     ("current_pose", [ EnvironmentVariable('CARMA_LOCZ_NS', default_value=''), "/current_pose" ] ),
-                    ("incoming_mobility_operation", [ EnvironmentVariable('CARMA_MSG_NS', default_value=''), "/incoming_mobility_operation" ] ),  
-                    ("outgoing_mobility_operation", [ EnvironmentVariable('CARMA_MSG_NS', default_value=''), "/outgoing_mobility_operation" ] ),     
-                    ("ui_instructions", [ EnvironmentVariable('CARMA_UI_NS', default_value=''), "/ui_instructions" ] )       
+                    ("incoming_mobility_operation", [ EnvironmentVariable('CARMA_MSG_NS', default_value=''), "/incoming_mobility_operation" ] ),
+                    ("outgoing_mobility_operation", [ EnvironmentVariable('CARMA_MSG_NS', default_value=''), "/outgoing_mobility_operation" ] ),
+                    ("ui_instructions", [ EnvironmentVariable('CARMA_UI_NS', default_value=''), "/ui_instructions" ] )
                 ],
                 parameters=[
                     port_drayage_plugin_param_file,
-                    vehicle_characteristics_param_file
-                ]     
+                    vehicle_characteristics_param_file,
+                    vehicle_config_param_file
+                ]
             )
         ]
     )
@@ -310,7 +320,7 @@ def generate_launch_description():
                 plugin='twist_filter::TwistFilter',
                 name='twist_filter_node',
                 extra_arguments=[
-                    {'use_intra_process_comms': True}, 
+                    {'use_intra_process_comms': True},
                     {'--log-level' : GetLogLevel('twist_filter', env_log_levels) }
                 ],
                 remappings = [
@@ -328,7 +338,7 @@ def generate_launch_description():
                     {'lowpass_gain_linear_x':0.1},
                     {'lowpass_gain_angular_z':0.0},
                     {'lowpass_gain_steering_angle':0.1}
-                ]     
+                ]
             ),
             ComposableNode(
                 package='twist_gate',
@@ -347,7 +357,8 @@ def generate_launch_description():
                 ],
                 parameters = [
                     {'loop_rate':30.0},
-                    {'use_decision_maker':False}
+                    {'use_decision_maker':False},
+                    vehicle_config_param_file
                 ]
             )
         ]
@@ -362,7 +373,7 @@ def generate_launch_description():
                 launch_arguments={
                     'route_file_folder' : route_file_folder,
                     'vehicle_calibration_dir' : vehicle_calibration_dir,
-                    'vehicle_characteristics_param_file' : vehicle_characteristics_param_file, 
+                    'vehicle_characteristics_param_file' : vehicle_characteristics_param_file,
                     'vehicle_config_param_file' : vehicle_config_param_file,
                     'enable_guidance_plugin_validator' : enable_guidance_plugin_validator,
                     'strategic_plugins_to_validate' : strategic_plugins_to_validate,
@@ -373,22 +384,26 @@ def generate_launch_description():
             ),
         ]
     )
-      
+
     # subsystem_controller which orchestrates the lifecycle of this subsystem's components
     subsystem_controller = Node(
         package='subsystem_controllers',
         name='guidance_controller',
         executable='guidance_controller',
-        parameters=[ subsystem_controller_default_param_file, subsystem_controller_param_file ],
+        parameters=[
+            subsystem_controller_default_param_file,
+            subsystem_controller_param_file,
+            {"use_sim_time" : use_sim_time}],
         on_exit= Shutdown(), # Mark the subsystem controller as required
         arguments=['--ros-args', '--log-level', GetLogLevel('subsystem_controllers', env_log_levels)]
     )
 
-    return LaunchDescription([  
+    return LaunchDescription([
         declare_vehicle_config_param_file_arg,
-        declare_subsystem_controller_param_file_arg,  
+        declare_use_sim_time_arg,
+        declare_subsystem_controller_param_file_arg,
         carma_trajectory_executor_and_route_container,
-        carma_guidance_visualizer_container,    
+        carma_guidance_visualizer_container,
         carma_guidance_worker_container,
         carma_plan_delegator_container,
         carma_arbitrator_container,
@@ -396,4 +411,4 @@ def generate_launch_description():
         twist_filter_container,
         plugins_group,
         subsystem_controller
-    ]) 
+    ])

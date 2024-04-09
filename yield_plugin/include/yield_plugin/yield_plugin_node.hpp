@@ -25,7 +25,7 @@
 #include <carma_v2x_msgs/msg/mobility_response.hpp>
 #include <carma_v2x_msgs/msg/bsm.hpp>
 #include <functional>
-
+#include <carma_perception_msgs/msg/external_object_list.hpp>
 #include "yield_plugin.hpp"
 #include "yield_config.hpp"
 
@@ -68,14 +68,14 @@ private:
     std::string version_id_;
     
     // Publishers
-    carma_ros2_utils::PubPtr<carma_v2x_msgs::msg::MobilityResponse> mob_resp_pub_;
-    carma_ros2_utils::PubPtr<carma_planning_msgs::msg::LaneChangeStatus> lc_status_pub_;
+    rclcpp_lifecycle::LifecyclePublisher<carma_v2x_msgs::msg::MobilityResponse>::SharedPtr mob_resp_pub_;
+    rclcpp_lifecycle::LifecyclePublisher<carma_planning_msgs::msg::LaneChangeStatus>::SharedPtr lc_status_pub_;
 
     // Subscribers
-    carma_ros2_utils::SubPtr<carma_v2x_msgs::msg::MobilityRequest> mob_request_sub_;
-    carma_ros2_utils::SubPtr<carma_v2x_msgs::msg::BSM> bsm_sub_;
-    carma_ros2_utils::SubPtr<std_msgs::msg::String> georeference_sub_;
-   
+    rclcpp::Subscription<carma_v2x_msgs::msg::MobilityRequest>::SharedPtr mob_request_sub_;
+    rclcpp::Subscription<carma_v2x_msgs::msg::BSM>::SharedPtr bsm_sub_;
+    rclcpp::Subscription<carma_perception_msgs::msg::ExternalObjectList>::SharedPtr external_objects_sub_;
+    rclcpp::Subscription<std_msgs::msg::String>::SharedPtr georeference_sub_;
 };
 
 }  // namespace yield_plugin

@@ -45,8 +45,8 @@ static const std::string ILC_LOGGER = "inlanecruising_plugin";
 
 /**
  * \brief Class containing primary business logic for the In-Lane Cruising Plugin
- * 
- */ 
+ *
+ */
 class InLaneCruisingPlugin
 {
 public:
@@ -58,10 +58,10 @@ public:
    * \param debug_publisher Callback which will publish a debug message. The callback defaults to no-op.
    * \param plugin_name Retrieved from the plugin node
    * \param version_id Retrieved from the plugin node
-   */ 
-  InLaneCruisingPlugin(std::shared_ptr<carma_ros2_utils::CarmaLifecycleNode> nh, 
-                      carma_wm::WorldModelConstPtr wm, 
-                      const InLaneCruisingPluginConfig& config, 
+   */
+  InLaneCruisingPlugin(std::shared_ptr<carma_ros2_utils::CarmaLifecycleNode> nh,
+                      carma_wm::WorldModelConstPtr wm,
+                      const InLaneCruisingPluginConfig& config,
                       const DebugPublisher& debug_publisher=[](const auto& msg){},
                       const std::string& plugin_name = "inlanecruising_plugin",
                       const std::string& version_id = "v1.0");
@@ -71,27 +71,18 @@ public:
    * \param srv_header header
    * \param req The service request
    * \param resp The service response
-   * 
-   */ 
+   *
+   */
   void plan_trajectory_callback(
-    carma_planning_msgs::srv::PlanTrajectory::Request::SharedPtr req, 
+    carma_planning_msgs::srv::PlanTrajectory::Request::SharedPtr req,
     carma_planning_msgs::srv::PlanTrajectory::Response::SharedPtr resp);
 
   /**
    * \brief set the yield service
-   * 
+   *
    * \param yield_srv input yield service
    */
   void set_yield_client(carma_ros2_utils::ClientPtr<carma_planning_msgs::srv::PlanTrajectory> client);
-
-   /**
-   * \brief verify if the input yield trajectory plan is valid
-   * 
-   * \param yield_plan input yield trajectory plan
-   *
-   * \return true or false
-   */
-  bool validate_yield_plan(const carma_planning_msgs::msg::TrajectoryPlan& yield_plan) const;
 
   carma_planning_msgs::msg::VehicleState ending_state_before_buffer_; //state before applying extra points for curvature calculation that are removed later
 
@@ -105,7 +96,7 @@ private:
   DebugPublisher debug_publisher_;
   carma_debug_ros2_msgs::msg::TrajectoryCurvatureSpeeds debug_msg_;
   std::shared_ptr<carma_ros2_utils::CarmaLifecycleNode> nh_;
-  
+
   // Access members for unit test
   FRIEND_TEST(InLaneCruisingPluginTest, rostest1);
 };

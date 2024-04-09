@@ -33,7 +33,7 @@ TEST(StopAndDwellStrategicPluginTest, composeLaneFollowingManeuverMessage)
   sd_node->activate();
   StopAndDwellStrategicPluginConfig config;
   auto result =
-      sd_node->composeLaneFollowingManeuverMessage(1, 10.2, 20.4, 5, 10, rclcpp::Time(1.2*1e9), 1.0, { 1200, 1201 });
+      sd_node->composeLaneFollowingManeuverMessage(10.2, 20.4, 5, 10, rclcpp::Time(1.2*1e9), 1.0, { 1200, 1201 });
 
   ASSERT_EQ(carma_planning_msgs::msg::Maneuver::LANE_FOLLOWING, result.type);
   ASSERT_EQ(carma_planning_msgs::msg::ManeuverParameters::NO_NEGOTIATION, result.lane_following_maneuver.parameters.negotiation_type);
@@ -108,46 +108,79 @@ TEST(StopAndDwellStrategicPluginTest, findSpeedLimit)
 
 TEST(StopAndDwellStrategicPluginTest, maneuvercbtest)
 {
-  lanelet::Id id{1200};
-  // intersection id
-  lanelet::Id int_id{1};
-  lanelet::Point3d p1, p2, p3, p4, p5, p6;
-  lanelet::LineString3d ls1, ls2, ls3, ls4, ls5, ls6;
-  lanelet::Lanelet ll1, ll2, ll3, ll4;
+  auto pl2 = carma_wm::test::getPoint(0, 20, 0);
+  auto pr2 = carma_wm::test::getPoint(5, 20, 0);
 
-  p1 = lanelet::Point3d(++id, 0., 10., 0.);
-  p2 = lanelet::Point3d(++id, 10., 10., 0.);
-  p3 = lanelet::Point3d(++id, 10., 10., 0.);
-  p4 = lanelet::Point3d(++id, 60., 10., 0.);
-  p5 = lanelet::Point3d(++id, 60., 60., 0.);
-  p6 = lanelet::Point3d(++id, 60., 60., 0.);
-
-  ls1 = lanelet::LineString3d(++id, lanelet::Points3d{p1, p2});
-  ls2 = lanelet::LineString3d(++id, lanelet::Points3d{p2, p3});
-  ls3 = lanelet::LineString3d(++id, lanelet::Points3d{p3, p4});
-  ls4 = lanelet::LineString3d(++id, lanelet::Points3d{p4, p5});
-  ls5 = lanelet::LineString3d(++id, lanelet::Points3d{p5, p6});
-
-
-  ll1 = lanelet::Lanelet(++id, ls1, ls2);
-  std::cout << "ll1.id()  " << ll1.id() << std::endl;
-  ll2 = lanelet::Lanelet(++id, ls2, ls3);
-  std::cout << "ll2.id()  " << ll2.id() << std::endl;
-  ll3 = lanelet::Lanelet(++id, ls3, ls4);
-  std::cout << "ll3.id()  " << ll3.id() << std::endl;
-  ll4 = lanelet::Lanelet(++id, ls4, ls5);
+  lanelet::Id stop_line_id = lanelet::utils::getId();
+  lanelet::LineString3d virtual_stop_line(stop_line_id, {pl2, pr2});
+  // Creat passing control line for solid dashed line
+  std::shared_ptr<lanelet::BusStopRule> bus_stop_rule(new lanelet::BusStopRule(lanelet::BusStopRule::buildData(
+      lanelet::utils::getId(), { virtual_stop_line })));
 
   carma_wm::CARMAWorldModel cmw;
-  lanelet::LaneletMapPtr map;
   // Create a complete map
-  carma_wm::test::MapOptions mp(1,1);
+  carma_wm::test::MapOptions mp(5,40);
   auto cmw_ptr = carma_wm::test::getGuidanceTestMap(mp);
-  std::shared_ptr<lanelet::AllWayStop> row = lanelet::AllWayStop::make(int_id, lanelet::AttributeMap(), {{ll1, ls1}, {ll3, ls4}});
-
-  cmw_ptr->getMutableMap()->update(cmw_ptr->getMutableMap()->laneletLayer.get(1200), row);
+ 
+  cmw_ptr->getMutableMap()->update(cmw_ptr->getMutableMap()->laneletLayer.get(1200), bus_stop_rule);
 
   carma_wm::test::setRouteByIds({1200, 1201, 1202, 1203}, cmw_ptr);
 
+  auto sd_node = std::make_shared<stop_and_dwell_strategic_plugin::StopAndDwellStrategicPlugin>(rclcpp::NodeOptions());
+  sd_node->configure();
+  sd_node->activate();
+  sd_node->set_wm(cmw_ptr);
+
+  auto srv_header = std::make_shared<rmw_request_id_t>();
+  auto req = std::make_shared<carma_planning_msgs::srv::PlanManeuvers::Request>();
+  auto resp = std::make_shared<carma_planning_msgs::srv::PlanManeuvers::Response>();
+
+  // approaching bus stop
+  req->veh_x = 2.5;
+  req->veh_y = 0.0; 
+  req->veh_downtrack = req->veh_y;
+  req->veh_logitudinal_velocity = 1.0;
+  req->veh_lane_id = "1200";
+
+  sd_node->plan_maneuvers_callback(srv_header, req, resp);
+
+  ASSERT_EQ(2, resp->new_plan.maneuvers.size());
+
+  // approaching to stop
+  resp->new_plan.maneuvers = {};
+  req->veh_x = 2.5;
+  req->veh_y = 10.0; 
+  req->veh_downtrack = req->veh_y;
+  req->veh_logitudinal_velocity = 5.0;
+  req->veh_lane_id = "1200";
+
+  sd_node->plan_maneuvers_callback(srv_header, req, resp);
+
+  ASSERT_EQ(1, resp->new_plan.maneuvers.size());
+
+  // passed bus stop
+  resp->new_plan.maneuvers = {};
+  req->veh_x = 2.5;
+  req->veh_y = 20.4; 
+  req->veh_downtrack = req->veh_y;
+  req->veh_logitudinal_velocity = 0.2;
+  req->veh_lane_id = "1200";
+
+  sd_node->plan_maneuvers_callback(srv_header, req, resp);
+
+  ASSERT_EQ(0, resp->new_plan.maneuvers.size());
+
+  // stopped and waiting
+  resp->new_plan.maneuvers = {};
+  req->veh_x = 2.5;
+  req->veh_y = 19.0; 
+  req->veh_downtrack = req->veh_y;
+  req->veh_logitudinal_velocity = 0.0;
+  req->veh_lane_id = "1200";
+
+  sd_node->plan_maneuvers_callback(srv_header, req, resp);
+  ASSERT_EQ(1, resp->new_plan.maneuvers.size());
+ 
 }
 
 } // namespace stop_and_dwell_strategic_plugin

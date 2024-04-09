@@ -23,7 +23,11 @@
 #include "carma_msgs/msg/system_alert.hpp"
 #include "ros2_lifecycle_manager/ros2_lifecycle_manager.hpp"
 #include "rclcpp/rclcpp.hpp"
+#include <carma_driver_msgs/msg/driver_status.hpp>
 #include "subsystem_controllers/base_subsystem_controller/base_subsystem_controller.hpp"
+#include "drivers_controller_config.hpp"
+#include "driver_manager.hpp"
+#include <boost/algorithm/string.hpp>
 
 namespace subsystem_controllers
 {
@@ -43,8 +47,38 @@ namespace subsystem_controllers
      */
     explicit DriversControllerNode(const rclcpp::NodeOptions &options);
 
-    // TODO integrate driver_discovery/health_monitor behavior into this node
-    // https://github.com/usdot-fhwa-stol/carma-platform/issues/1500
+
+  private:
+
+    // DriverManager to handle all the driver specific discovery and reporting
+    std::shared_ptr<DriverManager> driver_manager_;
+
+    //! Config for user provided parameters
+    DriversControllerConfig config_;
+
+    //! ROS handles
+    carma_ros2_utils::SubPtr<carma_driver_msgs::msg::DriverStatus> driver_status_sub_;
+
+    // message/service callbacks
+    void driver_discovery_cb(const carma_driver_msgs::msg::DriverStatus::SharedPtr msg);
+
+    //! Timer callback function to check status of required ros1 drivers 
+    void timer_callback();
+
+    carma_ros2_utils::CallbackReturn handle_on_configure(const rclcpp_lifecycle::State &prev_state);
+    carma_ros2_utils::CallbackReturn handle_on_activate(const rclcpp_lifecycle::State &prev_state);
+
+    //! ROS parameters
+    std::vector<std::string> ros1_required_drivers_;
+    std::vector<std::string> ros1_camera_drivers_;
+
+    // record of startup timestamp
+    long start_up_timestamp_;
+
+    rclcpp::TimerBase::SharedPtr timer_;
+
+    // Previously published alert message
+    boost::optional<carma_msgs::msg::SystemAlert> prev_alert;
 
   };
 

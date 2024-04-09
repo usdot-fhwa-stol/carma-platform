@@ -27,7 +27,7 @@ namespace light_controlled_intersection_tactical_plugin
 {
     // TODO: The package requires additional unit tests to improve unit test coverage. These unit tests will be created
     //       in a follow-on story.
-    
+
     TEST(LCITacticalPluginTest, applyTrajectorySmoothingAlgorithm)
     {
         std::shared_ptr<carma_wm::CARMAWorldModel> wm = std::make_shared<carma_wm::CARMAWorldModel>();
@@ -35,8 +35,8 @@ namespace light_controlled_intersection_tactical_plugin
         wm->setMap(map);
         carma_wm::test::setSpeedLimit(15_mph, wm);
         carma_wm::test::setRouteByIds({ 1200, 1201, 1202, 1203 }, wm);
-        
-        
+
+
         rclcpp::NodeOptions options;
         auto lci_node = std::make_shared<light_controlled_intersection_tactical_plugin::LightControlledIntersectionTransitPluginNode>(options);
         Config config;
@@ -44,8 +44,8 @@ namespace light_controlled_intersection_tactical_plugin
 
         std::vector<PointSpeedPair> points_and_target_speeds;
 
-        auto lci_tactical = LightControlledIntersectionTacticalPlugin(wm, config, "", lci_node->get_node_logging_interface());
-    
+        auto lci_tactical = LightControlledIntersectionTacticalPlugin(wm, config, "", lci_node);
+
         TrajectoryParams tp;
         tp.v1_ = 1.0;
         tp.v2_ = 2.0;
@@ -74,7 +74,7 @@ namespace light_controlled_intersection_tactical_plugin
         points_and_target_speeds.push_back(pair);
 
         lci_tactical.applyTrajectorySmoothingAlgorithm(wm, points_and_target_speeds, 1, 4, 1, 1, tp);
-        
+
         EXPECT_NEAR(points_and_target_speeds.front().speed, 1.0, 0.001);
         EXPECT_NEAR(points_and_target_speeds.back().speed, 2.0, 0.001);
         EXPECT_NEAR(points_and_target_speeds.front().point.y(), 1.0, 0.001);
@@ -123,7 +123,7 @@ namespace light_controlled_intersection_tactical_plugin
         EXPECT_NEAR(points_and_target_speeds.back().point.y(), 5.0, 0.001);
 
     }
-    
+
     TEST(LCITacticalPluginTest, applyOptimizedTargetSpeedProfile)
     {
         std::shared_ptr<carma_wm::CARMAWorldModel> wm = std::make_shared<carma_wm::CARMAWorldModel>();
@@ -131,8 +131,8 @@ namespace light_controlled_intersection_tactical_plugin
         wm->setMap(map);
         carma_wm::test::setSpeedLimit(15_mph, wm);
         carma_wm::test::setRouteByIds({ 1200, 1201, 1202, 1203 }, wm);
-        
-        
+
+
         rclcpp::NodeOptions options;
         auto lci_node = std::make_shared<light_controlled_intersection_tactical_plugin::LightControlledIntersectionTransitPluginNode>(options);
         Config config;
@@ -140,8 +140,8 @@ namespace light_controlled_intersection_tactical_plugin
 
         std::vector<PointSpeedPair> points_and_target_speeds;
 
-        auto lci_tactical = LightControlledIntersectionTacticalPlugin(wm, config, "", lci_node->get_node_logging_interface());
-        
+        auto lci_tactical = LightControlledIntersectionTacticalPlugin(wm, config, "", lci_node);
+
         carma_planning_msgs::msg::Maneuver maneuver_msg;
         maneuver_msg.type = carma_planning_msgs::msg::Maneuver::LANE_FOLLOWING;
         maneuver_msg.lane_following_maneuver.parameters.negotiation_type =
@@ -152,7 +152,7 @@ namespace light_controlled_intersection_tactical_plugin
         maneuver_msg.lane_following_maneuver.start_speed = 1;
         maneuver_msg.lane_following_maneuver.end_dist = 4;
         maneuver_msg.lane_following_maneuver.end_speed = 1;
-        
+
         TrajectoryParams tsp;
         tsp.v1_ = 1.0;
         tsp.v2_ = 2.0;
@@ -193,7 +193,7 @@ namespace light_controlled_intersection_tactical_plugin
         points_and_target_speeds.push_back(pair);
 
         EXPECT_THROW(lci_tactical.applyOptimizedTargetSpeedProfile(maneuver_msg, maneuver_msg.lane_following_maneuver.start_speed, points_and_target_speeds), std::invalid_argument);
-        
+
         maneuver_msg.lane_following_maneuver.parameters.float_valued_meta_data.push_back(tsp.x3_);
 
         lci_tactical.applyOptimizedTargetSpeedProfile(maneuver_msg, maneuver_msg.lane_following_maneuver.start_speed, points_and_target_speeds);
@@ -204,7 +204,7 @@ namespace light_controlled_intersection_tactical_plugin
         EXPECT_NEAR(points_and_target_speeds.back().point.y(), 5.0, 0.001);
 
     }
-      
+
     TEST(LCITacticalPluginTest, createGeometryProfile)
     {
         std::shared_ptr<carma_wm::CARMAWorldModel> wm = std::make_shared<carma_wm::CARMAWorldModel>();
@@ -212,15 +212,15 @@ namespace light_controlled_intersection_tactical_plugin
         wm->setMap(map);
         carma_wm::test::setSpeedLimit(15_mph, wm);
         carma_wm::test::setRouteByIds({ 1200, 1201, 1202, 1203 }, wm);
-        
-        
+
+
         rclcpp::NodeOptions options;
         auto lci_node = std::make_shared<light_controlled_intersection_tactical_plugin::LightControlledIntersectionTransitPluginNode>(options);
         Config config;
         config.minimum_speed = 1;
 
-        auto lci_tactical = LightControlledIntersectionTacticalPlugin(wm, config, "", lci_node->get_node_logging_interface());
-        
+        auto lci_tactical = LightControlledIntersectionTacticalPlugin(wm, config, "", lci_node);
+
         carma_planning_msgs::msg::Maneuver maneuver_msg;
         maneuver_msg.type = carma_planning_msgs::msg::Maneuver::LANE_FOLLOWING;
         maneuver_msg.lane_following_maneuver.parameters.negotiation_type =
@@ -231,7 +231,7 @@ namespace light_controlled_intersection_tactical_plugin
         maneuver_msg.lane_following_maneuver.start_speed = 1;
         maneuver_msg.lane_following_maneuver.end_dist = 4;
         maneuver_msg.lane_following_maneuver.end_speed = 2;
-        
+
         TrajectoryParams tsp;
         tsp.v1_ = 1.0;
         tsp.v2_ = 2.0;
@@ -277,9 +277,9 @@ namespace light_controlled_intersection_tactical_plugin
 
 
         EXPECT_EQ(lci_tactical.createGeometryProfile({maneuver_msg}, 1, wm, ending_state, state, wpg_general_config, wpg_detail_config).size(), 7);
-        
+
         auto points_and_target_speeds = lci_tactical.createGeometryProfile({maneuver_msg}, 1, wm, ending_state, state, wpg_general_config, wpg_detail_config);
-        
+
         EXPECT_NEAR(points_and_target_speeds.front().speed, 2.0, 0.001);
         EXPECT_NEAR(points_and_target_speeds.back().speed, 2.0, 0.001);
         EXPECT_NEAR(points_and_target_speeds.front().point.y(), 0.0, 0.001);
@@ -293,16 +293,16 @@ namespace light_controlled_intersection_tactical_plugin
         wm->setMap(map);
         carma_wm::test::setSpeedLimit(15_mph, wm);
         carma_wm::test::setRouteByIds({ 1200, 1201, 1202, 1203 }, wm);
-        
-        
+
+
         rclcpp::NodeOptions options;
         auto lci_node = std::make_shared<light_controlled_intersection_tactical_plugin::LightControlledIntersectionTransitPluginNode>(options);
         Config config;
         config.minimum_speed = 1;
         config.default_downsample_ratio = 1;
 
-        auto lci_tactical = LightControlledIntersectionTacticalPlugin(wm, config, "", lci_node->get_node_logging_interface());
-        
+        auto lci_tactical = LightControlledIntersectionTacticalPlugin(wm, config, "", lci_node);
+
         carma_planning_msgs::msg::Maneuver maneuver_msg;
         maneuver_msg.type = carma_planning_msgs::msg::Maneuver::LANE_FOLLOWING;
         maneuver_msg.lane_following_maneuver.parameters.negotiation_type =
@@ -313,7 +313,7 @@ namespace light_controlled_intersection_tactical_plugin
         maneuver_msg.lane_following_maneuver.start_speed = 1;
         maneuver_msg.lane_following_maneuver.end_dist = 11.0;
         maneuver_msg.lane_following_maneuver.end_speed = 2;
-        
+
         TrajectoryParams tsp;
         tsp.v1_ = 1.0;
         tsp.v2_ = 2.0;
@@ -347,20 +347,20 @@ namespace light_controlled_intersection_tactical_plugin
 
         auto req = std::make_shared<carma_planning_msgs::srv::PlanTrajectory::Request>();
         auto resp = std::make_shared<carma_planning_msgs::srv::PlanTrajectory::Response>();
-        
+
         req->maneuver_plan.maneuvers.push_back(maneuver_msg);
         req->maneuver_index_to_plan = 0;
         req->vehicle_state = state;
 
         lci_tactical.planTrajectoryCB(req, resp);
-        
+
         EXPECT_NEAR(rclcpp::Time(resp->trajectory_plan.trajectory_points.front().target_time).seconds(), 0.0, 0.001);
         EXPECT_NEAR(rclcpp::Time(resp->trajectory_plan.trajectory_points.back().target_time).seconds(), 9.23, 0.1);
         EXPECT_NEAR(resp->trajectory_plan.trajectory_points.front().y, 0.1, 0.001);
 
     }
 
-    
+
 } // namespace light_controlled_intersection_tactical_plugin
 
 
@@ -377,4 +377,4 @@ int main(int argc, char ** argv)
     rclcpp::shutdown();
 
     return success;
-} 
+}

@@ -82,20 +82,19 @@ namespace light_controlled_intersection_tactical_plugin
 
   /**
    * \brief  Class containing primary business logic for the Light Controlled Intersection Tactical Plugin
-   * 
+   *
    */
   class LightControlledIntersectionTacticalPlugin
   {
 
-  private:    
+  private:
     // World Model object
     carma_wm::WorldModelConstPtr wm_;
 
     // Config for this object
     Config config_;
 
-    // Logger for this object
-    rclcpp::node_interfaces::NodeLoggingInterface::SharedPtr logger_;
+    std::shared_ptr<carma_ros2_utils::CarmaLifecycleNode> nh_;
 
     // CARMA Streets Variables
     // timestamp for msg received from carma streets
@@ -115,6 +114,7 @@ namespace light_controlled_intersection_tactical_plugin
     boost::optional<TSCase> last_case_;
     boost::optional<bool> is_last_case_successful_;
     carma_planning_msgs::msg::TrajectoryPlan last_trajectory_;
+    carma_ros2_utils::ClientPtr<carma_planning_msgs::srv::PlanTrajectory> yield_client_;
 
     carma_planning_msgs::msg::VehicleState ending_state_before_buffer_; //state before applying extra points for curvature calculation that are removed later
 
@@ -133,7 +133,7 @@ namespace light_controlled_intersection_tactical_plugin
     std::string light_controlled_intersection_strategy_ = "Carma/signalized_intersection"; // Strategy carma-streets is sending. Could be more verbose but needs to be changed on both ends
 
     /**
-     * \brief Creates a speed profile according to case one or two of the light controlled intersection, where the vehicle accelerates (then cruises if needed) and decelerates into the intersection. 
+     * \brief Creates a speed profile according to case one or two of the light controlled intersection, where the vehicle accelerates (then cruises if needed) and decelerates into the intersection.
      * \param wm world_model pointer
      * \param points_and_target_speeds of centerline points paired with speed limits whose speeds are to be modified:
      * \param start_dist starting downtrack of the maneuver to be planned (excluding buffer points) in m
@@ -144,7 +144,7 @@ namespace light_controlled_intersection_tactical_plugin
      * NOTE: Cruising speed profile is applied (case 1) if speed before deceleration is higher than speed limit. Otherwise Case 2.
      * NOTE: when applying the speed profile, the function ignores buffer points beyond start_dist and end_dist. Internally uses: config_.back_distance and speed_limit_
      */
-    void applyTrajectorySmoothingAlgorithm(const carma_wm::WorldModelConstPtr& wm, std::vector<PointSpeedPair>& points_and_target_speeds, double start_dist, double remaining_dist, 
+    void applyTrajectorySmoothingAlgorithm(const carma_wm::WorldModelConstPtr& wm, std::vector<PointSpeedPair>& points_and_target_speeds, double start_dist, double remaining_dist,
                                             double starting_speed, double departure_speed, TrajectoryParams tsp);
 
     /**
@@ -153,8 +153,8 @@ namespace light_controlled_intersection_tactical_plugin
      * \param maneuver Maneuver associated that has starting downtrack and desired entry time
      * \param starting_speed Starting speed of the vehicle
      * \param points The set of points with raw speed limits whose speed profile to be changed.
-     *               These points must be in the same lane as the vehicle and must extend in front of it though it is fine if they also extend behind it. 
-     *              
+     *               These points must be in the same lane as the vehicle and must extend in front of it though it is fine if they also extend behind it.
+     *
      */
     void applyOptimizedTargetSpeedProfile(const carma_planning_msgs::msg::Maneuver& maneuver, const double starting_speed, std::vector<PointSpeedPair>& points_and_target_speeds);
 
@@ -162,7 +162,7 @@ namespace light_controlled_intersection_tactical_plugin
      * \brief Creates geometry profile to return a point speed pair struct for INTERSECTION_TRANSIT maneuver types (by converting it to LANE_FOLLOW)
      * \param maneuvers The list of maneuvers to convert to geometry points and calculate associated raw speed limits
      *  \param max_starting_downtrack The maximum downtrack that is allowed for the first maneuver. This should be set to the vehicle position or earlier.
-     *                               If the first maneuver exceeds this then it's downtrack will be shifted to this value. 
+     *                               If the first maneuver exceeds this then it's downtrack will be shifted to this value.
      * \param wm Pointer to intialized world model for semantic map access
      * \param ending_state_before_buffer reference to Vehicle state, which is state before applying extra points for curvature calculation that are removed later
      * \param state The vehicle state at the time the function is called
@@ -197,22 +197,29 @@ namespace light_controlled_intersection_tactical_plugin
     /*!
     * \brief LightControlledIntersectionTacticalPlugin constructor
     */
-    LightControlledIntersectionTacticalPlugin(carma_wm::WorldModelConstPtr wm, const Config& config, const std::string& plugin_name, 
-        rclcpp::node_interfaces::NodeLoggingInterface::SharedPtr logger);
+    LightControlledIntersectionTacticalPlugin(carma_wm::WorldModelConstPtr wm, const Config& config, const std::string& plugin_name,
+        std::shared_ptr<carma_ros2_utils::CarmaLifecycleNode> nh);
 
     /**
      * \brief Function to process the light controlled intersection tactical plugin service call for trajectory planning
      * \param req The service request
      * \param resp The service response
-     */ 
-    void planTrajectoryCB( 
-      carma_planning_msgs::srv::PlanTrajectory::Request::SharedPtr req, 
+     */
+    void planTrajectoryCB(
+      carma_planning_msgs::srv::PlanTrajectory::Request::SharedPtr req,
       carma_planning_msgs::srv::PlanTrajectory::Response::SharedPtr resp);
+
+    /**
+     * \brief set the yield service
+     *
+     * \param yield_srv input yield service
+     */
+    void set_yield_client(carma_ros2_utils::ClientPtr<carma_planning_msgs::srv::PlanTrajectory> client);
 
     /**
      * \brief Setter function to set a new config for this object
      * \param config The new config to be used by this object
-     */ 
+     */
     void setConfig(const Config& config);
   };
 

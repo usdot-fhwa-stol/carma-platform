@@ -104,11 +104,6 @@
     <!--Platooning Control IHP Plugin-->
     <include file="$(find platoon_control_ihp)/launch/platoon_control_ihp.launch" />
 
-    <!-- Intersection Transit Maneuvering Plugin-->
-    <group>
-      <include file = "$(find intersection_transit_maneuvering)/launch/intersection_transit_maneuvering.launch"/>
-    </group>
-
   </group>
   
   <!-- Guidance Plugin Validator -->

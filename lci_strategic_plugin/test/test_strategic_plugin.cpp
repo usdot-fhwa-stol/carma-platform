@@ -64,18 +64,18 @@ TEST_F(LCIStrategicTestFixture, planManeuverCb)
   req->veh_downtrack = req->veh_y;
   req->veh_logitudinal_velocity = 11.176;
   req->veh_lane_id = "1200";
-  
+
   lcip->plan_maneuvers_callback(nullptr,req, resp);
 
   ASSERT_TRUE(resp->new_plan.maneuvers.empty());
 
   RCLCPP_WARN_STREAM(rclcpp::get_logger("lci_strategic_plugin"), ">>>>>>>>>>>>>>>>>>>>>>>>>>>In range test: GREEN");
-  
+
   req = std::make_shared<carma_planning_msgs::srv::PlanManeuvers::Request>();
   resp = std::make_shared<carma_planning_msgs::srv::PlanManeuvers::Response>();
   RCLCPP_WARN_STREAM(rclcpp::get_logger("lci_strategic_plugin"), ">>>>>>>>>>>>>>>>>>>>>>>>>>>In range test: GREEN");
   req->header.stamp = rclcpp::Time(1e9 * 0);
-  
+
   req->veh_x = 1.85;
   req->veh_y = 130; // In approach range
   req->veh_downtrack = req->veh_y;
@@ -83,7 +83,7 @@ TEST_F(LCIStrategicTestFixture, planManeuverCb)
   req->veh_lane_id = "1200";
 
   lcip->plan_maneuvers_callback(nullptr,req, resp);
-  
+
   ASSERT_EQ(2, resp->new_plan.maneuvers.size());
   ASSERT_EQ(carma_planning_msgs::msg::Maneuver::LANE_FOLLOWING, resp->new_plan.maneuvers[0].type);
   ASSERT_EQ(130.0, resp->new_plan.maneuvers[0].lane_following_maneuver.start_dist );
@@ -96,7 +96,7 @@ TEST_F(LCIStrategicTestFixture, planManeuverCb)
   EXPECT_NEAR(-0.6823, resp->new_plan.maneuvers[0].lane_following_maneuver.parameters.float_valued_meta_data[0], 0.01);
   EXPECT_NEAR(2.99, resp->new_plan.maneuvers[0].lane_following_maneuver.parameters.float_valued_meta_data[1], 0.01);
   EXPECT_NEAR(215.00, resp->new_plan.maneuvers[0].lane_following_maneuver.parameters.float_valued_meta_data[2], 0.1);
-    
+
   EXPECT_NEAR(0.68, resp->new_plan.maneuvers[0].lane_following_maneuver.parameters.float_valued_meta_data[3], 0.01);
   EXPECT_NEAR(11.17, resp->new_plan.maneuvers[0].lane_following_maneuver.parameters.float_valued_meta_data[4], 0.01);
   EXPECT_NEAR(300.0, resp->new_plan.maneuvers[0].lane_following_maneuver.parameters.float_valued_meta_data[5], 0.01);
@@ -151,7 +151,7 @@ TEST_F(LCIStrategicTestFixture, planManeuverCb)
   EXPECT_TRUE(resp->new_plan.maneuvers[0].stop_and_wait_maneuver.starting_lane_id.compare("1201") == 0);
   EXPECT_TRUE(resp->new_plan.maneuvers[0].stop_and_wait_maneuver.ending_lane_id.compare("1201") == 0);
 
-  
+
   RCLCPP_WARN_STREAM(rclcpp::get_logger("lci_strategic_plugin"), ">>>>>>>>>>>>>>>>>>>>>>>>>>>>>>Departing test ");
     req = std::make_shared<carma_planning_msgs::srv::PlanManeuvers::Request>();
   resp = std::make_shared<carma_planning_msgs::srv::PlanManeuvers::Response>();
@@ -235,11 +235,46 @@ TEST_F(LCIStrategicTestFixture, planManeuverCb)
   EXPECT_NEAR(req->veh_logitudinal_velocity, resp->new_plan.maneuvers[0].stop_and_wait_maneuver.start_speed, 0.02);
   EXPECT_NEAR(15.1, rclcpp::Time(resp->new_plan.maneuvers[0].stop_and_wait_maneuver.end_time).seconds(), 0.001);
   EXPECT_NEAR(300, resp->new_plan.maneuvers[0].stop_and_wait_maneuver.end_dist, 0.02);
-  
+
+}
+
+TEST_F(LCIStrategicTestFixture, get_eet_or_tbd)
+{
+  const double EPSILON = 0.01;
+
+  LCIStrategicPluginConfig config;
+      auto lcip = std::make_shared<lci_strategic_plugin::LCIStrategicPlugin>(rclcpp::NodeOptions());
+
+  lcip->wm_ = cmw_;
+  lcip->config_ = config;
+
+  // Light will be located on lanelet 1200 (300m) and control lanelet 1202, 1203
+  lanelet::Id traffic_light_id = lanelet::utils::getId();
+  carma_wm::test::addTrafficLight(cmw_, traffic_light_id, {1200}, { 1203 });
+
+  auto signal = cmw_->getMutableMap()->laneletLayer.get(1200).regulatoryElementsAs<lanelet::CarmaTrafficSignal>().front();
+
+  // Handle dynamic signal states where signal extrapolation is not used
+  // overwrite signal states to not be fixed_cycle
+  signal->fixed_cycle_duration = boost::posix_time::seconds(0);
+  signal->recorded_start_time_stamps = {};
+  signal->recorded_start_time_stamps.push_back(lanelet::time::timeFromSec(0));
+  signal->recorded_time_stamps = {};
+  signal->recorded_time_stamps.push_back(std::make_pair<boost::posix_time::ptime, lanelet::CarmaTrafficSignalState>(lanelet::time::timeFromSec(15), lanelet::CarmaTrafficSignalState::PROTECTED_MOVEMENT_ALLOWED));
+  // when eet is past the available signals of the traffic_light (16sec is past available signal at 15)
+  auto time = lcip->get_eet_or_tbd(rclcpp::Time(1e9 * 16), signal);
+
+  EXPECT_EQ(time, rclcpp::Time(1e9 * 16));
+
+  time = lcip->get_eet_or_tbd(rclcpp::Time(1e9 * 14), signal);
+
+  EXPECT_NEAR(time.seconds(), rclcpp::Time(1e9 * 15).seconds(), 0.01);
 }
 
 TEST_F(LCIStrategicTestFixture, get_nearest_green_entry_time)
 {
+  const double EPSILON = 0.01;
+
   LCIStrategicPluginConfig config;
       auto lcip = std::make_shared<lci_strategic_plugin::LCIStrategicPlugin>(rclcpp::NodeOptions());
 
@@ -252,6 +287,8 @@ TEST_F(LCIStrategicTestFixture, get_nearest_green_entry_time)
 
   auto signal = cmw_->getMutableMap()->laneletLayer.get(1200).regulatoryElementsAs<lanelet::CarmaTrafficSignal>().front();
   auto time = lcip->get_nearest_green_entry_time(rclcpp::Time(1e9 * 10), rclcpp::Time(1e9 * 15), signal, 0);
+
+  // Fixed cycle signal tests
 
   EXPECT_EQ(rclcpp::Time(1e9 * 24), time);
 
@@ -266,6 +303,19 @@ TEST_F(LCIStrategicTestFixture, get_nearest_green_entry_time)
   time = lcip->get_nearest_green_entry_time(rclcpp::Time(1e9 * 10), rclcpp::Time(1e9 * 44), signal, 50);
 
   EXPECT_EQ(rclcpp::Time(1e9 * 122), time);
+
+  // Handle dynamic signal states where signal extrapolation is not used
+  // overwrite signal states to not be fixed_cycle
+  signal->fixed_cycle_duration = boost::posix_time::seconds(0);
+  signal->recorded_start_time_stamps = {};
+  signal->recorded_start_time_stamps.push_back(lanelet::time::timeFromSec(0));
+  signal->recorded_time_stamps = {};
+  signal->recorded_time_stamps.push_back(std::make_pair<boost::posix_time::ptime, lanelet::CarmaTrafficSignalState>(lanelet::time::timeFromSec(15), lanelet::CarmaTrafficSignalState::PROTECTED_MOVEMENT_ALLOWED));
+  // when eet is past the available signals of the traffic_light (16sec is past available signal at 15)
+  time = lcip->get_nearest_green_entry_time(rclcpp::Time(1e9 * 0), rclcpp::Time(1e9 * 16), signal, 0);
+
+  EXPECT_EQ(time, std::nullopt);
+
 }
 
 TEST_F(LCIStrategicTestFixture, handleFailureCaseHelper)
@@ -293,7 +343,7 @@ TEST_F(LCIStrategicTestFixture, handleFailureCaseHelper)
   lcip->emergency_decel_norm_ = 2 * config.vehicle_decel_limit * config.vehicle_decel_limit_multiplier;
 
   auto signal = cmw_->getMutableMap()->laneletLayer.get(1200).regulatoryElementsAs<lanelet::CarmaTrafficSignal>().front();
-  
+
   ////////// CASE 1 ////////////////
   // Traj upper 1
 
@@ -309,15 +359,15 @@ TEST_F(LCIStrategicTestFixture, handleFailureCaseHelper)
   signal->recorded_start_time_stamps.push_back(boost::posix_time::from_time_t(0.0));
   signal->recorded_time_stamps.push_back(std::pair<boost::posix_time::ptime, lanelet::CarmaTrafficSignalState>(boost::posix_time::from_time_t(green_end_time), lanelet::CarmaTrafficSignalState::PROTECTED_MOVEMENT_ALLOWED));
   signal->recorded_start_time_stamps.push_back(boost::posix_time::from_time_t(green_start_time));
-  
+
   TrajectoryParams params;
 
-  params = lcip->handleFailureCaseHelper(signal, 
-                                            current_time, 
-                                            8.0, 
-                                            11.0, 
-                                            11.176, 
-                                            remaining_distance, 
+  params = lcip->handleFailureCaseHelper(signal,
+                                            current_time,
+                                            8.0,
+                                            11.0,
+                                            11.176,
+                                            remaining_distance,
                                             remaining_distance);
 
   EXPECT_NEAR(params.t0_, 0.0, 0.01);
@@ -342,12 +392,12 @@ TEST_F(LCIStrategicTestFixture, handleFailureCaseHelper)
   remaining_distance = 12.0;
   current_time = 3.0;
 
-  params = lcip->handleFailureCaseHelper(signal, 
-                                        current_time, 
-                                        8.0, 
-                                        11.0, 
-                                        11.176, 
-                                        remaining_distance, 
+  params = lcip->handleFailureCaseHelper(signal,
+                                        current_time,
+                                        8.0,
+                                        11.0,
+                                        11.176,
+                                        remaining_distance,
                                         remaining_distance);
 
   EXPECT_NEAR(params.t0_, current_time, 0.01);
@@ -368,19 +418,19 @@ TEST_F(LCIStrategicTestFixture, handleFailureCaseHelper)
 
 
 
-  // Traj lower 
+  // Traj lower
 
   green_start_time = 1.0;
   green_end_time = 5.0;
   remaining_distance = 12.0;
   current_time = -0.5; // unrealistic time, only used for unit test purpose
 
-  params = lcip->handleFailureCaseHelper(signal, 
-                                        current_time, 
-                                        8.0, 
-                                        11.0, 
-                                        11.176, 
-                                        remaining_distance, 
+  params = lcip->handleFailureCaseHelper(signal,
+                                        current_time,
+                                        8.0,
+                                        11.0,
+                                        11.176,
+                                        remaining_distance,
                                         remaining_distance);
 
   EXPECT_NEAR(params.t0_, current_time, 0.01);
@@ -405,14 +455,14 @@ TEST_F(LCIStrategicTestFixture, handleFailureCaseHelper)
   green_start_time = 1.0;
   green_end_time = 5.0;
   remaining_distance = 12.0;
-  current_time = 4.0; 
+  current_time = 4.0;
 
-  params = lcip->handleFailureCaseHelper(signal, 
-                                        current_time, 
-                                        8.0, 
-                                        11.0, 
-                                        11.176, 
-                                        remaining_distance, 
+  params = lcip->handleFailureCaseHelper(signal,
+                                        current_time,
+                                        8.0,
+                                        11.0,
+                                        11.176,
+                                        remaining_distance,
                                         remaining_distance);
 
   EXPECT_NEAR(params.t0_, 0.0, 0.01);
@@ -428,12 +478,12 @@ TEST_F(LCIStrategicTestFixture, handleFailureCaseHelper)
   remaining_distance = 12.0;
   current_time = 6.0;
 
-  params = lcip->handleFailureCaseHelper(signal, 
-                                        current_time, 
-                                        8.0, 
-                                        11.0, 
-                                        11.176, 
-                                        remaining_distance, 
+  params = lcip->handleFailureCaseHelper(signal,
+                                        current_time,
+                                        8.0,
+                                        11.0,
+                                        11.176,
+                                        remaining_distance,
                                         remaining_distance);
 
   EXPECT_NEAR(params.t0_, 0.0, 0.01);
@@ -444,7 +494,7 @@ TEST_F(LCIStrategicTestFixture, handleFailureCaseHelper)
   EXPECT_NEAR(params.x1_, 0, 0.01);
   EXPECT_NEAR(params.a1_, 0, 0.01);
 
-    
+
   ////////// CASE 2 ////////////////
 
   // Traj upper GREEN
@@ -454,12 +504,12 @@ TEST_F(LCIStrategicTestFixture, handleFailureCaseHelper)
   remaining_distance = 12.0;
   current_time = 2.0;
 
-  params = lcip->handleFailureCaseHelper(signal, 
-                                        current_time, 
-                                        9.0, 
-                                        11.0, 
-                                        11.176, 
-                                        remaining_distance, 
+  params = lcip->handleFailureCaseHelper(signal,
+                                        current_time,
+                                        9.0,
+                                        11.0,
+                                        11.176,
+                                        remaining_distance,
                                         remaining_distance);
 
   EXPECT_NEAR(params.t0_, current_time, 0.01);
@@ -483,12 +533,12 @@ TEST_F(LCIStrategicTestFixture, handleFailureCaseHelper)
   remaining_distance = 12.0;
   current_time = 0.0;
 
-  params = lcip->handleFailureCaseHelper(signal, 
-                                        current_time, 
-                                        9.0, 
-                                        11.0, 
-                                        11.176, 
-                                        remaining_distance, 
+  params = lcip->handleFailureCaseHelper(signal,
+                                        current_time,
+                                        9.0,
+                                        11.0,
+                                        11.176,
+                                        remaining_distance,
                                         remaining_distance);
 
   EXPECT_NEAR(params.t0_, current_time, 0.01);
@@ -514,12 +564,12 @@ TEST_F(LCIStrategicTestFixture, handleFailureCaseHelper)
   remaining_distance = 12.0;
   current_time = -0.5; //unrealistic time only for unit test only
 
-  params = lcip->handleFailureCaseHelper(signal, 
-                                        current_time, 
-                                        9.0, 
-                                        11.0, 
-                                        11.176, 
-                                        remaining_distance, 
+  params = lcip->handleFailureCaseHelper(signal,
+                                        current_time,
+                                        9.0,
+                                        11.0,
+                                        11.176,
+                                        remaining_distance,
                                         remaining_distance);
 
   EXPECT_NEAR(params.t0_, current_time, 0.01);
@@ -545,12 +595,12 @@ TEST_F(LCIStrategicTestFixture, handleFailureCaseHelper)
   remaining_distance = 12.0;
   current_time = 4.0;
 
-  params = lcip->handleFailureCaseHelper(signal, 
-                                        current_time, 
-                                        9.0, 
-                                        11.0, 
-                                        11.176, 
-                                        remaining_distance, 
+  params = lcip->handleFailureCaseHelper(signal,
+                                        current_time,
+                                        9.0,
+                                        11.0,
+                                        11.176,
+                                        remaining_distance,
                                         remaining_distance);
 
   EXPECT_NEAR(params.t0_, 0.0, 0.01);
@@ -566,12 +616,12 @@ TEST_F(LCIStrategicTestFixture, handleFailureCaseHelper)
   remaining_distance = 12.0;
   current_time = 7.0;
 
-  params = lcip->handleFailureCaseHelper(signal, 
-                                        current_time, 
-                                        9.0, 
-                                        11.0, 
-                                        11.176, 
-                                        remaining_distance, 
+  params = lcip->handleFailureCaseHelper(signal,
+                                        current_time,
+                                        9.0,
+                                        11.0,
+                                        11.176,
+                                        remaining_distance,
                                         remaining_distance);
 
   EXPECT_NEAR(params.t0_, 0.0, 0.01);
@@ -583,19 +633,19 @@ TEST_F(LCIStrategicTestFixture, handleFailureCaseHelper)
   EXPECT_NEAR(params.a1_, 0, 0.01);
 
   ////////// CASE 3 ////////////////
-  
-  // Traj upper GREEN  
+
+  // Traj upper GREEN
   green_start_time = 1.0;
   green_end_time = 5.0;
   remaining_distance = 12.0;
   current_time = 0.0;
 
-  params = lcip->handleFailureCaseHelper(signal, 
-                                        current_time, 
-                                        9.0, 
-                                        7.0, 
-                                        11.176, 
-                                        remaining_distance, 
+  params = lcip->handleFailureCaseHelper(signal,
+                                        current_time,
+                                        9.0,
+                                        7.0,
+                                        11.176,
+                                        remaining_distance,
                                         remaining_distance);
 
   EXPECT_NEAR(params.t0_, current_time, 0.01);
@@ -619,12 +669,12 @@ TEST_F(LCIStrategicTestFixture, handleFailureCaseHelper)
   remaining_distance = 12.0;
   current_time = 2.0;
 
-  params = lcip->handleFailureCaseHelper(signal, 
-                                        current_time, 
-                                        9.0, 
-                                        7.0, 
-                                        11.176, 
-                                        remaining_distance, 
+  params = lcip->handleFailureCaseHelper(signal,
+                                        current_time,
+                                        9.0,
+                                        7.0,
+                                        11.176,
+                                        remaining_distance,
                                         remaining_distance);
 
   EXPECT_NEAR(params.t0_, current_time, 0.01);
@@ -649,12 +699,12 @@ TEST_F(LCIStrategicTestFixture, handleFailureCaseHelper)
   remaining_distance = 12.0;
   current_time = -0.5; //unrealistic time only for unit test only
 
-  params = lcip->handleFailureCaseHelper(signal, 
-                                        current_time, 
-                                        9.0, 
-                                        7.0, 
-                                        11.176, 
-                                        remaining_distance, 
+  params = lcip->handleFailureCaseHelper(signal,
+                                        current_time,
+                                        9.0,
+                                        7.0,
+                                        11.176,
+                                        remaining_distance,
                                         remaining_distance);
 
   EXPECT_NEAR(params.t0_, current_time, 0.01);
@@ -674,19 +724,19 @@ TEST_F(LCIStrategicTestFixture, handleFailureCaseHelper)
   EXPECT_NEAR(params.a3_, -2.0, 0.01);
 
   ////////// CASE 4 ////////////////
-  
-  // Traj upper GREEN  
+
+  // Traj upper GREEN
   green_start_time = 1.0;
   green_end_time = 5.0;
   remaining_distance = 12.0;
   current_time = 0.0;
 
-  params = lcip->handleFailureCaseHelper(signal, 
-                                        current_time, 
-                                        10.0, 
-                                        7.0, 
-                                        11.176, 
-                                        remaining_distance, 
+  params = lcip->handleFailureCaseHelper(signal,
+                                        current_time,
+                                        10.0,
+                                        7.0,
+                                        11.176,
+                                        remaining_distance,
                                         remaining_distance);
 
   EXPECT_NEAR(params.t0_, current_time, 0.01);
@@ -710,12 +760,12 @@ TEST_F(LCIStrategicTestFixture, handleFailureCaseHelper)
   remaining_distance = 12.0;
   current_time = 2.0;
 
-  params = lcip->handleFailureCaseHelper(signal, 
-                                        current_time, 
-                                        10.0, 
-                                        7.0, 
-                                        11.176, 
-                                        remaining_distance, 
+  params = lcip->handleFailureCaseHelper(signal,
+                                        current_time,
+                                        10.0,
+                                        7.0,
+                                        11.176,
+                                        remaining_distance,
                                         remaining_distance);
 
   EXPECT_NEAR(params.t0_, current_time, 0.01);
@@ -738,14 +788,14 @@ TEST_F(LCIStrategicTestFixture, handleFailureCaseHelper)
   green_start_time = 1.0;
   green_end_time = 5.0;
   remaining_distance = 12.0;
-  current_time = 4; 
+  current_time = 4;
 
-  params = lcip->handleFailureCaseHelper(signal, 
-                                        current_time, 
-                                        10.0, 
-                                        7.0, 
-                                        11.176, 
-                                        remaining_distance, 
+  params = lcip->handleFailureCaseHelper(signal,
+                                        current_time,
+                                        10.0,
+                                        7.0,
+                                        11.176,
+                                        remaining_distance,
                                         remaining_distance);
 
   EXPECT_NEAR(params.t0_, 0.0, 0.01);
@@ -761,12 +811,12 @@ TEST_F(LCIStrategicTestFixture, handleFailureCaseHelper)
   remaining_distance = 12.0;
   current_time = -0.5; //unrealistic time only for unit test
 
-  params = lcip->handleFailureCaseHelper(signal, 
-                                        current_time, 
-                                        10.0, 
-                                        7.0, 
-                                        11.176, 
-                                        remaining_distance, 
+  params = lcip->handleFailureCaseHelper(signal,
+                                        current_time,
+                                        10.0,
+                                        7.0,
+                                        11.176,
+                                        remaining_distance,
                                         remaining_distance);
 
   EXPECT_NEAR(params.t0_, 0.0, 0.01);
@@ -777,7 +827,7 @@ TEST_F(LCIStrategicTestFixture, handleFailureCaseHelper)
   EXPECT_NEAR(params.x1_, 0, 0.01);
   EXPECT_NEAR(params.a1_, 0, 0.01);
 
-} 
+}
 
 TEST(LCIStrategicPluginTest, moboperationcbtest)
 {
@@ -877,12 +927,12 @@ TEST_F(LCIStrategicTestFixture, planWhenETInTBD)
   ASSERT_FALSE(resp->new_plan.maneuvers.empty());
   ASSERT_TRUE(resp->new_plan.maneuvers.front().type == carma_planning_msgs::msg::Maneuver::STOP_AND_WAIT);
   ASSERT_NEAR(resp->new_plan.maneuvers.front().stop_and_wait_maneuver.parameters.float_valued_meta_data[1], 3.0, 0.01);
- 
+
   ////////// CASE 2: Check edge cases when not red light violating ////////////////
   resp->new_plan.maneuvers = {};
   req->header.stamp = rclcpp::Time(1e9 * 0);
   req->veh_x = 1.85;
-  req->veh_y = 270; // traffic light is at 300 
+  req->veh_y = 270; // traffic light is at 300
   req->veh_downtrack = req->veh_y;
   req->veh_logitudinal_velocity = 9.5;
   req->veh_lane_id = "1200";
@@ -890,7 +940,7 @@ TEST_F(LCIStrategicTestFixture, planWhenETInTBD)
   current_state = lcip->extractInitialState(req);
 
   lcip->last_case_num_ = TSCase::CASE_1; //simulating when vehicle is speeding up while ET goes into TBD
-  
+
   lcip->planWhenAPPROACHING(req, resp, current_state, signal, cmw_->getMutableMap()->laneletLayer.get(1200), cmw_->getMutableMap()->laneletLayer.get(1203), cmw_->getMutableMap()->laneletLayer.get(1200));
 
   ASSERT_FALSE(resp->new_plan.maneuvers.empty());
@@ -900,7 +950,7 @@ TEST_F(LCIStrategicTestFixture, planWhenETInTBD)
   resp->new_plan.maneuvers = {};
   req->header.stamp = rclcpp::Time(1e9 * 2);
   req->veh_x = 1.85;
-  req->veh_y = 200; // traffic light is at 300 
+  req->veh_y = 200; // traffic light is at 300
   req->veh_downtrack = req->veh_y;
   req->veh_logitudinal_velocity = 10.0;
   req->veh_lane_id = "1200";
@@ -908,7 +958,7 @@ TEST_F(LCIStrategicTestFixture, planWhenETInTBD)
   current_state = lcip->extractInitialState(req);
 
   lcip->last_case_num_ = TSCase::CASE_1; //simulating when vehicle is speeding up while ET goes into TBD
-  
+
   lcip->planWhenAPPROACHING(req, resp, current_state, signal, cmw_->getMutableMap()->laneletLayer.get(1200), cmw_->getMutableMap()->laneletLayer.get(1203), cmw_->getMutableMap()->laneletLayer.get(1200));
 
   ASSERT_FALSE(resp->new_plan.maneuvers.empty());
@@ -918,7 +968,7 @@ TEST_F(LCIStrategicTestFixture, planWhenETInTBD)
   LCIStrategicPluginConfig config_real;
   config_real.enable_carma_streets_connection = true;
   config_real.green_light_time_buffer = 1.0;
-  config_real.deceleration_fraction = 0.7;  // actual was 0.8 which failed. 
+  config_real.deceleration_fraction = 0.7;  // actual was 0.8 which failed.
   config_real.vehicle_decel_limit_multiplier = 1.0;
   config_real.vehicle_accel_limit_multiplier = 1.0;
   config_real.desired_distance_to_stop_buffer = 15.0;
@@ -950,11 +1000,11 @@ TEST_F(LCIStrategicTestFixture, planWhenETInTBD)
   req->veh_downtrack = req->veh_y;
   req->veh_logitudinal_velocity = 10.402;
   req->veh_lane_id = "1200";
-  lcip_real->scheduled_enter_time_ = 8103635; // 8103.635 
+  lcip_real->scheduled_enter_time_ = 8103635; // 8103.635
   current_state = lcip_real->extractInitialState(req);
 
   lcip_real->last_case_num_ = TSCase::CASE_3; //simulating when vehicle is speeding up while ET goes into TBD
-  
+
   lcip_real->planWhenAPPROACHING(req, resp, current_state, signal, cmw_->getMutableMap()->laneletLayer.get(1200), cmw_->getMutableMap()->laneletLayer.get(1203), cmw_->getMutableMap()->laneletLayer.get(1200));
 
   ASSERT_FALSE(resp->new_plan.maneuvers.empty());
@@ -969,11 +1019,11 @@ TEST_F(LCIStrategicTestFixture, planWhenETInTBD)
   req->veh_downtrack = req->veh_y;
   req->veh_logitudinal_velocity = 9.402;
   req->veh_lane_id = "1200";
-  lcip_real->scheduled_enter_time_ = 8103635; // 8103.635 
+  lcip_real->scheduled_enter_time_ = 8103635; // 8103.635
   current_state = lcip_real->extractInitialState(req);
 
   lcip_real->last_case_num_ = TSCase::STOPPING;
-  
+
   lcip_real->planWhenAPPROACHING(req, resp, current_state, signal, cmw_->getMutableMap()->laneletLayer.get(1200), cmw_->getMutableMap()->laneletLayer.get(1203), cmw_->getMutableMap()->laneletLayer.get(1200));
 
   ASSERT_FALSE(resp->new_plan.maneuvers.empty());
@@ -1017,11 +1067,11 @@ TEST_F(LCIStrategicTestFixture, planWhenETInTBD)
   req->veh_downtrack = req->veh_y;
   req->veh_logitudinal_velocity = 9.0;
   req->veh_lane_id = "1200";
-  lcip_failure->scheduled_enter_time_ = 20000; // 20.0 
+  lcip_failure->scheduled_enter_time_ = 20000; // 20.0
   current_state = lcip_failure->extractInitialState(req);
 
   lcip_failure->last_case_num_ = TSCase::CASE_1;
-  
+
   lcip_failure->planWhenAPPROACHING(req, resp, current_state, signal, cmw_->getMutableMap()->laneletLayer.get(1200), cmw_->getMutableMap()->laneletLayer.get(1203), cmw_->getMutableMap()->laneletLayer.get(1200));
 
   ASSERT_FALSE(resp->new_plan.maneuvers.empty());

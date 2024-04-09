@@ -30,7 +30,7 @@ desired_distance_to_stop_buffer : 15.0
 min_maneuver_planning_period : 15.1
 
 # Bool: If enable_carma_streets_connection is true when we want to allow carma streets functionality (UC3) and if its false that means we don't want to allow carma streets behaviour and will only use UC2 behaviour.
-enable_carma_streets_connection : true
+enable_carma_streets_connection : false
 
 # Double: Mobility operation rate
 mobility_rate : 10.0

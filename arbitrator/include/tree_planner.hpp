@@ -29,12 +29,12 @@
 namespace arbitrator
 {
     /**
-     * \brief Implementation of PlanningStrategy using a generic tree search 
+     * \brief Implementation of PlanningStrategy using a generic tree search
      *      algorithm
-     * 
+     *
      * The fundamental components of this tree search are individually injected
      * into this class at construction time to allow for fine-tuning of the
-     * algorithm and ensure better testability and separation of algorithmic 
+     * algorithm and ensure better testability and separation of algorithmic
      * concerns
      */
     class TreePlanner : public PlanningStrategy
@@ -47,9 +47,9 @@ namespace arbitrator
              * \param ss Shared ptr to a SearchStrategy implementation
              * \param target The desired duration of finished plans
              */
-            TreePlanner(std::shared_ptr<CostFunction> cf, 
-                std::shared_ptr<NeighborGenerator> ng, 
-                std::shared_ptr<SearchStrategy> ss, 
+            TreePlanner(std::shared_ptr<CostFunction> cf,
+                std::shared_ptr<NeighborGenerator> ng,
+                std::shared_ptr<SearchStrategy> ss,
                 rclcpp::Duration target):
                 cost_function_(cf),
                 neighbor_generator_(ng),
@@ -57,9 +57,9 @@ namespace arbitrator
                 target_plan_duration_(target) {};
 
             /**
-             * \brief Utilize the configured cost function, neighbor generator, 
+             * \brief Utilize the configured cost function, neighbor generator,
              *      and search strategy, to generate a plan by means of tree search
-             * 
+             *
              * \param start_state The starting state of the vehicle to plan for
              */
             carma_planning_msgs::msg::ManeuverPlan generate_plan(const VehicleState& start_state);
@@ -69,6 +69,6 @@ namespace arbitrator
             std::shared_ptr<SearchStrategy> search_strategy_;
             rclcpp::Duration target_plan_duration_;
     };
-};
+}
 
 #endif //__ARBITRATOR_INCLUDE_TREE_PLANNER_HPP__

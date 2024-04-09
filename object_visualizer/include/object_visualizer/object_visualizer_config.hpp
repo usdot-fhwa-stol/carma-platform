@@ -33,6 +33,9 @@ namespace object_visualizer
     //! If true then RViz markers will be forwarded for received carma_perception_msgs/RoadwayObstacleList messages
     bool enable_roadway_objects_viz = true;
 
+    // Unsigned int: Visualization marker shape: CUBE=1, SPHERE=2, CYLINDER=3
+    uint8_t marker_shape = 2;
+
     //! External Objects marker rviz namespace
     std::string external_objects_viz_ns = "external_objects";
 
@@ -47,6 +50,7 @@ namespace object_visualizer
            << "enable_roadway_objects_viz: " << c.enable_roadway_objects_viz << std::endl
            << "external_objects_viz_ns: " << c.external_objects_viz_ns << std::endl
            << "roadway_obstacles_viz_ns: " << c.roadway_obstacles_viz_ns << std::endl
+           << "marker_shape: " << c.marker_shape << std::endl
            << "}" << std::endl;
       return output;
     }

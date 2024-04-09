@@ -36,12 +36,12 @@ public:
 
     void callback(const carma_v2x_msgs::msg::MobilityResponse::UniquePtr msg)
     {
-      RCLCPP_INFO_STREAM(rclcpp::get_logger("yield_plugin"),"Test mob_resp callback..");
+      RCLCPP_INFO(get_logger(),"Test mob_resp callback..");
     }
 
     void status_callback(const carma_planning_msgs::msg::LaneChangeStatus::UniquePtr msg)
     {
-      RCLCPP_INFO_STREAM(rclcpp::get_logger("yield_plugin"),"Test lc callback..");
+      RCLCPP_INFO(get_logger(),"Test lc callback..");
     }
     
 };

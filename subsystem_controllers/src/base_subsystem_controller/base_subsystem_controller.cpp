@@ -25,7 +25,7 @@ using std_msec = std::chrono::milliseconds;
 namespace subsystem_controllers
 {
   BaseSubsystemController::BaseSubsystemController(const rclcpp::NodeOptions &options)
-      : CarmaLifecycleNode(options), 
+      : CarmaLifecycleNode(options),
       lifecycle_mgr_(get_node_base_interface(), get_node_graph_interface(), get_node_logging_interface(), get_node_services_interface())
   {
     // Declare parameters
@@ -35,7 +35,7 @@ namespace subsystem_controllers
     base_config_.subsystem_namespace = this->declare_parameter<std::string>("subsystem_namespace", base_config_.subsystem_namespace);
     base_config_.full_subsystem_required = this->declare_parameter<bool>("full_subsystem_required", base_config_.full_subsystem_required);
     base_config_.unmanaged_required_nodes = this->declare_parameter<std::vector<std::string>>("unmanaged_required_nodes", base_config_.unmanaged_required_nodes);
-  
+
     // Handle fact that parameter vectors cannot be empty
     if (base_config_.required_subsystem_nodes.size() == 1 && base_config_.required_subsystem_nodes[0].empty()) {
       base_config_.required_subsystem_nodes.clear();
@@ -78,7 +78,7 @@ namespace subsystem_controllers
         alert.source_node =  get_node_base_interface()->get_fully_qualified_name();
         publish_system_alert(alert);
 
-        // TODO: It might be worth trying to deactivate or shutdown after alerting the larger system, 
+        // TODO: It might be worth trying to deactivate or shutdown after alerting the larger system,
         //       but not clear on if that will increase instability of shutdown process
       }
       else
@@ -93,7 +93,7 @@ namespace subsystem_controllers
   {
     RCLCPP_INFO_STREAM(get_logger(), "Subsystem trying to configure");
 
-    // Reset config 
+    // Reset config
     base_config_ = BaseSubSystemControllerConfig();
 
     // Load Parameters
@@ -141,7 +141,7 @@ namespace subsystem_controllers
 
       RCLCPP_INFO_STREAM(get_logger(), "New config: " << base_config_);
     }
-    
+
 
     if (!trigger_managed_nodes_configure_from_base_class_) {
       return CallbackReturn::SUCCESS;
@@ -279,7 +279,7 @@ namespace subsystem_controllers
   std::vector<std::string> BaseSubsystemController::get_nodes_in_namespace(const std::string &node_namespace) const
   {
 
-    // These two services are exposed by lifecycle nodes. 
+    // These two services are exposed by lifecycle nodes.
     static const std::string CHANGE_STATE_SRV = "/change_state";
     static const std::string GET_STATE_SRV = "/get_state";
 
@@ -307,8 +307,8 @@ namespace subsystem_controllers
 
         ////
         // In the following section of code we check if the current node in the target namespace is actually a lifecycle node
-        // This check is done by evaluating if that nodes exposes the change_state and get_state lifecycle services. 
-        // If the node does not expose these services then it cannot be managed by this component. 
+        // This check is done by evaluating if that nodes exposes the change_state and get_state lifecycle services.
+        // If the node does not expose these services then it cannot be managed by this component.
         // However, this does not result in an error as the node could be wrapped by a lifecycle component wrapper
         ////
 
@@ -332,7 +332,7 @@ namespace subsystem_controllers
         const std::string cs_srv = node + CHANGE_STATE_SRV;
         const std::string gs_srv = node + GET_STATE_SRV;
 
-        if (services_and_types.find(cs_srv) != services_and_types.end() 
+        if (services_and_types.find(cs_srv) != services_and_types.end()
           && services_and_types.find(gs_srv) != services_and_types.end()
           && std::find(services_and_types.at(cs_srv).begin(), services_and_types.at(cs_srv).end(), CHANGE_STATE_TYPE) != services_and_types.at(cs_srv).end()
           && std::find(services_and_types.at(gs_srv).begin(), services_and_types.at(gs_srv).end(), GET_STATE_TYPE) != services_and_types.at(gs_srv).end())
@@ -343,7 +343,7 @@ namespace subsystem_controllers
         } else {
           // Current node is not a lifecycle node so log a warning
           RCLCPP_WARN_STREAM(get_logger(), "Failed to find lifecycle services for node: " << node << " this node will not be managed. NOTE: If this node is wrapped by a lifecycle component that is managed then this is not an issue.");
-          
+
           continue;
 
         }

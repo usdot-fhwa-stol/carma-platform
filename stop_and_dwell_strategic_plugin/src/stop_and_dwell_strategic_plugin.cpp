@@ -69,7 +69,14 @@ StopAndDwellStrategicPlugin::StopAndDwellStrategicPlugin(const rclcpp::NodeOptio
   config_.veh_length = declare_parameter<double>("vehicle_length", config_.veh_length);
   config_.vehicle_decel_limit = declare_parameter<double>("vehicle_deceleration_limit", config_.vehicle_decel_limit);
   config_.vehicle_accel_limit = declare_parameter<double>("vehicle_acceleration_limit", config_.vehicle_accel_limit);
+  config_.activation_distance = declare_parameter<double>("activation_distance", config_.activation_distance);
+  config_.dwell_time = declare_parameter<double>("dwell_time", config_.dwell_time);
+  config_.deceleration_fraction = declare_parameter<double>("deceleration_fraction", config_.deceleration_fraction);
+  config_.desired_distance_to_stop_buffer = declare_parameter<double>("desired_distance_to_stop_buffer", config_.desired_distance_to_stop_buffer);
 
+  max_comfort_accel_ = config_.vehicle_accel_limit * config_.vehicle_accel_limit_multiplier;
+  max_comfort_decel_ = -1 * config_.vehicle_decel_limit * config_.vehicle_decel_limit_multiplier;
+  max_comfort_decel_norm_ = config_.vehicle_decel_limit * config_.vehicle_decel_limit_multiplier;
 };
 
 carma_ros2_utils::CallbackReturn StopAndDwellStrategicPlugin::on_configure_plugin()
@@ -87,7 +94,15 @@ carma_ros2_utils::CallbackReturn StopAndDwellStrategicPlugin::on_configure_plugi
   get_parameter<double>("vehicle_length", config_.veh_length);
   get_parameter<double>("vehicle_deceleration_limit", config_.vehicle_decel_limit);
   get_parameter<double>("vehicle_acceleration_limit", config_.vehicle_accel_limit);
-  
+  get_parameter<double>("activation_distance", config_.activation_distance);
+  get_parameter<double>("dwell_time", config_.dwell_time);
+  get_parameter<double>("deceleration_fraction", config_.deceleration_fraction);
+  get_parameter<double>("desired_distance_to_stop_buffer", config_.desired_distance_to_stop_buffer);
+
+  max_comfort_accel_ = config_.vehicle_accel_limit * config_.vehicle_accel_limit_multiplier;
+  max_comfort_decel_ = -1 * config_.vehicle_decel_limit * config_.vehicle_decel_limit_multiplier;
+  max_comfort_decel_norm_ = config_.vehicle_decel_limit * config_.vehicle_decel_limit_multiplier;
+
    // Register runtime parameter update callback
   add_on_set_parameters_callback(std::bind(&StopAndDwellStrategicPlugin::parameter_update_callback, this, std_ph::_1));
 
@@ -129,7 +144,7 @@ carma_ros2_utils::CallbackReturn StopAndDwellStrategicPlugin::on_activate_plugin
   return CallbackReturn::SUCCESS;
 }
 
-StopAndDwellStrategicPlugin::VehicleState StopAndDwellStrategicPlugin::extractInitialState(const carma_planning_msgs::srv::PlanManeuvers::Request& req) const
+VehicleState StopAndDwellStrategicPlugin::extractInitialState(const carma_planning_msgs::srv::PlanManeuvers::Request& req) const
 {
   VehicleState state;
   if (!req.prior_plan.maneuvers.empty())
@@ -173,7 +188,6 @@ void StopAndDwellStrategicPlugin::currentPoseCb(geometry_msgs::msg::PoseStamped:
     RCLCPP_DEBUG_STREAM(rclcpp::get_logger("stop_and_dwell_strategic_plugin"), "Downtrack from current pose: " << current_downtrack_);
   }
   
-  
 }
 
 std::vector<lanelet::ConstLanelet> StopAndDwellStrategicPlugin::getLaneletsBetweenWithException(double start_downtrack,
@@ -194,17 +208,142 @@ std::vector<lanelet::ConstLanelet> StopAndDwellStrategicPlugin::getLaneletsBetwe
   return crossed_lanelets;
 }
 
+VehicleState StopAndDwellStrategicPlugin::extractInitialState(carma_planning_msgs::srv::PlanManeuvers::Request::SharedPtr req) const
+{
+  VehicleState state;
+  if (!req->prior_plan.maneuvers.empty())
+  {
+    RCLCPP_DEBUG_STREAM(rclcpp::get_logger(logger_name_), "Provided with initial plan...");
+    state.stamp = GET_MANEUVER_PROPERTY(req->prior_plan.maneuvers.back(), end_time);
+    state.downtrack = GET_MANEUVER_PROPERTY(req->prior_plan.maneuvers.back(), end_dist);
+    state.speed = getManeuverEndSpeed(req->prior_plan.maneuvers.back());
+    state.lane_id = getLaneletsBetweenWithException(state.downtrack, state.downtrack, true).front().id();
+  }
+  else
+  {
+    RCLCPP_DEBUG_STREAM(rclcpp::get_logger(logger_name_), "No initial plan provided...");
+    
+    state.stamp = rclcpp::Time(req->header.stamp, RCL_SYSTEM_TIME);
+    state.downtrack = req->veh_downtrack;
+    state.speed = req->veh_logitudinal_velocity;
+    state.lane_id = stoi(req->veh_lane_id);
+  }
+  RCLCPP_DEBUG_STREAM(rclcpp::get_logger(logger_name_), "extractInitialState >>>> state.stamp: " << std::to_string(state.stamp.seconds()));
+  RCLCPP_DEBUG_STREAM(rclcpp::get_logger(logger_name_), "extractInitialState >>>> state.downtrack : " << state.downtrack );
+  RCLCPP_DEBUG_STREAM(rclcpp::get_logger(logger_name_), "extractInitialState >>>> state.speed: " << state.speed);
+  RCLCPP_DEBUG_STREAM(rclcpp::get_logger(logger_name_), "extractInitialState >>>> state.lane_id: " << state.lane_id);
 
+  return state;
+}
 
 void StopAndDwellStrategicPlugin::plan_maneuvers_callback(
   std::shared_ptr<rmw_request_id_t> srv_header, 
   carma_planning_msgs::srv::PlanManeuvers::Request::SharedPtr req, 
   carma_planning_msgs::srv::PlanManeuvers::Response::SharedPtr resp)
 {
-   return;
+  std::chrono::system_clock::time_point execution_start_time = std::chrono::system_clock::now();  // Start timing the execution time for planning so it can be logged
+  
+  RCLCPP_DEBUG_STREAM(rclcpp::get_logger(logger_name_), "<<<<<<<<<<<<<<<<< STARTING STOP_AND_DWELL_STRATEGIC_PLUIGN!!!!!!!!! >>>>>>>>>>>>>>>>");
+
+  if (!wm_->getRoute())
+  {
+    RCLCPP_ERROR_STREAM(rclcpp::get_logger(logger_name_), "Could not plan maneuvers as route was not available");
+    return;
+  }
+
+  RCLCPP_DEBUG_STREAM(rclcpp::get_logger(logger_name_), "Finding car information");
+
+  // Extract vehicle data from request
+  VehicleState current_state = extractInitialState(req);
+
+  auto bus_stop_list = wm_->getBusStopsAlongRoute({ req->veh_x, req->veh_y });
+
+  RCLCPP_DEBUG_STREAM(rclcpp::get_logger(logger_name_), "Found bus stops of size: " << bus_stop_list .size());
+
+  if(bus_stop_list.empty())
+  {
+    RCLCPP_DEBUG_STREAM(rclcpp::get_logger(logger_name_), "Bus stops list is empty");
+    return;
+  }
+
+  lanelet::BusStopRulePtr nearest_bus_stop = bus_stop_list.front();
+
+  double bus_stop_downtrack_  = wm_->routeTrackPos(nearest_bus_stop->stopAndWaitLine().front().front().basicPoint2d()).downtrack;
+  RCLCPP_DEBUG_STREAM(rclcpp::get_logger(logger_name_), "bus_stop_downtrack_ : " << bus_stop_downtrack_ );
+  double distance_remaining_to_bus_stop = bus_stop_downtrack_  - current_state.downtrack;
+  RCLCPP_DEBUG_STREAM(rclcpp::get_logger(logger_name_), "distance_remaining_to_bus_stop: " << distance_remaining_to_bus_stop <<
+                    ", current_state.downtrack: " << current_state.downtrack);
+
+  if (distance_remaining_to_bus_stop < -config_.bus_line_exit_zone_length)
+  {
+    resp->new_plan.maneuvers = {};
+    RCLCPP_WARN_STREAM(rclcpp::get_logger(logger_name_), "Already passed bus stop, sending empty maneuvers");
+    return;
+  }                  
+
+  constexpr double HALF_MPH_IN_MPS = 0.22352;  
+
+  if (current_state.speed < HALF_MPH_IN_MPS && fabs(bus_stop_downtrack_ - current_state.downtrack ) < config_.stop_line_buffer) 
+  {
+    if(first_stop_)
+    {
+      time_to_move_ = now() + rclcpp::Duration(config_.dwell_time  * 1e9); 
+      first_stop_ = false;
+    }
+
+    if(time_to_move_ <= now())
+    {
+      std::vector<lanelet::ConstLanelet> crossed_lanelets = getLaneletsBetweenWithException(current_state.downtrack, bus_stop_downtrack_, true, true);
+      auto starting_lane_id = crossed_lanelets.front().id();
+      auto ending_lane_id = crossed_lanelets.back().id();
+      resp->new_plan.maneuvers.push_back(composeStopAndWaitManeuverMessage(current_state.downtrack ,bus_stop_downtrack_,current_state.speed,starting_lane_id,ending_lane_id,max_comfort_decel_norm_ ,now(),now() + rclcpp::Duration(config_.min_maneuver_planning_period * 1e9) )); 
+    }
+    else
+    {
+      double maneuver_end_distance = bus_stop_downtrack_ + config_.bus_line_exit_zone_length;
+      std::vector<lanelet::ConstLanelet> crossed_lanelets = getLaneletsBetweenWithException(current_state.downtrack, maneuver_end_distance, true, true);
+      std::vector<lanelet::Id> lane_ids = lanelet::utils::transform(crossed_lanelets, [](const auto& ll) { return ll.id(); });
+      speed_limit_ = findSpeedLimit(crossed_lanelets.front());
+      resp->new_plan.maneuvers.push_back(composeLaneFollowingManeuverMessage(current_state.downtrack ,maneuver_end_distance,current_state.speed,speed_limit_,now(),config_.min_maneuver_planning_period,lane_ids));
+    }
+  }
+ else if ( current_state.downtrack>= ( bus_stop_downtrack_ - config_.activation_distance ))
+  {
+    double desired_distance_to_stop = pow(current_state.speed, 2)/(2 * max_comfort_decel_norm_ * config_.deceleration_fraction) + config_.desired_distance_to_stop_buffer;
+    
+    if(current_state.downtrack >= ( bus_stop_downtrack_ - desired_distance_to_stop))
+    {
+      std::vector<lanelet::ConstLanelet> crossed_lanelets = getLaneletsBetweenWithException(current_state.downtrack, bus_stop_downtrack_, true, true);
+      auto starting_lane_id = crossed_lanelets.front().id();
+      auto ending_lane_id = crossed_lanelets.back().id();
+      rclcpp::Time start_time = now();
+      rclcpp::Time end_time = now() + rclcpp::Duration(config_.min_maneuver_planning_period * 1e9) ;
+      //Stop at desired distance before bus stop
+      resp->new_plan.maneuvers.push_back(composeStopAndWaitManeuverMessage(current_state.downtrack ,bus_stop_downtrack_,current_state.speed,starting_lane_id,ending_lane_id,max_comfort_decel_norm_ ,start_time,end_time));
+    }
+    else
+    {    
+      double time_to_stop = (distance_remaining_to_bus_stop - desired_distance_to_stop)/speed_limit_;
+      rclcpp::Time timestamp_to_stop = now() + rclcpp::Duration(time_to_stop * 1e9);
+      std::vector<lanelet::ConstLanelet> crossed_lanelets = getLaneletsBetweenWithException(current_state.downtrack, (bus_stop_downtrack_ - desired_distance_to_stop) , true, true);
+      std::vector<lanelet::ConstLanelet> crossed_lanelets_stop = getLaneletsBetweenWithException((bus_stop_downtrack_ - desired_distance_to_stop), bus_stop_downtrack_, true, true);
+      std::vector<lanelet::Id> lane_ids = lanelet::utils::transform(crossed_lanelets, [](const auto& ll) { return ll.id(); });
+      
+      auto starting_lane_id = crossed_lanelets_stop.front().id();
+      auto ending_lane_id = crossed_lanelets_stop.back().id();
+
+      resp->new_plan.maneuvers.push_back(composeLaneFollowingManeuverMessage(current_state.downtrack ,(bus_stop_downtrack_ - desired_distance_to_stop),current_state.speed,speed_limit_,now(), time_to_stop,lane_ids));
+      resp->new_plan.maneuvers.push_back(composeStopAndWaitManeuverMessage((bus_stop_downtrack_ - desired_distance_to_stop),bus_stop_downtrack_,speed_limit_,starting_lane_id,ending_lane_id,max_comfort_decel_norm_ ,timestamp_to_stop ,(timestamp_to_stop + rclcpp::Duration(config_.min_maneuver_planning_period * 1e9))));
+    }
+  }
+  std::chrono::system_clock::time_point execution_end_time = std::chrono::system_clock::now();  // Planning complete
+
+  auto execution_duration = execution_end_time - execution_start_time;
+  RCLCPP_DEBUG_STREAM(rclcpp::get_logger(logger_name_), "ExecutionTime stop_and_dwell_strategic_plugin: " << std::chrono::duration<double>(execution_duration).count());
+  return;
 }
 
-carma_planning_msgs::msg::Maneuver StopAndDwellStrategicPlugin::composeLaneFollowingManeuverMessage(int case_num, double start_dist, double end_dist,
+carma_planning_msgs::msg::Maneuver StopAndDwellStrategicPlugin::composeLaneFollowingManeuverMessage(double start_dist, double end_dist,
                                                                           double start_speed, double target_speed,
                                                                           rclcpp::Time start_time, double time_to_stop,
                                                                           std::vector<lanelet::Id> lane_ids)
