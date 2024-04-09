@@ -8,8 +8,6 @@ on:
       - "develop"
       - "master"
       - "release/*"
-      - "release/lavida"
-
 jobs:
   dockerhub:
     uses: usdot-fhwa-stol/actions/.github/workflows/dockerhub.yml@main
