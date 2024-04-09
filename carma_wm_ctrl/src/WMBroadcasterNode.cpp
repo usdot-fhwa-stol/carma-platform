@@ -92,11 +92,7 @@ carma_ros2_utils::CallbackReturn WMBroadcasterNode::handle_on_configure(const rc
   get_parameter<std::string>("vehicle_participant_type", config_.participant);
   get_parameter<double>("config_speed_limit", config_.config_limit);
 
-  wmb_->setConfigACKPubTimes(config_.ack_pub_times);
-  wmb_->setMaxLaneWidth(config_.max_lane_width);
-  wmb_->setConfigSpeedLimit(config_.config_limit);
-  wmb_->setConfigVehicleId(config_.vehicle_id);
-  wmb_->setVehicleParticipationType(config_.participant);
+
 
   rclcpp::Parameter intersection_coord_correction_param = get_parameter("intersection_coord_correction");
   config_.intersection_coord_correction = intersection_coord_correction_param.as_double_array();
@@ -104,7 +100,7 @@ carma_ros2_utils::CallbackReturn WMBroadcasterNode::handle_on_configure(const rc
   rclcpp::Parameter intersection_ids_for_correction_param = get_parameter("intersection_ids_for_correction");
   config_.intersection_ids_for_correction = intersection_ids_for_correction_param.as_integer_array();
 
-  wmb_->setIntersectionCoordCorrection(config_.intersection_ids_for_correction, config_.intersection_coord_correction);
+
 
   RCLCPP_INFO_STREAM(rclcpp::get_logger("carma_mw_ctrl"),"Done loading parameters: " << config_);
 
@@ -152,6 +148,13 @@ carma_ros2_utils::CallbackReturn WMBroadcasterNode::handle_on_configure(const rc
 
 carma_ros2_utils::CallbackReturn WMBroadcasterNode::handle_on_activate(const rclcpp_lifecycle::State &prev_state)
 {
+  wmb_->setConfigACKPubTimes(config_.ack_pub_times);
+  wmb_->setMaxLaneWidth(config_.max_lane_width);
+  wmb_->setConfigSpeedLimit(config_.config_limit);
+  wmb_->setConfigVehicleId(config_.vehicle_id);
+  wmb_->setVehicleParticipationType(config_.participant);
+
+  wmb_->setIntersectionCoordCorrection(config_.intersection_ids_for_correction, config_.intersection_coord_correction);
   // Timer setup
   timer_ = create_timer(get_clock(),
                           std::chrono::milliseconds((int)(config_.traffic_control_request_period * 1000)),

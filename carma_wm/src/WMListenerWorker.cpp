@@ -121,26 +121,26 @@ void logSignalizedIntersectionManager(const carma_wm::SignalizedIntersectionMana
 {
   for (auto const &[intersection_id, regulatory_element_id] : sim.intersection_id_to_regem_id_)
   {
-    RCLCPP_DEBUG_STREAM(rclcpp::get_logger("carma_wm::WMListenerWorker"),
+    RCLCPP_ERROR_STREAM(rclcpp::get_logger("carma_wm::WMListenerWorker"),
       "inter id: " << intersection_id << ", regem id: " << regulatory_element_id);
   }
   for (auto const &[signal_id, entry_llt_ids] : sim.signal_group_to_entry_lanelet_ids_)
   {
     for (const auto & entry_llt_id : entry_llt_ids)
     {
-      RCLCPP_DEBUG_STREAM(rclcpp::get_logger("carma_wm::WMListenerWorker"), "signal id: " << (int)signal_id << ", entry llt id: " << entry_llt_id);
+      RCLCPP_ERROR_STREAM(rclcpp::get_logger("carma_wm::WMListenerWorker"), "signal id: " << (int)signal_id << ", entry llt id: " << entry_llt_id);
     }
   }
   for (auto const &[signal_id, exit_llt_ids] : sim.signal_group_to_exit_lanelet_ids_)
   {
     for (const auto & exit_llt_id : exit_llt_ids)
     {
-      RCLCPP_DEBUG_STREAM(rclcpp::get_logger("carma_wm::WMListenerWorker"), "signal id: " << (int)signal_id << ", exit llt id: " << exit_llt_id);
+      RCLCPP_ERROR_STREAM(rclcpp::get_logger("carma_wm::WMListenerWorker"), "signal id: " << (int)signal_id << ", exit llt id: " << exit_llt_id);
     }
   }
   for (auto const &[signal_id, regem_id] : sim.signal_group_to_traffic_light_id_)
   {
-    RCLCPP_DEBUG_STREAM(rclcpp::get_logger("carma_wm::WMListenerWorker"), "signal id: " << (int)signal_id << ", regem id: " << regem_id);
+    RCLCPP_ERROR_STREAM(rclcpp::get_logger("carma_wm::WMListenerWorker"), "signal id: " << (int)signal_id << ", regem id: " << regem_id);
   }
 }
 

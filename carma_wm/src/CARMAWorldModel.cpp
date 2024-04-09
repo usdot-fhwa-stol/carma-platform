@@ -1487,6 +1487,7 @@ namespace carma_wm
       return;
     }
 
+    RCLCPP_ERROR_STREAM(rclcpp::get_logger("carma_wm"), "Processing SPAT Message");
     for (const auto& curr_intersection : spat_msg.intersection_state_list)
     {
 
@@ -1545,7 +1546,7 @@ namespace carma_wm
           sim_.traffic_signal_start_times_[curr_intersection.id.id][current_movement_state.signal_group].push_back(
                               start_time_dynamic);
 
-          RCLCPP_DEBUG_STREAM(rclcpp::get_logger("carma_wm"), "intersection id: " << (int)curr_intersection.id.id << ", signal: " << (int)current_movement_state.signal_group
+          RCLCPP_ERROR_STREAM(rclcpp::get_logger("carma_wm"), "intersection id: " << (int)curr_intersection.id.id << ", signal: " << (int)current_movement_state.signal_group
             << ", start_time: " << std::to_string(lanelet::time::toSec(start_time_dynamic))
             << ", end_time: " << std::to_string(lanelet::time::toSec(min_end_time_dynamic))
             << ", state: " << received_state_dynamic);
