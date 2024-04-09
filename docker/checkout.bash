@@ -82,7 +82,7 @@ git clone -b ros2 https://github.com/usdot-fhwa-stol/rosbridge_suite
 # The feature/integrate-carma branch of rosbag2 includes improvements that were not possible to backport into the foxy branch
 # of rosbag2. These rosbag2 packages will replace the originally built foxy rosbag2 packages.
 # NOTE: Additional information regarding the rosbag2 improvements on this branch are included in the forked repository's README.
-git clone -b carma-develop https://github.com/usdot-fhwa-stol/rosbag2
+git clone -b carma-system-4.5.0 https://github.com/usdot-fhwa-stol/rosbag2
 
 # Novatel OEM7 Driver
 # NOTE: This is required since otherwise this image will not contain the novatel_oem7_msgs package, and a missing ROS 2 message package
