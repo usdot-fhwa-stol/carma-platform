@@ -8,7 +8,7 @@ on:
       - "develop"
       - "master"
       - "release/*"
-      - "feature-mish/*"
+      - "carma-system-*"
     tags:
       - "carma-system-*"
 jobs:
