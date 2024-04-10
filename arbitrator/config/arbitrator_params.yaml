@@ -1,7 +1,7 @@
 # Float: The minimum amount of time that an arbitrated plan must cover for the 
 # system to proceed with execution
 # Unit: s
-min_plan_duration: 6.0
+min_plan_duration: 60.0
 
 # Float: The nominal amount of time that an arbitrated plan should cover for the 
 # system to operate at best performance
