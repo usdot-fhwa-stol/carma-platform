@@ -1,13 +1,13 @@
 #!/bin/bash
 
 #  Copyright (C) 2022-2023 LEIDOS.
-# 
+#
 #  Licensed under the Apache License, Version 2.0 (the "License"); you may not
 #  use this file except in compliance with the License. You may obtain a copy of
 #  the License at
-# 
+#
 #  http://www.apache.org/licenses/LICENSE-2.0
-# 
+#
 #  Unless required by applicable law or agreed to in writing, software
 #  distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
 #  WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
@@ -34,9 +34,9 @@ USER_ARN=
 PASS=
 CONFIG_IMAGE=
 EOF
-        
+
     fi
-    
+
     while [[ $# -gt 0 ]]; do
         arg="$1"
         case $arg in
@@ -53,7 +53,7 @@ EOF
                 shift
                 ;;
             -v|--carmaversion)
-                
+
                 local CONFIG_IMAGE=$2
                 if [[ $2 == "develop" ]]; then
                     local CONFIG_IMAGE="usdotfhwastoldev/carma-config:develop-carla_integration"
@@ -69,19 +69,19 @@ EOF
                 shift
                 ;;
             -i|--configimage)
-                
+
                 if [[ -z $2 ]]; then
                     echo "When using -i a full docker image name must be specified."
                     exit 1
                 fi
-                
+
                 local CONFIG_IMAGE=$2
 
                 sed -i "s|CONFIG_IMAGE=.*|CONFIG_IMAGE=${CONFIG_IMAGE}|" "${CARMA_CLOUD_SIM_CONFIG_PATH}"
                 shift
                 shift
                 ;;
-            *) 
+            *)
                 echo "Invalid argument $arg"
                 exit 1
                 ;;
@@ -92,7 +92,7 @@ EOF
     if ! command -v "aws" &> /dev/null
     then
         echo "aws cli is not installed. Attempting to install. This requires sudo."
-        
+
         curl "https://awscli.amazonaws.com/awscli-exe-linux-x86_64.zip" -o "awscliv2.zip"
         unzip awscliv2.zip
         sudo ./aws/install
@@ -121,7 +121,7 @@ cloud-sim__start() {
 
     echo $1
     if [ ! -f "$CARMA_CLOUD_SIM_CLOUD_FORMATION_PATH" ] || [ "${1}" == '-c'  ]; then
-       
+
         echo "###################################"
         echo "## Pulling cloud formation template"
         echo "###################################"
@@ -155,13 +155,13 @@ cloud-sim__start() {
         echo "aws cli has not been installed please install and configure it for your desired user account."
         exit 1
     fi
-    
+
     # Call cloud formation
     local STACK_NAME="CloudSimStack"$(echo ${USER_ARN} |  grep -oh "/.*@" | sed "s|@|-|g" | sed "s|\.|-|g" | sed "s|[^A-Za-z0-9]|-|g")
-    
+
     # Check if required resources are available
     if query_resource_status; then
-    
+
         # Get the VPC ID
         local VPC_ID=$(aws ec2 describe-vpcs --filters "Name=tag:Name,Values=CDASim VPC" --query 'Vpcs[].VpcId' --output text)
         # Get the Route Table ID
@@ -169,23 +169,24 @@ cloud-sim__start() {
 
         # Get subnet information
         local SubnetCIDRBlock="10.0.0.0/24"
-        
-        # Query for existing subnetID list
-        local subnet_ids=$(aws ec2 describe-route-tables --route-table-ids "$ROUTETABLE_ID" \
-                    --query 'RouteTables[0].Associations[].SubnetId' \
-                    --output text)
-        # Use default subnet if none exist, else check existing subnets and increment by 1
-        local total_subnets=${#subnet_ids[@]}
-        
 
-        if [ -n "${subnet_ids[0]}" ]; then 
+        # Query for existing subnetID list and convert to an array
+        read -ra subnet_ids <<< $(aws ec2 describe-route-tables --route-table-ids "$ROUTETABLE_ID" \
+                            --query 'RouteTables[0].Associations[].SubnetId' \
+                            --output text)
+
+        # Calculate the total number of subnets
+        local total_subnets=${#subnet_ids[@]}
+
+        # Proceed if the array is not empty
+        if [ -n "${subnet_ids[0]}" ]; then
             local max=0
             for ((i = 0; i < total_subnets; i++)); do
-                subnet_id=${subnet_ids[i]}
+                local subnet_id=${subnet_ids[i]}
 
                 # Lookup subnet address
                 cidr_block=$(aws ec2 describe-subnets --subnet-ids "$subnet_id" --query 'Subnets[0].CidrBlock' --output text)
-                
+
                 # Split the CIDR block into its components
                 IFS="/" read -r ip_address subnet_mask <<< "$cidr_block"
 
@@ -194,23 +195,23 @@ cloud-sim__start() {
 
                 # Get the second to last octet
                 update_octet="${octets[2]}"
-                
+
                 if [ "$update_octet" -gt "$max" ]; then
                     max="$update_octet"
                 fi
-                
+
                 # Update Octet on last itr
                 if ((i == total_subnets - 1)); then
                     ((max++))
                     updated_subnet="${octets[0]}.${octets[1]}.$max.${octets[3]}"
-                    
+
                     # Reconstruct the updated CIDR block
                     updated_cidr_block="$updated_subnet/$subnet_mask"
                     SubnetCIDRBlock="$updated_cidr_block"
                 fi
             done
         fi
-            
+
 
         local RESULT=$(aws --region us-east-1 cloudformation create-stack --template-body "file://${CARMA_CLOUD_SIM_CLOUD_FORMATION_PATH}" \
             --stack-name "${STACK_NAME}" \
@@ -221,14 +222,14 @@ cloud-sim__start() {
             ParameterKey=ExistingRouteTableID,ParameterValue="${ROUTETABLE_ID}" \
             ParameterKey=EC2SubnetCIDRBlock,ParameterValue="${SubnetCIDRBlock}" \
             --capabilities CAPABILITY_NAMED_IAM)
-        
+
         local VALID_LAUNCH=$(echo "${RESULT}" | grep 'arn:aws:cloudformation:us-east-1')
         if [ -z "${VALID_LAUNCH}" ]; then
             echo "AWS Launch Failed with error:"
             echo ${RESULT}
             exit 1
         fi
-        
+
         echo "AWS Stack ${STACK_NAME} starting up......."
 
         local STACK_RESOURCE_STATUS="NOT_EMPTY"
@@ -244,9 +245,9 @@ cloud-sim__start() {
 
         sleep ${SLEEP_SEC}
 
-        # As long as there are resources which do not have the status CREATE_COMPLETE 
+        # As long as there are resources which do not have the status CREATE_COMPLETE
         # TODO: Ideally we wouldn't need to hard code 14 resources but a rare race condition can occur where 13 complete before 14 starts which leads to the need to hard code it for now
-        while { [ -n "${NON_COMPLETE_RES}" ] || [ ${TOTAL_STACK_RESOURCE} -lt 14 ]; } && [ ${ELAPSED_TIME} -lt ${LAUNCH_TIMEOUT} ]; do 
+        while { [ -n "${NON_COMPLETE_RES}" ] || [ ${TOTAL_STACK_RESOURCE} -lt 14 ]; } && [ ${ELAPSED_TIME} -lt ${LAUNCH_TIMEOUT} ]; do
 
             STACK_RESOURCE_STATUS=$(aws cloudformation describe-stack-resources --stack-name "${STACK_NAME}" | grep -oh '"ResourceStatus":.*",' | sed "s|\s*\"ResourceStatus\": \"||" | sed "s|\",||")
 
@@ -254,23 +255,23 @@ cloud-sim__start() {
             FAILED_RES=$(echo "${STACK_RESOURCE_STATUS}" | grep "\(ROLLBACK\|FAILED\|DELETE\)" | sed "s/\n//")
 
             # If the status returns a ROLLBACK or FAILED state at any point then launch has failed
-            if [ -n "${FAILED_RES}" ]; then 
+            if [ -n "${FAILED_RES}" ]; then
                 echo "Stack launch failed. Inspect AWS console for details. Remember to delete the stack after debugging!"
                 exit 1
             fi
 
             TOTAL_STACK_RESOURCE=$(echo "${STACK_RESOURCE_STATUS}" | wc -l)
-            
+
             LAUNCHED_RESOURCE_COUNT=$(echo "${STACK_RESOURCE_STATUS}" | grep "CREATE_COMPLETE" | wc -l)
 
             if [ ${PREV_LAUNCH_COUNT} -ne ${LAUNCHED_RESOURCE_COUNT} ]; then
                 echo "Launched Stack Resource: ${LAUNCHED_RESOURCE_COUNT}/${TOTAL_STACK_RESOURCE} Elapsed Sec: ${ELAPSED_TIME}"
-                
+
                 PREV_LAUNCH_COUNT=${LAUNCHED_RESOURCE_COUNT}
 
             elif [ $(( ELAPSED_TIME % 20 )) == 0 ]; then
                 echo "Waiting on resources. Launched Stack Resources: ${LAUNCHED_RESOURCE_COUNT}/${TOTAL_STACK_RESOURCE} Elapsed Sec: ${ELAPSED_TIME}"
-            fi 
+            fi
 
             ((i++))
 
@@ -301,7 +302,7 @@ cloud-sim__start() {
 
         # Save the stack name for cleanup
         echo "STACK_NAME=${STACK_NAME}" > ${CARMA_CLOUD_SIM_STACK_PATH}
-        
+
         # Print for user
         echo "##############################"
         echo ""
@@ -312,7 +313,7 @@ cloud-sim__start() {
         echo "Cloud9 IDE Address: ${CLOUD9_ADDRESS}"
         echo ""
         echo "##############################"
-    
+
     else
         echo -e "Required resources have not been setup. Please run \e[3m\e[1mcarma cloud-sim init-resources\e[0m first"
         exit 1
@@ -357,7 +358,7 @@ cloud-sim__init-resources() {
 
     if [ ! command -v "aws" &> /dev/null ]; then
         echo "aws cli is not installed. Attempting to install. This requires sudo."
-        
+
         curl "https://awscli.amazonaws.com/awscli-exe-linux-x86_64.zip" -o "awscliv2.zip"
         unzip awscliv2.zip
         sudo ./aws/install
@@ -365,7 +366,7 @@ cloud-sim__init-resources() {
         echo "NOTE: You need to manually configure the aws cli for your user access key. Refer to this video for instructions https://www.youtube.com/watch?v=Rp-A84oh4G8"
         exit 1
     fi
-    
+
     # Check if resources already exist - reset if all don't exist
     local vpc_success=0
     local igw_success=0
@@ -390,9 +391,9 @@ cloud-sim__init-resources() {
 
         # Create VPC
         vpc_id=$(aws ec2 create-vpc --cidr-block $CIDR_Block --tag-specifications 'ResourceType=vpc,Tags=[{Key=Name,Value=CDASim VPC}]' \
-        --query 'Vpc.VpcId' --output text) 
+        --query 'Vpc.VpcId' --output text)
 
-        aws ec2 modify-vpc-attribute --vpc-id $vpc_id --enable-dns-support 
+        aws ec2 modify-vpc-attribute --vpc-id $vpc_id --enable-dns-support
         aws ec2 modify-vpc-attribute --vpc-id $vpc_id --enable-dns-hostnames
         # Check the exit code to determine if the VPC creation was successful
         if [ $? -eq 0 ]; then
@@ -406,7 +407,7 @@ cloud-sim__init-resources() {
         # Create Internet Gateway
         igw_id=$(aws ec2 create-internet-gateway \
         --tag-specifications 'ResourceType=internet-gateway,Tags=[{Key=Name,Value=CDASim IGW}]' --query 'InternetGateway.InternetGatewayId' \
-        --output text) 
+        --output text)
 
         # Check the exit code to determine if the Internet Gateway creation was successful
         if [ $? -eq 0 ]; then
@@ -495,7 +496,7 @@ cloud-sim__cleanup-resources() {
 
     if [ ! command -v "aws" &> /dev/null ]; then
         echo "aws cli is not installed. Attempting to install. This requires sudo."
-        
+
         curl "https://awscli.amazonaws.com/awscli-exe-linux-x86_64.zip" -o "awscliv2.zip"
         unzip awscliv2.zip
         sudo ./aws/install
@@ -568,24 +569,24 @@ cloud-sim__help() {
 
 Please enter one of the following commands when using the cloud-sim extension:
     carma
-        cloud-sim: 
+        cloud-sim:
             config
-                - Set the configuration for AWS instances launched using the cloud-sim command. 
+                - Set the configuration for AWS instances launched using the cloud-sim command.
                   On first run creates a file at ${CARMA_CLOUD_SIM_CONFIG_PATH} containing these settings unencrypted.
                   Multiple or only one of the optional arguments can be specified.
                 -a
                     - AWS user ARN. Generally of the form arn:aws:iam::<user id number>:user/<IAM User (usually email)>
-                      For example: arn:aws:iam::928947697780:user/Bob.Marley@reggae.com 
-                -p 
-                    - Password to set for the default "ubuntu" user on the started EC2 instance. 
-                      This password will be used to login to the remote desktop session for the EC2 instance. 
+                      For example: arn:aws:iam::928947697780:user/Bob.Marley@reggae.com
+                -p
+                    - Password to set for the default "ubuntu" user on the started EC2 instance.
+                      This password will be used to login to the remote desktop session for the EC2 instance.
                 -v
                     - Default CARMA Platform version to install in the instance. Use "develop" to indicate the dev version.
-                      The full carma-config image name can also be specified instead.  
+                      The full carma-config image name can also be specified instead.
                       For example using " -x 1.0.1 " would pull the image usdotfhwastol/carma-config:carma-system-1.0.1
                       For example using " -x develop " would pull the image usdotfhwastoldev/carma-config:carla-integration-develop
-                      This option should only be specified if -i is not specified. 
-                -i 
+                      This option should only be specified if -i is not specified.
+                -i
                     - Specify the exact carma-config to use for launching the vehicle and simulation
                       For example " -i image usdotfhwastol/carma-config:carma-system-1.0.1 "
                       This option is an alternative to -v and should only be used if that option is not specified.
@@ -594,24 +595,24 @@ Please enter one of the following commands when using the cloud-sim extension:
                  Created resources are required will persist for all users in organization until `clean` is called.
             start
                 - Starts the cloud formation stack using the configurations specified by cloud-sim config and returns access information for the user.
-                  Saves the stack ARN to ${CARMA_CLOUD_SIM_STACK_PATH} for future reference by the stop command. 
-                  If the config is not fully defined returns an error. 
+                  Saves the stack ARN to ${CARMA_CLOUD_SIM_STACK_PATH} for future reference by the stop command.
+                  If the config is not fully defined returns an error.
                 -c [optional]
                     - If specified then the cloud formation template used to create the AWS instances will be repulled from the repository.
                       This happens automatically if the file does not exist. The cloud formation template is stored at ${CARMA_CLOUD_SIM_CLOUD_FORMATION_PATH}
             stop
                 - Shutsdown the current cloud formation stack started by cloud-sim start and stored in ${CARMA_CLOUD_SIM_STACK_PATH}
-                  If the stack is not availble returns a warning. 
+                  If the stack is not availble returns a warning.
             cleanup-resources
                 - Tries to shutdown the current cloud formation stack started by cloud-sim start and then deallocates resources created on init.
                   This command can be run independently to delete the created VPC, internet gateway, and route table"
             get-config
                 - Print the contents of the current configuration located at ${CARMA_CLOUD_SIM_CONFIG_PATH}
             status
-                - Returns the operational status of the cloud formation stacks aws resources. 
-                
+                - Returns the operational status of the cloud formation stacks aws resources.
+
             help - Display this information for cloud-sim sub-command
-        help - Display information for other available carma commands. 
+        help - Display information for other available carma commands.
 HELP
 }
 
@@ -624,4 +625,3 @@ carma__cloud-sim() {
         exit 1
     fi
 }
-

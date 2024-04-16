@@ -15,4 +15,3 @@ the License.
   <node pkg="platoon_control" type="platoon_control" name="platoon_control" />
   <test test-name="test_platoon_control" pkg="platoon_control" type="test_platoon_control" />
 </launch>
-

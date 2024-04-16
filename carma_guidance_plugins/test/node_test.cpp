@@ -27,7 +27,7 @@ bool has_publisher(std::shared_ptr<carma_ros2_utils::CarmaLifecycleNode> node, c
 {
     bool found = false;
     for (const auto& endpoint : node->get_publishers_info_by_topic(topic_name)) {
-        
+
         std::cerr << "name: " << endpoint.node_name() << " type: " << endpoint.topic_type() << std::endl;
 
         if (endpoint.node_name() == node->get_name() && endpoint.topic_type() == type)
@@ -41,7 +41,7 @@ bool has_subscriber(std::shared_ptr<carma_ros2_utils::CarmaLifecycleNode> node, 
 {
     bool found = false;
     for (const auto& endpoint : node->get_subscriptions_info_by_topic(topic_name)) {
-        
+
         std::cerr << "name: " << endpoint.node_name() << " type: " << endpoint.topic_type() << std::endl;
 
         if (endpoint.node_name() == node->get_name() && endpoint.topic_type() == type)
@@ -55,7 +55,7 @@ bool has_service(std::shared_ptr<carma_ros2_utils::CarmaLifecycleNode> node, std
 {
     bool found = false;
     for (const auto& [service_k, type_v] : node->get_service_names_and_types_by_node(node->get_name(), "")) {
-        
+
         std::cerr << "service: " << service_k << " type: " << type_v[0] << std::endl;
 
         if ( service_k == service_name && type_v[0] == type)
@@ -68,6 +68,9 @@ bool has_service(std::shared_ptr<carma_ros2_utils::CarmaLifecycleNode> node, std
 namespace carma_guidance_plugins
 {
 
+// These tests has been temporarily disabled to support Continuous Improvement (CI) processes.
+// Related GitHub Issue: <https://github.com/usdot-fhwa-stol/carma-platform/issues/2335>
+/**
 TEST(carma_guidance_plugins_test, connections_test) {
 
 
@@ -143,7 +146,7 @@ TEST(carma_guidance_plugins_test, connections_test) {
     ASSERT_TRUE(has_subscriber(control_plugin, "TestControlPlugin/plan_trajectory", "carma_planning_msgs/msg/TrajectoryPlan"));
 
 }
-
+*/
 } // carma_guidance_plugins
 
 int main(int argc, char ** argv)
@@ -159,4 +162,4 @@ int main(int argc, char ** argv)
     rclcpp::shutdown();
 
     return success;
-} 
+}

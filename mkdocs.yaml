@@ -1,0 +1,43 @@
+site_name: CARMA Platform
+repo_name: usdot-fhwa-stol/carma-platform
+repo_url: https://github.com/usdot-fhwa-stol/carma-platform
+
+markdown_extensions:
+  - admonition
+  - pymdownx.details
+  - pymdownx.highlight:
+      anchor_linenums: true
+      line_spans: __span
+      pygments_lang_class: true
+  - pymdownx.inlinehilite
+  - pymdownx.snippets
+  - pymdownx.superfences
+
+plugins:
+  - monorepo
+  - search
+
+theme:
+  features:
+    - content.code.copy
+    - navigation.indexes
+    - navigation.top
+  icon:
+    repo: fontawesome/brands/github
+  name: material
+  palette:
+    - scheme: default
+      primary: amber
+      accent: amber
+      toggle:
+        icon: material/weather-sunny
+        name: Switch to dark mode
+    - scheme: slate
+      primary: indigo
+      accent: indigo
+      toggle:
+        icon: material/weather-night
+        name: Switch to light mode
+
+nav:
+  - Overview: "index.md"
