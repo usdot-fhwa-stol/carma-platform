@@ -325,10 +325,10 @@ boost::optional<bool> LCIStrategicPlugin::canArriveAtGreenWithCertainty(const rc
     bool can_make_late_arrival = true;
 
     if (check_early)
-      can_make_early_arrival = (early_arrival_state_by_algo_optional.get().second == lanelet::CarmaTrafficSignalState::PROTECTED_MOVEMENT_ALLOWED || early_arrival_state_by_algo_optional.get().second == lanelet::CarmaTrafficSignalState::PERMISSIVE_MOVEMENT_ALLOWED);
+      can_make_early_arrival = (early_arrival_state_by_algo_optional.get().second == lanelet::CarmaTrafficSignalState::PERMISSIVE_MOVEMENT_ALLOWED);
 
     if (check_late)
-      can_make_late_arrival = (late_arrival_state_by_algo_optional.get().second == lanelet::CarmaTrafficSignalState::PROTECTED_MOVEMENT_ALLOWED  || late_arrival_state_by_algo_optional.get().second == lanelet::CarmaTrafficSignalState::PERMISSIVE_MOVEMENT_ALLOWED);
+      can_make_late_arrival = (late_arrival_state_by_algo_optional.get().second == lanelet::CarmaTrafficSignalState::PERMISSIVE_MOVEMENT_ALLOWED);
 
     // We will cross the light on the green phase even if we arrive early or late
     if (can_make_early_arrival && can_make_late_arrival)  // Green light
@@ -693,7 +693,7 @@ TrajectoryParams LCIStrategicPlugin::handleFailureCaseHelper(const lanelet::Carm
     }
     else
     {
-      if (upper_optional.get().second == lanelet::CarmaTrafficSignalState::PROTECTED_MOVEMENT_ALLOWED || upper_optional.get().second == lanelet::CarmaTrafficSignalState::PERMISSIVE_MOVEMENT_ALLOWED)
+      if (upper_optional.get().second == lanelet::CarmaTrafficSignalState::PERMISSIVE_MOVEMENT_ALLOWED)
       {
         RCLCPP_ERROR_STREAM(rclcpp::get_logger("lci_strategic_plugin"), "Detected Upper GREEN case");
         return_params = traj_upper;
@@ -712,7 +712,7 @@ TrajectoryParams LCIStrategicPlugin::handleFailureCaseHelper(const lanelet::Carm
     }
     else
     {
-      if (lower_optional.get().second == lanelet::CarmaTrafficSignalState::PROTECTED_MOVEMENT_ALLOWED || lower_optional.get().second == lanelet::CarmaTrafficSignalState::PERMISSIVE_MOVEMENT_ALLOWED)
+      if (lower_optional.get().second == lanelet::CarmaTrafficSignalState::PERMISSIVE_MOVEMENT_ALLOWED)
       {
         RCLCPP_ERROR_STREAM(rclcpp::get_logger("lci_strategic_plugin"), "Detected Lower GREEN case");
         return_params = traj_lower;
@@ -1098,7 +1098,7 @@ void LCIStrategicPlugin::planWhenWAITING(carma_planning_msgs::srv::PlanManeuvers
   if (config_.enable_carma_streets_connection && entering_time > current_state.stamp.seconds()) //uc3
     should_enter = false;
 
-  if (current_light_state_optional.get().second == lanelet::CarmaTrafficSignalState::PROTECTED_MOVEMENT_ALLOWED || current_light_state_optional.get().second == lanelet::CarmaTrafficSignalState::PERMISSIVE_MOVEMENT_ALLOWED &&
+  if (current_light_state_optional.get().second == lanelet::CarmaTrafficSignalState::PERMISSIVE_MOVEMENT_ALLOWED &&
         bool_optional_late_certainty.get() && should_enter) // if can make with certainty
   {
     transition_table_.signal(TransitEvent::RED_TO_GREEN_LIGHT);  // If the light is green send the light transition
