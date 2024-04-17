@@ -71,7 +71,7 @@ void GeofenceScheduler::addGeofence(std::shared_ptr<Geofence> gf_ptr)
 { 
   std::lock_guard<std::mutex> guard(mutex_);
 
-  RCLCPP_INFO_STREAM(rclcpp::get_logger("carma_wm_ctrl"), "Attempting to add Geofence with Id: " << gf_ptr->id_);
+  RCLCPP_ERROR_STREAM(rclcpp::get_logger("carma_wm_ctrl"), "Attempting to add Geofence with Id: " << gf_ptr->id_);
 
   // Create timer for next start time
   for (size_t schedule_idx = 0; schedule_idx < gf_ptr->schedules.size(); schedule_idx++)
@@ -112,7 +112,7 @@ void GeofenceScheduler::startGeofenceCallback(std::shared_ptr<Geofence> gf_ptr, 
   std::lock_guard<std::mutex> guard(mutex_);
   rclcpp::Time endTime = timerFactory_->now() + gf_ptr->schedules[schedule_id].control_span_;
 
-  RCLCPP_INFO_STREAM(rclcpp::get_logger("carma_wm_ctrl"), "Activating Geofence with Id: " << gf_ptr->id_ << ", which will end at:" << endTime.seconds());
+  RCLCPP_ERROR_STREAM(rclcpp::get_logger("carma_wm_ctrl"), "Activating Geofence with Id: " << gf_ptr->id_ << ", which will end at:" << endTime.seconds());
 
   active_callback_(gf_ptr);
 
@@ -133,7 +133,7 @@ void GeofenceScheduler::endGeofenceCallback(std::shared_ptr<Geofence> gf_ptr, co
 {
   std::lock_guard<std::mutex> guard(mutex_);
 
-  RCLCPP_INFO_STREAM(rclcpp::get_logger("carma_wm_ctrl"), "Deactivating Geofence with Id: " << gf_ptr->id_);
+  RCLCPP_ERROR_STREAM(rclcpp::get_logger("carma_wm_ctrl"), "Deactivating Geofence with Id: " << gf_ptr->id_);
 
   inactive_callback_(gf_ptr);
   timers_[timer_id].second = true;  // Mark timer for deletion

@@ -43,7 +43,7 @@ namespace guidance
 
   carma_ros2_utils::CallbackReturn GuidanceWorker::handle_on_configure(const rclcpp_lifecycle::State &)
   {
-    RCLCPP_INFO_STREAM(get_logger(), "GuidanceWorker trying to configure");
+    RCLCPP_ERROR_STREAM(get_logger(), "GuidanceWorker trying to configure");
 
     // Reset config
     config_ = Config();
@@ -51,7 +51,7 @@ namespace guidance
     // Load parameters
     get_parameter<double>("spin_rate_hz", config_.spin_rate_hz);
 
-    RCLCPP_INFO_STREAM(get_logger(), "Loaded params: " << config_);
+    RCLCPP_ERROR_STREAM(get_logger(), "Loaded params: " << config_);
 
     // Register runtime parameter update callback
     add_on_set_parameters_callback(std::bind(&GuidanceWorker::parameter_update_callback, this, std_ph::_1));
@@ -103,16 +103,20 @@ namespace guidance
                                       const std::shared_ptr<carma_planning_msgs::srv::SetGuidanceActive::Request> req,
                                       std::shared_ptr<carma_planning_msgs::srv::SetGuidanceActive::Response> resp) 
   {
+    RCLCPP_ERROR_STREAM(rclcpp::get_logger("guidance"),"Entered guidance activation callback");
     // Translate message type from GuidanceActiveRequest to SetEnableRobotic
     if(!req->guidance_active)
     {
+      RCLCPP_ERROR_STREAM(rclcpp::get_logger("guidance"),"Entered Not request guidance active");
       auto enable_robotic_request = std::make_shared<carma_driver_msgs::srv::SetEnableRobotic::Request>();
       enable_robotic_request->set = carma_driver_msgs::srv::SetEnableRobotic::Request::DISABLE;
       enable_client_->async_send_request(enable_robotic_request);
     }
-
+    
     gsm_.onSetGuidanceActive(req->guidance_active);
+    RCLCPP_ERROR_STREAM(rclcpp::get_logger("guidance"),"After SetGuidanceActive");
     resp->guidance_status = (gsm_.getCurrentState() == GuidanceStateMachine::ACTIVE);
+    RCLCPP_ERROR_STREAM(rclcpp::get_logger("guidance"),"Guidance status is: "<< int(resp->guidance_status));
     return true;  
   }
 

@@ -88,9 +88,9 @@ void InLaneCruisingPlugin::plan_trajectory_callback(
   auto points_and_target_speeds = basic_autonomy::waypoint_generation::create_geometry_profile(maneuver_plan, std::max((double)0, current_downtrack - config_.back_distance),
                                                                          wm_, ending_state_before_buffer_, req->vehicle_state, wpg_general_config, wpg_detail_config);
 
-  RCLCPP_DEBUG_STREAM(nh_->get_logger(), "points_and_target_speeds: " << points_and_target_speeds.size());
+  RCLCPP_ERROR_STREAM(nh_->get_logger(), "points_and_target_speeds: " << points_and_target_speeds.size());
 
-  RCLCPP_DEBUG_STREAM(nh_->get_logger(), "PlanTrajectory");
+  RCLCPP_ERROR_STREAM(nh_->get_logger(), "PlanTrajectory");
 
   carma_planning_msgs::msg::TrajectoryPlan original_trajectory;
   original_trajectory.header.frame_id = "map";
@@ -129,7 +129,7 @@ void InLaneCruisingPlugin::plan_trajectory_callback(
   std::chrono::system_clock::time_point end_time = std::chrono::system_clock::now();  // Planning complete
 
   auto duration = end_time - start_time;
-  RCLCPP_DEBUG_STREAM(nh_->get_logger(), "ExecutionTime: " << std::chrono::duration<double>(duration).count());
+  RCLCPP_ERROR_STREAM(nh_->get_logger(), "ExecutionTime: " << std::chrono::duration<double>(duration).count());
 }
 
 void InLaneCruisingPlugin::set_yield_client(carma_ros2_utils::ClientPtr<carma_planning_msgs::srv::PlanTrajectory> client)

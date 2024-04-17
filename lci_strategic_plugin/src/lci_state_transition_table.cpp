@@ -117,7 +117,7 @@ void LCIStrategicStateTransitionTable::signalWhenDEPARTING(TransitEvent signal)
 
 void LCIStrategicStateTransitionTable::logDebugSignal(TransitEvent signal) const
 {
-  RCLCPP_DEBUG_STREAM(rclcpp::get_logger("lci_strategic_plugin"), "LCIStrategicStateTransitionTable received unsupported signal of " << signal << " while in state "
+  RCLCPP_ERROR_STREAM(rclcpp::get_logger("lci_strategic_plugin"), "LCIStrategicStateTransitionTable received unsupported signal of " << signal << " while in state "
                                                                                   << state_);
 }
 
@@ -128,7 +128,7 @@ void LCIStrategicStateTransitionTable::setAndLogState(TransitState new_state, Tr
     return;  // State was unchanged no need to log or trigger callbacks
   }
 
-  RCLCPP_INFO_STREAM(rclcpp::get_logger("lci_strategic_plugin"), "LCIStrategicStateTransitionTable changed LCIStrategic Strategic Plugin state from "
+  RCLCPP_ERROR_STREAM(rclcpp::get_logger("lci_strategic_plugin"), "LCIStrategicStateTransitionTable changed LCIStrategic Strategic Plugin state from "
                   << state_ << " to " << new_state << " because of signal " << source_signal);
  
   TransitState prev_state = state_;

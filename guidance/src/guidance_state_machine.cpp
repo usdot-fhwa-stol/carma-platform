@@ -111,12 +111,15 @@ namespace guidance
     }
 
     void GuidanceStateMachine::onSetGuidanceActive(bool msg)
-    {
+    {   
+        RCLCPP_ERROR_STREAM(rclcpp::get_logger("guidance"),"Entering OnSetGuidanceActive");
         if(msg)
         {
+            RCLCPP_ERROR_STREAM(rclcpp::get_logger("guidance"),"Entering IF - setting Guidance ACTIVATED Signal");
             onGuidanceSignal(Signal::ACTIVATED);
         } else
         {
+            RCLCPP_ERROR_STREAM(rclcpp::get_logger("guidance"),"Entering ELSE - setting Guidance ACTIVATED Signal");
             onGuidanceSignal(Signal::DISENGAGED);
         }
         

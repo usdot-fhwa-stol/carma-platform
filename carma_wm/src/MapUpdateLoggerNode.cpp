@@ -161,7 +161,7 @@ carma_debug_ros2_msgs::msg::LaneletIdRegulatoryElementPair MapUpdateLogger::pair
 
 carma_debug_ros2_msgs::msg::MapUpdateReadable MapUpdateLogger::mapUpdateCallback(const autoware_lanelet2_msgs::msg::MapBin& update) {
   
-  RCLCPP_INFO_STREAM(get_logger(), "Recieved map update ");
+  RCLCPP_ERROR_STREAM(get_logger(), "Recieved map update ");
 
   auto control = std::make_shared<carma_wm::TrafficControl>(carma_wm::TrafficControl());
   carma_wm::fromBinMsg(update, control);

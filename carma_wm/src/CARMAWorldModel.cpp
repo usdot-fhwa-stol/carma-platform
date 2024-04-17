@@ -434,13 +434,13 @@ namespace carma_wm
 
     if (!route_)
     {
-      RCLCPP_DEBUG_STREAM(rclcpp::get_logger("carma_wm"), "Route has not yet been loaded");
+      RCLCPP_ERROR_STREAM(rclcpp::get_logger("carma_wm"), "Route has not yet been loaded");
       return boost::none;
     }
 
     if (downtrack < 0 || downtrack > getRouteEndTrackPos().downtrack)
     {
-      RCLCPP_DEBUG_STREAM(rclcpp::get_logger("carma_wm"), "Tried to convert a downtrack of: " << downtrack
+      RCLCPP_ERROR_STREAM(rclcpp::get_logger("carma_wm"), "Tried to convert a downtrack of: " << downtrack
                                                            << " to map point, but it did not fit in route bounds of "
                                                            << getRouteEndTrackPos().downtrack);
       return boost::none;
@@ -566,7 +566,7 @@ namespace carma_wm
     if (!semantic_map_)
     {
 
-      RCLCPP_INFO_STREAM(rclcpp::get_logger("carma_wm"), "First time map is set in carma_wm. Routing graph will be recomputed reguardless of method inputs.");
+      RCLCPP_ERROR_STREAM(rclcpp::get_logger("carma_wm"), "First time map is set in carma_wm. Routing graph will be recomputed reguardless of method inputs.");
 
       recompute_routing_graph = true;
     }
@@ -578,7 +578,7 @@ namespace carma_wm
     if (recompute_routing_graph)
     {
 
-      RCLCPP_INFO_STREAM(rclcpp::get_logger("carma_wm"), "Building routing graph");
+      RCLCPP_ERROR_STREAM(rclcpp::get_logger("carma_wm"), "Building routing graph");
 
       auto tr = getTrafficRules(participant_type_);
 
@@ -592,13 +592,13 @@ namespace carma_wm
       lanelet::routing::RoutingGraphUPtr map_graph = lanelet::routing::RoutingGraph::build(*semantic_map_, *traffic_rules);
       map_routing_graph_ = std::move(map_graph);
 
-      RCLCPP_INFO_STREAM(rclcpp::get_logger("carma_wm"), "Done building routing graph");
+      RCLCPP_ERROR_STREAM(rclcpp::get_logger("carma_wm"), "Done building routing graph");
     }
   }
 
   void CARMAWorldModel::setRoutingGraph(LaneletRoutingGraphPtr graph) {
 
-    RCLCPP_INFO_STREAM(rclcpp::get_logger("carma_wm"), "Setting the routing graph with user or listener provided graph");
+    RCLCPP_ERROR_STREAM(rclcpp::get_logger("carma_wm"), "Setting the routing graph with user or listener provided graph");
 
     map_routing_graph_ = graph;
   }
@@ -1451,15 +1451,27 @@ namespace carma_wm
 
       // Force the current year to start of epoch if it is simulation
       if (is_simulation)
-        curr_year = 1970;
+        curr_year = 2024;
 
       auto curr_year_start_boost(boost::posix_time::time_from_string(std::to_string(curr_year)+ "-01-01 00:00:00.000"));
+
+      // rclcpp::Clock system_clock(RCL_SYSTEM_TIME);
+      // rclcpp::Time start_time = system_clock.now();
+      // boost::posix_time::ptime curr_minute_stamp_boost = lanelet::time::timeFromSec(start_time.seconds());
 
       auto curr_minute_stamp_boost = curr_year_start_boost + boost::posix_time::minutes((int)moy);
 
       int hours_of_day = curr_minute_stamp_boost.time_of_day().hours();
       int curr_month = curr_minute_stamp_boost.date().month();
       int curr_day = curr_minute_stamp_boost.date().day();
+
+      int mins_of_day = curr_minute_stamp_boost.time_of_day().minutes();
+      RCLCPP_ERROR_STREAM(rclcpp::get_logger("carma_wm")," Min end calculations. ");
+      RCLCPP_ERROR_STREAM(rclcpp::get_logger("carma_wm")," Curr Year:  " <<curr_year);
+      RCLCPP_ERROR_STREAM(rclcpp::get_logger("carma_wm")," curr_month: " << curr_month);
+      RCLCPP_ERROR_STREAM(rclcpp::get_logger("carma_wm")," curr_day: "<< curr_day);
+      RCLCPP_ERROR_STREAM(rclcpp::get_logger("carma_wm")," Hour of day: "<< hours_of_day);
+      RCLCPP_ERROR_STREAM(rclcpp::get_logger("carma_wm")," Minutes of day: "<< mins_of_day);
 
       auto curr_day_boost(boost::posix_time::time_from_string(std::to_string(curr_year) + "/" + std::to_string(curr_month) + "/" + std::to_string(curr_day) +" 00:00:00.000")); // GMT is the standard
       auto curr_hour_boost = curr_day_boost + boost::posix_time::hours(hours_of_day);
@@ -1475,15 +1487,37 @@ namespace carma_wm
 
   void CARMAWorldModel::processSpatFromMsg(const carma_v2x_msgs::msg::SPAT &spat_msg, bool use_sim_time)
   {
+    // Get offset between sim clock and host clock. At time of receiving the message
+    //Update spat times by this offset
+    RCLCPP_ERROR_STREAM(rclcpp::get_logger("carma_wm"),"Entering processSpatFromMsg");
+
+    boost::posix_time::time_duration spat_time_offset_posix = boost::posix_time::seconds(0);
+    if (use_sim_time && ros1_clock_){
+      
+      rclcpp::Clock system_clock(RCL_SYSTEM_TIME);
+      rclcpp::Time start_time = system_clock.now();
+      // auto system_time_now = rclcpp::Clock(RCL_SYSTEM_TIME).now().seconds();
+      RCLCPP_ERROR_STREAM(rclcpp::get_logger("carma_wm"),"Got system time: "<< std::to_string(start_time.seconds()));
+
+      auto spat_time_offset = start_time.seconds() - ros1_clock_.value().seconds();
+      RCLCPP_ERROR_STREAM(rclcpp::get_logger("carma_wm")," Calculated Offset: "<< std::to_string(spat_time_offset));
+
+      spat_time_offset_posix = lanelet::time::durationFromSec(spat_time_offset);
+
+    }
+    else{
+      RCLCPP_ERROR_STREAM(rclcpp::get_logger("carma_wm"), "Ros1 clock doesn't exist");
+    }
+
     if (!semantic_map_)
     {
-      RCLCPP_INFO_STREAM(rclcpp::get_logger("carma_wm"), "Map is not set yet.");
+      RCLCPP_ERROR_STREAM(rclcpp::get_logger("carma_wm"), "Map is not set yet.");
       return;
     }
 
     if (spat_msg.intersection_state_list.empty())
     {
-      RCLCPP_WARN_STREAM(rclcpp::get_logger("carma_wm"), "No intersection_state_list in the newly received SPAT msg. Returning...");
+      RCLCPP_ERROR_STREAM(rclcpp::get_logger("carma_wm"), "No intersection_state_list in the newly received SPAT msg. Returning...");
       return;
     }
 
@@ -1494,6 +1528,7 @@ namespace carma_wm
       {
         lanelet::Id curr_light_id = getTrafficSignalId(curr_intersection.id.id, current_movement_state.signal_group);
 
+        RCLCPP_ERROR_STREAM(rclcpp::get_logger("carma_wm"), "In intersection list for light id: "<<int(curr_light_id));
         if (curr_light_id == lanelet::InvalId)
         {
           continue;
@@ -1509,7 +1544,7 @@ namespace carma_wm
         // reset states if the intersection's geometry changed
         if (curr_light->revision_ != curr_intersection.revision)
         {
-          RCLCPP_DEBUG_STREAM(rclcpp::get_logger("carma_wm"), "Received a new intersection geometry. intersection_id: " << (int)curr_intersection.id.id << ", and signal_group_id: " << (int)current_movement_state.signal_group);
+          RCLCPP_ERROR_STREAM(rclcpp::get_logger("carma_wm"), "Received a new intersection geometry. intersection_id: " << (int)curr_intersection.id.id << ", and signal_group_id: " << (int)current_movement_state.signal_group);
           sim_.traffic_signal_start_times_[curr_intersection.id.id][current_movement_state.signal_group].clear();
           sim_.traffic_signal_states_[curr_intersection.id.id][current_movement_state.signal_group].clear();
         }
@@ -1517,12 +1552,12 @@ namespace carma_wm
         // all maneuver types in same signal group is currently expected to share signal timing, so only 0th index is used when setting states
         if (current_movement_state.movement_event_list.empty())
         {
-          RCLCPP_DEBUG_STREAM(rclcpp::get_logger("carma_wm"), "Movement_event_list is empty . intersection_id: " << (int)curr_intersection.id.id << ", and signal_group_id: " << (int)current_movement_state.signal_group);
+          RCLCPP_ERROR_STREAM(rclcpp::get_logger("carma_wm"), "Movement_event_list is empty . intersection_id: " << (int)curr_intersection.id.id << ", and signal_group_id: " << (int)current_movement_state.signal_group);
           continue;
         }
         else
         {
-          RCLCPP_DEBUG_STREAM(rclcpp::get_logger("carma_wm"), "Movement_event_list size: " << current_movement_state.movement_event_list.size() << " . intersection_id: " << (int)curr_intersection.id.id << ", and signal_group_id: " << (int)current_movement_state.signal_group);
+          RCLCPP_ERROR_STREAM(rclcpp::get_logger("carma_wm"), "Movement_event_list size: " << current_movement_state.movement_event_list.size() << " . intersection_id: " << (int)curr_intersection.id.id << ", and signal_group_id: " << (int)current_movement_state.signal_group);
         }
 
         curr_light->revision_ = curr_intersection.revision; // valid SPAT msg
@@ -1532,20 +1567,34 @@ namespace carma_wm
 
         for(auto current_movement_event:current_movement_state.movement_event_list)
         {
+          RCLCPP_ERROR_STREAM(rclcpp::get_logger("carma_wm"),"Current start time for spat is : " << current_movement_event.timing.start_time);
           // raw min_end_time in seconds measured from the most recent full hour
           boost::posix_time::ptime min_end_time_dynamic = lanelet::time::timeFromSec(current_movement_event.timing.min_end_time);
           boost::posix_time::ptime start_time_dynamic = lanelet::time::timeFromSec(current_movement_event.timing.start_time);
+          
+            // RCLCPP_ERROR_STREAM(rclcpp::get_logger("carma_wm"), "Before min end convertor. intersection id: " << (int)curr_intersection.id.id << ", signal: " << (int)current_movement_state.signal_group
+            // << ", start_time: " << std::to_string(lanelet::time::toSec(start_time_dynamic))
+            // << ", end_time: " << std::to_string(lanelet::time::toSec(min_end_time_dynamic)));
+
 
           min_end_time_dynamic=min_end_time_converter_minute_of_year(min_end_time_dynamic,curr_intersection.moy_exists,curr_intersection.moy, use_sim_time); // Accounting minute of the year
           start_time_dynamic=min_end_time_converter_minute_of_year(start_time_dynamic,curr_intersection.moy_exists,curr_intersection.moy, use_sim_time); // Accounting minute of the year
 
+          RCLCPP_ERROR_STREAM(rclcpp::get_logger("carma_wm"), "Before subtracting offset - intersection id: " << (int)curr_intersection.id.id << ", signal: " << (int)current_movement_state.signal_group
+            << ", start_time: " << std::to_string(lanelet::time::toSec(start_time_dynamic))
+            << ", end_time: " << std::to_string(lanelet::time::toSec(min_end_time_dynamic)));
+          
+          min_end_time_dynamic -= spat_time_offset_posix;
+          start_time_dynamic -= spat_time_offset_posix;
+          
+          
           auto received_state_dynamic = static_cast<lanelet::CarmaTrafficSignalState>(current_movement_event.event_state.movement_phase_state);
 
           sim_.traffic_signal_states_[curr_intersection.id.id][current_movement_state.signal_group].push_back(std::make_pair(min_end_time_dynamic, received_state_dynamic));
           sim_.traffic_signal_start_times_[curr_intersection.id.id][current_movement_state.signal_group].push_back(
                               start_time_dynamic);
 
-          RCLCPP_DEBUG_STREAM(rclcpp::get_logger("carma_wm"), "intersection id: " << (int)curr_intersection.id.id << ", signal: " << (int)current_movement_state.signal_group
+          RCLCPP_ERROR_STREAM(rclcpp::get_logger("carma_wm"), "intersection id: " << (int)curr_intersection.id.id << ", signal: " << (int)current_movement_state.signal_group
             << ", start_time: " << std::to_string(lanelet::time::toSec(start_time_dynamic))
             << ", end_time: " << std::to_string(lanelet::time::toSec(min_end_time_dynamic))
             << ", state: " << received_state_dynamic);

@@ -62,7 +62,7 @@ TEST(TrafficControl, TrafficControlBinMsgTest)
   autoware_lanelet2_msgs::msg::MapBin gf_obj_msg;
   
   auto send_data = std::make_shared<carma_wm::TrafficControl>(carma_wm::TrafficControl(gf_ptr->id_, gf_ptr->update_list_, gf_ptr->remove_list_, {ll_1}));
-  RCLCPP_INFO(rclcpp::get_logger("carma_wm::TrafficControlTest"), "Below null pointer error message is expected");
+  RCLCPP_ERROR(rclcpp::get_logger("carma_wm::TrafficControlTest"), "Below null pointer error message is expected");
   auto null = nullptr;
   carma_wm::toBinMsg(send_data, null);
   ASSERT_EQ(null, nullptr);
@@ -70,7 +70,7 @@ TEST(TrafficControl, TrafficControlBinMsgTest)
   
   // at map users
   auto data_received = std::make_shared<carma_wm::TrafficControl>(carma_wm::TrafficControl());
-  RCLCPP_INFO(rclcpp::get_logger("carma_wm::TrafficControlTest"), "Below null pointer error message is expected");
+  RCLCPP_ERROR(rclcpp::get_logger("carma_wm::TrafficControlTest"), "Below null pointer error message is expected");
   carma_wm::fromBinMsg(gf_obj_msg, null);
   ASSERT_EQ(null, nullptr);
   carma_wm::fromBinMsg(gf_obj_msg, data_received);

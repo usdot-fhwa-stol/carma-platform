@@ -33,8 +33,8 @@ fi
 
 cd ~/carma_ws
 
-echo "Installing multiple object tracking dependencies"
-sudo ./src/multiple_object_tracking/scripts/install_dependencies.sh
+# echo "Installing multiple object tracking dependencies"
+# sudo ./src/multiple_object_tracking/scripts/install_dependencies.sh
 
 sudo mkdir -p /opt/carma # Create install directory
 sudo chown carma /opt/carma # Set owner to expose permissions for build
@@ -73,7 +73,7 @@ echo "Building ROS2 CARMA Components"
 if [[ ! -z "$ROS1_PACKAGES$ROS2_PACKAGES" ]]; then
     if [[ ! -z "$ROS2_PACKAGES" ]]; then
         echo "Incrementally building ROS2 packages: $ROS2_PACKAGES"
-        colcon build --install-base /opt/carma/install_ros2 --cmake-args -DCMAKE_BUILD_TYPE=Release --packages-above $ROS2_PACKAGES
+        colcon build --install-base /opt/carma/install_ros2 --cmake-args -DCMAKE_BUILD_TYPE=Release --packages-select $ROS2_PACKAGES
     else
         echo "Build type is incremental but no ROS2 packages specified, skipping ROS2 build..."
     fi

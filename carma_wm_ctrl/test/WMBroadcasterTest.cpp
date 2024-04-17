@@ -436,7 +436,7 @@ TEST(WMBroadcaster, routeCallbackMessage)
   route_msg.route_path_lanelet_ids.push_back(1346);
   route_msg.route_path_lanelet_ids.push_back(1349);
 
-  RCLCPP_INFO_STREAM(rclcpp::get_logger("carma_wm_ctrl"), "This is a test: ");
+  RCLCPP_ERROR_STREAM(rclcpp::get_logger("carma_wm_ctrl"), "This is a test: ");
   
   size_t base_map_call_count = 0;
   WMBroadcaster wmb(
@@ -455,7 +455,7 @@ TEST(WMBroadcaster, routeCallbackMessage)
   
   //Test throw exceptions
   ASSERT_THROW(wmb.routeCallbackMessage(std::make_unique<carma_planning_msgs::msg::Route>(route_msg)), lanelet::InvalidObjectStateError);
-  RCLCPP_INFO_STREAM(rclcpp::get_logger("carma_wm_ctrl"), "Throw Exceptions Test Passed.");
+  RCLCPP_ERROR_STREAM(rclcpp::get_logger("carma_wm_ctrl"), "Throw Exceptions Test Passed.");
   
   // Load vector map from a file start 
   std::string file = "resource/test_vector_map1.osm";
@@ -1433,7 +1433,7 @@ TEST(WMBroadcaster, currentLocationCallback)
       [](const carma_perception_msgs::msg::CheckActiveGeofence& active_pub_){},
       timer, [](const carma_v2x_msgs::msg::MobilityOperation& tcm_ack_pub_){});
 
-  RCLCPP_INFO_STREAM(rclcpp::get_logger("carma_wm_ctrl"), "Throw Exceptions Test Passed.");
+  RCLCPP_ERROR_STREAM(rclcpp::get_logger("carma_wm_ctrl"), "Throw Exceptions Test Passed.");
 
   // Get and convert map to binary message
   auto map = carma_wm::getDisjointRouteMap();
@@ -2675,7 +2675,7 @@ TEST(WMBroadcaster, createWorkzoneGeometry)
   // update the map with new lanelets (mapUpdateCallback should follow this pattern as well)
   for(auto llt : gf_ptr->lanelet_additions_)
   {
-    RCLCPP_INFO_STREAM(rclcpp::get_logger("carma_wm_ctrl"), "Adding llt with id:" << llt.id());
+    RCLCPP_ERROR_STREAM(rclcpp::get_logger("carma_wm_ctrl"), "Adding llt with id:" << llt.id());
     auto left = llt.leftBound3d(); //new lanelet coming in
     for (int i = 0; i < left.size(); i ++)
     {
@@ -2833,7 +2833,7 @@ ASSERT_EQ(value, p1);
   sample_proj_string.data = proj_string;
   wmb.geoReferenceCallback(std::make_unique<std_msgs::msg::String>(sample_proj_string));
 
-  RCLCPP_INFO_STREAM(rclcpp::get_logger("carma_wm_ctrl"), "Map Vehicle Participation Type Test Complete.");
+  RCLCPP_ERROR_STREAM(rclcpp::get_logger("carma_wm_ctrl"), "Map Vehicle Participation Type Test Complete.");
 
   
 
