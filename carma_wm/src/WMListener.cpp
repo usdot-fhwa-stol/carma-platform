@@ -68,7 +68,7 @@ WMListener::WMListener(
   RCLCPP_INFO_STREAM(node_logging->get_logger(), "Loaded config speed limit: " << config_speed_limit_param.as_double());
   RCLCPP_INFO_STREAM(node_logging->get_logger(), "Loaded vehicle participant type: " << participant_param.as_string());
   RCLCPP_INFO_STREAM(node_logging->get_logger(), "Is using simulation time? : " << use_sim_time_param.as_bool());
-  RCLCPP_INFO_STREAM(node_logging->get_logger(), "Is SPaT using system time? : " << is_spat_wall_time_param.as_bool());
+  RCLCPP_INFO_STREAM(node_logging->get_logger(), "Is SPaT using wall time? : " << is_spat_wall_time_param.as_bool());
 
 
   setConfigSpeedLimit(config_speed_limit_param.as_double());
