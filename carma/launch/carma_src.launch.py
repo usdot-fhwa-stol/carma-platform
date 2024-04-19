@@ -287,7 +287,8 @@ def generate_launch_description():
                     'tactical_plugins_to_validate' : tactical_plugins_to_validate,
                     'control_plugins_to_validate' : control_plugins_to_validate,
                     'subsystem_controller_param_file' : [vehicle_config_dir, '/SubsystemControllerParams.yaml'],
-                    'use_sim_time' : use_sim_time
+                    'use_sim_time' : use_sim_time,
+                    'is_spat_wall_time' : is_spat_wall_time
                 }.items()
             ),
         ]
