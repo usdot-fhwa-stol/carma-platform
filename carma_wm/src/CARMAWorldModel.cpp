@@ -1442,7 +1442,7 @@ namespace carma_wm
     {
       // NOTE: If carma-platform is running in simulation with clock synced to sim time but the incoming spat information is based on wall clock
       // the spat signal phase time must be offset to sim time.
-      wall_time_offset_in_seconds = (std::chrono::system_clock::now().time_since_epoch()).count() - ros1_clock_.value().seconds();
+      wall_time_offset_in_seconds = (std::chrono::duration<double>(std::chrono::system_clock::now().time_since_epoch()).count()) - ros1_clock_.value().seconds();
     }
 
     min_end_time += lanelet::time::durationFromSec(simulation_time_difference_in_seconds);
