@@ -107,6 +107,13 @@ def generate_launch_description():
         description = "True of simulation mode is on"
     )
 
+    is_spat_wall_time = LaunchConfiguration('is_spat_wall_time')
+    declare_is_spat_wall_time_arg = DeclareLaunchArgument(
+        name = 'is_spat_wall_time',
+        default_value = 'True',
+        description = "True if SPaT is being published based on wall clock"
+    )
+
     #Declare the route file folder launch argument
     route_file_folder = LaunchConfiguration('route_file_folder')
     declare_route_file_folder = DeclareLaunchArgument(
@@ -330,6 +337,7 @@ def generate_launch_description():
         declare_vehicle_characteristics_param_file_arg,
         declare_vehicle_config_param_file_arg,
         declare_use_sim_time_arg,
+        declare_is_spat_wall_time_arg,
         declare_route_file_folder,
         declare_enable_guidance_plugin_validator,
         declare_strategic_plugins_to_validate,
