@@ -5,9 +5,9 @@ Version 4.5.0, released April 10th, 2024
 ----------------------------------------
 
 ### **Summary**
-This release represents an advancement in leveraging cooperative perception and cooperative driving automation (CDA) to enhance the safety of Vulnerable Road Users (VRU) at Signalized Intersections demonstrated using CDASim. Key features include the implementation of cooperative perception utilizing both infrastructure and vehicle sensors, along with data fusion (DF) and the encoding and decoding of sensor data sharing messages (SDSM). These advancements enable effective sharing of VRU state information collected by infrastructure sensors with nearby connected road users, particularly CDA-equipped vehicles, thereby establishing a state of Cooperative Perception (CP). The primary goal is to improve overall road safety, particularly by reducing the risk of collisions between vehicles and VRUs such as pedestrians and cyclists.
+This release represents an advancement in leveraging cooperative perception and cooperative driving automation (CDA) to enhance the safety of Vulnerable Road Users (VRU) at Signalized Intersections demonstrated using CDASim. Key features include the implementation of cooperative perception utilizing both infrastructure and vehicle sensors, along with data fusion (DF) and the encoding and decoding of sensor data sharing messages (SDSM). These advancements enable effective sharing of VRU state information collected by infrastructure sensors with nearby connected road users, particularly CDA-equipped vehicles, thereby establishing a state of Cooperative Perception (CP). The primary goal is to improve overall road safety, particularly by reducing the risk of collisions between vehicles and VRUs such as pedestrians and cyclists.It is important to note that the functionalities developed in this release were only tested in simulation environment, and currently not all of them are directly portable to real-life environment yet.
 
-### **CDA Simulation** 
+### **CDA Sim** 
 This release introduces new functionalities of CDASim that includes the capability to spawn sensors in CARLA and transmit detection data to vehicle and infrastructure actors. It also enhances the functionality of CARLA Scenario Runner, allowing for the configuration of CARLA scenarios and the collection of scenario metrics.
 
 Enhancements in this release: 
@@ -85,6 +85,8 @@ CARMA Builds is a new component of the CARMA ecosystem, which enables a coordina
 
 ### **CARMA Streets** 
 
+Main new functionality in CARMA Streets is that it can now generate J2334 Sensor Data Sharing Message from simulation sensor detected data. It also received further improvements such as a new dependency on CARMA Builds to efficiently pull from common base images and minor improvements on time synchronization, data collection, and json parsing.
+
 Enhancements in this release: 
 
 -	PR 341: Added functionality to the TSC Service to periodically log vehicle and pedestrian call information in easily processable format for the Intersection Safety Challenge (ISC) data collection. Added a logger to log pedestrian and vehicle information in the following csv format. 
@@ -103,6 +105,8 @@ Fixes in this release:
 -	PR 397: Fixed Kafka data collection script
 
 ### **CARMA Platform** 
+
+Main improvements for CARMA Platform this release include new package of cooperative perception stack that can process both object list data from local perception and from J2334 SDSM to provide multiple object tracking functionality. It also received further improvements in its world model and motion prediction stack such that it yields to more objects than only vehicles and movements not along the road. This feature is tested in a signalized intersection in CARLA along with its traffic signal following behaviors using J2735 SPAT and MAP.
 
 Enhancements in this release: 
 
