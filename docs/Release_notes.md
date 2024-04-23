@@ -5,14 +5,16 @@ Version 4.5.0, released April 10th, 2024
 ----------------------------------------
 
 ### **Summary**
-This release represents an advancement in leveraging cooperative perception and cooperative driving automation (CDA) to enhance the safety of Vulnerable Road Users (VRU) at Signalized Intersections demonstrated using CDASim. Key features include the implementation of cooperative perception utilizing both infrastructure and vehicle sensors, along with data fusion (DF) and the encoding and decoding of sensor data sharing messages (SDSM). These advancements enable effective sharing of VRU state information collected by infrastructure sensors with nearby connected road users, particularly CDA-equipped vehicles, thereby establishing a state of Cooperative Perception (CP). The primary goal is to improve overall road safety, particularly by reducing the risk of collisions between vehicles and VRUs such as pedestrians and cyclists.It is important to note that the functionalities developed in this release were only tested in simulation environment, and currently not all of them are directly portable to real-life environment yet.
+
+This release represents a significant advancement in utilizing cooperative perception and cooperative driving automation (CDA) to enhance the safety of Vulnerable Road Users (VRU) at signalized intersections, as demonstrated with CDASim. Key features include the implementation of cooperative perception using both infrastructure and vehicle sensors, along with data fusion (DF) and the encoding and decoding of sensor data sharing messages (SDSM). These advancements facilitate the effective sharing of VRU state information, collected by infrastructure sensors, with nearby connected road users, particularly those in CDA-equipped vehicles. This establishes a state of Cooperative Perception (CP). The primary goal is to improve overall road safety, especially by reducing the risk of collisions between vehicles and VRUs such as pedestrians and cyclists. It is important to note that the functionalities developed in this release were only tested in a simulation environment, and not all of them are currently directly portable to a real-life environment.
 
 ### **CDA Sim** 
-This release introduces new functionalities of CDASim that includes the capability to spawn sensors in CARLA and transmit detection data to vehicle and infrastructure actors. It also enhances the functionality of CARLA Scenario Runner, allowing for the configuration of CARLA scenarios and the collection of scenario metrics.
+
+This release introduces new functionalities of CDASim, including the ability to spawn sensors in CARLA and transmit detection data to vehicle and infrastructure actors. It also introduces a new functionality of the CARLA Scenario Runner, allowing for the configuration of CARLA scenarios and the collection of scenario metrics.
 
 Enhancements in this release: 
 
-- Issue 211: CARLA Sensor Integration. Add functionality to CDASim to create and poll detection data from sensors spawned in CARLA. Currently, Lidar is the only CARLA Sensor type currently supported. This includes development of CARLA Ambassador functionality to request creation of sensors based on received SensorRegistration interactions and to publish Detection interactions for each detection from the created sensor.
+- Issue 211: CARLA Sensor Integration: This enhancement adds functionality to CDASim to create and poll detection data from sensors deployed in CARLA. Currently, Lidar is the only supported sensor type integrated with CARLA. The update includes the development of CARLA Ambassador functionality, which requests the creation of sensors based on received SensorRegistration Interactions and publishes Detection Interactions for each detection from the created sensor.
 - PR 164: Updated logback settings to include fully qualified class name and line number to log statements.
 - PR 170: Added cfg that the carma-config is configured to look for at the moment. This is sumo intersection 916 fixed signal configuration.
 -	PR 182: Enhanced behavior of the sumo traffic light for TRB scenario.
@@ -42,6 +44,8 @@ Known Issues related to this release:
 
 ### **CARMA-CARLA Integration Tool** 
 
+This release introduces CARLA Sensor Integration on object-level data using the carla-sensor-lib library (new repository in this release as well) for CARMA vehicles. It also updates outdated packages, adapts to the ROS2 naming convention in line with the CARMA Platform's updates, and improves the stability of the tool. This enhancement leverages scripts to wait for CARLA, eliminating the need for fine-tuned sleep commands.
+
 Enhancement in this release: 
 
 -	Issue 38 / PR 40: Renamed plugins to accommodate ROS2 naming convention in carma-platform
@@ -63,29 +67,31 @@ Enhancement in the release:
 
 ### **CARLA Sensor Library** 
 
-The carla-sensor-lib is a new repository and docker image for this release. This library provides functions to create CARLA sensors with noise modeling and retrieve detection information from created sensors. Additionally this repository creates a docker image which deploys and XML RPC server that allows clients to create sensor in CARLA and poll their detections. This new feature is provided to enable object detection for CDASim deployment using CARLA's existing sensor and object representation. The data will be feed to the CARMA-Platform via the CARLA CARMA Integration tool, and to CDASim to expose the data to other integrated simulators or software systems under test.
+The carla-sensor-lib is a new repository introduced in this release, housing a wrapper library for CARLA sensors along with a Docker image. This library provides functions for creating CARLA sensors with noise modeling and retrieving object-level detection information from these sensors. The CARLA CARMA Integration tool utilizes this library to feed object-level data to the CARMA Platform. Additionally, this repository generates a Docker image that deploys an XML RPC server, enabling clients to create sensors in CARLA and poll their detections. This feature is designed to facilitate object-level detection for CDASim deployment, making the data available to other integrated simulators or software systems under test.
 
 ### **CARLA ScenarioRunner** 
 
-The scenario-runner is a new repository and docker image for this release. This directory contains custom ScenarioRunner scenario configurations to facilitate integration testing. This still a work in progress, so the scenarios serve more as example references. ScenarioRunner's code resides in the srunner Python package, and the scenario_runner.py script is responsible for launching scenarios. 
+The scenario-runner is a new repository and Docker image introduced in this release. This directory contains custom ScenarioRunner scenario configurations designed to facilitate integration testing interactions between CARMA vehicles and Vulnerable Road Users (VRU) in a signalized intersection. These scenarios primarily serve as example references. The code for ScenarioRunner is housed in the srunner Python package, with the scenario_runner.py script responsible for launching the scenarios.
 
 ### **EVC-SUMO (New Private Repository)** 
 
-This EVC-sumo is a new private repository. Econolite Virtual Controller (EVC)-SUMO bridge tool that is a part of XiL co-simulation tool. This bridge acts as a mediator between EVC (via the PyEOS Python package) and SUMO, integrating the exchange of traffic light status and detector status.
-Currently, in order to build and use the docker image, the tool needs proprietary github-token accessible to the members of the usdot-fhwa-stol organization due to Econolite's license.
+EVC-sumo is a new private repository featuring the Econolite Virtual Controller (EVC)-SUMO bridge tool, part of the XiL co-simulation toolset. This bridge acts as a mediator between EVC, accessed via the PyEOS Python package, and SUMO, facilitating the integration of traffic light and detector status exchanges.
+
+Currently, building and using the Docker image for this tool requires a proprietary GitHub token, accessible only to members of the USDOT-FHWA-STOL organization, due to licensing restrictions imposed by Econolite.
 
 ### **Multiple Object Tracking** 
 
-Multiple Object Tracking is a new repository that holds a library to support cooperative perception. This library is intended for tracking multiple objects from multiple sources where the input is abstracted as a standard cooperative perception object tracking interface. For example, object level data can come from multiple sources including J2334 Sensor Data Sharing Message, Basic Safety Message, or local perception. This enables the library to be deployed in different road actors such as C-ADS equipped vehicles or the infrastructure with the help of message adapters that are suited for respective middleware. 
-The library exposes multiple submodules and functionalities adopted from the architectural and algorithmic advancements made by the sensor fusion community. Example usage of this library to fully execute multiple object tracking pipeline is implemented in CARMA Platform here.   
+The Multiple Object Tracking repository introduces a new library designed to support cooperative perception. This library is tailored for tracking multiple objects from various sources, utilizing a standard cooperative perception object tracking interface. Inputs can include object-level data from diverse sources such as the J2334 Sensor Data Sharing Message, Basic Safety Message, or local perception. This versatility allows the library to be deployed across different road actors, such as C-ADS equipped vehicles or infrastructure, using message adapters appropriate for the respective middleware.
+
+The library features multiple submodules and functionalities that leverage architectural and algorithmic advancements from the sensor fusion community. An example of how this library can be implemented to execute a complete multiple object tracking pipeline is demonstrated in the CARMA Platform.
 
 ### **CARMA Builds** 
 
-CARMA Builds is a new component of the CARMA ecosystem, which enables a coordination among different transportation users. This component provides Docker images used to build other projects within CARMA. 
+CARMA Builds is a new addition to the CARMA ecosystem, designed to facilitate Docker image build coordination among various transportation users. This component provides essential Docker images for building other projects within CARMA, streamlining the development process and enhancing collaboration across different transportation initiatives.
 
 ### **CARMA Streets** 
 
-Main new functionality in CARMA Streets is that it can now generate J2334 Sensor Data Sharing Message from simulation sensor detected data. It also received further improvements such as a new dependency on CARMA Builds to efficiently pull from common base images and minor improvements on time synchronization, data collection, and json parsing.
+The main new functionality in CARMA Streets is its ability to generate J2334 Sensor Data Sharing Messages from object-level data detected by simulation sensors. Additionally, it has received further enhancements, including a new dependency on CARMA Builds, which allows for efficient pulling from common base images. There are also minor improvements in time synchronization, data collection, and JSON parsing, enhancing the overall functionality and efficiency of the system.
 
 Enhancements in this release: 
 
@@ -106,7 +112,7 @@ Fixes in this release:
 
 ### **CARMA Platform** 
 
-Main improvements for CARMA Platform this release include new package of cooperative perception stack that can process both object list data from local perception and from J2334 SDSM to provide multiple object tracking functionality. It also received further improvements in its world model and motion prediction stack such that it yields to more objects than only vehicles and movements not along the road. This feature is tested in a signalized intersection in CARLA along with its traffic signal following behaviors using J2735 SPAT and MAP.
+The main improvements for CARMA Platform in this release include a new package callled, carma_cooperative_perception, that can process both object list data from local perception and from J2334 SDSM, providing enhanced multiple object tracking functionality. Additionally, there have been further improvements to its world model and motion prediction stack, enabling it to recognize and respond to more objects than just vehicles (such as pedestrians), including movements not along the road (such as pedestrians moving on crosswalks). This feature has been tested at a signalized intersection in CARLA, incorporating traffic signal following behaviors using J2735 SPAT and MAP, demonstrating significant safety advancements in its operational capabilities.
 
 Enhancements in this release: 
 
