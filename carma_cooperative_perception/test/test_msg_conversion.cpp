@@ -169,7 +169,7 @@ TEST(ToDetectionMsg, Simple)
   EXPECT_EQ(detection.id, "BADDCAFE-1");
   EXPECT_EQ(detection.motion_model, detection.MOTION_MODEL_CTRV);
 }
-*/
+
 TEST(CalcDetectionTimeStamp, Simple)
 {
   carma_cooperative_perception::DDateTime d_date_time;
