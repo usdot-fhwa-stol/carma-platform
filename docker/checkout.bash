@@ -37,7 +37,7 @@ while [[ $# -gt 0 ]]; do
       esac
 done
 
-cd ${dir}/src
+cd "${dir}"/src
 
 git clone --depth=1 https://github.com/usdot-fhwa-stol/carma-msgs.git --branch "${BRANCH}"
 git clone --depth=1 https://github.com/usdot-fhwa-stol/carma-utils.git --branch "${BRANCH}"
@@ -48,7 +48,7 @@ git clone --depth=1 https://github.com/usdot-fhwa-stol/multiple_object_tracking 
 # The feature/integrate-carma branch of rosbag2 includes improvements that were not possible to backport into the foxy branch
 # of rosbag2. These rosbag2 packages will replace the originally built foxy rosbag2 packages.
 # NOTE: Additional information regarding the rosbag2 improvements on this branch are included in the forked repository's README.
-if [[ "${BRANCH}" == "master"]] || [[ "${BRANCH}" == "develop"]]; then
+if [[ "${BRANCH}" == "master" ]] || [[ "${BRANCH}" == "develop" ]]; then
       git clone --depth=1 https://github.com/usdot-fhwa-stol/rosbag2 --branch carma-"${BRANCH}"
 else
       git clone --depth=1 https://github.com/usdot-fhwa-stol/rosbag2 --branch "${BRANCH}"
@@ -83,17 +83,14 @@ git clone -b ros2 https://github.com/usdot-fhwa-stol/rosbridge_suite
 # NOTE: This is required since otherwise this image will not contain the novatel_oem7_msgs package, and a missing ROS 2 message package
 #       can cause ROS 2 rosbag logging to fail in Foxy.
 # Related GitHub discussion for fix that was not backported to Foxy: https://github.com/ros2/rosbag2/pull/858
-git clone https://github.com/novatel/novatel_oem7_driver.git ${dir}/src/novatel_oem7_driver -b ros2-dev
+git clone https://github.com/novatel/novatel_oem7_driver.git "${dir}"/src/novatel_oem7_driver -b ros2-dev
 # Checkout verified commit
-cd ${dir}/src/novatel_oem7_driver
+cd "${dir}"/src/novatel_oem7_driver
 git checkout 3055e220bb9715b59c3ef53ab0aba05a495d9d5
 # Ignore novatel_oem7_driver package; only novatel_oem7_msgs is required
-cd ${dir}/src/novatel_oem7_driver/src/novatel_oem7_driver
+cd "${dir}"/src/novatel_oem7_driver/src/novatel_oem7_driver
 echo "" > COLCON_IGNORE
-cd ${dir}/src
-
-
-cd ${dir}/src
+cd "${dir}"/src
 # TODO: Remove V2X-Hub Depedency (CAR-6029)
 git clone -b master --depth 1 https://github.com/etherealjoy/qhttpengine.git
 
