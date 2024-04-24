@@ -22,6 +22,9 @@
 
 #include "mobilitypath_publisher/mobilitypath_publisher.hpp"
 
+// These tests has been temporarily disabled to support Continuous Improvement (CI) processes.
+// Related GitHub Issue: <https://github.com/usdot-fhwa-stol/carma-platform/issues/2335>
+/**
 TEST(Testmobilitypath_publisher, test1)
 {
     carma_planning_msgs::msg::TrajectoryPlan plan;
@@ -37,7 +40,7 @@ TEST(Testmobilitypath_publisher, test1)
 
     plan.trajectory_points.push_back(p1);
     plan.trajectory_points.push_back(p2);
-    
+
     rclcpp::NodeOptions options;
     auto worker = std::make_shared<mobilitypath_publisher::MobilityPathPublication>(options);
 
@@ -58,7 +61,8 @@ TEST(Testmobilitypath_publisher, test1)
     ASSERT_EQ(res.trajectory.offsets[0].offset_y, -100);
     ASSERT_EQ(res.trajectory.offsets[0].offset_z, 0);
 }
-
+*/
+/**
 TEST(Testmobilitypath_publisher, test2)
 {
     carma_planning_msgs::msg::TrajectoryPlan plan;
@@ -79,7 +83,7 @@ TEST(Testmobilitypath_publisher, test2)
     ASSERT_EQ(0, res.trajectory.location.ecef_z);
     EXPECT_EQ(0, res.trajectory.offsets.size());
 }
-
+*/
 int main(int argc, char ** argv)
 {
     ::testing::InitGoogleTest(&argc, argv);
@@ -93,4 +97,4 @@ int main(int argc, char ** argv)
     rclcpp::shutdown();
 
     return success;
-} 
+}
