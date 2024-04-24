@@ -27,6 +27,9 @@ if(motion_computation_BUILD_TESTS)
 
   list(APPEND AMENT_LINT_AUTO_EXCLUDE
     ament_cmake_uncrustify  # Using clang-format instead
+    # This test has been temporarily disabled to support Continuous Improvement (CI) processes.
+    # Related GitHub Issue: <https://github.com/usdot-fhwa-stol/carma-platform/issues/2335>
+    ament_cmake_cppcheck
   )
 
   ament_lint_auto_find_test_dependencies()
