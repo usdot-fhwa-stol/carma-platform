@@ -1,11 +1,6 @@
 name: Docker build
 
 on:
-  push:
-    branches-ignore:
-      - "develop"
-      - "master"
-      - "release/*"
   pull_request:
       types: [opened, synchronize, reopened]
 
