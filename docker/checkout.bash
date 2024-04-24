@@ -24,7 +24,7 @@ BRANCH=develop  # The script will use this unless the -b flag updates it
 while [[ $# -gt 0 ]]; do
       arg="$1"
       case $arg in
-            --b|--branch)
+            -b|--branch)
                   BRANCH=$2
                   shift
                   shift
@@ -42,20 +42,17 @@ cd ${dir}/src
 git clone --depth=1 https://github.com/usdot-fhwa-stol/carma-msgs.git --branch "${BRANCH}"
 git clone --depth=1 https://github.com/usdot-fhwa-stol/carma-utils.git --branch "${BRANCH}"
 git clone --depth=1 https://github.com/usdot-fhwa-stol/carma-messenger.git --branch "${BRANCH}"
+# Get humble branch of message filters which supports template Node arguments (foxy version supports rclcpp::Node only)
+git clone --depth=1 https://github.com/usdot-fhwa-stol/carma-message-filters.git --branch "${BRANCH}"
+git clone --depth=1 https://github.com/usdot-fhwa-stol/multiple_object_tracking --branch "${BRANCH}"
+# The feature/integrate-carma branch of rosbag2 includes improvements that were not possible to backport into the foxy branch
+# of rosbag2. These rosbag2 packages will replace the originally built foxy rosbag2 packages.
+# NOTE: Additional information regarding the rosbag2 improvements on this branch are included in the forked repository's README.
 if [[ "${BRANCH}" == "master"]] || [[ "${BRANCH}" == "develop"]]; then
       git clone --depth=1 https://github.com/usdot-fhwa-stol/rosbag2 --branch carma-"${BRANCH}"
 else
       git clone --depth=1 https://github.com/usdot-fhwa-stol/rosbag2 --branch "${BRANCH}"
 fi
-
-
-# Get humble branch of message filters which supports template Node arguments (foxy version supports rclcpp::Node only)
-git clone https://github.com/usdot-fhwa-stol/carma-message-filters.git --branch "${BRANCH}"
-
-git clone https://github.com/usdot-fhwa-stol/multiple_object_tracking --branch "${BRANCH}"
-# The feature/integrate-carma branch of rosbag2 includes improvements that were not possible to backport into the foxy branch
-# of rosbag2. These rosbag2 packages will replace the originally built foxy rosbag2 packages.
-# NOTE: Additional information regarding the rosbag2 improvements on this branch are included in the forked repository's README.
 
 # add astuff messages
 # NOTE: The ibeo_msgs package is ignored because on build the cmake files in that package run a sed command
