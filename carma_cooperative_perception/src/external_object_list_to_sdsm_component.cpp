@@ -118,6 +118,15 @@ auto ExternalObjectListToSdsmNode::handle_on_shutdown(
 auto ExternalObjectListToSdsmNode::publish_as_sdsm(const external_objects_msg_type & msg) const
   -> void
 {
+  if (!map_projector_) {
+    // Set to DEBUG level because this node may start up before any georeference publisher. In that
+    // scenario, temporarily not having a georeference (and therefore, no projector) is expected.
+    RCLCPP_DEBUG(
+      this->get_logger(), "Could not convert external object list to SDSM: unknown georeference");
+
+    return;
+  }
+
   try {
     const auto sdsm_output{to_sdsm_msg(msg, current_pose_, map_projector_)};
 

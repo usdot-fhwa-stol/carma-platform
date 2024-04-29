@@ -35,6 +35,7 @@
 #include <carma_v2x_msgs/msg/trajectory.hpp>
 #include <carma_v2x_msgs/msg/plan_type.hpp>
 #include <basic_autonomy/smoothing/filters.hpp>
+#include <future>
 
 using oss = std::ostringstream;
 constexpr auto EPSILON {0.01}; //small value to compare doubles
@@ -62,6 +63,11 @@ namespace yield_plugin
   double get_trajectory_duration(const carma_planning_msgs::msg::TrajectoryPlan& trajectory)
   {
     return fabs(get_trajectory_end_time(trajectory) - get_trajectory_start_time(trajectory));
+  }
+
+  double get_trajectory_duration(const std::vector<carma_perception_msgs::msg::PredictedState>& trajectory)
+  {
+    return (rclcpp::Time(trajectory.back().header.stamp) - rclcpp::Time(trajectory.front().header.stamp)).seconds();
   }
 
   std::vector<std::pair<int, lanelet::BasicPoint2d>> YieldPlugin::detect_trajectories_intersection(std::vector<lanelet::BasicPoint2d> self_trajectory, std::vector<lanelet::BasicPoint2d> incoming_trajectory) const
@@ -257,6 +263,15 @@ namespace yield_plugin
     carma_planning_msgs::msg::TrajectoryPlan original_trajectory = req->initial_trajectory_plan;
     carma_planning_msgs::msg::TrajectoryPlan yield_trajectory;
 
+
+    double initial_velocity = req->vehicle_state.longitudinal_vel;
+    // If vehicle_state is stopped, non-zero velocity from the trajectory
+    // should be used. Otherwise, vehicle will not move.
+    if (initial_velocity < EPSILON)
+    {
+      initial_velocity = original_trajectory.initial_longitudinal_velocity;
+    }
+
     // seperating cooperative yield with regular object detection for better performance.
     if (config_.enable_cooperative_behavior && clc_urgency_ > config_.acceptable_urgency)
     {
@@ -264,19 +279,19 @@ namespace yield_plugin
       if (timesteps_since_last_req_ < config_.acceptable_passed_timesteps)
       {
         RCLCPP_DEBUG(nh_->get_logger(),"Yield for CLC. We haven't received an updated negotiation this timestep");
-        yield_trajectory = update_traj_for_cooperative_behavior(original_trajectory, req->vehicle_state.longitudinal_vel);
+        yield_trajectory = update_traj_for_cooperative_behavior(original_trajectory, initial_velocity);
         timesteps_since_last_req_++;
       }
       else
       {
         RCLCPP_DEBUG(nh_->get_logger(),"unreliable CLC communication, switching to object avoidance");
-        yield_trajectory = update_traj_for_object(original_trajectory, external_objects_, req->vehicle_state.longitudinal_vel); // Compute the trajectory
+        yield_trajectory = update_traj_for_object(original_trajectory, external_objects_, initial_velocity); // Compute the trajectory
       }
     }
     else
     {
       RCLCPP_DEBUG(nh_->get_logger(),"Yield for object avoidance");
-      yield_trajectory = update_traj_for_object(original_trajectory, external_objects_, req->vehicle_state.longitudinal_vel); // Compute the trajectory
+      yield_trajectory = update_traj_for_object(original_trajectory, external_objects_, initial_velocity); // Compute the trajectory
     }
 
     // return original trajectory if no difference in trajectory points a.k.a no collision
@@ -372,13 +387,15 @@ namespace yield_plugin
 
   double get_smallest_time_step_of_traj(const carma_planning_msgs::msg::TrajectoryPlan& original_tp)
   {
-    double smallest_time_step = std::numeric_limits<double>::max();
+    double smallest_time_step = std::numeric_limits<double>::infinity();
     for (size_t i = 0; i < original_tp.trajectory_points.size() - 1; i ++)
     {
       smallest_time_step = std::min(smallest_time_step,
         (rclcpp::Time(original_tp.trajectory_points.at(i + 1).target_time)
         - rclcpp::Time(original_tp.trajectory_points.at(i).target_time)).seconds());
     }
+    RCLCPP_DEBUG_STREAM(rclcpp::get_logger("yield_plugin"),"smallest_time_step: " << smallest_time_step);
+
     return smallest_time_step;
   }
 
@@ -400,10 +417,19 @@ namespace yield_plugin
     // Up until goal_pos (which also can be until end of the entire original trajectory), generate new speeds at
     // or near original trajectory points by generating them at a fixed time interval using the JMT polynomial equation
     const double initial_time = 0;
-    const double initial_accel = 0.0;
-    const double goal_accel = 0.0;
+    const double initial_accel = 0;
+    const double goal_accel = 0;
     int new_traj_idx = 1;
     int original_traj_idx = 1;
+    RCLCPP_DEBUG_STREAM(nh_->get_logger(),"Following parameters used for JMT: "
+      "\ninitial_pos: " << initial_pos <<
+      "\ngoal_pos: " << goal_pos <<
+      "\ninitial_velocity: " << initial_velocity <<
+      "\ngoal_velocity: " << goal_velocity <<
+      "\ninitial_accel: " << initial_accel <<
+      "\ngoal_accel: " << goal_accel <<
+      "\nplanning_time: " << planning_time <<
+      "\noriginal_max_speed: " << original_max_speed);
 
     // Get the polynomial solutions used to generate the trajectory
     std::vector<double> polynomial_coefficients = quintic_coefficient_calculator::quintic_coefficient_calculator(initial_pos,
@@ -416,7 +442,7 @@ namespace yield_plugin
                                                                                                 planning_time);
     RCLCPP_DEBUG_STREAM(nh_->get_logger(),"Used original_max_speed: " << original_max_speed);
     const auto smallest_time_step = get_smallest_time_step_of_traj(original_tp);
-    while (new_traj_accumulated_downtrack < goal_pos && original_traj_idx < original_traj_relative_downtracks.size())
+    while (new_traj_accumulated_downtrack < goal_pos - EPSILON && original_traj_idx < original_traj_relative_downtracks.size())
     {
       const double target_time = new_traj_idx * smallest_time_step;
       const double downtrack_at_target_time = polynomial_calc(polynomial_coefficients, target_time);
@@ -424,6 +450,13 @@ namespace yield_plugin
 
       RCLCPP_DEBUG_STREAM(nh_->get_logger(), "Calculated speed velocity_at_target_time: " << velocity_at_target_time
         << ", downtrack_at_target_time: "<< downtrack_at_target_time << ", target_time: " << target_time);
+
+      // if the speed becomes negative, the downtrack starts reversing to negative as well
+      // which will never reach the goal_pos, so break here.
+      if (velocity_at_target_time < 0.0)
+      {
+        break;
+      }
 
       // Cannot have a negative speed or have a higher speed than that of the original trajectory
       velocity_at_target_time = std::clamp(velocity_at_target_time, 0.0, original_max_speed);
@@ -441,7 +474,14 @@ namespace yield_plugin
       }
       new_traj_accumulated_downtrack = downtrack_at_target_time;
       new_traj_idx++;
+
     }
+
+    // if the loop above finished prematurely due to negative speed, fill with 0.0 speeds
+    // since the speed crossed 0.0 and algorithm indicates stopping
+    std::fill_n(std::back_inserter(calculated_speeds),
+                std::size(original_traj_relative_downtracks) - std::size(calculated_speeds),
+                0.0);
 
     // Moving average filter to smoothen the speeds
     std::vector<double> filtered_speeds = basic_autonomy::smoothing::moving_average_filter(calculated_speeds, config_.speed_moving_average_window_size);
@@ -449,6 +489,8 @@ namespace yield_plugin
 
     // Replace the original trajectory's associated timestamps based on the newly calculated speeds
     double prev_speed = filtered_speeds.at(0);
+    RCLCPP_DEBUG_STREAM(nh_->get_logger(), "start speed: " << prev_speed << ", target_time: " << std::to_string(rclcpp::Time(original_tp.trajectory_points[0].target_time).seconds()));
+
     for(size_t i = 1; i < original_tp.trajectory_points.size(); i++)
     {
       carma_planning_msgs::msg::TrajectoryPlanPoint jmt_tpp = original_tp.trajectory_points.at(i);
@@ -493,6 +535,8 @@ namespace yield_plugin
       }
 
       jmt_trajectory_points.push_back(jmt_tpp);
+      double insta_decel = (current_speed - prev_speed) / (rclcpp::Time(jmt_trajectory_points.at(i).target_time).seconds() - rclcpp::Time(jmt_trajectory_points.at(i - 1).target_time).seconds());
+      RCLCPP_DEBUG_STREAM(nh_->get_logger(), "insta_decel: " << insta_decel );
       prev_speed = current_speed;
     }
 
@@ -503,12 +547,11 @@ namespace yield_plugin
     return jmt_trajectory;
   }
 
-  std::optional<rclcpp::Time> YieldPlugin::get_collision_time(const carma_planning_msgs::msg::TrajectoryPlan& trajectory1,
-    const std::vector<carma_perception_msgs::msg::PredictedState>& trajectory2, double collision_radius)
+  std::optional<GetCollisionResult> YieldPlugin::get_collision(const carma_planning_msgs::msg::TrajectoryPlan& trajectory1,
+    const std::vector<carma_perception_msgs::msg::PredictedState>& trajectory2, double collision_radius, double trajectory1_max_speed)
   {
 
     // Iterate through each pair of consecutive points in the trajectories
-
     RCLCPP_DEBUG_STREAM(nh_->get_logger(), "Starting a new collision detection, trajectory size: "
       << trajectory1.trajectory_points.size() << ". prediction size: " << trajectory2.size());
 
@@ -516,7 +559,39 @@ namespace yield_plugin
     bool on_route = false;
     int on_route_idx = 0;
 
-    for (size_t j = 0; j < trajectory2.size(); j+=4) // Checking every 4th point to save computation time
+    // A flag to stop searching more than one lanelet if the object has no velocity
+    const auto traj2_speed{std::hypot(trajectory2.front().predicted_velocity.linear.x,
+                                  trajectory2.front().predicted_velocity.linear.y)};
+    bool traj2_has_zero_speed = traj2_speed < config_.obstacle_zero_speed_threshold_in_ms;
+
+    if (trajectory2.size() < 2)
+    {
+      throw std::invalid_argument("Object on ther road doesn't have enough predicted states! Please check motion_computation is correctly applying predicted states");
+    }
+    const double predict_step_duration = (rclcpp::Time(trajectory2.at(1).header.stamp) - rclcpp::Time(trajectory2.front().header.stamp)).seconds();
+    const double predict_total_duration = get_trajectory_duration(trajectory2);
+
+    if (predict_step_duration < 0.0)
+    {
+      throw std::invalid_argument("Predicted states of the object is malformed. Detected trajectory going backwards in time!");
+    }
+
+    // In order to optimize the for loops for comparing two trajectories, following logic skips every iteration_stride-th points of the traj2.
+    // Since skipping number of points from the traj2 may result in ignoring potential collisions, its value is dependent on two
+    // trajectories' speeds and intervehicle_collision_distance_in_m radius.
+    // Therefore, the derivation first calculates the max time, t, that both actors can move while still being in collision radius:
+    // sqrt( (v1 * t / 2)^2 + (v2 * t / 2)^2 ) = collision_radius. Here v1 and v2 are assumed to be perpendicular to each other and
+    // intersecting at t/2 to get max possible collision_radius. Solving for t gives following:
+    double iteration_stride_max_time_s = 2 * config_.intervehicle_collision_distance_in_m / sqrt(pow(traj2_speed, 2) + pow(trajectory1_max_speed, 2));
+    int iteration_stride = std::max(1, static_cast<int>(iteration_stride_max_time_s / predict_step_duration));
+
+    RCLCPP_DEBUG_STREAM(nh_->get_logger(), "Determined iteration_stride: " << iteration_stride
+      << ", with traj2_speed: " << traj2_speed
+      << ", with trajectory1_max_speed: " << trajectory1_max_speed
+      << ", with predict_step_duration: " << predict_step_duration
+      << ", iteration_stride_max_time_s: " << iteration_stride_max_time_s);
+
+    for (size_t j = 0; j < trajectory2.size(); j += iteration_stride) // Saving computation time aiming for 1.5 meter interval
     {
       lanelet::BasicPoint2d curr_point;
       curr_point.x() = trajectory2.at(j).predicted_position.position.x;
@@ -535,7 +610,7 @@ namespace yield_plugin
           break;
         }
       }
-      if (on_route)
+      if (on_route || traj2_has_zero_speed)
         break;
     }
 
@@ -545,12 +620,13 @@ namespace yield_plugin
       return std::nullopt;
     }
 
-    double smallest_dist = std::numeric_limits<double>::max();
+    double smallest_dist = std::numeric_limits<double>::infinity();
     for (size_t i = 0; i < trajectory1.trajectory_points.size() - 1; ++i)
     {
       auto p1a = trajectory1.trajectory_points.at(i);
       auto p1b = trajectory1.trajectory_points.at(i + 1);
-      for (size_t j = on_route_idx; j < trajectory2.size() - 1; ++j)
+      double previous_distance_between_predictions = std::numeric_limits<double>::infinity();
+      for (size_t j = on_route_idx; j < trajectory2.size() - 1; j += iteration_stride)
       {
         auto p2a = trajectory2.at(j);
         auto p2b = trajectory2.at(j + 1);
@@ -575,12 +651,24 @@ namespace yield_plugin
         double y2 = p2a.predicted_position.position.y;
 
         // Calculate the distance between the two interpolated points
-        double distance = std::sqrt((x1 - x2) * (x1 - x2) + (y1 - y2) * (y1 - y2));
+        const auto distance{std::hypot(x1 - x2, y1 - y2)};
+
         smallest_dist = std::min(distance, smallest_dist);
         RCLCPP_DEBUG_STREAM(nh_->get_logger(), "Smallest_dist: " << smallest_dist << ", distance: " << distance << ", dt: " << dt
           << ", x1: " << x1 << ", y1: " << y1
           << ", x2: " << x2 << ", y2: " << y2
           << ", p2a_t:" << std::to_string(p2a_t));
+
+        // Following "if logic" assumes the traj2 is a simple cv model, aka, traj2 point is a straight line over time.
+        // And current traj1 point is fixed in this iteration.
+        // Then once the distance between the two start to increase over traj2 iteration,
+        // the distance will always increase and it's unnecessary to continue the logic to find the smallest_dist
+        if (previous_distance_between_predictions < distance)
+        {
+          RCLCPP_DEBUG_STREAM(nh_->get_logger(), "Stopping search here because the distance between predictions started to increase");
+          break;
+        }
+        previous_distance_between_predictions = distance;
 
         if (i == 0 && j == 0 && distance > config_.collision_check_radius_in_m)
         {
@@ -590,27 +678,15 @@ namespace yield_plugin
 
         if (distance > collision_radius)
         {
+          // continue searching for collision
           continue;
         }
 
-        // if within collision radius
-        lanelet::BasicPoint2d vehicle_point(x1,y1);
-        lanelet::BasicPoint2d object_point(x2,y2);
-        double vehicle_downtrack = wm_->routeTrackPos(vehicle_point).downtrack;
-        double object_downtrack = wm_->routeTrackPos(object_point).downtrack;
-
-        if (vehicle_downtrack > object_downtrack + config_.vehicle_length / 2)  // if half a length of the vehicle past, it is considered behind
-        {
-          RCLCPP_INFO_STREAM(nh_->get_logger(), "Detected an object nearby behind the vehicle at timestamp " << std::to_string(p2a_t));
-          return std::nullopt;
-        }
-        else
-        {
-          RCLCPP_WARN_STREAM(nh_->get_logger(), "Collision detected at timestamp " << std::to_string(p2a_t) << ", x: " << x1 << ", y: " << y1 <<
-            ", within actual downtrack distance: " << object_downtrack - vehicle_downtrack <<
-            ", and collision distance: " << distance);
-          return rclcpp::Time(p2a.header.stamp);
-        }
+        GetCollisionResult collision_result;
+        collision_result.point1 = lanelet::BasicPoint2d(x1,y1);
+        collision_result.point2 = lanelet::BasicPoint2d(x2,y2);
+        collision_result.collision_time = rclcpp::Time(p2a.header.stamp);
+        return collision_result;
       }
     }
 
@@ -618,8 +694,34 @@ namespace yield_plugin
     return std::nullopt;
   }
 
+  bool YieldPlugin::is_object_behind_vehicle(uint32_t object_id, const rclcpp::Time& collision_time, double vehicle_downtrack, double object_downtrack)
+  {
+    const auto previous_clearance_count = consecutive_clearance_count_for_obstacles_[object_id];
+    // if the object's location is half a length of the vehicle past its rear-axle, it is considered behind
+    // half a length of the vehicle to conservatively estimate the rear axle to rear bumper length
+    if (object_downtrack < vehicle_downtrack - config_.vehicle_length / 2)
+    {
+      consecutive_clearance_count_for_obstacles_[object_id] = std::min(consecutive_clearance_count_for_obstacles_[object_id] + 1, config_.consecutive_clearance_count_for_obstacles_threshold);
+      RCLCPP_INFO_STREAM(nh_->get_logger(), "Detected an object nearby might be behind the vehicle at timestamp: " << std::to_string(collision_time.seconds()) <<
+        ", and consecutive_clearance_count_for obstacle: " <<  object_id << ", is: " << consecutive_clearance_count_for_obstacles_[object_id]);
+    }
+    // confirmed false positive for a collision
+    if (consecutive_clearance_count_for_obstacles_[object_id] >= config_.consecutive_clearance_count_for_obstacles_threshold)
+    {
+      return true;
+    }
+    // if the clearance counter didn't increase by this point, true collision was detected
+    // therefore reset the consecutive clearance counter as it is no longer consecutive
+    if (consecutive_clearance_count_for_obstacles_[object_id] == previous_clearance_count)
+    {
+      consecutive_clearance_count_for_obstacles_[object_id] = 0;
+    }
+
+    return false;
+  }
+
   std::optional<rclcpp::Time> YieldPlugin::get_collision_time(const carma_planning_msgs::msg::TrajectoryPlan& original_tp,
-    const carma_perception_msgs::msg::ExternalObject& curr_obstacle)
+    const carma_perception_msgs::msg::ExternalObject& curr_obstacle, double original_tp_max_speed)
   {
     auto plan_start_time = get_trajectory_start_time(original_tp);
 
@@ -646,7 +748,60 @@ namespace yield_plugin
     new_list.push_back(curr_state);
     new_list.insert(new_list.end(), curr_obstacle.predictions.cbegin(), curr_obstacle.predictions.cend());
 
-    return get_collision_time(original_tp, new_list, config_.intervehicle_collision_distance_in_m);
+    const auto collision_result = get_collision(original_tp, new_list, config_.intervehicle_collision_distance_in_m, original_tp_max_speed);
+
+    if (!collision_result)
+    {
+      // reset the consecutive clearance counter because no collision was detected at this iteration
+      consecutive_clearance_count_for_obstacles_[curr_obstacle.id] = 0;
+      return std::nullopt;
+    }
+
+    // if within collision radius, it is not a collision if obstacle is behind the vehicle despite being in collision radius
+    const double vehicle_downtrack = wm_->routeTrackPos(collision_result.value().point1).downtrack;
+    const double object_downtrack = wm_->routeTrackPos(collision_result.value().point2).downtrack;
+
+    if (is_object_behind_vehicle(curr_obstacle.id, collision_result.value().collision_time, vehicle_downtrack, object_downtrack))
+    {
+      RCLCPP_INFO_STREAM(nh_->get_logger(), "Confirmed that the object: " << curr_obstacle.id << " is behind the vehicle at timestamp " << std::to_string(collision_result.value().collision_time.seconds()));
+      return std::nullopt;
+    }
+
+    const auto distance{std::hypot(
+      collision_result.value().point1.x() - collision_result.value().point2.x(),
+      collision_result.value().point1.y() - collision_result.value().point2.y()
+    )}; //for debug
+
+    RCLCPP_WARN_STREAM(nh_->get_logger(), "Collision detected for object: " << curr_obstacle.id << ", at timestamp " << std::to_string(collision_result.value().collision_time.seconds()) <<
+      ", x: " << collision_result.value().point1.x() << ", y: " << collision_result.value().point1.y() <<
+      ", within actual downtrack distance: " << object_downtrack - vehicle_downtrack <<
+      ", and collision distance: " << distance);
+
+    return collision_result.value().collision_time;
+  }
+
+  std::unordered_map<uint32_t, rclcpp::Time> YieldPlugin::get_collision_times_concurrently(const carma_planning_msgs::msg::TrajectoryPlan& original_tp,
+    const std::vector<carma_perception_msgs::msg::ExternalObject>& external_objects, double original_tp_max_speed)
+  {
+
+    std::unordered_map<uint32_t, std::future<std::optional<rclcpp::Time>>> futures;
+    std::unordered_map<uint32_t, rclcpp::Time> collision_times;
+
+    // Launch asynchronous tasks to check for collision times
+    for (const auto& object : external_objects) {
+      futures[object.id] = std::async(std::launch::async,[this, &original_tp, &object, &original_tp_max_speed]{
+          return get_collision_time(original_tp, object, original_tp_max_speed);
+        });
+    }
+
+    // Collect results from futures and update collision_times
+    for (const auto& object : external_objects) {
+      if (const auto collision_time{futures.at(object.id).get()}) {
+        collision_times[object.id] = collision_time.value();
+      }
+    }
+
+    return collision_times;
   }
 
   std::optional<std::pair<carma_perception_msgs::msg::ExternalObject, double>> YieldPlugin::get_earliest_collision_object_and_time(const carma_planning_msgs::msg::TrajectoryPlan& original_tp,
@@ -663,17 +818,13 @@ namespace yield_plugin
     // save route Ids for faster access
     for (const auto& llt: wm_->getRoute()->shortestPath())
     {
+      // TODO: Enhancement https://github.com/usdot-fhwa-stol/carma-platform/issues/2316
       route_llt_ids_.insert(llt.id());
     }
 
     RCLCPP_DEBUG_STREAM(nh_->get_logger(),"External Object List (external_objects) size: " << external_objects.size());
-
-    std::map<std::uint32_t, rclcpp::Time> collision_times;
-    for (const auto & object : external_objects) {
-      if (const auto collision_time { get_collision_time(original_tp, object) } ) {
-        collision_times[object.id] = collision_time.value();
-      }
-    }
+    const double original_max_speed = max_trajectory_speed(original_tp.trajectory_points, get_trajectory_end_time(original_tp));
+    std::unordered_map<uint32_t, rclcpp::Time> collision_times = get_collision_times_concurrently(original_tp,external_objects, original_max_speed);
 
     if (collision_times.empty()) { return std::nullopt; }
 
@@ -780,7 +931,7 @@ namespace yield_plugin
     // roadway object position
     const double gap_time_until_min_gap_distance = std::max(0.0, object_downtrack_lead - config_.minimum_safety_gap_in_meters)/initial_velocity;
 
-    if (goal_velocity <= config_.min_obstacle_speed_in_ms){
+    if (goal_velocity <= config_.obstacle_zero_speed_threshold_in_ms){
       RCLCPP_WARN_STREAM(nh_->get_logger(),"The obstacle is not moving, goal velocity is set to 0 from: " << goal_velocity);
       goal_velocity = 0.0;
     }
@@ -803,37 +954,22 @@ namespace yield_plugin
       safety_gap = std::max(safety_gap, externally_commanded_safety_gap);
     }
 
-    const double goal_pos = std::max(0.0, object_downtrack_lead - safety_gap);
+    const double goal_pos = std::max(0.0, object_downtrack_lead - safety_gap - config_.vehicle_length);
     const double initial_pos = 0.0; //relative initial position (first trajectory point)
     const double original_max_speed = max_trajectory_speed(original_tp.trajectory_points, earliest_collision_time_in_seconds);
     const double delta_v_max = fabs(goal_velocity - original_max_speed);
     RCLCPP_DEBUG_STREAM(nh_->get_logger(),"delta_v_max: " << delta_v_max << ", safety_gap: " << safety_gap);
 
-    // reference time, is the maximum time available to perform object avoidance (length of a trajectory)
-    const double max_allowed_trajectory_duration_in_s = get_trajectory_duration(original_tp);
-    // time required for comfortable deceleration
-    const double time_required_for_comfortable_decel_in_s = config_.acceleration_adjustment_factor * delta_v_max / config_.yield_max_deceleration_in_ms2;
+    const double time_required_for_comfortable_decel_in_s = config_.acceleration_adjustment_factor * 2 * goal_pos / delta_v_max;
+    const double min_time_required_for_comfortable_decel_in_s = delta_v_max / config_.yield_max_deceleration_in_ms2;
 
     // planning time for object avoidance
-    double planning_time_in_s = 0;
-
-    if (config_.min_obj_avoidance_plan_time_in_s < time_required_for_comfortable_decel_in_s
-      && time_required_for_comfortable_decel_in_s < max_allowed_trajectory_duration_in_s)
-    {
-      planning_time_in_s = time_required_for_comfortable_decel_in_s;
-    }
-    else if(time_required_for_comfortable_decel_in_s < config_.min_obj_avoidance_plan_time_in_s)
-    {
-      planning_time_in_s = config_.min_obj_avoidance_plan_time_in_s;
-    }
-    else
-    {
-      planning_time_in_s = max_allowed_trajectory_duration_in_s;
-    }
+    double planning_time_in_s = std::max({config_.min_obj_avoidance_plan_time_in_s, time_required_for_comfortable_decel_in_s, min_time_required_for_comfortable_decel_in_s});
+    RCLCPP_DEBUG_STREAM(nh_->get_logger(),"time_required_for_comfortable_decel_in_s: " << time_required_for_comfortable_decel_in_s << ", min_time_required_for_comfortable_decel_in_s: " << min_time_required_for_comfortable_decel_in_s);
 
     RCLCPP_DEBUG_STREAM(nh_->get_logger(),"Object avoidance planning time: " << planning_time_in_s);
 
-    return generate_JMT_trajectory(original_tp, initial_pos, goal_pos, initial_velocity, goal_velocity, planning_time_in_s, original_max_speed);;
+    return generate_JMT_trajectory(original_tp, initial_pos, goal_pos, initial_velocity, goal_velocity, planning_time_in_s, original_max_speed);
   }
 
 

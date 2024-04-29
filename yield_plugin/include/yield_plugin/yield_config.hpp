@@ -25,7 +25,7 @@ struct YieldPluginConfig
 {
   double acceleration_adjustment_factor = 4.0;  // Adjustment factor for safe and comfortable acceleration/deceleration
   double on_route_vehicle_collision_horizon_in_s = 10.0;        // time horizon for collision detection in s
-  double min_obstacle_speed_in_ms = 2.0;       // Minimum speed for moving obstacle in m/s
+  double obstacle_zero_speed_threshold_in_ms = 0.25;       // Minimum speed threshold for moving obstacle in m/s to be considered stopped
   double min_obj_avoidance_plan_time_in_s = 2.0;                     // minimum object avoidance planning time in s
   double yield_max_deceleration_in_ms2 = 3.0;  // max deceleration value in m/s^2
   double minimum_safety_gap_in_meters = 2.0;                       // minimum safety gap in m
@@ -38,6 +38,7 @@ struct YieldPluginConfig
   std::string vehicle_id = "DEFAULT_VEHICLE_ID";         // Vehicle id is the license plate of the vehicle
   int acceptable_passed_timesteps = 10;              // acceptable number of timesteps to use the latest known mobility request before switching to yield
   double intervehicle_collision_distance_in_m = 10.0;    //Intervehicle distance that is considered a collision
+  int consecutive_clearance_count_for_obstacles_threshold = 5; //Number of consecutive times the vehicle detects that the obstacle is behind to confirm the obstacle is actually behind
   double safety_collision_time_gap_in_s = 2.0;          // Time gap to finish planning a yield earlier than collision time
   bool enable_adjustable_gap = true;          // Flag to enable yield plugin to check for adjustable gap for example digital gap from map
   int acceptable_urgency = 5;                 //Minimum urgency value to consider the mobility request
@@ -49,7 +50,7 @@ struct YieldPluginConfig
     output << "YieldPluginConfig { " << std::endl
           << "acceleration_adjustment_factor: " << c.acceleration_adjustment_factor << std::endl
           << "on_route_vehicle_collision_horizon_in_s: " << c.on_route_vehicle_collision_horizon_in_s << std::endl
-          << "min_obstacle_speed_in_ms: " << c.min_obstacle_speed_in_ms << std::endl
+          << "obstacle_zero_speed_threshold_in_ms: " << c.obstacle_zero_speed_threshold_in_ms << std::endl
           << "yield_max_deceleration_in_ms2: " << c.yield_max_deceleration_in_ms2 << std::endl
           << "minimum_safety_gap_in_meters: " << c.minimum_safety_gap_in_meters << std::endl
           << "vehicle_length: " << c.vehicle_length << std::endl
@@ -61,6 +62,7 @@ struct YieldPluginConfig
           << "vehicle_id: " << c.vehicle_id << std::endl
           << "acceptable_passed_timesteps: " << c.acceptable_passed_timesteps << std::endl
           << "intervehicle_collision_distance_in_m: " << c.intervehicle_collision_distance_in_m << std::endl
+          << "consecutive_clearance_count_for_obstacles_threshold: " << c.consecutive_clearance_count_for_obstacles_threshold << std::endl
           << "safety_collision_time_gap_in_s: " << c.safety_collision_time_gap_in_s << std::endl
           << "enable_adjustable_gap: " << c.enable_adjustable_gap << std::endl
           << "acceptable_urgency: " << c.acceptable_urgency << std::endl

@@ -53,7 +53,7 @@ namespace waypoint_generation
      * \param points BasicLineString2d points
      * \param target_downtrack target downtrack along the route to get index near to
      * 
-     * \return index of nearest point in points
+     * \return index of nearest point in points with a downtrack less than 'target_downtrack', or -1 if the received 'points' vector is empty.
      */
     int get_nearest_index_by_downtrack(const std::vector<lanelet::BasicPoint2d>& points, const carma_wm::WorldModelConstPtr& wm, double target_downtrack);
 

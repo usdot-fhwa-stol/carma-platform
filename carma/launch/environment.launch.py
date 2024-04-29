@@ -280,6 +280,7 @@ def generate_launch_description():
                     ],
                     remappings=[
                         ("external_objects", "external_object_predictions"),
+                        ("external_objects_viz", "fused_external_objects_viz")
                     ],
                     parameters=[ object_visualizer_param_file, vehicle_config_param_file ]
             ),

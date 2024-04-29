@@ -54,6 +54,51 @@ TEST(ToTimeMsg, NulloptSeconds)
   EXPECT_DOUBLE_EQ(actual_msg.sec, expected_msg.sec);
   EXPECT_DOUBLE_EQ(actual_msg.nanosec, expected_msg.nanosec);
 }
+
+TEST(ToTimeMsg, GeneralConversions)
+{
+  carma_cooperative_perception::DDateTime d_date_time;
+
+  d_date_time.hour = units::time::hour_t{0};
+  d_date_time.minute = units::time::minute_t{0};
+  d_date_time.second = units::time::second_t{1};
+  auto actual_msg{carma_cooperative_perception::to_time_msg(d_date_time)};
+
+  EXPECT_DOUBLE_EQ(actual_msg.sec, 1);
+  EXPECT_DOUBLE_EQ(actual_msg.nanosec, 0);
+
+  d_date_time.hour = units::time::hour_t{0};
+  d_date_time.minute = units::time::minute_t{3};
+  d_date_time.second = units::time::second_t{5};
+  actual_msg = carma_cooperative_perception::to_time_msg(d_date_time);
+
+  EXPECT_DOUBLE_EQ(actual_msg.sec, 185);
+  EXPECT_DOUBLE_EQ(actual_msg.nanosec, 0);
+
+  d_date_time.hour = units::time::hour_t{2};
+  d_date_time.minute = units::time::minute_t{0};
+  d_date_time.second = units::time::second_t{0};
+  actual_msg = carma_cooperative_perception::to_time_msg(d_date_time);
+
+  EXPECT_DOUBLE_EQ(actual_msg.sec, 7200);
+  EXPECT_DOUBLE_EQ(actual_msg.nanosec, 0);
+
+  d_date_time.hour = units::time::hour_t{2};
+  d_date_time.minute = units::time::minute_t{10};
+  d_date_time.second = units::time::second_t{30};
+  actual_msg = carma_cooperative_perception::to_time_msg(d_date_time);
+
+  EXPECT_DOUBLE_EQ(actual_msg.sec, 7830);
+  EXPECT_DOUBLE_EQ(actual_msg.nanosec, 0);
+
+  d_date_time.hour = units::time::hour_t{3};
+  d_date_time.minute = units::time::minute_t{0};
+  d_date_time.second = units::time::second_t{50.25};
+  actual_msg = carma_cooperative_perception::to_time_msg(d_date_time);
+
+  EXPECT_DOUBLE_EQ(actual_msg.sec, 10850);
+  EXPECT_DOUBLE_EQ(actual_msg.nanosec, 250000000);
+}
 // These tests has been temporarily disabled to support Continuous Improvement (CI) processes.
 // Related GitHub Issue: <https://github.com/usdot-fhwa-stol/carma-platform/issues/2335>
 

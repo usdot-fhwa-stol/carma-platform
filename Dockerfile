@@ -32,14 +32,16 @@
 # /////////////////////////////////////////////////////////////////////////////
 # Stage 1 - Acquire the CARMA source as well as any extra packages
 # /////////////////////////////////////////////////////////////////////////////
-
-FROM usdotfhwastoldev/autoware.ai:develop AS base-image
+ARG DOCKER_ORG="usdotfhwastoldev"
+ARG DOCKER_TAG="develop"
+FROM ${DOCKER_ORG}/autoware.ai:${DOCKER_TAG} as base-image
+ARG GIT_BRANCH="develop" 
 
 FROM base-image AS source-code
 
 RUN mkdir ~/src
 COPY --chown=carma . /home/carma/src/carma-platform/
-RUN ~/src/carma-platform/docker/checkout.bash
+RUN ~/src/carma-platform/docker/checkout.bash -b ${GIT_BRANCH}
 
 # /////////////////////////////////////////////////////////////////////////////
 # Stage 2 - Build and install the software 
