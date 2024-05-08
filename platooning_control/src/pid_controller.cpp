@@ -1,5 +1,5 @@
 /*------------------------------------------------------------------------------
-* Copyright (C) 2020-2021 LEIDOS.
+* Copyright (C) 2024 LEIDOS.
 *
 * Licensed under the Apache License, Version 2.0 (the "License"); you may not
 * use this file except in compliance with the License. You may obtain a copy of
@@ -15,63 +15,60 @@
 
 ------------------------------------------------------------------------------*/
 
-#include "pid_controller.h"
-
+#include "platoon_control/pid_controller.hpp"
 
 namespace platoon_control
 {
-	PIDController::PIDController(){}
-	
-	double PIDController::calculate( double setpoint, double pv ){
+    PIDController::PIDController(){}
 
-		// Calculate error
+    double PIDController::calculate( double setpoint, double pv ){
+        // Calculate error
 	    double error = setpoint - pv;
-		ROS_DEBUG_STREAM("PID error: " << error);
+		RCLCPP_DEBUG_STREAM(rclcpp::get_logger("platoon_control"),"PID error: " << error);
 
 	    // Proportional term
-	    double Pout = config_.Kp * error;
-		ROS_DEBUG_STREAM("Proportional term: " << Pout);
+	    double Pout = config_->kp * error;
+		RCLCPP_DEBUG_STREAM(rclcpp::get_logger("platoon_control"), "Proportional term: " << Pout);
 
 	    // Integral term
-	    _integral += error * config_.dt;
-		ROS_DEBUG_STREAM("Integral term: " << _integral);
+	    _integral += error * config_->dt;
+		RCLCPP_DEBUG_STREAM(rclcpp::get_logger("platoon_control"),"Integral term: " << _integral);
 
-		if (_integral > config_.integratorMax){
-			 _integral = config_.integratorMax;
+		if (_integral > config_->integrator_max){
+			 _integral = config_->integrator_max;
 		}
-		else if (_integral < config_.integratorMin){
-			_integral = config_.integratorMin;
+		else if (_integral < config_->integrator_min){
+			_integral = config_->integrator_min;
 		}
-	    double Iout = config_.Ki * _integral;
-		ROS_DEBUG_STREAM("Iout: " << Iout);
+	    double Iout = config_->ki * _integral;
+		RCLCPP_DEBUG_STREAM(rclcpp::get_logger("platoon_control"), "Iout: " << Iout);
 
 	    // Derivative term
-	    double derivative = (error - _pre_error) / config_.dt;
-		ROS_DEBUG_STREAM("derivative term: " << derivative);
-	    double Dout = config_.Kd * derivative;
-		ROS_DEBUG_STREAM("Dout: " << Dout);
+	    double derivative = (error - _pre_error) / config_->dt;
+		RCLCPP_DEBUG_STREAM(rclcpp::get_logger("platoon_control"), "derivative term: " << derivative);
+	    double Dout = config_->kd * derivative;
+		RCLCPP_DEBUG_STREAM(rclcpp::get_logger("platoon_control"), "Dout: " << Dout);
 
 	    // Calculate total output
 	    double output = Pout + Iout + Dout;
-		ROS_DEBUG_STREAM("total controller output: " << output);
+		RCLCPP_DEBUG_STREAM(rclcpp::get_logger("platoon_control"), "total controller output: " << output);
 
 	    // Restrict to max/min
-	    if( output > config_.maxValue )
-	        output = config_.maxValue;
-	    else if( output < config_.minValue )
-	        output = config_.minValue;
+	    if( output > config_->max_value )
+	        output = config_->max_value;
+	    else if( output < config_->min_value )
+	        output = config_->min_value;
 	    // Save error to previous error
 	    _pre_error = error;
 
 	    return output;
 
-	}
+    }
 
-
-
-    void PIDController::reset() {
+	void PIDController::reset() {
         _integral = 0.0;
         _pre_error = 0.0;
     }
+
 
 }

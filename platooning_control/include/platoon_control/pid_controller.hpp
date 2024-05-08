@@ -15,22 +15,20 @@
 
 ------------------------------------------------------------------------------*/
 
-#include <ros/ros.h>
-#include "platoon_control_config.h"
-
+#include <rclcpp/rclcpp.hpp>
+#include "platoon_control/platoon_control_config.hpp"
 
 namespace platoon_control
 {
-
     /**
     * \brief This class includes logic for PID controller. PID controller is used in this plugin to maintain the inter-vehicle gap by adjusting the speed.
     */
 
-    class PIDController
-    {
+   class PIDController
+   {
     public:
 
-        /**
+    /**
         * \brief Constructor for the PID controller class
         */
     	PIDController();
@@ -38,9 +36,10 @@ namespace platoon_control
         /**
         * \brief plugin config object
         */
-        PlatooningControlPluginConfig config_;
-    	
-    	// ~PIDController();
+        std::shared_ptr<PlatooningControlPluginConfig> config_;
+
+
+        // ~PIDController();
 
         // Kp -  proportional gain
         // Ki -  Integral gain
@@ -61,15 +60,9 @@ namespace platoon_control
 
         void reset();
 
-        
-
-
-
-
     private:
 
         double _pre_error = 0.0;
         double _integral = 0.0;
-
-    };
+   };
 }

@@ -1,19 +1,19 @@
-standStillHeadway: 12.0 # Standstill gap between vehicles (m)
-maxAccel: 1.5 # Maximum acceleration absolute value used in controller filters (m/s^2)
-Kp: 0.4 # Proportional weight for PID controller
-Kd: 0.0  # Derivative Weight for PID controller  
-Ki: 0.03 # Integral weight for PID controller
-maxValue: 2.0 # Max value to restrict speed adjustment at one time step (limit on delta_v) (m/s)
-minValue: -10.0 # Min value to restrict speed adjustment at one time step (limit on delta_v) (m/s)
-cmdTmestamp: 100 # Timestep to calculate ctrl commands (ms)
-adjustmentCap: 15.0 # Adjustment cap for speed command (m/s)
+stand_still_headway: 12.0 # Standstill gap between vehicles (m)
+max_accel: 1.5 # Maximum acceleration absolute value used in controller filters (m/s^2)
+kp: 0.4 # Proportional weight for PID controller
+kd: 0.0  # Derivative Weight for PID controller
+ki: 0.03 # Integral weight for PID controller
+max_value: 2.0 # Max value to restrict speed adjustment at one time step (limit on delta_v) (m/s)
+min_value: -10.0 # Min value to restrict speed adjustment at one time step (limit on delta_v) (m/s)
+cmd_tmestamp: 100 # Timestep to calculate ctrl commands (ms)
+adjustment_cap: 15.0 # Adjustment cap for speed command (m/s)
 dt: 0.1 # Timestep to calculate ctrl commands (s)
-integratorMax: 30 # Max limit for integrator term
-integratorMin: -30  # Min limit for integrator term
-lowpassGain: 0.5 ##Lowpass filter gain
-lookaheadRatio: 2.0 # Ratio to calculate lookahead distance
-minLookaheadDist: 15.0 # Min lookahead distance (m)
-correctionAngle: 0.0 # Correction angle to improve steering accuracy
-integratorMax_pp: 0.1 # Max integrator val for pure pursuit integral controller
-integratorMin_pp: -0.1  # Min integrator val for pure pursuit integral controller
-Ki_pp: 0.012 # Integral weight for pure pursuit integral controller
+integrator_max: 30 # Max limit for integrator term
+integrator_min: -30  # Min limit for integrator term
+lowpass_gain: 0.5 ##Lowpass filter gain
+lookahead_ratio: 2.0 # Ratio to calculate lookahead distance
+minLookahead_dist: 15.0 # Min lookahead distance (m)
+correction_angle: 0.0 # Correction angle to improve steering accuracy
+integrator_max_pp: 0.1 # Max integrator val for pure pursuit integral controller
+integrator_min_pp: -0.1  # Min integrator val for pure pursuit integral controller
+ki_pp: 0.012 # Integral weight for pure pursuit integral controller

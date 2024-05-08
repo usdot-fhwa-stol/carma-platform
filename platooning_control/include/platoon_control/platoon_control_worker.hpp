@@ -1,6 +1,5 @@
-
 /*------------------------------------------------------------------------------
-* Copyright (C) 2020-2021 LEIDOS.
+* Copyright (C) 2024 LEIDOS.
 *
 * Licensed under the Apache License, Version 2.0 (the "License"); you may not
 * use this file except in compliance with the License. You may obtain a copy of
@@ -16,51 +15,46 @@
 
 ------------------------------------------------------------------------------*/
 
-#include <ros/ros.h>
-#include <cav_msgs/MobilityOperation.h>
-#include <cav_msgs/MobilityRequest.h>
-#include <cav_msgs/MobilityResponse.h>
-#include <geometry_msgs/PoseStamped.h>
-#include <cav_msgs/PlanType.h>
-#include "pid_controller.h"
-#include "pure_pursuit.h"
-#include "platoon_control_config.h"
+
+#include <rclcpp/rclcpp.hpp>
+#include <carma_v2x_msgs/msg/mobility_operation.hpp>
+#include <carma_v2x_msgs/msg/mobility_request.hpp>
+#include <carma_v2x_msgs/msg/mobility_response.hpp>
+#include <geometry_msgs/msg/pose_stamped.hpp>
+#include <carma_v2x_msgs/msg/plan_type.hpp>
+#include "platoon_control/pid_controller.hpp"
+#include "platoon_control/pure_pursuit.hpp"
+#include "platoon_control/platoon_control_config.hpp"
 #include <boost/optional.hpp>
-
-
-
-
 
 namespace platoon_control
 {
-    /**
+        /**
     * \brief Platoon Leader Struct
     */
 	struct PlatoonLeaderInfo{
-            // Static ID is permanent ID for each vehicle
-            std::string staticId;
-            // Current BSM Id for each CAV
-            std::string bsmId;
-            // Vehicle real time command speed in m/s
-            double commandSpeed;
-            // Actual vehicle speed in m/s
-            double vehicleSpeed;
-            // Vehicle current down track distance on the current route in m
-            double vehiclePosition;
-            // The local time stamp when the host vehicle update any informations of this member
-            long   timestamp;
-            // leader index in the platoon
-            int leaderIndex;
-            // Number of vehicles in front
-            int NumberOfVehicleInFront;
+        // Static ID is permanent ID for each vehicle
+        std::string staticId;
+        // Current BSM Id for each CAV
+        std::string bsmId;
+        // Vehicle real time command speed in m/s
+        double commandSpeed;
+        // Actual vehicle speed in m/s
+        double vehicleSpeed;
+        // Vehicle current down track distance on the current route in m
+        double vehiclePosition;
+        // The local time stamp when the host vehicle update any informations of this member
+        long   timestamp;
+        // leader index in the platoon
+        int leaderIndex;
+        // Number of vehicles in front
+        int NumberOfVehicleInFront;
 
-        };
+    };
 
-
-        // Leader info: platoonmember + leader index + number of vehicles in front
-
+    // Leader info: platoonmember + leader index + number of vehicles in front
     /**
-    * \brief This is the worker class for platoon controller. It is responsible for generating and smoothing the speed and steering control commands from trajectory points.  
+    * \brief This is the worker class for platoon controller. It is responsible for generating and smoothing the speed and steering control commands from trajectory points.
     */
     class PlatoonControlWorker
     {
@@ -87,25 +81,19 @@ namespace platoon_control
         * \brief Generates speed commands (in m/s) based on the trajectory point
         * \param point trajectory point
         */
-        void generateSpeed(const cav_msgs::TrajectoryPlanPoint& point);
-        
+        void generateSpeed(const carma_planning_msgs::msg::TrajectoryPlanPoint& point);
+
         /**
         * \brief Generates steering commands (in rad) based on lookahead trajectory point
         * \param point trajectory point
         */
-        void generateSteer(const cav_msgs::TrajectoryPlanPoint& point);
+        void generateSteer(const carma_planning_msgs::msg::TrajectoryPlanPoint& point);
 
         /**
         * \brief Sets the platoon leader object using info from msg
         * \param leader leader information msg received from strategic plugin
         */
         void setLeader(const PlatoonLeaderInfo& leader);
-        
-        /**
-        * \brief set current pose
-        * \param msg pose value
-        */
-        void setCurrentPose(const geometry_msgs::PoseStamped msg);
 
 
         /**
@@ -115,26 +103,28 @@ namespace platoon_control
         void setCurrentSpeed(double speed);
 
         // Member Variables
+
+        // Platoon Leader
+        PlatoonLeaderInfo platoon_leader;
+
+		// geometry pose
+        std::shared_ptr<geometry_msgs::msg::Pose> current_pose_;
+
+        // config parameters
+        std::shared_ptr<PlatooningControlPluginConfig> ctrl_config_;
+
         double speedCmd = 0;
         double currentSpeed = 0;
         double lastCmdSpeed = 0.0;
         double speedCmd_ = 0;
         double steerCmd_ = 0;
         double angVelCmd_ = 0;
-        double desired_gap_ = ctrl_config_.standStillHeadway;
+        double desired_gap_ = ctrl_config_->stand_still_headway;
         double actual_gap_ = 0.0;
         bool last_cmd_set_ = false;
 
-        // Platoon Leader
-        PlatoonLeaderInfo platoon_leader;
-
-		// geometry pose
-        geometry_msgs::Pose current_pose_;
-
 
     private:
-        // config parameters
-        PlatooningControlPluginConfig ctrl_config_;
 
         // pid controller object
         PIDController pid_ctrl_;
@@ -146,13 +136,13 @@ namespace platoon_control
 
         bool leaderSpeedCapEnabled = true;
         bool enableMaxAdjustmentFilter = true;
-        
+
         bool speedLimitCapEnabled = true;
         bool enableLocalSpeedLimitFilter = true;
-        
+
         bool maxAccelCapEnabled = true;
         bool enableMaxAccelFilter = true;
-        
+
 
     };
 }
