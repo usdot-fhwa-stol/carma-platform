@@ -84,6 +84,9 @@ def generate_launch_description():
     stop_controlled_intersection_tactical_plugin_file_path = os.path.join(
         get_package_share_directory('stop_controlled_intersection_tactical_plugin'), 'config/parameters.yaml')
 
+    trajectory_follower_wrapper_param_file = os.path.join(
+        get_package_share_directory('trajectory_follower_wrapper'), 'config/parameters.yaml')
+
     env_log_levels = EnvironmentVariable('CARMA_ROS_LOGGING_CONFIG', default_value='{ "default_level" : "WARN" }')
 
     pure_pursuit_tuning_parameters = [vehicle_calibration_dir, "/pure_pursuit/calibration.yaml"]
@@ -451,8 +454,37 @@ def generate_launch_description():
                 ],
                 parameters=[
                     vehicle_characteristics_param_file, #vehicle_response_lag
-                    pure_pursuit_tuning_parameters, #pure_pursuit calibration parameters
                     vehicle_config_param_file
+                ]
+            ),
+        ]
+    )
+
+    carma_trajectory_follower_wrapper_container = ComposableNodeContainer(
+        package='carma_ros2_utils',
+        name='carma_trajectory_follower_wrapper_container',
+        executable='carma_component_container_mt',
+        namespace=GetCurrentNamespace(),
+        composable_node_descriptions=[
+            ComposableNode(
+                    package='trajectory_follower_wrapper',
+                    plugin='trajectory_follower_wrapper::TrajectoryFollowerWrapperNode',
+                    name='trajectory_follower_wrapper',
+                    extra_arguments=[
+                    {'use_intra_process_comms': True},
+                    {'--log-level' : GetLogLevel('trajectory_follower_wrapper', env_log_levels) }
+                ],
+                remappings = [
+                    ("plugin_discovery", [ EnvironmentVariable('CARMA_GUIDE_NS', default_value=''), "/plugin_discovery" ] ),
+                    ("ctrl_raw", [ EnvironmentVariable('CARMA_GUIDE_NS', default_value=''), "/ctrl_raw" ] ),
+                    ("trajectory_follower_wrapper/plan_trajectory", [ EnvironmentVariable('CARMA_GUIDE_NS', default_value=''), "/plugins/pure_pursuit/plan_trajectory" ] ),
+                    ("current_pose", [ EnvironmentVariable('CARMA_LOCZ_NS', default_value=''), "/current_pose" ] ),
+                    ("vehicle/twist", [ EnvironmentVariable('CARMA_INTR_NS', default_value=''), "/vehicle/twist" ] ),
+                ],
+                parameters=[
+                    vehicle_characteristics_param_file, #vehicle_response_lag
+                    pure_pursuit_tuning_parameters, #pure_pursuit calibration parameters
+                    trajectory_follower_wrapper_param_file
                 ]
             ),
         ]
