@@ -1,0 +1,4 @@
+# An approximation of the delay (sec) between sent vehicle commands and the vehicle begining a meaningful acceleration to that command
+vehicle_response_lag : "0.2"
+# acceptable time difference from autoware's contrl command to still use the command in sec
+time_threshold: "0.5"
