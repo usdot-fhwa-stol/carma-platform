@@ -23,22 +23,6 @@
 #include "platoon_control/platoon_control.hpp"
 
 
-// TODO for USER: Implement a real test using GTest
-// TEST(Testplatoon_control, example_test){
-
-//     rclcpp::NodeOptions options;
-//     auto worker_node = std::make_shared<platoon_control::Node>(options);
-
-//     worker_node->configure(); //Call configure state transition
-//     worker_node->activate();  //Call activate state transition to get not read for runtime
-
-//     std::unique_ptr<std_msgs::msg::String> msg = std::make_unique<std_msgs::msg::String>();
-//     msg->data = "my string";
-
-//     worker_node->example_callback(move(msg)); // Manually drive topic callbacks
-
-// }
-
 
 TEST(PlatoonControlTest, test_case_1)
 {
@@ -48,7 +32,7 @@ TEST(PlatoonControlTest, test_case_1)
     worker_node->configure();
     worker_node->activate();
 
-    std::this_thread::sleep_for(std::chrono::milliseconds(500));
+    std::this_thread::sleep_for(std::chrono::milliseconds(1000));
     auto num = worker_node->count_subscribers("platoon_control/plan_trajectory");
     EXPECT_EQ(1, num);
 
