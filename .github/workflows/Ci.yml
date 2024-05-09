@@ -9,13 +9,13 @@ jobs:
   # First job: Preliminary setup or determinations
   preliminary:
     runs-on: ubuntu-latest
-    outputs:
-      docker_org: ${{ steps.docker-org-and-tag.outputs.docker_org }}
-      docker_tag: ${{ steps.docker-org-and-tag.outputs.docker_tag }}
     steps:
       - name: Determine Docker organization and tag
         id: docker-org-and-tag
         uses: usdot-fhwa-stol/actions/docker-org-and-tag@main
+    outputs:
+      docker_org: ${{ steps.docker-org-and-tag.outputs.docker_org }}
+      docker_tag: ${{ steps.docker-org-and-tag.outputs.docker_tag }}
 
   build:
     needs: preliminary
