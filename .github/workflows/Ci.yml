@@ -6,7 +6,19 @@ on:
   push:
     branches: [develop, master]
 jobs:
+  # First job: Preliminary setup or determinations
+  preliminary:
+    runs-on: ubuntu-latest
+    outputs:
+      docker_org: ${{ steps.docker-org-and-tag.outputs.docker_org }}
+      docker_tag: ${{ steps.docker-org-and-tag.outputs.docker_tag }}
+    steps:
+      - name: Determine Docker organization and tag
+        id: docker-org-and-tag
+        uses: usdot-fhwa-stol/actions/docker-org-and-tag@main
+
   build:
+    needs: preliminary
     defaults:
       run:
         shell: bash
@@ -17,7 +29,7 @@ jobs:
 
     # Set up a Docker container for the job
     container:
-      image: usdotfhwastoldev/autoware.ai:develop
+      image: ${{ needs.preliminary.outputs.docker_org }}/autoware.ai:${{ needs.preliminary.outputs.docker_tag }}
       env:
         INIT_ENV: "/home/carma/.base-image/init-env.sh"
         ROS_2_ENV: "/opt/ros/foxy/setup.bash"
