@@ -40,6 +40,7 @@
       - /guidance/plugins/pure_pursuit_wrapper
       - /guidance/plugins/inlanecruising_plugin
       - /guidance/plugins/cooperative_lanechange
+      - /guidance/plugins/platoon_control
 
     # List of guidance plugins which are not required but the user wishes to have automatically activated
     # so that the user doesn't need to manually activate them via the UI on each launch (though they still can)
