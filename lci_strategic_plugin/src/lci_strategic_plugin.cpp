@@ -325,10 +325,10 @@ boost::optional<bool> LCIStrategicPlugin::canArriveAtGreenWithCertainty(const rc
     bool can_make_late_arrival = true;
 
     if (check_early)
-      can_make_early_arrival = isAllowedMovement(early_arrival_state_by_algo_optional.get().second);
+      can_make_early_arrival = isStateAllowedGreen(early_arrival_state_by_algo_optional.get().second);
 
     if (check_late)
-      can_make_late_arrival = isAllowedMovement(late_arrival_state_by_algo_optional.get().second);
+      can_make_late_arrival = isStateAllowedGreen(late_arrival_state_by_algo_optional.get().second);
 
     // We will cross the light on the green phase even if we arrive early or late
     if (can_make_early_arrival && can_make_late_arrival)  // Green light
@@ -338,7 +338,7 @@ boost::optional<bool> LCIStrategicPlugin::canArriveAtGreenWithCertainty(const rc
 
 }
 
-bool LCIStrategicPlugin::isAllowedMovement(const lanelet::CarmaTrafficSignalState& state) {
+bool LCIStrategicPlugin::isStateAllowedGreen(const lanelet::CarmaTrafficSignalState& state) {
     return state == lanelet::CarmaTrafficSignalState::PROTECTED_MOVEMENT_ALLOWED ||
            state == lanelet::CarmaTrafficSignalState::PERMISSIVE_MOVEMENT_ALLOWED;
 }
@@ -698,7 +698,7 @@ TrajectoryParams LCIStrategicPlugin::handleFailureCaseHelper(const lanelet::Carm
     }
     else
     {
-      if (isAllowedMovement(upper_optional.get().second))
+      if (isStateAllowedGreen(upper_optional.get().second))
       {
         RCLCPP_DEBUG_STREAM(rclcpp::get_logger("lci_strategic_plugin"), "Detected Upper GREEN case");
         return_params = traj_upper;
@@ -717,7 +717,7 @@ TrajectoryParams LCIStrategicPlugin::handleFailureCaseHelper(const lanelet::Carm
     }
     else
     {
-      if (isAllowedMovement(lower_optional.get().second))
+      if (isStateAllowedGreen(lower_optional.get().second))
       {
         RCLCPP_DEBUG_STREAM(rclcpp::get_logger("lci_strategic_plugin"), "Detected Lower GREEN case");
         return_params = traj_lower;
@@ -1103,7 +1103,7 @@ void LCIStrategicPlugin::planWhenWAITING(carma_planning_msgs::srv::PlanManeuvers
   if (config_.enable_carma_streets_connection && entering_time > current_state.stamp.seconds()) //uc3
     should_enter = false;
 
-  if (isAllowedMovement(current_light_state_optional.get().second) && bool_optional_late_certainty.get() && should_enter) // if can make with certainty
+  if (isStateAllowedGreen(current_light_state_optional.get().second) && bool_optional_late_certainty.get() && should_enter) // if can make with certainty
   {
     transition_table_.signal(TransitEvent::RED_TO_GREEN_LIGHT);  // If the light is green send the light transition
                                                                  // signal

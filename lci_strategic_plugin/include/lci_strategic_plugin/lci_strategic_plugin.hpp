@@ -281,7 +281,19 @@ private:
     lanelet::Id lane_id;  // The current lane id of the vehicle at time stamp
   };
 
-  bool isAllowedMovement(const lanelet::CarmaTrafficSignalState& state);
+  /**
+   * \brief Method to check if the state is an allowed green movement state. Currently Permissive and Protected green are supported
+   * \param state The traffic signal state to check for
+   * \return bool value - True if state is PERMISSIVE_MOVEMENT_ALLOWED or PROTECTED_MOVEMENT_ALLOWED
+   */
+  bool isStateAllowedGreen(const lanelet::CarmaTrafficSignalState& state);
+
+  /**
+   * \brief Returns the clearance duration
+   * \param traffic_light The traffic light object to get the green duration for
+   * \return int value of the signal duration
+   */
+  int getClearanceDuration(lanelet::CarmaTrafficSignalPtr traffic_light);
 
   /**
    * \brief Method for performing maneuver planning when the current plugin state is TransitState::UNAVAILABLE
