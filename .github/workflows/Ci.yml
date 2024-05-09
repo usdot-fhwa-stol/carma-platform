@@ -37,6 +37,7 @@ jobs:
       options: "--user root"
 
     steps:
+
     - name: Determine base branch
       id: determine-base-branch
       run: |
