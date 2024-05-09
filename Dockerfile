@@ -35,13 +35,12 @@
 ARG DOCKER_ORG="usdotfhwastoldev"
 ARG DOCKER_TAG="develop"
 FROM ${DOCKER_ORG}/autoware.ai:${DOCKER_TAG} as base-image
+ARG GIT_BRANCH="develop" 
 
 FROM base-image AS source-code
 
 RUN mkdir ~/src
 COPY --chown=carma . /home/carma/src/carma-platform/
-
-ARG GIT_BRANCH="develop" 
 RUN ~/src/carma-platform/docker/checkout.bash -b ${GIT_BRANCH}
 
 # /////////////////////////////////////////////////////////////////////////////
