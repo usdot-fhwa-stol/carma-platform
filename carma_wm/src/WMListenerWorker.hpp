@@ -151,9 +151,15 @@ public:
    */
   void isUsingSimTime(bool use_sim_time);
 
+  /**
+   *  \brief set true if incoming spat is based on wall clock
+   */
+  void isSpatWallTime(bool is_spat_wall_time);
+
 private:
   std::shared_ptr<CARMAWorldModel> world_model_;
   bool use_sim_time_;
+  bool is_spat_wall_time_;
   std::function<void()> map_callback_;
   std::function<void()> route_callback_;
   void newRegemUpdateHelper(lanelet::Lanelet parent_llt, lanelet::RegulatoryElement* regem) const;
