@@ -6,19 +6,7 @@ on:
   push:
     branches: [develop, master]
 jobs:
-  # First job: Preliminary setup or determinations
-  preliminary:
-    runs-on: ubuntu-latest
-    steps:
-      - name: Determine Docker organization and tag
-        id: docker-org-and-tag
-        uses: usdot-fhwa-stol/actions/docker-org-and-tag@main
-    outputs:
-      docker_org: ${{ steps.docker-org-and-tag.outputs.docker_organization }}
-      docker_tag: ${{ steps.docker-org-and-tag.outputs.docker_image_tag }}
-
   build:
-    needs: preliminary
     defaults:
       run:
         shell: bash
@@ -29,7 +17,7 @@ jobs:
 
     # Set up a Docker container for the job
     container:
-      image: ${{ needs.preliminary.outputs.docker_org }}/autoware.ai:${{ needs.preliminary.outputs.docker_tag }}
+      image: usdotfhwastoldev/autoware.ai:develop
       env:
         INIT_ENV: "/home/carma/.base-image/init-env.sh"
         ROS_2_ENV: "/opt/ros/foxy/setup.bash"
@@ -37,15 +25,6 @@ jobs:
       options: "--user root"
 
     steps:
-    - name: Determine base branch
-      id: determine-base-branch
-      run: |
-        if [[ "$GITHUB_EVENT_NAME" == "pull_request" ]]; then
-          echo git_branch="$GITHUB_BASE_REF" >> $GITHUB_OUTPUT
-        else
-          echo git_branch="$GITHUB_REF_NAME" >> $GITHUB_OUTPUT
-        fi
-
     - name: Checkout ${{ github.event.repository.name }}
       # Check out the repository code
       uses: actions/checkout@v3.3.0
@@ -61,7 +40,7 @@ jobs:
       # Checkout project dependencies
       run: |
         source "$INIT_ENV"
-        ./src/${{ github.event.repository.name }}/docker/checkout.bash -r /opt/carma/ -b ${{ steps.determine-base-branch.outputs.git_branch }}
+        ./src/${{ github.event.repository.name }}/docker/checkout.bash -r /opt/carma/
 
     - name: Install external dependencies
       # Install the multiple object tracking deps
