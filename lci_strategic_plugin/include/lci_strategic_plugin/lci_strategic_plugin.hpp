@@ -281,6 +281,8 @@ private:
     lanelet::Id lane_id;  // The current lane id of the vehicle at time stamp
   };
 
+  bool isAllowedMovement(const lanelet::CarmaTrafficSignalState& state);
+
   /**
    * \brief Method for performing maneuver planning when the current plugin state is TransitState::UNAVAILABLE
    *        Therefor no maneuvers are planned but the system checks for the precense of traffic lights ahead of it
