@@ -25,6 +25,15 @@ jobs:
       options: "--user root"
 
     steps:
+    - name: Determine base branch
+      id: determine-base-branch
+      run: |
+        if [[ "$GITHUB_EVENT_NAME" == "pull_request" ]]; then
+          echo git_branch="$GITHUB_BASE_REF" >> $GITHUB_OUTPUT
+        else
+          echo git_branch="$GITHUB_REF_NAME" >> $GITHUB_OUTPUT
+        fi
+
     - name: Checkout ${{ github.event.repository.name }}
       # Check out the repository code
       uses: actions/checkout@v3.3.0
@@ -40,7 +49,7 @@ jobs:
       # Checkout project dependencies
       run: |
         source "$INIT_ENV"
-        ./src/${{ github.event.repository.name }}/docker/checkout.bash -r /opt/carma/
+        ./src/${{ github.event.repository.name }}/docker/checkout.bash -r /opt/carma/ -b ${{ steps.determine-base-branch.outputs.git_branch }}
 
     - name: Install external dependencies
       # Install the multiple object tracking deps
