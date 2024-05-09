@@ -94,12 +94,12 @@ namespace platoon_control
 
 
         // geometry pose
-		std::shared_ptr<geometry_msgs::msg::Pose> current_pose_;
+		std::shared_ptr<geometry_msgs::msg::Pose> current_pose_ = std::make_shared<geometry_msgs::msg::Pose>();
 		double velocity_ = 0.0;
 		double angular_velocity_ = 0;
 		double steering_angle_ = 0;
 
-		std::shared_ptr<PlatooningControlPluginConfig> config_;
+		std::shared_ptr<PlatooningControlPluginConfig> config_ = std::make_shared<PlatooningControlPluginConfig>();
 
 
     private:

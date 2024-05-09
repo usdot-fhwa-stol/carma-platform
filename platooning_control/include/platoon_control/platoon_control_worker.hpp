@@ -108,10 +108,10 @@ namespace platoon_control
         PlatoonLeaderInfo platoon_leader;
 
 		// geometry pose
-        std::shared_ptr<geometry_msgs::msg::Pose> current_pose_;
+        std::shared_ptr<geometry_msgs::msg::Pose> current_pose_ = std::make_shared<geometry_msgs::msg::Pose>();
 
         // config parameters
-        std::shared_ptr<PlatooningControlPluginConfig> ctrl_config_;
+        std::shared_ptr<PlatooningControlPluginConfig> ctrl_config_ = std::make_shared<PlatooningControlPluginConfig>();
 
         double speedCmd = 0;
         double currentSpeed = 0;

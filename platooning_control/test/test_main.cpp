@@ -13,22 +13,21 @@
  * License for the specific language governing permissions and limitations under
  * the License.
  */
-
+#include <gtest/gtest.h>
 #include <rclcpp/rclcpp.hpp>
-#include "platoon_control/platoon_control.hpp"
 
-int main(int argc, char **argv)
+
+int main(int argc, char ** argv)
 {
+    ::testing::InitGoogleTest(&argc, argv);
 
-  rclcpp::init(argc, argv);
+    //Initialize ROS
+    rclcpp::init(argc, argv);
 
-  auto node = std::make_shared<platoon_control::PlatoonControlPlugin>(rclcpp::NodeOptions());
+    bool success = RUN_ALL_TESTS();
 
-  rclcpp::executors::MultiThreadedExecutor executor;
-  executor.add_node(node->get_node_base_interface());
-  executor.spin();
+    //shutdown ROS
+    rclcpp::shutdown();
 
-  rclcpp::shutdown();
-
-  return 0;
+    return success;
 }

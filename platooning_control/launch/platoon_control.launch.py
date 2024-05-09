@@ -52,7 +52,7 @@ def generate_launch_description():
             ComposableNode(
                     package='platoon_control',
                     plugin='platoon_control::PlatoonControlPlugin',
-                    name='platoon_control_node',
+                    name='platoon_control',
                     extra_arguments=[
                         {'use_intra_process_comms': True},
                         {'--log-level' : log_level }

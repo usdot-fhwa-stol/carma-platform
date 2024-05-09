@@ -22,7 +22,6 @@ namespace platoon_control
   PlatoonControlPlugin::PlatoonControlPlugin(const rclcpp::NodeOptions &options)
       : carma_guidance_plugins::ControlPlugin(options)
   {
-    RCLCPP_ERROR_STREAM(get_logger(), "Entering constructor for platoon control");
     // Create initial config
     config_ = PlatooningControlPluginConfig();
 
@@ -39,8 +38,6 @@ namespace platoon_control
     config_.cmd_timestamp = declare_parameter<int>("cmd_timestamp", config_.cmd_timestamp);
     config_.integrator_max = declare_parameter<double>("integrator_max", config_.integrator_max);
     config_.integrator_min = declare_parameter<double>("integrator_min", config_.integrator_min);
-    config_.kdd = declare_parameter<double>("kdd", config_.kdd);
-    config_.wheel_base = declare_parameter<double>("wheel_base", config_.wheel_base);
     config_.lowpass_gain = declare_parameter<double>("lowpass_gain", config_.lowpass_gain);
     config_.lookahead_ratio = declare_parameter<double>("lookahead_ratio", config_.lookahead_ratio);
     config_.min_lookahead_dist = declare_parameter<double>("min_lookahead_dist", config_.min_lookahead_dist);
@@ -50,6 +47,9 @@ namespace platoon_control
     config_.ki_pp = declare_parameter<double>("ki_pp", config_.ki_pp);
 
     //Global params (from vehicle config)
+    config_.kdd = declare_parameter<double>("kdd", config_.kdd);
+    config_.wheel_base = declare_parameter<double>("wheel_base", config_.wheel_base);
+
     config_.vehicle_id  = declare_parameter<std::string>("vehicle_id", config_.vehicle_id);
     config_.shutdown_timeout = declare_parameter<int>("control_plugin_shutdown_timeout", config_.shutdown_timeout);
     config_.ignore_initial_inputs = declare_parameter<int>("control_plugin_ignore_initial_inputs", config_.ignore_initial_inputs);
@@ -58,7 +58,6 @@ namespace platoon_control
     pcw_.ctrl_config_ = std::make_shared<PlatooningControlPluginConfig>(config_);
     pcw_.current_pose_ = std::make_shared<geometry_msgs::msg::Pose>(current_pose_.get().pose);
 
-    RCLCPP_ERROR_STREAM(get_logger(), "Exiting constructor for platoon control");
   }
 
   rcl_interfaces::msg::SetParametersResult PlatoonControlPlugin::parameter_update_callback(const std::vector<rclcpp::Parameter> &parameters)
@@ -88,17 +87,12 @@ namespace platoon_control
 
     auto error_int = update_params<int>({
       {"cmd_timestamp", config_.cmd_timestamp},
-      {"control_plugin_shutdown_timeout", config_.shutdown_timeout},
-      {"control_plugin_ignore_initial_inputs", config_.ignore_initial_inputs},
     }, parameters);
 
-    auto error_string = update_params<std::string>({
-      {"vehicle_id", config_.vehicle_id},
-    }, parameters);
-
+    // vehicle_id, control_plugin_shutdown_timeout and control_plugin_ignore_initial_inputs are not updated as they are global params
     rcl_interfaces::msg::SetParametersResult result;
 
-    result.successful = !error_double && !error_int && !error_string;
+    result.successful = !error_double && !error_int;
 
     return result;
 
@@ -166,7 +160,6 @@ namespace platoon_control
 
     autoware_msgs::msg::ControlCommandStamped ctrl_msg;
 
-    RCLCPP_DEBUG_STREAM(get_logger(), "In generate_command");
     // If it has been a long time since input data has arrived then reset the input counter and return
     // Note: this quiets the controller after its input stream stops, which is necessary to allow
     // the replacement controller to publish on the same output topic after this one is done.

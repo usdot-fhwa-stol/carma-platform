@@ -8,11 +8,11 @@ min_value: -10.0 # Min value to restrict speed adjustment at one time step (limi
 cmd_tmestamp: 100 # Timestep to calculate ctrl commands (ms)
 adjustment_cap: 15.0 # Adjustment cap for speed command (m/s)
 dt: 0.1 # Timestep to calculate ctrl commands (s)
-integrator_max: 30 # Max limit for integrator term
-integrator_min: -30  # Min limit for integrator term
+integrator_max: 30.0 # Max limit for integrator term
+integrator_min: -30.0  # Min limit for integrator term
 lowpass_gain: 0.5 ##Lowpass filter gain
 lookahead_ratio: 2.0 # Ratio to calculate lookahead distance
-minLookahead_dist: 15.0 # Min lookahead distance (m)
+min_lookahead_dist: 15.0 # Min lookahead distance (m)
 correction_angle: 0.0 # Correction angle to improve steering accuracy
 integrator_max_pp: 0.1 # Max integrator val for pure pursuit integral controller
 integrator_min_pp: -0.1  # Min integrator val for pure pursuit integral controller

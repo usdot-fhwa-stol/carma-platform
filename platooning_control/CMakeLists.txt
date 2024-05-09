@@ -32,7 +32,7 @@ set(node_lib platoon_control_node)
 # Includes
 include_directories(
   ${Boost_INCLUDE_DIRS}
-  include/platoon_control
+  include
 )
 
 # Build
@@ -62,7 +62,14 @@ if(BUILD_TESTING)
   find_package(ament_lint_auto REQUIRED)
   ament_lint_auto_find_test_dependencies() # This populates the ${${PROJECT_NAME}_FOUND_TEST_DEPENDS} variable
 
-  ament_add_gtest(test_platoon_control test/node_test.cpp)
+  ament_add_gtest(test_platoon_control
+  test/test_main.cpp
+  test/node_test.cpp
+  test/test_control.cpp
+  test/test_pid.cpp
+  test/test_pure.cpp
+  test/test_worker.cpp
+  )
 
   ament_target_dependencies(test_platoon_control ${${PROJECT_NAME}_FOUND_TEST_DEPENDS})
 

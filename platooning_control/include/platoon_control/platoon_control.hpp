@@ -78,7 +78,7 @@ namespace platoon_control
     /**
      * \brief PlatoonControlPlugin constructor
      */
-    explicit PlatoonControlPlugin(const rclcpp::NodeOptions &);
+    explicit PlatoonControlPlugin(const rclcpp::NodeOptions& options);
 
     /**
      * \brief Example callback for dynamic parameter updates

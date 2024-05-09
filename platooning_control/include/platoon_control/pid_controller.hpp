@@ -36,7 +36,7 @@ namespace platoon_control
         /**
         * \brief plugin config object
         */
-        std::shared_ptr<PlatooningControlPluginConfig> config_;
+        std::shared_ptr<PlatooningControlPluginConfig> config_ = std::make_shared<PlatooningControlPluginConfig>();
 
 
         // ~PIDController();
