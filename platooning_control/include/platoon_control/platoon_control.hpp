@@ -18,8 +18,6 @@
 
 #include <rclcpp/rclcpp.hpp>
 #include <functional>
-#include <std_msgs/msg/string.hpp>
-#include <std_srvs/srv/empty.hpp>
 #include <carma_planning_msgs/msg/trajectory_plan_point.hpp>
 #include <geometry_msgs/msg/twist_stamped.hpp>
 #include <autoware_msgs/msg/control_command.hpp>
@@ -36,7 +34,8 @@ namespace platoon_control
 {
 
   /**
-    * \brief This class includes logic for Platoon control. It includes publishers and subscribers and their callback functions
+    * \brief This class includes node-level logic for Platooning Control such as its publishers, subscribers, and their callback functions.
+    * Platooning Control is used for generating control commands to maintain the gap in platoon as well as generating longitudinal and lateral control commands to follow the trajectory.
 	*/
   class PlatoonControlPlugin : public carma_guidance_plugins::ControlPlugin
   {
@@ -67,7 +66,7 @@ namespace platoon_control
     * \param trajectory_points set of trajectory points
     * \return trajectory speed
     */
-    double getTrajectorySpeed(std::vector<carma_planning_msgs::msg::TrajectoryPlanPoint> trajectory_points);
+    double getTrajectorySpeed(const std::vector<carma_planning_msgs::msg::TrajectoryPlanPoint>& trajectory_points);
 
 
     // Subscribers
@@ -106,14 +105,14 @@ namespace platoon_control
 			*/
 			geometry_msgs::msg::TwistStamped composeTwistCmd(double linear_vel, double angular_vel);
 
-      motion::motion_common::State convert_state(geometry_msgs::msg::PoseStamped pose, geometry_msgs::msg::TwistStamped twist);
+      motion::motion_common::State convert_state(const geometry_msgs::msg::PoseStamped& pose, const geometry_msgs::msg::TwistStamped& twist);
 
       /**
 			* \brief find the point correspoding to the lookahead distance
 			* \param trajectory_plan trajectory plan
 			* \return trajectory point
 			*/
-			carma_planning_msgs::msg::TrajectoryPlanPoint getLookaheadTrajectoryPoint(carma_planning_msgs::msg::TrajectoryPlan trajectory_plan);
+			carma_planning_msgs::msg::TrajectoryPlanPoint getLookaheadTrajectoryPoint(const carma_planning_msgs::msg::TrajectoryPlan& trajectory_plan);
 
       double trajectory_speed_ = 0.0;
 

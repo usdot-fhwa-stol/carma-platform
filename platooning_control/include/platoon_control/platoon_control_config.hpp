@@ -27,16 +27,16 @@ namespace platoon_control
  */
   struct PlatooningControlPluginConfig
   {
-    double stand_still_headway = 12.0; // Standstill gap between vehicles (m)
-    double max_accel = 2.5;  // Maximum acceleration absolute value used in controller filters (m/s^2)
+    double stand_still_headway_m = 12.0; // Standstill gap between vehicles (m)
+    double max_accel_mps2 = 2.5;  // Maximum acceleration absolute value used in controller filters (m/s^2)
     double kp = 0.5;  // Proportional weight for PID controller
     double kd = -0.5;  // Derivative Weight for PID controller
     double ki = 0.0;  // Integral weight for PID controller
-    double max_value = 2;  // Max value to restrict speed adjustment at one time step (limit on delta_v) (m/s)
-    double min_value = -10; // Min value to restrict speed adjustment at one time step (limit on delta_v) (m/s)
+    double max_delta_speed_per_timestep = 2;  // Max value to restrict speed adjustment at one time step (limit on delta_v) (m/s)
+    double min_delta_speed_per_timestep = -10; // Min value to restrict speed adjustment at one time step (limit on delta_v) (m/s)
 
-    double adjustment_cap = 10;  // Adjustment cap for speed command (m/s)
-    int cmd_timestamp = 100;  // Timestamp to calculate ctrl commands (ms)
+    double adjustment_cap_mps = 10;  // Adjustment cap for speed command (m/s)
+    int cmd_timestamp_ms = 100;  // Timestamp to calculate ctrl commands (ms)
     double integrator_max = 100; // Max limit for integrator term
     double integrator_min = -100;  // Max limit for integrator term
     std::string vehicle_id = "DEFAULT_VEHICLE_ID";         // Vehicle id is the license plate of the vehicle
@@ -65,20 +65,20 @@ namespace platoon_control
   friend std::ostream& operator<<(std::ostream& output, const PlatooningControlPluginConfig& c)
   {
     output << "PlatooningControlPluginConfig { " << std::endl
-           << "stand_still_headway_: " << c.stand_still_headway << std::endl
-           << "max_accel_: " << c.max_accel << std::endl
-           << "kp_: " << c.kp << std::endl
-           << "kd_: " << c.kd << std::endl
-           << "ki_: " << c.ki << std::endl
-           << "max_value_: " << c.max_value << std::endl
-           << "min_value_: " << c.min_value << std::endl
-           << "adjustment_cap_: " << c.adjustment_cap << std::endl
-           << "cmd_timestamp_: " << c.cmd_timestamp << std::endl
-           << "integrator_max_: " << c.integrator_max << std::endl
-           << "integrator_min_: " << c.integrator_min << std::endl
-           << "vehicle_id_: " << c.vehicle_id << std::endl
-           << "shutdown_timeout_: " << c.shutdown_timeout << std::endl
-           << "ignore_initial_inputs_: " << c.ignore_initial_inputs << std::endl
+           << "stand_still_headway_m: " << c.stand_still_headway_m << std::endl
+           << "max_accel_mps2: " << c.max_accel_mps2 << std::endl
+           << "kp: " << c.kp << std::endl
+           << "kd: " << c.kd << std::endl
+           << "ki: " << c.ki << std::endl
+           << "max_delta_speed_per_timestep: " << c.max_delta_speed_per_timestep << std::endl
+           << "min_delta_speed_per_timestep_: " << c.min_delta_speed_per_timestep << std::endl
+           << "adjustment_cap_mps: " << c.adjustment_cap_mps << std::endl
+           << "cmd_timestamp_ms: " << c.cmd_timestamp_ms << std::endl
+           << "integrator_max: " << c.integrator_max << std::endl
+           << "integrator_min: " << c.integrator_min << std::endl
+           << "vehicle_id: " << c.vehicle_id << std::endl
+           << "shutdown_timeout: " << c.shutdown_timeout << std::endl
+           << "ignore_initial_inputs: " << c.ignore_initial_inputs << std::endl
             //Pure Pursuit configs
            << "vehicle_response_lag" << c.vehicle_response_lag << std::endl
            << "max_lookahead_dist: " << c.max_lookahead_dist << std::endl

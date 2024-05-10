@@ -24,7 +24,6 @@
 #include <carma_v2x_msgs/msg/plan_type.hpp>
 #include <carma_planning_msgs/msg/trajectory_plan.hpp>
 #include "platoon_control/pid_controller.hpp"
-#include "platoon_control/pure_pursuit.hpp"
 #include "platoon_control/platoon_control_config.hpp"
 #include <boost/optional.hpp>
 
@@ -65,12 +64,6 @@ namespace platoon_control
         * \brief Default constructor for platooning control worker
         */
         PlatoonControlWorker();
-
-        /**
-        * \brief Update configurations
-        * \param new_config new configuration
-        */
-        void updateConfigParams(PlatooningControlPluginConfig new_config);
 
         /**
         * \brief Returns latest speed command
@@ -114,7 +107,7 @@ namespace platoon_control
         double speedCmd_ = 0;
         double steerCmd_ = 0;
         double angVelCmd_ = 0;
-        double desired_gap_ = ctrl_config_->stand_still_headway;
+        double desired_gap_ = ctrl_config_->stand_still_headway_m;
         double actual_gap_ = 0.0;
         bool last_cmd_set_ = false;
 

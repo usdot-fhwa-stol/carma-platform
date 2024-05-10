@@ -31,8 +31,6 @@ set(node_lib platoon_control_node)
 
 # Includes
 include_directories(
-  ${Boost_INCLUDE_DIRS}
-  ${catkin_INCLUDE_DIRS}
   include
 )
 
@@ -69,8 +67,6 @@ if(BUILD_TESTING)
   test/test_pid.cpp
   test/test_worker.cpp
   )
-
-  ament_target_dependencies(test_platoon_control ${${PROJECT_NAME}_FOUND_TEST_DEPENDS})
 
   target_link_libraries(test_platoon_control ${node_lib})
 

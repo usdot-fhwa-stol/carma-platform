@@ -54,10 +54,10 @@ namespace platoon_control
 		RCLCPP_DEBUG_STREAM(rclcpp::get_logger("platoon_control"), "total controller output: " << output);
 
 	    // Restrict to max/min
-	    if( output > config_->max_value )
-	        output = config_->max_value;
-	    else if( output < config_->min_value )
-	        output = config_->min_value;
+	    if( output > config_->max_delta_speed_per_timestep )
+	        output = config_->max_delta_speed_per_timestep;
+	    else if( output < config_->min_delta_speed_per_timestep )
+	        output = config_->min_delta_speed_per_timestep;
 	    // Save error to previous error
 	    _pre_error = error;
 

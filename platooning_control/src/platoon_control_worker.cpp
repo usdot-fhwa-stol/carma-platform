@@ -62,7 +62,7 @@ namespace platoon_control
 
 		    double adjSpeedCmd = controllerOutput + leader.commandSpeed;
 	        RCLCPP_DEBUG_STREAM(rclcpp::get_logger("platoon_control"), "Adjusted Speed Cmd = " << adjSpeedCmd << "; Controller Output = " << controllerOutput
-	        	<< "; Leader CmdSpeed= " << leader.commandSpeed << "; Adjustment Cap " << ctrl_config_->adjustment_cap);
+	        	<< "; Leader CmdSpeed= " << leader.commandSpeed << "; Adjustment Cap " << ctrl_config_->adjustment_cap_mps);
 	            // After we get a adjSpeedCmd, we apply three filters on it if the filter is enabled
 	            // First: we do not allow the difference between command speed of the host vehicle and the leader's commandSpeed higher than adjustmentCap
 
@@ -71,10 +71,10 @@ namespace platoon_control
 
             if(enableMaxAdjustmentFilter)
             {
-                if(speed_cmd > leader.commandSpeed + ctrl_config_->adjustment_cap) {
-                    speed_cmd = leader.commandSpeed + ctrl_config_->adjustment_cap;
-                } else if(speed_cmd < leader.commandSpeed - ctrl_config_->adjustment_cap) {
-                    speed_cmd = leader.commandSpeed - ctrl_config_->adjustment_cap;
+                if(speed_cmd > leader.commandSpeed + ctrl_config_->adjustment_cap_mps) {
+                    speed_cmd = leader.commandSpeed + ctrl_config_->adjustment_cap_mps;
+                } else if(speed_cmd < leader.commandSpeed - ctrl_config_->adjustment_cap_mps) {
+                    speed_cmd = leader.commandSpeed - ctrl_config_->adjustment_cap_mps;
                 }
                 RCLCPP_DEBUG_STREAM(rclcpp::get_logger("platoon_control"), "The adjusted cmd speed after max adjustment cap is " << speed_cmd << " m/s");
             }
@@ -88,9 +88,9 @@ namespace platoon_control
 
             if(enableMaxAdjustmentFilter)
             {
-                if(speed_cmd > ctrl_config_->adjustment_cap)
+                if(speed_cmd > ctrl_config_->adjustment_cap_mps)
                 {
-                    speed_cmd = ctrl_config_->adjustment_cap;
+                    speed_cmd = ctrl_config_->adjustment_cap_mps;
                 }
 
                 RCLCPP_DEBUG_STREAM(rclcpp::get_logger("platoon_control"), "The adjusted leader cmd speed after max adjustment cap is " << speed_cmd << " m/s");
@@ -112,8 +112,8 @@ namespace platoon_control
         // Third: we allow do not a large gap between two consecutive speed commands
         if(enableMaxAccelFilter) {
 
-                double max = lastCmdSpeed + (ctrl_config_->max_accel * (ctrl_config_->cmd_timestamp / 1000.0));
-                double min = lastCmdSpeed - (ctrl_config_->max_accel * (ctrl_config_->cmd_timestamp / 1000.0));
+                double max = lastCmdSpeed + (ctrl_config_->max_accel_mps2 * (ctrl_config_->cmd_timestamp_ms / 1000.0));
+                double min = lastCmdSpeed - (ctrl_config_->max_accel_mps2 * (ctrl_config_->cmd_timestamp_ms / 1000.0));
                 if(speed_cmd > max) {
                     speed_cmd = max;
                 } else if (speed_cmd < min) {
