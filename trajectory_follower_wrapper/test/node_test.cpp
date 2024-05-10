@@ -65,7 +65,7 @@ TEST(Testtrajectory_follower_wrapper, test_threshold){
     ASSERT_FALSE(res2);
 
     std::string version = worker_node->get_version_id();
-    ASSERT_EQUAL(version, "1,0");
+    ASSERT_EQ(version, "1,0");
 
     worker_node->timer_callback();
 }

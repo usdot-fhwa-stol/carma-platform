@@ -79,11 +79,15 @@ namespace trajectory_follower_wrapper
   {
     RCLCPP_DEBUG(get_logger(), "In timer callback");
 
-    auto autoware_traj_plan = basic_autonomy::waypoint_generation::process_trajectory_plan(current_trajectory_.get(), config_.vehicle_response_lag);
-    autoware_traj_pub_->publish(autoware_traj_plan);
+    if (!current_trajectory_ || !current_pose_ || !current_twist_)
+    {
+      auto autoware_traj_plan = basic_autonomy::waypoint_generation::process_trajectory_plan(current_trajectory_.get(), config_.vehicle_response_lag);
+      autoware_traj_pub_->publish(autoware_traj_plan);
 
-    auto autoware_state = convert_state(current_pose_.get(), current_twist_.get());
-    autoware_state_pub_->publish(autoware_state);
+
+      auto autoware_state = convert_state(current_pose_.get(), current_twist_.get());
+      autoware_state_pub_->publish(autoware_state);
+    }
   }
 
   void TrajectoryFollowerWrapperNode::ackermann_control_cb(autoware_auto_msgs::msg::AckermannControlCommand::SharedPtr msg)
