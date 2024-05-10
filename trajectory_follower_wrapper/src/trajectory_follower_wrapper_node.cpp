@@ -79,7 +79,7 @@ namespace trajectory_follower_wrapper
   {
     RCLCPP_DEBUG(get_logger(), "In timer callback");
 
-    if (!current_trajectory_ || !current_pose_ || !current_twist_)
+    if (current_trajectory_ || current_pose_ || current_twist_)
     {
       auto autoware_traj_plan = basic_autonomy::waypoint_generation::process_trajectory_plan(current_trajectory_.get(), config_.vehicle_response_lag);
       autoware_traj_pub_->publish(autoware_traj_plan);
@@ -140,9 +140,8 @@ namespace trajectory_follower_wrapper
       return converted_cmd;
     }
 
-    bool isreceivedCmdOld = isControlCommandOld(received_ctrl_command_.get());
 
-    if (isreceivedCmdOld)
+    if (isControlCommandOld(received_ctrl_command_.get()))
     {
       RCLCPP_DEBUG_STREAM(rclcpp::get_logger("trajectory_follower_wrapper"), "Control Command is old, empty control command generated");
       return converted_cmd;
