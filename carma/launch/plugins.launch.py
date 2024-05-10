@@ -477,7 +477,7 @@ def generate_launch_description():
                 remappings = [
                     ("plugin_discovery", [ EnvironmentVariable('CARMA_GUIDE_NS', default_value=''), "/plugin_discovery" ] ),
                     ("ctrl_raw", [ EnvironmentVariable('CARMA_GUIDE_NS', default_value=''), "/ctrl_raw" ] ),
-                    ("trajectory_follower_wrapper/plan_trajectory", [ EnvironmentVariable('CARMA_GUIDE_NS', default_value=''), "/plugins/pure_pursuit/plan_trajectory" ] ),
+                    ("trajectory_follower_wrapper/plan_trajectory", [ EnvironmentVariable('CARMA_GUIDE_NS', default_value=''), "/plugins/trajectory_follower_wrapper/plan_trajectory" ] ),
                     ("current_pose", [ EnvironmentVariable('CARMA_LOCZ_NS', default_value=''), "/current_pose" ] ),
                     ("vehicle/twist", [ EnvironmentVariable('CARMA_INTR_NS', default_value=''), "/vehicle/twist" ] ),
                 ],
