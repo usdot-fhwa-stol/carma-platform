@@ -17,7 +17,7 @@ jobs:
       docker_tag: ${{ steps.docker-org-and-tag.outputs.docker_image_tag }}
 
   build:
-    needs: determine_docker_org_and_tag:
+    needs: determine_docker_org_and_tag
     defaults:
       run:
         shell: bash
