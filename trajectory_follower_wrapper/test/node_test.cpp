@@ -63,6 +63,11 @@ TEST(Testtrajectory_follower_wrapper, test_threshold){
     aw_cmd.stamp = worker_node->now();
     bool res2 = worker_node->isControlCommandOld(aw_cmd);
     ASSERT_FALSE(res2);
+
+    std::string version = worker_node->get_version_id();
+    ASSERT_EQUAL(version, "1,0");
+
+    worker_node->timer_callback();
 }
 
 TEST(Testtrajectory_follower_wrapper, test_conversion_state)
