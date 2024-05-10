@@ -57,7 +57,7 @@ namespace trajectory_follower_wrapper
     add_on_set_parameters_callback(std::bind(&TrajectoryFollowerWrapperNode::parameter_update_callback, this, std_ph::_1));
 
     // Setup subscribers
-    control_cmd_sub_ = create_subscription<autoware_auto_msgs::msg::AckermannControlCommand>("output/control_cmd", 10,
+    control_cmd_sub_ = create_subscription<autoware_auto_msgs::msg::AckermannControlCommand>("output/control_cmd", rclcpp::QoS{1}.transient_local(),
                                                               std::bind(&TrajectoryFollowerWrapperNode::ackermann_control_cb, this, std_ph::_1));
 
     // Setup publishers

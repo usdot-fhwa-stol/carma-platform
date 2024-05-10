@@ -23,7 +23,7 @@
 #include "trajectory_follower_wrapper/trajectory_follower_wrapper_node.hpp"
 
 
-TEST(Testtrajectory_follower_wrapper, test_time_threshold){
+TEST(Testtrajectory_follower_wrapper, test_ctrl_cb){
 
     rclcpp::NodeOptions options;
     auto worker_node = std::make_shared<trajectory_follower_wrapper::TrajectoryFollowerWrapperNode>(options);
@@ -41,6 +41,28 @@ TEST(Testtrajectory_follower_wrapper, test_time_threshold){
     auto res = worker_node->generate_command();
 
     ASSERT_NEAR(res.cmd.linear_acceleration, 0.0, 0.0001);
+
+}
+
+TEST(Testtrajectory_follower_wrapper, test_threshold){
+
+    rclcpp::NodeOptions options;
+    auto worker_node = std::make_shared<trajectory_follower_wrapper::TrajectoryFollowerWrapperNode>(options);
+
+    worker_node->configure(); //Call configure state transition
+    worker_node->activate();  //Call activate state transition to get not read for runtime
+
+    autoware_auto_msgs::msg::AckermannControlCommand aw_cmd;
+    aw_cmd.stamp = worker_node->now() - rclcpp::Duration::from_seconds(5);
+    aw_cmd.longitudinal.acceleration = 1.0;
+    aw_cmd.longitudinal.speed = 2.0;
+
+    bool res1 = worker_node->isControlCommandOld(aw_cmd);
+    ASSERT_TRUE(res1);
+
+    aw_cmd.stamp = worker_node->now();
+    bool res2 = worker_node->isControlCommandOld(aw_cmd);
+    ASSERT_FALSE(res2);
 }
 
 TEST(Testtrajectory_follower_wrapper, test_conversion_state)
