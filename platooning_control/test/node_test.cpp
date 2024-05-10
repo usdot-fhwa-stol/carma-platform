@@ -24,21 +24,7 @@
 
 
 
-TEST(PlatoonControlTest, test_case_1)
-{
-    rclcpp::NodeOptions options;
-    auto worker_node = std::make_shared<platoon_control::PlatoonControlPlugin>(options);
-
-    worker_node->configure();
-    worker_node->activate();
-
-    // std::this_thread::sleep_for(std::chrono::milliseconds(1000));
-    auto num = worker_node->count_subscribers("platoon_control/plan_trajectory");
-    EXPECT_EQ(1, num);
-
-}
-
-TEST(PlatoonControlTest, testCase2)
+TEST(PlatoonControlTest, testCase1)
 {
     rclcpp::NodeOptions options;
     auto worker_node = std::make_shared<platoon_control::PlatoonControlPlugin>(options);

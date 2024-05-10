@@ -34,23 +34,32 @@ namespace platoon_control
     double ki = 0.0;  // Integral weight for PID controller
     double max_value = 2;  // Max value to restrict speed adjustment at one time step (limit on delta_v) (m/s)
     double min_value = -10; // Min value to restrict speed adjustment at one time step (limit on delta_v) (m/s)
-    double dt = 0.1; // Timestep to calculate ctrl commands (s)
+
     double adjustment_cap = 10;  // Adjustment cap for speed command (m/s)
     int cmd_timestamp = 100;  // Timestamp to calculate ctrl commands (ms)
     double integrator_max = 100; // Max limit for integrator term
     double integrator_min = -100;  // Max limit for integrator term
-    double kdd = 4.5; //coefficient for smooth steering
-    double wheel_base = 3.09; //Wheelbase of the vehicle (m)
-    double lowpass_gain = 0.5;  // Lowpass filter gain
-    double lookahead_ratio = 2.0;  // Ratio to calculate lookahead distance
-    double min_lookahead_dist = 6.0;  // Min lookahead distance (m)
     std::string vehicle_id = "DEFAULT_VEHICLE_ID";         // Vehicle id is the license plate of the vehicle
     int     shutdown_timeout = 200;    // Timeout to stop generating ctrl signals after stopped receiving trajectory (ms)
     int     ignore_initial_inputs = 0;  // num inputs to throw away after startup
-    double correction_angle = 0.0;  //Correction angle to improve steering accuracy
+
+    //Pure Pursuit configs
+    double vehicle_response_lag = 0.2;       // An approximation of the delay (sec) between sent vehicle commands and the vehicle begining a meaningful acceleration to that command
+    double max_lookahead_dist = 100.0;
+    double min_lookahead_dist = 6.0;  // Min lookahead distance (m)
+    double speed_to_lookahead_ratio = 2.0; // Ratio to calculate lookahead distance
+    bool is_interpolate_lookahead_point = true;
+    bool is_delay_compensation = true;      // not to be confused with vehicle_response_lag, which is applied nonetheless
+    double emergency_stop_distance = 0.1;
+    double speed_thres_traveling_direction = 0.3;
+    double dist_front_rear_wheels = 3.5;
+
+    double dt = 0.1; // Timestep to calculate ctrl commands (s)
     double integrator_max_pp = 0.0; //Max integrator val for pure pursuit integral controller
     double integrator_min_pp = 0.0;   //Min integrator val for pure pursuit integral controller
     double ki_pp = 0.0; // Integral weight for pure pursuit integral controller";
+    bool is_integrator_enabled = false;
+
 
     // Stream operator for this config
   friend std::ostream& operator<<(std::ostream& output, const PlatooningControlPluginConfig& c)
@@ -63,23 +72,28 @@ namespace platoon_control
            << "ki_: " << c.ki << std::endl
            << "max_value_: " << c.max_value << std::endl
            << "min_value_: " << c.min_value << std::endl
-           << "dt_: " << c.dt << std::endl
            << "adjustment_cap_: " << c.adjustment_cap << std::endl
            << "cmd_timestamp_: " << c.cmd_timestamp << std::endl
            << "integrator_max_: " << c.integrator_max << std::endl
            << "integrator_min_: " << c.integrator_min << std::endl
-           << "kdd_: " << c.kdd << std::endl
-           << "wheel_base_: " << c.wheel_base << std::endl
-           << "lowpass_gain_: " << c.lowpass_gain << std::endl
-           << "lookahead_ratio_: " << c.lookahead_ratio << std::endl
-           << "min_lookahead_dist_: " << c.min_lookahead_dist << std::endl
            << "vehicle_id_: " << c.vehicle_id << std::endl
            << "shutdown_timeout_: " << c.shutdown_timeout << std::endl
            << "ignore_initial_inputs_: " << c.ignore_initial_inputs << std::endl
-           << "correction_angle_: " << c.correction_angle << std::endl
-           << "integrator_max_pp_: " << c.integrator_max_pp << std::endl
-           << "integrator_min_pp_: " << c.integrator_min_pp << std::endl
+            //Pure Pursuit configs
+           << "vehicle_response_lag" << c.vehicle_response_lag << std::endl
+           << "max_lookahead_dist: " << c.max_lookahead_dist << std::endl
+           << "min_lookahead_dist: " << c.min_lookahead_dist << std::endl
+           << "speed_to_lookahead_ratio: " << c.speed_to_lookahead_ratio << std::endl
+           << "is_interpolate_lookahead_point: " << c.is_interpolate_lookahead_point << std::endl
+           << "is_delay_compensation: " << c.is_delay_compensation << std::endl
+           << "emergency_stop_distance: " << c.emergency_stop_distance << std::endl
+           << "speed_thres_traveling_direction: "<< c.speed_thres_traveling_direction << std::endl
+           << "dist_front_rear_wheels: " << c.dist_front_rear_wheels << std::endl
+           << "dt: " << c.dt << std::endl
+           << "integrator_max_pp: " << c.integrator_max_pp << std::endl
+           << "integrator_min_pp: " << c.integrator_min_pp << std::endl
            << "ki_pp_: " << c.ki_pp << std::endl
+           << "is_integrator_enabled" << c.is_integrator_enabled <<std::endl
            << "}" << std::endl;
     return output;
   }

@@ -123,13 +123,3 @@ TEST(PlatoonControlWorkerTest, test3)
     EXPECT_NEAR(10.25, pcw.getLastSpeedCommand(), 0.5);
 
 }
-
-TEST(PlatoonControlWorkerTest, test_steer)
-{
-    platoon_control::PlatoonControlWorker pcw;
-    carma_planning_msgs::msg::TrajectoryPlanPoint point;
-    point.x = 1.0;
-    point.y = 2.0;
-    pcw.generateSteer(point);
-    EXPECT_NEAR(0, pcw.steerCmd_, 0.6);
-}

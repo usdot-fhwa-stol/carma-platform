@@ -22,6 +22,7 @@
 #include <carma_v2x_msgs/msg/mobility_response.hpp>
 #include <geometry_msgs/msg/pose_stamped.hpp>
 #include <carma_v2x_msgs/msg/plan_type.hpp>
+#include <carma_planning_msgs/msg/trajectory_plan.hpp>
 #include "platoon_control/pid_controller.hpp"
 #include "platoon_control/pure_pursuit.hpp"
 #include "platoon_control/platoon_control_config.hpp"
@@ -84,12 +85,6 @@ namespace platoon_control
         void generateSpeed(const carma_planning_msgs::msg::TrajectoryPlanPoint& point);
 
         /**
-        * \brief Generates steering commands (in rad) based on lookahead trajectory point
-        * \param point trajectory point
-        */
-        void generateSteer(const carma_planning_msgs::msg::TrajectoryPlanPoint& point);
-
-        /**
         * \brief Sets the platoon leader object using info from msg
         * \param leader leader information msg received from strategic plugin
         */
@@ -128,9 +123,6 @@ namespace platoon_control
 
         // pid controller object
         PIDController pid_ctrl_;
-
-        // pure pursuit controller object
-        PurePursuit pp_;
 
         double dist_to_front_vehicle;
 

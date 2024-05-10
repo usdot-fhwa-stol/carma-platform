@@ -36,6 +36,8 @@
   <depend>tf2</depend>
   <depend>tf2_geometry_msgs</depend>
   <depend>tf2_eigen</depend>
+  <depend>pure_pursuit</depend>
+  <depend>basic_autonomy</depend>
 
   <test_depend>ament_lint_auto</test_depend>
   <test_depend>ament_cmake_gtest</test_depend>

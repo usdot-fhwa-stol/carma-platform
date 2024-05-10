@@ -32,6 +32,7 @@ set(node_lib platoon_control_node)
 # Includes
 include_directories(
   ${Boost_INCLUDE_DIRS}
+  ${catkin_INCLUDE_DIRS}
   include
 )
 
@@ -40,7 +41,6 @@ ament_auto_add_library(${node_lib} SHARED
         src/platoon_control.cpp
         src/platoon_control_worker.cpp
         src/pid_controller.cpp
-        src/pure_pursuit.cpp
 )
 
 ament_auto_add_executable(${node_exec}
@@ -67,7 +67,6 @@ if(BUILD_TESTING)
   test/node_test.cpp
   test/test_control.cpp
   test/test_pid.cpp
-  test/test_pure.cpp
   test/test_worker.cpp
   )
 

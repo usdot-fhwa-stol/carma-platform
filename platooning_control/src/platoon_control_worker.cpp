@@ -25,11 +25,6 @@ namespace platoon_control
     PlatoonControlWorker::PlatoonControlWorker()
     {
         pid_ctrl_ = PIDController();
-        pp_ = PurePursuit();
-
-        pid_ctrl_.config_ = ctrl_config_;
-        pp_.config_ = ctrl_config_;
-        pp_.current_pose_ = current_pose_;
 
     }
 
@@ -132,15 +127,6 @@ namespace platoon_control
 
         lastCmdSpeed = speedCmd_;
 
-    }
-
-    void PlatoonControlWorker::generateSteer(const carma_planning_msgs::msg::TrajectoryPlanPoint& point)
-    {
-        pp_.velocity_ = currentSpeed;
-
-        pp_.calculateSteer(point);
-    	steerCmd_ = pp_.getSteeringAngle();
-        angVelCmd_ = pp_.getAngularVelocity();
     }
 
     // TODO get the actual leader from strategic plugin

@@ -28,7 +28,10 @@
 #include <carma_guidance_plugins/control_plugin.hpp>
 #include "platoon_control/platoon_control_config.hpp"
 #include "platoon_control/platoon_control_worker.hpp"
+#include <pure_pursuit/pure_pursuit.hpp>
+#include <basic_autonomy/basic_autonomy.hpp>
 
+namespace pure_pursuit = autoware::motion::control::pure_pursuit;
 namespace platoon_control
 {
 
@@ -50,6 +53,8 @@ namespace platoon_control
     PlatoonLeaderInfo platoon_leader_;
     long prev_input_time_ = 0;				//timestamp of the previous trajectory plan input received
     long consecutive_input_counter_ = 0;	//num inputs seen without a timeout
+
+    std::shared_ptr<pure_pursuit::PurePursuit> pp_;
 
     /**
     * \brief callback function for platoon info
@@ -101,6 +106,7 @@ namespace platoon_control
 			*/
 			geometry_msgs::msg::TwistStamped composeTwistCmd(double linear_vel, double angular_vel);
 
+      motion::motion_common::State convert_state(geometry_msgs::msg::PoseStamped pose, geometry_msgs::msg::TwistStamped twist);
 
       /**
 			* \brief find the point correspoding to the lookahead distance

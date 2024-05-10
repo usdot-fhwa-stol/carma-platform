@@ -33,23 +33,28 @@ namespace platoon_control
     config_.ki = declare_parameter<double>("ki", config_.ki);
     config_.max_value = declare_parameter<double>("max_value", config_.max_value);
     config_.min_value = declare_parameter<double>("min_value", config_.min_value);
-    config_.dt = declare_parameter<double>("dt", config_.dt);
     config_.adjustment_cap = declare_parameter<double>("adjustment_cap", config_.adjustment_cap);
     config_.cmd_timestamp = declare_parameter<int>("cmd_timestamp", config_.cmd_timestamp);
     config_.integrator_max = declare_parameter<double>("integrator_max", config_.integrator_max);
     config_.integrator_min = declare_parameter<double>("integrator_min", config_.integrator_min);
-    config_.lowpass_gain = declare_parameter<double>("lowpass_gain", config_.lowpass_gain);
-    config_.lookahead_ratio = declare_parameter<double>("lookahead_ratio", config_.lookahead_ratio);
-    config_.min_lookahead_dist = declare_parameter<double>("min_lookahead_dist", config_.min_lookahead_dist);
-    config_.correction_angle = declare_parameter<double>("correction_angle", config_.correction_angle);
+
+    config_.vehicle_response_lag = declare_parameter<double>("vehicle_response_lag", config_.vehicle_response_lag);
+    config_.max_lookahead_dist = declare_parameter<double>("maximum_lookahead_distance", config_.max_lookahead_dist);
+    config_.min_lookahead_dist = declare_parameter<double>("minimum_lookahead_distance", config_.min_lookahead_dist);
+    config_.speed_to_lookahead_ratio = declare_parameter<double>("speed_to_lookahead_ratio", config_.speed_to_lookahead_ratio);
+    config_.is_interpolate_lookahead_point = declare_parameter<bool>("is_interpolate_lookahead_point", config_.is_interpolate_lookahead_point);
+    config_.is_delay_compensation = declare_parameter<bool>("is_delay_compensation", config_.is_delay_compensation);
+    config_.emergency_stop_distance = declare_parameter<double>("emergency_stop_distance", config_.emergency_stop_distance);
+    config_.speed_thres_traveling_direction = declare_parameter<double>("speed_thres_traveling_direction", config_.speed_thres_traveling_direction);
+    config_.dist_front_rear_wheels = declare_parameter<double>("dist_front_rear_wheels", config_.dist_front_rear_wheels);
+
+    config_.dt = declare_parameter<double>("dt", config_.dt);
     config_.integrator_max_pp = declare_parameter<double>("integrator_max_pp", config_.integrator_max_pp);
     config_.integrator_min_pp = declare_parameter<double>("integrator_min_pp", config_.integrator_min_pp);
-    config_.ki_pp = declare_parameter<double>("ki_pp", config_.ki_pp);
+    config_.ki_pp = declare_parameter<double>("Ki_pp", config_.ki_pp);
+    config_.is_integrator_enabled = declare_parameter<bool>("is_integrator_enabled", config_.is_integrator_enabled);
 
     //Global params (from vehicle config)
-    config_.kdd = declare_parameter<double>("kdd", config_.kdd);
-    config_.wheel_base = declare_parameter<double>("wheel_base", config_.wheel_base);
-
     config_.vehicle_id  = declare_parameter<std::string>("vehicle_id", config_.vehicle_id);
     config_.shutdown_timeout = declare_parameter<int>("control_plugin_shutdown_timeout", config_.shutdown_timeout);
     config_.ignore_initial_inputs = declare_parameter<int>("control_plugin_ignore_initial_inputs", config_.ignore_initial_inputs);
@@ -70,29 +75,37 @@ namespace platoon_control
       {"ki", config_.ki},
       {"max_value", config_.max_value},
       {"min_value", config_.min_value},
-      {"dt", config_.dt},
       {"adjustment_cap", config_.adjustment_cap},
       {"integrator_max", config_.integrator_max},
       {"integrator_min", config_.integrator_min},
-      {"kdd", config_.kdd},
-      {"wheel_base", config_.wheel_base},
-      {"lowpass_gain", config_.lowpass_gain},
-      {"lookahead_ratio", config_.lookahead_ratio},
+
+      {"vehicle_response_lag", config_.vehicle_response_lag},
+      {"max_lookahead_dist", config_.max_lookahead_dist},
       {"min_lookahead_dist", config_.min_lookahead_dist},
-      {"correction_angle", config_.correction_angle},
+      {"speed_to_lookahead_ratio", config_.speed_to_lookahead_ratio},
+      {"emergency_stop_distance",config_.emergency_stop_distance},
+      {"speed_thres_traveling_direction", config_.speed_thres_traveling_direction},
+      {"dist_front_rear_wheels", config_.dist_front_rear_wheels},
+      {"dt", config_.dt},
       {"integrator_max_pp", config_.integrator_max_pp},
       {"integrator_min_pp", config_.integrator_min_pp},
-      {"ki_pp", config_.ki_pp},
+      {"Ki_pp", config_.ki_pp},
     }, parameters);
 
     auto error_int = update_params<int>({
       {"cmd_timestamp", config_.cmd_timestamp},
     }, parameters);
 
+    auto error_bool = update_params<bool>({
+      {"is_interpolate_lookahead_point", config_.is_interpolate_lookahead_point},
+      {"is_delay_compensation",config_.is_delay_compensation},
+      {"is_integrator_enabled", config_.is_integrator_enabled},
+  }, parameters);
+
     // vehicle_id, control_plugin_shutdown_timeout and control_plugin_ignore_initial_inputs are not updated as they are global params
     rcl_interfaces::msg::SetParametersResult result;
 
-    result.successful = !error_double && !error_int;
+    result.successful = !error_double && !error_int && !error_bool;
 
     return result;
 
@@ -111,27 +124,56 @@ namespace platoon_control
     get_parameter<double>("ki", config_.ki);
     get_parameter<double>("max_value", config_.max_value);
     get_parameter<double>("min_value", config_.min_value);
-    get_parameter<double>("dt", config_.dt);
     get_parameter<double>("adjustment_cap", config_.adjustment_cap);
     get_parameter<int>("cmd_timestamp", config_.cmd_timestamp);
     get_parameter<double>("integrator_max", config_.integrator_max);
     get_parameter<double>("integrator_min", config_.integrator_min);
-    get_parameter<double>("kdd", config_.kdd);
-    get_parameter<double>("wheel_base", config_.wheel_base);
-    get_parameter<double>("lowpass_gain", config_.lowpass_gain);
-    get_parameter<double>("lookahead_ratio", config_.lookahead_ratio);
-    get_parameter<double>("min_lookahead_dist", config_.min_lookahead_dist);
-    get_parameter<double>("correction_angle", config_.correction_angle);
-    get_parameter<double>("integrator_max_pp", config_.integrator_max_pp);
-    get_parameter<double>("integrator_min_pp", config_.integrator_min_pp);
-    get_parameter<double>("ki_pp", config_.ki_pp);
-
 
     get_parameter<std::string>("vehicle_id", config_.vehicle_id);
     get_parameter<int>("control_plugin_shutdown_timeout", config_.shutdown_timeout);
     get_parameter<int>("control_plugin_ignore_initial_inputs", config_.ignore_initial_inputs);
 
+   //Pure Pursuit params
+    get_parameter<double>("vehicle_response_lag", config_.vehicle_response_lag);
+    get_parameter<double>("maximum_lookahead_distance", config_.max_lookahead_dist);
+    get_parameter<double>("minimum_lookahead_distance", config_.min_lookahead_dist);
+    get_parameter<double>("speed_to_lookahead_ratio", config_.speed_to_lookahead_ratio);
+    get_parameter<bool>("is_interpolate_lookahead_point", config_.is_interpolate_lookahead_point);
+    get_parameter<bool>("is_delay_compensation", config_.is_delay_compensation);
+    get_parameter<double>("emergency_stop_distance", config_.emergency_stop_distance);
+    get_parameter<double>("speed_thres_traveling_direction", config_.speed_thres_traveling_direction);
+    get_parameter<double>("dist_front_rear_wheels", config_.dist_front_rear_wheels);
+
+    get_parameter<double>("dt", config_.dt);
+    get_parameter<double>("integrator_max_pp", config_.integrator_max_pp);
+    get_parameter<double>("integrator_min_pp", config_.integrator_min_pp);
+    get_parameter<double>("Ki_pp", config_.ki_pp);
+    get_parameter<bool>("is_integrator_enabled", config_.is_integrator_enabled);
+
+
     RCLCPP_INFO_STREAM(get_logger(), "Loaded Params: " << config_);
+
+    // create config for pure_pursuit worker
+    pure_pursuit::Config cfg{
+      config_.min_lookahead_dist,
+      config_.max_lookahead_dist,
+      config_.speed_to_lookahead_ratio,
+      config_.is_interpolate_lookahead_point,
+      config_.is_delay_compensation,
+      config_.emergency_stop_distance,
+      config_.speed_thres_traveling_direction,
+      config_.dist_front_rear_wheels,
+    };
+
+    pure_pursuit::IntegratorConfig i_cfg;
+    i_cfg.dt = config_.dt;
+    i_cfg.integrator_max_pp = config_.integrator_max_pp;
+    i_cfg.integrator_min_pp = config_.integrator_min_pp;
+    i_cfg.Ki_pp = config_.ki_pp;
+    i_cfg.integral = 0.0; // accumulator of integral starts from 0
+    i_cfg.is_integrator_enabled = config_.is_integrator_enabled;
+
+    pp_ = std::make_shared<pure_pursuit::PurePursuit>(cfg, i_cfg);
 
     // Register runtime parameter update callback
     add_on_set_parameters_callback(std::bind(&PlatoonControlPlugin::parameter_update_callback, this, std_ph::_1));
@@ -159,6 +201,8 @@ namespace platoon_control
   {
 
     autoware_msgs::msg::ControlCommandStamped ctrl_msg;
+    if (!current_trajectory_ || !current_pose_ || !current_twist_)
+      return ctrl_msg;
 
     // If it has been a long time since input data has arrived then reset the input counter and return
     // Note: this quiets the controller after its input stream stops, which is necessary to allow
@@ -196,7 +240,7 @@ namespace platoon_control
   {
     carma_planning_msgs::msg::TrajectoryPlanPoint lookahead_point;
 
-    double lookahead_dist = config_.lookahead_ratio * current_twist_.get().twist.linear.x;
+    double lookahead_dist = config_.speed_to_lookahead_ratio * current_twist_.get().twist.linear.x;
     RCLCPP_DEBUG_STREAM(get_logger(), "lookahead based on speed: " << lookahead_dist);
 
     lookahead_dist = std::max(config_.min_lookahead_dist, lookahead_dist);
@@ -277,14 +321,36 @@ namespace platoon_control
     // pcw_.setCurrentSpeed(current_twist_.get());
     pcw_.setLeader(platoon_leader_);
     pcw_.generateSpeed(first_trajectory_point);
-    pcw_.generateSteer(lookahead_point);
 
-    geometry_msgs::msg::TwistStamped twist_msg = composeTwistCmd(pcw_.speedCmd_, pcw_.angVelCmd_);
-    twist_pub_->publish(twist_msg);
+    motion::control::controller_common::State state_tf = convert_state(current_pose_.get(), current_twist_.get());
+    RCLCPP_DEBUG_STREAM(get_logger(), "Forced from frame_id: " << state_tf.header.frame_id << ", into: " << current_trajectory_.get().header.frame_id);
 
-    autoware_msgs::msg::ControlCommandStamped ctrl_msg = composeCtrlCmd(pcw_.speedCmd_, pcw_.steerCmd_);
+    current_trajectory_.get().header.frame_id = state_tf.header.frame_id;
+
+    auto autoware_traj_plan = basic_autonomy::waypoint_generation::process_trajectory_plan(current_trajectory_.get(), config_.vehicle_response_lag);
+
+    pp_->set_trajectory(autoware_traj_plan);
+    const auto cmd{pp_->compute_command(state_tf)};
+
+    auto steer_cmd = cmd.front_wheel_angle_rad; //autoware sets the front wheel angle as the calculated steer. https://github.com/usdot-fhwa-stol/autoware.auto/blob/3450f94fa694f51b00de272d412722d65a2c2d3e/AutowareAuto/src/control/pure_pursuit/src/pure_pursuit.cpp#L88
+
+    autoware_msgs::msg::ControlCommandStamped ctrl_msg = composeCtrlCmd(pcw_.speedCmd_, steer_cmd);
 
     return ctrl_msg;
+  }
+
+  motion::motion_common::State PlatoonControlPlugin::convert_state(geometry_msgs::msg::PoseStamped pose, geometry_msgs::msg::TwistStamped twist)
+  {
+    motion::motion_common::State state;
+    state.header = pose.header;
+    state.state.x = pose.pose.position.x;
+    state.state.y = pose.pose.position.y;
+    state.state.z = pose.pose.position.z;
+    state.state.heading.real = pose.pose.orientation.w;
+    state.state.heading.imag = pose.pose.orientation.z;
+
+    state.state.longitudinal_velocity_mps = twist.twist.linear.x;
+    return state;
   }
 
   void PlatoonControlPlugin::current_trajectory_callback(const carma_planning_msgs::msg::TrajectoryPlan::UniquePtr tp)
