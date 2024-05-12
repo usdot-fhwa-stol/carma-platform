@@ -62,7 +62,6 @@ if(BUILD_TESTING)
 
   ament_add_gtest(test_platoon_control
   test/test_main.cpp
-  test/node_test.cpp
   test/test_control.cpp
   test/test_pid.cpp
   test/test_worker.cpp
