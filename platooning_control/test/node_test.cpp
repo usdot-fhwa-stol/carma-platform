@@ -32,7 +32,7 @@ TEST(PlatoonControlTest, testCase1)
     worker_node->configure();
     worker_node->activate();
 
-    // std::this_thread::sleep_for(std::chrono::milliseconds(500));
+    std::this_thread::sleep_for(std::chrono::milliseconds(100));
     auto num = worker_node->count_subscribers("/current_pose");
     EXPECT_EQ(1, num);
 }

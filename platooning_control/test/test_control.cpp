@@ -48,7 +48,7 @@ TEST(PlatoonControlPluginTest, test2)
 
     tp.trajectory_points = {point1, point2, point3};
 
-    carma_planning_msgs::msg::TrajectoryPlanPoint out = worker_node->getLookaheadTrajectoryPoint(tp);
+    carma_planning_msgs::msg::TrajectoryPlanPoint out = worker_node->get_lookahead_trajectory_point(tp);
     EXPECT_EQ(out.x, 10.0);
 
 }

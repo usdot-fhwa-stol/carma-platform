@@ -58,7 +58,7 @@ namespace platoon_control
     */
     class PlatoonControlWorker
     {
-    public:
+        public:
 
         /**
         * \brief Default constructor for platooning control worker
@@ -69,34 +69,31 @@ namespace platoon_control
         * \brief Returns latest speed command
         * \return lastest speed command in m/s
         */
-        double getLastSpeedCommand() const;
+        double get_last_speed_command() const;
 
         /**
         * \brief Generates speed commands (in m/s) based on the trajectory point
         * \param point trajectory point
         */
-        void generateSpeed(const carma_planning_msgs::msg::TrajectoryPlanPoint& point);
+        void generate_speed(const carma_planning_msgs::msg::TrajectoryPlanPoint& point);
 
         /**
         * \brief Sets the platoon leader object using info from msg
         * \param leader leader information msg received from strategic plugin
         */
-        void setLeader(const PlatoonLeaderInfo& leader);
+        void set_leader(const PlatoonLeaderInfo& leader);
 
 
         /**
         * \brief set current speed
         * \param speed speed value
         */
-        void setCurrentSpeed(double speed);
+        void set_current_speed(double speed);
 
         // Member Variables
 
         // Platoon Leader
         PlatoonLeaderInfo platoon_leader;
-
-		// geometry pose
-        std::shared_ptr<geometry_msgs::msg::Pose> current_pose_ = std::make_shared<geometry_msgs::msg::Pose>();
 
         // config parameters
         std::shared_ptr<PlatooningControlPluginConfig> ctrl_config_ = std::make_shared<PlatooningControlPluginConfig>();

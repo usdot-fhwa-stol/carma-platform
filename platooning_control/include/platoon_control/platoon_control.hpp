@@ -40,6 +40,81 @@ namespace platoon_control
   class PlatoonControlPlugin : public carma_guidance_plugins::ControlPlugin
   {
 
+  public:
+    /**
+     * \brief PlatoonControlPlugin constructor
+     */
+    explicit PlatoonControlPlugin(const rclcpp::NodeOptions& options);
+
+    /**
+			* \brief generate control signal by calculating speed and steering commands.
+			* \param point0 start point of control window
+			* \param point_end end point of control wondow
+			*/
+		autoware_msgs::msg::ControlCommandStamped generate_control_signals(const carma_planning_msgs::msg::TrajectoryPlanPoint& point0, const carma_planning_msgs::msg::TrajectoryPlanPoint& point_end);
+
+    /**
+			* \brief Compose twist message from linear and angular velocity commands.
+			* \param linear_vel linear velocity in m/s
+			* \param angular_vel angular velocity in rad/s
+			* \return twist message
+			*/
+		geometry_msgs::msg::TwistStamped compose_twist_cmd(double linear_vel, double angular_vel);
+
+    motion::motion_common::State convert_state(const geometry_msgs::msg::PoseStamped& pose, const geometry_msgs::msg::TwistStamped& twist);
+
+      /**
+			* \brief find the point correspoding to the lookahead distance
+			* \param trajectory_plan trajectory plan
+			* \return trajectory point
+			*/
+		carma_planning_msgs::msg::TrajectoryPlanPoint get_lookahead_trajectory_point(const carma_planning_msgs::msg::TrajectoryPlan& trajectory_plan);
+
+    double trajectory_speed_ = 0.0;
+
+    carma_planning_msgs::msg::TrajectoryPlan latest_trajectory_;
+
+    /**
+     * \brief Callback for dynamic parameter updates
+     */
+    rcl_interfaces::msg::SetParametersResult parameter_update_callback(const std::vector<rclcpp::Parameter> &parameters);
+
+    /**
+    * \brief callback function for trajectory plan
+    * \param msg trajectory plan msg
+    */
+    void current_trajectory_callback(const carma_planning_msgs::msg::TrajectoryPlan::UniquePtr tp);
+
+    /**
+			* \brief Compose control message from speed and steering commands.
+			* \param linear_vel linear velocity in m/s
+			* \param steering_angle steering angle in rad
+			* \return control command
+			*/
+		autoware_msgs::msg::ControlCommandStamped compose_ctrl_cmd(double linear_vel, double steering_angle);
+
+    /**
+    * \brief Returns availability of plugin. Always true
+    */
+    bool get_availability() override;
+
+    /**
+    * \brief Returns version id of plugn.
+    */
+    std::string get_version_id() override;
+
+    ////
+    // Overrides
+    ////
+
+    autoware_msgs::msg::ControlCommandStamped generate_command() override;
+
+    /**
+     * \brief This method should be used to load parameters and will be called on the configure state transition.
+     */
+    carma_ros2_utils::CallbackReturn on_configure_plugin() override;
+
+
   private:
 
     // Node configuration
@@ -59,14 +134,14 @@ namespace platoon_control
     * \brief callback function for platoon info
     * \param msg platoon info msg
     */
-    void platoonInfo_cb(const carma_planning_msgs::msg::PlatooningInfo::SharedPtr msg);
+    void platoon_info_cb(const carma_planning_msgs::msg::PlatooningInfo::SharedPtr msg);
 
     /**
     * \brief calculate average speed of a set of trajectory points
     * \param trajectory_points set of trajectory points
     * \return trajectory speed
     */
-    double getTrajectorySpeed(const std::vector<carma_planning_msgs::msg::TrajectoryPlanPoint>& trajectory_points);
+    double get_trajectory_speed(const std::vector<carma_planning_msgs::msg::TrajectoryPlanPoint>& trajectory_points);
 
 
     // Subscribers
@@ -76,77 +151,6 @@ namespace platoon_control
     // Publishers
     carma_ros2_utils::PubPtr<geometry_msgs::msg::TwistStamped> twist_pub_;
     carma_ros2_utils::PubPtr<carma_planning_msgs::msg::PlatooningInfo> platoon_info_pub_;
-
-
-  public:
-    /**
-     * \brief PlatoonControlPlugin constructor
-     */
-    explicit PlatoonControlPlugin(const rclcpp::NodeOptions& options);
-
-    /**
-     * \brief Example callback for dynamic parameter updates
-     */
-    rcl_interfaces::msg::SetParametersResult
-    parameter_update_callback(const std::vector<rclcpp::Parameter> &parameters);
-
-    /**
-			* \brief generate control signal by calculating speed and steering commands.
-			* \param point0 start point of control window
-			* \param point_end end point of control wondow
-			*/
-		autoware_msgs::msg::ControlCommandStamped generateControlSignals(const carma_planning_msgs::msg::TrajectoryPlanPoint& point0, const carma_planning_msgs::msg::TrajectoryPlanPoint& point_end);
-
-    /**
-			* \brief Compose twist message from linear and angular velocity commands.
-			* \param linear_vel linear velocity in m/s
-			* \param angular_vel angular velocity in rad/s
-			* \return twist message
-			*/
-			geometry_msgs::msg::TwistStamped composeTwistCmd(double linear_vel, double angular_vel);
-
-      motion::motion_common::State convert_state(const geometry_msgs::msg::PoseStamped& pose, const geometry_msgs::msg::TwistStamped& twist);
-
-      /**
-			* \brief find the point correspoding to the lookahead distance
-			* \param trajectory_plan trajectory plan
-			* \return trajectory point
-			*/
-			carma_planning_msgs::msg::TrajectoryPlanPoint getLookaheadTrajectoryPoint(const carma_planning_msgs::msg::TrajectoryPlan& trajectory_plan);
-
-      double trajectory_speed_ = 0.0;
-
-      carma_planning_msgs::msg::TrajectoryPlan latest_trajectory_;
-
-    ////
-    // Overrides
-    ////
-
-    autoware_msgs::msg::ControlCommandStamped generate_command() override;
-
-    /**
-    * \brief callback function for trajectory plan
-    * \param msg trajectory plan msg
-    */
-    void current_trajectory_callback(const carma_planning_msgs::msg::TrajectoryPlan::UniquePtr tp);
-
-    /**
-			* \brief Compose control message from speed and steering commands.
-			* \param linear_vel linear velocity in m/s
-			* \param steering_angle steering angle in rad
-			* \return control command
-			*/
-		autoware_msgs::msg::ControlCommandStamped composeCtrlCmd(double linear_vel, double steering_angle);
-
-
-    bool get_availability() override;
-
-    std::string get_version_id() override;
-
-    /**
-     * \brief This method should be used to load parameters and will be called on the configure state transition.
-     */
-    carma_ros2_utils::CallbackReturn on_configure_plugin() override;
 
   };
 
