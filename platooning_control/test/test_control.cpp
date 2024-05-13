@@ -25,30 +25,30 @@
 
 
 
-// TEST(PlatoonControlPluginTest, test2)
-// {
-//     rclcpp::NodeOptions options;
-//     auto worker_node = std::make_shared<platoon_control::PlatoonControlPlugin>(options);
+TEST(PlatoonControlPluginTest, test2)
+{
+    rclcpp::NodeOptions options;
+    auto worker_node = std::make_shared<platoon_control::PlatoonControlPlugin>(options);
 
-//     worker_node->configure();
-//     worker_node->activate();
+    // worker_node->configure();
+    // worker_node->activate();
 
-//     carma_planning_msgs::msg::TrajectoryPlan tp;
-//     carma_planning_msgs::msg::TrajectoryPlanPoint point1;
-//     point1.x = 1.0;
-//     point1.y = 1.0;
+    carma_planning_msgs::msg::TrajectoryPlan tp;
+    carma_planning_msgs::msg::TrajectoryPlanPoint point1;
+    point1.x = 1.0;
+    point1.y = 1.0;
 
-//     carma_planning_msgs::msg::TrajectoryPlanPoint point2;
-//     point2.x = 10.0;
-//     point2.y = 10.0;
+    carma_planning_msgs::msg::TrajectoryPlanPoint point2;
+    point2.x = 10.0;
+    point2.y = 10.0;
 
-//     carma_planning_msgs::msg::TrajectoryPlanPoint point3;
-//     point3.x = 20.0;
-//     point3.y = 20.0;
+    carma_planning_msgs::msg::TrajectoryPlanPoint point3;
+    point3.x = 20.0;
+    point3.y = 20.0;
 
-//     tp.trajectory_points = {point1, point2, point3};
+    tp.trajectory_points = {point1, point2, point3};
 
-//     carma_planning_msgs::msg::TrajectoryPlanPoint out = worker_node->get_lookahead_trajectory_point(tp);
-//     EXPECT_EQ(out.x, 10.0);
+    carma_planning_msgs::msg::TrajectoryPlanPoint out = worker_node->get_lookahead_trajectory_point(tp);
+    EXPECT_EQ(out.x, 10.0);
 
-// }
+}
