@@ -57,3 +57,38 @@ TEST(PlatoonControlPluginTest, test1)
     EXPECT_EQ(out.x, 10.0);
 
 }
+
+TEST(PlatoonControlPluginTest, test_convert_state)
+{
+    rclcpp::NodeOptions options;
+    auto worker_node = std::make_shared<platoon_control::PlatoonControlPlugin>(options);
+
+    geometry_msgs::msg::PoseStamped pose_msg;
+    pose_msg.pose.position.x = 0.0;
+    pose_msg.pose.position.y = 0.0;
+    pose_msg.pose.position.z = 0.0;
+    pose_msg.pose.orientation.w = 1.0;
+    pose_msg.pose.orientation.z = 0.0;
+
+    geometry_msgs::msg::TwistStamped twist_msg;
+    twist_msg.twist.linear.x = 0.0;
+
+    auto converted_state = worker_node->convert_state(pose_msg, twist_msg);
+    EXPECT_EQ(converted_state.state.x, pose_msg.pose.position.x);
+    EXPECT_EQ(converted_state.state.heading.imag, pose_msg.pose.orientation.z);
+
+}
+
+TEST(PlatoonControlPluginTest, test_compose_twist_cmd)
+{
+    rclcpp::NodeOptions options;
+    auto worker_node = std::make_shared<platoon_control::PlatoonControlPlugin>(options);
+
+    auto linear_vel = 1.0;
+    auto angular_vel = 2.0;
+
+    auto twist_cmd = worker_node->compose_twist_cmd(linear_vel,angular_vel);
+
+    EXPECT_EQ(twist_cmd.twist.linear.x, linear_vel);
+    EXPECT_EQ(twist_cmd.twist.angular.z, angular_vel);
+}

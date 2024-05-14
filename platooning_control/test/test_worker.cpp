@@ -26,6 +26,7 @@
 TEST(PlatoonControlWorkerTest, test1)
 {
     platoon_control::PlatoonControlWorker pcw;
+    pcw.ctrl_config_ = std::make_shared<platoon_control::PlatooningControlPluginConfig>();
     carma_planning_msgs::msg::TrajectoryPlanPoint point;
     point.x = 1.0;
     point.y = 2.0;
@@ -37,6 +38,7 @@ TEST(PlatoonControlWorkerTest, test11)
 {
     platoon_control::PlatoonLeaderInfo leader;
     platoon_control::PlatoonControlWorker pcw;
+    pcw.ctrl_config_ = std::make_shared<platoon_control::PlatooningControlPluginConfig>();
     leader.staticId = "";
     leader.leaderIndex = 0;
     leader.NumberOfVehicleInFront = 1;
@@ -54,6 +56,8 @@ TEST(PlatoonControlWorkerTest, test2)
 {
 
     platoon_control::PlatoonControlWorker pcw;
+    platoon_control::PlatooningControlPluginConfig config;
+    pcw.ctrl_config_ = std::make_shared<platoon_control::PlatooningControlPluginConfig>();
     platoon_control::PlatoonLeaderInfo leader;
     leader.commandSpeed = 10;
     leader.vehicleSpeed = 10;
@@ -84,12 +88,19 @@ TEST(PlatoonControlWorkerTest, test2)
     pcw.generate_speed(point3);
     EXPECT_NEAR(10.25, pcw.get_last_speed_command(), 0.5);
 
+    config.enable_max_adjustment_filter = false;
+    config.vehicle_id = "id";
+    pcw.generate_speed(point3);
+    EXPECT_NEAR(9.5, pcw.get_last_speed_command(), 0.5);
+
 }
 
 TEST(PlatoonControlWorkerTest, test3)
 {
 
     platoon_control::PlatoonControlWorker pcw;
+    platoon_control::PlatooningControlPluginConfig config;
+    pcw.ctrl_config_ = std::make_shared<platoon_control::PlatooningControlPluginConfig>(config);
     platoon_control::PlatoonLeaderInfo leader;
     leader.commandSpeed = 10;
     leader.vehicleSpeed = 10;

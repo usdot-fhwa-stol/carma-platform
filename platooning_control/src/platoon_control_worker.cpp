@@ -69,7 +69,7 @@ namespace platoon_control
             speed_cmd = adjSpeedCmd;
             RCLCPP_DEBUG_STREAM(rclcpp::get_logger("platoon_control"), "A speed command is generated from command generator: " << speed_cmd << " m/s");
 
-            if(enableMaxAdjustmentFilter)
+            if(ctrl_config_->enable_max_adjustment_filter)
             {
                 if(speed_cmd > leader.commandSpeed + ctrl_config_->adjustment_cap_mps) {
                     speed_cmd = leader.commandSpeed + ctrl_config_->adjustment_cap_mps;
@@ -86,7 +86,7 @@ namespace platoon_control
             RCLCPP_DEBUG_STREAM(rclcpp::get_logger("platoon_control"), "Host vehicle is the leader");
             speed_cmd = currentSpeed;
 
-            if(enableMaxAdjustmentFilter)
+            if(ctrl_config_->enable_max_adjustment_filter)
             {
                 if(speed_cmd > ctrl_config_->adjustment_cap_mps)
                 {
@@ -110,7 +110,7 @@ namespace platoon_control
 
 
         // Third: we allow do not a large gap between two consecutive speed commands
-        if(enableMaxAccelFilter) {
+        if(ctrl_config_->enable_max_accel_filter) {
 
                 double max = lastCmdSpeed + (ctrl_config_->max_accel_mps2 * (ctrl_config_->cmd_timestamp_ms / 1000.0));
                 double min = lastCmdSpeed - (ctrl_config_->max_accel_mps2 * (ctrl_config_->cmd_timestamp_ms / 1000.0));

@@ -59,6 +59,9 @@ namespace platoon_control
     double integrator_min_pp = 0.0;   //Min integrator val for pure pursuit integral controller
     double ki_pp = 0.0; // Integral weight for pure pursuit integral controller";
     bool is_integrator_enabled = false;
+    bool enable_max_adjustment_filter = true;
+    bool enable_max_accel_filter = true;
+
 
 
     // Stream operator for this config
@@ -94,6 +97,8 @@ namespace platoon_control
            << "integrator_min_pp: " << c.integrator_min_pp << std::endl
            << "ki_pp_: " << c.ki_pp << std::endl
            << "is_integrator_enabled" << c.is_integrator_enabled <<std::endl
+           << "enable_max_adjustment_filter" << c.enable_max_adjustment_filter << std::endl
+           << "enable_max_accel_filter" << c.enable_max_accel_filter << std::endl
            << "}" << std::endl;
     return output;
   }

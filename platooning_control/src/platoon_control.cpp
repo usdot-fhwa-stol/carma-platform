@@ -53,6 +53,8 @@ namespace platoon_control
     config_.integrator_min_pp = declare_parameter<double>("integrator_min_pp", config_.integrator_min_pp);
     config_.ki_pp = declare_parameter<double>("Ki_pp", config_.ki_pp);
     config_.is_integrator_enabled = declare_parameter<bool>("is_integrator_enabled", config_.is_integrator_enabled);
+    config_.enable_max_adjustment_filter = declare_parameter<bool>("enable_max_adjustment_filter", config_.enable_max_adjustment_filter);
+    config_.enable_max_accel_filter = declare_parameter<bool>("enable_max_accel_filter", config_.enable_max_accel_filter);
 
     //Global params (from vehicle config)
     config_.vehicle_id  = declare_parameter<std::string>("vehicle_id", config_.vehicle_id);
@@ -99,6 +101,8 @@ namespace platoon_control
       {"is_interpolate_lookahead_point", config_.is_interpolate_lookahead_point},
       {"is_delay_compensation",config_.is_delay_compensation},
       {"is_integrator_enabled", config_.is_integrator_enabled},
+      {"enable_max_adjustment_filter", config_.enable_max_adjustment_filter},
+      {"enable_max_accel_filter", config_.enable_max_accel_filter},
   }, parameters);
 
     // vehicle_id, control_plugin_shutdown_timeout and control_plugin_ignore_initial_inputs are not updated as they are global params
@@ -131,6 +135,8 @@ namespace platoon_control
     get_parameter<std::string>("vehicle_id", config_.vehicle_id);
     get_parameter<int>("control_plugin_shutdown_timeout", config_.shutdown_timeout);
     get_parameter<int>("control_plugin_ignore_initial_inputs", config_.ignore_initial_inputs);
+    get_parameter<bool>("enable_max_adjustment_filter", config_.enable_max_adjustment_filter);
+    get_parameter<bool>("enable_max_accel_filter", config_.enable_max_accel_filter);
 
    //Pure Pursuit params
     get_parameter<double>("vehicle_response_lag", config_.vehicle_response_lag);

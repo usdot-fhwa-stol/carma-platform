@@ -116,15 +116,6 @@ namespace platoon_control
 
         double dist_to_front_vehicle;
 
-        bool leaderSpeedCapEnabled = true;
-        bool enableMaxAdjustmentFilter = true;
-
-        bool speedLimitCapEnabled = true;
-        bool enableLocalSpeedLimitFilter = true;
-
-        bool maxAccelCapEnabled = true;
-        bool enableMaxAccelFilter = true;
-
 
     };
 }

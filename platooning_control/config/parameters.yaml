@@ -10,3 +10,5 @@ adjustment_cap_mps: 15.0 # Adjustment cap for speed command (m/s)
 integrator_max: 30.0 # Max limit for integrator term
 integrator_min: -30.0  # Min limit for integrator term
 vehicle_response_lag: 0.2
+enable_max_adjustment_filter: true
+enable_max_accel_filter: true
