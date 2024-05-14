@@ -187,8 +187,7 @@ namespace platoon_control
 
 
     //Control Publishers
-    twist_pub_ = create_publisher<geometry_msgs::msg::TwistStamped>("twist_raw", 5); //TODO car5188: Should this be transient_local?
-    platoon_info_pub_ = create_publisher<carma_planning_msgs::msg::PlatooningInfo>("platooning_info", 1); //TODO car5188: Should this be transient_local?
+    platoon_info_pub_ = create_publisher<carma_planning_msgs::msg::PlatooningInfo>("platooning_info", 1);
 
 
     // Return success if everthing initialized successfully
@@ -295,23 +294,23 @@ namespace platoon_control
     RCLCPP_DEBUG_STREAM(rclcpp::get_logger("platoon_control"), "Platoon leader leader pose:  " << platoon_leader_.vehiclePosition);
     RCLCPP_DEBUG_STREAM(rclcpp::get_logger("platoon_control"), "Platoon leader leader cmd speed:  " << platoon_leader_.commandSpeed);
 
-    carma_planning_msgs::msg::PlatooningInfo platooing_info_msg = *msg;
+    carma_planning_msgs::msg::PlatooningInfo platooning_info_msg = *msg;
 
-    RCLCPP_DEBUG_STREAM(rclcpp::get_logger("platoon_control"), "platooing_info_msg.actual_gap:  " << platooing_info_msg.actual_gap);
+    RCLCPP_DEBUG_STREAM(rclcpp::get_logger("platoon_control"), "platooning_info_msg.actual_gap:  " << platooning_info_msg.actual_gap);
 
-    if (platooing_info_msg.actual_gap > 5.0)
+    if (platooning_info_msg.actual_gap > 5.0)
     {
-        platooing_info_msg.actual_gap -= 5.0; // TODO: temporary: should be vehicle length
+        platooning_info_msg.actual_gap -= 5.0; // TODO: temporary: should be vehicle length
     }
 
-    RCLCPP_DEBUG_STREAM(rclcpp::get_logger("platoon_control"), "platooing_info_msg.actual_gap:  " << platooing_info_msg.actual_gap);
+    RCLCPP_DEBUG_STREAM(rclcpp::get_logger("platoon_control"), "platooning_info_msg.actual_gap:  " << platooning_info_msg.actual_gap);
     // platooing_info_msg.desired_gap = pcw_.desired_gap_;
     // platooing_info_msg.actual_gap = pcw_.actual_gap_;
-    pcw_.actual_gap_ = platooing_info_msg.actual_gap;
-    pcw_.desired_gap_ = platooing_info_msg.desired_gap;
+    pcw_.actual_gap_ = platooning_info_msg.actual_gap;
+    pcw_.desired_gap_ = platooning_info_msg.desired_gap;
 
-    platooing_info_msg.host_cmd_speed = pcw_.speedCmd_;
-    platoon_info_pub_->publish(platooing_info_msg);
+    platooning_info_msg.host_cmd_speed = pcw_.speedCmd_;
+    platoon_info_pub_->publish(platooning_info_msg);
   }
 
   autoware_msgs::msg::ControlCommandStamped PlatoonControlPlugin::generate_control_signals(const carma_planning_msgs::msg::TrajectoryPlanPoint& first_trajectory_point, const carma_planning_msgs::msg::TrajectoryPlanPoint& lookahead_point)

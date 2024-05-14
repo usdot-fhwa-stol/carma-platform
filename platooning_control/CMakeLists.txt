@@ -65,6 +65,7 @@ if(BUILD_TESTING)
   test/test_control.cpp
   test/test_pid.cpp
   test/test_worker.cpp
+  test/test_pure.cpp
   )
 
   target_link_libraries(test_platoon_control ${node_lib})

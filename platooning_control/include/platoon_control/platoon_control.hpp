@@ -28,6 +28,7 @@
 #include "platoon_control/platoon_control_worker.hpp"
 #include <pure_pursuit/pure_pursuit.hpp>
 #include <basic_autonomy/basic_autonomy.hpp>
+#include <gtest/gtest_prod.h>
 
 namespace pure_pursuit = autoware::motion::control::pure_pursuit;
 namespace platoon_control
@@ -114,6 +115,8 @@ namespace platoon_control
      */
     carma_ros2_utils::CallbackReturn on_configure_plugin() override;
 
+    std::shared_ptr<pure_pursuit::PurePursuit> pp_;
+
 
   private:
 
@@ -127,8 +130,6 @@ namespace platoon_control
     PlatoonLeaderInfo platoon_leader_;
     long prev_input_time_ = 0;				//timestamp of the previous trajectory plan input received
     long consecutive_input_counter_ = 0;	//num inputs seen without a timeout
-
-    std::shared_ptr<pure_pursuit::PurePursuit> pp_;
 
     /**
     * \brief callback function for platoon info
@@ -149,7 +150,6 @@ namespace platoon_control
     carma_ros2_utils::SubPtr<carma_planning_msgs::msg::PlatooningInfo> platoon_info_sub_;
 
     // Publishers
-    carma_ros2_utils::PubPtr<geometry_msgs::msg::TwistStamped> twist_pub_;
     carma_ros2_utils::PubPtr<carma_planning_msgs::msg::PlatooningInfo> platoon_info_pub_;
 
   };
