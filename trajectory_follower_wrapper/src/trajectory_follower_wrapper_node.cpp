@@ -64,7 +64,7 @@ namespace trajectory_follower_wrapper
     autoware_traj_pub_ = create_publisher<autoware_auto_msgs::msg::Trajectory>("input/reference_trajectory", 10);
     autoware_state_pub_ = create_publisher<autoware_auto_msgs::msg::VehicleKinematicState>("input/current_kinematic_state", 10);
 
-    // Setup timers
+    // Setup timers to publish autoware compatible trajectory and state
     timer_ = create_timer(
         get_clock(),
         std::chrono::milliseconds(33), // Spin at 30 Hz per plugin API

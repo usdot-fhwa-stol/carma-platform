@@ -125,17 +125,16 @@ TEST(Testtrajectory_follower_wrapper, TestStateConversion)
     worker_node->configure(); //Call configure state transition
     worker_node->activate();  //Call activate state transition to get not read for runtime
 
-    auto converted_time_now = std::chrono::system_clock::to_time_t(std::chrono::system_clock::now());
 
     geometry_msgs::msg::PoseStamped pose;
-    pose.header.stamp = rclcpp::Time(converted_time_now*1e9);
+    pose.header.stamp = worker_node->now();
     pose.pose.position.x = 1;
     pose.pose.position.y = 2;
     pose.pose.position.z = 3;
 
 
     geometry_msgs::msg::TwistStamped twist;
-    twist.header.stamp = rclcpp::Time(converted_time_now*1e9);
+    twist.header.stamp = worker_node->now();
     twist.twist.linear.x = 4;
     twist.twist.linear.y = 0;
     twist.twist.linear.z = 0;
