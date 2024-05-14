@@ -23,37 +23,12 @@
 #include "platoon_control/platoon_control.hpp"
 
 
-//Create publisher node to set initial pose and twist
-class TestPublisher : rclcpp::Node
-{
-    public:
-    TestPublisher() : Node ("test_node"){
-
-        auto twist_pub = create_publisher<geometry_msgs::msg::TwistStamped>("vehicle/twist",1);
-        geometry_msgs::msg::TwistStamped twist_msg;
-        twist_msg.twist.linear.x = 0.0;
-
-        twist_pub->publish(twist_msg);
-
-        auto pose_pub = create_publisher<geometry_msgs::msg::PoseStamped>("current_pose", 1);
-        geometry_msgs::msg::PoseStamped pose_msg;
-        pose_msg.pose.position.x = 0.0;
-        pose_msg.pose.position.y = 0.0;
-
-        pose_pub->publish(pose_msg);
-    }
-
-};
-
-
 TEST(PurePursuitTest, sanity_check)
 {
   rclcpp::NodeOptions options;
   auto node = std::make_shared<platoon_control::PlatoonControlPlugin>(options);
   node->configure();
   node->activate();
-
-  auto test_node = TestPublisher();
 
   carma_planning_msgs::msg::TrajectoryPlanPoint tpp, tpp2, tpp3;
   tpp.x = 100;

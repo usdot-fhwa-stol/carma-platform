@@ -52,7 +52,7 @@ namespace platoon_control
 			* \param point0 start point of control window
 			* \param point_end end point of control wondow
 			*/
-		autoware_msgs::msg::ControlCommandStamped generate_control_signals(const carma_planning_msgs::msg::TrajectoryPlanPoint& point0, const carma_planning_msgs::msg::TrajectoryPlanPoint& point_end);
+		autoware_msgs::msg::ControlCommandStamped generate_control_signals(const carma_planning_msgs::msg::TrajectoryPlanPoint& first_trajectory_point, const carma_planning_msgs::msg::TrajectoryPlanPoint& lookahead_point, const geometry_msgs::msg::PoseStamped& current_pose, const geometry_msgs::msg::TwistStamped& current_twist);
 
     /**
 			* \brief Compose twist message from linear and angular velocity commands.
@@ -69,7 +69,7 @@ namespace platoon_control
 			* \param trajectory_plan trajectory plan
 			* \return trajectory point
 			*/
-		carma_planning_msgs::msg::TrajectoryPlanPoint get_lookahead_trajectory_point(const carma_planning_msgs::msg::TrajectoryPlan& trajectory_plan);
+		carma_planning_msgs::msg::TrajectoryPlanPoint get_lookahead_trajectory_point(const carma_planning_msgs::msg::TrajectoryPlan& trajectory_plan, const geometry_msgs::msg::PoseStamped& current_pose, const geometry_msgs::msg::TwistStamped& current_twist);
 
     double trajectory_speed_ = 0.0;
 

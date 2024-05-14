@@ -224,21 +224,21 @@ namespace platoon_control
     }
 
     carma_planning_msgs::msg::TrajectoryPlanPoint second_trajectory_point = latest_trajectory_.trajectory_points[1];
-    carma_planning_msgs::msg::TrajectoryPlanPoint lookahead_point = get_lookahead_trajectory_point(latest_trajectory_);
+    carma_planning_msgs::msg::TrajectoryPlanPoint lookahead_point = get_lookahead_trajectory_point(latest_trajectory_, current_pose_.get(), current_twist_.get());
 
     trajectory_speed_ = get_trajectory_speed(latest_trajectory_.trajectory_points);
 
-    ctrl_msg = generate_control_signals(second_trajectory_point, lookahead_point);
+    ctrl_msg = generate_control_signals(second_trajectory_point, lookahead_point, current_pose_.get(), current_twist_.get());
 
     return ctrl_msg;
 
   }
 
-  carma_planning_msgs::msg::TrajectoryPlanPoint PlatoonControlPlugin::get_lookahead_trajectory_point(const carma_planning_msgs::msg::TrajectoryPlan& trajectory_plan)
+  carma_planning_msgs::msg::TrajectoryPlanPoint PlatoonControlPlugin::get_lookahead_trajectory_point(const carma_planning_msgs::msg::TrajectoryPlan& trajectory_plan, const geometry_msgs::msg::PoseStamped& current_pose, const geometry_msgs::msg::TwistStamped& current_twist)
   {
     carma_planning_msgs::msg::TrajectoryPlanPoint lookahead_point;
 
-    double lookahead_dist = config_.speed_to_lookahead_ratio * current_twist_.get().twist.linear.x;
+    double lookahead_dist = config_.speed_to_lookahead_ratio * current_twist.twist.linear.x;
     RCLCPP_DEBUG_STREAM(rclcpp::get_logger("platoon_control"), "lookahead based on speed: " << lookahead_dist);
 
     lookahead_dist = std::max(config_.min_lookahead_dist, lookahead_dist);
@@ -249,8 +249,8 @@ namespace platoon_control
 
     for (size_t i = 1; i<trajectory_plan.trajectory_points.size() - 1; i++)
     {
-        double dx =  current_pose_.get().pose.position.x - trajectory_plan.trajectory_points[i].x;
-        double dy =  current_pose_.get().pose.position.y - trajectory_plan.trajectory_points[i].y;
+        double dx =  current_pose.pose.position.x - trajectory_plan.trajectory_points[i].x;
+        double dy =  current_pose.pose.position.y - trajectory_plan.trajectory_points[i].y;
 
         double dx1 = trajectory_plan.trajectory_points[i].x - trajectory_plan.trajectory_points[i-1].x;
         double dy1 = trajectory_plan.trajectory_points[i].y - trajectory_plan.trajectory_points[i-1].y;
@@ -313,7 +313,7 @@ namespace platoon_control
     platoon_info_pub_->publish(platooning_info_msg);
   }
 
-  autoware_msgs::msg::ControlCommandStamped PlatoonControlPlugin::generate_control_signals(const carma_planning_msgs::msg::TrajectoryPlanPoint& first_trajectory_point, const carma_planning_msgs::msg::TrajectoryPlanPoint& lookahead_point)
+  autoware_msgs::msg::ControlCommandStamped PlatoonControlPlugin::generate_control_signals(const carma_planning_msgs::msg::TrajectoryPlanPoint& first_trajectory_point, const carma_planning_msgs::msg::TrajectoryPlanPoint& lookahead_point, const geometry_msgs::msg::PoseStamped& current_pose, const geometry_msgs::msg::TwistStamped& current_twist)
   {
     pcw_.set_current_speed(trajectory_speed_); //TODO why this and not the actual vehicle speed?  Method name suggests different use than this.
     // pcw_.set_current_speed(current_twist_.get());
