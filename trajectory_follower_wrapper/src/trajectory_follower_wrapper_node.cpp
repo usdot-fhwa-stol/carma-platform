@@ -25,7 +25,7 @@ namespace trajectory_follower_wrapper
     // Create initial config
     config_ = TrajectoryFollowerWrapperConfig();
     config_.vehicle_response_lag = declare_parameter<double>("vehicle_response_lag", config_.vehicle_response_lag);
-    config_.time_threshold = declare_parameter<double>("time_threshold", config_.time_threshold);
+    config_.incoming_cmd_time_threshold = declare_parameter<double>("incoming_cmd_time_threshold", config_.incoming_cmd_time_threshold);
 
   }
 
@@ -33,7 +33,7 @@ namespace trajectory_follower_wrapper
   {
     auto error_double = update_params<double>({
       {"vehicle_response_lag", config_.vehicle_response_lag},
-      {"time_threshold", config_.time_threshold}
+      {"incoming_cmd_time_threshold", config_.incoming_cmd_time_threshold}
       }, parameters);
 
     rcl_interfaces::msg::SetParametersResult result;
@@ -50,7 +50,7 @@ namespace trajectory_follower_wrapper
 
     // Load parameters
     get_parameter<double>("vehicle_response_lag", config_.vehicle_response_lag);
-    get_parameter<double>("time_threshold", config_.time_threshold);
+    get_parameter<double>("incoming_cmd_time_threshold", config_.incoming_cmd_time_threshold);
 
     RCLCPP_INFO_STREAM(rclcpp::get_logger("trajectory_follower_wrapper"), "Loaded Params: " << config_);
     // Register runtime parameter update callback
@@ -77,16 +77,19 @@ namespace trajectory_follower_wrapper
 
   void TrajectoryFollowerWrapperNode::timer_callback()
   {
-    RCLCPP_DEBUG(get_logger(), "In timer callback");
+    RCLCPP_DEBUG(rclcpp::get_logger("trajectory_follower_wrapper"), "In timer callback");
 
-    if (current_trajectory_ || current_pose_ || current_twist_)
+    if (current_trajectory_ && current_pose_ && current_twist_)
     {
+      // generate and publish autoware kinematic state
+      auto autoware_state = convert_state(current_pose_.get(), current_twist_.get());
+      autoware_state_pub_->publish(autoware_state);
+
+      // generate and publish autoware trajectory
+      current_trajectory_.get().header.frame_id = autoware_state.header.frame_id;
       auto autoware_traj_plan = basic_autonomy::waypoint_generation::process_trajectory_plan(current_trajectory_.get(), config_.vehicle_response_lag);
       autoware_traj_pub_->publish(autoware_traj_plan);
 
-
-      auto autoware_state = convert_state(current_pose_.get(), current_twist_.get());
-      autoware_state_pub_->publish(autoware_state);
     }
   }
 
@@ -134,20 +137,20 @@ namespace trajectory_follower_wrapper
     // process and save the trajectory
     autoware_msgs::msg::ControlCommandStamped converted_cmd;
 
-    if (!current_trajectory_ || !current_pose_ || !current_twist_ || !received_ctrl_command_)
+    if (!current_trajectory_ || !current_pose_ || !current_twist_ || !received_ctrl_command_.has_value())
     {
       RCLCPP_DEBUG_STREAM(rclcpp::get_logger("trajectory_follower_wrapper"), "Insufficient data, empty control command generated");
       return converted_cmd;
     }
 
 
-    if (isControlCommandOld(received_ctrl_command_.get()))
+    if (isControlCommandOld(received_ctrl_command_.value()))
     {
       RCLCPP_DEBUG_STREAM(rclcpp::get_logger("trajectory_follower_wrapper"), "Control Command is old, empty control command generated");
       return converted_cmd;
     }
 
-    converted_cmd = convert_cmd(received_ctrl_command_.get());
+    converted_cmd = convert_cmd(received_ctrl_command_.value());
 
     return converted_cmd;
   }
@@ -156,7 +159,10 @@ namespace trajectory_follower_wrapper
   {
     double difference = std::abs(this->now().seconds() - rclcpp::Time(cmd.stamp).seconds());
 
-    if (difference >= config_.time_threshold) return true;
+    if (difference >= config_.incoming_cmd_time_threshold)
+    {
+      return true;
+    }
 
     return false;
   }

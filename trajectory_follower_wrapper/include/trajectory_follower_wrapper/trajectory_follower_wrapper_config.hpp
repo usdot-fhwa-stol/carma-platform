@@ -17,7 +17,6 @@
  */
 
 #include <iostream>
-#include <vector>
 
 namespace trajectory_follower_wrapper
 {
@@ -27,8 +26,8 @@ namespace trajectory_follower_wrapper
    */
   struct TrajectoryFollowerWrapperConfig
   {
-    double vehicle_response_lag = 0.2;       // in sec
-    double time_threshold = 0.5; // acceptable time difference from autoware's contrl command to still use the command in sec
+    double vehicle_response_lag = 0.2;       // approximation of the delay (sec) between sent vehicle commands and the vehicle beginning a meaningful acceleration to that command"
+    double incoming_cmd_time_threshold = 1.0; // acceptable time difference from autoware's contrl command to still use the command in sec
 
 
     // Stream operator for this config
@@ -36,7 +35,7 @@ namespace trajectory_follower_wrapper
     {
       output << "trajectory_follower_wrapper::TrajectoryFollowerWrapperConfig { " << std::endl
            << "vehicle_response_lag: " << c.vehicle_response_lag << std::endl
-           << "time_threshold: " << c.time_threshold << std::endl
+           << "incoming_cmd_time_threshold: " << c.incoming_cmd_time_threshold << std::endl
            << "}" << std::endl;
       return output;
     }

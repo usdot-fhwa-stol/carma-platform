@@ -483,6 +483,7 @@ def generate_launch_description():
                     ("vehicle/twist", [ EnvironmentVariable('CARMA_INTR_NS', default_value=''), "/vehicle/twist" ] ),
                 ],
                 parameters=[
+                    vehicle_characteristics_param_file,
                     trajectory_follower_wrapper_param_file
                 ]
             ),
