@@ -146,6 +146,13 @@ namespace platoon_control
 
         worker_node->platoon_info_cb(std::make_shared<carma_planning_msgs::msg::PlatooningInfo>(msg));
 
+        // Test parameter update
+        rclcpp::ParameterValue bool_val(false);
+        rclcpp::Parameter param("enable_max_accel_filter", bool_val);
+        std::vector<rclcpp::Parameter> param_vec = {param};
+
+        worker_node->parameter_update_callback(param_vec);
+        EXPECT_FALSE(worker_node->config_.enable_max_accel_filter);
     }
 
     TEST(PlatoonControlPluginTest, test_get_trajectory_speed)
@@ -220,7 +227,6 @@ namespace platoon_control
 
         worker_node->current_trajectory_callback(std::make_unique<carma_planning_msgs::msg::TrajectoryPlan>(traj_plan));
         auto control_cmd = worker_node->generate_control_signals(trajectory_point, lookahead_point, current_pose, current_twist);
-        // std::cout<<"Control cmd: "<< control_cmd.cmd.linear_velocity<<std::endl;
         EXPECT_NEAR(4.47, control_cmd.cmd.linear_velocity, 0.5);
 
 
