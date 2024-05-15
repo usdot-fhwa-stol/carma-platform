@@ -57,7 +57,7 @@ TEST(PlatoonControlWorkerTest, test2)
 
     platoon_control::PlatoonControlWorker pcw;
     platoon_control::PlatooningControlPluginConfig config;
-    pcw.ctrl_config_ = std::make_shared<platoon_control::PlatooningControlPluginConfig>();
+    pcw.ctrl_config_ = std::make_shared<platoon_control::PlatooningControlPluginConfig>(config);
     platoon_control::PlatoonLeaderInfo leader;
     leader.commandSpeed = 10;
     leader.vehicleSpeed = 10;
@@ -92,6 +92,17 @@ TEST(PlatoonControlWorkerTest, test2)
     config.vehicle_id = "id";
     pcw.generate_speed(point3);
     EXPECT_NEAR(9.5, pcw.get_last_speed_command(), 0.5);
+
+    config.vehicle_id = leader.staticId;
+    config.adjustment_cap_mps = 5.0;
+    config.enable_max_adjustment_filter = true;
+    pcw.set_current_speed(4.47);
+    carma_planning_msgs::msg::TrajectoryPlanPoint point4;
+    point4.x = 55.0;
+    point4.y = 60.0;
+    pcw.generate_speed(point4);
+    EXPECT_NEAR(9.0, pcw.get_last_speed_command(), 0.5);
+
 
 }
 

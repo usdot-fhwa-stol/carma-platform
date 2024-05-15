@@ -73,8 +73,6 @@ namespace platoon_control
 
     double trajectory_speed_ = 0.0;
 
-    carma_planning_msgs::msg::TrajectoryPlan latest_trajectory_;
-
     /**
      * \brief Callback for dynamic parameter updates
      */
@@ -155,6 +153,8 @@ namespace platoon_control
     // Unit Test Accessors
     FRIEND_TEST(PlatoonControlPluginTest, test_platoon_info_cb);
     FRIEND_TEST(PlatoonControlPluginTest, test_get_trajectory_speed);
+    FRIEND_TEST(PlatoonControlPluginTest, test_generate_controls);
+    FRIEND_TEST(PlatoonControlPluginTest, test_current_trajectory_callback);
 
   };
 

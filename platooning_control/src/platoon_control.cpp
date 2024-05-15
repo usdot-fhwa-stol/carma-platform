@@ -229,10 +229,10 @@ namespace platoon_control
         return ctrl_msg;
     }
 
-    carma_planning_msgs::msg::TrajectoryPlanPoint second_trajectory_point = latest_trajectory_.trajectory_points[1];
-    carma_planning_msgs::msg::TrajectoryPlanPoint lookahead_point = get_lookahead_trajectory_point(latest_trajectory_, current_pose_.get(), current_twist_.get());
+    carma_planning_msgs::msg::TrajectoryPlanPoint second_trajectory_point = current_trajectory_.get().trajectory_points[1];
+    carma_planning_msgs::msg::TrajectoryPlanPoint lookahead_point = get_lookahead_trajectory_point(current_trajectory_.get(), current_pose_.get(), current_twist_.get());
 
-    trajectory_speed_ = get_trajectory_speed(latest_trajectory_.trajectory_points);
+    trajectory_speed_ = get_trajectory_speed(current_trajectory_.get().trajectory_points);
 
     ctrl_msg = generate_control_signals(second_trajectory_point, lookahead_point, current_pose_.get(), current_twist_.get());
 
@@ -326,7 +326,7 @@ namespace platoon_control
     pcw_.set_leader(platoon_leader_);
     pcw_.generate_speed(first_trajectory_point);
 
-    motion::control::controller_common::State state_tf = convert_state(current_pose_.get(), current_twist_.get());
+    motion::control::controller_common::State state_tf = convert_state(current_pose, current_twist);
     RCLCPP_DEBUG_STREAM(rclcpp::get_logger("platoon_control"), "Forced from frame_id: " << state_tf.header.frame_id << ", into: " << current_trajectory_.get().header.frame_id);
 
     current_trajectory_.get().header.frame_id = state_tf.header.frame_id;
@@ -364,7 +364,7 @@ namespace platoon_control
             return;
         }
 
-        latest_trajectory_ = *tp;
+        current_trajectory_ = *tp;
         prev_input_time_ = this->now().nanoseconds() / 1000000;
         ++consecutive_input_counter_;
         RCLCPP_DEBUG_STREAM(rclcpp::get_logger("platoon_control"), "New trajectory plan #" << consecutive_input_counter_ << " at time " << prev_input_time_);
