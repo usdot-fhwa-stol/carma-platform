@@ -88,6 +88,8 @@ TEST(Testtrajectory_follower_wrapper, TestControlCallback){
     ASSERT_NEAR(res2.cmd.linear_acceleration, 1.0, 0.0001);
     ASSERT_NEAR(res2.cmd.linear_velocity, 2.0, 0.0001);
     ASSERT_NEAR(res2.cmd.steering_angle, 0.5, 0.0001);
+
+    worker_node->timer_callback();
 }
 
 TEST(Testtrajectory_follower_wrapper, TestThreshold){
