@@ -64,20 +64,20 @@ namespace trajectory_follower_wrapper
     autoware_traj_pub_ = create_publisher<autoware_auto_msgs::msg::Trajectory>("input/reference_trajectory", 10);
     autoware_state_pub_ = create_publisher<autoware_auto_msgs::msg::VehicleKinematicState>("input/current_kinematic_state", 10);
 
-    // Setup timers to publish autoware compatible trajectory and state
-    timer_ = create_timer(
+    // Setup timers to publish autoware compatible info (trajectory and state)
+    autoware_info_timer_ = create_timer(
         get_clock(),
         std::chrono::milliseconds(33), // Spin at 30 Hz per plugin API
-        std::bind(&TrajectoryFollowerWrapperNode::timer_callback, this));
+        std::bind(&TrajectoryFollowerWrapperNode::autoware_info_timer_callback, this));
 
     // Return success if everthing initialized successfully
     return CallbackReturn::SUCCESS;
   }
 
 
-  void TrajectoryFollowerWrapperNode::timer_callback()
+  void TrajectoryFollowerWrapperNode::autoware_info_timer_callback()
   {
-    RCLCPP_DEBUG(rclcpp::get_logger("trajectory_follower_wrapper"), "In timer callback");
+    RCLCPP_DEBUG_STREAM(rclcpp::get_logger("trajectory_follower_wrapper"), "In autoware info timer callback");
 
     if (current_trajectory_ && current_pose_ && current_twist_)
     {
@@ -93,14 +93,14 @@ namespace trajectory_follower_wrapper
     }
   }
 
-  void TrajectoryFollowerWrapperNode::ackermann_control_cb(autoware_auto_msgs::msg::AckermannControlCommand::SharedPtr msg)
+  void TrajectoryFollowerWrapperNode::ackermann_control_cb(const autoware_auto_msgs::msg::AckermannControlCommand::SharedPtr msg)
   {
     RCLCPP_DEBUG_STREAM(rclcpp::get_logger("trajectory_follower_wrapper"), "In ackermann control callback");
     received_ctrl_command_ = *msg;
   }
 
 
-  autoware_auto_msgs::msg::VehicleKinematicState TrajectoryFollowerWrapperNode::convert_state(geometry_msgs::msg::PoseStamped pose, geometry_msgs::msg::TwistStamped twist)
+  autoware_auto_msgs::msg::VehicleKinematicState TrajectoryFollowerWrapperNode::convert_state(const geometry_msgs::msg::PoseStamped& pose, const geometry_msgs::msg::TwistStamped& twist) const
   {
     autoware_auto_msgs::msg::VehicleKinematicState state;
     state.header = pose.header;
@@ -114,7 +114,7 @@ namespace trajectory_follower_wrapper
     return state;
   }
 
-  autoware_msgs::msg::ControlCommandStamped TrajectoryFollowerWrapperNode::convert_cmd(autoware_auto_msgs::msg::AckermannControlCommand cmd)
+  autoware_msgs::msg::ControlCommandStamped TrajectoryFollowerWrapperNode::convert_cmd(const autoware_auto_msgs::msg::AckermannControlCommand& cmd) const
   {
     autoware_msgs::msg::ControlCommandStamped return_cmd;
     return_cmd.header.stamp = cmd.stamp;
@@ -155,7 +155,7 @@ namespace trajectory_follower_wrapper
     return converted_cmd;
   }
 
-  bool TrajectoryFollowerWrapperNode::isControlCommandOld(autoware_auto_msgs::msg::AckermannControlCommand cmd)
+  bool TrajectoryFollowerWrapperNode::isControlCommandOld(const autoware_auto_msgs::msg::AckermannControlCommand& cmd) const
   {
     double difference = std::abs(this->now().seconds() - rclcpp::Time(cmd.stamp).seconds());
 

@@ -33,9 +33,7 @@
   <depend>autoware_msgs</depend>
   <depend>autoware_config_msgs</depend>
   <depend>geometry_msgs</depend>
-  <depend>trajectory_utils_ros2</depend>
   <depend>autoware_auto_msgs</depend>
-  <depend>motion_testing</depend>
   <depend>basic_autonomy</depend>
 
   <test_depend>ament_lint_auto</test_depend>

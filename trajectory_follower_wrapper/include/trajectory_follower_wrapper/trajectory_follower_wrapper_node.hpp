@@ -18,8 +18,6 @@
 
 #include <rclcpp/rclcpp.hpp>
 #include <carma_planning_msgs/msg/trajectory_plan.hpp>
-#include <autoware_msgs/msg/lane.hpp>
-#include <trajectory_utils/trajectory_utils.hpp>
 #include <carma_guidance_plugins/control_plugin.hpp>
 #include <autoware_auto_msgs/msg/vehicle_kinematic_state.hpp>
 #include <autoware_auto_msgs/msg/vehicle_control_command.hpp>
@@ -46,13 +44,13 @@ namespace trajectory_follower_wrapper
     carma_ros2_utils::PubPtr<autoware_auto_msgs::msg::VehicleKinematicState> autoware_state_pub_;
 
     // Timers
-    rclcpp::TimerBase::SharedPtr timer_;
+    rclcpp::TimerBase::SharedPtr autoware_info_timer_;
 
     // Received Control Command
-    // boost::optional<autoware_auto_msgs::msg::AckermannControlCommand> received_ctrl_command_;
     std::optional<autoware_auto_msgs::msg::AckermannControlCommand> received_ctrl_command_;
 
   public:
+
     /**
      * \brief Node constructor
      */
@@ -67,29 +65,32 @@ namespace trajectory_follower_wrapper
     /**
      * \brief Timer callback to spin at 30 hz and frequently publish autoware kinematic state and trajectory
      */
-    void timer_callback();
+    void autoware_info_timer_callback();
 
     /**
      * \brief autoware's control subscription callback
      */
-    void ackermann_control_cb(autoware_auto_msgs::msg::AckermannControlCommand::SharedPtr msg);
+    void ackermann_control_cb(const autoware_auto_msgs::msg::AckermannControlCommand::SharedPtr msg);
 
     /**
      * \brief Check to see if the received control command recent or old
      */
-    bool isControlCommandOld(autoware_auto_msgs::msg::AckermannControlCommand cmd);
+    bool isControlCommandOld(const autoware_auto_msgs::msg::AckermannControlCommand& cmd) const;
+
+    // Node configuration
+    TrajectoryFollowerWrapperConfig config_;
 
     //CONVERSIONS
 
     /**
      * \brief convert vehicle's pose and twist messages to autoware kinematic state
      */
-    autoware_auto_msgs::msg::VehicleKinematicState convert_state(geometry_msgs::msg::PoseStamped pose, geometry_msgs::msg::TwistStamped twist);
+    autoware_auto_msgs::msg::VehicleKinematicState convert_state(const geometry_msgs::msg::PoseStamped& pose, const geometry_msgs::msg::TwistStamped& twist) const;
 
     /**
      * \brief convert autoware Ackermann control command to autoware stamped control command
      */
-    autoware_msgs::msg::ControlCommandStamped convert_cmd(autoware_auto_msgs::msg::AckermannControlCommand cmd);
+    autoware_msgs::msg::ControlCommandStamped convert_cmd(const autoware_auto_msgs::msg::AckermannControlCommand& cmd) const;
 
 
 
@@ -101,9 +102,6 @@ namespace trajectory_follower_wrapper
     bool get_availability() override;
 
     std::string get_version_id() override;
-
-    // Node configuration
-    TrajectoryFollowerWrapperConfig config_;
 
     /**
      * \brief This method should be used to load parameters and will be called on the configure state transition.

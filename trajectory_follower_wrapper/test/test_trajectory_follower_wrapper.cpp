@@ -15,15 +15,12 @@
  */
 
 #include <gtest/gtest.h>
-#include <memory>
-#include <chrono>
-#include <thread>
-#include <future>
+
 
 #include "trajectory_follower_wrapper/trajectory_follower_wrapper_node.hpp"
 
 
-TEST(Testtrajectory_follower_wrapper, TestControlCallback){
+TEST(TesttrajectoryFollowerWrapper, TestControlCallback){
 // tetsing the overall control callback as well as combination of the conversions and time checks
     rclcpp::NodeOptions options;
     auto worker_node = std::make_shared<trajectory_follower_wrapper::TrajectoryFollowerWrapperNode>(options);
@@ -89,10 +86,10 @@ TEST(Testtrajectory_follower_wrapper, TestControlCallback){
     ASSERT_NEAR(res2.cmd.linear_velocity, 2.0, 0.0001);
     ASSERT_NEAR(res2.cmd.steering_angle, 0.5, 0.0001);
 
-    worker_node->timer_callback();
+    worker_node->autoware_info_timer_callback();
 }
 
-TEST(Testtrajectory_follower_wrapper, TestThreshold){
+TEST(TesttrajectoryFollowerWrapper, TestThreshold){
 
     rclcpp::NodeOptions options;
     auto worker_node = std::make_shared<trajectory_follower_wrapper::TrajectoryFollowerWrapperNode>(options);
@@ -104,6 +101,9 @@ TEST(Testtrajectory_follower_wrapper, TestThreshold){
     aw_cmd.stamp = worker_node->now() - rclcpp::Duration::from_seconds(5);
     aw_cmd.longitudinal.acceleration = 1.0;
     aw_cmd.longitudinal.speed = 2.0;
+
+    // the config value is set to 1 sec
+    worker_node->config_.incoming_cmd_time_threshold = 1.0;
 
     bool res1 = worker_node->isControlCommandOld(aw_cmd);
     ASSERT_TRUE(res1);
@@ -119,7 +119,7 @@ TEST(Testtrajectory_follower_wrapper, TestThreshold){
     ASSERT_TRUE(available);
 }
 
-TEST(Testtrajectory_follower_wrapper, TestStateConversion)
+TEST(TesttrajectoryFollowerWrapper, TestStateConversion)
 {
     rclcpp::NodeOptions options;
     auto worker_node = std::make_shared<trajectory_follower_wrapper::TrajectoryFollowerWrapperNode>(options);
@@ -149,7 +149,7 @@ TEST(Testtrajectory_follower_wrapper, TestStateConversion)
 
 }
 
-TEST(Testtrajectory_follower_wrapper, TestControlConversion)
+TEST(TesttrajectoryFollowerWrapper, TestControlConversion)
 {
     rclcpp::NodeOptions options;
     auto worker_node = std::make_shared<trajectory_follower_wrapper::TrajectoryFollowerWrapperNode>(options);
@@ -172,7 +172,7 @@ TEST(Testtrajectory_follower_wrapper, TestControlConversion)
 
 }
 
-TEST(TrajectoryFollowerWrapperNodeTest, ParameterUpdateCallbackTest) {
+TEST(TesttrajectoryFollowerWrapper, ParameterUpdateCallbackTest) {
     rclcpp::NodeOptions options;
     auto worker_node = std::make_shared<trajectory_follower_wrapper::TrajectoryFollowerWrapperNode>(options);
 
