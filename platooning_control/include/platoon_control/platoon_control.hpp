@@ -152,6 +152,10 @@ namespace platoon_control
     // Publishers
     carma_ros2_utils::PubPtr<carma_planning_msgs::msg::PlatooningInfo> platoon_info_pub_;
 
+    // Unit Test Accessors
+    FRIEND_TEST(PlatoonControlPluginTest, test_platoon_info_cb);
+    FRIEND_TEST(PlatoonControlPluginTest, test_get_trajectory_speed);
+
   };
 
 } // platoon_control

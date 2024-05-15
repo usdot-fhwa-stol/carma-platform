@@ -58,6 +58,18 @@ TEST(PlatoonControlPluginTest, test1)
 
 }
 
+TEST(PlatoonControlPluginTest, test_2)
+{
+    rclcpp::NodeOptions options;
+    auto worker_node = std::make_shared<platoon_control::PlatoonControlPlugin>(options);
+
+    EXPECT_TRUE(worker_node->get_availability());
+    EXPECT_EQ(worker_node->get_version_id(), "v1.0");
+
+    EXPECT_EQ(worker_node->generate_command().cmd.linear_velocity, 0.0);
+
+}
+
 TEST(PlatoonControlPluginTest, test_convert_state)
 {
     rclcpp::NodeOptions options;
@@ -91,4 +103,78 @@ TEST(PlatoonControlPluginTest, test_compose_twist_cmd)
 
     EXPECT_EQ(twist_cmd.twist.linear.x, linear_vel);
     EXPECT_EQ(twist_cmd.twist.angular.z, angular_vel);
+}
+
+TEST(PlatoonControlPluginTest, test_current_trajectory_callback)
+{
+    rclcpp::NodeOptions options;
+    auto worker_node = std::make_shared<platoon_control::PlatoonControlPlugin>(options);
+
+    carma_planning_msgs::msg::TrajectoryPlan traj_plan;
+
+    carma_planning_msgs::msg::TrajectoryPlanPoint point1;
+    point1.x = 30.0;
+    point1.y = 20.0;
+
+    traj_plan.trajectory_points = {point1};
+    worker_node->current_trajectory_callback(std::make_unique<carma_planning_msgs::msg::TrajectoryPlan>(traj_plan));
+    EXPECT_EQ(worker_node->latest_trajectory_.trajectory_points.size(), 0);
+
+    carma_planning_msgs::msg::TrajectoryPlanPoint point2;
+    point2.x = 50.0;
+    point2.y = 60.0;
+
+
+    traj_plan.trajectory_points = {point1, point2};
+
+    worker_node->current_trajectory_callback(std::make_unique<carma_planning_msgs::msg::TrajectoryPlan>(traj_plan));
+    EXPECT_EQ(worker_node->latest_trajectory_.trajectory_points.size(), 2);
+
+}
+
+namespace platoon_control
+{
+
+    TEST(PlatoonControlPluginTest, test_platoon_info_cb)
+    {
+        rclcpp::NodeOptions options;
+        auto worker_node = std::make_shared<platoon_control::PlatoonControlPlugin>(options);
+
+        worker_node->configure();
+        worker_node->activate();
+
+        carma_planning_msgs::msg::PlatooningInfo msg;
+        msg.leader_id = "id";
+        msg.leader_downtrack_distance = 2.0;
+        msg.leader_cmd_speed = 1.0;
+        msg.host_platoon_position=1;
+
+        worker_node->platoon_info_cb(std::make_shared<carma_planning_msgs::msg::PlatooningInfo>(msg));
+
+    }
+
+    TEST(PlatoonControlPluginTest, test_get_trajectory_speed)
+    {
+
+        carma_planning_msgs::msg::TrajectoryPlanPoint point;
+        point.x = 30.0;
+        point.y = 15.0;
+        point.target_time.sec = 0;
+
+        carma_planning_msgs::msg::TrajectoryPlanPoint point2;
+        point2.x = 50.0;
+        point2.y = 60.0;
+        point2.target_time.sec = 1.0;
+
+        carma_planning_msgs::msg::TrajectoryPlanPoint point3;
+        point3.x = 55.0;
+        point3.y = 60.0;
+        point3.target_time.sec = 10.0;
+
+        rclcpp::NodeOptions options;
+        auto worker_node = std::make_shared<platoon_control::PlatoonControlPlugin>(options);
+
+
+        EXPECT_NEAR(worker_node->get_trajectory_speed({point,point2,point3}), 5.1, 0.1);
+    }
 }
