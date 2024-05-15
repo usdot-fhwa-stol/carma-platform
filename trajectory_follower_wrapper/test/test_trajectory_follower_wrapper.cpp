@@ -172,6 +172,25 @@ TEST(Testtrajectory_follower_wrapper, TestControlConversion)
 
 }
 
+TEST(TrajectoryFollowerWrapperNodeTest, ParameterUpdateCallbackTest) {
+    rclcpp::NodeOptions options;
+    auto worker_node = std::make_shared<trajectory_follower_wrapper::TrajectoryFollowerWrapperNode>(options);
+
+    worker_node->configure(); //Call configure state transition
+    worker_node->activate();  //Call activate state transition to get not read for runtime
+
+  std::vector<rclcpp::Parameter> parameters;
+
+  // Simulate setting valid parameters
+  parameters.push_back(rclcpp::Parameter("vehicle_response_lag", 1.0));
+  parameters.push_back(rclcpp::Parameter("incoming_cmd_time_threshold", 2.0));
+
+  rcl_interfaces::msg::SetParametersResult result = worker_node->parameter_update_callback(parameters);
+
+  // Expect the result to be successful
+  EXPECT_TRUE(result.successful);
+}
+
 
 
 int main(int argc, char ** argv)

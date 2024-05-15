@@ -58,7 +58,7 @@ if(BUILD_TESTING)
   find_package(ament_lint_auto REQUIRED)
   ament_lint_auto_find_test_dependencies() # This populates the ${${PROJECT_NAME}_FOUND_TEST_DEPENDS} variable
 
-  ament_add_gtest(test_trajectory_follower_wrapper test/trajectory_follower_wrapper_test.cpp)
+  ament_add_gtest(test_trajectory_follower_wrapper test/test_trajectory_follower_wrapper.cpp)
 
   ament_target_dependencies(test_trajectory_follower_wrapper ${${PROJECT_NAME}_FOUND_TEST_DEPENDS})
 
