@@ -20,10 +20,8 @@ namespace platoon_control
   namespace std_ph = std::placeholders;
 
   PlatoonControlPlugin::PlatoonControlPlugin(const rclcpp::NodeOptions &options)
-      : carma_guidance_plugins::ControlPlugin(options)
+      : carma_guidance_plugins::ControlPlugin(options), config_(PlatooningControlPluginConfig()), pcw_(PlatoonControlWorker())
   {
-    // Create initial config
-    config_ = PlatooningControlPluginConfig();
 
     // Declare parameters
     config_.stand_still_headway_m = declare_parameter<double>("stand_still_headway_m", config_.stand_still_headway_m);
@@ -61,7 +59,6 @@ namespace platoon_control
     config_.shutdown_timeout = declare_parameter<int>("control_plugin_shutdown_timeout", config_.shutdown_timeout);
     config_.ignore_initial_inputs = declare_parameter<int>("control_plugin_ignore_initial_inputs", config_.ignore_initial_inputs);
 
-    pcw_ = PlatoonControlWorker();
     pcw_.ctrl_config_ = std::make_shared<PlatooningControlPluginConfig>(config_);
 
   }
@@ -211,7 +208,7 @@ namespace platoon_control
     // If it has been a long time since input data has arrived then reset the input counter and return
     // Note: this quiets the controller after its input stream stops, which is necessary to allow
     // the replacement controller to publish on the same output topic after this one is done.
-    long current_time_ms = this->now().nanoseconds() / 1e6;
+    double current_time_ms = this->now().nanoseconds() / 1e6;
     RCLCPP_DEBUG_STREAM(rclcpp::get_logger("platoon_control"), "current_time_ms = " << current_time_ms << ", prev_input_time_ms_ = " << prev_input_time_ms_ << ", input counter = " << consecutive_input_counter_);
 
     if(current_time_ms - prev_input_time_ms_ > config_.shutdown_timeout)
@@ -230,60 +227,13 @@ namespace platoon_control
     }
 
     carma_planning_msgs::msg::TrajectoryPlanPoint second_trajectory_point = current_trajectory_.get().trajectory_points[1];
-    carma_planning_msgs::msg::TrajectoryPlanPoint lookahead_point = get_lookahead_trajectory_point(current_trajectory_.get(), current_pose_.get(), current_twist_.get());
 
     trajectory_speed_ = get_trajectory_speed(current_trajectory_.get().trajectory_points);
 
-    ctrl_msg = generate_control_signals(second_trajectory_point, lookahead_point, current_pose_.get(), current_twist_.get());
+    ctrl_msg = generate_control_signals(second_trajectory_point, current_pose_.get(), current_twist_.get());
 
     return ctrl_msg;
 
-  }
-
-  carma_planning_msgs::msg::TrajectoryPlanPoint PlatoonControlPlugin::get_lookahead_trajectory_point(const carma_planning_msgs::msg::TrajectoryPlan& trajectory_plan, const geometry_msgs::msg::PoseStamped& current_pose, const geometry_msgs::msg::TwistStamped& current_twist)
-  {
-    carma_planning_msgs::msg::TrajectoryPlanPoint lookahead_point;
-
-    double lookahead_dist = config_.speed_to_lookahead_ratio * current_twist.twist.linear.x;
-    RCLCPP_DEBUG_STREAM(rclcpp::get_logger("platoon_control"), "lookahead based on speed: " << lookahead_dist);
-
-    lookahead_dist = std::max(config_.min_lookahead_dist, lookahead_dist);
-    RCLCPP_DEBUG_STREAM(rclcpp::get_logger("platoon_control"), "final lookahead: " << lookahead_dist);
-
-    double traveled_dist = 0.0;
-    bool found_point = false;
-
-    for (size_t i = 1; i<trajectory_plan.trajectory_points.size() - 1; i++)
-    {
-        double dx =  current_pose.pose.position.x - trajectory_plan.trajectory_points[i].x;
-        double dy =  current_pose.pose.position.y - trajectory_plan.trajectory_points[i].y;
-
-        double dx1 = trajectory_plan.trajectory_points[i].x - trajectory_plan.trajectory_points[i-1].x;
-        double dy1 = trajectory_plan.trajectory_points[i].y - trajectory_plan.trajectory_points[i-1].y;
-        double dist1 = std::sqrt(dx1*dx1 + dy1*dy1);
-        RCLCPP_DEBUG_STREAM(rclcpp::get_logger("platoon_control"), "trajectory spacing: " << dist1);
-
-        double dist = std::sqrt(dx*dx + dy*dy);
-
-        traveled_dist = dist;
-
-        if ((lookahead_dist - traveled_dist) < 1.0)
-        {
-            lookahead_point =  trajectory_plan.trajectory_points[i];
-            found_point = true;
-            RCLCPP_DEBUG_STREAM(rclcpp::get_logger("platoon_control"), "found lookahead point at index: " << i);
-            break;
-        }
-    }
-
-    if (!found_point)
-    {
-        lookahead_point = trajectory_plan.trajectory_points.back();
-        RCLCPP_DEBUG_STREAM(rclcpp::get_logger("platoon_control"), "lookahead point set as the last trajectory point");
-    }
-
-
-    return lookahead_point;
   }
 
   void PlatoonControlPlugin::platoon_info_cb(const carma_planning_msgs::msg::PlatooningInfo::SharedPtr msg)
@@ -319,7 +269,7 @@ namespace platoon_control
     platoon_info_pub_->publish(platooning_info_msg);
   }
 
-  autoware_msgs::msg::ControlCommandStamped PlatoonControlPlugin::generate_control_signals(const carma_planning_msgs::msg::TrajectoryPlanPoint& first_trajectory_point, const carma_planning_msgs::msg::TrajectoryPlanPoint& lookahead_point, const geometry_msgs::msg::PoseStamped& current_pose, const geometry_msgs::msg::TwistStamped& current_twist)
+  autoware_msgs::msg::ControlCommandStamped PlatoonControlPlugin::generate_control_signals(const carma_planning_msgs::msg::TrajectoryPlanPoint& first_trajectory_point, const geometry_msgs::msg::PoseStamped& current_pose, const geometry_msgs::msg::TwistStamped& current_twist)
   {
     pcw_.set_current_speed(trajectory_speed_); //TODO why this and not the actual vehicle speed?  Method name suggests different use than this.
     // pcw_.set_current_speed(current_twist_.get());
@@ -343,7 +293,7 @@ namespace platoon_control
     return ctrl_msg;
   }
 
-  motion::motion_common::State PlatoonControlPlugin::convert_state(const geometry_msgs::msg::PoseStamped& pose, const geometry_msgs::msg::TwistStamped& twist)
+  motion::motion_common::State PlatoonControlPlugin::convert_state(const geometry_msgs::msg::PoseStamped& pose, const geometry_msgs::msg::TwistStamped& twist) const
   {
     motion::motion_common::State state;
     state.header = pose.header;

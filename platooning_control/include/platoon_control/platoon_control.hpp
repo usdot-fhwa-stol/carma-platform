@@ -52,7 +52,7 @@ namespace platoon_control
 			* \param point0 start point of control window
 			* \param point_end end point of control wondow
 			*/
-		autoware_msgs::msg::ControlCommandStamped generate_control_signals(const carma_planning_msgs::msg::TrajectoryPlanPoint& first_trajectory_point, const carma_planning_msgs::msg::TrajectoryPlanPoint& lookahead_point, const geometry_msgs::msg::PoseStamped& current_pose, const geometry_msgs::msg::TwistStamped& current_twist);
+		autoware_msgs::msg::ControlCommandStamped generate_control_signals(const carma_planning_msgs::msg::TrajectoryPlanPoint& first_trajectory_point, const geometry_msgs::msg::PoseStamped& current_pose, const geometry_msgs::msg::TwistStamped& current_twist);
 
     /**
 			* \brief Compose twist message from linear and angular velocity commands.
@@ -62,14 +62,7 @@ namespace platoon_control
 			*/
 		geometry_msgs::msg::TwistStamped compose_twist_cmd(double linear_vel, double angular_vel);
 
-    motion::motion_common::State convert_state(const geometry_msgs::msg::PoseStamped& pose, const geometry_msgs::msg::TwistStamped& twist);
-
-      /**
-			* \brief find the point correspoding to the lookahead distance
-			* \param trajectory_plan trajectory plan
-			* \return trajectory point
-			*/
-		carma_planning_msgs::msg::TrajectoryPlanPoint get_lookahead_trajectory_point(const carma_planning_msgs::msg::TrajectoryPlan& trajectory_plan, const geometry_msgs::msg::PoseStamped& current_pose, const geometry_msgs::msg::TwistStamped& current_twist);
+    motion::motion_common::State convert_state(const geometry_msgs::msg::PoseStamped& pose, const geometry_msgs::msg::TwistStamped& twist) const;
 
     double trajectory_speed_ = 0.0;
 
@@ -126,7 +119,7 @@ namespace platoon_control
 
     // Variables
     PlatoonLeaderInfo platoon_leader_;
-    long prev_input_time_ms_ = 0;				//timestamp of the previous trajectory plan input received
+    double prev_input_time_ms_ = 0;				//timestamp of the previous trajectory plan input received
     long consecutive_input_counter_ = 0;	//num inputs seen without a timeout
 
     /**

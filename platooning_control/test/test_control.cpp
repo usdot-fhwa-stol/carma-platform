@@ -23,41 +23,6 @@
 #include "platoon_control/platoon_control.hpp"
 
 
-TEST(PlatoonControlPluginTest, test1)
-{
-    rclcpp::NodeOptions options;
-    auto worker_node = std::make_shared<platoon_control::PlatoonControlPlugin>(options);
-
-    worker_node->configure();
-    worker_node->activate();
-
-    carma_planning_msgs::msg::TrajectoryPlan tp;
-    carma_planning_msgs::msg::TrajectoryPlanPoint point1;
-    point1.x = 1.0;
-    point1.y = 1.0;
-
-    carma_planning_msgs::msg::TrajectoryPlanPoint point2;
-    point2.x = 10.0;
-    point2.y = 10.0;
-
-    carma_planning_msgs::msg::TrajectoryPlanPoint point3;
-    point3.x = 20.0;
-    point3.y = 20.0;
-
-    tp.trajectory_points = {point1, point2, point3};
-
-    geometry_msgs::msg::TwistStamped twist_msg;
-    twist_msg.twist.linear.x = 0.0;
-
-    geometry_msgs::msg::PoseStamped pose_msg;
-    pose_msg.pose.position.x = 0.0;
-    pose_msg.pose.position.y = 0.0;
-
-    carma_planning_msgs::msg::TrajectoryPlanPoint out = worker_node->get_lookahead_trajectory_point(tp, pose_msg, twist_msg);
-    EXPECT_EQ(out.x, 10.0);
-
-}
-
 TEST(PlatoonControlPluginTest, test_2)
 {
     rclcpp::NodeOptions options;
@@ -204,10 +169,6 @@ namespace platoon_control
         trajectory_point.x = 50.0;
         trajectory_point.y = 60.0;
 
-        carma_planning_msgs::msg::TrajectoryPlanPoint lookahead_point;
-        lookahead_point.x = 55.0;
-        lookahead_point.y = 60.0;
-
         geometry_msgs::msg::PoseStamped current_pose;
         current_pose.pose.position.x = 0.0;
         current_pose.pose.position.y = 0.0;
@@ -226,7 +187,7 @@ namespace platoon_control
         traj_plan.trajectory_points = {point1, point2};
 
         worker_node->current_trajectory_callback(std::make_unique<carma_planning_msgs::msg::TrajectoryPlan>(traj_plan));
-        auto control_cmd = worker_node->generate_control_signals(trajectory_point, lookahead_point, current_pose, current_twist);
+        auto control_cmd = worker_node->generate_control_signals(trajectory_point, current_pose, current_twist);
         EXPECT_NEAR(4.47, control_cmd.cmd.linear_velocity, 0.5);
 
 
