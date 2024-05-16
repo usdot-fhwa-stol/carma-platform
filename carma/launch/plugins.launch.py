@@ -88,7 +88,7 @@ def generate_launch_description():
 
     pure_pursuit_tuning_parameters = [vehicle_calibration_dir, "/pure_pursuit/calibration.yaml"]
 
-    lci_plugin_calibration_params = [vehicle_calibration_dir, "/identifiers/UniqueVehicleParams.yaml"]
+    unique_vehicle_calibration_params = [vehicle_calibration_dir, "/identifiers/UniqueVehicleParams.yaml"]
 
     platoon_control_param_file = os.path.join(
         get_package_share_directory('platoon_control'), 'config/parameters.yaml')
@@ -292,7 +292,7 @@ def generate_launch_description():
                 parameters=[
                     lci_strategic_plugin_file_path,
                     vehicle_config_param_file,
-                    lci_plugin_calibration_params
+                    unique_vehicle_calibration_params
                 ]
             ),
         ]
@@ -552,7 +552,7 @@ def generate_launch_description():
                     ("current_pose", [ EnvironmentVariable('CARMA_LOCZ_NS', default_value=''), "/current_pose" ] ),
                     ("vehicle/twist", [ EnvironmentVariable('CARMA_INTR_NS', default_value=''), "/vehicle/twist" ] ),
                 ],
-                parameters=[ platoon_control_param_file, vehicle_config_param_file ]
+                parameters=[ platoon_control_param_file, vehicle_config_param_file, unique_vehicle_calibration_params ]
             )
         ]
     )

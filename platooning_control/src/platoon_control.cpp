@@ -212,9 +212,9 @@ namespace platoon_control
     // Note: this quiets the controller after its input stream stops, which is necessary to allow
     // the replacement controller to publish on the same output topic after this one is done.
     long current_time_ms = this->now().nanoseconds() / 1e6;
-    RCLCPP_DEBUG_STREAM(rclcpp::get_logger("platoon_control"), "current_time_ms = " << current_time_ms << ", prev_input_time_ = " << prev_input_time_ << ", input counter = " << consecutive_input_counter_);
+    RCLCPP_DEBUG_STREAM(rclcpp::get_logger("platoon_control"), "current_time_ms = " << current_time_ms << ", prev_input_time_ms_ = " << prev_input_time_ms_ << ", input counter = " << consecutive_input_counter_);
 
-    if(current_time_ms - prev_input_time_ > config_.shutdown_timeout)
+    if(current_time_ms - prev_input_time_ms_ > config_.shutdown_timeout)
     {
         RCLCPP_DEBUG_STREAM(rclcpp::get_logger("platoon_control"), "returning due to timeout.");
         consecutive_input_counter_ = 0;
@@ -365,9 +365,9 @@ namespace platoon_control
         }
 
         current_trajectory_ = *tp;
-        prev_input_time_ = this->now().nanoseconds() / 1000000;
+        prev_input_time_ms_ = this->now().nanoseconds() / 1000000;
         ++consecutive_input_counter_;
-        RCLCPP_DEBUG_STREAM(rclcpp::get_logger("platoon_control"), "New trajectory plan #" << consecutive_input_counter_ << " at time " << prev_input_time_);
+        RCLCPP_DEBUG_STREAM(rclcpp::get_logger("platoon_control"), "New trajectory plan #" << consecutive_input_counter_ << " at time " << prev_input_time_ms_);
         rclcpp::Time tp_time(tp->header.stamp);
         RCLCPP_DEBUG_STREAM(rclcpp::get_logger("platoon_control"), "tp header time =                " << tp_time.nanoseconds() / 1000000);
   }

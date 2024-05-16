@@ -89,21 +89,6 @@
   <remap from="/vehicle_status" to="$(optenv CARMA_INTR_NS)/vehicle_status"/>
   <remap from="/current_pose" to="$(optenv CARMA_LOCZ_NS)/current_pose"/>
 
-  <!-- Planning Stack -->
-  <group ns="plugins">
-
-    <!-- Remappings for common topics to move out of the plugin namespace -->
-    <remap from="route" to="$(optenv CARMA_GUIDE_NS)/route"/>
-    <remap from="plugin_discovery" to="$(optenv CARMA_GUIDE_NS)/plugin_discovery"/>
-    <remap from="ctrl_raw" to="$(optenv CARMA_GUIDE_NS)/ctrl_raw"/>
-    <remap from="twist_raw" to="$(optenv CARMA_GUIDE_NS)/twist_raw"/>
-
-    <!--Platooning Control Plugin-->
-
-    <!--Platooning Control IHP Plugin-->
-    <include file="$(find platoon_control_ihp)/launch/platoon_control_ihp.launch" />
-
-  </group>
 
   <!-- Guidance Plugin Validator -->
   <group>

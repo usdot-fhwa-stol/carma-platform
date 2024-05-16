@@ -126,7 +126,7 @@ namespace platoon_control
 
     // Variables
     PlatoonLeaderInfo platoon_leader_;
-    long prev_input_time_ = 0;				//timestamp of the previous trajectory plan input received
+    long prev_input_time_ms_ = 0;				//timestamp of the previous trajectory plan input received
     long consecutive_input_counter_ = 0;	//num inputs seen without a timeout
 
     /**
