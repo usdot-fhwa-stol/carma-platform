@@ -31,7 +31,6 @@
   <depend>rclcpp_components</depend>
   <depend>carma_guidance_plugins</depend>
   <depend>autoware_msgs</depend>
-  <depend>autoware_config_msgs</depend>
   <depend>geometry_msgs</depend>
   <depend>autoware_auto_msgs</depend>
   <depend>basic_autonomy</depend>

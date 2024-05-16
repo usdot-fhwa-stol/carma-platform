@@ -19,6 +19,7 @@
 
 #include "trajectory_follower_wrapper/trajectory_follower_wrapper_node.hpp"
 
+namespace trajectory_follower_wrapper{
 
 TEST(TesttrajectoryFollowerWrapper, TestControlCallback){
 // tetsing the overall control callback as well as combination of the conversions and time checks
@@ -190,7 +191,7 @@ TEST(TesttrajectoryFollowerWrapper, ParameterUpdateCallbackTest) {
   // Expect the result to be successful
   EXPECT_TRUE(result.successful);
 }
-
+}//namespace trajectory_follower_wrapper
 
 
 int main(int argc, char ** argv)

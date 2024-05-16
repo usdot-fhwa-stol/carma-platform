@@ -108,6 +108,9 @@ namespace trajectory_follower_wrapper
      */
     carma_ros2_utils::CallbackReturn on_configure_plugin() override;
 
+    FRIEND_TEST(TesttrajectoryFollowerWrapper, TestControlCallback);
+    FRIEND_TEST(TesttrajectoryFollowerWrapper, TestThreshold);
+
   };
 
 } // trajectory_follower_wrapper

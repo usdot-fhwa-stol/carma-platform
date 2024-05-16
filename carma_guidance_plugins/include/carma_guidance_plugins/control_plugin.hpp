@@ -63,9 +63,14 @@ namespace carma_guidance_plugins
     //! The most recent trajectory received by this plugin
     boost::optional<carma_planning_msgs::msg::TrajectoryPlan> current_trajectory_;
 
+    // These callbacks do direct assignment into their respective member variables
+    void current_pose_callback(geometry_msgs::msg::PoseStamped::UniquePtr msg);
+    void current_twist_callback(geometry_msgs::msg::TwistStamped::UniquePtr msg);
+    void current_trajectory_callback(carma_planning_msgs::msg::TrajectoryPlan::UniquePtr msg);
+
+
 
   public:
-
     /**
      * \brief ControlPlugin constructor
      */
@@ -73,12 +78,6 @@ namespace carma_guidance_plugins
 
     //! Virtual destructor for safe deletion
     virtual ~ControlPlugin() = default;
-
-
-    // These callbacks do direct assignment into their respective member variables
-    void current_pose_callback(geometry_msgs::msg::PoseStamped::UniquePtr msg);
-    void current_twist_callback(geometry_msgs::msg::TwistStamped::UniquePtr msg);
-    void current_trajectory_callback(carma_planning_msgs::msg::TrajectoryPlan::UniquePtr msg);
 
     /**
      * \brief Extending class provided method which should generate a command message

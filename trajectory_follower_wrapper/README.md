@@ -1,3 +1,3 @@
 # trajectory_follower_wrapper
 
-TODO for USER: Add description of package and link to confluence documentation.
+Design Document: https://usdot-carma.atlassian.net/wiki/spaces/CRMPLT/pages/2899312668/Detailed+Design+-+Trajectory+Follower+Wrapper
