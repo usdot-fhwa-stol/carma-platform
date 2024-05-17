@@ -20,13 +20,13 @@
 #include <thread>
 #include <future>
 
-#include "platoon_control/platoon_control.hpp"
+#include "platooning_control/platooning_control.hpp"
 
 
 TEST(PlatoonControlPluginTest, test_2)
 {
     rclcpp::NodeOptions options;
-    auto worker_node = std::make_shared<platoon_control::PlatoonControlPlugin>(options);
+    auto worker_node = std::make_shared<platooning_control::PlatoonControlPlugin>(options);
 
     EXPECT_TRUE(worker_node->get_availability());
     EXPECT_EQ(worker_node->get_version_id(), "v1.0");
@@ -38,7 +38,7 @@ TEST(PlatoonControlPluginTest, test_2)
 TEST(PlatoonControlPluginTest, test_convert_state)
 {
     rclcpp::NodeOptions options;
-    auto worker_node = std::make_shared<platoon_control::PlatoonControlPlugin>(options);
+    auto worker_node = std::make_shared<platooning_control::PlatoonControlPlugin>(options);
 
     geometry_msgs::msg::PoseStamped pose_msg;
     pose_msg.pose.position.x = 0.0;
@@ -59,7 +59,7 @@ TEST(PlatoonControlPluginTest, test_convert_state)
 TEST(PlatoonControlPluginTest, test_compose_twist_cmd)
 {
     rclcpp::NodeOptions options;
-    auto worker_node = std::make_shared<platoon_control::PlatoonControlPlugin>(options);
+    auto worker_node = std::make_shared<platooning_control::PlatoonControlPlugin>(options);
 
     auto linear_vel = 1.0;
     auto angular_vel = 2.0;
@@ -70,12 +70,12 @@ TEST(PlatoonControlPluginTest, test_compose_twist_cmd)
     EXPECT_EQ(twist_cmd.twist.angular.z, angular_vel);
 }
 
-namespace platoon_control
+namespace platooning_control
 {
     TEST(PlatoonControlPluginTest, test_current_trajectory_callback)
     {
         rclcpp::NodeOptions options;
-        auto worker_node = std::make_shared<platoon_control::PlatoonControlPlugin>(options);
+        auto worker_node = std::make_shared<platooning_control::PlatoonControlPlugin>(options);
 
         carma_planning_msgs::msg::TrajectoryPlan traj_plan;
 
@@ -98,7 +98,7 @@ namespace platoon_control
     TEST(PlatoonControlPluginTest, test_platoon_info_cb)
     {
         rclcpp::NodeOptions options;
-        auto worker_node = std::make_shared<platoon_control::PlatoonControlPlugin>(options);
+        auto worker_node = std::make_shared<platooning_control::PlatoonControlPlugin>(options);
 
         worker_node->configure();
         worker_node->activate();
@@ -139,7 +139,7 @@ namespace platoon_control
         point3.target_time.sec = 10.0;
 
         rclcpp::NodeOptions options;
-        auto worker_node = std::make_shared<platoon_control::PlatoonControlPlugin>(options);
+        auto worker_node = std::make_shared<platooning_control::PlatoonControlPlugin>(options);
 
 
         EXPECT_NEAR(worker_node->get_trajectory_speed({point,point2,point3}), 5.1, 0.1);
@@ -148,12 +148,12 @@ namespace platoon_control
     TEST(PlatoonControlPluginTest, test_generate_controls)
     {
         rclcpp::NodeOptions options;
-        auto worker_node = std::make_shared<platoon_control::PlatoonControlPlugin>(options);
+        auto worker_node = std::make_shared<platooning_control::PlatoonControlPlugin>(options);
 
         worker_node->configure();
         worker_node->activate();
 
-        platoon_control::PlatoonLeaderInfo msg;
+        platooning_control::PlatoonLeaderInfo msg;
         msg.staticId = "id";
         msg.commandSpeed = 2.0;
         msg.vehicleSpeed = 2.0;

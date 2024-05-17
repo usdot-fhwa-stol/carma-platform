@@ -13,9 +13,9 @@
  * License for the specific language governing permissions and limitations under
  * the License.
  */
-#include "platoon_control/platoon_control.hpp"
+#include "platooning_control/platooning_control.hpp"
 
-namespace platoon_control
+namespace platooning_control
 {
   namespace std_ph = std::placeholders;
 
@@ -153,7 +153,7 @@ namespace platoon_control
     get_parameter<bool>("is_integrator_enabled", config_.is_integrator_enabled);
 
 
-    RCLCPP_INFO_STREAM(rclcpp::get_logger("platoon_control"), "Loaded Params: " << config_);
+    RCLCPP_INFO_STREAM(rclcpp::get_logger("platooning_control"), "Loaded Params: " << config_);
 
     // create config for pure_pursuit worker
     pure_pursuit::Config cfg{
@@ -182,7 +182,7 @@ namespace platoon_control
 
 
     // Trajectory Plan Subscriber
-    trajectory_plan_sub_ = create_subscription<carma_planning_msgs::msg::TrajectoryPlan>("platoon_control/plan_trajectory", 1,
+    trajectory_plan_sub_ = create_subscription<carma_planning_msgs::msg::TrajectoryPlan>("platooning_control/plan_trajectory", 1,
                                                                                             std::bind(&PlatoonControlPlugin::current_trajectory_callback, this, std_ph::_1));
 
     // Platoon Info Subscriber
@@ -209,11 +209,11 @@ namespace platoon_control
     // Note: this quiets the controller after its input stream stops, which is necessary to allow
     // the replacement controller to publish on the same output topic after this one is done.
     double current_time_ms = this->now().nanoseconds() / 1e6;
-    RCLCPP_DEBUG_STREAM(rclcpp::get_logger("platoon_control"), "current_time_ms = " << current_time_ms << ", prev_input_time_ms_ = " << prev_input_time_ms_ << ", input counter = " << consecutive_input_counter_);
+    RCLCPP_DEBUG_STREAM(rclcpp::get_logger("platooning_control"), "current_time_ms = " << current_time_ms << ", prev_input_time_ms_ = " << prev_input_time_ms_ << ", input counter = " << consecutive_input_counter_);
 
     if(current_time_ms - prev_input_time_ms_ > config_.shutdown_timeout)
     {
-        RCLCPP_DEBUG_STREAM(rclcpp::get_logger("platoon_control"), "returning due to timeout.");
+        RCLCPP_DEBUG_STREAM(rclcpp::get_logger("platooning_control"), "returning due to timeout.");
         consecutive_input_counter_ = 0;
         return ctrl_msg;
     }
@@ -222,7 +222,7 @@ namespace platoon_control
     // previous control plugin to time out and stop publishing, since it uses same output topic)
     if (consecutive_input_counter_ <= config_.ignore_initial_inputs)
     {
-        RCLCPP_DEBUG_STREAM(rclcpp::get_logger("platoon_control"), "returning due to first data input");
+        RCLCPP_DEBUG_STREAM(rclcpp::get_logger("platooning_control"), "returning due to first data input");
         return ctrl_msg;
     }
 
@@ -246,20 +246,20 @@ namespace platoon_control
     platoon_leader_.NumberOfVehicleInFront = msg->host_platoon_position;
     platoon_leader_.leaderIndex = 0;
 
-    RCLCPP_DEBUG_STREAM(rclcpp::get_logger("platoon_control"), "Platoon leader leader id:  " << platoon_leader_.staticId);
-    RCLCPP_DEBUG_STREAM(rclcpp::get_logger("platoon_control"), "Platoon leader leader pose:  " << platoon_leader_.vehiclePosition);
-    RCLCPP_DEBUG_STREAM(rclcpp::get_logger("platoon_control"), "Platoon leader leader cmd speed:  " << platoon_leader_.commandSpeed);
+    RCLCPP_DEBUG_STREAM(rclcpp::get_logger("platooning_control"), "Platoon leader leader id:  " << platoon_leader_.staticId);
+    RCLCPP_DEBUG_STREAM(rclcpp::get_logger("platooning_control"), "Platoon leader leader pose:  " << platoon_leader_.vehiclePosition);
+    RCLCPP_DEBUG_STREAM(rclcpp::get_logger("platooning_control"), "Platoon leader leader cmd speed:  " << platoon_leader_.commandSpeed);
 
     carma_planning_msgs::msg::PlatooningInfo platooning_info_msg = *msg;
 
-    RCLCPP_DEBUG_STREAM(rclcpp::get_logger("platoon_control"), "platooning_info_msg.actual_gap:  " << platooning_info_msg.actual_gap);
+    RCLCPP_DEBUG_STREAM(rclcpp::get_logger("platooning_control"), "platooning_info_msg.actual_gap:  " << platooning_info_msg.actual_gap);
 
     if (platooning_info_msg.actual_gap > 5.0)
     {
         platooning_info_msg.actual_gap -= 5.0; // TODO: temporary: should be vehicle length
     }
 
-    RCLCPP_DEBUG_STREAM(rclcpp::get_logger("platoon_control"), "platooning_info_msg.actual_gap:  " << platooning_info_msg.actual_gap);
+    RCLCPP_DEBUG_STREAM(rclcpp::get_logger("platooning_control"), "platooning_info_msg.actual_gap:  " << platooning_info_msg.actual_gap);
     // platooing_info_msg.desired_gap = pcw_.desired_gap_;
     // platooing_info_msg.actual_gap = pcw_.actual_gap_;
     pcw_.actual_gap_ = platooning_info_msg.actual_gap;
@@ -277,7 +277,7 @@ namespace platoon_control
     pcw_.generate_speed(first_trajectory_point);
 
     motion::control::controller_common::State state_tf = convert_state(current_pose, current_twist);
-    RCLCPP_DEBUG_STREAM(rclcpp::get_logger("platoon_control"), "Forced from frame_id: " << state_tf.header.frame_id << ", into: " << current_trajectory_.get().header.frame_id);
+    RCLCPP_DEBUG_STREAM(rclcpp::get_logger("platooning_control"), "Forced from frame_id: " << state_tf.header.frame_id << ", into: " << current_trajectory_.get().header.frame_id);
 
     current_trajectory_.get().header.frame_id = state_tf.header.frame_id;
 
@@ -310,16 +310,16 @@ namespace platoon_control
   void PlatoonControlPlugin::current_trajectory_callback(const carma_planning_msgs::msg::TrajectoryPlan::UniquePtr tp)
   {
     if (tp->trajectory_points.size() < 2) {
-            RCLCPP_WARN_STREAM(rclcpp::get_logger("platoon_control"), "PlatoonControlPlugin cannot execute trajectory as only 1 point was provided");
+            RCLCPP_WARN_STREAM(rclcpp::get_logger("platooning_control"), "PlatoonControlPlugin cannot execute trajectory as only 1 point was provided");
             return;
         }
 
         current_trajectory_ = *tp;
         prev_input_time_ms_ = this->now().nanoseconds() / 1000000;
         ++consecutive_input_counter_;
-        RCLCPP_DEBUG_STREAM(rclcpp::get_logger("platoon_control"), "New trajectory plan #" << consecutive_input_counter_ << " at time " << prev_input_time_ms_);
+        RCLCPP_DEBUG_STREAM(rclcpp::get_logger("platooning_control"), "New trajectory plan #" << consecutive_input_counter_ << " at time " << prev_input_time_ms_);
         rclcpp::Time tp_time(tp->header.stamp);
-        RCLCPP_DEBUG_STREAM(rclcpp::get_logger("platoon_control"), "tp header time =                " << tp_time.nanoseconds() / 1000000);
+        RCLCPP_DEBUG_STREAM(rclcpp::get_logger("platooning_control"), "tp header time =                " << tp_time.nanoseconds() / 1000000);
   }
 
   geometry_msgs::msg::TwistStamped PlatoonControlPlugin::compose_twist_cmd(double linear_vel, double angular_vel)
@@ -336,9 +336,9 @@ namespace platoon_control
     autoware_msgs::msg::ControlCommandStamped cmd_ctrl;
     cmd_ctrl.header.stamp = this->now();
     cmd_ctrl.cmd.linear_velocity = linear_vel;
-    RCLCPP_DEBUG_STREAM(rclcpp::get_logger("platoon_control"), "ctrl command speed " << cmd_ctrl.cmd.linear_velocity);
+    RCLCPP_DEBUG_STREAM(rclcpp::get_logger("platooning_control"), "ctrl command speed " << cmd_ctrl.cmd.linear_velocity);
     cmd_ctrl.cmd.steering_angle = steering_angle;
-    RCLCPP_DEBUG_STREAM(rclcpp::get_logger("platoon_control"), "ctrl command steering " << cmd_ctrl.cmd.steering_angle);
+    RCLCPP_DEBUG_STREAM(rclcpp::get_logger("platooning_control"), "ctrl command steering " << cmd_ctrl.cmd.steering_angle);
 
     return cmd_ctrl;
   }
@@ -362,7 +362,7 @@ namespace platoon_control
     double t1 = rclcpp::Time((trajectory_points[trajectory_points.size()-1].target_time)).seconds() - rclcpp::Time(trajectory_points[0].target_time).nanoseconds();
 
     double avg_speed = d1/t1;
-    RCLCPP_DEBUG_STREAM(rclcpp::get_logger("platoon_control"), "trajectory_points size = " << trajectory_points.size() << ", d1 = " << d1 << ", t1 = " << t1 << ", avg_speed = " << avg_speed);
+    RCLCPP_DEBUG_STREAM(rclcpp::get_logger("platooning_control"), "trajectory_points size = " << trajectory_points.size() << ", d1 = " << d1 << ", t1 = " << t1 << ", avg_speed = " << avg_speed);
 
     for(size_t i = 0; i < trajectory_points.size() - 2; i++ )
     {
@@ -377,17 +377,17 @@ namespace platoon_control
         }
     }
 
-    RCLCPP_DEBUG_STREAM(rclcpp::get_logger("platoon_control"), "trajectory speed: " << trajectory_speed);
-    RCLCPP_DEBUG_STREAM(rclcpp::get_logger("platoon_control"), "avg trajectory speed: " << avg_speed);
+    RCLCPP_DEBUG_STREAM(rclcpp::get_logger("platooning_control"), "trajectory speed: " << trajectory_speed);
+    RCLCPP_DEBUG_STREAM(rclcpp::get_logger("platooning_control"), "avg trajectory speed: " << avg_speed);
 
     return avg_speed; //TODO: why are 2 speeds being calculated? Which should be returned?
 
   }
 
 
-} // platoon_control
+} // platooning_control
 
 #include "rclcpp_components/register_node_macro.hpp"
 
 // Register the component with class_loader
-RCLCPP_COMPONENTS_REGISTER_NODE(platoon_control::PlatoonControlPlugin)
+RCLCPP_COMPONENTS_REGISTER_NODE(platooning_control::PlatoonControlPlugin)

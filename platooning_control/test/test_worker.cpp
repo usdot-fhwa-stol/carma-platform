@@ -20,13 +20,13 @@
 #include <thread>
 #include <future>
 
-#include "platoon_control/platoon_control_worker.hpp"
+#include "platooning_control/platooning_control_worker.hpp"
 
 
 TEST(PlatoonControlWorkerTest, test1)
 {
-    platoon_control::PlatoonControlWorker pcw;
-    pcw.ctrl_config_ = std::make_shared<platoon_control::PlatooningControlPluginConfig>();
+    platooning_control::PlatoonControlWorker pcw;
+    pcw.ctrl_config_ = std::make_shared<platooning_control::PlatooningControlPluginConfig>();
     carma_planning_msgs::msg::TrajectoryPlanPoint point;
     point.x = 1.0;
     point.y = 2.0;
@@ -36,9 +36,9 @@ TEST(PlatoonControlWorkerTest, test1)
 
 TEST(PlatoonControlWorkerTest, test11)
 {
-    platoon_control::PlatoonLeaderInfo leader;
-    platoon_control::PlatoonControlWorker pcw;
-    pcw.ctrl_config_ = std::make_shared<platoon_control::PlatooningControlPluginConfig>();
+    platooning_control::PlatoonLeaderInfo leader;
+    platooning_control::PlatoonControlWorker pcw;
+    pcw.ctrl_config_ = std::make_shared<platooning_control::PlatooningControlPluginConfig>();
     leader.staticId = "";
     leader.leaderIndex = 0;
     leader.NumberOfVehicleInFront = 1;
@@ -55,10 +55,10 @@ TEST(PlatoonControlWorkerTest, test11)
 TEST(PlatoonControlWorkerTest, test2)
 {
 
-    platoon_control::PlatoonControlWorker pcw;
-    platoon_control::PlatooningControlPluginConfig config;
-    pcw.ctrl_config_ = std::make_shared<platoon_control::PlatooningControlPluginConfig>(config);
-    platoon_control::PlatoonLeaderInfo leader;
+    platooning_control::PlatoonControlWorker pcw;
+    platooning_control::PlatooningControlPluginConfig config;
+    pcw.ctrl_config_ = std::make_shared<platooning_control::PlatooningControlPluginConfig>(config);
+    platooning_control::PlatoonLeaderInfo leader;
     leader.commandSpeed = 10;
     leader.vehicleSpeed = 10;
     leader.vehiclePosition = 50;
@@ -109,10 +109,10 @@ TEST(PlatoonControlWorkerTest, test2)
 TEST(PlatoonControlWorkerTest, test3)
 {
 
-    platoon_control::PlatoonControlWorker pcw;
-    platoon_control::PlatooningControlPluginConfig config;
-    pcw.ctrl_config_ = std::make_shared<platoon_control::PlatooningControlPluginConfig>(config);
-    platoon_control::PlatoonLeaderInfo leader;
+    platooning_control::PlatoonControlWorker pcw;
+    platooning_control::PlatooningControlPluginConfig config;
+    pcw.ctrl_config_ = std::make_shared<platooning_control::PlatooningControlPluginConfig>(config);
+    platooning_control::PlatoonLeaderInfo leader;
     leader.commandSpeed = 10;
     leader.vehicleSpeed = 10;
     leader.vehiclePosition = 50;

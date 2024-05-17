@@ -15,24 +15,24 @@
 
 ------------------------------------------------------------------------------*/
 
-#include "platoon_control/pid_controller.hpp"
+#include "platooning_control/pid_controller.hpp"
 
-namespace platoon_control
+namespace platooning_control
 {
     PIDController::PIDController(){}
 
     double PIDController::calculate( double setpoint, double pv ){
         // Calculate error
 	    double error = setpoint - pv;
-		RCLCPP_DEBUG_STREAM(rclcpp::get_logger("platoon_control"),"PID error: " << error);
+		RCLCPP_DEBUG_STREAM(rclcpp::get_logger("platooning_control"),"PID error: " << error);
 
 	    // Proportional term
 	    double Pout = config_->kp * error;
-		RCLCPP_DEBUG_STREAM(rclcpp::get_logger("platoon_control"), "Proportional term: " << Pout);
+		RCLCPP_DEBUG_STREAM(rclcpp::get_logger("platooning_control"), "Proportional term: " << Pout);
 
 	    // Integral term
 	    _integral += error * config_->dt;
-		RCLCPP_DEBUG_STREAM(rclcpp::get_logger("platoon_control"),"Integral term: " << _integral);
+		RCLCPP_DEBUG_STREAM(rclcpp::get_logger("platooning_control"),"Integral term: " << _integral);
 
 		if (_integral > config_->integrator_max){
 			 _integral = config_->integrator_max;
@@ -41,17 +41,17 @@ namespace platoon_control
 			_integral = config_->integrator_min;
 		}
 	    double Iout = config_->ki * _integral;
-		RCLCPP_DEBUG_STREAM(rclcpp::get_logger("platoon_control"), "Iout: " << Iout);
+		RCLCPP_DEBUG_STREAM(rclcpp::get_logger("platooning_control"), "Iout: " << Iout);
 
 	    // Derivative term
 	    double derivative = (error - _pre_error) / config_->dt;
-		RCLCPP_DEBUG_STREAM(rclcpp::get_logger("platoon_control"), "derivative term: " << derivative);
+		RCLCPP_DEBUG_STREAM(rclcpp::get_logger("platooning_control"), "derivative term: " << derivative);
 	    double Dout = config_->kd * derivative;
-		RCLCPP_DEBUG_STREAM(rclcpp::get_logger("platoon_control"), "Dout: " << Dout);
+		RCLCPP_DEBUG_STREAM(rclcpp::get_logger("platooning_control"), "Dout: " << Dout);
 
 	    // Calculate total output
 	    double output = Pout + Iout + Dout;
-		RCLCPP_DEBUG_STREAM(rclcpp::get_logger("platoon_control"), "total controller output: " << output);
+		RCLCPP_DEBUG_STREAM(rclcpp::get_logger("platooning_control"), "total controller output: " << output);
 
 	    // Restrict to max/min
 	    if( output > config_->max_delta_speed_per_timestep )

@@ -90,8 +90,8 @@ def generate_launch_description():
 
     unique_vehicle_calibration_params = [vehicle_calibration_dir, "/identifiers/UniqueVehicleParams.yaml"]
 
-    platoon_control_param_file = os.path.join(
-        get_package_share_directory('platoon_control'), 'config/parameters.yaml')
+    platooning_control_param_file = os.path.join(
+        get_package_share_directory('platooning_control'), 'config/parameters.yaml')
 
     carma_inlanecruising_plugin_container = ComposableNodeContainer(
         package='carma_ros2_utils',
@@ -532,14 +532,14 @@ def generate_launch_description():
 
     platooning_control_plugin_container = ComposableNodeContainer(
         package='carma_ros2_utils',
-        name='platoon_control_container',
+        name='platooning_control_container',
         executable='carma_component_container_mt',
         namespace=GetCurrentNamespace(),
         composable_node_descriptions=[
             ComposableNode(
-                package='platoon_control',
-                plugin='platoon_control::PlatoonControlPlugin',
-                name='platoon_control',
+                package='platooning_control',
+                plugin='platooning_control::PlatoonControlPlugin',
+                name='platooning_control',
                 extra_arguments=[
                     {'use_intra_process_comms': True},
                     {'--log-level' : GetLogLevel('platooning_control_plugin', env_log_levels) }
@@ -548,11 +548,11 @@ def generate_launch_description():
                     ("plugin_discovery", [ EnvironmentVariable('CARMA_GUIDE_NS', default_value=''), "/plugin_discovery" ] ),
                     ("ctrl_raw", [ EnvironmentVariable('CARMA_GUIDE_NS', default_value=''), "/ctrl_raw" ] ),
                     ("twist_raw", [ EnvironmentVariable('CARMA_GUIDE_NS', default_value=''), "/twist_raw" ] ),
-                    ("platoon_control/plan_trajectory", [ EnvironmentVariable('CARMA_GUIDE_NS', default_value=''), "/plugins/platoon_control/plan_trajectory" ] ),
+                    ("platooning_control/plan_trajectory", [ EnvironmentVariable('CARMA_GUIDE_NS', default_value=''), "/plugins/platooning_control/plan_trajectory" ] ),
                     ("current_pose", [ EnvironmentVariable('CARMA_LOCZ_NS', default_value=''), "/current_pose" ] ),
                     ("vehicle/twist", [ EnvironmentVariable('CARMA_INTR_NS', default_value=''), "/vehicle/twist" ] ),
                 ],
-                parameters=[ platoon_control_param_file, vehicle_config_param_file, unique_vehicle_calibration_params ]
+                parameters=[ platooning_control_param_file, vehicle_config_param_file, unique_vehicle_calibration_params ]
             )
         ]
     )

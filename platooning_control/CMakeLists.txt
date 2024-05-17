@@ -14,7 +14,7 @@
 # the License.
 
 cmake_minimum_required(VERSION 3.5)
-project(platoon_control)
+project(platooning_control)
 
 # Declare carma package and check ROS version
 find_package(carma_cmake_common REQUIRED)
@@ -26,8 +26,8 @@ find_package(ament_cmake_auto REQUIRED)
 ament_auto_find_build_dependencies()
 
 # Name build targets
-set(node_exec platoon_control_node_exec)
-set(node_lib platoon_control_node)
+set(node_exec platooning_control_node_exec)
+set(node_lib platooning_control_node)
 
 # Includes
 include_directories(
@@ -36,8 +36,8 @@ include_directories(
 
 # Build
 ament_auto_add_library(${node_lib} SHARED
-        src/platoon_control.cpp
-        src/platoon_control_worker.cpp
+        src/platooning_control.cpp
+        src/platooning_control_worker.cpp
         src/pid_controller.cpp
 )
 
@@ -46,7 +46,7 @@ ament_auto_add_executable(${node_exec}
 )
 
 # Register component
-rclcpp_components_register_nodes(${node_lib} "platoon_control::PlatoonControlPlugin")
+rclcpp_components_register_nodes(${node_lib} "platooning_control::PlatoonControlPlugin")
 
 # All locally created targets will need to be manually linked
 # ament auto will handle linking of external dependencies
@@ -60,7 +60,7 @@ if(BUILD_TESTING)
   find_package(ament_lint_auto REQUIRED)
   ament_lint_auto_find_test_dependencies() # This populates the ${${PROJECT_NAME}_FOUND_TEST_DEPENDS} variable
 
-  ament_add_gtest(test_platoon_control
+  ament_add_gtest(test_platooning_control
   test/test_main.cpp
   test/test_control.cpp
   test/test_pid.cpp
@@ -68,7 +68,7 @@ if(BUILD_TESTING)
   test/test_pure.cpp
   )
 
-  target_link_libraries(test_platoon_control ${node_lib})
+  target_link_libraries(test_platooning_control ${node_lib})
 
 endif()
 

@@ -20,33 +20,33 @@
 #include <thread>
 #include <future>
 
-#include "platoon_control/platoon_control.hpp"
+#include "platooning_control/platooning_control.hpp"
 
 
 TEST(PIDControllerTest, test1)
 {
-    platoon_control::PIDController pid;
+    platooning_control::PIDController pid;
     double res = pid.calculate(40, 38);
     EXPECT_EQ(-9, res);;
 }
 
 TEST(PIDControllerTest, test2)
 {
-    platoon_control::PIDController pid;
+    platooning_control::PIDController pid;
     double res = pid.calculate(20, 300);
     EXPECT_EQ(2, res);
 }
 
 TEST(PIDControllerTest, test3)
 {
-    platoon_control::PIDController pid;
+    platooning_control::PIDController pid;
     double res = pid.calculate(300, 20);
     EXPECT_EQ(-10, res);
 }
 
 TEST(PIDControllerTest, test4)
 {
-    platoon_control::PIDController pid;
+    platooning_control::PIDController pid;
     pid.reset();
     double res = pid.calculate(200, 20);
     EXPECT_EQ(-10, res);

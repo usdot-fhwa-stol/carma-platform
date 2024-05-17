@@ -16,10 +16,10 @@
 
 ------------------------------------------------------------------------------*/
 
-#include "platoon_control/platoon_control_worker.hpp"
+#include "platooning_control/platooning_control_worker.hpp"
 
 
-namespace platoon_control
+namespace platooning_control
 {
 
     PlatoonControlWorker::PlatoonControlWorker()
@@ -50,24 +50,24 @@ namespace platoon_control
 
 
 	        double leaderCurrentPosition = leader.vehiclePosition;
-	        RCLCPP_DEBUG_STREAM(rclcpp::get_logger("platoon_control"), "The current leader position is " << leaderCurrentPosition);
+	        RCLCPP_DEBUG_STREAM(rclcpp::get_logger("platooning_control"), "The current leader position is " << leaderCurrentPosition);
 
             double desiredHostPosition = leaderCurrentPosition - desired_gap_;
-            RCLCPP_DEBUG_STREAM(rclcpp::get_logger("platoon_control"), "desiredHostPosition = " << desiredHostPosition);
+            RCLCPP_DEBUG_STREAM(rclcpp::get_logger("platooning_control"), "desiredHostPosition = " << desiredHostPosition);
 
             double hostVehiclePosition = leaderCurrentPosition - actual_gap_;
-            RCLCPP_DEBUG_STREAM(rclcpp::get_logger("platoon_control"), "hostVehiclePosition = " << hostVehiclePosition);
+            RCLCPP_DEBUG_STREAM(rclcpp::get_logger("platooning_control"), "hostVehiclePosition = " << hostVehiclePosition);
 
 	        controllerOutput = pid_ctrl_.calculate(desiredHostPosition, hostVehiclePosition);
 
 		    double adjSpeedCmd = controllerOutput + leader.commandSpeed;
-	        RCLCPP_DEBUG_STREAM(rclcpp::get_logger("platoon_control"), "Adjusted Speed Cmd = " << adjSpeedCmd << "; Controller Output = " << controllerOutput
+	        RCLCPP_DEBUG_STREAM(rclcpp::get_logger("platooning_control"), "Adjusted Speed Cmd = " << adjSpeedCmd << "; Controller Output = " << controllerOutput
 	        	<< "; Leader CmdSpeed= " << leader.commandSpeed << "; Adjustment Cap " << ctrl_config_->adjustment_cap_mps);
 	            // After we get a adjSpeedCmd, we apply three filters on it if the filter is enabled
 	            // First: we do not allow the difference between command speed of the host vehicle and the leader's commandSpeed higher than adjustmentCap
 
             speed_cmd = adjSpeedCmd;
-            RCLCPP_DEBUG_STREAM(rclcpp::get_logger("platoon_control"), "A speed command is generated from command generator: " << speed_cmd << " m/s");
+            RCLCPP_DEBUG_STREAM(rclcpp::get_logger("platooning_control"), "A speed command is generated from command generator: " << speed_cmd << " m/s");
 
             if(ctrl_config_->enable_max_adjustment_filter)
             {
@@ -76,14 +76,14 @@ namespace platoon_control
                 } else if(speed_cmd < leader.commandSpeed - ctrl_config_->adjustment_cap_mps) {
                     speed_cmd = leader.commandSpeed - ctrl_config_->adjustment_cap_mps;
                 }
-                RCLCPP_DEBUG_STREAM(rclcpp::get_logger("platoon_control"), "The adjusted cmd speed after max adjustment cap is " << speed_cmd << " m/s");
+                RCLCPP_DEBUG_STREAM(rclcpp::get_logger("platooning_control"), "The adjusted cmd speed after max adjustment cap is " << speed_cmd << " m/s");
             }
 
         }
 
         else if (leader.staticId == ctrl_config_->vehicle_id)
         {
-            RCLCPP_DEBUG_STREAM(rclcpp::get_logger("platoon_control"), "Host vehicle is the leader");
+            RCLCPP_DEBUG_STREAM(rclcpp::get_logger("platooning_control"), "Host vehicle is the leader");
             speed_cmd = currentSpeed;
 
             if(ctrl_config_->enable_max_adjustment_filter)
@@ -93,7 +93,7 @@ namespace platoon_control
                     speed_cmd = ctrl_config_->adjustment_cap_mps;
                 }
 
-                RCLCPP_DEBUG_STREAM(rclcpp::get_logger("platoon_control"), "The adjusted leader cmd speed after max adjustment cap is " << speed_cmd << " m/s");
+                RCLCPP_DEBUG_STREAM(rclcpp::get_logger("platooning_control"), "The adjusted leader cmd speed after max adjustment cap is " << speed_cmd << " m/s");
             }
 
             pid_ctrl_.reset();
@@ -102,7 +102,7 @@ namespace platoon_control
         else
         {
             // If there is no leader available, the vehicle will stop. This means there is a mis-communication between platooning strategic and control plugins.
-            RCLCPP_DEBUG_STREAM(rclcpp::get_logger("platoon_control"), "There is no leader available");
+            RCLCPP_DEBUG_STREAM(rclcpp::get_logger("platooning_control"), "There is no leader available");
             speed_cmd = 0.0;
             pid_ctrl_.reset();
         }
@@ -120,7 +120,7 @@ namespace platoon_control
                     speed_cmd = min;
                 }
                 lastCmdSpeed = speed_cmd;
-                RCLCPP_DEBUG_STREAM(rclcpp::get_logger("platoon_control"), "The speed command after max accel cap is: " << speed_cmd << " m/s");
+                RCLCPP_DEBUG_STREAM(rclcpp::get_logger("platooning_control"), "The speed command after max accel cap is: " << speed_cmd << " m/s");
         }
 
         speedCmd_ = speed_cmd;

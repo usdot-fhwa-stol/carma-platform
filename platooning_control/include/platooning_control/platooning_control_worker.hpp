@@ -23,11 +23,11 @@
 #include <geometry_msgs/msg/pose_stamped.hpp>
 #include <carma_v2x_msgs/msg/plan_type.hpp>
 #include <carma_planning_msgs/msg/trajectory_plan.hpp>
-#include "platoon_control/pid_controller.hpp"
-#include "platoon_control/platoon_control_config.hpp"
+#include "platooning_control/pid_controller.hpp"
+#include "platooning_control/platooning_control_config.hpp"
 #include <boost/optional.hpp>
 
-namespace platoon_control
+namespace platooning_control
 {
         /**
     * \brief Platoon Leader Struct

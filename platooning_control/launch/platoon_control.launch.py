@@ -24,7 +24,7 @@ import os
 
 
 '''
-This file is can be used to launch the CARMA platoon_control_node.
+This file is can be used to launch the CARMA platooning_control_node.
   Though in carma-platform it may be launched directly from the base launch file.
 '''
 
@@ -37,22 +37,22 @@ def generate_launch_description():
 
     # Get parameter file path
     param_file_path = os.path.join(
-        get_package_share_directory('platoon_control'), 'config/parameters.yaml')
+        get_package_share_directory('platooning_control'), 'config/parameters.yaml')
 
 
     # Launch node(s) in a carma container to allow logging to be configured
     container = ComposableNodeContainer(
         package='carma_ros2_utils',
-        name='platoon_control_container',
+        name='platooning_control_container',
         namespace=GetCurrentNamespace(),
         executable='carma_component_container_mt',
         composable_node_descriptions=[
 
             # Launch the core node(s)
             ComposableNode(
-                    package='platoon_control',
-                    plugin='platoon_control::PlatoonControlPlugin',
-                    name='platoon_control',
+                    package='platooning_control',
+                    plugin='platooning_control::PlatoonControlPlugin',
+                    name='platooning_control',
                     extra_arguments=[
                         {'use_intra_process_comms': True},
                         {'--log-level' : log_level }

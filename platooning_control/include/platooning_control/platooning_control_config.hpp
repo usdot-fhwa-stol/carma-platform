@@ -19,7 +19,7 @@
 #include <iostream>
 #include <vector>
 
-namespace platoon_control
+namespace platooning_control
 {
 
 /**
@@ -104,4 +104,4 @@ namespace platoon_control
   }
 };
 
-} // platoon_control
+} // platooning_control

@@ -16,9 +16,9 @@
 ------------------------------------------------------------------------------*/
 
 #include <rclcpp/rclcpp.hpp>
-#include "platoon_control/platoon_control_config.hpp"
+#include "platooning_control/platooning_control_config.hpp"
 
-namespace platoon_control
+namespace platooning_control
 {
     /**
     * \brief This class includes logic for PID controller. PID controller is used in this plugin to maintain the inter-vehicle gap by adjusting the speed.

@@ -1,4 +1,4 @@
-# platoon_control
+# platooning_control
 
 Platooning Control plugin which allows platooning to maintain the gap; moreover, generates longitudinal and lateral control commands to follow the trajectory. The structure of this plugin is very similar to the control plugin for IHP2, so the same design document is included here.
 

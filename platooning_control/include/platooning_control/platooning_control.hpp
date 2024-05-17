@@ -24,14 +24,14 @@
 #include <carma_planning_msgs/msg/platooning_info.hpp>
 
 #include <carma_guidance_plugins/control_plugin.hpp>
-#include "platoon_control/platoon_control_config.hpp"
-#include "platoon_control/platoon_control_worker.hpp"
+#include "platooning_control/platooning_control_config.hpp"
+#include "platooning_control/platooning_control_worker.hpp"
 #include <pure_pursuit/pure_pursuit.hpp>
 #include <basic_autonomy/basic_autonomy.hpp>
 #include <gtest/gtest_prod.h>
 
 namespace pure_pursuit = autoware::motion::control::pure_pursuit;
-namespace platoon_control
+namespace platooning_control
 {
 
   /**
@@ -151,4 +151,4 @@ namespace platoon_control
 
   };
 
-} // platoon_control
+} // platooning_control

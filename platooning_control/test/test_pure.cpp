@@ -20,13 +20,13 @@
 #include <thread>
 #include <future>
 
-#include "platoon_control/platoon_control.hpp"
+#include "platooning_control/platooning_control.hpp"
 
 
 TEST(PurePursuitTest, sanity_check)
 {
   rclcpp::NodeOptions options;
-  auto node = std::make_shared<platoon_control::PlatoonControlPlugin>(options);
+  auto node = std::make_shared<platooning_control::PlatoonControlPlugin>(options);
   node->configure();
   node->activate();
 

@@ -15,14 +15,14 @@
  */
 
 #include <rclcpp/rclcpp.hpp>
-#include "platoon_control/platoon_control.hpp"
+#include "platooning_control/platooning_control.hpp"
 
 int main(int argc, char **argv)
 {
 
   rclcpp::init(argc, argv);
 
-  auto node = std::make_shared<platoon_control::PlatoonControlPlugin>(rclcpp::NodeOptions());
+  auto node = std::make_shared<platooning_control::PlatoonControlPlugin>(rclcpp::NodeOptions());
 
   rclcpp::executors::MultiThreadedExecutor executor;
   executor.add_node(node->get_node_base_interface());
