@@ -56,9 +56,16 @@ namespace trajectory_follower_wrapper
     // Register runtime parameter update callback
     add_on_set_parameters_callback(std::bind(&TrajectoryFollowerWrapperNode::parameter_update_callback, this, std_ph::_1));
 
-    // Setup subscribers
-    control_cmd_sub_ = create_subscription<autoware_auto_msgs::msg::AckermannControlCommand>("output/control_cmd", rclcpp::QoS{1}.transient_local(),
-                                                              std::bind(&TrajectoryFollowerWrapperNode::ackermann_control_cb, this, std_ph::_1));
+    // NOTE: Currently, intra-process comms must be disabled for the following subscriber that is transient_local: https://github.com/ros2/rclcpp/issues/1753
+
+    rclcpp::SubscriptionOptions intra_proc_disabled;
+    intra_proc_disabled.use_intra_process_comm = rclcpp::IntraProcessSetting::Disable;
+
+    auto sub_qos_transient_local = rclcpp::QoS(rclcpp::KeepAll()); // A subscriber with this QoS will store all messages that it has sent on the topic
+    sub_qos_transient_local.transient_local();
+    // Setup subscriber
+    control_cmd_sub_ = create_subscription<autoware_auto_msgs::msg::AckermannControlCommand>("output/control_cmd", sub_qos_transient_local,
+      std::bind(&TrajectoryFollowerWrapperNode::ackermann_control_cb, this, std::placeholders::_1),intra_proc_disabled);
 
     // Setup publishers
     autoware_traj_pub_ = create_publisher<autoware_auto_msgs::msg::Trajectory>("input/reference_trajectory", 10);

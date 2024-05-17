@@ -54,7 +54,7 @@ namespace trajectory_follower_wrapper
     /**
      * \brief Node constructor
      */
-    explicit TrajectoryFollowerWrapperNode(const rclcpp::NodeOptions &);
+    explicit TrajectoryFollowerWrapperNode(const rclcpp::NodeOptions& options);
 
     /**
      * \brief Callback for dynamic parameter updates

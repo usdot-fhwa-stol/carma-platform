@@ -34,25 +34,25 @@ def generate_launch_description():
     log_level = LaunchConfiguration('log_level')
     declare_log_level_arg = DeclareLaunchArgument(
         name ='log_level', default_value='WARN')
-    
+
     # Get parameter file path
     param_file_path = os.path.join(
         get_package_share_directory('trajectory_follower_wrapper'), 'config/parameters.yaml')
 
-        
+
     # Launch node(s) in a carma container to allow logging to be configured
-    container = ComposableNodeContainer(
+    trajectory_follower_wrapper_container = ComposableNodeContainer(
         package='carma_ros2_utils',
         name='trajectory_follower_wrapper_container',
         namespace=GetCurrentNamespace(),
         executable='carma_component_container_mt',
         composable_node_descriptions=[
-            
+
             # Launch the core node(s)
             ComposableNode(
                     package='trajectory_follower_wrapper',
-                    plugin='trajectory_follower_wrapper::Node',
-                    name='trajectory_follower_wrapper_node',
+                    plugin='trajectory_follower_wrapper::TrajectoryFollowerWrapperNode',
+                    name='trajectory_follower_wrapper',
                     extra_arguments=[
                         {'use_intra_process_comms': True},
                         {'--log-level' : log_level }
@@ -64,5 +64,5 @@ def generate_launch_description():
 
     return LaunchDescription([
         declare_log_level_arg,
-        container
+        trajectory_follower_wrapper_container
     ])
