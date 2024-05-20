@@ -1,4 +1,4 @@
-CARMA Platform Release Notes
+CARMA System Release Notes
 ----------------------------
 
 Version 4.5.0, released April 10th, 2024

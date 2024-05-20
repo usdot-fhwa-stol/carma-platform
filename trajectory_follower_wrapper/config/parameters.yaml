@@ -1,0 +1,2 @@
+# acceptable time difference from autoware's control command to still use the command in sec
+incoming_cmd_time_threshold: 1.0
