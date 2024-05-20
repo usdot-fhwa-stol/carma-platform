@@ -26,7 +26,7 @@
 TEST(PurePursuitTest, sanity_check)
 {
   rclcpp::NodeOptions options;
-  auto node = std::make_shared<platooning_control::PlatoonControlPlugin>(options);
+  auto node = std::make_shared<platooning_control::PlatooningControlPlugin>(options);
   node->configure();
   node->activate();
 

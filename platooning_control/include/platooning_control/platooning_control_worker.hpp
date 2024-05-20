@@ -56,14 +56,14 @@ namespace platooning_control
     /**
     * \brief This is the worker class for platoon controller. It is responsible for generating and smoothing the speed and steering control commands from trajectory points.
     */
-    class PlatoonControlWorker
+    class PlatooningControlWorker
     {
         public:
 
         /**
         * \brief Default constructor for platooning control worker
         */
-        PlatoonControlWorker();
+        PlatooningControlWorker();
 
         /**
         * \brief Returns latest speed command

@@ -23,9 +23,9 @@
 #include "platooning_control/platooning_control_worker.hpp"
 
 
-TEST(PlatoonControlWorkerTest, test1)
+TEST(PlatooningControlWorkerTest, test1)
 {
-    platooning_control::PlatoonControlWorker pcw;
+    platooning_control::PlatooningControlWorker pcw;
     pcw.ctrl_config_ = std::make_shared<platooning_control::PlatooningControlPluginConfig>();
     carma_planning_msgs::msg::TrajectoryPlanPoint point;
     point.x = 1.0;
@@ -34,10 +34,10 @@ TEST(PlatoonControlWorkerTest, test1)
     EXPECT_NEAR(0, pcw.speedCmd_, 0.1);
 }
 
-TEST(PlatoonControlWorkerTest, test11)
+TEST(PlatooningControlWorkerTest, test11)
 {
     platooning_control::PlatoonLeaderInfo leader;
-    platooning_control::PlatoonControlWorker pcw;
+    platooning_control::PlatooningControlWorker pcw;
     pcw.ctrl_config_ = std::make_shared<platooning_control::PlatooningControlPluginConfig>();
     leader.staticId = "";
     leader.leaderIndex = 0;
@@ -52,10 +52,10 @@ TEST(PlatoonControlWorkerTest, test11)
     EXPECT_NEAR(10.0, pcw.get_last_speed_command(), 0.5);
 }
 
-TEST(PlatoonControlWorkerTest, test2)
+TEST(PlatooningControlWorkerTest, test2)
 {
 
-    platooning_control::PlatoonControlWorker pcw;
+    platooning_control::PlatooningControlWorker pcw;
     platooning_control::PlatooningControlPluginConfig config;
     pcw.ctrl_config_ = std::make_shared<platooning_control::PlatooningControlPluginConfig>(config);
     platooning_control::PlatoonLeaderInfo leader;
@@ -106,10 +106,10 @@ TEST(PlatoonControlWorkerTest, test2)
 
 }
 
-TEST(PlatoonControlWorkerTest, test3)
+TEST(PlatooningControlWorkerTest, test3)
 {
 
-    platooning_control::PlatoonControlWorker pcw;
+    platooning_control::PlatooningControlWorker pcw;
     platooning_control::PlatooningControlPluginConfig config;
     pcw.ctrl_config_ = std::make_shared<platooning_control::PlatooningControlPluginConfig>(config);
     platooning_control::PlatoonLeaderInfo leader;

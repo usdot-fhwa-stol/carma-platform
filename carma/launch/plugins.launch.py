@@ -538,7 +538,7 @@ def generate_launch_description():
         composable_node_descriptions=[
             ComposableNode(
                 package='platooning_control',
-                plugin='platooning_control::PlatoonControlPlugin',
+                plugin='platooning_control::PlatooningControlPlugin',
                 name='platooning_control',
                 extra_arguments=[
                     {'use_intra_process_comms': True},

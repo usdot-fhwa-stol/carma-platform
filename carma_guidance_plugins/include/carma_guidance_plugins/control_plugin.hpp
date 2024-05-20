@@ -50,10 +50,6 @@ namespace carma_guidance_plugins
     // Timers
     rclcpp::TimerBase::SharedPtr command_timer_;
 
-    // These callbacks do direct assignment into their respective member variables
-    void current_pose_callback(geometry_msgs::msg::PoseStamped::UniquePtr msg);
-    void current_twist_callback(geometry_msgs::msg::TwistStamped::UniquePtr msg);
-
 
   protected:
 
@@ -66,6 +62,15 @@ namespace carma_guidance_plugins
 
     //! The most recent trajectory received by this plugin
     boost::optional<carma_planning_msgs::msg::TrajectoryPlan> current_trajectory_;
+
+    // These callbacks do direct assignment into their respective member variables
+    void current_pose_callback(geometry_msgs::msg::PoseStamped::UniquePtr msg);
+    void current_twist_callback(geometry_msgs::msg::TwistStamped::UniquePtr msg);
+
+    /**
+     * \brief Extending class provided method which can optionally handle trajectory plan callbacks.
+     */
+    virtual void current_trajectory_callback(carma_planning_msgs::msg::TrajectoryPlan::UniquePtr msg);
 
 
   public:
@@ -86,11 +91,6 @@ namespace carma_guidance_plugins
      * \return The command message to publish
      */
     virtual autoware_msgs::msg::ControlCommandStamped generate_command() = 0;
-
-    /**
-     * \brief Extending class provided method which can optionally handle trajectory plan callbacks.
-     */
-    virtual void current_trajectory_callback(carma_planning_msgs::msg::TrajectoryPlan::UniquePtr msg);
 
     ////
     // Overrides

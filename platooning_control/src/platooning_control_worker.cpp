@@ -22,17 +22,17 @@
 namespace platooning_control
 {
 
-    PlatoonControlWorker::PlatoonControlWorker()
+    PlatooningControlWorker::PlatooningControlWorker()
     {
         pid_ctrl_ = PIDController();
 
     }
 
-    double PlatoonControlWorker::get_last_speed_command() const {
+    double PlatooningControlWorker::get_last_speed_command() const {
         return speedCmd_;
     }
 
-    void PlatoonControlWorker::generate_speed(const carma_planning_msgs::msg::TrajectoryPlanPoint& point)
+    void PlatooningControlWorker::generate_speed(const carma_planning_msgs::msg::TrajectoryPlanPoint& point)
     {
         double speed_cmd = 0;
 
@@ -130,11 +130,11 @@ namespace platooning_control
     }
 
     // TODO get the actual leader from strategic plugin
-    void PlatoonControlWorker::set_leader(const PlatoonLeaderInfo& leader){
+    void PlatooningControlWorker::set_leader(const PlatoonLeaderInfo& leader){
     	platoon_leader = leader;
     }
 
-    void  PlatoonControlWorker::set_current_speed(double speed){
+    void  PlatooningControlWorker::set_current_speed(double speed){
     	currentSpeed = speed;
 
     }

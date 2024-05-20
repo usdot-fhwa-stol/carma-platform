@@ -19,8 +19,8 @@ namespace platooning_control
 {
   namespace std_ph = std::placeholders;
 
-  PlatoonControlPlugin::PlatoonControlPlugin(const rclcpp::NodeOptions &options)
-      : carma_guidance_plugins::ControlPlugin(options), config_(PlatooningControlPluginConfig()), pcw_(PlatoonControlWorker())
+  PlatooningControlPlugin::PlatooningControlPlugin(const rclcpp::NodeOptions &options)
+      : carma_guidance_plugins::ControlPlugin(options), config_(PlatooningControlPluginConfig()), pcw_(PlatooningControlWorker())
   {
 
     // Declare parameters
@@ -63,7 +63,7 @@ namespace platooning_control
 
   }
 
-  rcl_interfaces::msg::SetParametersResult PlatoonControlPlugin::parameter_update_callback(const std::vector<rclcpp::Parameter> &parameters)
+  rcl_interfaces::msg::SetParametersResult PlatooningControlPlugin::parameter_update_callback(const std::vector<rclcpp::Parameter> &parameters)
   {
     auto error_double = update_params<double>({
       {"stand_still_headway_m", config_.stand_still_headway_m},
@@ -111,7 +111,7 @@ namespace platooning_control
 
   }
 
-  carma_ros2_utils::CallbackReturn PlatoonControlPlugin::on_configure_plugin()
+  carma_ros2_utils::CallbackReturn PlatooningControlPlugin::on_configure_plugin()
   {
     // Reset config
     config_ = PlatooningControlPluginConfig();
@@ -178,15 +178,15 @@ namespace platooning_control
     pp_ = std::make_shared<pure_pursuit::PurePursuit>(cfg, i_cfg);
 
     // Register runtime parameter update callback
-    add_on_set_parameters_callback(std::bind(&PlatoonControlPlugin::parameter_update_callback, this, std_ph::_1));
+    add_on_set_parameters_callback(std::bind(&PlatooningControlPlugin::parameter_update_callback, this, std_ph::_1));
 
 
     // Trajectory Plan Subscriber
     trajectory_plan_sub_ = create_subscription<carma_planning_msgs::msg::TrajectoryPlan>("platooning_control/plan_trajectory", 1,
-                                                                                            std::bind(&PlatoonControlPlugin::current_trajectory_callback, this, std_ph::_1));
+                                                                                            std::bind(&PlatooningControlPlugin::current_trajectory_callback, this, std_ph::_1));
 
     // Platoon Info Subscriber
-    platoon_info_sub_ = create_subscription<carma_planning_msgs::msg::PlatooningInfo>("platoon_info", 1, std::bind(&PlatoonControlPlugin::platoon_info_cb, this, std_ph::_1));
+    platoon_info_sub_ = create_subscription<carma_planning_msgs::msg::PlatooningInfo>("platoon_info", 1, std::bind(&PlatooningControlPlugin::platoon_info_cb, this, std_ph::_1));
 
 
     //Control Publishers
@@ -198,7 +198,7 @@ namespace platooning_control
   }
 
 
-  autoware_msgs::msg::ControlCommandStamped PlatoonControlPlugin::generate_command()
+  autoware_msgs::msg::ControlCommandStamped PlatooningControlPlugin::generate_command()
   {
 
     autoware_msgs::msg::ControlCommandStamped ctrl_msg;
@@ -236,7 +236,7 @@ namespace platooning_control
 
   }
 
-  void PlatoonControlPlugin::platoon_info_cb(const carma_planning_msgs::msg::PlatooningInfo::SharedPtr msg)
+  void PlatooningControlPlugin::platoon_info_cb(const carma_planning_msgs::msg::PlatooningInfo::SharedPtr msg)
   {
 
     platoon_leader_.staticId = msg->leader_id;
@@ -269,7 +269,7 @@ namespace platooning_control
     platoon_info_pub_->publish(platooning_info_msg);
   }
 
-  autoware_msgs::msg::ControlCommandStamped PlatoonControlPlugin::generate_control_signals(const carma_planning_msgs::msg::TrajectoryPlanPoint& first_trajectory_point, const geometry_msgs::msg::PoseStamped& current_pose, const geometry_msgs::msg::TwistStamped& current_twist)
+  autoware_msgs::msg::ControlCommandStamped PlatooningControlPlugin::generate_control_signals(const carma_planning_msgs::msg::TrajectoryPlanPoint& first_trajectory_point, const geometry_msgs::msg::PoseStamped& current_pose, const geometry_msgs::msg::TwistStamped& current_twist)
   {
     pcw_.set_current_speed(trajectory_speed_); //TODO why this and not the actual vehicle speed?  Method name suggests different use than this.
     // pcw_.set_current_speed(current_twist_.get());
@@ -293,7 +293,7 @@ namespace platooning_control
     return ctrl_msg;
   }
 
-  motion::motion_common::State PlatoonControlPlugin::convert_state(const geometry_msgs::msg::PoseStamped& pose, const geometry_msgs::msg::TwistStamped& twist) const
+  motion::motion_common::State PlatooningControlPlugin::convert_state(const geometry_msgs::msg::PoseStamped& pose, const geometry_msgs::msg::TwistStamped& twist) const
   {
     motion::motion_common::State state;
     state.header = pose.header;
@@ -307,10 +307,10 @@ namespace platooning_control
     return state;
   }
 
-  void PlatoonControlPlugin::current_trajectory_callback(const carma_planning_msgs::msg::TrajectoryPlan::UniquePtr tp)
+  void PlatooningControlPlugin::current_trajectory_callback(const carma_planning_msgs::msg::TrajectoryPlan::UniquePtr tp)
   {
     if (tp->trajectory_points.size() < 2) {
-            RCLCPP_WARN_STREAM(rclcpp::get_logger("platooning_control"), "PlatoonControlPlugin cannot execute trajectory as only 1 point was provided");
+            RCLCPP_WARN_STREAM(rclcpp::get_logger("platooning_control"), "PlatooningControlPlugin cannot execute trajectory as only 1 point was provided");
             return;
         }
 
@@ -322,7 +322,7 @@ namespace platooning_control
         RCLCPP_DEBUG_STREAM(rclcpp::get_logger("platooning_control"), "tp header time =                " << tp_time.nanoseconds() / 1000000);
   }
 
-  geometry_msgs::msg::TwistStamped PlatoonControlPlugin::compose_twist_cmd(double linear_vel, double angular_vel)
+  geometry_msgs::msg::TwistStamped PlatooningControlPlugin::compose_twist_cmd(double linear_vel, double angular_vel)
   {
     geometry_msgs::msg::TwistStamped cmd_twist;
     cmd_twist.twist.linear.x = linear_vel;
@@ -331,7 +331,7 @@ namespace platooning_control
     return cmd_twist;
   }
 
-  autoware_msgs::msg::ControlCommandStamped PlatoonControlPlugin::compose_ctrl_cmd(double linear_vel, double steering_angle)
+  autoware_msgs::msg::ControlCommandStamped PlatooningControlPlugin::compose_ctrl_cmd(double linear_vel, double steering_angle)
   {
     autoware_msgs::msg::ControlCommandStamped cmd_ctrl;
     cmd_ctrl.header.stamp = this->now();
@@ -343,16 +343,16 @@ namespace platooning_control
     return cmd_ctrl;
   }
 
-  bool PlatoonControlPlugin::get_availability() {
+  bool PlatooningControlPlugin::get_availability() {
     return true; // TODO for user implement actual check on availability if applicable to plugin
   }
 
-  std::string PlatoonControlPlugin::get_version_id() {
+  std::string PlatooningControlPlugin::get_version_id() {
     return "v1.0";
   }
 
   // extract maximum speed of trajectory
-  double PlatoonControlPlugin::get_trajectory_speed(const std::vector<carma_planning_msgs::msg::TrajectoryPlanPoint>& trajectory_points)
+  double PlatooningControlPlugin::get_trajectory_speed(const std::vector<carma_planning_msgs::msg::TrajectoryPlanPoint>& trajectory_points)
   {
     double trajectory_speed = 0;
 
@@ -390,4 +390,4 @@ namespace platooning_control
 #include "rclcpp_components/register_node_macro.hpp"
 
 // Register the component with class_loader
-RCLCPP_COMPONENTS_REGISTER_NODE(platooning_control::PlatoonControlPlugin)
+RCLCPP_COMPONENTS_REGISTER_NODE(platooning_control::PlatooningControlPlugin)

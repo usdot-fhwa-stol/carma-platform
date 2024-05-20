@@ -38,14 +38,14 @@ namespace platooning_control
     * \brief This class includes node-level logic for Platooning Control such as its publishers, subscribers, and their callback functions.
     * Platooning Control is used for generating control commands to maintain the gap in platoon as well as generating longitudinal and lateral control commands to follow the trajectory.
 	*/
-  class PlatoonControlPlugin : public carma_guidance_plugins::ControlPlugin
+  class PlatooningControlPlugin : public carma_guidance_plugins::ControlPlugin
   {
 
   public:
     /**
-     * \brief PlatoonControlPlugin constructor
+     * \brief PlatooningControlPlugin constructor
      */
-    explicit PlatoonControlPlugin(const rclcpp::NodeOptions& options);
+    explicit PlatooningControlPlugin(const rclcpp::NodeOptions& options);
 
     /**
 			* \brief generate control signal by calculating speed and steering commands.
@@ -115,7 +115,7 @@ namespace platooning_control
     PlatooningControlPluginConfig config_;
 
     // platoon control worker object
-    PlatoonControlWorker pcw_;
+    PlatooningControlWorker pcw_;
 
     // Variables
     PlatoonLeaderInfo platoon_leader_;
@@ -144,10 +144,10 @@ namespace platooning_control
     carma_ros2_utils::PubPtr<carma_planning_msgs::msg::PlatooningInfo> platoon_info_pub_;
 
     // Unit Test Accessors
-    FRIEND_TEST(PlatoonControlPluginTest, test_platoon_info_cb);
-    FRIEND_TEST(PlatoonControlPluginTest, test_get_trajectory_speed);
-    FRIEND_TEST(PlatoonControlPluginTest, test_generate_controls);
-    FRIEND_TEST(PlatoonControlPluginTest, test_current_trajectory_callback);
+    FRIEND_TEST(PlatooningControlPluginTest, test_platoon_info_cb);
+    FRIEND_TEST(PlatooningControlPluginTest, test_get_trajectory_speed);
+    FRIEND_TEST(PlatooningControlPluginTest, test_generate_controls);
+    FRIEND_TEST(PlatooningControlPluginTest, test_current_trajectory_callback);
 
   };
 

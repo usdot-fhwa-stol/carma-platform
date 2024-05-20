@@ -46,7 +46,7 @@ ament_auto_add_executable(${node_exec}
 )
 
 # Register component
-rclcpp_components_register_nodes(${node_lib} "platooning_control::PlatoonControlPlugin")
+rclcpp_components_register_nodes(${node_lib} "platooning_control::PlatooningControlPlugin")
 
 # All locally created targets will need to be manually linked
 # ament auto will handle linking of external dependencies
