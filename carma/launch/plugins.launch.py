@@ -91,7 +91,10 @@ def generate_launch_description():
 
     pure_pursuit_tuning_parameters = [vehicle_calibration_dir, "/pure_pursuit/calibration.yaml"]
 
-    lci_plugin_calibration_params = [vehicle_calibration_dir, "/identifiers/UniqueVehicleParams.yaml"]
+    unique_vehicle_calibration_params = [vehicle_calibration_dir, "/identifiers/UniqueVehicleParams.yaml"]
+
+    platooning_control_param_file = os.path.join(
+        get_package_share_directory('platooning_control'), 'config/parameters.yaml')
 
     carma_inlanecruising_plugin_container = ComposableNodeContainer(
         package='carma_ros2_utils',
@@ -292,7 +295,7 @@ def generate_launch_description():
                 parameters=[
                     lci_strategic_plugin_file_path,
                     vehicle_config_param_file,
-                    lci_plugin_calibration_params
+                    unique_vehicle_calibration_params
                 ]
             ),
         ]
@@ -559,6 +562,33 @@ def generate_launch_description():
         ]
     )
 
+    platooning_control_plugin_container = ComposableNodeContainer(
+        package='carma_ros2_utils',
+        name='platooning_control_container',
+        executable='carma_component_container_mt',
+        namespace=GetCurrentNamespace(),
+        composable_node_descriptions=[
+            ComposableNode(
+                package='platooning_control',
+                plugin='platooning_control::PlatooningControlPlugin',
+                name='platooning_control',
+                extra_arguments=[
+                    {'use_intra_process_comms': True},
+                    {'--log-level' : GetLogLevel('platooning_control_plugin', env_log_levels) }
+                ],
+                remappings = [
+                    ("plugin_discovery", [ EnvironmentVariable('CARMA_GUIDE_NS', default_value=''), "/plugin_discovery" ] ),
+                    ("ctrl_raw", [ EnvironmentVariable('CARMA_GUIDE_NS', default_value=''), "/ctrl_raw" ] ),
+                    ("twist_raw", [ EnvironmentVariable('CARMA_GUIDE_NS', default_value=''), "/twist_raw" ] ),
+                    ("platooning_control/plan_trajectory", [ EnvironmentVariable('CARMA_GUIDE_NS', default_value=''), "/plugins/platooning_control/plan_trajectory" ] ),
+                    ("current_pose", [ EnvironmentVariable('CARMA_LOCZ_NS', default_value=''), "/current_pose" ] ),
+                    ("vehicle/twist", [ EnvironmentVariable('CARMA_INTR_NS', default_value=''), "/vehicle/twist" ] ),
+                ],
+                parameters=[ platooning_control_param_file, vehicle_config_param_file, unique_vehicle_calibration_params ]
+            )
+        ]
+    )
+
     carma_stop_and_dwell_strategic_plugin_container = ComposableNodeContainer(
         package='carma_ros2_utils',
         name='carma_stop_and_dwell_strategic_plugin_container',
@@ -630,6 +660,7 @@ def generate_launch_description():
         carma_trajectory_follower_wrapper_container,
         #platooning_strategic_plugin_container,
         platooning_tactical_plugin_container,
+        platooning_control_plugin_container,
         intersection_transit_maneuvering_container
 
     ])

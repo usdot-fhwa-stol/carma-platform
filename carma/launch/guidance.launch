@@ -41,7 +41,7 @@
   <remap from="heading" to="$(optenv CARMA_INTR_NS)/gnss/heading_raw"/>
   <remap from="nav_sat_fix" to="$(optenv CARMA_INTR_NS)/gnss/fix_raw"/>
   <remap from="velocity" to="$(optenv CARMA_INTR_NS)/gnss/vel_raw"/>
-  
+
   <remap from="/republish/cmd_lateral" to="$(optenv CARMA_INTR_NS)/controller/cmd_lateral"/>
   <remap from="/republish/cmd_longitudinal_effort" to="$(optenv CARMA_INTR_NS)/controller/cmd_longitudinal_effort"/>
   <remap from="/republish/cmd_speed" to="$(optenv CARMA_INTR_NS)/controller/cmd_speed"/>
@@ -58,15 +58,15 @@
   <remap from="get_transform" to="$(optenv CARMA_TF_NS)/get_transform"/>
 
   <!-- TODO Look into if there is a better way for handling global prameters -->
-  <remap from="~vehicle_id" to="/vehicle_id"/> 
-  <remap from="vehicle_state_machine_type" to="/vehicle_state_machine_type"/> 
-  <remap from="vehicle_length" to="/vehicle_length"/> 
-  <remap from="vehicle_width" to="/vehicle_width"/> 
+  <remap from="~vehicle_id" to="/vehicle_id"/>
+  <remap from="vehicle_state_machine_type" to="/vehicle_state_machine_type"/>
+  <remap from="vehicle_length" to="/vehicle_length"/>
+  <remap from="vehicle_width" to="/vehicle_width"/>
 
   <remap from="system_alert" to="/system_alert"/>
 
-  <remap from="/base/lane_waypoints_raw" to="base/lane_waypoints_raw"/> 
-  <remap from="/based/lane_waypoints_raw" to="base/lane_waypoints_raw"/>      
+  <remap from="/base/lane_waypoints_raw" to="base/lane_waypoints_raw"/>
+  <remap from="/based/lane_waypoints_raw" to="base/lane_waypoints_raw"/>
   <remap from="/lane_waypoints_array" to="lane_waypoints_array"/>
   <remap from="/traffic_waypoints_array" to="traffic_waypoints_array"/>
   <remap from="/red_waypoints_array" to="red_waypoints_array"/>
@@ -87,25 +87,9 @@
   <remap from="incoming_spat" to="$(optenv CARMA_MSG_NS)/incoming_spat"/>
 
   <remap from="/vehicle_status" to="$(optenv CARMA_INTR_NS)/vehicle_status"/>
-  <remap from="/current_pose" to="$(optenv CARMA_LOCZ_NS)/current_pose"/>  
+  <remap from="/current_pose" to="$(optenv CARMA_LOCZ_NS)/current_pose"/>
 
-  <!-- Planning Stack -->
-  <group ns="plugins">
 
-    <!-- Remappings for common topics to move out of the plugin namespace -->
-    <remap from="route" to="$(optenv CARMA_GUIDE_NS)/route"/>
-    <remap from="plugin_discovery" to="$(optenv CARMA_GUIDE_NS)/plugin_discovery"/>
-    <remap from="ctrl_raw" to="$(optenv CARMA_GUIDE_NS)/ctrl_raw"/>
-    <remap from="twist_raw" to="$(optenv CARMA_GUIDE_NS)/twist_raw"/>
-      
-    <!--Platooning Control Plugin-->
-    <include file="$(find platoon_control)/launch/platoon_control.launch" />
-
-    <!--Platooning Control IHP Plugin-->
-    <include file="$(find platoon_control_ihp)/launch/platoon_control_ihp.launch" />
-
-  </group>
-  
   <!-- Guidance Plugin Validator -->
   <group>
     <remap from="plugin_discovery" to="$(optenv CARMA_GUIDE_NS)/plugin_discovery"/>
