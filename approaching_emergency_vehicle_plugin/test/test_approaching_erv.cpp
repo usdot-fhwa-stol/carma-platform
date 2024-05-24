@@ -992,7 +992,7 @@ namespace approaching_emergency_vehicle_plugin{
         **/
 
         // Spin executor for 2 seconds
-        end_time = std::chrono::system_clock::now() + std::chrono::seconds(2);
+        auto end_time = std::chrono::system_clock::now() + std::chrono::seconds(2);
         while(std::chrono::system_clock::now() < end_time){
             executor.spin_once();
         }
