@@ -175,6 +175,8 @@ namespace approaching_emergency_vehicle_plugin{
         ASSERT_EQ(worker_node->filter_points_ahead(reference_point6, {points.back()}).size(), 1);
     }
 
+    // These tests has been temporarily disabled to support Continuous Improvement (CI) processes.
+    // Related GitHub Issue: <https://github.com/usdot-fhwa-stol/carma-platform/issues/2335
 
     /**
     TEST(Testapproaching_emergency_vehicle_plugin, testBSMProcessing){
