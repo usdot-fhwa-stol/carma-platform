@@ -196,36 +196,36 @@ def generate_launch_description():
                 ],
                 parameters=[ euclidean_cluster_param_file, vehicle_config_param_file]
             ),
-            ComposableNode(
-                package='object_detection_tracking',
-                plugin='bounding_box_to_detected_object::Node',
-                name='bounding_box_converter',
-                extra_arguments=[
-                    {'use_intra_process_comms': True},
-                    {'--log-level' : GetLogLevel('object_detection_tracking', env_log_levels) },
-                    {'is_lifecycle_node': True} # Flag to allow lifecycle node loading in lifecycle wrapper
-                ],
-                remappings=[
-                    ("bounding_boxes", "lidar_bounding_boxes"),
-                    ("lidar_detected_objects", "detected_objects"),
-                ],
-                parameters=[vehicle_config_param_file]
-            ),
-            ComposableNode(
-                    package='tracking_nodes',
-                    plugin='autoware::tracking_nodes::MultiObjectTrackerNode',
-                    name='tracking_nodes_node',
-                    extra_arguments=[
-                        {'use_intra_process_comms': True},
-                        {'--log-level' : GetLogLevel('tracking_nodes', env_log_levels) }
-                    ],
-                    remappings=[
-                        ("ego_state", [ EnvironmentVariable('CARMA_LOCZ_NS', default_value=''), "/current_pose_with_covariance" ] ),
-                        # TODO note classified_rois1 is the default single camera input topic
-                        # TODO when camera detection is added, we will wan to separate this node into a different component to preserve fault tolerance
-                    ],
-                    parameters=[ tracking_nodes_param_file, vehicle_config_param_file]
-            )
+            #ComposableNode(
+            #    package='object_detection_tracking',
+            #    plugin='bounding_box_to_detected_object::Node',
+            #    name='bounding_box_converter',
+            #    extra_arguments=[
+            #        {'use_intra_process_comms': True},
+            #        {'--log-level' : GetLogLevel('object_detection_tracking', env_log_levels) },
+            #        {'is_lifecycle_node': True} # Flag to allow lifecycle node loading in lifecycle wrapper
+            #    ],
+            #    remappings=[
+            #        ("bounding_boxes", "lidar_bounding_boxes"),
+            #        ("lidar_detected_objects", "detected_objects"),
+            #    ],
+            #    parameters=[vehicle_config_param_file]
+            #),
+            #ComposableNode(
+            #        package='tracking_nodes',
+            #        plugin='autoware::tracking_nodes::MultiObjectTrackerNode',
+            #        name='tracking_nodes_node',
+            #        extra_arguments=[
+            #            {'use_intra_process_comms': True},
+            #            {'--log-level' : GetLogLevel('tracking_nodes', env_log_levels) }
+            #        ],
+            #        remappings=[
+            #            ("ego_state", [ EnvironmentVariable('CARMA_LOCZ_NS', default_value=''), "/current_pose_with_covariance" ] ),
+            #            # TODO note classified_rois1 is the default single camera input topic
+            #            # TODO when camera detection is added, we will wan to separate this node into a different component to preserve fault tolerance
+            #        ],
+            #        parameters=[ tracking_nodes_param_file, vehicle_config_param_file]
+            #)
         ]
     )
 
@@ -284,25 +284,25 @@ def generate_launch_description():
                     ],
                     parameters=[ object_visualizer_param_file, vehicle_config_param_file ]
             ),
-            ComposableNode(
-                package='motion_computation',
-                plugin='motion_computation::MotionComputationNode',
-                name='motion_computation_node',
-                extra_arguments=[
-                    {'use_intra_process_comms': True},
-                    {'--log-level' : GetLogLevel('motion_computation', env_log_levels) }
-                ],
-                remappings=[
-                    ("incoming_mobility_path", [ EnvironmentVariable('CARMA_MSG_NS', default_value=''), "/incoming_mobility_path" ] ),
-                    ("incoming_psm", [ EnvironmentVariable('CARMA_MSG_NS', default_value=''), "/incoming_psm" ] ),
-                    ("incoming_bsm", [ EnvironmentVariable('CARMA_MSG_NS', default_value=''), "/incoming_bsm" ] ),
-                    ("georeference", [ EnvironmentVariable('CARMA_LOCZ_NS', default_value=''), "/map_param_loader/georeference" ] ),
-                    ("external_objects", "fused_external_objects")
-                ],
-                parameters=[
-                    motion_computation_param_file, vehicle_config_param_file
-                ]
-            ),
+            #ComposableNode(
+            #    package='motion_computation',
+            #    plugin='motion_computation::MotionComputationNode',
+            #    name='motion_computation_node',
+            #    extra_arguments=[
+            #        {'use_intra_process_comms': True},
+            #        {'--log-level' : GetLogLevel('motion_computation', env_log_levels) }
+            #    ],
+            #    remappings=[
+            #        ("incoming_mobility_path", [ EnvironmentVariable('CARMA_MSG_NS', default_value=''), "/incoming_mobility_path" ] ),
+            #        ("incoming_psm", [ EnvironmentVariable('CARMA_MSG_NS', default_value=''), "/incoming_psm" ] ),
+            #        ("incoming_bsm", [ EnvironmentVariable('CARMA_MSG_NS', default_value=''), "/incoming_bsm" ] ),
+            #        ("georeference", [ EnvironmentVariable('CARMA_LOCZ_NS', default_value=''), "/map_param_loader/georeference" ] ),
+            #        ("external_objects", "fused_external_objects")
+            #    ],
+            #    parameters=[
+            #        motion_computation_param_file, vehicle_config_param_file
+            #    ]
+            #),
             ComposableNode( #CARMA Motion Prediction Visualizer Node
                     package='motion_prediction_visualizer',
                     plugin='motion_prediction_visualizer::Node',

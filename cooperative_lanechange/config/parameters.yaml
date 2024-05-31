@@ -74,7 +74,7 @@ min_timestep : 0.1
 
 # Double:  The range from the start from which the plugin can start working
 # Units: meters
-starting_downtrack_range : 5.0
+starting_downtrack_range : 10.0
 
 # Double: Fraction of the maneuver that has been completed. Starting fraction specifies a higher urgency of in the request to lane change
 starting_fraction : 0.2
@@ -96,7 +96,7 @@ turn_downsample_ratio: 0
 
 # Double: Curve re-sampling step size
 # Units: meters
-curve_resample_step_size: 1.0
+curve_resample_step_size: 2.0
 
 # Double: Number of meters behind the first maneuver that need to be included in points for curvature calculation
 # Units: meters
