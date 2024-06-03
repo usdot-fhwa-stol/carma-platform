@@ -498,7 +498,7 @@ namespace plan_delegator
 
                 if(!previous_lanelets.empty()){
                     auto llt_on_route_optional = wm_->getLaneletOnShortestPath(previous_lanelets);
-                    lanelet::ConstLanelet previous_lanelet_to_add = llt_on_route_optional ? llt_on_route_optional.get() : previous_lanelets[0];
+                    lanelet::ConstLanelet previous_lanelet_to_add = llt_on_route_optional ? llt_on_route_optional.value() : previous_lanelets[0];
 
                     // lane_ids array is ordered by increasing downtrack, so this new starting lanelet is inserted at the front
                     maneuver.lane_following_maneuver.lane_ids.insert(maneuver.lane_following_maneuver.lane_ids.begin(), std::to_string(previous_lanelet_to_add.id()));
@@ -540,7 +540,7 @@ namespace plan_delegator
                 auto previous_lanelets = wm_->getMapRoutingGraph()->previous(original_starting_lanelet, false);
                 if(!previous_lanelets.empty()){
                     auto llt_on_route_optional = wm_->getLaneletOnShortestPath(previous_lanelets);
-                    lanelet::ConstLanelet previous_lanelet_to_add = llt_on_route_optional ? llt_on_route_optional.get() : previous_lanelets[0];
+                    lanelet::ConstLanelet previous_lanelet_to_add = llt_on_route_optional ? llt_on_route_optional.value() : previous_lanelets[0];
                     setManeuverStartingLaneletId(maneuver, previous_lanelet_to_add.id());
                 }
                 else{

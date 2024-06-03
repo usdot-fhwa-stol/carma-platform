@@ -72,7 +72,7 @@ namespace light_controlled_intersection_tactical_plugin
 
         // get the lanelet that is on the route in case overlapping ones found
         auto llt_on_route_optional = wm_->getLaneletOnShortestPath(current_lanelets);
-        current_lanelet = llt_on_route_optional ? llt_on_route_optional.get() : current_lanelets[0];
+        current_lanelet = llt_on_route_optional ? llt_on_route_optional.value() : current_lanelets[0];
 
         RCLCPP_DEBUG_STREAM(rclcpp::get_logger("light_controlled_intersection_tactical_plugin"), "Current_lanelet: " << current_lanelet.id());
 
