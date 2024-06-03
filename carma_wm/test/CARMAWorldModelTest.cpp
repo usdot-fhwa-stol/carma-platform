@@ -1429,7 +1429,7 @@ TEST(CARMAWorldModelTest, getLaneletOnShortestPath)
   test::MapOptions mp(1,1);
   auto cmw_ptr = test::getGuidanceTestMap(mp);
 
-  std::vector<ConstLanelet> random_lanelets;
+  std::vector<lanelet::ConstLanelet> random_lanelets;
   random_lanelets.push_back(cmw_ptr->getMap()->laneletLayer.get(1200));
   random_lanelets.push_back(cmw_ptr->getMap()->laneletLayer.get(1221));
   random_lanelets.push_back(cmw_ptr->getMap()->laneletLayer.get(1222));
