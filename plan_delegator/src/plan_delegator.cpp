@@ -495,20 +495,11 @@ namespace plan_delegator
             if(adjusted_start_dist < original_starting_lanelet_centerline_start_point_dt){
 
                 auto previous_lanelets = wm_->getMapRoutingGraph()->previous(original_starting_lanelet, false);
-                auto previous_lanelet_to_add = previous_lanelets[0];
-
-                // pick a lanelet on the shortest path
-                for (const auto& llt : previous_lanelets)
-                {
-                    auto route = wm_->getRoute()->shortestPath();
-                    if (std::find(route.begin(), route.end(), llt) != route.end())
-                    {
-                        previous_lanelet_to_add = llt;
-                        break;
-                    }
-                }
 
                 if(!previous_lanelets.empty()){
+                    auto llt_on_route_optional = wm_->getLaneletOnShortestPath(previous_lanelets);
+                    lanelet::ConstLanelet previous_lanelet_to_add = llt_on_route_optional ? llt_on_route_optional.get() : previous_lanelets[0];
+
                     // lane_ids array is ordered by increasing downtrack, so this new starting lanelet is inserted at the front
                     maneuver.lane_following_maneuver.lane_ids.insert(maneuver.lane_following_maneuver.lane_ids.begin(), std::to_string(previous_lanelet_to_add.id()));
 
@@ -547,20 +538,10 @@ namespace plan_delegator
 
             if(adjusted_start_dist < original_starting_lanelet_centerline_start_point_dt){
                 auto previous_lanelets = wm_->getMapRoutingGraph()->previous(original_starting_lanelet, false);
-                auto previous_lanelet_to_add = previous_lanelets[0];
                 if(!previous_lanelets.empty()){
-                    // pick a lanelet on the shortest path
-                    for (const auto& llt : previous_lanelets)
-                    {
-                        auto route = wm_->getRoute()->shortestPath();
-                        if (std::find(route.begin(), route.end(), llt) != route.end())
-                        {
-                            previous_lanelet_to_add = llt;
-                            break;
-                        }
-                    }
+                    auto llt_on_route_optional = wm_->getLaneletOnShortestPath(previous_lanelets);
+                    lanelet::ConstLanelet previous_lanelet_to_add = llt_on_route_optional ? llt_on_route_optional.get() : previous_lanelets[0];
                     setManeuverStartingLaneletId(maneuver, previous_lanelet_to_add.id());
-                    
                 }
                 else{
                     RCLCPP_WARN_STREAM(rclcpp::get_logger("plan_delegator"), "No previous lanelet was found for lanelet " << original_starting_lanelet.id());

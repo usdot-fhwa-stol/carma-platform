@@ -1321,15 +1321,8 @@ void LCIStrategicPlugin::plan_maneuvers_callback(
   }
 
   // get the lanelet that is on the route in case overlapping ones found
-  for (auto llt : current_lanelets)
-  {
-    auto route = wm_->getRoute()->shortestPath();
-    if (std::find(route.begin(), route.end(), llt) != route.end())
-    {
-      current_lanelet = llt;
-      break;
-    }
-  }
+  auto llt_on_route_optional = wm_->getLaneletOnShortestPath(current_lanelets);
+  current_lanelet = llt_on_route_optional ? llt_on_route_optional.get() : current_lanelets[0];
 
   lanelet::CarmaTrafficSignalPtr nearest_traffic_signal = nullptr;
 

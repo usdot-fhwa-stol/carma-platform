@@ -265,6 +265,8 @@ public:
 
   std::vector<lanelet::SignalizedIntersectionPtr> getSignalizedIntersectionsAlongRoute(const lanelet::BasicPoint2d &loc) const;
 
+  std::optional<lanelet::ConstLanelet> getLaneletOnShortestPath(const std::vector<lanelet::ConstLanelet>& lanelets_to_filter) const;
+
   std::unordered_map<uint32_t, lanelet::Id> traffic_light_ids_;
 
   carma_wm::SignalizedIntersectionManager sim_; // records SPAT/MAP lane ids to lanelet ids

@@ -436,7 +436,16 @@ class WorldModel
      * \return vector of underlying lanelet, empty vector if it is not part of any lanelet
      */
     virtual std::vector<lanelet::ConstLanelet> nonConnectedAdjacentLeft(const lanelet::BasicPoint2d& input_point, const unsigned int n = 10) const = 0;
-                                                                                             
+
+    /**
+     * \brief Given the vector of lanelets, returns the lanelet that's on the shortest path
+     *
+     * \param lanelets_to_filter  lanelets to pick from
+     * 
+     * \return lanelet on the shortest path from the input list. std::nullopt if no route is available or no lanelet is on the route
+     */
+    virtual std::optional<lanelet::ConstLanelet> getLaneletOnShortestPath(const std::vector<lanelet::ConstLanelet>& lanelets_to_filter) const = 0;
+                                                    
 };
 // Helpful using declarations for carma_wm classes
 using WorldModelConstPtr = std::shared_ptr<const WorldModel>;
