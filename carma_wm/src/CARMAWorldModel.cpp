@@ -1556,7 +1556,7 @@ namespace carma_wm
     }
   }
 
-  std::optional<lanelet::ConstLanelet> getLaneletOnShortestPath(const std::vector<lanelet::ConstLanelet>& lanelets_to_filter) const
+  std::optional<lanelet::ConstLanelet> CARMAWorldModel::getLaneletOnShortestPath(const std::vector<lanelet::ConstLanelet>& lanelets_to_filter) const
   {
     if (!route_ || lanelets_to_filter.empty())
     {
