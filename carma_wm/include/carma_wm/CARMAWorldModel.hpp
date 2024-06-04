@@ -32,7 +32,7 @@
 #include "boost/date_time/posix_time/posix_time.hpp"
 #include "carma_wm/SignalizedIntersectionManager.hpp"
 #include <rosgraph_msgs/msg/clock.hpp>
-
+#include <gtest/gtest_prod.h>
 namespace carma_wm
 {
 /*! \brief Class which implements the WorldModel interface. In addition this class provides write access to the world
@@ -322,5 +322,6 @@ private:
   static constexpr double YELLOW_LIGHT_DURATION = 3.0; //in sec
   static constexpr double GREEN_LIGHT_DURATION = 20.0; //in sec
 
+  FRIEND_TEST(CARMAWorldModelTest, getLaneletOnShortestPath);
 };
 }  // namespace carma_wm
