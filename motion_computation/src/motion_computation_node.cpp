@@ -50,6 +50,17 @@ MotionComputationNode::MotionComputationNode(const rclcpp::NodeOptions & options
     "enable_mobility_path_processing", config_.enable_mobility_path_processing);
   config_.enable_sensor_processing =
     declare_parameter<bool>("enable_sensor_processing", config_.enable_sensor_processing);
+  config_.enable_ctrv_for_unknown_obj =
+    declare_parameter<bool>("enable_ctrv_for_unknown_obj", config_.enable_ctrv_for_unknown_obj);
+  config_.enable_ctrv_for_motorcycle_obj =
+    declare_parameter<bool>("enable_ctrv_for_motorcycle_obj", config_.enable_ctrv_for_motorcycle_obj);
+  config_.enable_ctrv_for_small_vehicle_obj =
+    declare_parameter<bool>("enable_ctrv_for_small_vehicle_obj", config_.enable_ctrv_for_small_vehicle_obj);
+  config_.enable_ctrv_for_large_vehicle_obj =
+    declare_parameter<bool>("enable_ctrv_for_large_vehicle_obj", config_.enable_ctrv_for_large_vehicle_obj);
+  config_.enable_ctrv_for_pedestrian_obj =
+    declare_parameter<bool>("enable_ctrv_for_pedestrian_obj", config_.enable_ctrv_for_pedestrian_obj);
+  
 }
 
 rcl_interfaces::msg::SetParametersResult MotionComputationNode::parameter_update_callback(
@@ -68,7 +79,12 @@ rcl_interfaces::msg::SetParametersResult MotionComputationNode::parameter_update
     {{"enable_bsm_processing", config_.enable_bsm_processing},
      {"enable_psm_processing", config_.enable_psm_processing},
      {"enable_mobility_path_processing", config_.enable_mobility_path_processing},
-     {"enable_sensor_processing", config_.enable_sensor_processing}},
+     {"enable_sensor_processing", config_.enable_sensor_processing},
+     {"enable_ctrv_for_unknown_obj", config_.enable_ctrv_for_unknown_obj},
+     {"enable_ctrv_for_motorcycle_obj", config_.enable_ctrv_for_motorcycle_obj}
+     {"enable_ctrv_for_small_vehicle_obj", config_.enable_ctrv_for_small_vehicle_obj}
+     {"enable_ctrv_for_large_vehicle_obj", config_.enable_ctrv_for_large_vehicle_obj}
+     {"enable_ctrv_for_pedestrian_obj", config_.enable_ctrv_for_pedestrian_obj}},
     parameters);
 
   rcl_interfaces::msg::SetParametersResult result;
@@ -84,6 +100,9 @@ rcl_interfaces::msg::SetParametersResult MotionComputationNode::parameter_update
     motion_worker_.setProcessNoiseMax(config_.prediction_process_noise_max);
     motion_worker_.setConfidenceDropRate(config_.prediction_confidence_drop_rate);
     motion_worker_.setDetectionInputFlags(
+      config_.enable_sensor_processing, config_.enable_bsm_processing,
+      config_.enable_psm_processing, config_.enable_mobility_path_processing);
+    motion_worker_.setDetectionMotionModelFlags(
       config_.enable_sensor_processing, config_.enable_bsm_processing,
       config_.enable_psm_processing, config_.enable_mobility_path_processing);
   }
