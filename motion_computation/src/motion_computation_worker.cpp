@@ -35,6 +35,10 @@ void MotionComputationWorker::predictionLogic(
   carma_perception_msgs::msg::ExternalObjectList sensor_list;
   sensor_list.header = obj_list->header;
 
+  if (!obj_list || obj_list->objects.empty())
+  {
+    return;
+  }
   for (auto obj : obj_list->objects) {
     // Header contains the frame rest of the fields will use
     // obj.header = obj_list.objects[i].header;
