@@ -252,7 +252,7 @@ namespace basic_autonomy
                 }
 
                 double delta_d = lanelet::geometry::distance2d(prev_point, current_point);
-                
+
                 dist_accumulator += delta_d;
                 RCLCPP_DEBUG_STREAM(rclcpp::get_logger(BASIC_AUTONOMY_LOGGER), "Index i: " << i << ", delta_d: " << delta_d << ", dist_accumulator:" << dist_accumulator <<", current_point.x():" << current_point.x() <<
                 "current_point.y():" << current_point.y());

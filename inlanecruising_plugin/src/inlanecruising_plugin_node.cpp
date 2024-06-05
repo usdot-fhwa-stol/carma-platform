@@ -46,6 +46,7 @@ namespace inlanecruising_plugin
 
   carma_ros2_utils::CallbackReturn InLaneCruisingPluginNode::on_configure_plugin()
   {
+    rcutils_logging_set_logger_level("basic_autonomy", RCUTILS_LOG_SEVERITY_DEBUG);
     trajectory_debug_pub_ = create_publisher<carma_debug_ros2_msgs::msg::TrajectoryCurvatureSpeeds>("debug/trajectory_planning", 1);
 
     config_ = InLaneCruisingPluginConfig();

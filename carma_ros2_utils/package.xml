@@ -1,0 +1,48 @@
+<?xml version="1.0"?>
+<?xml-model href="http://download.ros.org/schema/package_format3.xsd" schematypens="http://www.w3.org/2001/XMLSchema"?>
+<package format="3">
+  <name>carma_ros2_utils</name>
+  <version>1.0.0</version>
+  <description>Package of ROS2 utilities in carma. </description>
+  <author email="Michael.McConnell-2@leidos.com">Michael McConnell</author>
+  <maintainer email="carma@dot.gov">CARMA Support</maintainer>
+  <license>Apache-2.0</license>
+
+  <buildtool_depend>ament_cmake</buildtool_depend>
+  <buildtool_depend>ament_cmake_python</buildtool_depend>
+  <build_depend>libboost-program-options-dev</build_depend>
+  <build_depend>carma_cmake_common</build_depend>
+
+  <build_depend>rcpputils</build_depend>
+  <build_depend>ament_cmake_auto</build_depend>
+
+  <depend>launch</depend>
+  <depend>launch_ros</depend>
+  <depend>lifecycle_msgs</depend>
+  <depend>rclcpp</depend>
+  <depend>rclcpp_lifecycle</depend>
+  <depend>rclcpp_components</depend>
+  <depend>rcutils</depend>
+  <depend>carma_msgs</depend>
+  <depend>ament_index_cpp</depend>
+  <depend>class_loader</depend>
+  <depend>composition_interfaces</depend>
+  <depend>Boost</depend>
+
+
+  <exec_depend>libboost-program-options</exec_depend>
+
+  <test_depend>ament_lint_common</test_depend>
+  <test_depend>ament_lint_auto</test_depend>
+  <test_depend>ament_cmake_gtest</test_depend>
+  <test_depend>launch_testing_ament_cmake</test_depend>
+  <test_depend>launch_testing_ros</test_depend>
+  <test_depend>ament_cmake_pytest</test_depend>
+  <test_depend>ros2_lifecycle_manager</test_depend>
+  <test_depend>std_srvs</test_depend>
+  <test_depend>launch_testing</test_depend>
+
+  <export>
+    <build_type>ament_cmake</build_type>
+  </export>
+</package>

@@ -88,6 +88,7 @@ namespace light_controlled_intersection_tactical_plugin
   {
     RCLCPP_INFO_STREAM(rclcpp::get_logger("light_controlled_intersection_tactical_plugin"), "LightControlledIntersectionTransitPluginNode trying to configure");
 
+    rcutils_logging_set_logger_level("basic_autonomy", RCUTILS_LOG_SEVERITY_DEBUG);
     // Reset config
     config_ = Config();
 
