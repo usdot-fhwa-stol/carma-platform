@@ -33,8 +33,8 @@ enable_mobility_path_processing: false
 enable_sensor_processing: false
 
 # Boolean: True if CTRV motion model should be used for the object type. False, if CV should be used:
-enable_ctrv_for_unknown_obj: false
-enable_ctrv_for_motorcycle_obj: false
-enable_ctrv_for_small_vehicle_obj: false
-enable_ctrv_for_large_vehicle_obj: false
-enable_ctrv_for_pedestrian_obj: true
+enable_ctrv_for_unknown_obj: true
+enable_ctrv_for_motorcycle_obj: true
+enable_ctrv_for_small_vehicle_obj: true
+enable_ctrv_for_large_vehicle_obj: true
+enable_ctrv_for_pedestrian_obj: false
