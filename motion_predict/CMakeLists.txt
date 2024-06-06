@@ -1,5 +1,4 @@
-
-# Copyright (C) 2022 LEIDOS.
+# Copyright (C) 2020-2022 LEIDOS.
 #
 # Licensed under the Apache License, Version 2.0 (the "License"); you may not
 # use this file except in compliance with the License. You may obtain a copy of
@@ -14,45 +13,43 @@
 # the License.
 
 cmake_minimum_required(VERSION 3.5)
-project(motion_prediction_visualizer)
+project(motion_predict)
 
-# Declare carma package and check ROS version
 find_package(carma_cmake_common REQUIRED)
 carma_check_ros_version(2)
 carma_package()
 
-## Find dependencies using ament auto
 find_package(ament_cmake_auto REQUIRED)
+find_package(Eigen3 REQUIRED)
 ament_auto_find_build_dependencies()
-
-# Name build targets
-set(node_exec motion_prediction_visualizer_node_exec)
-set(node_lib motion_prediction_visualizer_node)
 
 # Includes
 include_directories(
   include
+  ${EIGEN3_INCLUDE_DIRS}
 )
 
-# Build
-ament_auto_add_library(${node_lib} SHARED
-        src/motion_prediction_visualizer_node.cpp
+ament_auto_add_library(motion_predict
+  src/motion_predict.cpp
+  src/predict_ctrv.cpp
 )
 
-ament_auto_add_executable(${node_exec} 
-        src/main.cpp 
-)
+# Testing
+if(BUILD_TESTING)  
 
-# Register component
-rclcpp_components_register_nodes(${node_lib} "motion_prediction_visualizer::Node")
+  find_package(ament_lint_auto REQUIRED)
+  ament_lint_auto_find_test_dependencies() # This populates the ${${PROJECT_NAME}_FOUND_TEST_DEPENDS} variable
 
-# All locally created targets will need to be manually linked
-# ament auto will handle linking of external dependencies
-target_link_libraries(${node_exec}
-        ${node_lib}
-)
+  ament_add_gtest(test_motion_predict 
+    test/main.cpp
+    test/test_motion_predict.cpp 
+    test/test_predict_ctrv.cpp
+  )
 
-# Install
-ament_auto_package(
-        INSTALL_TO_SHARE launch
-)
+  ament_target_dependencies(test_motion_predict ${${PROJECT_NAME}_FOUND_TEST_DEPENDS})
+
+  target_link_libraries(test_motion_predict ${PROJECT_NAME})
+
+endif()
+
+ament_auto_package()

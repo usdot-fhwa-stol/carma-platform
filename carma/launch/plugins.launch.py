@@ -585,7 +585,7 @@ def generate_launch_description():
     return LaunchDescription([
         carma_inlanecruising_plugin_container,
         carma_route_following_plugin_container,
-        #carma_approaching_emergency_vehicle_plugin_container,
+        carma_approaching_emergency_vehicle_plugin_container,
         carma_stop_and_wait_plugin_container,
         carma_sci_strategic_plugin_container,
         carma_stop_and_dwell_strategic_plugin_container,

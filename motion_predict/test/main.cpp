@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022 LEIDOS.
+ * Copyright (C) 2019-2022 LEIDOS.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -14,21 +14,20 @@
  * the License.
  */
 
+#include <gtest/gtest.h>
 #include <rclcpp/rclcpp.hpp>
-#include "motion_prediction_visualizer/motion_prediction_visualizer.hpp"
 
+// Run all the tests
+int main(int argc, char **argv) {
+    testing::InitGoogleTest(&argc, argv);
 
-int main(int argc, char **argv) 
-{
-  rclcpp::init(argc, argv);
+    //Initialize ROS
+    rclcpp::init(argc, argv);
 
-  auto node = std::make_shared<motion_prediction_visualizer::Node>(rclcpp::NodeOptions());
-  
-  rclcpp::executors::MultiThreadedExecutor executor;
-  executor.add_node(node->get_node_base_interface());
-  executor.spin();
+    bool success = RUN_ALL_TESTS();
 
-  rclcpp::shutdown();
+    //shutdown ROS
+    rclcpp::shutdown();
 
-  return 0;
+    return success;
 }

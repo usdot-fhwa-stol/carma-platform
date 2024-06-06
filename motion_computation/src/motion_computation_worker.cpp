@@ -35,6 +35,10 @@ void MotionComputationWorker::predictionLogic(
   carma_perception_msgs::msg::ExternalObjectList sensor_list;
   sensor_list.header = obj_list->header;
 
+  if (!obj_list || obj_list->objects.empty())
+  {
+    return;
+  }
   for (auto obj : obj_list->objects) {
     // Header contains the frame rest of the fields will use
     // obj.header = obj_list.objects[i].header;
@@ -49,18 +53,18 @@ void MotionComputationWorker::predictionLogic(
     bool use_ctrv_model;
 
     if (obj.object_type == obj.UNKNOWN) {
-      use_ctrv_model = true;
+      use_ctrv_model = enable_ctrv_for_unknown_obj_;
     } else if (obj.object_type == obj.MOTORCYCLE) {
-      use_ctrv_model = true;
+      use_ctrv_model = enable_ctrv_for_motorcycle_obj_;
     } else if (obj.object_type == obj.SMALL_VEHICLE) {
-      use_ctrv_model = true;
+      use_ctrv_model = enable_ctrv_for_small_vehicle_obj_;
     } else if (obj.object_type == obj.LARGE_VEHICLE) {
-      use_ctrv_model = true;
+      use_ctrv_model = enable_ctrv_for_large_vehicle_obj_;
     } else if (obj.object_type == obj.PEDESTRIAN) {
-      use_ctrv_model = false;
+      use_ctrv_model = enable_ctrv_for_pedestrian_obj_;
     } else {
       obj.object_type = obj.UNKNOWN;
-      use_ctrv_model = false;
+      use_ctrv_model = enable_ctrv_for_unknown_obj_;
     }  // end if-else
 
     if (use_ctrv_model == true) {
@@ -182,6 +186,17 @@ void MotionComputationWorker::setDetectionInputFlags(
   enable_bsm_processing_ = enable_bsm_processing;
   enable_psm_processing_ = enable_psm_processing;
   enable_mobility_path_processing_ = enable_mobility_path_processing;
+}
+
+void MotionComputationWorker::setDetectionMotionModelFlags(
+  bool enable_ctrv_for_unknown_obj, bool enable_ctrv_for_motorcycle_obj, bool enable_ctrv_for_small_vehicle_obj,
+  bool enable_ctrv_for_large_vehicle_obj, bool enable_ctrv_for_pedestrian_obj)
+{
+  enable_ctrv_for_unknown_obj_ = enable_ctrv_for_unknown_obj;
+  enable_ctrv_for_motorcycle_obj_ = enable_ctrv_for_motorcycle_obj;
+  enable_ctrv_for_small_vehicle_obj_ = enable_ctrv_for_small_vehicle_obj;
+  enable_ctrv_for_large_vehicle_obj_ = enable_ctrv_for_large_vehicle_obj;
+  enable_ctrv_for_pedestrian_obj_ = enable_ctrv_for_pedestrian_obj;
 }
 
 void MotionComputationWorker::mobilityPathCallback(

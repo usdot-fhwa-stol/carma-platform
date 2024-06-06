@@ -57,6 +57,14 @@ struct Config
   // will occur (objects may be duplicated)
   bool enable_sensor_processing = false;
 
+  // True if CTRV motion model should be used for the object type. 
+  // False, if CV should be used for all following booleans
+  bool enable_ctrv_for_unknown_obj = true;
+  bool enable_ctrv_for_motorcycle_obj = true;
+  bool enable_ctrv_for_small_vehicle_obj = true;
+  bool enable_ctrv_for_large_vehicle_obj = true;
+  bool enable_ctrv_for_pedestrian_obj = false;
+
   // Stream operator for this config
   friend std::ostream & operator<<(std::ostream & output, const Config & c)
   {
@@ -72,6 +80,11 @@ struct Config
            << "enable_psm_processing: " << c.enable_psm_processing << std::endl
            << "enable_mobility_path_processing: " << c.enable_mobility_path_processing << std::endl
            << "enable_sensor_processing: " << c.enable_sensor_processing << std::endl
+           << "enable_ctrv_for_unknown_obj: " << c.enable_ctrv_for_unknown_obj << std::endl
+           << "enable_ctrv_for_motorcycle_obj: " << c.enable_ctrv_for_motorcycle_obj << std::endl
+           << "enable_ctrv_for_small_vehicle_obj: " << c.enable_ctrv_for_small_vehicle_obj << std::endl
+           << "enable_ctrv_for_large_vehicle_obj: " << c.enable_ctrv_for_large_vehicle_obj << std::endl
+           << "enable_ctrv_for_pedestrian_obj: " << c.enable_ctrv_for_pedestrian_obj << std::endl
            << "}" << std::endl;
     return output;
   }

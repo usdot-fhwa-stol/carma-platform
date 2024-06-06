@@ -65,10 +65,6 @@ Visualization Manager:
           Value: true
         222:
           Value: true
-        223:
-          Value: true
-        224:
-          Value: true
         All Enabled: true
         base_link:
           Value: true
@@ -168,10 +164,6 @@ Visualization Manager:
               {}
             222:
               {}
-            223:
-              {}
-            224:
-              {}
             carma_1/camera/rgb/front:
               camera:
                 {}
@@ -252,6 +244,7 @@ Visualization Manager:
       Value: false
       Visibility:
         "": true
+        Cooperative Perception Detected Objects: true
         Detection Range: true
         ERROR: true
         FATAL: true
@@ -264,6 +257,7 @@ Visualization Manager:
         MobilityPath Collision Warning: true
         Next Waypoint Mark: true
         OK: true
+        Object Prediction Visualization: true
         OverlayImage: true
         OverlayText: true
         PP Trajectory Mark: true
@@ -678,7 +672,7 @@ Visualization Manager:
       Marker Topic: /guidance/trajectory_visualizer
       Name: MarkerArray
       Namespaces:
-        trajectory_visualizer: true
+        {}
       Queue Size: 10
       Value: true
     - Class: rviz/Marker
@@ -726,7 +720,7 @@ Visualization Manager:
       Marker Topic: /environment/fused_external_objects_viz
       Name: Cooperative Perception Detected Objects
       Namespaces:
-        external_objects: true
+        {}
       Queue Size: 100
       Value: true
     - Alpha: 1
@@ -744,6 +738,14 @@ Visualization Manager:
       Shape: Arrow (Flat)
       Topic: /environment/motion_computation_visualize
       Unreliable: false
+      Value: true
+    - Class: rviz/MarkerArray
+      Enabled: true
+      Marker Topic: /environment/external_objects_viz
+      Name: MarkerArray
+      Namespaces:
+        external_objects: true
+      Queue Size: 100
       Value: true
   Enabled: true
   Global Options:
@@ -809,4 +811,4 @@ Window Geometry:
     collapsed: true
   Width: 1150
   X: 92
-  Y: 373
+  Y: 336
