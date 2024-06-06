@@ -73,6 +73,9 @@ public:
   void setDetectionInputFlags(
     bool enable_sensor_processing, bool enable_bsm_processing, bool enable_psm_processing,
     bool enable_mobility_path_processing);
+  void setDetectionMotionModelFlags(
+    bool enable_ctrv_for_unknown_obj, bool enable_ctrv_for_motorcycle_obj, bool enable_ctrv_for_small_vehicle_obj,
+    bool enable_ctrv_for_large_vehicle_obj, bool enable_ctrv_for_pedestrian_obj);
 
   // callbacks
   void mobilityPathCallback(const carma_v2x_msgs::msg::MobilityPath::UniquePtr msg);
@@ -140,6 +143,13 @@ private:
   bool enable_psm_processing_ = false;
   bool enable_mobility_path_processing_ = false;
 
+  // Flags for the different possible motion models for detections
+  bool enable_ctrv_for_unknown_obj_ = true;
+  bool enable_ctrv_for_motorcycle_obj_ = true;
+  bool enable_ctrv_for_small_vehicle_obj_ = true;
+  bool enable_ctrv_for_large_vehicle_obj_ = true;
+  bool enable_ctrv_for_pedestrian_obj_ = false;
+  
   // Map frame
   std::string map_frame_id_ = "map";
 
