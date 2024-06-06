@@ -71,8 +71,16 @@ namespace light_controlled_intersection_tactical_plugin
         }
 
         // get the lanelet that is on the route in case overlapping ones found
-        auto llt_on_route_optional = wm_->getLaneletOnShortestPath(current_lanelets);
-        current_lanelet = llt_on_route_optional ? llt_on_route_optional.value() : current_lanelets[0];
+        auto llt_on_route_optional = wm_->getFirstLaneletOnShortestPath(current_lanelets);
+
+        if (llt_on_route_optional){
+            current_lanelet = llt_on_route_optional.value();
+        }
+        else{
+            RCLCPP_WARN_STREAM(rclcpp::get_logger("plan_delegator"), "When adjusting maneuver for maneuvers other than lane follow, no previous lanelet found on the shortest path. " <<
+                "Picking arbitrary lanelet: " << current_lanelets[0].id() << ", instead");
+            current_lanelet = current_lanelets[0];
+        }
 
         RCLCPP_DEBUG_STREAM(rclcpp::get_logger("light_controlled_intersection_tactical_plugin"), "Current_lanelet: " << current_lanelet.id());
 

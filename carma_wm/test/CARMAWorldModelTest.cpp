@@ -1423,7 +1423,7 @@ TEST(CARMAWorldModelTest, getSignalsAlongRoute)
 
 }
 
-TEST(CARMAWorldModelTest, getLaneletOnShortestPath)
+TEST(CARMAWorldModelTest, getFirstLaneletOnShortestPath)
 {
   // Create a complete map
   test::MapOptions mp(1,1);
@@ -1436,7 +1436,7 @@ TEST(CARMAWorldModelTest, getLaneletOnShortestPath)
 
   // No route
   cmw_ptr->route_ = nullptr;
-  auto lanelet_on_the_route = cmw_ptr->getLaneletOnShortestPath(random_lanelets);
+  auto lanelet_on_the_route = cmw_ptr->getFirstLaneletOnShortestPath(random_lanelets);
   EXPECT_EQ(lanelet_on_the_route, std::nullopt);
 
   // No lanelet on route
@@ -1445,7 +1445,7 @@ TEST(CARMAWorldModelTest, getLaneletOnShortestPath)
   random_lanelets.push_back(cmw_ptr->getMap()->laneletLayer.get(1221));
   random_lanelets.push_back(cmw_ptr->getMap()->laneletLayer.get(1222));
   carma_wm::test::setRouteByIds({ 1200, 1201, 1202}, cmw_ptr);
-  lanelet_on_the_route = cmw_ptr->getLaneletOnShortestPath(random_lanelets);
+  lanelet_on_the_route = cmw_ptr->getFirstLaneletOnShortestPath(random_lanelets);
   EXPECT_EQ(lanelet_on_the_route, std::nullopt);
 
   // 1 lanelet on the route
@@ -1454,7 +1454,7 @@ TEST(CARMAWorldModelTest, getLaneletOnShortestPath)
   random_lanelets.push_back(cmw_ptr->getMap()->laneletLayer.get(1221));
   random_lanelets.push_back(cmw_ptr->getMap()->laneletLayer.get(1222));
 
-  lanelet_on_the_route = cmw_ptr->getLaneletOnShortestPath(random_lanelets);
+  lanelet_on_the_route = cmw_ptr->getFirstLaneletOnShortestPath(random_lanelets);
   EXPECT_EQ(lanelet_on_the_route, cmw_ptr->getMap()->laneletLayer.get(1200));
 
   // 1 lanelet on the route
@@ -1463,7 +1463,7 @@ TEST(CARMAWorldModelTest, getLaneletOnShortestPath)
   random_lanelets.push_back(cmw_ptr->getMap()->laneletLayer.get(1221));
   random_lanelets.push_back(cmw_ptr->getMap()->laneletLayer.get(1202));
 
-  lanelet_on_the_route = cmw_ptr->getLaneletOnShortestPath(random_lanelets);
+  lanelet_on_the_route = cmw_ptr->getFirstLaneletOnShortestPath(random_lanelets);
   EXPECT_EQ(lanelet_on_the_route, cmw_ptr->getMap()->laneletLayer.get(1202));
 
   // 2 lanelets on the route, return earliest
@@ -1472,7 +1472,7 @@ TEST(CARMAWorldModelTest, getLaneletOnShortestPath)
   random_lanelets.push_back(cmw_ptr->getMap()->laneletLayer.get(1221));
   random_lanelets.push_back(cmw_ptr->getMap()->laneletLayer.get(1202));
 
-  lanelet_on_the_route = cmw_ptr->getLaneletOnShortestPath(random_lanelets);
+  lanelet_on_the_route = cmw_ptr->getFirstLaneletOnShortestPath(random_lanelets);
   EXPECT_EQ(lanelet_on_the_route, cmw_ptr->getMap()->laneletLayer.get(1200));
 }
 

@@ -265,7 +265,7 @@ public:
 
   std::vector<lanelet::SignalizedIntersectionPtr> getSignalizedIntersectionsAlongRoute(const lanelet::BasicPoint2d &loc) const;
 
-  std::optional<lanelet::ConstLanelet> getLaneletOnShortestPath(const std::vector<lanelet::ConstLanelet>& lanelets_to_filter) const;
+  std::optional<lanelet::ConstLanelet> getFirstLaneletOnShortestPath(const std::vector<lanelet::ConstLanelet>& lanelets_to_filter) const;
 
   std::unordered_map<uint32_t, lanelet::Id> traffic_light_ids_;
 
@@ -322,6 +322,6 @@ private:
   static constexpr double YELLOW_LIGHT_DURATION = 3.0; //in sec
   static constexpr double GREEN_LIGHT_DURATION = 20.0; //in sec
 
-  FRIEND_TEST(CARMAWorldModelTest, getLaneletOnShortestPath);
+  FRIEND_TEST(CARMAWorldModelTest, getFirstLaneletOnShortestPath);
 };
 }  // namespace carma_wm
