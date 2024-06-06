@@ -39,6 +39,7 @@ void MotionComputationWorker::predictionLogic(
   {
     return;
   }
+
   for (auto obj : obj_list->objects) {
     // Header contains the frame rest of the fields will use
     // obj.header = obj_list.objects[i].header;
@@ -76,6 +77,7 @@ void MotionComputationWorker::predictionLogic(
         obj, prediction_time_step_, prediction_period_, cv_x_accel_noise_, cv_y_accel_noise_,
         prediction_process_noise_max_, prediction_confidence_drop_rate_);
     }
+
     sensor_list.objects.emplace_back(obj);
   }  // end for-loop
 
@@ -135,6 +137,7 @@ void MotionComputationWorker::predictionLogic(
   bsm_obj_id_map_.clear();
   psm_list_.objects.clear();
   psm_obj_id_map_.clear();
+
 }
 
 void MotionComputationWorker::georeferenceCallback(const std_msgs::msg::String::UniquePtr msg)
