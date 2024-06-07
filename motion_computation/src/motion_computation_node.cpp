@@ -129,6 +129,11 @@ carma_ros2_utils::CallbackReturn MotionComputationNode::handle_on_configure(
   get_parameter<bool>("enable_psm_processing", config_.enable_psm_processing);
   get_parameter<bool>("enable_mobility_path_processing", config_.enable_mobility_path_processing);
   get_parameter<bool>("enable_sensor_processing", config_.enable_sensor_processing);
+  get_parameter<bool>("enable_ctrv_for_unknown_obj", config_.enable_ctrv_for_unknown_obj);
+  get_parameter<bool>("enable_ctrv_for_motorcycle_obj", config_.enable_ctrv_for_motorcycle_obj);
+  get_parameter<bool>("enable_ctrv_for_small_vehicle_obj", config_.enable_ctrv_for_small_vehicle_obj);
+  get_parameter<bool>("enable_ctrv_for_large_vehicle_obj", config_.enable_ctrv_for_large_vehicle_obj);
+  get_parameter<bool>("enable_ctrv_for_pedestrian_obj", config_.enable_ctrv_for_pedestrian_obj);
 
   RCLCPP_INFO_STREAM(get_logger(), "Loaded params: " << config_);
 
