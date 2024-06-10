@@ -127,7 +127,11 @@ namespace bsm_generator
   void BSMGenerator::georeferenceCallback(const std_msgs::msg::String::UniquePtr msg)
   {
     // Build projector from proj string
-    map_projector_ = std::make_shared<lanelet::projection::LocalFrameProjector>(msg->data.c_str());
+    if (georeference_ != msg->data)
+    {
+      georeference_ = msg->data;
+      map_projector_ = std::make_shared<lanelet::projection::LocalFrameProjector>(msg->data.c_str());
+    }
   }
 
   void BSMGenerator::speedCallback(const geometry_msgs::msg::TwistStamped::UniquePtr msg)
