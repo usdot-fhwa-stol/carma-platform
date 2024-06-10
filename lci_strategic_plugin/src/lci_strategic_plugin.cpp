@@ -1327,8 +1327,9 @@ void LCIStrategicPlugin::plan_maneuvers_callback(
     current_lanelet = llt_on_route_optional.value();
   }
   else{
-    RCLCPP_WARN_STREAM(rclcpp::get_logger("plan_delegator"), "When adjusting maneuver for maneuvers other than lane follow, no previous lanelet found on the shortest path. " <<
-      "Picking arbitrary lanelet: " << current_lanelets[0].id() << ", instead");
+    RCLCPP_WARN_STREAM(rclcpp::get_logger("lci_strategic_plugin"), "When identifying the corresponding lanelet for requested maneuever's state, x: " 
+      << req->veh_x << ", y: " << req->veh_y << ", no possible lanelet was found to be on the shortest path."
+      << "Picking arbitrary lanelet: " << current_lanelets[0].id() << ", instead");
     current_lanelet = current_lanelets[0];
   }
 

@@ -506,8 +506,8 @@ namespace plan_delegator
                         previous_lanelet_to_add = llt_on_route_optional.value();
                     }
                     else{
-                        RCLCPP_WARN_STREAM(rclcpp::get_logger("plan_delegator"), "When adjusting maneuver for lane follow, no previous lanelet found on the shortest path. " <<
-                            "Picking arbitrary lanelet: " << previous_lanelets[0].id() << ", instead");
+                        RCLCPP_WARN_STREAM(rclcpp::get_logger("plan_delegator"), "When adjusting maneuver for lane follow, no previous lanelet found on the shortest path for lanelet " 
+                            << original_starting_lanelet.id() << ". Picking arbitrary lanelet: " << previous_lanelets[0].id() << ", instead");
                         previous_lanelet_to_add = previous_lanelets[0];
                     }
 
@@ -557,8 +557,8 @@ namespace plan_delegator
                         previous_lanelet_to_add = llt_on_route_optional.value();
                     }
                     else{
-                        RCLCPP_WARN_STREAM(rclcpp::get_logger("plan_delegator"), "When adjusting maneuver for maneuvers other than lane follow, no previous lanelet found on the shortest path. " <<
-                            "Picking arbitrary lanelet: " << previous_lanelets[0].id() << ", instead");
+                        RCLCPP_WARN_STREAM(rclcpp::get_logger("plan_delegator"), "When adjusting non-lane follow maneuver, no previous lanelet found on the shortest path for lanelet " 
+                            << original_starting_lanelet.id() << ". Picking arbitrary lanelet: " << previous_lanelets[0].id() << ", instead");
                         previous_lanelet_to_add = previous_lanelets[0];
                     }
                     setManeuverStartingLaneletId(maneuver, previous_lanelet_to_add.id());

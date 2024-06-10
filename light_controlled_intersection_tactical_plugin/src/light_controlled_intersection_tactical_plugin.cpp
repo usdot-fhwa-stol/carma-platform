@@ -77,8 +77,9 @@ namespace light_controlled_intersection_tactical_plugin
             current_lanelet = llt_on_route_optional.value();
         }
         else{
-            RCLCPP_WARN_STREAM(rclcpp::get_logger("plan_delegator"), "When adjusting maneuver for maneuvers other than lane follow, no previous lanelet found on the shortest path. " <<
-                "Picking arbitrary lanelet: " << current_lanelets[0].id() << ", instead");
+        RCLCPP_WARN_STREAM(rclcpp::get_logger("light_controlled_intersection_tactical_plugin"), "When identifying the corresponding lanelet for requested trajectory plan's state, x: " 
+            << req->vehicle_state.x_pos_global << ", y: " << req->vehicle_state.y_pos_global << ", no possible lanelet was found to be on the shortest path."
+            << "Picking arbitrary lanelet: " << current_lanelets[0].id() << ", instead");
             current_lanelet = current_lanelets[0];
         }
 
