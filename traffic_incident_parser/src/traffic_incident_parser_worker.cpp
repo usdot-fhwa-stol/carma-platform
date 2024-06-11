@@ -279,12 +279,12 @@ namespace traffic_incident_parser
         RCLCPP_DEBUG_STREAM(logger_->get_logger(), "In composeTrafficControlMesssages");
         if(!wm_->getMap())
         {
-            RCLCPP_WARN_STREAM(logger_->get_logger(), "Traffic Incident Parser received traffic control message, but it has not loaded the map yet. Returning empty list");
+            RCLCPP_WARN_STREAM(logger_->get_logger(), "Traffic Incident Parser is composing a Traffic Control Message, but it has not loaded the map yet. Returning empty list");
             return {};
         }
         if (projection_msg_ == "")
         {
-            RCLCPP_WARN_STREAM(logger_->get_logger(), "Traffic Incident Parser received traffic control message, but georeference has not loaded yet. Returning empty list");
+            RCLCPP_WARN_STREAM(logger_->get_logger(), "Traffic Incident Parser is composing a Traffic Control Message, but georeference has not loaded yet. Returning empty list");
             return {};
         }
         local_point_=getIncidentOriginPoint();
