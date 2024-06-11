@@ -36,7 +36,7 @@ namespace approaching_emergency_vehicle_plugin
     double finished_passing_threshold = 152.4;     // (Meters) A threshold; an actively-passing ERV is considered to have completed passing the ego vehicle when
                                                    // its distance in front of the ego vehicle reaches this value.
 
-    double min_lane_following_duration_before_lane_change = 3.0; // (Seconds) The minimum duration of lane following that must be planned before a lane change when in the 
+    double min_lane_following_duration_before_lane_change = 3.0; // (Seconds) The minimum duration of lane following that must be planned before a lane change when in the
                                                                  // MOVING_OVER_FOR_APPROACHING_ERV state.
 
     double bsm_processing_frequency = 1.0;         // (Hz) The rate that incoming BSMs from a specific ERV will be processed by this plugin.
@@ -52,11 +52,11 @@ namespace approaching_emergency_vehicle_plugin
     double reduced_speed_buffer = 1.1176;          // (m/s) A buffer value; if the ego vehicle speed is within this speed of its target speed when slowing down for an actively passing
                                                    // ERV, then this plugin will state in its approaching ERV status message that the ego vehicle has finished slowing down.
 
-    double timeout_check_frequency = 2.0;          // (Hz) The frequency at which this plugin will check whether a timeout has occurred for the 
+    double timeout_check_frequency = 2.0;          // (Hz) The frequency at which this plugin will check whether a timeout has occurred for the
                                                    // currently-tracked ERV.
-  
+
     double timeout_duration = 5.0;                 // (Seconds) If no BSM has been received from the currently-tracked ERV, than the ERV will no longer be tracked by
-                                                   // this plugin. 
+                                                   // this plugin.
 
     double minimal_plan_duration = 15.0;           // (Seconds) The minimal duration of a generated maneuver plan.
 
@@ -71,7 +71,7 @@ namespace approaching_emergency_vehicle_plugin
 
     double approaching_erv_status_publication_frequency = 1.0;  // (Hz) The frequency at which this plugin will publish status updates to the Web UI that describe the estimated time until an approaching ERV
                                                                 // passes the ego vehicle, and a description of the ego vehicle's path plan in response to the approaching ERV.
-    
+
     double warning_broadcast_frequency = 1.0;      // (Hz) The frequency at which this plugin will broadcast EmergencyVehicleResponse warning messages to the currently-tracked ERV
                                                    // when the ego vehicle is in the approaching ERV's path but is unable to change lanes.
 
@@ -105,13 +105,13 @@ namespace approaching_emergency_vehicle_plugin
            << "timeout_check_frequency: " << c.timeout_check_frequency << std::endl
            << "timeout_duration: " << c.timeout_duration << std::endl
            << "minimal_plan_duration: " << c.minimal_plan_duration << std::endl
-           << "buffer_distance_before_stopping: " << c.buffer_distance_before_stopping << std::endl 
-           << "stopping_accel_limit_multiplier: " << c.stopping_accel_limit_multiplier << std::endl 
-           << "vehicle_acceleration_limit: " << c.vehicle_acceleration_limit << std::endl 
+           << "buffer_distance_before_stopping: " << c.buffer_distance_before_stopping << std::endl
+           << "stopping_accel_limit_multiplier: " << c.stopping_accel_limit_multiplier << std::endl
+           << "vehicle_acceleration_limit: " << c.vehicle_acceleration_limit << std::endl
            << "route_end_point_buffer: " << c.route_end_point_buffer << std::endl
            << "approaching_erv_status_publication_frequency: " << c.approaching_erv_status_publication_frequency << std::endl
-           << "warning_broadcast_frequency: " << c.warning_broadcast_frequency << std::endl 
-           << "max_warning_broadcasts: " << c.max_warning_broadcasts << std::endl 
+           << "warning_broadcast_frequency: " << c.warning_broadcast_frequency << std::endl
+           << "max_warning_broadcasts: " << c.max_warning_broadcasts << std::endl
            << "lane_following_plugin: " << c.lane_following_plugin << std::endl
            << "lane_change_plugin: " << c.lane_change_plugin << std::endl
            << "stop_and_wait_plugin: " << c.stop_and_wait_plugin << std::endl

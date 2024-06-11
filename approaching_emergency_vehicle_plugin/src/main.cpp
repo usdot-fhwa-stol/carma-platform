@@ -17,12 +17,12 @@
 #include <rclcpp/rclcpp.hpp>
 #include "approaching_emergency_vehicle_plugin/approaching_emergency_vehicle_plugin_node.hpp"
 
-int main(int argc, char **argv) 
+int main(int argc, char **argv)
 {
   rclcpp::init(argc, argv);
 
   auto node = std::make_shared<approaching_emergency_vehicle_plugin::ApproachingEmergencyVehiclePlugin>(rclcpp::NodeOptions());
-  
+
   rclcpp::executors::MultiThreadedExecutor executor;
   executor.add_node(node->get_node_base_interface());
   executor.spin();

@@ -13,12 +13,12 @@ approaching_threshold : 75.0
 # Units: Meters
 finished_passing_threshold : 152.4
 
-# Double: The minimum duration of lane following that must be planned before a lane change when in the 
+# Double: The minimum duration of lane following that must be planned before a lane change when in the
 #         MOVING_OVER_FOR_APPROACHING_ERV state.
 # Units: Seconds
 min_lane_following_duration_before_lane_change : 3.0
 
-# Double: The rate that incoming BSMs from a specific ERV will be processed by this plugin. All received 
+# Double: The rate that incoming BSMs from a specific ERV will be processed by this plugin. All received
 #         BSMs from an ERV between processed BSMs will be dropped.
 # Units: Hz
 bsm_processing_frequency : 1.0
@@ -47,12 +47,12 @@ reduced_speed_buffer : 1.1176 # NOTE: 1.1176 m/s to 2.5 mph
 timeout_check_frequency : 2.0
 
 # Double: If no BSM has been received from the currently-tracked ERV, than the ERV will no longer be tracked by
-#         this plugin. 
+#         this plugin.
 # Units: Seconds
 timeout_duration : 15.0
 
 # Double: The frequency at which this plugin will publish status updates to the Web UI that describe the estimated time until an approaching ERV
-#         passes the ego vehicle, and a description of the ego vehicle's path plan in response to the approaching ERV. 
+#         passes the ego vehicle, and a description of the ego vehicle's path plan in response to the approaching ERV.
 # Units: Hz
 approaching_erv_status_publication_frequency : 5.0
 

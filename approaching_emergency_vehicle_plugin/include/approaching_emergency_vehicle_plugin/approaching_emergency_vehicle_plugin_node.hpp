@@ -67,7 +67,7 @@ namespace approaching_emergency_vehicle_plugin
    * \brief Convenience struct for storing relevant data for an Emergency Response Vehicle (ERV).
    */
   struct ErvInformation{
-    std::string vehicle_id;            // The vehicle ID asssociated with an ERV 
+    std::string vehicle_id;            // The vehicle ID asssociated with an ERV
     double current_speed;              // The current speed (m/s) of an ERV
     double current_latitude;           // The current latitude of an ERV
     double current_longitude;          // The current longitude of an ERV
@@ -75,8 +75,8 @@ namespace approaching_emergency_vehicle_plugin
     lanelet::ConstLanelet intersecting_lanelet;    // The first intersecting lanelet between ERV's future route and CMV's future shortest path
     double seconds_until_passing;      // The estimated duration (seconds) until the ERV will pass the ego vehicle
                                        //     based on their current positions and current speeds
-    int previous_lane_index;           // The lane index of the 
-    int lane_index = 0;                // The ERV's current lane index 
+    int previous_lane_index;           // The lane index of the
+    int lane_index = 0;                // The ERV's current lane index
                                        //     NOTE 1: For 'lane index', 0 is rightmost lane, 1 is second rightmost, etc.; Only the current travel direction is considered
                                        //     NOTE 2: To prevent "noisy" lane index calculations from the ERV, this value is only updated when the lane index of the ERV (according to a processed BSM) matches
                                        //                previous_lane_index, which was obtained from the previously processed BSM.
@@ -84,7 +84,7 @@ namespace approaching_emergency_vehicle_plugin
   };
 
   /**
-   * \brief Convenience struct for storing the parameters of an upcoming lane change to ensure that the same parameters 
+   * \brief Convenience struct for storing the parameters of an upcoming lane change to ensure that the same parameters
    * are used in separately generated maneuver plans.
    */
   struct UpcomingLaneChangeParameters{
@@ -104,7 +104,7 @@ namespace approaching_emergency_vehicle_plugin
   /**
    * \brief Class that implements the Approaching Emergency Vehicle Plugin (ERV) strategic plugin. This
    * class is primarily responsible for handling ROS topic subscriptions, publications, and service callbacks
-   * for processing incoming BSMs from ERV's, generating manuever plans that account for a nearby ERV, and 
+   * for processing incoming BSMs from ERV's, generating manuever plans that account for a nearby ERV, and
    * publishing warning message(s) to an approaching ERV when the ego vehicle is in its path.
    */
   class ApproachingEmergencyVehiclePlugin : public carma_guidance_plugins::StrategicPlugin
@@ -134,7 +134,7 @@ namespace approaching_emergency_vehicle_plugin
     carma_ros2_utils::PubPtr<std_msgs::msg::Bool> hazard_light_cmd_pub_;
 
     /**
-     * \brief Helper function to obtain an ERV's position in the map frame from its current latitude and longitude. 
+     * \brief Helper function to obtain an ERV's position in the map frame from its current latitude and longitude.
      * \param current_latitude The current latitude of the ERV.
      * \param current_longitude The current longitude of the ERV.
      * \return An optional lanelet::BasicPoint2d object, which is empty if the projection of the ERV's current position into
@@ -149,7 +149,7 @@ namespace approaching_emergency_vehicle_plugin
      * \param erv_destination_points The ERV's future destination points.
      * \return An optional lanelet::routing::Route object, which is empty if the generation of the ERV's route was not successful.
      */
-    lanelet::Optional<lanelet::routing::Route> generateErvRoute(double current_latitude, double current_longitude, 
+    lanelet::Optional<lanelet::routing::Route> generateErvRoute(double current_latitude, double current_longitude,
                                                                              std::vector<carma_v2x_msgs::msg::Position3D> erv_destination_points);
 
     /**
@@ -168,17 +168,17 @@ namespace approaching_emergency_vehicle_plugin
      * \param erv_current_speed The ERV's current speed (m/s)
      * \param intersecting_lanelet The earliest lanelet that exists on both the ERV's future route and the ego vehicle's
      * future shortest path.
-     * \return An optional double, which includes the estimated seconds until the ERV will pass the ego vehicle. If empty, 
+     * \return An optional double, which includes the estimated seconds until the ERV will pass the ego vehicle. If empty,
      * the ERV is behind the ego vehicle and travelling slower than the ego vehicle, or the ERV is in front of the ego vehicle
      * while not actively passing the ego vehicle.
      */
-    boost::optional<double> getSecondsUntilPassing(lanelet::Optional<lanelet::routing::Route>& erv_future_route, const lanelet::BasicPoint2d& erv_position_in_map, 
+    boost::optional<double> getSecondsUntilPassing(lanelet::Optional<lanelet::routing::Route>& erv_future_route, const lanelet::BasicPoint2d& erv_position_in_map,
                                   const double& erv_current_speed, lanelet::ConstLanelet& intersecting_lanelet);
 
     /**
      * \brief Through internal logic and calls to separate helper functions, this function processes a received BSM
      * to obtain all necessary information for an ERV to be tracked. This "necessary information" includes all fields
-     * contained within an ErvInformation struct. 
+     * contained within an ErvInformation struct.
      * \param msg The BSM message to be processed. It may or may not be from an active ERV.
      * \return An optional ErvInformation object, which is empty if BSM processing could not extract all necessary information
      * required for an ERV to be tracked.
@@ -186,8 +186,8 @@ namespace approaching_emergency_vehicle_plugin
     boost::optional<ErvInformation> getErvInformationFromBsm(carma_v2x_msgs::msg::BSM::UniquePtr msg);
 
     /**
-     * \brief This is a callback function for the erv_timeout_timer_ timer, and  is called to determine whether a 
-     * timeout has occurred for the currently tracked ERV by comparing the duration since the latest ERV BSM was received 
+     * \brief This is a callback function for the erv_timeout_timer_ timer, and  is called to determine whether a
+     * timeout has occurred for the currently tracked ERV by comparing the duration since the latest ERV BSM was received
      * with config_.timeout_duration. If a timeout has occurred, an ERV_UPDATE_TIMEOUT event will be triggered for this plugin's
      * transition_table_ object, and the has_tracked_erv_ boolean flag will be set to false.
      */
@@ -195,7 +195,7 @@ namespace approaching_emergency_vehicle_plugin
 
     /**
      * \brief This is a callback function for the warning_broadcast_timer_, and is called to broadcast an EmergencyVehicleResponse
-     * warning message to the currently tracked ERV when the ego vehicle is in the ERV's path, but is unable to change lanes because 
+     * warning message to the currently tracked ERV when the ego vehicle is in the ERV's path, but is unable to change lanes because
      * the ERV is estimated to pass the ego vehicle in under config_.passing_threshold. It increases the num_warnings_broadcasted_ counter,
      * and resets it to 0 when it has reached config_.max_warning_broadcasts. Additionally, when config_.max_warning_broadcasts is reached,
      * this method sets should_broadcast_warnings_ to false.
@@ -214,9 +214,9 @@ namespace approaching_emergency_vehicle_plugin
     void publishHazardLightStatus();
 
     /**
-     * \brief Function to generate a carma_msgs::msg::UIInstructions message that describes whether there is currently an approaching ERV that is 
+     * \brief Function to generate a carma_msgs::msg::UIInstructions message that describes whether there is currently an approaching ERV that is
      * being tracked by this plugin. The generated message will follow the format described for this plugin's APPROACHING_ERV_STATUS_PARAMS string object.
-     * \return A carma_msgs::msg::UIInstructions message with a 'msg' string field that follows the format described for this plugin's 
+     * \return A carma_msgs::msg::UIInstructions message with a 'msg' string field that follows the format described for this plugin's
      * APPROACHING_ERV_STATUS_PARAMS string object.
      */
     carma_msgs::msg::UIInstructions generateApproachingErvStatusMessage();
@@ -255,7 +255,7 @@ namespace approaching_emergency_vehicle_plugin
      * \param start_time The estimated time that the ego vehicle will start this maneuver.
      * \return A lane following maneuver message composed based on the provided maneuver parameters.
      */
-    carma_planning_msgs::msg::Maneuver composeLaneFollowingManeuverMessage(double start_dist, double end_dist, 
+    carma_planning_msgs::msg::Maneuver composeLaneFollowingManeuverMessage(double start_dist, double end_dist,
                                   double start_speed, double target_speed, int lanelet_id, rclcpp::Time& start_time) const;
 
     /**
@@ -269,7 +269,7 @@ namespace approaching_emergency_vehicle_plugin
      * \param start_time The estimated time that the ego vehicle will start this maneuver.
      * \return A lane change maneuver message composed based on the provided maneuver parameters.
      */
-    carma_planning_msgs::msg::Maneuver composeLaneChangeManeuverMessage(double start_dist, double end_dist, 
+    carma_planning_msgs::msg::Maneuver composeLaneChangeManeuverMessage(double start_dist, double end_dist,
                                   double start_speed, double target_speed, lanelet::Id starting_lane_id, lanelet::Id ending_lane_id, rclcpp::Time& start_time) const;
 
     /**
@@ -283,7 +283,7 @@ namespace approaching_emergency_vehicle_plugin
      * \param start_time The estimated time that the ego vehicle will start this maneuver.
      * \return A lane change maneuver message composed based on the provided maneuver parameters.
      */
-    carma_planning_msgs::msg::Maneuver composeStopAndWaitManeuverMessage(double start_dist, double end_dist, double start_speed, 
+    carma_planning_msgs::msg::Maneuver composeStopAndWaitManeuverMessage(double start_dist, double end_dist, double start_speed,
                                   lanelet::Id starting_lane_id, lanelet::Id ending_lane_id, double stopping_deceleration, rclcpp::Time& start_time) const;
 
     /**
@@ -303,14 +303,14 @@ namespace approaching_emergency_vehicle_plugin
      * \return None; but function updates the provided 'resp', which is the service response for the Plan Maneuvers service. The maneuver plan in this response will
      * be updated to have a stop and wait maneuver added at its end.
      */
-    void addStopAndWaitToEndOfPlan(carma_planning_msgs::srv::PlanManeuvers::Response::SharedPtr resp, 
-                          double downtrack_progress, double stop_maneuver_beginning_downtrack, double end_of_route_downtrack, 
+    void addStopAndWaitToEndOfPlan(carma_planning_msgs::srv::PlanManeuvers::Response::SharedPtr resp,
+                          double downtrack_progress, double stop_maneuver_beginning_downtrack, double end_of_route_downtrack,
                           double stopping_entry_speed, double stopping_deceleration, double current_lanelet_ending_downtrack,
                           lanelet::ConstLanelet current_lanelet, rclcpp::Time time_progress);
 
     /**
      * \brief Function to generate a maneuver plan when the ego vehicle must remain in its lane due to being in the SLOWING_DOWN_FOR_ERV state.
-     * The target speed of lane follow maneuvers in the generated plan will have a 
+     * The target speed of lane follow maneuvers in the generated plan will have a
      * reduced value.
      * \param resp The service response for the Plan Maneuvers service, which will be updated by this function.
      * \param current_lanelet The current lanelet that the first maneuver generated by this function will use.
@@ -341,7 +341,7 @@ namespace approaching_emergency_vehicle_plugin
      * \param ego_lane_index The ego vehicle's current lane index (NOTE: For 'lane index', 0 is rightmost lane, 1 is second rightmost, etc.; Only the current travel direction is considered)
      * \param erv_lane_index The ERV's current lane index (NOTE: For 'lane index', 0 is rightmost lane, 1 is second rightmost, etc.; Only the current travel direction is considered)
      * \return None; but function updates the provided 'resp', which is the service response for the Plan Maneuvers service. The maneuver plan in this response will
-     * be updated to contain lane following maneuvers along with one lane change maneuver. A stop and wait maneuver will be included at the end if the maneuver plan 
+     * be updated to contain lane following maneuvers along with one lane change maneuver. A stop and wait maneuver will be included at the end if the maneuver plan
      * reaches the end of the route.
      */
     void generateMoveOverManeuverPlan(carma_planning_msgs::srv::PlanManeuvers::Response::SharedPtr resp,
@@ -351,10 +351,10 @@ namespace approaching_emergency_vehicle_plugin
 
      /**
      * \brief Helper function that return points ahead of the given reference point accounting for the list of point's direction (idx 0 is the beginning).
-     *        Used for getting route destination points ahead of the ERV 
+     *        Used for getting route destination points ahead of the ERV
      * \param reference_point Reference point to check against the list of points
      * \param original_points List of points.
-     * 
+     *
      * \return Points ahead of the reference_point. Empty if the point is determined to have passed the destination points.
      *         NOTE: if the list only has 1 point, it returns it as it is not possible to determine direction.
      */
@@ -384,7 +384,7 @@ namespace approaching_emergency_vehicle_plugin
       * Formatted string for conveying the status of this plugin and the ego vehicle's current action in response to an approaching ERV.
       *    - Index 0: (Boolean) Value indicating whether the ego vehicle is tracking an approaching ERV
       *    - Index 1: (Double; rounded to first decimal place)  If an approaching ERV exists, this indicates the estimated seconds until the ERV passes the ego vehicle.
-      *    - Index 2: (String)  If an approaching ERV exists, this describes the current action of the ego vehicle in response to the approaching ERV. 
+      *    - Index 2: (String)  If an approaching ERV exists, this describes the current action of the ego vehicle in response to the approaching ERV.
       *    - NOTE: The values of indexes 1 and 2 can be ignored if index 0 indicates that no approaching ERV is being tracked.
       */
     const std::string APPROACHING_ERV_STATUS_PARAMS = "HAS_APPROACHING_ERV:%1%,TIME_UNTIL_PASSING:%2$.1f,EGO_VEHICLE_ACTION:%3%";
@@ -408,7 +408,7 @@ namespace approaching_emergency_vehicle_plugin
     // Timer used to trigger the publication of a message describing the status of this plugin and the ego vehicle's current action in response to an approaching ERV
     rclcpp::TimerBase::SharedPtr approaching_emergency_vehicle_status_timer_;
 
-    // Timer used to command the hazard lights to turn ON/OFF (true/false) 
+    // Timer used to command the hazard lights to turn ON/OFF (true/false)
     rclcpp::TimerBase::SharedPtr hazard_light_timer_;
 
     // Object to store the parameters of an upcoming lane change maneuver so that the same parameters are used when the
@@ -433,9 +433,9 @@ namespace approaching_emergency_vehicle_plugin
     bool is_maintaining_non_reduced_speed_ = false;
 
     // (m/s) The target speed that the ego vehicle shall maintain when the 'is_maintaining_non_reduced_speed_' flag is true. Set to the latest ego vehicle
-    //       speed at the moment transition_table_ most recently received the 'ERV_PASSING_IN_PATH' event and the ERV was estimated to pass the ego 
+    //       speed at the moment transition_table_ most recently received the 'ERV_PASSING_IN_PATH' event and the ERV was estimated to pass the ego
     //       vehicle in less than the 'MAINTAIN_SPEED_THERSHOLD' time threshold.
-    double non_reduced_speed_to_maintain_ = 4.4704; // Default is 4.4704 m/s or 10 mph 
+    double non_reduced_speed_to_maintain_ = 4.4704; // Default is 4.4704 m/s or 10 mph
 
     // Boolean flag to indicate whether guidance is currently engaged
     bool is_guidance_engaged_ = false;
@@ -459,7 +459,7 @@ namespace approaching_emergency_vehicle_plugin
     bool has_received_route_state_ = false;
 
     std::vector<int> future_route_lanelet_ids_;
-    
+
     // Logger name for this plugin
     std::string logger_name = "approaching_emergency_vehicle_plugin";
 
@@ -491,7 +491,7 @@ namespace approaching_emergency_vehicle_plugin
     /**
      * \brief Callback for dynamic parameter updates
      */
-    rcl_interfaces::msg::SetParametersResult 
+    rcl_interfaces::msg::SetParametersResult
     parameter_update_callback(const std::vector<rclcpp::Parameter> &parameters);
 
     /**
@@ -503,13 +503,13 @@ namespace approaching_emergency_vehicle_plugin
     void incomingBsmCallback(carma_v2x_msgs::msg::BSM::UniquePtr msg);
 
     /**
-     * \brief Route State subscription callback, with is used to update this plugin's latest_route_state_ object. 
+     * \brief Route State subscription callback, with is used to update this plugin's latest_route_state_ object.
      * \param msg The latest Route State message.
      */
     void routeStateCallback(carma_planning_msgs::msg::RouteState::UniquePtr msg);
 
     /**
-     * \brief Route subscription callback, with is used to update this plugin's future_route_lanelet_ids_ object. 
+     * \brief Route subscription callback, with is used to update this plugin's future_route_lanelet_ids_ object.
      * \param msg The latest Route message.
      */
     void routeCallback(carma_planning_msgs::msg::Route::UniquePtr msg);
@@ -542,22 +542,22 @@ namespace approaching_emergency_vehicle_plugin
     // Overrides
     ////
     void plan_maneuvers_callback(
-      std::shared_ptr<rmw_request_id_t>, 
-      carma_planning_msgs::srv::PlanManeuvers::Request::SharedPtr req, 
+      std::shared_ptr<rmw_request_id_t>,
+      carma_planning_msgs::srv::PlanManeuvers::Request::SharedPtr req,
       carma_planning_msgs::srv::PlanManeuvers::Response::SharedPtr resp) override;
 
     bool get_availability() override;
 
     std::string get_version_id() override;
-    
+
     /**
      * \brief This method is used to load parameters and will be called on the configure state transition.
-     */ 
+     */
     carma_ros2_utils::CallbackReturn on_configure_plugin();
 
     /**
      * \brief This method is used to create a timer and will be called on the activate transition.
-     */ 
+     */
     carma_ros2_utils::CallbackReturn on_activate_plugin();
 
     // World Model pointer

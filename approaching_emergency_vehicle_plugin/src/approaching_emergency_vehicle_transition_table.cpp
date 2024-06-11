@@ -155,10 +155,10 @@ void ApproachingEmergencyVehicleTransitionTable::setAndLogState(ApproachingEmerg
 
   RCLCPP_INFO_STREAM(rclcpp::get_logger("approaching_emergency_vehicle_plugin"), "ApproachingEmergencyVehicleTransitionTable changed ApproachingEmergencyVehicle Strategic Plugin state from "
                   << state_ << " to " << new_state << " because of event " << source_event);
- 
+
   ApproachingEmergencyVehicleState prev_state = state_;
   state_ = new_state; // Set new state
-  
+
   if (transition_callback_) // Trigger callback if available
   {
     transition_callback_(prev_state, state_, source_event);

@@ -23,11 +23,11 @@ namespace approaching_emergency_vehicle_plugin
 //! @brief Enum describing the possible states of the ApproachingEmergencyVehiclePlugin (Strategic Plugin)
 enum class ApproachingEmergencyVehicleState
 {
-    NO_APPROACHING_ERV, // State representing that an ERV is not passing the ego vehicle within the duration defined by 
+    NO_APPROACHING_ERV, // State representing that an ERV is not passing the ego vehicle within the duration defined by
                         // the "approaching_threshold" configurable parameter.
     MOVING_OVER_FOR_APPROACHING_ERV, // State representing that the ego vehicle must change lanes in response to an approaching ERV.
 
-    SLOWING_DOWN_FOR_ERV  // State representing that the ERV is actively passing the ego vehicle, so the ego vehicle should remain in its 
+    SLOWING_DOWN_FOR_ERV  // State representing that the ERV is actively passing the ego vehicle, so the ego vehicle should remain in its
                           // current lane and slow down if necessary.
 };
 
@@ -43,7 +43,7 @@ enum class ApproachingEmergencyVehicleEvent
     ERV_UPDATE_TIMEOUT, // Event representing that no BSMs have been received from the currently-tracked ERV within the duration
                         // defined by the "timeout_duration" configurable parameters.
 
-    NO_APPROACHING_ERV, // Event representing that an ERV is not passing the ego vehicle within the duration defined by 
+    NO_APPROACHING_ERV, // Event representing that an ERV is not passing the ego vehicle within the duration defined by
                         // the "approaching_threshold" configurable parameter.
 
     APPROACHING_ERV_IN_PATH, // Event representing that an ERV is approaching the ego vehicle and the ego vehicle is either
