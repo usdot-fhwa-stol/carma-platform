@@ -149,7 +149,7 @@ private:
   bool enable_ctrv_for_small_vehicle_obj_ = true;
   bool enable_ctrv_for_large_vehicle_obj_ = true;
   bool enable_ctrv_for_pedestrian_obj_ = false;
-  
+
   // Map frame
   std::string map_frame_id_ = "map";
 
