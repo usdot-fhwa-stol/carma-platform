@@ -15,7 +15,7 @@
  */
 
 /*
- * Developed by the UCLA Mobility Lab, 10/20/2021. 
+ * Developed by the UCLA Mobility Lab, 10/20/2021.
  *
  * Creator: Xu Han
  * Author: Xu Han, Xin Xia, Jiaqi Ma
@@ -64,7 +64,7 @@ namespace platoon_strategic_ihp
     using PlatooningInfoCB = std::function<void(const carma_planning_msgs::msg::PlatooningInfo&)>;
 
     /**
-    * \brief Class containing the logic for Strategic IHP Plugin. This class is responsible for all the negotiations as well as generating a maneuver msg. 
+    * \brief Class containing the logic for Strategic IHP Plugin. This class is responsible for all the negotiations as well as generating a maneuver msg.
     */
     class PlatoonStrategicIHPPlugin
     {
@@ -72,39 +72,39 @@ namespace platoon_strategic_ihp
 
             /**
             * \brief Constructor
-            * 
+            *
             * \param wm Pointer to initalized instance of the carma world model for accessing semantic map data
             * \param config The configuration to be used for this object
-            */ 
+            */
             PlatoonStrategicIHPPlugin(carma_wm::WorldModelConstPtr wm, PlatoonPluginConfig config, MobilityResponseCB mobility_response_publisher,
                                 MobilityRequestCB mobility_request_publisher, MobilityOperationCB mobility_operation_publisher,
                                 PlatooningInfoCB platooning_info_publisher,
                                 std::shared_ptr<carma_ros2_utils::timers::TimerFactory> timer_factory);
-            
+
             /**
             * \brief Callback function for Mobility Operation Message
-            * 
+            *
             * \param msg Mobility Operation Message
             */
             void mob_op_cb(const carma_v2x_msgs::msg::MobilityOperation::UniquePtr msg);
 
             /**
             * \brief Callback function for Mobility Request Message
-            * 
+            *
             * \param msg Mobility Request Message
             */
             void mob_req_cb(const carma_v2x_msgs::msg::MobilityRequest::UniquePtr msg);
 
             /**
             * \brief Callback function for Mobility Response Message
-            * 
+            *
             * \param msg Mobility Response Message
             */
             void mob_resp_cb(const carma_v2x_msgs::msg::MobilityResponse::UniquePtr msg);
 
             /**
             * \brief Function to the process and respond to the mobility request
-            * 
+            *
             * \param msg Mobility Request Message
             *
             * \return Mobility response message
@@ -113,7 +113,7 @@ namespace platoon_strategic_ihp
 
             /**
             * \brief Callback function to the maneuver request
-            * 
+            *
             * \param req Maneuver service request
             * \param resp Maneuver service response
             *
@@ -123,7 +123,7 @@ namespace platoon_strategic_ihp
 
             /**
             * \brief Find lanelet index from path
-            * 
+            *
             * \param path path
             * \param target_id target lanelet id
             *
@@ -133,19 +133,19 @@ namespace platoon_strategic_ihp
 
             /**
             * \brief Find lanelet width from local position
-            * 
+            *
             * \return lanelet index
             */
             double findLaneWidth();
 
             /**
             * \brief Find lanelet index from path
-            * 
+            *
             * \param current_dist: current downtrack distance (m)
             * \param end_dist: ending downtrack distance (m)
             * \param current_speed: current speed (m/s)
             * \param target_speed: target speed (m/s)
-            * \param lane_id: lanelet id 
+            * \param lane_id: lanelet id
             * \param current_time: current time (s)
             *
             * \return Maneuver message
@@ -154,7 +154,7 @@ namespace platoon_strategic_ihp
 
             /**
             * \brief Find start(current) and target(end) lanelet index from path to generate lane change maneuver message.
-            * 
+            *
             * \param current_dist: current downtrack distance
             * \param end_dist: ending downtrack distance
             * \param current_speed: current speed
@@ -169,7 +169,7 @@ namespace platoon_strategic_ihp
 
             /**
             * \brief Update maneuver status based on prior plan
-            * 
+            *
             * \param maneuver maneuver
             * \param speed speed
             * \param current_progress current progress
@@ -179,34 +179,34 @@ namespace platoon_strategic_ihp
 
             /**
             * \brief Callback function for current pose
-            * 
+            *
             * \param msg PoseStamped msg
             */
             void pose_cb(const geometry_msgs::msg::PoseStamped::UniquePtr msg);
 
             /**
             * \brief Compose Platoon information message
-            * 
+            *
             * \return PlatooningInfo msg
 
             * Note: There is a difference between the "platoon info status" versus the the "platoon strategic plugin states".
-            *       
+            *
             *       [platooning info status]
-            *       The "platooning info status" reflect the overall operating status. The status can 
-            *       include vehicles in different "platoon strategic plugin states" as long as the current state is relavent 
+            *       The "platooning info status" reflect the overall operating status. The status can
+            *       include vehicles in different "platoon strategic plugin states" as long as the current state is relavent
             *       to the genral status.
-            *       
+            *
             *       [platoon strategic plugin states]
-            *       The "platoon strategic plugin states" manage the negotiation strategies and 
-            *       vehicle communication in a more refined manner that can achieve the "platooning info status'" objective. Hence, 
-            *       vehicles in different states will behave differently based on the corresponding roles and predefined rules. 
-            *       However, they can belong to the same "platooning info statu" for the same operation purpose. 
-            *       
-            *       [Example]  
-            *       Multiple strategic states, such as "leader aborting" and "candidate follower", can both be mapped to 
-            *       "connecting to new leader" platooning info status, as both states are serving the same purpose of connecting 
-            *       to the leader. 
-            * 
+            *       The "platoon strategic plugin states" manage the negotiation strategies and
+            *       vehicle communication in a more refined manner that can achieve the "platooning info status'" objective. Hence,
+            *       vehicles in different states will behave differently based on the corresponding roles and predefined rules.
+            *       However, they can belong to the same "platooning info statu" for the same operation purpose.
+            *
+            *       [Example]
+            *       Multiple strategic states, such as "leader aborting" and "candidate follower", can both be mapped to
+            *       "connecting to new leader" platooning info status, as both states are serving the same purpose of connecting
+            *       to the leader.
+            *
             */
             carma_planning_msgs::msg::PlatooningInfo composePlatoonInfoMsg();
 
@@ -237,7 +237,7 @@ namespace platoon_strategic_ihp
             * \brief Run Leader State
             */
             void run_leader();
-            
+
             /**
             * \brief Run Leader Waiting State
             */
@@ -272,7 +272,7 @@ namespace platoon_strategic_ihp
             * \brief UCLA Run lead with operation State
             */
             void run_lead_with_operation();
-            
+
             /**
             * \brief UCLA Run prepare to join State
             */
@@ -300,11 +300,11 @@ namespace platoon_strategic_ihp
 
             /**
              * \brief Set the current config
-             */ 
+             */
             void setConfig(const PlatoonPluginConfig& config);
 
         private:
-            
+
             MobilityRequestCB mobility_request_publisher_;
             MobilityResponseCB mobility_response_publisher_;
             MobilityOperationCB mobility_operation_publisher_;
@@ -320,7 +320,7 @@ namespace platoon_strategic_ihp
             // local copy of pose
             // Current vehicle pose in map
             geometry_msgs::msg::PoseStamped pose_msg_;
-            
+
             //Internal Variables used in unit tests
             // Current vehicle command speed, m/s
             double cmd_speed_ = 0;
@@ -349,7 +349,7 @@ namespace platoon_strategic_ihp
             * \return true or false
             */
             bool isVehicleRightInFront(double downtrack, double crosstrack);
-            
+
             /**
             * \brief Function to find speed limit of a lanelet
             *
@@ -417,7 +417,7 @@ namespace platoon_strategic_ihp
             * \param msg incoming mobility response
             */
             void mob_resp_cb_leaderwaiting(const carma_v2x_msgs::msg::MobilityResponse& msg);
-            
+
             /**
             * \brief Function to process mobility response in follower state
             *
@@ -438,42 +438,42 @@ namespace platoon_strategic_ihp
             * \param msg incoming mobility response
             */
             void mob_resp_cb_standby(const carma_v2x_msgs::msg::MobilityResponse& msg);
-            
+
             /**
             * \brief Function to process mobility operation in leader state
             *
             * \param msg incoming mobility operation
             */
             void mob_op_cb_leader(const carma_v2x_msgs::msg::MobilityOperation& msg);
-            
+
             /**
             * \brief Function to process mobility operation in leader waiting state
             *
             * \param msg incoming mobility operation
             */
             void mob_op_cb_leaderwaiting(const carma_v2x_msgs::msg::MobilityOperation& msg);
-            
+
             /**
             * \brief Function to process mobility operation in follower state
             *
             * \param msg incoming mobility operation
             */
             void mob_op_cb_follower(const carma_v2x_msgs::msg::MobilityOperation& msg);
-            
+
             /**
             * \brief Function to process mobility operation in candidate follower state
             *
             * \param msg incoming mobility operation
             */
             void mob_op_cb_candidatefollower(const carma_v2x_msgs::msg::MobilityOperation& msg);
-            
+
             /**
             * \brief Function to process mobility operation in standby state
             *
             * \param msg incoming mobility operation
             */
             void mob_op_cb_standby(const carma_v2x_msgs::msg::MobilityOperation& msg);
-            
+
             /**
             * \brief Function to compose mobility operation in leader state
             *
@@ -503,7 +503,7 @@ namespace platoon_strategic_ihp
             * \return mobility operation msg
             */
             carma_v2x_msgs::msg::MobilityOperation composeMobilityOperationCandidateFollower();
-            
+
             /**
             * \brief Function to convert pose from map frame to ecef location
             *
@@ -523,12 +523,12 @@ namespace platoon_strategic_ihp
             lanelet::BasicPoint2d ecef_to_map_point(carma_v2x_msgs::msg::LocationECEF ecef_point);
 
             // -------------- UCLA implemented functions -----------------------
-            
+
             // ----- 0. Extract data -------
-            
+
             /**
             * \brief Function to determine if the given downtrack distance (m) is behind the host vehicle.
-            * 
+            *
             * note: This is only applicable for same lane application, so it will check cross track distance.
             *
             * \param downtrack: The downtrack distance (m) of the target vehicle to compare with the host.
@@ -540,19 +540,19 @@ namespace platoon_strategic_ihp
 
             /**
             * \brief The method for platoon leader to determine if the joining vehicle is closeby. (Note: Used when host vehicle is the platoon leader)
-            *  
+            *
             *
             * \param joining_downtrack: The downtrack distance of the joining vehicle.
             *        joining_crosstrack:  The crosstrack distance of the joining vehicle.
-            *        
+            *
             *
             * \return (boolean): if the host vehicle is close to the target platoon.
             */
             bool isJoiningVehicleNearPlatoon(double joining_downtrack, double joining_crosstrack);
-            
+
             /**
-            * \brief Function to determine if the host vehicle is close to the target platoon (used for cut-in join scenarios). 
-            *  
+            * \brief Function to determine if the host vehicle is close to the target platoon (used for cut-in join scenarios).
+            *
             *
             * \param rearVehicleDtd: The downtrack of the neighbor platoon rear vehicle.
             * \param frontVehicleDtd: The downtrack of the neighbor platoon leader.
@@ -564,72 +564,72 @@ namespace platoon_strategic_ihp
 
             /**
             * \brief Function to find the starting and ending lanelet ID for lane change in a two-lane scenario (used for cut-in join scenarios).
-            * 
+            *
             * Note: This is a temporary function for internal test only. The scenario is not generalized. Can only find adjacent lanletID based on predefined direction (left, right).
-            *       
-            * \TODO: This function should be replaced by the complete arbitrary lane change module. 
+            *
+            * \TODO: This function should be replaced by the complete arbitrary lane change module.
             *
             * \param start_downtrack: The downtrack distance (m) of the starting point.
             *        end_downtrack: The downtrack distance (m) of the target (end) point.
             *
-            * \return (int): The adjacent laneletID based on the provided downtrack distance range. 
+            * \return (int): The adjacent laneletID based on the provided downtrack distance range.
             */
             int find_target_lanelet_id(double start_downtrack, double end_downtrack);
-            
+
             // ----- 1. compose message ---------
-            
+
             /**
             * \brief Function to compose mobility operation message with STATUS params.
             *
             * \return mobility operation msg.
             */
             carma_v2x_msgs::msg::MobilityOperation composeMobilityOperationSTATUS();
-            
+
             /**
             * \brief Function to compose mobility operation message with INFO params.
             *
             * \return mobility operation msg.
             */
             carma_v2x_msgs::msg::MobilityOperation composeMobilityOperationINFO();
-            
+
             /**
             * \brief Function to compose mobility operation in LeaderAborting state.
             *
             * \return mobility operation msg.
             */
             carma_v2x_msgs::msg::MobilityOperation composeMobilityOperationLeaderAborting();
-            
+
             /**
             * \brief Function to compose mobility operation in CandidateLeader.
             *
             * \return mobility operation msg.
             */
             carma_v2x_msgs::msg::MobilityOperation composeMobilityOperationCandidateLeader();
-            
+
             /**
             * \brief Function to compose mobility operation in LeadWithOperation (cut-in join)
             *
             * \param type type of mobility operation (info or status)
             *
-            * \return msg: mobility operation msg 
-            *         Return null ("") if the incoming message is trashed/unrecognized. 
+            * \return msg: mobility operation msg
+            *         Return null ("") if the incoming message is trashed/unrecognized.
             */
             carma_v2x_msgs::msg::MobilityOperation composeMobilityOperationLeadWithOperation(const std::string& type);
-            
+
             /**
             * \brief Function to compose mobility operation in PrepareToJoin (cut-in join)
             *
             * \param type type of mobility operation (info or status)
             *
             * \return msg: mobility operation msg
-            *         Return null ("") if the incoming message is trashed/unrecognized. 
+            *         Return null ("") if the incoming message is trashed/unrecognized.
             */
             carma_v2x_msgs::msg::MobilityOperation composeMobilityOperationPrepareToJoin();
 
             // --------- 2. Mobility operation callback -----------
-            
+
             /**
-            * \brief Function to process mobility operation message with STATUS params, 
+            * \brief Function to process mobility operation message with STATUS params,
             *        read ecef location and update platoon member info.
             *
             * \param msg incoming mobility operation message.
@@ -640,25 +640,25 @@ namespace platoon_strategic_ihp
             * \brief Function to process mobility operation INFO params to find platoon length in m.
             *
             * \param strategyParams The parsed strategy params, used to find ecef locaton.
-            *   
+            *
             * \return The length of the platoon in m.
             */
             double mob_op_find_platoon_length_from_INFO_params(std::string strategyParams);
-            
+
             /**
             * \brief Function to process mobility operation INFO params to find platoon leader's ecef location.
             *
             * \param strategyParams The parsed strategy params, used to find ecef locaton.
-            *   
+            *
             * \return ecef location of the sender.
             */
             carma_v2x_msgs::msg::LocationECEF mob_op_find_ecef_from_INFO_params(std::string strategyParams);
-            
+
             /**
             * \brief Function to process mobility operation for STATUS params.
             *
             * \param strategyParams The parsed strategy params, used to find ecef locaton.
-            *   
+            *
             * \return ecef location of the sender.
             */
             carma_v2x_msgs::msg::LocationECEF mob_op_find_ecef_from_STATUS_params(std::string strategyParams);
@@ -669,21 +669,21 @@ namespace platoon_strategic_ihp
             * \param msg incoming mobility operation message.
             */
             void mob_op_cb_leaderaborting(const carma_v2x_msgs::msg::MobilityOperation& msg);
-            
+
             /**
             * \brief Function to process mobility operation in candidateleader state.
             *
             * \param msg incoming mobility operation message.
             */
             void mob_op_cb_candidateleader(const carma_v2x_msgs::msg::MobilityOperation& msg);
-            
+
             /**
             * \brief Function to process mobility operation in LeadWithOperation state (cut-in join)
             *
             * \param msg incoming mobility operation
             */
             void mob_op_cb_leadwithoperation(const carma_v2x_msgs::msg::MobilityOperation& msg);
-            
+
             /**
             * \brief Function to process mobility operation in PrepareToJoin state (cut-in join)
             *
@@ -692,7 +692,7 @@ namespace platoon_strategic_ihp
             void mob_op_cb_preparetojoin(const carma_v2x_msgs::msg::MobilityOperation& msg);
 
             //------- 3. Mobility request callback -----------
-            
+
             /**
             * \brief Function to process mobility request in leaderaborting state.
             *
@@ -701,7 +701,7 @@ namespace platoon_strategic_ihp
             * \return ACK, NACK, or No response.
             */
             MobilityRequestResponse mob_req_cb_leaderaborting(const carma_v2x_msgs::msg::MobilityRequest& msg);
-            
+
             /**
             * \brief Function to process mobility request in candidateleader state.
             *
@@ -710,7 +710,7 @@ namespace platoon_strategic_ihp
             * \return ACK, NACK, or No response.
             */
             MobilityRequestResponse mob_req_cb_candidateleader(const carma_v2x_msgs::msg::MobilityRequest& msg);
-            
+
             /**
             * \brief Function to process mobility request in leadwithoperation state (cut-in join)
             *
@@ -719,7 +719,7 @@ namespace platoon_strategic_ihp
             * \return ACK, NACK, or No response
             */
             MobilityRequestResponse mob_req_cb_leadwithoperation(const carma_v2x_msgs::msg::MobilityRequest& msg);
-            
+
             /**
             * \brief Function to process mobility request in preparetojoin state (cut-in join)
             *
@@ -736,23 +736,23 @@ namespace platoon_strategic_ihp
             * \param msg incoming mobility response.
             */
             void mob_resp_cb_leaderaborting(const carma_v2x_msgs::msg::MobilityResponse& msg);
-            
+
             /**
             * \brief Function to process mobility response in candidateleader state.
             *
             * \param msg incoming mobility response.
             */
             void mob_resp_cb_candidateleader(const carma_v2x_msgs::msg::MobilityResponse& msg);
-            
+
             /**
             * \brief Function to process mobility response in leadwithoperation state (cut-in join)
             *
             * \param msg incoming mobility response
             */
             void mob_resp_cb_leadwithoperation(const carma_v2x_msgs::msg::MobilityResponse& msg);
-            
+
             /**
-            * \brief Function to process mobility response in preparetojoin state 
+            * \brief Function to process mobility response in preparetojoin state
             *
             * \param msg incoming mobility response
             */
@@ -770,6 +770,7 @@ namespace platoon_strategic_ihp
             bool is_lanechange_possible(lanelet::Id start_lanelet_id, lanelet::Id target_lanelet_id);
 
             // Pointer for map projector
+            std::string georeference_{""};
             std::shared_ptr<lanelet::projection::LocalFrameProjector> map_projector_;
 
             // flag to check if map is loaded
@@ -806,7 +807,7 @@ namespace platoon_strategic_ihp
 
             // UCLA: add member variable for state prepare to join (default -2, front join -1, mid/rear join other integer)
             int target_join_index_ = -2;
-            
+
             // Is there a sufficient gap open in the platoon for a cut-in join?
             bool safeToLaneChange_ = false;
 
@@ -820,7 +821,7 @@ namespace platoon_strategic_ihp
             const std::string PLATOONING_STRATEGY = "Carma/Platooning";
             const std::string OPERATION_INFO_TYPE = "INFO";
             const std::string OPERATION_STATUS_TYPE = "STATUS";
-            
+
             // UCLA: edit INFO params to store platoon front info (front join needs 10 info params)
             /**
              * index = 0, LENGTH, physical length of the platoon, in m.
@@ -831,7 +832,7 @@ namespace platoon_strategic_ihp
              * index = 5, ECEFZ, in cm.
              */
             const std::string OPERATION_INFO_PARAMS   = "INFO|LENGTH:%.2f,SPEED:%.2f,SIZE:%d,ECEFX:%.2f,ECEFY:%.2f,ECEFZ:%.2f";
-            
+
             /**
              * index = 0, CMDSPEED, in m/s.
              * index = 1, SPEED, in m/s.
@@ -840,7 +841,7 @@ namespace platoon_strategic_ihp
              * index = 4, ECEFZ, in cm.
              */
             const std::string OPERATION_STATUS_PARAMS = "STATUS|CMDSPEED:%1%,SPEED:%2%,ECEFX:%3%,ECEFY:%4%,ECEFZ:%5%";
-            
+
             // JOIN Strategy Params
             /**
              * index = 0, SIZE, number of members.
@@ -850,11 +851,11 @@ namespace platoon_strategic_ihp
              * index = 4, ECEFZ, in cm.
              * index = 5, JOINIDX, index of the position in platoon the incoming vehicle tries to join
              */
-            /** note: The cut-in index is zero-based and points to the gap-leading vehicle's index. 
-             *  eg:  for rear join, cut-in index == platoon.size()-1; 
+            /** note: The cut-in index is zero-based and points to the gap-leading vehicle's index.
+             *  eg:  for rear join, cut-in index == platoon.size()-1;
              *       for join from front, index == -1;
              *       for cut-in in middle, index indicate the gap leading vehicle's index.
-             */    
+             */
             const std::string JOIN_PARAMS = "SIZE:%1%,SPEED:%2%,ECEFX:%3%,ECEFY:%4%,ECEFZ:%5%,JOINIDX:%6%";
 
             // Unit Test Accessors

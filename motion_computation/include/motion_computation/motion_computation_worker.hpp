@@ -149,7 +149,7 @@ private:
   bool enable_ctrv_for_small_vehicle_obj_ = true;
   bool enable_ctrv_for_large_vehicle_obj_ = true;
   bool enable_ctrv_for_pedestrian_obj_ = false;
-  
+
   // Map frame
   std::string map_frame_id_ = "map";
 
@@ -168,6 +168,7 @@ private:
   std::unordered_map<uint32_t, size_t> bsm_obj_id_map_;
   std::unordered_map<uint32_t, size_t> psm_obj_id_map_;
 
+  std::string georeference_{""};
   std::shared_ptr<lanelet::projection::LocalFrameProjector> map_projector_;
 
   // Rotation of a North East Down frame located on the map origin described in the map frame

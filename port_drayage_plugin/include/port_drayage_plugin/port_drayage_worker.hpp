@@ -34,7 +34,7 @@
 #include <boost/property_tree/json_parser.hpp>
 
 namespace port_drayage_plugin
-{    
+{
     /**
      * \brief Convenience struct for storing all data contained in a received MobilityOperation message's
      * strategy_params field with strategy "carma/port_drayage"
@@ -116,7 +116,7 @@ namespace port_drayage_plugin
 
         private:
             // Data member containing this object's Operation enum value
-            const Operation operation_enum_ = Operation::DEFAULT_OPERATION; 
+            const Operation operation_enum_ = Operation::DEFAULT_OPERATION;
     };
 
     /**
@@ -134,6 +134,7 @@ namespace port_drayage_plugin
             std::function<void(carma_msgs::msg::UIInstructions)> publish_ui_instructions_;
             std::function<bool(std::shared_ptr<carma_planning_msgs::srv::SetActiveRoute::Request>)> call_set_active_route_service_;
             std::shared_ptr<lanelet::projection::LocalFrameProjector> map_projector_ = nullptr;
+            std::string georeference_{""};
             bool starting_at_staging_area_; // Flag indicating CMV's first destination; 'true' indicates Staging Area Entrance; 'false' indicates Port Entrance.
             bool enable_port_drayage_; // Flag to enable to port drayage operations. If false, state machine will remain in 'INACTIVE' state
 
@@ -144,7 +145,7 @@ namespace port_drayage_plugin
             const std::string PORT_DRAYAGE_PLUGIN_ID = "port_drayage_plugin";
             const std::string PORT_DRAYAGE_STRATEGY_ID = "carma/port_drayage";
             const std::string SET_GUIDANCE_ACTIVE_SERVICE_ID = "/guidance/set_guidance_active";
-            
+
             // Clock for this object
             rclcpp::Clock::SharedPtr clock_;
 
@@ -155,43 +156,43 @@ namespace port_drayage_plugin
 
             /**
              * \brief Standard constructor for the PortDrayageWorker
-             * 
+             *
              * \param mobility_operations_publisher A function containing the logic
-             * necessary to publish a Mobility Operations  message. 
-             * 
+             * necessary to publish a Mobility Operations  message.
+             *
              * \param ui_instructions_publisher A function containing the logic
-             * necessary to publish a UI Instructions message. 
-             * 
+             * necessary to publish a UI Instructions message.
+             *
              * \param call_set_active_route A function containing the logic
              * necessary to call the SetActiveRoute service client.
              */
             PortDrayageWorker(rclcpp::node_interfaces::NodeLoggingInterface::SharedPtr logger,
                 rclcpp::Clock::SharedPtr clock,
-                std::function<void(carma_v2x_msgs::msg::MobilityOperation)> mobility_operations_publisher, 
+                std::function<void(carma_v2x_msgs::msg::MobilityOperation)> mobility_operations_publisher,
                 std::function<void(carma_msgs::msg::UIInstructions)> ui_instructions_publisher,
                 std::function<bool(std::shared_ptr<carma_planning_msgs::srv::SetActiveRoute::Request>)> call_set_active_route);
 
             /**
              * \brief Setter function to set this object's cmv_id_ string
-             * \param cmv_id The provided CMV ID for this object 
+             * \param cmv_id The provided CMV ID for this object
              */
             void setVehicleID(const std::string& cmv_id);
 
             /**
              * \brief Setter function to set this object's cargo_id_ string
-             * \param cargo_id The provided Cargo ID for this object 
+             * \param cargo_id The provided Cargo ID for this object
              */
             void setCargoID(const std::string& cargo_id);
 
             /**
              * \brief Setter function to set this object's enable_port_drayage flag
-             * \param enable_port_drayage The provided boolean flag 
+             * \param enable_port_drayage The provided boolean flag
              */
             void setEnablePortDrayageFlag(bool enable_port_drayage);
 
             /**
              * \brief Setter function to set this object's starting_at_staging_area flag
-             * \param starting_at_staging_area The provided boolean flag 
+             * \param starting_at_staging_area The provided boolean flag
              */
             void setStartingAtStagingAreaFlag(bool starting_at_staging_area);
 
@@ -232,13 +233,13 @@ namespace port_drayage_plugin
             * \brief Callback for map projection string to define lat/lon <--> map conversion
             * \param msg The proj string defining the projection.
              */
-            void onNewGeoreference(std_msgs::msg::String::UniquePtr msg);   
+            void onNewGeoreference(std_msgs::msg::String::UniquePtr msg);
 
             /**
              * \brief Callback for the pose subscriber. The pose will be converted into lat/lon and stored locally.
              * \param msg Latest pose message
              */
-            void onNewPose(geometry_msgs::msg::PoseStamped::UniquePtr msg);          
+            void onNewPose(geometry_msgs::msg::PoseStamped::UniquePtr msg);
 
             /**
              * \brief Callback to process a received MobilityOperation message
@@ -255,7 +256,7 @@ namespace port_drayage_plugin
             void updateCargoInformationAfterActionCompletion(const PortDrayageMobilityOperationMsg& previous_port_drayage_msg);
 
             /**
-             * \brief Function to help parse the text included in an inbound MobilityOperation message's 
+             * \brief Function to help parse the text included in an inbound MobilityOperation message's
              *  strategy_params field according to the JSON schema intended for MobilityOperation messages
              *  with strategy type 'carma/port_drayage'. Stores the parsed information in _latest_mobility_operation_msg.
              * \param mobility_operation_strategy_params the strategy_params field of a MobilityOperation message
@@ -263,14 +264,14 @@ namespace port_drayage_plugin
             void mobilityOperationMessageParser(std::string mobility_operation_strategy_params);
 
             /**
-             * \brief Callback to process the current status of the guidance state machine. 
+             * \brief Callback to process the current status of the guidance state machine.
              * \param msg a received GuidanceState message
              */
-            void onGuidanceState(const carma_planning_msgs::msg::GuidanceState::UniquePtr msg); 
+            void onGuidanceState(const carma_planning_msgs::msg::GuidanceState::UniquePtr msg);
 
             /**
              * \brief Callback to process each Route Event
-             * \param msg a received RouteEvent message 
+             * \param msg a received RouteEvent message
              */
             void onRouteEvent(const carma_planning_msgs::msg::RouteEvent::UniquePtr msg);
 

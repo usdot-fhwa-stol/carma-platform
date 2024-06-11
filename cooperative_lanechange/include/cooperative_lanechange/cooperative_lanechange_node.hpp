@@ -48,7 +48,7 @@ namespace cooperative_lanechange
   using PointSpeedPair = basic_autonomy::waypoint_generation::PointSpeedPair;
 
   /**
-   * \brief Convenience struct for storing the original start_dist and starting_lane_id associated 
+   * \brief Convenience struct for storing the original start_dist and starting_lane_id associated
    * with a received lane change maneuver.
    */
   struct LaneChangeManeuverOriginalValues
@@ -86,11 +86,12 @@ namespace cooperative_lanechange
     carma_wm::WorldModelConstPtr wm_;
 
     // Map projection string, which defines the lat/lon -> map conversion
+    std::string map_georeference_{""};
     std::shared_ptr<lanelet::projection::LocalFrameProjector> map_projector_;
 
     // Trajectory frequency
     double traj_freq_ = 10;
-    
+
     // Default recipient ID to be used for cooperative lane change Mobility Requests
     std::string DEFAULT_STRING_= "";
 
@@ -120,7 +121,7 @@ namespace cooperative_lanechange
      * \param msg Latest pose message
      */
     void pose_cb(const geometry_msgs::msg::PoseStamped::UniquePtr msg);
-            
+
     /**
      * \brief Callback for the twist subscriber, which will store latest twist locally
      * \param msg Latest twist message
@@ -154,34 +155,34 @@ namespace cooperative_lanechange
     carma_planning_msgs::msg::VehicleState ending_state_before_buffer_;
 
     /**
-     * \brief CooperativeLaneChangePlugin constructor 
+     * \brief CooperativeLaneChangePlugin constructor
      */
     explicit CooperativeLaneChangePlugin(const rclcpp::NodeOptions &);
 
     /**
      * \brief Callback for dynamic parameter updates
      */
-    rcl_interfaces::msg::SetParametersResult 
+    rcl_interfaces::msg::SetParametersResult
     parameter_update_callback(const std::vector<rclcpp::Parameter> &parameters);
 
     /**
      * \brief Creates a vector of Trajectory Points from maneuver information in trajectory request
-     * 
+     *
      * \param req The service request
-     * 
+     *
      * \return vector of unobstructed lane change trajectory points
-     */ 
+     */
     std::vector<carma_planning_msgs::msg::TrajectoryPlanPoint> plan_lanechange(carma_planning_msgs::srv::PlanTrajectory::Request::SharedPtr req);
 
     /**
      * \brief Calculates distance between subject vehicle and vehicle 2
-     * 
+     *
      * \param veh2_lanelet_id Current lanelet id of vehicle 2
      * \param veh2_downtrack Downtrack of vehicle 2 in its current lanelet
      * \param ego_state vehicle state of the ego vehicle
-     * 
+     *
      * \return the distance between subject vehicle and vehicle 2
-     */ 
+     */
     double find_current_gap(long veh2_lanelet_id, double veh2_downtrack, carma_planning_msgs::msg::VehicleState& ego_state) const;
 
     /**
@@ -201,7 +202,7 @@ namespace cooperative_lanechange
      * \brief Converts Trajectory Plan to (Mobility) Trajectory
      * \param traj_points vector of Trajectory Plan points to be converted to Trajectory type message
      * \return The Trajectory type message in world frame
-     */        
+     */
     carma_v2x_msgs::msg::Trajectory trajectory_plan_to_trajectory(const std::vector<carma_planning_msgs::msg::TrajectoryPlanPoint>& traj_points) const;
 
     /**
@@ -218,31 +219,31 @@ namespace cooperative_lanechange
      * \param resp The plan trajectory service response
      * \param planned_trajectory_points The generated trajectory plan points, which are added to the service response
      */
-    void add_trajectory_to_response(carma_planning_msgs::srv::PlanTrajectory::Request::SharedPtr req, 
-                                  carma_planning_msgs::srv::PlanTrajectory::Response::SharedPtr resp, 
+    void add_trajectory_to_response(carma_planning_msgs::srv::PlanTrajectory::Request::SharedPtr req,
+                                  carma_planning_msgs::srv::PlanTrajectory::Response::SharedPtr resp,
                                   const std::vector<carma_planning_msgs::msg::TrajectoryPlanPoint>& planned_trajectory_points);
 
     /**
      * \brief Callback for map projection string to define lat/lon -> map conversion
      * \brief msg The proj string defining the projection.
-     */ 
+     */
     void georeference_cb(const std_msgs::msg::String::UniquePtr msg);
 
     ////
     // Overrides
     ////
     void plan_trajectory_callback(
-      std::shared_ptr<rmw_request_id_t>, 
-      carma_planning_msgs::srv::PlanTrajectory::Request::SharedPtr req, 
+      std::shared_ptr<rmw_request_id_t>,
+      carma_planning_msgs::srv::PlanTrajectory::Request::SharedPtr req,
       carma_planning_msgs::srv::PlanTrajectory::Response::SharedPtr resp) override;
 
     bool get_availability() override;
 
     std::string get_version_id() override;
-    
+
     /**
      * \brief This method should be used to load parameters and will be called on the configure state transition.
-     */ 
+     */
     carma_ros2_utils::CallbackReturn on_configure_plugin();
 
     // Unit Tests

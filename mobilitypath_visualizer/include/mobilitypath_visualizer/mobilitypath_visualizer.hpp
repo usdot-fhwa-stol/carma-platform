@@ -35,8 +35,8 @@ namespace mobilitypath_visualizer {
     /**
      * MobilityPathVisualizer visualizes all incoming and host's mobilitypath in rviz. It also detects if any path is close to 1meter distance
      *                        detecting collision and displays it in text
-     * 
-    */ 
+     *
+    */
     struct MarkerColor
     {
         double red = 0.0;
@@ -46,10 +46,10 @@ namespace mobilitypath_visualizer {
 
     class MobilityPathVisualizer :public carma_ros2_utils::CarmaLifecycleNode
     {
-        
+
     public:
 
-        
+
         /**
          * \brief Constructor
          */
@@ -62,7 +62,7 @@ namespace mobilitypath_visualizer {
          * \return Visualization Marker in arrow type
          */
         visualization_msgs::msg::MarkerArray composeVisualizationMarker(const carma_v2x_msgs::msg::MobilityPath& msg, const MarkerColor& color);
-        
+
         /**
          * \brief Accepts ECEF point in cm to convert to a point in map in meters
          * \param ecef_point ECEF point to convert in cm
@@ -85,17 +85,17 @@ namespace mobilitypath_visualizer {
          * \param cav_markers Other CAV marker's visualization markers as arrow type
          * \note  This function assumes 0.1s between any of the points. It also drops CAV markers that start later than the first point in host_marker does.
          *        This is acceptable as the host is publishing in 0.1s and we don't need to visualize points in the future.
-         *        It extrapolates the last point CAV's just to conform with 
-         * \return Synchronized CAV markers 
+         *        It extrapolates the last point CAV's just to conform with
+         * \return Synchronized CAV markers
          */
-        std::vector<visualization_msgs::msg::MarkerArray> matchTrajectoryTimestamps(const visualization_msgs::msg::MarkerArray& host_marker, 
+        std::vector<visualization_msgs::msg::MarkerArray> matchTrajectoryTimestamps(const visualization_msgs::msg::MarkerArray& host_marker,
                                                                     const std::vector<visualization_msgs::msg::MarkerArray>& cav_markers) const;
 
 
         /**
          * \brief Callback for map projection string to define lat/lon -> map conversion
          * \brief msg The proj string defining the projection.
-         */ 
+         */
         void georeferenceCallback(std_msgs::msg::String::UniquePtr msg);
 
         ////
@@ -111,15 +111,16 @@ namespace mobilitypath_visualizer {
         carma_ros2_utils::PubPtr<visualization_msgs::msg::MarkerArray> host_marker_pub_;
         carma_ros2_utils::PubPtr<visualization_msgs::msg::MarkerArray> cav_marker_pub_;
         carma_ros2_utils::PubPtr<visualization_msgs::msg::MarkerArray> label_marker_pub_;
-        
+
         // subscriber
         carma_ros2_utils::SubPtr<carma_v2x_msgs::msg::MobilityPath> host_mob_path_sub_;
         carma_ros2_utils::SubPtr<carma_v2x_msgs::msg::MobilityPath> cav_mob_path_sub_;
         carma_ros2_utils::SubPtr<std_msgs::msg::String> georeference_sub_;
-        
+
         // initialize this node before running
         void initialize();
 
+        std::string georeference_{""};
         std::shared_ptr<lanelet::projection::LocalFrameProjector> map_projector_;
 
         Config config_;
@@ -130,7 +131,7 @@ namespace mobilitypath_visualizer {
         // callbacks
         void callbackMobilityPath(carma_v2x_msgs::msg::MobilityPath::UniquePtr msg);
         void timer_callback();
-        
+
         // latest msgs
         std::unordered_map<std::string, carma_v2x_msgs::msg::MobilityPath> latest_cav_mob_path_msg_;
 

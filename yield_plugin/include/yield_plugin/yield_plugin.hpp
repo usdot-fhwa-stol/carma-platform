@@ -336,6 +336,7 @@ private:
   // BSM Message
   std::string host_bsm_id_;
 
+  std::string georeference_{""};
   std::shared_ptr<lanelet::projection::LocalFrameProjector> map_projector_;
 
   std::string bsmIDtoString(carma_v2x_msgs::msg::BSMCoreData bsm_core)
