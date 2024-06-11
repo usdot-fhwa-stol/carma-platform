@@ -351,7 +351,7 @@ namespace carma_wm
 
     if (target_frame_ == "")
     {
-      RCLCPP_WARN_STREAM(rclcpp::get_logger("carma_wm::SignalizedIntersectionManager"), "Georeference is not loaded yet, so returning without processing this MAP msg.");
+      RCLCPP_WARN_STREAM(rclcpp::get_logger("carma_wm::SignalizedIntersectionManager"), "Georeference is not loaded yet. Returning without processing this MAP msg.");
       return;
     }
 
