@@ -142,7 +142,7 @@ auto ExternalObjectListToSdsmNode::update_georeference(const georeference_msg_ty
   if (map_georeference_ != msg.data)
   {
     map_georeference_ = msg.data;
-    map_projector_ = std::make_shared<lanelet::projection::LocalFrameProjector>(map_georeference_);
+    map_projector_ = std::make_shared<lanelet::projection::LocalFrameProjector>(map_georeference_.c_str());
   }
 }
 
