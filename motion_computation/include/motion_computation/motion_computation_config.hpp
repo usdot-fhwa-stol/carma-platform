@@ -18,24 +18,22 @@
 #include <iostream>
 #include <vector>
 
-namespace motion_computation
-{
+namespace motion_computation {
 
 /**
  * \brief Stuct containing the algorithm configuration values for motion_computation
  */
-struct Config
-{
-  double prediction_time_step = 0.1;  // Time between predicted states (in seconds)
+struct Config {
+  double prediction_time_step = 0.1; // Time between predicted states (in seconds)
   double mobility_path_time_step =
-    0.1;  // Time between received mobility path predicted states (in seconds)
-  double prediction_period = 2.0;  // Period of prediction (in seconds)
-  double cv_x_accel_noise = 9.0;   // CV Model X-Axis Acceleration Noise
-  double cv_y_accel_noise = 9.0;   // CV Model Y-Axis Acceleration Noise
+      0.1; // Time between received mobility path predicted states (in seconds)
+  double prediction_period = 2.0; // Period of prediction (in seconds)
+  double cv_x_accel_noise = 9.0;  // CV Model X-Axis Acceleration Noise
+  double cv_y_accel_noise = 9.0;  // CV Model Y-Axis Acceleration Noise
   double prediction_process_noise_max =
-    1000.0;  // Maximum expected process noise; used for mapping noise to confidence in [0,1] range
+      1000.0; // Maximum expected process noise; used for mapping noise to confidence in [0,1] range
   double prediction_confidence_drop_rate =
-    0.95;  // Percentage of initial confidence to propagate to next time step
+      0.95; // Percentage of initial confidence to propagate to next time step
 
   // If true then BSM messages will be converted to ExternalObjects.
   // If other object sources are enabled, they will be synchronized but no fusion
@@ -66,8 +64,7 @@ struct Config
   bool enable_ctrv_for_pedestrian_obj = false;
 
   // Stream operator for this config
-  friend std::ostream & operator<<(std::ostream & output, const Config & c)
-  {
+  friend std::ostream &operator<<(std::ostream &output, const Config &c) {
     output << "motion_computation::Config { " << std::endl
            << "prediction_time_step: " << c.prediction_time_step << std::endl
            << "mobility_path_time_step: " << c.mobility_path_time_step << std::endl
@@ -82,14 +79,16 @@ struct Config
            << "enable_sensor_processing: " << c.enable_sensor_processing << std::endl
            << "enable_ctrv_for_unknown_obj: " << c.enable_ctrv_for_unknown_obj << std::endl
            << "enable_ctrv_for_motorcycle_obj: " << c.enable_ctrv_for_motorcycle_obj << std::endl
-           << "enable_ctrv_for_small_vehicle_obj: " << c.enable_ctrv_for_small_vehicle_obj << std::endl
-           << "enable_ctrv_for_large_vehicle_obj: " << c.enable_ctrv_for_large_vehicle_obj << std::endl
+           << "enable_ctrv_for_small_vehicle_obj: " << c.enable_ctrv_for_small_vehicle_obj
+           << std::endl
+           << "enable_ctrv_for_large_vehicle_obj: " << c.enable_ctrv_for_large_vehicle_obj
+           << std::endl
            << "enable_ctrv_for_pedestrian_obj: " << c.enable_ctrv_for_pedestrian_obj << std::endl
            << "}" << std::endl;
     return output;
   }
 };
 
-}  // namespace motion_computation
+} // namespace motion_computation
 
-#endif  // MOTION_COMPUTATION__MOTION_COMPUTATION_CONFIG_HPP_
+#endif // MOTION_COMPUTATION__MOTION_COMPUTATION_CONFIG_HPP_

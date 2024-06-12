@@ -20,18 +20,15 @@
 #include <string>
 #include <vector>
 
-namespace motion_computation
-{
+namespace motion_computation {
 
-namespace conversion
-{
+namespace conversion {
 
-void convert(
-  const carma_v2x_msgs::msg::BSM & in_msg, carma_perception_msgs::msg::ExternalObject & out_msg,
-  const std::string & map_frame_id, double pred_period, double pred_step_size,
-  const lanelet::projection::LocalFrameProjector & map_projector,
-  tf2::Quaternion ned_in_map_rotation)
-{
+void convert(const carma_v2x_msgs::msg::BSM &in_msg,
+             carma_perception_msgs::msg::ExternalObject &out_msg, const std::string &map_frame_id,
+             double pred_period, double pred_step_size,
+             const lanelet::projection::LocalFrameProjector &map_projector,
+             tf2::Quaternion ned_in_map_rotation) {
   out_msg.presence_vector |= carma_perception_msgs::msg::ExternalObject::BSM_ID_PRESENCE_VECTOR;
 
   // assume any BSM is a dynamic object since its sent be a vehicle
@@ -42,7 +39,7 @@ void convert(
   // Generate a unique object id from the bsm id
   out_msg.id = 0;
   for (int i = in_msg.core_data.id.size() - 1; i >= 0;
-       i--) {  // using signed iterator to handle empty case
+       i--) { // using signed iterator to handle empty case
     // each byte of the bsm id gets placed in one byte of the object id.
     // This should result in very large numbers which will be unlikely to
     // conflict with standard detections
@@ -61,25 +58,23 @@ void convert(
 
   /////// Object Type and Size /////////
 
-  if (
-    in_msg.core_data.size.presence_vector &
-    carma_v2x_msgs::msg::VehicleSize::VEHICLE_LENGTH_AVAILABLE) {
+  if (in_msg.core_data.size.presence_vector &
+      carma_v2x_msgs::msg::VehicleSize::VEHICLE_LENGTH_AVAILABLE) {
     // ExternalObject size is half of each dimension
     out_msg.size.x = in_msg.core_data.size.vehicle_length / 2;
   } else {
-    out_msg.size.x = 1.0;  // value from mob path to external obj conversion
+    out_msg.size.x = 1.0; // value from mob path to external obj conversion
   }
 
-  if (
-    in_msg.core_data.size.presence_vector &
-    carma_v2x_msgs::msg::VehicleSize::VEHICLE_WIDTH_AVAILABLE) {
+  if (in_msg.core_data.size.presence_vector &
+      carma_v2x_msgs::msg::VehicleSize::VEHICLE_WIDTH_AVAILABLE) {
     // ExternalObject size is half of each dimension
     out_msg.size.y = in_msg.core_data.size.vehicle_width / 2;
   } else {
-    out_msg.size.y = 1.0;  // value from mob path to external obj conversion
+    out_msg.size.y = 1.0; // value from mob path to external obj conversion
   }
 
-  out_msg.size.z = 2.0;  // value from mob path to external obj conversion
+  out_msg.size.z = 2.0; // value from mob path to external obj conversion
 
   out_msg.object_type = carma_perception_msgs::msg::ExternalObject::SMALL_VEHICLE;
 
@@ -104,27 +99,26 @@ void convert(
   // For computing confidence we will use the largest provided standard
   // deviation of position
   double largest_position_std =
-    std::max(in_msg.core_data.accuracy.semi_major, in_msg.core_data.accuracy.semi_minor);
+      std::max(in_msg.core_data.accuracy.semi_major, in_msg.core_data.accuracy.semi_minor);
 
   double lat_variance = in_msg.core_data.accuracy.semi_minor * in_msg.core_data.accuracy.semi_minor;
 
   double lon_variance = in_msg.core_data.accuracy.semi_major * in_msg.core_data.accuracy.semi_major;
 
   double heading_variance =
-    in_msg.core_data.accuracy.orientation * in_msg.core_data.accuracy.orientation;
+      in_msg.core_data.accuracy.orientation * in_msg.core_data.accuracy.orientation;
 
-  double position_confidence = 0.1;  // Default will be 10% confidence. If the position accuracy is
-                                     // available then this value will be updated
+  double position_confidence = 0.1; // Default will be 10% confidence. If the position accuracy is
+                                    // available then this value will be updated
 
   // A standard deviation which is larger than the acceptable value to give
   // 95% confidence interval on fitting the pedestrian within one 3.7m lane
   constexpr double MAX_POSITION_STD = 1.85;
 
-  if (
-    (in_msg.core_data.accuracy.presence_vector |
-     carma_v2x_msgs::msg::PositionalAccuracy::ACCURACY_AVAILABLE) &&
-    (in_msg.core_data.accuracy.presence_vector |
-     carma_v2x_msgs::msg::PositionalAccuracy::ACCURACY_ORIENTATION_AVAILABLE)) {
+  if ((in_msg.core_data.accuracy.presence_vector |
+       carma_v2x_msgs::msg::PositionalAccuracy::ACCURACY_AVAILABLE) &&
+      (in_msg.core_data.accuracy.presence_vector |
+       carma_v2x_msgs::msg::PositionalAccuracy::ACCURACY_ORIENTATION_AVAILABLE)) {
     // Both accuracies available
 
     // NOTE: ExternalObject.msg does not clearly define what is meant by
@@ -138,22 +132,20 @@ void convert(
     // the position confidence for both
     out_msg.confidence = 1.0 - std::min(1.0, fabs(largest_position_std / MAX_POSITION_STD));
     out_msg.presence_vector |=
-      carma_perception_msgs::msg::ExternalObject::CONFIDENCE_PRESENCE_VECTOR;
-  } else if (
-    in_msg.core_data.accuracy.presence_vector |
-    carma_v2x_msgs::msg::PositionalAccuracy::ACCURACY_AVAILABLE) {
+        carma_perception_msgs::msg::ExternalObject::CONFIDENCE_PRESENCE_VECTOR;
+  } else if (in_msg.core_data.accuracy.presence_vector |
+             carma_v2x_msgs::msg::PositionalAccuracy::ACCURACY_AVAILABLE) {
     // Position accuracy available
 
-    heading_variance = 1.0;  // Yaw variance is not available so mark as
-                             // impossible perfect case
+    heading_variance = 1.0; // Yaw variance is not available so mark as
+                            // impossible perfect case
 
     // Same calculation as shown in above condition. See that for description
     out_msg.confidence = 1.0 - std::min(1.0, fabs(largest_position_std / MAX_POSITION_STD));
     out_msg.presence_vector |=
-      carma_perception_msgs::msg::ExternalObject::CONFIDENCE_PRESENCE_VECTOR;
-  } else if (
-    in_msg.core_data.accuracy.presence_vector |
-    carma_v2x_msgs::msg::PositionalAccuracy::ACCURACY_ORIENTATION_AVAILABLE) {
+        carma_perception_msgs::msg::ExternalObject::CONFIDENCE_PRESENCE_VECTOR;
+  } else if (in_msg.core_data.accuracy.presence_vector |
+             carma_v2x_msgs::msg::PositionalAccuracy::ACCURACY_ORIENTATION_AVAILABLE) {
     // Orientation accuracy available
 
     lat_variance = 1.0;
@@ -164,11 +156,10 @@ void convert(
   /////// Pose and Covariance /////////
   // Compute the pose
 
-  if (
-    (in_msg.core_data.presence_vector & carma_v2x_msgs::msg::BSMCoreData::LATITUDE_AVAILABLE) &&
-    (in_msg.core_data.presence_vector & carma_v2x_msgs::msg::BSMCoreData::LONGITUDE_AVAILABLE) &&
-    (in_msg.core_data.presence_vector & carma_v2x_msgs::msg::BSMCoreData::ELEVATION_AVAILABLE) &&
-    (in_msg.core_data.presence_vector & carma_v2x_msgs::msg::BSMCoreData::HEADING_AVAILABLE)) {
+  if ((in_msg.core_data.presence_vector & carma_v2x_msgs::msg::BSMCoreData::LATITUDE_AVAILABLE) &&
+      (in_msg.core_data.presence_vector & carma_v2x_msgs::msg::BSMCoreData::LONGITUDE_AVAILABLE) &&
+      (in_msg.core_data.presence_vector & carma_v2x_msgs::msg::BSMCoreData::ELEVATION_AVAILABLE) &&
+      (in_msg.core_data.presence_vector & carma_v2x_msgs::msg::BSMCoreData::HEADING_AVAILABLE)) {
     double longitude = std::min(in_msg.core_data.longitude, in_msg.core_data.LONGITUDE_MAX);
     longitude = std::max(longitude, in_msg.core_data.LONGITUDE_MIN);
 
@@ -181,9 +172,9 @@ void convert(
     double heading = std::min(in_msg.core_data.heading, in_msg.core_data.HEADING_MAX);
     // heading = std::max(heading, in_msg.core_data.HEADING_MIN);
 
-    out_msg.pose = impl::pose_from_gnss(
-      map_projector, ned_in_map_rotation, {latitude, longitude, elev}, heading, lat_variance,
-      lon_variance, heading_variance);
+    out_msg.pose =
+        impl::pose_from_gnss(map_projector, ned_in_map_rotation, {latitude, longitude, elev},
+                             heading, lat_variance, lon_variance, heading_variance);
     out_msg.presence_vector |= carma_perception_msgs::msg::ExternalObject::POSE_PRESENCE_VECTOR;
   }
   // Else: No pose available
@@ -198,13 +189,13 @@ void convert(
   std::vector<geometry_msgs::msg::Pose> predicted_poses;
 
   predicted_poses = impl::sample_2d_linear_motion(
-    out_msg.pose.pose, out_msg.velocity.twist.linear.x, pred_period, pred_step_size);
+      out_msg.pose.pose, out_msg.velocity.twist.linear.x, pred_period, pred_step_size);
 
   out_msg.predictions = impl::predicted_poses_to_predicted_state(
-    predicted_poses, out_msg.velocity.twist.linear.x, rclcpp::Time(out_msg.header.stamp),
-    rclcpp::Duration(pred_step_size * 1e9), map_frame_id, out_msg.confidence, out_msg.confidence);
+      predicted_poses, out_msg.velocity.twist.linear.x, rclcpp::Time(out_msg.header.stamp),
+      rclcpp::Duration(pred_step_size * 1e9), map_frame_id, out_msg.confidence, out_msg.confidence);
   out_msg.presence_vector |= carma_perception_msgs::msg::ExternalObject::PREDICTION_PRESENCE_VECTOR;
 }
 
-}  // namespace conversion
-}  // namespace motion_computation
+} // namespace conversion
+} // namespace motion_computation

@@ -16,8 +16,7 @@
 #include <rclcpp/rclcpp.hpp>
 
 // Run all the tests
-int main(int argc, char ** argv)
-{
+int main(int argc, char **argv) {
   ::testing::InitGoogleTest(&argc, argv);
 
   // Initialize ROS
