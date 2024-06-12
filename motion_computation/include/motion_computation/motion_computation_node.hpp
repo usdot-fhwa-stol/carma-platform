@@ -15,17 +15,15 @@
 #ifndef MOTION_COMPUTATION__MOTION_COMPUTATION_NODE_HPP_
 #define MOTION_COMPUTATION__MOTION_COMPUTATION_NODE_HPP_
 
+#include <lanelet2_extension/projection/local_frame_projector.h>
+#include <tf2_geometry_msgs/tf2_geometry_msgs.h>
+#include <functional>
+#include <vector>
 #include <carma_perception_msgs/msg/external_object_list.hpp>
 #include <carma_ros2_utils/carma_lifecycle_node.hpp>
 #include <carma_v2x_msgs/msg/mobility_path.hpp>
-#include <lanelet2_extension/projection/local_frame_projector.h>
 #include <rclcpp/rclcpp.hpp>
 #include <std_msgs/msg/string.hpp>
-#include <tf2_geometry_msgs/tf2_geometry_msgs.h>
-
-#include <functional>
-#include <vector>
-
 #include "motion_computation/motion_computation_config.hpp"
 #include "motion_computation/motion_computation_worker.hpp"
 
@@ -36,7 +34,7 @@ namespace motion_computation {
  * \brief The class responsible for publishing external object predictions
  */
 class MotionComputationNode : public carma_ros2_utils::CarmaLifecycleNode {
-private:
+ private:
   // Subscribers
   carma_ros2_utils::SubPtr<carma_perception_msgs::msg::ExternalObjectList> motion_comp_sub_;
   carma_ros2_utils::SubPtr<carma_v2x_msgs::msg::MobilityPath> mobility_path_sub_;
@@ -53,7 +51,7 @@ private:
   // Node configuration
   Config config_;
 
-public:
+ public:
   /**
    * \brief MotionComputationNode constructor
    */
@@ -62,8 +60,8 @@ public:
   /**
    * \brief Function callback for dynamic parameter updates
    */
-  rcl_interfaces::msg::SetParametersResult
-  parameter_update_callback(const std::vector<rclcpp::Parameter> &parameters);
+  rcl_interfaces::msg::SetParametersResult parameter_update_callback(
+      const std::vector<rclcpp::Parameter> &parameters);
 
   /**
    * \brief Function to publish ExternalObjectList
@@ -77,6 +75,6 @@ public:
   carma_ros2_utils::CallbackReturn handle_on_configure(const rclcpp_lifecycle::State &);
 };
 
-} // namespace motion_computation
+}  // namespace motion_computation
 
-#endif // MOTION_COMPUTATION__MOTION_COMPUTATION_NODE_HPP_
+#endif  // MOTION_COMPUTATION__MOTION_COMPUTATION_NODE_HPP_

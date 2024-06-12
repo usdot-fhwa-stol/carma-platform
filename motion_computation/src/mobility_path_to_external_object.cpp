@@ -12,14 +12,14 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+#include <tf2/LinearMath/Transform.h>
+#include <string>
+#include <utility>
 #include <carma_perception_msgs/msg/external_object.hpp>
 #include <carma_v2x_msgs/msg/mobility_path.hpp>
 #include <motion_computation/impl/mobility_path_to_external_object_helpers.hpp>
 #include <rclcpp/logger.hpp>
 #include <rclcpp/logging.hpp>
-#include <string>
-#include <tf2/LinearMath/Transform.h>
-#include <utility>
 
 namespace motion_computation {
 namespace conversion {
@@ -28,9 +28,9 @@ void convert(const carma_v2x_msgs::msg::MobilityPath &in_msg,
              carma_perception_msgs::msg::ExternalObject &out_msg,
              const lanelet::projection::LocalFrameProjector &map_projector) {
   constexpr double mobility_path_points_timestep_size =
-      0.1; // Mobility path timestep size per message spec
+      0.1;  // Mobility path timestep size per message spec
 
-  out_msg.size.x = 2.5; // TODO(carma) identify better approach for object size in mobility path
+  out_msg.size.x = 2.5;  // TODO(carma) identify better approach for object size in mobility path
   out_msg.size.y = 2.25;
   out_msg.size.z = 2.0;
 
@@ -67,7 +67,7 @@ void convert(const carma_v2x_msgs::msg::MobilityPath &in_msg,
 
   // first point's timestamp
   out_msg.header.stamp =
-      rclcpp::Time((uint64_t)in_msg.m_header.timestamp * 1e6); // ms to nanoseconds
+      rclcpp::Time((uint64_t)in_msg.m_header.timestamp * 1e6);  // ms to nanoseconds
 
   // If it is a static object, we finished processing
   if (in_msg.trajectory.offsets.size() < 2) {
@@ -83,7 +83,7 @@ void convert(const carma_v2x_msgs::msg::MobilityPath &in_msg,
   auto prev_pt_map = impl::transform_to_map_frame(prev_pt_ecef, map_projector);
   double prev_yaw = 0.0;
 
-  double message_offset_x = 0.0; // units cm
+  double message_offset_x = 0.0;  // units cm
   double message_offset_y = 0.0;
   double message_offset_z = 0.0;
 
@@ -103,26 +103,25 @@ void convert(const carma_v2x_msgs::msg::MobilityPath &in_msg,
         ecef_x + message_offset_x / 100.0, ecef_y + message_offset_y / 100.0,
         ecef_z +
             message_offset_z /
-                100.0}; // ecef_x is in m while message_offset_x is in cm. Want m as final result
+                100.0};  // ecef_x is in m while message_offset_x is in cm. Want m as final result
     auto curr_pt_map = impl::transform_to_map_frame(curr_pt_ecef, map_projector);
 
     carma_perception_msgs::msg::PredictedState curr_state;
 
-    if (i == 0) // First point's state should be stored outside "predictions"
+    if (i == 0)  // First point's state should be stored outside "predictions"
     {
       rclcpp::Time prev_stamp_as_time = rclcpp::Time(out_msg.header.stamp);
       rclcpp::Time updated_time_step = prev_stamp_as_time + mobility_path_point_delta_t;
 
       auto res = impl::composePredictedState(
           curr_pt_map, prev_pt_map, prev_stamp_as_time, updated_time_step,
-          prev_yaw); // Position returned is that of prev_pt_map NOT curr_pt_map
+          prev_yaw);  // Position returned is that of prev_pt_map NOT curr_pt_map
       curr_state = std::get<0>(res);
       prev_yaw = std::get<1>(res);
       // Compute out_msg pose
-      out_msg.pose.pose =
-          curr_state
-              .predicted_position; // Orientation computed from first point in offsets with location
-      out_msg.velocity.twist = curr_state.predicted_velocity; // Velocity derived from first point
+      out_msg.pose.pose = curr_state.predicted_position;  // Orientation computed from first point
+                                                          // in offsets with location
+      out_msg.velocity.twist = curr_state.predicted_velocity;  // Velocity derived from first point
 
     } else {
       // NOTE: This is where the time increment happens but it feels incorrect.
@@ -140,7 +139,7 @@ void convert(const carma_v2x_msgs::msg::MobilityPath &in_msg,
 
     if (i ==
         in_msg.trajectory.offsets.size() -
-            1) // if last point, copy the prev_state velocity & orientation to the last point too
+            1)  // if last point, copy the prev_state velocity & orientation to the last point too
     {
       curr_state.predicted_position.position.x = curr_pt_map.x();
       curr_state.predicted_position.position.y = curr_pt_map.y();
@@ -159,10 +158,9 @@ void convert(const carma_v2x_msgs::msg::MobilityPath &in_msg,
 
 namespace impl {
 
-std::pair<carma_perception_msgs::msg::PredictedState, double>
-composePredictedState(const tf2::Vector3 &curr_pt, const tf2::Vector3 &prev_pt,
-                      const rclcpp::Time &prev_time_stamp, const rclcpp::Time &curr_time_stamp,
-                      double prev_yaw) {
+std::pair<carma_perception_msgs::msg::PredictedState, double> composePredictedState(
+    const tf2::Vector3 &curr_pt, const tf2::Vector3 &prev_pt, const rclcpp::Time &prev_time_stamp,
+    const rclcpp::Time &curr_time_stamp, double prev_yaw) {
   carma_perception_msgs::msg::PredictedState output_state;
   // Set Position
   output_state.predicted_position.position.x = prev_pt.x();
@@ -174,7 +172,7 @@ composePredictedState(const tf2::Vector3 &curr_pt, const tf2::Vector3 &prev_pt,
   Eigen::Vector2d x_axis = {1, 0};
   double yaw = 0.0;
   if (vehicle_vector.norm() <
-      0.000001) { // If there is zero magnitude use previous yaw to avoid divide by 0
+      0.000001) {  // If there is zero magnitude use previous yaw to avoid divide by 0
     yaw = prev_yaw;
     RCLCPP_DEBUG_STREAM(
         rclcpp::get_logger("motion_computation::conversion"),
@@ -247,12 +245,12 @@ tf2::Vector3 transform_to_map_frame(const tf2::Vector3 &ecef_point,
                                     const lanelet::projection::LocalFrameProjector &map_projector) {
   lanelet::BasicPoint3d map_point =
       map_projector.projectECEF({ecef_point.x(), ecef_point.y(), ecef_point.z()},
-                                -1); // Input should already be converted to m
+                                -1);  // Input should already be converted to m
 
   return tf2::Vector3(map_point.x(), map_point.y(), map_point.z());
 }
-} // namespace impl
+}  // namespace impl
 
-} // namespace conversion
+}  // namespace conversion
 
-} // namespace motion_computation
+}  // namespace motion_computation

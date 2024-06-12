@@ -12,13 +12,12 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include <carma_perception_msgs/msg/external_object.hpp>
-#include <motion_computation/impl/psm_to_external_object_helpers.hpp>
-#include <motion_computation/message_conversions.hpp>
-
 #include <algorithm>
 #include <string>
 #include <vector>
+#include <carma_perception_msgs/msg/external_object.hpp>
+#include <motion_computation/impl/psm_to_external_object_helpers.hpp>
+#include <motion_computation/message_conversions.hpp>
 
 namespace motion_computation {
 
@@ -39,7 +38,7 @@ void convert(const carma_v2x_msgs::msg::BSM &in_msg,
   // Generate a unique object id from the bsm id
   out_msg.id = 0;
   for (int i = in_msg.core_data.id.size() - 1; i >= 0;
-       i--) { // using signed iterator to handle empty case
+       i--) {  // using signed iterator to handle empty case
     // each byte of the bsm id gets placed in one byte of the object id.
     // This should result in very large numbers which will be unlikely to
     // conflict with standard detections
@@ -63,7 +62,7 @@ void convert(const carma_v2x_msgs::msg::BSM &in_msg,
     // ExternalObject size is half of each dimension
     out_msg.size.x = in_msg.core_data.size.vehicle_length / 2;
   } else {
-    out_msg.size.x = 1.0; // value from mob path to external obj conversion
+    out_msg.size.x = 1.0;  // value from mob path to external obj conversion
   }
 
   if (in_msg.core_data.size.presence_vector &
@@ -71,10 +70,10 @@ void convert(const carma_v2x_msgs::msg::BSM &in_msg,
     // ExternalObject size is half of each dimension
     out_msg.size.y = in_msg.core_data.size.vehicle_width / 2;
   } else {
-    out_msg.size.y = 1.0; // value from mob path to external obj conversion
+    out_msg.size.y = 1.0;  // value from mob path to external obj conversion
   }
 
-  out_msg.size.z = 2.0; // value from mob path to external obj conversion
+  out_msg.size.z = 2.0;  // value from mob path to external obj conversion
 
   out_msg.object_type = carma_perception_msgs::msg::ExternalObject::SMALL_VEHICLE;
 
@@ -108,8 +107,8 @@ void convert(const carma_v2x_msgs::msg::BSM &in_msg,
   double heading_variance =
       in_msg.core_data.accuracy.orientation * in_msg.core_data.accuracy.orientation;
 
-  double position_confidence = 0.1; // Default will be 10% confidence. If the position accuracy is
-                                    // available then this value will be updated
+  double position_confidence = 0.1;  // Default will be 10% confidence. If the position accuracy is
+                                     // available then this value will be updated
 
   // A standard deviation which is larger than the acceptable value to give
   // 95% confidence interval on fitting the pedestrian within one 3.7m lane
@@ -137,8 +136,8 @@ void convert(const carma_v2x_msgs::msg::BSM &in_msg,
              carma_v2x_msgs::msg::PositionalAccuracy::ACCURACY_AVAILABLE) {
     // Position accuracy available
 
-    heading_variance = 1.0; // Yaw variance is not available so mark as
-                            // impossible perfect case
+    heading_variance = 1.0;  // Yaw variance is not available so mark as
+                             // impossible perfect case
 
     // Same calculation as shown in above condition. See that for description
     out_msg.confidence = 1.0 - std::min(1.0, fabs(largest_position_std / MAX_POSITION_STD));
@@ -197,5 +196,5 @@ void convert(const carma_v2x_msgs::msg::BSM &in_msg,
   out_msg.presence_vector |= carma_perception_msgs::msg::ExternalObject::PREDICTION_PRESENCE_VECTOR;
 }
 
-} // namespace conversion
-} // namespace motion_computation
+}  // namespace conversion
+}  // namespace motion_computation

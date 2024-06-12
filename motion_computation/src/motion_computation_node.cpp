@@ -11,7 +11,6 @@
 // the License.
 
 #include "motion_computation/motion_computation_node.hpp"
-
 #include <vector>
 
 namespace motion_computation {
@@ -57,8 +56,8 @@ MotionComputationNode::MotionComputationNode(const rclcpp::NodeOptions &options)
       "enable_ctrv_for_pedestrian_obj", config_.enable_ctrv_for_pedestrian_obj);
 }
 
-rcl_interfaces::msg::SetParametersResult
-MotionComputationNode::parameter_update_callback(const std::vector<rclcpp::Parameter> &parameters) {
+rcl_interfaces::msg::SetParametersResult MotionComputationNode::parameter_update_callback(
+    const std::vector<rclcpp::Parameter> &parameters) {
   auto error = update_params<double>(
       {{"prediction_time_step", config_.prediction_time_step},
        {"prediction_period", config_.prediction_period},
@@ -104,8 +103,8 @@ MotionComputationNode::parameter_update_callback(const std::vector<rclcpp::Param
   return result;
 }
 
-carma_ros2_utils::CallbackReturn
-MotionComputationNode::handle_on_configure(const rclcpp_lifecycle::State &) {
+carma_ros2_utils::CallbackReturn MotionComputationNode::handle_on_configure(
+    const rclcpp_lifecycle::State &) {
   RCLCPP_INFO_STREAM(get_logger(), "MotionComputationNode trying to configure");
 
   // Reset config
@@ -181,6 +180,6 @@ void MotionComputationNode::publishObject(
   carma_obj_pub_->publish(obj_pred_msg);
 }
 
-} // namespace motion_computation
+}  // namespace motion_computation
 
 #include "rclcpp_components/register_node_macro.hpp"

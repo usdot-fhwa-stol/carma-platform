@@ -12,22 +12,21 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+#include <lanelet2_extension/regulatory_elements/CarmaTrafficSignal.h>
+#include <tf2/LinearMath/Transform.h>
+#include <tf2_geometry_msgs/tf2_geometry_msgs.h>
+#include <wgs84_utils/wgs84_utils.h>
+#include <algorithm>
+#include <string>
+#include <vector>
 #include <boost/date_time/posix_time/posix_time.hpp>
 #include <carma_perception_msgs/msg/external_object.hpp>
 #include <carma_v2x_msgs/msg/psm.hpp>
-#include <lanelet2_extension/regulatory_elements/CarmaTrafficSignal.h>
 #include <motion_computation/impl/psm_to_external_object_helpers.hpp>
 #include <motion_computation/message_conversions.hpp>
 #include <rclcpp/logger.hpp>
 #include <rclcpp/logging.hpp>
 #include <rclcpp/rclcpp.hpp>
-#include <tf2/LinearMath/Transform.h>
-#include <tf2_geometry_msgs/tf2_geometry_msgs.h>
-#include <wgs84_utils/wgs84_utils.h>
-
-#include <algorithm>
-#include <string>
-#include <vector>
 
 namespace motion_computation {
 
@@ -41,14 +40,15 @@ void convert(const carma_v2x_msgs::msg::PSM &in_msg,
              const tf2::Quaternion &ned_in_map_rotation,
              rclcpp::node_interfaces::NodeClockInterface::SharedPtr node_clock) {
   /////// Dynamic Object /////////
-  out_msg.dynamic_obj = true; // If a PSM is sent then the object is dynamic
-                              // since its a living thing
+  out_msg.dynamic_obj = true;  // If a PSM is sent then the object is dynamic
+                               // since its a living thing
   out_msg.presence_vector |= carma_perception_msgs::msg::ExternalObject::DYNAMIC_OBJ_PRESENCE;
 
   /////// Object Id /////////
   // Generate a unique object id from the psm id
   out_msg.id = 0;
-  for (int i = in_msg.id.id.size() - 1; i >= 0; i--) { // using signed iterator to handle empty case
+  for (int i = in_msg.id.id.size() - 1; i >= 0;
+       i--) {  // using signed iterator to handle empty case
     // each byte of the psm id gets placed in one byte of the object id.
     // This should result in very large numbers which will be unlikely to
     // conflict with standard detections
@@ -75,11 +75,11 @@ void convert(const carma_v2x_msgs::msg::PSM &in_msg,
       in_msg.basic_type.type ==
           j2735_v2x_msgs::msg::PersonalDeviceUserType::A_PUBLIC_SAFETY_WORKER ||
       in_msg.basic_type.type ==
-          j2735_v2x_msgs::msg::PersonalDeviceUserType::AN_ANIMAL) // Treat animals
-                                                                  // like people
-                                                                  // since we have
-                                                                  // no internal
-                                                                  // class for that
+          j2735_v2x_msgs::msg::PersonalDeviceUserType::AN_ANIMAL)  // Treat animals
+                                                                   // like people
+                                                                   // since we have
+                                                                   // no internal
+                                                                   // class for that
   {
     out_msg.object_type = carma_perception_msgs::msg::ExternalObject::PEDESTRIAN;
 
@@ -94,8 +94,8 @@ void convert(const carma_v2x_msgs::msg::PSM &in_msg,
   } else if (in_msg.basic_type.type ==
              j2735_v2x_msgs::msg::PersonalDeviceUserType::A_PEDALCYCLIST) {
     out_msg.object_type = carma_perception_msgs::msg::ExternalObject::
-        MOTORCYCLE; // Currently external object cannot represent bicycles,
-                    // but motor cycle seems like the next best choice
+        MOTORCYCLE;  // Currently external object cannot represent bicycles,
+                     // but motor cycle seems like the next best choice
 
     // Default bicycle size
     out_msg.size.x = 1.0;
@@ -128,10 +128,10 @@ void convert(const carma_v2x_msgs::msg::PSM &in_msg,
   double largest_position_std = 0.0;
   double lat_variance = 0.0;
   double lon_variance = 0.0;
-  double heading_variance = 0.0;    // Yaw variance is not available so mark as
-                                    // impossible perfect case
-  double position_confidence = 0.0; // Default will be 10% confidence. If the position accuracy is
-                                    // available then this value will be updated
+  double heading_variance = 0.0;     // Yaw variance is not available so mark as
+                                     // impossible perfect case
+  double position_confidence = 0.0;  // Default will be 10% confidence. If the position accuracy is
+                                     // available then this value will be updated
 
   // A standard deviation which is larger than the acceptable value to give
   // 95% confidence interval on fitting the pedestrian within one 3.7m lane
@@ -170,8 +170,8 @@ void convert(const carma_v2x_msgs::msg::PSM &in_msg,
     largest_position_std = std::max(in_msg.accuracy.semi_major, in_msg.accuracy.semi_minor);
     lat_variance = in_msg.accuracy.semi_minor * in_msg.accuracy.semi_minor;
     lon_variance = in_msg.accuracy.semi_major * in_msg.accuracy.semi_major;
-    heading_variance = 1.0; // Yaw variance is not available so mark as
-                            // impossible perfect case
+    heading_variance = 1.0;  // Yaw variance is not available so mark as
+                             // impossible perfect case
 
     // Same calculation as shown in above condition. See that for description
     out_msg.confidence = 1.0 - std::min(1.0, fabs(largest_position_std / MAX_POSITION_STD));
@@ -186,7 +186,7 @@ void convert(const carma_v2x_msgs::msg::PSM &in_msg,
     lon_variance = 1.0;
 
     heading_variance = in_msg.accuracy.orientation * in_msg.accuracy.orientation;
-  } else { // No accuracies available
+  } else {  // No accuracies available
     lat_variance = 1.0;
     lon_variance = 1.0;
     heading_variance = 1.0;
@@ -226,9 +226,9 @@ void convert(const carma_v2x_msgs::msg::PSM &in_msg,
 }
 
 namespace impl {
-std::vector<geometry_msgs::msg::Pose>
-sample_2d_path_from_radius(const geometry_msgs::msg::Pose &pose, double velocity,
-                           double radius_of_curvature, double period, double step_size) {
+std::vector<geometry_msgs::msg::Pose> sample_2d_path_from_radius(
+    const geometry_msgs::msg::Pose &pose, double velocity, double radius_of_curvature,
+    double period, double step_size) {
   std::vector<geometry_msgs::msg::Pose> output;
   output.reserve((period / step_size) + 1);
 
@@ -247,7 +247,7 @@ sample_2d_path_from_radius(const geometry_msgs::msg::Pose &pose, double velocity
   while (total_dt < period) {
     // Compute the 2d position and orientation in the Pose frame
     total_dt += step_size;
-    double delta_arc_length = velocity * total_dt; // Assumes perfect point motion along curve
+    double delta_arc_length = velocity * total_dt;  // Assumes perfect point motion along curve
 
     double turning_angle = delta_arc_length / radius_of_curvature;
     double dx_from_center = radius_of_curvature * sin(turning_angle);
@@ -269,7 +269,7 @@ sample_2d_path_from_radius(const geometry_msgs::msg::Pose &pose, double velocity
 
     sample_pose.position.x = map_to_sample.getOrigin().x();
     sample_pose.position.y = map_to_sample.getOrigin().y();
-    sample_pose.position.z = pose.orientation.z; // Reuse the z position from the initial pose
+    sample_pose.position.z = pose.orientation.z;  // Reuse the z position from the initial pose
 
     sample_pose.orientation.x = map_to_sample.getRotation().x();
     sample_pose.orientation.y = map_to_sample.getRotation().y();
@@ -299,7 +299,7 @@ std::vector<geometry_msgs::msg::Pose> sample_2d_linear_motion(const geometry_msg
   while (total_dt < period) {
     // Compute the 2d position and orientation in the Pose frame
     total_dt += step_size;
-    double dx_from_start = velocity * total_dt; // Assuming linear motion in pose frame
+    double dx_from_start = velocity * total_dt;  // Assuming linear motion in pose frame
 
     double x = pose.position.x + dx_from_start;
 
@@ -328,22 +328,22 @@ std::vector<geometry_msgs::msg::Pose> sample_2d_linear_motion(const geometry_msg
 
 // NOTE heading will need to be set after calling this
 
-geometry_msgs::msg::PoseWithCovariance
-pose_from_gnss(const lanelet::projection::LocalFrameProjector &projector,
-               const tf2::Quaternion &ned_in_map_rotation, const lanelet::GPSPoint &gps_point,
-               const double &heading, const double lat_variance, const double lon_variance,
-               const double heading_variance) {
+geometry_msgs::msg::PoseWithCovariance pose_from_gnss(
+    const lanelet::projection::LocalFrameProjector &projector,
+    const tf2::Quaternion &ned_in_map_rotation, const lanelet::GPSPoint &gps_point,
+    const double &heading, const double lat_variance, const double lon_variance,
+    const double heading_variance) {
   //// Convert the position information into the map frame using the proj
   /// library
   lanelet::BasicPoint3d map_point = projector.forward(gps_point);
 
-  RCLCPP_DEBUG_STREAM(rclcpp::get_logger("motion_computation::conversion"),
-                      "map_point: " << map_point.x() << ", " << map_point.y() << ", "
-                                    << map_point.z());
+  RCLCPP_DEBUG_STREAM(
+      rclcpp::get_logger("motion_computation::conversion"),
+      "map_point: " << map_point.x() << ", " << map_point.y() << ", " << map_point.z());
 
   if (fabs(map_point.x()) > 10000.0 ||
-      fabs(map_point.y()) > 10000.0) { // Above 10km from map origin earth curvature will start to
-                                       // have a negative impact on system performance
+      fabs(map_point.y()) > 10000.0) {  // Above 10km from map origin earth curvature will start to
+                                        // have a negative impact on system performance
 
     RCLCPP_WARN_STREAM(rclcpp::get_logger("motion_computation::conversion"),
                        "Distance from map origin is larger than supported by system "
@@ -359,14 +359,14 @@ pose_from_gnss(const lanelet::projection::LocalFrameProjector &projector,
   // without change in its orientation will give the same result (as far as we
   // are concered).
 
-  tf2::Quaternion R_m_n(ned_in_map_rotation); // Rotation of NED frame in map
-                                              // frame
-  tf2::Quaternion R_n_h;                      // Rotation of sensor heading report in NED frame
+  tf2::Quaternion R_m_n(ned_in_map_rotation);  // Rotation of NED frame in map
+                                               // frame
+  tf2::Quaternion R_n_h;                       // Rotation of sensor heading report in NED frame
   R_n_h.setRPY(0, 0, heading * wgs84_utils::DEG2RAD);
 
-  tf2::Quaternion R_m_s = R_m_n * R_n_h; // Rotation of sensor in map frame under assumption that
-                                         // distance from map origin is sufficiently small so as to
-                                         // ignore local changes in NED orientation
+  tf2::Quaternion R_m_s = R_m_n * R_n_h;  // Rotation of sensor in map frame under assumption that
+                                          // distance from map origin is sufficiently small so as to
+                                          // ignore local changes in NED orientation
 
   RCLCPP_DEBUG_STREAM(rclcpp::get_logger("motion_computation::conversion"),
                       "R_m_n (x,y,z,w) : ( " << R_m_n.x() << ", " << R_m_n.y() << ", " << R_m_n.z()
@@ -381,10 +381,11 @@ pose_from_gnss(const lanelet::projection::LocalFrameProjector &projector,
                                              << ", " << R_m_s.w());
 
   tf2::Transform T_m_s(R_m_s, tf2::Vector3(map_point.x(), map_point.y(),
-                                           map_point.z())); // Reported position and orientation
-                                                            // of sensor frame in map frame
+                                           map_point.z()));  // Reported position and orientation
+                                                             // of sensor frame in map frame
 
-  tf2::Transform T_m_n_no_heading(R_m_n, tf2::Vector3(0, 0, 0)); // Used to transform the covariance
+  tf2::Transform T_m_n_no_heading(R_m_n,
+                                  tf2::Vector3(0, 0, 0));  // Used to transform the covariance
 
   // This covariance represents the covariance of the NED frame N-lat,
   // E-lon, heading- angle east of north This means that the covariance is
@@ -423,11 +424,10 @@ pose_from_gnss(const lanelet::projection::LocalFrameProjector &projector,
   return pose;
 }
 
-std::vector<carma_perception_msgs::msg::PredictedState>
-predicted_poses_to_predicted_state(const std::vector<geometry_msgs::msg::Pose> &poses,
-                                   double constant_velocity, const rclcpp::Time &start_time,
-                                   const rclcpp::Duration &step_size, const std::string &frame,
-                                   double initial_pose_confidence, double initial_vel_confidence) {
+std::vector<carma_perception_msgs::msg::PredictedState> predicted_poses_to_predicted_state(
+    const std::vector<geometry_msgs::msg::Pose> &poses, double constant_velocity,
+    const rclcpp::Time &start_time, const rclcpp::Duration &step_size, const std::string &frame,
+    double initial_pose_confidence, double initial_vel_confidence) {
   std::vector<carma_perception_msgs::msg::PredictedState> output;
   output.reserve(poses.size());
 
@@ -441,12 +441,13 @@ predicted_poses_to_predicted_state(const std::vector<geometry_msgs::msg::Pose> &
 
     pred_state.predicted_position = p;
     pred_state.predicted_position_confidence =
-        0.9 * initial_pose_confidence; // Reduce confidence by 10 % per timestep
+        0.9 * initial_pose_confidence;  // Reduce confidence by 10 % per timestep
     initial_pose_confidence = pred_state.predicted_position_confidence;
 
     pred_state.predicted_velocity.linear.x = constant_velocity;
-    pred_state.predicted_velocity_confidence = 0.9 * initial_vel_confidence; // Reduce confidence by
-                                                                             // 10 % per timestep
+    pred_state.predicted_velocity_confidence =
+        0.9 * initial_vel_confidence;  // Reduce confidence by
+                                       // 10 % per timestep
     initial_vel_confidence = pred_state.predicted_velocity_confidence;
 
     output.push_back(pred_state);
@@ -500,8 +501,8 @@ rclcpp::Time get_psm_timestamp(const carma_v2x_msgs::msg::PSM &in_msg,
                                    in_msg.path_history.initial_position.utc_time.day.day);
 
     utc_time_of_current_psm = boost::posix_time::ptime(utc_day) + time_of_day;
-  } else { // If the utc time of the path history cannot be used to account for minute
-           // change over, then we have to default to the sec mark
+  } else {  // If the utc time of the path history cannot be used to account for minute
+            // change over, then we have to default to the sec mark
 
     RCLCPP_WARN_STREAM_THROTTLE(rclcpp::get_logger("motion_computation::conversion"), *clock.get(),
                                 rclcpp::Duration(5, 0).nanoseconds(),
@@ -556,7 +557,7 @@ rclcpp::Time get_psm_timestamp(const carma_v2x_msgs::msg::PSM &in_msg,
 
   return rclcpp::Time(nsec_since_epoch.total_nanoseconds());
 }
-} // namespace impl
+}  // namespace impl
 
-} // namespace conversion
-} // namespace motion_computation
+}  // namespace conversion
+}  // namespace motion_computation

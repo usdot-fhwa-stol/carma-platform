@@ -15,15 +15,15 @@
 #ifndef MOTION_COMPUTATION__IMPL__MOBILITY_PATH_TO_EXTERNAL_OBJECT_HELPERS_HPP_
 #define MOTION_COMPUTATION__IMPL__MOBILITY_PATH_TO_EXTERNAL_OBJECT_HELPERS_HPP_
 
-#include <carma_perception_msgs/msg/external_object.hpp>
-#include <carma_perception_msgs/msg/predicted_state.hpp>
-#include <geometry_msgs/msg/quaternion.hpp>
 #include <lanelet2_extension/projection/local_frame_projector.h>
-#include <rclcpp/time.hpp>
 #include <tf2/LinearMath/Quaternion.h>
 #include <tf2/LinearMath/Vector3.h>
 #include <tuple>
 #include <utility>
+#include <carma_perception_msgs/msg/external_object.hpp>
+#include <carma_perception_msgs/msg/predicted_state.hpp>
+#include <geometry_msgs/msg/quaternion.hpp>
+#include <rclcpp/time.hpp>
 
 namespace motion_computation {
 
@@ -43,10 +43,9 @@ namespace impl {
  * the prediction including linear velocity, last_time, orientation filled in and the second
  * element is the yaw in radians used to compute the orientation
  */
-std::pair<carma_perception_msgs::msg::PredictedState, double>
-composePredictedState(const tf2::Vector3 &curr_pt, const tf2::Vector3 &prev_pt,
-                      const rclcpp::Time &prev_time_stamp, const rclcpp::Time &curr_time_stamp,
-                      double prev_yaw);
+std::pair<carma_perception_msgs::msg::PredictedState, double> composePredictedState(
+    const tf2::Vector3 &curr_pt, const tf2::Vector3 &prev_pt, const rclcpp::Time &prev_time_stamp,
+    const rclcpp::Time &curr_time_stamp, double prev_yaw);
 /**
  * \brief Helper function to fill in the angular velocity of the external object
  * \param ExternalObject to fill in its angular velocities
@@ -70,8 +69,8 @@ double getYawFromQuaternionMsg(const geometry_msgs::msg::Quaternion &quaternion)
 tf2::Vector3 transform_to_map_frame(const tf2::Vector3 &ecef_point,
                                     const lanelet::projection::LocalFrameProjector &map_projector);
 
-} // namespace impl
-} // namespace conversion
-} // namespace motion_computation
+}  // namespace impl
+}  // namespace conversion
+}  // namespace motion_computation
 
-#endif // MOTION_COMPUTATION__IMPL__MOBILITY_PATH_TO_EXTERNAL_OBJECT_HELPERS_HPP_
+#endif  // MOTION_COMPUTATION__IMPL__MOBILITY_PATH_TO_EXTERNAL_OBJECT_HELPERS_HPP_

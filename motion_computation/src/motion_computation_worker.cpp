@@ -13,10 +13,10 @@
 // limitations under the License.
 
 #include "motion_computation/motion_computation_worker.hpp"
-#include "motion_computation/message_conversions.hpp"
+#include <wgs84_utils/proj_tools.h>
 #include <memory>
 #include <string>
-#include <wgs84_utils/proj_tools.h>
+#include "motion_computation/message_conversions.hpp"
 
 namespace motion_computation {
 
@@ -61,7 +61,7 @@ void MotionComputationWorker::predictionLogic(
     } else {
       obj.object_type = obj.UNKNOWN;
       use_ctrv_model = enable_ctrv_for_unknown_obj_;
-    } // end if-else
+    }  // end if-else
 
     if (use_ctrv_model == true) {
       obj.predictions = motion_predict::ctrv::predictPeriod(
@@ -74,13 +74,13 @@ void MotionComputationWorker::predictionLogic(
     }
 
     sensor_list.objects.emplace_back(obj);
-  } // end for-loop
+  }  // end for-loop
 
   // Synchronize all data to the current sensor data timestamp
   carma_perception_msgs::msg::ExternalObjectList synchronization_base_objects;
   synchronization_base_objects.header =
-      sensor_list.header; // Use the current sensing stamp as the sync point even if sensor data is
-                          // not used
+      sensor_list.header;  // Use the current sensing stamp as the sync point even if sensor data is
+                           // not used
 
   if (enable_sensor_processing_) {
     // If using sensor data add it to the base synchronization list since it
@@ -94,9 +94,10 @@ void MotionComputationWorker::predictionLogic(
     synchronization_base_objects.objects.clear();
 
   } else {
-    RCLCPP_WARN_STREAM(logger_->get_logger(), "Not configured to publish any data publishing empty "
-                                              "object list. Operating like this is NOT "
-                                              "advised.");
+    RCLCPP_WARN_STREAM(logger_->get_logger(),
+                       "Not configured to publish any data publishing empty "
+                       "object list. Operating like this is NOT "
+                       "advised.");
 
     obj_pub_(synchronization_base_objects);
     bsm_list_.objects.clear();
@@ -138,12 +139,12 @@ void MotionComputationWorker::georeferenceCallback(const std_msgs::msg::String::
   map_projector_ = std::make_shared<lanelet::projection::LocalFrameProjector>(msg->data.c_str());
 
   std::string axis = wgs84_utils::proj_tools::getAxisFromProjString(
-      msg->data); // Extract axis for orientation calc
+      msg->data);  // Extract axis for orientation calc
 
   RCLCPP_INFO_STREAM(logger_->get_logger(), "Extracted Axis: " << axis);
 
-  ned_in_map_rotation_ =
-      wgs84_utils::proj_tools::getRotationOfNEDFromProjAxis(axis); // Extract map rotation from axis
+  ned_in_map_rotation_ = wgs84_utils::proj_tools::getRotationOfNEDFromProjAxis(
+      axis);  // Extract map rotation from axis
 
   RCLCPP_DEBUG_STREAM(logger_->get_logger(), "Extracted NED in Map Rotation (x,y,z,w) : ( "
                                                  << ned_in_map_rotation_.getX() << ", "
@@ -330,7 +331,7 @@ carma_perception_msgs::msg::ExternalObject MotionComputationWorker::matchAndInte
       continue;
     }
 
-    if (is_first_point) // we store in the body if it is the first point, not predictions
+    if (is_first_point)  // we store in the body if it is the first point, not predictions
     {
       // reaching here means curr_state starts later than the time we are trying to match
       // copy old unchanged parts
@@ -343,7 +344,7 @@ carma_perception_msgs::msg::ExternalObject MotionComputationWorker::matchAndInte
       rclcpp::Duration pred_delta_t =
           rclcpp::Time(curr_state.header.stamp) - rclcpp::Time(prev_state.header.stamp);
       double ratio;
-      if (pred_delta_t.seconds() < 0.00000001) { // Divide by zero check
+      if (pred_delta_t.seconds() < 0.00000001) {  // Divide by zero check
         // This can only happen if effectively all 3 points are on top of each other
         // which is extremely unlikely
         ratio = 0.0;
@@ -381,4 +382,4 @@ carma_perception_msgs::msg::ExternalObject MotionComputationWorker::matchAndInte
   return output;
 }
 
-} // namespace motion_computation
+}  // namespace motion_computation
