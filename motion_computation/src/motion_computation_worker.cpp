@@ -12,11 +12,11 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include "motion_computation/motion_computation_worker.hpp"
 #include <wgs84_utils/proj_tools.h>
 #include <memory>
 #include <string>
-#include "motion_computation/message_conversions.hpp"
+#include <motion_computation/message_conversions.hpp>
+#include <motion_computation/motion_computation_worker.hpp>
 
 namespace motion_computation {
 

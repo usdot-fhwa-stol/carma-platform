@@ -13,8 +13,8 @@
 // limitations under the License.
 
 #include <memory>
-#include <rclcpp/rclcpp.hpp>
 #include "motion_computation/motion_computation_node.hpp"
+#include <rclcpp/rclcpp.hpp>
 
 int main(int argc, char **argv) {
   rclcpp::init(argc, argv);
