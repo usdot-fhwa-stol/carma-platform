@@ -31,17 +31,18 @@
 #include <carma_perception_msgs/msg/external_object.hpp>
 #include <carma_v2x_msgs/msg/psm.hpp>
 
-namespace motion_computation {
+namespace motion_computation
+{
+namespace conversion
+{
+void convert(
+  const carma_v2x_msgs::msg::PSM & in_msg, carma_perception_msgs::msg::ExternalObject & out_msg,
+  const std::string & map_frame_id, double pred_period, double pred_step_size,
 
-namespace conversion {
-
-void convert(const carma_v2x_msgs::msg::PSM &in_msg,
-             carma_perception_msgs::msg::ExternalObject &out_msg, const std::string &map_frame_id,
-             double pred_period, double pred_step_size,
-
-             const lanelet::projection::LocalFrameProjector &map_projector,
-             const tf2::Quaternion &ned_in_map_rotation,
-             rclcpp::node_interfaces::NodeClockInterface::SharedPtr node_clock) {
+  const lanelet::projection::LocalFrameProjector & map_projector,
+  const tf2::Quaternion & ned_in_map_rotation,
+  rclcpp::node_interfaces::NodeClockInterface::SharedPtr node_clock)
+{
   /////// Dynamic Object /////////
   out_msg.dynamic_obj = true;  // If a PSM is sent then the object is dynamic
                                // since its a living thing
@@ -74,15 +75,15 @@ void convert(const carma_v2x_msgs::msg::PSM &in_msg,
   /////// Object Type and Size /////////
   // Set the type
 
-  if (in_msg.basic_type.type == j2735_v2x_msgs::msg::PersonalDeviceUserType::A_PEDESTRIAN ||
-      in_msg.basic_type.type ==
-          j2735_v2x_msgs::msg::PersonalDeviceUserType::A_PUBLIC_SAFETY_WORKER ||
-      in_msg.basic_type.type ==
-          j2735_v2x_msgs::msg::PersonalDeviceUserType::AN_ANIMAL)  // Treat animals
-                                                                   // like people
-                                                                   // since we have
-                                                                   // no internal
-                                                                   // class for that
+  if (
+    in_msg.basic_type.type == j2735_v2x_msgs::msg::PersonalDeviceUserType::A_PEDESTRIAN ||
+    in_msg.basic_type.type == j2735_v2x_msgs::msg::PersonalDeviceUserType::A_PUBLIC_SAFETY_WORKER ||
+    in_msg.basic_type.type ==
+      j2735_v2x_msgs::msg::PersonalDeviceUserType::AN_ANIMAL)  // Treat animals
+                                                               // like people
+                                                               // since we have
+                                                               // no internal
+                                                               // class for that
   {
     out_msg.object_type = carma_perception_msgs::msg::ExternalObject::PEDESTRIAN;
 
@@ -94,11 +95,11 @@ void convert(const carma_v2x_msgs::msg::PSM &in_msg,
     out_msg.size.y = 0.5;
     out_msg.size.z = 1.0;
 
-  } else if (in_msg.basic_type.type ==
-             j2735_v2x_msgs::msg::PersonalDeviceUserType::A_PEDALCYCLIST) {
+  } else if (
+    in_msg.basic_type.type == j2735_v2x_msgs::msg::PersonalDeviceUserType::A_PEDALCYCLIST) {
     out_msg.object_type = carma_perception_msgs::msg::ExternalObject::
-        MOTORCYCLE;  // Currently external object cannot represent bicycles,
-                     // but motor cycle seems like the next best choice
+      MOTORCYCLE;  // Currently external object cannot represent bicycles,
+                   // but motor cycle seems like the next best choice
 
     // Default bicycle size
     out_msg.size.x = 1.0;
@@ -140,10 +141,11 @@ void convert(const carma_v2x_msgs::msg::PSM &in_msg,
   // 95% confidence interval on fitting the pedestrian within one 3.7m lane
   constexpr double MAX_POSITION_STD = 1.85;
 
-  if ((in_msg.accuracy.presence_vector |
-       carma_v2x_msgs::msg::PositionalAccuracy::ACCURACY_AVAILABLE) &&
-      (in_msg.accuracy.presence_vector |
-       carma_v2x_msgs::msg::PositionalAccuracy::ACCURACY_ORIENTATION_AVAILABLE)) {
+  if (
+    (in_msg.accuracy.presence_vector |
+     carma_v2x_msgs::msg::PositionalAccuracy::ACCURACY_AVAILABLE) &&
+    (in_msg.accuracy.presence_vector |
+     carma_v2x_msgs::msg::PositionalAccuracy::ACCURACY_ORIENTATION_AVAILABLE)) {
     // Both accuracies available
 
     // Compute the position covariance
@@ -165,9 +167,9 @@ void convert(const carma_v2x_msgs::msg::PSM &in_msg,
     // the position confidence for both
     out_msg.confidence = 1.0 - std::min(1.0, fabs(largest_position_std / MAX_POSITION_STD));
     out_msg.presence_vector |=
-        carma_perception_msgs::msg::ExternalObject::CONFIDENCE_PRESENCE_VECTOR;
-  } else if (in_msg.accuracy.presence_vector |
-             carma_v2x_msgs::msg::PositionalAccuracy::ACCURACY_AVAILABLE) {
+      carma_perception_msgs::msg::ExternalObject::CONFIDENCE_PRESENCE_VECTOR;
+  } else if (
+    in_msg.accuracy.presence_vector | carma_v2x_msgs::msg::PositionalAccuracy::ACCURACY_AVAILABLE) {
     // Position accuracy available
 
     largest_position_std = std::max(in_msg.accuracy.semi_major, in_msg.accuracy.semi_minor);
@@ -179,10 +181,11 @@ void convert(const carma_v2x_msgs::msg::PSM &in_msg,
     // Same calculation as shown in above condition. See that for description
     out_msg.confidence = 1.0 - std::min(1.0, fabs(largest_position_std / MAX_POSITION_STD));
     out_msg.presence_vector |=
-        carma_perception_msgs::msg::ExternalObject::CONFIDENCE_PRESENCE_VECTOR;
+      carma_perception_msgs::msg::ExternalObject::CONFIDENCE_PRESENCE_VECTOR;
 
-  } else if (in_msg.accuracy.presence_vector |
-             carma_v2x_msgs::msg::PositionalAccuracy::ACCURACY_ORIENTATION_AVAILABLE) {
+  } else if (
+    in_msg.accuracy.presence_vector |
+    carma_v2x_msgs::msg::PositionalAccuracy::ACCURACY_ORIENTATION_AVAILABLE) {
     // Orientation accuracy available
 
     lat_variance = 1.0;
@@ -198,10 +201,10 @@ void convert(const carma_v2x_msgs::msg::PSM &in_msg,
   /////// Pose and Covariance /////////
   // Compute the pose
   lanelet::GPSPoint gps_point(
-      {in_msg.position.latitude, in_msg.position.longitude, in_msg.position.elevation});
-  out_msg.pose =
-      impl::pose_from_gnss(map_projector, ned_in_map_rotation, gps_point, in_msg.heading.heading,
-                           lat_variance, lon_variance, heading_variance);
+    {in_msg.position.latitude, in_msg.position.longitude, in_msg.position.elevation});
+  out_msg.pose = impl::pose_from_gnss(
+    map_projector, ned_in_map_rotation, gps_point, in_msg.heading.heading, lat_variance,
+    lon_variance, heading_variance);
   out_msg.presence_vector |= carma_perception_msgs::msg::ExternalObject::POSE_PRESENCE_VECTOR;
 
   /////// Predictions /////////
@@ -215,29 +218,31 @@ void convert(const carma_v2x_msgs::msg::PSM &in_msg,
     // Based on the vehicle frame used in j2735 positive should be to the right
     // and negative to the left
     predicted_poses = impl::sample_2d_path_from_radius(
-        out_msg.pose.pose, out_msg.velocity.twist.linear.x,
-        -in_msg.path_prediction.radius_of_curvature, pred_period, pred_step_size);
+      out_msg.pose.pose, out_msg.velocity.twist.linear.x,
+      -in_msg.path_prediction.radius_of_curvature, pred_period, pred_step_size);
   } else {
     predicted_poses = impl::sample_2d_linear_motion(
-        out_msg.pose.pose, out_msg.velocity.twist.linear.x, pred_period, pred_step_size);
+      out_msg.pose.pose, out_msg.velocity.twist.linear.x, pred_period, pred_step_size);
   }
 
   out_msg.predictions = impl::predicted_poses_to_predicted_state(
-      predicted_poses, out_msg.velocity.twist.linear.x, rclcpp::Time(out_msg.header.stamp),
-      rclcpp::Duration(pred_step_size * 1e9), map_frame_id, out_msg.confidence, out_msg.confidence);
+    predicted_poses, out_msg.velocity.twist.linear.x, rclcpp::Time(out_msg.header.stamp),
+    rclcpp::Duration(pred_step_size * 1e9), map_frame_id, out_msg.confidence, out_msg.confidence);
   out_msg.presence_vector |= carma_perception_msgs::msg::ExternalObject::PREDICTION_PRESENCE_VECTOR;
 }
 
-namespace impl {
+namespace impl
+{
 std::vector<geometry_msgs::msg::Pose> sample_2d_path_from_radius(
-    const geometry_msgs::msg::Pose &pose, double velocity, double radius_of_curvature,
-    double period, double step_size) {
+  const geometry_msgs::msg::Pose & pose, double velocity, double radius_of_curvature, double period,
+  double step_size)
+{
   std::vector<geometry_msgs::msg::Pose> output;
   output.reserve((period / step_size) + 1);
 
   tf2::Vector3 pose_in_map_translation(pose.position.x, pose.position.y, pose.position.z);
-  tf2::Quaternion pose_in_map_quat(pose.orientation.x, pose.orientation.y, pose.orientation.z,
-                                   pose.orientation.w);
+  tf2::Quaternion pose_in_map_quat(
+    pose.orientation.x, pose.orientation.y, pose.orientation.z, pose.orientation.w);
   tf2::Transform pose_in_map(pose_in_map_quat, pose_in_map_translation);
 
   // The radius of curvature originates from the frame of the provided pose
@@ -285,15 +290,15 @@ std::vector<geometry_msgs::msg::Pose> sample_2d_path_from_radius(
   return output;
 }
 
-std::vector<geometry_msgs::msg::Pose> sample_2d_linear_motion(const geometry_msgs::msg::Pose &pose,
-                                                              double velocity, double period,
-                                                              double step_size) {
+std::vector<geometry_msgs::msg::Pose> sample_2d_linear_motion(
+  const geometry_msgs::msg::Pose & pose, double velocity, double period, double step_size)
+{
   std::vector<geometry_msgs::msg::Pose> output;
   output.reserve((period / step_size) + 1);
 
   tf2::Vector3 pose_in_map_translation(pose.position.x, pose.position.y, pose.position.z);
-  tf2::Quaternion pose_in_map_quat(pose.orientation.x, pose.orientation.y, pose.orientation.z,
-                                   pose.orientation.w);
+  tf2::Quaternion pose_in_map_quat(
+    pose.orientation.x, pose.orientation.y, pose.orientation.z, pose.orientation.w);
 
   tf2::Transform pose_in_map(pose_in_map_quat, pose_in_map_translation);
 
@@ -332,26 +337,29 @@ std::vector<geometry_msgs::msg::Pose> sample_2d_linear_motion(const geometry_msg
 // NOTE heading will need to be set after calling this
 
 geometry_msgs::msg::PoseWithCovariance pose_from_gnss(
-    const lanelet::projection::LocalFrameProjector &projector,
-    const tf2::Quaternion &ned_in_map_rotation, const lanelet::GPSPoint &gps_point,
-    const double &heading, const double lat_variance, const double lon_variance,
-    const double heading_variance) {
+  const lanelet::projection::LocalFrameProjector & projector,
+  const tf2::Quaternion & ned_in_map_rotation, const lanelet::GPSPoint & gps_point,
+  const double & heading, const double lat_variance, const double lon_variance,
+  const double heading_variance)
+{
   //// Convert the position information into the map frame using the proj
   /// library
   lanelet::BasicPoint3d map_point = projector.forward(gps_point);
 
   RCLCPP_DEBUG_STREAM(
+    rclcpp::get_logger("motion_computation::conversion"),
+    "map_point: " << map_point.x() << ", " << map_point.y() << ", " << map_point.z());
+
+  if (
+    fabs(map_point.x()) > 10000.0 ||
+    fabs(map_point.y()) > 10000.0) {  // Above 10km from map origin earth curvature will start to
+                                      // have a negative impact on system performance
+
+    RCLCPP_WARN_STREAM(
       rclcpp::get_logger("motion_computation::conversion"),
-      "map_point: " << map_point.x() << ", " << map_point.y() << ", " << map_point.z());
-
-  if (fabs(map_point.x()) > 10000.0 ||
-      fabs(map_point.y()) > 10000.0) {  // Above 10km from map origin earth curvature will start to
-                                        // have a negative impact on system performance
-
-    RCLCPP_WARN_STREAM(rclcpp::get_logger("motion_computation::conversion"),
-                       "Distance from map origin is larger than supported by system "
-                       "assumptions. Strongly advise "
-                       "alternative map origin be used. ");
+      "Distance from map origin is larger than supported by system "
+      "assumptions. Strongly advise "
+      "alternative map origin be used. ");
   }
 
   //// Convert the orientation information into the map frame
@@ -371,24 +379,29 @@ geometry_msgs::msg::PoseWithCovariance pose_from_gnss(
                                           // distance from map origin is sufficiently small so as to
                                           // ignore local changes in NED orientation
 
-  RCLCPP_DEBUG_STREAM(rclcpp::get_logger("motion_computation::conversion"),
-                      "R_m_n (x,y,z,w) : ( " << R_m_n.x() << ", " << R_m_n.y() << ", " << R_m_n.z()
-                                             << ", " << R_m_n.w());
+  RCLCPP_DEBUG_STREAM(
+    rclcpp::get_logger("motion_computation::conversion"),
+    "R_m_n (x,y,z,w) : ( " << R_m_n.x() << ", " << R_m_n.y() << ", " << R_m_n.z() << ", "
+                           << R_m_n.w());
 
-  RCLCPP_DEBUG_STREAM(rclcpp::get_logger("motion_computation::conversion"),
-                      "R_n_h (x,y,z,w) : ( " << R_n_h.x() << ", " << R_n_h.y() << ", " << R_n_h.z()
-                                             << ", " << R_n_h.w());
+  RCLCPP_DEBUG_STREAM(
+    rclcpp::get_logger("motion_computation::conversion"),
+    "R_n_h (x,y,z,w) : ( " << R_n_h.x() << ", " << R_n_h.y() << ", " << R_n_h.z() << ", "
+                           << R_n_h.w());
 
-  RCLCPP_DEBUG_STREAM(rclcpp::get_logger("motion_computation::conversion"),
-                      "R_m_s (x,y,z,w) : ( " << R_m_s.x() << ", " << R_m_s.y() << ", " << R_m_s.z()
-                                             << ", " << R_m_s.w());
+  RCLCPP_DEBUG_STREAM(
+    rclcpp::get_logger("motion_computation::conversion"),
+    "R_m_s (x,y,z,w) : ( " << R_m_s.x() << ", " << R_m_s.y() << ", " << R_m_s.z() << ", "
+                           << R_m_s.w());
 
-  tf2::Transform T_m_s(R_m_s, tf2::Vector3(map_point.x(), map_point.y(),
-                                           map_point.z()));  // Reported position and orientation
-                                                             // of sensor frame in map frame
+  tf2::Transform T_m_s(
+    R_m_s, tf2::Vector3(
+             map_point.x(), map_point.y(),
+             map_point.z()));  // Reported position and orientation
+                               // of sensor frame in map frame
 
-  tf2::Transform T_m_n_no_heading(R_m_n,
-                                  tf2::Vector3(0, 0, 0));  // Used to transform the covariance
+  tf2::Transform T_m_n_no_heading(
+    R_m_n, tf2::Vector3(0, 0, 0));  // Used to transform the covariance
 
   // This covariance represents the covariance of the NED frame N-lat,
   // E-lon, heading- angle east of north This means that the covariance is
@@ -404,12 +417,12 @@ geometry_msgs::msg::PoseWithCovariance pose_from_gnss(
         };
   // clang-format on
 
-  std::array<double, 36> new_cov =
-      tf2::transformCovariance(input_covariance,
-                               // Per the usage of transformCovariance in tf2_geometry_msgs
-                               // this frame should be the transform between the map which the pose
-                               // is in an the target frame.
-                               T_m_n_no_heading);
+  std::array<double, 36> new_cov = tf2::transformCovariance(
+    input_covariance,
+    // Per the usage of transformCovariance in tf2_geometry_msgs
+    // this frame should be the transform between the map which the pose
+    // is in an the target frame.
+    T_m_n_no_heading);
 
   // Populate message
   geometry_msgs::msg::PoseWithCovariance pose;
@@ -428,9 +441,10 @@ geometry_msgs::msg::PoseWithCovariance pose_from_gnss(
 }
 
 std::vector<carma_perception_msgs::msg::PredictedState> predicted_poses_to_predicted_state(
-    const std::vector<geometry_msgs::msg::Pose> &poses, double constant_velocity,
-    const rclcpp::Time &start_time, const rclcpp::Duration &step_size, const std::string &frame,
-    double initial_pose_confidence, double initial_vel_confidence) {
+  const std::vector<geometry_msgs::msg::Pose> & poses, double constant_velocity,
+  const rclcpp::Time & start_time, const rclcpp::Duration & step_size, const std::string & frame,
+  double initial_pose_confidence, double initial_vel_confidence)
+{
   std::vector<carma_perception_msgs::msg::PredictedState> output;
   output.reserve(poses.size());
 
@@ -444,13 +458,13 @@ std::vector<carma_perception_msgs::msg::PredictedState> predicted_poses_to_predi
 
     pred_state.predicted_position = p;
     pred_state.predicted_position_confidence =
-        0.9 * initial_pose_confidence;  // Reduce confidence by 10 % per timestep
+      0.9 * initial_pose_confidence;  // Reduce confidence by 10 % per timestep
     initial_pose_confidence = pred_state.predicted_position_confidence;
 
     pred_state.predicted_velocity.linear.x = constant_velocity;
     pred_state.predicted_velocity_confidence =
-        0.9 * initial_vel_confidence;  // Reduce confidence by
-                                       // 10 % per timestep
+      0.9 * initial_vel_confidence;  // Reduce confidence by
+                                     // 10 % per timestep
     initial_vel_confidence = pred_state.predicted_velocity_confidence;
 
     output.push_back(pred_state);
@@ -459,13 +473,14 @@ std::vector<carma_perception_msgs::msg::PredictedState> predicted_poses_to_predi
   return output;
 }
 
-rclcpp::Time get_psm_timestamp(const carma_v2x_msgs::msg::PSM &in_msg,
-                               rclcpp::Clock::SharedPtr clock) {
+rclcpp::Time get_psm_timestamp(
+  const carma_v2x_msgs::msg::PSM & in_msg, rclcpp::Clock::SharedPtr clock)
+{
   boost::posix_time::ptime utc_time_of_current_psm;
 
   // Get the utc epoch start time
   static const boost::posix_time::ptime inception_boost(
-      boost::posix_time::time_from_string("1970-01-01 00:00:00.000"));
+    boost::posix_time::time_from_string("1970-01-01 00:00:00.000"));
 
   // Determine if the utc time of the path history can be used instead of the
   // sec_mark The sec_mark is susceptible to large error on minute transitions
@@ -488,39 +503,42 @@ rclcpp::Time get_psm_timestamp(const carma_v2x_msgs::msg::PSM &in_msg,
         (initial_position_time.presence_vector & j2735_v2x_msgs::msg::DDateTime::SECOND) &&
       (in_msg.sec_mark.millisecond == initial_position_time.second.millisecond)) {
     // clang-format on
-    RCLCPP_DEBUG_STREAM(rclcpp::get_logger("motion_computation::conversion"),
-                        "Using UTC time of path history to determine PSM "
-                        "timestamp. Assumed valid since UTC is fully specified "
-                        "and sec_mark == utc_time.seconds in this message.");
+    RCLCPP_DEBUG_STREAM(
+      rclcpp::get_logger("motion_computation::conversion"),
+      "Using UTC time of path history to determine PSM "
+      "timestamp. Assumed valid since UTC is fully specified "
+      "and sec_mark == utc_time.seconds in this message.");
 
     boost::posix_time::time_duration time_of_day =
-        boost::posix_time::hours(in_msg.path_history.initial_position.utc_time.hour.hour) +
-        boost::posix_time::minutes(in_msg.path_history.initial_position.utc_time.minute.minute) +
-        boost::posix_time::milliseconds(
-            in_msg.path_history.initial_position.utc_time.second.millisecond);
+      boost::posix_time::hours(in_msg.path_history.initial_position.utc_time.hour.hour) +
+      boost::posix_time::minutes(in_msg.path_history.initial_position.utc_time.minute.minute) +
+      boost::posix_time::milliseconds(
+        in_msg.path_history.initial_position.utc_time.second.millisecond);
 
-    boost::gregorian::date utc_day(in_msg.path_history.initial_position.utc_time.year.year,
-                                   in_msg.path_history.initial_position.utc_time.month.month,
-                                   in_msg.path_history.initial_position.utc_time.day.day);
+    boost::gregorian::date utc_day(
+      in_msg.path_history.initial_position.utc_time.year.year,
+      in_msg.path_history.initial_position.utc_time.month.month,
+      in_msg.path_history.initial_position.utc_time.day.day);
 
     utc_time_of_current_psm = boost::posix_time::ptime(utc_day) + time_of_day;
   } else {  // If the utc time of the path history cannot be used to account for minute
             // change over, then we have to default to the sec mark
 
-    RCLCPP_WARN_STREAM_THROTTLE(rclcpp::get_logger("motion_computation::conversion"), *clock.get(),
-                                rclcpp::Duration(5, 0).nanoseconds(),
-                                "PSM PathHistory utc timstamp does not match "
-                                "sec_mark. Unable to determine the minute of "
-                                "the year used for PSM data. Assuming local "
-                                "clock is exactly synced. This is NOT "
-                                "ADVISED.");
+    RCLCPP_WARN_STREAM_THROTTLE(
+      rclcpp::get_logger("motion_computation::conversion"), *clock.get(),
+      rclcpp::Duration(5, 0).nanoseconds(),
+      "PSM PathHistory utc timstamp does not match "
+      "sec_mark. Unable to determine the minute of "
+      "the year used for PSM data. Assuming local "
+      "clock is exactly synced. This is NOT "
+      "ADVISED.");
 
     // Get the current ROS time
     auto current_time = clock->now();
 
     // Convert the ros time to a boost duration
     boost::posix_time::time_duration duration_since_inception(
-        lanelet::time::durationFromSec(current_time.seconds()));
+      lanelet::time::durationFromSec(current_time.seconds()));
 
     // Get the current ROS time in UTC
     auto curr_time_boost = inception_boost + duration_since_inception;
@@ -545,7 +563,7 @@ rclcpp::Time get_psm_timestamp(const carma_v2x_msgs::msg::PSM &in_msg,
     // Compute the UTC PSM stamp from the sec_mark using ROS time as the clock
 
     boost::posix_time::time_duration s_in_cur_minute =
-        boost::posix_time::milliseconds(in_msg.sec_mark.millisecond);
+      boost::posix_time::milliseconds(in_msg.sec_mark.millisecond);
 
     utc_time_of_current_psm = utc_start_of_current_minute + s_in_cur_minute;
   }
@@ -553,9 +571,10 @@ rclcpp::Time get_psm_timestamp(const carma_v2x_msgs::msg::PSM &in_msg,
   boost::posix_time::time_duration nsec_since_epoch = utc_time_of_current_psm - inception_boost;
 
   if (nsec_since_epoch.is_special()) {
-    RCLCPP_ERROR_STREAM(rclcpp::get_logger("motion_computation::conversion"),
-                        "Computed psm nsec_since_epoch is special (computation "
-                        "failed). Value effectively undefined.");
+    RCLCPP_ERROR_STREAM(
+      rclcpp::get_logger("motion_computation::conversion"),
+      "Computed psm nsec_since_epoch is special (computation "
+      "failed). Value effectively undefined.");
   }
 
   return rclcpp::Time(nsec_since_epoch.total_nanoseconds());

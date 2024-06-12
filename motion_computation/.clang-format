@@ -1,0 +1,46 @@
+---
+# ROS 2 C++ style guidelines
+# Reference: https://github.com/ament/ament_lint/blob/rolling/ament_clang_format/ament_clang_format/configuration/.clang-format
+Language: Cpp
+BasedOnStyle: Google
+
+AccessModifierOffset: -2
+AlignAfterOpenBracket: AlwaysBreak
+BraceWrapping:
+  AfterClass: true
+  AfterFunction: true
+  AfterNamespace: true
+  AfterStruct: true
+  AfterEnum: true
+BreakBeforeBraces: Custom
+ColumnLimit: 100
+ConstructorInitializerIndentWidth: 0
+ContinuationIndentWidth: 2
+DerivePointerAlignment: false
+PointerAlignment: Middle
+ReflowComments: false
+SpacesBeforeTrailingComments: 2
+IncludeCategories:
+  # Main header (e.g. foo.hpp for foo.cpp) automatically assigned priority zero
+
+  # Rules are processed in order, the first match assigns the priority, so more general rules come last
+
+  # C System headers
+  - Regex: '^<.*\.h>'
+    Priority: 1
+  # Eigen headers are not std C++ headers
+  - Regex: '<Eigen/([A-Za-z0-9\Q/-_\E])+>'
+    Priority: 3
+  # Headers in <> without extension; e.g. C++ standard
+  - Regex: '<([A-Za-z0-9\Q/-_\E])+>'
+    Priority: 2
+  # Messages
+  - Regex: '.*_msgs/.*\.hpp'
+    Priority: 4
+  # Headers in "" with file extension; e.g. from the same or another package
+  - Regex: '"([A-Za-z0-9.\Q/-_\E])+"'
+    Priority: 3
+  # Other Packages
+  - Regex: '^<.*/.*\.h.*>'
+    Priority: 3
+IncludeBlocks: Regroup
