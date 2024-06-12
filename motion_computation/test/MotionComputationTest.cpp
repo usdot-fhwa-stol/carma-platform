@@ -13,12 +13,14 @@
 // limitations under the License.
 
 #include <gtest/gtest.h>
+
 #include <chrono>
 #include <future>
 #include <memory>
 #include <string>
 #include <thread>
 #include <utility>
+
 #include "motion_computation/impl/mobility_path_to_external_object_helpers.hpp"
 #include "motion_computation/message_conversions.hpp"
 #include "motion_computation/motion_computation_worker.hpp"

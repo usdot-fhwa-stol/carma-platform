@@ -13,8 +13,10 @@
 // limitations under the License.
 
 #include <wgs84_utils/proj_tools.h>
+
 #include <memory>
 #include <string>
+
 #include <motion_computation/message_conversions.hpp>
 #include <motion_computation/motion_computation_worker.hpp>
 

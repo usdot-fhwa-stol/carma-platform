@@ -13,13 +13,16 @@
 // limitations under the License.
 
 #include <tf2/LinearMath/Transform.h>
+
 #include <string>
 #include <utility>
-#include <carma_perception_msgs/msg/external_object.hpp>
-#include <carma_v2x_msgs/msg/mobility_path.hpp>
+
 #include <motion_computation/impl/mobility_path_to_external_object_helpers.hpp>
 #include <rclcpp/logger.hpp>
 #include <rclcpp/logging.hpp>
+
+#include <carma_perception_msgs/msg/external_object.hpp>
+#include <carma_v2x_msgs/msg/mobility_path.hpp>
 
 namespace motion_computation {
 namespace conversion {
