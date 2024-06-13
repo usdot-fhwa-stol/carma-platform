@@ -636,7 +636,7 @@ namespace cooperative_lanechange
     if (map_georeference_ != msg->data)
     {
       map_georeference_ = msg->data;
-      map_projector_ = std::make_shared<lanelet::projection::LocalFrameProjector>(map_georeference_); // Build projector from proj string
+      map_projector_ = std::make_shared<lanelet::projection::LocalFrameProjector>(msg->data.c_str()); // Build projector from proj string
     }
   }
 
