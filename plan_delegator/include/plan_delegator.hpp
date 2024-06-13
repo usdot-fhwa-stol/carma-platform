@@ -76,9 +76,9 @@ namespace plan_delegator
         double max_trajectory_duration = 6.0;
         double min_crawl_speed = 2.2352; // Min crawl speed in m/s
         double duration_to_signal_before_lane_change = 2.5; // (Seconds) If an upcoming lane change will begin in under this time threshold, a turn signal activation command will be published.
-        int tactical_plugin_service_call_timeout = 100; // (Milliseconds) The maximum duration that Plan Delegator will wait after calling a tactical plugin's trajectory planning service; if trajectory 
+        int tactical_plugin_service_call_timeout = 100; // (Milliseconds) The maximum duration that Plan Delegator will wait after calling a tactical plugin's trajectory planning service; if trajectory
                                                         // generation takes longer than this, then planning will immediately end for the current trajectory planning iteration.
-        
+
         // Stream operator for this config
         friend std::ostream &operator<<(std::ostream &output, const Config &c)
         {
@@ -102,7 +102,7 @@ namespace plan_delegator
         double starting_downtrack;  // The starting downtrack of the lane change
         bool is_right_lane_change;  // Flag to indicate whether lane change is a right lane change; false if it is a left lane change
     };
-    
+
     class PlanDelegator : public carma_ros2_utils::CarmaLifecycleNode
     {
         public:
@@ -111,7 +111,7 @@ namespace plan_delegator
             static const constexpr double MILLISECOND_TO_SECOND = 0.001;
 
             /**
-             * \brief PlanDelegator constructor 
+             * \brief PlanDelegator constructor
              */
             explicit PlanDelegator(const rclcpp::NodeOptions &);
 
@@ -158,8 +158,8 @@ namespace plan_delegator
             void lookupFrontBumperTransform();
 
             /**
-             * \brief Update the starting downtrack, ending downtrack, and maneuver-specific Lanelet ID parameters associated 
-             * with a given maneuver. These updates are required since the starting and ending downtrack values of each maneuver 
+             * \brief Update the starting downtrack, ending downtrack, and maneuver-specific Lanelet ID parameters associated
+             * with a given maneuver. These updates are required since the starting and ending downtrack values of each maneuver
              * are shifted based on the distance between the base_link frame and the vehicle_front frame.
              * \param maneuver The maneuver to be updated.
              */
@@ -174,7 +174,7 @@ namespace plan_delegator
         protected:
             // Node configuration
             Config config_;
-  
+
             // map to store service clients
             std::unordered_map<std::string, carma_ros2_utils::ClientPtr<carma_planning_msgs::srv::PlanTrajectory>> trajectory_planners_;
             // local storage of incoming messages
@@ -257,8 +257,8 @@ namespace plan_delegator
             LaneChangeInformation getLaneChangeInformation(const carma_planning_msgs::msg::Maneuver& lane_change_maneuver);
 
             /**
-             * \brief Function for processing an optional LaneChangeInformation object pertaining to an upcoming lane change. If not empty, 
-             * an UpcomingLaneChangeStatus message is created and published based on the contents of the LaneChangeInformation. The published 
+             * \brief Function for processing an optional LaneChangeInformation object pertaining to an upcoming lane change. If not empty,
+             * an UpcomingLaneChangeStatus message is created and published based on the contents of the LaneChangeInformation. The published
              * UpcomingLaneChangeStatus message is stored in upcoming_lane_change_status_.
              * \param upcoming_lane_change_information An optional LaneChangeInformation object. Empty if no upcoming lane change exists.
              */
@@ -267,13 +267,13 @@ namespace plan_delegator
             /**
              * \brief Function for processing an optional LaneChangeInformation object pertaining to the currently-occurring lane change
              * and an UpcomingLaneChangeStatus message. If the optional object pertaining to the currently-occurring lane change is not empty,
-             * then a turn signal command is published based on the current lane change direction. Otherwise, a turn signal command in the direction 
+             * then a turn signal command is published based on the current lane change direction. Otherwise, a turn signal command in the direction
              * of the UpcomingLaneChangeStatus message is published if the vehicle is estimated to begin that lane change in under the time
-             * threshold defined by config_.duration_to_signal_before_lane_change. The published TurnSignalComand message is stored in 
+             * threshold defined by config_.duration_to_signal_before_lane_change. The published TurnSignalComand message is stored in
              * latest_turn_signal_command_.
-             * \param current_lane_change_information An optional LaneChangeInformation object pertaining to the current lane 
+             * \param current_lane_change_information An optional LaneChangeInformation object pertaining to the current lane
              * change. Empty if vehicle is not currently changing lanes.
-             * \param upcoming_lane_change_status An UpcomingLaneChangeStatus message containing the lane change direction of an upcoming lane change, along 
+             * \param upcoming_lane_change_status An UpcomingLaneChangeStatus message containing the lane change direction of an upcoming lane change, along
              * with the downtrack distance to that lane change.
              */
             void publishTurnSignalCommand(const boost::optional<LaneChangeInformation>& current_lane_change_information, const carma_planning_msgs::msg::UpcomingLaneChangeStatus& upcoming_lane_change_status);
@@ -283,5 +283,6 @@ namespace plan_delegator
             FRIEND_TEST(TestPlanDelegator, TestPlanDelegator);
             FRIEND_TEST(TestPlanDelegator, TestLaneChangeInformation);
             FRIEND_TEST(TestPlanDelegator, TestUpcomingLaneChangeAndTurnSignals);
+            FRIEND_TEST(TestPlanDelegator, TestUpdateManeuverParameters);
     };
 }
