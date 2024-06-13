@@ -1,4 +1,4 @@
-/*
+    /*
  * Copyright (C) 2020-2022 LEIDOS.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
@@ -410,7 +410,7 @@ namespace port_drayage_plugin
 
     void PortDrayageWorker::onNewGeoreference(std_msgs::msg::String::UniquePtr msg) {
         // Build projector from proj string
-        if (georeference_ != = msg->data)
+        if (georeference_ != msg->data)
         {
             georeference_ = msg->data;
             map_projector_ = std::make_shared<lanelet::projection::LocalFrameProjector>(msg->data.c_str());
