@@ -146,7 +146,7 @@ void MotionComputationWorker::georeferenceCallback(const std_msgs::msg::String::
   if (georeference_ != msg->data)
   {
     georeference_ = msg->data;
-    map_projector_ = std::make_shared<lanelet::projection::LocalFrameProjector>(georeference_);
+    map_projector_ = std::make_shared<lanelet::projection::LocalFrameProjector>(msg->data.c_str());
 
     std::string axis =
       wgs84_utils::proj_tools::getAxisFromProjString(msg->data);  // Extract axis for orientation calc
