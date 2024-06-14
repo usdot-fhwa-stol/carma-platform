@@ -254,13 +254,16 @@ carma-config__install() {
     fi
 
     # Extract environment variables from the carma-config container
-    echo "Extracting environment variables from specified carma-config..."
+    echo "Extracting environment variables from carma-config targeted to install..."
     docker run --name carma-config-tmp $IMAGE_NAME
+
+    # Parse environment variables as a space-separated string of key=value pairs.
     local env_vars=$(docker run --rm --volumes-from carma-config-tmp:ro --entrypoint sh busybox:latest -c \
         'cat /opt/carma/vehicle/config/.env' | xargs)
 
-    local processed_foreground_compose=$(__parse_docker_compose_using_env_vars "/opt/carma/vehicle/config/docker-compose.yml" "$env_vars")
-    local processed_background_compose=$(__parse_docker_compose_using_env_vars "/opt/carma/vehicle/config/docker-compose-background.yml" "$env_vars")
+    # Get the docker compose file content with environment variables replaced.
+    local processed_foreground_compose=$(__parse_docker_compose_using_env_vars_in_carma_config "/opt/carma/vehicle/config/docker-compose.yml" "$env_vars")
+    local processed_background_compose=$(__parse_docker_compose_using_env_vars_in_carma_config "/opt/carma/vehicle/config/docker-compose-background.yml" "$env_vars")
 
     echo "Downloading $IMAGE_NAME dependencies..."
     echo "$processed_foreground_compose" | docker-compose -f - pull
@@ -296,7 +299,19 @@ carma__fix_bag() {
     fi
 }
 
-__replace_env_vars_in_docker_compose_from_carma_config() {
+# Replace environment variables in the given Docker Compose file content using provided environment variables.
+#
+# This function takes the content of a Docker Compose file and a list of environment variables,
+# then replaces any placeholders in the Docker Compose file with their corresponding environment variable values using sed
+#
+# Args:
+#   $1: Docker Compose file content as a string.
+#   $2: Environment variables as a space-separated string of key=value pairs.
+#
+# Returns:
+#   The Docker Compose file content with environment variables replaced.
+
+__replace_env_vars_in_docker_compose_file() {
     local compose_file_content=$1
     local env_vars=$2
 
@@ -310,16 +325,31 @@ __replace_env_vars_in_docker_compose_from_carma_config() {
     echo "$output"
 }
 
-__parse_docker_compose_using_env_vars(){
+# Parse a Docker Compose file from a CARMA configuration and replace environment variables.
+#
+# This function retrieves the content of a Docker Compose file from the `carma-config` container,
+# replaces any environment variable placeholders with their corresponding values, and outputs the modified content.
+#
+# Args:
+#   $1: The full path to the Docker Compose file inside the `carma-config` container.
+#   $2: Environment variables as a space-separated string of key=value pairs.
+#
+# Returns:
+#   The Docker Compose file content with environment variables replaced.
+
+__parse_docker_compose_using_env_vars_in_carma_config() {
     local compose_file_full_path=$1
     local env_vars=$2
 
+    # Retrieve the original Docker Compose file content from the carma-config container
     local original_compose_file=$(docker run --rm --volumes-from carma-config --entrypoint sh busybox:latest -c \
         "cat ${compose_file_full_path}")
 
-    local processed_compose_file=$(__replace_env_vars_in_docker_compose_from_carma_config "$original_compose_file" "$env_vars")
+    # Replace environment variables in the Docker Compose file content
+    local processed_compose_file=$(__replace_env_vars_in_docker_compose_file "$original_compose_file" "$env_vars")
     echo "$processed_compose_file"
 }
+
 
 carma__start() {
     # Check if the carma-config container exists
@@ -336,8 +366,8 @@ carma__start() {
 
     # Start CARMA background processes
     echo "Starting CARMA background processes..."
-    local processed_background_compose=$(__parse_docker_compose_using_env_vars "/opt/carma/vehicle/config/docker-compose-background.yml" "$env_vars")
-    # Use the processed docker-compose content to start the background processes
+    local processed_background_compose=$(__parse_docker_compose_using_env_vars_in_carma_config "/opt/carma/vehicle/config/docker-compose-background.yml" "$env_vars")
+    # Use the docker-compose content with environment variables replaced to start the background processes
     echo "$processed_background_compose" | docker-compose -f - -p carma-background up -d
 
     # Check if the argument "all" is passed to start the foreground processes
@@ -345,8 +375,8 @@ carma__start() {
         shift
         # Start CARMA Platform foreground processes
         echo "Starting CARMA Platform foreground processes..."
-        local processed_foreground_compose=$(__parse_docker_compose_using_env_vars "/opt/carma/vehicle/config/docker-compose.yml" "$env_vars")
-        # Use the processed docker-compose content to start the foreground processes
+        local processed_foreground_compose=$(__parse_docker_compose_using_env_vars_in_carma_config "/opt/carma/vehicle/config/docker-compose.yml" "$env_vars")
+        # Use the docker-compose content with environment variables replaced to start the foreground processes
         echo "$processed_foreground_compose" | docker-compose -f - -p carma up $@
     elif [ ! -z "$1" ]; then
         # Handle unrecognized arguments
@@ -369,16 +399,16 @@ carma__stop() {
 
     # Shutdown CARMA background processes
     echo "Shutting down CARMA background processes..."
-    local processed_background_compose=$(__parse_docker_compose_using_env_vars "/opt/carma/vehicle/config/docker-compose-background.yml" "$env_vars")
-    # Use the processed docker-compose content to start the background processes
+    local processed_background_compose=$(__parse_docker_compose_using_env_vars_in_carma_config "/opt/carma/vehicle/config/docker-compose-background.yml" "$env_vars")
+    # Use the docker-compose content with environment variables replaced to start the background processes
     echo "$processed_background_compose" | docker-compose -f - -p carma-background down
 
     # Check if the argument "all" is passed to also shut down the background processes
     if [ "$1" = "all" ]; then
         # Start CARMA Platform foreground processes
         echo "Shutting down CARMA processes..."
-        local processed_foreground_compose=$(__parse_docker_compose_using_env_vars "/opt/carma/vehicle/config/docker-compose.yml" "$env_vars")
-        # Use the processed docker-compose content to start the foreground processes
+        local processed_foreground_compose=$(__parse_docker_compose_using_env_vars_in_carma_config "/opt/carma/vehicle/config/docker-compose.yml" "$env_vars")
+        # Use the docker-compose content with environment variables replaced to start the foreground processes
         echo "$processed_foreground_compose" | docker-compose -f - -p carma down
 
         if [ "$2" = "fix_bag" ]; then
