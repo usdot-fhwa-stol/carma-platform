@@ -94,6 +94,8 @@ __get_image_from_config() {
             local TARGET_IMAGE=$IMAGE_BACKUP
             echoerr "Could not identify usable image from config so defaulting to image: $TARGET_IMAGE"
         fi
+
+        rm /tmp/.env
     else
         echoerr "No config detected or target image specified so using default: $TARGET_IMAGE"
     fi
