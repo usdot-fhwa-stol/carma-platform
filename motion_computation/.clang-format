@@ -21,6 +21,7 @@ PointerAlignment: Middle
 ReflowComments: false
 SpacesBeforeTrailingComments: 2
 IncludeCategories:
+  # Originally from: https://github.com/usdot-fhwa-stol/autoware.auto/blob/carma-system-4.5.0/AutowareAuto/.clang-format
   # Main header (e.g. foo.hpp for foo.cpp) automatically assigned priority zero
 
   # Rules are processed in order, the first match assigns the priority, so more general rules come last
