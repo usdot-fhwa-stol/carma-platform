@@ -1,13 +1,13 @@
 #!/bin/bash
 
 #  Copyright (C) 2018-2022 LEIDOS.
-# 
+#
 #  Licensed under the Apache License, Version 2.0 (the "License"); you may not
 #  use this file except in compliance with the License. You may obtain a copy of
 #  the License at
-# 
+#
 #  http://www.apache.org/licenses/LICENSE-2.0
-# 
+#
 #  Unless required by applicable law or agreed to in writing, software
 #  distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
 #  WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
@@ -16,9 +16,9 @@
 
 # Code below largely based on template from Stack Overflow:
 # https://stackoverflow.com/questions/37257551/defining-subcommands-that-take-arguments-in-bash
-# Question asked by user 
+# Question asked by user
 # DiogoSaraiva (https://stackoverflow.com/users/4465820/diogosaraiva)
-# and answered by user 
+# and answered by user
 # Charles Duffy (https://stackoverflow.com/users/14122/charles-duffy)
 # Attribution here is in line with Stack Overflow's Attribution policy cc-by-sa found here:
 # https://stackoverflow.blog/2009/06/25/attribution-required/
@@ -38,7 +38,7 @@ __pull_newest_carma_base() {
         sed -e 's/[][]//g' -e 's/"//g' -e 's/ //g' | tr '}' '\n'  | \
         awk -F: '{print "usdotfhwastol/carma-base:"$3}' | tail -n 1)
     fi
-    
+
     echo "No local carma-base image found, pulling down the most recent from Dockerhub..."
     docker pull $remote_image
 }
@@ -54,9 +54,9 @@ echoerr() { echo "$@" 1>&2; }
 # The method will return the first tag that appears in the config for the possible organizations and images.
 # If the config is not set or an image cannot be found the method will return a carma-base image as the default.
 # The user can specify optional organizations or images as sed compatable regex lists.
-# For example calling 
+# For example calling
 #  $(__get_image_from_config 'carma-platform:\|carma-messenger:' 'usdotfhwastol\|usdotfhwastoldev\|usdotfhwastolcandidate')
-# 
+#
 #  If no parameters are provided the defaults will be used
 ##
 __get_image_from_config() {
@@ -71,7 +71,7 @@ __get_image_from_config() {
 
     if [ -n "$2" ]
     then
-        
+
         local SUPPORTED_ORANIZATIONS="$2"
     fi
 
@@ -80,17 +80,22 @@ __get_image_from_config() {
 
         local IMAGE_BACKUP=$TARGET_IMAGE
 
-        # sed command finds the first instance of an image which is part of the set defined in SUPPORTED_ORGANIZATIONS and SUPPORTED_IMAGES.
-        # then returns the name of the image.  
-        local TARGET_IMAGE=$(docker run --rm --volumes-from carma-config:ro --entrypoint sh busybox:latest -c \
-            "sed -n -e '/image:\s*\($SUPPORTED_ORANIZATIONS\)\/\($SUPPORTED_IMAGES\)/ s/.*\image: *//p' /opt/carma/vehicle/config/docker-compose.yml | grep -m 1 '.*'")
-            
+        # Extract the .env file content from the carma-config volume
+        docker run --rm --volumes-from carma-config:ro busybox:latest cat /opt/carma/vehicle/config/.env > /tmp/.env
+
+        # Extract DOCKER_ORG and DOCKER_TAG from the .env file
+        source /tmp/.env
+
+        # Construct the image name using the values from the .env file
+        TARGET_IMAGE="${DOCKER_ORG}/carma-base:${DOCKER_TAG}"
 
         # If the sed resulted in an empty string then reset the tag
         if [ -z "$TARGET_IMAGE" ]; then
             local TARGET_IMAGE=$IMAGE_BACKUP
             echoerr "Could not identify usable image from config so defaulting to image: $TARGET_IMAGE"
         fi
+
+        rm /tmp/.env
     else
         echoerr "No config detected or target image specified so using default: $TARGET_IMAGE"
     fi
@@ -215,11 +220,11 @@ carma-config__list_remote() {
     elif [ "$1" = "-c" ]; then
         wget -q https://registry.hub.docker.com/v1/repositories/usdotfhwastolcandidate/carma-config/tags -O -  | \
         sed -e 's/[][]//g' -e 's/"//g' -e 's/ //g' | tr '}' '\n'  | \
-        awk -F: 'BEGIN {print "Remotely available images from usdotfhwastolcandidate Dockerhub:\nIMAGE\t\t\t\tTAG"} {print "usdotfhwastolcandidate/carma-config\t"$3}' 
+        awk -F: 'BEGIN {print "Remotely available images from usdotfhwastolcandidate Dockerhub:\nIMAGE\t\t\t\tTAG"} {print "usdotfhwastolcandidate/carma-config\t"$3}'
     else
         wget -q https://registry.hub.docker.com/v1/repositories/usdotfhwastol/carma-config/tags -O -  | \
         sed -e 's/[][]//g' -e 's/"//g' -e 's/ //g' | tr '}' '\n'  | \
-        awk -F: 'BEGIN {print "Remotely available images from usdotfhwastol Dockerhub:\nIMAGE\t\t\t\tTAG"} {print "usdotfhwastol/carma-config\t"$3}'    
+        awk -F: 'BEGIN {print "Remotely available images from usdotfhwastol Dockerhub:\nIMAGE\t\t\t\tTAG"} {print "usdotfhwastol/carma-config\t"$3}'
     fi
 }
 
@@ -248,6 +253,14 @@ carma-config__install() {
         docker rm carma-config-tmp
     fi
     docker run --name carma-config-tmp $IMAGE_NAME
+
+    # Extract the .env file content from the carma-config volume
+    docker run --rm --volumes-from carma-config:ro busybox:latest cat /opt/carma/vehicle/config/.env > /tmp/.env
+
+    # Extract DOCKER_ORG and DOCKER_TAG (and others) from the .env file
+    set -o allexport
+    source /tmp/.env
+    set +o allexport
 
     local CARMA_DOCKER_FILE="`docker run --rm --volumes-from carma-config-tmp:ro --entrypoint sh busybox:latest -c 'cat /opt/carma/vehicle/config/docker-compose.yml' | sed s/carma-config/carma-config-tmp/g`"
     local CARMA_BACKGROUND_DOCKER_FILE="`docker run --rm --volumes-from carma-config-tmp:ro --entrypoint sh busybox:latest -c 'cat /opt/carma/vehicle/config/docker-compose-background.yml' | sed s/carma-config/carma-config-tmp/g`"
@@ -292,12 +305,20 @@ carma__start() {
         exit 1
     fi
 
+    # Extract the .env file content from the carma-config volume
+    docker run --rm --volumes-from carma-config:ro busybox:latest cat /opt/carma/vehicle/config/.env > /tmp/.env
+
+    # Extract DOCKER_ORG and DOCKER_TAG (and others) from the .env file
+    set -o allexport
+    source /tmp/.env
+    set +o allexport
+
     echo "Starting CARMA background processes..."
     docker run --rm --volumes-from carma-config:ro --entrypoint sh busybox:latest -c \
     'cat /opt/carma/vehicle/config/docker-compose-background.yml' | \
     docker-compose -f - -p carma-background up -d
 
-    if [ "$1" = "all" ]; then 
+    if [ "$1" = "all" ]; then
         shift
         echo "Starting CARMA Platform foreground processes..."
         docker run --rm --volumes-from carma-config:ro --entrypoint sh busybox:latest -c \
@@ -306,6 +327,8 @@ carma__start() {
     elif [ ! -z "$1" ]; then
         echo "Unrecognized argument \"start $1\""
     fi
+
+    rm /tmp/.env
 }
 
 carma__stop() {
@@ -315,12 +338,20 @@ carma__stop() {
         exit 1
     fi
 
+    # Extract the .env file content from the carma-config volume
+    docker run --rm --volumes-from carma-config:ro busybox:latest cat /opt/carma/vehicle/config/.env > /tmp/.env
+
+    # Extract DOCKER_ORG and DOCKER_TAG (and others) from the .env file
+    set -o allexport
+    source /tmp/.env
+    set +o allexport
+
     echo "Shutting down CARMA processes..."
     docker run --rm --volumes-from carma-config:ro --entrypoint sh busybox:latest -c \
     'cat /opt/carma/vehicle/config/docker-compose.yml' | \
     docker-compose -f - -p carma down
 
-    if [ "$1" = "all" ]; then 
+    if [ "$1" = "all" ]; then
         echo "Shutting down CARMA background processes..."
         docker run --rm --volumes-from carma-config:ro --entrypoint sh busybox:latest -c \
         'cat /opt/carma/vehicle/config/docker-compose-background.yml' | \
@@ -337,6 +368,8 @@ carma__stop() {
     elif [ ! -z "$1" ]; then
         echo "Unrecognized argument \"stop $1\""
     fi
+
+    rm /tmp/.env
 }
 
 carma__ps() {
@@ -392,19 +425,19 @@ carma-config__status() {
 carma__exec() {
     local USERNAME=usdotfhwastol
     local TAG=latest
-    
+
     local TARGET_IMAGE="$USERNAME/carma-platform:$TAG"
 
     # Check if the -i argument was provided
     # If the image was specified then use that
 
-    if [ "$1" = "--gui" ]; then 
+    if [ "$1" = "--gui" ]; then
         local RUNTIME=nvidia
         echo "setting docker runtime to $RUNTIME"
         shift
     fi
 
-    if [ "$1" = "-i" ]; then 
+    if [ "$1" = "-i" ]; then
 
         if [ -z "$2" ]; then
             echo " When -i is specified you must enter a carma docker image and tag."
@@ -444,7 +477,7 @@ carma__exec() {
     if [ -n "$1" ]; then
 
         local COMMAND="source $INIT_FILE && ${@}"
-        
+
         docker run \
             -e DISPLAY=$DISPLAY \
             --runtime=$RUNTIME \
@@ -491,56 +524,56 @@ carma__help() {
 -------------------------------------------------------------------------------
 
 Please enter one of the following commands:
-    config: 
+    config:
         status (filename)
             - Report the current configuration status in total or for the
               specified file
         list_local
             - List available usdotfhwastol configurations on the host machine
-            -d 
+            -d
                 - List available usdotfhwastoldev configurations on the host machine
             -c
                 - List available usdotfhwastolcandidate configurations on the host machine
-        list_remote 
+        list_remote
             - List available usdotfhwastol configurations on Dockerhub
             -d
                 - List available usdotfhwastoldev configurations on Dockerhub
             -c
                 - List available usdotfhwastolcandidate configurations on Dockerhub
-        install <tag/image> 
-            - Install a configuration identified by <tag> and download 
+        install <tag/image>
+            - Install a configuration identified by <tag> and download
               dependencies. If <tag> is bare (no :), it is assumed to be a
               usdotfhwastol/carma-config tag.
             -d
                 - tag organization is assumed to be usdotfhwastoldev
             -c
                 - tag organization is assumed to be usdotfhwastolcandidate
-        set <tag/image> 
-            - Set the configuration to the version identified by <tag>. If 
-              <tag> is bare (no :), it is assumed to be a 
+        set <tag/image>
+            - Set the configuration to the version identified by <tag>. If
+              <tag> is bare (no :), it is assumed to be a
               usdotfhwastol/carma-config tag.
-        edit 
-            - Open a shell inside the current configuration storage with r/w 
+        edit
+            - Open a shell inside the current configuration storage with r/w
               permissions
-        inspect 
+        inspect
             - Open a shell inside the current configuration storage with r/o
               permissions
             -d
                 - uses a usdotfhwastoldev/carma-base image
             -c
                 - uses a usdotfhwastolcandidate/carma-base image
-        reset 
+        reset
             - Restore a configuration to its default state
-    start (all (docker-compose up args)) 
-        - Start the CARMA platform's background processes. If all, start 
+    start (all (docker-compose up args))
+        - Start the CARMA platform's background processes. If all, start
           everything.
         - Accepts the same flags as "docker-compose up"
-    stop (all (docker-compose down args)) 
-        - Stop the CARMA platform's foreground processes. If all, stop 
+    stop (all (docker-compose down args))
+        - Stop the CARMA platform's foreground processes. If all, stop
           everything.
         - Accepts the same flags as "docker-compose down"
         - fix_bag
-            - After stopping carma, checks if the last run's rosbag has been correctly saved. If not, fixes it to be replayable. 
+            - After stopping carma, checks if the last run's rosbag has been correctly saved. If not, fixes it to be replayable.
     exec <optional bash command>
         - Opens a new container with GUI support from the carma-platform or carma-messenger image with the version specified in docker compose. If no version is found it will use latest.
           This container can be used to interact with CARMA using ROS tooling such as Rviz and RQT.
@@ -559,7 +592,7 @@ Please enter one of the following commands:
     <script extension>
         - Script extensions can be added by placing a file in ~/.carma_script_extensions/ with the name of the new subcommand and no file extension.
           The file should contain a matching carma__<script extension>() function to recieve the commands.
-    help 
+    help
         - Display this information"
 HELP
 }
