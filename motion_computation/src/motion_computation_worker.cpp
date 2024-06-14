@@ -12,15 +12,16 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include "motion_computation/motion_computation_worker.hpp"
 #include <wgs84_utils/proj_tools.h>
+
 #include <memory>
 #include <string>
-#include "motion_computation/message_conversions.hpp"
+
+#include <motion_computation/message_conversions.hpp>
+#include <motion_computation/motion_computation_worker.hpp>
 
 namespace motion_computation
 {
-
 MotionComputationWorker::MotionComputationWorker(
   const PublishObjectCallback & obj_pub,
   rclcpp::node_interfaces::NodeLoggingInterface::SharedPtr logger,
@@ -35,8 +36,7 @@ void MotionComputationWorker::predictionLogic(
   carma_perception_msgs::msg::ExternalObjectList sensor_list;
   sensor_list.header = obj_list->header;
 
-  if (!obj_list || obj_list->objects.empty())
-  {
+  if (!obj_list || obj_list->objects.empty()) {
     return;
   }
 
@@ -84,8 +84,8 @@ void MotionComputationWorker::predictionLogic(
   // Synchronize all data to the current sensor data timestamp
   carma_perception_msgs::msg::ExternalObjectList synchronization_base_objects;
   synchronization_base_objects.header =
-    sensor_list
-      .header;  // Use the current sensing stamp as the sync point even if sensor data is not used
+    sensor_list.header;  // Use the current sensing stamp as the sync point even if sensor data is
+                         // not used
 
   if (enable_sensor_processing_) {
     // If using sensor data add it to the base synchronization list since it
@@ -101,7 +101,8 @@ void MotionComputationWorker::predictionLogic(
   } else {
     RCLCPP_WARN_STREAM(
       logger_->get_logger(),
-      "Not configured to publish any data publishing empty object list. Operating like this is NOT "
+      "Not configured to publish any data publishing empty "
+      "object list. Operating like this is NOT "
       "advised.");
 
     obj_pub_(synchronization_base_objects);
@@ -137,7 +138,6 @@ void MotionComputationWorker::predictionLogic(
   bsm_obj_id_map_.clear();
   psm_list_.objects.clear();
   psm_obj_id_map_.clear();
-
 }
 
 void MotionComputationWorker::georeferenceCallback(const std_msgs::msg::String::UniquePtr msg)
@@ -192,8 +192,9 @@ void MotionComputationWorker::setDetectionInputFlags(
 }
 
 void MotionComputationWorker::setDetectionMotionModelFlags(
-  bool enable_ctrv_for_unknown_obj, bool enable_ctrv_for_motorcycle_obj, bool enable_ctrv_for_small_vehicle_obj,
-  bool enable_ctrv_for_large_vehicle_obj, bool enable_ctrv_for_pedestrian_obj)
+  bool enable_ctrv_for_unknown_obj, bool enable_ctrv_for_motorcycle_obj,
+  bool enable_ctrv_for_small_vehicle_obj, bool enable_ctrv_for_large_vehicle_obj,
+  bool enable_ctrv_for_pedestrian_obj)
 {
   enable_ctrv_for_unknown_obj_ = enable_ctrv_for_unknown_obj;
   enable_ctrv_for_motorcycle_obj_ = enable_ctrv_for_motorcycle_obj;

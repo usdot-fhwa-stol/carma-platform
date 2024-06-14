@@ -13,19 +13,21 @@
 // limitations under the License.
 
 #include <tf2/LinearMath/Transform.h>
-#include <carma_perception_msgs/msg/external_object.hpp>
-#include <carma_v2x_msgs/msg/mobility_path.hpp>
+
+#include <string>
+#include <utility>
+
 #include <motion_computation/impl/mobility_path_to_external_object_helpers.hpp>
 #include <rclcpp/logger.hpp>
 #include <rclcpp/logging.hpp>
-#include <string>
-#include <utility>
+
+#include <carma_perception_msgs/msg/external_object.hpp>
+#include <carma_v2x_msgs/msg/mobility_path.hpp>
 
 namespace motion_computation
 {
 namespace conversion
 {
-
 void convert(
   const carma_v2x_msgs::msg::MobilityPath & in_msg,
   carma_perception_msgs::msg::ExternalObject & out_msg,
@@ -122,9 +124,8 @@ void convert(
       curr_state = std::get<0>(res);
       prev_yaw = std::get<1>(res);
       // Compute out_msg pose
-      out_msg.pose.pose =
-        curr_state
-          .predicted_position;  // Orientation computed from first point in offsets with location
+      out_msg.pose.pose = curr_state.predicted_position;  // Orientation computed from first point
+                                                          // in offsets with location
       out_msg.velocity.twist = curr_state.predicted_velocity;  // Velocity derived from first point
 
     } else {
@@ -162,7 +163,6 @@ void convert(
 
 namespace impl
 {
-
 std::pair<carma_perception_msgs::msg::PredictedState, double> composePredictedState(
   const tf2::Vector3 & curr_pt, const tf2::Vector3 & prev_pt, const rclcpp::Time & prev_time_stamp,
   const rclcpp::Time & curr_time_stamp, double prev_yaw)

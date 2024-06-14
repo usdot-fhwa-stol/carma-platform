@@ -12,20 +12,19 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include <carma_perception_msgs/msg/external_object.hpp>
-#include <motion_computation/impl/psm_to_external_object_helpers.hpp>
-#include <motion_computation/message_conversions.hpp>
-
 #include <algorithm>
 #include <string>
 #include <vector>
 
+#include <motion_computation/impl/psm_to_external_object_helpers.hpp>
+#include <motion_computation/message_conversions.hpp>
+
+#include <carma_perception_msgs/msg/external_object.hpp>
+
 namespace motion_computation
 {
-
 namespace conversion
 {
-
 void convert(
   const carma_v2x_msgs::msg::BSM & in_msg, carma_perception_msgs::msg::ExternalObject & out_msg,
   const std::string & map_frame_id, double pred_period, double pred_step_size,

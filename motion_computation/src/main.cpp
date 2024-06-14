@@ -12,14 +12,11 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+#include <memory>
+#include "motion_computation/motion_computation_node.hpp"
 #include <rclcpp/rclcpp.hpp>
 
-#include <memory>
-
-#include "motion_computation/motion_computation_node.hpp"
-
-int main(int argc, char ** argv)
-{
+int main(int argc, char **argv) {
   rclcpp::init(argc, argv);
 
   auto node = std::make_shared<motion_computation::MotionComputationNode>(rclcpp::NodeOptions());

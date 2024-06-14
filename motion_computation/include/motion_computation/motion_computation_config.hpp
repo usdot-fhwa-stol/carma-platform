@@ -20,7 +20,6 @@
 
 namespace motion_computation
 {
-
 /**
  * \brief Stuct containing the algorithm configuration values for motion_computation
  */
@@ -29,11 +28,11 @@ struct Config
   double prediction_time_step = 0.1;  // Time between predicted states (in seconds)
   double mobility_path_time_step =
     0.1;  // Time between received mobility path predicted states (in seconds)
-  double prediction_period = 2.0;  // Period of prediction (in seconds)
-  double cv_x_accel_noise = 9.0;   // CV Model X-Axis Acceleration Noise
-  double cv_y_accel_noise = 9.0;   // CV Model Y-Axis Acceleration Noise
-  double prediction_process_noise_max =
-    1000.0;  // Maximum expected process noise; used for mapping noise to confidence in [0,1] range
+  double prediction_period = 2.0;                // Period of prediction (in seconds)
+  double cv_x_accel_noise = 9.0;                 // CV Model X-Axis Acceleration Noise
+  double cv_y_accel_noise = 9.0;                 // CV Model Y-Axis Acceleration Noise
+  double prediction_process_noise_max = 1000.0;  // Maximum expected process noise; used for mapping
+                                                 // noise to confidence in [0,1] range
   double prediction_confidence_drop_rate =
     0.95;  // Percentage of initial confidence to propagate to next time step
 
@@ -57,7 +56,7 @@ struct Config
   // will occur (objects may be duplicated)
   bool enable_sensor_processing = false;
 
-  // True if CTRV motion model should be used for the object type. 
+  // True if CTRV motion model should be used for the object type.
   // False, if CV should be used for all following booleans
   bool enable_ctrv_for_unknown_obj = true;
   bool enable_ctrv_for_motorcycle_obj = true;
@@ -82,8 +81,10 @@ struct Config
            << "enable_sensor_processing: " << c.enable_sensor_processing << std::endl
            << "enable_ctrv_for_unknown_obj: " << c.enable_ctrv_for_unknown_obj << std::endl
            << "enable_ctrv_for_motorcycle_obj: " << c.enable_ctrv_for_motorcycle_obj << std::endl
-           << "enable_ctrv_for_small_vehicle_obj: " << c.enable_ctrv_for_small_vehicle_obj << std::endl
-           << "enable_ctrv_for_large_vehicle_obj: " << c.enable_ctrv_for_large_vehicle_obj << std::endl
+           << "enable_ctrv_for_small_vehicle_obj: " << c.enable_ctrv_for_small_vehicle_obj
+           << std::endl
+           << "enable_ctrv_for_large_vehicle_obj: " << c.enable_ctrv_for_large_vehicle_obj
+           << std::endl
            << "enable_ctrv_for_pedestrian_obj: " << c.enable_ctrv_for_pedestrian_obj << std::endl
            << "}" << std::endl;
     return output;

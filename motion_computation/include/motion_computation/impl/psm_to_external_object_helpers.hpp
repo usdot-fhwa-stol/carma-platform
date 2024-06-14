@@ -18,20 +18,21 @@
 #include <lanelet2_core/primitives/GPSPoint.h>
 #include <lanelet2_extension/projection/local_frame_projector.h>
 #include <tf2/LinearMath/Quaternion.h>
+
+#include <string>
+#include <vector>
+
+#include <rclcpp/rclcpp.hpp>
+
 #include <carma_perception_msgs/msg/external_object.hpp>
 #include <carma_v2x_msgs/msg/psm.hpp>
 #include <geometry_msgs/msg/pose.hpp>
 #include <geometry_msgs/msg/pose_with_covariance.hpp>
-#include <rclcpp/rclcpp.hpp>
-#include <string>
-#include <vector>
 
 namespace motion_computation
 {
-
 namespace conversion
 {
-
 // Namespace for functionality not meant to be part of public API but valuable
 // to unit test in isolation
 namespace impl
