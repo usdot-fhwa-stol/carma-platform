@@ -397,19 +397,19 @@ carma__stop() {
     local env_vars=$(docker run --rm --volumes-from carma-config:ro --entrypoint sh busybox:latest -c \
         'cat /opt/carma/vehicle/config/.env' | xargs)
 
-    # Shutdown CARMA background processes
-    echo "Shutting down CARMA background processes..."
-    local processed_background_compose=$(__parse_docker_compose_using_env_vars_in_carma_config "/opt/carma/vehicle/config/docker-compose-background.yml" "$env_vars")
-    # Use the docker-compose content with environment variables replaced to start the background processes
-    echo "$processed_background_compose" | docker-compose -f - -p carma-background down
+    # Shutdown CARMA Platform foreground processes
+    echo "Shutting down CARMA processes..."
+    local processed_foreground_compose=$(__parse_docker_compose_using_env_vars_in_carma_config "/opt/carma/vehicle/config/docker-compose.yml" "$env_vars")
+    # Use the docker-compose content with environment variables replaced to start the foreground processes
+    echo "$processed_foreground_compose" | docker-compose -f - -p carma down
 
     # Check if the argument "all" is passed to also shut down the background processes
     if [ "$1" = "all" ]; then
-        # Start CARMA Platform foreground processes
-        echo "Shutting down CARMA processes..."
-        local processed_foreground_compose=$(__parse_docker_compose_using_env_vars_in_carma_config "/opt/carma/vehicle/config/docker-compose.yml" "$env_vars")
-        # Use the docker-compose content with environment variables replaced to start the foreground processes
-        echo "$processed_foreground_compose" | docker-compose -f - -p carma down
+        # Shutdown CARMA background processes
+        echo "Shutting down CARMA background processes..."
+        local processed_background_compose=$(__parse_docker_compose_using_env_vars_in_carma_config "/opt/carma/vehicle/config/docker-compose-background.yml" "$env_vars")
+        # Use the docker-compose content with environment variables replaced to start the background processes
+        echo "$processed_background_compose" | docker-compose -f - -p carma-background down
 
         if [ "$2" = "fix_bag" ]; then
             echo "Trying to fix the last rosbag file..."
