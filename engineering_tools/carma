@@ -360,7 +360,7 @@ carma__start() {
     fi
 
     # Extract environment variables from the carma-config container
-    echo "Extracting environment variables from carma-config..." > /dev/tty  # Make sure to print to terminal instead of returning
+    echo "Extracting environment variables from carma-config..."
     local env_vars=$(docker run --rm --volumes-from carma-config:ro --entrypoint sh busybox:latest -c \
         'cat /opt/carma/vehicle/config/.env' | xargs)
 
@@ -393,7 +393,7 @@ carma__stop() {
     fi
 
     # Extract environment variables from the carma-config container
-    echo "Extracting environment variables from carma-config..." > /dev/tty  # Make sure to print to terminal instead of returning
+    echo "Extracting environment variables from carma-config..."
     local env_vars=$(docker run --rm --volumes-from carma-config:ro --entrypoint sh busybox:latest -c \
         'cat /opt/carma/vehicle/config/.env' | xargs)
 
