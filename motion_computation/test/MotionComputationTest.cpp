@@ -14,8 +14,6 @@
 
 #include <gtest/gtest.h>
 
-#include <boost/date_time/posix_time/posix_time.hpp>
-#include <boost/date_time/posix_time/posix_time_io.hpp>
 #include <chrono>
 #include <future>
 #include <memory>
@@ -26,6 +24,8 @@
 #include "motion_computation/impl/mobility_path_to_external_object_helpers.hpp"
 #include "motion_computation/message_conversions.hpp"
 #include "motion_computation/motion_computation_worker.hpp"
+#include <boost/date_time/posix_time/posix_time.hpp>
+#include <boost/date_time/posix_time/posix_time_io.hpp>
 
 namespace motion_computation
 {
