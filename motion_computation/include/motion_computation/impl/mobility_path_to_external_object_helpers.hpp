@@ -18,16 +18,18 @@
 #include <lanelet2_extension/projection/local_frame_projector.h>
 #include <tf2/LinearMath/Quaternion.h>
 #include <tf2/LinearMath/Vector3.h>
-#include <carma_perception_msgs/msg/external_object.hpp>
-#include <carma_perception_msgs/msg/predicted_state.hpp>
-#include <geometry_msgs/msg/quaternion.hpp>
-#include <rclcpp/time.hpp>
+
 #include <tuple>
 #include <utility>
 
+#include <rclcpp/time.hpp>
+
+#include <carma_perception_msgs/msg/external_object.hpp>
+#include <carma_perception_msgs/msg/predicted_state.hpp>
+#include <geometry_msgs/msg/quaternion.hpp>
+
 namespace motion_computation
 {
-
 namespace conversion
 {
 namespace impl
@@ -38,11 +40,12 @@ namespace impl
  * \param curr_pt current point
  * \param prev_pt prev_pt. this point is recorded in the state
  * \param prev_time_stamp prev_pt's time stamp. This time is recorded in the state
- * \param curr_time_stamp The timestamp of the second point when used to compute velocity at prev point
+ * \param curr_time_stamp The timestamp of the second point when used to compute velocity at prev
+ * point
  * \param prev_yaw A previous yaw value in radians to use if the two provided points are equivalent
- * \return std::pair<carma_perception_msgs::msg::PredictedState,double> where the first element is the prediction
- * including linear velocity, last_time, orientation filled in and the second element is the yaw in radians used to
- * compute the orientation
+ * \return std::pair<carma_perception_msgs::msg::PredictedState,double> where the first element is
+ * the prediction including linear velocity, last_time, orientation filled in and the second
+ * element is the yaw in radians used to compute the orientation
  */
 std::pair<carma_perception_msgs::msg::PredictedState, double> composePredictedState(
   const tf2::Vector3 & curr_pt, const tf2::Vector3 & prev_pt, const rclcpp::Time & prev_time_stamp,

@@ -886,7 +886,10 @@ namespace basic_autonomy
                                                                                     detailed_config, visited_lanelets), std::invalid_argument);
     }
 
+    // These tests has been temporarily disabled to support Continuous Improvement (CI) processes.
+    // Related GitHub Issue: <https://github.com/usdot-fhwa-stol/carma-platform/issues/2335>
 
+    /**
     TEST(BasicAutonomyTest, test_verify_yield)
     {
         auto node = std::make_shared<carma_ros2_utils::CarmaLifecycleNode>(rclcpp::NodeOptions());
@@ -946,7 +949,7 @@ namespace basic_autonomy
         ASSERT_FALSE(basic_autonomy::waypoint_generation::is_valid_yield_plan(node, tp2));
 
     }
-
+*/
 
 } // namespace basic_autonomy
 

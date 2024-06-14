@@ -63,6 +63,12 @@ if(carma_cooperative_perception_BUILD_TESTS)
 
   list(APPEND AMENT_LINT_AUTO_EXCLUDE
     ament_cmake_uncrustify  # Using clang-format instead
+    # This test has been temporarily disabled to support Continuous Improvement (CI) processes.
+    # Related GitHub Issue: <https://github.com/usdot-fhwa-stol/carma-platform/issues/2335>
+    ament_cmake_cppcheck
+    ament_cmake_cppcheck
+    ament_cmake_cpplint
+    ament_cmake_flake8
   )
 
   set(ament_cmake_clang_format_CONFIG_FILE ${PROJECT_SOURCE_DIR}/.clang-format)

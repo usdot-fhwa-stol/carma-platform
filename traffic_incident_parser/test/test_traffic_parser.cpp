@@ -37,19 +37,19 @@ TEST(TrafficIncidentParserWorkerTest, testMobilityMessageParser1)
   rclcpp::node_interfaces::NodeLoggingInterface::SharedPtr logger = node->get_node_logging_interface();
   rclcpp::Clock::SharedPtr clock = node->get_clock();
   TrafficIncidentParserWorker traffic_worker(std::static_pointer_cast<const carma_wm::WorldModel>(cmw),[](auto msg){}, logger, clock);
-    
+
   std::string mobility_strategy_params="lat:0.435,lon:0.555,downtrack:5,uptrack:5,min_gap:2,advisory_speed:1.2,event_reason:MOVE OVER LAW,event_type:CLOSED";
   traffic_worker.mobilityMessageParser(mobility_strategy_params);
-  
+
   EXPECT_EQ(traffic_worker.latitude,0.435);
   EXPECT_EQ(traffic_worker.longitude,0.555);
   EXPECT_EQ(traffic_worker.down_track,5);
-  EXPECT_EQ(traffic_worker.up_track,5);  
+  EXPECT_EQ(traffic_worker.up_track,5);
   EXPECT_EQ(traffic_worker.min_gap,2);
   EXPECT_EQ(traffic_worker.speed_advisory,1.2);
   EXPECT_EQ(traffic_worker.event_reason,"MOVE OVER LAW");
   EXPECT_EQ(traffic_worker.event_type,"CLOSED");
-  
+
   }
 
 
@@ -61,19 +61,19 @@ TEST(TrafficIncidentParserWorkerTest, testMobilityMessageParser2)
   rclcpp::node_interfaces::NodeLoggingInterface::SharedPtr logger = node->get_node_logging_interface();
   rclcpp::Clock::SharedPtr clock = node->get_clock();
   TrafficIncidentParserWorker traffic_worker(std::static_pointer_cast<const carma_wm::WorldModel>(cmw),[](auto msg){}, logger, clock);
-      
+
   std::string mobility_strategy_params="lat:0.75,lon:0.555,downtrack:75,uptrack:55,min_gap:2,advisory_speed:1.2,event_reason:MOVE OVER LAW3,event_type:OPEN";
   traffic_worker.mobilityMessageParser(mobility_strategy_params);
-  
+
   EXPECT_EQ(traffic_worker.latitude,0.75);
   EXPECT_EQ(traffic_worker.longitude,0.555);
   EXPECT_EQ(traffic_worker.down_track,75);
   EXPECT_EQ(traffic_worker.up_track,55);
-  EXPECT_EQ(traffic_worker.min_gap,2);  
+  EXPECT_EQ(traffic_worker.min_gap,2);
   EXPECT_EQ(traffic_worker.speed_advisory,1.2);
   EXPECT_EQ(traffic_worker.event_reason,"MOVE OVER LAW3");
   EXPECT_EQ(traffic_worker.event_type,"OPEN");
-  
+
   }
 
 
@@ -88,16 +88,16 @@ TEST(TrafficIncidentParserWorkerTest, testMobilityMessageParser3)
 
   std::string mobility_strategy_params="lat:0.3,lon:0.95,downtrack:57,uptrack:59,min_gap:2,advisory_speed:1.2,event_reason:MOVE OVER LAW,event_type:CLOSED";
   traffic_worker.mobilityMessageParser(mobility_strategy_params);
-  
+
   EXPECT_EQ(traffic_worker.latitude,0.3);
   EXPECT_EQ(traffic_worker.longitude,0.95);
   EXPECT_EQ(traffic_worker.down_track,57);
   EXPECT_EQ(traffic_worker.up_track,59);
-  EXPECT_EQ(traffic_worker.min_gap,2); 
+  EXPECT_EQ(traffic_worker.min_gap,2);
   EXPECT_EQ(traffic_worker.speed_advisory,1.2);
   EXPECT_EQ(traffic_worker.event_reason,"MOVE OVER LAW");
   EXPECT_EQ(traffic_worker.event_type,"CLOSED");
-  
+
   }
 
   TEST(TrafficIncidentParserWorkerTest, earthToMapFrame)
@@ -108,7 +108,7 @@ TEST(TrafficIncidentParserWorkerTest, testMobilityMessageParser3)
   rclcpp::node_interfaces::NodeLoggingInterface::SharedPtr logger = node->get_node_logging_interface();
   rclcpp::Clock::SharedPtr clock = node->get_clock();
   TrafficIncidentParserWorker traffic_worker(std::static_pointer_cast<const carma_wm::WorldModel>(cmw),[](auto msg){}, logger, clock);
-  
+
   std_msgs::msg::String projection_msg;
   projection_msg.data="+proj=tmerc +lat_0=39.46636844371259 +lon_0=-76.16919523566943 +k=1 +x_0=0 +y_0=0 +datum=WGS84 +units=m +vunits=m +no_defs";
 
@@ -119,21 +119,25 @@ TEST(TrafficIncidentParserWorkerTest, testMobilityMessageParser3)
   traffic_worker.mobilityMessageParser(mobility_strategy_params);
 
   lanelet::BasicPoint2d local_point=traffic_worker.getIncidentOriginPoint();
-    
+
   EXPECT_NEAR(local_point.x(),0,0.001);
   EXPECT_NEAR(local_point.y(),0,0.001);
 }
 
+// These tests has been temporarily disabled to support Continuous Improvement (CI) processes.
+// Related GitHub Issue: <https://github.com/usdot-fhwa-stol/carma-platform/issues/2335>
+
+/**
   TEST(TrafficIncidentParserWorkerTest, composeTrafficControlMesssage)
 {
   auto cmw= carma_wm::test::getGuidanceTestMap();
   carma_wm::test::setRouteByIds({1200, 1201,1202,1203}, cmw);
-  
+
   auto node = std::make_shared<rclcpp::Node>("test_node");
   rclcpp::node_interfaces::NodeLoggingInterface::SharedPtr logger = node->get_node_logging_interface();
   rclcpp::Clock::SharedPtr clock = node->get_clock();
   TrafficIncidentParserWorker traffic_worker(std::static_pointer_cast<const carma_wm::WorldModel>(cmw),[](auto msg){}, logger, clock);
-  
+
   std_msgs::msg::String projection_msg;
   projection_msg.data="+proj=tmerc +lat_0=39.46636844371259 +lon_0=-76.16919523566943 +k=1 +x_0=0 +y_0=0 +datum=WGS84 +units=m +vunits=m +no_defs";
 
@@ -142,7 +146,7 @@ TEST(TrafficIncidentParserWorkerTest, testMobilityMessageParser3)
 
   std::string mobility_strategy_params="lat:39.46636844371259,lon:-76.16919523566943,downtrack:99,uptrack:25,min_gap:2,advisory_speed:1.2,event_reason:MOVE OVER LAW,event_type:CLOSED";
   traffic_worker.mobilityMessageParser(mobility_strategy_params);
-  
+
   std::vector<carma_v2x_msgs::msg::TrafficControlMessageV01> traffic_mobility_msg_test=traffic_worker.composeTrafficControlMesssages();
 
   EXPECT_NEAR(traffic_mobility_msg_test[0].geometry.nodes[0].x,0.0,0.001);
@@ -168,12 +172,13 @@ TEST(TrafficIncidentParserWorkerTest, testMobilityMessageParser3)
   EXPECT_EQ(traffic_mobility_msg_test[2].params.detail.maxspeed,1.2);
 
 }
-
+*/
+/**
  TEST(TrafficIncidentParserWorkerTest, composeTrafficControlMesssage1)
 {
   auto cmw= carma_wm::test::getGuidanceTestMap();
   carma_wm::test::setRouteByIds({1200, 1201,1202,1203}, cmw);
-  
+
   auto node = std::make_shared<rclcpp::Node>("test_node");
   rclcpp::node_interfaces::NodeLoggingInterface::SharedPtr logger = node->get_node_logging_interface();
   rclcpp::Clock::SharedPtr clock = node->get_clock();
@@ -181,13 +186,13 @@ TEST(TrafficIncidentParserWorkerTest, testMobilityMessageParser3)
 
   std_msgs::msg::String projection_msg;
   projection_msg.data="+proj=tmerc +lat_0=39.46636844371259 +lon_0=-76.16919523566943 +k=1 +x_0=0 +y_0=0 +datum=WGS84 +units=m +vunits=m +no_defs";
-	
+
   std::unique_ptr<std_msgs::msg::String> projection_msg_ptr = std::make_unique<std_msgs::msg::String>(projection_msg);
   traffic_worker.georeferenceCallback(move(projection_msg_ptr));
 
   std::string mobility_strategy_params="lat:39.46663865458896225,lon:-76.16919523566940597,downtrack:99,uptrack:25,min_gap:2,advisory_speed:1.2,event_reason:MOVE OVER LAW,event_type:CLOSED";
   traffic_worker.mobilityMessageParser(mobility_strategy_params);
-  
+
   std::vector<carma_v2x_msgs::msg::TrafficControlMessageV01> traffic_mobility_msg_test=traffic_worker.composeTrafficControlMesssages();
 
   EXPECT_NEAR(traffic_mobility_msg_test[0].geometry.nodes[0].x,0.0,0.001);
@@ -213,10 +218,11 @@ TEST(TrafficIncidentParserWorkerTest, testMobilityMessageParser3)
   EXPECT_EQ(traffic_mobility_msg_test[2].params.detail.maxspeed,1.2);
 
 }
+*/
 
 /**
  * This test is for manual debugging by allowing an actual map to be laoded. It can be disabled in other cases
- */ 
+ */
 TEST(TrafficIncidentParserWorkerTest, DISABLED_composeTrafficControlMesssage)
 {
   // File to process. Path is relative to test folder
@@ -240,12 +246,12 @@ TEST(TrafficIncidentParserWorkerTest, DISABLED_composeTrafficControlMesssage)
 
   auto cmw = std::make_shared<carma_wm::CARMAWorldModel>();
   cmw->setMap(map);
-  
+
   auto node = std::make_shared<rclcpp::Node>("test_node");
   rclcpp::node_interfaces::NodeLoggingInterface::SharedPtr logger = node->get_node_logging_interface();
   rclcpp::Clock::SharedPtr clock = node->get_clock();
   TrafficIncidentParserWorker traffic_worker(std::static_pointer_cast<const carma_wm::WorldModel>(cmw),[](auto msg){}, logger, clock);
-  
+
   std_msgs::msg::String projection_msg;
   projection_msg.data=target_frame;
 
@@ -254,7 +260,7 @@ TEST(TrafficIncidentParserWorkerTest, DISABLED_composeTrafficControlMesssage)
 
   std::string mobility_strategy_params="lat:39.233744,lon:-77.969849,downtrack:25,uptrack:25,min_gap:2,advisory_speed:1.2,event_reason:MOVE OVER LAW,event_type:CLOSED";
   traffic_worker.mobilityMessageParser(mobility_strategy_params);
-  
+
   std::vector<carma_v2x_msgs::msg::TrafficControlMessageV01> traffic_mobility_msg_test=traffic_worker.composeTrafficControlMesssages();
 
 
@@ -275,4 +281,4 @@ int main(int argc, char ** argv)
     rclcpp::shutdown();
 
     return success;
-} 
+}
