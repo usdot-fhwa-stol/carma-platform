@@ -38,8 +38,8 @@ namespace mobilitypath_publisher
   /**
    * \class MobilityPathPublication
    * \brief The class responsible for publishing MobilityPath messages based on the latest
-   * trajectory plan 
-   * 
+   * trajectory plan
+   *
    */
   class MobilityPathPublication : public carma_ros2_utils::CarmaLifecycleNode
   {
@@ -52,7 +52,7 @@ namespace mobilitypath_publisher
     carma_ros2_utils::SubPtr<carma_planning_msgs::msg::GuidanceState> guidance_state_sub_;
 
     bool guidance_engaged_ = false;
-    
+
     // Publishers
     carma_ros2_utils::PubPtr<carma_v2x_msgs::msg::MobilityPath> path_pub_;
 
@@ -68,10 +68,11 @@ namespace mobilitypath_publisher
     // The MobilityPath message generated from the most recently published trajectory plan
     carma_v2x_msgs::msg::MobilityPath latest_mobility_path_;
 
-    // The BSMCoreData from the most recently published BSM message 
+    // The BSMCoreData from the most recently published BSM message
     carma_v2x_msgs::msg::BSMCoreData bsm_core_;
 
     // Map projection string, which defines the lat/lon -> map conversion
+    std::string georeference_{""};
     std::shared_ptr<lanelet::projection::LocalFrameProjector> map_projector_;
 
     // Recipient's static ID (Empty string indicates a broadcast message)
@@ -107,7 +108,7 @@ namespace mobilitypath_publisher
     /**
      * \brief Generates a MobilityHeader to be used for a published MobilityPath message
      * \param time Time in milliseconds
-     * \return A MobilityHeader 
+     * \return A MobilityHeader
      */
     carma_v2x_msgs::msg::MobilityHeader compose_mobility_header(uint64_t time);
 
@@ -117,7 +118,7 @@ namespace mobilitypath_publisher
      * \return A (Mobility) Trajectory
      */
     carma_v2x_msgs::msg::Trajectory trajectory_plan_to_trajectory(const std::vector<carma_planning_msgs::msg::TrajectoryPlanPoint>& traj_points) const;
-    
+
     /**
      * \brief Converts Trajectory Plan Point to ECEF (accepts meters and outputs in cm)
      * \param traj_points The Trajectory Plan Point to be converted to ECEF
@@ -127,7 +128,7 @@ namespace mobilitypath_publisher
 
   public:
     /**
-     * \brief MobilityPathPublication constructor 
+     * \brief MobilityPathPublication constructor
      */
     explicit MobilityPathPublication(const rclcpp::NodeOptions &);
 
@@ -146,7 +147,7 @@ namespace mobilitypath_publisher
     /**
     * \brief Callback for map projection string to define lat/lon -> map conversion
     * \brief msg The proj string defining the projection.
-    */ 
+    */
     void georeference_cb(const std_msgs::msg::String::UniquePtr msg);
 
     ////

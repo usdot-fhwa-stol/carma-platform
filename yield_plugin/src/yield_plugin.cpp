@@ -1060,7 +1060,11 @@ namespace yield_plugin
 
   void YieldPlugin::set_georeference_string(const std::string& georeference)
   {
-    map_projector_ = std::make_shared<lanelet::projection::LocalFrameProjector>(georeference.c_str());  // Build projector from proj string
+    if (georeference_ != georeference)
+    {
+      georeference_ = georeference;
+      map_projector_ = std::make_shared<lanelet::projection::LocalFrameProjector>(georeference.c_str());  // Build projector from proj string
+    }
   }
 
   void YieldPlugin::set_external_objects(const std::vector<carma_perception_msgs::msg::ExternalObject>& object_list)

@@ -28,7 +28,7 @@ GNSSToMapConvertor::GNSSToMapConvertor(PosePubCallback pose_pub, TransformLookup
   , tf_lookup_(tf_lookup)
   , map_frame_id_(map_frame_id)
   , base_link_frame_id_(base_link_frame_id)
-  , heading_frame_id_(heading_frame_id) 
+  , heading_frame_id_(heading_frame_id)
   , logger_(logger)
 {
 }
@@ -94,21 +94,24 @@ void GNSSToMapConvertor::gnssFixCb(gps_msgs::msg::GPSFix::UniquePtr fix_msg)
 
 void GNSSToMapConvertor::geoReferenceCallback(std_msgs::msg::String::UniquePtr geo_ref)
 {
-
-  map_projector_ = std::make_shared<lanelet::projection::LocalFrameProjector>(
+  if (georeference_ != geo_ref->data)
+  {
+    georeference_ = geo_ref->data;
+    map_projector_ = std::make_shared<lanelet::projection::LocalFrameProjector>(
       geo_ref->data.c_str());  // Build projector from proj string
 
-  RCLCPP_INFO_STREAM(logger_->get_logger(), "Recieved map georeference: " << geo_ref->data);
+    RCLCPP_INFO_STREAM(logger_->get_logger(), "Received map georeference: " << geo_ref->data);
 
-  std::string axis = wgs84_utils::proj_tools::getAxisFromProjString(geo_ref->data);  // Extract axis for orientation calc
+    std::string axis = wgs84_utils::proj_tools::getAxisFromProjString(geo_ref->data);  // Extract axis for orientation calc
 
-  RCLCPP_INFO_STREAM(logger_->get_logger(), "Extracted Axis: " << axis);
+    RCLCPP_INFO_STREAM(logger_->get_logger(), "Extracted Axis: " << axis);
 
-  ned_in_map_rotation_ = wgs84_utils::proj_tools::getRotationOfNEDFromProjAxis(axis);  // Extract map rotation from axis
+    ned_in_map_rotation_ = wgs84_utils::proj_tools::getRotationOfNEDFromProjAxis(axis);  // Extract map rotation from axis
 
-  RCLCPP_INFO_STREAM(logger_->get_logger(), "Extracted NED in Map Rotation (x,y,z,w) : ( "
-                  << ned_in_map_rotation_.get().x() << ", " << ned_in_map_rotation_.get().y() << ", "
-                  << ned_in_map_rotation_.get().z() << ", " << ned_in_map_rotation_.get().w());
+    RCLCPP_INFO_STREAM(logger_->get_logger(), "Extracted NED in Map Rotation (x,y,z,w) : ( "
+                    << ned_in_map_rotation_.get().x() << ", " << ned_in_map_rotation_.get().y() << ", "
+                    << ned_in_map_rotation_.get().z() << ", " << ned_in_map_rotation_.get().w());
+  }
 }
 
 boost::optional<tf2::Quaternion> GNSSToMapConvertor::getNedInMapRotation()
@@ -123,9 +126,9 @@ std::shared_ptr<lanelet::projection::LocalFrameProjector> GNSSToMapConvertor::ge
 
 
 geometry_msgs::msg::PoseWithCovarianceStamped GNSSToMapConvertor::poseFromGnss(
-    const tf2::Transform& baselink_in_sensor, 
+    const tf2::Transform& baselink_in_sensor,
     const tf2::Quaternion& sensor_in_ned_heading_rotation,
-    const lanelet::projection::LocalFrameProjector& projector, 
+    const lanelet::projection::LocalFrameProjector& projector,
     const tf2::Quaternion& ned_in_map_rotation,
     gps_msgs::msg::GPSFix fix_msg)
 {
@@ -163,11 +166,11 @@ geometry_msgs::msg::PoseWithCovarianceStamped GNSSToMapConvertor::poseFromGnss(
     RCLCPP_DEBUG_STREAM(logger_->get_logger(), "R_m_n (x,y,z,w) : ( "
                   << R_m_n.x() << ", " << R_m_n.y() << ", "
                   << R_m_n.z() << ", " << R_m_n.w());
-    
+
     RCLCPP_DEBUG_STREAM(logger_->get_logger(), "R_n_h (x,y,z,w) : ( "
                   << R_n_h.x() << ", " << R_n_h.y() << ", "
                   << R_n_h.z() << ", " << R_n_h.w());
-    
+
     RCLCPP_DEBUG_STREAM(logger_->get_logger(), "R_h_s (x,y,z,w) : ( "
                   << R_h_s.x() << ", " << R_h_s.y() << ", "
                   << R_h_s.z() << ", " << R_h_s.w());

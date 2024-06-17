@@ -139,8 +139,11 @@ auto ExternalObjectListToSdsmNode::publish_as_sdsm(const external_objects_msg_ty
 
 auto ExternalObjectListToSdsmNode::update_georeference(const georeference_msg_type & msg) -> void
 {
-  map_georeference_ = msg.data;
-  map_projector_ = std::make_shared<lanelet::projection::LocalFrameProjector>(msg.data.c_str());
+  if (map_georeference_ != msg.data)
+  {
+    map_georeference_ = msg.data;
+    map_projector_ = std::make_shared<lanelet::projection::LocalFrameProjector>(map_georeference_.c_str());
+  }
 }
 
 auto ExternalObjectListToSdsmNode::update_current_pose(const pose_msg_type & msg) -> void

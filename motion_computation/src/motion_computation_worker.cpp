@@ -143,21 +143,25 @@ void MotionComputationWorker::predictionLogic(
 void MotionComputationWorker::georeferenceCallback(const std_msgs::msg::String::UniquePtr msg)
 {
   // Build projector from proj string
-  map_projector_ = std::make_shared<lanelet::projection::LocalFrameProjector>(msg->data.c_str());
+  if (georeference_ != msg->data)
+  {
+    georeference_ = msg->data;
+    map_projector_ = std::make_shared<lanelet::projection::LocalFrameProjector>(msg->data.c_str());
 
-  std::string axis =
-    wgs84_utils::proj_tools::getAxisFromProjString(msg->data);  // Extract axis for orientation calc
+    std::string axis =
+      wgs84_utils::proj_tools::getAxisFromProjString(msg->data);  // Extract axis for orientation
 
-  RCLCPP_INFO_STREAM(logger_->get_logger(), "Extracted Axis: " << axis);
+    RCLCPP_INFO_STREAM(logger_->get_logger(), "Extracted Axis: " << axis);
 
-  ned_in_map_rotation_ =
-    wgs84_utils::proj_tools::getRotationOfNEDFromProjAxis(axis);  // Extract map rotation from axis
+    ned_in_map_rotation_ =
+      wgs84_utils::proj_tools::getRotationOfNEDFromProjAxis(axis);  // Extract map rotation
 
-  RCLCPP_DEBUG_STREAM(
-    logger_->get_logger(), "Extracted NED in Map Rotation (x,y,z,w) : ( "
-                             << ned_in_map_rotation_.getX() << ", " << ned_in_map_rotation_.getY()
-                             << ", " << ned_in_map_rotation_.getZ() << ", "
-                             << ned_in_map_rotation_.getW());
+    RCLCPP_DEBUG_STREAM(
+      logger_->get_logger(), "Extracted NED in Map Rotation (x,y,z,w) : ( "
+                              << ned_in_map_rotation_.getX() << ", " << ned_in_map_rotation_.getY()
+                              << ", " << ned_in_map_rotation_.getZ() << ", "
+                              << ned_in_map_rotation_.getW());
+  }
 }
 
 void MotionComputationWorker::setPredictionTimeStep(double time_step)
