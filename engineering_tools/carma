@@ -60,25 +60,22 @@ echoerr() { echo "$@" 1>&2; }
 #  If no parameters are provided the defaults will be used
 ##
 __get_image_from_config() {
-    local TARGET_IMAGE="usdotfhwastol/carma-base:latest"
-    local SUPPORTED_ORANIZATIONS="usdotfhwastol\|usdotfhwastoldev\|usdotfhwastolcandidate"
+    local DEFAULT_IMAGE="usdotfhwastol/carma-base:latest"
+    local SUPPORTED_ORGANIZATIONS="usdotfhwastol\|usdotfhwastoldev\|usdotfhwastolcandidate"
     local SUPPORTED_IMAGES="carma-platform:\|carma-messenger:"
 
-    if [ -n "$1" ]
-    then
-        local SUPPORTED_IMAGES="$1"
+    if [ -n "$1" ]; then
+        SUPPORTED_IMAGES="$1"
     fi
 
-    if [ -n "$2" ]
-    then
-
-        local SUPPORTED_ORANIZATIONS="$2"
+    if [ -n "$2" ]; then
+        SUPPORTED_ORGANIZATIONS="$2"
     fi
 
     # Check if carma-config is set. If so, use what was in the carma config
     if docker container inspect carma-config > /dev/null 2>&1; then
-
-        local IMAGE_BACKUP=$TARGET_IMAGE
+        # use backup image as the most recent carma-base docker image
+        local IMAGE_BACKUP=$(docker images --format '{{.Repository}}:{{.Tag}} {{.CreatedAt}}' | grep -E 'carma-base' | grep -v '<none>' | sort -k 2 -r | head -n 1 | awk '{print $1}')
 
         # Extract the .env file content from the carma-config volume
         docker run --rm --volumes-from carma-config:ro busybox:latest cat /opt/carma/vehicle/config/.env > /tmp/.env
@@ -87,22 +84,27 @@ __get_image_from_config() {
         source /tmp/.env
 
         # Construct the image name using the values from the .env file
-        TARGET_IMAGE="${DOCKER_ORG}/carma-base:${DOCKER_TAG}"
+        local TARGET_IMAGE="${DOCKER_ORG}/carma-base:${DOCKER_TAG}"
 
-        # If the sed resulted in an empty string then reset the tag
+        # Check if TARGET_IMAGE exists locally
+        if ! docker images --format '{{.Repository}}:{{.Tag}}' | grep -q "^${TARGET_IMAGE}$"; then
+            echoerr "TARGET_IMAGE ($TARGET_IMAGE) does not exist locally, defaulting to most recent carma-base image: $IMAGE_BACKUP"
+            TARGET_IMAGE=$IMAGE_BACKUP
+        fi
+
         if [ -z "$TARGET_IMAGE" ]; then
-            local TARGET_IMAGE=$IMAGE_BACKUP
-            echoerr "Could not identify usable image from config so defaulting to image: $TARGET_IMAGE"
+            TARGET_IMAGE=$DEFAULT_IMAGE
+            echoerr "No recent carma-base image found, using default image: $TARGET_IMAGE"
         fi
 
         rm /tmp/.env
     else
-        echoerr "No config detected or target image specified so using default: $TARGET_IMAGE"
+        echoerr "No config detected or target image specified so using default: $DEFAULT_IMAGE"
+        TARGET_IMAGE=$DEFAULT_IMAGE
     fi
 
     echo "$TARGET_IMAGE"
 }
-
 __get_most_recent_carma_base() {
     if [ "$1" = "-d" ]; then
         local USERNAME=usdotfhwastoldev
