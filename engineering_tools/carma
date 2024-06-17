@@ -99,8 +99,22 @@ __get_image_from_config() {
         # Check if TARGET_IMAGE exists locally
         if [ $IMAGE_FOUND -eq 0 ]; then
             echoerr "TARGET_IMAGE with DOCKER_ORG=${DOCKER_ORG} DOCKER_TAG=${DOCKER_TAG} does not exist locally for these images: ${SUPPORTED_IMAGES},
-                defaulting to most recent carma-base image: $DEFAULT_IMAGE"
-            TARGET_IMAGE=$DEFAULT_IMAGE
+                trying to get most recent images from these: ${SUPPORTED_IMAGES}"
+
+            for IMAGE in "${IMAGE_ARRAY[@]}"; do
+                TARGET_IMAGE=$(docker images --format '{{.Repository}}:{{.Tag}} {{.CreatedAt}}' | grep -E "$IMAGE" | grep -v '<none>' | sort -k 2 -r | head -n 1 | awk '{print $1}')
+
+                # Verify target image exists
+                if [ -n "$(docker images -q $TARGET_IMAGE 2> /dev/null)" ]; then
+                    IMAGE_FOUND=1
+                    break
+                fi
+            done
+
+            if [ $IMAGE_FOUND -eq 0 ]; then
+            echoerr "Trying to use default image: ${DEFAULT_IMAGE}"
+                TARGET_IMAGE=$DEFAULT_IMAGE
+            fi
         fi
 
         rm /tmp/.env
