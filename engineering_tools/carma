@@ -50,31 +50,30 @@ __pull_newest_carma_base() {
 echoerr() { echo "$@" 1>&2; }
 
 ##
-# Method returns a fully specified docker image name and tag based on the currently set carma-config.
-# The method will return the first tag that appears in the config for the possible organizations and images.
-# If the config is not set or an image cannot be found the method will return a carma-base image as the default.
-# The user can specify optional organizations or images as sed compatable regex lists.
+# Method returns a fully specified docker image name and tag based on the currently set carma-config
+# The method extracts DOCKER_ORG and DOCKER_TAG from the .env file in carma-config to look for
+# combinations from SUPPORTED_IMAGES that exist locally.
+# If the config is not set or an image cannot be found the method will return most recent
+# carma-base image as the default.
+# If none is possible from above, returns error message.
+# The user can specify optional images as sed compatable regex lists.
 # For example calling
-#  $(__get_image_from_config 'carma-platform\|carma-messenger' 'usdotfhwastol\|usdotfhwastoldev\|usdotfhwastolcandidate')
+#  $(__get_image_from_config 'carma-platform\|carma-messenger')
 #
 #  If no parameters are provided the defaults will be used
 ##
 __get_image_from_config() {
     # Default image is the most recent carma-base image
     local DEFAULT_IMAGE=$(docker images --format '{{.Repository}}:{{.Tag}} {{.CreatedAt}}' | grep -E 'carma-base' | grep -v '<none>' | sort -k 2 -r | head -n 1 | awk '{print $1}')
-    local SUPPORTED_ORGANIZATIONS="usdotfhwastol\|usdotfhwastoldev\|usdotfhwastolcandidate"
     local SUPPORTED_IMAGES="carma-platform\|carma-messenger"
 
     if [ -n "$1" ]; then
         SUPPORTED_IMAGES="$1"
     fi
 
-    if [ -n "$2" ]; then
-        SUPPORTED_ORGANIZATIONS="$2"
-    fi
-
     # Check if carma-config is set. If so, use what was in the carma config
     if docker container inspect carma-config > /dev/null 2>&1; then
+        local IMAGE_FOUND=0
         # Extract the .env file content from the carma-config volume
         docker run --rm --volumes-from carma-config:ro busybox:latest cat /opt/carma/vehicle/config/.env > /tmp/.env
 
@@ -98,8 +97,9 @@ __get_image_from_config() {
         done
 
         # Check if TARGET_IMAGE exists locally
-        if ! docker images --format '{{.Repository}}:{{.Tag}}' | grep -q "^${TARGET_IMAGE}$"; then
-            echoerr "TARGET_IMAGE ($TARGET_IMAGE) does not exist locally, defaulting to most recent carma-base image: $DEFAULT_IMAGE"
+        if [ $IMAGE_FOUND -eq 0 ]; then
+            echoerr "TARGET_IMAGE with DOCKER_ORG=${DOCKER_ORG} DOCKER_TAG=${DOCKER_TAG} does not exist locally for these images: ${SUPPORTED_IMAGES},
+                defaulting to most recent carma-base image: $DEFAULT_IMAGE"
             TARGET_IMAGE=$DEFAULT_IMAGE
         fi
 
