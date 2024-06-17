@@ -1563,4 +1563,24 @@ namespace carma_wm
     }
   }
 
+  std::optional<lanelet::ConstLanelet> CARMAWorldModel::getFirstLaneletOnShortestPath(const std::vector<lanelet::ConstLanelet>& lanelets_to_filter) const
+  {
+    if (!route_ || lanelets_to_filter.empty())
+    {
+      return std::nullopt;
+    }
+
+    // pick a lanelet on the shortest path
+    for (const auto& llt : lanelets_to_filter)
+    {
+      auto shortest_path = route_->shortestPath();
+      if (std::find(shortest_path.begin(), shortest_path.end(), llt) != shortest_path.end())
+      {
+        return llt;
+      }
+    }
+
+    return std::nullopt;
+  }
+
 } // namespace carma_wm

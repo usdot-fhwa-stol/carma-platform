@@ -380,6 +380,129 @@ namespace plan_delegator{
     }
 */
 
+    /**
+     * Total route length should be 100m
+     *
+     *        |1203|1213|1223|
+     *        | _  _  _  _  _|
+     *        |1202|1212|1222|
+     *        | _  _  _  _  _|
+     *        |1201|1211|1221|    num   = lanelet id hardcoded for easier testing
+     *        | _  _  _  _  _|    |     = lane lines
+     *        |1200|1210|1220|    - - - = Lanelet boundary
+     *        |    12100     |
+     *        ****************
+     *           START_LINE
+     */
+    TEST(TestPlanDelegator, TestUpdateManeuverParameters)
+    {
+        rclcpp::NodeOptions node_options;
+        auto pd = std::make_shared<plan_delegator::PlanDelegator>(node_options);
+        pd->configure();
+        pd->activate();
+
+        // Use Guidance Lib to create map without an obstacle
+        carma_wm::test::MapOptions options;
+        options.obstacle_ = carma_wm::test::MapOptions::Obstacle::NONE;
+        std::shared_ptr<carma_wm::CARMAWorldModel> cmw = carma_wm::test::getGuidanceTestMap(options);
+
+        // Introduce overlapping lanelet not on the route
+        lanelet::Lanelet start_lanelet = cmw->getMutableMap()->laneletLayer.get(1210);
+        lanelet::Lanelet start_lanelet_overlapping = carma_wm::test::getLanelet(12100, start_lanelet.leftBound(), start_lanelet.rightBound());
+        auto overlapping_llt_id = std::to_string(start_lanelet_overlapping.id());
+        cmw->getMutableMap()->add(start_lanelet_overlapping);
+        cmw->setMap(cmw->getMutableMap()); // re-trigger routing graph
+        carma_wm::test::setRouteByIds({1210, 1213}, cmw);
+        // Set PlanDelegator's world model object
+        pd->wm_ = cmw;
+
+        // Verify that start end dist are correct and lanelet on the route is prioritized when picking lanelet
+        carma_planning_msgs::msg::Maneuver maneuver_1;
+        maneuver_1.type = carma_planning_msgs::msg::Maneuver::LANE_FOLLOWING;
+        maneuver_1.lane_following_maneuver.start_dist = 25.0;
+        maneuver_1.lane_following_maneuver.end_dist = 50.0;
+        maneuver_1.lane_following_maneuver.lane_ids.push_back("1211");
+        pd->length_to_front_bumper_ = 4.0; // 4.0 meter vehicle length
+        pd->updateManeuverParameters(maneuver_1);
+
+        EXPECT_NEAR(maneuver_1.lane_following_maneuver.start_dist, 21.0, 0.01);
+        EXPECT_NEAR(maneuver_1.lane_following_maneuver.end_dist, 46.0, 0.01);
+        EXPECT_EQ(maneuver_1.lane_following_maneuver.lane_ids.front(), "1210");
+
+        // Switch route with a different lanelet to verify route prioritization
+        cmw->setMap(cmw->getMutableMap()); // re-trigger routing graph
+        carma_wm::test::setRouteByIds({start_lanelet_overlapping.id(), 1213}, cmw);
+        pd->wm_ = cmw;
+        maneuver_1.lane_following_maneuver.start_dist = 25.0;
+        maneuver_1.lane_following_maneuver.end_dist = 50.0;
+        maneuver_1.lane_following_maneuver.lane_ids.front() = "1211";
+        pd->updateManeuverParameters(maneuver_1);
+
+        EXPECT_NEAR(maneuver_1.lane_following_maneuver.start_dist, 21.0, 0.01);
+        EXPECT_NEAR(maneuver_1.lane_following_maneuver.end_dist, 46.0, 0.01);
+        EXPECT_EQ(maneuver_1.lane_following_maneuver.lane_ids.front(), overlapping_llt_id);
+
+        // lanechange
+        carma_planning_msgs::msg::Maneuver maneuver_2;
+        maneuver_2.type = carma_planning_msgs::msg::Maneuver::LANE_CHANGE;
+        maneuver_2.lane_change_maneuver.start_dist = 25.0;
+        maneuver_2.lane_change_maneuver.end_dist = 50.0;
+        maneuver_2.lane_change_maneuver.starting_lane_id = "1211";
+        maneuver_2.lane_change_maneuver.ending_lane_id = "1221";
+
+        cmw->setMap(cmw->getMutableMap()); // re-trigger routing graph
+        carma_wm::test::setRouteByIds({1210, 1213}, cmw);
+        pd->wm_ = cmw;
+
+        pd->updateManeuverParameters(maneuver_2);
+        EXPECT_NEAR(maneuver_2.lane_change_maneuver.start_dist, 21.0, 0.01);
+        EXPECT_NEAR(maneuver_2.lane_change_maneuver.end_dist, 46.0, 0.01);
+        EXPECT_EQ(maneuver_2.lane_change_maneuver.starting_lane_id, "1210");
+
+        // Switch route with a different lanelet to verify route prioritization
+        cmw->setMap(cmw->getMutableMap()); // re-trigger routing graph
+        carma_wm::test::setRouteByIds({start_lanelet_overlapping.id(), 1211, 1212, 1213}, cmw);
+        pd->wm_ = cmw;
+        maneuver_2.lane_change_maneuver.start_dist = 25.0;  // reset
+        maneuver_2.lane_change_maneuver.end_dist = 50.0;
+        maneuver_2.lane_change_maneuver.starting_lane_id = "1211";
+        maneuver_2.lane_change_maneuver.ending_lane_id = "1221";
+
+        pd->updateManeuverParameters(maneuver_2);
+        EXPECT_NEAR(maneuver_2.lane_change_maneuver.start_dist, 21.0, 0.01);
+        EXPECT_NEAR(maneuver_2.lane_change_maneuver.end_dist, 46.0, 0.01);
+        EXPECT_EQ(maneuver_2.lane_change_maneuver.starting_lane_id, overlapping_llt_id);
+
+        // Verify that the non-route lanelet is being picked if no suitable lanelet is on the route
+        cmw->setMap(cmw->getMutableMap()); // re-trigger routing graph
+        carma_wm::test::setRouteByIds({1201, 1203}, cmw);
+        pd->wm_ = cmw;
+
+        // Lane Follow
+        maneuver_1.lane_following_maneuver.start_dist = 0.0;  // Reset values
+        maneuver_1.lane_following_maneuver.end_dist = 25.0;
+        maneuver_1.lane_following_maneuver.lane_ids.front() = "1201";
+
+        pd->updateManeuverParameters(maneuver_1);
+
+        EXPECT_NEAR(maneuver_1.lane_following_maneuver.start_dist, -4.0, 0.01);
+        EXPECT_NEAR(maneuver_1.lane_following_maneuver.end_dist, 21.0, 0.01);
+        EXPECT_EQ(maneuver_1.lane_following_maneuver.lane_ids.front(), "1200");
+
+        // Lanechange
+        cmw->setMap(cmw->getMutableMap()); // re-trigger routing graph
+        carma_wm::test::setRouteByIds({1221, 1213}, cmw);
+        pd->wm_ = cmw;
+        maneuver_2.lane_change_maneuver.start_dist = 0.0;  // Reset values
+        maneuver_2.lane_change_maneuver.end_dist = 25.0;
+        maneuver_2.lane_change_maneuver.starting_lane_id = "1221";
+        maneuver_2.lane_change_maneuver.ending_lane_id = "1211";
+
+        pd->updateManeuverParameters(maneuver_2);
+        EXPECT_NEAR(maneuver_2.lane_change_maneuver.start_dist, -4.0, 0.01);
+        EXPECT_NEAR(maneuver_2.lane_change_maneuver.end_dist, 21.0, 0.01);
+        EXPECT_EQ(maneuver_2.lane_change_maneuver.starting_lane_id, "1220");
+    }
 } // namespace plan_delegator
 
     /*!

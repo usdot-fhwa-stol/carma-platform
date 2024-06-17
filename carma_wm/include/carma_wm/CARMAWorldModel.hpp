@@ -32,7 +32,7 @@
 #include "boost/date_time/posix_time/posix_time.hpp"
 #include "carma_wm/SignalizedIntersectionManager.hpp"
 #include <rosgraph_msgs/msg/clock.hpp>
-
+#include <gtest/gtest_prod.h>
 namespace carma_wm
 {
 /*! \brief Class which implements the WorldModel interface. In addition this class provides write access to the world
@@ -267,6 +267,8 @@ public:
 
   std::vector<lanelet::SignalizedIntersectionPtr> getSignalizedIntersectionsAlongRoute(const lanelet::BasicPoint2d &loc) const;
 
+  std::optional<lanelet::ConstLanelet> getFirstLaneletOnShortestPath(const std::vector<lanelet::ConstLanelet>& lanelets_to_filter) const;
+
   std::unordered_map<uint32_t, lanelet::Id> traffic_light_ids_;
 
   carma_wm::SignalizedIntersectionManager sim_; // records SPAT/MAP lane ids to lanelet ids
@@ -322,5 +324,6 @@ private:
   static constexpr double YELLOW_LIGHT_DURATION = 3.0; //in sec
   static constexpr double GREEN_LIGHT_DURATION = 20.0; //in sec
 
+  FRIEND_TEST(CARMAWorldModelTest, getFirstLaneletOnShortestPath);
 };
 }  // namespace carma_wm
