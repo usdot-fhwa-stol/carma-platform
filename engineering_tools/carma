@@ -55,7 +55,7 @@ echoerr() { echo "$@" 1>&2; }
 # If the config is not set or an image cannot be found the method will return a carma-base image as the default.
 # The user can specify optional organizations or images as sed compatable regex lists.
 # For example calling
-#  $(__get_image_from_config 'carma-platform:\|carma-messenger:' 'usdotfhwastol\|usdotfhwastoldev\|usdotfhwastolcandidate')
+#  $(__get_image_from_config 'carma-platform\|carma-messenger' 'usdotfhwastol\|usdotfhwastoldev\|usdotfhwastolcandidate')
 #
 #  If no parameters are provided the defaults will be used
 ##
@@ -63,7 +63,7 @@ __get_image_from_config() {
     # Default image is the most recent carma-base image
     local DEFAULT_IMAGE=$(docker images --format '{{.Repository}}:{{.Tag}} {{.CreatedAt}}' | grep -E 'carma-base' | grep -v '<none>' | sort -k 2 -r | head -n 1 | awk '{print $1}')
     local SUPPORTED_ORGANIZATIONS="usdotfhwastol\|usdotfhwastoldev\|usdotfhwastolcandidate"
-    local SUPPORTED_IMAGES="carma-platform:\|carma-messenger:"
+    local SUPPORTED_IMAGES="carma-platform\|carma-messenger"
 
     if [ -n "$1" ]; then
         SUPPORTED_IMAGES="$1"
@@ -81,8 +81,21 @@ __get_image_from_config() {
         # Extract DOCKER_ORG and DOCKER_TAG from the .env file
         source /tmp/.env
 
-        # Construct the image name using the values from the .env file
-        local TARGET_IMAGE="${DOCKER_ORG}/carma-base:${DOCKER_TAG}"
+        # Construct the image name using the values from the .env file and given SUPPORTED_IMAGES options
+
+        # Split SUPPORTED_IMAGES into an array
+        local IFS='\|'
+        read -ra IMAGE_ARRAY <<< "$SUPPORTED_IMAGES"
+
+        for IMAGE in "${IMAGE_ARRAY[@]}"; do
+            TARGET_IMAGE="${DOCKER_ORG}/${IMAGE}:${DOCKER_TAG}"
+
+            # Verify target image exists
+            if [ -n "$(docker images -q $TARGET_IMAGE 2> /dev/null)" ]; then
+                IMAGE_FOUND=1
+                break
+            fi
+        done
 
         # Check if TARGET_IMAGE exists locally
         if ! docker images --format '{{.Repository}}:{{.Tag}}' | grep -q "^${TARGET_IMAGE}$"; then
@@ -159,7 +172,7 @@ carma-config__edit() {
 
     echo "Opening shell inside carma-config container with read/write privileges..."
 
-    local carma_base=$(__get_image_from_config carma-base:)
+    local carma_base=$(__get_image_from_config carma-base)
     if [[ -z $carma_base ]]; then
         __pull_newest_carma_base
         carma_base=$(__get_most_recent_carma_base)
@@ -449,7 +462,7 @@ carma__exec() {
         shift
     # If the image was not specified try to use what was in the carma config
     else
-        local TARGET_IMAGE=$(__get_image_from_config 'carma-platform:\|carma-messenger:')
+        local TARGET_IMAGE=$(__get_image_from_config 'carma-platform\|carma-messenger')
     fi
 
     # Verify target image exists
