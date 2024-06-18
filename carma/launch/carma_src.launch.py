@@ -162,6 +162,22 @@ def generate_launch_description():
         description='Flag to enable opening http tunnesl to CARMA Cloud'
     )
 
+    # Declare system_architecture
+    system_architecture = LaunchConfiguration('system_architecture')
+    declare_system_architecture = DeclareLaunchArgument(
+        name = 'system_architecture',
+        default_value = 'single',
+        description = 'Flag to define whether a single compute system or a dual compute system is being used'
+    )
+
+    # Declare host_placement
+    host_placement = LaunchConfiguration('host_placement')
+    declare_host_placement = DeclareLaunchArgument(
+        name = 'host_placement',
+        default_value = 'manager',
+        description = 'Flag to define whether the current active host is a manager or worker for ROS node allocation'
+    )
+    
     # Declare port
     port = LaunchConfiguration('port')
     declare_port = DeclareLaunchArgument(
@@ -194,6 +210,7 @@ def generate_launch_description():
 
     # Launch ROS2 rosbag logging
     ros2_rosbag_launch = GroupAction(
+        condition=IfCondition(PythonExpression(["'", host_placement, "' == 'manager'"])),
         actions=[
             IncludeLaunchDescription(
                 PythonLaunchDescriptionSource([ThisLaunchFileDir(), '/ros2_rosbag.launch.py']),
@@ -206,8 +223,8 @@ def generate_launch_description():
     )
 
     # Nodes
-
     transform_group = GroupAction(
+        condition=IfCondition(PythonExpression(["'", host_placement, "' == 'manager'"])),
         actions=[
             PushRosNamespace(EnvironmentVariable('CARMA_TF_NS', default_value='/')),
             IncludeLaunchDescription(
@@ -220,7 +237,9 @@ def generate_launch_description():
         ]
     )
 
+
     environment_group = GroupAction(
+        condition=IfCondition(PythonExpression(["'", host_placement, "' == 'manager'"])),
         actions=[
             PushRosNamespace(EnvironmentVariable('CARMA_ENV_NS', default_value='environment')),
             IncludeLaunchDescription(
@@ -236,7 +255,9 @@ def generate_launch_description():
         ]
     )
 
+
     localization_group = GroupAction(
+        condition=IfCondition(PythonExpression(["'", host_placement, "' == 'manager'"])),
         actions=[
             PushRosNamespace(EnvironmentVariable('CARMA_LOCZ_NS', default_value='localization')),
             IncludeLaunchDescription(
@@ -256,7 +277,9 @@ def generate_launch_description():
         ]
     )
 
+
     v2x_group = GroupAction(
+        condition=IfCondition(PythonExpression(["'", host_placement, "' == 'manager'"])),
         actions=[
             PushRosNamespace(EnvironmentVariable('CARMA_MSG_NS', default_value='message')),
             IncludeLaunchDescription(
@@ -272,7 +295,9 @@ def generate_launch_description():
         ]
     )
 
+
     guidance_group = GroupAction(
+        condition=IfCondition(PythonExpression(["'", host_placement, "' == 'worker'"])),
         actions=[
             PushRosNamespace(EnvironmentVariable('CARMA_GUIDE_NS', default_value='guidance')),
 
@@ -294,7 +319,9 @@ def generate_launch_description():
         ]
     )
 
+
     drivers_group = GroupAction(
+        condition=IfCondition(PythonExpression(["'", host_placement, "' == 'manager'"])),
         actions=[
             PushRosNamespace(EnvironmentVariable('CARMA_INTR_NS', default_value='hardware_interface')),
             IncludeLaunchDescription(
@@ -308,7 +335,9 @@ def generate_launch_description():
         ]
     )
 
+
     system_controller = Node(
+        condition=IfCondition(PythonExpression(["'", host_placement, "' == 'manager'"])),
         package='system_controller',
         name='system_controller',
         executable='system_controller',
@@ -319,7 +348,9 @@ def generate_launch_description():
         arguments=['--ros-args', '--log-level', GetLogLevel('system_controller', env_log_levels)]
     )
 
+
     ui_group = GroupAction(
+        condition=IfCondition(PythonExpression(["'", host_placement, "' == 'manager'"])),
         actions=[
             PushRosNamespace(EnvironmentVariable('CARMA_UI_NS', default_value='ui')),
 
@@ -331,6 +362,7 @@ def generate_launch_description():
             ),
         ]
     )
+
 
     return LaunchDescription([
         declare_vehicle_calibration_dir_arg,
@@ -352,6 +384,8 @@ def generate_launch_description():
         declare_arealist_path,
         declare_vector_map_file,
         declare_is_ros2_tracing_enabled,
+        declare_system_architecture,
+        declare_host_placement,
         drivers_group,
         transform_group,
         environment_group,
