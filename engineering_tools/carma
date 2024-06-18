@@ -65,6 +65,7 @@ echoerr() { echo "$@" 1>&2; }
 __get_image_from_config() {
     # Default image is the most recent carma-base image
     local DEFAULT_IMAGE=$(docker images --format '{{.Repository}}:{{.Tag}} {{.CreatedAt}}' | grep -E 'carma-base' | grep -v '<none>' | sort -k 2 -r | head -n 1 | awk '{print $1}')
+    local SUPPORTED_ORANIZATIONS="usdotfhwastol\|usdotfhwastoldev\|usdotfhwastolcandidate"
     local SUPPORTED_IMAGES="carma-platform\|carma-messenger"
 
     if [ -n "$1" ]; then
@@ -73,7 +74,22 @@ __get_image_from_config() {
 
     # Check if carma-config is set. If so, use what was in the carma config
     if docker container inspect carma-config > /dev/null 2>&1; then
+
+        # Before and including carma-system-4.5.0, image can be directly grabbed from config docker-compose using sed
+        # sed command finds the first instance of an image which is part of the set defined in SUPPORTED_ORGANIZATIONS and SUPPORTED_IMAGES.
+        # then returns the name of the image.
+        local TARGET_IMAGE=$(docker run --rm --volumes-from carma-config:ro --entrypoint sh busybox:latest -c \
+            "sed -n -e '/image:\s*\($SUPPORTED_ORANIZATIONS\)\/\($SUPPORTED_IMAGES\)/ s/.*\image: *//p' /opt/carma/vehicle/config/docker-compose.yml | grep -m 1 '.*'")
+
+        # If the sed resulted in valid image, then return
+        if [ -n "$TARGET_IMAGE" ]; then
+            echo "$TARGET_IMAGE"
+            return 0
+        fi
+
+        # Else, possibly newer config than carma-system-4.5.0...
         local IMAGE_FOUND=0
+
         # Extract the .env file content from the carma-config volume
         docker run --rm --volumes-from carma-config:ro busybox:latest cat /opt/carma/vehicle/config/.env > /tmp/.env
 
@@ -281,11 +297,11 @@ carma-config__install() {
     docker run --name carma-config-tmp $IMAGE_NAME
 
     # Extract the .env file content from the carma-config volume
-    docker run --rm --volumes-from carma-config:ro busybox:latest cat /opt/carma/vehicle/config/.env > /tmp/.env
+    docker run --rm --volumes-from carma-config:ro busybox:latest cat /opt/carma/vehicle/config/.env > /tmp/.env 2>/dev/null  # suppress misleading error message that will occur for versions before 4.5.0
 
     # Extract DOCKER_ORG and DOCKER_TAG (and others) from the .env file
     set -o allexport
-    source /tmp/.env
+    source /tmp/.env 2>/dev/null # suppress misleading error message that will occur for versions before 4.5.0
     set +o allexport
 
     local CARMA_DOCKER_FILE="`docker run --rm --volumes-from carma-config-tmp:ro --entrypoint sh busybox:latest -c 'cat /opt/carma/vehicle/config/docker-compose.yml' | sed s/carma-config/carma-config-tmp/g`"
@@ -355,7 +371,7 @@ carma__start() {
     EXTRA_ARGS=("$@")
 
     # Extract the .env file content from the carma-config volume and save temporarily
-    docker run --rm --volumes-from carma-config:ro busybox:latest cat /opt/carma/vehicle/config/.env > /tmp/.env
+    docker run --rm --volumes-from carma-config:ro busybox:latest cat /opt/carma/vehicle/config/.env > /tmp/.env 2>/dev/null  # suppress misleading error message that will occur for versions before 4.5.0
 
     # Get correct order of .env file precedence. From low to high: carma-config .env, local .env, user defined.
     COMPOSE_ENV_FILES_WITH_DEFAULT=$(__get_compose_env_files)
@@ -386,7 +402,7 @@ carma__stop() {
     fi
 
     # Extract the .env file content from the carma-config volume
-    docker run --rm --volumes-from carma-config:ro busybox:latest cat /opt/carma/vehicle/config/.env > /tmp/.env
+    docker run --rm --volumes-from carma-config:ro busybox:latest cat /opt/carma/vehicle/config/.env > /tmp/.env 2>/dev/null  # suppress misleading error message that will occur for versions before 4.5.0
 
     # Get correct order of .env file precedence. From low to high: carma-config .env, local .env, user defined.
     COMPOSE_ENV_FILES_WITH_DEFAULT=$(__get_compose_env_files)
