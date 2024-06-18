@@ -324,6 +324,25 @@ carma__fix_bag() {
 
     fi
 }
+
+__get_compose_env_files() {
+    # If variable is not set, modify to get default values
+    RETURN_COMPOSE_ENV_FILES="/tmp/.env"
+
+    # Check if local .env file exists
+    if [ -f ".env" ]; then
+        RETURN_COMPOSE_ENV_FILES="$RETURN_COMPOSE_ENV_FILES,.env"
+    fi
+
+    if [ -n "${COMPOSE_ENV_FILES+x}" ]; then
+        echoerr "WARNING: COMPOSE_ENV_FILES is already defined in the shell: $COMPOSE_ENV_FILES. Appending it to default COMPOSE_ENV_FILES"
+        # This way, user defined COMPOSE_ENV_FILES still takes higher precedence.
+        RETURN_COMPOSE_ENV_FILES="$RETURN_COMPOSE_ENV_FILES,$COMPOSE_ENV_FILES"
+    fi
+
+    echo "$RETURN_COMPOSE_ENV_FILES"
+}
+
 carma__start() {
     if ! docker container inspect carma-config > /dev/null 2>&1; then
         echo "No existing CARMA configuration found, nothing to start. Please set a config."
@@ -331,27 +350,28 @@ carma__start() {
         exit 1
     fi
 
-    # Extract the .env file content from the carma-config volume
+    # Capture all extra arguments
+    EXTRA_ARGS=("$@")
+
+    # Extract the .env file content from the carma-config volume and save temporarily
     docker run --rm --volumes-from carma-config:ro busybox:latest cat /opt/carma/vehicle/config/.env > /tmp/.env
 
-    # Extract DOCKER_ORG and DOCKER_TAG (and others) from the .env file
-    set -o allexport
-    source /tmp/.env
-    set +o allexport
+    # Set .env file in carma-config as default and lowest precedence over any other env files
+    COMPOSE_ENV_FILES_WITH_DEFAULT=$(__get_compose_env_files)
 
     echo "Starting CARMA background processes..."
     docker run --rm --volumes-from carma-config:ro --entrypoint sh busybox:latest -c \
     'cat /opt/carma/vehicle/config/docker-compose-background.yml' | \
-    docker-compose -f - -p carma-background up -d
+        COMPOSE_ENV_FILES="$COMPOSE_ENV_FILES_WITH_DEFAULT", docker-compose -f - -p carma-background "${EXTRA_ARGS[@]:1}" up -d
 
-    if [ "$1" = "all" ]; then
+    if [[ "${EXTRA_ARGS[0]}" == "all" ]]; then
         shift
         echo "Starting CARMA Platform foreground processes..."
         docker run --rm --volumes-from carma-config:ro --entrypoint sh busybox:latest -c \
         'cat /opt/carma/vehicle/config/docker-compose.yml' | \
-        docker-compose -f - -p carma up $@
-    elif [ ! -z "$1" ]; then
-        echo "Unrecognized argument \"start $1\""
+            COMPOSE_ENV_FILES="$COMPOSE_ENV_FILES_WITH_DEFAULT", docker-compose -f - -p carma "${EXTRA_ARGS[@]:1}" up
+    elif [[ ! -z "${EXTRA_ARGS[0]}" ]]; then
+        echo "Unrecognized argument \"start ${EXTRA_ARGS[0]}\""
     fi
 
     rm /tmp/.env
@@ -367,21 +387,19 @@ carma__stop() {
     # Extract the .env file content from the carma-config volume
     docker run --rm --volumes-from carma-config:ro busybox:latest cat /opt/carma/vehicle/config/.env > /tmp/.env
 
-    # Extract DOCKER_ORG and DOCKER_TAG (and others) from the .env file
-    set -o allexport
-    source /tmp/.env
-    set +o allexport
+    # Set .env file in carma-config as default and lowest precedence over any other env files
+    COMPOSE_ENV_FILES_WITH_DEFAULT=$(__get_compose_env_files)
 
     echo "Shutting down CARMA processes..."
     docker run --rm --volumes-from carma-config:ro --entrypoint sh busybox:latest -c \
     'cat /opt/carma/vehicle/config/docker-compose.yml' | \
-    docker-compose -f - -p carma down
+    COMPOSE_ENV_FILES="$COMPOSE_ENV_FILES_WITH_DEFAULT", docker-compose -f - -p carma down
 
     if [ "$1" = "all" ]; then
         echo "Shutting down CARMA background processes..."
         docker run --rm --volumes-from carma-config:ro --entrypoint sh busybox:latest -c \
         'cat /opt/carma/vehicle/config/docker-compose-background.yml' | \
-        docker-compose -f - -p carma-background down
+        COMPOSE_ENV_FILES="$COMPOSE_ENV_FILES_WITH_DEFAULT", docker-compose -f - -p carma-background down
         if [ "$2" = "fix_bag" ]; then
             echo "Trying to fix the last rosbag file..."
             carma__fix_bag
@@ -594,10 +612,14 @@ Please enter one of the following commands:
         - Start the CARMA platform's background processes. If all, start
           everything.
         - Accepts the same flags as "docker-compose up"
+        - NOTE: Uses COMPOSE_ENV_FILES under the hood for env files.
+          Precedence from lowest to highest: .env in carma-config, local .env, existing COMPOSE_ENV_FILES in shell.
     stop (all (docker-compose down args))
         - Stop the CARMA platform's foreground processes. If all, stop
           everything.
         - Accepts the same flags as "docker-compose down"
+        - NOTE: Uses COMPOSE_ENV_FILES under the hood for env files.
+          Precedence from lowest to highest: .env in carma-config, local .env, existing COMPOSE_ENV_FILES in shell.
         - fix_bag
             - After stopping carma, checks if the last run's rosbag has been correctly saved. If not, fixes it to be replayable.
     exec <optional bash command>
