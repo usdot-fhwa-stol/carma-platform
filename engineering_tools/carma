@@ -329,11 +329,12 @@ __get_compose_env_files() {
     # If variable is not set, modify to get default values
     RETURN_COMPOSE_ENV_FILES="/tmp/.env"
 
-    # Check if local .env file exists
+    # If local .env file exists, it takes higher precedence over carma-config .env file
     if [ -f ".env" ]; then
         RETURN_COMPOSE_ENV_FILES="$RETURN_COMPOSE_ENV_FILES,.env"
     fi
 
+    # If user defined COMPOSE_ENV_FILES exists in the shell, it takes higher precedence over other default .env files
     if [ -n "${COMPOSE_ENV_FILES+x}" ]; then
         echoerr "WARNING: COMPOSE_ENV_FILES is already defined in the shell: $COMPOSE_ENV_FILES. Appending it to default COMPOSE_ENV_FILES"
         # This way, user defined COMPOSE_ENV_FILES still takes higher precedence.
@@ -356,7 +357,7 @@ carma__start() {
     # Extract the .env file content from the carma-config volume and save temporarily
     docker run --rm --volumes-from carma-config:ro busybox:latest cat /opt/carma/vehicle/config/.env > /tmp/.env
 
-    # Set .env file in carma-config as default and lowest precedence over any other env files
+    # Get correct order of .env file precedence. From low to high: carma-config .env, local .env, user defined.
     COMPOSE_ENV_FILES_WITH_DEFAULT=$(__get_compose_env_files)
 
     echo "Starting CARMA background processes..."
@@ -387,7 +388,7 @@ carma__stop() {
     # Extract the .env file content from the carma-config volume
     docker run --rm --volumes-from carma-config:ro busybox:latest cat /opt/carma/vehicle/config/.env > /tmp/.env
 
-    # Set .env file in carma-config as default and lowest precedence over any other env files
+    # Get correct order of .env file precedence. From low to high: carma-config .env, local .env, user defined.
     COMPOSE_ENV_FILES_WITH_DEFAULT=$(__get_compose_env_files)
 
     echo "Shutting down CARMA processes..."
