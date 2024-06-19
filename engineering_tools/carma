@@ -202,6 +202,8 @@ carma__attach() {
 
     echo "Attaching to CARMA container STDOUT..."
     echo "$CARMA_DOCKER_FILE" | docker-compose -p carma logs -f - logs --follow --tail=10
+
+    rm /tmp/.env
 }
 
 carma-config__edit() {
