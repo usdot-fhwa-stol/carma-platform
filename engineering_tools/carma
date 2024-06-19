@@ -350,7 +350,7 @@ __get_compose_env_files() {
 
     # If .env file exists in current directory, it takes higher precedence over carma-config .env file
     if [ -f ".env" ]; then
-        echoerr "NOTE: .env file detected in current directory, considering its values for current carma session."
+        echoerr "NOTE: .env file detected in current directory, taking its values for consideration for current carma session."
         RETURN_COMPOSE_ENV_FILES="$RETURN_COMPOSE_ENV_FILES,.env"
     fi
 
