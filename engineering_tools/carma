@@ -190,10 +190,18 @@ carma-config__set() {
 }
 
 carma__attach() {
+    # Extract the .env file content from the carma-config volume
+    docker run --rm --volumes-from carma-config:ro busybox:latest cat /opt/carma/vehicle/config/.env > /tmp/.env 2>/dev/null  # suppress misleading error message that will occur for versions before 4.5.0
+
+    # Extract DOCKER_ORG and DOCKER_TAG (and others) from the .env file
+    set -o allexport
+    source /tmp/.env 2>/dev/null # suppress misleading error message that will occur for versions before 4.5.0
+    set +o allexport
+
     local CARMA_DOCKER_FILE="`docker run --rm --volumes-from carma-config:ro --entrypoint sh busybox:latest -c 'cat /opt/carma/vehicle/config/docker-compose.yml'`"
 
     echo "Attaching to CARMA container STDOUT..."
-    echo "$CARMA_DOCKER_FILE" | docker-compose -p carma -f - logs --follow --tail=10
+    echo "$CARMA_DOCKER_FILE" | docker-compose -p carma logs -f - logs --follow --tail=10
 }
 
 carma-config__edit() {
