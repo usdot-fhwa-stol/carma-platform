@@ -54,8 +54,9 @@ echoerr() { echo "$@" 1>&2; }
 # The method extracts DOCKER_ORG and DOCKER_TAG from the .env file in carma-config to look for
 # combinations from SUPPORTED_IMAGES that exist locally.
 # If the config is not set or an image cannot be found the method will return most recent
-# carma-base image as the default.
-# If none is possible from above, returns error message.
+# SUPPORTED_IMAGES image as the default.
+# If that fails, returns the most recent carma-base image.
+# If none is possible from all above, returns error message.
 # The user can specify optional images as sed compatable regex lists.
 # For example calling
 #  $(__get_image_from_config 'carma-platform\|carma-messenger')
@@ -75,7 +76,7 @@ __get_image_from_config() {
     # Check if carma-config is set. If so, use what was in the carma config
     if docker container inspect carma-config > /dev/null 2>&1; then
 
-        # Before and including carma-system-4.5.0, image can be directly grabbed from config docker-compose using sed
+        # NOTE: Before and including carma-system-4.5.0, image can be directly grabbed from config docker-compose using sed
         # sed command finds the first instance of an image which is part of the set defined in SUPPORTED_ORGANIZATIONS and SUPPORTED_IMAGES.
         # then returns the name of the image.
         local TARGET_IMAGE=$(docker run --rm --volumes-from carma-config:ro --entrypoint sh busybox:latest -c \
@@ -87,7 +88,7 @@ __get_image_from_config() {
             return 0
         fi
 
-        # Else, possibly newer config than carma-system-4.5.0...
+        # NOTE: Else, possibly newer config than carma-system-4.5.0 which uses `/opt/carma/vehicle/config/.env`...
         local IMAGE_FOUND=0
 
         # Extract the .env file content from the carma-config volume
@@ -96,7 +97,7 @@ __get_image_from_config() {
         # Extract DOCKER_ORG and DOCKER_TAG from the .env file
         source /tmp/.env
 
-        # Construct the image name using the values from the .env file and given SUPPORTED_IMAGES options
+        # 1. Construct the image name using the values from the .env file and given SUPPORTED_IMAGES options
 
         # Split SUPPORTED_IMAGES into an array
         local IFS='\|'
@@ -117,6 +118,7 @@ __get_image_from_config() {
             echoerr "TARGET_IMAGE with DOCKER_ORG=${DOCKER_ORG} DOCKER_TAG=${DOCKER_TAG} does not exist locally for these images: ${SUPPORTED_IMAGES},
                 trying to get most recent images from these: ${SUPPORTED_IMAGES}"
 
+            # 2. Get most recent images of SUPPORTED_IMAGES
             for IMAGE in "${IMAGE_ARRAY[@]}"; do
                 TARGET_IMAGE=$(docker images --format '{{.Repository}}:{{.Tag}} {{.CreatedAt}}' | grep -E "$IMAGE" | grep -v '<none>' | sort -k 2 -r | head -n 1 | awk '{print $1}')
 
@@ -127,6 +129,7 @@ __get_image_from_config() {
                 fi
             done
 
+            # 3. Get most recent carma-base image
             if [ $IMAGE_FOUND -eq 0 ]; then
             echoerr "Trying to use default image: ${DEFAULT_IMAGE}"
                 TARGET_IMAGE=$DEFAULT_IMAGE
@@ -342,17 +345,18 @@ carma__fix_bag() {
 }
 
 __get_compose_env_files() {
-    # If variable is not set, modify to get default values
+    # If variable is not set, modify to get default values from carma-config
     RETURN_COMPOSE_ENV_FILES="/tmp/.env"
 
-    # If local .env file exists, it takes higher precedence over carma-config .env file
+    # If .env file exists in current directory, it takes higher precedence over carma-config .env file
     if [ -f ".env" ]; then
         RETURN_COMPOSE_ENV_FILES="$RETURN_COMPOSE_ENV_FILES,.env"
     fi
 
-    # If user defined COMPOSE_ENV_FILES exists in the shell, it takes higher precedence over other default .env files
+    # If user defined COMPOSE_ENV_FILES exists in the shell, it takes higher precedence over .env from carma-config and current directory .env
     if [ -n "${COMPOSE_ENV_FILES+x}" ]; then
-        echoerr "WARNING: COMPOSE_ENV_FILES is already defined in the shell: $COMPOSE_ENV_FILES. Appending it to default COMPOSE_ENV_FILES"
+        echoerr "WARNING: COMPOSE_ENV_FILES is already defined in the shell: $COMPOSE_ENV_FILES. 
+            Setting it higher precedence than .env from carma-config and current directory .env (if it exists)"
         # This way, user defined COMPOSE_ENV_FILES still takes higher precedence.
         RETURN_COMPOSE_ENV_FILES="$RETURN_COMPOSE_ENV_FILES,$COMPOSE_ENV_FILES"
     fi
