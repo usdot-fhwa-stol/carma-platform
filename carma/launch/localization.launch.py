@@ -60,6 +60,9 @@ def generate_launch_description():
     localization_manager_convertor_param_file = os.path.join(
     get_package_share_directory('localization_manager'), 'config/parameters.yaml')
 
+    basic_travel_simulator_param_file = os.path.join(
+    get_package_share_directory('basic_travel_simulator'), 'config/parameters.yaml')
+
     vehicle_calibration_dir = LaunchConfiguration('vehicle_calibration_dir')
     ndt_matching_param_file = [vehicle_calibration_dir, "/lidar_localizer/ndt_matching/params.yaml"]
 
@@ -127,6 +130,29 @@ def generate_launch_description():
 
                 ],
                 parameters=[ localization_manager_convertor_param_file, vehicle_config_param_file ]
+        )
+    ])
+
+    basic_travel_simulator_container = ComposableNodeContainer(
+    package='carma_ros2_utils',
+    name='basic_travel_simulator_container',
+    executable='carma_component_container_mt',
+    namespace=GetCurrentNamespace(),
+    composable_node_descriptions=[
+        ComposableNode(
+                package='basic_travel_simulator',
+                plugin='basic_travel_simulator::Node',
+                name='basic_travel_simulator',
+                extra_arguments=[
+                    {'use_intra_process_comms': True},
+                    {'--log-level' : GetLogLevel('basic_travel_simulator', env_log_levels) }
+                ],
+                remappings=[
+                    ("current_velocity", [ EnvironmentVariable('CARMA_INTR_NS', default_value=''), "/vehicle/twist" ] ),
+                    ("current_pose", [ EnvironmentVariable('CARMA_LOCZ_NS', default_value=''), "/current_pose" ] ),
+                    ("plan_trajectory", [ EnvironmentVariable('CARMA_GUIDE_NS', default_value=''), "/plan_trajectory" ] ),
+                ],
+                parameters=[  ]
         )
     ])
 
@@ -382,6 +408,7 @@ def generate_launch_description():
         declare_map_file,
         declare_use_sim_time_arg,
         gnss_to_map_convertor_container,
+        basic_travel_simulator_container,
         localization_manager_container,
         dead_reckoner_container,
         voxel_grid_filter_container,

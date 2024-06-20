@@ -41,7 +41,7 @@ private:
 
   // Robot Status flags
   bool robot_active_ = false;
-  bool robot_enabled_ = false;
+  bool robot_enabled_ = true; //TODO
 
 protected:
   int onRun() override;
