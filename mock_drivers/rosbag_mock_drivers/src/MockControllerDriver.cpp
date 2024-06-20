@@ -33,30 +33,12 @@ void MockControllerDriver::vehicleCmdCallback(const autoware_msgs::VehicleCmd::C
   robot_enabled_ = true;  // If a command was received set the robot enabled status to true
 }
 
-bool MockControllerDriver::enableRoboticSrv(const cav_srvs::SetEnableRobotic::Request& req,
+bool MockControllerDriver::enableRoboticSrv(cav_srvs::SetEnableRobotic::Request& req,
                                             cav_srvs::SetEnableRobotic::Response& res)
 {
-  ROS_ERROR_STREAM("called enableRoboticSrv " << req.set);
+  ROS_ERROR_STREAM("called enableRoboticSrv " << static_cast<int>(req.set));
   robot_active_ = true; //set to true no matter what
   robot_enabled_ = true;
-  //try
-  //{
-  //  ROS_ERROR_STREAM("Inside TRY enableRoboticSrv " << req.set);
-  //  if (robot_enabled_ && req.set == cav_srvs::SetEnableRobotic::Request::ENABLE)
-  //  {
-  //    robot_active_ = true;
-  //    ROS_ERROR_STREAM("EAVLED IT");
-  //  }
-  //  else
-  //  {
-  //    robot_active_ = false;
-  //  }
-  //}
-  //catch(const std::exception& e)
-  //{
-  //  ROS_ERROR_STREAM("CAught exception!!");
-//
-  //}
   return true;
 }
 
@@ -71,10 +53,7 @@ MockControllerDriver::MockControllerDriver(bool dummy)
       std::bind(&MockControllerDriver::vehicleCmdCallback, this, std::placeholders::_1), CommTypes::sub, false, 10,
       vehicle_cmd_topic_);
 
-  enable_robotic_ptr_ =
-      boost::make_shared<ROSComms<cav_srvs::SetEnableRobotic::Request&, cav_srvs::SetEnableRobotic::Response&>>(
-          std::bind(&MockControllerDriver::enableRoboticSrv, this, std::placeholders::_1, std::placeholders::_2),
-          CommTypes::srv, enable_robotic_srv_);
+  enable_robotic_srv_ = nh_.advertiseService(enable_robotic_srv_string_, &MockControllerDriver::enableRoboticSrv, this);
 }
 
 bool MockControllerDriver::onSpin()
@@ -98,7 +77,7 @@ int MockControllerDriver::onRun()
   // driver publisher, subscriber, and service
   mock_driver_node_.addPub(robot_status_ptr_);
   mock_driver_node_.addSub(vehicle_cmd_ptr_);
-  mock_driver_node_.addSrv(enable_robotic_ptr_);
+  //mock_driver_node_.addSrv(enable_robotic_ptr_);
 
   return 0;
 }
