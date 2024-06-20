@@ -60,11 +60,9 @@ echoerr() { echo "$@" 1>&2; }
 # The user can specify optional images as sed compatable regex lists.
 # For example calling
 #  $(__get_image_from_config 'carma-platform\|carma-messenger')
-#
-#  If no parameters are provided the defaults will be used
 ##
 __get_image_from_config() {
-    # Default image is the most recent carma-base image
+    # Default image is the most recent carma-base image by time of creation
     local DEFAULT_IMAGE=$(docker images --format '{{.Repository}}:{{.Tag}} {{.CreatedAt}}' | grep -E 'carma-base' | grep -v '<none>' | sort -k 2 -r | head -n 1 | awk '{print $1}')
     local SUPPORTED_ORANIZATIONS="usdotfhwastol\|usdotfhwastoldev\|usdotfhwastolcandidate"
     local SUPPORTED_IMAGES="carma-platform\|carma-messenger"
@@ -77,6 +75,7 @@ __get_image_from_config() {
     if docker container inspect carma-config > /dev/null 2>&1; then
 
         # NOTE: Before and including carma-system-4.5.0, image can be directly grabbed from config docker-compose using sed
+        # This approach needs to be used for versions for and before carma-system-4.5.0 because the /opt/carma/vehicle/config/.env file is not defined
         # sed command finds the first instance of an image which is part of the set defined in SUPPORTED_ORGANIZATIONS and SUPPORTED_IMAGES.
         # then returns the name of the image.
         local TARGET_IMAGE=$(docker run --rm --volumes-from carma-config:ro --entrypoint sh busybox:latest -c \
