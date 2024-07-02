@@ -320,8 +320,8 @@ carma-config__install() {
     local CARMA_BACKGROUND_DOCKER_FILE="`docker run --rm --volumes-from carma-config-tmp:ro --entrypoint sh busybox:latest -c 'cat /opt/carma/vehicle/config/docker-compose-background.yml' | sed s/carma-config/carma-config-tmp/g`"
 
     echo "Downloading $IMAGE_NAME dependencies..."
-    echo "$CARMA_DOCKER_FILE" | docker-compose -f - pull
-    echo "$CARMA_BACKGROUND_DOCKER_FILE" | docker-compose -f - pull
+    echo "$CARMA_DOCKER_FILE" | docker-compose -f - pull --ignore-pull-failures
+    echo "$CARMA_BACKGROUND_DOCKER_FILE" | docker-compose -f - pull --ignore-pull-failures
 
     echo "Cleaning up temporary container..."
     docker rm carma-config-tmp
