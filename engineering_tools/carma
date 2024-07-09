@@ -309,7 +309,7 @@ carma-config__install() {
     docker run --name carma-config-tmp $IMAGE_NAME
 
     # Extract the .env file content from the carma-config volume
-    docker run --rm --volumes-from carma-config:ro busybox:latest cat /opt/carma/vehicle/config/.env > /tmp/.env 2>/dev/null  # suppress misleading error message that will occur for versions before 4.5.0
+    docker run --rm --volumes-from carma-config-tmp:ro busybox:latest cat /opt/carma/vehicle/config/.env > /tmp/.env 2>/dev/null  # suppress misleading error message that will occur for versions before 4.5.0
 
     # Extract DOCKER_ORG and DOCKER_TAG (and others) from the .env file
     set -o allexport
@@ -365,7 +365,7 @@ __get_compose_env_files() {
 
     # If user defined COMPOSE_ENV_FILES exists in the shell, it takes higher precedence over .env from carma-config and current directory .env
     if [ -n "${COMPOSE_ENV_FILES+x}" ]; then
-        echoerr "WARNING: COMPOSE_ENV_FILES is already defined in the shell: $COMPOSE_ENV_FILES. 
+        echoerr "WARNING: COMPOSE_ENV_FILES is already defined in the shell: $COMPOSE_ENV_FILES.
             Setting it higher precedence than .env from carma-config and current directory .env (if it exists)"
         # This way, user defined COMPOSE_ENV_FILES still takes higher precedence.
         RETURN_COMPOSE_ENV_FILES="$RETURN_COMPOSE_ENV_FILES,$COMPOSE_ENV_FILES"
