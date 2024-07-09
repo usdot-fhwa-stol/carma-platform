@@ -1,6 +1,12 @@
-| GitHub Actions Build Status | Sonar Code Quality | DockerHub Release | DockerHub Release Candidate | DockerHub Develop |
-|------|-----|-----|-----|-----|
-[![Build Workflows](https://github.com/usdot-fhwa-stol/carma-platform/actions/workflows/Ci.yml/badge.svg?branch=develop)](https://github.com/usdot-fhwa-stol/carma-platform/actions/workflows/Ci.yml) | [![Quality Gate Status](https://sonarcloud.io/api/project_badges/measure?project=usdot-fhwa-stol_CARMAPlatform&metric=alert_status)](https://sonarcloud.io/dashboard?id=usdot-fhwa-stol_CARMAPlatform) | [![Docker Cloud Build Status](https://img.shields.io/docker/cloud/build/usdotfhwastol/carma-platform?label=Usdotfhwa%20STOL&logo=%232496ED)](https://hub.docker.com/repository/docker/usdotfhwastol/carma-platform) | [![Docker Cloud Build Status](https://img.shields.io/docker/cloud/build/usdotfhwastolcandidate/carma-platform?label=Usdotfhwastol%20Candidate&logo=%232496ED)](https://hub.docker.com/repository/docker/usdotfhwastolcandidate/carma-platform) | [![Docker Cloud Build Status](https://img.shields.io/docker/cloud/build/usdotfhwastoldev/carma-platform?label=Usdotfhwastol%20DEV&logo=%232496ED)](https://hub.docker.com/repository/docker/usdotfhwastoldev/carma-platform)
+## Develop CI/CD Processes
+| DockerHub Image Build | Unit Tests Workflow |  Sonar Code Quality |
+|----------------------|---------------------|---------------------|
+ [![Build Workflows](https://github.com/usdot-fhwa-stol/carma-platform/actions/workflows/dockerhub.yml/badge.svg?branch=develop)](https://github.com/usdot-fhwa-stol/carma-platform/actions/workflows/dockerhub.yml) |  [![Build Workflows](https://github.com/usdot-fhwa-stol/carma-platform/actions/workflows/Ci.yml/badge.svg?branch=develop)](https://github.com/usdot-fhwa-stol/carma-platform/actions/workflows/Ci.yml) | [![Quality Gate Status](https://sonarcloud.io/api/project_badges/measure?project=usdot-fhwa-stol_CARMAPlatform&metric=alert_status)](https://sonarcloud.io/dashboard?id=usdot-fhwa-stol_CARMAPlatform) |
+ ## Release CI/CD Processes
+| DockerHub Image Build | Unit Tests Workflow | 
+|----------------------|---------------------|
+ [![Build Workflows](https://github.com/usdot-fhwa-stol/carma-platform/actions/workflows/dockerhub.yml/badge.svg?branch=master)](https://github.com/usdot-fhwa-stol/carma-platform/actions/workflows/dockerhub.yml) |  [![Build Workflows](https://github.com/usdot-fhwa-stol/carma-platform/actions/workflows/Ci.yml/badge.svg?branch=master)](https://github.com/usdot-fhwa-stol/carma-platform/actions/workflows/Ci.yml) |
+
 
 # CARMA
 ![CARMA Arch](docs/image/CARMA3_Vehicles.jpg)
