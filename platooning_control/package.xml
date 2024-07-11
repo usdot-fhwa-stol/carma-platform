@@ -34,6 +34,7 @@
   <depend>autoware_msgs</depend>
   <depend>pure_pursuit</depend>
   <depend>basic_autonomy</depend>
+  <depend>carma_wm</depend>
 
   <test_depend>ament_lint_auto</test_depend>
   <test_depend>ament_cmake_gtest</test_depend>

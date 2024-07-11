@@ -29,6 +29,7 @@
 #include <pure_pursuit/pure_pursuit.hpp>
 #include <basic_autonomy/basic_autonomy.hpp>
 #include <gtest/gtest_prod.h>
+#include <carma_wm/CARMAWorldModel.hpp>
 
 namespace pure_pursuit = autoware::motion::control::pure_pursuit;
 namespace platooning_control
@@ -65,6 +66,8 @@ namespace platooning_control
     motion::motion_common::State convert_state(const geometry_msgs::msg::PoseStamped& pose, const geometry_msgs::msg::TwistStamped& twist) const;
 
     double trajectory_speed_ = 0.0;
+
+    carma_wm::WorldModelConstPtr wm_;
 
     /**
      * \brief Callback for dynamic parameter updates
