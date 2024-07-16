@@ -27,7 +27,7 @@
 #include <thread>
 namespace arbitrator
 {
-    constexpr auto MAX_RETRY_ATTEMPTS {10};
+    constexpr auto MAX_RETRY_ATTEMPTS {2};
 
     template<typename MSrvReq, typename MSrvRes>
     std::map<std::string, std::shared_ptr<MSrvRes>>
