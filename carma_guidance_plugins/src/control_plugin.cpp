@@ -31,9 +31,9 @@ namespace carma_guidance_plugins
     return "control/trajectory_control";
   }
 
-  uint8_t ControlPlugin::get_type() 
+  uint8_t ControlPlugin::get_type()
   {
-    return carma_planning_msgs::msg::Plugin::CONTROL; 
+    return carma_planning_msgs::msg::Plugin::CONTROL;
   }
 
   void ControlPlugin::current_pose_callback(geometry_msgs::msg::PoseStamped::UniquePtr msg)
@@ -74,10 +74,15 @@ namespace carma_guidance_plugins
         [this]() {
           if (this->get_activation_status()) // Only trigger when activated
           {
-            this->vehicle_cmd_pub_->publish(this->generate_command());
+            auto vehicle_cmd = this->generate_command();
+            //If vehicle cmd is outdated - dont publish
+            if ((this->now() - rclcpp::Time(vehicle_cmd.header.stamp)).seconds() < 5.0){
+              this->vehicle_cmd_pub_->publish(vehicle_cmd);
+            }
+
           }
         });
-    
+
     return PluginBaseNode::handle_on_configure(prev_state);
   }
 
@@ -107,4 +112,3 @@ namespace carma_guidance_plugins
   }
 
 } // carma_guidance_plugins
-

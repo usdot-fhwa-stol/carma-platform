@@ -359,7 +359,7 @@ namespace platooning_control
     double dx1 = trajectory_points[trajectory_points.size()-1].x - trajectory_points[0].x;
     double dy1 = trajectory_points[trajectory_points.size()-1].y - trajectory_points[0].y;
     double d1 = sqrt(dx1*dx1 + dy1*dy1);
-    double t1 = rclcpp::Time((trajectory_points[trajectory_points.size()-1].target_time)).seconds() - rclcpp::Time(trajectory_points[0].target_time).nanoseconds();
+    double t1 = rclcpp::Time((trajectory_points[trajectory_points.size()-1].target_time)).seconds() - rclcpp::Time(trajectory_points[0].target_time).seconds();
 
     double avg_speed = d1/t1;
     RCLCPP_DEBUG_STREAM(rclcpp::get_logger("platooning_control"), "trajectory_points size = " << trajectory_points.size() << ", d1 = " << d1 << ", t1 = " << t1 << ", avg_speed = " << avg_speed);
