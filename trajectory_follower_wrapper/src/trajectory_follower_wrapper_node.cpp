@@ -26,6 +26,7 @@ namespace trajectory_follower_wrapper
     config_ = TrajectoryFollowerWrapperConfig();
     config_.vehicle_response_lag = declare_parameter<double>("vehicle_response_lag", config_.vehicle_response_lag);
     config_.incoming_cmd_time_threshold = declare_parameter<double>("incoming_cmd_time_threshold", config_.incoming_cmd_time_threshold);
+    cmd_timeout_in_s_ = declare_parameter<double>("cmd_timeout_in_s", cmd_timeout_in_s_);
 
   }
 
@@ -33,7 +34,8 @@ namespace trajectory_follower_wrapper
   {
     auto error_double = update_params<double>({
       {"vehicle_response_lag", config_.vehicle_response_lag},
-      {"incoming_cmd_time_threshold", config_.incoming_cmd_time_threshold}
+      {"incoming_cmd_time_threshold", config_.incoming_cmd_time_threshold},
+      {"cmd_timeout_in_s", cmd_timeout_in_s_}
       }, parameters);
 
     rcl_interfaces::msg::SetParametersResult result;
@@ -51,6 +53,7 @@ namespace trajectory_follower_wrapper
     // Load parameters
     get_parameter<double>("vehicle_response_lag", config_.vehicle_response_lag);
     get_parameter<double>("incoming_cmd_time_threshold", config_.incoming_cmd_time_threshold);
+    get_parameter<double>("cmd_timeout_in_s", cmd_timeout_in_s_);
 
     RCLCPP_INFO_STREAM(rclcpp::get_logger("trajectory_follower_wrapper"), "Loaded Params: " << config_);
     // Register runtime parameter update callback

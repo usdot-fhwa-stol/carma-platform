@@ -12,3 +12,4 @@ integrator_min: -30.0  # Min limit for integrator term
 vehicle_response_lag: 0.2
 enable_max_adjustment_filter: true
 enable_max_accel_filter: true
+cmd_timeout_in_s: 5.0 # Timeout duration for control commands

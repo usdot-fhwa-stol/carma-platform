@@ -37,6 +37,7 @@ PurePursuitWrapperNode::PurePursuitWrapperNode(const rclcpp::NodeOptions& option
   config_.emergency_stop_distance = declare_parameter<double>("emergency_stop_distance", config_.emergency_stop_distance);
   config_.speed_thres_traveling_direction = declare_parameter<double>("speed_thres_traveling_direction", config_.speed_thres_traveling_direction);
   config_.dist_front_rear_wheels = declare_parameter<double>("dist_front_rear_wheels", config_.dist_front_rear_wheels);
+  cmd_timeout_in_s_ = declare_parameter<double>("cmd_timeout_in_s", cmd_timeout_in_s_);
 
   // integrator part
   config_.dt = declare_parameter<double>("dt", config_.dt);
@@ -58,7 +59,8 @@ carma_ros2_utils::CallbackReturn PurePursuitWrapperNode::on_configure_plugin()
   get_parameter<double>("emergency_stop_distance", config_.emergency_stop_distance);
   get_parameter<double>("speed_thres_traveling_direction", config_.speed_thres_traveling_direction);
   get_parameter<double>("dist_front_rear_wheels", config_.dist_front_rear_wheels);
-  
+  get_parameter<double>("cmd_timeout_in_s", cmd_timeout_in_s_);
+
   // integrator configs
   get_parameter<double>("dt", config_.dt);
   get_parameter<double>("integrator_max_pp", config_.integrator_max_pp);
@@ -70,7 +72,7 @@ carma_ros2_utils::CallbackReturn PurePursuitWrapperNode::on_configure_plugin()
 
   // Register runtime parameter update callback
   add_on_set_parameters_callback(std::bind(&PurePursuitWrapperNode::parameter_update_callback, this, std_ph::_1));
-  
+
   // create config for pure_pursuit worker
   pure_pursuit::Config cfg{
     config_.minimum_lookahead_distance,
@@ -84,18 +86,18 @@ carma_ros2_utils::CallbackReturn PurePursuitWrapperNode::on_configure_plugin()
   };
 
   pure_pursuit::IntegratorConfig i_cfg;
-  i_cfg.dt = config_.dt; 
-  i_cfg.integrator_max_pp = config_.integrator_max_pp; 
-  i_cfg.integrator_min_pp = config_.integrator_min_pp; 
-  i_cfg.Ki_pp = config_.Ki_pp; 
+  i_cfg.dt = config_.dt;
+  i_cfg.integrator_max_pp = config_.integrator_max_pp;
+  i_cfg.integrator_min_pp = config_.integrator_min_pp;
+  i_cfg.Ki_pp = config_.Ki_pp;
   i_cfg.integral = 0.0; // accumulator of integral starts from 0
-  i_cfg.is_integrator_enabled = config_.is_integrator_enabled; 
-  
+  i_cfg.is_integrator_enabled = config_.is_integrator_enabled;
+
   pp_ = std::make_shared<pure_pursuit::PurePursuit>(cfg, i_cfg);
 
   // Return success if everything initialized successfully
   return CallbackReturn::SUCCESS;
-} 
+}
 
 motion::motion_common::State PurePursuitWrapperNode::convert_state(geometry_msgs::msg::PoseStamped pose, geometry_msgs::msg::TwistStamped twist)
 {
@@ -148,7 +150,7 @@ autoware_msgs::msg::ControlCommandStamped PurePursuitWrapperNode::generate_comma
   pp_->set_trajectory(autoware_traj_plan);
 
   const auto cmd{pp_->compute_command(state_tf)};
-  
+
   converted_cmd = convert_cmd(cmd);
 
 
@@ -167,9 +169,10 @@ rcl_interfaces::msg::SetParametersResult PurePursuitWrapperNode::parameter_updat
     {"dist_front_rear_wheels", config_.dist_front_rear_wheels},
     {"integrator_max_pp", config_.integrator_max_pp},
     {"integrator_min_pp", config_.integrator_min_pp},
-    {"Ki_pp", config_.Ki_pp}
+    {"Ki_pp", config_.Ki_pp},
+    {"cmd_timeout_in_s", cmd_timeout_in_s_},
     }, parameters);
-  
+
   auto error_bool = update_params<bool>({
     {"is_interpolate_lookahead_point", config_.is_interpolate_lookahead_point},
     {"is_delay_compensation", config_.is_delay_compensation},
@@ -184,19 +187,19 @@ rcl_interfaces::msg::SetParametersResult PurePursuitWrapperNode::parameter_updat
 }
 
 
-bool PurePursuitWrapperNode::get_availability() 
+bool PurePursuitWrapperNode::get_availability()
 {
   return true;
 }
 
-std::string PurePursuitWrapperNode::get_version_id() 
+std::string PurePursuitWrapperNode::get_version_id()
 {
   return "v4.0";
 }
 
 std::vector<carma_planning_msgs::msg::TrajectoryPlanPoint> PurePursuitWrapperNode::remove_repeated_timestamps(const std::vector<carma_planning_msgs::msg::TrajectoryPlanPoint>& traj_points)
 {
-  
+
   std::vector<carma_planning_msgs::msg::TrajectoryPlanPoint> new_traj_points;
 
   carma_planning_msgs::msg::TrajectoryPlanPoint prev_point;

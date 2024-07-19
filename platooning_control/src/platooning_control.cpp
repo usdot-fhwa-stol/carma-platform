@@ -45,6 +45,7 @@ namespace platooning_control
     config_.emergency_stop_distance = declare_parameter<double>("emergency_stop_distance", config_.emergency_stop_distance);
     config_.speed_thres_traveling_direction = declare_parameter<double>("speed_thres_traveling_direction", config_.speed_thres_traveling_direction);
     config_.dist_front_rear_wheels = declare_parameter<double>("dist_front_rear_wheels", config_.dist_front_rear_wheels);
+    cmd_timeout_in_s_ = declare_parameter<double>("cmd_timeout_in_s", cmd_timeout_in_s_);
 
     config_.dt = declare_parameter<double>("dt", config_.dt);
     config_.integrator_max_pp = declare_parameter<double>("integrator_max_pp", config_.integrator_max_pp);
@@ -76,6 +77,7 @@ namespace platooning_control
       {"adjustment_cap_mps", config_.adjustment_cap_mps},
       {"integrator_max", config_.integrator_max},
       {"integrator_min", config_.integrator_min},
+      {"cmd_timeout_in_s", cmd_timeout_in_s_},
 
       {"vehicle_response_lag", config_.vehicle_response_lag},
       {"max_lookahead_dist", config_.max_lookahead_dist},
@@ -134,6 +136,7 @@ namespace platooning_control
     get_parameter<int>("control_plugin_ignore_initial_inputs", config_.ignore_initial_inputs);
     get_parameter<bool>("enable_max_adjustment_filter", config_.enable_max_adjustment_filter);
     get_parameter<bool>("enable_max_accel_filter", config_.enable_max_accel_filter);
+    get_parameter<double>("cmd_timeout_in_s", cmd_timeout_in_s_);
 
    //Pure Pursuit params
     get_parameter<double>("vehicle_response_lag", config_.vehicle_response_lag);
@@ -359,7 +362,7 @@ namespace platooning_control
     double dx1 = trajectory_points[trajectory_points.size()-1].x - trajectory_points[0].x;
     double dy1 = trajectory_points[trajectory_points.size()-1].y - trajectory_points[0].y;
     double d1 = sqrt(dx1*dx1 + dy1*dy1);
-    double t1 = rclcpp::Time((trajectory_points[trajectory_points.size()-1].target_time)).seconds() - rclcpp::Time(trajectory_points[0].target_time).seconds();
+    double t1 = (rclcpp::Time((trajectory_points[trajectory_points.size()-1].target_time)).nanoseconds() - rclcpp::Time(trajectory_points[0].target_time).nanoseconds())/1e9;
 
     double avg_speed = d1/t1;
     RCLCPP_DEBUG_STREAM(rclcpp::get_logger("platooning_control"), "trajectory_points size = " << trajectory_points.size() << ", d1 = " << d1 << ", t1 = " << t1 << ", avg_speed = " << avg_speed);
