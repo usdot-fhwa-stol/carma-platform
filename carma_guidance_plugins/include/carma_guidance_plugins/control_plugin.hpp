@@ -72,6 +72,9 @@ namespace carma_guidance_plugins
      */
     virtual void current_trajectory_callback(carma_planning_msgs::msg::TrajectoryPlan::UniquePtr msg);
 
+    //Duration after which control commands timesout in seconds
+    double cmd_timeout_in_s_ = 5.0;
+
 
   public:
     /**

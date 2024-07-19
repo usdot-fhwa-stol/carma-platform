@@ -76,7 +76,7 @@ namespace carma_guidance_plugins
           {
             auto vehicle_cmd = this->generate_command();
             //If vehicle cmd is outdated - dont publish
-            if ((this->now() - rclcpp::Time(vehicle_cmd.header.stamp)).seconds() < 5.0){
+            if ((this->now() - rclcpp::Time(vehicle_cmd.header.stamp)).seconds() < cmd_timeout_in_s_){
               this->vehicle_cmd_pub_->publish(vehicle_cmd);
             }
 
