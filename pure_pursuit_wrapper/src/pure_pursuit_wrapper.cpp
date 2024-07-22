@@ -37,7 +37,6 @@ PurePursuitWrapperNode::PurePursuitWrapperNode(const rclcpp::NodeOptions& option
   config_.emergency_stop_distance = declare_parameter<double>("emergency_stop_distance", config_.emergency_stop_distance);
   config_.speed_thres_traveling_direction = declare_parameter<double>("speed_thres_traveling_direction", config_.speed_thres_traveling_direction);
   config_.dist_front_rear_wheels = declare_parameter<double>("dist_front_rear_wheels", config_.dist_front_rear_wheels);
-  cmd_timeout_in_s_ = declare_parameter<double>("cmd_timeout_in_s", cmd_timeout_in_s_);
 
   // integrator part
   config_.dt = declare_parameter<double>("dt", config_.dt);
@@ -59,7 +58,6 @@ carma_ros2_utils::CallbackReturn PurePursuitWrapperNode::on_configure_plugin()
   get_parameter<double>("emergency_stop_distance", config_.emergency_stop_distance);
   get_parameter<double>("speed_thres_traveling_direction", config_.speed_thres_traveling_direction);
   get_parameter<double>("dist_front_rear_wheels", config_.dist_front_rear_wheels);
-  get_parameter<double>("cmd_timeout_in_s", cmd_timeout_in_s_);
 
   // integrator configs
   get_parameter<double>("dt", config_.dt);
@@ -170,7 +168,6 @@ rcl_interfaces::msg::SetParametersResult PurePursuitWrapperNode::parameter_updat
     {"integrator_max_pp", config_.integrator_max_pp},
     {"integrator_min_pp", config_.integrator_min_pp},
     {"Ki_pp", config_.Ki_pp},
-    {"cmd_timeout_in_s", cmd_timeout_in_s_},
     }, parameters);
 
   auto error_bool = update_params<bool>({

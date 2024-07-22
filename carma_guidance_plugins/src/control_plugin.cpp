@@ -74,11 +74,7 @@ namespace carma_guidance_plugins
         [this]() {
           if (this->get_activation_status()) // Only trigger when activated
           {
-            auto vehicle_cmd = this->generate_command();
-            //If vehicle cmd is outdated - dont publish
-            if ((this->now() - rclcpp::Time(vehicle_cmd.header.stamp)).seconds() < cmd_timeout_in_s_){
-              this->vehicle_cmd_pub_->publish(vehicle_cmd);
-            }
+            this->vehicle_cmd_pub_->publish(this->generate_command());
 
           }
         });

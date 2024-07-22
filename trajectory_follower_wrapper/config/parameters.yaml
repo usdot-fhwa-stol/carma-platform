@@ -1,5 +1,2 @@
 # acceptable time difference from autoware's control command to still use the command in sec
 incoming_cmd_time_threshold: 1.0
-
-# Timeout duration for control commands in seconds
-cmd_timeout_in_s: 5.0
