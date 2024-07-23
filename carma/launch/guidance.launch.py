@@ -316,6 +316,74 @@ def generate_launch_description():
         ]
     )
 
+    trajectory_follower_container = ComposableNodeContainer(
+        package='carma_ros2_utils',
+        name='trajectory_follower_container',
+        executable='carma_component_container_mt',
+        namespace=GetCurrentNamespace(),
+        composable_node_descriptions=[
+            ComposableNode(
+                package='trajectory_follower_nodes',
+                plugin='autoware::motion::control::trajectory_follower_nodes::LatLonMuxer',
+                name='latlon_muxer_node',
+                extra_arguments=[
+                    {'use_intra_process_comms': False},
+                    {'--log-level' : GetLogLevel('latlon_muxer', env_log_levels) }
+                ],
+                # remappings = [
+                #     ("/accel_cmd", ["accel_cmd" ] ),
+                # ],
+                parameters=[
+                    {'timeout_thr_sec':0.5}
+                ]
+            ),
+            ComposableNode(
+                package='trajectory_follower_nodes',
+                plugin='autoware::motion::control::trajectory_follower_nodes::LateralController',
+                name='lateral_controller_node',
+                extra_arguments=[
+                    {'use_intra_process_comms': True},
+                    {'--log-level' : GetLogLevel('lateral_controller', env_log_levels) }
+                ],
+                remappings = [
+                      ("output/lateral/control_cmd", "input/lateral/control_cmd")
+                #     ("vehicle_cmd", [ EnvironmentVariable('CARMA_INTR_NS', default_value=''), "/vehicle_cmd" ] ),
+                #     ("/lamp_cmd", ["lamp_cmd" ] ),
+                #     ("/twist_cmd", ["twist_cmd" ] ),
+                #     ("/decision_maker/state", ["decision_maker/state" ] ),
+                #     ("/ctrl_cmd",   ["ctrl_cmd" ] ),
+                ],
+                parameters = [
+                    [vehicle_calibration_dir, "/mpc_follower/lateral_controller_params.yaml"]
+                    # os.path.join(get_package_share_directory('trajectory_follower_nodes'),'param/lateral_controller_defaults.yaml'),
+                    # os.path.join(get_package_share_directory('trajectory_follower_wrapper'), 'config/lateral_controller_params.yaml')
+                ]
+            ),
+            ComposableNode(
+                package='trajectory_follower_nodes',
+                plugin='autoware::motion::control::trajectory_follower_nodes::LongitudinalController',
+                name='longitudinal_controller_node',
+                extra_arguments=[
+                    {'use_intra_process_comms': True},
+                    {'--log-level' : GetLogLevel('longitudinal_controller', env_log_levels) }
+                ],
+                remappings = [
+                      ("output/longitudinal/control_cmd", "input/longitudinal/control_cmd")
+                #     ("vehicle_cmd", [ EnvironmentVariable('CARMA_INTR_NS', default_value=''), "/vehicle_cmd" ] ),
+                #     ("/lamp_cmd", ["lamp_cmd" ] ),
+                #     ("/twist_cmd", ["twist_cmd" ] ),
+                #     ("/decision_maker/state", ["decision_maker/state" ] ),
+                #     ("/ctrl_cmd",   ["ctrl_cmd" ] ),
+                ],
+                parameters = [
+                    [vehicle_calibration_dir, "/mpc_follower/lateral_controller_defaults.yaml", "/mpc_follower/longitudinal_controller_defaults.yaml"]
+                    # os.path.join(get_package_share_directory('trajectory_follower_nodes'),'param/lateral_controller_defaults.yaml'),
+                    # os.path.join(get_package_share_directory('trajectory_follower_wrapper'), 'config/lateral_controller_params.yaml')
+                ]
+            )
+        ]
+    )
+
     twist_filter_container = ComposableNodeContainer(
         package='carma_ros2_utils',
         name='twist_filter_container',
@@ -419,5 +487,6 @@ def generate_launch_description():
         carma_port_drayage_plugin_container,
         twist_filter_container,
         plugins_group,
-        subsystem_controller
+        subsystem_controller,
+        trajectory_follower_container
     ])

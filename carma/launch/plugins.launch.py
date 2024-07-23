@@ -479,6 +479,9 @@ def generate_launch_description():
                     {'--log-level' : GetLogLevel('trajectory_follower_wrapper', env_log_levels) }
                 ],
                 remappings = [
+                    ("input/current_kinematic_state", [ EnvironmentVariable('CARMA_GUIDE_NS', default_value=''),"/input/current_kinematic_state"]),
+                    ("input/reference_trajectory", [ EnvironmentVariable('CARMA_GUIDE_NS', default_value=''),"/input/reference_trajectory"]),
+                    ("output/control_cmd" , [ EnvironmentVariable('CARMA_GUIDE_NS', default_value=''),"/output/control_cmd"]),
                     ("plugin_discovery", [ EnvironmentVariable('CARMA_GUIDE_NS', default_value=''), "/plugin_discovery" ] ),
                     ("ctrl_raw", [ EnvironmentVariable('CARMA_GUIDE_NS', default_value=''), "/ctrl_raw" ] ),
                     ("trajectory_follower_wrapper/plan_trajectory", [ EnvironmentVariable('CARMA_GUIDE_NS', default_value=''), "/plugins/trajectory_follower_wrapper/plan_trajectory" ] ),
