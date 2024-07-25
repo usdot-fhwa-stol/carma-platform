@@ -95,9 +95,29 @@ namespace trajectory_follower_wrapper
       // generate and publish autoware trajectory
       current_trajectory_.get().header.frame_id = autoware_state.header.frame_id;
       auto autoware_traj_plan = basic_autonomy::waypoint_generation::process_trajectory_plan(current_trajectory_.get(), config_.vehicle_response_lag);
+      // autoware_traj_plan.points[0].heading.real = current_pose_.get().pose.orientation.w;
+      // autoware_traj_plan.points[0].heading.imag = current_pose_.get().pose.orientation.z;
+
+      for (size_t i=1; i< autoware_traj_plan.points.size(); i++ )
+      {
+
+        double yaw = calc_point_to_point_yaw(autoware_traj_plan.points[i-1], autoware_traj_plan.points[i]);
+        autoware_traj_plan.points[i-1].heading.real = std::cos(yaw/2);
+        autoware_traj_plan.points[i-1].heading.imag = std::sin(yaw/2);
+
+      }
       autoware_traj_pub_->publish(autoware_traj_plan);
 
     }
+  }
+
+  double TrajectoryFollowerWrapperNode::calc_point_to_point_yaw(const autoware_auto_msgs::msg::TrajectoryPoint& cur_point,
+                                                                const autoware_auto_msgs::msg::TrajectoryPoint& next_point)
+  {
+    double dx = next_point.x - cur_point.x;
+    double dy = next_point.y - cur_point.y;
+    double yaw = std::atan2(dy, dx);
+    return yaw;
   }
 
   void TrajectoryFollowerWrapperNode::ackermann_control_cb(const autoware_auto_msgs::msg::AckermannControlCommand::SharedPtr msg)
@@ -116,19 +136,21 @@ namespace trajectory_follower_wrapper
     state.state.z = pose.pose.position.z;
     state.state.heading.real = pose.pose.orientation.w;
     state.state.heading.imag = pose.pose.orientation.z;
+    state.state.front_wheel_angle_rad = steering_angle_;
 
     state.state.longitudinal_velocity_mps = twist.twist.linear.x;
     return state;
   }
 
-  autoware_msgs::msg::ControlCommandStamped TrajectoryFollowerWrapperNode::convert_cmd(const autoware_auto_msgs::msg::AckermannControlCommand& cmd) const
+  autoware_msgs::msg::ControlCommandStamped TrajectoryFollowerWrapperNode::convert_cmd(const autoware_auto_msgs::msg::AckermannControlCommand& cmd)
   {
     autoware_msgs::msg::ControlCommandStamped return_cmd;
     return_cmd.header.stamp = cmd.stamp;
 
     return_cmd.cmd.linear_acceleration = cmd.longitudinal.acceleration;
     return_cmd.cmd.linear_velocity = cmd.longitudinal.speed;
-    return_cmd.cmd.steering_angle = cmd.lateral.steering_tire_angle;
+    return_cmd.cmd.steering_angle = cmd.lateral.steering_tire_angle/15.0;
+    steering_angle_ = return_cmd.cmd.steering_angle;
 
     RCLCPP_DEBUG_STREAM(rclcpp::get_logger("trajectory_follower_wrapper"), "generated command cmd.stamp: " << std::to_string(rclcpp::Time(cmd.stamp).seconds()));
     RCLCPP_DEBUG_STREAM(rclcpp::get_logger("trajectory_follower_wrapper"), "generated command cmd.longitudinal.acceleration: " << cmd.longitudinal.acceleration);

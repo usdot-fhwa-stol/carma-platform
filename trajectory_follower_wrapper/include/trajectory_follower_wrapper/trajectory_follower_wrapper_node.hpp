@@ -49,6 +49,8 @@ namespace trajectory_follower_wrapper
     // Received Control Command
     std::optional<autoware_auto_msgs::msg::AckermannControlCommand> received_ctrl_command_;
 
+    double steering_angle_ = 0.0;
+
   public:
 
     /**
@@ -66,6 +68,12 @@ namespace trajectory_follower_wrapper
      * \brief Timer callback to spin at 30 hz and frequently publish autoware kinematic state and trajectory
      */
     void autoware_info_timer_callback();
+
+    /**
+     * \brief Calculate point to point yaw angle
+     */
+    double calc_point_to_point_yaw(const autoware_auto_msgs::msg::TrajectoryPoint& cur_point,
+                                                                const autoware_auto_msgs::msg::TrajectoryPoint& next_point);
 
     /**
      * \brief autoware's control subscription callback
@@ -90,7 +98,7 @@ namespace trajectory_follower_wrapper
     /**
      * \brief convert autoware Ackermann control command to autoware stamped control command
      */
-    autoware_msgs::msg::ControlCommandStamped convert_cmd(const autoware_auto_msgs::msg::AckermannControlCommand& cmd) const;
+    autoware_msgs::msg::ControlCommandStamped convert_cmd(const autoware_auto_msgs::msg::AckermannControlCommand& cmd);
 
 
 

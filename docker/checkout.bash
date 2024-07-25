@@ -99,3 +99,5 @@ cd V2X-Hub
 git config core.sparsecheckout true
 git sparse-checkout init
 git sparse-checkout set ext/ccserver
+
+git clone -b arc-78-trajectory-follower-integration --depth 1 https://github.com/usdot-fhwa-stol/autoware.auto.git

@@ -94,7 +94,7 @@ def generate_launch_description():
     port_drayage_plugin_param_file = os.path.join(
         get_package_share_directory('port_drayage_plugin'), 'config/parameters.yaml')
 
-    env_log_levels = EnvironmentVariable('CARMA_ROS_LOGGING_CONFIG', default_value='{ "default_level" : "WARN" }')
+    env_log_levels = EnvironmentVariable('CARMA_ROS_LOGGING_CONFIG', default_value='{ "default_level" : "DEBUG" }')
 
     subsystem_controller_param_file = LaunchConfiguration('subsystem_controller_param_file')
     declare_subsystem_controller_param_file_arg = DeclareLaunchArgument(
@@ -354,7 +354,7 @@ def generate_launch_description():
                 #     ("/ctrl_cmd",   ["ctrl_cmd" ] ),
                 ],
                 parameters = [
-                    [vehicle_calibration_dir, "/mpc_follower/lateral_controller_params.yaml"]
+                    [vehicle_calibration_dir, "/mpc_follower/lateral_controller_defaults.yaml"]
                     # os.path.join(get_package_share_directory('trajectory_follower_nodes'),'param/lateral_controller_defaults.yaml'),
                     # os.path.join(get_package_share_directory('trajectory_follower_wrapper'), 'config/lateral_controller_params.yaml')
                 ]
@@ -364,11 +364,13 @@ def generate_launch_description():
                 plugin='autoware::motion::control::trajectory_follower_nodes::LongitudinalController',
                 name='longitudinal_controller_node',
                 extra_arguments=[
-                    {'use_intra_process_comms': True},
+                    {'use_intra_process_comms': False},
                     {'--log-level' : GetLogLevel('longitudinal_controller', env_log_levels) }
                 ],
                 remappings = [
-                      ("output/longitudinal/control_cmd", "input/longitudinal/control_cmd")
+                      ("output/longitudinal/control_cmd", "input/longitudinal/control_cmd"),
+                      ("input/current_trajectory", "input/reference_trajectory"),
+                      ("input/current_state", "input/current_kinematic_state")
                 #     ("vehicle_cmd", [ EnvironmentVariable('CARMA_INTR_NS', default_value=''), "/vehicle_cmd" ] ),
                 #     ("/lamp_cmd", ["lamp_cmd" ] ),
                 #     ("/twist_cmd", ["twist_cmd" ] ),
@@ -376,7 +378,7 @@ def generate_launch_description():
                 #     ("/ctrl_cmd",   ["ctrl_cmd" ] ),
                 ],
                 parameters = [
-                    [vehicle_calibration_dir, "/mpc_follower/lateral_controller_defaults.yaml", "/mpc_follower/longitudinal_controller_defaults.yaml"]
+                    [vehicle_calibration_dir, "/mpc_follower/longitudinal_controller_defaults.yaml"]
                     # os.path.join(get_package_share_directory('trajectory_follower_nodes'),'param/lateral_controller_defaults.yaml'),
                     # os.path.join(get_package_share_directory('trajectory_follower_wrapper'), 'config/lateral_controller_params.yaml')
                 ]
