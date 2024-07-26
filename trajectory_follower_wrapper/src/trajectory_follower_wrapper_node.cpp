@@ -25,6 +25,7 @@ namespace trajectory_follower_wrapper
     // Create initial config
     config_ = TrajectoryFollowerWrapperConfig();
     config_.vehicle_response_lag = declare_parameter<double>("vehicle_response_lag", config_.vehicle_response_lag);
+    config_.vehicle_wheel_base = declare_parameter<double>("vehicle_wheel_base", config_.vehicle_wheel_base);
     config_.incoming_cmd_time_threshold = declare_parameter<double>("incoming_cmd_time_threshold", config_.incoming_cmd_time_threshold);
 
   }
@@ -33,6 +34,7 @@ namespace trajectory_follower_wrapper
   {
     auto error_double = update_params<double>({
       {"vehicle_response_lag", config_.vehicle_response_lag},
+      {"vehicle_wheel_base", config_.vehicle_wheel_base},
       {"incoming_cmd_time_threshold", config_.incoming_cmd_time_threshold}
       }, parameters);
 
@@ -50,6 +52,7 @@ namespace trajectory_follower_wrapper
 
     // Load parameters
     get_parameter<double>("vehicle_response_lag", config_.vehicle_response_lag);
+    get_parameter<double>("vehicle_wheel_base", config_.vehicle_wheel_base);
     get_parameter<double>("incoming_cmd_time_threshold", config_.incoming_cmd_time_threshold);
 
     RCLCPP_INFO_STREAM(rclcpp::get_logger("trajectory_follower_wrapper"), "Loaded Params: " << config_);
@@ -95,8 +98,6 @@ namespace trajectory_follower_wrapper
       // generate and publish autoware trajectory
       current_trajectory_.get().header.frame_id = autoware_state.header.frame_id;
       auto autoware_traj_plan = basic_autonomy::waypoint_generation::process_trajectory_plan(current_trajectory_.get(), config_.vehicle_response_lag);
-      // autoware_traj_plan.points[0].heading.real = current_pose_.get().pose.orientation.w;
-      // autoware_traj_plan.points[0].heading.imag = current_pose_.get().pose.orientation.z;
 
       for (size_t i=1; i< autoware_traj_plan.points.size(); i++ )
       {
@@ -112,12 +113,24 @@ namespace trajectory_follower_wrapper
   }
 
   double TrajectoryFollowerWrapperNode::calc_point_to_point_yaw(const autoware_auto_msgs::msg::TrajectoryPoint& cur_point,
-                                                                const autoware_auto_msgs::msg::TrajectoryPoint& next_point)
+                                                                const autoware_auto_msgs::msg::TrajectoryPoint& next_point) const
   {
     double dx = next_point.x - cur_point.x;
     double dy = next_point.y - cur_point.y;
     double yaw = std::atan2(dy, dx);
     return yaw;
+  }
+
+  double TrajectoryFollowerWrapperNode::get_wheel_angle_from_twist(const geometry_msgs::msg::TwistStamped& twist) const
+  {
+
+    if (twist.twist.linear.x == 0)
+    {
+      return 0.0;
+    }
+
+    double steering_angle = std::atan2(twist.twist.angular.z * config_.vehicle_wheel_base, twist.twist.linear.x);
+    return steering_angle;
   }
 
   void TrajectoryFollowerWrapperNode::ackermann_control_cb(const autoware_auto_msgs::msg::AckermannControlCommand::SharedPtr msg)
@@ -136,13 +149,14 @@ namespace trajectory_follower_wrapper
     state.state.z = pose.pose.position.z;
     state.state.heading.real = pose.pose.orientation.w;
     state.state.heading.imag = pose.pose.orientation.z;
-    state.state.front_wheel_angle_rad = steering_angle_;
 
+    state.state.front_wheel_angle_rad = get_wheel_angle_from_twist(twist);
     state.state.longitudinal_velocity_mps = twist.twist.linear.x;
+
     return state;
   }
 
-  autoware_msgs::msg::ControlCommandStamped TrajectoryFollowerWrapperNode::convert_cmd(const autoware_auto_msgs::msg::AckermannControlCommand& cmd)
+  autoware_msgs::msg::ControlCommandStamped TrajectoryFollowerWrapperNode::convert_cmd(const autoware_auto_msgs::msg::AckermannControlCommand& cmd) const
   {
     autoware_msgs::msg::ControlCommandStamped return_cmd;
     return_cmd.header.stamp = cmd.stamp;
@@ -150,7 +164,6 @@ namespace trajectory_follower_wrapper
     return_cmd.cmd.linear_acceleration = cmd.longitudinal.acceleration;
     return_cmd.cmd.linear_velocity = cmd.longitudinal.speed;
     return_cmd.cmd.steering_angle = cmd.lateral.steering_tire_angle/15.0;
-    steering_angle_ = return_cmd.cmd.steering_angle;
 
     RCLCPP_DEBUG_STREAM(rclcpp::get_logger("trajectory_follower_wrapper"), "generated command cmd.stamp: " << std::to_string(rclcpp::Time(cmd.stamp).seconds()));
     RCLCPP_DEBUG_STREAM(rclcpp::get_logger("trajectory_follower_wrapper"), "generated command cmd.longitudinal.acceleration: " << cmd.longitudinal.acceleration);

@@ -49,8 +49,6 @@ namespace trajectory_follower_wrapper
     // Received Control Command
     std::optional<autoware_auto_msgs::msg::AckermannControlCommand> received_ctrl_command_;
 
-    double steering_angle_ = 0.0;
-
   public:
 
     /**
@@ -73,7 +71,7 @@ namespace trajectory_follower_wrapper
      * \brief Calculate point to point yaw angle
      */
     double calc_point_to_point_yaw(const autoware_auto_msgs::msg::TrajectoryPoint& cur_point,
-                                                                const autoware_auto_msgs::msg::TrajectoryPoint& next_point);
+                                   const autoware_auto_msgs::msg::TrajectoryPoint& next_point) const;
 
     /**
      * \brief autoware's control subscription callback
@@ -98,7 +96,12 @@ namespace trajectory_follower_wrapper
     /**
      * \brief convert autoware Ackermann control command to autoware stamped control command
      */
-    autoware_msgs::msg::ControlCommandStamped convert_cmd(const autoware_auto_msgs::msg::AckermannControlCommand& cmd);
+    autoware_msgs::msg::ControlCommandStamped convert_cmd(const autoware_auto_msgs::msg::AckermannControlCommand& cmd) const;
+
+    /**
+     * \brief calculate wheel angle from angular velocity in twist message
+     */
+    double get_wheel_angle_from_twist(const geometry_msgs::msg::TwistStamped& twist) const;
 
 
 
