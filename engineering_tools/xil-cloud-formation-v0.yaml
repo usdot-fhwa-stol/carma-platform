@@ -421,7 +421,9 @@ Resources:
           # Install docker compose
           DESTINATION=/usr/bin/docker-compose
           sudo rm $DESTINATION
-          sudo curl -L "https://github.com/docker/compose/releases/download/1.29.1/docker-compose-$(uname -s)-$(uname -m)" -o $DESTINATION
+          # Get most recent version using curl + grep
+          VERSION=$(curl --silent https://api.github.com/repos/docker/compose/releases/latest | grep -Po '"tag_name": "\K.*\d')
+          sudo curl -L "https://github.com/docker/compose/releases/download/${VERSION}/docker-compose-$(uname -s)-$(uname -m)" -o $DESTINATION
           sudo chmod 755 $DESTINATION
 
           # Install carma-config
