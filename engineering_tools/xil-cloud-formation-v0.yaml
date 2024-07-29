@@ -32,6 +32,10 @@ Parameters:
     Description: The specific carma config which launches xil and platform to make available in the instance
     Type: String
     Default: "usdotfhwastoldev/carma-config:xil-cloud-test"
+  DockerComposeVersion:
+    Description: Docker Compose version to install in the instance
+    Type: String
+    Default: "v2.27.1"
 Mappings:
   AMIMap:
     us-east-1:
@@ -422,14 +426,14 @@ Resources:
           DESTINATION=/usr/bin/docker-compose
           sudo rm $DESTINATION
           # Get most recent version using curl + grep
-          VERSION=$(curl --silent https://api.github.com/repos/docker/compose/releases/latest | grep -Po '"tag_name": "\K.*\d')
-          sudo curl -L "https://github.com/docker/compose/releases/download/${VERSION}/docker-compose-$(uname -s)-$(uname -m)" -o $DESTINATION
+          DockerComposeVersion=$(curl --silent https://api.github.com/repos/docker/compose/releases/latest | grep -Po '"tag_name": "\K.*\d')"
+          sudo curl -L "https://github.com/docker/compose/releases/download/${DockerComposeVersion}/docker-compose-$(uname -s)-$(uname -m)" -o $DESTINATION
           sudo chmod 755 $DESTINATION
 
           # Install carma-config
           carma config install ${CarmaConfigImage}
           carma config set ${CarmaConfigImage}
-          
+
           ## Add VCS Sources
           sudo apt-get update
           sudo apt-get install -y lsb-release
@@ -452,7 +456,7 @@ Resources:
 
           ## Add VCS auto completion
           echo "source /usr/share/vcstool-completion/vcs.bash" >> ~/.bashrc
-          
+
           # Clone Repos
           cd /home/ubuntu/carma_ws
           curl -L https://raw.githubusercontent.com/usdot-fhwa-stol/carma-platform/develop/carma-platform.repos | sed 's/git@github.com:/https:\/\/github.com\//' | vcs import
