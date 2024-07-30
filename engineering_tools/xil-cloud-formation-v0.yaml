@@ -32,10 +32,6 @@ Parameters:
     Description: The specific carma config which launches xil and platform to make available in the instance
     Type: String
     Default: "usdotfhwastoldev/carma-config:xil-cloud-test"
-  DockerComposeVersion:
-    Description: Docker Compose version to install in the instance
-    Type: String
-    Default: "v2.27.1"
 Mappings:
   AMIMap:
     us-east-1:
@@ -426,8 +422,8 @@ Resources:
           DESTINATION=/usr/bin/docker-compose
           sudo rm $DESTINATION
           # Get most recent version using curl + grep
-          DockerComposeVersion=$(curl --silent https://api.github.com/repos/docker/compose/releases/latest | grep -Po '"tag_name": "\K.*\d')"
-          sudo curl -L "https://github.com/docker/compose/releases/download/${DockerComposeVersion}/docker-compose-$(uname -s)-$(uname -m)" -o $DESTINATION
+          DOCKER_VERSION=$(sudo curl --silent https://api.github.com/repos/docker/compose/releases/latest | grep -oP '"tag_name": "\K(.*)(?=")')
+          sudo curl -L "https://github.com/docker/compose/releases/download/$DOCKER_VERSION/docker-compose-$(uname -s)-$(uname -m)" -o $DESTINATION
           sudo chmod 755 $DESTINATION
 
           # Install carma-config
