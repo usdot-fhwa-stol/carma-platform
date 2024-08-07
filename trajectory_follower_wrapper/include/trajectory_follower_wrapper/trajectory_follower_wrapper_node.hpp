@@ -29,6 +29,9 @@
 #include <optional>
 #include "trajectory_follower_wrapper/trajectory_follower_wrapper_config.hpp"
 
+#define DEG2RAD 3.1415926535 / 180.0
+#define RAD2DEG 180.0 / 3.1415926535
+
 namespace trajectory_follower_wrapper
 {
 

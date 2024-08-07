@@ -105,8 +105,15 @@ namespace trajectory_follower_wrapper
         double yaw = calc_point_to_point_yaw(autoware_traj_plan.points[i-1], autoware_traj_plan.points[i]);
         autoware_traj_plan.points[i-1].heading.real = std::cos(yaw/2);
         autoware_traj_plan.points[i-1].heading.imag = std::sin(yaw/2);
+        autoware_traj_plan.points[i-1].longitudinal_velocity_mps = 2.0;
+        // rclcpp::Duration target(0, (i-1) * 100000000);  
+        // autoware_traj_plan.points[i-1].time_from_start = target;
 
       }
+      
+      auto vel = autoware_traj_plan.points[15].longitudinal_velocity_mps;
+      RCLCPP_ERROR(rclcpp::get_logger("trajectory_follower_wrapper"), "longitudinal_velocity_mps 15: %f", vel);
+
       autoware_traj_pub_->publish(autoware_traj_plan);
 
     }
@@ -120,6 +127,7 @@ namespace trajectory_follower_wrapper
     double yaw = std::atan2(dy, dx);
     return yaw;
   }
+  
 
   double TrajectoryFollowerWrapperNode::get_wheel_angle_from_twist(const geometry_msgs::msg::TwistStamped& twist) const
   {
@@ -152,6 +160,12 @@ namespace trajectory_follower_wrapper
 
     state.state.front_wheel_angle_rad = get_wheel_angle_from_twist(twist);
     state.state.longitudinal_velocity_mps = twist.twist.linear.x;
+    state.state.lateral_velocity_mps = twist.twist.linear.y;
+    RCLCPP_ERROR(rclcpp::get_logger("trajectory_follower_wrapper"), "front_wheel_angle_rad: %f" , state.state.front_wheel_angle_rad);
+    // state.state.acceleration_mps2 =
+    // state.state.heading_rate_rps =
+
+
 
     return state;
   }
@@ -163,7 +177,10 @@ namespace trajectory_follower_wrapper
 
     return_cmd.cmd.linear_acceleration = cmd.longitudinal.acceleration;
     return_cmd.cmd.linear_velocity = cmd.longitudinal.speed;
-    return_cmd.cmd.steering_angle = cmd.lateral.steering_tire_angle/15.0;
+    return_cmd.cmd.steering_angle = cmd.lateral.steering_tire_angle;
+
+    RCLCPP_ERROR(rclcpp::get_logger("trajectory_follower_wrapper"), "generated command cmd.lateral.steering_tire_angle: %f" , cmd.lateral.steering_tire_angle*RAD2DEG);
+
 
     RCLCPP_DEBUG_STREAM(rclcpp::get_logger("trajectory_follower_wrapper"), "generated command cmd.stamp: " << std::to_string(rclcpp::Time(cmd.stamp).seconds()));
     RCLCPP_DEBUG_STREAM(rclcpp::get_logger("trajectory_follower_wrapper"), "generated command cmd.longitudinal.acceleration: " << cmd.longitudinal.acceleration);
