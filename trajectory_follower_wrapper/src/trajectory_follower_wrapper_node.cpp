@@ -105,15 +105,11 @@ namespace trajectory_follower_wrapper
         double yaw = calc_point_to_point_yaw(autoware_traj_plan.points[i-1], autoware_traj_plan.points[i]);
         autoware_traj_plan.points[i-1].heading.real = std::cos(yaw/2);
         autoware_traj_plan.points[i-1].heading.imag = std::sin(yaw/2);
-        autoware_traj_plan.points[i-1].longitudinal_velocity_mps = 2.0;
-        // rclcpp::Duration target(0, (i-1) * 100000000);  
-        // autoware_traj_plan.points[i-1].time_from_start = target;
+        // autoware_traj_plan.points[i-1].longitudinal_velocity_mps = 2.0;
+        RCLCPP_ERROR(rclcpp::get_logger("trajectory_follower_wrapper"), "longitudinal_velocity_mps : %f", autoware_traj_plan.points[i-1].longitudinal_velocity_mps);
 
       }
       
-      auto vel = autoware_traj_plan.points[15].longitudinal_velocity_mps;
-      RCLCPP_ERROR(rclcpp::get_logger("trajectory_follower_wrapper"), "longitudinal_velocity_mps 15: %f", vel);
-
       autoware_traj_pub_->publish(autoware_traj_plan);
 
     }
