@@ -97,6 +97,7 @@ namespace trajectory_follower_wrapper
 
       // generate and publish autoware trajectory
       current_trajectory_.get().header.frame_id = autoware_state.header.frame_id;
+      RCLCPP_ERROR(rclcpp::get_logger("trajectory_follower_wrapper"), "frame_id : %s", autoware_state.header.frame_id);
       auto autoware_traj_plan = basic_autonomy::waypoint_generation::process_trajectory_plan(current_trajectory_.get(), config_.vehicle_response_lag);
 
       for (size_t i=1; i< autoware_traj_plan.points.size(); i++ )
@@ -148,6 +149,7 @@ namespace trajectory_follower_wrapper
   {
     autoware_auto_msgs::msg::VehicleKinematicState state;
     state.header = pose.header;
+    state.header.frame_id = "map";
     state.state.x = pose.pose.position.x;
     state.state.y = pose.pose.position.y;
     state.state.z = pose.pose.position.z;
