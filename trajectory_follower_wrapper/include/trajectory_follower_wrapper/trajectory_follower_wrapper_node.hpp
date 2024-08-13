@@ -71,12 +71,6 @@ namespace trajectory_follower_wrapper
     void autoware_info_timer_callback();
 
     /**
-     * \brief Calculate point to point yaw angle
-     */
-    double calc_point_to_point_yaw(const autoware_auto_msgs::msg::TrajectoryPoint& cur_point,
-                                   const autoware_auto_msgs::msg::TrajectoryPoint& next_point) const;
-
-    /**
      * \brief autoware's control subscription callback
      */
     void ackermann_control_cb(const autoware_auto_msgs::msg::AckermannControlCommand::SharedPtr msg);

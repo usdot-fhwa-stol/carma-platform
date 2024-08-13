@@ -99,29 +99,10 @@ namespace trajectory_follower_wrapper
       current_trajectory_.get().header.frame_id = autoware_state.header.frame_id;
       auto autoware_traj_plan = basic_autonomy::waypoint_generation::process_trajectory_plan(current_trajectory_.get(), config_.vehicle_response_lag);
 
-      for (size_t i=1; i< autoware_traj_plan.points.size(); i++ )
-      {
-
-        double yaw = calc_point_to_point_yaw(autoware_traj_plan.points[i-1], autoware_traj_plan.points[i]);
-        autoware_traj_plan.points[i-1].heading.real = std::cos(yaw/2);
-        autoware_traj_plan.points[i-1].heading.imag = std::sin(yaw/2);
-
-      }
-
       autoware_traj_pub_->publish(autoware_traj_plan);
 
     }
   }
-
-  double TrajectoryFollowerWrapperNode::calc_point_to_point_yaw(const autoware_auto_msgs::msg::TrajectoryPoint& cur_point,
-                                                                const autoware_auto_msgs::msg::TrajectoryPoint& next_point) const
-  {
-    double dx = next_point.x - cur_point.x;
-    double dy = next_point.y - cur_point.y;
-    double yaw = std::atan2(dy, dx);
-    return yaw;
-  }
-
 
   double TrajectoryFollowerWrapperNode::get_wheel_angle_from_twist(const geometry_msgs::msg::TwistStamped& twist) const
   {
