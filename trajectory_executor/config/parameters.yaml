@@ -7,8 +7,8 @@ trajectory_publish_rate: 10.0
 # Due to lack of existing plugin discovery mechanism this is the only control plugin
 # which will be available to TrajectoryExecutor
 # Units: N/a
-default_control_plugin: "trajectory_follower_wrapper"
+default_control_plugin: "pure_pursuit_wrapper_node"
 
 # String: Full path to default control plugin's trajectory input topic
 # Units: N/a
-default_control_plugin_topic: "/guidance/plugins/trajectory_follower_wrapper/plan_trajectory"
+default_control_plugin_topic: "/guidance/plugins/pure_pursuit/plan_trajectory"
