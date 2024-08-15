@@ -575,6 +575,7 @@ carma__exec() {
     else
         docker run \
             -e DISPLAY=$DISPLAY \
+            --runtime=$RUNTIME \
             --group-add video \
             --volume=$XSOCK:$XSOCK:rw \
             --volume=$XAUTH:$XAUTH:rw \
