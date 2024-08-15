@@ -1,6 +1,59 @@
 CARMA System Release Notes
 ----------------------------
 
+Version 4.6.0, released Aug 14th, 2024
+----------------------------------------
+
+### **Summary**
+This release represents a significant advancement in the CARMA ecosystem and CDASim, focusing on enhancing simulation capabilities and cloud integration. CARMA Cloud has been upgraded to ensure seamless time synchronization with CDASim and enhanced communication with V2XHub, strengthening data exchange.
+
+### **CDA Sim** 
+
+This release introduces new functionalities of CDASim, including the integration of CARMA Cloud with CDASim, enhancing the platform's connectivity and functionality. This integration allows Traffic Control Requests (TCR) to be sent from the CARMA Platform to CARMA Cloud via CDASim, enabling seamless communication and coordination. Additionally, CARMA Cloud can now respond with Traffic Control Messages (TCM) to the CARMA Platform, ensuring efficient traffic management and response. Another significant update is the design and implementation of the CARMA Cloud Ambassador within CDASim, which sends time message from CDASim to CARMA Cloud for time synchronization purposes. 
+
+Enhancements in this release:  
+
+- CDASim PR 200: Added CARMA Cloud ambassador to integrate CARMA Cloud in CDASim. 
+
+Fixes in this release: 
+
+- CDASim PR 198: Fixed CARMA Ambassador time sync message updates to use the current time step, correcting timing issues. 
+- CDASim PR 217: Removed unused checkout.sh script and explicitly defined runner for CI.  
+
+Known Issues related to this release:  
+
+- CARMA Platform Issue #2422 – NS3_Adapter log file timestamps use inconsistent format and time source. 
+
+### **CARMA-Cloud** 
+
+This release introduces new functionalities for CARMA Cloud, including an interface to receive time message from CDASim, which ensures time synchronization 
+between the systems. Additionally, the connection with V2XHub has been enhanced, improving overall communication and data exchange capabilities.
+
+Enhancement in this release:  
+
+- Carma-cloud PR 56: Created initial Docker file to build a default CARMA Cloud deployment image.  
+- Carma-cloud PR 57: Added simulation time synchronization functionality for CARMA-Cloud 
+- Carma-cloud PR 61: Added Filter Controls utility to manage a subset of traffic controls for testing scenarios. 
+- Carma-cloud PR 200: Implemented MOSAIC federate and integrated all components correctly within CDASim. CARMA Cloud now successfully registers with the MOSAIC Ambassador components and receives and processes time synchronization messages. 
+
+### **CARMA-Config** 
+
+This release introduces a new folder named "xil_carma_cloud" in CARMA Config.This folder includes new configuration files for Infrastructure, CARMA Platform, CARMA Cloud, and CDASim, streamlining the setup and integration processes across these systems. 
+ 
+Enhancement in this release:  
+
+- CARMA-config PR 354 & 332: Added filtered CARMA Cloud traffic control config and reduced the default maximum speed for vehicles to 15 mph.     
+- Carma-config PR 345: Example dev calibration folder for CARLA integration. 
+- Carma-config PR 349: Removed truck_inspection from CARMA config. 
+- Carma-config PR 351: Updated verification testing scenario for CARMA-Cloud integration. 
+- Carma-config PR 347: Updated config to match VRU. 
+- Carma-config PR 359: XIL CARMA Cloud config that platform works with UI. 
+
+Fixes in this release: 
+
+- Carma-config PR 353: Fixed incorrect carmacloudvol.zip URL in README.md. 
+- Issue #207: Fixed internal CARMA ROS1, ROS2 components communication issue with RMW_IMPLEMENTATION and launching issues with latest version of Carma-platform in simulation environment.
+
 Version 4.5.0, released April 10th, 2024
 ----------------------------------------
 
