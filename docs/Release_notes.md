@@ -1,7 +1,7 @@
 CARMA System Release Notes
 ----------------------------
 
-Version 4.6.0, released Aug 14th, 2024
+Version 4.6.0, released Aug 15th, 2024
 ----------------------------------------
 
 ### **Summary**
