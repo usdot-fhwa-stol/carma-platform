@@ -26,9 +26,9 @@ namespace trajectory_follower_wrapper
    */
   struct TrajectoryFollowerWrapperConfig
   {
-    double vehicle_response_lag = 0.2;       // approximation of the delay (sec) between sent vehicle commands and the vehicle beginning a meaningful acceleration to that command"
-    double incoming_cmd_time_threshold = 1.0; // acceptable time difference from autoware's contrl command to still use the command in sec
-    double vehicle_wheel_base = 2.79; //distance between the centers of the front and rear axles
+    double vehicle_response_lag = 0.2;       // (in seconds) approximation of the delay between sent vehicle commands and the vehicle beginning a meaningful acceleration to that command" - set and modified in carma config
+    double incoming_cmd_time_threshold = 1.0; // (in second) acceptable time difference from autoware's contrl command to still use the command
+    double vehicle_wheel_base = 2.79; //(in meter) distance between the centers of the front and rear axles - set and modified in carma config
 
 
     // Stream operator for this config

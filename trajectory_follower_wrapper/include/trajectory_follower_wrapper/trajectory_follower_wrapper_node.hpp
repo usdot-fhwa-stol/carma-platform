@@ -29,8 +29,7 @@
 #include <optional>
 #include "trajectory_follower_wrapper/trajectory_follower_wrapper_config.hpp"
 
-#define DEG2RAD 3.1415926535 / 180.0
-#define RAD2DEG 180.0 / 3.1415926535
+constexpr double EPSILON = 0.0001;
 
 namespace trajectory_follower_wrapper
 {
@@ -96,9 +95,9 @@ namespace trajectory_follower_wrapper
     autoware_msgs::msg::ControlCommandStamped convert_cmd(const autoware_auto_msgs::msg::AckermannControlCommand& cmd) const;
 
     /**
-     * \brief calculate wheel angle from angular velocity in twist message
+     * \brief calculate wheel angle in rad from angular velocity in twist message
      */
-    double get_wheel_angle_from_twist(const geometry_msgs::msg::TwistStamped& twist) const;
+    double get_wheel_angle_rad_from_twist(const geometry_msgs::msg::TwistStamped& twist) const;
 
 
 

@@ -104,10 +104,10 @@ namespace trajectory_follower_wrapper
     }
   }
 
-  double TrajectoryFollowerWrapperNode::get_wheel_angle_from_twist(const geometry_msgs::msg::TwistStamped& twist) const
+  double TrajectoryFollowerWrapperNode::get_wheel_angle_rad_from_twist(const geometry_msgs::msg::TwistStamped& twist) const
   {
 
-    if (twist.twist.linear.x == 0)
+    if (std::abs(twist.twist.linear.x) < EPSILON )
     {
       return 0.0;
     }
@@ -134,7 +134,7 @@ namespace trajectory_follower_wrapper
     state.state.heading.real = pose.pose.orientation.w;
     state.state.heading.imag = pose.pose.orientation.z;
 
-    state.state.front_wheel_angle_rad = get_wheel_angle_from_twist(twist);
+    state.state.front_wheel_angle_rad = get_wheel_angle_rad_from_twist(twist);
     state.state.longitudinal_velocity_mps = twist.twist.linear.x;
     state.state.lateral_velocity_mps = twist.twist.linear.y;
     RCLCPP_DEBUG_STREAM(rclcpp::get_logger("trajectory_follower_wrapper"), "front_wheel_angle_rad: " << state.state.front_wheel_angle_rad);

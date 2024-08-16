@@ -1270,10 +1270,15 @@ namespace basic_autonomy
                 autoware_point.y = trajectory_points[i].y;
                 autoware_point.longitudinal_velocity_mps = lag_speeds[i];
                 double yaw = 0.0;
-                if (i<= max_size-1)
+                if (i< max_size-1)
                 {
-                    double yaw = std::atan2(trajectory_points[i+1].y - trajectory_points[i].y, trajectory_points[i+1].x - trajectory_points[i].x);
-                    // the last trajectory point does not have a next point and its yaw cannot be calculated. But since the new trajectories are being generated frequently thats not an issue.
+                    yaw = std::atan2(trajectory_points[i+1].y - trajectory_points[i].y, trajectory_points[i+1].x - trajectory_points[i].x);
+
+                }
+                else
+                {
+                    yaw = std::atan2(trajectory_points[max_size-1].y - trajectory_points[max_size-2].y, trajectory_points[max_size-1].x - trajectory_points[max_size-2].x);
+                    // last point in the trajectory will have yaw value of its previous point to avoid sudden steering in some conditions
                 }
                 autoware_point.heading.real = std::cos(yaw/2);
                 autoware_point.heading.imag = std::sin(yaw/2);
