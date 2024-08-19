@@ -67,12 +67,12 @@ namespace trajectory_follower_wrapper
     auto sub_qos_transient_local = rclcpp::QoS(rclcpp::KeepAll()); // A subscriber with this QoS will store all messages that it has sent on the topic
     sub_qos_transient_local.transient_local();
     // Setup subscriber
-    control_cmd_sub_ = create_subscription<autoware_auto_msgs::msg::AckermannControlCommand>("output/control_cmd", sub_qos_transient_local,
+    control_cmd_sub_ = create_subscription<autoware_auto_msgs::msg::AckermannControlCommand>("trajectory_follower/control_cmd", sub_qos_transient_local,
       std::bind(&TrajectoryFollowerWrapperNode::ackermann_control_cb, this, std::placeholders::_1),intra_proc_disabled);
 
     // Setup publishers
-    autoware_traj_pub_ = create_publisher<autoware_auto_msgs::msg::Trajectory>("input/reference_trajectory", 10);
-    autoware_state_pub_ = create_publisher<autoware_auto_msgs::msg::VehicleKinematicState>("input/current_kinematic_state", 10);
+    autoware_traj_pub_ = create_publisher<autoware_auto_msgs::msg::Trajectory>("trajectory_follower/reference_trajectory", 10);
+    autoware_state_pub_ = create_publisher<autoware_auto_msgs::msg::VehicleKinematicState>("trajectory_follower/current_kinematic_state", 10);
 
     // Setup timers to publish autoware compatible info (trajectory and state)
     autoware_info_timer_ = create_timer(
