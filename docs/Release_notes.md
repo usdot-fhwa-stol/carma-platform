@@ -1,6 +1,69 @@
 CARMA System Release Notes
 ----------------------------
 
+Version 4.7.0, released Aug 26th, 2024
+----------------------------------------
+
+### **Summary**
+This release introduces significant enhancements and new functionalities of CDA-Telematics tool, focusing on improving data streaming, integration and visualization capabilities. Key updates include support for streaming data from the XIL environment, integration of telematics tools with V2X Hub and enhanced UI visualization with historical ROS 2 data. Additionally, telematics tool for local deployment process is improved to facilitate use with tools like CAVe-in-a-box. Along with these enhancements, several bug fixes and deployment related enhancements are included in this release.
+
+### **CDA-Telematics** 
+
+This release introduces new functionalities of CDA-telematics that includes the capability to:  
+
+1. Allow the ROS 2 NATS bridge and Kafka NATS bridge to stream data from the XiL environment. 
+2. Integrate the telematics tool as a plugin in V2X Hub to stream data from infrastructure units connected to V2X Hub. 
+3. Enable visualization of historical ROS 2 data recorded in rosbags  of the .mcap format by allowing upload, processing and writing of data from ROS 2 rosbags to the database from where it can be used to generate plots on the dashboard. 
+Note: The carma-system-4.5.0 release, which is the latest release for CARMA Platform - the main CDA system used to test and evaluate the telematics tool, currently does not support recording of rosbags in the .mcap format. Evaluation for historical data visualization was conducted using rosbags recorded on an unreleased version of CARMA Platform to enable recording of rosbags in the .mcap format. 
+4. Deploy all telematics services locally on a host machine to facilitate use with off the network tools like CAVe-in-a-box, which is a portable infrastructure unit.
+
+Enhancements in this release:  
+
+- Cda-telematics PR 153: Updated the ros2 nats bridge to add a flag that allows it to stamp messages to wall clock if true. 
+- Cda-telematics PR 154: Updated the kafka nats bridge to add a flag that allows it to stamp messages to wall clock if true. 
+- Cda-telematics PR 160: Fixed type conflicts in partial write failure scenarios for the telematics messaging server. 
+- Cda-telematics PR 162: Added unit tests for the web application to ensure robust functionality.
+- Cda-telematics PR 164: Enhanced the telematics messaging server to handle cases where no topics are available, returning a null value. 
+- Cda-telematics PR 168: Made improvements to facilitate smoother local deployment process 
+- Cda-telematics PR 171: Updated the telematic web client to expose url as a config parameter that can be updated at runtime. 
+- Cda-telematics PR 174: Added new APIs to support uploading and listing ROS2 rosbags, enhancing data handling capabilities. 
+- Cda-telematics PR 175: Implemented a new service to handle rosbag processing, improving data management and accessibility. 
+- Cda-telematics PR 176: Enhanced the telematics UI to support listing and uploading ROS2 rosbags. 
+- Cda-telematics PR 180: Updated telematics web UI to upload rosbags to organization-based directories to facilitate use with multiple organizations. 
+- Cda-telematics PR 181: Enhanced telematics web UI to allow filtering of locally stored .mcap files when browsing for files to upload. 
+- Cda-telematics PR 183: Enhanced the rosbag processing service by integrating a MySQL writer for efficient data storage. 
+- Cda-telematics PR 185: Improved the user registration message for clarity and better user experience. 
+- Cda-telematics PR 198: Updated the deployment process for the rosbag2 processing service for better reliability. 
+- Cda-telematics PR 205: Enabled runtime updates for configuration parameters in the telematics cloud messaging server. 
+- Cda-telematics PR 211: Introduced more descriptive error messages for improved user experience and debugging. 
+- Cda-telematics PR 224: Added feature to catch exceptions in the historical data processing service caused by uploading file sizes less than 8 bytes, allowing service to record error and stay operational. 
+- Cda-telematics PR 231: Developed a script to analyze and report message drops in the V2X Hub telematics plugin, enhancing reliability. 
+- Cda-telematics PR 232: Enhanced historical data processing logs for better tracking and analysis. 
+- Cda-telematics PR 233: Improved Docker hub workflows by incorporating reusable actions for better efficiency. 
+- Cda-telematics PR 234: Updated image names to reflect the release candidate status for clarity. 
+- Cda-telematics PR 248: Added script for historical data processing log analysis.
+Fixes in this release:
+
+- Cda-telematics PR 197: Addressed multiple bugs in the cloud deployment configuration for more reliable deployments. 
+- Cda-telematics PR 243: Fixed issue where the messaging server interrupted the topic request thread when a unit was not active. 
+- Cda-telematics PR 244: Updates the data analysis scripts to be used for latency and message drop analysis from logs generated by telematics bridges and telematics messaging server, to be usable with logs from multiple 
+  runs simultaneously. Also adds a README to include direction for using the scripts.  
+
+### **CARMA-Config** 
+
+This release introduces a new xil_cloud_telematics configuration to deploy telematics modules in the CDASim environment. A telematics module for streaming ROS 2 data and another one for streaming Kafka data is added to the docker-compose in the new configuration that allows visualization of live data being generated in this environment. In addition, the new configuration is setup to run the Vulnerable Road User cooperative perception scenario that was supported as part of the carma-system-4.5.0 release. 
+
+Enhancement in this release:  
+
+- Carma-config PR 273: Included the telematics module in the CDASim Docker compose, allowing the ROS2 telematics bridge to be launched with CDA Sim components. 
+- Carma-config PR 281: Added streets NATS bridge to the Carma deployment with CDASim. 
+- Carma-config PR 347: Updated the XiL cloud telematics config with ail_vru changes to run test cases from Carma System 4.5.0 release. 
+- Carma-config PR 370: Added volume to the ROS2 NATS bridge service launched from XiL cloud telematics, allowing logs to be available from the host PC. 
+
+Fixes in this release: 
+
+- Carma-config PR 368:  Fixed image names defined in the Docker compose for XiL cloud telematics. 
+
 Version 4.6.0, released Aug 14th, 2024
 ----------------------------------------
 
