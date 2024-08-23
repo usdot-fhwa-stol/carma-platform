@@ -501,7 +501,7 @@ def generate_launch_description():
                       ("input/reference_trajectory","trajectory_follower/reference_trajectory" )
                 ],
                 parameters = [
-                    [vehicle_calibration_dir, "/mpc_follower/lateral_controller_defaults.yaml"]
+                    [vehicle_calibration_dir, "/trajectory_follower/lateral_controller_defaults.yaml"]
                 ]
             ),
             ComposableNode(
@@ -518,7 +518,7 @@ def generate_launch_description():
                       ("input/current_state", "trajectory_follower/current_kinematic_state")
                 ],
                 parameters = [
-                    [vehicle_calibration_dir, "/mpc_follower/longitudinal_controller_defaults.yaml"]
+                    [vehicle_calibration_dir, "/trajectory_follower/longitudinal_controller_defaults.yaml"]
                 ]
             )
         ]
