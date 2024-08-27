@@ -14,7 +14,6 @@ This release introduces new functionalities of CDA-telematics that includes the 
 1. Allow the ROS 2 NATS bridge and Kafka NATS bridge to stream data from the XiL environment. 
 2. Integrate the telematics tool as a plugin in V2X Hub to stream data from infrastructure units connected to V2X Hub. 
 3. Enable visualization of historical ROS 2 data recorded in rosbags  of the .mcap format by allowing upload, processing and writing of data from ROS 2 rosbags to the database from where it can be used to generate plots on the dashboard. 
-Note: The carma-system-4.5.0 release, which is the latest release for CARMA Platform - the main CDA system used to test and evaluate the telematics tool, currently does not support recording of rosbags in the .mcap format. Evaluation for historical data visualization was conducted using rosbags recorded on an unreleased version of CARMA Platform to enable recording of rosbags in the .mcap format. 
 4. Deploy all telematics services locally on a host machine to facilitate use with off the network tools like CAVe-in-a-box, which is a portable infrastructure unit.
 
 Enhancements in this release:  
