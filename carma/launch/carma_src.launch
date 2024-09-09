@@ -24,9 +24,6 @@
   Use:
   roslaunch carma carma.launch
   After using source devel/setup.bash from workspace root.
-
-  If not using simulated drivers they are activated using ros arguments as shown below.
-  roslaunch carma carma.launch mock_drivers="can"
 -->
 <launch>
 
@@ -34,14 +31,7 @@
   <arg name="vehicle_config_dir" default="/opt/carma/vehicle/config" doc="The directory continaing vehicle config type parameters"/>
   <arg name="vehicle_calibration_dir" default="/opt/carma/vehicle/calibration" doc="The directory continaing vehicle calibration type parameters"/>
 
-	<!-- Startup Drivers With Main CARMA System -->
-  <arg name="launch_drivers" default="true" doc="True if drivers are to be launched with the CARMA Platform, overrides mock_drivers arg if false"/>
-
   <!-- Simulation Usage -->
-  <arg name="mock_drivers"
-    default="controller can comms gnss radar lidar camera roadway_sensor imu"
-    doc="List of driver node base names which will be launched as mock drivers"
-  />
   <arg name="simulation_mode" default="false" doc="True if CARMA Platform is launched with CARLA Simulator"/>
 
   <!-- Logging -->
@@ -64,11 +54,7 @@
 
   <!-- Hardware Interface Stack -->
   <group ns="$(env CARMA_INTR_NS)">
-    <include file="$(find carma)/launch/hardware_interface.launch">
-      <arg name="mock_drivers" value="$(arg mock_drivers)"/>
-      <arg name="launch_drivers" value="$(arg launch_drivers)"/>
-      <arg name="vehicle_calibration_dir" value="$(arg vehicle_calibration_dir)"/>
-    </include>
+    <include file="$(find carma)/launch/hardware_interface.launch"/>
   </group>
 
   <!-- Set up the rosbag record node that will exclude sensitive topics -->
