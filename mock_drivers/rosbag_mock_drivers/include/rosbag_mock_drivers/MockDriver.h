@@ -158,23 +158,23 @@ public:
   /**
    * \brief Pure Virtual method. Returns an integer value which corresponds to the cav_msgs/DriverStatus enum felids
    * representing the status of the driver.
-   * 
+   *
    * \return Integer value which must match one of the enum fields in cav_msgs/DriverStatus
    */
   virtual uint8_t getDriverStatus() = 0;
 
   /**
    * \brief Pure virtual method that returns the desired operational rate of a child class.
-   * 
+   *
    * \return Spin rate in Hz
-   */ 
+   */
   virtual unsigned int getRate() = 0;
 
   /**
-   * \brief Callback which will be triggered at the rate specified by getRate(). This callback will also trigger the onSpin() method. 
-   * 
+   * \brief Callback which will be triggered at the rate specified by getRate(). This callback will also trigger the onSpin() method.
+   *
    * \return False if this node should shutdown. True otherwise.
-   */ 
+   */
   bool spinCallback();
 };
 

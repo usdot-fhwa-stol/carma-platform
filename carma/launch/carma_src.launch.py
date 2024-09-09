@@ -30,6 +30,7 @@ from launch.actions import DeclareLaunchArgument
 from launch.actions import OpaqueFunction
 
 from tracetools_launch.action import Trace
+from tracetools_trace.tools.names import DEFAULT_EVENTS_ROS
 
 from datetime import datetime
 
@@ -53,7 +54,19 @@ def create_ros2_tracing_action(context, *args, **kwargs):
             Trace(
                 base_path = log_directory_string,
                 session_name='my-tracing-session-' + str(datetime.now().strftime('%Y-%m-%d_%H%M%S')),
-                events_kernel = [], # Empty since kernel tracing is not enabled for CARMA Platform
+                #events_kernel = [], # Empty since kernel tracing is not enabled for CARMA Platform
+                events_ust=[
+                    'lttng_ust_libc:malloc',
+                    'lttng_ust_libc:calloc',
+                    'lttng_ust_libc:realloc',
+                    'lttng_ust_libc:free',
+                    'lttng_ust_libc:memalign',
+                    'lttng_ust_libc:posix_memalign',
+                ] + DEFAULT_EVENTS_ROS,
+                events_kernel=[
+                    'kmem_mm_page_alloc',
+                    'kmem_mm_page_free',
+                ]
             )
         ]
     )

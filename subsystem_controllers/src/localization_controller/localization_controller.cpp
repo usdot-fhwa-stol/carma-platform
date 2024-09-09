@@ -20,18 +20,18 @@
 namespace subsystem_controllers
 {
 
-  
+
   LocalizationControllerNode::LocalizationControllerNode(const rclcpp::NodeOptions &options)
       : BaseSubsystemController(options)
   {
     config_.sensor_nodes = declare_parameter<std::vector<std::string>>("sensor_nodes", config_.sensor_nodes);
     config_.sensor_fault_map = sensor_fault_map_from_json(declare_parameter<std::string>("sensor_fault_map", ""));
-  
+
     // Handle fact that parameter vectors cannot be empty
     if (config_.sensor_nodes.size() == 1 && config_.sensor_nodes[0].empty()) {
       config_.sensor_nodes.clear();
     }
-  
+
   }
 
   carma_ros2_utils::CallbackReturn LocalizationControllerNode::handle_on_configure(const rclcpp_lifecycle::State &prev_state) {
@@ -45,17 +45,17 @@ namespace subsystem_controllers
     // Reset and reload config
     config_ = LocalizationControllerConfig();
     get_parameter<std::vector<std::string>>("sensor_nodes", config_.sensor_nodes);
-    
+
     // Handle fact that parameter vectors cannot be empty
     if (config_.sensor_nodes.size() == 1 && config_.sensor_nodes[0].empty()) {
       config_.sensor_nodes.clear();
     }
-    
+
     std::string json_string;
     get_parameter<std::string>("sensor_fault_map", json_string);
-    
+
     RCLCPP_INFO_STREAM(get_logger(), "Loaded sensor_fault_map json string: " << json_string);
-    
+
     config_.sensor_fault_map = sensor_fault_map_from_json(json_string);
 
     RCLCPP_INFO_STREAM(get_logger(), "Loaded localization config: " << config_);
@@ -122,9 +122,9 @@ namespace subsystem_controllers
   }
 
   std::unordered_map<std::vector<SensorBooleanStatus>, SensorAlertStatus, VectorHash> LocalizationControllerNode::sensor_fault_map_from_json(std::string json_string) {
-      
+
     std::unordered_map<std::vector<SensorBooleanStatus>, SensorAlertStatus, VectorHash> map;
-    
+
     rapidjson::Document d;
 
     if(d.Parse(json_string.c_str()).HasParseError())
@@ -161,7 +161,7 @@ namespace subsystem_controllers
         continue;
       }
 
-      std::vector<SensorBooleanStatus> statuses; 
+      std::vector<SensorBooleanStatus> statuses;
       statuses.reserve(map_value[i].Size()-1);
       for (rapidjson::SizeType j = 0; j < map_value[i].Size() - 1; j++) {
         if (!map_value[i][j].IsInt()) {

@@ -101,7 +101,7 @@ namespace guidance
 
   bool GuidanceWorker::guidance_activation_cb(const std::shared_ptr<rmw_request_id_t>,
                                       const std::shared_ptr<carma_planning_msgs::srv::SetGuidanceActive::Request> req,
-                                      std::shared_ptr<carma_planning_msgs::srv::SetGuidanceActive::Response> resp) 
+                                      std::shared_ptr<carma_planning_msgs::srv::SetGuidanceActive::Response> resp)
   {
     // Translate message type from GuidanceActiveRequest to SetEnableRobotic
     if(!req->guidance_active)
@@ -113,7 +113,7 @@ namespace guidance
 
     gsm_.onSetGuidanceActive(req->guidance_active);
     resp->guidance_status = (gsm_.getCurrentState() == GuidanceStateMachine::ACTIVE);
-    return true;  
+    return true;
   }
 
   bool GuidanceWorker::spin_cb()
