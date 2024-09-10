@@ -21,8 +21,6 @@
 #include <boost/uuid/uuid_generators.hpp>
 #include <boost/uuid/uuid_io.hpp>
 #include <lanelet2_core/geometry/Point.h>
-#include <trajectory_utils/trajectory_utils.hpp>
-#include <trajectory_utils/conversions/conversions.hpp>
 #include <sstream>
 #include <Eigen/Core>
 #include <Eigen/Geometry>

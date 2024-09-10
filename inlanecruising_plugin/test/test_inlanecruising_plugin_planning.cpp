@@ -40,8 +40,6 @@
 #include <boost/uuid/uuid_generators.hpp>
 #include <boost/uuid/uuid_io.hpp>
 #include <lanelet2_core/geometry/Point.h>
-#include <trajectory_utils/trajectory_utils.hpp>
-#include <trajectory_utils/conversions/conversions.hpp>
 #include <sstream>
 #include <Eigen/Core>
 #include <Eigen/Geometry>
@@ -148,13 +146,13 @@ Using this file:
 
 TEST(WaypointGeneratorTest, DISABLED_test_full_generation)
 {
-  
+
  int projector_type = 0;
   std::string target_frame;
   lanelet::ErrorMessages load_errors;
 
   // File location of osm file
-  std::string file = "/workspaces/carma/AOI_1_TFHRC_faster_pretty.osm";    
+  std::string file = "/workspaces/carma/AOI_1_TFHRC_faster_pretty.osm";
   // The route ids that will form the route used
   std::vector<lanelet::Id> route_ids = { 130, 111, 110, 113, 135, 138 };
 
@@ -173,7 +171,7 @@ TEST(WaypointGeneratorTest, DISABLED_test_full_generation)
   auto node = std::make_shared<inlanecruising_plugin::InLaneCruisingPluginNode>(rclcpp::NodeOptions());
 
   InLaneCruisingPlugin inlc(node, wm, config, [&](auto msg) {});
-  
+
   auto routing_graph = wm->getMapRoutingGraph();
 
   // Output graph for debugging
@@ -233,7 +231,7 @@ TEST(WaypointGeneratorTest, DISABLED_test_compute_fit_full_generation)
   lanelet::ErrorMessages load_errors;
 
   // File location of osm file
-  std::string file = "/workspaces/carma/AOI_1_TFHRC_faster_pretty.osm";    
+  std::string file = "/workspaces/carma/AOI_1_TFHRC_faster_pretty.osm";
   // The route ids that will form the route used
   std::vector<lanelet::Id> route_ids = { 130, 129 };
 
@@ -252,7 +250,7 @@ TEST(WaypointGeneratorTest, DISABLED_test_compute_fit_full_generation)
   auto node = std::make_shared<inlanecruising_plugin::InLaneCruisingPluginNode>(rclcpp::NodeOptions());
 
   InLaneCruisingPlugin inlc(node, wm, config, [&](auto msg) {});
-  
+
   auto routing_graph = wm->getMapRoutingGraph();
 
   carma_wm::test::setRouteByIds(route_ids, wm);
@@ -265,7 +263,7 @@ TEST(WaypointGeneratorTest, DISABLED_test_compute_fit_full_generation)
   }
   // Get centerline
   lanelet::BasicLineString2d route_geometry = carma_wm::geometry::concatenate_lanelets(lanelets);
-  
+
   // Downsample
   std::vector<lanelet::BasicPoint2d> downsampled_points;
   downsampled_points.reserve((route_geometry.size() / config.default_downsample_ratio) + 1);
@@ -273,19 +271,19 @@ TEST(WaypointGeneratorTest, DISABLED_test_compute_fit_full_generation)
   for (int i = 0; i < route_geometry.size(); i += config.default_downsample_ratio)
   {
     downsampled_points.push_back(route_geometry[i]);
-    // Uncomment to print and check if this original map matches with the generated one below 
+    // Uncomment to print and check if this original map matches with the generated one below
     // RCLCPP_INFO_STREAM(rclcpp::get_logger(ILC_LOGGER), "Original point: x: " << route_geometry[i].x() << "y: " << route_geometry[i].y());
   }
 
   std::unique_ptr<basic_autonomy::smoothing::SplineI> fit_curve = basic_autonomy:: waypoint_generation::compute_fit(downsampled_points);
-  
+
   std::vector<lanelet::BasicPoint2d> spline_points;
 
   // Following logic is written for BSpline library. Switch with appropriate call of the new library if different.
   double parameter = 0.0;
   for(int i=0; i< downsampled_points.size(); i++){
     lanelet::BasicPoint2d pt = (*fit_curve)(parameter);
-    // Uncomment to print and check if this generated map matches with the original one above 
+    // Uncomment to print and check if this generated map matches with the original one above
     // RCLCPP_INFO_STREAM(rclcpp::get_logger(ILC_LOGGER), "BSpline point: x: " << values.x() << "y: " << values.y());
     spline_points.push_back(pt);
     parameter += 1.0/(downsampled_points.size()*1.0);
@@ -293,14 +291,14 @@ TEST(WaypointGeneratorTest, DISABLED_test_compute_fit_full_generation)
 
   ASSERT_EQ(spline_points.size(), downsampled_points.size());
   int error_count = 0;
-  
+
   for(int i = 1; i < downsampled_points.size(); i ++)
   {
     // tag as erroneous if directions of generated points are not within 5 degree of those of original points
-    tf2::Vector3 original_vector(downsampled_points[i].x() - downsampled_points[i-1].x(), 
+    tf2::Vector3 original_vector(downsampled_points[i].x() - downsampled_points[i-1].x(),
                       downsampled_points[i].y() - downsampled_points[i-1].y(), 0);
     original_vector.setZ(0);
-    tf2::Vector3 spline_vector(spline_points[i].x() - spline_points[i-1].x(), 
+    tf2::Vector3 spline_vector(spline_points[i].x() - spline_points[i-1].x(),
                       spline_points[i].y() - spline_points[i-1].y(), 0);
     spline_vector.setZ(0);
     double angle_in_rad = std::fabs(tf2::tf2Angle(original_vector, spline_vector));
@@ -308,9 +306,9 @@ TEST(WaypointGeneratorTest, DISABLED_test_compute_fit_full_generation)
   }
 
   // We say it is passing if there is less than 10% error in total number of points
-  RCLCPP_INFO_STREAM(rclcpp::get_logger(ILC_LOGGER), "Total points above 5 degree difference in their direction:" << error_count 
+  RCLCPP_INFO_STREAM(rclcpp::get_logger(ILC_LOGGER), "Total points above 5 degree difference in their direction:" << error_count
     << ", which is " << (double)error_count/(double)downsampled_points.size()*100 << "% of total");
-  ASSERT_TRUE((double)error_count/(double)downsampled_points.size() < 0.1); 
+  ASSERT_TRUE((double)error_count/(double)downsampled_points.size() < 0.1);
 }
 
 
@@ -332,4 +330,4 @@ int main(int argc, char ** argv)
   rclcpp::shutdown();
 
   return success;
-} 
+}
