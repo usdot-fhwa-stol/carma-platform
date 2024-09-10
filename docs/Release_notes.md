@@ -63,6 +63,16 @@ Fixes in this release:
 
 - Carma-config PR 368:  Fixed image names defined in the Docker compose for XiL cloud telematics. 
 
+Version 4.6.1, released Sep 3rd, 2024
+----------------------------------------
+
+**Summary:** 
+Carma-cloud release version 4.6.1 is a hotfix release for 4.6.0.
+
+Fixes in this release:
+-	Carma-cloud PR 65: Resolved the issue where the CARMA Cloud Web UI could not load .xodr files and display them correctly on the map, which prevented users from setting up traffic control configurations.
+
+
 Version 4.6.0, released Aug 14th, 2024
 ----------------------------------------
 
