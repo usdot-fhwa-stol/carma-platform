@@ -67,7 +67,7 @@ Version 4.6.1, released Sep 3rd, 2024
 ----------------------------------------
 
 **Summary:** 
-Carma-platform release version 4.6.1 is a hotfix release for 4.6.0.
+Carma-cloud release version 4.6.1 is a hotfix release for 4.6.0.
 
 Fixes in this release:
 -	Carma-cloud PR 65: Resolved the issue where the CARMA Cloud Web UI could not load .xodr files and display them correctly on the map, which prevented users from setting up traffic control configurations.
