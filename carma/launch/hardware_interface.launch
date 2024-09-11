@@ -15,37 +15,14 @@
   the License.
 -->
 <!--
-	Launch file for launching the nodes in the CARMA hardware interface stack 
+	Launch file for launching the nodes in the CARMA hardware interface stack
 -->
 <launch>
 
-  <arg name="vehicle_calibration_dir" default="$(find carma)../../CARMAVehicleCalibration/development/vehicle" doc="The directory continaing vehicle calibration type parameters"/>
-
-  <!-- Simulated Driver Arguments -->
-  <!-- Simulation Usage -->
-  <arg name="mock_drivers" default="controller can comms gnss radar lidar camera roadway_sensor" doc="List of driver node base names which will be launched as mock drivers"/>
-  
-  <!-- Startup Drivers With Main CARMA System -->
-  <arg name="launch_drivers" default="true" doc="True if drivers are to be launched with the CARMA Platform, overrides mock_drivers arg if false"/>
-
   <!-- Remap topics from external packages -->
   <remap from="ui_instructions" to="$(optenv CARMA_UI_NS)/ui_instructions"/>
-
   <remap from="system_alert" to="/system_alert"/>
 
-  <group if="$(arg launch_drivers)">
-    <!-- Simulated Mock Drivers -->
-    <include file="$(find carma)/launch/mock_drivers.launch">
-      <arg name="mock_drivers" value="$(arg mock_drivers)"/>
-    </include>
-
-    <!-- Driver Launch File if Using Actual Drivers -->
-    <include file="$(find carma)/launch/drivers.launch">
-      <arg name="mock_drivers" value="$(arg mock_drivers)" />
-      <arg name="vehicle_calibration_dir" value="$(arg vehicle_calibration_dir)"/>
-    </include>
-  </group>
-	
   <!-- Temporary node to get a ROS2 accel topic into the rosbag -->
   <node pkg="topic_tools" type="relay" name="relay_vehicle_accel" args="/hardware_interface/as/velocity_accel_cov /hardware_interface/velocity_accel_cov"/>
 

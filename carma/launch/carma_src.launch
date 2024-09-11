@@ -24,43 +24,19 @@
   Use:
   roslaunch carma carma.launch
   After using source devel/setup.bash from workspace root.
-
-  If not using simulated drivers they are activated using ros arguments as shown below.
-  roslaunch carma carma.launch mock_drivers="can"
 -->
 <launch>
 
   <!-- Directory of vehicle config parameters -->
   <arg name="vehicle_config_dir" default="/opt/carma/vehicle/config" doc="The directory continaing vehicle config type parameters"/>
   <arg name="vehicle_calibration_dir" default="/opt/carma/vehicle/calibration" doc="The directory continaing vehicle calibration type parameters"/>
-  <arg name="yolo_dir" default="/opt/carma/yolo" doc="The directory continaing yolo weights files for the perception stack"/>
-  <arg name="cuda" default="true" doc="cuda flag for vision_darknet_detect (true if cuda is available)"/>
-  <arg name="enable_guidance_plugin_validator" default="false" doc="Flag indicating whether the Guidance Plugin Validator node will actively validate guidance strategic, tactical, and control plugins"/>
-  <arg name="strategic_plugins_to_validate" default="[]" doc="List of String: Guidance Strategic Plugins that will be validated by the Guidance Plugin Validator Node if enabled"/>
-  <arg name="tactical_plugins_to_validate" default="[]" doc="List of String: Guidance Tactical Plugins that will be validated by the Guidance Plugin Validator Node if enabled"/>
-  <arg name="control_plugins_to_validate" default="[]" doc="List of String: Guidance Control Plugins that will be validated by the Guidance Plugin Validator Node if enabled"/>
-  <arg name="combined_lidar_frame" default="velodyne" doc="Frame of the lidar(s)"/>
-
-	<!-- Startup Drivers With Main CARMA System -->
-  <arg name="launch_drivers" default="true" doc="True if drivers are to be launched with the CARMA Platform, overrides mock_drivers arg if false"/>
 
   <!-- Simulation Usage -->
-  <arg name="mock_drivers" 
-    default="controller can comms gnss radar lidar camera roadway_sensor imu"
-    doc="List of driver node base names which will be launched as mock drivers"
-  />
   <arg name="simulation_mode" default="false" doc="True if CARMA Platform is launched with CARLA Simulator"/>
 
   <!-- Logging -->
   <!-- ROS Bag -->
   <arg name="rosbag_exclusions" default="/fake_exclusion" doc="Additonal regex pattern to match for identifying what topics to exclude from rosbag recordings"/>
-  
-  <!-- Map files to load -->
-  <arg name="arealist_path" default="arealist.txt" doc="Path to the arealist.txt file which contains the paths and dimensions of each map cell to load"/>
-  <arg name="load_type" default="noupdate" doc="Enum of the map loading approach to use. Can be 'download', 'noupdate', or 'arealist'"/> 
-  <arg name="single_pcd_path" default="/opt/carma/maps/pcd_map.pcd" doc="Path to the map pcd file if using the noupdate load type"/>
-  <arg name="area" default="1x1" doc="Dimensions of the square of cells loaded at runtime using the download and arealist load types"/>
-  <arg name="vector_map_file" default="/opt/carma/maps/vector_map.osm" doc="Path to the map osm file if using the noupdate load type"/>
 
   <!-- Route File Locations -->
   <arg name="route_file_folder" default="/opt/carma/routes/" doc="Path of folder containing routes to load"/>
@@ -78,33 +54,15 @@
 
   <!-- Hardware Interface Stack -->
   <group ns="$(env CARMA_INTR_NS)">
-    <include file="$(find carma)/launch/hardware_interface.launch">
-      <arg name="mock_drivers" value="$(arg mock_drivers)"/>
-      <arg name="launch_drivers" value="$(arg launch_drivers)"/>
-      <arg name="vehicle_calibration_dir" value="$(arg vehicle_calibration_dir)"/>
-    </include>
+    <include file="$(find carma)/launch/hardware_interface.launch"/>
   </group>
-
-
-  <!-- Environment Perception Stack -->
-  <group ns="$(env CARMA_ENV_NS)">
-    <include file="$(find carma)/launch/environment.launch">
-      <arg name="cuda" value="$(arg cuda)"/>
-      <arg name="vector_map_file" value="$(arg vector_map_file)" />
-      <arg name="vehicle_calibration_dir" value="$(arg vehicle_calibration_dir)"/>
-      <arg name="yolo_dir" value="$(arg yolo_dir)"/>
-      <arg name="simulation_mode" value="$(arg simulation_mode)" />
-      <arg name="combined_lidar_frame" value="$(arg combined_lidar_frame)"/>
-    </include>
-  </group>
-
 
   <!-- Set up the rosbag record node that will exclude sensitive topics -->
   <group ns="carma_record">
     <include file="$(find carma_record)/launch/carma_record.launch" />
   </group>
-  
+
   <!-- Dump all ros parameters to a file -->
   <node name="param_dump" pkg="carma_record" type="param_dump.sh"/>
-  
+
 </launch>
