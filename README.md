@@ -7,7 +7,7 @@
 # CARMA
 ![CARMA Arch](docs/image/CARMA3_Vehicles.jpg)
 
-CARMA<sup>SM</sup>  advances research and development to accelerate market readiness and deployment of cooperative driving automation, while advancing automated driving technology safety, security, data, and artificial intelligence. It encourages collaboration and participation by a community of engineers and researchers to advance understanding of cooperative driving automation using open source software (OSS) and agile project management practices. 
+CARMA<sup>SM</sup>  advances research and development to accelerate market readiness and deployment of cooperative driving automation, while advancing automated driving technology safety, security, data, and artificial intelligence. It encourages collaboration and participation by a community of engineers and researchers to advance understanding of cooperative driving automation using open source software (OSS) and agile project management practices.
 
 CARMA is a reusable, extensible platform for controlling SAE level 2 connected, automated vehicles (AVs). It provides a rich, generic API for third party plugins that implement vehicle guidance algorithms to plan vehicle trajectories. It is written in C++ and runs in a Robot Operating System (ROS) environment on Ubuntu. The platform can be reused on a variety of properly equipped vehicles.  Migration has begun from the ROS 1 framework to ROS 2.
 
@@ -42,6 +42,9 @@ The current version and release history of the CARMA software platform: [CARMA R
 ## Roadmap
 The current CARMA ecosystem development direction and release plans can be found here: [CARMA Roadmap](https://usdot-carma.atlassian.net/wiki/spaces/CRMECO/pages/1093435397/CARMA+Ecosystem+Roadmap)
 
+## Current Status of ROS 1 and ROS 2 Packages
+The current CARMA Platform system operates as a hybrid of ROS 1 Noetic and ROS 2 Foxy components. While nearly all components have been upgraded to ROS 2 Foxy, a small amount of ROS 1 Noetic content still exists within the system, including some packages in this repository. For more information, please see the relevant documentation in the [carma-config](https://github.com/usdot-fhwa-stol/carma-config?tab=readme-ov-file#current-status-of-hybrid-ros-1ros-2-system) repository.
+
 ## Architecture Guide
 The documentation describes the software architecture within a single CARMA vehicle.  There may be several of these vehicles operating in concert, communicating with each other via DSRC or cellular means.  They can also communicate with roadside infrastructure using DSRC or cellular.  The communication among software components within a single vehicle, however, is mostly done via the Robot Operating System (ROS) framework.  There are no ROS communications between neighboring vehicles. [CARMA3 System Architecture](https://usdot-carma.atlassian.net/wiki/spaces/CRMPLT/pages/89587713/CARMA3+System+Architecture)
 
@@ -51,7 +54,7 @@ For information on the CARMA2 architecture, please see [CARMA2 System Architectu
 Please see the Detail Design document page for detailed design specification for CARMA and other additional information.
 [Detail Design Page](Detail_Design.md)
 
-## Developers Guide  
+## Developers Guide
 
 Useful development documentation and instructions for the setup of a development environment for CARMA Platform can be found at the following pages:
 
@@ -73,7 +76,7 @@ An administrator guide for CARMA3 will be coming soon.
 For administrative information on CARMA2, including vehicle and developer PC configuration, build, deployment and testing steps necessary to install and run CARMA Platform, please see [Administrator Guide](https://usdot-carma.atlassian.net/wiki/spaces/CRMPLT/pages/1160642629/CARMA2+Project+Documentation?preview=/1160642629/1160642730/CARMA%20Administrator%20Guide.docx)
 
 ## Other CARMA Packages
-CARMA Platform<sup>SM</sup> is a downloadable, open source software (OSS) platform architected to be extensible and reusable for a wide variety of research purposes to advance innovation for cooperative driving automation. It enables communication between vehicles, road users such as pedestrians, bicyclists, and scooters, and infrastructure devices capable of communication. It promotes collaboration between a community of engineers and researchers to accelerate the development, testing, and evaluation of cooperative driving automation while advancing the safety, security, data, and use of artificial intelligence in automated driving technology.  
+CARMA Platform<sup>SM</sup> is a downloadable, open source software (OSS) platform architected to be extensible and reusable for a wide variety of research purposes to advance innovation for cooperative driving automation. It enables communication between vehicles, road users such as pedestrians, bicyclists, and scooters, and infrastructure devices capable of communication. It promotes collaboration between a community of engineers and researchers to accelerate the development, testing, and evaluation of cooperative driving automation while advancing the safety, security, data, and use of artificial intelligence in automated driving technology.
 
 The CARMA Platform is distributed as a set of multiple independent packages hosted in separate Github repositories. These packages facilitate operation of the CARMA Platform with different hardware configurations or allow it to support different modes of operation. To include one of these packages in your build of the CARMA Platform system please clone the Github repository into the same Catkin workspace `src/` folder as this repository. The Catkin build system will verify that dependencies are resolved appropriately and build the newly included package when you next run `catkin_make`. An incomplete listing of available packages for CARMA3 includes:
 
@@ -105,16 +108,16 @@ A full list of available packages may be found at in the [USDOT FHWA STOL](https
 CARMA Cloud<sup>SM</sup> is a downloadable, cloud-based open source software (OSS) service that provides information to support and enable cooperative driving automation. It enables communication with cloud services and vehicles, road users such as pedestrians, bicyclists, and scooters, and infrastructure devices capable of communication. It promotes collaboration between a community of engineers and researchers to accelerate the development, testing, and evaluation of cooperative driving automation while advancing the safety, security, data, and use of artificial intelligence in automated driving technology. The source code for CARMA Cloud can be found [here on GitHub](https://github.com/usdot-fhwa-stol/carma-cloud).
 
 ## Contribution
-Welcome to the CARMA contributing guide. Please read this guide to learn about our development process, how to propose pull requests and improvements, and how to build and test your changes to this project. [CARMA Contributing Guide](Contributing.md) 
+Welcome to the CARMA contributing guide. Please read this guide to learn about our development process, how to propose pull requests and improvements, and how to build and test your changes to this project. [CARMA Contributing Guide](Contributing.md)
 
-## Code of Conduct 
+## Code of Conduct
 Please read our [CARMA Code of Conduct](Code_of_Conduct.md) which outlines our expectations for participants within the CARMA community, as well as steps to reporting unacceptable behavior. We are committed to providing a welcoming and inspiring community for all and expect our code of conduct to be honored. Anyone who violates this code of conduct may be banned from the community.
 
 ## Attribution
-The development team would like to acknowledge the people who have made direct contributions to the design and code in this repository. [CARMA Attribution](ATTRIBUTION.md) 
+The development team would like to acknowledge the people who have made direct contributions to the design and code in this repository. [CARMA Attribution](ATTRIBUTION.md)
 
 ## License
-By contributing to the Federal Highway Administration (FHWA) Connected Automated Research Mobility Applications (CARMA), you agree that your contributions will be licensed under its Apache License 2.0 license. [CARMA License](<docs/License.md>) 
+By contributing to the Federal Highway Administration (FHWA) Connected Automated Research Mobility Applications (CARMA), you agree that your contributions will be licensed under its Apache License 2.0 license. [CARMA License](<docs/License.md>)
 
 ## Code.gov Registration Info
 
