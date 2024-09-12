@@ -40,7 +40,7 @@ done
 cd "${dir}"/src
 
 git clone --depth=1 https://github.com/usdot-fhwa-stol/carma-msgs.git --branch "${BRANCH}"
-git clone --depth=1 https://github.com/usdot-fhwa-stol/carma-utils.git --branch arc-146-remove-ros1
+git clone --depth=1 https://github.com/usdot-fhwa-stol/carma-utils.git --branch "${BRANCH}"
 git clone --depth=1 https://github.com/usdot-fhwa-stol/carma-messenger.git --branch "${BRANCH}"
 # Get humble branch of message filters which supports template Node arguments (foxy version supports rclcpp::Node only)
 git clone --depth=1 https://github.com/usdot-fhwa-stol/carma-message-filters.git --branch "${BRANCH}"
