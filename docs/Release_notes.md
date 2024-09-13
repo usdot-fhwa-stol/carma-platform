@@ -1,6 +1,65 @@
 CARMA System Release Notes
 ----------------------------
 
+Version 4.8.0, released Sep 11th, 2024
+----------------------------------------
+
+### **Summary**
+This release introduces the CARMA 1Tenth (C1T) software platform with a focus on being able to perform an automated Port Drayage demonstration within a scaled-down test environment. The system is built around a forked version of the Navigation2 (Nav2) ADS platform, with the new navigation2_extensions repository developed to integrate Cooperative Automated Driving (CDA) functionality with Nav2. Forked versions of the vesc and twist_to_ackermann repositories were introduced to allow for minor changes needed to interface software drivers with the C1T hardware. Additional SQL files were added to V2X Hub to coordinate the Port Drayage demonstration message exchange with the vehicle, and the c1t2x-emulator package was developed to enable this communication between two Raspberry Pis representing mock OBUs and RSUs. Minor changes were made to the  carma-msgs, carma-utils, and carma-messenger repositories to integrate with the C1T system and ensure build compatibility with ARM platforms and ROS 2 Humble. Lastly, the c1t_bringup repository was developed to coordinate launching the necessary software onboard the vehicle with the specified parameters, maps, and road networks.
+
+### **C1t2x-emulator** 
+c1t2x-emulator is a new repository that enables Raspberry Pi’s to act as mock Onboard Units (OBUs) and Roadside Units (RSUs) for the C1T platform. This includes the ability to communicate with vehicles and V2X Hub instances, as well as forwarding messages over WiFi to other Raspberry Pi’s. 
+
+### **C1t_bringup** 
+c1t_bringup is a new repository used to launch all ROS 2 subsystems for C1T using the ROS 2 launch system for ROS 2 Humble. Additionally, required inputs to Navigation2 have been added to this repository including occupancy grid maps, graphs, parameter files, and system configurations. The occupancy grid maps included have been generated using the ROS 2 package slam_toolbox for various, on-site testing environments. Each map has associated graphs which define structured paths for the robot to follow. For the C1T platform, these structured paths are treated as road networks that contain the lane information for a specific scenario. Graphs are defined using the GEOJson file format and translated to the ROS 2 ecosystem using the Navigation2 “route_server.” Parameter files describe the specifics of what ROS 2 packages should be launched and specify the configuration for each package. The contents of c1t_bringup are specific to the physical vehicles and on-site testing environments with the addition of a simulated virtual test environment using the Gazebo robot simulator.  
+
+### **Navigation2** 
+navigation2 is a new repository that was forked from the ROS Navigation organization to provide a local instance for development if minor changes were required to the “nav2_route_server” branch, an experimental branch used to define structured paths (i.e. road networks) for mobile robots, for it to be used with the C1T system. Updates to navigation2 focus on ensuring compatibility with ROS 2 Humble and addressing key issues related to map files and configurations.
+
+### **Navigation2_extentions** 
+navigation2_extensions is a new repository that integrates Cooperative Driving Automation (CDA) functionality with the open-source Navigation2 (Nav2) ADS platform. Along with the core components of Nav2, this repository also relies on the “nav2_route” package for defining road networks used by the ADS. This release targets automated port drayage where a semi-truck communicates with an infrastructure computer within a port to coordinate the pickup and drop-off of cargo. Additionally, an emergency stop feature has been added to stop the vehicle via remote input if necessary.
+
+### **Vesc** 
+vesc is a new repository that was forked to provide a local instance for developing minor changes required for the C1T system. The only update included in this release is negating the speed value sent to the vesc due to the motors being installed in the opposite direction. 
+
+### **Twist_to_ackermann** 
+twist_to_ackermann is a new repository that was developed to translate ROS 2 messages from desired velocities (std_msgs/msg/Twist) to steering and velocity commands for an Ackermann vehicle (ackermann_msgs/msg/AckermannDriveStamped). 
+
+### **Carma-messenger** 
+The carma-messenger repository has been updated to support ARM architectures as well as forward-compatibility with ROS 2 Humble.
+
+Enhancements in this release:  
+
+- carma-messenger PR 224: Addressed compatibility issues with ARM architecture and forward-compatibility issues with ROS 2 Humble. 
+
+### **Carma-analytics-fotda** 
+To support evaluation of the C1T system’s ability to perform automated Port Drayage operations through communication with a connected V2X Hub instance, new data analysis scripts were added to the carma-analytics-fotda repository to evaluate ROS2 bags from the C1T system. For these data analysis scripts, ROS2 bags are processed to output plots and statistics to enable performance metric evaluation and debugging capabilities for the C1T trucks. 
+
+Enhancements in this release:  
+
+- carma-analytics-fotda PR 75: Added debugging tools to track vehicle performance. 
+- carma-analytics-fotda PR 77: Introduced new metrics to track C1T system performance. 
+
+### **Carma-msgs** 
+Updates to carma-msgs focus on improving build processes and ensuring that packages containing ROS 2 message definitions are forward compatible with ROS 2 Humble, the version of ROS 2 used for the C1T platform.
+
+Enhancements in this release:  
+
+- carma-msgs PR 227: Fix compilation errors to support forward-compatibility with ROS 2 Humble. 
+
+Fixes in this release: 
+
+- carma-msgs PR 233: Fixed Continuous Integration and build processes to decouple branch dependencies. 
+
+### **Carma-utils** 
+The carma-utils repository, which contains packages useful for developing ROS 2 packages for the CARMA ecosystem, has been updated to ensure forward-compatibility with ROS 2 Humble and to fix build issues.
+
+Enhancements in this release:  
+
+- carma-utils PR 220: Added forward compatibility for rclcpp_lifecycle::LifecyclePublisher with ROS 2 Humble. 
+- carma-utils PR 217: Made ros2_lifecycle_manager package compatible with ROS 2 Humble.
+
+
 Version 4.7.0, released Aug 26th, 2024
 ----------------------------------------
 
