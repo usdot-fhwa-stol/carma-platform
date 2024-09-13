@@ -137,7 +137,8 @@ int Node::getCurrentPoseIndexFromTraj(
       break;
     }
   }
-
+  RCLCPP_INFO_STREAM(
+    rclcpp::get_logger("basic_travel_simulator"), "Calculated idx from trajectory: " << idx);
   return idx;
 }
 
@@ -189,6 +190,8 @@ double Node::getCurrentLinearSpeedFromTraj(
   double dt =
     (rclcpp::Time(point_n.target_time) - rclcpp::Time(point_n_minus_1.target_time)).seconds();
   double speed = std::sqrt(dx * dx + dy * dy) / dt;
+  RCLCPP_INFO_STREAM(
+    rclcpp::get_logger("basic_travel_simulator"), "Calculated current_speed: " << speed);
   return speed;
 }
 
@@ -198,22 +201,37 @@ double Node::getCurrentAngularSpeedFromTraj(
 {
   auto idx = validateIdx(input_idx, traj.trajectory_points.size() - 1);
   const auto & point_n = traj.trajectory_points[idx];
+  double current_yaw_rate = (point_n.yaw - last_yaw) / time_elapsed_since_last_s;
+
+  RCLCPP_INFO_STREAM(
+    rclcpp::get_logger("basic_travel_simulator"),
+    "Calculated current yaw_rate from trajectory: " << current_yaw_rate);
 
   // Calculate the angular speed
-  return (point_n.yaw - last_yaw) / time_elapsed_since_last_s;
+  return current_yaw_rate;
 }
 
 void Node::statusTick()
 {
   double operation_period_s = 1 / config_.pose_pub_rate;
+  if (current_trajectory_.trajectory_points.size() < 2) {
+    RCLCPP_WARN_STREAM(
+      rclcpp::get_logger("basic_travel_simulator"),
+      "Not enough points in trajectory to simulate, doing nothing...");
+    return;
+  }
+
   auto current_pose_idx =
     getCurrentPoseIndexFromTraj(last_linear_speed_, operation_period_s, current_trajectory_);
+
   double current_linear_speed =
     getCurrentLinearSpeedFromTraj(current_pose_idx, current_trajectory_);
+
   double current_angular_speed = getCurrentAngularSpeedFromTraj(
     last_yaw_, operation_period_s, current_pose_idx, current_trajectory_);
 
   const auto & current_pose_msg = composePoseStamped(current_pose_idx, current_trajectory_);
+
   const auto & current_speed_msg =
     composeTwistStamped(current_linear_speed, current_angular_speed, current_trajectory_);
 
