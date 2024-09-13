@@ -41,6 +41,8 @@ private:
   carma_planning_msgs::msg::TrajectoryPlan current_trajectory_;
   double last_linear_speed_ = 0.0;
   double last_yaw_ = 0.0;
+  int last_idx_ = 1;
+  std::optional<carma_planning_msgs::msg::TrajectoryPlanPoint> last_traj_first_point_;
 
   // Publishers
   carma_ros2_utils::PubPtr<geometry_msgs::msg::PoseStamped> pose_pub_;

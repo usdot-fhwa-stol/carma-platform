@@ -22,5 +22,6 @@ namespace basic_travel_simulator
     struct BasicTravelSimulatorConfig
     {
         double pose_pub_rate = 30.0; // Hz
+        int traj_idx_buffer = 2;
     };
 } // namespace basic_travel_simulator

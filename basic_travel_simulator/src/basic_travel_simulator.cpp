@@ -36,16 +36,20 @@ Node::Node(const rclcpp::NodeOptions & options) : carma_ros2_utils::CarmaLifecyc
   // Create initial config
   config_ = BasicTravelSimulatorConfig();
   config_.pose_pub_rate = declare_parameter<double>("pose_pub_rate", config_.pose_pub_rate);
+  config_.traj_idx_buffer = declare_parameter<int>("traj_idx_buffer", config_.traj_idx_buffer);
+
 }
 
 rcl_interfaces::msg::SetParametersResult Node::parameter_update_callback(
   const std::vector<rclcpp::Parameter> & parameters)
 {
   auto error = update_params<double>({{"pose_pub_rate", config_.pose_pub_rate}}, parameters);
+  auto error2 = update_params<int>({{"traj_idx_buffer", config_.traj_idx_buffer}}, parameters);
+
 
   rcl_interfaces::msg::SetParametersResult result;
 
-  result.successful = !error;
+  result.successful = !error && !error2;
 
   return result;
 }
@@ -56,6 +60,7 @@ carma_ros2_utils::CallbackReturn Node::handle_on_configure(const rclcpp_lifecycl
   config_ = BasicTravelSimulatorConfig();
 
   get_parameter<double>("pose_pub_rate", config_.pose_pub_rate);
+  get_parameter<int>("traj_idx_buffer", config_.traj_idx_buffer);
 
   // Register runtime parameter update callback
   add_on_set_parameters_callback(std::bind(&Node::parameter_update_callback, this, std_ph::_1));
@@ -120,10 +125,11 @@ int Node::getCurrentPoseIndexFromTraj(
   // Distance actually traveled
   double distance_traveled = last_speed * time_elapsed_since_last_s;
 
-  // Get corresponding idx to the distance traveled form the traj
-  auto idx = 0;
+  // Get corresponding idx to the distance traveled from the traj
+  // start from last_idx_ which is the last idx the pose was in this traj
+  auto idx = last_idx_;
   double dist_accumulator = 0.0;
-  for (auto i = 1; i < traj.trajectory_points.size(); i++) {
+  for (auto i = last_idx_; i < traj.trajectory_points.size(); i++) {
     // Extract the i-th point
     const auto & point_i = traj.trajectory_points[i];
     const auto & point_i_minus_1 = traj.trajectory_points[i - 1];
@@ -138,7 +144,7 @@ int Node::getCurrentPoseIndexFromTraj(
     }
   }
   RCLCPP_INFO_STREAM(
-    rclcpp::get_logger("basic_travel_simulator"), "Calculated idx from trajectory: " << idx);
+    rclcpp::get_logger("basic_travel_simulator"), "Calculated idx from trajectory with buffer: " << idx);
   return idx;
 }
 
@@ -173,7 +179,8 @@ geometry_msgs::msg::TwistStamped Node::composeTwistStamped(
   twist_msg.twist.linear.z = 0.0;
   twist_msg.twist.angular.x = 0.0;
   twist_msg.twist.angular.y = 0.0;
-  twist_msg.twist.angular.z = current_angular_speed;
+  // anuglar speed is not working currently
+  twist_msg.twist.angular.z = 0.0;
   return twist_msg;
 }
 
@@ -215,9 +222,6 @@ void Node::statusTick()
 {
   double operation_period_s = 1 / config_.pose_pub_rate;
   if (current_trajectory_.trajectory_points.size() < 2) {
-    RCLCPP_WARN_STREAM(
-      rclcpp::get_logger("basic_travel_simulator"),
-      "Not enough points in trajectory to simulate, doing nothing...");
     return;
   }
 
@@ -241,12 +245,18 @@ void Node::statusTick()
 
   last_yaw_ = current_trajectory_.trajectory_points[current_pose_idx].yaw;
   last_linear_speed_ = current_linear_speed;
+  last_idx_ = current_pose_idx;
+  last_traj_first_point_ = current_trajectory_.trajectory_points.front();
 }
 
 void Node::currentTrajectoryCallback(carma_planning_msgs::msg::TrajectoryPlan::UniquePtr msg)
 {
   RCLCPP_DEBUG(rclcpp::get_logger("basic_travel_simulator"), "Received trajectory message");
   current_trajectory_ = *msg;
+  // reset the last pose idx because it was only relevant to last trajectory
+  if (last_traj_first_point_ && get_2d_distance(last_traj_first_point_.value(),
+    current_trajectory_.trajectory_points.front()) > 0.1)
+    last_idx_ = 1 + config_.traj_idx_buffer;
 }
 
 }  // namespace basic_travel_simulator

@@ -34,9 +34,9 @@
 # /////////////////////////////////////////////////////////////////////////////
 ARG DOCKER_ORG="usdotfhwastoldev"
 ARG DOCKER_TAG="develop"
-FROM 6ce671821d3d as base-image
+FROM 4e857887c715 as base-image
 
-FROM 6ce671821d3d AS source-code
+FROM 4e857887c715 AS source-code
 
 RUN mkdir ~/src
 COPY --chown=carma . /home/carma/src/carma-platform/
@@ -49,7 +49,7 @@ RUN ~/src/carma-platform/docker/checkout.bash -b ${GIT_BRANCH}
 # /////////////////////////////////////////////////////////////////////////////
 
 
-FROM 6ce671821d3d AS install
+FROM 4e857887c715 AS install
 ARG ROS1_PACKAGES=""
 ENV ROS1_PACKAGES=${ROS1_PACKAGES}
 ARG ROS2_PACKAGES=""
@@ -66,7 +66,7 @@ RUN ~/carma_ws/src/carma-platform/docker/install.sh
 # /////////////////////////////////////////////////////////////////////////////
 
 
-FROM 6ce671821d3d
+FROM 4e857887c715
 
 ARG BUILD_DATE="NULL"
 ARG VCS_REF="NULL"

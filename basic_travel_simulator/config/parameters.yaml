@@ -1,2 +1,8 @@
-// hz
+# Pose and speed publication rate (Hz)
+# Recommended: Match with controller's frequency
 pose_pub_rate: 30.0
+
+# Increase more to help avoid going back and forth
+# when speed is low and keeps getting same trajectory
+# better tracks trajectory if kept low [0, inf]
+traj_idx_buffer: 0
