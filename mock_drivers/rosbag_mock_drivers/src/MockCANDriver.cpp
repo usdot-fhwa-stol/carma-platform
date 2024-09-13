@@ -44,7 +44,7 @@ int MockCANDriver::onRun()
   addPassthroughPubNoHeader<std_msgs::Float64>(bag_prefix_ + brake_position_topic_, brake_position_topic_, false, 10);
   addPassthroughPubNoHeader<std_msgs::Float64>(bag_prefix_ + steering_wheel_angle_topic_, steering_wheel_angle_topic_,
                                                false, 10);
-  addPassthroughPubNoHeader<j2735_msgs::TransmissionState>(bag_prefix_ + transmission_state_topic_,
+  addPassthroughPubNoHeader<j2735_v2x_msgs::TransmissionState>(bag_prefix_ + transmission_state_topic_,
                                                            transmission_state_topic_, false, 10);
 
   addPassthroughPub<geometry_msgs::TwistStamped>(bag_prefix_ + vehicle_twist, vehicle_twist, false, 10);

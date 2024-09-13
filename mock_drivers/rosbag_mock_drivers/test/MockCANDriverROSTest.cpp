@@ -17,7 +17,7 @@
 #include <gmock/gmock.h>
 #include <ros/ros.h>
 #include <std_msgs/Float64.h>
-#include <j2735_msgs/TransmissionState.h>
+#include <j2735_v2x_msgs/TransmissionState.h>
 #include <geometry_msgs/TwistStamped.h>
 #include "test_utils.h"
 
@@ -44,11 +44,11 @@ TEST(MockCANDriver, can_topic)
       nh.subscribe<std_msgs::Float64>("/hardware_interface/can/steering_wheel_angle", 5,
                                      [&](const std_msgs::Float64ConstPtr& msg) -> void { got_steering_wheel = true; });
 
-  ros::Publisher transmission_pub = nh.advertise<j2735_msgs::TransmissionState>("/bag/hardware_interface/can/transmission_state", 5);
+  ros::Publisher transmission_pub = nh.advertise<j2735_v2x_msgs::TransmissionState>("/bag/hardware_interface/can/transmission_state", 5);
 
   ros::Subscriber transmission_sub =
-      nh.subscribe<j2735_msgs::TransmissionState>("/hardware_interface/can/transmission_state", 5,
-                                     [&](const j2735_msgs::TransmissionStateConstPtr& msg) -> void { got_transmission = true; });
+      nh.subscribe<j2735_v2x_msgs::TransmissionState>("/hardware_interface/can/transmission_state", 5,
+                                     [&](const j2735_v2x_msgs::TransmissionStateConstPtr& msg) -> void { got_transmission = true; });
 
   ros::Publisher twist_pub = nh.advertise<geometry_msgs::TwistStamped>("/bag/hardware_interface/vehicle/twist", 5);
 
@@ -63,7 +63,7 @@ TEST(MockCANDriver, can_topic)
 
   std_msgs::Float64 msg1;
   std_msgs::Float64 msg2;
-  j2735_msgs::TransmissionState msg3;
+  j2735_v2x_msgs::TransmissionState msg3;
   geometry_msgs::TwistStamped msg4;
 
   bake_pub.publish(msg1);

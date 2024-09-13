@@ -19,7 +19,7 @@
 #include "rosbag_mock_drivers/MockDriver.h"
 #include <std_msgs/Bool.h>
 #include <std_msgs/Float64.h>
-#include <j2735_msgs/TransmissionState.h>
+#include <j2735_v2x_msgs/TransmissionState.h>
 #include <cav_msgs/TurnSignal.h>
 #include <geometry_msgs/TwistStamped.h>
 #include <autoware_msgs/VehicleStatus.h>
