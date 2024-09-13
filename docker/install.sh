@@ -14,7 +14,7 @@
 #  License for the specific language governing permissions and limitations under
 #  the License.
 
-set -ex
+set -e
 
 # Build the software and its dependencies
 
