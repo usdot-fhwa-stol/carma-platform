@@ -29,6 +29,8 @@
 #include <optional>
 #include "trajectory_follower_wrapper/trajectory_follower_wrapper_config.hpp"
 
+constexpr double EPSILON = 0.0001;
+
 namespace trajectory_follower_wrapper
 {
 
@@ -91,6 +93,11 @@ namespace trajectory_follower_wrapper
      * \brief convert autoware Ackermann control command to autoware stamped control command
      */
     autoware_msgs::msg::ControlCommandStamped convert_cmd(const autoware_auto_msgs::msg::AckermannControlCommand& cmd) const;
+
+    /**
+     * \brief calculate wheel angle in rad from angular velocity in twist message
+     */
+    double get_wheel_angle_rad_from_twist(const geometry_msgs::msg::TwistStamped& twist) const;
 
 
 

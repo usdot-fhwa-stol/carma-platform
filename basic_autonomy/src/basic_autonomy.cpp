@@ -252,7 +252,7 @@ namespace basic_autonomy
                 }
 
                 double delta_d = lanelet::geometry::distance2d(prev_point, current_point);
-                
+
                 dist_accumulator += delta_d;
                 RCLCPP_DEBUG_STREAM(rclcpp::get_logger(BASIC_AUTONOMY_LOGGER), "Index i: " << i << ", delta_d: " << delta_d << ", dist_accumulator:" << dist_accumulator <<", current_point.x():" << current_point.x() <<
                 "current_point.y():" << current_point.y());
@@ -1269,6 +1269,19 @@ namespace basic_autonomy
                 autoware_point.x = trajectory_points[i].x;
                 autoware_point.y = trajectory_points[i].y;
                 autoware_point.longitudinal_velocity_mps = lag_speeds[i];
+                double yaw = 0.0;
+                if (i< max_size-1)
+                {
+                    yaw = std::atan2(trajectory_points[i+1].y - trajectory_points[i].y, trajectory_points[i+1].x - trajectory_points[i].x);
+
+                }
+                else
+                {
+                    yaw = std::atan2(trajectory_points[max_size-1].y - trajectory_points[max_size-2].y, trajectory_points[max_size-1].x - trajectory_points[max_size-2].x);
+                    // last point in the trajectory will have yaw value of its previous point to avoid sudden steering in some conditions
+                }
+                autoware_point.heading.real = std::cos(yaw/2);
+                autoware_point.heading.imag = std::sin(yaw/2);
 
                 autoware_point.time_from_start = rclcpp::Duration(times[i] * 1e9);
                 RCLCPP_DEBUG_STREAM(rclcpp::get_logger(BASIC_AUTONOMY_LOGGER), "Setting waypoint idx: " << i <<", with planner: << " << trajectory_points[i].planner_plugin_name << ", x: " << trajectory_points[i].x <<

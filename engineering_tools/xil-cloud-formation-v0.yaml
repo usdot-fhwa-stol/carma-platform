@@ -421,13 +421,15 @@ Resources:
           # Install docker compose
           DESTINATION=/usr/bin/docker-compose
           sudo rm $DESTINATION
-          sudo curl -L "https://github.com/docker/compose/releases/download/1.29.1/docker-compose-$(uname -s)-$(uname -m)" -o $DESTINATION
+          # Get most recent version using curl + grep
+          DOCKER_VERSION=$(sudo curl --silent https://api.github.com/repos/docker/compose/releases/latest | grep -oP '"tag_name": "\K(.*)(?=")')
+          sudo curl -L "https://github.com/docker/compose/releases/download/$DOCKER_VERSION/docker-compose-$(uname -s)-$(uname -m)" -o $DESTINATION
           sudo chmod 755 $DESTINATION
 
           # Install carma-config
           carma config install ${CarmaConfigImage}
           carma config set ${CarmaConfigImage}
-          
+
           ## Add VCS Sources
           sudo apt-get update
           sudo apt-get install -y lsb-release
@@ -450,7 +452,7 @@ Resources:
 
           ## Add VCS auto completion
           echo "source /usr/share/vcstool-completion/vcs.bash" >> ~/.bashrc
-          
+
           # Clone Repos
           cd /home/ubuntu/carma_ws
           curl -L https://raw.githubusercontent.com/usdot-fhwa-stol/carma-platform/develop/carma-platform.repos | sed 's/git@github.com:/https:\/\/github.com\//' | vcs import

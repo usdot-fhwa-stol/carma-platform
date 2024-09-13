@@ -25,6 +25,7 @@ namespace trajectory_follower_wrapper
     // Create initial config
     config_ = TrajectoryFollowerWrapperConfig();
     config_.vehicle_response_lag = declare_parameter<double>("vehicle_response_lag", config_.vehicle_response_lag);
+    config_.vehicle_wheel_base = declare_parameter<double>("vehicle_wheel_base", config_.vehicle_wheel_base);
     config_.incoming_cmd_time_threshold = declare_parameter<double>("incoming_cmd_time_threshold", config_.incoming_cmd_time_threshold);
 
   }
@@ -33,6 +34,7 @@ namespace trajectory_follower_wrapper
   {
     auto error_double = update_params<double>({
       {"vehicle_response_lag", config_.vehicle_response_lag},
+      {"vehicle_wheel_base", config_.vehicle_wheel_base},
       {"incoming_cmd_time_threshold", config_.incoming_cmd_time_threshold}
       }, parameters);
 
@@ -50,6 +52,7 @@ namespace trajectory_follower_wrapper
 
     // Load parameters
     get_parameter<double>("vehicle_response_lag", config_.vehicle_response_lag);
+    get_parameter<double>("vehicle_wheel_base", config_.vehicle_wheel_base);
     get_parameter<double>("incoming_cmd_time_threshold", config_.incoming_cmd_time_threshold);
 
     RCLCPP_INFO_STREAM(rclcpp::get_logger("trajectory_follower_wrapper"), "Loaded Params: " << config_);
@@ -64,12 +67,12 @@ namespace trajectory_follower_wrapper
     auto sub_qos_transient_local = rclcpp::QoS(rclcpp::KeepAll()); // A subscriber with this QoS will store all messages that it has sent on the topic
     sub_qos_transient_local.transient_local();
     // Setup subscriber
-    control_cmd_sub_ = create_subscription<autoware_auto_msgs::msg::AckermannControlCommand>("output/control_cmd", sub_qos_transient_local,
+    control_cmd_sub_ = create_subscription<autoware_auto_msgs::msg::AckermannControlCommand>("trajectory_follower/control_cmd", sub_qos_transient_local,
       std::bind(&TrajectoryFollowerWrapperNode::ackermann_control_cb, this, std::placeholders::_1),intra_proc_disabled);
 
     // Setup publishers
-    autoware_traj_pub_ = create_publisher<autoware_auto_msgs::msg::Trajectory>("input/reference_trajectory", 10);
-    autoware_state_pub_ = create_publisher<autoware_auto_msgs::msg::VehicleKinematicState>("input/current_kinematic_state", 10);
+    autoware_traj_pub_ = create_publisher<autoware_auto_msgs::msg::Trajectory>("trajectory_follower/reference_trajectory", 10);
+    autoware_state_pub_ = create_publisher<autoware_auto_msgs::msg::VehicleKinematicState>("trajectory_follower/current_kinematic_state", 10);
 
     // Setup timers to publish autoware compatible info (trajectory and state)
     autoware_info_timer_ = create_timer(
@@ -95,9 +98,22 @@ namespace trajectory_follower_wrapper
       // generate and publish autoware trajectory
       current_trajectory_.get().header.frame_id = autoware_state.header.frame_id;
       auto autoware_traj_plan = basic_autonomy::waypoint_generation::process_trajectory_plan(current_trajectory_.get(), config_.vehicle_response_lag);
+
       autoware_traj_pub_->publish(autoware_traj_plan);
 
     }
+  }
+
+  double TrajectoryFollowerWrapperNode::get_wheel_angle_rad_from_twist(const geometry_msgs::msg::TwistStamped& twist) const
+  {
+
+    if (std::abs(twist.twist.linear.x) < EPSILON )
+    {
+      return 0.0;
+    }
+
+    double steering_angle = std::atan2(twist.twist.angular.z * config_.vehicle_wheel_base, twist.twist.linear.x);
+    return steering_angle;
   }
 
   void TrajectoryFollowerWrapperNode::ackermann_control_cb(const autoware_auto_msgs::msg::AckermannControlCommand::SharedPtr msg)
@@ -111,13 +127,20 @@ namespace trajectory_follower_wrapper
   {
     autoware_auto_msgs::msg::VehicleKinematicState state;
     state.header = pose.header;
+    state.header.frame_id = "map";
     state.state.x = pose.pose.position.x;
     state.state.y = pose.pose.position.y;
     state.state.z = pose.pose.position.z;
     state.state.heading.real = pose.pose.orientation.w;
     state.state.heading.imag = pose.pose.orientation.z;
 
+    state.state.front_wheel_angle_rad = get_wheel_angle_rad_from_twist(twist);
     state.state.longitudinal_velocity_mps = twist.twist.linear.x;
+    state.state.lateral_velocity_mps = twist.twist.linear.y;
+    RCLCPP_DEBUG_STREAM(rclcpp::get_logger("trajectory_follower_wrapper"), "front_wheel_angle_rad: " << state.state.front_wheel_angle_rad);
+
+
+
     return state;
   }
 

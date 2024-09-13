@@ -73,10 +73,7 @@ Welcome to the CARMAPlatform contributing guide. There are a few guidelines that
 * For major changes the reviewer may require additional support from the team, which could cause some delay. 
 * We'll do our best to provide updates and feedback throughout the process. 
 * Feel free to open pull requests, and the CARMAPlatform team will communicate through it with any comments.
-
 #### Become a Collaborator
-**Please fill out this [form](https://forms.gle/2Rd6ii4BgCLCmRpi7) to be added to the CARMA Collaborative.**
-
 Four Contribution Levels
 1.	Informative Group Contributor.
 This level is for stakeholders interested at an informational level to keep up-to-date on CARMA activities advancing CDA. This level receives CARMA news, product updates, and first access to public CARMA events.
