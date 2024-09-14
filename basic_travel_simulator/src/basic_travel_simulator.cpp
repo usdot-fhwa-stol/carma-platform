@@ -185,7 +185,7 @@ geometry_msgs::msg::TwistStamped Node::composeTwistStamped(
 {
   geometry_msgs::msg::TwistStamped twist_msg;
   // Fill in the TwistStamped message
-  twist_msg.header.frame_id = "map";
+  twist_msg.header.frame_id = "base_link";
   twist_msg.header.stamp = this->now();
   twist_msg.twist.linear.x = current_linear_speed;
   twist_msg.twist.linear.y = 0.0;
@@ -267,8 +267,8 @@ void Node::currentTrajectoryCallback(carma_planning_msgs::msg::TrajectoryPlan::U
   RCLCPP_DEBUG(rclcpp::get_logger("basic_travel_simulator"), "Received trajectory message");
 
   // Check if the new trajectory is different from the current one
-  if (current_trajectory_.trajectory_points.empty() || 
-      get_2d_distance(current_trajectory_.trajectory_points.front(), msg->trajectory_points.front()) > 0.1) 
+  if (current_trajectory_.trajectory_points.empty() ||
+      get_2d_distance(current_trajectory_.trajectory_points.front(), msg->trajectory_points.front()) > 0.1)
   {
     current_trajectory_ = *msg;
     last_idx_ = 1 + config_.traj_idx_buffer;  // Reset the index for a new trajectory
