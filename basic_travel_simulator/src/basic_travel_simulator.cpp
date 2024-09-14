@@ -252,11 +252,14 @@ void Node::statusTick()
 void Node::currentTrajectoryCallback(carma_planning_msgs::msg::TrajectoryPlan::UniquePtr msg)
 {
   RCLCPP_DEBUG(rclcpp::get_logger("basic_travel_simulator"), "Received trajectory message");
-  current_trajectory_ = *msg;
-  // reset the last pose idx because it was only relevant to last trajectory
-  if (last_traj_first_point_ && get_2d_distance(last_traj_first_point_.value(),
-    current_trajectory_.trajectory_points.front()) > 0.1)
-    last_idx_ = 1 + config_.traj_idx_buffer;
+
+  // Check if the new trajectory is different from the current one
+  if (current_trajectory_.trajectory_points.empty() || 
+      get_2d_distance(current_trajectory_.trajectory_points.front(), msg->trajectory_points.front()) > 0.1) 
+  {
+    current_trajectory_ = *msg;
+    last_idx_ = 1 + config_.traj_idx_buffer;  // Reset the index for a new trajectory
+  }
 }
 
 }  // namespace basic_travel_simulator
