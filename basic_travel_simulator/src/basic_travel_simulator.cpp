@@ -161,9 +161,20 @@ geometry_msgs::msg::PoseStamped Node::composePoseStamped(
   pose_msg.pose.position.y = point_n.y;
   pose_msg.pose.position.z = 0.0;  // Assuming 2D, z is 0
 
-  tf2::Quaternion q;
-  q.setRPY(0, 0, point_n.yaw);
-  pose_msg.pose.orientation = tf2::toMsg(q);
+  // Calculate yaw based on trajectory points
+  if (idx > 0) {
+    const auto & point_prev = traj.trajectory_points[idx - 1];
+    double dx = point_n.x - point_prev.x;
+    double dy = point_n.y - point_prev.y;
+    double yaw = std::atan2(dy, dx);
+    tf2::Quaternion q;
+    q.setRPY(0, 0, yaw);
+    pose_msg.pose.orientation = tf2::toMsg(q);
+  } else {
+    tf2::Quaternion q;
+    q.setRPY(0, 0, point_n.yaw);
+    pose_msg.pose.orientation = tf2::toMsg(q);
+  }
   return pose_msg;
 }
 
