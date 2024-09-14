@@ -156,7 +156,8 @@ geometry_msgs::msg::PoseStamped Node::composePoseStamped(
   const auto & point_n = traj.trajectory_points[idx];
 
   // Fill in the PoseStamped message
-  pose_msg.header = traj.header;
+  pose_msg.header.frame_id = "map";
+  pose_msg.header.stamp = this->now();
   pose_msg.pose.position.x = point_n.x;
   pose_msg.pose.position.y = point_n.y;
   pose_msg.pose.position.z = 0.0;  // Assuming 2D, z is 0
@@ -184,7 +185,8 @@ geometry_msgs::msg::TwistStamped Node::composeTwistStamped(
 {
   geometry_msgs::msg::TwistStamped twist_msg;
   // Fill in the TwistStamped message
-  twist_msg.header = traj.header;
+  twist_msg.header.frame_id = "map";
+  twist_msg.header.stamp = this->now();
   twist_msg.twist.linear.x = current_linear_speed;
   twist_msg.twist.linear.y = 0.0;
   twist_msg.twist.linear.z = 0.0;
