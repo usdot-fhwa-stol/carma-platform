@@ -35,14 +35,14 @@ namespace subsystem_controllers
   class DriversControllerNode : public BaseSubsystemController
   {
   public:
-    
+
     DriversControllerNode() = delete;
 
     ~DriversControllerNode() = default;
 
     /**
      * \brief Constructor. Set explicitly to support node composition.
-     * 
+     *
      * \param options The node options to use for configuring this node
      */
     explicit DriversControllerNode(const rclcpp::NodeOptions &options);
@@ -62,7 +62,7 @@ namespace subsystem_controllers
     // message/service callbacks
     void driver_discovery_cb(const carma_driver_msgs::msg::DriverStatus::SharedPtr msg);
 
-    //! Timer callback function to check status of required ros1 drivers 
+    //! Timer callback function to check status of required ros1 drivers
     void timer_callback();
 
     carma_ros2_utils::CallbackReturn handle_on_configure(const rclcpp_lifecycle::State &prev_state);
@@ -70,7 +70,6 @@ namespace subsystem_controllers
 
     //! ROS parameters
     std::vector<std::string> ros1_required_drivers_;
-    std::vector<std::string> ros1_camera_drivers_;
 
     // record of startup timestamp
     long start_up_timestamp_;
@@ -83,4 +82,3 @@ namespace subsystem_controllers
   };
 
 } // namespace v2x_controller
-
