@@ -63,6 +63,36 @@ Enhancements in this release: 
 - carma-utils PR 220: Added forward compatibility for rclcpp_lifecycle::LifecyclePublisher with ROS 2 Humble.
 - carma-utils PR 217: Made ros2_lifecycle_manager package compatible with ROS 2 Humble.
 
+Version 4.7.3, released Sep 18th, 2024
+----------------------------------------
+
+### **Summary**
+CDA-telematics release version 4.7.3 is a hotfix release for CARMA-system-4.7.2. 
+
+Fixes in this release: 
+
+- CDA-telematics PR 262: The “Load default topics” button on the topic management page had incorrect text “Save”. This would confuse end users, as they would click a “Save” button to load default topics, which is actually a “Load” topics button. 
+
+Version 4.7.2, released Aug 28th, 2024
+----------------------------------------
+
+### **Summary**
+CDA-telematics release version 4.7.2 is a hotfix release for CARMA-system-4.7.1. 
+
+Fixes in this release: 
+
+- CDA-telematics PR 260: Fixed Docker Compose files with the latest versions of the CDA-telematics release. 
+
+Version 4.7.1, released Aug 28th, 2024
+----------------------------------------
+
+### **Summary**
+CDA-telematics release version 4.7.1 is a hotfix release for CARMA-system-4.7.0. 
+
+Fixes in this release: 
+
+- CDA-telematics PR 259: Fixed Docker Compose YAML files pointing to the wrong incorrect hub organization, now correctly pointing to the official USDOTFHWA STOL organization. 
+- Carma-config PR 385: Fixed the Docker Compose YAML file to point latest CDA-telematics release.
 
 Version 4.7.0, released Aug 26th, 2024
 ----------------------------------------
