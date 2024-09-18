@@ -73,6 +73,8 @@ Fixes in this release:
 
 - CDA-telematics PR 262: The “Load default topics” button on the topic management page had incorrect text “Save”. This would confuse end users, as they would click a “Save” button to load default topics, which is actually a “Load” topics button. 
 
+NOTE: Historical data processing service loses MySQL database connection when it is idle or when it has not received a request within 24 hours. When historical processing service does not immediately pick up the request for uploaded files, please restart the processing service to reestablish MySQL connection.
+
 Version 4.7.2, released Aug 28th, 2024
 ----------------------------------------
 
