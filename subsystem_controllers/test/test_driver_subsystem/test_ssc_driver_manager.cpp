@@ -16,14 +16,14 @@
 
 #include <gtest/gtest.h>
 
-#include <subsystem_controllers/drivers_controller/driver_manager.hpp>
+#include <subsystem_controllers/drivers_controller/ssc_driver_manager.hpp>
 
 namespace subsystem_controllers
 {
 TEST(DriverManagerTest, testCarNormalDriverStatus)
 {
   // inordinary case where no critical drivers are specified
-  DriverManager dm0({"ssc"}, 0);
+  SSCDriverManager dm0("ssc", 0);
   carma_driver_msgs::msg::DriverStatus msg0;
   msg0.controller = true;
   msg0.name = "controller";
@@ -33,9 +33,9 @@ TEST(DriverManagerTest, testCarNormalDriverStatus)
 
   dm0.update_driver_status(msg0_pointer, 1000);
 
-  EXPECT_EQ("s_0", dm0.are_critical_drivers_operational(1500));
+  EXPECT_FALSE(dm0.is_ssc_driver_operational(1500));
 
-  std::vector<std::string> required_drivers{"controller"};
+  std::string ssc_driver_name = "controller";
 
   carma_driver_msgs::msg::DriverStatus msg1;
   msg1.controller = true;
@@ -45,14 +45,15 @@ TEST(DriverManagerTest, testCarNormalDriverStatus)
     new carma_driver_msgs::msg::DriverStatus(msg1));
   dm0.update_driver_status(msg1_pointer, 1000);
 
-  EXPECT_EQ("s_1", dm0.are_critical_drivers_operational(1500));
+  // the name of the controller did not match, so still unoperational
+  EXPECT_FALSE(dm0.is_ssc_driver_operational(1500));
 }
 
 TEST(DriverManagerTest, testCarErrorDriverStatusTimeOut)
 {
-  std::vector<std::string> required_drivers{"controller"};
+  std::string ssc_driver_name = "controller";
 
-  DriverManager dm(required_drivers, 1000L);
+  SSCDriverManager dm(ssc_driver_name, 1000L);
 
   carma_driver_msgs::msg::DriverStatus msg1;
   msg1.controller = true;
@@ -62,14 +63,14 @@ TEST(DriverManagerTest, testCarErrorDriverStatusTimeOut)
     new carma_driver_msgs::msg::DriverStatus(msg1));
   dm.update_driver_status(msg1_pointer, 1000);
 
-  EXPECT_EQ("s_0", dm.are_critical_drivers_operational(2100));
+  EXPECT_FALSE(dm.is_ssc_driver_operational(2100));
 }
 
 TEST(DriverManagerTest, testCarHandleSpinDriversReady)
 {
-  std::vector<std::string> required_drivers{"controller"};
+  std::string ssc_driver_name = "controller";
 
-  DriverManager dm(required_drivers, 1000L);
+  SSCDriverManager dm(ssc_driver_name, 1000L);
 
   carma_driver_msgs::msg::DriverStatus msg1;
   msg1.controller = true;
@@ -80,16 +81,16 @@ TEST(DriverManagerTest, testCarHandleSpinDriversReady)
   dm.update_driver_status(msg1_pointer, 1000);
 
   carma_msgs::msg::SystemAlert alert;
-  alert = dm.handle_spin(1500, 150, 750);
+  alert = dm.get_latest_system_alert(1500, 150, 750);
 
   EXPECT_EQ(5, alert.type);
 }
 
 TEST(DriverManagerTest, testCarHandleSpinFatalSscWorking)
 {
-  std::vector<std::string> required_drivers{"controller"};
+  std::string ssc_driver_name = "controller";
 
-  DriverManager dm(required_drivers, 1000L);
+  SSCDriverManager dm(ssc_driver_name, 1000L);
 
   carma_driver_msgs::msg::DriverStatus msg1;
   msg1.controller = true;
@@ -100,27 +101,27 @@ TEST(DriverManagerTest, testCarHandleSpinFatalSscWorking)
   dm.update_driver_status(msg1_pointer, 1000);
 
   carma_msgs::msg::SystemAlert alert;
-  alert = dm.handle_spin(1500, 150, 750);
+  alert = dm.get_latest_system_alert(1500, 150, 750);
 
   EXPECT_EQ(6, alert.type);
 }
 
 TEST(DriverManagerTest, testCarHandleSpinFatalUnknownInside)
 {
-  std::vector<std::string> required_drivers{"controller"};
-  DriverManager dm(required_drivers, 1000L);
+  std::string ssc_driver_name = "controller";
+  SSCDriverManager dm(ssc_driver_name, 1000L);
 
   carma_msgs::msg::SystemAlert alert;
-  alert = dm.handle_spin(1500, 150, 750);
+  alert = dm.get_latest_system_alert(1500, 150, 750);
 
   EXPECT_EQ(6, alert.type);
 }
 
 TEST(DriverManagerTest, testCarHandleSpinNotReadyCase1)
 {
-  std::vector<std::string> required_drivers{"controller"};
+  std::string ssc_driver_name = "controller";
 
-  DriverManager dm(required_drivers, 1000L);
+  SSCDriverManager dm(ssc_driver_name, 1000L);
 
   carma_driver_msgs::msg::DriverStatus msg1;
   msg1.controller = true;
@@ -131,16 +132,16 @@ TEST(DriverManagerTest, testCarHandleSpinNotReadyCase1)
   dm.update_driver_status(msg1_pointer, 1000);
 
   carma_msgs::msg::SystemAlert alert;
-  alert = dm.handle_spin(1500, 1000, 750);
+  alert = dm.get_latest_system_alert(1500, 1000, 750);
 
   EXPECT_EQ(4, alert.type);
 }
 
 TEST(DriverManagerTest, testCarHandleSpinNotReadyCase2)
 {
-  std::vector<std::string> required_drivers{"controller"};
+  std::string ssc_driver_name = "controller";
 
-  DriverManager dm(required_drivers, 1000L);
+  SSCDriverManager dm(ssc_driver_name, 1000L);
 
   carma_driver_msgs::msg::DriverStatus msg1;
   msg1.controller = true;
@@ -151,16 +152,16 @@ TEST(DriverManagerTest, testCarHandleSpinNotReadyCase2)
   dm.update_driver_status(msg1_pointer, 1000);
 
   carma_msgs::msg::SystemAlert alert;
-  alert = dm.handle_spin(1500, 5000, 750);
+  alert = dm.get_latest_system_alert(1500, 5000, 750);
 
   EXPECT_EQ(4, alert.type);
 }
 
 TEST(DriverManagerTest, testCarTruckHandleSpinFatalUnknown)
 {
-  std::vector<std::string> required_drivers{"controller"};
+  std::string ssc_driver_name = "controller";
 
-  DriverManager dm(required_drivers, 1000L);
+  SSCDriverManager dm(ssc_driver_name, 1000L);
 
   carma_driver_msgs::msg::DriverStatus msg1;
   msg1.controller = true;
@@ -171,7 +172,7 @@ TEST(DriverManagerTest, testCarTruckHandleSpinFatalUnknown)
   dm.update_driver_status(msg1_pointer, 1000);
 
   carma_msgs::msg::SystemAlert alert;
-  alert = dm.handle_spin(1500, 150, 750);
+  alert = dm.get_latest_system_alert(1500, 150, 750);
 
   EXPECT_EQ(6, alert.type);
 }

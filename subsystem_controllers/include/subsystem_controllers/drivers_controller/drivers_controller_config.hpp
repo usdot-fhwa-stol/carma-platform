@@ -27,9 +27,9 @@ namespace subsystem_controllers
 struct DriversControllerConfig
 
 {
-  //! List of ros1 controller drivers (node name) to consider required and who's failure shall
+  //! ros1 controller driver (node name) to consider required and whose failure shall
   //! result in automation abort.
-  std::vector<std::string> ros1_required_drivers_;
+  std::string ros1_ssc_driver_name_;
   //! List of nodes in the namespace which will not be managed by this subsystem controller
   std::vector<std::string> excluded_namespace_nodes_;
   //! The time allocated for system startup in seconds
@@ -40,11 +40,9 @@ struct DriversControllerConfig
   // Stream operator for this config
   friend std::ostream & operator<<(std::ostream & output, const DriversControllerConfig & c)
   {
-    output << "DriversControllerConfig { " << std::endl << "ros1_required_drivers: [ " << std::endl;
-
-    for (auto node : c.ros1_required_drivers_) output << node << " ";
-
-    output << "] " << std::endl << "excluded_namespace_nodes: [ ";
+    output << "DriversControllerConfig { " << std::endl
+           << "ros1_ssc_driver_name: " << c.ros1_ssc_driver_name_ << std::endl
+           << "excluded_namespace_nodes: [  " << std::endl;
 
     for (auto node : c.excluded_namespace_nodes_) output << node << " ";
 

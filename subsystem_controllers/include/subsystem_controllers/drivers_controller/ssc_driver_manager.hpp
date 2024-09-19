@@ -27,7 +27,6 @@
 #include <vector>
 
 #include "entry.hpp"
-#include "entry_manager.hpp"
 #include <ros2_lifecycle_manager/lifecycle_manager_interface.hpp>
 
 #include <carma_driver_msgs/msg/driver_status.hpp>
@@ -40,24 +39,25 @@
 namespace subsystem_controllers
 {
 /**
- * \brief The DriverManager serves as a component to manage CARMA required ROS1 Drivers
+ * \brief The SSCDriverManager serves as a component to manage ROS1 SSC Driver in CARMA which is
+ * primarily in ROS2
  */
-class DriverManager
+class SSCDriverManager
 {
 public:
   /*!
-   * \brief Default constructor for DriverManager with driver_timeout_ = 1000ms
+   * \brief Default constructor for SSCDriverManager with driver_timeout_ = 1000ms
    */
-  DriverManager();
+  SSCDriverManager();
 
   /**
-   * \brief Constructor for DriverManager
+   * \brief Constructor for SSCDriverManager
    *
-   * \param critical_driver_names The set of drivers which will be treated as required. A failure in
-   * these plugins will result in an exception \param driver_timeout The timeout threshold for
-   * essential drivers
+   * \param ssc_driver_name The driver name which will be treated as required. A failure in
+   * this plugin will result in an exception
+   * \param driver_timeout The timeout threshold for the driver
    */
-  DriverManager(const std::vector<std::string> & critical_driver_names, const long driver_timeout);
+  SSCDriverManager(const std::string & ssc_driver_name, const long driver_timeout);
 
   /*!
    * \brief Update driver status
@@ -68,26 +68,20 @@ public:
   /*!
    * \brief Check if all critical drivers are operational
    */
-  std::string are_critical_drivers_operational(long current_time);
-
-  /*!
-   * \brief Evaluate if the sensor is available
-   */
-  void evaluate_sensor(
-    int & sensor_input, bool available, long current_time, long timestamp, long driver_timeout);
+  bool is_ssc_driver_operational(long current_time);
 
   /*!
    * \brief Handle the spin and publisher
    */
-  carma_msgs::msg::SystemAlert handle_spin(
+  carma_msgs::msg::SystemAlert get_latest_system_alert(
     long time_now, long start_up_timestamp, long startup_duration);
 
 protected:
   // list of critical drivers
-  std::vector<std::string> critical_drivers_;
+  std::string ssc_driver_name_ = "";
 
-  //! Entry manager to keep track of detected plugins
-  std::shared_ptr<EntryManager> em_;
+  //! Latest SSC Status entry to keep track
+  std::shared_ptr<Entry> latest_ssc_status_entry_ = std::make_shared<Entry>();
 
   // timeout for critical driver timeout in milliseconds
   long driver_timeout_ = 1000;

@@ -32,8 +32,8 @@ DriversControllerNode::DriversControllerNode(const rclcpp::NodeOptions & options
     declare_parameter<double>("required_driver_timeout", config_.driver_timeout_);
 
   // carma-config parameters
-  config_.ros1_required_drivers_ = declare_parameter<std::vector<std::string>>(
-    "ros1_required_drivers", config_.ros1_required_drivers_);
+  config_.ros1_ssc_driver_name_ =
+    declare_parameter<std::string>("ros1_ssc_driver_name", config_.ros1_ssc_driver_name_);
   config_.excluded_namespace_nodes_ = declare_parameter<std::vector<std::string>>(
     "excluded_namespace_nodes", config_.excluded_namespace_nodes_);
 }
@@ -51,7 +51,7 @@ carma_ros2_utils::CallbackReturn DriversControllerNode::handle_on_configure(
   config_ = DriversControllerConfig();
 
   // Load required plugins and default enabled plugins
-  get_parameter<std::vector<std::string>>("ros1_required_drivers", config_.ros1_required_drivers_);
+  get_parameter<std::string>("ros1_ssc_driver_name", config_.ros1_ssc_driver_name_);
   get_parameter<int>("startup_duration", config_.startup_duration_);
   get_parameter<double>("required_driver_timeout", config_.driver_timeout_);
   get_parameter<std::vector<std::string>>(
@@ -60,9 +60,6 @@ carma_ros2_utils::CallbackReturn DriversControllerNode::handle_on_configure(
   RCLCPP_INFO_STREAM(get_logger(), "Config: " << config_);
 
   // Handle fact that parameter vectors cannot be empty
-  if (config_.ros1_required_drivers_.size() == 1 && config_.ros1_required_drivers_[0].empty()) {
-    config_.ros1_required_drivers_.clear();
-  }
   if (
     config_.excluded_namespace_nodes_.size() == 1 && config_.excluded_namespace_nodes_[0].empty()) {
     config_.excluded_namespace_nodes_.clear();
@@ -77,8 +74,8 @@ carma_ros2_utils::CallbackReturn DriversControllerNode::handle_on_configure(
 
   lifecycle_mgr_.set_managed_nodes(updated_managed_nodes);
 
-  driver_manager_ = std::make_shared<DriverManager>(
-    config_.ros1_required_drivers_, config_.driver_timeout_);
+  ssc_driver_manager_ =
+    std::make_shared<SSCDriverManager>(config_.ros1_ssc_driver_name_, config_.driver_timeout_);
 
   // record starup time
   start_up_timestamp_ = this->now().nanoseconds() / 1e6;
@@ -87,9 +84,9 @@ carma_ros2_utils::CallbackReturn DriversControllerNode::handle_on_configure(
     "driver_discovery", 20,
     std::bind(&DriversControllerNode::driver_discovery_cb, this, std::placeholders::_1));
 
-  timer_ = create_timer(
+  ssc_status_check_timer_ = create_timer(
     get_clock(), std::chrono::milliseconds(1000),
-    std::bind(&DriversControllerNode::timer_callback, this));
+    std::bind(&DriversControllerNode::critical_drivers_check_callback, this));
 
   // Configure our drivers
   bool success = lifecycle_mgr_
@@ -129,26 +126,28 @@ carma_ros2_utils::CallbackReturn DriversControllerNode::handle_on_activate(
   return base_return;
 }
 
-void DriversControllerNode::timer_callback()
+void DriversControllerNode::critical_drivers_check_callback()
 {
-  long time_now = this->now().nanoseconds() / 1e6;
-  rclcpp::Duration sd(config_.startup_duration_, 0);
-  long start_duration = sd.nanoseconds() / 1e6;
-
-  auto dm = driver_manager_->handle_spin(time_now, start_up_timestamp_, start_duration);
-
   // Wait for node to be activated
   if (get_current_state().id() == lifecycle_msgs::msg::State::PRIMARY_STATE_ACTIVE) {
+    long time_now = this->now().nanoseconds() / 1e6;
+    rclcpp::Duration sd(config_.startup_duration_, 0);
+    long start_duration = sd.nanoseconds() / 1e6;
+
+    auto sys_alert_msg_from_ssc =
+      ssc_driver_manager_->get_latest_system_alert(time_now, start_up_timestamp_, start_duration);
+
     if (!prev_alert) {
-      prev_alert = dm;
-      publish_system_alert(dm);
+      prev_alert = sys_alert_msg_from_ssc;
+      publish_system_alert(sys_alert_msg_from_ssc);
     } else if (
-      prev_alert->type == dm.type &&
-      prev_alert->description.compare(dm.description) == 0) {  // Do not publish duplicate alerts
+      prev_alert->type == sys_alert_msg_from_ssc.type &&
+      prev_alert->description.compare(sys_alert_msg_from_ssc.description) ==
+        0) {  // Do not publish duplicate alerts
       RCLCPP_DEBUG_STREAM(get_logger(), "No change to alert status");
     } else {
-      prev_alert = dm;
-      publish_system_alert(dm);
+      prev_alert = sys_alert_msg_from_ssc;
+      publish_system_alert(sys_alert_msg_from_ssc);
     }
   }
 }
@@ -157,7 +156,7 @@ void DriversControllerNode::driver_discovery_cb(
   const carma_driver_msgs::msg::DriverStatus::SharedPtr msg)
 {
   // Driver discovery only published by ros1 drivers
-  driver_manager_->update_driver_status(msg, this->now().nanoseconds() / 1e6);
+  ssc_driver_manager_->update_driver_status(msg, this->now().nanoseconds() / 1e6);
 }
 
 }  // namespace subsystem_controllers

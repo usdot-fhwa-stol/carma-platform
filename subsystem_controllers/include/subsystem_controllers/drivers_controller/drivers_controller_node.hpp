@@ -16,69 +16,63 @@
  * the License.
  */
 
-
-
 #include <memory>
 
-#include "carma_msgs/msg/system_alert.hpp"
-#include "ros2_lifecycle_manager/ros2_lifecycle_manager.hpp"
-#include "rclcpp/rclcpp.hpp"
-#include <carma_driver_msgs/msg/driver_status.hpp>
-#include "subsystem_controllers/base_subsystem_controller/base_subsystem_controller.hpp"
 #include "drivers_controller_config.hpp"
-#include "driver_manager.hpp"
+#include "rclcpp/rclcpp.hpp"
+#include "ros2_lifecycle_manager/ros2_lifecycle_manager.hpp"
+#include "ssc_driver_manager.hpp"
+#include "subsystem_controllers/base_subsystem_controller/base_subsystem_controller.hpp"
 #include <boost/algorithm/string.hpp>
+
+#include "carma_msgs/msg/system_alert.hpp"
+#include <carma_driver_msgs/msg/driver_status.hpp>
 
 namespace subsystem_controllers
 {
+class DriversControllerNode : public BaseSubsystemController
+{
+public:
+  DriversControllerNode() = delete;
 
-  class DriversControllerNode : public BaseSubsystemController
-  {
-  public:
+  ~DriversControllerNode() = default;
 
-    DriversControllerNode() = delete;
+  /**
+   * \brief Constructor. Set explicitly to support node composition.
+   *
+   * \param options The node options to use for configuring this node
+   */
+  explicit DriversControllerNode(const rclcpp::NodeOptions & options);
 
-    ~DriversControllerNode() = default;
+private:
+  // SSCDriverManager to handle all the driver specific discovery and reporting
+  std::shared_ptr<SSCDriverManager> ssc_driver_manager_;
 
-    /**
-     * \brief Constructor. Set explicitly to support node composition.
-     *
-     * \param options The node options to use for configuring this node
-     */
-    explicit DriversControllerNode(const rclcpp::NodeOptions &options);
+  //! Config for user provided parameters
+  DriversControllerConfig config_;
 
+  //! ROS handles
+  carma_ros2_utils::SubPtr<carma_driver_msgs::msg::DriverStatus> driver_status_sub_;
 
-  private:
+  // message/service callbacks
+  void driver_discovery_cb(const carma_driver_msgs::msg::DriverStatus::SharedPtr msg);
 
-    // DriverManager to handle all the driver specific discovery and reporting
-    std::shared_ptr<DriverManager> driver_manager_;
+  //! Timer callback function to check status of required ros1 drivers
+  void critical_drivers_check_callback();
 
-    //! Config for user provided parameters
-    DriversControllerConfig config_;
+  carma_ros2_utils::CallbackReturn handle_on_configure(const rclcpp_lifecycle::State & prev_state);
+  carma_ros2_utils::CallbackReturn handle_on_activate(const rclcpp_lifecycle::State & prev_state);
 
-    //! ROS handles
-    carma_ros2_utils::SubPtr<carma_driver_msgs::msg::DriverStatus> driver_status_sub_;
+  //! ROS parameters
+  std::vector<std::string> ros1_ssc_driver_name_;
 
-    // message/service callbacks
-    void driver_discovery_cb(const carma_driver_msgs::msg::DriverStatus::SharedPtr msg);
+  // record of startup timestamp
+  long start_up_timestamp_;
 
-    //! Timer callback function to check status of required ros1 drivers
-    void timer_callback();
+  rclcpp::TimerBase::SharedPtr ssc_status_check_timer_;
 
-    carma_ros2_utils::CallbackReturn handle_on_configure(const rclcpp_lifecycle::State &prev_state);
-    carma_ros2_utils::CallbackReturn handle_on_activate(const rclcpp_lifecycle::State &prev_state);
+  // Previously published alert message
+  boost::optional<carma_msgs::msg::SystemAlert> prev_alert;
+};
 
-    //! ROS parameters
-    std::vector<std::string> ros1_required_drivers_;
-
-    // record of startup timestamp
-    long start_up_timestamp_;
-
-    rclcpp::TimerBase::SharedPtr timer_;
-
-    // Previously published alert message
-    boost::optional<carma_msgs::msg::SystemAlert> prev_alert;
-
-  };
-
-} // namespace v2x_controller
+}  // namespace subsystem_controllers
