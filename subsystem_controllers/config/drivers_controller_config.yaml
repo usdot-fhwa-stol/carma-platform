@@ -22,7 +22,7 @@
     # Specifically includes the lidar and gps nodes which are handled in other subsystem controllers
     excluded_namespace_nodes: [""]
 
-    # List of ros1 controller drivers (node name) to consider required and who's failure shall result in automation abort
+    # ros1 controller driver (node name) to consider required and whose failure shall result in automation abort
     ros1_ssc_driver_name: ""
 
     # Boolean: If this flag is true then all nodes under subsystem_namespace are treated as required in addition to any nodes in required_subsystem_nodes
