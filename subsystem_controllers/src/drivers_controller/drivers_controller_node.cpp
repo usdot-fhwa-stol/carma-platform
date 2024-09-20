@@ -142,8 +142,8 @@ void DriversControllerNode::critical_drivers_check_callback()
       publish_system_alert(sys_alert_msg_from_ssc);
     } else if (
       prev_alert->type == sys_alert_msg_from_ssc.type &&
-      prev_alert->description.compare(sys_alert_msg_from_ssc.description) ==
-        0) {  // Do not publish duplicate alerts
+      // Do not publish duplicate alerts
+      prev_alert->description == sys_alert_msg_from_ssc.description) { 
       RCLCPP_DEBUG_STREAM(get_logger(), "No change to alert status");
     } else {
       prev_alert = sys_alert_msg_from_ssc;

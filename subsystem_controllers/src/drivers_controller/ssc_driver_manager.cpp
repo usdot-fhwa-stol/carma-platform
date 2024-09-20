@@ -65,7 +65,7 @@ void SSCDriverManager::update_driver_status(
   // update driver status is only called in response to a message received on driver_discovery.
   // This topic is only being published in ros1. Check only SSC
 
-  if (ssc_driver_name_.compare(msg->name) == 0) {
+  if (ssc_driver_name_ == msg->name) {
     Entry driver_status(
       msg->status == carma_driver_msgs::msg::DriverStatus::OPERATIONAL ||
         msg->status == carma_driver_msgs::msg::DriverStatus::DEGRADED,
@@ -78,7 +78,7 @@ void SSCDriverManager::update_driver_status(
 bool SSCDriverManager::is_ssc_driver_operational(long current_time)
 {
   // Manual disable of ssc entry in case ssc wrapper is in ros2
-  if (ssc_driver_name_ == "") {
+  if (ssc_driver_name_.empty()) {
     return true;
   }
 
