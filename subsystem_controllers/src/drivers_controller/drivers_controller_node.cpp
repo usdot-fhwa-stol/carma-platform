@@ -128,27 +128,25 @@ carma_ros2_utils::CallbackReturn DriversControllerNode::handle_on_activate(
 
 void DriversControllerNode::critical_drivers_check_callback()
 {
-  // Wait for node to be activated
-  if (get_current_state().id() == lifecycle_msgs::msg::State::PRIMARY_STATE_ACTIVE) {
-    long time_now = this->now().nanoseconds() / 1e6;
-    rclcpp::Duration sd(config_.startup_duration_, 0);
-    long start_duration = sd.nanoseconds() / 1e6;
+  if (get_current_state().id() != lifecycle_msgs::msg::State::PRIMARY_STATE_ACTIVE) {
+    return;  // Exit early if node is not active
+  }
 
-    auto sys_alert_msg_from_ssc =
-      ssc_driver_manager_->get_latest_system_alert(time_now, start_up_timestamp_, start_duration);
+  long time_now = this->now().nanoseconds() / 1e6;
+  long start_duration = rclcpp::Duration(config_.startup_duration_, 0).nanoseconds() / 1e6;
 
-    if (!prev_alert) {
-      prev_alert = sys_alert_msg_from_ssc;
-      publish_system_alert(sys_alert_msg_from_ssc);
-    } else if (
-      prev_alert->type == sys_alert_msg_from_ssc.type &&
-      // Do not publish duplicate alerts
-      prev_alert->description == sys_alert_msg_from_ssc.description) { 
-      RCLCPP_DEBUG_STREAM(get_logger(), "No change to alert status");
-    } else {
-      prev_alert = sys_alert_msg_from_ssc;
-      publish_system_alert(sys_alert_msg_from_ssc);
-    }
+  auto sys_alert_msg_from_ssc =
+    ssc_driver_manager_->get_latest_system_alert(time_now, start_up_timestamp_, start_duration);
+
+  // Only publish if it is first time publishing
+  // or if its type or description changed
+  if (
+    !prev_alert || prev_alert->type != sys_alert_msg_from_ssc.type ||
+    prev_alert->description != sys_alert_msg_from_ssc.description) {
+    prev_alert = sys_alert_msg_from_ssc;
+    publish_system_alert(sys_alert_msg_from_ssc);
+  } else {
+    RCLCPP_DEBUG_STREAM(get_logger(), "No change to alert status");
   }
 }
 
