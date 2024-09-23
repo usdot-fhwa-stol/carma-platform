@@ -29,7 +29,7 @@ DriversControllerNode::DriversControllerNode(const rclcpp::NodeOptions & options
 
   config_.startup_duration_ = declare_parameter<int>("startup_duration", config_.startup_duration_);
   config_.driver_timeout_ =
-    declare_parameter<double>("required_driver_timeout", config_.driver_timeout_);
+    declare_parameter<double>("ros1_ssc_driver_timeout ", config_.driver_timeout_);
 
   // carma-config parameters
   config_.ros1_ssc_driver_name_ =
@@ -53,7 +53,7 @@ carma_ros2_utils::CallbackReturn DriversControllerNode::handle_on_configure(
   // Load required plugins and default enabled plugins
   get_parameter<std::string>("ros1_ssc_driver_name", config_.ros1_ssc_driver_name_);
   get_parameter<int>("startup_duration", config_.startup_duration_);
-  get_parameter<double>("required_driver_timeout", config_.driver_timeout_);
+  get_parameter<double>("ros1_ssc_driver_timeout ", config_.driver_timeout_);
   get_parameter<std::vector<std::string>>(
     "excluded_namespace_nodes", config_.excluded_namespace_nodes_);
 

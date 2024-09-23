@@ -32,4 +32,4 @@
     startup_duration: 30
 
     # Double: The timeout threshold for essential drivers in ms
-    required_driver_timeout: 3000.0
+    ros1_ssc_driver_timeout : 3000.0
