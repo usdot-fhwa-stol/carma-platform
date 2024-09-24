@@ -26,8 +26,7 @@ add_executable(test_carma_lifecycle_node
 ament_add_gtest(controllers_gtest
   localization_controller_test.cpp
   test_plugin_manager.cpp
-  test_driver_subsystem/test_entry_manager.cpp
-  test_driver_subsystem/test_driver_manager.cpp
+  test_driver_subsystem/test_ssc_driver_manager.cpp
 )
 
 target_link_libraries(controllers_gtest

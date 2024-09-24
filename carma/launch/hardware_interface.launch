@@ -19,14 +19,8 @@
 -->
 <launch>
 
-  <arg name="vehicle_calibration_dir" default="$(find carma)../../CARMAVehicleCalibration/development/vehicle" doc="The directory continaing vehicle calibration type parameters"/>
-
-  <!-- Startup Drivers With Main CARMA System -->
-  <arg name="launch_drivers" default="true" doc="True if drivers are to be launched with the CARMA Platform"/>
-
   <!-- Remap topics from external packages -->
   <remap from="ui_instructions" to="$(optenv CARMA_UI_NS)/ui_instructions"/>
-
   <remap from="system_alert" to="/system_alert"/>
 
   <!-- Temporary node to get a ROS2 accel topic into the rosbag -->
