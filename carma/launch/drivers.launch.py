@@ -24,6 +24,7 @@ from launch_ros.actions import ComposableNodeContainer
 from launch_ros.descriptions import ComposableNode
 from carma_ros2_utils.launch.get_log_level import GetLogLevel
 from carma_ros2_utils.launch.get_current_namespace import GetCurrentNamespace
+from launch.conditions import IfCondition
 import os
 
 
@@ -112,12 +113,12 @@ def generate_launch_description():
     # subsystem_controller which orchestrates the lifecycle of this subsystem's components
     mock_controller_driver = Node(
         package='mock_controller_driver',
-        name='mock_controller',
-        executable='mock_controller',
+        name='mock_controller_driver',
+        executable='mock_controller_driver_node_exec',
         parameters=[
             {"use_mock_controller" : use_mock_controller}],
-        on_exit= Shutdown(), # Mark the subsystem controller as required
-        arguments=['--ros-args', '--log-level', GetLogLevel('mock_controller_driver', env_log_levels)]
+        arguments=['--ros-args', '--log-level', GetLogLevel('mock_controller_driver', env_log_levels)],
+        condition=IfCondition(LaunchConfiguration('use_mock_controller'))
     )
 
     return LaunchDescription([
