@@ -52,7 +52,7 @@ def generate_launch_description():
     declare_use_mock_controller = DeclareLaunchArgument(
         name = 'use_mock_controller',
         default_value = "False",
-        description = "True if locally deployed" #TODO check with team
+        description = "True if locally deployed for Basic Travel Simulator" #TODO check with team
     )
 
     env_log_levels = EnvironmentVariable('CARMA_ROS_LOGGING_CONFIG', default_value='{ "default_level" : "WARN" }')
