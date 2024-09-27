@@ -50,8 +50,8 @@ namespace mock_controller_driver
     // Setup timers
     spin_timer_ = create_timer(
         get_clock(),
-        std::chrono::milliseconds(50), // 20 Hz
-        std::bind(&MockControllerDriver::timer_callback, this));
+        std::chrono::milliseconds(33), // 30 Hz
+        std::bind(&MockControllerDriver::publish_robot_status_callback, this));
 
     return CallbackReturn::SUCCESS;
   }
@@ -78,9 +78,9 @@ namespace mock_controller_driver
     return true;
   }
 
-  void MockControllerDriver::timer_callback()
+  void MockControllerDriver::publish_robot_status_callback()
   {
-    RCLCPP_DEBUG(get_logger(), "Example timer callback");
+    RCLCPP_DEBUG(get_logger(), "Generating robot status message");
     carma_driver_msgs::msg::RobotEnabled robot_status;
     robot_status.robot_active = robot_active_;
     robot_status.robot_enabled = robot_enabled_;

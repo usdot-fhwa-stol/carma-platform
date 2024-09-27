@@ -30,7 +30,8 @@ namespace mock_controller_driver
 {
 
   /**
-   * \brief TODO for USER: Add class description
+   * \class MockControllerDriver
+   * \brief responsible for replicating behavior of control driver
    *
    */
   class MockControllerDriver : public carma_ros2_utils::CarmaLifecycleNode
@@ -78,13 +79,14 @@ namespace mock_controller_driver
     parameter_update_callback(const std::vector<rclcpp::Parameter> &parameters);
 
     /**
-     * \brief Timer callback
+     * \brief Timer callback, to publish robot status message
      */
-    void timer_callback();
+    void publish_robot_status_callback();
 
 
     /**
     * \brief Callback for the enable robotic service. Triggering this callback will modify the RobotEnabled message output by this driver.
+    * This service enables the robotic drive-by-wire controller
     *
     * \param request The service request in message
     * \param response The service response out message
@@ -108,14 +110,6 @@ namespace mock_controller_driver
     carma_ros2_utils::CallbackReturn handle_on_configure(const rclcpp_lifecycle::State &prev_state);
     carma_ros2_utils::CallbackReturn handle_on_activate(const rclcpp_lifecycle::State &);
 
-    /**
-     * TODO for USER: The following lifecycle overrides are also available if needed
-     * handle_on_activate
-     * handle_on_deactivate
-     * handle_on_cleanup
-     * handle_on_shutdown
-     * handle_on_error
-     */
   };
 
 } // mock_controller_driver

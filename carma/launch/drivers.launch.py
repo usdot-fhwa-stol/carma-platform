@@ -48,12 +48,6 @@ def generate_launch_description():
         description = "True if simulation mode is on"
     )
 
-    use_mock_controller = LaunchConfiguration('use_mock_controller')
-    declare_use_mock_controller = DeclareLaunchArgument(
-        name = 'use_mock_controller',
-        default_value = "False",
-        description = "True if locally deployed for Basic Travel Simulator" #TODO check with team
-    )
 
     env_log_levels = EnvironmentVariable('CARMA_ROS_LOGGING_CONFIG', default_value='{ "default_level" : "WARN" }')
 
@@ -110,23 +104,10 @@ def generate_launch_description():
         arguments=['--ros-args', '--log-level', GetLogLevel('subsystem_controllers', env_log_levels)]
     )
 
-    # subsystem_controller which orchestrates the lifecycle of this subsystem's components
-    mock_controller_driver = Node(
-        package='mock_controller_driver',
-        name='mock_controller_driver',
-        executable='mock_controller_driver_node_exec',
-        parameters=[
-            {"use_mock_controller" : use_mock_controller}],
-        arguments=['--ros-args', '--log-level', GetLogLevel('mock_controller_driver', env_log_levels)],
-        condition=IfCondition(LaunchConfiguration('use_mock_controller'))
-    )
-
     return LaunchDescription([
         declare_subsystem_controller_param_file_arg,
         declare_vehicle_config_param_file_arg,
         declare_use_sim_time_arg,
-        declare_use_mock_controller,
         lightbar_manager_container,
         subsystem_controller,
-        mock_controller_driver
     ])
