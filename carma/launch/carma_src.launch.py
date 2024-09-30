@@ -92,6 +92,14 @@ def generate_launch_description():
         description = "Path to file containing unique vehicle characteristics"
     )
 
+    # Enables/disables the basic travel simulator in carma-platform only local simulation environment
+    enable_basic_travel_simulator = LaunchConfiguration('enable_basic_travel_simulator')
+    declare_enable_basic_travel_simulator_arg = DeclareLaunchArgument(
+        'enable_basic_travel_simulator',
+        default_value='false',
+        description='Enable or disable the basic travel simulator'
+    )
+
     # Declare the vehicle_config_param_file launch argument
     vehicle_config_param_file = LaunchConfiguration('vehicle_config_param_file')
     declare_vehicle_config_param_file_arg = DeclareLaunchArgument(
@@ -250,7 +258,8 @@ def generate_launch_description():
                     'arealist_path' : arealist_path,
                     'vector_map_file' : vector_map_file,
                     'vehicle_calibration_dir': vehicle_calibration_dir,
-                    'use_sim_time' : use_sim_time
+                    'use_sim_time' : use_sim_time,
+                    'enable_basic_travel_simulator': enable_basic_travel_simulator
                 }.items()
             )
         ]
@@ -352,6 +361,7 @@ def generate_launch_description():
         declare_arealist_path,
         declare_vector_map_file,
         declare_is_ros2_tracing_enabled,
+        declare_enable_basic_travel_simulator_arg,
         drivers_group,
         transform_group,
         environment_group,

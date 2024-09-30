@@ -2,7 +2,10 @@
 # Recommended: Match with controller's frequency
 pose_pub_rate: 30.0
 
-# Increase more to help avoid going back and forth
-# when speed is low and keeps getting same trajectory
-# better tracks trajectory if kept low [0, inf]
+# When speed is low, the simulator struggles to 
+# move the car forward consistently and the 
+# car may oscillate back and forth. Increase to help
+# avoid this issue.It means to consider
+# the next trajectory point that is traj_idx_buffer
+# further ahead in the trajectory. [0, inf]
 traj_idx_buffer: 0
