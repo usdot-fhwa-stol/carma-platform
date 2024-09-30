@@ -42,6 +42,3 @@ truck_can_driver
 # exceptions
 !hooks/build
 .vscode
-
-# ifgnore AI chat
-.aider*
