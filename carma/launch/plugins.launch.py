@@ -84,8 +84,8 @@ def generate_launch_description():
     stop_controlled_intersection_tactical_plugin_file_path = os.path.join(
         get_package_share_directory('stop_controlled_intersection_tactical_plugin'), 'config/parameters.yaml')
 
-    #trajectory_follower_wrapper_param_file = os.path.join(
-    #    get_package_share_directory('trajectory_follower_wrapper'), 'config/parameters.yaml')
+    trajectory_follower_wrapper_param_file = os.path.join(
+        get_package_share_directory('trajectory_follower_wrapper'), 'config/parameters.yaml')
 
     env_log_levels = EnvironmentVariable('CARMA_ROS_LOGGING_CONFIG', default_value='{ "default_level" : "WARN" }')
 
@@ -464,93 +464,93 @@ def generate_launch_description():
         ]
     )
 
-    # trajectory_follower_container = ComposableNodeContainer(
-    #     package='carma_ros2_utils',
-    #     name='trajectory_follower_container',
-    #     executable='carma_component_container_mt',
-    #     namespace=GetCurrentNamespace(),
-    #     composable_node_descriptions=[
-    #         ComposableNode(
-    #             package='trajectory_follower_nodes',
-    #             plugin='autoware::motion::control::trajectory_follower_nodes::LatLonMuxer',
-    #             name='latlon_muxer_node',
-    #             extra_arguments=[
-    #                 {'use_intra_process_comms': False},
-    #                 {'--log-level' : GetLogLevel('latlon_muxer', env_log_levels) }
-    #             ],
-    #             remappings = [
-    #                   ("input/lateral/control_cmd", "trajectory_follower/lateral/control_cmd"),
-    #                   ("input/longitudinal/control_cmd", "trajectory_follower/longitudinal/control_cmd"),
-    #                   ("output/control_cmd", "trajectory_follower/control_cmd")
-    #             ],
-    #             parameters=[
-    #                 {'timeout_thr_sec':0.5}
-    #             ]
-    #         ),
-    #         ComposableNode(
-    #             package='trajectory_follower_nodes',
-    #             plugin='autoware::motion::control::trajectory_follower_nodes::LateralController',
-    #             name='lateral_controller_node',
-    #             extra_arguments=[
-    #                 {'use_intra_process_comms': True},
-    #                 {'--log-level' : GetLogLevel('lateral_controller', env_log_levels) }
-    #             ],
-    #             remappings = [
-    #                   ("output/lateral/control_cmd", "trajectory_follower/lateral/control_cmd"),
-    #                   ("input/current_kinematic_state", "trajectory_follower/current_kinematic_state"),
-    #                   ("input/reference_trajectory","trajectory_follower/reference_trajectory" )
-    #             ],
-    #             parameters = [
-    #                 [vehicle_calibration_dir, "/trajectory_follower/lateral_controller_defaults.yaml"]
-    #             ]
-    #         ),
-    #         ComposableNode(
-    #             package='trajectory_follower_nodes',
-    #             plugin='autoware::motion::control::trajectory_follower_nodes::LongitudinalController',
-    #             name='longitudinal_controller_node',
-    #             extra_arguments=[
-    #                 {'use_intra_process_comms': False},
-    #                 {'--log-level' : GetLogLevel('longitudinal_controller', env_log_levels) }
-    #             ],
-    #             remappings = [
-    #                   ("output/longitudinal/control_cmd", "trajectory_follower/longitudinal/control_cmd"),
-    #                   ("input/current_trajectory", "trajectory_follower/reference_trajectory"),
-    #                   ("input/current_state", "trajectory_follower/current_kinematic_state")
-    #             ],
-    #             parameters = [
-    #                 [vehicle_calibration_dir, "/trajectory_follower/longitudinal_controller_defaults.yaml"]
-    #             ]
-    #         )
-    #     ]
-    # )
-    # carma_trajectory_follower_wrapper_container = ComposableNodeContainer(
-    #     package='carma_ros2_utils',
-    #     name='carma_trajectory_follower_wrapper_container',
-    #     executable='carma_component_container_mt',
-    #     namespace=GetCurrentNamespace(),
-    #     composable_node_descriptions=[
-    #         ComposableNode(
-    #                 package='trajectory_follower_wrapper',
-    #                 plugin='trajectory_follower_wrapper::TrajectoryFollowerWrapperNode',
-    #                 name='trajectory_follower_wrapper',
-    #                 extra_arguments=[
-    #                 {'use_intra_process_comms': True},
-    #                 {'--log-level' : GetLogLevel('trajectory_follower_wrapper', env_log_levels) }
-    #             ],
-    #             remappings = [
-    #                 ("plugin_discovery", [ EnvironmentVariable('CARMA_GUIDE_NS', default_value=''), "/plugin_discovery" ] ),
-    #                 ("ctrl_raw", [ EnvironmentVariable('CARMA_GUIDE_NS', default_value=''), "/ctrl_raw" ] ),
-    #                 ("trajectory_follower_wrapper/plan_trajectory", [ EnvironmentVariable('CARMA_GUIDE_NS', default_value=''), "/plugins/trajectory_follower_wrapper/plan_trajectory" ] ),
-    #                 ("current_pose", [ EnvironmentVariable('CARMA_LOCZ_NS', default_value=''), "/current_pose" ] ),
-    #                 ("vehicle/twist", [ EnvironmentVariable('CARMA_INTR_NS', default_value=''), "/vehicle/twist" ] ),
-    #             ],
-    #             parameters=[
-    #                 vehicle_characteristics_param_file,
-    #                 trajectory_follower_wrapper_param_file
-    #             ]
-    #         ),
-    #     ]
-    # )
+    trajectory_follower_container = ComposableNodeContainer(
+        package='carma_ros2_utils',
+        name='trajectory_follower_container',
+        executable='carma_component_container_mt',
+        namespace=GetCurrentNamespace(),
+        composable_node_descriptions=[
+            ComposableNode(
+                package='trajectory_follower_nodes',
+                plugin='autoware::motion::control::trajectory_follower_nodes::LatLonMuxer',
+                name='latlon_muxer_node',
+                extra_arguments=[
+                    {'use_intra_process_comms': False},
+                    {'--log-level' : GetLogLevel('latlon_muxer', env_log_levels) }
+                ],
+                remappings = [
+                      ("input/lateral/control_cmd", "trajectory_follower/lateral/control_cmd"),
+                      ("input/longitudinal/control_cmd", "trajectory_follower/longitudinal/control_cmd"),
+                      ("output/control_cmd", "trajectory_follower/control_cmd")
+                ],
+                parameters=[
+                    {'timeout_thr_sec':0.5}
+                ]
+            ),
+            ComposableNode(
+                package='trajectory_follower_nodes',
+                plugin='autoware::motion::control::trajectory_follower_nodes::LateralController',
+                name='lateral_controller_node',
+                extra_arguments=[
+                    {'use_intra_process_comms': True},
+                    {'--log-level' : GetLogLevel('lateral_controller', env_log_levels) }
+                ],
+                remappings = [
+                      ("output/lateral/control_cmd", "trajectory_follower/lateral/control_cmd"),
+                      ("input/current_kinematic_state", "trajectory_follower/current_kinematic_state"),
+                      ("input/reference_trajectory","trajectory_follower/reference_trajectory" )
+                ],
+                parameters = [
+                    [vehicle_calibration_dir, "/trajectory_follower/lateral_controller_defaults.yaml"]
+                ]
+            ),
+            ComposableNode(
+                package='trajectory_follower_nodes',
+                plugin='autoware::motion::control::trajectory_follower_nodes::LongitudinalController',
+                name='longitudinal_controller_node',
+                extra_arguments=[
+                    {'use_intra_process_comms': False},
+                    {'--log-level' : GetLogLevel('longitudinal_controller', env_log_levels) }
+                ],
+                remappings = [
+                      ("output/longitudinal/control_cmd", "trajectory_follower/longitudinal/control_cmd"),
+                      ("input/current_trajectory", "trajectory_follower/reference_trajectory"),
+                      ("input/current_state", "trajectory_follower/current_kinematic_state")
+                ],
+                parameters = [
+                    [vehicle_calibration_dir, "/trajectory_follower/longitudinal_controller_defaults.yaml"]
+                ]
+            )
+        ]
+    )
+    carma_trajectory_follower_wrapper_container = ComposableNodeContainer(
+        package='carma_ros2_utils',
+        name='carma_trajectory_follower_wrapper_container',
+        executable='carma_component_container_mt',
+        namespace=GetCurrentNamespace(),
+        composable_node_descriptions=[
+            ComposableNode(
+                    package='trajectory_follower_wrapper',
+                    plugin='trajectory_follower_wrapper::TrajectoryFollowerWrapperNode',
+                    name='trajectory_follower_wrapper',
+                    extra_arguments=[
+                    {'use_intra_process_comms': True},
+                    {'--log-level' : GetLogLevel('trajectory_follower_wrapper', env_log_levels) }
+                ],
+                remappings = [
+                    ("plugin_discovery", [ EnvironmentVariable('CARMA_GUIDE_NS', default_value=''), "/plugin_discovery" ] ),
+                    ("ctrl_raw", [ EnvironmentVariable('CARMA_GUIDE_NS', default_value=''), "/ctrl_raw" ] ),
+                    ("trajectory_follower_wrapper/plan_trajectory", [ EnvironmentVariable('CARMA_GUIDE_NS', default_value=''), "/plugins/trajectory_follower_wrapper/plan_trajectory" ] ),
+                    ("current_pose", [ EnvironmentVariable('CARMA_LOCZ_NS', default_value=''), "/current_pose" ] ),
+                    ("vehicle/twist", [ EnvironmentVariable('CARMA_INTR_NS', default_value=''), "/vehicle/twist" ] ),
+                ],
+                parameters=[
+                    vehicle_characteristics_param_file,
+                    trajectory_follower_wrapper_param_file
+                ]
+            ),
+        ]
+    )
 
     platooning_strategic_plugin_container = ComposableNodeContainer(
         package='carma_ros2_utils',
@@ -716,11 +716,11 @@ def generate_launch_description():
         carma_yield_plugin_container,
         carma_light_controlled_intersection_plugins_container,
         carma_pure_pursuit_wrapper_container,
-        #carma_trajectory_follower_wrapper_container,
+        carma_trajectory_follower_wrapper_container,
         #platooning_strategic_plugin_container,
         platooning_tactical_plugin_container,
         platooning_control_plugin_container,
         intersection_transit_maneuvering_container,
-        #trajectory_follower_container
+        trajectory_follower_container
 
     ])
