@@ -65,7 +65,7 @@ def generate_launch_description():
     Launch CARMA System.
     """
 
-    system_controller_param_file = os.path.join(
+    system_controller_default_param_file = os.path.join(
         get_package_share_directory('system_controller'), 'config/config.yaml')
 
     env_log_levels = EnvironmentVariable('CARMA_ROS_LOGGING_CONFIG', default_value='{ "default_level" : "WARN" }')
@@ -84,6 +84,9 @@ def generate_launch_description():
         default_value = "/opt/carma/vehicle/config",
         description = "Path to file containing vehicle config directories"
     )
+
+    system_controller_param_file = os.path.join(
+        vehicle_config_dir, 'config/config.yaml')
 
     vehicle_characteristics_param_file = LaunchConfiguration('vehicle_characteristics_param_file')
     declare_vehicle_characteristics_param_file_arg = DeclareLaunchArgument(
@@ -322,6 +325,7 @@ def generate_launch_description():
         name='system_controller',
         executable='system_controller',
         parameters=[
+                    system_controller_default_param_file,
                     system_controller_param_file,
                     {"use_sim_time" : use_sim_time}],
         on_exit = Shutdown(), # Mark the subsystem controller as required for segfaults
