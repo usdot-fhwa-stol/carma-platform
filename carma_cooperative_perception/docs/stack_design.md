@@ -21,6 +21,8 @@ The following table summarizes the different stack configurations.
 
 We assume all actors can receive incoming messages such as SDSMs, whether they can use that data is a different matter.
 We also assume actors with local perception abilities have access to object-level data regarding the environment.
+## General approach with notations
+![Alt text](assets/Overall_MOT.png)
 
 ## Local perception and fusion
 
@@ -81,3 +83,6 @@ configuration.
 
 ![](assets/carma_cooperative_perception_no_perception_no_fusion_node_diagram.png)
 ![](assets/carma_cooperative_perception_no_perception_no_fusion_system_diagram.png)
+
+## Multiple Object Tracking Pipeline Archecture
+![Alt text](assets/MOT_Detailed_Pipeline.png)
