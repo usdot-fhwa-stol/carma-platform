@@ -68,7 +68,7 @@ sudo groupadd --gid $GRP_ID carma # create the carma group if it does not alread
 USERNAME=$(whoami)
 sudo usermod -a -G $GRP_ID $USERNAME
 
-mkdir -p /opt/carma/logs /opt/carma/.ros /opt/carma/maps /opt/carma/routes
+mkdir -p /opt/carma/logs /opt/carma/.ros /opt/carma/maps /opt/carma/routes /opt/carma/yolo /opt/carma/data
 
 # Check if downloading maps is required
 if [ "$DOWNLOAD_MAPS" == "true" ]; then
