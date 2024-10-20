@@ -136,8 +136,9 @@ Contact Name: James Lieu
 Contact Phone: (202) 366-3000
 
 ## Contact
-Please click on the CARMA logo below to visit the Federal Highway Adminstration(FHWA) CARMA website. For more information, contact CARMA@dot.gov.
+Please click on the CARMA logo below to visit the Federal Highway Adminstration(FHWA) CARMA website. For more information, contact CAVSupportServices@dot.gov.
+
 [![CARMA Image](docs/image/CARMA_icon2.png)](https://highways.dot.gov/research/research-programs/operations/CARMA)
 
 ## Support
-For technical support from the CARMA team, please contact the CARMA help desk at CARMASupport@dot.gov.
+For technical support from the CARMA team, please contact the CARMA help desk at CAVSupportServices@dot.gov.
