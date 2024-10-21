@@ -190,3 +190,5 @@ void MotionComputationNode::publishObject(
 }  // namespace motion_computation
 
 #include "rclcpp_components/register_node_macro.hpp"
+// Register the component with class_loader
+RCLCPP_COMPONENTS_REGISTER_NODE(motion_computation::MotionComputationNode)
