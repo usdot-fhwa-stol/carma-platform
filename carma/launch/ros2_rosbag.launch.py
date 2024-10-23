@@ -67,7 +67,7 @@ def record_ros2_rosbag(context: LaunchContext, vehicle_config_param_file, rosbag
                 proc = ExecuteProcess(
                         cmd=['ros2', 'bag', 'record', '-s', 'mcap', '--qos-profile-overrides-path', overriding_qos_profiles, '-o', '/opt/carma/logs/rosbag2_' + str(datetime.now().strftime('%Y-%m-%d_%H%M%S')), '-a', '-x', exclude_topics_regex],
                         output='screen',
-                        shell='true'
+                        shell='false'
                     )
 
                 return [proc]
