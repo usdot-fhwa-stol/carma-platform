@@ -1,67 +1,38 @@
 ## This file defines Quality of Service settings for subscribers created in rosbag2 recording.
 ## Topics defined here have multiple publishers with different QoS settings which may lead to the rosbag ignoring messages.
 ## The QoS settings defined here give the subscriber less restrictive settings, so all messages from the topic are retained.
+
 /rosout:
   history: keep_all
   reliability: reliable
   durability: volatile
+
 /environment/lanelet2_map_viz:
   history: keep_last
   reliability: reliable
   durability: transient_local
   depth: 1
+
 /environment/lanelet_map_bin:
   history: keep_last
   reliability: reliable
   durability: transient_local
   depth: 1
-/environment/lanelet2_map_viz:
-  history: keep_last
-  reliability: reliable
-  durability: transient_local
-  depth: 1
+
 /localization/map_param_loader/georeference:
   history: keep_last
   reliability: reliable
   durability: transient_local
   depth: 1
+
 /localization/points_map:
   history: keep_last
   reliability: reliable
   durability: transient_local
   depth: 1
+
 /message/incoming_geofence_control:
   history: keep_last
-  reliability: reliable
-  durability: transient_local
-  depth: 1
-/environment/map_update:
-  history: keep_last
-  reliability: reliable
-  durability: transient_local
-  depth: 1
-/environment/semantic_map:
-  history: keep_last
-  reliability: reliable
-  durability: transient_local
-  depth: 1
-/localization/managed_initialpose:
-  history: keep_last
-  reliability: reliable
-  durability: transient_local
-  depth: 1
-/guidance/route_event:
-  history: keep_last
-  reliability: reliable
-  durability: transient_local
-  depth: 1
-/system_alert:
-  history: keep_all
-  reliability: reliable
-  durability: transient_local
-  depth: 1k
-/trajectory_follower/control_cmd:
-  history: keep_all
   reliability: reliable
   durability: transient_local
   depth: 1
