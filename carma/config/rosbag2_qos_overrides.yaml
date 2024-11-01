@@ -35,19 +35,16 @@
   history: keep_all
   reliability: reliable
   durability: transient_local
-  depth: 1
 
 /guidance/route_event:
   history: keep_all
   reliability: reliable
   durability: transient_local
-  depth: 1
 
 /system_alert:
   history: keep_all
   reliability: reliable
   durability: transient_local
-  depth: 1
 
 /environment/map_update:
   history: keep_last
