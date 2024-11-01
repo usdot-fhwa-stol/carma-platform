@@ -32,19 +32,19 @@
   depth: 1
 
 /message/incoming_geofence_control:
-  history: keep_last
+  history: keep_all
   reliability: reliable
   durability: transient_local
   depth: 1
 
 /guidance/route_event:
-  history: keep_last
+  history: keep_all
   reliability: reliable
   durability: transient_local
   depth: 1
 
 /system_alert:
-  history: keep_last
+  history: keep_all
   reliability: reliable
   durability: transient_local
   depth: 1
