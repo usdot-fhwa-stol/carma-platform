@@ -583,7 +583,6 @@ carma__exec() {
             --device=/dev/dri:/dev/dri \
             --network=$NETWORK \
             --entrypoint="$entrypoint" \
-            -p 8765:8765 \
             -it $TARGET_IMAGE -c "$COMMAND"
     else
         docker run \
@@ -602,7 +601,6 @@ carma__exec() {
             --device=/dev/dri:/dev/dri \
             --network=$NETWORK \
             --entrypoint="$entrypoint" \
-            -p 8765:8765 \
             -it $TARGET_IMAGE --init-file "$INIT_FILE"
     fi
 }
