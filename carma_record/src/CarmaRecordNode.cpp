@@ -86,8 +86,10 @@ int CarmaRecordNode::run() const
   } else {
     cnh_.setParam("no_exclusions", false);
   }
+  // No need to spin here, but it prevents from continuously 
+  // printing error logs in ros1_bridge
+  ros::spin();
 
-  // End node because there is no need to spin
   return 0;
 }
 
