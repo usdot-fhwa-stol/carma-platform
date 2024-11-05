@@ -502,42 +502,58 @@ carma__exec() {
     local TAG=latest
 
     local TARGET_IMAGE="$USERNAME/carma-platform:$TAG"
+    local NETWORK="host"  # Default network mode
+    local RUNTIME=""      # Default runtime is empty
+    local COMMAND=""
+    local INIT_FILE="/home/carma/.base-image/init-env.sh"
 
-    # Check if the -i argument was provided
-    # If the image was specified then use that
+    # Process all arguments in any order
+    while [[ $# -gt 0 ]]; do
+        case "$1" in
+            --gui)
+                RUNTIME="nvidia"
+                echo "Setting Docker runtime to $RUNTIME"
+                shift
+                ;;
+            --network|-n)
+                if [[ -z "$2" ]]; then
+                    echo "When --network or -n is specified, you must enter a network name."
+                    exit 1
+                fi
+                NETWORK="$2"
+                echo "Setting Docker network to $NETWORK"
+                shift 2
+                ;;
+            -i|--image)
+                if [[ -z "$2" ]]; then
+                    echo "When -i or --image is specified, you must enter a CARMA Docker image and tag."
+                    exit 1
+                fi
+                TARGET_IMAGE="$2"
+                echo "Setting Docker image to $TARGET_IMAGE"
+                shift 2
+                ;;
+            *)
+                # Assume any remaining arguments are part of the command
+                COMMAND="${COMMAND} $1"
+                shift
+                ;;
+        esac
+    done
 
-    if [ "$1" = "--gui" ]; then
-        local RUNTIME=nvidia
-        echo "setting docker runtime to $RUNTIME"
-        shift
-    fi
-
-    if [ "$1" = "-i" ]; then
-
-        if [ -z "$2" ]; then
-            echo " When -i is specified you must enter a carma docker image and tag."
-            exit 1
-        fi
-
-        local TARGET_IMAGE="$2"
-
-        shift
-        shift
-    # If the image was not specified try to use what was in the carma config
-    else
-        local TARGET_IMAGE=$(__get_image_from_config 'carma-platform\|carma-messenger')
+    # If no custom image is specified, get the default from the config
+    if [[ "$TARGET_IMAGE" == "$USERNAME/carma-platform:$TAG" ]]; then
+        TARGET_IMAGE=$(__get_image_from_config 'carma-platform\|carma-messenger')
     fi
 
     # Verify target image exists
-    if [ -z "$(docker images -q $TARGET_IMAGE 2> /dev/null)" ]; then
-        echo "Specified image could not be found. carma exec attempted to use image $TARGET_IMAGE but it was not found."
-        echo "If an alternative image is available, please specify it using the -i option."
+    if [[ -z "$(docker images -q $TARGET_IMAGE 2> /dev/null)" ]]; then
+        echo "Specified image could not be found. CARMA exec attempted to use image $TARGET_IMAGE but it was not found."
+        echo "If an alternative image is available, please specify it using the -i or --image option."
         exit 1
     fi
 
-    # Docker setup here is based on Pierre Killy's docker-ros-box https://github.com/pierrekilly/docker-ros-box located here.
-    # Docker ROS Box is licensed under the MIT licesne a copy of which can be found in the carma-platform repository here https://github.com/usdot-fhwa-stol/carma-platform/blob/develop/docs/License.md
-
+    # Setup for Docker X11 and authorization
     local XSOCK=/tmp/.X11-unix
     local XAUTH=/tmp/.docker.xauth
     touch $XAUTH
@@ -545,13 +561,10 @@ carma__exec() {
 
     echo "Trying to open shell inside image: $TARGET_IMAGE"
 
-    # If a command was specified then assign it otherwise use bash
+    # Set entrypoint and environment setup
     local entrypoint="/bin/bash"
-    local INIT_FILE="/home/carma/.base-image/init-env.sh"
-
-    if [ -n "$1" ]; then
-
-        local COMMAND="source $INIT_FILE && ${@}"
+    if [[ -n "$COMMAND" ]]; then
+        COMMAND="source $INIT_FILE && $COMMAND"
 
         docker run \
             -e DISPLAY=$DISPLAY \
@@ -568,10 +581,10 @@ carma__exec() {
             --env="XAUTHORITY=${XAUTH}" \
             --env QT_X11_NO_MITSHM=1 \
             --device=/dev/dri:/dev/dri \
-            --network=host \
+            --network=$NETWORK \
             --entrypoint="$entrypoint" \
+            -p 8765:8765 \
             -it $TARGET_IMAGE -c "$COMMAND"
-
     else
         docker run \
             -e DISPLAY=$DISPLAY \
@@ -587,11 +600,13 @@ carma__exec() {
             --volume=/opt/carma/routes:/opt/carma/routes \
             --env="XAUTHORITY=${XAUTH}" \
             --device=/dev/dri:/dev/dri \
-            --network=host \
+            --network=$NETWORK \
             --entrypoint="$entrypoint" \
+            -p 8765:8765 \
             -it $TARGET_IMAGE --init-file "$INIT_FILE"
     fi
 }
+
 
 carma__help() {
     cat <<HELP
