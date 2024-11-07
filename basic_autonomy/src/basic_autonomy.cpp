@@ -1318,6 +1318,7 @@ namespace basic_autonomy
             if (yield_plan.trajectory_points.size() < 2)
             {
                 RCLCPP_WARN(node_handler->get_logger(), "Invalid Yield Trajectory");
+                return false;
             }
 
             RCLCPP_DEBUG_STREAM(node_handler->get_logger(), "Yield Trajectory Time" << rclcpp::Time(yield_plan.trajectory_points[0].target_time).seconds());
