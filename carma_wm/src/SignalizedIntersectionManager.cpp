@@ -132,8 +132,9 @@ namespace carma_wm
 
       for (auto node : node_list)
       {
-        RCLCPP_DEBUG_STREAM(rclcpp::get_logger("carma_wm::SignalizedIntersectionManager"), node.x() << ", " << node.y());
+        RCLCPP_DEBUG_STREAM(rclcpp::get_logger("carma_wm::SignalizedIntersectionManager"), "intersection: " << intersection.id.id << ", " << node.x() << ", " << node.y());
       }
+      intersection_nodes_[intersection.id.id] = node_list;
 
       // save which signal group connect to which exit lanes
       for (auto connection : lane.connect_to_list)

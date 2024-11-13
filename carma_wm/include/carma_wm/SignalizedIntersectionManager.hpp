@@ -144,6 +144,9 @@ public:
   */
   lanelet::Lanelets identifyInteriorLanelets(const lanelet::Lanelets& entry_llts, const std::shared_ptr<lanelet::LaneletMap>& map);
   
+  // SignalizedIntersection's geometry points from MAP Msg
+  std::unordered_map<uint16_t, std::vector<lanelet::Point3d>> intersection_nodes_;
+
   // SignalizedIntersection's reference point correction pair of (x, y) for each intersection_id
   std::unordered_map<uint16_t, std::pair<double, double>> intersection_coord_correction_;
   

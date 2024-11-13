@@ -240,6 +240,8 @@ std::vector<std::shared_ptr<Geofence>> WMBroadcaster::geofenceFromMapMsg(std::sh
     {
       update->affected_parts_.push_back(llt);
     }
+    // For debug purpose we add the intersection geometry points to visualize later
+    update->gf_pts = sim_->intersection_nodes_[intersection.id.id];
     updates_to_send.push_back(update);
   }
 
