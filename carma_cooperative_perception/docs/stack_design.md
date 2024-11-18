@@ -33,7 +33,8 @@ The CP stack in general has three key stages:
   - Aligns them temporally to create time-synchronized detections
   - Produces M tracks/estimates (T^i_k) where typically N ≥ M
   - Executes within a fixed time window Δt
-> **_NOTE:_**: Since this step's implementation can vary, the specific architecture used in CARMA is provided below in "Multiple Object Tracking Pipeline Archecture" section
+> [!NOTE]\
+Since this step's implementation can vary, the specific architecture used in CARMA is provided below in "Multiple Object Tracking Pipeline Archecture" section
 
 - Execution Timeline: System runs in discrete steps (k). During each step:
   - Processes detections collected between k-1 and k
