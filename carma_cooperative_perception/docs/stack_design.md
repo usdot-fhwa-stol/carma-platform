@@ -21,7 +21,26 @@ The following table summarizes the different stack configurations.
 
 We assume all actors can receive incoming messages such as SDSMs, whether they can use that data is a different matter.
 We also assume actors with local perception abilities have access to object-level data regarding the environment.
+
 ## General approach with notations
+The CP stack processes perception data in three key stages:
+
+- Detection Generation: 
+  - Collects raw detections (D^i_k) from multiple sources (V2X, or local sensors)
+  - Each detection has its own timestamp when recorded
+  - All detections are in the vehicle's map frame which is handled by the Detection Generators
+- MOT (Multiple Object Tracking) Pipeline: Takes N raw detections with varying timestamps
+  - Aligns them temporally to create time-synchronized detections
+  - Produces M tracks/estimates (T^i_k) where typically N ≥ M
+  - Executes within a fixed time window Δt
+- Execution Timeline: System runs in discrete steps (k). During each step:
+  - Processes detections collected between k-1 and k
+  - Uses previous tracks from step k-1
+  - Generates new tracks for step k
+  - Small time offset ε accounts for detection timing variations
+
+The pipeline efficiently converts asynchronous sensor data into synchronized object tracks that downstream components can use for vehicle planning and control.
+
 ![Alt text](assets/Overall_MOT.png)
 
 ## Local perception and fusion
@@ -85,4 +104,40 @@ configuration.
 ![](assets/carma_cooperative_perception_no_perception_no_fusion_system_diagram.png)
 
 ## Multiple Object Tracking Pipeline Archecture
+
+A modular pipeline implmented in CARMA CP stack for processing and fusing multi-source object detections into tracks. 
+Individual components utilize library functions available in https://github.com/usdot-fhwa-stol/multiple_object_tracking. In other words, this is just one example that is possible from the library.
+
+Pipeline Main Components, for each k step: 
+1. Temporal Alignment
+- Synchronizes raw detections D from N sources to the host vehicle timestamp
+- Outputs time-aligned detections D̄ to k timestamp
+- Ensures consistent temporal reference frame for processing
+2. Scoring and Gating
+- Computes association scores between detections and existing tracks
+- Uses MetricVisitor pattern for customizable scoring strategies
+- Generates ScoreMap: (track_id, det_id) -> score
+- Takes previous tracks (from k-1 step) T̄ as input
+3. Association
+- Maps detections to existing tracks using AssociationVisitor
+- Produces AssociationMap: track_id -> vector<det_id>
+- Handles track initialization and termination
+4. Track Maintenance
+- Updates track states using associated detections
+- Manages track lifecycle (creation, updates, deletion)
+- Integrates with prediction system for motion estimation
+5. Fusion
+- Combines associated detections and track data
+- Uses FusionVisitor for customizable fusion strategies
+- Outputs final fused tracks T̄ of M size for k step
+
+Supporting Components and Steps:
+1. Track Cache
+- Stores historical track information
+- Enables prediction and temporal consistency
+2. Predict Track
+- Projects track states forward in time
+- Supports gating and association processes
+
+
 ![Alt text](assets/MOT_Detailed_Pipeline.png)
