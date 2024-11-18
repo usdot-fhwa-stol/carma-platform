@@ -47,6 +47,7 @@ def main():
                 "Total CPU (%)",
             ]
         )
+        print(f"Starting to monitor the CPU usage data and saving to: {output_file}")
 
         while True:
             timestamp = datetime.now().strftime("%Y-%m-%d %H:%M:%S.%f")[:-3]
