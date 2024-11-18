@@ -16,15 +16,15 @@ Usage:
        python3 monitor-ros-cpu.py
 
     4. In a different terminal, start CARMA Platform:
-       ./carma start all
+       carma start all
 
     5. The script will automatically monitor and log CPU/memory usage
        of all ROS2 nodes and related processes during CARMA operation
 
     6. To stop monitoring:
        - Press Ctrl+C in the monitoring terminal
-       - The CSV output file will be saved in the current directory as:
-         'cpu_usage_ros2_nodes.csv' or 'cpu_usage_ros2_nodes-N.csv'
+       - The CSV output file will be saved in the logs directory following ROS bag naming convention:
+         'logs/cpu_usage_ros2_nodes_YYYY_MM_DD-HH_MM_SS.csv'
 
 Output:
     - CSV file containing timestamp, process info, CPU and memory usage
@@ -32,30 +32,23 @@ Output:
 """
 
 import psutil
-import subprocess
 import time
 import csv
 import os
 from datetime import datetime
 
 
-# Function to create a unique filename by appending a number
-def get_unique_filename(base_filename):
-    counter = 1
-    filename, file_extension = os.path.splitext(base_filename)
+def setup_logging_directory():
+    if not os.path.exists("logs"):
+        os.makedirs("logs")
 
-    # Loop until a file with a unique name is found
-    while os.path.isfile(base_filename):
-        base_filename = f"{filename}-{counter}{file_extension}"
-        counter += 1
-    return base_filename
+    timestamp = datetime.now().strftime("%Y_%m_%d-%H_%M_%S")
+    filename = f"cpu_usage_ros2_nodes_{timestamp}.csv"
+
+    return os.path.join("logs", filename)
 
 
-# Base path to save the CSV file
-base_output_file = "cpu_usage_ros2_nodes.csv"
-
-# Get a unique filename
-output_file = get_unique_filename(base_output_file)
+output_file = setup_logging_directory()
 
 # Open CSV file to store process usage data
 with open(output_file, mode="a") as file:
