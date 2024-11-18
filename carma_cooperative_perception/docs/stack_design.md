@@ -23,7 +23,7 @@ We assume all actors can receive incoming messages such as SDSMs, whether they c
 We also assume actors with local perception abilities have access to object-level data regarding the environment.
 
 ## General approach with notations
-The CP stack processes perception data in three key stages:
+The CP stack in general has three key stages:
 
 - Detection Generation: 
   - Collects raw detections (D^i_k) from multiple sources (V2X, or local sensors)
@@ -33,6 +33,8 @@ The CP stack processes perception data in three key stages:
   - Aligns them temporally to create time-synchronized detections
   - Produces M tracks/estimates (T^i_k) where typically N ≥ M
   - Executes within a fixed time window Δt
+> **_NOTE:_**: Since this step's implementation can vary, the specific architecture used in CARMA is provided below in "Multiple Object Tracking Pipeline Archecture" section
+
 - Execution Timeline: System runs in discrete steps (k). During each step:
   - Processes detections collected between k-1 and k
   - Uses previous tracks from step k-1
