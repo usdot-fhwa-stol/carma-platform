@@ -1,5 +1,4 @@
 #!/usr/bin/env python3
-
 import psutil
 import subprocess
 import time
@@ -7,7 +6,6 @@ import csv
 import os
 import argparse
 from datetime import datetime
-
 
 def parse_args():
     parser = argparse.ArgumentParser(description="Monitor CPU usage of ROS2 nodes")
@@ -19,16 +17,12 @@ def parse_args():
     )
     return parser.parse_args()
 
-
 def setup_logging_directory(output_dir):
     if not os.path.exists(output_dir):
         os.makedirs(output_dir)
-
     timestamp = datetime.now().strftime("%Y_%m_%d-%H_%M_%S")
     filename = f"cpu_usage_ros2_nodes_{timestamp}.csv"
-
     return os.path.join(output_dir, filename)
-
 
 def main():
     args = parse_args()
@@ -57,14 +51,16 @@ def main():
                 ["pid", "name", "cpu_percent", "memory_percent", "cmdline"]
             ):
                 try:
-                    cmdline = " ".join(proc.info["cmdline"])
+                    # Fix for the join() error - handle None case
+                    cmdline = " ".join(proc.info["cmdline"]) if proc.info["cmdline"] else ""
+
                     if (
-                        "ros" in proc.info["name"]
-                        or "node" in proc.info["name"]
-                        or "node" in cmdline
-                        or "python3" in proc.info["name"]
-                        or "ros" in cmdline
-                    ) and not ("code" in proc.info["name"]):
+                        "ros" in proc.info["name"].lower()
+                        or "node" in proc.info["name"].lower()
+                        or "node" in cmdline.lower()
+                        or "python3" in proc.info["name"].lower()
+                        or "ros" in cmdline.lower()
+                    ) and not ("code" in proc.info["name"].lower()):
                         pid = proc.info["pid"]
                         name = proc.info["name"]
                         cpu_percent = proc.info["cpu_percent"]
@@ -81,7 +77,6 @@ def main():
                                 total_cpu_percent,
                             ]
                         )
-
                 except (
                     psutil.NoSuchProcess,
                     psutil.AccessDenied,
@@ -90,7 +85,6 @@ def main():
                     continue
 
             time.sleep(1)
-
 
 if __name__ == "__main__":
     main()
