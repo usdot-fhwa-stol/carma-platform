@@ -286,14 +286,14 @@ private:
    * \param state The traffic signal state to check for
    * \return bool value - True if state is PERMISSIVE_MOVEMENT_ALLOWED or PROTECTED_MOVEMENT_ALLOWED
    */
-  bool isStateAllowedGreen(const lanelet::CarmaTrafficSignalState& state);
+  bool isStateAllowedGreen(const lanelet::CarmaTrafficSignalState& state) const;
 
   /**
    * \brief Returns the duration for the allowed movements
    * \param traffic_light The traffic light object to get the green duration for
    * \return int value of the duration for the allowed movement
    */
-  int getMovementAllowedDuration(lanelet::CarmaTrafficSignalPtr traffic_light);
+  boost::posix_time::time_duration getMovementAllowedDuration(lanelet::CarmaTrafficSignalPtr traffic_light);
 
   /**
    * \brief Method for performing maneuver planning when the current plugin state is TransitState::UNAVAILABLE

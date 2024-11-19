@@ -338,8 +338,8 @@ boost::optional<bool> LCIStrategicPlugin::canArriveAtGreenWithCertainty(const rc
 
 }
 
-bool LCIStrategicPlugin::isStateAllowedGreen(const lanelet::CarmaTrafficSignalState& state) {
-    return state == lanelet::CarmaTrafficSignalState::PROTECTED_MOVEMENT_ALLOWED ||
+bool LCIStrategicPlugin::isStateAllowedGreen(const lanelet::CarmaTrafficSignalState& state) const{
+    return state == lanelet::CarmaTrafficSignalState::PROTECTED_MOVEMENT_ALLOWED |
            state == lanelet::CarmaTrafficSignalState::PERMISSIVE_MOVEMENT_ALLOWED;
 }
 
