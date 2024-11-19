@@ -289,11 +289,11 @@ private:
   bool isStateAllowedGreen(const lanelet::CarmaTrafficSignalState& state);
 
   /**
-   * \brief Returns the clearance duration
+   * \brief Returns the duration for the allowed movements
    * \param traffic_light The traffic light object to get the green duration for
-   * \return int value of the signal duration
+   * \return int value of the duration for the allowed movement
    */
-  int getClearanceDuration(lanelet::CarmaTrafficSignalPtr traffic_light);
+  int getMovementAllowedDuration(lanelet::CarmaTrafficSignalPtr traffic_light);
 
   /**
    * \brief Method for performing maneuver planning when the current plugin state is TransitState::UNAVAILABLE

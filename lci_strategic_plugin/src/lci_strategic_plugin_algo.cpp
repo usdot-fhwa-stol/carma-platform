@@ -250,7 +250,7 @@ rclcpp::Duration LCIStrategicPlugin::get_earliest_entry_time(double remaining_di
 
 }
 
-int LCIStrategicPlugin::getClearanceDuration(lanelet::CarmaTrafficSignalPtr traffic_light)
+int LCIStrategicPlugin::getMovementAllowedDuration(lanelet::CarmaTrafficSignalPtr traffic_light)
 {
   if(traffic_light->signal_durations[lanelet::CarmaTrafficSignalState::PROTECTED_MOVEMENT_ALLOWED])
   {
