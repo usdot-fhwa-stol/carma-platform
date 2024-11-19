@@ -252,7 +252,6 @@ rclcpp::Duration LCIStrategicPlugin::get_earliest_entry_time(double remaining_di
 
 boost::posix_time::time_duration LCIStrategicPlugin::getMovementAllowedDuration(lanelet::CarmaTrafficSignalPtr traffic_light)
 {
-  // if(traffic_light->signal_durations[lanelet::CarmaTrafficSignalState::PROTECTED_MOVEMENT_ALLOWED])
   if(traffic_light->signal_durations.find(lanelet::CarmaTrafficSignalState::PROTECTED_MOVEMENT_ALLOWED) != traffic_light->signal_durations.end())
   {
     return traffic_light->signal_durations[lanelet::CarmaTrafficSignalState::PROTECTED_MOVEMENT_ALLOWED];
