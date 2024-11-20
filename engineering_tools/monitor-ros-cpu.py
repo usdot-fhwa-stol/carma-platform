@@ -15,7 +15,7 @@ ROS_KEYWORDS = {
     "rqt",
     "ros2 launch",
     "/opt/ros/",  # ROS installation path
-    "/opt/carma/", # CARMA ROS installation path
+    "/opt/carma/",  # CARMA ROS installation path
     "roscore",
     "rosmaster",
     "roslaunch",
@@ -31,7 +31,7 @@ ROS_KEYWORDS = {
     "rclpy",
     "noetic",
     "foxy",
-    "humble"
+    "humble",
 }
 
 # Define processes to exclude (to avoid false positives)
@@ -118,8 +118,6 @@ def main():
                 "Memory (%)",
                 "Command Line",
                 "Total CPU (%)",
-                "Parent PID",
-                "Parent Name",
             ]
         )
 
@@ -130,7 +128,7 @@ def main():
             total_cpu_percent = psutil.cpu_percent(interval=None)
 
             for proc in psutil.process_iter(
-                ["pid", "name", "cpu_percent", "memory_percent", "cmdline", "ppid"]
+                ["pid", "name", "cpu_percent", "memory_percent", "cmdline"]
             ):
                 try:
                     # Fix for the join() error - handle None case
@@ -143,14 +141,6 @@ def main():
                         name = proc.info["name"]
                         cpu_percent = proc.info["cpu_percent"]
                         memory_percent = proc.info["memory_percent"]
-                        ppid = proc.info["ppid"]
-
-                        # Get parent process name
-                        try:
-                            parent = psutil.Process(ppid)
-                            parent_name = parent.name()
-                        except (psutil.NoSuchProcess, psutil.AccessDenied):
-                            parent_name = "N/A"
 
                         writer.writerow(
                             [
@@ -161,8 +151,6 @@ def main():
                                 memory_percent,
                                 cmdline,
                                 total_cpu_percent,
-                                ppid,
-                                parent_name,
                             ]
                         )
 
