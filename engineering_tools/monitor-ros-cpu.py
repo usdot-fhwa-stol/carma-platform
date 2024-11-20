@@ -113,6 +113,7 @@ def main():
                 "Memory (%)",
                 "Command Line",
                 "Total CPU (%)",
+                "Total Memory (%)",
             ]
         )
 
@@ -121,12 +122,14 @@ def main():
         while True:
             timestamp = datetime.now().strftime("%Y-%m-%d %H:%M:%S.%f")[:-3]
             total_cpu_percent = psutil.cpu_percent(interval=None)
+            total_memory_percent = (
+                psutil.virtual_memory().percent
+            )  # Get total memory usage
 
             for proc in psutil.process_iter(
                 ["pid", "name", "cpu_percent", "memory_percent", "cmdline"]
             ):
                 try:
-                    # Fix for the join() error - handle None case
                     cmdline = (
                         " ".join(proc.info["cmdline"]) if proc.info["cmdline"] else ""
                     )
@@ -146,6 +149,7 @@ def main():
                                 memory_percent,
                                 cmdline,
                                 total_cpu_percent,
+                                total_memory_percent,  # Added total memory usage
                             ]
                         )
 
