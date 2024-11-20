@@ -74,10 +74,6 @@ def is_ros_related_process(proc_info, cmdline):
     if any(excl in name_lower or excl in cmdline_lower for excl in EXCLUDE_KEYWORDS):
         return False
 
-    # Check if process is running from ROS path
-    if "/opt/ros/" in cmdline or "/opt/carma/" in cmdline:
-        return True
-
     # Check for ROS-related keywords in process name and command line
     return any(
         keyword in name_lower or keyword in cmdline_lower for keyword in ROS_KEYWORDS
