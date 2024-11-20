@@ -1,6 +1,0 @@
-Timestamp,PID,Process Name,CPU (%),Memory (%),Command Line,Total CPU (%)
-2024-11-20 07:09:45.354,38596,python3,0.0,0.07703650664891687,python3 engineering_tools/monitor-ros-cpu.py,6.7
-2024-11-20 07:09:46.358,38596,python3,0.0,0.07703650664891687,python3 engineering_tools/monitor-ros-cpu.py,0.1
-2024-11-20 07:09:47.363,38596,python3,0.0,0.07703650664891687,python3 engineering_tools/monitor-ros-cpu.py,0.4
-2024-11-20 07:09:48.368,38596,python3,2.0,0.07703650664891687,python3 engineering_tools/monitor-ros-cpu.py,0.6
-2024-11-20 07:09:49.386,38596,python3,1.0,0.07703650664891687,python3 engineering_tools/monitor-ros-cpu.py,0.1
