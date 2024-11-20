@@ -11,25 +11,11 @@ from datetime import datetime
 ROS_KEYWORDS = {
     "ros",
     "node",
-    "python3",
     "rviz",
     "rqt",
-<<<<<<< Updated upstream
-    "launch",
-    "carma",  # CARMA-specific processes
-    "guidance",
-    "planning",
-    "control",
-    "perception",
-    "localization",
-    "vehicle",
-    "environment",
-    "/opt/ros/",  # ROS installation path
-=======
     "ros2 launch",
     "/opt/ros/",  # ROS installation path
     "/opt/carma/", # CARMA ROS installation path
->>>>>>> Stashed changes
     "roscore",
     "rosmaster",
     "roslaunch",
@@ -43,14 +29,13 @@ ROS_KEYWORDS = {
     "cyclonedds",
     "rclcpp",
     "rclpy",
+    "noetic",
+    "foxy",
+    "humble"
 }
 
 # Define processes to exclude (to avoid false positives)
-<<<<<<< Updated upstream
-EXCLUDE_KEYWORDS = {"code", "chrome", "firefox", "vscode"}
-=======
 EXCLUDE_KEYWORDS = {"code", "chrome", "firefox", "vscode", "gnome"}
->>>>>>> Stashed changes
 
 
 def parse_args():
