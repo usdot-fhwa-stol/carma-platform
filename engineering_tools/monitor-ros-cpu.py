@@ -114,10 +114,14 @@ def main():
                 "Command Line",
                 "Total CPU (%)",
                 "Total Memory (%)",
+                "Total Memory (GB)",
             ]
         )
 
         print(f"Starting to monitor the CPU usage data and saving to: {output_file}")
+
+        # Total memory size in GB doesn't change
+        total_memory_gb = psutil.virtual_memory().total / (1024**3)
 
         while True:
             timestamp = datetime.now().strftime("%Y-%m-%d %H:%M:%S.%f")[:-3]
@@ -149,7 +153,8 @@ def main():
                                 memory_percent,
                                 cmdline,
                                 total_cpu_percent,
-                                total_memory_percent,  # Added total memory usage
+                                total_memory_percent,
+                                total_memory_gb,
                             ]
                         )
 
