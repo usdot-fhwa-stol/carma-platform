@@ -1,6 +1,5 @@
 #!/usr/bin/env python3
 import psutil
-import subprocess
 import time
 import csv
 import os
@@ -13,7 +12,6 @@ ROS_KEYWORDS = {
     "node",
     "rviz",
     "rqt",
-    "ros2 launch",
     "/opt/ros/",  # ROS installation path
     "/opt/carma/",  # CARMA ROS installation path
     "roscore",
@@ -35,6 +33,7 @@ ROS_KEYWORDS = {
 }
 
 # Define processes to exclude (to avoid false positives)
+# NOTE: Detection of these keywords overwrites the ROS_KEYWORDS
 EXCLUDE_KEYWORDS = {"code", "chrome", "firefox", "vscode", "gnome"}
 
 
