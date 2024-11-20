@@ -14,6 +14,7 @@ ROS_KEYWORDS = {
     "python3",
     "rviz",
     "rqt",
+<<<<<<< Updated upstream
     "launch",
     "carma",  # CARMA-specific processes
     "guidance",
@@ -24,6 +25,11 @@ ROS_KEYWORDS = {
     "vehicle",
     "environment",
     "/opt/ros/",  # ROS installation path
+=======
+    "ros2 launch",
+    "/opt/ros/",  # ROS installation path
+    "/opt/carma/", # CARMA ROS installation path
+>>>>>>> Stashed changes
     "roscore",
     "rosmaster",
     "roslaunch",
@@ -40,7 +46,11 @@ ROS_KEYWORDS = {
 }
 
 # Define processes to exclude (to avoid false positives)
+<<<<<<< Updated upstream
 EXCLUDE_KEYWORDS = {"code", "chrome", "firefox", "vscode"}
+=======
+EXCLUDE_KEYWORDS = {"code", "chrome", "firefox", "vscode", "gnome"}
+>>>>>>> Stashed changes
 
 
 def parse_args():
