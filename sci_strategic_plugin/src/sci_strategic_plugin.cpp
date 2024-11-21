@@ -43,10 +43,10 @@ namespace {
   * \brief Anonymous function to extract maneuver end speed which can not be optained with GET_MANEUVER_PROPERY calls due to it missing in stop and wait plugin
   * \param mvr input maneuver
   * \return end speed
-  */ 
+  */
   double getManeuverEndSpeed(const carma_planning_msgs::msg::Maneuver& mvr)
   {
-    switch(mvr.type) 
+    switch(mvr.type)
     {
       case carma_planning_msgs::msg::Maneuver::LANE_FOLLOWING:
           return mvr.lane_following_maneuver.end_speed;
@@ -107,31 +107,31 @@ carma_ros2_utils::CallbackReturn SCIStrategicPlugin::on_configure_plugin()
   get_parameter<double>("vehicle_length", config_.veh_length);
   get_parameter<double>("vehicle_deceleration_limit", config_.vehicle_decel_limit);
   get_parameter<double>("vehicle_acceleration_limit", config_.vehicle_accel_limit);
-  
+
    // Register runtime parameter update callback
   add_on_set_parameters_callback(std::bind(&SCIStrategicPlugin::parameter_update_callback, this, std_ph::_1));
 
   RCLCPP_INFO_STREAM(rclcpp::get_logger("sci_strategic_plugin"),"Done loading parameters: " << config_);
 
   // Mobility Operation Subscriber
-  mob_operation_sub_ = create_subscription<carma_v2x_msgs::msg::MobilityOperation>("incoming_mobility_operation", 1, 
+  mob_operation_sub_ = create_subscription<carma_v2x_msgs::msg::MobilityOperation>("incoming_mobility_operation", 1,
     std::bind(&SCIStrategicPlugin::mobilityOperationCb,this,std_ph::_1));
-  
+
   // Current Pose Subscriber
-  current_pose_sub_ = create_subscription<geometry_msgs::msg::PoseStamped>("current_pose", 1, 
+  current_pose_sub_ = create_subscription<geometry_msgs::msg::PoseStamped>("current_pose", 1,
     std::bind(&SCIStrategicPlugin::currentPoseCb,this,std_ph::_1));
 
   // BSM subscriber
-  bsm_sub_ = create_subscription<carma_v2x_msgs::msg::BSM>("bsm_outbound", 1, 
+  bsm_sub_ = create_subscription<carma_v2x_msgs::msg::BSM>("bsm_outbound", 1,
     std::bind(&SCIStrategicPlugin::BSMCb,this,std_ph::_1));
 
   // Guidance State subscriber
-  guidance_state_sub_ = create_subscription<carma_planning_msgs::msg::GuidanceState>("guidance_state", 5, 
+  guidance_state_sub_ = create_subscription<carma_planning_msgs::msg::GuidanceState>("guidance_state", 5,
     std::bind(&SCIStrategicPlugin::guidance_state_cb, this, std::placeholders::_1));
 
   // set world model point form wm listener
   wm_ = get_world_model();
-  
+
   // Setup publishers
   mobility_operation_pub_ = create_publisher<carma_v2x_msgs::msg::MobilityOperation>("outgoing_mobility_operation", 1);
 
@@ -181,13 +181,13 @@ SCIStrategicPlugin::VehicleState SCIStrategicPlugin::extractInitialState(const c
   else
   {
     RCLCPP_DEBUG_STREAM(rclcpp::get_logger("sci_strategic_plugin"), "No initial plan provided...");
-    
+
     state.stamp = req.header.stamp;
     state.downtrack = req.veh_downtrack;
     state.speed = req.veh_logitudinal_velocity;
     state.lane_id = stoi(req.veh_lane_id);
   }
-  
+
   RCLCPP_DEBUG_STREAM(rclcpp::get_logger("sci_strategic_plugin"), "state.stamp: " << std::to_string(state.stamp.seconds()));
   RCLCPP_DEBUG_STREAM(rclcpp::get_logger("sci_strategic_plugin"), "state.downtrack : " << state.downtrack );
   RCLCPP_DEBUG_STREAM(rclcpp::get_logger("sci_strategic_plugin"), "state.speed: " << state.speed);
@@ -212,7 +212,7 @@ void SCIStrategicPlugin::mobilityOperationCb(carma_v2x_msgs::msg::MobilityOperat
       }
     previous_strategy_params_ = msg->strategy_params;
   }
-  
+
 }
 
 void SCIStrategicPlugin::BSMCb(carma_v2x_msgs::msg::BSM::UniquePtr msg)
@@ -237,8 +237,8 @@ void SCIStrategicPlugin::currentPoseCb(geometry_msgs::msg::PoseStamped::UniquePt
     current_downtrack_ = wm_->routeTrackPos(current_loc).downtrack;
     RCLCPP_DEBUG_STREAM(rclcpp::get_logger("sci_strategic_plugin"), "Downtrack from current pose: " << current_downtrack_);
   }
-  
-  
+
+
 }
 
 void SCIStrategicPlugin::parseStrategyParams(const std::string& strategy_params)
@@ -281,7 +281,7 @@ int SCIStrategicPlugin::determine_speed_profile_case(double stop_dist, double cu
 {
   int case_num = 0;
   double estimated_stop_time = calcEstimatedStopTime(stop_dist, current_speed);
-  
+
   RCLCPP_DEBUG_STREAM(rclcpp::get_logger("sci_strategic_plugin"), "estimated_stop_time: " << estimated_stop_time);
   if (estimated_stop_time < schedule_stop_time)
   {
@@ -300,13 +300,13 @@ int SCIStrategicPlugin::determine_speed_profile_case(double stop_dist, double cu
       case_num = 2;
     }
   }
-  
+
   return case_num;
 }
 
 double SCIStrategicPlugin::calcEstimatedStopTime(double stop_dist, double current_speed) const
 {
-  
+
   double t_stop = 0;
   t_stop = 2*stop_dist/current_speed;
   return t_stop;
@@ -319,7 +319,7 @@ double SCIStrategicPlugin::calc_speed_before_decel(double stop_time, double stop
   double desired_acceleration = config_.vehicle_accel_limit * config_.vehicle_accel_limit_multiplier;
   double desired_deceleration = -1 * config_.vehicle_decel_limit * config_.vehicle_decel_limit_multiplier;
 
-  double sqr_term = sqrt(pow(1 - (desired_acceleration/desired_deceleration), 2) * pow(stop_dist/stop_time, 2) 
+  double sqr_term = sqrt(pow(1 - (desired_acceleration/desired_deceleration), 2) * pow(stop_dist/stop_time, 2)
                         + (1 - (desired_acceleration/desired_deceleration))*(current_speed*current_speed - 2*current_speed*stop_dist/stop_time));
 
   speed_before_decel = (stop_dist/stop_time) + sqr_term/(1 - (desired_acceleration/desired_deceleration));
@@ -349,8 +349,8 @@ std::vector<lanelet::ConstLanelet> SCIStrategicPlugin::getLaneletsBetweenWithExc
 
 
 void SCIStrategicPlugin::plan_maneuvers_callback(
-  std::shared_ptr<rmw_request_id_t> srv_header, 
-  carma_planning_msgs::srv::PlanManeuvers::Request::SharedPtr req, 
+  std::shared_ptr<rmw_request_id_t> srv_header,
+  carma_planning_msgs::srv::PlanManeuvers::Request::SharedPtr req,
   carma_planning_msgs::srv::PlanManeuvers::Response::SharedPtr resp)
 {
   RCLCPP_DEBUG_STREAM(rclcpp::get_logger("sci_strategic_plugin"), "In Maneuver callback...");
@@ -404,7 +404,7 @@ void SCIStrategicPlugin::plan_maneuvers_callback(
     RCLCPP_WARN_STREAM(rclcpp::get_logger("sci_strategic_plugin"), "There are no stop lines on the closest stop-controlled intersections in the map");
     return;
   }
-  
+
 
   // extract the intersection stop line information
   std::vector<double> stop_lines;
@@ -415,12 +415,12 @@ void SCIStrategicPlugin::plan_maneuvers_callback(
     stop_lines.push_back(stop_bar_dtd);
   }
   std::sort(stop_lines.begin(), stop_lines.end());
-  
+
   double stop_intersection_down_track = stop_lines.front();
 
   RCLCPP_DEBUG_STREAM(rclcpp::get_logger("sci_strategic_plugin"), "stop_intersection_down_track  " << stop_intersection_down_track);
-  
-  
+
+
   double distance_to_stopline = stop_intersection_down_track - current_downtrack_ - config_.stop_line_buffer;
   RCLCPP_DEBUG_STREAM(rclcpp::get_logger("sci_strategic_plugin"), "distance_to_stopline  " << distance_to_stopline);
 
@@ -442,15 +442,15 @@ void SCIStrategicPlugin::plan_maneuvers_callback(
   intersection_turn_direction_ = getTurnDirectionAtIntersection(intersection_lanelets);
 
   uint32_t base_time = street_msg_timestamp_;
-  
+
   bool time_to_approach_int = int((scheduled_stop_time_) - (street_msg_timestamp_))>0;
   RCLCPP_DEBUG_STREAM(rclcpp::get_logger("sci_strategic_plugin"), "time_to_approach_int  " << time_to_approach_int);
-  
+
   carma_planning_msgs::msg::Maneuver maneuver_planned;
 
-  
+
   if (time_to_approach_int)
-  {   
+  {
       auto tmp = (scheduled_stop_time_) - (street_msg_timestamp_);
       RCLCPP_DEBUG_STREAM(rclcpp::get_logger("sci_strategic_plugin"), "tmp  " << tmp);
       double time_to_schedule_stop = (tmp)/1000.0;
@@ -463,7 +463,7 @@ void SCIStrategicPlugin::plan_maneuvers_callback(
       speed_limit_ = findSpeedLimit(crossed_lanelets.front());
 
       // lane following to intersection
-      
+
       RCLCPP_DEBUG_STREAM(rclcpp::get_logger("sci_strategic_plugin"), "time_to_schedule_stop  " << time_to_schedule_stop);
 
       double desired_deceleration = config_.vehicle_decel_limit * config_.vehicle_decel_limit_multiplier;
@@ -491,10 +491,10 @@ void SCIStrategicPlugin::plan_maneuvers_callback(
 
           // at the stop line or decelerating to stop line
           // stop and wait maneuver
-        
+
           std::vector<lanelet::ConstLanelet> crossed_lanelets =
               getLaneletsBetweenWithException(current_downtrack_, stop_intersection_down_track, true, true);
-          
+
 
           double stopping_accel = caseThreeSpeedProfile(distance_to_stopline, current_state.speed, time_to_schedule_stop);
           stopping_accel = std::max(-stopping_accel, desired_deceleration);
@@ -503,7 +503,7 @@ void SCIStrategicPlugin::plan_maneuvers_callback(
           maneuver_planned = composeStopAndWaitManeuverMessage(
           current_state.downtrack, stop_intersection_down_track, current_state.speed, crossed_lanelets[0].id(),
           crossed_lanelets[0].id(), stopping_accel, current_state.stamp,
-          current_state.stamp + rclcpp::Duration(time_to_schedule_stop*1e9));
+          current_state.stamp + rclcpp::Duration::from_nanoseconds(time_to_schedule_stop*1e9));
 
           resp->new_plan.maneuvers.push_back(maneuver_planned);
 
@@ -516,7 +516,7 @@ void SCIStrategicPlugin::plan_maneuvers_callback(
         maneuver_planned = composeStopAndWaitManeuverMessage(
           current_state.downtrack, stop_intersection_down_track, current_state.speed, crossed_lanelets[0].id(),
           crossed_lanelets[0].id(), desired_deceleration, current_state.stamp,
-          current_state.stamp + rclcpp::Duration(time_to_schedule_stop*1e9));
+          current_state.stamp + rclcpp::Duration::from_nanoseconds(time_to_schedule_stop*1e9));
       }
   }
 
@@ -539,7 +539,7 @@ void SCIStrategicPlugin::plan_maneuvers_callback(
     maneuver_planned = composeStopAndWaitManeuverMessage(
           current_state.downtrack, stop_intersection_down_track, current_state.speed, stop_line_lanelet.id(),
           stop_line_lanelet.id(), stopping_accel, current_state.stamp,
-          current_state.stamp + rclcpp::Duration(stop_duration*1e9));
+          current_state.stamp + rclcpp::Duration::from_nanoseconds(stop_duration*1e9));
   }
 
   if (!is_allowed_int_)
@@ -557,7 +557,7 @@ void SCIStrategicPlugin::plan_maneuvers_callback(
       maneuver_planned = composeStopAndWaitManeuverMessage(
           current_state.downtrack, stop_intersection_down_track, current_state.speed, current_state.lane_id,
           current_state.lane_id, stop_acc, current_state.stamp,
-          current_state.stamp + rclcpp::Duration(stop_duration*1e9));
+          current_state.stamp + rclcpp::Duration::from_nanoseconds(stop_duration*1e9));
 
   }
 
@@ -573,23 +573,23 @@ void SCIStrategicPlugin::plan_maneuvers_callback(
 
     RCLCPP_DEBUG_STREAM(rclcpp::get_logger("sci_strategic_plugin"), "Vehicle is crossing the intersection");
     // Passing the stop line
-    
+
     // Compose intersection transit maneuver
     base_time = std::max(scheduled_enter_time_, street_msg_timestamp_);
     double intersection_transit_time = (scheduled_depart_time_ - base_time)/1000;
     RCLCPP_DEBUG_STREAM(rclcpp::get_logger("sci_strategic_plugin"), "intersection_transit_time: " << intersection_transit_time);
-    
+
     intersection_transit_time = config_.min_maneuver_planning_period;//std::max(intersection_transit_time, config_.min_maneuver_planning_period);
     RCLCPP_DEBUG_STREAM(rclcpp::get_logger("sci_strategic_plugin"), "used intersection_transit_time: " << intersection_transit_time);
     // Identify the lanelets which will be crossed by approach maneuvers lane follow maneuver
     std::vector<lanelet::ConstLanelet> crossed_lanelets =
           getLaneletsBetweenWithException(current_downtrack_, intersection_end_downtrack, true, true);
 
-    
+
     // find the turn direction at intersection:
 
     intersection_turn_direction_ = getTurnDirectionAtIntersection(crossed_lanelets);
-    
+
     RCLCPP_DEBUG_STREAM(rclcpp::get_logger("sci_strategic_plugin"), "turn direction at the intersection is: " << intersection_turn_direction_);
 
     double intersection_speed_limit = findSpeedLimit(nearest_stop_intersection->lanelets().front());
@@ -601,9 +601,9 @@ void SCIStrategicPlugin::plan_maneuvers_callback(
 
       maneuver_planned = composeIntersectionTransitMessage(
       current_state.downtrack, current_state.downtrack + end_of_intersection, current_state.speed, intersection_speed_limit,
-      current_state.stamp, rclcpp::Time(req->header.stamp) + rclcpp::Duration(intersection_transit_time*1e9), intersection_turn_direction_, crossed_lanelets.front().id(), crossed_lanelets.back().id());
-    
-    
+      current_state.stamp, rclcpp::Time(req->header.stamp) + rclcpp::Duration::from_nanoseconds(intersection_transit_time*1e9), intersection_turn_direction_, crossed_lanelets.front().id(), crossed_lanelets.back().id());
+
+
     if (distance_to_stopline < -end_of_intersection)
     {
       RCLCPP_DEBUG_STREAM(rclcpp::get_logger("sci_strategic_plugin"), "Vehicle is out of intersection, stop planning...");
@@ -615,7 +615,7 @@ void SCIStrategicPlugin::plan_maneuvers_callback(
 
   }
   resp->new_plan.maneuvers.push_back(maneuver_planned);
-  
+
   return;
 }
 
@@ -649,18 +649,18 @@ TurnDirection SCIStrategicPlugin::getTurnDirectionAtIntersection(std::vector<lan
   return turn_direction;
 }
 
-void SCIStrategicPlugin::caseOneSpeedProfile(double speed_before_decel, double current_speed, double stop_time, 
+void SCIStrategicPlugin::caseOneSpeedProfile(double speed_before_decel, double current_speed, double stop_time,
                                             std::vector<double>* float_metadata_list) const
 {
   double desired_acceleration = config_.vehicle_accel_limit * config_.vehicle_accel_limit_multiplier;
-  double desired_deceleration = -1 * config_.vehicle_decel_limit * config_.vehicle_decel_limit_multiplier;  
+  double desired_deceleration = -1 * config_.vehicle_decel_limit * config_.vehicle_decel_limit_multiplier;
 
   // Equations obtained from TSMO UC 1 Algorithm draft doc
   double a_acc = ((1 - desired_acceleration/desired_deceleration)*speed_before_decel - current_speed)/stop_time;
   RCLCPP_DEBUG_STREAM(rclcpp::get_logger("sci_strategic_plugin"), "Case one a_acc: " << a_acc);
   a_acc = std::min(a_acc, desired_acceleration);
   RCLCPP_DEBUG_STREAM(rclcpp::get_logger("sci_strategic_plugin"), "Used Case one a_acc: " << a_acc);
-  
+
   double a_dec = ((desired_deceleration - desired_acceleration)*speed_before_decel - desired_deceleration * current_speed)/(desired_acceleration * stop_time);
   RCLCPP_DEBUG_STREAM(rclcpp::get_logger("sci_strategic_plugin"), "Case one a_dec: " << a_dec);
   a_dec = std::max(a_dec, desired_deceleration);
@@ -668,7 +668,7 @@ void SCIStrategicPlugin::caseOneSpeedProfile(double speed_before_decel, double c
 
   double t_acc = (speed_before_decel - current_speed)/a_acc;
   RCLCPP_DEBUG_STREAM(rclcpp::get_logger("sci_strategic_plugin"), "Case one t_acc: " << t_acc);
-  double t_dec = -speed_before_decel/a_dec; // a_dec is negative so a - is used to make the t_dec positive. 
+  double t_dec = -speed_before_decel/a_dec; // a_dec is negative so a - is used to make the t_dec positive.
   RCLCPP_DEBUG_STREAM(rclcpp::get_logger("sci_strategic_plugin"), "Case one t_dec: " << t_dec);
   float_metadata_list->push_back(a_acc);
   float_metadata_list->push_back(a_dec);
@@ -677,8 +677,8 @@ void SCIStrategicPlugin::caseOneSpeedProfile(double speed_before_decel, double c
   float_metadata_list->push_back(speed_before_decel);
 }
 
-void SCIStrategicPlugin::caseTwoSpeedProfile(double stop_dist, double speed_before_decel, 
-                                            double current_speed, double stop_time,  double speed_limit, 
+void SCIStrategicPlugin::caseTwoSpeedProfile(double stop_dist, double speed_before_decel,
+                                            double current_speed, double stop_time,  double speed_limit,
                                             std::vector<double>* float_metadata_list) const
 {
   double desired_acceleration = config_.vehicle_accel_limit * config_.vehicle_accel_limit_multiplier;
@@ -689,8 +689,8 @@ void SCIStrategicPlugin::caseTwoSpeedProfile(double stop_dist, double speed_befo
     speed_before_decel = speed_limit;
     RCLCPP_DEBUG_STREAM(rclcpp::get_logger("sci_strategic_plugin"), "Case two speed_before_decel: " << speed_before_decel);
   }
-  
-  double t_c_nom = 2*stop_dist * ((1 - desired_acceleration/desired_deceleration)*speed_limit - current_speed) - 
+
+  double t_c_nom = 2*stop_dist * ((1 - desired_acceleration/desired_deceleration)*speed_limit - current_speed) -
                   stop_time * ((1 - desired_acceleration/desired_deceleration)*pow(speed_limit,2) - pow(current_speed, 2));
   double t_c_den = pow(speed_limit - current_speed, 2) - (desired_acceleration/desired_deceleration) * pow(speed_limit, 2);
   double t_cruise = t_c_nom / t_c_den;
@@ -709,7 +709,7 @@ void SCIStrategicPlugin::caseTwoSpeedProfile(double stop_dist, double speed_befo
 
   double t_acc = (speed_limit - current_speed)/a_acc;
   RCLCPP_DEBUG_STREAM(rclcpp::get_logger("sci_strategic_plugin"), "Case two t_acc: " << t_acc);
-  double t_dec = -speed_limit/a_dec; // a_dec is negative so a - is used to make the t_dec positive. 
+  double t_dec = -speed_limit/a_dec; // a_dec is negative so a - is used to make the t_dec positive.
   RCLCPP_DEBUG_STREAM(rclcpp::get_logger("sci_strategic_plugin"), "Case two t_dec: " << t_dec);
 
   float_metadata_list->push_back(a_acc);
@@ -737,8 +737,8 @@ carma_planning_msgs::msg::Maneuver SCIStrategicPlugin::composeLaneFollowingManeu
   carma_planning_msgs::msg::Maneuver empty_msg;
   maneuver_msg.type = carma_planning_msgs::msg::Maneuver::LANE_FOLLOWING;
   maneuver_msg.lane_following_maneuver.parameters.planning_strategic_plugin = config_.strategic_plugin_name;
-  maneuver_msg.lane_following_maneuver.parameters.presence_vector = 
-  carma_planning_msgs::msg::ManeuverParameters::HAS_TACTICAL_PLUGIN | carma_planning_msgs::msg::ManeuverParameters::HAS_INT_META_DATA | 
+  maneuver_msg.lane_following_maneuver.parameters.presence_vector =
+  carma_planning_msgs::msg::ManeuverParameters::HAS_TACTICAL_PLUGIN | carma_planning_msgs::msg::ManeuverParameters::HAS_INT_META_DATA |
   carma_planning_msgs::msg::ManeuverParameters::HAS_FLOAT_META_DATA | carma_planning_msgs::msg::ManeuverParameters::HAS_STRING_META_DATA;
   maneuver_msg.lane_following_maneuver.parameters.negotiation_type = carma_planning_msgs::msg::ManeuverParameters::NO_NEGOTIATION;
   maneuver_msg.lane_following_maneuver.parameters.planning_tactical_plugin = config_.lane_following_plugin_name;
@@ -747,7 +747,7 @@ carma_planning_msgs::msg::Maneuver SCIStrategicPlugin::composeLaneFollowingManeu
   maneuver_msg.lane_following_maneuver.start_speed = start_speed;
   maneuver_msg.lane_following_maneuver.end_speed = target_speed;
   maneuver_msg.lane_following_maneuver.start_time = start_time;
-  maneuver_msg.lane_following_maneuver.end_time =  start_time + rclcpp::Duration(time_to_stop*1e9);
+  maneuver_msg.lane_following_maneuver.end_time =  start_time + rclcpp::Duration::from_nanoseconds(time_to_stop*1e9);
   maneuver_msg.lane_following_maneuver.lane_ids =
       lanelet::utils::transform(lane_ids, [](auto id) { return std::to_string(id); });
 
@@ -768,12 +768,12 @@ carma_planning_msgs::msg::Maneuver SCIStrategicPlugin::composeLaneFollowingManeu
     default:
       return empty_msg;
   }
-  
-  
+
+
   maneuver_msg.lane_following_maneuver.parameters.int_valued_meta_data.push_back(case_num);
   maneuver_msg.lane_following_maneuver.parameters.string_valued_meta_data.push_back(stop_controlled_intersection_strategy_);
   maneuver_msg.lane_following_maneuver.parameters.float_valued_meta_data = float_metadata_list;
-  
+
   return maneuver_msg;
 }
 
@@ -807,11 +807,11 @@ carma_v2x_msgs::msg::MobilityOperation SCIStrategicPlugin::generateMobilityOpera
     if (intersection_turn_direction_ == TurnDirection::Left) intersection_turn_direction = "left";
 
 
-    mo_.strategy_params = "access: " +  std::to_string(is_allowed_int_) + ", max_accel: " + std::to_string(vehicle_acceleration_limit_) + 
+    mo_.strategy_params = "access: " +  std::to_string(is_allowed_int_) + ", max_accel: " + std::to_string(vehicle_acceleration_limit_) +
                         ", max_decel: " + std::to_string(vehicle_deceleration_limit_) + ", react_time: " + std::to_string(config_.reaction_time) +
-                        ", min_gap: " + std::to_string(config_.min_gap) + ", depart_pos: " + std::to_string(scheduled_departure_position_) + 
+                        ", min_gap: " + std::to_string(config_.min_gap) + ", depart_pos: " + std::to_string(scheduled_departure_position_) +
                         ", turn_direction: " + intersection_turn_direction + ", msg_count: " + std::to_string(bsm_msg_count_) + ", sec_mark: " + std::to_string(bsm_sec_mark_);
-    
+
 
     return mo_;
 }
@@ -851,7 +851,7 @@ carma_planning_msgs::msg::Maneuver SCIStrategicPlugin::composeStopAndWaitManeuve
   maneuver_msg.stop_and_wait_maneuver.parameters.float_valued_meta_data.push_back(stopping_accel);
 
   RCLCPP_INFO_STREAM(rclcpp::get_logger("sci_strategic_plugin"), "Creating stop and wait start dist: " << current_dist << " end dist: " << end_dist);
-  
+
   return maneuver_msg;
 }
 
@@ -926,8 +926,8 @@ carma_planning_msgs::msg::Maneuver SCIStrategicPlugin::composeIntersectionTransi
     maneuver_msg.intersection_transit_straight_maneuver.ending_lane_id = std::to_string(ending_lane_id);
 
   }
-  
-  
+
+
 
   // Start time and end time for maneuver are assigned in updateTimeProgress
 

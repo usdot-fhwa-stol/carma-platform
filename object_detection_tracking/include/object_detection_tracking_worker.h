@@ -26,7 +26,7 @@
 #include <geometry_msgs/msg/transform_stamped.h>
 #include <tf2/convert.h>
 #include <tf2/LinearMath/Transform.h>
-#include <tf2_geometry_msgs/tf2_geometry_msgs.h>
+#include <tf2_geometry_msgs/tf2_geometry_msgs.hpp>
 #include <tf2/LinearMath/Quaternion.h>
 #include <tf2/transform_datatypes.h>
 #include <tf2_ros/transform_listener.h>
@@ -55,7 +55,7 @@ class ObjectDetectionTrackingWorker
    */
 
   ObjectDetectionTrackingWorker(PublishObjectCallback obj_pub, TransformLookupCallback tf_lookup, rclcpp::node_interfaces::NodeLoggingInterface::SharedPtr logger);
-    
+
     /*! \fn detectedObjectCallback(const autoware_auto_msgs::autoware_msgs &msg)
     \brief detectedObjectCallback populates detected object along with its velocity,yaw, yaw_rate and static/dynamic class to DetectedObject message.
     \param  msg array of detected objects.
@@ -66,7 +66,7 @@ class ObjectDetectionTrackingWorker
   // Setters for the parameters
   void setMapFrame(std::string map_frame);
 
- 
+
  private:
 
   // local copy of external object publihsers
@@ -82,16 +82,16 @@ class ObjectDetectionTrackingWorker
 
   // Logger interface
   rclcpp::node_interfaces::NodeLoggingInterface::SharedPtr logger_;
-  
+
 
   /**
    * \brief Helper method to check if the provided tracked object has the provided class type
-   * 
+   *
    * \param obj The object to check
    * \param class_id The class type to check
-   * 
+   *
    * \return true if the object has the class type
-   */ 
+   */
   bool isClass(const autoware_auto_msgs::msg::TrackedObject& obj, uint8_t class_id);
 };
 

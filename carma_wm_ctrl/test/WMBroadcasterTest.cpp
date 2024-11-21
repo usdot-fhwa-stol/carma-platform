@@ -281,11 +281,11 @@ TEST(WMBroadcaster, geofenceCallback)
 
   gf->schedules.push_back(carma_wm_ctrl::GeofenceSchedule(rclcpp::Time(1e9),  // Schedule between 1 and 8
                                  rclcpp::Time(8e9),
-                                 rclcpp::Duration(2e9),    // Starts at 2
-                                 rclcpp::Duration(1.1e9),  // Ends at by 3.1
-                                 rclcpp::Duration(0),    // 0 offset for repetition start, so still starts at 2
-                                 rclcpp::Duration(1e9),    // Duration of 1 and interval of 2 so active durations are (2-3)
-                                 rclcpp::Duration(2e9)));
+                                 rclcpp::Duration::from_nanoseconds(2e9),    // Starts at 2
+                                 rclcpp::Duration::from_nanoseconds(1.1e9),  // Ends at by 3.1
+                                 rclcpp::Duration::from_nanoseconds(0),    // 0 offset for repetition start, so still starts at 2
+                                 rclcpp::Duration::from_nanoseconds(1e9),    // Duration of 1 and interval of 2 so active durations are (2-3)
+                                 rclcpp::Duration::from_nanoseconds(2e9)));
   // convert to ros msg
   carma_v2x_msgs::msg::TrafficControlMessageV01 msg_v01;
   std::copy(gf->id_.begin(),  gf->id_.end(), msg_v01.id.id.begin());
@@ -737,11 +737,11 @@ TEST(WMBroadcaster, RegulatoryPCLTest)
 
   gf_ptr->schedules.push_back(carma_wm_ctrl::GeofenceSchedule(rclcpp::Time(1e9),  // Schedule between 1 and 8
                                  rclcpp::Time(8e9),
-                                 rclcpp::Duration(2e9),    // Starts at 2
-                                 rclcpp::Duration(1.1e9),  // Ends at by 3.1
-                                 rclcpp::Duration(0),    // 0 offset for repetition start, so still starts at 2
-                                 rclcpp::Duration(1e9),    // Duration of 1 and interval of two so active durations are (2-3)
-                                 rclcpp::Duration(2e9)));
+                                 rclcpp::Duration::from_nanoseconds(2e9),    // Starts at 2
+                                 rclcpp::Duration::from_nanoseconds(1.1e9),  // Ends at by 3.1
+                                 rclcpp::Duration::from_nanoseconds(0),    // 0 offset for repetition start, so still starts at 2
+                                 rclcpp::Duration::from_nanoseconds(1e9),    // Duration of 1 and interval of two so active durations are (2-3)
+                                 rclcpp::Duration::from_nanoseconds(2e9)));
   // convert to ros msg
   carma_v2x_msgs::msg::TrafficControlMessageV01 msg_v01;
   std::copy(gf_ptr->id_.begin(),  gf_ptr->id_.end(), msg_v01.id.id.begin());
@@ -915,12 +915,12 @@ TEST(WMBroadcaster, geofenceFromMsgTest)
   msg_v01.params.schedule.start = rclcpp::Time(1);  // Schedule between 1 ...
   msg_v01.params.schedule.end = rclcpp::Time(8);    // and 8
   carma_v2x_msgs::msg::DailySchedule daily_schedule;
-  daily_schedule.begin = rclcpp::Duration(2);       // Starts at 2
-  daily_schedule.duration = rclcpp::Duration(1.1);  // Ends at by 3.1
+  daily_schedule.begin = rclcpp::Duration::from_nanoseconds(2);       // Starts at 2
+  daily_schedule.duration = rclcpp::Duration::from_nanoseconds(1.1);  // Ends at by 3.1
   msg_v01.params.schedule.between.push_back(daily_schedule);
-  msg_v01.params.schedule.repeat.offset =  rclcpp::Duration(0);  // 0 offset for repetition start, so still starts at 2
-  msg_v01.params.schedule.repeat.span = rclcpp::Duration(1);     // Duration of 1 and interval of two so active durations are (2-3)
-  msg_v01.params.schedule.repeat.period =  rclcpp::Duration(2);
+  msg_v01.params.schedule.repeat.offset =  rclcpp::Duration::from_nanoseconds(0);  // 0 offset for repetition start, so still starts at 2
+  msg_v01.params.schedule.repeat.span = rclcpp::Duration::from_nanoseconds(1);     // Duration of 1 and interval of two so active durations are (2-3)
+  msg_v01.params.schedule.repeat.period =  rclcpp::Duration::from_nanoseconds(2);
   msg_v01.params.schedule.end_exists = true;
   msg_v01.params.schedule.between_exists = true;
   msg_v01.params.schedule.repeat_exists = true;
@@ -1154,11 +1154,11 @@ TEST(WMBroadcaster, distToNearestActiveGeofence)
 
   gf->schedules.push_back(carma_wm_ctrl::GeofenceSchedule(rclcpp::Time(1e9),  // Schedule between 1 and 8
                                  rclcpp::Time(8e9),
-                                 rclcpp::Duration(2e9),    // Starts at 2
-                                 rclcpp::Duration(1.1e9),  // Ends at by 3.1
-                                 rclcpp::Duration(0),    // 0 offset for repetition start, so still starts at 2
-                                 rclcpp::Duration(1e9),    // Duration of 1 and interval of two so active durations are (2-3)
-                                 rclcpp::Duration(2e9)));
+                                 rclcpp::Duration::from_nanoseconds(2e9),    // Starts at 2
+                                 rclcpp::Duration::from_nanoseconds(1.1e9),  // Ends at by 3.1
+                                 rclcpp::Duration::from_nanoseconds(0),    // 0 offset for repetition start, so still starts at 2
+                                 rclcpp::Duration::from_nanoseconds(1e9),    // Duration of 1 and interval of two so active durations are (2-3)
+                                 rclcpp::Duration::from_nanoseconds(2e9)));
   // convert to ros msg
   carma_v2x_msgs::msg::TrafficControlMessageV01 msg_v01;
   std::copy(gf->id_.begin(),  gf->id_.end(), msg_v01.id.id.begin());
@@ -1390,11 +1390,11 @@ TEST(WMBroadcaster, currentLocationCallback)
 
   gf->schedules.push_back(carma_wm_ctrl::GeofenceSchedule(rclcpp::Time(1e9),  // Schedule between 1 and 8
                                  rclcpp::Time(8e9),
-                                 rclcpp::Duration(2e9),    // Starts at 2
-                                 rclcpp::Duration(1.1e9),  // Ends at by 3.1
-                                 rclcpp::Duration(0),    // 0 offset for repetition start, so still starts at 2
-                                 rclcpp::Duration(1e9),    // Duration of 1 and interval of two so active durations are (2-3)
-                                 rclcpp::Duration(2e9)));
+                                 rclcpp::Duration::from_nanoseconds(2e9),    // Starts at 2
+                                 rclcpp::Duration::from_nanoseconds(1.1e9),  // Ends at by 3.1
+                                 rclcpp::Duration::from_nanoseconds(0),    // 0 offset for repetition start, so still starts at 2
+                                 rclcpp::Duration::from_nanoseconds(1e9),    // Duration of 1 and interval of two so active durations are (2-3)
+                                 rclcpp::Duration::from_nanoseconds(2e9)));
   // convert to ros msg
   carma_v2x_msgs::msg::TrafficControlMessageV01 msg_v01;
   std::copy(gf->id_.begin(),  gf->id_.end(), msg_v01.id.id.begin());
@@ -1531,11 +1531,11 @@ TEST(WMBroadcaster, checkActiveGeofenceLogicTest)
   auto gf = std::make_shared<Geofence>();
   gf->schedules.push_back(carma_wm_ctrl::GeofenceSchedule(rclcpp::Time(1e9),  // Schedule between 1 and 8
                                  rclcpp::Time(8e9),
-                                 rclcpp::Duration(2e9),    // Starts at 2
-                                 rclcpp::Duration(1.1e9),  // Ends at by 3.1
-                                 rclcpp::Duration(0),    // 0 offset for repetition start, so still starts at 2
-                                 rclcpp::Duration(1e9),    // Duration of 1 and interval of two so active durations are (2-3)
-                                 rclcpp::Duration(2e9)));
+                                 rclcpp::Duration::from_nanoseconds(2e9),    // Starts at 2
+                                 rclcpp::Duration::from_nanoseconds(1.1e9),  // Ends at by 3.1
+                                 rclcpp::Duration::from_nanoseconds(0),    // 0 offset for repetition start, so still starts at 2
+                                 rclcpp::Duration::from_nanoseconds(1e9),    // Duration of 1 and interval of two so active durations are (2-3)
+                                 rclcpp::Duration::from_nanoseconds(2e9)));
 
   // Convert the geofence pointer into a TrafficControlMessageV01 message
   carma_v2x_msgs::msg::TrafficControlMessageV01 msg_v01;
@@ -1783,11 +1783,11 @@ TEST(WMBroadcaster, RegionAccessRuleTest)
 
   gf_ptr->schedules.push_back(carma_wm_ctrl::GeofenceSchedule(rclcpp::Time(1e9),  // Schedule between 1 and 8
                                  rclcpp::Time(8e9),
-                                 rclcpp::Duration(2e9),    // Starts at 2
-                                 rclcpp::Duration(1.1e9),  // Ends at by 3.1
-                                 rclcpp::Duration(0),    // 0 offset for repetition start, so still starts at 2
-                                 rclcpp::Duration(1e9),    // Duration of 1 and interval of two so active durations are (2-3)
-                                 rclcpp::Duration(2e9)));
+                                 rclcpp::Duration::from_nanoseconds(2e9),    // Starts at 2
+                                 rclcpp::Duration::from_nanoseconds(1.1e9),  // Ends at by 3.1
+                                 rclcpp::Duration::from_nanoseconds(0),    // 0 offset for repetition start, so still starts at 2
+                                 rclcpp::Duration::from_nanoseconds(1e9),    // Duration of 1 and interval of two so active durations are (2-3)
+                                 rclcpp::Duration::from_nanoseconds(2e9)));
   // convert to ros msg
   carma_v2x_msgs::msg::TrafficControlMessageV01 msg_v01;
   std::copy(gf_ptr->id_.begin(),  gf_ptr->id_.end(), msg_v01.id.id.begin());

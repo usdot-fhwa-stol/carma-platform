@@ -24,7 +24,7 @@
 #include <carma_ros2_utils/carma_lifecycle_node.hpp>
 
 #include <tf2_ros/transform_listener.h>
-#include <tf2_geometry_msgs/tf2_geometry_msgs.h>
+#include <tf2_geometry_msgs/tf2_geometry_msgs.hpp>
 #include <tf2/LinearMath/Quaternion.h>
 #include <tf2/LinearMath/Matrix3x3.h>
 
@@ -51,7 +51,7 @@ namespace gnss_to_map_convertor
     // Buffer which holds the tree of transforms
 
     tf2_ros::Buffer tfBuffer_;
-    
+
     // tf2 listeners. Subscribes to the /tf and /tf_static topics
     tf2_ros::TransformListener tfListener_ {tfBuffer_};
 
@@ -60,7 +60,7 @@ namespace gnss_to_map_convertor
 
   public:
     /**
-     * \brief Node constructor 
+     * \brief Node constructor
      */
     explicit Node(const rclcpp::NodeOptions &);
 

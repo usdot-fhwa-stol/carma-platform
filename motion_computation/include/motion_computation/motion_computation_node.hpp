@@ -16,7 +16,7 @@
 #define MOTION_COMPUTATION__MOTION_COMPUTATION_NODE_HPP_
 
 #include <lanelet2_extension/projection/local_frame_projector.h>
-#include <tf2_geometry_msgs/tf2_geometry_msgs.h>
+#include <tf2_geometry_msgs/tf2_geometry_msgs.hpp>
 
 #include <functional>
 #include <vector>

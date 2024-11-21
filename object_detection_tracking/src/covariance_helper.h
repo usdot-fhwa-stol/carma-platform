@@ -29,25 +29,25 @@
 // POSSIBILITY OF SUCH DAMAGE.
 
 /**
- * 
+ *
  * Modifications (c) Leidos 2021
  * - Moved to new namespace.
- * 
- */ 
+ *
+ */
 
 
-#include <tf2_geometry_msgs/tf2_geometry_msgs.h>
+#include <tf2_geometry_msgs/tf2_geometry_msgs.hpp>
 
 namespace covariance_helper {
 
-/** 
- * NOTE: The function is a direct copy from 
+/**
+ * NOTE: The function is a direct copy from
  * https://github.com/ros2/geometry2/blob/16562cee8694c11f1f82b2bdbde2814fca1c7954/tf2_geometry_msgs/include/tf2_geometry_msgs/tf2_geometry_msgs.hpp#L422
- * 
+ *
  * This bit of logic is normally included in the tf2_geometry_msgs packages, but it has not been backported to ROS2 Foxy
  * This means the current doTransform operation for PoseWithCovarianceStamped does not result in the correct covariance values
  * This function should be called after a call to doTransform to get the correct transformed covariance
- * 
+ *
  * \brief Transform the covariance matrix of a PoseWithCovariance message to a new frame.
  * \param cov_in The covariance matrix to transform.
  * \param transform The transform to apply, as a tf2::Transform structure.

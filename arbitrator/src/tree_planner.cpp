@@ -32,7 +32,7 @@ namespace arbitrator
         open_list_to_evaluate.push_back(std::make_pair(root, INF));
 
         carma_planning_msgs::msg::ManeuverPlan longest_plan = root; // Track longest plan in case target length is never reached
-        rclcpp::Duration longest_plan_duration = rclcpp::Duration(0);
+        rclcpp::Duration longest_plan_duration = rclcpp::Duration::from_nanoseconds(0);
 
 
         while (!open_list_to_evaluate.empty())

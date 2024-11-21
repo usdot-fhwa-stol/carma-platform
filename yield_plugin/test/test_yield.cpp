@@ -123,35 +123,35 @@ TEST(YieldPluginTest, MaxTrajectorySpeed)
   carma_planning_msgs::msg::TrajectoryPlanPoint point_2;
   point_2.x = 5.0;
   point_2.y = 0.0;
-  point_2.target_time = startTime + rclcpp::Duration(1*1e9);
+  point_2.target_time = startTime + rclcpp::Duration::from_nanoseconds(1*1e9);
   point_2.lane_id = "1";
   trajectory_points.push_back(point_2);
 
   carma_planning_msgs::msg::TrajectoryPlanPoint point_3;
   point_3.x = 10.0;
   point_3.y = 0.0;
-  point_3.target_time = startTime + rclcpp::Duration(2*1e9);
+  point_3.target_time = startTime + rclcpp::Duration::from_nanoseconds(2*1e9);
   point_3.lane_id = "1";
   trajectory_points.push_back(point_3);
 
   carma_planning_msgs::msg::TrajectoryPlanPoint point_4;
   point_4.x = 15.0;
   point_4.y = 0.0;
-  point_4.target_time = startTime + rclcpp::Duration(3*1e9);
+  point_4.target_time = startTime + rclcpp::Duration::from_nanoseconds(3*1e9);
   point_4.lane_id = "1";
   trajectory_points.push_back(point_4);
 
   carma_planning_msgs::msg::TrajectoryPlanPoint point_5;
   point_5.x = 20.0;
   point_5.y = 0.0;
-  point_5.target_time = startTime + rclcpp::Duration(4*1e9);
+  point_5.target_time = startTime + rclcpp::Duration::from_nanoseconds(4*1e9);
   point_5.lane_id = "1";
   trajectory_points.push_back(point_5);
 
   carma_planning_msgs::msg::TrajectoryPlanPoint point_6;
   point_6.x = 25.0;
   point_6.y = 0.0;
-  point_6.target_time = startTime + rclcpp::Duration(5*1e9);
+  point_6.target_time = startTime + rclcpp::Duration::from_nanoseconds(5*1e9);
   point_6.lane_id = "1";
   trajectory_points.push_back(point_6);
 
@@ -159,7 +159,7 @@ TEST(YieldPluginTest, MaxTrajectorySpeed)
  carma_planning_msgs::msg::TrajectoryPlanPoint point_7;
   point_7.x = 40.0;
   point_7.y = 0.0;
-  point_7.target_time = startTime + rclcpp::Duration(6*1e9);
+  point_7.target_time = startTime + rclcpp::Duration::from_nanoseconds(6*1e9);
   point_7.lane_id = "1";
   trajectory_points.push_back(point_7);
 
@@ -677,7 +677,7 @@ TEST(YieldPluginTest, test_update_traj2)
       carma_planning_msgs::msg::TrajectoryPlanPoint new_tpp;
       new_tpp.x = original_tp.trajectory_points[i].x;
       new_tpp.y = original_tp.trajectory_points[i].y;
-      new_tpp.target_time = rclcpp::Time(new_trajectory_points[0].target_time) + rclcpp::Duration((original_traj_downtracks[i]/dv)*1e9);
+      new_tpp.target_time = rclcpp::Time(new_trajectory_points[0].target_time) + rclcpp::Duration::from_nanoseconds((original_traj_downtracks[i]/dv)*1e9);
       new_trajectory_points.push_back(new_tpp);
   }
 
@@ -784,14 +784,14 @@ TEST(YieldPluginTest, test_update_traj_stop)
           }
           // trajectory point is copied to move all the available information, then its target time is updated
           new_tpp = original_tp.trajectory_points[i];
-          new_tpp.target_time = rclcpp::Time(new_trajectory_points[i-1].target_time) + rclcpp::Duration((original_traj_downtracks[i]/dv)*1e9);
+          new_tpp.target_time = rclcpp::Time(new_trajectory_points[i-1].target_time) + rclcpp::Duration::from_nanoseconds((original_traj_downtracks[i]/dv)*1e9);
           new_trajectory_points.push_back(new_tpp);
         }
         else
         {
           RCLCPP_WARN(rclcpp::get_logger("yield_plugin"),"target speed is zero");
           new_tpp = new_trajectory_points[i-1];
-          new_tpp.target_time = rclcpp::Time(new_trajectory_points[0].target_time) + rclcpp::Duration(traj_target_time*1e9);
+          new_tpp.target_time = rclcpp::Time(new_trajectory_points[0].target_time) + rclcpp::Duration::from_nanoseconds(traj_target_time*1e9);
           new_trajectory_points.push_back(new_tpp);
         }
       new_speeds.push_back(dv);

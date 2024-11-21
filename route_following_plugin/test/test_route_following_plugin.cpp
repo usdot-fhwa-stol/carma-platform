@@ -135,7 +135,7 @@ namespace route_following_plugin
         std::shared_ptr<rmw_request_id_t> srv_header;
 
         worker->plan_maneuvers_callback(srv_header,plan_request, plan_response);
-        
+
         //check target speeds in updated response
         lanelet::Velocity limit = 30_mph;
         ASSERT_EQ(plan_response->new_plan.maneuvers[0].lane_following_maneuver.end_speed, 11.176);
@@ -161,15 +161,15 @@ namespace route_following_plugin
         lanelet::Id end_id = 111;
         /***
          * VAVLID PATHs (consists of lanenet ids): (This is also the shortest path because certain Lanelets missing)
-         * 159->160->164->136->135->137->144->121; 
+         * 159->160->164->136->135->137->144->121;
          * 159->160->164->136->135->137->144->118;
          * 168->170->111
          * 159->161->168->170->111
          * 167->169->168->170->111
-         * 115->146->140->139->143->167->169->168->170->111 
-         * 141->139->143->167->169->168->170->111 
-         * 127->146->140->139->143->167->169->168->170->111 
-         * 101->100->104->167->169->168->170->111 (a counter cLock circle) 
+         * 115->146->140->139->143->167->169->168->170->111
+         * 141->139->143->167->169->168->170->111
+         * 127->146->140->139->143->167->169->168->170->111
+         * 101->100->104->167->169->168->170->111 (a counter cLock circle)
          * **/
         // Write new map to file
         int projector_type = 0;
@@ -263,7 +263,7 @@ namespace route_following_plugin
         else
             ASSERT_EQ(speed, 11.176);
     }
-    
+
     TEST(RouteFollowingPlugin, TestHelperfunctions)
     {
         auto worker = std::make_shared<RouteFollowingPlugin>(rclcpp::NodeOptions());
@@ -274,7 +274,7 @@ namespace route_following_plugin
         worker->setManeuverStartDist(maneuver, 50.0);
         ASSERT_EQ(maneuver.lane_following_maneuver.start_dist, 50.0);
 
-        rclcpp::Time new_start_time = start_time + rclcpp::Duration(10.0*1e9);
+        rclcpp::Time new_start_time = start_time + rclcpp::Duration::from_nanoseconds(10.0*1e9);
         std::vector<carma_planning_msgs::msg::Maneuver> maneuvers;
         maneuvers.push_back(maneuver);
 
@@ -361,4 +361,3 @@ int main (int argc, char **argv) {
 
     return success;
 }
-

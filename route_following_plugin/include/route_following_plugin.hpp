@@ -28,7 +28,7 @@
 #include <gtest/gtest_prod.h>
 #include <tf2_ros/transform_listener.h>
 #include <tf2/LinearMath/Transform.h>
-#include <tf2_geometry_msgs/tf2_geometry_msgs.h>
+#include <tf2_geometry_msgs/tf2_geometry_msgs.hpp>
 #include <unordered_set>
 #include "carma_guidance_plugins/strategic_plugin.hpp"
 #include "route_following_plugin_config.hpp"
@@ -56,7 +56,7 @@
                         ((mvr).type == carma_planning_msgs::msg::Maneuver::STOP_AND_WAIT ? (mvr).stop_and_wait_maneuver.property = (value) :\
                             ((mvr).type == carma_planning_msgs::msg::Maneuver::LANE_FOLLOWING ? (mvr).lane_following_maneuver.property = (value) :\
                                 throw std::invalid_argument("SET_MANEUVER_PROPERTY (property) called on maneuver with invalid type id " + std::to_string((mvr).type)))))))))
-                        
+
 namespace route_following_plugin
 {
     class RouteFollowingPlugin : public carma_guidance_plugins::StrategicPlugin
@@ -67,7 +67,7 @@ namespace route_following_plugin
          * \brief Default constructor for RouteFollowingPlugin class
          */
         explicit RouteFollowingPlugin(const rclcpp::NodeOptions &);
-        
+
         ////////// OVERRIDES ///////////
         carma_ros2_utils::CallbackReturn on_configure_plugin();
         carma_ros2_utils::CallbackReturn on_activate_plugin();
@@ -78,7 +78,7 @@ namespace route_following_plugin
 
         bool get_availability();
         std::string get_version_id();
-        
+
         private:
 
         /**
@@ -87,13 +87,13 @@ namespace route_following_plugin
          * \param end_dist End downtrack distance of the current maneuver
          * \param start_speed Start speed of the current maneuver
          * \param target_speed Target speed pf the current maneuver, usually it is the lanelet speed limit
-         * \param lane_ids List of lanelet IDs that the current maneuver traverses. Message expects these to be contiguous and end to end 
+         * \param lane_ids List of lanelet IDs that the current maneuver traverses. Message expects these to be contiguous and end to end
          * \return A lane keeping maneuver message which is ready to be published
          */
         carma_planning_msgs::msg::Maneuver composeLaneFollowingManeuverMessage(double start_dist, double end_dist, double start_speed, double target_speed, const std::vector<lanelet::Id>& lane_ids) const;
 
         /**
-         * \brief Compose a lane change maneuver message based on input params 
+         * \brief Compose a lane change maneuver message based on input params
          *        NOTE: The start and stop time are not set. This is because this is recomputed based on requests from the arbitrator
          * \param start_dist Start downtrack distance of the current maneuver
          * \param end_dist End downtrack distance of the current maneuver
@@ -104,9 +104,9 @@ namespace route_following_plugin
          * \return A lane keeping maneuver message which is ready to be published
          */
         carma_planning_msgs::msg::Maneuver composeLaneChangeManeuverMessage(double start_dist, double end_dist, double start_speed, double target_speed, lanelet::Id starting_lane_id,lanelet::Id ending_lane_id) const;
-        
+
         /**
-         * \brief Compose a stop and wait maneuver message based on input params. 
+         * \brief Compose a stop and wait maneuver message based on input params.
          *        NOTE: The start and stop time are not set. This is because this is recomputed based on requests from the arbitrator
          * \param start_dist Start downtrack distance of the current maneuver
          * \param end_dist End downtrack distance of the current maneuver
@@ -125,7 +125,7 @@ namespace route_following_plugin
          * \return Whether we need a lanechange to reach to the next lanelet in the shortest path.
          */
         bool isLaneChangeNeeded(lanelet::routing::LaneletRelations relations, lanelet::Id target_id) const;
-        
+
         /**
          * \brief Set the start distance of a maneuver based on the progress along the route
          * \param maneuver A maneuver (non-specific to type) to be performed
@@ -135,7 +135,7 @@ namespace route_following_plugin
 
         /**
          * \brief Given an array of maneuvers update the starting time for each
-         * \param maneuvers An array of maneuvers (non-specific to type) 
+         * \param maneuvers An array of maneuvers (non-specific to type)
          * \param start_time The starting time for the first maneuver in the sequence, each consequent maneuver is pushed ahead by same amount
          */
         void updateTimeProgress(std::vector<carma_planning_msgs::msg::Maneuver>& maneuvers, rclcpp::Time start_time) const;
@@ -152,10 +152,10 @@ namespace route_following_plugin
          * \param resp Plan maneuver response with a list of maneuver plan
          * \return If service call successed
          */
-      
+
         void plan_maneuvers_callback(
-         std::shared_ptr<rmw_request_id_t> srv_header, 
-         carma_planning_msgs::srv::PlanManeuvers::Request::SharedPtr req, 
+         std::shared_ptr<rmw_request_id_t> srv_header,
+         carma_planning_msgs::srv::PlanManeuvers::Request::SharedPtr req,
          carma_planning_msgs::srv::PlanManeuvers::Response::SharedPtr resp);
 
         /**
@@ -174,69 +174,69 @@ namespace route_following_plugin
         /**
          * \brief Adds a StopAndWait maneuver to the end of a maneuver set stopping at the provided downtrack value
          *        NOTE: The priority of this method is to plan the stopping maneuver therefore earlier maneuvers will be modified or removed if required to allow the stopping behavior to be executed
-         * 
+         *
          * \param input_maneuvers The set of maneuvers to modify to support the StopAndWait maneuver.
          * \param route_end_downtrack The target stopping point (normally the end of the route) which the vehicle should stop before. Units meters
          * \param stopping_entry_speed The expected entry speed for stopping. This is used to compute the stopping distance. Units m/s
          * \param stopping_logitudinal_accel The target deceleration (unsigned) for the stopping operation. Units m/s/s
          * \param lateral_accel_limit The lateral acceleration limit allowed for lane changes. Units m/s/s
          * \param min_maneuver_length The absolute minimum allowable maneuver length for any existing maneuvers in meters
-         * 
+         *
          * NOTE: Only min_maneuver_length can be a zero-valued input. All other parameters must be positive values greater than zero.
-         * 
+         *
          * \throw std::invalid_argument If existing maneuvers cannot be modified to allow stopping maneuver creation, or if the generated maneuvers do not overlap any lanelets in the map.
-         * 
-         * \return A list of maneuvers which mirrors the input list but with the modifications required to include a stopping maneuver at the end 
-         * 
+         *
+         * \return A list of maneuvers which mirrors the input list but with the modifications required to include a stopping maneuver at the end
+         *
          * ASSUMPTION: At the moment the stopping entry speed is not updated because the assumption is
-         * that any previous maneuvers which were slower need not be accounted for as planning for a higher speed will always be capable of handling that case 
-         * and any which were faster would already have their speed reduced by the maneuver which this speed was derived from. 
-         */ 
+         * that any previous maneuvers which were slower need not be accounted for as planning for a higher speed will always be capable of handling that case
+         * and any which were faster would already have their speed reduced by the maneuver which this speed was derived from.
+         */
         std::vector<carma_planning_msgs::msg::Maneuver> addStopAndWaitAtRouteEnd (
-                const std::vector<carma_planning_msgs::msg::Maneuver>& input_maneuvers, 
+                const std::vector<carma_planning_msgs::msg::Maneuver>& input_maneuvers,
                 double route_end_downtrack, double stopping_entry_speed, double stopping_logitudinal_accel,
                 double lateral_accel_limit, double min_maneuver_length
             ) const;
 
         /**
          * \brief Identifies if a maneuver starts after the provided downtrack with compensation for a dynamic buffer size based on the maneuver type
-         * 
+         *
          * \param maneuver The maneuver to compare
          * \param downtrack The downtrack value to evaluate in meters
          * \param lateral_accel The max lateral acceleration allowed for lane changes in m/s/s
          * \param min_maneuver_length The absolute minimum allowable for any maneuver in meters
-         * 
+         *
          * \return true if the provided maneuver plus the computed dynamic buffer starts after the provided downtrack value
-         */ 
+         */
         bool maneuverWithBufferStartsAfterDowntrack(const carma_planning_msgs::msg::Maneuver& maneuver, double downtrack, double lateral_accel, double min_maneuver_length) const;
 
         /**
          * \brief This method returns a new UUID as a string for assignment to a Maneuver message
-         * 
+         *
          * \return A new UUID as a string
-         */ 
+         */
         std::string getNewManeuverId() const;
 
         /**
          * \brief This method re-routes the vehicle back to the shortest path, if the vehicle has left the shortest path, but is still on the route
          * Re-routing is performed by generating a new shortest path via the closest lanelet on the original shortest path
-         * 
+         *
          * \param current_lanelet curretn lanelet where the vehicle is at
-         */ 
+         */
         void returnToShortestPath(const lanelet::ConstLanelet &current_lanelet);
 
         //Subscribers
         carma_ros2_utils::SubPtr<geometry_msgs::msg::TwistStamped> twist_sub_;
         carma_ros2_utils::SubPtr<carma_planning_msgs::msg::ManeuverPlan> current_maneuver_plan_sub_;
-    
+
         // unordered set of all the lanelet ids in shortest path
         std::unordered_set<lanelet::Id> shortest_path_set_;
-       
+
         static constexpr double MAX_LANE_WIDTH = 3.70; // Maximum lane width of a US highway
 
         // Node configuration
         Config config_;
-        
+
         // Current vehicle forward speed
         double current_speed_ = 0.0;
 
@@ -246,7 +246,7 @@ namespace route_following_plugin
         // Current vehicle pose in map
         geometry_msgs::msg::PoseStamped pose_msg_;
         lanelet::BasicPoint2d current_loc_;
-        
+
         // Currently executing maneuver plan from Arbitrator
         carma_planning_msgs::msg::ManeuverPlan::UniquePtr current_maneuver_plan_;
 
@@ -258,11 +258,11 @@ namespace route_following_plugin
         std::string stop_and_wait_plugin_ = "stop_and_wait_plugin";
 
         std::string planning_strategic_plugin_ = "route_following_plugin";
-        std::string lanefollow_planning_tactical_plugin_ = "inlanecruising_plugin"; 
-   
+        std::string lanefollow_planning_tactical_plugin_ = "inlanecruising_plugin";
+
         // Timer used to update the front bumper pose
         rclcpp::TimerBase::SharedPtr bumper_pose_timer_;
-        
+
         /**
          * \brief Callback for the front bumper pose transform
          */
@@ -296,10 +296,10 @@ namespace route_following_plugin
         void initializeBumperTransformLookup();
 
         geometry_msgs::msg::TransformStamped tf_;
-        
+
         // front bumper transform
         tf2::Stamped<tf2::Transform> frontbumper_transform_;
-        
+
         // TF listenser
         tf2_ros::Buffer tf2_buffer_;
         std::unique_ptr<tf2_ros::TransformListener> tf2_listener_;

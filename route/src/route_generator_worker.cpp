@@ -20,7 +20,7 @@ namespace route {
 
     RouteGeneratorWorker::RouteGeneratorWorker(tf2_ros::Buffer& tf2_buffer)
         : tf2_buffer_(tf2_buffer) {}
-    
+
     void RouteGeneratorWorker::setWorldModelPtr(carma_wm::WorldModelConstPtr wm)
     {
         this->world_model_ = wm;
@@ -76,14 +76,14 @@ namespace route {
     bool RouteGeneratorWorker::getAvailableRouteCb(const std::shared_ptr<rmw_request_id_t>,
                                 const std::shared_ptr<carma_planning_msgs::srv::GetAvailableRoutes::Request>,
                                 std::shared_ptr<carma_planning_msgs::srv::GetAvailableRoutes::Response> resp)
-    {   
+    {
         // Return if the the directory specified by route_file_path_ does not exist
         if(!boost::filesystem::exists(boost::filesystem::path(this->route_file_path_)))
         {
             RCLCPP_ERROR_STREAM(logger_->get_logger(), "No directory exists at " << route_file_path_);
             return true;
         }
- 
+
         // Read all route files in the given directory
         boost::filesystem::directory_iterator end_point;
         for(boost::filesystem::directory_iterator itr(boost::filesystem::path(this->route_file_path_)); itr != end_point; ++itr)
@@ -99,9 +99,9 @@ namespace route {
 
             // Skip if '.csv' is not found in the file name
             if(full_file_name.find(".csv") == std::string::npos)
-            { 
+            {
                 continue;
-            }          
+            }
 
             // Assume route files ending with ".csv", before that is the actual route name
             route_msg.route_id = full_file_name.substr(0, full_file_name.find(".csv"));
@@ -116,7 +116,7 @@ namespace route {
                     if(temp != "") dest_name = temp;
                 }
                 fin.close();
-            } 
+            }
             else
             {
                 RCLCPP_ERROR_STREAM(logger_->get_logger(), "File open failed...");
@@ -128,9 +128,9 @@ namespace route {
                 resp->available_routes.push_back(move(route_msg));
             }
         }
-            
+
         //after route path object is available to select, worker will able to transit state and provide route selection service
-        if(this->rs_worker_.getRouteState() == RouteStateWorker::RouteState::LOADING) 
+        if(this->rs_worker_.getRouteState() == RouteStateWorker::RouteState::LOADING)
         {
             this->rs_worker_.onRouteEvent(RouteStateWorker::RouteEvent::ROUTE_LOADED);
             publishRouteEvent(carma_planning_msgs::msg::RouteEvent::ROUTE_LOADED);
@@ -150,7 +150,7 @@ namespace route {
     bool RouteGeneratorWorker::setActiveRouteCb(const std::shared_ptr<rmw_request_id_t>,
                                 const std::shared_ptr<carma_planning_msgs::srv::SetActiveRoute::Request> req,
                                 std::shared_ptr<carma_planning_msgs::srv::SetActiveRoute::Response> resp)
-    {   
+    {
         // only allow a new route to be activated in route selection state
         if(this->rs_worker_.getRouteState() != RouteStateWorker::RouteState::SELECTION)
         {
@@ -161,7 +161,7 @@ namespace route {
         }
 
         RCLCPP_DEBUG_STREAM(logger_->get_logger(), "Valid state proceeding with selection");
-        	
+
         // entering to routing state once destinations are picked
         this->rs_worker_.onRouteEvent(RouteStateWorker::RouteEvent::ROUTE_SELECTED);
         publishRouteEvent(carma_planning_msgs::msg::RouteEvent::ROUTE_SELECTED);
@@ -186,7 +186,7 @@ namespace route {
         // load destination points in map frame
         std::vector<lanelet::BasicPoint3d> destination_points;
         if(req->choice == carma_planning_msgs::srv::SetActiveRoute::Request::ROUTE_ID)
-        {   
+        {
             RCLCPP_INFO_STREAM(logger_->get_logger(), "set_active_route_cb: Selected Route ID: " << req->route_id);
             std::vector<carma_v2x_msgs::msg::Position3D> gps_destination_points = loadRouteDestinationGpsPointsFromRouteId(req->route_id);
             destination_points = loadRouteDestinationsInMapFrame(gps_destination_points);
@@ -220,7 +220,7 @@ namespace route {
 
         // Add vehicle as first destination point
         auto destination_points_in_map_with_vehicle = destination_points_in_map_;
-            
+
         lanelet::BasicPoint2d vehicle_position(vehicle_pose_->pose.position.x, vehicle_pose_->pose.position.y);
         destination_points_in_map_with_vehicle.insert(destination_points_in_map_with_vehicle.begin(), vehicle_position);
 
@@ -230,7 +230,7 @@ namespace route {
         {
             if ((world_model_->getLaneletsFromPoint(pt, 1)).empty())
             {
-                RCLCPP_ERROR_STREAM(logger_->get_logger(), "Route Generator: " << idx 
+                RCLCPP_ERROR_STREAM(logger_->get_logger(), "Route Generator: " << idx
                         << "th destination point is not in the map, x: " << pt.x() << " y: " << pt.y());
                 resp->error_status = carma_planning_msgs::srv::SetActiveRoute::Response::ROUTE_FILE_ERROR;
                 this->rs_worker_.onRouteEvent(RouteStateWorker::RouteEvent::ROUTE_GEN_FAILED);
@@ -239,7 +239,7 @@ namespace route {
             }
             idx ++;
         }
-            
+
         // get route graph from world model object
         auto p = world_model_->getMapRoutingGraph();
         // generate a route
@@ -306,7 +306,7 @@ namespace route {
 
         // Verify that there are no duplicate lanelet IDs in the shortest path
         std::sort(shortest_path_lanelet_ids.begin(), shortest_path_lanelet_ids.end());
-        
+
         if (std::adjacent_find(shortest_path_lanelet_ids.begin(), shortest_path_lanelet_ids.end()) != shortest_path_lanelet_ids.end())
         {
             // Route's shortest path contains duplicate lanelet IDs
@@ -322,7 +322,7 @@ namespace route {
         if (!map_proj_) {
             throw std::invalid_argument("loadRouteDestinationsInMapFrame (using destination points array) before map projection was set");
         }
-        
+
         lanelet::projection::LocalFrameProjector projector(map_proj_.get().c_str()); // Build map projector
 
         // Process each point in 'destinations'
@@ -332,7 +332,7 @@ namespace route {
             lanelet::GPSPoint coordinate;
             coordinate.lon = destination.longitude;
             coordinate.lat = destination.latitude;
-            
+
             if(destination.elevation_exists)
             {
                 coordinate.ele = destination.elevation;
@@ -354,7 +354,7 @@ namespace route {
         std::string route_file_name = route_file_path_ + route_id + ".csv";
         std::ifstream fs(route_file_name);
         std::string line;
-        
+
         // read each line in route file (if any)
         std::vector<carma_v2x_msgs::msg::Position3D> destination_points;
         while(std::getline(fs, line))
@@ -390,7 +390,7 @@ namespace route {
         double lanelet_downtrack = carma_wm::geometry::trackPos(last_ll, last_ll.centerline().back().basicPoint2d()).downtrack;
         // get number of points to display using ratio of the downtracks
         auto points_until_end_point = int (last_ll.centerline().size() * (end_point_downtrack / lanelet_downtrack));
-  
+
         for(const auto& ll : route.get().shortestPath())
         {
             if (ll.id() == last_ll.id())
@@ -433,14 +433,14 @@ namespace route {
             RCLCPP_WARN_STREAM(logger_->get_logger(), "No central line points! Returning");
             return route_marker_msg_;
         }
- 
+
         for (int i = 0; i < points.size(); i=i+5)
         {
             geometry_msgs::msg::Point temp_point;
             temp_point.x = points[i].x();
             temp_point.y = points[i].y();
             temp_point.z = 1; //to show up on top of the lanelet lines
-            
+
             marker.points.push_back(temp_point);
         }
         new_route_marker_generated_ = true;
@@ -485,7 +485,7 @@ namespace route {
         return true;
     }
 
-    void RouteGeneratorWorker::initializeBumperTransformLookup() 
+    void RouteGeneratorWorker::initializeBumperTransformLookup()
     {
         tf2_listener_.reset(new tf2_ros::TransformListener(tf2_buffer_));
         tf2_buffer_.setUsingDedicatedThread(true);
@@ -495,20 +495,20 @@ namespace route {
     {
         try
         {
-            tf_ = tf2_buffer_.lookupTransform("map", "vehicle_front", rclcpp::Time(0,0), rclcpp::Duration(1.0*1e9)); //save to local copy of transform 0.1 sec timeout
+            tf_ = tf2_buffer_.lookupTransform("map", "vehicle_front", rclcpp::Time(0,0), rclcpp::Duration::from_nanoseconds(1.0*1e9)); //save to local copy of transform 0.1 sec timeout
             tf2::fromMsg(tf_, frontbumper_transform_);
         }
         catch (const tf2::TransformException &ex)
         {
             RCLCPP_WARN_STREAM(logger_->get_logger(), ex.what());
         }
-        
+
         geometry_msgs::msg::PoseStamped updated_vehicle_pose;
         updated_vehicle_pose.pose.position.x = frontbumper_transform_.getOrigin().getX();
         updated_vehicle_pose.pose.position.y = frontbumper_transform_.getOrigin().getY();
         updated_vehicle_pose.pose.position.z = frontbumper_transform_.getOrigin().getZ();
-        vehicle_pose_ = updated_vehicle_pose; 
-            
+        vehicle_pose_ = updated_vehicle_pose;
+
         if(this->rs_worker_.getRouteState() == RouteStateWorker::RouteState::FOLLOWING) {
             // convert from pose stamp into lanelet basic 2D point
             current_loc_ = lanelet::BasicPoint2d(vehicle_pose_->pose.position.x, vehicle_pose_->pose.position.y);
@@ -536,27 +536,27 @@ namespace route {
             current_downtrack_distance_ = track.downtrack;
             // Determine speed limit
             lanelet::Optional<carma_wm::TrafficRulesConstPtr> traffic_rules = world_model_->getTrafficRules();
-            
-            if (traffic_rules) 
+
+            if (traffic_rules)
             {
                 auto laneletIterator = world_model_->getMap()->laneletLayer.find(ll_id_);
                 if (laneletIterator != world_model_->getMap()->laneletLayer.end()) {
                     speed_limit_ = (*traffic_rules)->speedLimit(*laneletIterator).speedLimit.value();
-                } 
-                else 
+                }
+                else
                 {
                     RCLCPP_ERROR_STREAM(logger_->get_logger(), "Failed to set the current speed limit. The lanelet_id: "
                         << ll_id_ << " could not be matched with a lanelet in the map. The previous speed limit of "
                         << speed_limit_ << " will be used.");
                 }
-                
-            } 
-            else 
+
+            }
+            else
             {
                 RCLCPP_ERROR_STREAM(logger_->get_logger(), "Failed to set the current speed limit. Valid traffic rules object could not be built.");
             }
             std::shared_ptr<geometry_msgs::msg::PoseStamped> pose_ptr(new geometry_msgs::msg::PoseStamped(*vehicle_pose_));
-            
+
             // check if we left the seleted route by cross track error
             if (crosstrackErrorCheck(pose_ptr, current_lanelet))
             {
@@ -564,7 +564,7 @@ namespace route {
                 publishRouteEvent(carma_planning_msgs::msg::RouteEvent::ROUTE_DEPARTED);
             }
 
-            // check if we reached our destination be remaining down track distance            
+            // check if we reached our destination be remaining down track distance
             double route_length_2d = world_model_->getRouteEndTrackPos().downtrack;
             if((current_downtrack_distance_ > route_length_2d - down_track_target_range_ && current_speed_ < epsilon_) || (current_downtrack_distance_ > route_length_2d))
             {
@@ -604,25 +604,25 @@ namespace route {
     {
         route_event_queue.push(event_type);
     }
-    
+
     lanelet::Optional<lanelet::routing::Route> RouteGeneratorWorker::rerouteAfterRouteInvalidation(const std::vector<lanelet::BasicPoint2d>& destination_points_in_map)
     {
         std::vector<lanelet::BasicPoint2d> destination_points_in_map_temp;
-        
+
         for(const auto &i:destination_points_in_map) // Identify all route points that we have not yet passed
         {
             double destination_down_track=world_model_->routeTrackPos(i).downtrack;
-            
+
             if( current_downtrack_distance_< destination_down_track)
             {
                 destination_points_in_map_temp.push_back(i);
                 RCLCPP_DEBUG_STREAM(logger_->get_logger(), "current_downtrack_distance_:" << current_downtrack_distance_);
                 RCLCPP_DEBUG_STREAM(logger_->get_logger(), "destination_down_track:" << destination_down_track);
             }
-        }  
-        
+        }
+
         destination_points_in_map_ = destination_points_in_map_temp; // Update our route point list
-        
+
         RCLCPP_DEBUG_STREAM(logger_->get_logger(), "New destination_points_in_map.size:" << destination_points_in_map_.size());
 
         auto route=routing(current_loc_, // Route from current location through future destinations
@@ -663,8 +663,8 @@ namespace route {
             else
             {
                 this->rs_worker_.onRouteEvent(RouteStateWorker::RouteEvent::ROUTE_STARTED);
-                publishRouteEvent(carma_planning_msgs::msg::RouteEvent::ROUTE_STARTED);  
-            }    
+                publishRouteEvent(carma_planning_msgs::msg::RouteEvent::ROUTE_STARTED);
+            }
             std::string original_route_name = route_msg_.route_name;
             route_msg_ = composeRouteMsg(route);
             route_msg_.route_name = original_route_name;
@@ -674,7 +674,7 @@ namespace route {
             new_route_msg_generated_ = true;
             new_route_marker_generated_ = true;
         }
-        
+
         // publish new route and set new route flag back to false
         if(new_route_msg_generated_ && new_route_marker_generated_)
         {
@@ -692,7 +692,7 @@ namespace route {
             state_msg.route_id = route_msg_.route_name;
             state_msg.cross_track = current_crosstrack_distance_;
             state_msg.down_track = current_downtrack_distance_;
-            state_msg.lanelet_downtrack = ll_downtrack_distance_;            
+            state_msg.lanelet_downtrack = ll_downtrack_distance_;
             state_msg.state = this->rs_worker_.getRouteState();
             state_msg.lanelet_id = ll_id_;
             state_msg.speed_limit = speed_limit_;
@@ -706,7 +706,7 @@ namespace route {
             route_event_pub_->publish(route_event_msg_);
             route_event_queue.pop();
         }
-        return true; 
+        return true;
     }
 
     bool RouteGeneratorWorker::crosstrackErrorCheck(const std::shared_ptr<geometry_msgs::msg::PoseStamped>& msg, lanelet::ConstLanelet current)
@@ -725,7 +725,7 @@ namespace route {
         RCLCPP_DEBUG_STREAM(logger_->get_logger(), "LLt Polygon Dimensions1: " << current.polygon2d().front().x()<< ", "<< current.polygon2d().front().y());
         RCLCPP_DEBUG_STREAM(logger_->get_logger(), "LLt Polygon Dimensions2: " << current.polygon2d().back().x()<< ", "<< current.polygon2d().back().y());
         RCLCPP_DEBUG_STREAM(logger_->get_logger(), "Distance1: " << boost::geometry::distance(position, current.polygon2d()) << " Max allowed Crosstrack: " << cross_track_dist_ );
-    
+
         if (boost::geometry::distance(position, current.polygon2d()) > cross_track_dist_) //Evaluate lanelet crosstrack distance from vehicle
             {
                 cte_count_++;
@@ -735,7 +735,7 @@ namespace route {
                         cte_count_ = 0;
                         return true;
                     }
-                else 
+                else
                     return false;
             }
         else
@@ -743,7 +743,7 @@ namespace route {
                 cte_count_ = 0;
                 return false;
             }
- 
+
     }
 
 

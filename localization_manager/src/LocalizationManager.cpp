@@ -14,7 +14,7 @@
  * the License.
  */
 
-#include <tf2_geometry_msgs/tf2_geometry_msgs.h>
+#include <tf2_geometry_msgs/tf2_geometry_msgs.hpp>
 #include <algorithm>
 #include "localization_manager/LocalizationManager.hpp"
 
@@ -242,14 +242,14 @@ namespace localization_manager
             prev_ndt_stamp_ = boost::none;
 
             current_timer_id_ = nextId();
-            current_timer_ = timer_factory_->buildTimer(current_timer_id_, rclcpp::Duration(config_.auto_initialization_timeout * 1e6),
+            current_timer_ = timer_factory_->buildTimer(current_timer_id_, rclcpp::Duration::from_nanoseconds(config_.auto_initialization_timeout * 1e6),
                                                         std::bind(&LocalizationManager::timerCallback, this, new_state), true, true);
 
             timers_[current_timer_id_] = std::make_pair(std::move(current_timer_), false); // Add start timer to map by Id
             break;
         case LocalizationState::DEGRADED_NO_LIDAR_FIX:
             current_timer_id_ = nextId();
-            current_timer_ = timer_factory_->buildTimer(current_timer_id_, rclcpp::Duration(config_.gnss_only_operation_timeout * 1e6),
+            current_timer_ = timer_factory_->buildTimer(current_timer_id_, rclcpp::Duration::from_nanoseconds(config_.gnss_only_operation_timeout * 1e6),
                                                         std::bind(&LocalizationManager::timerCallback, this, new_state), true, true);
 
             timers_[current_timer_id_] = std::make_pair(std::move(current_timer_), false); // Add start timer to map by Id
@@ -281,7 +281,7 @@ namespace localization_manager
         }
 
         // check if last gnss time stamp is older than threshold and send the corresponding signal
-        if (last_raw_gnss_value_ && timer_factory_->now() - rclcpp::Time(last_raw_gnss_value_->header.stamp, timer_clock_type_) > rclcpp::Duration(config_.gnss_data_timeout * 1e6))
+        if (last_raw_gnss_value_ && timer_factory_->now() - rclcpp::Time(last_raw_gnss_value_->header.stamp, timer_clock_type_) > rclcpp::Duration::from_nanoseconds(config_.gnss_data_timeout * 1e6))
         {
             transition_table_.signal(LocalizationSignal::GNSS_DATA_TIMEOUT);
         }
