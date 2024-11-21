@@ -15,24 +15,25 @@
  */
 
 #include <gtest/gtest.h>
-#include <memory>
+
 #include <chrono>
-#include <thread>
 #include <future>
+#include <memory>
+#include <thread>
 
 #include "platooning_strategic_ihp/platoon_strategic_plugin_node_ihp.h"
 
 int main(int argc, char ** argv)
 {
-    ::testing::InitGoogleTest(&argc, argv);
+  ::testing::InitGoogleTest(&argc, argv);
 
-    //Initialize ROS
-    rclcpp::init(argc, argv);
+  // Initialize ROS
+  rclcpp::init(argc, argv);
 
-    bool success = RUN_ALL_TESTS();
+  bool success = RUN_ALL_TESTS();
 
-    //shutdown ROS
-    rclcpp::shutdown();
+  // shutdown ROS
+  rclcpp::shutdown();
 
-    return success;
+  return success;
 }

@@ -24,11 +24,11 @@ GeofenceSchedule::GeofenceSchedule()
 }
 
 GeofenceSchedule::GeofenceSchedule(rclcpp::Time schedule_start, rclcpp::Time schedule_end, rclcpp::Duration control_start,
-                                   rclcpp::Duration control_duration, rclcpp::Duration control_offset,
-                                   rclcpp::Duration control_span, rclcpp::Duration control_period, DayOfTheWeekSet week_day_set):
-                                   schedule_start_(schedule_start), schedule_end_(schedule_end),
-                                   control_start_ (control_start), control_duration_ (control_duration),
-                                   control_offset_ (control_offset), control_span_ (control_span), control_period_ (control_period), week_day_set_(week_day_set)
+rclcpp::Duration control_duration, rclcpp::Duration control_offset,
+rclcpp::Duration control_span, rclcpp::Duration control_period, DayOfTheWeekSet week_day_set):
+schedule_start_(schedule_start), schedule_end_(schedule_end),
+control_start_ (control_start), control_duration_ (control_duration),
+control_offset_ (control_offset), control_span_ (control_span), control_period_ (control_period), week_day_set_(week_day_set)
 {}
 
 bool GeofenceSchedule::scheduleExpired(const rclcpp::Time& time) const
@@ -51,7 +51,7 @@ std::pair<bool, rclcpp::Time> GeofenceSchedule::getNextInterval(const rclcpp::Ti
     RCLCPP_DEBUG_STREAM(rclcpp::get_logger("carma_wm_ctrl"), "Geofence schedule expired");
     return std::make_pair(false, rclcpp::Time(0, 0, clock_type));  // If the schedule has expired or was never started
   }
-  
+
   boost::posix_time::ptime boost_time = boost::posix_time::from_time_t(time.seconds());
   boost_time += boost::posix_time::microseconds((int)((time.seconds()-std::floor(time.seconds()))*1e6));
   boost::gregorian::date date = boost_time.date();
@@ -67,7 +67,7 @@ std::pair<bool, rclcpp::Time> GeofenceSchedule::getNextInterval(const rclcpp::Ti
 
   // Convert schedule into workable components
   boost::posix_time::ptime ptime_start_of_day(date, boost::posix_time::hours(0));  // Get absolute start time of the day
-  
+
   rclcpp::Time ros_time_of_day = rclcpp::Time(lanelet::time::toSec(time_of_day) * 1e9, clock_type);
 
   rclcpp::Time abs_day_start = rclcpp::Time(lanelet::time::toSec(ptime_start_of_day) * 1e9, clock_type);
@@ -93,7 +93,7 @@ std::pair<bool, rclcpp::Time> GeofenceSchedule::getNextInterval(const rclcpp::Ti
         ros_time_of_day < rclcpp::Time((cur_start + control_span_).nanoseconds(), clock_type))
     {
       RCLCPP_DEBUG_STREAM(rclcpp::get_logger("carma_wm_ctrl"), "Geofence schedule active!");
-      
+
       time_in_active_period = true;
     }
     cur_start = cur_start + control_period_;

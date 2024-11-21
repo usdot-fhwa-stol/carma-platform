@@ -14,10 +14,10 @@
  * the License.
  */
 
-#include <rclcpp/rclcpp.hpp>
 #include "platooning_strategic_ihp/platoon_strategic_plugin_node_ihp.h"
+#include <rclcpp/rclcpp.hpp>
 
-int main(int argc, char **argv)
+int main(int argc, char ** argv)
 {
   rclcpp::init(argc, argv);
 

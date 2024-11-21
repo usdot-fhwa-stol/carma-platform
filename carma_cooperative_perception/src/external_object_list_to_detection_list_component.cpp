@@ -151,7 +151,7 @@ auto ExternalObjectListToDetectionListNode::handle_on_configure(
   // mapping strategy.
 
   // Declarations must come after on_set_parameters_callback_ assignment because the ROS
-  // runtime will call the callback if declare_parameter() succeeds.
+  // runtime will call the callback if declare_parameter () succeeds.
   declare_parameter("small_vehicle_motion_model", motion_model_mapping_.small_vehicle_model);
   declare_parameter("large_vehicle_motion_model", motion_model_mapping_.large_vehicle_model);
   declare_parameter("motorcycle_motion_model", motion_model_mapping_.motorcycle_model);

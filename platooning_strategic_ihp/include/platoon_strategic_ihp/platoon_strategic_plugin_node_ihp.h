@@ -25,89 +25,86 @@
 
 #pragma once
 
-#include <rclcpp/rclcpp.hpp>
 #include <functional>
+
+#include "platoon_config_ihp.h"
+#include "platooning_strategic_ihp.h"
+#include <carma_guidance_plugins/strategic_plugin.hpp>
+#include <carma_wm/WMListener.hpp>
+#include <rclcpp/rclcpp.hpp>
+
+#include <carma_planning_msgs/msg/platooning_info.hpp>
 #include <carma_planning_msgs/msg/plugin.hpp>
 #include <carma_planning_msgs/srv/plan_trajectory.hpp>
-#include <carma_v2x_msgs/msg/mobility_response.hpp>
-#include <carma_v2x_msgs/msg/mobility_request.hpp>
 #include <carma_v2x_msgs/msg/mobility_operation.hpp>
-#include <carma_planning_msgs/msg/platooning_info.hpp>
+#include <carma_v2x_msgs/msg/mobility_request.hpp>
+#include <carma_v2x_msgs/msg/mobility_response.hpp>
 #include <std_msgs/msg/string.hpp>
-#include <carma_wm/WMListener.hpp>
-#include <functional>
-
-#include <carma_guidance_plugins/strategic_plugin.hpp>
-
-#include "platooning_strategic_ihp.h"
-#include "platoon_config_ihp.h"
 
 namespace platooning_strategic_ihp
 {
 
+/**
+ * \brief ROS Node to for Platooning Strategic Plugin IHP2 variant. It includes all the service
+ * clients, publishers and subscribers
+ */
+class Node : public carma_guidance_plugins::StrategicPlugin
+{
+private:
+  // Publishers
+  carma_ros2_utils::PubPtr<carma_planning_msgs::msg::PlatooningInfo> platoon_info_pub;
+  carma_ros2_utils::PubPtr<carma_v2x_msgs::msg::MobilityResponse> mob_response_pub;
+  carma_ros2_utils::PubPtr<carma_v2x_msgs::msg::MobilityRequest> mob_request_pub;
+  carma_ros2_utils::PubPtr<carma_v2x_msgs::msg::MobilityOperation> mob_operation_pub;
+
+  // Subscribers
+  carma_ros2_utils::SubPtr<carma_v2x_msgs::msg::MobilityRequest> mob_request_sub;
+  carma_ros2_utils::SubPtr<carma_v2x_msgs::msg::MobilityResponse> mob_response_sub;
+  carma_ros2_utils::SubPtr<carma_v2x_msgs::msg::MobilityOperation> mob_operation_sub;
+  carma_ros2_utils::SubPtr<geometry_msgs::msg::PoseStamped> current_pose_sub;
+  carma_ros2_utils::SubPtr<geometry_msgs::msg::TwistStamped> current_twist_sub;
+  carma_ros2_utils::SubPtr<geometry_msgs::msg::TwistStamped> cmd_sub;
+  carma_ros2_utils::SubPtr<std_msgs::msg::String> georeference_sub;
+
+  // Timers
+  rclcpp::TimerBase::SharedPtr loop_timer_;
+
+  // Node configuration
+  PlatoonPluginConfig config_;
+
+  // Worker
+  std::shared_ptr<PlatoonStrategicIHPPlugin> worker_;
+
+public:
   /**
-   * \brief ROS Node to for Platooning Strategic Plugin IHP2 variant. It includes all the service clients, publishers and subscribers
+   * \brief Node constructor
    */
-  class Node : public carma_guidance_plugins::StrategicPlugin
-  {
+  explicit Node(const rclcpp::NodeOptions &);
 
-  private:
+  /**
+   * \brief Callback for dynamic parameter updates
+   */
+  rcl_interfaces::msg::SetParametersResult parameter_update_callback(
+    const std::vector<rclcpp::Parameter> & parameters);
 
-    // Publishers
-    carma_ros2_utils::PubPtr<carma_planning_msgs::msg::PlatooningInfo> platoon_info_pub;
-    carma_ros2_utils::PubPtr<carma_v2x_msgs::msg::MobilityResponse> mob_response_pub;
-    carma_ros2_utils::PubPtr<carma_v2x_msgs::msg::MobilityRequest> mob_request_pub;
-    carma_ros2_utils::PubPtr<carma_v2x_msgs::msg::MobilityOperation> mob_operation_pub;
+  ////
+  // Overrides
+  ////
+  void plan_maneuvers_callback(
+    std::shared_ptr<rmw_request_id_t>,
+    carma_planning_msgs::srv::PlanManeuvers::Request::SharedPtr req,
+    carma_planning_msgs::srv::PlanManeuvers::Response::SharedPtr resp) override;
 
-    // Subscribers
-    carma_ros2_utils::SubPtr<carma_v2x_msgs::msg::MobilityRequest> mob_request_sub;
-    carma_ros2_utils::SubPtr<carma_v2x_msgs::msg::MobilityResponse> mob_response_sub;
-    carma_ros2_utils::SubPtr<carma_v2x_msgs::msg::MobilityOperation> mob_operation_sub;
-    carma_ros2_utils::SubPtr<geometry_msgs::msg::PoseStamped> current_pose_sub;
-    carma_ros2_utils::SubPtr<geometry_msgs::msg::TwistStamped> current_twist_sub;
-    carma_ros2_utils::SubPtr<geometry_msgs::msg::TwistStamped> cmd_sub;
-    carma_ros2_utils::SubPtr<std_msgs::msg::String> georeference_sub;
+  bool get_availability() override;
 
-    // Timers
-    rclcpp::TimerBase::SharedPtr loop_timer_;
+  std::string get_version_id() override;
 
-    // Node configuration
-    PlatoonPluginConfig config_;
+  /**
+   * \brief This method should be used to load parameters and will be called on the configure state
+   * transition.
+   */
+  carma_ros2_utils::CallbackReturn on_configure_plugin();
+  carma_ros2_utils::CallbackReturn on_cleanup_plugin();
+};
 
-    // Worker
-    std::shared_ptr<PlatoonStrategicIHPPlugin> worker_;
-
-  public:
-    /**
-     * \brief Node constructor
-     */
-    explicit Node(const rclcpp::NodeOptions &);
-
-    /**
-     * \brief Callback for dynamic parameter updates
-     */
-    rcl_interfaces::msg::SetParametersResult
-    parameter_update_callback(const std::vector<rclcpp::Parameter> &parameters);
-
-
-    ////
-    // Overrides
-    ////
-    void plan_maneuvers_callback(
-      std::shared_ptr<rmw_request_id_t>,
-      carma_planning_msgs::srv::PlanManeuvers::Request::SharedPtr req,
-      carma_planning_msgs::srv::PlanManeuvers::Response::SharedPtr resp) override;
-
-    bool get_availability() override;
-
-    std::string get_version_id() override;
-
-    /**
-     * \brief This method should be used to load parameters and will be called on the configure state transition.
-     */
-    carma_ros2_utils::CallbackReturn on_configure_plugin();
-    carma_ros2_utils::CallbackReturn on_cleanup_plugin();
-
-  };
-
-} // platooning_strategic_ihp
+}  // namespace platooning_strategic_ihp
