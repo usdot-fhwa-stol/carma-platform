@@ -44,13 +44,13 @@ echo "Building ROS2 CARMA Components"
 if [[ ! -z "$ROS1_PACKAGES$ROS2_PACKAGES" ]]; then
     if [[ ! -z "$ROS2_PACKAGES" ]]; then
         echo "Incrementally building ROS2 packages: $ROS2_PACKAGES"
-        colcon build --install-base /opt/carma/install --cmake-args -DCMAKE_BUILD_TYPE=Release --packages-above $ROS2_PACKAGES
+        colcon build --continue-on-error --install-base /opt/carma/install --cmake-args -DCMAKE_BUILD_TYPE=Release --packages-above $ROS2_PACKAGES
     else
         echo "Build type is incremental but no ROS2 packages specified, skipping ROS2 build..."
     fi
 else
     echo "Building all ROS2 components..."
-    colcon build  --install-base /opt/carma/install --build-base build --cmake-args -DCMAKE_BUILD_TYPE=Release
+    colcon build  --continue-on-error --install-base /opt/carma/install --build-base build --cmake-args -DCMAKE_BUILD_TYPE=Release
 fi
 
 echo "Build of ROS 2 CARMA Components Complete"
