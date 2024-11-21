@@ -29,9 +29,9 @@ LightBarManager::LightBarManager(const rclcpp::NodeOptions &options) : carma_ros
     config_ = Config();
     config_.spin_rate_hz = declare_parameter<double>("spin_rate_hz", config_.spin_rate_hz);
     config_.normal_operation = declare_parameter<bool>("normal_operation", config_.normal_operation);
-    declare_parameter("lightbar_cda_table");
-    declare_parameter("lightbar_ind_table");
-    declare_parameter("lightbar_priorities");
+    declare_parameter("lightbar_cda_table", config_.lightbar_cda_table);
+    declare_parameter("lightbar_ind_table", config_.lightbar_ind_table);
+    declare_parameter("lightbar_priorities", config_.lightbar_priorities);
     lbm_ = std::make_shared<LightBarManagerWorker>();
 }
 
@@ -39,9 +39,9 @@ carma_ros2_utils::CallbackReturn LightBarManager::handle_on_configure(const rclc
 {
     // Reset config
     config_ = Config();
-    
+
     RCLCPP_INFO_STREAM(rclcpp::get_logger("lightbar_manager"),"Initalizing lightbar manager node...");
-    
+
     // Load the spin rate param to determine how fast to process messages
     // Default rate 10.0 Hz
     get_parameter<double>("spin_rate_hz", config_.spin_rate_hz);
@@ -55,7 +55,7 @@ carma_ros2_utils::CallbackReturn LightBarManager::handle_on_configure(const rclc
     lightbar_driver_client_ = create_client<carma_driver_msgs::srv::SetLights>("set_lights");
 
     // Load Conversion table, CDAType to Indicator mapping
- 
+
     rclcpp::Parameter lightbar_cda_table_param = get_parameter("lightbar_cda_table");
     if (lightbar_cda_table_param.get_type() !=  rclcpp::ParameterType::PARAMETER_NOT_SET)
         config_.lightbar_cda_table = lightbar_cda_table_param.as_string_array();
@@ -63,12 +63,12 @@ carma_ros2_utils::CallbackReturn LightBarManager::handle_on_configure(const rclc
     rclcpp::Parameter lightbar_ind_table_param = get_parameter("lightbar_ind_table");
     if (lightbar_ind_table_param.get_type() !=  rclcpp::ParameterType::PARAMETER_NOT_SET)
         config_.lightbar_ind_table = lightbar_ind_table_param.as_string_array();
-    
+
     if (config_.lightbar_cda_table.size() != config_.lightbar_ind_table.size())
     {
         throw std::invalid_argument("Size of lightbar_cda_table is not same as that of lightbar_ind_table");
     }
-    
+
     lbm_->setIndicatorCDAMap(config_.lightbar_cda_table, config_.lightbar_ind_table);
 
     // Initialize indicator control map. Fills with supporting indicators with empty string name as owners.
@@ -84,7 +84,7 @@ carma_ros2_utils::CallbackReturn LightBarManager::handle_on_configure(const rclc
         config_.lightbar_priorities = lightbar_priorities_param.as_string_array();
         lbm_->control_priorities = config_.lightbar_priorities;
     }
-        
+
     // Take control of green light
     get_parameter<bool>("normal_operation", config_.normal_operation);
 
@@ -105,15 +105,15 @@ carma_ros2_utils::CallbackReturn LightBarManager::handle_on_configure(const rclc
         else
         {
             RCLCPP_WARN_STREAM(rclcpp::get_logger("lightbar_manager"),"In fuction " << __FUNCTION__ << ", LightBarManager was not able to take control of all green indicators."
-                << ".\n Resuming...");   
+                << ".\n Resuming...");
         }
     }
     return CallbackReturn::SUCCESS;
 }
-    
+
 carma_ros2_utils::CallbackReturn LightBarManager::handle_on_activate(const rclcpp_lifecycle::State &)
 {
-    pub_timer_ = create_timer(get_clock(), 
+    pub_timer_ = create_timer(get_clock(),
             std::chrono::milliseconds((int)(1 / config_.spin_rate_hz * 1000)),
             std::bind(&LightBarManager::spinCallBack, this));
     return CallbackReturn::SUCCESS;
@@ -128,10 +128,10 @@ void LightBarManager::turnOffAll()
 
     for (std::pair <LightBarIndicator, std::string> element : lbm_->getIndicatorControllers())
         all_indicators.push_back(element.first);
-    
+
     // Reset all controls
     lbm_->setIndicatorControllers();
-    
+
     // Give lightbar manager the control which is guaranteed to succeed
     lbm_->requestControl(all_indicators, node_name_);
     int response_code = 0;
@@ -139,7 +139,7 @@ void LightBarManager::turnOffAll()
     {
         response_code = setIndicator(indicator, OFF, node_name_);
         if (response_code != 0)
-            RCLCPP_WARN_STREAM(rclcpp::get_logger("lightbar_manager"),"In Function " << __FUNCTION__ << ": LightBarManager was not able to turn off indicator ID:" 
+            RCLCPP_WARN_STREAM(rclcpp::get_logger("lightbar_manager"),"In Function " << __FUNCTION__ << ": LightBarManager was not able to turn off indicator ID:"
                 << indicator << ". Response code: " << response_code);
     }
 
@@ -155,32 +155,32 @@ bool LightBarManager::requestControlCallBack(const std::shared_ptr<rmw_request_i
 {
     std::vector<LightBarIndicator> ind_list, controlled_ind_list;
     std::vector<LightBarCDAType> controlled_cda_type_list;
-    
+
     // Use CDAType if the field is not empty in the request
     if (req->cda_list.size() != 0)
-    {   
-        for (auto cda_type : req->cda_list) 
+    {
+        for (auto cda_type : req->cda_list)
         {
             // return false if invalid cda_type number
             if (static_cast<uint8_t>(cda_type.type) >= INDICATOR_COUNT)
-                return false; 
+                return false;
             ind_list.push_back(lbm_->getIndicatorFromCDAType(static_cast<LightBarCDAType>(cda_type.type)));
         }
     }
     else
     {
-        for (auto indicator : req->ind_list) 
+        for (auto indicator : req->ind_list)
         {
             // return false if invalid indicator number
             if (static_cast<uint8_t>(indicator.indicator) >= INDICATOR_COUNT)
                 return false;
             ind_list.push_back(static_cast<LightBarIndicator>(indicator.indicator));
         }
-            
+
     }
-    
+
     controlled_ind_list = lbm_->requestControl(ind_list, req->requester_name);
-    
+
     for (auto indicator : controlled_ind_list)
     {
         try
@@ -194,7 +194,7 @@ bool LightBarManager::requestControlCallBack(const std::shared_ptr<rmw_request_i
             continue;
         }
     }
-        
+
     // Modify the response
     resp->cda_list = lbm_->getMsg(controlled_cda_type_list);
     resp->ind_list = lbm_->getMsg(controlled_ind_list);
@@ -209,12 +209,12 @@ bool LightBarManager::releaseControlCallBack(const std::shared_ptr<rmw_request_i
 
     // Use CDAType if the field is not empty in the request
     if (req->cda_list.size() != 0)
-    {   
-        for (auto cda_type : req->cda_list) 
+    {
+        for (auto cda_type : req->cda_list)
         {
             // return false if invalid indicator number
             if (static_cast<uint8_t>(cda_type.type) >= INDICATOR_COUNT)
-                return false; 
+                return false;
             ind_list.push_back(lbm_->getIndicatorFromCDAType(static_cast<LightBarCDAType>(cda_type.type)));
         }
     }
@@ -224,7 +224,7 @@ bool LightBarManager::releaseControlCallBack(const std::shared_ptr<rmw_request_i
         {
             // return false if invalid cda_type number
             if (static_cast<uint8_t>(indicator.indicator) >= INDICATOR_COUNT)
-                return false; 
+                return false;
             ind_list.push_back(static_cast<LightBarIndicator>(indicator.indicator));
         }
     }
@@ -286,14 +286,14 @@ void LightBarManager::processTurnSignal(const automotive_platform_msgs::msg::Tur
     {
         return; //no need to do anything if it is same turn signal changed
     }
-    
+
     lightbar_manager::IndicatorStatus indicator_status;
     // check if we should turn off or on given any indicator
     if (msg.turn_signal == automotive_platform_msgs::msg::TurnSignalCommand::NONE)
     {
         indicator_status = lightbar_manager::IndicatorStatus::OFF;
     }
-    else 
+    else
     {
         indicator_status = lightbar_manager::IndicatorStatus::ON;
         prev_owners_before_turn_ = lbm_->getIndicatorControllers(); // save the owner if new turn is starting
@@ -304,7 +304,7 @@ void LightBarManager::processTurnSignal(const automotive_platform_msgs::msg::Tur
         int response_code = 0;
         response_code = setIndicator(changed_turn_signal[0], indicator_status, node_name_);
         if (response_code != 0)
-            RCLCPP_ERROR_STREAM(rclcpp::get_logger("lightbar_manager"),"In Function " << __FUNCTION__ << ": LightBarManager was not able to set light of indicator ID:" 
+            RCLCPP_ERROR_STREAM(rclcpp::get_logger("lightbar_manager"),"In Function " << __FUNCTION__ << ": LightBarManager was not able to set light of indicator ID:"
                 << changed_turn_signal[0] << ". Response code: " << response_code);
     }
     else
@@ -344,9 +344,9 @@ int LightBarManager::setIndicator(LightBarIndicator ind, IndicatorStatus ind_sta
 
     // Check if the requester has control of this light
     std::string current_controller = lbm_->getIndicatorControllers()[ind];
-    if (requester_name == "" || current_controller != requester_name) 
+    if (requester_name == "" || current_controller != requester_name)
     {
-        RCLCPP_WARN_STREAM(rclcpp::get_logger("lightbar_manager"),requester_name << " failed to set the LightBarIndicator ID" << ind 
+        RCLCPP_WARN_STREAM(rclcpp::get_logger("lightbar_manager"),requester_name << " failed to set the LightBarIndicator ID" << ind
             << " as this was already controlled by " << current_controller);
         response_code = 1;
         return response_code;
@@ -356,7 +356,7 @@ int LightBarManager::setIndicator(LightBarIndicator ind, IndicatorStatus ind_sta
     carma_driver_msgs::msg::LightBarStatus msg = lbm_->getLightBarStatusMsg(light_status_proposed);
     auto srv = std::make_shared<carma_driver_msgs::srv::SetLights::Request>();
     srv->set_state = msg;
-    
+
     auto resp = lightbar_driver_client_->async_send_request(srv);
 
     auto future_status = resp.wait_for(std::chrono::milliseconds(100));
@@ -396,5 +396,3 @@ bool LightBarManager::setIndicatorCallBack(const std::shared_ptr<rmw_request_id_
 }
 
 } // namespace lightbar_manager
-
-
