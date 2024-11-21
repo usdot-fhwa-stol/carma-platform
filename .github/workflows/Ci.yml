@@ -80,7 +80,7 @@ jobs:
         source "$INIT_ENV"
         source "$ROS_2_ENV"
         source /opt/autoware.ai/ros/install/setup.bash
-        sed -i '/colcon build/ s/$/ --continue-on-error --parallel-workers 4 --packages-up-to $PACKAGES/' /home/carma/.ci-image/engineering_tools/code_coverage/make_with_coverage.bash
+        sed -i '/colcon build/ s/$/ --continue-on-error --parallel-workers 16 --packages-up-to $PACKAGES/' /home/carma/.ci-image/engineering_tools/code_coverage/make_with_coverage.bash
         make_with_coverage.bash -m -e /opt/carma/ -o ./coverage_reports/gcov
 
     - name: Run ROS2 C++ Tests
@@ -90,7 +90,7 @@ jobs:
         source "$INIT_ENV"
         source "$ROS_2_ENV"
         source /opt/autoware.ai/ros/install/setup.bash
-        sed -i '/colcon test/ s/$/ --parallel-workers 4 --packages-above $PACKAGES/' /home/carma/.ci-image/engineering_tools/code_coverage/make_with_coverage.bash
+        sed -i '/colcon test/ s/$/ --parallel-workers 16 --packages-above $PACKAGES/' /home/carma/.ci-image/engineering_tools/code_coverage/make_with_coverage.bash
         make_with_coverage.bash -t -e /opt/carma/ -o ./coverage_reports/gcov
 
     - name: Run SonarScanner
