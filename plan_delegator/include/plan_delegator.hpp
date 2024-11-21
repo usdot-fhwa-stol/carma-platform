@@ -18,6 +18,7 @@
 #include <gtest/gtest_prod.h>
 #include <math.h>
 #include <tf2/LinearMath/Transform.h>
+#include <tf2_ros/buffer.h>
 #include <tf2_ros/transform_listener.h>
 
 #include <string>

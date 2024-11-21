@@ -16,6 +16,7 @@
 
 #pragma once
 
+#include <tf2_ros/buffer.h>
 #include <tf2_ros/transform_listener.h>
 
 #include <functional>
