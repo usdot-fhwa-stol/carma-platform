@@ -49,11 +49,10 @@ namespace gnss_to_map_convertor
     Config config_;
 
     // Buffer which holds the tree of transforms
-
-    tf2_ros::Buffer tfBuffer_;
+    std::shared_ptr<tf2_ros::Buffer> tfBuffer_;
 
     // tf2 listeners. Subscribes to the /tf and /tf_static topics
-    tf2_ros::TransformListener tfListener_ {tfBuffer_};
+    std::shared_ptr<tf2_ros::TransformListener> tfListener_;
 
     //worker for GNSSToMapConvertor
     std::shared_ptr <GNSSToMapConvertor> convertor_worker_;

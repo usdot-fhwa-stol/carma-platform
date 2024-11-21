@@ -32,29 +32,29 @@ class ObjectDetectionTrackingNode : public carma_ros2_utils::CarmaLifecycleNode
 {
 
  private:
-  
+
   //subscriber
   carma_ros2_utils::SubPtr<autoware_auto_msgs::msg::TrackedObjects> autoware_obj_sub_;
 
   //publisher
   carma_ros2_utils::PubPtr<carma_perception_msgs::msg::ExternalObjectList> carma_obj_pub_;
-  
+
   //ObjectDetectionTrackingWorker class object
   ObjectDetectionTrackingWorker object_worker_;
-  
+
   // Buffer which holds the tree of transforms
-  tf2_ros::Buffer tfBuffer_;
-  
+  std::shared_ptr<tf2_ros::Buffer> tfBuffer_;
+
   // tf2 listeners. Subscribes to the /tf and /tf_static topics
-  tf2_ros::TransformListener tfListener_ {tfBuffer_};
+  std::shared_ptr<tf2_ros::TransformListener> tfListener_;
 
   // Output frame id
   std::string map_frame_;
 
  public:
-  
+
    /*! \fn ObjectDetectionTrackingNode()
-    \brief ObjectDetectionTrackingNode constructor 
+    \brief ObjectDetectionTrackingNode constructor
    */
   explicit ObjectDetectionTrackingNode(const rclcpp::NodeOptions& );
 
@@ -68,7 +68,7 @@ class ObjectDetectionTrackingNode : public carma_ros2_utils::CarmaLifecycleNode
   * \param parent The parent frame
   * \param child The child frame
   * \param stamp The time stamp of the transform
-  * 
+  *
   * \return boost::optional<geometry_msgs::TransformStamped> The transform between the two frames or boost::none if the transform does not exist or cannot be computed
   */
   boost::optional<geometry_msgs::msg::TransformStamped> lookupTransform(const std::string& parent, const std::string& child, const rclcpp::Time& stamp);
@@ -77,7 +77,7 @@ class ObjectDetectionTrackingNode : public carma_ros2_utils::CarmaLifecycleNode
   // Overrides
   ////
   carma_ros2_utils::CallbackReturn handle_on_configure(const rclcpp_lifecycle::State &);
-  
+
 };
 
 }//object

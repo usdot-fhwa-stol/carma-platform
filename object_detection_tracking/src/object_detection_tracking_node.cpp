@@ -23,14 +23,16 @@ namespace object{
 
   ObjectDetectionTrackingNode::ObjectDetectionTrackingNode(const rclcpp::NodeOptions& options)
   : carma_ros2_utils::CarmaLifecycleNode(options),
-    object_worker_( 
-      std::bind(&ObjectDetectionTrackingNode::publishObject, this, _1), 
+    object_worker_(
+      std::bind(&ObjectDetectionTrackingNode::publishObject, this, _1),
       std::bind(&ObjectDetectionTrackingNode::lookupTransform, this, _1, _2, _3),
       get_node_logging_interface()
-    ),
-    tfBuffer_(get_clock()),
-    tfListener_(tfBuffer_)
+    )
     {
+      // Initialize tf buffer with clock and duration
+      tfBuffer_ = std::make_shared<tf2_ros::Buffer>(this->get_clock());
+      // Initialize transform listener with buffer
+      tfListener_ = std::make_shared<tf2_ros::TransformListener>(*tfBuffer_);
       map_frame_ = this->declare_parameter<std::string>("map_frame", map_frame_);
     }
 
@@ -42,7 +44,7 @@ namespace object{
 
     this->add_on_set_parameters_callback(
         [this](auto param_vec) {
-          
+
           auto error = update_params<std::string>({ {"map_frame", map_frame_} }, param_vec);
 
           rcl_interfaces::msg::SetParametersResult result;
@@ -58,7 +60,7 @@ namespace object{
           return result;
         }
       );
-    
+
 
     // Setup pub/sub
     autoware_obj_sub_= create_subscription<autoware_auto_msgs::msg::TrackedObjects>("detected_objects",10,
@@ -75,11 +77,11 @@ namespace object{
     carma_obj_pub_->publish(obj_msg);
   }
 
-  boost::optional<geometry_msgs::msg::TransformStamped> 
+  boost::optional<geometry_msgs::msg::TransformStamped>
   ObjectDetectionTrackingNode::lookupTransform(const std::string& parent, const std::string& child, const rclcpp::Time& stamp) {
     try {
 
-      return tfBuffer_.lookupTransform(parent ,child, stamp);
+      return tfBuffer_->lookupTransform(parent ,child, stamp);
 
     } catch (tf2::TransformException &ex) {
 
@@ -88,7 +90,7 @@ namespace object{
     }
   }
 
-    
+
 
 }//object
 
