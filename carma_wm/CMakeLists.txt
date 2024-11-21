@@ -59,16 +59,11 @@ target_link_libraries(
         ${Boost_LIBRARIES}
 )
 
-# Add compile options
-if(NOT WIN32)
-  target_compile_options(${node_lib} PRIVATE -Wall -Wextra -Wpedantic)
-endif()
-
 ament_auto_add_executable(map_update_logger_node 
         src/MapUpdateLoggerNode.cpp 
 )
 
-# Register component with updated syntax for ROS2 Humble
+# Register component
 rclcpp_components_register_nodes(${node_lib} 
   "MapUpdateLogger"
 )
