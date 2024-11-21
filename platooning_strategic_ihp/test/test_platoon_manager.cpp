@@ -16,16 +16,16 @@
 
 ------------------------------------------------------------------------------*/
 
-#include "platoon_strategic_ihp/platoon_manager_ihp.h"
-#include "platoon_strategic_ihp/platoon_strategic_ihp.h"
-#include "platoon_strategic_ihp/platoon_config_ihp.h"
+#include "platooning_strategic_ihp/platoon_manager_ihp.h"
+#include "platooning_strategic_ihp/platooning_strategic_ihp.h"
+#include "platooning_strategic_ihp/platoon_config_ihp.h"
 #include <gtest/gtest.h>
 #include <carma_wm/WMListener.hpp>
 #include <carma_wm/WorldModel.hpp>
 #include <carma_wm/CARMAWorldModel.hpp>
 #include <carma_ros2_utils/timers/testing/TestTimerFactory.hpp>
 
-using namespace platoon_strategic_ihp;
+using namespace platooning_strategic_ihp;
 
 TEST(PlatoonManagerTest, test_construct)
 {
@@ -206,12 +206,12 @@ TEST(PlatoonStrategicIHPPlugin, test_get_leader)
 
 TEST(PlatoonManagerTest, test2)
 {
-    platoon_strategic_ihp::PlatoonMember* member = new platoon_strategic_ihp::PlatoonMember("1", 1.0, 1.1, 0.1, 0, 100);
-    std::vector<platoon_strategic_ihp::PlatoonMember> cur_pl;
+    platooning_strategic_ihp::PlatoonMember* member = new platooning_strategic_ihp::PlatoonMember("1", 1.0, 1.1, 0.1, 0, 100);
+    std::vector<platooning_strategic_ihp::PlatoonMember> cur_pl;
 
     cur_pl.push_back(*member);
 
-    platoon_strategic_ihp::PlatoonManager pm(std::make_shared<carma_ros2_utils::timers::testing::TestTimerFactory>());
+    platooning_strategic_ihp::PlatoonManager pm(std::make_shared<carma_ros2_utils::timers::testing::TestTimerFactory>());
     pm.host_platoon_ = cur_pl;
 
     pm.isFollower = true;
@@ -229,14 +229,14 @@ TEST(PlatoonManagerTest, test2)
 
 TEST(PlatoonManagerTest, test3)
 {
-    platoon_strategic_ihp::PlatoonMember* member1 = new platoon_strategic_ihp::PlatoonMember("1", 1.0, 1.1, 0.1, 0, 100);
-    platoon_strategic_ihp::PlatoonMember* member2 = new platoon_strategic_ihp::PlatoonMember("2", 2.0, 2.1, 0.2, 0, 200);
-    std::vector<platoon_strategic_ihp::PlatoonMember> cur_pl;
+    platooning_strategic_ihp::PlatoonMember* member1 = new platooning_strategic_ihp::PlatoonMember("1", 1.0, 1.1, 0.1, 0, 100);
+    platooning_strategic_ihp::PlatoonMember* member2 = new platooning_strategic_ihp::PlatoonMember("2", 2.0, 2.1, 0.2, 0, 200);
+    std::vector<platooning_strategic_ihp::PlatoonMember> cur_pl;
 
     cur_pl.push_back(*member1);
     cur_pl.push_back(*member2);
 
-    platoon_strategic_ihp::PlatoonManager pm(std::make_shared<carma_ros2_utils::timers::testing::TestTimerFactory>());
+    platooning_strategic_ihp::PlatoonManager pm(std::make_shared<carma_ros2_utils::timers::testing::TestTimerFactory>());
     pm.host_platoon_ = cur_pl;
 
     pm.isFollower = false;
@@ -251,14 +251,14 @@ TEST(PlatoonManagerTest, test3)
 
 TEST(PlatoonManagerTest, test4)
 {
-    platoon_strategic_ihp::PlatoonMember* member1 = new platoon_strategic_ihp::PlatoonMember("1", 1.0, 1.1, 0.1, 0, 100);
-    platoon_strategic_ihp::PlatoonMember* member2 = new platoon_strategic_ihp::PlatoonMember("2", 2.0, 2.1, 0.2, 0, 200);
-    std::vector<platoon_strategic_ihp::PlatoonMember> cur_pl;
+    platooning_strategic_ihp::PlatoonMember* member1 = new platooning_strategic_ihp::PlatoonMember("1", 1.0, 1.1, 0.1, 0, 100);
+    platooning_strategic_ihp::PlatoonMember* member2 = new platooning_strategic_ihp::PlatoonMember("2", 2.0, 2.1, 0.2, 0, 200);
+    std::vector<platooning_strategic_ihp::PlatoonMember> cur_pl;
 
     cur_pl.push_back(*member1);
     cur_pl.push_back(*member2);
 
-    platoon_strategic_ihp::PlatoonManager pm(std::make_shared<carma_ros2_utils::timers::testing::TestTimerFactory>());
+    platooning_strategic_ihp::PlatoonManager pm(std::make_shared<carma_ros2_utils::timers::testing::TestTimerFactory>());
     pm.host_platoon_ = cur_pl;
 
     pm.isFollower = true;

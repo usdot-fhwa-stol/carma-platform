@@ -18,7 +18,7 @@
 
 #include <iostream>
 
-namespace platoon_strategic_ihp
+namespace platooning_strategic_ihp
 {
 
 /**
@@ -36,7 +36,7 @@ struct PlatoonPluginConfig
   // following parameters are for IHP gap regulation algorithm
   double time_step             = 15;      // s
   double epislon               = 0.001;   // m/s
-  
+
   // following parameters are for platoon forming and operation
   double timeHeadway                    = 2.0;     // s
   double standStillHeadway              = 12.0;    // m
@@ -49,20 +49,20 @@ struct PlatoonPluginConfig
   int    maxLeaderAbortingCalls         = 2;       // counter
   double waitingStateTimeout            = 25.0;    // s
   double cmdSpeedMaxAdjustment          = 10.0;    // m/s
-    
+
   // following parameters are mainly for APF leader selection
   // UCLA: Rename the next four variables for better explainability.
   double minAllowableHeadaway    = 1.6;   // s
   double headawayStableLowerBond = 1.7;   // s
   double maxAllowableHeadaway    = 4.0;   // s
   double headawayStableUpperBond = 3.9;   // s
-  
+
   double minCutinGap             = 22.0;  // m
   double maxCutinGap             = 22.0;  // m
   double maxCrosstrackError      = 2.0;   // m
 
   // Speed adjuster to slow down platoon memebr to create gap
-  double slowDownAdjuster         = 0.75;    // ratio 
+  double slowDownAdjuster         = 0.75;    // ratio
   double createGapAdjuster        = 0.3;     // ratio
 
   std::string vehicleID       = "default_id";
@@ -72,7 +72,7 @@ struct PlatoonPluginConfig
 
   // ---------------------- UCLA: parameters for IHP platoon trajectory regulation ----------------
   /**
-  * \brief Parameter sets for IHP platoon trajectory regulation algorithm. 
+  * \brief Parameter sets for IHP platoon trajectory regulation algorithm.
   * Please refer to the updated design doc for detailed parameter description.
   */
   double ss_theta = 4.0; // Stanstill determining threshold, in m/s.
@@ -123,4 +123,4 @@ struct PlatoonPluginConfig
   }
 };
 
-} //platoon_strategic_ihp
+} //platooning_strategic_ihp

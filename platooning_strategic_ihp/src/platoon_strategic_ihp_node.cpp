@@ -13,11 +13,11 @@
  * License for the specific language governing permissions and limitations under
  * the License.
  */
-#include "platoon_strategic_ihp/platoon_strategic_plugin_node_ihp.h"
+#include "platooning_strategic_ihp/platoon_strategic_plugin_node_ihp.h"
 #include <carma_ros2_utils/timers/TimerFactory.hpp>
 #include <carma_ros2_utils/timers/ROSTimerFactory.hpp>
 
-namespace platoon_strategic_ihp
+namespace platooning_strategic_ihp
 {
   namespace std_ph = std::placeholders;
 
@@ -70,7 +70,7 @@ namespace platoon_strategic_ihp
       {"allowCutinJoin", config_.allowCutinJoin},
       {"test_cutin_join", config_.test_cutin_join}
     }, parameters);
-    
+
     auto error2 = update_params<int>({
       {"maxPlatoonSize", config_.maxPlatoonSize},
       {"algorithmType", config_.algorithmType},
@@ -217,8 +217,8 @@ namespace platoon_strategic_ihp
 
 
   void Node::plan_maneuvers_callback(
-    std::shared_ptr<rmw_request_id_t>, 
-    carma_planning_msgs::srv::PlanManeuvers::Request::SharedPtr req, 
+    std::shared_ptr<rmw_request_id_t>,
+    carma_planning_msgs::srv::PlanManeuvers::Request::SharedPtr req,
     carma_planning_msgs::srv::PlanManeuvers::Response::SharedPtr resp)
   {
     if (worker_)
@@ -233,9 +233,9 @@ namespace platoon_strategic_ihp
     return "v4.0";
   }
 
-} // platoon_strategic_ihp
+} // platooning_strategic_ihp
 
 #include "rclcpp_components/register_node_macro.hpp"
 
 // Register the component with class_loader
-RCLCPP_COMPONENTS_REGISTER_NODE(platoon_strategic_ihp::Node)
+RCLCPP_COMPONENTS_REGISTER_NODE(platooning_strategic_ihp::Node)

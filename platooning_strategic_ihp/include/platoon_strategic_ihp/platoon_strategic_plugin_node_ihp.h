@@ -15,11 +15,11 @@
  */
 
 /*
- * Originally Developed for ROS1 by the UCLA Mobility Lab, 10/20/2021. 
+ * Originally Developed for ROS1 by the UCLA Mobility Lab, 10/20/2021.
  *
  * Creator: Xu Han
  * Author: Xu Han, Xin Xia, Jiaqi Ma
- * 
+ *
  * 8/15/2022: Ported to ROS2
  */
 
@@ -39,15 +39,15 @@
 
 #include <carma_guidance_plugins/strategic_plugin.hpp>
 
-#include "platoon_strategic_ihp.h"
+#include "platooning_strategic_ihp.h"
 #include "platoon_config_ihp.h"
 
-namespace platoon_strategic_ihp
+namespace platooning_strategic_ihp
 {
 
   /**
    * \brief ROS Node to for Platooning Strategic Plugin IHP2 variant. It includes all the service clients, publishers and subscribers
-   */ 
+   */
   class Node : public carma_guidance_plugins::StrategicPlugin
   {
 
@@ -79,14 +79,14 @@ namespace platoon_strategic_ihp
 
   public:
     /**
-     * \brief Node constructor 
+     * \brief Node constructor
      */
     explicit Node(const rclcpp::NodeOptions &);
 
     /**
      * \brief Callback for dynamic parameter updates
      */
-    rcl_interfaces::msg::SetParametersResult 
+    rcl_interfaces::msg::SetParametersResult
     parameter_update_callback(const std::vector<rclcpp::Parameter> &parameters);
 
 
@@ -94,20 +94,20 @@ namespace platoon_strategic_ihp
     // Overrides
     ////
     void plan_maneuvers_callback(
-      std::shared_ptr<rmw_request_id_t>, 
-      carma_planning_msgs::srv::PlanManeuvers::Request::SharedPtr req, 
+      std::shared_ptr<rmw_request_id_t>,
+      carma_planning_msgs::srv::PlanManeuvers::Request::SharedPtr req,
       carma_planning_msgs::srv::PlanManeuvers::Response::SharedPtr resp) override;
 
     bool get_availability() override;
 
     std::string get_version_id() override;
-    
+
     /**
      * \brief This method should be used to load parameters and will be called on the configure state transition.
-     */ 
+     */
     carma_ros2_utils::CallbackReturn on_configure_plugin();
     carma_ros2_utils::CallbackReturn on_cleanup_plugin();
 
   };
 
-} // platoon_strategic_ihp
+} // platooning_strategic_ihp

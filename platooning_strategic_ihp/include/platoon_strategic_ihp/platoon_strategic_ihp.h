@@ -56,7 +56,7 @@
 #include <std_msgs/msg/string.hpp>
 #include <rclcpp/time.hpp>
 
-namespace platoon_strategic_ihp
+namespace platooning_strategic_ihp
 {
     using MobilityResponseCB = std::function<void(const carma_v2x_msgs::msg::MobilityResponse&)>;
     using MobilityRequestCB = std::function<void(const carma_v2x_msgs::msg::MobilityRequest&)>;

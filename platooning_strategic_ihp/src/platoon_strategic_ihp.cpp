@@ -24,12 +24,12 @@
 
 #include <rclcpp/logging.hpp>
 #include <string>
-#include "platoon_strategic_ihp/platoon_strategic_ihp.h"
+#include "platooning_strategic_ihp/platooning_strategic_ihp.h"
 #include <array>
 #include <stdlib.h>
 
 
-namespace platoon_strategic_ihp
+namespace platooning_strategic_ihp
 {
 
     // -------------- constructor --------------//
@@ -41,20 +41,20 @@ namespace platoon_strategic_ihp
       mobility_response_publisher_(mobility_response_publisher), mobility_operation_publisher_(mobility_operation_publisher),
       platooning_info_publisher_(platooning_info_publisher), wm_(wm), config_(config), timer_factory_(timer_factory), pm_(timer_factory_)
     {
-        RCLCPP_DEBUG_STREAM(rclcpp::get_logger("platoon_strategic_ihp"), "Top of PlatoonStrategicIHP ctor.");
+        RCLCPP_DEBUG_STREAM(rclcpp::get_logger("platooning_strategic_ihp"), "Top of PlatoonStrategicIHP ctor.");
         std::string hostStaticId = config_.vehicleID; //static ID for this vehicle
         pm_.HostMobilityId = hostStaticId;
         // construct platoon member for host vehicle as the first element in the vector, since it starts life as a solo vehicle
         long cur_t = timer_factory_->now().nanoseconds()/1000000; // time in millisecond
         PlatoonMember hostVehicleMember = PlatoonMember(hostStaticId, 0.0, 0.0, 0.0, 0.0, cur_t);
         pm_.host_platoon_.push_back(hostVehicleMember);
-        plugin_discovery_msg_.name = "platoon_strategic_ihp";
+        plugin_discovery_msg_.name = "platooning_strategic_ihp";
         plugin_discovery_msg_.version_id = "v1.0";
         plugin_discovery_msg_.available = true;
         plugin_discovery_msg_.activated = true;
         plugin_discovery_msg_.type = carma_planning_msgs::msg::Plugin::STRATEGIC;
         plugin_discovery_msg_.capability = "strategic_plan/plan_maneuvers";
-        RCLCPP_DEBUG_STREAM(rclcpp::get_logger("platoon_strategic_ihp"), "ctor complete. hostStaticId = " << hostStaticId);
+        RCLCPP_DEBUG_STREAM(rclcpp::get_logger("platooning_strategic_ihp"), "ctor complete. hostStaticId = " << hostStaticId);
     }
 
 
@@ -78,9 +78,9 @@ namespace platoon_strategic_ihp
         location.ecef_z = ecef_point.z() * 100.0;
 
 
-        // RCLCPP_DEBUG_STREAM(rclcpp::get_logger("platoon_strategic_ihp"), "location.ecef_x: " << location.ecef_x);
-        // RCLCPP_DEBUG_STREAM(rclcpp::get_logger("platoon_strategic_ihp"), "location.ecef_y: " << location.ecef_y);
-        // RCLCPP_DEBUG_STREAM(rclcpp::get_logger("platoon_strategic_ihp"), "location.ecef_z: " << location.ecef_z);
+        // RCLCPP_DEBUG_STREAM(rclcpp::get_logger("platooning_strategic_ihp"), "location.ecef_x: " << location.ecef_x);
+        // RCLCPP_DEBUG_STREAM(rclcpp::get_logger("platooning_strategic_ihp"), "location.ecef_y: " << location.ecef_y);
+        // RCLCPP_DEBUG_STREAM(rclcpp::get_logger("platooning_strategic_ihp"), "location.ecef_z: " << location.ecef_z);
 
         // note: the returned ecef is in cm.
         return location;
@@ -124,7 +124,7 @@ namespace platoon_strategic_ihp
             // update host's DtD and CtD
             current_downtrack_ = tc.downtrack;
             current_crosstrack_ = tc.crosstrack;
-            // RCLCPP_DEBUG_STREAM(rclcpp::get_logger("platoon_strategic_ihp"), "current_downtrack_ = " << current_downtrack_ << ", current_crosstrack_ = " << current_crosstrack_);
+            // RCLCPP_DEBUG_STREAM(rclcpp::get_logger("platooning_strategic_ihp"), "current_downtrack_ = " << current_downtrack_ << ", current_crosstrack_ = " << current_crosstrack_);
             pm_.updateHostPose(current_downtrack_, current_crosstrack_);
 
             // note: the ecef read from "pose_ecef_point" is in cm.
@@ -177,7 +177,7 @@ namespace platoon_strategic_ihp
             throw std::invalid_argument("Valid traffic rules object could not be built");
         }
 
-        RCLCPP_DEBUG_STREAM(rclcpp::get_logger("platoon_strategic_ihp"), "target speed (limit) " << target_speed);
+        RCLCPP_DEBUG_STREAM(rclcpp::get_logger("platooning_strategic_ihp"), "target speed (limit) " << target_speed);
 
         return target_speed;
     }
@@ -198,7 +198,7 @@ namespace platoon_strategic_ihp
         double dx = abs (left_bound[0].x() - right_bound[0].x());
         double dy = abs (left_bound[0].y() - right_bound[0].y());
         double laneWidth = sqrt(dx*dx + dy*dy);
-        RCLCPP_DEBUG_STREAM(rclcpp::get_logger("platoon_strategic_ihp"), "calculated lane width: " << laneWidth);
+        RCLCPP_DEBUG_STREAM(rclcpp::get_logger("platooning_strategic_ihp"), "calculated lane width: " << laneWidth);
 
         // TODO temporary disable this function and return constant value
         laneWidth = 3.5;
@@ -217,13 +217,13 @@ namespace platoon_strategic_ihp
 
         if (downtrack > currentDtd && samelane)
         {
-            RCLCPP_DEBUG_STREAM(rclcpp::get_logger("platoon_strategic_ihp"), "Found a platoon in front. We are able to join");
+            RCLCPP_DEBUG_STREAM(rclcpp::get_logger("platooning_strategic_ihp"), "Found a platoon in front. We are able to join");
             return true;
         }
         else
         {
-            RCLCPP_DEBUG_STREAM(rclcpp::get_logger("platoon_strategic_ihp"), "Ignoring platoon that is either behind host or in another lane.");
-            RCLCPP_DEBUG_STREAM(rclcpp::get_logger("platoon_strategic_ihp"), "The front platoon dtd is " << downtrack << " and we are current at " << currentDtd);
+            RCLCPP_DEBUG_STREAM(rclcpp::get_logger("platooning_strategic_ihp"), "Ignoring platoon that is either behind host or in another lane.");
+            RCLCPP_DEBUG_STREAM(rclcpp::get_logger("platooning_strategic_ihp"), "The front platoon dtd is " << downtrack << " and we are current at " << currentDtd);
             return false;
         }
     }
@@ -237,13 +237,13 @@ namespace platoon_strategic_ihp
 
         if (downtrack < currentDtd && samelane)
         {
-            RCLCPP_DEBUG_STREAM(rclcpp::get_logger("platoon_strategic_ihp"), "Found a platoon at behind. We are able to join");
+            RCLCPP_DEBUG_STREAM(rclcpp::get_logger("platooning_strategic_ihp"), "Found a platoon at behind. We are able to join");
             return true;
         }
         else
         {
-            RCLCPP_DEBUG_STREAM(rclcpp::get_logger("platoon_strategic_ihp"), "Ignoring platoon that is either ahead of us or in another lane.");
-            RCLCPP_DEBUG_STREAM(rclcpp::get_logger("platoon_strategic_ihp"), "The front platoon dtd is " << downtrack << " and we are current at " << currentDtd);
+            RCLCPP_DEBUG_STREAM(rclcpp::get_logger("platooning_strategic_ihp"), "Ignoring platoon that is either ahead of us or in another lane.");
+            RCLCPP_DEBUG_STREAM(rclcpp::get_logger("platooning_strategic_ihp"), "The front platoon dtd is " << downtrack << " and we are current at " << currentDtd);
             return false;
         }
     }
@@ -309,7 +309,7 @@ namespace platoon_strategic_ihp
         // compose message
         std::string statusParams = fmter.str();
         msg.strategy_params = statusParams;
-        RCLCPP_DEBUG_STREAM(rclcpp::get_logger("platoon_strategic_ihp"), "Composed a mobility operation message with params " << msg.strategy_params);
+        RCLCPP_DEBUG_STREAM(rclcpp::get_logger("platooning_strategic_ihp"), "Composed a mobility operation message with params " << msg.strategy_params);
         return msg;
     }
 
@@ -343,7 +343,7 @@ namespace platoon_strategic_ihp
 
         std::string infoParams = fmter.str();
         msg.strategy_params = infoParams;
-        RCLCPP_DEBUG_STREAM(rclcpp::get_logger("platoon_strategic_ihp"), "Composed a mobility operation message with params " << msg.strategy_params);
+        RCLCPP_DEBUG_STREAM(rclcpp::get_logger("platooning_strategic_ihp"), "Composed a mobility operation message with params " << msg.strategy_params);
         return msg;
     }
 
@@ -370,19 +370,19 @@ namespace platoon_strategic_ihp
         bool lateralCheck = joining_crosstrack >= frontVehicleCtd - two_lane_cross_error  ||
                             joining_crosstrack <= frontVehicleCtd + two_lane_cross_error;
         // logs for longitudinal and lateral check
-        RCLCPP_DEBUG_STREAM(rclcpp::get_logger("platoon_strategic_ihp"), "The longitudinalCheck result is: " << longitudinalCheck );
-        RCLCPP_DEBUG_STREAM(rclcpp::get_logger("platoon_strategic_ihp"), "The lateralCheck result is: " << lateralCheck );
+        RCLCPP_DEBUG_STREAM(rclcpp::get_logger("platooning_strategic_ihp"), "The longitudinalCheck result is: " << longitudinalCheck );
+        RCLCPP_DEBUG_STREAM(rclcpp::get_logger("platooning_strategic_ihp"), "The lateralCheck result is: " << lateralCheck );
 
         if (longitudinalCheck && lateralCheck)
         {
-            RCLCPP_DEBUG_STREAM(rclcpp::get_logger("platoon_strategic_ihp"), "Joining vehicle is nearby. It is able to join.");
+            RCLCPP_DEBUG_STREAM(rclcpp::get_logger("platooning_strategic_ihp"), "Joining vehicle is nearby. It is able to join.");
             return true;
         }
         else
         {
-            RCLCPP_DEBUG_STREAM(rclcpp::get_logger("platoon_strategic_ihp"), "The joining vehicle is not close by, the join request will not be approved.");
-            RCLCPP_DEBUG_STREAM(rclcpp::get_logger("platoon_strategic_ihp"), "The joining vehicle downtrack is " << joining_downtrack << " and the host (platoon leader) downtrack is " << frontVehicleDtd);
-            RCLCPP_DEBUG_STREAM(rclcpp::get_logger("platoon_strategic_ihp"), "The joining vehicle crosstrack is " << joining_crosstrack << " and the host (platoon leader) crosstrack is " << frontVehicleCtd);
+            RCLCPP_DEBUG_STREAM(rclcpp::get_logger("platooning_strategic_ihp"), "The joining vehicle is not close by, the join request will not be approved.");
+            RCLCPP_DEBUG_STREAM(rclcpp::get_logger("platooning_strategic_ihp"), "The joining vehicle downtrack is " << joining_downtrack << " and the host (platoon leader) downtrack is " << frontVehicleDtd);
+            RCLCPP_DEBUG_STREAM(rclcpp::get_logger("platooning_strategic_ihp"), "The joining vehicle crosstrack is " << joining_crosstrack << " and the host (platoon leader) crosstrack is " << frontVehicleCtd);
             return false;
         }
     }
@@ -400,20 +400,20 @@ namespace platoon_strategic_ihp
         // current_crosstrack_ >= frontVehicleCtd - two_lane_cross_error ||
         //                     current_crosstrack_ <= frontVehicleCtd + two_lane_cross_error;
         // logs for longitudinal and lateral check
-        RCLCPP_DEBUG_STREAM(rclcpp::get_logger("platoon_strategic_ihp"), "The longitudinalCheck result is: " << longitudinalCheck );
-        RCLCPP_DEBUG_STREAM(rclcpp::get_logger("platoon_strategic_ihp"), "The lateralCheck result is: " << lateralCheck );
+        RCLCPP_DEBUG_STREAM(rclcpp::get_logger("platooning_strategic_ihp"), "The longitudinalCheck result is: " << longitudinalCheck );
+        RCLCPP_DEBUG_STREAM(rclcpp::get_logger("platooning_strategic_ihp"), "The lateralCheck result is: " << lateralCheck );
 
         if (longitudinalCheck && lateralCheck)
         {
             // host vehicle is close to target platoon longitudinally (within 10m) and laterally (within 5m)
-            RCLCPP_DEBUG_STREAM(rclcpp::get_logger("platoon_strategic_ihp"), "Found a platoon nearby. We are able to join.");
+            RCLCPP_DEBUG_STREAM(rclcpp::get_logger("platooning_strategic_ihp"), "Found a platoon nearby. We are able to join.");
             return true;
         }
         else
         {
-            RCLCPP_DEBUG_STREAM(rclcpp::get_logger("platoon_strategic_ihp"), "Ignoring platoon.");
-            RCLCPP_DEBUG_STREAM(rclcpp::get_logger("platoon_strategic_ihp"), "The platoon leader dtd is " << frontVehicleDtd << " and we are current at " << current_downtrack_);
-            RCLCPP_DEBUG_STREAM(rclcpp::get_logger("platoon_strategic_ihp"), "The platoon leader ctd is " << frontVehicleCtd << " and we are current at " << current_crosstrack_);
+            RCLCPP_DEBUG_STREAM(rclcpp::get_logger("platooning_strategic_ihp"), "Ignoring platoon.");
+            RCLCPP_DEBUG_STREAM(rclcpp::get_logger("platooning_strategic_ihp"), "The platoon leader dtd is " << frontVehicleDtd << " and we are current at " << current_downtrack_);
+            RCLCPP_DEBUG_STREAM(rclcpp::get_logger("platooning_strategic_ihp"), "The platoon leader ctd is " << frontVehicleCtd << " and we are current at " << current_crosstrack_);
             return false;
         }
     }
@@ -425,7 +425,7 @@ namespace platoon_strategic_ihp
          * Note: There is a difference between the "platoon info status" versus the the "platoon strategic plugin states".
          *       The "platooning info status" reflect the overall operating status.
          *       The "platoon strategic plugin states" manage the negotiation strategies and vehicle communication in a more refined manner.
-         * A more detailed note can be found in the corresponding function declaration in "platoon_strategic_ihp.h" file.
+         * A more detailed note can be found in the corresponding function declaration in "platooning_strategic_ihp.h" file.
          */
 
         carma_planning_msgs::msg::PlatooningInfo status_msg;
@@ -486,10 +486,10 @@ namespace platoon_strategic_ihp
                 status_msg.leader_downtrack_distance = platoon_leader.vehiclePosition;
                 status_msg.leader_cmd_speed = platoon_leader.commandSpeed;
                 status_msg.host_platoon_position = pm_.getNumberOfVehicleInFront();
-                RCLCPP_DEBUG_STREAM(rclcpp::get_logger("platoon_strategic_ihp"), "pm platoonsize: " << pm_.getHostPlatoonSize() << ", platoon_leader " << platoon_leader.staticId);
+                RCLCPP_DEBUG_STREAM(rclcpp::get_logger("platooning_strategic_ihp"), "pm platoonsize: " << pm_.getHostPlatoonSize() << ", platoon_leader " << platoon_leader.staticId);
 
                 int numOfVehiclesGaps = pm_.getNumberOfVehicleInFront() - pm_.dynamic_leader_index_;
-                RCLCPP_DEBUG_STREAM(rclcpp::get_logger("platoon_strategic_ihp"), "The host vehicle have " << numOfVehiclesGaps << " vehicles between itself and its leader (includes the leader)");
+                RCLCPP_DEBUG_STREAM(rclcpp::get_logger("platooning_strategic_ihp"), "The host vehicle have " << numOfVehiclesGaps << " vehicles between itself and its leader (includes the leader)");
 
                 // use current position to find lanelet ID
                 lanelet::BasicPoint2d current_loc(pose_msg_.pose.position.x, pose_msg_.pose.position.y);
@@ -510,16 +510,16 @@ namespace platoon_strategic_ihp
 
                 else
                 {
-                    RCLCPP_DEBUG_STREAM(rclcpp::get_logger("platoon_strategic_ihp"), "No lanelets in this location!!!: ");
+                    RCLCPP_DEBUG_STREAM(rclcpp::get_logger("platooning_strategic_ihp"), "No lanelets in this location!!!: ");
                 }
 
-                RCLCPP_DEBUG_STREAM(rclcpp::get_logger("platoon_strategic_ihp"), "lanelet_digitalgap: " << lanelet_digitalgap);
+                RCLCPP_DEBUG_STREAM(rclcpp::get_logger("platooning_strategic_ihp"), "lanelet_digitalgap: " << lanelet_digitalgap);
                 double desired_headway = std::max(current_speed_ * config_.timeHeadway, lanelet_digitalgap);
-                RCLCPP_DEBUG_STREAM(rclcpp::get_logger("platoon_strategic_ihp"), "speed based gap: " << current_speed_ * config_.timeHeadway);
-                RCLCPP_DEBUG_STREAM(rclcpp::get_logger("platoon_strategic_ihp"), "max desired_headway " << desired_headway);
+                RCLCPP_DEBUG_STREAM(rclcpp::get_logger("platooning_strategic_ihp"), "speed based gap: " << current_speed_ * config_.timeHeadway);
+                RCLCPP_DEBUG_STREAM(rclcpp::get_logger("platooning_strategic_ihp"), "max desired_headway " << desired_headway);
                 // TODO: currently the average length of the vehicle is obtained from a config parameter. In future, plugin needs to be updated to receive each vehicle's actual length through status or BSM messages for more accuracy.
                 status_msg.desired_gap = std::max(config_.standStillHeadway * numOfVehiclesGaps, desired_headway * numOfVehiclesGaps) + (numOfVehiclesGaps - 1) * 5.0;//config_.averageVehicleLength;
-                RCLCPP_DEBUG_STREAM(rclcpp::get_logger("platoon_strategic_ihp"), "The desired gap with the leader is " << status_msg.desired_gap);
+                RCLCPP_DEBUG_STREAM(rclcpp::get_logger("platooning_strategic_ihp"), "The desired gap with the leader is " << status_msg.desired_gap);
 
 
                 // TODO: To uncomment the following lines, platooninfo msg must be updated
@@ -531,15 +531,15 @@ namespace platoon_strategic_ihp
 
                 // Note: use isCreateGap to adjust the desired gap send to control plugin
                 double regular_gap = status_msg.desired_gap;
-                RCLCPP_DEBUG_STREAM(rclcpp::get_logger("platoon_strategic_ihp"), "regular_gap: " << regular_gap);
-                RCLCPP_DEBUG_STREAM(rclcpp::get_logger("platoon_strategic_ihp"), "current_speed_: " << current_speed_);
-                RCLCPP_DEBUG_STREAM(rclcpp::get_logger("platoon_strategic_ihp"), "speed based gap: " << desired_headway);
+                RCLCPP_DEBUG_STREAM(rclcpp::get_logger("platooning_strategic_ihp"), "regular_gap: " << regular_gap);
+                RCLCPP_DEBUG_STREAM(rclcpp::get_logger("platooning_strategic_ihp"), "current_speed_: " << current_speed_);
+                RCLCPP_DEBUG_STREAM(rclcpp::get_logger("platooning_strategic_ihp"), "speed based gap: " << desired_headway);
                 if (pm_.isCreateGap){
                     // enlarged desired gap for gap creation
                     status_msg.desired_gap = regular_gap*(1 + config_.createGapAdjuster);
                 }
                 status_msg.actual_gap = platoon_leader.vehiclePosition - current_downtrack_;
-                RCLCPP_DEBUG_STREAM(rclcpp::get_logger("platoon_strategic_ihp"), "status_msg.actual_gap: " << status_msg.actual_gap);
+                RCLCPP_DEBUG_STREAM(rclcpp::get_logger("platooning_strategic_ihp"), "status_msg.actual_gap: " << status_msg.actual_gap);
             }
             else
             {
@@ -576,7 +576,7 @@ namespace platoon_strategic_ihp
         // Unknown strategy param.
         else
         {
-            RCLCPP_ERROR(rclcpp::get_logger("platoon_strategic_ihp"),"UNKNOWN strategy param string!!!");
+            RCLCPP_ERROR(rclcpp::get_logger("platooning_strategic_ihp"),"UNKNOWN strategy param string!!!");
             msg.strategy_params = "";
         }
         return msg;
@@ -664,7 +664,7 @@ namespace platoon_strategic_ihp
         // Unknown strategy param.
         else
         {
-            RCLCPP_ERROR(rclcpp::get_logger("platoon_strategic_ihp"),"UNKNOWN strategy param string!!!");
+            RCLCPP_ERROR(rclcpp::get_logger("platooning_strategic_ihp"),"UNKNOWN strategy param string!!!");
             msg.strategy_params = "";
         }
         return msg;
@@ -716,28 +716,28 @@ namespace platoon_strategic_ihp
          *              |----------0----------1---------2---------3---------4------|
          */
 
-        RCLCPP_DEBUG_STREAM(rclcpp::get_logger("platoon_strategic_ihp"), "Entered mob_op_cb_STATUS");
+        RCLCPP_DEBUG_STREAM(rclcpp::get_logger("platooning_strategic_ihp"), "Entered mob_op_cb_STATUS");
         std::string strategyParams = msg.strategy_params;
         std::string vehicleID = msg.m_header.sender_id;
         std::string platoonId = msg.m_header.plan_id;
-        RCLCPP_DEBUG_STREAM(rclcpp::get_logger("platoon_strategic_ihp"), "strategyParams = " << strategyParams);
-        RCLCPP_DEBUG_STREAM(rclcpp::get_logger("platoon_strategic_ihp"), "platoonId = " << platoonId << ", sender ID = " << vehicleID);
+        RCLCPP_DEBUG_STREAM(rclcpp::get_logger("platooning_strategic_ihp"), "strategyParams = " << strategyParams);
+        RCLCPP_DEBUG_STREAM(rclcpp::get_logger("platooning_strategic_ihp"), "platoonId = " << platoonId << ", sender ID = " << vehicleID);
         std::string statusParams = strategyParams.substr(OPERATION_STATUS_TYPE.size() + 1);
-        RCLCPP_DEBUG_STREAM(rclcpp::get_logger("platoon_strategic_ihp"), "pm_.currentPlatoonID = " << pm_.currentPlatoonID << ", targetPlatoonID = " << pm_.targetPlatoonID);
+        RCLCPP_DEBUG_STREAM(rclcpp::get_logger("platooning_strategic_ihp"), "pm_.currentPlatoonID = " << pm_.currentPlatoonID << ", targetPlatoonID = " << pm_.targetPlatoonID);
 
         // read Downtrack
         carma_v2x_msgs::msg::LocationECEF ecef_loc = mob_op_find_ecef_from_STATUS_params(strategyParams);
         lanelet::BasicPoint2d incoming_pose = ecef_to_map_point(ecef_loc);
         double dtd = wm_->routeTrackPos(incoming_pose).downtrack;
-        RCLCPP_DEBUG_STREAM(rclcpp::get_logger("platoon_strategic_ihp"), "DTD calculated from ecef is: " << dtd);
+        RCLCPP_DEBUG_STREAM(rclcpp::get_logger("platooning_strategic_ihp"), "DTD calculated from ecef is: " << dtd);
         // read Crosstrack
         double ctd = wm_->routeTrackPos(incoming_pose).crosstrack;
-        RCLCPP_DEBUG_STREAM(rclcpp::get_logger("platoon_strategic_ihp"), "CTD calculated from ecef is: " << ctd);
+        RCLCPP_DEBUG_STREAM(rclcpp::get_logger("platooning_strategic_ihp"), "CTD calculated from ecef is: " << ctd);
 
         // If it comes from a member of an identified neighbor platoon, then
         if (platoonId.compare(pm_.neighborPlatoonID) == 0 && platoonId.compare(pm_.dummyID) != 0)
         {
-            RCLCPP_DEBUG_STREAM(rclcpp::get_logger("platoon_strategic_ihp"), "Incoming platoonID matches target platoon id");
+            RCLCPP_DEBUG_STREAM(rclcpp::get_logger("platooning_strategic_ihp"), "Incoming platoonID matches target platoon id");
             // // Update this member's status (or add if it's unknown to us)
             pm_.neighborMemberUpdates(vehicleID, platoonId, statusParams, dtd, ctd);
         }
@@ -751,7 +751,7 @@ namespace platoon_strategic_ihp
         // else it represents an uninteresting platoon
         else
         {
-            RCLCPP_DEBUG_STREAM(rclcpp::get_logger("platoon_strategic_ihp"), "Received mob op for platoon " << platoonId << " that doesn't match our platoon: " << pm_.currentPlatoonID
+            RCLCPP_DEBUG_STREAM(rclcpp::get_logger("platooning_strategic_ihp"), "Received mob op for platoon " << platoonId << " that doesn't match our platoon: " << pm_.currentPlatoonID
                              << " or known neighbor platoon: " << pm_.targetPlatoonID);
         }
     }
@@ -816,22 +816,22 @@ namespace platoon_strategic_ihp
             return;
         }
 
-        RCLCPP_DEBUG_STREAM(rclcpp::get_logger("platoon_strategic_ihp"), "mob_op_cb received msg with sender ID " << msg->m_header.sender_id
+        RCLCPP_DEBUG_STREAM(rclcpp::get_logger("platooning_strategic_ihp"), "mob_op_cb received msg with sender ID " << msg->m_header.sender_id
                         << ", plan ID " << msg->m_header.plan_id);
-        RCLCPP_DEBUG_STREAM(rclcpp::get_logger("platoon_strategic_ihp"), "...strategy " << msg->strategy << ", strategy params " << msg->strategy_params);
+        RCLCPP_DEBUG_STREAM(rclcpp::get_logger("platooning_strategic_ihp"), "...strategy " << msg->strategy << ", strategy params " << msg->strategy_params);
 
         // Check that this is a message about platooning (could be from some other Carma activity nearby)
         std::string strategy = msg->strategy;
         if (strategy.rfind(PLATOONING_STRATEGY, 0) != 0)
         {
-            RCLCPP_DEBUG_STREAM(rclcpp::get_logger("platoon_strategic_ihp"), "Ignoring mobility operation message for " << strategy << " strategy.");
+            RCLCPP_DEBUG_STREAM(rclcpp::get_logger("platooning_strategic_ihp"), "Ignoring mobility operation message for " << strategy << " strategy.");
             return;
         }
 
         // Ignore messages as long as host vehicle is stopped
         if (current_speed_ < STOPPED_SPEED)
         {
-            RCLCPP_DEBUG_STREAM(rclcpp::get_logger("platoon_strategic_ihp"), "Ignoring message since host is stopped.");
+            RCLCPP_DEBUG_STREAM(rclcpp::get_logger("platooning_strategic_ihp"), "Ignoring message since host is stopped.");
             return;
         }
 
@@ -839,7 +839,7 @@ namespace platoon_strategic_ihp
         std::string strategyParams = msg->strategy_params;
         bool isPlatoonStatusMsg = strategyParams.rfind(OPERATION_STATUS_TYPE, 0) == 0;
         bool isPlatoonInfoMsg = strategyParams.rfind(OPERATION_INFO_TYPE, 0) == 0;
-        RCLCPP_DEBUG_STREAM(rclcpp::get_logger("platoon_strategic_ihp"), "strategyParams: " << strategyParams << "isPlatoonStatusMsg: " << isPlatoonStatusMsg << "isPlatoonInfoMsg: " << isPlatoonInfoMsg);
+        RCLCPP_DEBUG_STREAM(rclcpp::get_logger("platooning_strategic_ihp"), "strategyParams: " << strategyParams << "isPlatoonStatusMsg: " << isPlatoonStatusMsg << "isPlatoonInfoMsg: " << isPlatoonInfoMsg);
         if (isPlatoonStatusMsg)
         {
             mob_op_cb_STATUS(*msg);
@@ -855,7 +855,7 @@ namespace platoon_strategic_ihp
             std::vector<std::string> p_size;
             boost::algorithm::split(p_size, inputsParams[2], boost::is_any_of(":"));
             int platoon_size = std::stoi(p_size[1]);
-            RCLCPP_DEBUG_STREAM(rclcpp::get_logger("platoon_strategic_ihp"), "neighbor platoon_size from INFO: " << platoon_size);
+            RCLCPP_DEBUG_STREAM(rclcpp::get_logger("platooning_strategic_ihp"), "neighbor platoon_size from INFO: " << platoon_size);
             if (platoon_size > 1  &&  msg->m_header.plan_id.compare(pm_.currentPlatoonID) != 0)
             {
                 // If platoon ID doesn't match our known target platoon then clear any old neighbor platoon info and record
@@ -866,15 +866,15 @@ namespace platoon_strategic_ihp
                     pm_.neighborPlatoonID = msg->m_header.plan_id;
                 }
                 pm_.neighbor_platoon_leader_id_ = msg->m_header.sender_id;
-                RCLCPP_DEBUG_STREAM(rclcpp::get_logger("platoon_strategic_ihp"), "pm_.neighbor_platoon_leader_id_: " << pm_.neighbor_platoon_leader_id_);
+                RCLCPP_DEBUG_STREAM(rclcpp::get_logger("platooning_strategic_ihp"), "pm_.neighbor_platoon_leader_id_: " << pm_.neighbor_platoon_leader_id_);
                 pm_.neighbor_platoon_info_size_ = platoon_size;
-                RCLCPP_DEBUG_STREAM(rclcpp::get_logger("platoon_strategic_ihp"), "pm_.neighbor_platoon_info_size_: " << pm_.neighbor_platoon_info_size_);
+                RCLCPP_DEBUG_STREAM(rclcpp::get_logger("platooning_strategic_ihp"), "pm_.neighbor_platoon_info_size_: " << pm_.neighbor_platoon_info_size_);
             }
         }
 
         else
         {
-            RCLCPP_DEBUG_STREAM(rclcpp::get_logger("platoon_strategic_ihp"), "Invalid Mob Op received");
+            RCLCPP_DEBUG_STREAM(rclcpp::get_logger("platooning_strategic_ihp"), "Invalid Mob Op received");
         }
 
         // Perform state-specific additional actions
@@ -927,13 +927,13 @@ namespace platoon_strategic_ihp
     void PlatoonStrategicIHPPlugin::mob_op_cb_standby(const carma_v2x_msgs::msg::MobilityOperation& msg)
     {
         // In standby state, it will ignore operation message since it is not actively operating
-        RCLCPP_DEBUG_STREAM(rclcpp::get_logger("platoon_strategic_ihp"), "STANDBY state no further action on message from " << msg.m_header.sender_id);
+        RCLCPP_DEBUG_STREAM(rclcpp::get_logger("platooning_strategic_ihp"), "STANDBY state no further action on message from " << msg.m_header.sender_id);
     }
 
     // Handle STATUS operation message
     void PlatoonStrategicIHPPlugin::mob_op_cb_candidatefollower(const carma_v2x_msgs::msg::MobilityOperation& msg)
     {
-        RCLCPP_DEBUG_STREAM(rclcpp::get_logger("platoon_strategic_ihp"), "CANDIDATEFOLLOWER state no further action on message from " << msg.m_header.sender_id);
+        RCLCPP_DEBUG_STREAM(rclcpp::get_logger("platooning_strategic_ihp"), "CANDIDATEFOLLOWER state no further action on message from " << msg.m_header.sender_id);
     }
 
     // Handle STATUS operation message
@@ -944,13 +944,13 @@ namespace platoon_strategic_ihp
 
         // TODO: Place holder for prepare to depart
 
-        RCLCPP_DEBUG_STREAM(rclcpp::get_logger("platoon_strategic_ihp"), "FOLLOWER state no further action on message from " << msg.m_header.sender_id);
+        RCLCPP_DEBUG_STREAM(rclcpp::get_logger("platooning_strategic_ihp"), "FOLLOWER state no further action on message from " << msg.m_header.sender_id);
     }
 
     // Handle STATUS operation message
     void PlatoonStrategicIHPPlugin::mob_op_cb_leaderwaiting(const carma_v2x_msgs::msg::MobilityOperation& msg)
     {
-        RCLCPP_DEBUG_STREAM(rclcpp::get_logger("platoon_strategic_ihp"), "LEADERWAITING state no further action on message from " << msg.m_header.sender_id);
+        RCLCPP_DEBUG_STREAM(rclcpp::get_logger("platooning_strategic_ihp"), "LEADERWAITING state no further action on message from " << msg.m_header.sender_id);
     }
 
     // UCLA: Handle both STATUS and INFO operation message. Front join and rear join are all handled if incoming operation message have INFO param.
@@ -981,7 +981,7 @@ namespace platoon_strategic_ihp
         bool isPlatoonInfoMsg = strategyParams.rfind(OPERATION_INFO_TYPE, 0) == 0;            // INFO message only broadcast by leader and single CAV.
         bool isInNegotiation = pm_.current_plan.valid  ||  pm_.currentPlatoonID.compare(pm_.dummyID) != 0; // In negotiation indicates host is not available to become a joiner
                                                                                               // (i.e., not currently in a platoon or trying to join a platoon).
-        RCLCPP_DEBUG_STREAM(rclcpp::get_logger("platoon_strategic_ihp"), "Top of mob_op_cb_leader, isInNegotiation = " << isInNegotiation);
+        RCLCPP_DEBUG_STREAM(rclcpp::get_logger("platooning_strategic_ihp"), "Top of mob_op_cb_leader, isInNegotiation = " << isInNegotiation);
 
         // Condition 1. Host vehicle is the single CAV joining the platoon.
         if (isPlatoonInfoMsg && !isInNegotiation)
@@ -1002,7 +1002,7 @@ namespace platoon_strategic_ihp
             // use ecef_loc to calculate front Ctd in m.
             double frontVehicleCtd = wm_->routeTrackPos(incoming_pose).crosstrack;
             // downtrack and crosstrack of the platoon leader --> used for frontal join
-            RCLCPP_DEBUG_STREAM(rclcpp::get_logger("platoon_strategic_ihp"), "Neighbor platoon frontVehicleDtd from ecef: " << frontVehicleDtd << ", frontVehicleCtd from ecef: " << frontVehicleCtd);
+            RCLCPP_DEBUG_STREAM(rclcpp::get_logger("platooning_strategic_ihp"), "Neighbor platoon frontVehicleDtd from ecef: " << frontVehicleDtd << ", frontVehicleCtd from ecef: " << frontVehicleCtd);
 
             // use INFO param to find platoon rear vehicle DTD and CTD.
             double platoon_length = mob_op_find_platoon_length_from_INFO_params(strategyParams); // length of the entire platoon in meters.
@@ -1017,16 +1017,16 @@ namespace platoon_strategic_ihp
              */
 
             double rearVehicleDtd = frontVehicleDtd - platoon_length;
-            RCLCPP_DEBUG_STREAM(rclcpp::get_logger("platoon_strategic_ihp"), "rear veh dtd from platoon length: " << rearVehicleDtd);
+            RCLCPP_DEBUG_STREAM(rclcpp::get_logger("platooning_strategic_ihp"), "rear veh dtd from platoon length: " << rearVehicleDtd);
             if (!pm_.neighbor_platoon_.empty())
             {
                 rearVehicleDtd = pm_.neighbor_platoon_.back().vehiclePosition;
-                RCLCPP_DEBUG_STREAM(rclcpp::get_logger("platoon_strategic_ihp"), "rear veh dtd from neighbor platoon: " << rearVehicleDtd);
+                RCLCPP_DEBUG_STREAM(rclcpp::get_logger("platooning_strategic_ihp"), "rear veh dtd from neighbor platoon: " << rearVehicleDtd);
             }
 
             // Note: For one platoon, we assume all members are in the same lane.
             double rearVehicleCtd = frontVehicleCtd;
-            RCLCPP_DEBUG_STREAM(rclcpp::get_logger("platoon_strategic_ihp"), "Neighbor platoon rearVehicleDtd: " << rearVehicleDtd << ", rearVehicleCtd: " << rearVehicleCtd);
+            RCLCPP_DEBUG_STREAM(rclcpp::get_logger("platooning_strategic_ihp"), "Neighbor platoon rearVehicleDtd: " << rearVehicleDtd << ", rearVehicleCtd: " << rearVehicleCtd);
 
             // Parse the strategy params
             std::vector<std::string> inputsParams;
@@ -1036,8 +1036,8 @@ namespace platoon_strategic_ihp
             std::vector<std::string> targetPlatoonSize_parsed;
             boost::algorithm::split(targetPlatoonSize_parsed, inputsParams[2], boost::is_any_of(":"));
             int targetPlatoonSize = std::stoi(targetPlatoonSize_parsed[1]);
-            RCLCPP_DEBUG_STREAM(rclcpp::get_logger("platoon_strategic_ihp"), "target Platoon Size: " << targetPlatoonSize);
-            RCLCPP_DEBUG_STREAM(rclcpp::get_logger("platoon_strategic_ihp"), "Found a vehicle/platoon with id = " << platoonId << " within range.");
+            RCLCPP_DEBUG_STREAM(rclcpp::get_logger("platooning_strategic_ihp"), "target Platoon Size: " << targetPlatoonSize);
+            RCLCPP_DEBUG_STREAM(rclcpp::get_logger("platooning_strategic_ihp"), "Found a vehicle/platoon with id = " << platoonId << " within range.");
 
             //TODO future: add logic here to assess closeness of the neighbor platoon, as well as its speed, destination
             //             & other attributes to decide if we want to join before assembling a join request
@@ -1060,7 +1060,7 @@ namespace platoon_strategic_ihp
                 /**
                  *  Note: "isVehicleRightInFront" tests for same lane
                  */
-                RCLCPP_DEBUG_STREAM(rclcpp::get_logger("platoon_strategic_ihp"), "Neighbor platoon is right in front of us");
+                RCLCPP_DEBUG_STREAM(rclcpp::get_logger("platooning_strategic_ihp"), "Neighbor platoon is right in front of us");
 
                 request.plan_type.type = carma_v2x_msgs::msg::PlanType::JOIN_PLATOON_AT_REAR;
 
@@ -1080,7 +1080,7 @@ namespace platoon_strategic_ihp
                 fmter %dummy_join_index;            //  index = 5
                 request.strategy_params = fmter.str();
                 mobility_request_publisher_(request);
-                RCLCPP_DEBUG_STREAM(rclcpp::get_logger("platoon_strategic_ihp"), "Publishing request to leader " << senderId << " with params " << request.strategy_params << " and plan id = " << request.m_header.plan_id);
+                RCLCPP_DEBUG_STREAM(rclcpp::get_logger("platooning_strategic_ihp"), "Publishing request to leader " << senderId << " with params " << request.strategy_params << " and plan id = " << request.m_header.plan_id);
 
                 // Create a new join plan
                 pm_.current_plan = ActionPlan(true, request.m_header.timestamp, request.m_header.plan_id, senderId);
@@ -1089,7 +1089,7 @@ namespace platoon_strategic_ihp
                 if (platoonId.compare(pm_.dummyID) != 0)
                 {
                     pm_.targetPlatoonID = platoonId;
-                    RCLCPP_DEBUG_STREAM(rclcpp::get_logger("platoon_strategic_ihp"), "Detected neighbor as a real platoon & storing its ID: " << platoonId);
+                    RCLCPP_DEBUG_STREAM(rclcpp::get_logger("platooning_strategic_ihp"), "Detected neighbor as a real platoon & storing its ID: " << platoonId);
                 }
             }
 
@@ -1099,7 +1099,7 @@ namespace platoon_strategic_ihp
                 /**
                  *  Note: "isVehicleRightBehind" tests for same lane
                  */
-                RCLCPP_DEBUG_STREAM(rclcpp::get_logger("platoon_strategic_ihp"), "Neighbor platoon leader is right behind us");
+                RCLCPP_DEBUG_STREAM(rclcpp::get_logger("platooning_strategic_ihp"), "Neighbor platoon leader is right behind us");
 
                 // UCLA: assign a new plan type
                 request.plan_type.type = carma_v2x_msgs::msg::PlanType::JOIN_PLATOON_FROM_FRONT;
@@ -1119,7 +1119,7 @@ namespace platoon_strategic_ihp
                 fmter %dummy_join_index;            //  index = 5
                 request.strategy_params = fmter.str();
                 mobility_request_publisher_(request);
-                RCLCPP_DEBUG_STREAM(rclcpp::get_logger("platoon_strategic_ihp"), "Publishing front join request to the leader " << senderId << " with params " << request.strategy_params << " and plan id = " << request.m_header.plan_id);
+                RCLCPP_DEBUG_STREAM(rclcpp::get_logger("platooning_strategic_ihp"), "Publishing front join request to the leader " << senderId << " with params " << request.strategy_params << " and plan id = " << request.m_header.plan_id);
 
                 // Create a new join plan
                 pm_.current_plan = ActionPlan(true, request.m_header.timestamp, request.m_header.plan_id, senderId);
@@ -1129,12 +1129,12 @@ namespace platoon_strategic_ihp
                 if (config_.test_front_join)
                 {
                     pm_.targetPlatoonID = request.m_header.plan_id;
-                    RCLCPP_DEBUG_STREAM(rclcpp::get_logger("platoon_strategic_ihp"), "Since neighbor is a fake platoon, storing " << pm_.targetPlatoonID << " as its platoon ID");
+                    RCLCPP_DEBUG_STREAM(rclcpp::get_logger("platooning_strategic_ihp"), "Since neighbor is a fake platoon, storing " << pm_.targetPlatoonID << " as its platoon ID");
                 }
                 else
                 {
                     pm_.targetPlatoonID = platoonId;
-                    RCLCPP_DEBUG_STREAM(rclcpp::get_logger("platoon_strategic_ihp"), "Storing real neighbor platoon's ID as target: " << pm_.targetPlatoonID);
+                    RCLCPP_DEBUG_STREAM(rclcpp::get_logger("platooning_strategic_ihp"), "Storing real neighbor platoon's ID as target: " << pm_.targetPlatoonID);
                 }
             }
 
@@ -1143,15 +1143,15 @@ namespace platoon_strategic_ihp
                         &&  isVehicleNearTargetPlatoon(rearVehicleDtd, frontVehicleDtd, frontVehicleCtd))
             {
 
-                RCLCPP_DEBUG_STREAM(rclcpp::get_logger("platoon_strategic_ihp"), "starting cut-in join process");
-                RCLCPP_DEBUG_STREAM(rclcpp::get_logger("platoon_strategic_ihp"), "rearVehicleDtd " << rearVehicleDtd);
-                RCLCPP_DEBUG_STREAM(rclcpp::get_logger("platoon_strategic_ihp"), "rearVehicleCtd " << rearVehicleCtd);
+                RCLCPP_DEBUG_STREAM(rclcpp::get_logger("platooning_strategic_ihp"), "starting cut-in join process");
+                RCLCPP_DEBUG_STREAM(rclcpp::get_logger("platooning_strategic_ihp"), "rearVehicleDtd " << rearVehicleDtd);
+                RCLCPP_DEBUG_STREAM(rclcpp::get_logger("platooning_strategic_ihp"), "rearVehicleCtd " << rearVehicleCtd);
 
                 // If we are asking to join an actual platoon (not a solo vehicle), then save its ID for later use
                 if (platoonId.compare(pm_.dummyID) != 0)
                 {
                     pm_.targetPlatoonID = platoonId;
-                    RCLCPP_DEBUG_STREAM(rclcpp::get_logger("platoon_strategic_ihp"), "Detected neighbor as a real platoon & storing its ID: " << platoonId);
+                    RCLCPP_DEBUG_STREAM(rclcpp::get_logger("platooning_strategic_ihp"), "Detected neighbor as a real platoon & storing its ID: " << platoonId);
                 }
 
 
@@ -1165,17 +1165,17 @@ namespace platoon_strategic_ihp
                     if (!target_lanelets.empty())
                     {
                         long target_rear_pose_lanelet_id = target_lanelets[0].second.id();
-                        RCLCPP_DEBUG_STREAM(rclcpp::get_logger("platoon_strategic_ihp"), "target_rear_pose_lanelet_id: " << target_rear_pose_lanelet_id);
+                        RCLCPP_DEBUG_STREAM(rclcpp::get_logger("platooning_strategic_ihp"), "target_rear_pose_lanelet_id: " << target_rear_pose_lanelet_id);
                     }
                     else
                     {
-                        RCLCPP_DEBUG_STREAM(rclcpp::get_logger("platoon_strategic_ihp"), "target_rear_pose_lanelet not found!!");
+                        RCLCPP_DEBUG_STREAM(rclcpp::get_logger("platooning_strategic_ihp"), "target_rear_pose_lanelet not found!!");
                     }
                 }
 
                 else
                 {
-                    RCLCPP_DEBUG_STREAM(rclcpp::get_logger("platoon_strategic_ihp"), "No target pose is found, so we cannot prodeed with a cutin join request.");
+                    RCLCPP_DEBUG_STREAM(rclcpp::get_logger("platooning_strategic_ihp"), "No target pose is found, so we cannot prodeed with a cutin join request.");
                     return;
                 }
 
@@ -1208,7 +1208,7 @@ namespace platoon_strategic_ihp
                 fmter %join_index;                  //  index = 5
                 request.strategy_params = fmter.str();
                 mobility_request_publisher_(request);
-                RCLCPP_DEBUG_STREAM(rclcpp::get_logger("platoon_strategic_ihp"), "Publishing request to the leader " << senderId << " with params " << request.strategy_params << " and plan id = " << request.m_header.plan_id);
+                RCLCPP_DEBUG_STREAM(rclcpp::get_logger("platooning_strategic_ihp"), "Publishing request to the leader " << senderId << " with params " << request.strategy_params << " and plan id = " << request.m_header.plan_id);
 
                 // Create a new join plan
                 pm_.current_plan = ActionPlan(true, request.m_header.timestamp, request.m_header.plan_id, senderId);
@@ -1217,7 +1217,7 @@ namespace platoon_strategic_ihp
             // step 6. Return none if no platoon nearby
             else
             {
-                RCLCPP_DEBUG_STREAM(rclcpp::get_logger("platoon_strategic_ihp"), "Ignore platoon with platoon id: " << platoonId << " because it is too far away to join.");
+                RCLCPP_DEBUG_STREAM(rclcpp::get_logger("platooning_strategic_ihp"), "Ignore platoon with platoon id: " << platoonId << " because it is too far away to join.");
             }
         }
 
@@ -1228,19 +1228,19 @@ namespace platoon_strategic_ihp
     // UCLA: mob_op_cb for the new leader aborting state (inherited from candidate follower), handle STATUS message.
     void PlatoonStrategicIHPPlugin::mob_op_cb_leaderaborting(const carma_v2x_msgs::msg::MobilityOperation& msg)
     {
-        RCLCPP_DEBUG_STREAM(rclcpp::get_logger("platoon_strategic_ihp"), "LEADERABORTING state no further action on message from " << msg.m_header.sender_id);
+        RCLCPP_DEBUG_STREAM(rclcpp::get_logger("platooning_strategic_ihp"), "LEADERABORTING state no further action on message from " << msg.m_header.sender_id);
     }
 
     // UCLA: mob_op_candidateleader for the new candidate leader state (inherited from leader waiting), handle STATUS message.
     void PlatoonStrategicIHPPlugin::mob_op_cb_candidateleader(const carma_v2x_msgs::msg::MobilityOperation& msg)
     {
-        RCLCPP_DEBUG_STREAM(rclcpp::get_logger("platoon_strategic_ihp"), "CANDIDATELEADER state no further action on message from " << msg.m_header.sender_id);
+        RCLCPP_DEBUG_STREAM(rclcpp::get_logger("platooning_strategic_ihp"), "CANDIDATELEADER state no further action on message from " << msg.m_header.sender_id);
     }
 
     // UCLA: Mobility operation callback for lead_with_operation state (cut-in join).
     void PlatoonStrategicIHPPlugin::mob_op_cb_leadwithoperation(const carma_v2x_msgs::msg::MobilityOperation& msg)
     {
-        RCLCPP_DEBUG_STREAM(rclcpp::get_logger("platoon_strategic_ihp"), "LEADWITHOPERATION state no further action on message from " << msg.m_header.sender_id);
+        RCLCPP_DEBUG_STREAM(rclcpp::get_logger("platooning_strategic_ihp"), "LEADWITHOPERATION state no further action on message from " << msg.m_header.sender_id);
     }
 
     // UCLA: Mobility operation callback for prepare to join state (cut-in join).
@@ -1261,7 +1261,7 @@ namespace platoon_strategic_ihp
 
         // If this is an INFO message and our record of the neighbor platoon is complete then
         // pm_.is_neighbor_record_complete_ = true; //TODO temporary
-        RCLCPP_DEBUG_STREAM(rclcpp::get_logger("platoon_strategic_ihp"), "pm_.is_neighbor_record_complete_" << pm_.is_neighbor_record_complete_);
+        RCLCPP_DEBUG_STREAM(rclcpp::get_logger("platooning_strategic_ihp"), "pm_.is_neighbor_record_complete_" << pm_.is_neighbor_record_complete_);
 
         if (isPlatoonInfoMsg  &&  pm_.is_neighbor_record_complete_)
         {
@@ -1283,9 +1283,9 @@ namespace platoon_strategic_ihp
 
             // // Find neighbor platoon end vehicle and its downtrack in m
             int rearVehicleIndex = pm_.neighbor_platoon_.size() - 1;
-            RCLCPP_DEBUG_STREAM(rclcpp::get_logger("platoon_strategic_ihp"), "rearVehicleIndex: " << rearVehicleIndex);
+            RCLCPP_DEBUG_STREAM(rclcpp::get_logger("platooning_strategic_ihp"), "rearVehicleIndex: " << rearVehicleIndex);
             double rearVehicleDtd = pm_.neighbor_platoon_[rearVehicleIndex].vehiclePosition;
-            RCLCPP_DEBUG_STREAM(rclcpp::get_logger("platoon_strategic_ihp"), "Neighbor rearVehicleDtd from ecef: " << rearVehicleDtd);
+            RCLCPP_DEBUG_STREAM(rclcpp::get_logger("platooning_strategic_ihp"), "Neighbor rearVehicleDtd from ecef: " << rearVehicleDtd);
 
             // If lane change has not yet been authorized, stop here (this method will be running before the negotiations
             // with the platoon leader are complete)
@@ -1296,8 +1296,8 @@ namespace platoon_strategic_ihp
 
             // determine if the lane change is finished
             bool isSameLaneWithPlatoon = abs(frontVehicleCtd - current_crosstrack_) <= config_.maxCrosstrackError;
-            RCLCPP_DEBUG_STREAM(rclcpp::get_logger("platoon_strategic_ihp"), "Lane change has been authorized. isSameLaneWithPlatoon = " << isSameLaneWithPlatoon);
-            RCLCPP_DEBUG_STREAM(rclcpp::get_logger("platoon_strategic_ihp"), "crosstrack diff" << abs(frontVehicleCtd - current_crosstrack_));
+            RCLCPP_DEBUG_STREAM(rclcpp::get_logger("platooning_strategic_ihp"), "Lane change has been authorized. isSameLaneWithPlatoon = " << isSameLaneWithPlatoon);
+            RCLCPP_DEBUG_STREAM(rclcpp::get_logger("platooning_strategic_ihp"), "crosstrack diff" << abs(frontVehicleCtd - current_crosstrack_));
             if (isSameLaneWithPlatoon)
             {
                 // request 1. reset the safeToChangLane indicators if lane change is finished
@@ -1339,14 +1339,14 @@ namespace platoon_strategic_ihp
                     pm_.currentPlatoonID = request.m_header.plan_id;
                 }
 
-                RCLCPP_DEBUG_STREAM(rclcpp::get_logger("platoon_strategic_ihp"), "new platoon id: " << pm_.currentPlatoonID);
+                RCLCPP_DEBUG_STREAM(rclcpp::get_logger("platooning_strategic_ihp"), "new platoon id: " << pm_.currentPlatoonID);
                 pm_.current_plan = ActionPlan(true, request.m_header.timestamp, request.m_header.plan_id, senderId);
 
-                RCLCPP_DEBUG_STREAM(rclcpp::get_logger("platoon_strategic_ihp"), "Published Mobility request to revert to same-lane operation");
+                RCLCPP_DEBUG_STREAM(rclcpp::get_logger("platooning_strategic_ihp"), "Published Mobility request to revert to same-lane operation");
             }
             else
             {
-                RCLCPP_DEBUG_STREAM(rclcpp::get_logger("platoon_strategic_ihp"), "Lane Change not completed");
+                RCLCPP_DEBUG_STREAM(rclcpp::get_logger("platooning_strategic_ihp"), "Lane Change not completed");
             }
         }
     }
@@ -1362,7 +1362,7 @@ namespace platoon_strategic_ihp
         std::string strategy = msg.strategy;
         if (strategy.rfind(PLATOONING_STRATEGY, 0) != 0)
         {
-            RCLCPP_DEBUG_STREAM(rclcpp::get_logger("platoon_strategic_ihp"), "Ignoring mobility operation message for " << strategy << " strategy.");
+            RCLCPP_DEBUG_STREAM(rclcpp::get_logger("platooning_strategic_ihp"), "Ignoring mobility operation message for " << strategy << " strategy.");
             return MobilityRequestResponse::NO_RESPONSE;
         }
 
@@ -1416,7 +1416,7 @@ namespace platoon_strategic_ihp
     MobilityRequestResponse PlatoonStrategicIHPPlugin::mob_req_cb_standby(const carma_v2x_msgs::msg::MobilityRequest& msg)
     {
         // In standby state, the plugin is not responsible for replying to any request messages
-        RCLCPP_DEBUG_STREAM(rclcpp::get_logger("platoon_strategic_ihp"), "STANDBY state does nothing with msg from " << msg.m_header.sender_id);
+        RCLCPP_DEBUG_STREAM(rclcpp::get_logger("platooning_strategic_ihp"), "STANDBY state does nothing with msg from " << msg.m_header.sender_id);
         return MobilityRequestResponse::NO_RESPONSE;
     }
 
@@ -1424,7 +1424,7 @@ namespace platoon_strategic_ihp
     {
         // This state does not handle any mobility request for now
         // TODO Maybe it should handle some ABORT request from a waiting leader
-        RCLCPP_DEBUG_STREAM(rclcpp::get_logger("platoon_strategic_ihp"), "Received mobility request with type " << msg.plan_type.type << " but ignored.");
+        RCLCPP_DEBUG_STREAM(rclcpp::get_logger("platooning_strategic_ihp"), "Received mobility request with type " << msg.plan_type.type << " but ignored.");
         return MobilityRequestResponse::NO_RESPONSE;
     }
 
@@ -1461,15 +1461,15 @@ namespace platoon_strategic_ihp
             std::vector<std::string> join_index_parsed;
             boost::algorithm::split(join_index_parsed, inputsParams[5], boost::is_any_of(":"));
             int req_sender_join_index = std::stoi(join_index_parsed[1]);
-            RCLCPP_DEBUG_STREAM(rclcpp::get_logger("platoon_strategic_ihp"), "Requesting join_index parsed: " << req_sender_join_index);
+            RCLCPP_DEBUG_STREAM(rclcpp::get_logger("platooning_strategic_ihp"), "Requesting join_index parsed: " << req_sender_join_index);
 
             // Control vehicle speed based on cut-in type
             // 1. cut-in from rear
             if (static_cast<size_t>(req_sender_join_index) == pm_.host_platoon_.size()-1)
             {
                 // Accept plan and idle (becasue rear join, gap leading vehicle do not need to slow down).
-                RCLCPP_WARN(rclcpp::get_logger("platoon_strategic_ihp"),"Requested cut-in from rear, start approve cut-in and wait for lane change.");
-                RCLCPP_WARN(rclcpp::get_logger("platoon_strategic_ihp"),"Due to the rear join nature, there is no need to slow down or create gap.");
+                RCLCPP_WARN(rclcpp::get_logger("platooning_strategic_ihp"),"Requested cut-in from rear, start approve cut-in and wait for lane change.");
+                RCLCPP_WARN(rclcpp::get_logger("platooning_strategic_ihp"),"Due to the rear join nature, there is no need to slow down or create gap.");
                 return MobilityRequestResponse::ACK;
 
             }
@@ -1478,14 +1478,14 @@ namespace platoon_strategic_ihp
             {
                 // Accept plan and slow down to create gap.
                 pm_.isCreateGap = true;
-                RCLCPP_DEBUG_STREAM(rclcpp::get_logger("platoon_strategic_ihp"), "Requested cut-in index is: " << req_sender_join_index << ", approve cut-in and start create gap.");
+                RCLCPP_DEBUG_STREAM(rclcpp::get_logger("platooning_strategic_ihp"), "Requested cut-in index is: " << req_sender_join_index << ", approve cut-in and start create gap.");
                 return MobilityRequestResponse::ACK;
             }
             // 3. Abnormal join index
             else
             {
                 // Note: Leader will abort plan if reponse is not ACK for plantype "PLATOON_CUT_IN_JOIN".
-                RCLCPP_DEBUG_STREAM(rclcpp::get_logger("platoon_strategic_ihp"), "Abnormal cut-in index, abort operation.");
+                RCLCPP_DEBUG_STREAM(rclcpp::get_logger("platooning_strategic_ihp"), "Abnormal cut-in index, abort operation.");
                 return MobilityRequestResponse::NACK;
             }
         }
@@ -1494,7 +1494,7 @@ namespace platoon_strategic_ihp
         // 4. Reset to normal speed once the gap is created.
         else if (isGapCreated)
         {
-            RCLCPP_DEBUG_STREAM(rclcpp::get_logger("platoon_strategic_ihp"), "Gap is created, revert to normal operating speed.");
+            RCLCPP_DEBUG_STREAM(rclcpp::get_logger("platooning_strategic_ihp"), "Gap is created, revert to normal operating speed.");
             // Only reset create gap indicator, no need to send response.
             pm_.isCreateGap = false;
             return MobilityRequestResponse::NO_RESPONSE;
@@ -1518,8 +1518,8 @@ namespace platoon_strategic_ihp
         lanelet::BasicPoint2d incoming_pose = ecef_to_map_point(msg.location);
         double obj_cross_track = wm_->routeTrackPos(incoming_pose).crosstrack;
         bool inTheSameLane = abs(obj_cross_track - current_crosstrack_) < config_.maxCrosstrackError;
-        RCLCPP_DEBUG_STREAM(rclcpp::get_logger("platoon_strategic_ihp"), "current_cross_track error = " << abs(obj_cross_track - current_crosstrack_));
-        RCLCPP_DEBUG_STREAM(rclcpp::get_logger("platoon_strategic_ihp"), "inTheSameLane = " << inTheSameLane);
+        RCLCPP_DEBUG_STREAM(rclcpp::get_logger("platooning_strategic_ihp"), "current_cross_track error = " << abs(obj_cross_track - current_crosstrack_));
+        RCLCPP_DEBUG_STREAM(rclcpp::get_logger("platooning_strategic_ihp"), "inTheSameLane = " << inTheSameLane);
 
         // If everything is agreeable then approve the request; if it is from an unexpected vehicle or
         // is not a candidate join request, then we can just ignore it with no action
@@ -1528,8 +1528,8 @@ namespace platoon_strategic_ihp
         {
             if (inTheSameLane)
             {
-                RCLCPP_DEBUG_STREAM(rclcpp::get_logger("platoon_strategic_ihp"), "Target vehicle " << pm_.current_plan.peerId << " is actually joining.");
-                RCLCPP_DEBUG_STREAM(rclcpp::get_logger("platoon_strategic_ihp"), "Changing to PlatoonLeaderState and send ACK to target vehicle");
+                RCLCPP_DEBUG_STREAM(rclcpp::get_logger("platooning_strategic_ihp"), "Target vehicle " << pm_.current_plan.peerId << " is actually joining.");
+                RCLCPP_DEBUG_STREAM(rclcpp::get_logger("platooning_strategic_ihp"), "Changing to PlatoonLeaderState and send ACK to target vehicle");
 
                 // Change state to LEADER
                 pm_.current_platoon_state = PlatoonState::LEADER;
@@ -1544,9 +1544,9 @@ namespace platoon_strategic_ihp
                 PlatoonMember newMember = PlatoonMember();
                 newMember.staticId = msg.m_header.sender_id;
                 newMember.vehiclePosition = wm_->routeTrackPos(incoming_pose).downtrack;
-                RCLCPP_DEBUG_STREAM(rclcpp::get_logger("platoon_strategic_ihp"), "New member being added to platoon vector whose size is currently " << pm_.host_platoon_.size());
+                RCLCPP_DEBUG_STREAM(rclcpp::get_logger("platooning_strategic_ihp"), "New member being added to platoon vector whose size is currently " << pm_.host_platoon_.size());
                 pm_.host_platoon_.push_back(newMember);
-                RCLCPP_DEBUG_STREAM(rclcpp::get_logger("platoon_strategic_ihp"), "pm_ now thinks platoon size is " << pm_.getHostPlatoonSize());
+                RCLCPP_DEBUG_STREAM(rclcpp::get_logger("platooning_strategic_ihp"), "pm_ now thinks platoon size is " << pm_.getHostPlatoonSize());
 
                 // Send approval of the request
                 response = MobilityRequestResponse::ACK;
@@ -1555,13 +1555,13 @@ namespace platoon_strategic_ihp
             }
             else //correct vehicle and intent, but it's in the wrong lane
             {
-                RCLCPP_DEBUG_STREAM(rclcpp::get_logger("platoon_strategic_ihp"), "Received platoon request with vehicle id = " << msg.m_header.sender_id << " but in wrong lane. NACK");
+                RCLCPP_DEBUG_STREAM(rclcpp::get_logger("platooning_strategic_ihp"), "Received platoon request with vehicle id = " << msg.m_header.sender_id << " but in wrong lane. NACK");
                 response = MobilityRequestResponse::NACK;
 
                 // // Remove the candidate joiner from the platoon structure
                 // if (!pm_.removeMemberById(msg.m_header.sender_id))
                 // {
-                //     RCLCPP_DEBUG_STREAM(rclcpp::get_logger("platoon_strategic_ihp"), "Failed to remove candidate joiner from platoon record: " << msg.m_header.sender_id);
+                //     RCLCPP_DEBUG_STREAM(rclcpp::get_logger("platooning_strategic_ihp"), "Failed to remove candidate joiner from platoon record: " << msg.m_header.sender_id);
                 // }
             }
         }
@@ -1602,13 +1602,13 @@ namespace platoon_strategic_ihp
         if (isFrontJoin  ||  isRearJoin  ||  isCutInJoin  ||  isDepart)
         {
             if (pm_.current_plan.valid){
-                RCLCPP_DEBUG_STREAM(rclcpp::get_logger("platoon_strategic_ihp"), "Ignoring incoming request since we are already negotiating a join.");
+                RCLCPP_DEBUG_STREAM(rclcpp::get_logger("platooning_strategic_ihp"), "Ignoring incoming request since we are already negotiating a join.");
                 return MobilityRequestResponse::NO_RESPONSE; //TODO: replace with NACK that indicates to ask me later
             }
         }
         else
         {
-            RCLCPP_WARN_STREAM(rclcpp::get_logger("platoon_strategic_ihp"), "Received request with bogus message type " << plan_type.type << "; ignoring");
+            RCLCPP_WARN_STREAM(rclcpp::get_logger("platooning_strategic_ihp"), "Received request with bogus message type " << plan_type.type << "; ignoring");
             return MobilityRequestResponse::NO_RESPONSE;
         }
 
@@ -1620,11 +1620,11 @@ namespace platoon_strategic_ihp
         carma_v2x_msgs::msg::MobilityHeader msgHeader = msg.m_header;
         std::string params = msg.strategy_params;
         std::string applicantId = msgHeader.sender_id;
-        RCLCPP_DEBUG_STREAM(rclcpp::get_logger("platoon_strategic_ihp"), "Received mobility JOIN request from " << applicantId << " and PlanId = " << msgHeader.plan_id);
-        RCLCPP_DEBUG_STREAM(rclcpp::get_logger("platoon_strategic_ihp"), "The strategy parameters are " << params);
+        RCLCPP_DEBUG_STREAM(rclcpp::get_logger("platooning_strategic_ihp"), "Received mobility JOIN request from " << applicantId << " and PlanId = " << msgHeader.plan_id);
+        RCLCPP_DEBUG_STREAM(rclcpp::get_logger("platooning_strategic_ihp"), "The strategy parameters are " << params);
         if (params.length() == 0)
         {
-            RCLCPP_DEBUG_STREAM(rclcpp::get_logger("platoon_strategic_ihp"), "The strategy parameters are empty, return no response");
+            RCLCPP_DEBUG_STREAM(rclcpp::get_logger("platooning_strategic_ihp"), "The strategy parameters are empty, return no response");
             return MobilityRequestResponse::NO_RESPONSE;
         }
 
@@ -1636,24 +1636,24 @@ namespace platoon_strategic_ihp
         std::vector<std::string> applicantSize_parsed;
         boost::algorithm::split(applicantSize_parsed, inputsParams[0], boost::is_any_of(":"));
         int applicantSize = std::stoi(applicantSize_parsed[1]);
-        RCLCPP_DEBUG_STREAM(rclcpp::get_logger("platoon_strategic_ihp"), "applicantSize: " << applicantSize);
+        RCLCPP_DEBUG_STREAM(rclcpp::get_logger("platooning_strategic_ihp"), "applicantSize: " << applicantSize);
 
         // Parse applicant Current Speed in m/s
         std::vector<std::string> applicantCurrentSpeed_parsed;
         boost::algorithm::split(applicantCurrentSpeed_parsed, inputsParams[1], boost::is_any_of(":"));
         double applicantCurrentSpeed = std::stod(applicantCurrentSpeed_parsed[1]);
-        RCLCPP_DEBUG_STREAM(rclcpp::get_logger("platoon_strategic_ihp"), "applicantCurrentSpeed: " << applicantCurrentSpeed);
+        RCLCPP_DEBUG_STREAM(rclcpp::get_logger("platooning_strategic_ihp"), "applicantCurrentSpeed: " << applicantCurrentSpeed);
 
         // Calculate downtrack (m) based on incoming pose.
         lanelet::BasicPoint2d incoming_pose = ecef_to_map_point(msg.location);
         double applicantCurrentDtd = wm_->routeTrackPos(incoming_pose).downtrack;
-        RCLCPP_DEBUG_STREAM(rclcpp::get_logger("platoon_strategic_ihp"), "applicantCurrentmemberUpdates from ecef pose: " << applicantCurrentDtd);
+        RCLCPP_DEBUG_STREAM(rclcpp::get_logger("platooning_strategic_ihp"), "applicantCurrentmemberUpdates from ecef pose: " << applicantCurrentDtd);
 
         // Calculate crosstrack (m) based on incoming pose.
         double applicantCurrentCtd = wm_->routeTrackPos(incoming_pose).crosstrack;
-        RCLCPP_DEBUG_STREAM(rclcpp::get_logger("platoon_strategic_ihp"), "applicantCurrentCtd from ecef pose: " << applicantCurrentCtd);
+        RCLCPP_DEBUG_STREAM(rclcpp::get_logger("platooning_strategic_ihp"), "applicantCurrentCtd from ecef pose: " << applicantCurrentCtd);
         bool isInLane = abs(applicantCurrentCtd - current_crosstrack_) < config_.maxCrosstrackError;
-        RCLCPP_DEBUG_STREAM(rclcpp::get_logger("platoon_strategic_ihp"), "isInLane = " << isInLane);
+        RCLCPP_DEBUG_STREAM(rclcpp::get_logger("platooning_strategic_ihp"), "isInLane = " << isInLane);
 
         // Check if we have enough room for that applicant
         int currentPlatoonSize = pm_.getHostPlatoonSize();
@@ -1663,20 +1663,20 @@ namespace platoon_strategic_ihp
         if (isRearJoin)
         {
             // Log the request  type
-            RCLCPP_DEBUG_STREAM(rclcpp::get_logger("platoon_strategic_ihp"), "The received mobility JOIN request from " << applicantId << " and PlanId = " << msgHeader.plan_id << " is a same-lane REAR-JOIN request !");
+            RCLCPP_DEBUG_STREAM(rclcpp::get_logger("platooning_strategic_ihp"), "The received mobility JOIN request from " << applicantId << " and PlanId = " << msgHeader.plan_id << " is a same-lane REAR-JOIN request !");
 
             // -- core condition to decided accept joiner or not
             if (hasEnoughRoomInPlatoon && isInLane)
             {
-                RCLCPP_DEBUG_STREAM(rclcpp::get_logger("platoon_strategic_ihp"), "The current platoon has enough room for the applicant with size " << applicantSize);
+                RCLCPP_DEBUG_STREAM(rclcpp::get_logger("platooning_strategic_ihp"), "The current platoon has enough room for the applicant with size " << applicantSize);
                 double currentRearDtd = pm_.getPlatoonRearDowntrackDistance();
-                RCLCPP_DEBUG_STREAM(rclcpp::get_logger("platoon_strategic_ihp"), "The current platoon rear dtd is " << currentRearDtd);
+                RCLCPP_DEBUG_STREAM(rclcpp::get_logger("platooning_strategic_ihp"), "The current platoon rear dtd is " << currentRearDtd);
                 double currentGap = currentRearDtd - applicantCurrentDtd - config_.vehicleLength;
                 double currentTimeGap = currentGap / applicantCurrentSpeed;
-                RCLCPP_DEBUG_STREAM(rclcpp::get_logger("platoon_strategic_ihp"), "The gap between current platoon rear and applicant is " << currentGap << "m or " << currentTimeGap << "s");
+                RCLCPP_DEBUG_STREAM(rclcpp::get_logger("platooning_strategic_ihp"), "The gap between current platoon rear and applicant is " << currentGap << "m or " << currentTimeGap << "s");
                 if (currentGap < config_.minAllowedJoinGap)
                 {
-                    RCLCPP_WARN(rclcpp::get_logger("platoon_strategic_ihp"),"We should not receive any request from the vehicle in front of us. NACK it.");
+                    RCLCPP_WARN(rclcpp::get_logger("platooning_strategic_ihp"),"We should not receive any request from the vehicle in front of us. NACK it.");
                     return MobilityRequestResponse::NACK;
                 }
 
@@ -1684,8 +1684,8 @@ namespace platoon_strategic_ihp
                 bool isDistanceCloseEnough = currentGap <= config_.maxAllowedJoinGap  ||  currentTimeGap <= config_.maxAllowedJoinTimeGap;
                 if (isDistanceCloseEnough)
                 {
-                    RCLCPP_DEBUG_STREAM(rclcpp::get_logger("platoon_strategic_ihp"), "The applicant is close enough and we will allow it to try to join");
-                    RCLCPP_DEBUG_STREAM(rclcpp::get_logger("platoon_strategic_ihp"), "Change to LeaderWaitingState and waiting for " << msg.m_header.sender_id << " to join");
+                    RCLCPP_DEBUG_STREAM(rclcpp::get_logger("platooning_strategic_ihp"), "The applicant is close enough and we will allow it to try to join");
+                    RCLCPP_DEBUG_STREAM(rclcpp::get_logger("platooning_strategic_ihp"), "Change to LeaderWaitingState and waiting for " << msg.m_header.sender_id << " to join");
 
                     // change state to leaderwaiting !
                     pm_.current_platoon_state = PlatoonState::LEADERWAITING;
@@ -1696,13 +1696,13 @@ namespace platoon_strategic_ihp
                 }
                 else
                 {
-                    RCLCPP_DEBUG_STREAM(rclcpp::get_logger("platoon_strategic_ihp"), "The applicant is too far away from us. NACK.");
+                    RCLCPP_DEBUG_STREAM(rclcpp::get_logger("platooning_strategic_ihp"), "The applicant is too far away from us. NACK.");
                     return MobilityRequestResponse::NACK; //TODO: add reason & request to try again
                 }
             }
             else
             {
-                RCLCPP_DEBUG_STREAM(rclcpp::get_logger("platoon_strategic_ihp"), "The current platoon does not have enough room for applicant of size " << applicantSize << ". NACK");
+                RCLCPP_DEBUG_STREAM(rclcpp::get_logger("platooning_strategic_ihp"), "The current platoon does not have enough room for applicant of size " << applicantSize << ". NACK");
                 return MobilityRequestResponse::NACK;
             }
         }
@@ -1711,24 +1711,24 @@ namespace platoon_strategic_ihp
         else if (isFrontJoin)
         {
             // Log the request  type
-            RCLCPP_DEBUG_STREAM(rclcpp::get_logger("platoon_strategic_ihp"), "The received mobility JOIN request from " << applicantId << " and PlanId = " << msgHeader.plan_id << " is a same-lane FRONT-JOIN request !");
+            RCLCPP_DEBUG_STREAM(rclcpp::get_logger("platooning_strategic_ihp"), "The received mobility JOIN request from " << applicantId << " and PlanId = " << msgHeader.plan_id << " is a same-lane FRONT-JOIN request !");
 
             // -- core condition to decided accept joiner or not
             if (hasEnoughRoomInPlatoon && isInLane)
             {
-                RCLCPP_DEBUG_STREAM(rclcpp::get_logger("platoon_strategic_ihp"), "The current platoon has enough room for the applicant with size " << applicantSize);
+                RCLCPP_DEBUG_STREAM(rclcpp::get_logger("platooning_strategic_ihp"), "The current platoon has enough room for the applicant with size " << applicantSize);
 
                 // UCLA: change to read platoon front info
                 double currentFrontDtd = pm_.getPlatoonFrontDowntrackDistance();
-                RCLCPP_DEBUG_STREAM(rclcpp::get_logger("platoon_strategic_ihp"), "The current platoon front dtd is " << currentFrontDtd);
+                RCLCPP_DEBUG_STREAM(rclcpp::get_logger("platooning_strategic_ihp"), "The current platoon front dtd is " << currentFrontDtd);
                 // UCLA: adjust for calculating gap between new leader and old leader
                 double currentGap =  applicantCurrentDtd - currentFrontDtd - config_.vehicleLength;
                 double currentTimeGap = currentGap / applicantCurrentSpeed;
-                RCLCPP_DEBUG_STREAM(rclcpp::get_logger("platoon_strategic_ihp"), "The gap between current platoon front and applicant is " << currentGap << "m or " << currentTimeGap << "s");
+                RCLCPP_DEBUG_STREAM(rclcpp::get_logger("platooning_strategic_ihp"), "The gap between current platoon front and applicant is " << currentGap << "m or " << currentTimeGap << "s");
 
                 if (currentGap < config_.minAllowedJoinGap)
                 {
-                    RCLCPP_WARN(rclcpp::get_logger("platoon_strategic_ihp"),"The current time gap is not suitable for frontal join. NACK it.");
+                    RCLCPP_WARN(rclcpp::get_logger("platooning_strategic_ihp"),"The current time gap is not suitable for frontal join. NACK it.");
                     return MobilityRequestResponse::NACK;
                 }
 
@@ -1740,8 +1740,8 @@ namespace platoon_strategic_ihp
 
                 if (isDistanceCloseEnough && isPlatoonNotSingle)
                 {
-                    RCLCPP_DEBUG_STREAM(rclcpp::get_logger("platoon_strategic_ihp"), "The applicant is close enough for frontal join, send acceptance response");
-                    RCLCPP_DEBUG_STREAM(rclcpp::get_logger("platoon_strategic_ihp"), "Change to LeaderAborting state and waiting for " << msg.m_header.sender_id << " to join as the new platoon leader");
+                    RCLCPP_DEBUG_STREAM(rclcpp::get_logger("platooning_strategic_ihp"), "The applicant is close enough for frontal join, send acceptance response");
+                    RCLCPP_DEBUG_STREAM(rclcpp::get_logger("platooning_strategic_ihp"), "Change to LeaderAborting state and waiting for " << msg.m_header.sender_id << " to join as the new platoon leader");
 
                     // ----------------- give up leader position and look for new leader --------------------------
 
@@ -1766,13 +1766,13 @@ namespace platoon_strategic_ihp
                 }
                 else
                 {
-                    RCLCPP_DEBUG_STREAM(rclcpp::get_logger("platoon_strategic_ihp"), "The joining gap (" << currentGap << " m) is too far away from us or the target platoon size (" << pm_.getHostPlatoonSize() << ") is one. NACK.");
+                    RCLCPP_DEBUG_STREAM(rclcpp::get_logger("platooning_strategic_ihp"), "The joining gap (" << currentGap << " m) is too far away from us or the target platoon size (" << pm_.getHostPlatoonSize() << ") is one. NACK.");
                     return MobilityRequestResponse::NACK;  //TODO: add reason & request to try again
                 }
             }
             else
             {
-                RCLCPP_DEBUG_STREAM(rclcpp::get_logger("platoon_strategic_ihp"), "The current platoon does not have enough room for applicant of size " << applicantSize << ". NACK");
+                RCLCPP_DEBUG_STREAM(rclcpp::get_logger("platooning_strategic_ihp"), "The current platoon does not have enough room for applicant of size " << applicantSize << ". NACK");
                 return MobilityRequestResponse::NACK;
             }
         }
@@ -1781,15 +1781,15 @@ namespace platoon_strategic_ihp
         else if (isCutInJoin)
         {
             // Log the request  type
-            RCLCPP_DEBUG_STREAM(rclcpp::get_logger("platoon_strategic_ihp"), "The received mobility JOIN request from " << applicantId << " and PlanId = " << msgHeader.plan_id << " is a CUT-IN-JOIN request !");
+            RCLCPP_DEBUG_STREAM(rclcpp::get_logger("platooning_strategic_ihp"), "The received mobility JOIN request from " << applicantId << " and PlanId = " << msgHeader.plan_id << " is a CUT-IN-JOIN request !");
 
             // -- core condition to decided accept joiner or not. It is necessary leader only process the first cut-in joining request.
             // Note: The host is the platoon leader, need to use a different method to determine if joining vehicle is nearby.
             if (hasEnoughRoomInPlatoon && isJoiningVehicleNearPlatoon(applicantCurrentDtd, applicantCurrentCtd))
             {
-                RCLCPP_DEBUG_STREAM(rclcpp::get_logger("platoon_strategic_ihp"), "The current platoon has enough room for the applicant with size " << applicantSize);
-                RCLCPP_DEBUG_STREAM(rclcpp::get_logger("platoon_strategic_ihp"), "The applicant is close enough for cut-in join, send acceptance response");
-                RCLCPP_DEBUG_STREAM(rclcpp::get_logger("platoon_strategic_ihp"), "Change to Leading with operation state and waiting for " << msg.m_header.sender_id << " to change lane");
+                RCLCPP_DEBUG_STREAM(rclcpp::get_logger("platooning_strategic_ihp"), "The current platoon has enough room for the applicant with size " << applicantSize);
+                RCLCPP_DEBUG_STREAM(rclcpp::get_logger("platooning_strategic_ihp"), "The applicant is close enough for cut-in join, send acceptance response");
+                RCLCPP_DEBUG_STREAM(rclcpp::get_logger("platooning_strategic_ihp"), "Change to Leading with operation state and waiting for " << msg.m_header.sender_id << " to change lane");
                 // change state to lead with operation
                 pm_.current_platoon_state = PlatoonState::LEADWITHOPERATION;
                 waitingStartTime = timer_factory_->now().nanoseconds() / 1000000;
@@ -1799,10 +1799,10 @@ namespace platoon_strategic_ihp
             }
             else
             {
-                RCLCPP_DEBUG_STREAM(rclcpp::get_logger("platoon_strategic_ihp"), "The current platoon does not have enough room or the applicant is too far away from us. NACK the request.");
-                RCLCPP_DEBUG_STREAM(rclcpp::get_logger("platoon_strategic_ihp"), "The current applicant size: " << applicantSize << ".");
-                RCLCPP_DEBUG_STREAM(rclcpp::get_logger("platoon_strategic_ihp"), "The applicant downtrack is: " << current_downtrack_ << ".");
-                RCLCPP_DEBUG_STREAM(rclcpp::get_logger("platoon_strategic_ihp"), "The applicant crosstrack is: " << current_crosstrack_ << ".");
+                RCLCPP_DEBUG_STREAM(rclcpp::get_logger("platooning_strategic_ihp"), "The current platoon does not have enough room or the applicant is too far away from us. NACK the request.");
+                RCLCPP_DEBUG_STREAM(rclcpp::get_logger("platooning_strategic_ihp"), "The current applicant size: " << applicantSize << ".");
+                RCLCPP_DEBUG_STREAM(rclcpp::get_logger("platooning_strategic_ihp"), "The applicant downtrack is: " << current_downtrack_ << ".");
+                RCLCPP_DEBUG_STREAM(rclcpp::get_logger("platooning_strategic_ihp"), "The applicant crosstrack is: " << current_crosstrack_ << ".");
                 return MobilityRequestResponse::NACK;
             }
         }
@@ -1812,7 +1812,7 @@ namespace platoon_strategic_ihp
         // no response
         else
         {
-            RCLCPP_DEBUG_STREAM(rclcpp::get_logger("platoon_strategic_ihp"), "Received mobility request with type " << msg.plan_type.type << " and ignored.");
+            RCLCPP_DEBUG_STREAM(rclcpp::get_logger("platooning_strategic_ihp"), "Received mobility request with type " << msg.plan_type.type << " and ignored.");
             return MobilityRequestResponse::NO_RESPONSE;
         }
     }
@@ -1822,7 +1822,7 @@ namespace platoon_strategic_ihp
     {
         // This state does not handle any mobility request for now
         // TODO Maybe it should handle some ABORT request from a candidate leader
-        RCLCPP_DEBUG_STREAM(rclcpp::get_logger("platoon_strategic_ihp"), "Received mobility request with type " << msg.plan_type.type << " but ignored.");
+        RCLCPP_DEBUG_STREAM(rclcpp::get_logger("platooning_strategic_ihp"), "Received mobility request with type " << msg.plan_type.type << " but ignored.");
         return MobilityRequestResponse::NO_RESPONSE;
     }
 
@@ -1835,16 +1835,16 @@ namespace platoon_strategic_ihp
         lanelet::BasicPoint2d incoming_pose = ecef_to_map_point(msg.location);
         double obj_cross_track = wm_->routeTrackPos(incoming_pose).crosstrack;
         bool inTheSameLane = abs(obj_cross_track - current_crosstrack_) < config_.maxCrosstrackError;
-        RCLCPP_DEBUG_STREAM(rclcpp::get_logger("platoon_strategic_ihp"), "current_cross_track error = " << abs(obj_cross_track - current_crosstrack_));
-        RCLCPP_DEBUG_STREAM(rclcpp::get_logger("platoon_strategic_ihp"), "obj_cross_track = " << obj_cross_track);
-        RCLCPP_DEBUG_STREAM(rclcpp::get_logger("platoon_strategic_ihp"), "current_crosstrack_ = " << current_crosstrack_);
-        RCLCPP_DEBUG_STREAM(rclcpp::get_logger("platoon_strategic_ihp"), "inTheSameLane = " << inTheSameLane);
-        RCLCPP_DEBUG_STREAM(rclcpp::get_logger("platoon_strategic_ihp"), "isTargetVehicle = " << isTargetVehicle);
-        RCLCPP_DEBUG_STREAM(rclcpp::get_logger("platoon_strategic_ihp"), "isCandidateJoin = " << isCandidateJoin);
+        RCLCPP_DEBUG_STREAM(rclcpp::get_logger("platooning_strategic_ihp"), "current_cross_track error = " << abs(obj_cross_track - current_crosstrack_));
+        RCLCPP_DEBUG_STREAM(rclcpp::get_logger("platooning_strategic_ihp"), "obj_cross_track = " << obj_cross_track);
+        RCLCPP_DEBUG_STREAM(rclcpp::get_logger("platooning_strategic_ihp"), "current_crosstrack_ = " << current_crosstrack_);
+        RCLCPP_DEBUG_STREAM(rclcpp::get_logger("platooning_strategic_ihp"), "inTheSameLane = " << inTheSameLane);
+        RCLCPP_DEBUG_STREAM(rclcpp::get_logger("platooning_strategic_ihp"), "isTargetVehicle = " << isTargetVehicle);
+        RCLCPP_DEBUG_STREAM(rclcpp::get_logger("platooning_strategic_ihp"), "isCandidateJoin = " << isCandidateJoin);
         if (isCandidateJoin && inTheSameLane  &&  isTargetVehicle)
         {
-            RCLCPP_DEBUG_STREAM(rclcpp::get_logger("platoon_strategic_ihp"), "Old platoon leader " << pm_.current_plan.peerId << " has agreed to joining.");
-            RCLCPP_DEBUG_STREAM(rclcpp::get_logger("platoon_strategic_ihp"), "Changing to PlatoonLeaderState and send ACK to the previous leader vehicle");
+            RCLCPP_DEBUG_STREAM(rclcpp::get_logger("platooning_strategic_ihp"), "Old platoon leader " << pm_.current_plan.peerId << " has agreed to joining.");
+            RCLCPP_DEBUG_STREAM(rclcpp::get_logger("platooning_strategic_ihp"), "Changing to PlatoonLeaderState and send ACK to the previous leader vehicle");
             pm_.current_platoon_state = PlatoonState::LEADER;
 
             // Clean up planning info
@@ -1858,8 +1858,8 @@ namespace platoon_strategic_ihp
         }
         else
         {
-            RCLCPP_DEBUG_STREAM(rclcpp::get_logger("platoon_strategic_ihp"), "Received platoon request with vehicle id = " << msg.m_header.sender_id);
-            RCLCPP_DEBUG_STREAM(rclcpp::get_logger("platoon_strategic_ihp"), "The request type is " << msg.plan_type.type << " and we choose to ignore");
+            RCLCPP_DEBUG_STREAM(rclcpp::get_logger("platooning_strategic_ihp"), "Received platoon request with vehicle id = " << msg.m_header.sender_id);
+            RCLCPP_DEBUG_STREAM(rclcpp::get_logger("platooning_strategic_ihp"), "The request type is " << msg.plan_type.type << " and we choose to ignore");
             pm_.clearActionPlan();
             pm_.resetHostPlatoon(); //ASSUMES host is a solo joiner
 
@@ -1890,7 +1890,7 @@ namespace platoon_strategic_ihp
         lanelet::BasicPoint2d incoming_pose = ecef_to_map_point(msg.location);
         // read downtrack
         double applicantCurrentDtd = wm_->routeTrackPos(incoming_pose).downtrack;
-        RCLCPP_DEBUG_STREAM(rclcpp::get_logger("platoon_strategic_ihp"), "Applicant downtrack from ecef pose: " << applicantCurrentDtd);
+        RCLCPP_DEBUG_STREAM(rclcpp::get_logger("platooning_strategic_ihp"), "Applicant downtrack from ecef pose: " << applicantCurrentDtd);
 
         // Read requesting join index
         std::vector<std::string> inputsParams;
@@ -1899,7 +1899,7 @@ namespace platoon_strategic_ihp
         std::vector<std::string> join_index_parsed;
         boost::algorithm::split(join_index_parsed, inputsParams[5], boost::is_any_of(":"));
         int req_sender_join_index = std::stoi(join_index_parsed[1]);
-        RCLCPP_DEBUG_STREAM(rclcpp::get_logger("platoon_strategic_ihp"), "Requesting join_index parsed: " << req_sender_join_index);
+        RCLCPP_DEBUG_STREAM(rclcpp::get_logger("platooning_strategic_ihp"), "Requesting join_index parsed: " << req_sender_join_index);
 
         if (plan_type.type == carma_v2x_msgs::msg::PlanType::PLATOON_CUT_IN_JOIN)
         {
@@ -1914,21 +1914,21 @@ namespace platoon_strategic_ihp
 
                 if (isFrontJoinerInPosition)
                 {
-                    RCLCPP_DEBUG_STREAM(rclcpp::get_logger("platoon_strategic_ihp"), "The joining vehicle is cutting in from front.  Gap is already sufficient.");
+                    RCLCPP_DEBUG_STREAM(rclcpp::get_logger("platooning_strategic_ihp"), "The joining vehicle is cutting in from front.  Gap is already sufficient.");
                     return MobilityRequestResponse::ACK;
                 }
                 else if (cutinDtdDifference > 0.0  &&  cutinDtdDifference < 1.5*config_.vehicleLength)
                 {
                     // slow down leader to allow joiner cut-in
                     pm_.isCreateGap = true;
-                    RCLCPP_DEBUG_STREAM(rclcpp::get_logger("platoon_strategic_ihp"), "The joining vehicle is cutting in from front.");
-                    RCLCPP_DEBUG_STREAM(rclcpp::get_logger("platoon_strategic_ihp"), "Host (leader) slow down notified, joining vehicle can prepare to join");
+                    RCLCPP_DEBUG_STREAM(rclcpp::get_logger("platooning_strategic_ihp"), "The joining vehicle is cutting in from front.");
+                    RCLCPP_DEBUG_STREAM(rclcpp::get_logger("platooning_strategic_ihp"), "Host (leader) slow down notified, joining vehicle can prepare to join");
                     return MobilityRequestResponse::ACK;
                 }
 
                 else
                 {
-                    RCLCPP_DEBUG_STREAM(rclcpp::get_logger("platoon_strategic_ihp"), "Front join geometry violation. NACK.  cutinDtdDifference = " << cutinDtdDifference);
+                    RCLCPP_DEBUG_STREAM(rclcpp::get_logger("platooning_strategic_ihp"), "Front join geometry violation. NACK.  cutinDtdDifference = " << cutinDtdDifference);
                     pm_.current_platoon_state = PlatoonState::LEADER;
                     return MobilityRequestResponse::NACK;
                 }
@@ -1946,14 +1946,14 @@ namespace platoon_strategic_ihp
 
                 if (isRearJoinerInPosition)
                 {
-                    RCLCPP_DEBUG_STREAM(rclcpp::get_logger("platoon_strategic_ihp"), "Published Mobility cut-in-rear-Join request to relavent platoon member, host is leader.");
-                    RCLCPP_WARN(rclcpp::get_logger("platoon_strategic_ihp"),"Published Mobility cut-in-rear-Join request to relavent platoon members to signal gap creation.");
+                    RCLCPP_DEBUG_STREAM(rclcpp::get_logger("platooning_strategic_ihp"), "Published Mobility cut-in-rear-Join request to relavent platoon member, host is leader.");
+                    RCLCPP_WARN(rclcpp::get_logger("platooning_strategic_ihp"),"Published Mobility cut-in-rear-Join request to relavent platoon members to signal gap creation.");
                     pm_.isCreateGap = true;
                     return MobilityRequestResponse::ACK;
                 }
                 else
                 {
-                    RCLCPP_DEBUG_STREAM(rclcpp::get_logger("platoon_strategic_ihp"), "Rear join geometry violation. NACK. rearGap = " << rearGap);
+                    RCLCPP_DEBUG_STREAM(rclcpp::get_logger("platooning_strategic_ihp"), "Rear join geometry violation. NACK. rearGap = " << rearGap);
                     pm_.current_platoon_state = PlatoonState::LEADER;
                     return MobilityRequestResponse::NACK;
                 }
@@ -1998,14 +1998,14 @@ namespace platoon_strategic_ihp
                     // note: for rear join, cut-in index == host_platoon_.size()-1; for join from front, index == -1
                     //       for cut-in in middle, index indicate the gap leading vehicle's index
                     mobility_request_publisher_(request);
-                    RCLCPP_DEBUG_STREAM(rclcpp::get_logger("platoon_strategic_ihp"), "Published Mobility cut-in-mid-Join request to relavent platoon members to signal gap creation, host is leader.");
-                    RCLCPP_WARN(rclcpp::get_logger("platoon_strategic_ihp"),"Published Mobility cut-in-mid-Join request to relavent platoon members to signal gap creation.");
-                    RCLCPP_DEBUG_STREAM(rclcpp::get_logger("platoon_strategic_ihp"), "The joining vehicle is cutting in at index: "<< req_sender_join_index <<". Notify gap rear vehicle with ID: " << recipient_ID << " to slow down");
+                    RCLCPP_DEBUG_STREAM(rclcpp::get_logger("platooning_strategic_ihp"), "Published Mobility cut-in-mid-Join request to relavent platoon members to signal gap creation, host is leader.");
+                    RCLCPP_WARN(rclcpp::get_logger("platooning_strategic_ihp"),"Published Mobility cut-in-mid-Join request to relavent platoon members to signal gap creation.");
+                    RCLCPP_DEBUG_STREAM(rclcpp::get_logger("platooning_strategic_ihp"), "The joining vehicle is cutting in at index: "<< req_sender_join_index <<". Notify gap rear vehicle with ID: " << recipient_ID << " to slow down");
                     return MobilityRequestResponse::ACK;
                 }
                 else
                 {
-                    RCLCPP_DEBUG_STREAM(rclcpp::get_logger("platoon_strategic_ihp"), "Mid join geometry violation. NACK. gapFollwerDiff = " << gapFollowerDiff);
+                    RCLCPP_DEBUG_STREAM(rclcpp::get_logger("platooning_strategic_ihp"), "Mid join geometry violation. NACK. gapFollwerDiff = " << gapFollowerDiff);
                     pm_.current_platoon_state = PlatoonState::LEADER;
                     return MobilityRequestResponse::NACK;
                 }
@@ -2024,7 +2024,7 @@ namespace platoon_strategic_ihp
         // task 3 cut-in front: After creating gap, revert back to same-lane operation
         else if (plan_type.type == carma_v2x_msgs::msg::PlanType::CUT_IN_FRONT_DONE)
         {
-            RCLCPP_DEBUG_STREAM(rclcpp::get_logger("platoon_strategic_ihp"), "Cut-in from front lane change finished, leader revert to same-lane maneuver.");
+            RCLCPP_DEBUG_STREAM(rclcpp::get_logger("platooning_strategic_ihp"), "Cut-in from front lane change finished, leader revert to same-lane maneuver.");
             pm_.current_platoon_state = PlatoonState::LEADERABORTING;
             candidatestateStartTime = timer_factory_->now().nanoseconds() / 1000000;
             // if testing with two vehicles, use plan id as platoon id
@@ -2042,7 +2042,7 @@ namespace platoon_strategic_ihp
         // task 4 cut-in from middle/rear
         else if (plan_type.type == carma_v2x_msgs::msg::PlanType::CUT_IN_MID_OR_REAR_DONE)
         {
-            RCLCPP_DEBUG_STREAM(rclcpp::get_logger("platoon_strategic_ihp"), "Cut-in from mid/rear lane change finished, leader revert to same-lane maneuver.");
+            RCLCPP_DEBUG_STREAM(rclcpp::get_logger("platooning_strategic_ihp"), "Cut-in from mid/rear lane change finished, leader revert to same-lane maneuver.");
             pm_.current_platoon_state = PlatoonState::LEADERWAITING;
             waitingStartTime = timer_factory_->now().nanoseconds() / 1000000;
             return MobilityRequestResponse::ACK;
@@ -2052,14 +2052,14 @@ namespace platoon_strategic_ihp
         // task 5: if other joining vehicle send joning request, NACK it since there is already a cut-in join going on.
         else
         {
-            RCLCPP_DEBUG_STREAM(rclcpp::get_logger("platoon_strategic_ihp"), "CUT-IN join maneuver is already in operation, NACK incoming join requests from other candidates.");
-            RCLCPP_DEBUG_STREAM(rclcpp::get_logger("platoon_strategic_ihp"), "Plan Type: " << plan_type.type );
+            RCLCPP_DEBUG_STREAM(rclcpp::get_logger("platooning_strategic_ihp"), "CUT-IN join maneuver is already in operation, NACK incoming join requests from other candidates.");
+            RCLCPP_DEBUG_STREAM(rclcpp::get_logger("platooning_strategic_ihp"), "Plan Type: " << plan_type.type );
             return MobilityRequestResponse::NACK;
         }
 
         // this statement should never be reached, but will ensure reasonable behavior in case of coding error above
-        RCLCPP_WARN_STREAM(rclcpp::get_logger("platoon_strategic_ihp"), "End of method reached! Apparent logic fault above.");
-        RCLCPP_DEBUG_STREAM(rclcpp::get_logger("platoon_strategic_ihp"), "End of method reached! Apparent logic fault above."); //since WARN doesn't always print
+        RCLCPP_WARN_STREAM(rclcpp::get_logger("platooning_strategic_ihp"), "End of method reached! Apparent logic fault above.");
+        RCLCPP_DEBUG_STREAM(rclcpp::get_logger("platooning_strategic_ihp"), "End of method reached! Apparent logic fault above."); //since WARN doesn't always print
         return MobilityRequestResponse::NO_RESPONSE;
     }
 
@@ -2068,7 +2068,7 @@ namespace platoon_strategic_ihp
     {
         // This state does not handle any mobility request for now
         // TODO: if joining vehicle need to adjust speed, the leader should request it and the request should be handled here.
-        RCLCPP_DEBUG_STREAM(rclcpp::get_logger("platoon_strategic_ihp"), "Received mobility request with type " << msg.plan_type.type << " but ignored.");
+        RCLCPP_DEBUG_STREAM(rclcpp::get_logger("platooning_strategic_ihp"), "Received mobility request with type " << msg.plan_type.type << " but ignored.");
         return MobilityRequestResponse::NO_RESPONSE;
     }
 
@@ -2083,10 +2083,10 @@ namespace platoon_strategic_ihp
         bool isCurrPlanValid = pm_.current_plan.valid;                          // Check if current plan is still valid (i.e., not timed out).
         bool isForCurrentPlan = msg->m_header.plan_id == pm_.current_plan.planId;  // Check if plan Id matches.
         bool isFromTargetVehicle = msg->m_header.sender_id == pm_.current_plan.peerId;  // Check if expected peer ID and sender ID matches.
-        RCLCPP_DEBUG_STREAM(rclcpp::get_logger("platoon_strategic_ihp"), "mob_resp_cb: isCurrPlanValid = " << isCurrPlanValid << ", isForCurrentPlan = " <<
+        RCLCPP_DEBUG_STREAM(rclcpp::get_logger("platooning_strategic_ihp"), "mob_resp_cb: isCurrPlanValid = " << isCurrPlanValid << ", isForCurrentPlan = " <<
                         isForCurrentPlan << ", isFromTargetVehicle = " << isFromTargetVehicle);
-        RCLCPP_DEBUG_STREAM(rclcpp::get_logger("platoon_strategic_ihp"), "sender ID = " << msg->m_header.sender_id << ", current peer ID = " << pm_.current_plan.peerId);
-        RCLCPP_DEBUG_STREAM(rclcpp::get_logger("platoon_strategic_ihp"), "incoming plan ID = " << msg->m_header.plan_id << "current plan ID = " << pm_.current_plan.planId);
+        RCLCPP_DEBUG_STREAM(rclcpp::get_logger("platooning_strategic_ihp"), "sender ID = " << msg->m_header.sender_id << ", current peer ID = " << pm_.current_plan.peerId);
+        RCLCPP_DEBUG_STREAM(rclcpp::get_logger("platooning_strategic_ihp"), "incoming plan ID = " << msg->m_header.plan_id << "current plan ID = " << pm_.current_plan.planId);
 
         if (!(isCurrPlanValid && isForCurrentPlan && isFromTargetVehicle))
         {
@@ -2094,7 +2094,7 @@ namespace platoon_strategic_ihp
              * If any of the three condition (i.e., isCurrPlanValid, isForCurrentPlan and isFromTargetVehicle)
              * was not satisfied, return ignore as this message was not intended for the host.
              */
-            RCLCPP_DEBUG_STREAM(rclcpp::get_logger("platoon_strategic_ihp"), " Ignore the received response message as it was not intended for the host vehicle.");
+            RCLCPP_DEBUG_STREAM(rclcpp::get_logger("platooning_strategic_ihp"), " Ignore the received response message as it was not intended for the host vehicle.");
             return;
         }
         else if (pm_.current_platoon_state == PlatoonState::LEADER)
@@ -2143,18 +2143,18 @@ namespace platoon_strategic_ihp
     void PlatoonStrategicIHPPlugin::mob_resp_cb_standby(const carma_v2x_msgs::msg::MobilityResponse& msg)
     {
         // In standby state, it will not send out any requests so it will also ignore all responses
-        RCLCPP_DEBUG_STREAM(rclcpp::get_logger("platoon_strategic_ihp"), "STANDBY state does nothing with msg from " << msg.m_header.sender_id);
+        RCLCPP_DEBUG_STREAM(rclcpp::get_logger("platooning_strategic_ihp"), "STANDBY state does nothing with msg from " << msg.m_header.sender_id);
     }
 
     void PlatoonStrategicIHPPlugin::mob_resp_cb_candidatefollower(const carma_v2x_msgs::msg::MobilityResponse& msg)
     {
-        RCLCPP_DEBUG_STREAM(rclcpp::get_logger("platoon_strategic_ihp"), "Callback for candidate follower ");
+        RCLCPP_DEBUG_STREAM(rclcpp::get_logger("platooning_strategic_ihp"), "Callback for candidate follower ");
 
         // Check if current plan is still valid (i.e., not timed out)
         if (pm_.current_plan.valid)
         {
             bool isForCurrentPlan = msg.m_header.plan_id == pm_.current_plan.planId;
-            RCLCPP_DEBUG_STREAM(rclcpp::get_logger("platoon_strategic_ihp"), "isForCurrentPlan " << isForCurrentPlan);
+            RCLCPP_DEBUG_STREAM(rclcpp::get_logger("platooning_strategic_ihp"), "isForCurrentPlan " << isForCurrentPlan);
 
             // Check the response is received correctly (i.e., host vehicle is the desired receiver).
             if (isForCurrentPlan)
@@ -2164,13 +2164,13 @@ namespace platoon_strategic_ihp
                     // We change to follower state and start to actually follow that leader
                     // The platoon manager also need to change the platoon Id to the one that the target leader is using
                     pm_.current_platoon_state = PlatoonState::FOLLOWER;
-                    RCLCPP_DEBUG_STREAM(rclcpp::get_logger("platoon_strategic_ihp"), "pm_.currentPlatoonID: " << pm_.currentPlatoonID);
-                    RCLCPP_DEBUG_STREAM(rclcpp::get_logger("platoon_strategic_ihp"), "pm_.targetPlatoonID: " << pm_.currentPlatoonID);
+                    RCLCPP_DEBUG_STREAM(rclcpp::get_logger("platooning_strategic_ihp"), "pm_.currentPlatoonID: " << pm_.currentPlatoonID);
+                    RCLCPP_DEBUG_STREAM(rclcpp::get_logger("platooning_strategic_ihp"), "pm_.targetPlatoonID: " << pm_.currentPlatoonID);
 
                     if (pm_.targetPlatoonID.compare(pm_.dummyID) != 0)
                     {
                         pm_.currentPlatoonID = pm_.targetPlatoonID;
-                        RCLCPP_DEBUG_STREAM(rclcpp::get_logger("platoon_strategic_ihp"), "pm_.currentPlatoonID now: " << pm_.currentPlatoonID);
+                        RCLCPP_DEBUG_STREAM(rclcpp::get_logger("platooning_strategic_ihp"), "pm_.currentPlatoonID now: " << pm_.currentPlatoonID);
                         pm_.resetNeighborPlatoon();
                     }
                     else
@@ -2179,15 +2179,15 @@ namespace platoon_strategic_ihp
                     }
 
                     pm_.changeFromLeaderToFollower(pm_.currentPlatoonID, msg.m_header.sender_id);
-                    RCLCPP_DEBUG_STREAM(rclcpp::get_logger("platoon_strategic_ihp"), "The leader " << msg.m_header.sender_id << " agreed on our join. Change to follower state.");
-                    RCLCPP_WARN(rclcpp::get_logger("platoon_strategic_ihp"),"changed to follower");
+                    RCLCPP_DEBUG_STREAM(rclcpp::get_logger("platooning_strategic_ihp"), "The leader " << msg.m_header.sender_id << " agreed on our join. Change to follower state.");
+                    RCLCPP_WARN(rclcpp::get_logger("platooning_strategic_ihp"),"changed to follower");
                     pm_.clearActionPlan();
                 }
                 else
                 {
                     // We change back to normal leader state and try to join other platoons
-                    RCLCPP_DEBUG_STREAM(rclcpp::get_logger("platoon_strategic_ihp"), "The leader " << msg.m_header.sender_id << " does not agree on our join. Change back to leader state.");
-                    RCLCPP_DEBUG_STREAM(rclcpp::get_logger("platoon_strategic_ihp"), "Trying again..");
+                    RCLCPP_DEBUG_STREAM(rclcpp::get_logger("platooning_strategic_ihp"), "The leader " << msg.m_header.sender_id << " does not agree on our join. Change back to leader state.");
+                    RCLCPP_DEBUG_STREAM(rclcpp::get_logger("platooning_strategic_ihp"), "Trying again..");
                     // join plan failed, but we still need the peerid
                     pm_.current_plan.valid = false;
 
@@ -2201,12 +2201,12 @@ namespace platoon_strategic_ihp
             }
             else
             {
-                RCLCPP_DEBUG_STREAM(rclcpp::get_logger("platoon_strategic_ihp"), "Ignore received response message because it is not for the current plan.");
+                RCLCPP_DEBUG_STREAM(rclcpp::get_logger("platooning_strategic_ihp"), "Ignore received response message because it is not for the current plan.");
             }
         }
         else
         {
-            RCLCPP_DEBUG_STREAM(rclcpp::get_logger("platoon_strategic_ihp"), "Ignore received response message because we are not in any negotiation process.");
+            RCLCPP_DEBUG_STREAM(rclcpp::get_logger("platooning_strategic_ihp"), "Ignore received response message because we are not in any negotiation process.");
         }
     }
 
@@ -2217,7 +2217,7 @@ namespace platoon_strategic_ihp
          * and to prevent platoon leader from receiving messages from other CAVs in leader state.
          * There was no response involved in this state, hence no action needed in this section.
          */
-        RCLCPP_DEBUG_STREAM(rclcpp::get_logger("platoon_strategic_ihp"), "LEADERWAITING state does nothing with msg from " << msg.m_header.sender_id);
+        RCLCPP_DEBUG_STREAM(rclcpp::get_logger("platooning_strategic_ihp"), "LEADERWAITING state does nothing with msg from " << msg.m_header.sender_id);
     }
 
     void PlatoonStrategicIHPPlugin::mob_resp_cb_follower(const carma_v2x_msgs::msg::MobilityResponse& msg)
@@ -2245,8 +2245,8 @@ namespace platoon_strategic_ihp
         if (isFrontJoin && msg.is_accepted)
         {
             // if frontal join is accepted, change followers to candidate follower to update leader
-            RCLCPP_DEBUG_STREAM(rclcpp::get_logger("platoon_strategic_ihp"), "Received positive response for front-join plan id = " << pm_.current_plan.planId);
-            RCLCPP_DEBUG_STREAM(rclcpp::get_logger("platoon_strategic_ihp"), "Change to CandidateFollower state and prepare to update platoon information");
+            RCLCPP_DEBUG_STREAM(rclcpp::get_logger("platooning_strategic_ihp"), "Received positive response for front-join plan id = " << pm_.current_plan.planId);
+            RCLCPP_DEBUG_STREAM(rclcpp::get_logger("platooning_strategic_ihp"), "Change to CandidateFollower state and prepare to update platoon information");
             // Change to candidate follower state and request a new plan to catch up with the front platoon
             pm_.current_platoon_state = PlatoonState::CANDIDATEFOLLOWER;
             candidatestateStartTime = timer_factory_->now().nanoseconds() / 1000000;
@@ -2274,21 +2274,21 @@ namespace platoon_strategic_ihp
 
         // UCLA: read plan type
         carma_v2x_msgs::msg::PlanType plan_type = msg.plan_type;
-        RCLCPP_DEBUG_STREAM(rclcpp::get_logger("platoon_strategic_ihp"), "plan_type.type = " << plan_type.type);
+        RCLCPP_DEBUG_STREAM(rclcpp::get_logger("platooning_strategic_ihp"), "plan_type.type = " << plan_type.type);
 
         // UCLA: determine joining type
         bool isCutInJoin = plan_type.type == carma_v2x_msgs::msg::PlanType::PLATOON_CUT_IN_JOIN      &&  !config_.test_front_join;
         bool isRearJoin = plan_type.type == carma_v2x_msgs::msg::PlanType::JOIN_PLATOON_AT_REAR      &&  !config_.test_front_join;
         bool isFrontJoin = plan_type.type == carma_v2x_msgs::msg::PlanType::JOIN_PLATOON_FROM_FRONT  ||  config_.test_front_join;
-        RCLCPP_DEBUG_STREAM(rclcpp::get_logger("platoon_strategic_ihp"), "Joining type: isRearJoin = " << isRearJoin);
-        RCLCPP_DEBUG_STREAM(rclcpp::get_logger("platoon_strategic_ihp"), "Joining type: isFrontJoin = " << isFrontJoin);
-        RCLCPP_DEBUG_STREAM(rclcpp::get_logger("platoon_strategic_ihp"), "Joining type: isCutInJoin = " << isCutInJoin);
+        RCLCPP_DEBUG_STREAM(rclcpp::get_logger("platooning_strategic_ihp"), "Joining type: isRearJoin = " << isRearJoin);
+        RCLCPP_DEBUG_STREAM(rclcpp::get_logger("platooning_strategic_ihp"), "Joining type: isFrontJoin = " << isFrontJoin);
+        RCLCPP_DEBUG_STREAM(rclcpp::get_logger("platooning_strategic_ihp"), "Joining type: isCutInJoin = " << isCutInJoin);
 
         // Check if current plan is still valid (i.e., not timed out).
         if (pm_.current_plan.valid)
         {
-            RCLCPP_DEBUG_STREAM(rclcpp::get_logger("platoon_strategic_ihp"), "My plan id = " << pm_.current_plan.planId << " and response plan Id = " << msg.m_header.plan_id);
-            RCLCPP_DEBUG_STREAM(rclcpp::get_logger("platoon_strategic_ihp"), "Expected peer id = " << pm_.current_plan.peerId << " and response sender Id = " << msg.m_header.sender_id);
+            RCLCPP_DEBUG_STREAM(rclcpp::get_logger("platooning_strategic_ihp"), "My plan id = " << pm_.current_plan.planId << " and response plan Id = " << msg.m_header.plan_id);
+            RCLCPP_DEBUG_STREAM(rclcpp::get_logger("platooning_strategic_ihp"), "Expected peer id = " << pm_.current_plan.peerId << " and response sender Id = " << msg.m_header.sender_id);
 
             // Check the response is received correctly (i.e., host vehicle is the desired receiver).
             if (pm_.current_plan.planId == msg.m_header.plan_id && pm_.current_plan.peerId == msg.m_header.sender_id)
@@ -2296,8 +2296,8 @@ namespace platoon_strategic_ihp
                 // rear join
                 if (isRearJoin && msg.is_accepted)
                 {
-                    RCLCPP_DEBUG_STREAM(rclcpp::get_logger("platoon_strategic_ihp"), "Received positive response for plan id = " << pm_.current_plan.planId);
-                    RCLCPP_DEBUG_STREAM(rclcpp::get_logger("platoon_strategic_ihp"), "Change to CandidateFollower state and notify trajectory failure in order to replan");
+                    RCLCPP_DEBUG_STREAM(rclcpp::get_logger("platooning_strategic_ihp"), "Received positive response for plan id = " << pm_.current_plan.planId);
+                    RCLCPP_DEBUG_STREAM(rclcpp::get_logger("platooning_strategic_ihp"), "Change to CandidateFollower state and notify trajectory failure in order to replan");
 
                     // Change to candidate follower state and wait to catch up with the front platoon
                     pm_.current_platoon_state = PlatoonState::CANDIDATEFOLLOWER;
@@ -2308,8 +2308,8 @@ namespace platoon_strategic_ihp
                 // UCLA: frontal join (candidate leader, inherited from leaderwaiting)
                 else if (isFrontJoin && msg.is_accepted)
                 {
-                    RCLCPP_DEBUG_STREAM(rclcpp::get_logger("platoon_strategic_ihp"), "Received positive response for plan id = " << pm_.current_plan.planId);
-                    RCLCPP_DEBUG_STREAM(rclcpp::get_logger("platoon_strategic_ihp"), "Change to CandidateLeader state and prepare to become new leader. ");
+                    RCLCPP_DEBUG_STREAM(rclcpp::get_logger("platooning_strategic_ihp"), "Received positive response for plan id = " << pm_.current_plan.planId);
+                    RCLCPP_DEBUG_STREAM(rclcpp::get_logger("platooning_strategic_ihp"), "Change to CandidateLeader state and prepare to become new leader. ");
 
                     // Change to candidate leader and idle
                     pm_.current_platoon_state = PlatoonState::CANDIDATELEADER;
@@ -2325,8 +2325,8 @@ namespace platoon_strategic_ihp
                 // UCLA: CutIn join
                 else if (isCutInJoin && msg.is_accepted)
                 {
-                    RCLCPP_DEBUG_STREAM(rclcpp::get_logger("platoon_strategic_ihp"), "Received positive response for plan id = " << pm_.current_plan.planId);
-                    RCLCPP_DEBUG_STREAM(rclcpp::get_logger("platoon_strategic_ihp"), "Change to Prepare to join state and prepare to change lane. ");
+                    RCLCPP_DEBUG_STREAM(rclcpp::get_logger("platooning_strategic_ihp"), "Received positive response for plan id = " << pm_.current_plan.planId);
+                    RCLCPP_DEBUG_STREAM(rclcpp::get_logger("platooning_strategic_ihp"), "Change to Prepare to join state and prepare to change lane. ");
 
                     // Change to candidate leader and idle
                     pm_.current_platoon_state = PlatoonState::PREPARETOJOIN;
@@ -2341,11 +2341,11 @@ namespace platoon_strategic_ihp
                     //TODO future: add logic here to allow two platoons to join together
 
                     // Keep the leader idling, since this must be a bogus response
-                    RCLCPP_WARN_STREAM(rclcpp::get_logger("platoon_strategic_ihp"), "Host received response for joining vehicles, remain idling as the host is a current platoon leader.");
+                    RCLCPP_WARN_STREAM(rclcpp::get_logger("platooning_strategic_ihp"), "Host received response for joining vehicles, remain idling as the host is a current platoon leader.");
                 }
                 else
                 {
-                    RCLCPP_DEBUG_STREAM(rclcpp::get_logger("platoon_strategic_ihp"), "Received negative response for plan id = " << pm_.current_plan.planId << ". Resetting plan & platoon info.");
+                    RCLCPP_DEBUG_STREAM(rclcpp::get_logger("platooning_strategic_ihp"), "Received negative response for plan id = " << pm_.current_plan.planId << ". Resetting plan & platoon info.");
                     // Forget about the previous plan totally
                     pm_.clearActionPlan();
                     pm_.resetHostPlatoon();
@@ -2353,10 +2353,10 @@ namespace platoon_strategic_ihp
             }
             else
             {
-                RCLCPP_DEBUG_STREAM(rclcpp::get_logger("platoon_strategic_ihp"), "Ignore the response message because planID match: " << (pm_.current_plan.planId == msg.m_header.plan_id));
-                RCLCPP_DEBUG_STREAM(rclcpp::get_logger("platoon_strategic_ihp"), "My plan id = " << pm_.current_plan.planId << " and response plan Id = " << msg.m_header.plan_id);
-                RCLCPP_DEBUG_STREAM(rclcpp::get_logger("platoon_strategic_ihp"), "And peer id match " << (pm_.current_plan.peerId == msg.m_header.sender_id));
-                RCLCPP_DEBUG_STREAM(rclcpp::get_logger("platoon_strategic_ihp"), "Expected peer id = " << pm_.current_plan.peerId << " and response sender Id = " << msg.m_header.sender_id);
+                RCLCPP_DEBUG_STREAM(rclcpp::get_logger("platooning_strategic_ihp"), "Ignore the response message because planID match: " << (pm_.current_plan.planId == msg.m_header.plan_id));
+                RCLCPP_DEBUG_STREAM(rclcpp::get_logger("platooning_strategic_ihp"), "My plan id = " << pm_.current_plan.planId << " and response plan Id = " << msg.m_header.plan_id);
+                RCLCPP_DEBUG_STREAM(rclcpp::get_logger("platooning_strategic_ihp"), "And peer id match " << (pm_.current_plan.peerId == msg.m_header.sender_id));
+                RCLCPP_DEBUG_STREAM(rclcpp::get_logger("platooning_strategic_ihp"), "Expected peer id = " << pm_.current_plan.peerId << " and response sender Id = " << msg.m_header.sender_id);
             }
         }
     }
@@ -2375,7 +2375,7 @@ namespace platoon_strategic_ihp
          *  corresponding join request will be send out by the previos leader.
          */
 
-        RCLCPP_DEBUG_STREAM(rclcpp::get_logger("platoon_strategic_ihp"), "Callback for leader aborting !");
+        RCLCPP_DEBUG_STREAM(rclcpp::get_logger("platooning_strategic_ihp"), "Callback for leader aborting !");
 
         // Check if current plan is still valid (i.e., not timed out).
         if (pm_.current_plan.valid)
@@ -2384,21 +2384,21 @@ namespace platoon_strategic_ihp
             bool isForFrontJoin = msg.plan_type.type == carma_v2x_msgs::msg::PlanType::PLATOON_FRONT_JOIN;
 
             if (msg.plan_type.type == carma_v2x_msgs::msg::PlanType::UNKNOWN){
-                RCLCPP_DEBUG_STREAM(rclcpp::get_logger("platoon_strategic_ihp"), "*** plan type UNKNOWN");
+                RCLCPP_DEBUG_STREAM(rclcpp::get_logger("platooning_strategic_ihp"), "*** plan type UNKNOWN");
             }else if (msg.plan_type.type == carma_v2x_msgs::msg::PlanType::JOIN_PLATOON_FROM_FRONT){
-                RCLCPP_DEBUG_STREAM(rclcpp::get_logger("platoon_strategic_ihp"), "*** plan type JOIN_PLATOON_FROM_FRONT");
+                RCLCPP_DEBUG_STREAM(rclcpp::get_logger("platooning_strategic_ihp"), "*** plan type JOIN_PLATOON_FROM_FRONT");
             }else if (msg.plan_type.type == carma_v2x_msgs::msg::PlanType::PLATOON_CUT_IN_JOIN){
-                RCLCPP_DEBUG_STREAM(rclcpp::get_logger("platoon_strategic_ihp"), "*** plan type PLATOON_CUT_IN_JOIN");
+                RCLCPP_DEBUG_STREAM(rclcpp::get_logger("platooning_strategic_ihp"), "*** plan type PLATOON_CUT_IN_JOIN");
             }else {
-                RCLCPP_DEBUG_STREAM(rclcpp::get_logger("platoon_strategic_ihp"), "*** plan type not captured.");
+                RCLCPP_DEBUG_STREAM(rclcpp::get_logger("platooning_strategic_ihp"), "*** plan type not captured.");
             }
 
             bool isFromTargetVehicle = msg.m_header.sender_id == pm_.current_plan.peerId;
-            RCLCPP_DEBUG_STREAM(rclcpp::get_logger("platoon_strategic_ihp"), "msg.m_header.sender_id " << msg.m_header.sender_id);
-            RCLCPP_DEBUG_STREAM(rclcpp::get_logger("platoon_strategic_ihp"), "Plan Type " << msg.plan_type.type);
-            RCLCPP_DEBUG_STREAM(rclcpp::get_logger("platoon_strategic_ihp"), "isForFrontJoin " << isForFrontJoin);
-            RCLCPP_DEBUG_STREAM(rclcpp::get_logger("platoon_strategic_ihp"), "isForCurrentPlan " << isForCurrentPlan);
-            RCLCPP_DEBUG_STREAM(rclcpp::get_logger("platoon_strategic_ihp"), "isFromTargetVehicle " << isFromTargetVehicle);
+            RCLCPP_DEBUG_STREAM(rclcpp::get_logger("platooning_strategic_ihp"), "msg.m_header.sender_id " << msg.m_header.sender_id);
+            RCLCPP_DEBUG_STREAM(rclcpp::get_logger("platooning_strategic_ihp"), "Plan Type " << msg.plan_type.type);
+            RCLCPP_DEBUG_STREAM(rclcpp::get_logger("platooning_strategic_ihp"), "isForFrontJoin " << isForFrontJoin);
+            RCLCPP_DEBUG_STREAM(rclcpp::get_logger("platooning_strategic_ihp"), "isForCurrentPlan " << isForCurrentPlan);
+            RCLCPP_DEBUG_STREAM(rclcpp::get_logger("platooning_strategic_ihp"), "isFromTargetVehicle " << isFromTargetVehicle);
 
             // Check the response is received correctly (i.e., host vehicle is the desired receiver).
             if (isForCurrentPlan && isFromTargetVehicle && isForFrontJoin)
@@ -2409,8 +2409,8 @@ namespace platoon_strategic_ihp
                     // The platoon manager also need to change the platoon Id to the one that the target leader is using
                     pm_.current_platoon_state = PlatoonState::FOLLOWER;
                     pm_.changeFromLeaderToFollower(pm_.currentPlatoonID, msg.m_header.sender_id);
-                    RCLCPP_DEBUG_STREAM(rclcpp::get_logger("platoon_strategic_ihp"), "The new leader " << msg.m_header.sender_id << " agreed on the frontal join. Change to follower state.");
-                    RCLCPP_WARN(rclcpp::get_logger("platoon_strategic_ihp"),"changed to follower");
+                    RCLCPP_DEBUG_STREAM(rclcpp::get_logger("platooning_strategic_ihp"), "The new leader " << msg.m_header.sender_id << " agreed on the frontal join. Change to follower state.");
+                    RCLCPP_WARN(rclcpp::get_logger("platooning_strategic_ihp"),"changed to follower");
 
                     // reset leader aborting request marker
                     numLeaderAbortingCalls_ = 0;
@@ -2418,13 +2418,13 @@ namespace platoon_strategic_ihp
                 else
                 {
                     // We change back to normal leader state
-                    RCLCPP_DEBUG_STREAM(rclcpp::get_logger("platoon_strategic_ihp"), "The new leader " << msg.m_header.sender_id << " does not agree on the frontal join. Change back to leader state.");
+                    RCLCPP_DEBUG_STREAM(rclcpp::get_logger("platooning_strategic_ihp"), "The new leader " << msg.m_header.sender_id << " does not agree on the frontal join. Change back to leader state.");
                     pm_.current_platoon_state = PlatoonState::LEADER;
                     // We were already leading a platoon, so don't erase any of that info. But we need to remove the erstwhile candidate
                     // leader from our platoon roster; we know it is in position 0, so just remove that element
                     if (!pm_.removeMember(0))
                     {
-                        RCLCPP_DEBUG_STREAM(rclcpp::get_logger("platoon_strategic_ihp"), "Failed to remove candidate leader from the platoon!");
+                        RCLCPP_DEBUG_STREAM(rclcpp::get_logger("platooning_strategic_ihp"), "Failed to remove candidate leader from the platoon!");
                     }
                 }
 
@@ -2433,25 +2433,25 @@ namespace platoon_strategic_ihp
             }
             else
             {
-                RCLCPP_DEBUG_STREAM(rclcpp::get_logger("platoon_strategic_ihp"), "Ignore received response message because it is not for the current plan.");
+                RCLCPP_DEBUG_STREAM(rclcpp::get_logger("platooning_strategic_ihp"), "Ignore received response message because it is not for the current plan.");
             }
         }
         else
         {
-            RCLCPP_DEBUG_STREAM(rclcpp::get_logger("platoon_strategic_ihp"), "Ignore received response message because we are not in any negotiation process.");
+            RCLCPP_DEBUG_STREAM(rclcpp::get_logger("platooning_strategic_ihp"), "Ignore received response message because we are not in any negotiation process.");
         }
     }
 
     // UCLA: response for candidate leader (inherited from leader waiting)
     void PlatoonStrategicIHPPlugin::mob_resp_cb_candidateleader(const carma_v2x_msgs::msg::MobilityResponse& msg)
     {
-        RCLCPP_DEBUG_STREAM(rclcpp::get_logger("platoon_strategic_ihp"), "CANDIDATELEADER state does nothing with msg from " << msg.m_header.sender_id);
+        RCLCPP_DEBUG_STREAM(rclcpp::get_logger("platooning_strategic_ihp"), "CANDIDATELEADER state does nothing with msg from " << msg.m_header.sender_id);
     }
 
     // UCLA: response callback for lead with operation
     void PlatoonStrategicIHPPlugin::mob_resp_cb_leadwithoperation(const carma_v2x_msgs::msg::MobilityResponse& msg)
     {
-        RCLCPP_DEBUG_STREAM(rclcpp::get_logger("platoon_strategic_ihp"), "LEADWITHOPERATION state does nothing with msg from " << msg.m_header.sender_id);
+        RCLCPP_DEBUG_STREAM(rclcpp::get_logger("platooning_strategic_ihp"), "LEADWITHOPERATION state does nothing with msg from " << msg.m_header.sender_id);
     }
 
     // UCLA: response callback for prepare to join (inherited from leader waiting)
@@ -2466,26 +2466,26 @@ namespace platoon_strategic_ihp
         bool isCreatingGap = plan_type.type == carma_v2x_msgs::msg::PlanType::PLATOON_CUT_IN_JOIN;
         bool isFinishLaneChangeFront = plan_type.type == carma_v2x_msgs::msg::PlanType::CUT_IN_FRONT_DONE;
         bool isFinishLaneChangeMidorRear = plan_type.type == carma_v2x_msgs::msg::PlanType::CUT_IN_MID_OR_REAR_DONE;
-        RCLCPP_DEBUG_STREAM(rclcpp::get_logger("platoon_strategic_ihp"), "isCreatingGap = " << isCreatingGap << ", is_neighbor_record_complete = " << pm_.is_neighbor_record_complete_);
+        RCLCPP_DEBUG_STREAM(rclcpp::get_logger("platooning_strategic_ihp"), "isCreatingGap = " << isCreatingGap << ", is_neighbor_record_complete = " << pm_.is_neighbor_record_complete_);
 
         if (!msg.is_accepted)
         {
-            RCLCPP_DEBUG_STREAM(rclcpp::get_logger("platoon_strategic_ihp"), "Request " << msg.m_header.plan_id << " was rejected by leader.");
-            RCLCPP_DEBUG_STREAM(rclcpp::get_logger("platoon_strategic_ihp"), "Action Plan reset.");
-            RCLCPP_DEBUG_STREAM(rclcpp::get_logger("platoon_strategic_ihp"), "Trying again....");
+            RCLCPP_DEBUG_STREAM(rclcpp::get_logger("platooning_strategic_ihp"), "Request " << msg.m_header.plan_id << " was rejected by leader.");
+            RCLCPP_DEBUG_STREAM(rclcpp::get_logger("platooning_strategic_ihp"), "Action Plan reset.");
+            RCLCPP_DEBUG_STREAM(rclcpp::get_logger("platooning_strategic_ihp"), "Trying again....");
             pm_.current_plan.valid = false;
             pm_.current_platoon_state = PlatoonState::LEADER;
             return;
         }
         // UCLA: Create Gap or perform a rear join (no gap creation necessary)
-        RCLCPP_DEBUG_STREAM(rclcpp::get_logger("platoon_strategic_ihp"), "pm_.is_neighbor_record_complete_ " << pm_.is_neighbor_record_complete_);
+        RCLCPP_DEBUG_STREAM(rclcpp::get_logger("platooning_strategic_ihp"), "pm_.is_neighbor_record_complete_ " << pm_.is_neighbor_record_complete_);
         if (isCreatingGap  &&  pm_.is_neighbor_record_complete_)
         {
 
             // task 2: set indicator if gap is safe
             safeToLaneChange_ = true;
-            RCLCPP_DEBUG_STREAM(rclcpp::get_logger("platoon_strategic_ihp"), "Gap is now sufficiently large.");
-            RCLCPP_DEBUG_STREAM(rclcpp::get_logger("platoon_strategic_ihp"), "in mob_resp_cb safeToLaneChange_: " << safeToLaneChange_);
+            RCLCPP_DEBUG_STREAM(rclcpp::get_logger("platooning_strategic_ihp"), "Gap is now sufficiently large.");
+            RCLCPP_DEBUG_STREAM(rclcpp::get_logger("platooning_strategic_ihp"), "in mob_resp_cb safeToLaneChange_: " << safeToLaneChange_);
 
             // task 3: notify gap-rear vehicle to stop slowing down
             carma_v2x_msgs::msg::MobilityRequest request;
@@ -2510,21 +2510,21 @@ namespace platoon_strategic_ihp
 
             request.strategy_params = fmter.str();
             mobility_request_publisher_(request);
-            RCLCPP_DEBUG_STREAM(rclcpp::get_logger("platoon_strategic_ihp"), "Published Mobility Candidate-Join request to the leader to stop creating gap");
+            RCLCPP_DEBUG_STREAM(rclcpp::get_logger("platooning_strategic_ihp"), "Published Mobility Candidate-Join request to the leader to stop creating gap");
         }
 
         // UCLA: Revert to same-lane for cut-in front
         else if (isFinishLaneChangeFront)
         {
-            RCLCPP_DEBUG_STREAM(rclcpp::get_logger("platoon_strategic_ihp"), "Cut-in from front lane change finished, the joining vehicle revert to same-lane maneuver.");
+            RCLCPP_DEBUG_STREAM(rclcpp::get_logger("platooning_strategic_ihp"), "Cut-in from front lane change finished, the joining vehicle revert to same-lane maneuver.");
             pm_.current_platoon_state = PlatoonState::CANDIDATELEADER;
             candidatestateStartTime = timer_factory_->now().nanoseconds() / 1000000;
-            RCLCPP_DEBUG_STREAM(rclcpp::get_logger("platoon_strategic_ihp"), "pm_.currentPlatoonID: " << pm_.currentPlatoonID);
-            RCLCPP_DEBUG_STREAM(rclcpp::get_logger("platoon_strategic_ihp"), "pm_.targetPlatoonID: " << pm_.targetPlatoonID);
+            RCLCPP_DEBUG_STREAM(rclcpp::get_logger("platooning_strategic_ihp"), "pm_.currentPlatoonID: " << pm_.currentPlatoonID);
+            RCLCPP_DEBUG_STREAM(rclcpp::get_logger("platooning_strategic_ihp"), "pm_.targetPlatoonID: " << pm_.targetPlatoonID);
             if (pm_.targetPlatoonID.compare(pm_.dummyID) != 0)
             {
                 pm_.currentPlatoonID = pm_.targetPlatoonID;
-                RCLCPP_DEBUG_STREAM(rclcpp::get_logger("platoon_strategic_ihp"), "pm_.currentPlatoonID now: " << pm_.currentPlatoonID);
+                RCLCPP_DEBUG_STREAM(rclcpp::get_logger("platooning_strategic_ihp"), "pm_.currentPlatoonID now: " << pm_.currentPlatoonID);
             }
 
             pm_.current_plan.valid = false; //but leave peerId intact for use in second request
@@ -2533,7 +2533,7 @@ namespace platoon_strategic_ihp
         // UCLA: Revert to same-lane operation for cut-in from middle/rear
         else if (isFinishLaneChangeMidorRear)
         {
-            RCLCPP_DEBUG_STREAM(rclcpp::get_logger("platoon_strategic_ihp"), "Cut-in from mid or rear, the lane change finished, the joining vehicle revert to same-lane maneuver.");
+            RCLCPP_DEBUG_STREAM(rclcpp::get_logger("platooning_strategic_ihp"), "Cut-in from mid or rear, the lane change finished, the joining vehicle revert to same-lane maneuver.");
             pm_.current_platoon_state = PlatoonState::CANDIDATEFOLLOWER;
             candidatestateStartTime = timer_factory_->now().nanoseconds() / 1000000;
             pm_.current_plan.valid = false; //but leave peerId intact for use in second request
@@ -2542,7 +2542,7 @@ namespace platoon_strategic_ihp
 
         else
         {
-            RCLCPP_DEBUG_STREAM(rclcpp::get_logger("platoon_strategic_ihp"), "End of mob_resp_cb_preparetojoin");
+            RCLCPP_DEBUG_STREAM(rclcpp::get_logger("platooning_strategic_ihp"), "End of mob_resp_cb_preparetojoin");
         }
     }
 
@@ -2556,7 +2556,7 @@ namespace platoon_strategic_ihp
         // Ignore messages as long as host vehicle is stopped
         if (current_speed_ < config_.minPlatooningSpeed)
         {
-            RCLCPP_DEBUG_STREAM(rclcpp::get_logger("platoon_strategic_ihp"), "Ignoring message since host speed is below platooning speed.");
+            RCLCPP_DEBUG_STREAM(rclcpp::get_logger("platooning_strategic_ihp"), "Ignoring message since host speed is below platooning speed.");
             return;
         }
 
@@ -2564,7 +2564,7 @@ namespace platoon_strategic_ihp
         std::string strategy = msg->strategy;
         if (strategy.rfind(PLATOONING_STRATEGY, 0) != 0)
         {
-            RCLCPP_DEBUG_STREAM(rclcpp::get_logger("platoon_strategic_ihp"), "Ignoring mobility operation message for " << strategy << " strategy.");
+            RCLCPP_DEBUG_STREAM(rclcpp::get_logger("platooning_strategic_ihp"), "Ignoring mobility operation message for " << strategy << " strategy.");
             return;
         }
 
@@ -2590,7 +2590,7 @@ namespace platoon_strategic_ihp
         }
         else
         {
-            RCLCPP_DEBUG_STREAM(rclcpp::get_logger("platoon_strategic_ihp"), " NO response to mobility request. ");
+            RCLCPP_DEBUG_STREAM(rclcpp::get_logger("platooning_strategic_ihp"), " NO response to mobility request. ");
         }
     }
 
@@ -2599,13 +2599,13 @@ namespace platoon_strategic_ihp
 
     void PlatoonStrategicIHPPlugin::run_leader_waiting()
     {
-        RCLCPP_DEBUG_STREAM(rclcpp::get_logger("platoon_strategic_ihp"), "Run LeaderWaiting State ");
+        RCLCPP_DEBUG_STREAM(rclcpp::get_logger("platooning_strategic_ihp"), "Run LeaderWaiting State ");
         long tsStart = timer_factory_->now().nanoseconds() / 1000000;
         // Task 1
         if (tsStart - waitingStartTime > waitingStateTimeout * 1000)
         {
             //TODO if the current state timeouts, we need to have a kind of ABORT message to inform the applicant
-            RCLCPP_DEBUG_STREAM(rclcpp::get_logger("platoon_strategic_ihp"), "LeaderWaitingState is timeout, changing back to PlatoonLeaderState.");
+            RCLCPP_DEBUG_STREAM(rclcpp::get_logger("platooning_strategic_ihp"), "LeaderWaitingState is timeout, changing back to PlatoonLeaderState.");
             pm_.current_platoon_state = PlatoonState::LEADER;
             pm_.clearActionPlan();
         }
@@ -2613,7 +2613,7 @@ namespace platoon_strategic_ihp
         carma_v2x_msgs::msg::MobilityOperation status;
         status = composeMobilityOperationLeaderWaiting();
         mobility_operation_publisher_(status);
-        RCLCPP_DEBUG_STREAM(rclcpp::get_logger("platoon_strategic_ihp"), "publish status message");
+        RCLCPP_DEBUG_STREAM(rclcpp::get_logger("platooning_strategic_ihp"), "publish status message");
         long tsEnd = timer_factory_->now().nanoseconds() / 1000000;
         long sleepDuration = std::max((int32_t)(statusMessageInterval_ - (tsEnd - tsStart)), 0);
 
@@ -2634,14 +2634,14 @@ namespace platoon_strategic_ihp
 
         // Task 1: heart beat timeout: send INFO mob_op
         bool isTimeForHeartBeat = tsStart - prevHeartBeatTime_ >= infoMessageInterval_;
-        RCLCPP_DEBUG_STREAM(rclcpp::get_logger("platoon_strategic_ihp"), "time since last heart beat: " << tsStart - prevHeartBeatTime_);
+        RCLCPP_DEBUG_STREAM(rclcpp::get_logger("platooning_strategic_ihp"), "time since last heart beat: " << tsStart - prevHeartBeatTime_);
         if (isTimeForHeartBeat)
         {
             carma_v2x_msgs::msg::MobilityOperation infoOperation;
             infoOperation = composeMobilityOperationLeader(OPERATION_INFO_TYPE);
             mobility_operation_publisher_(infoOperation);
             prevHeartBeatTime_ = timer_factory_->now().nanoseconds() / 1000000;
-            RCLCPP_DEBUG_STREAM(rclcpp::get_logger("platoon_strategic_ihp"), "Published heart beat platoon INFO mobility operation message");
+            RCLCPP_DEBUG_STREAM(rclcpp::get_logger("platooning_strategic_ihp"), "Published heart beat platoon INFO mobility operation message");
         }
 
         // Task 3: plan time out, check if any current join plan is still valid (i.e., not timed out).
@@ -2650,14 +2650,14 @@ namespace platoon_strategic_ihp
             bool isCurrentPlanTimeout = tsStart - pm_.current_plan.planStartTime > NEGOTIATION_TIMEOUT;
             if (isCurrentPlanTimeout)
             {
-                RCLCPP_DEBUG_STREAM(rclcpp::get_logger("platoon_strategic_ihp"), "Give up current on waiting plan with planId: " << pm_.current_plan.planId);
+                RCLCPP_DEBUG_STREAM(rclcpp::get_logger("platooning_strategic_ihp"), "Give up current on waiting plan with planId: " << pm_.current_plan.planId);
                 pm_.clearActionPlan();
             }
         }
 
         // Task 4: STATUS msgs
         bool hasFollower = pm_.getHostPlatoonSize() > 1  ||  config_.test_cutin_join;
-        RCLCPP_DEBUG_STREAM(rclcpp::get_logger("platoon_strategic_ihp"), "hasFollower" << hasFollower);
+        RCLCPP_DEBUG_STREAM(rclcpp::get_logger("platooning_strategic_ihp"), "hasFollower" << hasFollower);
         // if has follower, publish platoon message as STATUS mob_op
         if (hasFollower)
         {
@@ -2665,7 +2665,7 @@ namespace platoon_strategic_ihp
             statusOperation = composeMobilityOperationLeader(OPERATION_STATUS_TYPE);
             // mob_op_pub_.publish(statusOperation);
             mobility_operation_publisher_(statusOperation);
-            RCLCPP_DEBUG_STREAM(rclcpp::get_logger("platoon_strategic_ihp"), "Published platoon STATUS operation message as a Leader with Follower");
+            RCLCPP_DEBUG_STREAM(rclcpp::get_logger("platooning_strategic_ihp"), "Published platoon STATUS operation message as a Leader with Follower");
         }
 
         long tsEnd = timer_factory_->now().nanoseconds() / 1000000;
@@ -2681,7 +2681,7 @@ namespace platoon_strategic_ihp
 
     void PlatoonStrategicIHPPlugin::run_follower()
     {
-        RCLCPP_DEBUG_STREAM(rclcpp::get_logger("platoon_strategic_ihp"), "run follower");
+        RCLCPP_DEBUG_STREAM(rclcpp::get_logger("platooning_strategic_ihp"), "run follower");
         // This is a interrupted-safe loop.
         // This loop has four tasks:
         // 1. Check the state start time, if it exceeds a limit it will give up current plan and change back to leader state
@@ -2700,7 +2700,7 @@ namespace platoon_strategic_ihp
             noLeaderUpdatesCounter++;
             if (noLeaderUpdatesCounter >= LEADER_TIMEOUT_COUNTER_LIMIT)
             {
-                RCLCPP_DEBUG_STREAM(rclcpp::get_logger("platoon_strategic_ihp"), "noLeaderUpdatesCounter = " << noLeaderUpdatesCounter << " and change to leader state");
+                RCLCPP_DEBUG_STREAM(rclcpp::get_logger("platooning_strategic_ihp"), "noLeaderUpdatesCounter = " << noLeaderUpdatesCounter << " and change to leader state");
                 pm_.changeFromFollowerToLeader();
                 pm_.current_platoon_state = PlatoonState::LEADER;
                 noLeaderUpdatesCounter = 0;
@@ -2728,11 +2728,11 @@ namespace platoon_strategic_ihp
 
         // Task 1: state timeout
         bool isCurrentStateTimeout = (tsStart - candidatestateStartTime) > waitingStateTimeout * 1000;
-        RCLCPP_DEBUG_STREAM(rclcpp::get_logger("platoon_strategic_ihp"), "timeout1: " << tsStart - candidatestateStartTime);
-        RCLCPP_DEBUG_STREAM(rclcpp::get_logger("platoon_strategic_ihp"), "waitingStateTimeout: " << waitingStateTimeout * 1000);
+        RCLCPP_DEBUG_STREAM(rclcpp::get_logger("platooning_strategic_ihp"), "timeout1: " << tsStart - candidatestateStartTime);
+        RCLCPP_DEBUG_STREAM(rclcpp::get_logger("platooning_strategic_ihp"), "waitingStateTimeout: " << waitingStateTimeout * 1000);
         if (isCurrentStateTimeout)
         {
-            RCLCPP_DEBUG_STREAM(rclcpp::get_logger("platoon_strategic_ihp"), "The current candidate follower state is timeout. Change back to leader state.");
+            RCLCPP_DEBUG_STREAM(rclcpp::get_logger("platooning_strategic_ihp"), "The current candidate follower state is timeout. Change back to leader state.");
             pm_.current_platoon_state = PlatoonState::LEADER;
             pm_.clearActionPlan();
         }
@@ -2740,16 +2740,16 @@ namespace platoon_strategic_ihp
         // Task 2: plan timeout, check if current plan is still valid (i.e., not timed out).
         if (pm_.current_plan.valid)
         {
-            RCLCPP_DEBUG_STREAM(rclcpp::get_logger("platoon_strategic_ihp"), "pm_.current_plan.planStartTime: " << pm_.current_plan.planStartTime);
-            RCLCPP_DEBUG_STREAM(rclcpp::get_logger("platoon_strategic_ihp"), "timeout2: " << tsStart - pm_.current_plan.planStartTime);
-            RCLCPP_DEBUG_STREAM(rclcpp::get_logger("platoon_strategic_ihp"), "NEGOTIATION_TIMEOUT: " << NEGOTIATION_TIMEOUT);
+            RCLCPP_DEBUG_STREAM(rclcpp::get_logger("platooning_strategic_ihp"), "pm_.current_plan.planStartTime: " << pm_.current_plan.planStartTime);
+            RCLCPP_DEBUG_STREAM(rclcpp::get_logger("platooning_strategic_ihp"), "timeout2: " << tsStart - pm_.current_plan.planStartTime);
+            RCLCPP_DEBUG_STREAM(rclcpp::get_logger("platooning_strategic_ihp"), "NEGOTIATION_TIMEOUT: " << NEGOTIATION_TIMEOUT);
             bool isPlanTimeout = tsStart - pm_.current_plan.planStartTime > NEGOTIATION_TIMEOUT;
             if (isPlanTimeout)
             {
                 pm_.current_platoon_state = PlatoonState::LEADER;
                 pm_.clearActionPlan();
-                RCLCPP_DEBUG_STREAM(rclcpp::get_logger("platoon_strategic_ihp"), "The current plan did not receive any response. Abort and change to leader state.");
-                RCLCPP_DEBUG_STREAM(rclcpp::get_logger("platoon_strategic_ihp"), "Changed the state back to Leader");
+                RCLCPP_DEBUG_STREAM(rclcpp::get_logger("platooning_strategic_ihp"), "The current plan did not receive any response. Abort and change to leader state.");
+                RCLCPP_DEBUG_STREAM(rclcpp::get_logger("platooning_strategic_ihp"), "Changed the state back to Leader");
             }
         }
 
@@ -2760,19 +2760,19 @@ namespace platoon_strategic_ihp
         if (!pm_.neighbor_platoon_.empty())
         {
             currentGap = pm_.neighbor_platoon_.back().vehiclePosition - current_downtrack_;
-            RCLCPP_DEBUG_STREAM(rclcpp::get_logger("platoon_strategic_ihp"), "curent gap calculated from back of neighbor platoon: " << currentGap);
-            RCLCPP_DEBUG_STREAM(rclcpp::get_logger("platoon_strategic_ihp"), "pm_.neighbor_platoon_.back().vehiclePosition " << pm_.neighbor_platoon_.back().vehiclePosition);
+            RCLCPP_DEBUG_STREAM(rclcpp::get_logger("platooning_strategic_ihp"), "curent gap calculated from back of neighbor platoon: " << currentGap);
+            RCLCPP_DEBUG_STREAM(rclcpp::get_logger("platooning_strategic_ihp"), "pm_.neighbor_platoon_.back().vehiclePosition " << pm_.neighbor_platoon_.back().vehiclePosition);
 
         }
         else
         {
             currentGap = pm_.getDistanceToPredVehicle();
-            RCLCPP_DEBUG_STREAM(rclcpp::get_logger("platoon_strategic_ihp"), "curent gap when there is no neighbor platoon: " << currentGap);
+            RCLCPP_DEBUG_STREAM(rclcpp::get_logger("platooning_strategic_ihp"), "curent gap when there is no neighbor platoon: " << currentGap);
         }
 
-        RCLCPP_DEBUG_STREAM(rclcpp::get_logger("platoon_strategic_ihp"), "Based on desired join time gap, the desired join distance gap is " << desiredJoinGap2 << " ms");
-        RCLCPP_DEBUG_STREAM(rclcpp::get_logger("platoon_strategic_ihp"), "Since we have max allowed gap as " << config_.desiredJoinGap << " m then max join gap became " << maxJoinGap << " m");
-        RCLCPP_DEBUG_STREAM(rclcpp::get_logger("platoon_strategic_ihp"), "The current gap from radar is " << currentGap << " m");
+        RCLCPP_DEBUG_STREAM(rclcpp::get_logger("platooning_strategic_ihp"), "Based on desired join time gap, the desired join distance gap is " << desiredJoinGap2 << " ms");
+        RCLCPP_DEBUG_STREAM(rclcpp::get_logger("platooning_strategic_ihp"), "Since we have max allowed gap as " << config_.desiredJoinGap << " m then max join gap became " << maxJoinGap << " m");
+        RCLCPP_DEBUG_STREAM(rclcpp::get_logger("platooning_strategic_ihp"), "The current gap from radar is " << currentGap << " m");
         if (currentGap <= maxJoinGap  &&  !pm_.current_plan.valid)
         {
             carma_v2x_msgs::msg::MobilityRequest request;
@@ -2789,8 +2789,8 @@ namespace platoon_strategic_ihp
             request.urgency = 50;
             request.location = pose_to_ecef(pose_msg_);
             mobility_request_publisher_(request);
-            RCLCPP_DEBUG_STREAM(rclcpp::get_logger("platoon_strategic_ihp"), "Published Mobility Candidate-Join request to the leader");
-            RCLCPP_DEBUG_STREAM(rclcpp::get_logger("platoon_strategic_ihp"), "current plan peer id: " << pm_.current_plan.peerId);
+            RCLCPP_DEBUG_STREAM(rclcpp::get_logger("platooning_strategic_ihp"), "Published Mobility Candidate-Join request to the leader");
+            RCLCPP_DEBUG_STREAM(rclcpp::get_logger("platooning_strategic_ihp"), "current plan peer id: " << pm_.current_plan.peerId);
 
             // Update the local record of the new activity plan and now establish that we have a platoon plan as well,
             // which allows us to start sending necessary op STATUS messages
@@ -2810,7 +2810,7 @@ namespace platoon_strategic_ihp
                 carma_v2x_msgs::msg::MobilityOperation status;
                 status = composeMobilityOperationCandidateFollower();
                 mobility_operation_publisher_(status);
-                RCLCPP_DEBUG_STREAM(rclcpp::get_logger("platoon_strategic_ihp"), "Published platoon STATUS operation message as Candidate Follower");
+                RCLCPP_DEBUG_STREAM(rclcpp::get_logger("platooning_strategic_ihp"), "Published platoon STATUS operation message as Candidate Follower");
             }
         }
 
@@ -2832,11 +2832,11 @@ namespace platoon_strategic_ihp
         long tsStart = timer_factory_->now().nanoseconds() / 1000000;
         // Task 1: state timeout
         bool isCurrentStateTimeout = (tsStart - candidatestateStartTime) > waitingStateTimeout * 1000;
-        RCLCPP_DEBUG_STREAM(rclcpp::get_logger("platoon_strategic_ihp"), "timeout1: " << tsStart - candidatestateStartTime);
-        RCLCPP_DEBUG_STREAM(rclcpp::get_logger("platoon_strategic_ihp"), "waitingStateTimeout: " << waitingStateTimeout * 1000);
+        RCLCPP_DEBUG_STREAM(rclcpp::get_logger("platooning_strategic_ihp"), "timeout1: " << tsStart - candidatestateStartTime);
+        RCLCPP_DEBUG_STREAM(rclcpp::get_logger("platooning_strategic_ihp"), "waitingStateTimeout: " << waitingStateTimeout * 1000);
         if (isCurrentStateTimeout)
         {
-            RCLCPP_DEBUG_STREAM(rclcpp::get_logger("platoon_strategic_ihp"), "The current leader aborting state is timeout. Change back to leader state.");
+            RCLCPP_DEBUG_STREAM(rclcpp::get_logger("platooning_strategic_ihp"), "The current leader aborting state is timeout. Change back to leader state.");
             pm_.current_platoon_state = PlatoonState::LEADER;
 
             //clear plan validity & end; leave platoon info alone, as we may still be leading a valid platoon
@@ -2853,9 +2853,9 @@ namespace platoon_strategic_ihp
         // preceding host is the candidate joiner. For this code to work, it depends on the candidate to publish
         // mobility operation STATUS messages so that host can include it in the pm_ platoon membership.
         double currentGap = pm_.getDistanceToPredVehicle(); //returns 0 if we haven't received op STATUS from joiner yet
-        RCLCPP_DEBUG_STREAM(rclcpp::get_logger("platoon_strategic_ihp"), "Based on desired join time gap, the desired join distance gap is " << desiredJoinGap2 << " m");
-        RCLCPP_DEBUG_STREAM(rclcpp::get_logger("platoon_strategic_ihp"), "Since we have max allowed gap as " << config_.desiredJoinGap << " m then max join gap became " << maxJoinGap << " m");
-        RCLCPP_DEBUG_STREAM(rclcpp::get_logger("platoon_strategic_ihp"), "The current gap to joiner is " << currentGap << " m");
+        RCLCPP_DEBUG_STREAM(rclcpp::get_logger("platooning_strategic_ihp"), "Based on desired join time gap, the desired join distance gap is " << desiredJoinGap2 << " m");
+        RCLCPP_DEBUG_STREAM(rclcpp::get_logger("platooning_strategic_ihp"), "Since we have max allowed gap as " << config_.desiredJoinGap << " m then max join gap became " << maxJoinGap << " m");
+        RCLCPP_DEBUG_STREAM(rclcpp::get_logger("platooning_strategic_ihp"), "The current gap to joiner is " << currentGap << " m");
 
         // NOTE: The front join depends upon the joiner to publish op STATUS messages with this platoon's ID, then host receives at least one
         // and thereby adds the joiner to the platoon record. This process requires host's mob_req_cb_leader() to ACK the join request, then
@@ -2868,7 +2868,7 @@ namespace platoon_strategic_ihp
         // Check if gap is big enough and if there is no currently active plan and this method has been called several times
         // Add a condition to prevent sending repeated requests (Note: This is a same-lane maneuver, so no need to consider lower bound of joining gap.)
         ++numLeaderAbortingCalls_;
-        RCLCPP_DEBUG_STREAM(rclcpp::get_logger("platoon_strategic_ihp"), "numLeaderAbortingCalls = " << numLeaderAbortingCalls_ << ", max = " << config_.maxLeaderAbortingCalls);
+        RCLCPP_DEBUG_STREAM(rclcpp::get_logger("platooning_strategic_ihp"), "numLeaderAbortingCalls = " << numLeaderAbortingCalls_ << ", max = " << config_.maxLeaderAbortingCalls);
         if (currentGap <= maxJoinGap  &&  !pm_.current_plan.valid  &&  numLeaderAbortingCalls_ > config_.maxLeaderAbortingCalls)
         {
             // compose frontal joining plan, senderID is the old leader
@@ -2898,7 +2898,7 @@ namespace platoon_strategic_ihp
             request.urgency = 50;
             request.location = pose_to_ecef(pose_msg_);
             mobility_request_publisher_(request);
-            RCLCPP_WARN(rclcpp::get_logger("platoon_strategic_ihp"),"Published Mobility Candidate-Join request to the new leader");
+            RCLCPP_WARN(rclcpp::get_logger("platooning_strategic_ihp"),"Published Mobility Candidate-Join request to the new leader");
 
             // Create a new join action plan
             pm_.current_plan = ActionPlan(true, currentTime, planId, pm_.platoonLeaderID);
@@ -2908,7 +2908,7 @@ namespace platoon_strategic_ihp
         carma_v2x_msgs::msg::MobilityOperation status;
         status = composeMobilityOperationLeaderAborting();
         mobility_operation_publisher_(status);
-        RCLCPP_DEBUG_STREAM(rclcpp::get_logger("platoon_strategic_ihp"), "Published platoon STATUS operation message");
+        RCLCPP_DEBUG_STREAM(rclcpp::get_logger("platooning_strategic_ihp"), "Published platoon STATUS operation message");
 
         long tsEnd = timer_factory_->now().nanoseconds() / 1000000;
         long sleepDuration = std::max((int32_t)(statusMessageInterval_ - (tsEnd - tsStart)), 0);
@@ -2920,13 +2920,13 @@ namespace platoon_strategic_ihp
     // UCLA: frontal join state (inherited from leader waiting: prepare to join as th new leader)
     void PlatoonStrategicIHPPlugin::run_candidate_leader()
     {
-        RCLCPP_DEBUG_STREAM(rclcpp::get_logger("platoon_strategic_ihp"), "Run Candidate Leader State ");
+        RCLCPP_DEBUG_STREAM(rclcpp::get_logger("platooning_strategic_ihp"), "Run Candidate Leader State ");
         long tsStart = timer_factory_->now().nanoseconds() / 1000000;
         // Task 1: State time out
         if (tsStart - candidatestateStartTime > waitingStateTimeout * 1000)
         {
             //TODO if the current state timeouts, we need to have a kind of ABORT message to inform the applicant
-            RCLCPP_DEBUG_STREAM(rclcpp::get_logger("platoon_strategic_ihp"), "CandidateLeader state is timeout, changing back to PlatoonLeaderState.");
+            RCLCPP_DEBUG_STREAM(rclcpp::get_logger("platooning_strategic_ihp"), "CandidateLeader state is timeout, changing back to PlatoonLeaderState.");
             pm_.current_platoon_state = PlatoonState::LEADER;
             pm_.clearActionPlan();
             pm_.resetHostPlatoon();
@@ -2936,7 +2936,7 @@ namespace platoon_strategic_ihp
         carma_v2x_msgs::msg::MobilityOperation status;
         status = composeMobilityOperationCandidateLeader();
         mobility_operation_publisher_(status);
-        RCLCPP_DEBUG_STREAM(rclcpp::get_logger("platoon_strategic_ihp"), "publish status message");
+        RCLCPP_DEBUG_STREAM(rclcpp::get_logger("platooning_strategic_ihp"), "publish status message");
         long tsEnd = timer_factory_->now().nanoseconds() / 1000000;
         long sleepDuration = std::max((int32_t)(statusMessageInterval_ - (tsEnd - tsStart)), 0);
         // TODO this solution is not sim-time complient and should be replaced with one which is when possible
@@ -2950,7 +2950,7 @@ namespace platoon_strategic_ihp
         long tsStart = timer_factory_->now().nanoseconds() / 1000000;
         // Task 1: heart beat timeout: constantly send INFO mob_op
         bool isTimeForHeartBeat = tsStart - prevHeartBeatTime_ >= infoMessageInterval_;
-        RCLCPP_DEBUG_STREAM(rclcpp::get_logger("platoon_strategic_ihp"), "time since last heart beat: " << tsStart - prevHeartBeatTime_);
+        RCLCPP_DEBUG_STREAM(rclcpp::get_logger("platooning_strategic_ihp"), "time since last heart beat: " << tsStart - prevHeartBeatTime_);
         if (isTimeForHeartBeat)
         {
             carma_v2x_msgs::msg::MobilityOperation infoOperation;
@@ -2992,11 +2992,11 @@ namespace platoon_strategic_ihp
         // Task 2.1: state timeout
         long tsStart = timer_factory_->now().nanoseconds() / 1000000;
         bool isCurrentStateTimeout = (tsStart - candidatestateStartTime) > waitingStateTimeout * 1000;
-        RCLCPP_DEBUG_STREAM(rclcpp::get_logger("platoon_strategic_ihp"), "timeout1: " << tsStart - candidatestateStartTime);
-        RCLCPP_DEBUG_STREAM(rclcpp::get_logger("platoon_strategic_ihp"), "waitingStateTimeout: " << waitingStateTimeout * 1000);
+        RCLCPP_DEBUG_STREAM(rclcpp::get_logger("platooning_strategic_ihp"), "timeout1: " << tsStart - candidatestateStartTime);
+        RCLCPP_DEBUG_STREAM(rclcpp::get_logger("platooning_strategic_ihp"), "waitingStateTimeout: " << waitingStateTimeout * 1000);
         if (isCurrentStateTimeout)
         {
-            RCLCPP_DEBUG_STREAM(rclcpp::get_logger("platoon_strategic_ihp"), "The current prepare to join state is timeout. Change back to leader state and abort lane change.");
+            RCLCPP_DEBUG_STREAM(rclcpp::get_logger("platooning_strategic_ihp"), "The current prepare to join state is timeout. Change back to leader state and abort lane change.");
             pm_.current_platoon_state = PlatoonState::LEADER;
             safeToLaneChange_ = false;
             pm_.clearActionPlan();
@@ -3007,7 +3007,7 @@ namespace platoon_strategic_ihp
         // TODO: Plan timeout is not needed for this state
 
         // If we aren't already waiting on a response to one of these plans, create one once neighbor info is available
-        RCLCPP_DEBUG_STREAM(rclcpp::get_logger("platoon_strategic_ihp"), "current_plan.valid = " << pm_.current_plan.valid << ", is_neighbor_record_complete = " << pm_.is_neighbor_record_complete_);
+        RCLCPP_DEBUG_STREAM(rclcpp::get_logger("platooning_strategic_ihp"), "current_plan.valid = " << pm_.current_plan.valid << ", is_neighbor_record_complete = " << pm_.is_neighbor_record_complete_);
 
         if (!pm_.current_plan.valid  &&  pm_.is_neighbor_record_complete_)
         {
@@ -3015,13 +3015,13 @@ namespace platoon_strategic_ihp
             carma_v2x_msgs::msg::MobilityOperation status;
             status = composeMobilityOperationPrepareToJoin(); //TODO: I bet we could consolidate a lot of these compose methods
             mobility_operation_publisher_(status);
-            RCLCPP_DEBUG_STREAM(rclcpp::get_logger("platoon_strategic_ihp"), "Published platoon STATUS operation message");
+            RCLCPP_DEBUG_STREAM(rclcpp::get_logger("platooning_strategic_ihp"), "Published platoon STATUS operation message");
 
             // Task 3: Calculate proper cut_in index
             // Note: The cut-in index is zero-based and points to the gap-leading vehicle's index. For cut-in from front, the join index = -1.
             double joinerDtD = current_downtrack_;
             target_join_index_ = pm_.getClosestIndex(joinerDtD);
-            RCLCPP_DEBUG_STREAM(rclcpp::get_logger("platoon_strategic_ihp"), "calculated join index: " << target_join_index_);
+            RCLCPP_DEBUG_STREAM(rclcpp::get_logger("platooning_strategic_ihp"), "calculated join index: " << target_join_index_);
 
             // Task 4: Send out request to leader about cut-in position
             carma_v2x_msgs::msg::MobilityRequest request;
@@ -3046,7 +3046,7 @@ namespace platoon_strategic_ihp
             fmter %target_join_index_;          //  index = 5
             request.strategy_params = fmter.str();
             mobility_request_publisher_(request);
-            RCLCPP_DEBUG_STREAM(rclcpp::get_logger("platoon_strategic_ihp"), "Published Mobility cut-in join request to leader " << request.m_header.recipient_id << " with planId = " << planId);
+            RCLCPP_DEBUG_STREAM(rclcpp::get_logger("platooning_strategic_ihp"), "Published Mobility cut-in join request to leader " << request.m_header.recipient_id << " with planId = " << planId);
 
             // Create a new join action plan
             pm_.current_plan = ActionPlan(true, currentTime, planId, pm_.neighbor_platoon_leader_id_);
@@ -3104,12 +3104,12 @@ namespace platoon_strategic_ihp
         }
         else if (pm_.current_platoon_state == PlatoonState::STANDBY)
         {
-            RCLCPP_DEBUG_STREAM(rclcpp::get_logger("platoon_strategic_ihp"), "standby state, nothing to do");
+            RCLCPP_DEBUG_STREAM(rclcpp::get_logger("platooning_strategic_ihp"), "standby state, nothing to do");
         }
         // coding oversight
         else
         {
-            RCLCPP_ERROR_STREAM(rclcpp::get_logger("platoon_strategic_ihp"), "///// unhandled state " << pm_.current_platoon_state);
+            RCLCPP_ERROR_STREAM(rclcpp::get_logger("platooning_strategic_ihp"), "///// unhandled state " << pm_.current_platoon_state);
         }
         // TODO: Place holder for departure
 
@@ -3129,7 +3129,7 @@ namespace platoon_strategic_ihp
         maneuver_msg.lane_following_maneuver.parameters.negotiation_type = carma_planning_msgs::msg::ManeuverParameters::PLATOONING;
         maneuver_msg.lane_following_maneuver.parameters.presence_vector = carma_planning_msgs::msg::ManeuverParameters::HAS_TACTICAL_PLUGIN;
         maneuver_msg.lane_following_maneuver.parameters.planning_tactical_plugin = "platooning_tactical_plugin";
-        maneuver_msg.lane_following_maneuver.parameters.planning_strategic_plugin = "platoon_strategic_ihp";
+        maneuver_msg.lane_following_maneuver.parameters.planning_strategic_plugin = "platooning_strategic_ihp";
         maneuver_msg.lane_following_maneuver.start_dist = current_dist;
         maneuver_msg.lane_following_maneuver.start_speed = current_speed;
         maneuver_msg.lane_following_maneuver.start_time = current_time;
@@ -3140,24 +3140,24 @@ namespace platoon_strategic_ihp
         maneuver_msg.lane_following_maneuver.end_time = current_time + rclcpp::Duration(config_.time_step*1e9);
         maneuver_msg.lane_following_maneuver.lane_ids = { std::to_string(lane_id) };
 
-        RCLCPP_DEBUG_STREAM(rclcpp::get_logger("platoon_strategic_ihp"), "in compose maneuver lane id:"<< lane_id);
+        RCLCPP_DEBUG_STREAM(rclcpp::get_logger("platooning_strategic_ihp"), "in compose maneuver lane id:"<< lane_id);
 
         lanelet::ConstLanelet current_lanelet = wm_->getMap()->laneletLayer.get(lane_id);
         if(!wm_->getMapRoutingGraph()->following(current_lanelet, false).empty())
         {
 
             auto next_lanelet_id = wm_->getMapRoutingGraph()->following(current_lanelet, false).front().id();
-            RCLCPP_DEBUG_STREAM(rclcpp::get_logger("platoon_strategic_ihp"), "next_lanelet_id:"<< next_lanelet_id);
+            RCLCPP_DEBUG_STREAM(rclcpp::get_logger("platooning_strategic_ihp"), "next_lanelet_id:"<< next_lanelet_id);
             maneuver_msg.lane_following_maneuver.lane_ids.push_back(std::to_string(next_lanelet_id));
         }
         else
         {
-            RCLCPP_DEBUG_STREAM(rclcpp::get_logger("platoon_strategic_ihp"), "No following lanelets");
+            RCLCPP_DEBUG_STREAM(rclcpp::get_logger("platooning_strategic_ihp"), "No following lanelets");
         }
 
         current_time = maneuver_msg.lane_following_maneuver.end_time;
-        RCLCPP_DEBUG_STREAM(rclcpp::get_logger("platoon_strategic_ihp"), "Creating lane follow start dist:"<<current_dist<<" end dist:"<<end_dist);
-        RCLCPP_DEBUG_STREAM(rclcpp::get_logger("platoon_strategic_ihp"), "Duration:"<< rclcpp::Time(maneuver_msg.lane_following_maneuver.end_time).seconds() - rclcpp::Time(maneuver_msg.lane_following_maneuver.start_time).seconds());
+        RCLCPP_DEBUG_STREAM(rclcpp::get_logger("platooning_strategic_ihp"), "Creating lane follow start dist:"<<current_dist<<" end dist:"<<end_dist);
+        RCLCPP_DEBUG_STREAM(rclcpp::get_logger("platooning_strategic_ihp"), "Duration:"<< rclcpp::Time(maneuver_msg.lane_following_maneuver.end_time).seconds() - rclcpp::Time(maneuver_msg.lane_following_maneuver.start_time).seconds());
         return maneuver_msg;
     }
 
@@ -3170,7 +3170,7 @@ namespace platoon_strategic_ihp
         maneuver_msg.lane_change_maneuver.parameters.negotiation_type = carma_planning_msgs::msg::ManeuverParameters::PLATOONING;
         maneuver_msg.lane_change_maneuver.parameters.presence_vector = carma_planning_msgs::msg::ManeuverParameters::HAS_TACTICAL_PLUGIN;
         maneuver_msg.lane_change_maneuver.parameters.planning_tactical_plugin = "cooperative_lanechange";
-        maneuver_msg.lane_change_maneuver.parameters.planning_strategic_plugin = "platoon_strategic_ihp";
+        maneuver_msg.lane_change_maneuver.parameters.planning_strategic_plugin = "platooning_strategic_ihp";
         maneuver_msg.lane_change_maneuver.start_dist = current_dist;
         maneuver_msg.lane_change_maneuver.start_speed = current_speed;
         maneuver_msg.lane_change_maneuver.start_time = current_time;
@@ -3197,8 +3197,8 @@ namespace platoon_strategic_ihp
         maneuver_msg.lane_change_maneuver.ending_lane_id = { std::to_string(ending_lane_id) };
 
         current_time = maneuver_msg.lane_change_maneuver.end_time;
-        RCLCPP_DEBUG_STREAM(rclcpp::get_logger("platoon_strategic_ihp"), "Creating lane change start dist:"<<current_dist<<" end dist:"<<end_dist);
-        RCLCPP_DEBUG_STREAM(rclcpp::get_logger("platoon_strategic_ihp"), "Duration:"<< rclcpp::Time(maneuver_msg.lane_change_maneuver.end_time).seconds() - rclcpp::Time(maneuver_msg.lane_change_maneuver.start_time).seconds());
+        RCLCPP_DEBUG_STREAM(rclcpp::get_logger("platooning_strategic_ihp"), "Creating lane change start dist:"<<current_dist<<" end dist:"<<end_dist);
+        RCLCPP_DEBUG_STREAM(rclcpp::get_logger("platooning_strategic_ihp"), "Duration:"<< rclcpp::Time(maneuver_msg.lane_change_maneuver.end_time).seconds() - rclcpp::Time(maneuver_msg.lane_change_maneuver.start_time).seconds());
         return maneuver_msg;
     }
 
@@ -3210,7 +3210,7 @@ namespace platoon_strategic_ihp
             current_progress =  maneuver.lane_following_maneuver.end_dist;
             if (maneuver.lane_following_maneuver.lane_ids.empty())
             {
-                RCLCPP_WARN_STREAM(rclcpp::get_logger("platoon_strategic_ihp"), "Lane id of lane following maneuver not set. Using 0");
+                RCLCPP_WARN_STREAM(rclcpp::get_logger("platooning_strategic_ihp"), "Lane id of lane following maneuver not set. Using 0");
                 lane_id = 0;
             }
             else
@@ -3244,7 +3244,7 @@ namespace platoon_strategic_ihp
         // raise warn if no path was found
         if(current_lanelets.size() == 0)
         {
-            RCLCPP_WARN_STREAM(rclcpp::get_logger("platoon_strategic_ihp"), "Cannot find any lanelet in map!");
+            RCLCPP_WARN_STREAM(rclcpp::get_logger("platooning_strategic_ihp"), "Cannot find any lanelet in map!");
             return true;
         }
 
@@ -3272,34 +3272,34 @@ namespace platoon_strategic_ihp
         // Update current status based on prior plan
         if(req.prior_plan.maneuvers.size()!= 0)
         {
-            RCLCPP_DEBUG_STREAM(rclcpp::get_logger("platoon_strategic_ihp"), "Provided with initial plan...");
+            RCLCPP_DEBUG_STREAM(rclcpp::get_logger("platooning_strategic_ihp"), "Provided with initial plan...");
             time_progress = req.prior_plan.planning_completion_time;
             int end_lanelet = 0;
             updateCurrentStatus(req.prior_plan.maneuvers.back(), speed_progress, current_progress, end_lanelet);
         }
 
-        RCLCPP_DEBUG_STREAM(rclcpp::get_logger("platoon_strategic_ihp"), "Starting Loop");
-        RCLCPP_DEBUG_STREAM(rclcpp::get_logger("platoon_strategic_ihp"), "total_maneuver_length: " << total_maneuver_length << " route_length: " << route_length);
+        RCLCPP_DEBUG_STREAM(rclcpp::get_logger("platooning_strategic_ihp"), "Starting Loop");
+        RCLCPP_DEBUG_STREAM(rclcpp::get_logger("platooning_strategic_ihp"), "total_maneuver_length: " << total_maneuver_length << " route_length: " << route_length);
 
 
-        RCLCPP_DEBUG_STREAM(rclcpp::get_logger("platoon_strategic_ihp"), "in mvr  callback safeToLaneChange: " << safeToLaneChange_);
+        RCLCPP_DEBUG_STREAM(rclcpp::get_logger("platooning_strategic_ihp"), "in mvr  callback safeToLaneChange: " << safeToLaneChange_);
 
         // Note: Use current_lanlet list (which was determined based on vehicle pose) to find current lanelet ID.
         lanelet::Id current_lanelet_id = current_lanelet.id();
 
 
 
-        RCLCPP_DEBUG_STREAM(rclcpp::get_logger("platoon_strategic_ihp"), "current_lanelet_id: " << current_lanelet_id);
+        RCLCPP_DEBUG_STREAM(rclcpp::get_logger("platooning_strategic_ihp"), "current_lanelet_id: " << current_lanelet_id);
         // lane change maneuver
         if (safeToLaneChange_)
         {
             // for testing purpose only, check lane change status
             double target_crosstrack = wm_->routeTrackPos(target_cutin_pose_).crosstrack;
-            RCLCPP_DEBUG_STREAM(rclcpp::get_logger("platoon_strategic_ihp"), "target_crosstrack: " << target_crosstrack);
+            RCLCPP_DEBUG_STREAM(rclcpp::get_logger("platooning_strategic_ihp"), "target_crosstrack: " << target_crosstrack);
             double crosstrackDiff = current_crosstrack_ - target_crosstrack;
             bool isLaneChangeFinished = abs(crosstrackDiff) <= config_.maxCrosstrackError;
-            RCLCPP_DEBUG_STREAM(rclcpp::get_logger("platoon_strategic_ihp"), "crosstrackDiff: " << crosstrackDiff);
-            RCLCPP_DEBUG_STREAM(rclcpp::get_logger("platoon_strategic_ihp"), "isLaneChangeFinished: " << isLaneChangeFinished);
+            RCLCPP_DEBUG_STREAM(rclcpp::get_logger("platooning_strategic_ihp"), "crosstrackDiff: " << crosstrackDiff);
+            RCLCPP_DEBUG_STREAM(rclcpp::get_logger("platooning_strategic_ihp"), "isLaneChangeFinished: " << isLaneChangeFinished);
 
             // lane change not finished, use lane change plan
             if(!isLaneChangeFinished)
@@ -3307,54 +3307,54 @@ namespace platoon_strategic_ihp
                 // send out lane change plan
                 while (current_progress < total_maneuver_length)
                 {
-                    RCLCPP_DEBUG_STREAM(rclcpp::get_logger("platoon_strategic_ihp"), "Lane Change Maneuver for Cut-in join ! ");
-                    RCLCPP_DEBUG_STREAM(rclcpp::get_logger("platoon_strategic_ihp"), "current_progress: "<< current_progress);
-                    RCLCPP_DEBUG_STREAM(rclcpp::get_logger("platoon_strategic_ihp"), "speed_progress: " << speed_progress);
-                    RCLCPP_DEBUG_STREAM(rclcpp::get_logger("platoon_strategic_ihp"), "target_speed: " << target_speed);
-                    RCLCPP_DEBUG_STREAM(rclcpp::get_logger("platoon_strategic_ihp"), "time_progress: " << rclcpp::Time(time_progress).seconds());
+                    RCLCPP_DEBUG_STREAM(rclcpp::get_logger("platooning_strategic_ihp"), "Lane Change Maneuver for Cut-in join ! ");
+                    RCLCPP_DEBUG_STREAM(rclcpp::get_logger("platooning_strategic_ihp"), "current_progress: "<< current_progress);
+                    RCLCPP_DEBUG_STREAM(rclcpp::get_logger("platooning_strategic_ihp"), "speed_progress: " << speed_progress);
+                    RCLCPP_DEBUG_STREAM(rclcpp::get_logger("platooning_strategic_ihp"), "target_speed: " << target_speed);
+                    RCLCPP_DEBUG_STREAM(rclcpp::get_logger("platooning_strategic_ihp"), "time_progress: " << rclcpp::Time(time_progress).seconds());
 
                     // set to next lane destination, consider sending ecef instead of dtd
                     double end_dist = total_maneuver_length;
-                    RCLCPP_DEBUG_STREAM(rclcpp::get_logger("platoon_strategic_ihp"), "end_dist: " << end_dist);
+                    RCLCPP_DEBUG_STREAM(rclcpp::get_logger("platooning_strategic_ihp"), "end_dist: " << end_dist);
                     // consider calculate dtd_diff and ctd_diff
                     double dist_diff = end_dist - current_progress;
-                    RCLCPP_DEBUG_STREAM(rclcpp::get_logger("platoon_strategic_ihp"), "dist_diff: " << dist_diff);
+                    RCLCPP_DEBUG_STREAM(rclcpp::get_logger("platooning_strategic_ihp"), "dist_diff: " << dist_diff);
 
 
                     //TODO: target_cutin_pose_ represents the platoon leader. It seems this may be the wrong answer for mid- or rear-cutins?
                     //SAINA: currently, the functions do not provide the correct point of rear vehicle of the platoon
                     double lc_end_dist = wm_->routeTrackPos(target_cutin_pose_).downtrack;
-                    RCLCPP_DEBUG_STREAM(rclcpp::get_logger("platoon_strategic_ihp"), "lc_end_dist before buffer: " << lc_end_dist);
+                    RCLCPP_DEBUG_STREAM(rclcpp::get_logger("platooning_strategic_ihp"), "lc_end_dist before buffer: " << lc_end_dist);
                     lc_end_dist = std::max(lc_end_dist, current_progress + config_.maxCutinGap);
-                    RCLCPP_DEBUG_STREAM(rclcpp::get_logger("platoon_strategic_ihp"), "lc_end_dist after buffer: " << lc_end_dist);
+                    RCLCPP_DEBUG_STREAM(rclcpp::get_logger("platooning_strategic_ihp"), "lc_end_dist after buffer: " << lc_end_dist);
 
                     //TODO: target_cutin_pose_ represents the platoon leader. Is this the best pose to use here?
                     // get the actually closest lanelets,
                     auto target_lanelets = lanelet::geometry::findNearest(wm_->getMap()->laneletLayer, target_cutin_pose_, 1);
                     if (target_lanelets.empty())
                     {
-                        RCLCPP_DEBUG_STREAM(rclcpp::get_logger("platoon_strategic_ihp"), "The target cutin pose is not on a valid lanelet. So no lane change!");
+                        RCLCPP_DEBUG_STREAM(rclcpp::get_logger("platooning_strategic_ihp"), "The target cutin pose is not on a valid lanelet. So no lane change!");
                         break;
                     }
                     lanelet::Id target_lanelet_id = target_lanelets[0].second.id();
-                    RCLCPP_DEBUG_STREAM(rclcpp::get_logger("platoon_strategic_ihp"), "target_lanelet_id: " << target_lanelet_id);
+                    RCLCPP_DEBUG_STREAM(rclcpp::get_logger("platooning_strategic_ihp"), "target_lanelet_id: " << target_lanelet_id);
 
                     lanelet::ConstLanelet starting_lanelet = wm_->getMap()->laneletLayer.get(current_lanelet_id);
                     lanelet::ConstLanelet ending_lanelet = wm_->getMap()->laneletLayer.get(target_lanelet_id);
 
                     bool lanechangePossible = is_lanechange_possible(current_lanelet_id, target_lanelet_id);
-                    RCLCPP_DEBUG_STREAM(rclcpp::get_logger("platoon_strategic_ihp"), "lanechangePossible: " << lanechangePossible);
+                    RCLCPP_DEBUG_STREAM(rclcpp::get_logger("platooning_strategic_ihp"), "lanechangePossible: " << lanechangePossible);
 
                     if (lanechangePossible)
                     {
-                        RCLCPP_DEBUG_STREAM(rclcpp::get_logger("platoon_strategic_ihp"), "Lane change possible, planning it.. " );
+                        RCLCPP_DEBUG_STREAM(rclcpp::get_logger("platooning_strategic_ihp"), "Lane change possible, planning it.. " );
                         resp.new_plan.maneuvers.push_back(composeLaneChangeManeuverMessage(current_downtrack_, lc_end_dist,
                                             speed_progress, target_speed, current_lanelet_id, target_lanelet_id , time_progress));
 
                     }
                     else
                     {
-                        RCLCPP_DEBUG_STREAM(rclcpp::get_logger("platoon_strategic_ihp"), "Lane change impossible, planning lanefollow instead ... " );
+                        RCLCPP_DEBUG_STREAM(rclcpp::get_logger("platooning_strategic_ihp"), "Lane change impossible, planning lanefollow instead ... " );
                         resp.new_plan.maneuvers.push_back(composeManeuverMessage(current_downtrack_, end_dist,
                                             speed_progress, target_speed, current_lanelet_id, time_progress));
                     }
@@ -3379,15 +3379,15 @@ namespace platoon_strategic_ihp
                 // send out lane following plan
                 while (current_progress < total_maneuver_length)
                 {
-                    RCLCPP_DEBUG_STREAM(rclcpp::get_logger("platoon_strategic_ihp"), "Same Lane Maneuver for platoon join ! ");
-                    RCLCPP_DEBUG_STREAM(rclcpp::get_logger("platoon_strategic_ihp"), "current_progress: "<< current_progress);
-                    RCLCPP_DEBUG_STREAM(rclcpp::get_logger("platoon_strategic_ihp"), "speed_progress: " << speed_progress);
-                    RCLCPP_DEBUG_STREAM(rclcpp::get_logger("platoon_strategic_ihp"), "target_speed: " << target_speed);
-                    RCLCPP_DEBUG_STREAM(rclcpp::get_logger("platoon_strategic_ihp"), "time_progress: " << rclcpp::Time(time_progress).seconds());
+                    RCLCPP_DEBUG_STREAM(rclcpp::get_logger("platooning_strategic_ihp"), "Same Lane Maneuver for platoon join ! ");
+                    RCLCPP_DEBUG_STREAM(rclcpp::get_logger("platooning_strategic_ihp"), "current_progress: "<< current_progress);
+                    RCLCPP_DEBUG_STREAM(rclcpp::get_logger("platooning_strategic_ihp"), "speed_progress: " << speed_progress);
+                    RCLCPP_DEBUG_STREAM(rclcpp::get_logger("platooning_strategic_ihp"), "target_speed: " << target_speed);
+                    RCLCPP_DEBUG_STREAM(rclcpp::get_logger("platooning_strategic_ihp"), "time_progress: " << rclcpp::Time(time_progress).seconds());
                     double end_dist = total_maneuver_length;
-                    RCLCPP_DEBUG_STREAM(rclcpp::get_logger("platoon_strategic_ihp"), "end_dist: " << end_dist);
+                    RCLCPP_DEBUG_STREAM(rclcpp::get_logger("platooning_strategic_ihp"), "end_dist: " << end_dist);
                     double dist_diff = end_dist - current_progress;
-                    RCLCPP_DEBUG_STREAM(rclcpp::get_logger("platoon_strategic_ihp"), "dist_diff: " << dist_diff);
+                    RCLCPP_DEBUG_STREAM(rclcpp::get_logger("platooning_strategic_ihp"), "dist_diff: " << dist_diff);
                     if(end_dist < current_progress)
                     {
                         break;
@@ -3411,18 +3411,18 @@ namespace platoon_strategic_ihp
         // same-lane maneuver
         else
         {
-            RCLCPP_DEBUG_STREAM(rclcpp::get_logger("platoon_strategic_ihp"), "Planning Same Lane Maneuver! ");
+            RCLCPP_DEBUG_STREAM(rclcpp::get_logger("platooning_strategic_ihp"), "Planning Same Lane Maneuver! ");
             while (current_progress < total_maneuver_length)
             {
-                RCLCPP_DEBUG_STREAM(rclcpp::get_logger("platoon_strategic_ihp"), "Same Lane Maneuver for platoon join ! ");
-                RCLCPP_DEBUG_STREAM(rclcpp::get_logger("platoon_strategic_ihp"), "current_progress: "<< current_progress);
-                RCLCPP_DEBUG_STREAM(rclcpp::get_logger("platoon_strategic_ihp"), "speed_progress: " << speed_progress);
-                RCLCPP_DEBUG_STREAM(rclcpp::get_logger("platoon_strategic_ihp"), "target_speed: " << target_speed);
-                RCLCPP_DEBUG_STREAM(rclcpp::get_logger("platoon_strategic_ihp"), "time_progress: " << rclcpp::Time(time_progress).seconds());
+                RCLCPP_DEBUG_STREAM(rclcpp::get_logger("platooning_strategic_ihp"), "Same Lane Maneuver for platoon join ! ");
+                RCLCPP_DEBUG_STREAM(rclcpp::get_logger("platooning_strategic_ihp"), "current_progress: "<< current_progress);
+                RCLCPP_DEBUG_STREAM(rclcpp::get_logger("platooning_strategic_ihp"), "speed_progress: " << speed_progress);
+                RCLCPP_DEBUG_STREAM(rclcpp::get_logger("platooning_strategic_ihp"), "target_speed: " << target_speed);
+                RCLCPP_DEBUG_STREAM(rclcpp::get_logger("platooning_strategic_ihp"), "time_progress: " << rclcpp::Time(time_progress).seconds());
                 double end_dist = total_maneuver_length;
-                RCLCPP_DEBUG_STREAM(rclcpp::get_logger("platoon_strategic_ihp"), "end_dist: " << end_dist);
+                RCLCPP_DEBUG_STREAM(rclcpp::get_logger("platooning_strategic_ihp"), "end_dist: " << end_dist);
                 double dist_diff = end_dist - current_progress;
-                RCLCPP_DEBUG_STREAM(rclcpp::get_logger("platoon_strategic_ihp"), "dist_diff: " << dist_diff);
+                RCLCPP_DEBUG_STREAM(rclcpp::get_logger("platooning_strategic_ihp"), "dist_diff: " << dist_diff);
                 if (end_dist < current_progress)
                 {
                     break;
@@ -3445,29 +3445,29 @@ namespace platoon_strategic_ihp
 
         if(resp.new_plan.maneuvers.size() == 0)
         {
-            RCLCPP_WARN_STREAM(rclcpp::get_logger("platoon_strategic_ihp"), "Cannot plan maneuver because no route is found");
+            RCLCPP_WARN_STREAM(rclcpp::get_logger("platooning_strategic_ihp"), "Cannot plan maneuver because no route is found");
         }
 
 
         if (pm_.getHostPlatoonSize() < 2 && !safeToLaneChange_)
         {
             resp.new_plan.maneuvers = {};
-            RCLCPP_WARN_STREAM(rclcpp::get_logger("platoon_strategic_ihp"), "Platoon size 1 so Empty maneuver sent");
+            RCLCPP_WARN_STREAM(rclcpp::get_logger("platooning_strategic_ihp"), "Platoon size 1 so Empty maneuver sent");
         }
         else
         {
-            RCLCPP_DEBUG_STREAM(rclcpp::get_logger("platoon_strategic_ihp"), "Planning maneuvers: ");
-            RCLCPP_DEBUG_STREAM(rclcpp::get_logger("platoon_strategic_ihp"), "safeToLaneChange_: " << safeToLaneChange_);
-            RCLCPP_DEBUG_STREAM(rclcpp::get_logger("platoon_strategic_ihp"), "pm_.getHostPlatoonSize(): " << pm_.getHostPlatoonSize());
+            RCLCPP_DEBUG_STREAM(rclcpp::get_logger("platooning_strategic_ihp"), "Planning maneuvers: ");
+            RCLCPP_DEBUG_STREAM(rclcpp::get_logger("platooning_strategic_ihp"), "safeToLaneChange_: " << safeToLaneChange_);
+            RCLCPP_DEBUG_STREAM(rclcpp::get_logger("platooning_strategic_ihp"), "pm_.getHostPlatoonSize(): " << pm_.getHostPlatoonSize());
         }
 
         if (pm_.current_platoon_state == PlatoonState::STANDBY)
         {
             pm_.current_platoon_state = PlatoonState::LEADER;
-            RCLCPP_DEBUG_STREAM(rclcpp::get_logger("platoon_strategic_ihp"), "change the state from standby to leader at start-up");
+            RCLCPP_DEBUG_STREAM(rclcpp::get_logger("platooning_strategic_ihp"), "change the state from standby to leader at start-up");
         }
 
-        RCLCPP_DEBUG_STREAM(rclcpp::get_logger("platoon_strategic_ihp"), "current_downtrack: " << current_downtrack_);
+        RCLCPP_DEBUG_STREAM(rclcpp::get_logger("platooning_strategic_ihp"), "current_downtrack: " << current_downtrack_);
 
         return true;
     }
@@ -3484,12 +3484,12 @@ namespace platoon_strategic_ihp
             //Assumption- Adjacent lanelets share lane boundary
             if(current_lanelet.leftBound() == ending_lanelet.rightBound())
             {
-                RCLCPP_DEBUG_STREAM(rclcpp::get_logger("platoon_strategic_ihp"), "Lanelet " << std::to_string(current_lanelet.id()) << " shares left boundary with " << std::to_string(ending_lanelet.id()));
+                RCLCPP_DEBUG_STREAM(rclcpp::get_logger("platooning_strategic_ihp"), "Lanelet " << std::to_string(current_lanelet.id()) << " shares left boundary with " << std::to_string(ending_lanelet.id()));
                 shared_boundary_found = true;
             }
             else if(current_lanelet.rightBound() == ending_lanelet.leftBound())
             {
-                RCLCPP_DEBUG_STREAM(rclcpp::get_logger("platoon_strategic_ihp"), "Lanelet " << std::to_string(current_lanelet.id()) << " shares right boundary with " << std::to_string(ending_lanelet.id()));
+                RCLCPP_DEBUG_STREAM(rclcpp::get_logger("platooning_strategic_ihp"), "Lanelet " << std::to_string(current_lanelet.id()) << " shares right boundary with " << std::to_string(ending_lanelet.id()));
                 shared_boundary_found = true;
             }
 
