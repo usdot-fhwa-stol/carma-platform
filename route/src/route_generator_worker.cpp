@@ -19,7 +19,7 @@
 namespace route
 {
 
-RouteGeneratorWorker::RouteGeneratorWorker(tf2_ros::Buffer & tf2_buffer) : tf2_buffer_(tf2_buffer)
+RouteGeneratorWorker::RouteGeneratorWorker(std::shared_ptr<tf2_ros::Buffer> tf2_buffer) : tf2_buffer_(tf2_buffer)
 {
 }
 
@@ -490,14 +490,14 @@ bool RouteGeneratorWorker::abortActiveRouteCb(
 
 void RouteGeneratorWorker::initializeBumperTransformLookup()
 {
-  tf2_listener_.reset(new tf2_ros::TransformListener(tf2_buffer_));
-  tf2_buffer_.setUsingDedicatedThread(true);
+  tf2_listener_->reset(new tf2_ros::TransformListener(*tf2_buffer_));
+  tf2_buffer_->setUsingDedicatedThread(true);
 }
 
 void RouteGeneratorWorker::bumperPoseCb()
 {
   try {
-    tf_ = tf2_buffer_.lookupTransform(
+    tf_ = tf2_buffer_->lookupTransform(
       "map", "vehicle_front", rclcpp::Time(0, 0),
       rclcpp::Duration::from_nanoseconds(
         1.0 * 1e9));  // save to local copy of transform 0.1 sec timeout

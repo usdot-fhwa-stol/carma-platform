@@ -347,8 +347,8 @@ private:
   tf2::Stamped<tf2::Transform> frontbumper_transform_;
 
   // TF listenser
-  tf2_ros::Buffer tf2_buffer_;
-  std::unique_ptr<tf2_ros::TransformListener> tf2_listener_;
+  std::shared_ptr<tf2_ros::Buffer> tf2_buffer_;
+  std::shared_ptr<tf2_ros::TransformListener> tf2_listener_;
 
   // Unit Tests
   FRIEND_TEST(RouteFollowingPluginTest, testComposeManeuverMessage);

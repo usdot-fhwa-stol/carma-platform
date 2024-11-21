@@ -74,7 +74,7 @@ private:
   Config config_;
 
   // tf2 buffer holds the tree of transforms
-  tf2_ros::Buffer tf2_buffer_;
+  std::shared_ptr<tf2_ros::Buffer> tf2_buffer_;
 
   // wm listener and pointer to the actual wm object
   carma_wm::WMListener wml_;

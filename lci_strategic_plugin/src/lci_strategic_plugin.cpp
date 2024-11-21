@@ -43,7 +43,8 @@ namespace lci_strategic_plugin
 namespace std_ph = std::placeholders;
 
 LCIStrategicPlugin::LCIStrategicPlugin(const rclcpp::NodeOptions & options)
-: carma_guidance_plugins::StrategicPlugin(options), tf2_buffer_(this->get_clock())
+: carma_guidance_plugins::StrategicPlugin(options),
+  tf2_buffer_(std::make_shared<tf2_ros::Buffer>(this->get_clock()))
 {
   config_ = LCIStrategicPluginConfig();
 
@@ -251,10 +252,10 @@ bool LCIStrategicPlugin::supportedLightState(lanelet::CarmaTrafficSignalState st
 
 void LCIStrategicPlugin::lookupFrontBumperTransform()
 {
-  tf2_listener_.reset(new tf2_ros::TransformListener(tf2_buffer_));
-  tf2_buffer_.setUsingDedicatedThread(true);
+  tf2_listener_->reset(new tf2_ros::TransformListener(*tf2_buffer_));
+  tf2_buffer_->setUsingDedicatedThread(true);
   try {
-    geometry_msgs::msg::TransformStamped tf2 = tf2_buffer_.lookupTransform(
+    geometry_msgs::msg::TransformStamped tf2 = tf2_buffer_->lookupTransform(
       "base_link", "vehicle_front", rclcpp::Time(0),
       rclcpp::Duration::from_nanoseconds(
         20.0 * 1e9));  // save to local copy of transform 20 sec timeout

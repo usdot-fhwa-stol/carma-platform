@@ -68,7 +68,7 @@ public:
     planning_strategy_(planning_strategy),
     initialized_(false),
     wm_(wm),
-    tf2_buffer_(nh_->get_clock()){};
+    tf2_buffer_(std::make_shared<tf2_ros::Buffer>(nh_->get_clock())){};
 
   /**
    * \brief Begin the operation of the arbitrator.
@@ -144,8 +144,8 @@ private:
 
   geometry_msgs::msg::TransformStamped tf_;
   // TF listenser
-  tf2_ros::Buffer tf2_buffer_;
-  std::unique_ptr<tf2_ros::TransformListener> tf2_listener_;
+  std::shared_ptr<tf2_ros::Buffer> tf2_buffer_;
+  std::shared_ptr<tf2_ros::TransformListener> tf2_listener_;
   // transform from front bumper to map
   tf2::Stamped<tf2::Transform> bumper_transform_;
   bool planning_in_progress_ = false;

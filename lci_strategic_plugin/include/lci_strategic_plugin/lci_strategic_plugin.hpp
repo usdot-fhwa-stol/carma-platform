@@ -246,8 +246,8 @@ private:
                                       // but needs to be changed on both ends
 
   // TF listenser
-  tf2_ros::Buffer tf2_buffer_;
-  std::unique_ptr<tf2_ros::TransformListener> tf2_listener_;
+  std::shared_ptr<tf2_ros::Buffer> tf2_buffer_;
+  std::shared_ptr<tf2_ros::TransformListener> tf2_listener_;
   tf2::Stamped<tf2::Transform> frontbumper_transform_;
   double length_to_front_bumper_ = 3.0;
 

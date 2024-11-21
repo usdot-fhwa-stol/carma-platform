@@ -597,7 +597,7 @@ void RouteFollowingPlugin::bumper_pose_cb()
   RCLCPP_DEBUG_STREAM(get_logger(), "Looking up front bumper pose...");
 
   try {
-    tf_ = tf2_buffer_.lookupTransform(
+    tf_ = tf2_buffer_->lookupTransform(
       "map", "vehicle_front", rclcpp::Time(0),
       rclcpp::Duration(1, 0));  // save to local copy of transform 1 sec timeout
     tf2::fromMsg(tf_, frontbumper_transform_);
@@ -958,8 +958,8 @@ double RouteFollowingPlugin::findSpeedLimit(const lanelet::ConstLanelet & llt)
 
 void RouteFollowingPlugin::initializeBumperTransformLookup()
 {
-  tf2_listener_.reset(new tf2_ros::TransformListener(tf2_buffer_));
-  tf2_buffer_.setUsingDedicatedThread(true);
+  tf2_listener_->reset(new tf2_ros::TransformListener(*tf2_buffer_));
+  tf2_buffer_->setUsingDedicatedThread(true);
 }
 
 void RouteFollowingPlugin::returnToShortestPath(const lanelet::ConstLanelet & current_lanelet)

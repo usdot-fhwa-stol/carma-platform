@@ -137,7 +137,7 @@ std::string getManeuverEndingLaneletId(carma_planning_msgs::msg::Maneuver mvr)
 
 PlanDelegator::PlanDelegator(const rclcpp::NodeOptions & options)
 : carma_ros2_utils::CarmaLifecycleNode(options),
-  tf2_buffer_(this->get_clock()),
+  tf2_buffer_(std::make_shared<tf2_ros::Buffer>(this->get_clock())),
   wml_(
     this->get_node_base_interface(), this->get_node_logging_interface(),
     this->get_node_topics_interface(), this->get_node_parameters_interface())
@@ -884,10 +884,10 @@ void PlanDelegator::onTrajPlanTick()
 
 void PlanDelegator::lookupFrontBumperTransform()
 {
-  tf2_listener_.reset(new tf2_ros::TransformListener(tf2_buffer_));
-  tf2_buffer_.setUsingDedicatedThread(true);
+  tf2_listener_->reset(new tf2_ros::TransformListener(*tf2_buffer_));
+  tf2_buffer_->setUsingDedicatedThread(true);
   try {
-    geometry_msgs::msg::TransformStamped tf = tf2_buffer_.lookupTransform(
+    geometry_msgs::msg::TransformStamped tf = tf2_buffer_->lookupTransform(
       "base_link", "vehicle_front", rclcpp::Time(0),
       rclcpp::Duration(20.0, 0));  // save to local copy of transform 20 sec timeout
     length_to_front_bumper_ = tf.transform.translation.x;

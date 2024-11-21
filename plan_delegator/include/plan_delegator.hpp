@@ -237,8 +237,8 @@ private:
   double length_to_front_bumper_ = 3.0;
 
   // TF listenser
-  tf2_ros::Buffer tf2_buffer_;
-  std::unique_ptr<tf2_ros::TransformListener> tf2_listener_;
+  std::shared_ptr<tf2_ros::Buffer> tf2_buffer_;
+  std::shared_ptr<tf2_ros::TransformListener> tf2_listener_;
 
   // Object to store information regarding the next upcoming lane change in latest_maneuver_plan_;
   // empty if no upcoming lane change exists in latest_maneuver_plan_

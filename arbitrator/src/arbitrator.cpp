@@ -175,7 +175,7 @@ void Arbitrator::shutdown_state()
 void Arbitrator::bumper_pose_cb()
 {
   try {
-    tf_ = tf2_buffer_.lookupTransform(
+    tf_ = tf2_buffer_->lookupTransform(
       "map", "vehicle_front", rclcpp::Time(0),
       rclcpp::Duration(1.0, 0));  // save to local copy of transform 1 sec timeout
     tf2::fromMsg(tf_, bumper_transform_);
@@ -211,7 +211,7 @@ void Arbitrator::twist_cb(geometry_msgs::msg::TwistStamped::UniquePtr msg)
 
 void Arbitrator::initializeBumperTransformLookup()
 {
-  tf2_listener_.reset(new tf2_ros::TransformListener(tf2_buffer_));
-  tf2_buffer_.setUsingDedicatedThread(true);
+  tf2_listener_->reset(*tf2_buffer_);
+  tf2_buffer_->setUsingDedicatedThread(true);
 }
 }  // namespace arbitrator
