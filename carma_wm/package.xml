@@ -15,17 +15,21 @@
 
 <package format="3">
   <name>carma_wm</name>
-  <version>1.0.0</version>
+  <version>5.0.0</version>
   <description>The carma_wm package</description>
 
   <maintainer email="carma@dot.gov">carma</maintainer>
 
   <license>Apache 2.0</license>
 
+  <!-- Build tool dependencies -->
   <buildtool_depend>ament_cmake</buildtool_depend>
+  <buildtool_depend>ament_cmake_auto</buildtool_depend>
+  
+  <!-- Build dependencies -->
   <build_depend>carma_cmake_common</build_depend>
-  <build_depend>ament_auto_cmake</build_depend>
 
+  <!-- Common dependencies -->
   <depend>rclcpp</depend>
   <depend>carma_ros2_utils</depend>
   <depend>rclcpp_components</depend>
@@ -43,13 +47,14 @@
   <depend>j2735_v2x_msgs</depend>
   <depend>carma_debug_ros2_msgs</depend>
   <depend>rosgraph_msgs</depend>
-
   <depend>autoware_lanelet2_ros_interface</depend>
 
-
+  <!-- Test dependencies -->
   <test_depend>ament_lint_auto</test_depend>
+  <test_depend>ament_lint_common</test_depend>
   <test_depend>ament_cmake_gtest</test_depend>
 
+  <!-- Execution dependencies -->
   <exec_depend>launch</exec_depend>
   <exec_depend>launch_ros</exec_depend>
 

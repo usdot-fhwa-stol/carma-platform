@@ -1,5 +1,4 @@
-
-# Copyright (C) 2022 LEIDOS.
+# Copyright (C) 2024 LEIDOS.
 #
 # Licensed under the Apache License, Version 2.0 (the "License"); you may not
 # use this file except in compliance with the License. You may obtain a copy of
@@ -13,13 +12,19 @@
 # License for the specific language governing permissions and limitations under
 # the License.
 
-cmake_minimum_required(VERSION 3.5)
+cmake_minimum_required(VERSION 3.8)
 project(carma_wm)
 
 # Declare carma package and check ROS version
 find_package(carma_cmake_common REQUIRED)
 carma_check_ros_version(2)
 carma_package()
+
+# Use C++17
+if(NOT CMAKE_CXX_STANDARD)
+  set(CMAKE_CXX_STANDARD 17)
+  set(CMAKE_CXX_STANDARD_REQUIRED ON)
+endif()
 
 ## Find dependencies using ament auto
 find_package(ament_cmake_auto REQUIRED)
@@ -54,11 +59,20 @@ target_link_libraries(
         ${Boost_LIBRARIES}
 )
 
+# Add compile options
+if(NOT WIN32)
+  target_compile_options(${node_lib} PRIVATE -Wall -Wextra -Wpedantic)
+endif()
+
 ament_auto_add_executable(map_update_logger_node 
         src/MapUpdateLoggerNode.cpp 
 )
-# Register component
-rclcpp_components_register_nodes(${node_lib} "MapUpdateLogger")
+
+# Register component with updated syntax for ROS2 Humble
+rclcpp_components_register_nodes(${node_lib} 
+  "MapUpdateLogger"
+)
+
 target_link_libraries(map_update_logger_node
         ${node_lib}
         ${Boost_LIBRARIES}
@@ -66,10 +80,11 @@ target_link_libraries(map_update_logger_node
 
 # Testing
 if(BUILD_TESTING)  
-
   find_package(ament_lint_auto REQUIRED)
-  ament_lint_auto_find_test_dependencies() # This populates the ${${PROJECT_NAME}_FOUND_TEST_DEPENDS} variable
+  ament_lint_auto_find_test_dependencies()
 
+  find_package(ament_cmake_gtest REQUIRED)  # Explicit gtest dependency
+  
   ament_add_gtest(test_carma_wm 
     test/GeometryTest.cpp
     test/CARMAWorldModelTest.cpp
@@ -82,6 +97,7 @@ if(BUILD_TESTING)
     test/WMTestLibForGuidanceTest.cpp
     test/WorldModelUtilsTest.cpp
   )
+  
   ament_target_dependencies(test_carma_wm ${${PROJECT_NAME}_FOUND_TEST_DEPENDS})
   target_link_libraries(test_carma_wm ${node_lib})
 
@@ -90,9 +106,7 @@ if(BUILD_TESTING)
   )
   ament_target_dependencies(segfault ${${PROJECT_NAME}_FOUND_TEST_DEPENDS})
   target_link_libraries(segfault ${node_lib})
-
 endif()
-
 
 # Install
 ament_auto_package(

@@ -23,7 +23,7 @@
 #include <lanelet2_core/Attribute.h>
 #include <tf2/LinearMath/Transform.h>
 #include <tf2/LinearMath/Quaternion.h>
-#include <tf2_geometry_msgs/tf2_geometry_msgs.h>
+#include <tf2_geometry_msgs/tf2_geometry_msgs.hpp>
 #include <carma_wm/WMTestLibForGuidance.hpp>
 #include "TestHelpers.hpp"
 

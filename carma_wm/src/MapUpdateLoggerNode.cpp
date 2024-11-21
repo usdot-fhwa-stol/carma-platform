@@ -47,7 +47,7 @@
 class MapUpdateLogger : public rclcpp::Node
 {
   public:
-    MapUpdateLogger(const rclcpp::NodeOptions& options);
+    MapUpdateLogger(const rclcpp::NodeOptions&);
     
     private:
     rclcpp::Publisher<carma_debug_ros2_msgs::msg::MapUpdateReadable>::SharedPtr readable_pub_;
@@ -76,7 +76,7 @@ class MapUpdateLogger : public rclcpp::Node
     }
 };
 
-MapUpdateLogger::MapUpdateLogger(const rclcpp::NodeOptions& options)
+MapUpdateLogger::MapUpdateLogger(const rclcpp::NodeOptions&)
   : Node("map_update_logger")
 {
     // Setup publishers
