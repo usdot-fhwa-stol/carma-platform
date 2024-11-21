@@ -21,12 +21,13 @@ namespace std_ph = std::placeholders;
 
 Route::Route(const rclcpp::NodeOptions & options)
 : carma_ros2_utils::CarmaLifecycleNode(options),
-  tf2_buffer_(std::make_shared<tf2_ros::Buffer>(this->get_clock())),
   wml_(
     this->get_node_base_interface(), this->get_node_logging_interface(),
-    this->get_node_topics_interface(), this->get_node_parameters_interface()),
-  rg_worker_(tf2_buffer_)
+    this->get_node_topics_interface(), this->get_node_parameters_interface())
 {
+  tf2_buffer_ = std::make_shared<tf2_ros::Buffer>(this->get_clock());
+  rg_worker_ = RouteGeneratorWorker(tf2_buffer_);
+
   // Create initial config
   config_ = Config();
 

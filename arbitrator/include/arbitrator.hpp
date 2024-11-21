@@ -67,8 +67,10 @@ public:
     capabilities_interface_(ci),
     planning_strategy_(planning_strategy),
     initialized_(false),
-    wm_(wm),
-    tf2_buffer_(std::make_shared<tf2_ros::Buffer>(nh_->get_clock())){};
+    wm_(wm)
+  {
+    tf2_buffer_ = std::make_shared<tf2_ros::Buffer>(nh_->get_clock());
+  };
 
   /**
    * \brief Begin the operation of the arbitrator.

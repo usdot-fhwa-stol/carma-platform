@@ -17,10 +17,10 @@
 
 #include <tf2/LinearMath/Quaternion.h>
 #include <tf2/transform_datatypes.h>
-#include <tf2_eigen/tf2_eigen.h>
 #include <tf2_ros/transform_listener.h>
 
 #include "covariance_helper.h"
+#include <tf2_eigen/tf2_eigen.hpp>
 
 #include <tf2_geometry_msgs/tf2_geometry_msgs.hpp>
 
@@ -108,13 +108,13 @@ void ObjectDetectionTrackingWorker::detectedObjectCallback(
 
     // This matrix represents the covariance of the object before transformation
     std::array<double, 36> input_covariance = {
-      xx, xy, xz, 0, 0, 0, yx, yy, yz, 0, 0, 0, zx,
-      zy, zz, 0,  0, 0, 0, 0,  0,  1,  0, 0,  // Since no covariance for the orientation is provided
-                                              // we will assume an identity relationship (1s on the
-                                              // diagonal)
-      0,  0,  0,  0, 1, 0,  // TODO when autoware suplies this information we should update this to
-                            // reflect the new covariance
-      0,  0,  0,  0, 0, 1};
+      xx, xy, xz, 0, 0, 0, yx, yy, yz, 0, 0, 0, zx, zy, zz, 0, 0, 0, 0, 0, 0, 1, 0,
+      0,                 // Since no covariance for the orientation is provided
+                         // we will assume an identity relationship (1s on the
+                         // diagonal)
+      0, 0, 0, 0, 1, 0,  // TODO when autoware suplies this information we should update this to
+                         // reflect the new covariance
+      0, 0, 0, 0, 0, 1};
 
     // Transform the covariance matrix
     tf2::Transform covariance_transform;

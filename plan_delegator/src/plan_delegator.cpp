@@ -137,11 +137,11 @@ std::string getManeuverEndingLaneletId(carma_planning_msgs::msg::Maneuver mvr)
 
 PlanDelegator::PlanDelegator(const rclcpp::NodeOptions & options)
 : carma_ros2_utils::CarmaLifecycleNode(options),
-  tf2_buffer_(std::make_shared<tf2_ros::Buffer>(this->get_clock())),
   wml_(
     this->get_node_base_interface(), this->get_node_logging_interface(),
     this->get_node_topics_interface(), this->get_node_parameters_interface())
 {
+  tf2_buffer_ = std::make_shared<tf2_ros::Buffer>(this->get_clock());
   // Create initial config
   config_ = Config();
 
