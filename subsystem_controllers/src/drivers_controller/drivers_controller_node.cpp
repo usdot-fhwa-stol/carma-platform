@@ -134,7 +134,7 @@ void DriversControllerNode::critical_drivers_check_callback()
 
   long time_now = this->now().nanoseconds() / 1e6;
   long start_duration =
-    rclcpp::Duration::from_nanoseconds(config_.startup_duration_, 0).nanoseconds() / 1e6;
+    rclcpp::Duration(std::chrono::duration<double>(config_.startup_duration_)).nanoseconds() / 1e6;
 
   auto sys_alert_msg_from_ssc =
     ssc_driver_manager_->get_latest_system_alert(time_now, start_up_timestamp_, start_duration);

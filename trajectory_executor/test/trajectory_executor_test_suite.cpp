@@ -16,117 +16,123 @@
 
 #pragma once
 
-#include <rclcpp/rclcpp.hpp>
 #include <functional>
-#include <carma_planning_msgs/msg/trajectory_plan.hpp>
 
 #include <carma_ros2_utils/carma_lifecycle_node.hpp>
+#include <rclcpp/rclcpp.hpp>
+
+#include <carma_planning_msgs/msg/trajectory_plan.hpp>
 
 namespace trajectory_executor_test_suite
 {
 
-    namespace std_ph = std::placeholders;
+namespace std_ph = std::placeholders;
 
-    /**
-     * TrajectoryExecutorTestSuite: Test fixture for TrajectoryExecutor testing
-     * Maintains publishers, subscribers, and message tracking for all tests.
-     * State is reset between tests to ensure clean results.
-     */
-    class TrajectoryExecutorTestSuite : public carma_ros2_utils::CarmaLifecycleNode
-    {
+/**
+ * TrajectoryExecutorTestSuite: Test fixture for TrajectoryExecutor testing
+ * Maintains publishers, subscribers, and message tracking for all tests.
+ * State is reset between tests to ensure clean results.
+ */
+class TrajectoryExecutorTestSuite : public carma_ros2_utils::CarmaLifecycleNode
+{
+public:
+  /*!
+   * \brief Constructor for TrajectoryExecutorTestSuite
+   */
+  explicit TrajectoryExecutorTestSuite(const rclcpp::NodeOptions & options)
+  : carma_ros2_utils::CarmaLifecycleNode(options)
+  {
+  }
 
-    public:
-        /*!
-        * \brief Constructor for TrajectoryExecutorTestSuite
-        */
-        explicit TrajectoryExecutorTestSuite(const rclcpp::NodeOptions &options)
-            : carma_ros2_utils::CarmaLifecycleNode(options) {}
+  // Publisher
+  carma_ros2_utils::PubPtr<carma_planning_msgs::msg::TrajectoryPlan> traj_pub_;
 
-        // Publisher
-        carma_ros2_utils::PubPtr<carma_planning_msgs::msg::TrajectoryPlan> traj_pub_;
+  // Subscribers
+  carma_ros2_utils::SubPtr<carma_planning_msgs::msg::TrajectoryPlan> traj_sub_;
+  carma_ros2_utils::SubPtr<carma_planning_msgs::msg::TrajectoryPlan> traj_sub2_;
 
-        // Subscribers
-        carma_ros2_utils::SubPtr<carma_planning_msgs::msg::TrajectoryPlan> traj_sub_;
-        carma_ros2_utils::SubPtr<carma_planning_msgs::msg::TrajectoryPlan> traj_sub2_;
+  int msg_count = 0;
 
-        int msg_count = 0;
+  void trajEmitCallback(carma_planning_msgs::msg::TrajectoryPlan::UniquePtr msg) { msg_count++; }
 
-        void trajEmitCallback(carma_planning_msgs::msg::TrajectoryPlan::UniquePtr msg) {
-            msg_count++;
-        }
+  ////
+  // Overrides
+  ////
+  carma_ros2_utils::CallbackReturn handle_on_configure(const rclcpp_lifecycle::State &)
+  {
+    // Setup Publisher
+    traj_pub_ = create_publisher<carma_planning_msgs::msg::TrajectoryPlan>("trajectory", 5);
 
-        ////
-        // Overrides
-        ////
-        carma_ros2_utils::CallbackReturn handle_on_configure(const rclcpp_lifecycle::State &) {
-            // Setup Publisher
-            traj_pub_ = create_publisher<carma_planning_msgs::msg::TrajectoryPlan>("trajectory", 5);
+    // Setup Subscribers
+    traj_sub_ = create_subscription<carma_planning_msgs::msg::TrajectoryPlan>(
+      "/guidance/plugins/pure_pursuit/plan_trajectory", 100,
+      std::bind(&TrajectoryExecutorTestSuite::trajEmitCallback, this, std_ph::_1));
+    traj_sub2_ = create_subscription<carma_planning_msgs::msg::TrajectoryPlan>(
+      "/guidance/plugins/platooning_control/plan_trajectory", 100,
+      std::bind(&TrajectoryExecutorTestSuite::trajEmitCallback, this, std_ph::_1));
 
-            // Setup Subscribers
-            traj_sub_ = create_subscription<carma_planning_msgs::msg::TrajectoryPlan>("/guidance/plugins/pure_pursuit/plan_trajectory", 100,
-                                                                    std::bind(&TrajectoryExecutorTestSuite::trajEmitCallback, this, std_ph::_1));
-            traj_sub2_ = create_subscription<carma_planning_msgs::msg::TrajectoryPlan>("/guidance/plugins/platooning_control/plan_trajectory", 100,
-                                                                    std::bind(&TrajectoryExecutorTestSuite::trajEmitCallback, this, std_ph::_1));
+    return CallbackReturn::SUCCESS;
+  }
+};
 
-            return CallbackReturn::SUCCESS;
-        }
+/*!
+ * \brief Helper Function: Builds a small sample TrajectoryPlan message for the Pure Pursuit
+ *                         controller plugin
+ *
+ * \return A 10-point TrajectoryPlan message containing sample data
+ */
+carma_planning_msgs::msg::TrajectoryPlan buildSampleTraj()
+{
+  carma_planning_msgs::msg::TrajectoryPlan plan;
 
-    };
+  plan.header.stamp = rclcpp::Time(0, 0);
+  plan.trajectory_id = "TEST TRAJECTORY 1";
 
-    /*!
-    * \brief Helper Function: Builds a small sample TrajectoryPlan message for the Pure Pursuit
-    *                         controller plugin
-    *
-    * \return A 10-point TrajectoryPlan message containing sample data
-    */
-    carma_planning_msgs::msg::TrajectoryPlan buildSampleTraj() {
-        carma_planning_msgs::msg::TrajectoryPlan plan;
+  rclcpp::Time cur_time = rclcpp::Time(0, 0);
+  for (int i = 0; i < 10; i++) {
+    carma_planning_msgs::msg::TrajectoryPlanPoint p;
+    p.controller_plugin_name = "pure_pursuit_wrapper_node";
+    p.lane_id = "0";
+    p.planner_plugin_name = "cruising";
+    // Convert seconds to nanoseconds
+    rclcpp::Duration dur = rclcpp::Duration::from_nanoseconds((i * 0.13) * 1e9);
+    p.target_time = cur_time + dur;
+    p.x = 10 * i;
+    p.y = 10 * i;
+    plan.trajectory_points.push_back(p);
+  }
 
-        plan.header.stamp = rclcpp::Time(0,0);
-        plan.trajectory_id = "TEST TRAJECTORY 1";
+  return plan;
+}
 
-        rclcpp::Time cur_time = rclcpp::Time(0,0);
-        for (int i = 0; i < 10; i++) {
-            carma_planning_msgs::msg::TrajectoryPlanPoint p;
-            p.controller_plugin_name = "pure_pursuit_wrapper_node";
-            p.lane_id = "0";
-            p.planner_plugin_name = "cruising";
-            rclcpp::Duration dur((i * 0.13)*1e9); // Convert seconds to nanoseconds
-            p.target_time = cur_time + dur;
-            p.x = 10 * i;
-            p.y = 10 * i;
-            plan.trajectory_points.push_back(p);
-        }
+/*!
+ * \brief Helper Function: Builds a small sample TrajectoryPlan message for the
+ * PlatooningControlPlugin controller plugin
+ *
+ * \return A 10-point TrajectoryPlan message containing sample data
+ */
+carma_planning_msgs::msg::TrajectoryPlan buildSampleTraj2()
+{
+  carma_planning_msgs::msg::TrajectoryPlan plan;
 
-        return plan;
-    }
+  plan.header.stamp = rclcpp::Time(0, 0);
+  plan.trajectory_id = "TEST TRAJECTORY 2";
 
-    /*!
-    * \brief Helper Function: Builds a small sample TrajectoryPlan message for the PlatooningControlPlugin
-    *                         controller plugin
-    *
-    * \return A 10-point TrajectoryPlan message containing sample data
-    */
-    carma_planning_msgs::msg::TrajectoryPlan buildSampleTraj2() {
-        carma_planning_msgs::msg::TrajectoryPlan plan;
+  rclcpp::Time cur_time = rclcpp::Time(0, 0);
+  for (int i = 0; i < 10; i++) {
+    carma_planning_msgs::msg::TrajectoryPlanPoint p;
+    p.controller_plugin_name = "platooning_control";
+    p.lane_id = "0";
+    p.planner_plugin_name = "cruising";
+    rclcpp::Duration dur =
+      rclcpp::Duration::from_nanoseconds((i * 0.13) * 1e9);  // Convert seconds to nanoseconds
+    p.target_time = cur_time + dur;
+    p.x = 10 * i;
+    p.y = 10 * i;
+    plan.trajectory_points.push_back(p);
+  }
 
-        plan.header.stamp = rclcpp::Time(0,0);
-        plan.trajectory_id = "TEST TRAJECTORY 2";
+  return plan;
+}
 
-        rclcpp::Time cur_time = rclcpp::Time(0,0);
-        for (int i = 0; i < 10; i++) {
-            carma_planning_msgs::msg::TrajectoryPlanPoint p;
-            p.controller_plugin_name = "platooning_control";
-            p.lane_id = "0";
-            p.planner_plugin_name = "cruising";
-            rclcpp::Duration dur((i * 0.13)*1e9); // Convert seconds to nanoseconds
-            p.target_time = cur_time + dur;
-            p.x = 10 * i;
-            p.y = 10 * i;
-            plan.trajectory_points.push_back(p);
-        }
-
-        return plan;
-    }
-
-} // trajectory_executor_test_suite
+}  // namespace trajectory_executor_test_suite

@@ -93,7 +93,8 @@ void convert(
   double message_offset_y = 0.0;
   double message_offset_z = 0.0;
 
-  rclcpp::Duration mobility_path_point_delta_t(mobility_path_points_timestep_size * 1e9);
+  rclcpp::Duration mobility_path_point_delta_t(
+    std::chrono::duration<double>(mobility_path_points_timestep_size));
 
   // Note the usage of current vs previous in this loop can be a bit confusing
   // The intended behavior is we our always storing our prev_point but using
