@@ -67,6 +67,11 @@ jobs:
     #- name: Install external dependencies
     #  # Install the multiple object tracking deps
     #  run: sudo bash /opt/carma/src/multiple_object_tracking/scripts/install_dependencies.sh
+    # TODO WIP Humble Upgrade: Remove after humble upgrade is done
+    - name: Read packages from file
+      run: |
+        PACKAGES=$(cat /opt/carma/src/${{ github.event.repository.name }}/.github/workflows/humble-upgraded-packages.txt)
+        echo "PACKAGES=$PACKAGES" >> $GITHUB_ENV
 
     - name: Build ROS2
       # Build ROS2 packages
@@ -75,7 +80,6 @@ jobs:
         source "$INIT_ENV"
         source "$ROS_2_ENV"
         source /opt/autoware.ai/ros/install/setup.bash
-        PACKAGES="carma_wm"
         sed -i '/colcon build/ s/$/ --continue-on-error --parallel-workers 4 --packages-up-to $PACKAGES/' /home/carma/.ci-image/engineering_tools/code_coverage/make_with_coverage.bash
         make_with_coverage.bash -m -e /opt/carma/ -o ./coverage_reports/gcov
 
@@ -86,7 +90,6 @@ jobs:
         source "$INIT_ENV"
         source "$ROS_2_ENV"
         source /opt/autoware.ai/ros/install/setup.bash
-        PACKAGES="carma_wm"
         sed -i '/colcon test/ s/$/ --parallel-workers 4 --packages-above $PACKAGES/' /home/carma/.ci-image/engineering_tools/code_coverage/make_with_coverage.bash
         make_with_coverage.bash -t -e /opt/carma/ -o ./coverage_reports/gcov
 
