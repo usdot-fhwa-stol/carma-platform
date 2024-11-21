@@ -70,7 +70,7 @@ jobs:
     # TODO WIP Humble Upgrade: Remove after humble upgrade is done
     - name: Read packages from file
       run: |
-        PACKAGES=$(find . -maxdepth 2 -type f -name package.xml | sed 's/\.\///' | cut -d/ -f1 | grep -v "template_package")
+        PACKAGES=$(find . -maxdepth 2 -type f -name "package.xml" -print0 | xargs -0 -I {} dirname {} | xargs -I {} basename {} | grep -v "template_package" | sort -u)
         echo "PACKAGES=$PACKAGES" >> $GITHUB_ENV
 
     - name: Build ROS2
