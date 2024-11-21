@@ -1,6 +1,6 @@
 <?xml version="1.0"?>
 
-<!--  
+<!--
  Copyright (C) 2022 LEIDOS.
  Licensed under the Apache License, Version 2.0 (the "License"); you may not
  use this file except in compliance with the License. You may obtain a copy of
@@ -15,20 +15,20 @@
 
 <package format="3">
   <name>carma_cloud_client</name>
-  <version>1.0.0</version>
-  <description>The carma_cloud_client package communicates with carma cloud by forwarding the TCR 
+  <version>5.0.0</version>
+  <description>The carma_cloud_client package communicates with carma cloud by forwarding the TCR
                 and receives TCM to/from cloud through http</description>
 
   <maintainer email="carma@dot.gov">carma</maintainer>
 
   <license>Apache 2.0</license>
-  
+
   <buildtool_depend>ament_cmake</buildtool_depend>
   <build_depend>carma_cmake_common</build_depend>
   <build_depend>ament_auto_cmake</build_depend>
   <build_depend>curl</build_depend>
-  
-  <build_depend>qhttpengine</build_depend>  
+
+  <build_depend>qhttpengine</build_depend>
   <build_depend>v2xhubWebAPI</build_depend>
 
   <depend>rclcpp</depend>
@@ -37,10 +37,10 @@
   <depend>j2735_v2x_msgs</depend>
   <depend>carma_v2x_msgs</depend>
   <depend>j2735_convertor</depend>
-  
+
   <!-- <depend>qhttpengine</depend> -->
   <!-- <depend>v2xhubWebAPI</depend> -->
-  
+
 
   <test_depend>ament_lint_auto</test_depend>
   <test_depend>ament_cmake_gtest</test_depend>

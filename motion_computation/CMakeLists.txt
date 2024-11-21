@@ -12,7 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-cmake_minimum_required(VERSION 3.5)
+cmake_minimum_required(VERSION 3.8)
 project(motion_computation)
 
 # CARMA builds packages in an environment with both ROS 1 and ROS 2 installed.

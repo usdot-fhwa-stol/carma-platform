@@ -13,7 +13,7 @@
 # License for the specific language governing permissions and limitations under
 # the License.
 
-cmake_minimum_required(VERSION 3.5)
+cmake_minimum_required(VERSION 3.8)
 project(arbitrator)
 
 # Declare carma package and check ROS version
@@ -47,7 +47,7 @@ ament_auto_add_library(${node_lib} SHARED
   src/tree_planner.cpp
 )
 
-ament_auto_add_executable(${node_exec} 
+ament_auto_add_executable(${node_exec}
   src/main.cpp
 )
 
@@ -62,12 +62,12 @@ target_link_libraries(${node_exec}
 )
 
 # Testing
- if(BUILD_TESTING)  
- 
+ if(BUILD_TESTING)
+
   find_package(ament_lint_auto REQUIRED)
   ament_lint_auto_find_test_dependencies() # This populates the ${${PROJECT_NAME}_FOUND_TEST_DEPENDS} variable
 
-  ament_add_gmock(test_arbitrator 
+  ament_add_gmock(test_arbitrator
   test/test_arbitrator_state_machine.cpp
   test/test_plugin_neighbor_generator.cpp
   test/test_fixed_priority_cost_function.cpp
@@ -79,7 +79,7 @@ target_link_libraries(${node_exec}
   ament_target_dependencies(test_arbitrator ${${PROJECT_NAME}_FOUND_TEST_DEPENDS})
 
   target_link_libraries(test_arbitrator ${node_lib})
- 
+
  endif()
 
 # Install

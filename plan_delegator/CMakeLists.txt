@@ -12,7 +12,7 @@
 # License for the specific language governing permissions and limitations under
 # the License.
 
-cmake_minimum_required(VERSION 3.5)
+cmake_minimum_required(VERSION 3.8)
 project(plan_delegator)
 
 # Declare carma package and check ROS version
@@ -38,8 +38,8 @@ ament_auto_add_library(${node_lib} SHARED
         src/plan_delegator.cpp
 )
 
-ament_auto_add_executable(${node_exec} 
-        src/plan_delegator_node.cpp 
+ament_auto_add_executable(${node_exec}
+        src/plan_delegator_node.cpp
 )
 
 # Register component
@@ -52,7 +52,7 @@ target_link_libraries(${node_exec}
 )
 
 #Testing
-if(BUILD_TESTING)  
+if(BUILD_TESTING)
 
   find_package(ament_lint_auto REQUIRED)
   ament_lint_auto_find_test_dependencies() # This populates the ${${PROJECT_NAME}_FOUND_TEST_DEPENDS} variable

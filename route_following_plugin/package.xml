@@ -1,6 +1,6 @@
 <?xml version="1.0"?>
 
-<!--  
+<!--
  Copyright (C) 2022 LEIDOS.
 
  Licensed under the Apache License, Version 2.0 (the "License"); you may not
@@ -18,7 +18,7 @@
 
 <package format="3">
   <name>route_following_plugin</name>
-  <version>4.0.0</version>
+  <version>5.0.0</version>
   <description>The strategic plugin generates maneuvers to make the vehicle follow the route. </description>
   <maintainer email="carma@dot.gov">carma</maintainer>
   <license>Apache License 2.0</license>
@@ -34,7 +34,7 @@
   <depend>std_msgs</depend>
   <depend>carma_wm</depend>
   <depend>tf2</depend>
-  <depend>tf2_geometry_msgs</depend> 
+  <depend>tf2_geometry_msgs</depend>
   <depend>carma_planning_msgs</depend>
   <depend>carma_guidance_plugins</depend>
   <depend>carma_v2x_msgs</depend>

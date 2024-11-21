@@ -18,7 +18,7 @@ limitations under the License.
 
 <package format="3">
   <name>roadway_objects</name>
-  <version>4.0.0</version>
+  <version>5.0.0</version>
   <description>The roadway_objects package</description>
 
   <maintainer email="carma@dot.gov">carma</maintainer>

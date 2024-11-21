@@ -1,6 +1,6 @@
 <?xml version="1.0"?>
 
-<!--  
+<!--
 Copyright (C) 2018-2022 LEIDOS.
 
  Licensed under the Apache License, Version 2.0 (the "License"); you may not
@@ -17,7 +17,7 @@ Copyright (C) 2018-2022 LEIDOS.
 -->
 <package format="3">
   <name>stop_and_wait_plugin</name>
-  <version>4.0.0</version>
+  <version>5.0.0</version>
   <description>The stop_and_wait_plugin package</description>
   <maintainer email="carma@dot.gov">carma</maintainer>
   <license>Apache License 2.0</license>
@@ -33,13 +33,13 @@ Copyright (C) 2018-2022 LEIDOS.
   <depend>autoware_msgs</depend>
   <depend>carma_wm</depend>
   <depend>tf2</depend>
-  <depend>tf2_geometry_msgs</depend> 
+  <depend>tf2_geometry_msgs</depend>
   <depend>trajectory_utils_ros2</depend>
   <depend>roslib</depend>
-  <depend>basic_autonomy</depend> 
+  <depend>basic_autonomy</depend>
   <depend>carma_guidance_plugins</depend>
   <depend>carma_planning_msgs</depend>
-  
+
   <test_depend>ament_lint_auto</test_depend>
   <test_depend>ament_cmake_gtest</test_depend>
 

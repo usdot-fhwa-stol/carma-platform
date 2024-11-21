@@ -14,7 +14,7 @@
 # the License.
 #
 
-cmake_minimum_required(VERSION 3.5)
+cmake_minimum_required(VERSION 3.8)
 project(stop_controlled_intersection_tactical_plugin)
 
 find_package(carma_cmake_common REQUIRED)
@@ -46,8 +46,8 @@ ament_auto_add_library(${node_lib} SHARED
         src/stop_controlled_intersection_tactical_plugin.cpp
 )
 
-ament_auto_add_executable(${node_exec} 
-        src/main.cpp 
+ament_auto_add_executable(${node_exec}
+        src/main.cpp
 )
 
 # Register component
@@ -60,7 +60,7 @@ target_link_libraries(${node_exec}
 )
 
 # Testing
-if(BUILD_TESTING)  
+if(BUILD_TESTING)
 
   find_package(ament_lint_auto REQUIRED)
   ament_lint_auto_find_test_dependencies() # This populates the ${${PROJECT_NAME}_FOUND_TEST_DEPENDS} variable

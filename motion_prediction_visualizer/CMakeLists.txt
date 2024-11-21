@@ -13,7 +13,7 @@
 # License for the specific language governing permissions and limitations under
 # the License.
 
-cmake_minimum_required(VERSION 3.5)
+cmake_minimum_required(VERSION 3.8)
 project(motion_prediction_visualizer)
 
 # Declare carma package and check ROS version
@@ -39,8 +39,8 @@ ament_auto_add_library(${node_lib} SHARED
         src/motion_prediction_visualizer_node.cpp
 )
 
-ament_auto_add_executable(${node_exec} 
-        src/main.cpp 
+ament_auto_add_executable(${node_exec}
+        src/main.cpp
 )
 
 # Register component

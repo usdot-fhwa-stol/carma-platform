@@ -13,7 +13,7 @@
 # License for the specific language governing permissions and limitations under
 # the License.
 
-cmake_minimum_required(VERSION 3.5)
+cmake_minimum_required(VERSION 3.8)
 project(platoon_strategic_ihp)
 
 # Declare carma package and check ROS version
@@ -41,8 +41,8 @@ ament_auto_add_library(${node_lib} SHARED
         src/platoon_strategic_ihp.cpp
 )
 
-ament_auto_add_executable(${node_exec} 
-        src/main.cpp 
+ament_auto_add_executable(${node_exec}
+        src/main.cpp
 )
 
 # Register component
@@ -61,12 +61,12 @@ include_directories(
 )
 
 # Testing
-if(BUILD_TESTING)  
+if(BUILD_TESTING)
 
   find_package(ament_lint_auto REQUIRED)
   ament_lint_auto_find_test_dependencies() # This populates the ${${PROJECT_NAME}_FOUND_TEST_DEPENDS} variable
 
-  ament_add_gtest(test_platoon_strategic_ihp 
+  ament_add_gtest(test_platoon_strategic_ihp
         test/main_test.cpp
         test/mobility_messages.cpp
         test/test_platoon_manager_front_join.cpp

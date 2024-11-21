@@ -13,7 +13,7 @@
 # License for the specific language governing permissions and limitations under
 # the License.
 
-cmake_minimum_required(VERSION 3.5)
+cmake_minimum_required(VERSION 3.8)
 project(object_detection_tracking)
 
 # Declare carma package and check ROS version
@@ -46,15 +46,15 @@ ament_auto_add_library(${node_lib} SHARED
         src/object_detection_tracking_node.cpp
 )
 
-ament_auto_add_executable(${node_exec} 
-        src/main.cpp 
+ament_auto_add_executable(${node_exec}
+        src/main.cpp
 )
 
 ament_auto_add_library(${bounding_box_lib} SHARED
         src/bounding_box_to_detected_object/bounding_box_to_detected_object_node.cpp
 )
 
-ament_auto_add_executable(${bounding_box_exec} 
+ament_auto_add_executable(${bounding_box_exec}
         src/bounding_box_to_detected_object/main.cpp
 )
 

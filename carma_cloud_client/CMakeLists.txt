@@ -13,7 +13,7 @@
 # License for the specific language governing permissions and limitations under
 # the License.
 
-cmake_minimum_required(VERSION 3.5)
+cmake_minimum_required(VERSION 3.8)
 project(carma_cloud_client)
 
 # Declare carma package and check ROS version
@@ -42,7 +42,7 @@ include_directories(
   ${CURL_INCLUDE_DIR}
 )
 
-include_directories(${Qt5Widgets_INCLUDE_DIRS}) 
+include_directories(${Qt5Widgets_INCLUDE_DIRS})
 
 include_directories(${EXTERNAL_INSTALL_LOCATION}/include)
 link_directories(${EXTERNAL_INSTALL_LOCATION}/lib)
@@ -57,15 +57,15 @@ ament_auto_add_library(${node_lib} SHARED
         src/carma_cloud_client_node.cpp
 )
 
-ament_auto_add_executable(${node_exec} 
-        src/main.cpp 
+ament_auto_add_executable(${node_exec}
+        src/main.cpp
 )
 
 # Register component
 rclcpp_components_register_nodes(${node_lib} "carma_cloud_client::CarmaCloudClient")
 target_link_libraries(${node_lib}
         ${CURL_LIBRARIES}
-        ${QHttpEngine_LIBRARY}  
+        ${QHttpEngine_LIBRARY}
         Qt5Widgets Qt5Core Qt5Network qhttpengine v2xhubWebAPI ZLIB::ZLIB
 )
 
@@ -74,12 +74,12 @@ target_link_libraries(${node_lib}
 target_link_libraries(${node_exec}
         ${node_lib}
         ${CURL_LIBRARIES}
-        ${QHttpEngine_LIBRARY}  
+        ${QHttpEngine_LIBRARY}
         Qt5Widgets Qt5Core Qt5Network qhttpengine v2xhubWebAPI ZLIB::ZLIB
 )
 
 # Testing
-if(BUILD_TESTING)  
+if(BUILD_TESTING)
 
   find_package(ament_lint_auto REQUIRED)
   ament_lint_auto_find_test_dependencies() # This populates the ${${PROJECT_NAME}_FOUND_TEST_DEPENDS} variable

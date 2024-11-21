@@ -1,6 +1,6 @@
 <?xml version="1.0"?>
 
-<!--  
+<!--
  Copyright (C) 2022 LEIDOS.
 
  Licensed under the Apache License, Version 2.0 (the "License"); you may not
@@ -18,12 +18,12 @@
 
 <package format="3">
   <name>yield_plugin</name>
-  <version>3.1.0</version>
+  <version>5.0.0</version>
   <description>The yield_plugin converts updates a trajectory plan to avoid obstacles</description>
   <maintainer email="CARMA@dot.gov">carma</maintainer>
   <license>Apache License 2.0</license>
   <author email="CARMA@dot.gov">carma</author>
-  
+
   <buildtool_depend>ament_cmake</buildtool_depend>
   <build_depend>carma_cmake_common</build_depend>
   <build_depend>ament_auto_cmake</build_depend>
@@ -36,7 +36,7 @@
   <depend>carma_planning_msgs</depend>
   <depend>carma_v2x_msgs</depend>
   <depend>carma_wm</depend>
-  <depend>trajectory_utils_ros2</depend> 
+  <depend>trajectory_utils_ros2</depend>
   <depend>lanelet2_extension</depend>
   <depend>carma_perception_msgs</depend>
   <depend>carma_guidance_plugins</depend>

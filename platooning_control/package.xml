@@ -15,7 +15,7 @@
 
 <package format="3">
   <name>platooning_control</name>
-  <version>1.0.0</version>
+  <version>5.0.0</version>
   <description>The platooning_control package</description>
 
   <maintainer email="carma@dot.gov">carma</maintainer>

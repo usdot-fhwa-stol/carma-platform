@@ -15,7 +15,7 @@
 
 <package format="3">
   <name>motion_computation</name>
-  <version>4.0.0</version>
+  <version>5.0.0</version>
   <description>The motion_computation package</description>
 
   <maintainer email="carma@dot.gov">carma</maintainer>
