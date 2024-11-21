@@ -48,12 +48,6 @@ file(TOUCH ${PROJECT_BINARY_DIR}/COLCON_IGNORE)
 # Configures CARMA package default settings
 carma_package()
 
-# Use C++17
-if(NOT CMAKE_CXX_STANDARD)
-  set(CMAKE_CXX_STANDARD 17)
-  set(CMAKE_CXX_STANDARD_REQUIRED ON)
-endif()
-
 # C17 CMake support added in CMake 3.21
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_C_STANDARD 11)

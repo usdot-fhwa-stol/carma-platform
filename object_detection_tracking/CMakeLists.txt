@@ -21,12 +21,6 @@ find_package(carma_cmake_common REQUIRED)
 carma_check_ros_version(2)
 carma_package()
 
-# Use C++17
-if(NOT CMAKE_CXX_STANDARD)
-  set(CMAKE_CXX_STANDARD 17)
-  set(CMAKE_CXX_STANDARD_REQUIRED ON)
-endif()
-
 ## Find dependencies
 find_package(ament_cmake_auto REQUIRED)
 ament_auto_find_build_dependencies()
@@ -52,15 +46,15 @@ ament_auto_add_library(${node_lib} SHARED
         src/object_detection_tracking_node.cpp
 )
 
-ament_auto_add_executable(${node_exec}
-        src/main.cpp
+ament_auto_add_executable(${node_exec} 
+        src/main.cpp 
 )
 
 ament_auto_add_library(${bounding_box_lib} SHARED
         src/bounding_box_to_detected_object/bounding_box_to_detected_object_node.cpp
 )
 
-ament_auto_add_executable(${bounding_box_exec}
+ament_auto_add_executable(${bounding_box_exec} 
         src/bounding_box_to_detected_object/main.cpp
 )
 

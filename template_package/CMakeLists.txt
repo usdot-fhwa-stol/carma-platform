@@ -21,12 +21,6 @@ find_package(carma_cmake_common REQUIRED)
 carma_check_ros_version(2)
 carma_package()
 
-# Use C++17
-if(NOT CMAKE_CXX_STANDARD)
-  set(CMAKE_CXX_STANDARD 17)
-  set(CMAKE_CXX_STANDARD_REQUIRED ON)
-endif()
-
 ## Find dependencies using ament auto
 find_package(ament_cmake_auto REQUIRED)
 ament_auto_find_build_dependencies()
@@ -45,8 +39,8 @@ ament_auto_add_library(${node_lib} SHARED
         src/<SUB><package_name>_node.cpp
 )
 
-ament_auto_add_executable(${node_exec}
-        src/main.cpp
+ament_auto_add_executable(${node_exec} 
+        src/main.cpp 
 )
 
 # Register component
@@ -59,7 +53,7 @@ target_link_libraries(${node_exec}
 )
 
 # Testing
-if(BUILD_TESTING)
+if(BUILD_TESTING)  
 
   find_package(ament_lint_auto REQUIRED)
   ament_lint_auto_find_test_dependencies() # This populates the ${${PROJECT_NAME}_FOUND_TEST_DEPENDS} variable

@@ -59,12 +59,12 @@ target_link_libraries(
         ${Boost_LIBRARIES}
 )
 
-ament_auto_add_executable(map_update_logger_node
-        src/MapUpdateLoggerNode.cpp
+ament_auto_add_executable(map_update_logger_node 
+        src/MapUpdateLoggerNode.cpp 
 )
 
 # Register component
-rclcpp_components_register_nodes(${node_lib}
+rclcpp_components_register_nodes(${node_lib} 
   "MapUpdateLogger"
 )
 
@@ -74,13 +74,13 @@ target_link_libraries(map_update_logger_node
 )
 
 # Testing
-if(BUILD_TESTING)
+if(BUILD_TESTING)  
   find_package(ament_lint_auto REQUIRED)
   ament_lint_auto_find_test_dependencies()
 
   find_package(ament_cmake_gtest REQUIRED)  # Explicit gtest dependency
-
-  ament_add_gtest(test_carma_wm
+  
+  ament_add_gtest(test_carma_wm 
     test/GeometryTest.cpp
     test/CARMAWorldModelTest.cpp
     test/WMListenerWorkerTest.cpp
@@ -92,7 +92,7 @@ if(BUILD_TESTING)
     test/WMTestLibForGuidanceTest.cpp
     test/WorldModelUtilsTest.cpp
   )
-
+  
   ament_target_dependencies(test_carma_wm ${${PROJECT_NAME}_FOUND_TEST_DEPENDS})
   target_link_libraries(test_carma_wm ${node_lib})
 
@@ -105,5 +105,5 @@ endif()
 
 # Install
 ament_auto_package(
-        INSTALL_TO_SHARE
+        INSTALL_TO_SHARE 
 )

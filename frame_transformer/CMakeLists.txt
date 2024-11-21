@@ -21,12 +21,6 @@ find_package(carma_cmake_common REQUIRED)
 carma_check_ros_version(2)
 carma_package()
 
-# Use C++17
-if(NOT CMAKE_CXX_STANDARD)
-  set(CMAKE_CXX_STANDARD 17)
-  set(CMAKE_CXX_STANDARD_REQUIRED ON)
-endif()
-
 ## Find dependencies using ament auto
 find_package(ament_cmake_auto REQUIRED)
 ament_auto_find_build_dependencies()
@@ -46,11 +40,11 @@ ament_auto_add_library(${node_lib} SHARED
         src/frame_transformer_node.cpp
 )
 
-ament_auto_add_executable(${node_exec}
+ament_auto_add_executable(${node_exec} 
         src/lifecycle_main.cpp
 )
 
-ament_auto_add_executable(${node_exec_auto_transition}
+ament_auto_add_executable(${node_exec_auto_transition} 
         src/auto_transition_main.cpp
 )
 
@@ -63,12 +57,12 @@ target_link_libraries(${node_exec}
         ${node_lib}
 )
 
-target_link_libraries(${node_exec_auto_transition}
+target_link_libraries(${node_exec_auto_transition} 
         ${node_lib}
 )
 
 # Testing
-if(BUILD_TESTING)
+if(BUILD_TESTING)  
 
   find_package(ament_lint_auto REQUIRED)
   ament_lint_auto_find_test_dependencies() # This populates the ${${PROJECT_NAME}_FOUND_TEST_DEPENDS} variable
