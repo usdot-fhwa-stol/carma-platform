@@ -60,7 +60,7 @@ public:
    * \brief Constructor for RouteGeneratorWorker class taking in dependencies via dependency
    * injection
    */
-  RouteGeneratorWorker(tf2_ros::Buffer & tf2_buffer);
+  RouteGeneratorWorker(std::shared_ptr<tf2_ros::Buffer> tf2_buffer);
 
   /**
    * \brief reroutingChecker function to set the rerouting flag locally
