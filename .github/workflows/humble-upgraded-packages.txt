@@ -1,2 +1,1 @@
-carma_wm
-basic_autonomy
+carma_wm basic_autonomy
