@@ -21,7 +21,7 @@
 #include <future>
 
 #include <tf2/LinearMath/Transform.h>
-#include <tf2/LinearMath/Vector3.h>
+#include <tf2_bullet/tf2_bullet.h>
 #include <tf2/LinearMath/Quaternion.h>
 
 #include "gnss_to_map_convertor/GNSSToMapConvertor.hpp"
@@ -103,7 +103,7 @@ TEST(GNSSToMapConvertor, poseFromGnss)
     gnss_to_map_convertor::GNSSToMapConvertor convertor(
         [](auto msg) {}, [](auto a, auto b) -> boost::optional<geometry_msgs::msg::TransformStamped> { return boost::none; },
         "map", "base_link", "ned_heading", worker_node->get_node_logging_interface());
-    
+
     worker_node->configure(); //Call configure state transition
     worker_node->activate();  //Call activate state transition to get not read for runtime
 
@@ -348,4 +348,4 @@ int main(int argc, char ** argv)
     rclcpp::shutdown();
 
     return success;
-} 
+}

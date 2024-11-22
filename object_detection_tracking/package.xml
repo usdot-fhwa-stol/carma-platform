@@ -31,6 +31,7 @@
   <depend>carma_perception_msgs</depend>
   <depend>carma_ros2_utils</depend>
   <depend>tf2_geometry_msgs</depend>
+  <depend>tf2_eigen</depend>
   <depend>tf2</depend>
   <depend>tf2_ros</depend>
   <depend>autoware_auto_msgs</depend>
