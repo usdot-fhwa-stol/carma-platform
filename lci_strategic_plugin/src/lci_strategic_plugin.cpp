@@ -252,7 +252,7 @@ bool LCIStrategicPlugin::supportedLightState(lanelet::CarmaTrafficSignalState st
 
 void LCIStrategicPlugin::lookupFrontBumperTransform()
 {
-  tf2_listener_->reset(new tf2_ros::TransformListener(*tf2_buffer_));
+  tf2_listener_ = std::make_shared<tf2_ros::TransformListener>(*tf2_buffer_);
   tf2_buffer_->setUsingDedicatedThread(true);
   try {
     geometry_msgs::msg::TransformStamped tf2 = tf2_buffer_->lookupTransform(

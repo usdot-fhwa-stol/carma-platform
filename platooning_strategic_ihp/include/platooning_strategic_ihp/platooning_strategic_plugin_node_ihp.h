@@ -28,7 +28,7 @@
 #include <functional>
 
 #include "platoon_config_ihp.h"
-#include "platooning_strategic_ihp.h"
+#include "platooniing_strategic_ihp.h"
 #include <carma_guidance_plugins/strategic_plugin.hpp>
 #include <carma_wm/WMListener.hpp>
 #include <rclcpp/rclcpp.hpp>

@@ -211,7 +211,7 @@ void Arbitrator::twist_cb(geometry_msgs::msg::TwistStamped::UniquePtr msg)
 
 void Arbitrator::initializeBumperTransformLookup()
 {
-  tf2_listener_->reset(*tf2_buffer_);
+  tf2_listener_ = std::make_shared<tf2_ros::TransformListener>(*tf2_buffer_);
   tf2_buffer_->setUsingDedicatedThread(true);
 }
 }  // namespace arbitrator

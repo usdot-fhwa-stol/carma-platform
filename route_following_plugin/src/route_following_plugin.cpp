@@ -958,7 +958,7 @@ double RouteFollowingPlugin::findSpeedLimit(const lanelet::ConstLanelet & llt)
 
 void RouteFollowingPlugin::initializeBumperTransformLookup()
 {
-  tf2_listener_->reset(new tf2_ros::TransformListener(*tf2_buffer_));
+  tf2_listener_ = std::make_shared<tf2_ros::TransformListener>(*tf2_buffer_);
   tf2_buffer_->setUsingDedicatedThread(true);
 }
 

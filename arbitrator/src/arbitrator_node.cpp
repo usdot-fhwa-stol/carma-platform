@@ -86,7 +86,7 @@ carma_ros2_utils::CallbackReturn ArbitratorNode::handle_on_configure(
     shared_from_this(), std::make_shared<ArbitratorStateMachine>(sm), ci,
     std::make_shared<TreePlanner>(tp),
     rclcpp::Duration::from_nanoseconds(config_.min_plan_duration * 1e9),
-    1 / config_.planning_frequency, wm_);
+    rclcpp::Duration::from_nanoseconds(1 / config_.planning_frequency * 1e9), wm_);
 
   twist_sub_ = create_subscription<geometry_msgs::msg::TwistStamped>(
     "current_velocity", 1,

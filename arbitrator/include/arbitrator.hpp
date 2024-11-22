@@ -60,7 +60,7 @@ public:
     std::shared_ptr<carma_ros2_utils::CarmaLifecycleNode> nh,
     std::shared_ptr<ArbitratorStateMachine> sm, std::shared_ptr<CapabilitiesInterface> ci,
     std::shared_ptr<PlanningStrategy> planning_strategy, rclcpp::Duration min_plan_duration,
-    double planning_period, carma_wm::WorldModelConstPtr wm)
+    rclcpp::Duration planning_period, carma_wm::WorldModelConstPtr wm)
   : sm_(sm),
     nh_(nh),
     min_plan_duration_(min_plan_duration),

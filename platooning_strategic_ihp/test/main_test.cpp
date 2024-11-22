@@ -21,7 +21,7 @@
 #include <memory>
 #include <thread>
 
-#include "platooning_strategic_ihp/platoon_strategic_plugin_node_ihp.h"
+#include "platooning_strategic_ihp/platooning_strategic_plugin_node_ihp.h"
 
 int main(int argc, char ** argv)
 {
