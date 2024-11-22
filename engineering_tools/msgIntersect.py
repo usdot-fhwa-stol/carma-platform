@@ -10,7 +10,6 @@
 
 
 import socket
-from time import sleep
 from binascii import unhexlify
 
 
@@ -50,7 +49,6 @@ def main():
 
         # send
         send(msgBytes, ip_send, port_send)
-        sleep(0.1)
 
 if __name__=="__main__":
     main()
