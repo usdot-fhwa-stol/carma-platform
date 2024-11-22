@@ -43,8 +43,8 @@ include_directories(
 # Build
 ament_auto_add_library(${node_lib} SHARED
         src/platoon_manager_ihp.cpp
-        src/platooning_strategic_ihp_node.cpp
-        src/platooning_strategic_ihp.cpp
+        src/platoon_strategic_ihp_node.cpp
+        src/platoon_strategic_ihp.cpp
 )
 
 ament_auto_add_executable(${node_exec}
@@ -72,16 +72,16 @@ if(BUILD_TESTING)
   find_package(ament_lint_auto REQUIRED)
   ament_lint_auto_find_test_dependencies() # This populates the ${${PROJECT_NAME}_FOUND_TEST_DEPENDS} variable
 
-  ament_add_gtest(test_platooning_strategic_ihp
+  ament_add_gtest(test_platoon_strategic_ihp
         test/main_test.cpp
         test/mobility_messages.cpp
         test/test_platoon_manager_front_join.cpp
         test/test_platoon_manager.cpp
   )
 
-  ament_target_dependencies(test_platooning_strategic_ihp ${${PROJECT_NAME}_FOUND_TEST_DEPENDS})
+  ament_target_dependencies(test_platoon_strategic_ihp ${${PROJECT_NAME}_FOUND_TEST_DEPENDS})
 
-  target_link_libraries(test_platooning_strategic_ihp ${node_lib})
+  target_link_libraries(test_platoon_strategic_ihp ${node_lib})
 
 endif()
 
