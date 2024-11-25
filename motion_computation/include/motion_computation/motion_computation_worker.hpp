@@ -18,6 +18,7 @@
 #include <gtest/gtest_prod.h>
 #include <lanelet2_extension/projection/local_frame_projector.h>
 #include <tf2/LinearMath/Transform.h>
+#include <tf2_geometry_msgs/tf2_geometry_msgs.h>
 
 #include <functional>
 #include <memory>
@@ -35,7 +36,6 @@
 #include <carma_v2x_msgs/msg/mobility_path.hpp>
 #include <carma_v2x_msgs/msg/psm.hpp>
 #include <std_msgs/msg/string.hpp>
-#include <tf2_geometry_msgs/tf2_geometry_msgs.hpp>
 
 namespace motion_computation
 {

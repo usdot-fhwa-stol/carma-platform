@@ -14,6 +14,7 @@
 
 #include <lanelet2_extension/regulatory_elements/CarmaTrafficSignal.h>
 #include <tf2/LinearMath/Transform.h>
+#include <tf2_geometry_msgs/tf2_geometry_msgs.h>
 #include <wgs84_utils/wgs84_utils.h>
 
 #include <algorithm>
@@ -29,7 +30,6 @@
 
 #include <carma_perception_msgs/msg/external_object.hpp>
 #include <carma_v2x_msgs/msg/psm.hpp>
-#include <tf2_geometry_msgs/tf2_geometry_msgs.hpp>
 
 namespace motion_computation
 {
@@ -227,8 +227,7 @@ void convert(
 
   out_msg.predictions = impl::predicted_poses_to_predicted_state(
     predicted_poses, out_msg.velocity.twist.linear.x, rclcpp::Time(out_msg.header.stamp),
-    rclcpp::Duration::from_nanoseconds(pred_step_size * 1e9), map_frame_id, out_msg.confidence,
-    out_msg.confidence);
+    rclcpp::Duration(pred_step_size * 1e9), map_frame_id, out_msg.confidence, out_msg.confidence);
   out_msg.presence_vector |= carma_perception_msgs::msg::ExternalObject::PREDICTION_PRESENCE_VECTOR;
 }
 

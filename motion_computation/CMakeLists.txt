@@ -12,7 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-cmake_minimum_required(VERSION 3.8)
+cmake_minimum_required(VERSION 3.5)
 project(motion_computation)
 
 # CARMA builds packages in an environment with both ROS 1 and ROS 2 installed.
@@ -43,12 +43,6 @@ file(TOUCH ${PROJECT_BINARY_DIR}/COLCON_IGNORE)
 
 # Configures CARMA package default settings
 carma_package()
-
-# Use C++17
-if(NOT CMAKE_CXX_STANDARD)
-  set(CMAKE_CXX_STANDARD 17)
-  set(CMAKE_CXX_STANDARD_REQUIRED ON)
-endif()
 
 # C17 CMake support added in CMake 3.21
 set(CMAKE_CXX_STANDARD 17)
