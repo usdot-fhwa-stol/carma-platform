@@ -22,7 +22,7 @@ Usage:
     5. The script will automatically monitor and log CPU/memory usage
        of all ROS2 nodes and related processes during CARMA operation
     6. To stop monitoring:
-       - Press Ctrl+C in the monitoring terminal
+       - Press Ctrl+C ONCE in the monitoring terminal
        - The CSV output file will be saved in the logs directory following ROS bag naming convention:
          'logs/cpu_usage_ros2_nodes_YYYY_MM_DD-HH_MM_SS.csv'
 Output:
