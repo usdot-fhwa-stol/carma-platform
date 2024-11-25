@@ -15,7 +15,7 @@
 
 <package format="3">
   <name>motion_computation</name>
-  <version>4.0.0</version>
+  <version>5.0.0</version>
   <description>The motion_computation package</description>
 
   <maintainer email="carma@dot.gov">carma</maintainer>
@@ -36,6 +36,7 @@
   <depend>tf2</depend>
   <depend>tf2_geometry_msgs</depend>
   <depend>tf2_ros</depend>
+  <depend>tf2_bullet</depend>
   <depend>lanelet2_extension</depend>
   <depend>wgs84_utils</depend>
 

@@ -4,7 +4,7 @@ on:
   pull_request:
     types: [opened, synchronize, reopened]
   push:
-    branches: [develop, master]
+    branches: [develop, develop-humble, master]
 jobs:
   determine_docker_org_and_tag:
     runs-on: ubuntu-latest
@@ -31,7 +31,7 @@ jobs:
       image: ${{ needs.determine_docker_org_and_tag.outputs.docker_org }}/autoware.ai:${{ needs.determine_docker_org_and_tag.outputs.docker_tag }}
       env:
         INIT_ENV: "/home/carma/.base-image/init-env.sh"
-        ROS_2_ENV: "/opt/ros/foxy/setup.bash"
+        ROS_2_ENV: "/opt/ros/humble/setup.bash"
         TERM: xterm
       options: "--user root"
 
@@ -63,63 +63,35 @@ jobs:
         source "$INIT_ENV"
         ./src/${{ github.event.repository.name }}/docker/checkout.bash -r /opt/carma/ -b ${{ steps.determine-base-branch.outputs.git_branch }}
 
-    - name: Install external dependencies
-      # Install the multiple object tracking deps
-      run: sudo bash /opt/carma/src/multiple_object_tracking/scripts/install_dependencies.sh
-
-    - name: Build ROS1
-      # Build ROS1 packages
-      # The skipped ROS 1 packages here should match the ROS 1 packages that are skipped during the build in docker/install.sh
+    # TODO: WIP Humble Upgrade: Enable when carma_cooperative_perception is ready
+    #- name: Install external dependencies
+    #  # Install the multiple object tracking deps
+    #  run: sudo bash /opt/carma/src/multiple_object_tracking/scripts/install_dependencies.sh
+    # TODO WIP Humble Upgrade: Remove after humble upgrade is done
+    - name: Read packages from file
       run: |
-        source "$INIT_ENV"
-        PACKAGES=$(find . -maxdepth 2 -type f -name package.xml | sed 's/\.\///' | cut -d/ -f1) # maxdepth 2 Limits the search of package.xml to current directory and one level of subdirectories beneath it. find will not search beyond two levels deep from the starting point. Without this option, find would search the starting directory and all subdirectories recursively.
-        sed -i 's/colcon build /colcon build --packages-skip novatel_oem7_msgs tracetools tracetools_test /' /home/carma/.ci-image/engineering_tools/code_coverage/make_with_coverage.bash
-        make_with_coverage.bash -m -e /opt/carma/ -o ./coverage_reports/gcov
-
-    - name: Run ROS1 C++ Tests
-      # Run ROS1 C++ tests
-      # The skipped ROS 1 packages here should match the ROS 1 packages that are skipped during the build in docker/install.sh"
-
-      # These tests has been temporarily disabled to support Continuous Improvement (CI) processes.
-      # Related GitHub Issue: <https://github.com/usdot-fhwa-stol/carma-platform/issues/2335>
-      # some ROS2 packages unit tests are triggered during ROS1 tests, so they are temporarily being skipped.
-      run: |
-        source "$INIT_ENV"
-        sed -i 's/colcon test /colcon test --packages-skip novatel_oem7_msgs tracetools tracetools_test carma_launch_testing carma_message_utilities ros2bag ros2trace tracetools_launch tracetools_read tracetools_trace rosbag2 carma_utils /' /home/carma/.ci-image/engineering_tools/code_coverage/make_with_coverage.bash
-        make_with_coverage.bash -t -e /opt/carma/ -o ./coverage_reports/gcov
-
-    - name: Backup ROS1 compile_commands.json
-      # Backup the ROS1 compile_commands.json file for sonarcloud
-      run: |
-        mv /opt/carma/build/compile_commands.json /opt/carma/compile_commands.ros1.json
-
-    - name: Cleanup before ROS 2 build
-      # Clear the build and install folders before building ROS 2
-      run: |
-        rm -rf /opt/carma/install
-        rm -rf /opt/carma/build
+        PACKAGES=$(find . -maxdepth 2 -type f -name "package.xml" -print0 | xargs -0 -I {} dirname {} | xargs -I {} basename {} | grep -v "template_package" | sort -u)
+        echo "PACKAGES=$PACKAGES" >> $GITHUB_ENV
 
     - name: Build ROS2
       # Build ROS2 packages
+      # TODO: WIP Humble Upgrade: Enable only packages that are converted
       run: |
         source "$INIT_ENV"
         source "$ROS_2_ENV"
-        source /opt/autoware.ai/ros/install_ros2/setup.bash
+        source /opt/autoware.ai/ros/install/setup.bash
+        sed -i '/colcon build/ s/$/ --continue-on-error --parallel-workers 16 --packages-up-to $PACKAGES/' /home/carma/.ci-image/engineering_tools/code_coverage/make_with_coverage.bash
         make_with_coverage.bash -m -e /opt/carma/ -o ./coverage_reports/gcov
 
     - name: Run ROS2 C++ Tests
       # Run ROS2 C++ tests
+      # TODO: WIP Humble Upgrade: Enable only packages that are converted. Should be packages-above later
       run: |
         source "$INIT_ENV"
         source "$ROS_2_ENV"
-        source /opt/autoware.ai/ros/install_ros2/setup.bash
+        source /opt/autoware.ai/ros/install/setup.bash
+        sed -i '/colcon test/ s/$/ --parallel-workers 16 --packages-select $PACKAGES/' /home/carma/.ci-image/engineering_tools/code_coverage/make_with_coverage.bash
         make_with_coverage.bash -t -e /opt/carma/ -o ./coverage_reports/gcov
-
-    - name: Combine ROS1 and ROS2 compile_commands.json files
-      # Combine the ROS1 and ROS2 compile_commands.json files for sonarscan
-      run: |
-        mv /opt/carma/build/compile_commands.json /opt/carma/compile_commands.ros2.json
-        jq -s add /opt/carma/compile_commands.ros1.json /opt/carma/compile_commands.ros2.json > /opt/carma/build/compile_commands.json
 
     - name: Run SonarScanner
       # Run SonarScanner for code analysis

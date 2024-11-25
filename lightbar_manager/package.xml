@@ -1,4 +1,4 @@
-<!--  
+<!--
  Copyright (C) 2023 LEIDOS.
  Licensed under the Apache License, Version 2.0 (the "License"); you may not
  use this file except in compliance with the License. You may obtain a copy of
@@ -13,13 +13,13 @@
 
 <package format="3">
   <name>lightbar_manager</name>
-  <version>4.0.0</version>
+  <version>5.0.0</version>
   <description>The lightbar_manager package</description>
 
   <maintainer email="carma@dot.gov">carma</maintainer>
 
   <license>Apache 2.0</license>
-  
+
   <buildtool_depend>ament_cmake</buildtool_depend>
   <build_depend>carma_cmake_common</build_depend>
   <build_depend>ament_auto_cmake</build_depend>

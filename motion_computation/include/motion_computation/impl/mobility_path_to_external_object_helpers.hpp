@@ -17,7 +17,7 @@
 
 #include <lanelet2_extension/projection/local_frame_projector.h>
 #include <tf2/LinearMath/Quaternion.h>
-#include <tf2/LinearMath/Vector3.h>
+#include <tf2_bullet/tf2_bullet.h>
 
 #include <tuple>
 #include <utility>

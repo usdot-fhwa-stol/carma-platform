@@ -16,7 +16,7 @@
 -->
 <package format = "3">
   <name>carma</name>
-  <version>3.3.0</version>
+  <version>5.0.0</version>
   <description>The carma package.</description>
 
   <maintainer email="carma@dot.gov">carma</maintainer>
@@ -37,5 +37,5 @@
     <build_type condition="$ROS_VERSION == 1">catkin</build_type>
     <build_type condition="$ROS_VERSION == 2">ament_cmake</build_type>
   </export>
-  
+
 </package>

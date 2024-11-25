@@ -16,7 +16,6 @@
 #define MOTION_COMPUTATION__MOTION_COMPUTATION_NODE_HPP_
 
 #include <lanelet2_extension/projection/local_frame_projector.h>
-#include <tf2_geometry_msgs/tf2_geometry_msgs.h>
 
 #include <functional>
 #include <vector>
@@ -29,6 +28,7 @@
 #include <carma_perception_msgs/msg/external_object_list.hpp>
 #include <carma_v2x_msgs/msg/mobility_path.hpp>
 #include <std_msgs/msg/string.hpp>
+#include <tf2_geometry_msgs/tf2_geometry_msgs.hpp>
 
 namespace motion_computation
 {

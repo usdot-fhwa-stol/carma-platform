@@ -16,64 +16,61 @@
 
 #pragma once
 
-#include <rclcpp/rclcpp.hpp>
-#include <functional>
-#include <std_msgs/msg/string.hpp>
-#include <std_srvs/srv/empty.hpp>
-
-#include <carma_ros2_utils/carma_lifecycle_node.hpp>
-
-#include <tf2_ros/transform_listener.h>
-#include <tf2_geometry_msgs/tf2_geometry_msgs.h>
-#include <tf2/LinearMath/Quaternion.h>
 #include <tf2/LinearMath/Matrix3x3.h>
+#include <tf2/LinearMath/Quaternion.h>
+#include <tf2_ros/buffer.h>
+#include <tf2_ros/transform_listener.h>
 
-#include <vector>
-#include <string>
 #include <algorithm>
+#include <functional>
+#include <string>
+#include <vector>
 
+#include "gnss_to_map_convertor/GNSSToMapConvertor.hpp"
+#include "gnss_to_map_convertor/gnss_to_map_convertor_config.hpp"
 #include <boost/algorithm/string.hpp>
 #include <boost/optional.hpp>
+#include <carma_ros2_utils/carma_lifecycle_node.hpp>
+#include <rclcpp/rclcpp.hpp>
+#include <std_srvs/srv/empty.hpp>
 
-#include "gnss_to_map_convertor/gnss_to_map_convertor_config.hpp"
-#include "gnss_to_map_convertor/GNSSToMapConvertor.hpp"
+#include <std_msgs/msg/string.hpp>
+#include <tf2_geometry_msgs/tf2_geometry_msgs.hpp>
 
 namespace gnss_to_map_convertor
 {
 
-  class Node : public carma_ros2_utils::CarmaLifecycleNode
-  {
-  private:
+class Node : public carma_ros2_utils::CarmaLifecycleNode
+{
+private:
+  // Node configuration
+  Config config_;
 
-    // Node configuration
-    Config config_;
+  // Buffer which holds the tree of transforms
+  std::shared_ptr<tf2_ros::Buffer> tfBuffer_;
 
-    // Buffer which holds the tree of transforms
+  // tf2 listeners. Subscribes to the /tf and /tf_static topics
+  std::shared_ptr<tf2_ros::TransformListener> tfListener_;
 
-    tf2_ros::Buffer tfBuffer_;
-    
-    // tf2 listeners. Subscribes to the /tf and /tf_static topics
-    tf2_ros::TransformListener tfListener_ {tfBuffer_};
+  // worker for GNSSToMapConvertor
+  std::shared_ptr<GNSSToMapConvertor> convertor_worker_;
 
-    //worker for GNSSToMapConvertor
-    std::shared_ptr <GNSSToMapConvertor> convertor_worker_;
+public:
+  /**
+   * \brief Node constructor
+   */
+  explicit Node(const rclcpp::NodeOptions &);
 
-  public:
-    /**
-     * \brief Node constructor 
-     */
-    explicit Node(const rclcpp::NodeOptions &);
+  rcl_interfaces::msg::SetParametersResult parameter_update_callback(
+    const std::vector<rclcpp::Parameter> & parameters);
 
-    rcl_interfaces::msg::SetParametersResult parameter_update_callback(const std::vector<rclcpp::Parameter> &parameters);
+  carma_ros2_utils::CallbackReturn handle_on_configure(const rclcpp_lifecycle::State &);
 
-    carma_ros2_utils::CallbackReturn handle_on_configure(const rclcpp_lifecycle::State &);
+  carma_ros2_utils::PubPtr<geometry_msgs::msg::PoseStamped> map_pose_pub;
 
-    carma_ros2_utils::PubPtr<geometry_msgs::msg::PoseStamped> map_pose_pub;
+  carma_ros2_utils::SubPtr<gps_msgs::msg::GPSFix> fix_sub_;
 
-    carma_ros2_utils::SubPtr<gps_msgs::msg::GPSFix> fix_sub_;
+  carma_ros2_utils::SubPtr<std_msgs::msg::String> geo_sub;
+};
 
-    carma_ros2_utils::SubPtr<std_msgs::msg::String> geo_sub;
-
-  };
-
-} // gnss_to_map_convertor
+}  // namespace gnss_to_map_convertor
