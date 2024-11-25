@@ -774,7 +774,7 @@ namespace basic_autonomy
             for (size_t i = 0; i < points.size(); i++)
             {
                 carma_planning_msgs::msg::TrajectoryPlanPoint tpp;
-                rclcpp::Duration relative_time(static_cast<int64_t>(times[i] * 1e9)); // Conversion of times[i] from seconds to nanoseconds
+                rclcpp::Duration relative_time = rclcpp::Duration::from_nanoseconds(static_cast<int64_t>(times[i] * 1e9)); // Conversion of times[i] from seconds to nanoseconds
                 tpp.target_time = startTime + relative_time;
                 tpp.x = points[i].x();
                 tpp.y = points[i].y();
