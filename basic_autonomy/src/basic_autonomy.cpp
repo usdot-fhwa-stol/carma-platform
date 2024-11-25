@@ -774,7 +774,7 @@ namespace basic_autonomy
             for (size_t i = 0; i < points.size(); i++)
             {
                 carma_planning_msgs::msg::TrajectoryPlanPoint tpp;
-                rclcpp::Duration relative_time(times[i] * 1e9); // Conversion of times[i] from seconds to nanoseconds
+                rclcpp::Duration relative_time(static_cast<int64_t>(times[i] * 1e9)); // Conversion of times[i] from seconds to nanoseconds
                 tpp.target_time = startTime + relative_time;
                 tpp.x = points[i].x();
                 tpp.y = points[i].y();
@@ -1283,7 +1283,7 @@ namespace basic_autonomy
                 autoware_point.heading.real = std::cos(yaw/2);
                 autoware_point.heading.imag = std::sin(yaw/2);
 
-                autoware_point.time_from_start = rclcpp::Duration::from_nanoseconds(times[i] * 1e9);
+                autoware_point.time_from_start = rclcpp::Duration::from_nanoseconds(static_cast<int64_t>(times[i] * 1e9));
                 RCLCPP_DEBUG_STREAM(rclcpp::get_logger(BASIC_AUTONOMY_LOGGER), "Setting waypoint idx: " << i <<", with planner: << " << trajectory_points[i].planner_plugin_name << ", x: " << trajectory_points[i].x <<
                                         ", y: " << trajectory_points[i].y <<
                                         ", speed: " << lag_speeds[i]* 2.23694 << "mph");
