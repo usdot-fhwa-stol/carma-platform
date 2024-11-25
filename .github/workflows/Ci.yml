@@ -70,7 +70,7 @@ jobs:
     # TODO WIP Humble Upgrade: Remove after humble upgrade is done
     - name: Read packages from file
       run: |
-        PACKAGES=$(find . -maxdepth 2 -type f -name package.xml | sed 's/\.\///' | cut -d/ -f1)
+        PACKAGES=$(find ./src/${{ github.event.repository.name }}/ -maxdepth 2 -type f -name package.xml | grep -v "template_package" | sed 's/\.\///' | cut -d/ -f1)
         echo "Selected packages to build from this repository: $PACKAGES"
         echo "PACKAGES=$PACKAGES" >> $GITHUB_ENV
 
