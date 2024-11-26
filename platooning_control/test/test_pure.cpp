@@ -58,7 +58,7 @@ TEST(PurePursuitTest, sanity_check)
   state_tf.state.y = 0;
   state_tf.state.longitudinal_velocity_mps = 4.0; //arbitrary speed for first point
   plan.header.frame_id = state_tf.header.frame_id;
-  plan.header.stamp = rclcpp::Time(converted_time_now*1e9) + rclcpp::Duration::from_nanoseconds(1.0*1e9);
+  plan.header.stamp = rclcpp::Time(converted_time_now*1e9) + rclcpp::Duration(1.0*1e9);
 
   plan.trajectory_points = { tpp, tpp2, tpp3 };
 

@@ -15,11 +15,12 @@
  */
 #include "<SUB><package_name>/<SUB><package_name>_node.hpp"
 
-namespace<SUB><package_name>
+namespace <SUB><package_name>
 {
   namespace std_ph = std::placeholders;
 
-  Node::Node(const rclcpp::NodeOptions & options) : carma_guidance_plugins::ControlPlugin(options)
+  Node::Node(const rclcpp::NodeOptions &options)
+      : carma_guidance_plugins::ControlPlugin(options)
   {
     // Create initial config
     config_ = Config();
@@ -28,11 +29,9 @@ namespace<SUB><package_name>
     config_.example_param = declare_parameter<std::string>("example_param", config_.example_param);
   }
 
-  rcl_interfaces::msg::SetParametersResult Node::parameter_update_callback(
-    const std::vector<rclcpp::Parameter> & parameters)
+  rcl_interfaces::msg::SetParametersResult Node::parameter_update_callback(const std::vector<rclcpp::Parameter> &parameters)
   {
-    // TODO for the USER: Ensure all parameters can be updated dynamically by adding them to this
-    // method
+    // TODO for the USER: Ensure all parameters can be updated dynamically by adding them to this method
     auto error = update_params<std::string>({{"example_param", config_.example_param}}, parameters);
 
     rcl_interfaces::msg::SetParametersResult result;
@@ -54,8 +53,8 @@ namespace<SUB><package_name>
     add_on_set_parameters_callback(std::bind(&Node::parameter_update_callback, this, std_ph::_1));
 
     // Setup subscribers
-    example_sub_ = create_subscription<std_msgs::msg::String>(
-      "example_input_topic", 10, std::bind(&Node::example_callback, this, std_ph::_1));
+    example_sub_ = create_subscription<std_msgs::msg::String>("example_input_topic", 10,
+                                                              std::bind(&Node::example_callback, this, std_ph::_1));
 
     // Setup publishers
     example_pub_ = create_publisher<std_msgs::msg::String>("example_output_topic", 10);
@@ -64,26 +63,27 @@ namespace<SUB><package_name>
     example_client_ = create_client<std_srvs::srv::Empty>("example_used_service");
 
     // Setup service servers
-    example_service_ = create_service<std_srvs::srv::Empty>(
-      "example_provided_service",
-      std::bind(&Node::example_service_callback, this, std_ph::_1, std_ph::_2, std_ph::_3));
+    example_service_ = create_service<std_srvs::srv::Empty>("example_provided_service",
+                                                            std::bind(&Node::example_service_callback, this, std_ph::_1, std_ph::_2, std_ph::_3));
 
     // Setup timers
-    // NOTE: You will not be able to actually publish until in the ACTIVE state
+    // NOTE: You will not be able to actually publish until in the ACTIVE state 
     // so it may often make more sense for timers to be created in handle_on_activate
     example_timer_ = create_timer(
-      get_clock(), std::chrono::milliseconds(1000), std::bind(&Node::example_timer_callback, this));
+        get_clock(),
+        std::chrono::milliseconds(1000),
+        std::bind(&Node::example_timer_callback, this));
 
     // Return success if everthing initialized successfully
     return CallbackReturn::SUCCESS;
   }
 
   // Parameter names not shown to prevent unused compile warning. The user may add them back
-  void Node::example_service_callback(
-    const std::shared_ptr<rmw_request_id_t>, const std::shared_ptr<std_srvs::srv::Empty::Request>,
-    std::shared_ptr<std_srvs::srv::Empty::Response>)
+  void Node::example_service_callback(const std::shared_ptr<rmw_request_id_t>,
+                                      const std::shared_ptr<std_srvs::srv::Empty::Request>,
+                                      std::shared_ptr<std_srvs::srv::Empty::Response>)
   {
-    RCLCPP_INFO(get_logger(), "Example service callback");
+    RCLCPP_INFO(  get_logger(), "Example service callback");
   }
 
   void Node::example_timer_callback()
@@ -96,7 +96,7 @@ namespace<SUB><package_name>
 
   void Node::example_callback(std_msgs::msg::String::UniquePtr msg)
   {
-    RCLCPP_INFO_STREAM(get_logger(), "example_sub_ callback called with value: " << msg->data);
+    RCLCPP_INFO_STREAM(  get_logger(), "example_sub_ callback called with value: " << msg->data);
   }
 
   autoware_msgs::msg::ControlCommandStamped Node::generate_command()
@@ -106,14 +106,15 @@ namespace<SUB><package_name>
     return msg;
   }
 
-  bool Node::get_availability()
-  {
-    return true;  // TODO for user implement actual check on availability if applicable to plugin
+  bool Node::get_availability() {
+    return true; // TODO for user implement actual check on availability if applicable to plugin
   }
 
-  std::string Node::get_version_id() { return "TODO for user specify plugin version id here"; }
+  std::string Node::get_version_id() {
+    return "TODO for user specify plugin version id here";
+  }
 
-}  // namespace >
+} // <SUB><package_name>
 
 #include "rclcpp_components/register_node_macro.hpp"
 

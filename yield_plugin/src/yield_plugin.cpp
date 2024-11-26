@@ -513,7 +513,7 @@ namespace yield_plugin
       // Derived from constant accelaration kinematic equation: (vi + vf) / 2 * dt = d_dist
       // This also handles a case correctly when current_speed is 0, but prev_speed is not 0 yet
       const double dt = (2 * original_traj_relative_downtracks.at(i)) / (current_speed + prev_speed);
-      jmt_tpp.target_time =  rclcpp::Time(jmt_trajectory_points.back().target_time) + rclcpp::Duration::from_nanoseconds(dt*1e9);
+      jmt_tpp.target_time =  rclcpp::Time(jmt_trajectory_points.back().target_time) + rclcpp::Duration(dt*1e9);
 
       if (prev_speed < EPSILON) // Handle a special case if prev_speed (thus current_speed too) is 0
       {
@@ -522,7 +522,7 @@ namespace yield_plugin
         // if the vehicle goes past the point, it may cruise toward undesirable location (for example into the intersection).
         // Keeping the points help the controller steer the vehicle toward direction of travel even when stopping.
         // Only downside is the trajectory plan is huge where only 15 sec is expected, but since this is stopping case, it shouldn't matter.
-        jmt_tpp.target_time = rclcpp::Time(jmt_trajectory_points.back().target_time) + rclcpp::Duration::from_nanoseconds(6000 * 1e9);
+        jmt_tpp.target_time = rclcpp::Time(jmt_trajectory_points.back().target_time) + rclcpp::Duration(6000 * 1e9);
         RCLCPP_DEBUG_STREAM(nh_->get_logger(), "Zero speed = x: " << jmt_tpp.x << ", y:" << jmt_tpp.y
           << ", t:" << std::to_string(rclcpp::Time(jmt_tpp.target_time).seconds())
           << ", prev_speed: " << prev_speed << ", current_speed: " << current_speed);

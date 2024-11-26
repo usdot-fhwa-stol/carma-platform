@@ -28,27 +28,27 @@ TEST(MobilityPathVisualizerTest, TestComposeVisualizationMarker)
     auto viz_node = std::make_shared<mobilitypath_visualizer::MobilityPathVisualizer>(options);
     viz_node->configure();
     viz_node->activate();
-
+    
     // 1 to 1 transform
     std::string base_proj = lanelet::projection::LocalFrameProjector::ECEF_PROJ_STR;
     std_msgs::msg::String msg;
     msg.data = base_proj;
     std::unique_ptr<std_msgs::msg::String> msg_ptr (new std_msgs::msg::String(msg));
     viz_node->georeferenceCallback(std::move(msg_ptr));  // Set projection
-
+    
     // INPUT MSG
     carma_v2x_msgs::msg::MobilityPath input_msg;
     input_msg.m_header.plan_id = "";
     input_msg.m_header.sender_id = ""; //host
     input_msg.m_header.timestamp = 10000; // 10sec
-
+    
     input_msg.trajectory.location.ecef_x = 0;
     input_msg.trajectory.location.ecef_y = 0;
     input_msg.trajectory.location.ecef_z = 0;
 
     carma_v2x_msgs::msg::LocationOffsetECEF offset;
     offset.offset_x = 100;
-    input_msg.trajectory.offsets.push_back(offset);
+    input_msg.trajectory.offsets.push_back(offset); 
     input_msg.trajectory.offsets.push_back(offset); // actual positions now 0, 1, 2 -> 2 markers
 
     mobilitypath_visualizer::MarkerColor expected_color_blue;
@@ -72,17 +72,17 @@ TEST(MobilityPathVisualizerTest, TestComposeVisualizationMarker)
     marker.color.g = expected_color_blue.green;
     marker.color.b = expected_color_blue.blue;
     marker.color.a = 1.0f;
-
+    
     // EXPECTED MSG DYNAMIC
     marker.id = 0;
     geometry_msgs::msg::Point point;
-    point.x = 0;
+    point.x = 0; 
     marker.points.push_back(point);
     point.x = 1; //in meters
     marker.points.push_back(point);
 
     expected_msg.markers.push_back(marker);
-    marker.header.stamp =  builtin_interfaces::msg::Time(rclcpp::Time(10.1*1e9));
+    marker.header.stamp =  builtin_interfaces::msg::Time(rclcpp::Time(10.1*1e9)); 
     marker.id = 1;
     marker.points = {};
     point.x = 1;
@@ -99,23 +99,23 @@ TEST(MobilityPathVisualizerTest, TestComposeVisualizationMarker)
     EXPECT_EQ(expected_msg.markers[0].type, result.markers[0].type);
     EXPECT_EQ(expected_msg.markers[0].action, result.markers[0].action);
     EXPECT_EQ(expected_msg.markers[0].ns, result.markers[0].ns);
-
+    
     EXPECT_EQ(expected_msg.markers[0].color.a, result.markers[0].color.a);
     EXPECT_EQ(expected_msg.markers[0].color.b, result.markers[0].color.b);
     EXPECT_EQ(expected_msg.markers[0].color.g, result.markers[0].color.g);
     EXPECT_EQ(expected_msg.markers[0].color.r, result.markers[0].color.r);
-
+    
     EXPECT_EQ(expected_msg.markers[0].points[0].x, result.markers[0].points[0].x);
     EXPECT_EQ(expected_msg.markers[0].points[0].y, result.markers[0].points[0].y);
     EXPECT_EQ(expected_msg.markers[0].points[0].z, result.markers[0].points[0].z);
-
+    
     EXPECT_EQ(expected_msg.markers[0].points[1].x, result.markers[0].points[1].x);
     EXPECT_EQ(expected_msg.markers[0].points[1].y, result.markers[0].points[1].y);
     EXPECT_EQ(expected_msg.markers[0].points[1].z, result.markers[0].points[1].z);
 
     EXPECT_EQ(expected_msg.markers[1].points[0].x, result.markers[1].points[0].x);
     EXPECT_EQ(expected_msg.markers[1].points[1].x, result.markers[1].points[1].x);
-
+    
 }
 
 TEST(MobilityPathVisualizerTest, TestECEFToMapPoint)
@@ -161,26 +161,26 @@ TEST(MobilityPathVisualizerTest, TestMatchTrajectoryTimestamps)
     msg.data = base_proj;
     std::unique_ptr<std_msgs::msg::String> msg_ptr(new std_msgs::msg::String(msg));
     viz_node->georeferenceCallback(std::move(msg_ptr));  // Set projection
-
+    
     // INPUT RESULT STATIC INFO
     visualization_msgs::msg::MarkerArray host_msg;
     visualization_msgs::msg::Marker marker;
-    marker.header.stamp = builtin_interfaces::msg::Time(rclcpp::Time(10*1e9)); //10sec
+    marker.header.stamp = builtin_interfaces::msg::Time(rclcpp::Time(10*1e9)); //10sec  
     marker.type = visualization_msgs::msg::Marker::ARROW;
     marker.action = visualization_msgs::msg::Marker::ADD;
     marker.ns = "mobilitypath_visualizer";
-
+    
     // INPUT MSG DYNAMIC
     marker.id = 0;
     geometry_msgs::msg::Point point;
-    point.x = 0;
+    point.x = 0; 
     marker.points.push_back(point);
     point.x = 1; //in meters
     marker.points.push_back(point);
 
     host_msg.markers.push_back(marker);
-    marker.header.stamp = builtin_interfaces::msg::Time(rclcpp::Time(10.1*1e9));
-
+    marker.header.stamp = builtin_interfaces::msg::Time(rclcpp::Time(10.1*1e9)); 
+    
     marker.id = 1;
     marker.points = {};
     point.x = 1;
@@ -192,23 +192,23 @@ TEST(MobilityPathVisualizerTest, TestMatchTrajectoryTimestamps)
 
     // Base test
     // Give CAV Exactly same as Host Marker itself
-
+    
     auto result = viz_node->matchTrajectoryTimestamps(host_msg, {host_msg});
-
+    
     EXPECT_EQ(result[0].markers[0].header.stamp.sec, host_msg.markers[0].header.stamp.sec);
     EXPECT_EQ(result[0].markers[0].id, host_msg.markers[0].id);
     EXPECT_EQ(result[0].markers[0].points[0].x, host_msg.markers[0].points[0].x);
     EXPECT_EQ(result[0].markers[0].points[0].y, host_msg.markers[0].points[0].y);
     EXPECT_EQ(result[0].markers[0].points[1].x, host_msg.markers[0].points[1].x);
     EXPECT_EQ(result[0].markers[0].points[1].y, host_msg.markers[0].points[1].y);
-
+    
     EXPECT_EQ(result[0].markers[1].header.stamp.sec, host_msg.markers[1].header.stamp.sec);
     EXPECT_EQ(result[0].markers[1].id, host_msg.markers[1].id);
     EXPECT_EQ(result[0].markers[1].points[0].x, host_msg.markers[1].points[0].x);
     EXPECT_EQ(result[0].markers[1].points[0].y, host_msg.markers[1].points[0].y);
     EXPECT_EQ(result[0].markers[1].points[1].x, host_msg.markers[1].points[1].x);
     EXPECT_EQ(result[0].markers[1].points[1].y, host_msg.markers[1].points[1].y);
-
+    
     visualization_msgs::msg::MarkerArray cav_msg;
     cav_msg = host_msg;
 
@@ -217,56 +217,56 @@ TEST(MobilityPathVisualizerTest, TestMatchTrajectoryTimestamps)
     cav_msg.markers[1].header.stamp = builtin_interfaces::msg::Time(rclcpp::Time(10.06 * 1e9));
 
     result = viz_node->matchTrajectoryTimestamps(host_msg, {cav_msg});
-
+    
     visualization_msgs::msg::MarkerArray expected_msg;
     expected_msg = host_msg;
-
+    
     expected_msg.markers[0].points[0].x = 0.4;
     expected_msg.markers[0].points[1].x = 1.4;
     expected_msg.markers[1].points[0].x = 1.4;
     expected_msg.markers[1].points[1].x = 2.4;
-
+    
     EXPECT_EQ(expected_msg.markers[0].header.stamp.sec, result[0].markers[0].header.stamp.sec);
     EXPECT_EQ(expected_msg.markers[0].id, result[0].markers[0].id);
     EXPECT_EQ(expected_msg.markers[0].points[0].x, result[0].markers[0].points[0].x);
     EXPECT_EQ(expected_msg.markers[0].points[1].x, result[0].markers[0].points[1].x);
-
+    
     EXPECT_EQ(expected_msg.markers[1].header.stamp.sec, result[0].markers[1].header.stamp.sec);
     EXPECT_EQ(expected_msg.markers[1].id, result[0].markers[1].id);
     EXPECT_EQ(expected_msg.markers[1].points[0].x, result[0].markers[1].points[0].x);
     EXPECT_EQ(expected_msg.markers[1].points[1].x, result[0].markers[1].points[1].x);
-
+    
     // 1 OUT OF 2 POINTS DROPPED
     cav_msg.markers[0].header.stamp = builtin_interfaces::msg::Time(rclcpp::Time(9.86 * 1e9));
     cav_msg.markers[1].header.stamp = builtin_interfaces::msg::Time(rclcpp::Time(9.96 * 1e9));
-
+    
     result = viz_node->matchTrajectoryTimestamps(host_msg, {cav_msg});
-
+    
     expected_msg.markers[0].id = 1;
     expected_msg.markers[0].header.stamp = builtin_interfaces::msg::Time(rclcpp::Time(10.0* 1e9));
     expected_msg.markers[0].points[0].x = 1.4;
     expected_msg.markers[0].points[1].x = 2.4;
-
+    
     EXPECT_EQ(expected_msg.markers[0].header.stamp, result[0].markers[0].header.stamp);
     EXPECT_EQ(expected_msg.markers[0].id, result[0].markers[0].id);
     EXPECT_EQ(expected_msg.markers[0].points[0].x, result[0].markers[0].points[0].x);
     EXPECT_EQ(expected_msg.markers[0].points[1].x, result[0].markers[0].points[1].x);
-
+    
     // ALL POINTS DROPPED OUTDATED
     cav_msg.markers[0].header.stamp = builtin_interfaces::msg::Time(rclcpp::Time(9.66* 1e9));
     cav_msg.markers[1].header.stamp = builtin_interfaces::msg::Time(rclcpp::Time(9.76* 1e9));
-
+    
     result = viz_node->matchTrajectoryTimestamps(host_msg, {cav_msg});
-
-    EXPECT_EQ(0, result.size());
+    
+    EXPECT_EQ(0, result.size()); 
 
     // ALL POINTS DROPPED TOO FUTURE
     cav_msg.markers[0].header.stamp = builtin_interfaces::msg::Time(rclcpp::Time(11.66 * 1e9));
     cav_msg.markers[1].header.stamp = builtin_interfaces::msg::Time(rclcpp::Time(12.76 * 1e9));
-
+    
     result = viz_node->matchTrajectoryTimestamps(host_msg, {cav_msg});
-
-    EXPECT_EQ(0, result.size());
+    
+    EXPECT_EQ(0, result.size()); 
 }
 
 TEST(MobilityPathVisualizerTest, TestComposeLabelMarker)
@@ -275,25 +275,25 @@ TEST(MobilityPathVisualizerTest, TestComposeLabelMarker)
     auto viz_node = std::make_shared<mobilitypath_visualizer::MobilityPathVisualizer>(options);
     viz_node->configure();
     viz_node->activate();
-
+    
     // INPUT RESULT STATIC INFO
     visualization_msgs::msg::MarkerArray host_msg;
     visualization_msgs::msg::Marker marker;
-    marker.header.stamp = builtin_interfaces::msg::Time(viz_node->now() + rclcpp::Duration::from_nanoseconds(10.0 * 10e9)); //10sec
+    marker.header.stamp = builtin_interfaces::msg::Time(viz_node->now() + rclcpp::Duration(10.0 * 10e9)); //10sec
     marker.type = visualization_msgs::msg::Marker::ARROW;
     marker.action = visualization_msgs::msg::Marker::ADD;
     marker.ns = "mobilitypath_visualizer";
-
+    
     // INPUT MSG DYNAMIC
     marker.id = 0;
     geometry_msgs::msg::Point point;
-    point.x = 0;
+    point.x = 0; 
     marker.points.push_back(point);
     point.x = 1; //in meters
     marker.points.push_back(point);
 
     host_msg.markers.push_back(marker);
-    marker.header.stamp.sec += rclcpp::Duration(0.1,0.0).seconds();
+    marker.header.stamp.sec += rclcpp::Duration(0.1,0.0).seconds(); 
     marker.id = 1;
     marker.points = {};
     point.x = 1;
@@ -306,9 +306,9 @@ TEST(MobilityPathVisualizerTest, TestComposeLabelMarker)
     // Base test
     // Give CAV Exactly same as Host Marker itself
     // Collision in every seconds
-
+    
     auto result = viz_node->composeLabelMarker(host_msg, {host_msg});
-
+    
     //TEST STATIC
     EXPECT_EQ(result.markers[0].header.frame_id, "map");
     EXPECT_EQ(result.markers[0].type, visualization_msgs::msg::Marker::TEXT_VIEW_FACING);
@@ -321,7 +321,7 @@ TEST(MobilityPathVisualizerTest, TestComposeLabelMarker)
     EXPECT_EQ(result.markers.size(), host_msg.markers.size() + 1);
     EXPECT_NEAR(result.markers[0].pose.position.x, host_msg.markers[0].points[0].x,0.001);
     EXPECT_NEAR(result.markers[0].pose.position.y, host_msg.markers[0].points[0].y,0.001);
-
+    
     EXPECT_NEAR(result.markers[1].pose.position.x, host_msg.markers[1].points[0].x,0.001);
     EXPECT_NEAR(result.markers[1].pose.position.y, host_msg.markers[1].points[0].y,0.001);
 
@@ -329,7 +329,7 @@ TEST(MobilityPathVisualizerTest, TestComposeLabelMarker)
     EXPECT_NEAR(result.markers[2].pose.position.y, host_msg.markers[1].points[1].y,0.001);
 
     EXPECT_NEAR(result.markers[2].header.stamp.sec, host_msg.markers[1].header.stamp.sec + 0.1,0.1);
-
+    
 }
 
 // Run all the tests

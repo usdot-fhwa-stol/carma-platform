@@ -32,11 +32,11 @@ namespace stop_controlled_intersection_tactical_plugin
     auto node = std::make_shared<stop_controlled_intersection_tactical_plugin::StopControlledIntersectionTacticalPlugin>(rclcpp::NodeOptions());
     node->configure();
     node->activate();
-
+    
     auto map = carma_wm::test::buildGuidanceTestMap(3.7, 50);
 
     wm->setMap(map);
-
+    
     carma_wm::test::setSpeedLimit(40_mph, wm);
     /**
      * Total route length should be 100m
@@ -79,19 +79,19 @@ namespace stop_controlled_intersection_tactical_plugin
     maneuver.lane_following_maneuver.parameters.int_valued_meta_data.push_back(1);    //Case number
     maneuver.lane_following_maneuver.parameters.string_valued_meta_data.push_back("Carma/stop_controlled_intersection");
     //Float meta data list - a_acc, a_dec, t_acc, t_dec, speed_before_decel
-
+    
     //Calculate speed before decel - The speed the vehicle should accelerate before slowing down
     //Assuming the a_dec to be 0.5m/s^2, the vehicle should be able to stop at that deceleration- over total_dist/2
     //So accelerate half way and decelerate the rest
     double a_dec = -1.5;
     double assumed_dec_dist = maneuver.lane_following_maneuver.end_dist/2;
     double speed_before_dec = sqrt(2*std::abs(a_dec)*assumed_dec_dist);
-
+    
     double a_acc = (pow(speed_before_dec,2) - pow(maneuver.lane_following_maneuver.start_speed,2))/(2*(maneuver.lane_following_maneuver.end_dist - assumed_dec_dist));
     double t_acc = (speed_before_dec - maneuver.lane_following_maneuver.start_speed)/a_acc;
     double t_dec = (speed_before_dec)/std::abs(a_dec);
 
-    maneuver.lane_following_maneuver.end_time = rclcpp::Time(maneuver.lane_following_maneuver.start_time) + rclcpp::Duration::from_nanoseconds((t_acc + t_dec)*1e9);
+    maneuver.lane_following_maneuver.end_time = rclcpp::Time(maneuver.lane_following_maneuver.start_time) + rclcpp::Duration((t_acc + t_dec)*1e9);
 
     maneuver.lane_following_maneuver.parameters.float_valued_meta_data.push_back(a_acc);
     maneuver.lane_following_maneuver.parameters.float_valued_meta_data.push_back(a_dec);
@@ -123,18 +123,18 @@ namespace stop_controlled_intersection_tactical_plugin
     //Ensure acceleration and deceleration is happening
     double dist_to_cover = maneuver.lane_following_maneuver.end_dist - maneuver.lane_following_maneuver.start_dist;
     double total_dist_covered = 0;
-
+  
     double prev_speed = case_one_profile[0].speed;
     lanelet::BasicPoint2d prev_point = case_one_profile[0].point;
     double current_speed;
     lanelet::BasicPoint2d current_point;
-
+    
     for(int i = 0;i < case_one_profile.size();i++){
       current_point = case_one_profile[i].point;
       current_speed = case_one_profile[i].speed;
       double delta_d = lanelet::geometry::distance2d(prev_point, current_point);
-      total_dist_covered += delta_d;
-      if(total_dist_covered < 50.1){ //According to test conditions acceleration till approx 50 meters
+      total_dist_covered += delta_d;   
+      if(total_dist_covered < 50.1){ //According to test conditions acceleration till approx 50 meters 
         EXPECT_TRUE(current_speed >= prev_speed);
       }
       else{
@@ -154,13 +154,13 @@ namespace stop_controlled_intersection_tactical_plugin
 
   TEST(StopControlledIntersectionTacticalPlugin, TestSCIPlanning_case_two){
     //Test Stop controlled Intersection tactical plugin generation
-
+    
     StopControlledIntersectionTacticalPluginConfig config;
     std::shared_ptr<carma_wm::CARMAWorldModel> wm = std::make_shared<carma_wm::CARMAWorldModel>();
     auto node = std::make_shared<stop_controlled_intersection_tactical_plugin::StopControlledIntersectionTacticalPlugin>(rclcpp::NodeOptions());
     node->configure();
     node->activate();
-
+    
     auto map = carma_wm::test::buildGuidanceTestMap(3.7, 50);
 
     wm->setMap(map);
@@ -180,9 +180,9 @@ namespace stop_controlled_intersection_tactical_plugin
      *           START_LINE
     */
 
-    carma_wm::test::setRouteByIds({1200, 1201, 1202, 1203}, wm);
+    carma_wm::test::setRouteByIds({1200, 1201, 1202, 1203}, wm);   
     node->wm_ = wm;
-
+    
     //Create a request and maneuver that meets case 2 criteria
     //speed_before_stop
      auto req  = std::make_shared<carma_planning_msgs::srv::PlanTrajectory::Request>();
@@ -205,7 +205,7 @@ namespace stop_controlled_intersection_tactical_plugin
     maneuver.lane_following_maneuver.parameters.string_valued_meta_data.push_back("Carma/stop_controlled_intersection");
 
     //Float meta data list - a_acc, a_dec, t_acc, t_dec, t_cruise, speed_before_decel
-
+    
     //Calculate speed before decel - The speed the vehicle should accelerate and then cruise before slowing down
     //Assuming the a_dec to be 2m/s^2, the vehicle should be able to stop at that deceleration starting from speed limit
 
@@ -220,7 +220,7 @@ namespace stop_controlled_intersection_tactical_plugin
     double t_dec = speed_before_decel/std::abs(a_dec);
     double t_cruising = dist_cruising/speed_before_decel;
 
-    maneuver.lane_following_maneuver.end_time = rclcpp::Time(maneuver.lane_following_maneuver.start_time) + rclcpp::Duration::from_nanoseconds((t_acc + t_cruising + t_dec)*1e9);
+    maneuver.lane_following_maneuver.end_time = rclcpp::Time(maneuver.lane_following_maneuver.start_time) + rclcpp::Duration((t_acc + t_cruising + t_dec)*1e9);
 
     maneuver.lane_following_maneuver.parameters.float_valued_meta_data.push_back(a_acc);
     maneuver.lane_following_maneuver.parameters.float_valued_meta_data.push_back(a_dec);
@@ -240,9 +240,9 @@ namespace stop_controlled_intersection_tactical_plugin
 
     //Test create_case_two_speed_profile
     std::vector<lanelet::BasicPoint2d> route_geometry_points = wm->sampleRoutePoints(
-            std::min(maneuver.lane_following_maneuver.start_dist + 1.0, maneuver.lane_following_maneuver.end_dist),
+            std::min(maneuver.lane_following_maneuver.start_dist + 1.0, maneuver.lane_following_maneuver.end_dist), 
             maneuver.lane_following_maneuver.end_dist, 1.0);
-
+    
     std::vector<PointSpeedPair> case_two_profile = node->create_case_two_speed_profile(wm, maneuver, route_geometry_points, req->vehicle_state.longitudinal_vel);
 
     double prev_speed = case_two_profile[0].speed;
@@ -257,7 +257,7 @@ namespace stop_controlled_intersection_tactical_plugin
       else{
         EXPECT_TRUE(current_speed < prev_speed);
       }
-
+      
       prev_speed = current_speed;
     }
 
@@ -271,7 +271,7 @@ namespace stop_controlled_intersection_tactical_plugin
     auto node = std::make_shared<stop_controlled_intersection_tactical_plugin::StopControlledIntersectionTacticalPlugin>(rclcpp::NodeOptions());
     node->configure();
     node->activate();
-
+    
     auto map = carma_wm::test::buildGuidanceTestMap(3.7, 50);
 
     wm->setMap(map);
@@ -291,7 +291,7 @@ namespace stop_controlled_intersection_tactical_plugin
      *           START_LINE
     */
 
-    carma_wm::test::setRouteByIds({1200, 1201, 1202, 1203}, wm);
+    carma_wm::test::setRouteByIds({1200, 1201, 1202, 1203}, wm);   
     node->wm_ = wm;
     //Create a request and maneuver that meets case 3 criteria
     //In order to be case 2 - estimated_stop_time > scheduled_stop_time and speed_before_decel =  speed_limit
@@ -321,15 +321,15 @@ namespace stop_controlled_intersection_tactical_plugin
 
     //Test create_case_three_speed_profile
     std::vector<lanelet::BasicPoint2d> route_geometry_points = wm->sampleRoutePoints(
-            std::min(maneuver.lane_following_maneuver.start_dist , maneuver.lane_following_maneuver.end_dist),
+            std::min(maneuver.lane_following_maneuver.start_dist , maneuver.lane_following_maneuver.end_dist), 
             maneuver.lane_following_maneuver.end_dist, 1.0);
-
+    
     std::vector<PointSpeedPair> case_three_profile = node->create_case_three_speed_profile(wm, maneuver, route_geometry_points, req->vehicle_state.longitudinal_vel);
     double prev_speed = case_three_profile.front().speed;
     for(int i = 1;i <case_three_profile.size();i++){
       double current_speed = case_three_profile[i].speed;
       EXPECT_TRUE(current_speed <= prev_speed);
-
+      
       prev_speed = current_speed;
     }
     EXPECT_TRUE(case_three_profile.back().speed < 0.5); //Last speed is less than 0.5mps

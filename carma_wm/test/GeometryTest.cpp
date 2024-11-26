@@ -15,20 +15,18 @@
  */
 
 #include <gtest/gtest.h>
-#include <lanelet2_core/Attribute.h>
+#include <iostream>
+#include <carma_wm/Geometry.hpp>
 #include <lanelet2_core/geometry/LineString.h>
 #include <lanelet2_traffic_rules/TrafficRulesFactory.h>
-#include <tf2/LinearMath/Quaternion.h>
-#include <tf2/LinearMath/Transform.h>
-
-#include <iostream>
-
-#include "TestHelpers.hpp"
 #include <autoware_lanelet2_ros2_interface/utility/utilities.hpp>
-#include <carma_wm/Geometry.hpp>
+#include <lanelet2_core/Attribute.h>
+#include <tf2/LinearMath/Transform.h>
+#include <tf2/LinearMath/Quaternion.h>
+#include <tf2_geometry_msgs/tf2_geometry_msgs.h>
 #include <carma_wm/WMTestLibForGuidance.hpp>
+#include "TestHelpers.hpp"
 
-#include <tf2_geometry_msgs/tf2_geometry_msgs.hpp>
 
 using namespace lanelet::units::literals;
 
@@ -75,16 +73,24 @@ TEST(GeometryTest, computeCurvature)
  * \param sample_count  How many points to sample evenly spaced across the arc
  * \return A lanelet matching the input geometry description
  */
-std::vector<lanelet::Point3d> generate_const_curvature_linestring(
-  lanelet::BasicPoint2d center_of_curvature, double radius_of_curvature, double arc_radians,
-  double sample_count)
+std::vector<lanelet::Point3d>
+generate_const_curvature_linestring(
+  lanelet::BasicPoint2d center_of_curvature,
+  double radius_of_curvature,
+  double arc_radians,
+  double sample_count
+)
 {
   std::vector<lanelet::Point3d> out;
 
   double x, y;
   for (int i = 0; i < sample_count; i++) {
-    x = center_of_curvature[0] + radius_of_curvature * std::cos(arc_radians / sample_count * i);
-    y = center_of_curvature[1] + radius_of_curvature * std::sin(arc_radians / sample_count * i);
+    x = center_of_curvature[0]
+      + radius_of_curvature
+      * std::cos(arc_radians / sample_count * i);
+    y = center_of_curvature[1]
+      + radius_of_curvature
+      * std::sin(arc_radians / sample_count * i);
 
     out.push_back(getPoint(x, y, 0.0));
   }
@@ -120,10 +126,10 @@ TEST(Geometry, local_curvatures)
   // Test single lanelet constant curvature
   lanelet::BasicPoint2d origin = getBasicPoint(0.0, 0.0);
   // Curve with centerline at radius 10, curvature 1/10
-  std::vector<lanelet::Point3d> left_2 = generate_const_curvature_linestring(origin, 5, M_PI / 2.0,
-20); std::vector<lanelet::Point3d> right_2 = generate_const_curvature_linestring(origin, 15, M_PI
-/ 2.0, 20); auto ll_2 = getLanelet(left_2, right_2); std::vector<lanelet::ConstLanelet> lanelets2 =
-{ lanelet::utils::toConst(ll_2) };
+  std::vector<lanelet::Point3d> left_2 = generate_const_curvature_linestring(origin, 5, M_PI / 2.0, 20);
+  std::vector<lanelet::Point3d> right_2 = generate_const_curvature_linestring(origin, 15, M_PI / 2.0, 20);
+  auto ll_2 = getLanelet(left_2, right_2);
+  std::vector<lanelet::ConstLanelet> lanelets2 = { lanelet::utils::toConst(ll_2) };
 
   std::vector<double> curvatures2 = geometry::local_curvatures(lanelets2);
   ASSERT_EQ(lanelets2[0].centerline2d().size(), curvatures2.size());
@@ -137,9 +143,9 @@ TEST(Geometry, local_curvatures)
 
   // Test single lanelet constant curvature 2
   // Curve with centerline at radius 20, curvature 1/20
-  std::vector<lanelet::Point3d> left_3 = generate_const_curvature_linestring(origin, 10, M_PI / 2.0,
-10); std::vector<lanelet::Point3d> right_3 = generate_const_curvature_linestring(origin, 30, M_PI
-/ 2.0, 10); auto ll_3 = getLanelet(left_3, right_3);
+  std::vector<lanelet::Point3d> left_3 = generate_const_curvature_linestring(origin, 10, M_PI / 2.0, 10);
+  std::vector<lanelet::Point3d> right_3 = generate_const_curvature_linestring(origin, 30, M_PI / 2.0, 10);
+  auto ll_3 = getLanelet(left_3, right_3);
   //lanelet::LineString3d center_ls3(lanelet::utils::getId(), center_3);
 
   lanelet::LaneletMapPtr map = std::move(lanelet::utils::createMap({ ll_3 }, {}));
@@ -158,9 +164,9 @@ TEST(Geometry, local_curvatures)
 
   // Test single lanelet constant curvature 3
   // Curve with centerline at radius 1, curvature 1
-  std::vector<lanelet::Point3d> left_4 = generate_const_curvature_linestring(origin, 0.5, M_PI
-/ 2.0, 5); std::vector<lanelet::Point3d> right_4 = generate_const_curvature_linestring(origin, 1.5,
-M_PI / 2.0, 5); auto ll_4 = getLanelet(left_4, right_4);
+  std::vector<lanelet::Point3d> left_4 = generate_const_curvature_linestring(origin, 0.5, M_PI / 2.0, 5);
+  std::vector<lanelet::Point3d> right_4 = generate_const_curvature_linestring(origin, 1.5, M_PI / 2.0, 5);
+  auto ll_4 = getLanelet(left_4, right_4);
 
   lanelet::LaneletMapPtr map2 = std::move(lanelet::utils::createMap({ ll_4 }, {}));
   std::cout << "LEFT" << std::endl;
@@ -200,14 +206,15 @@ M_PI / 2.0, 5); auto ll_4 = getLanelet(left_4, right_4);
 */
 TEST(GeometryTest, trackPos)
 {
+
   auto pl1 = getPoint(-1, 0, 0);
   auto pl2 = getPoint(-1, 1, 0);
   auto pl3 = getPoint(-1, 2, 0);
   auto pr1 = getPoint(1, 0, 0);
   auto pr2 = getPoint(1, 1, 0);
   auto pr3 = getPoint(1, 2, 0);
-  std::vector<lanelet::Point3d> left_1 = {pl1, pl2, pl3};
-  std::vector<lanelet::Point3d> right_1 = {pr1, pr2, pr3};
+  std::vector<lanelet::Point3d> left_1 = { pl1, pl2, pl3 };
+  std::vector<lanelet::Point3d> right_1 = { pr1, pr2, pr3 };
   auto ll_1 = getLanelet(left_1, right_1);
 
   ///// Test start point
@@ -260,8 +267,7 @@ TEST(GeometryTest, trackPos)
 TEST(GeometryTest, trackPos_point_segment)
 {
   ///// Point at start
-  TrackPos result =
-    geometry::trackPos(getBasicPoint(0, 0), getBasicPoint(0, 0), getBasicPoint(0, 1));
+  TrackPos result = geometry::trackPos(getBasicPoint(0, 0), getBasicPoint(0, 0), getBasicPoint(0, 1));
   ASSERT_NEAR(0.0, result.downtrack, 0.000001);
   ASSERT_NEAR(0.0, result.crosstrack, 0.000001);
 
@@ -345,7 +351,7 @@ TEST(GeometryTest, trackPos_line_string)
   auto p2 = lanelet::utils::to2D(p2_);
   auto p3 = lanelet::utils::to2D(p3_);
   lanelet::Id ls_id = lanelet::utils::getId();
-  lanelet::LineString3d ls3d(ls_id, {p1_, p2_, p3_});
+  lanelet::LineString3d ls3d(ls_id, { p1_, p2_, p3_ });
   auto ls2d = lanelet::utils::to2D(ls3d);
   auto ls = ls2d.basicLineString();
 
@@ -498,9 +504,7 @@ TEST(GeometryTest, trackPos_line_string)
 
   ///// Test exception throw on empty linestring
   lanelet::LineString2d empty_ls;
-  ASSERT_THROW(
-    geometry::matchSegment(getBasicPoint(1.0, 2.5), empty_ls.basicLineString()),
-    std::invalid_argument);
+  ASSERT_THROW(geometry::matchSegment(getBasicPoint(1.0, 2.5), empty_ls.basicLineString()), std::invalid_argument);
 
   ///// Create concave down triangle
   auto pa_ = getPoint(0, 0, 0);
@@ -509,7 +513,7 @@ TEST(GeometryTest, trackPos_line_string)
   auto pa = lanelet::utils::to2D(pa_).basicPoint();
   auto pb = lanelet::utils::to2D(pb_).basicPoint();
   auto pc = lanelet::utils::to2D(pc_).basicPoint();
-  lanelet::LineString3d ls_3d(lanelet::utils::getId(), {pa_, pb_, pc_});
+  lanelet::LineString3d ls_3d(lanelet::utils::getId(), { pa_, pb_, pc_ });
   auto ls_2d = lanelet::utils::to2D(ls_3d);
   auto ls_ = ls_2d.basicLineString();
 
@@ -591,8 +595,7 @@ TEST(Geometry, objectToMapPolygon)
   ASSERT_NEAR(result[3][1], 3.0, 0.00001);
 }
 
-void rpyFromQuatMsg(
-  const geometry_msgs::msg::Quaternion & q_msg, double & roll, double & pitch, double & yaw)
+void rpyFromQuatMsg(const geometry_msgs::msg::Quaternion& q_msg, double& roll, double& pitch, double& yaw)
 {
   tf2::Quaternion quat;
   tf2::convert(q_msg, quat);
@@ -624,13 +627,14 @@ TEST(GeometryTest, compute_tangent_orientations_straight)
    *           START_LINE
    */
 
-  carma_wm::test::setRouteByIds({1200, 1201, 1202, 1203}, wm);
+  carma_wm::test::setRouteByIds({ 1200, 1201, 1202, 1203 }, wm);
 
   auto route_lanelets = wm->getRoute()->shortestPath();
 
   lanelet::ConstLanelets lanelets_as_vec;
 
-  for (lanelet::ConstLanelet ll : route_lanelets) {
+  for (lanelet::ConstLanelet ll : route_lanelets)
+  {
     lanelets_as_vec.push_back(ll);
   }
 
@@ -639,7 +643,8 @@ TEST(GeometryTest, compute_tangent_orientations_straight)
   result = carma_wm::geometry::compute_tangent_orientations(centerline);
   ASSERT_EQ(9, result.size());
 
-  for (double yaw : result) {
+  for (double yaw : result)
+  {
     ASSERT_NEAR(M_PI_2, yaw, 0.000001);
   }
 }
@@ -652,8 +657,8 @@ TEST(GeometryTest, concatenate_line_string_dedupe)
   auto p4 = Eigen::Vector2d(-1, 2.001);
   auto p5 = Eigen::Vector2d(-1, 3);
   auto p6 = Eigen::Vector2d(-1, 4);
-  const lanelet::BasicLineString2d line1 = {p1, p2, p3};
-  const lanelet::BasicLineString2d line2 = {p4, p4, p6};
+  const lanelet::BasicLineString2d line1 = { p1, p2, p3 };
+  const lanelet::BasicLineString2d line2 = { p4, p4, p6 };
 
   auto result = carma_wm::geometry::concatenate_line_strings(line1, line2);
 
@@ -665,8 +670,8 @@ TEST(GeometryTest, concatenate_line_string_dedupe)
   p4 = Eigen::Vector2d(-1, 2.5);
   p5 = Eigen::Vector2d(-1, 3);
   p6 = Eigen::Vector2d(-1, 4);
-  const lanelet::BasicLineString2d line3 = {p1, p2, p3};
-  const lanelet::BasicLineString2d line4 = {p4, p4, p6};
+  const lanelet::BasicLineString2d line3 = { p1, p2, p3 };
+  const lanelet::BasicLineString2d line4 = { p4, p4, p6 };
 
   result = carma_wm::geometry::concatenate_line_strings(line3, line4);
 
@@ -675,22 +680,21 @@ TEST(GeometryTest, concatenate_line_string_dedupe)
 
 TEST(GeometryTest, compute_tangent_orientations_curved)
 {
+
   // This tests creates a 90 deg left turn from x = 0 that is followed by a short straight away
   // The inner turn radius is 30m and the outer radius is 34m
   // The straight away is 4m long. The turn is one lanelet the straight section is another
   std::shared_ptr<CARMAWorldModel> wm = std::make_shared<CARMAWorldModel>();
 
   int segments = 6;
-  double rad_increment = M_PI_2 / (double)segments;
+  double rad_increment = M_PI_2 / (double) segments;
   double inner_radius = 30;
   double outer_radius = 34;
   std::vector<lanelet::Point3d> left_points_1, right_points_1, left_points_2, right_points_2;
   double angle = 0;
   for (int i = 0; i <= segments; i++) {
-    left_points_1.push_back(
-      carma_wm::test::getPoint(inner_radius * cos(angle), inner_radius * sin(angle), 0));
-    right_points_1.push_back(
-      carma_wm::test::getPoint(outer_radius * cos(angle), outer_radius * sin(angle), 0));
+    left_points_1.push_back(carma_wm::test::getPoint(inner_radius * cos(angle), inner_radius * sin(angle), 0));
+    right_points_1.push_back(carma_wm::test::getPoint(outer_radius * cos(angle), outer_radius * sin(angle), 0));
     angle += rad_increment;
   }
 
@@ -703,25 +707,24 @@ TEST(GeometryTest, compute_tangent_orientations_curved)
   lanelet::Lanelet ll_1 = carma_wm::test::getLanelet(left_points_1, right_points_1);
   lanelet::Lanelet ll_2 = carma_wm::test::getLanelet(left_points_2, right_points_2);
 
-  lanelet::LaneletMapPtr map = lanelet::utils::createMap({ll_1, ll_2}, {});
+  lanelet::LaneletMapPtr map = lanelet::utils::createMap({ ll_1, ll_2 }, {});
   lanelet::MapConformer::ensureCompliance(map);
 
   wm->setMap(map);
   carma_wm::test::setSpeedLimit(25_mph, wm);
 
-  carma_wm::test::setRouteByLanelets({ll_1, ll_2}, wm);
+  carma_wm::test::setRouteByLanelets({ ll_1, ll_2 }, wm);
 
   auto route_lanelets = wm->getRoute()->shortestPath();
 
+
   std::vector<double> result;
-  lanelet::BasicLineString2d centerline = carma_wm::geometry::concatenate_lanelets(
-    {lanelet::traits::toConst(ll_1), lanelet::traits::toConst(ll_2)});
+  lanelet::BasicLineString2d centerline = carma_wm::geometry::concatenate_lanelets({ lanelet::traits::toConst(ll_1), lanelet::traits::toConst(ll_2) });
   result = carma_wm::geometry::compute_tangent_orientations(centerline);
 
   ASSERT_EQ(15, result.size());
 
-  ASSERT_NEAR(1.7017, result[0], 0.00001);  // First point has some error which is allowable due to
-                                            // mathemtical constraints on calculating the tangent
+  ASSERT_NEAR(1.7017, result[0], 0.00001); // First point has some error which is allowable due to mathemtical constraints on calculating the tangent
   ASSERT_NEAR(1.7017, result[1], 0.00001);
   ASSERT_NEAR(1.82437, result[2], 0.00001);
   ASSERT_NEAR(1.9635, result[3], 0.00001);
@@ -741,22 +744,24 @@ TEST(GeometryTest, compute_tangent_orientations_curved)
   lanelet::BasicLineString2d empty_ls;
   result = carma_wm::geometry::compute_tangent_orientations(empty_ls);
   ASSERT_EQ(0, result.size());
+
 }
 
 TEST(GeometryTest, point_to_point_yaw)
 {
-  lanelet::BasicPoint2d point1{1.0, 1.0};
-  lanelet::BasicPoint2d point2{1.0, 2.0};
-  double res = geometry::point_to_point_yaw(point1, point2);
-  EXPECT_NEAR(1.57, res, 0.1);
+    lanelet::BasicPoint2d point1{1.0, 1.0};
+    lanelet::BasicPoint2d point2{1.0, 2.0};
+    double res = geometry::point_to_point_yaw(point1, point2);
+    EXPECT_NEAR(1.57, res, 0.1);
 }
 
 TEST(GeometryTest, circular_arc_curvature)
 {
-  lanelet::BasicPoint2d point1{1.0, 1.0};
-  lanelet::BasicPoint2d point2{3.0, 4.0};
-  double res = geometry::circular_arc_curvature(point1, point2);
-  EXPECT_NEAR(0.46153846, res, 0.1);
+    lanelet::BasicPoint2d point1{1.0, 1.0};
+    lanelet::BasicPoint2d point2{3.0, 4.0};
+    double res = geometry::circular_arc_curvature(point1, point2);
+    EXPECT_NEAR(0.46153846, res, 0.1);
 }
+
 
 }  // namespace carma_wm
