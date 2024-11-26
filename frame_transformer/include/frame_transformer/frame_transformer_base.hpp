@@ -17,7 +17,7 @@
 
 #include <string>
 #include <memory>
-#include <tf2_ros/buffer.hpp>
+#include <tf2_ros/buffer.h>
 
 namespace frame_transformer
 {
