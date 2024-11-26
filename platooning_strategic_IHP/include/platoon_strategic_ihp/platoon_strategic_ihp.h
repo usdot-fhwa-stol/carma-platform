@@ -49,7 +49,7 @@
 #include <lanelet2_extension/regulatory_elements/DigitalMinimumGap.h>
 #include "platoon_config_ihp.h"
 #include "platoon_manager_ihp.h"
-#include <tf2_ros/transform_listener.h>
+#include <tf2_ros/transform_listener.hpp>
 #include <tf2/LinearMath/Transform.h>
 #include <tf2_geometry_msgs/tf2_geometry_msgs.h>
 #include <lanelet2_extension/projection/local_frame_projector.h>
