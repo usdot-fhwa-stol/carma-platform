@@ -140,7 +140,7 @@ namespace cooperative_lanechange
         double acc = pow(maneuver.lane_change_maneuver.start_speed, 2) / (2 * (ending_downtrack - starting_downtrack));
         double end_time = maneuver.lane_change_maneuver.start_speed / acc;
         maneuver.lane_change_maneuver.end_speed = 25.0;
-        maneuver.lane_change_maneuver.end_time = rclcpp::Time(end_time) + rclcpp::Duration(10 * 1e9);
+        maneuver.lane_change_maneuver.end_time = rclcpp::Time(end_time) + rclcpp::Duration::from_nanoseconds(10 * 1e9);
         maneuver.lane_change_maneuver.starting_lane_id = std::to_string(lane_change_start_id);
         maneuver.lane_change_maneuver.ending_lane_id = std::to_string(end_id);
 
@@ -156,7 +156,7 @@ namespace cooperative_lanechange
         carma_planning_msgs::srv::PlanTrajectory::Response resp;
 
         req.maneuver_plan.planning_start_time = worker->now();
-        req.maneuver_plan.planning_completion_time = rclcpp::Time(req.maneuver_plan.planning_start_time) + rclcpp::Duration(10 * 1e9);
+        req.maneuver_plan.planning_completion_time = rclcpp::Time(req.maneuver_plan.planning_start_time) + rclcpp::Duration::from_nanoseconds(10 * 1e9);
         req.vehicle_state.x_pos_global = veh_pos.x();
         req.vehicle_state.y_pos_global = veh_pos.y();
         req.vehicle_state.longitudinal_vel = maneuver.lane_change_maneuver.start_speed;
@@ -189,7 +189,7 @@ namespace cooperative_lanechange
         req.maneuver_index_to_plan = 0;
 
         req.maneuver_plan.planning_start_time = worker->now();
-        req.maneuver_plan.planning_completion_time = rclcpp::Time(req.maneuver_plan.planning_start_time) + rclcpp::Duration(10 * 1e9);
+        req.maneuver_plan.planning_completion_time = rclcpp::Time(req.maneuver_plan.planning_start_time) + rclcpp::Duration::from_nanoseconds(10 * 1e9);
 
         lanelet::BasicPoint2d veh_pos(1.0,1.0);
         req.vehicle_state.x_pos_global = veh_pos.x();
@@ -269,7 +269,7 @@ namespace cooperative_lanechange
         double acc = pow(maneuver.lane_change_maneuver.start_speed,2)/(2*(ending_downtrack - starting_downtrack));
         double end_time = maneuver.lane_change_maneuver.start_speed/acc;
         maneuver.lane_change_maneuver.end_speed = 25.0;
-        maneuver.lane_change_maneuver.end_time = rclcpp::Time(end_time) + rclcpp::Duration(10 * 1e9);
+        maneuver.lane_change_maneuver.end_time = rclcpp::Time(end_time) + rclcpp::Duration::from_nanoseconds(10 * 1e9);
         maneuver.lane_change_maneuver.starting_lane_id = std::to_string(lane_change_start_id);
         maneuver.lane_change_maneuver.ending_lane_id = std::to_string(end_id);
 
@@ -284,7 +284,7 @@ namespace cooperative_lanechange
         carma_planning_msgs::srv::PlanTrajectory::Response resp;
 
         req.maneuver_plan.planning_start_time = worker->now();
-        req.maneuver_plan.planning_completion_time = rclcpp::Time(req.maneuver_plan.planning_start_time) + rclcpp::Duration(10 * 1e9);
+        req.maneuver_plan.planning_completion_time = rclcpp::Time(req.maneuver_plan.planning_start_time) + rclcpp::Duration::from_nanoseconds(10 * 1e9);
         req.vehicle_state.x_pos_global = veh_pos.x();
         req.vehicle_state.y_pos_global = veh_pos.y();
         req.vehicle_state.longitudinal_vel = maneuver.lane_change_maneuver.start_speed;
@@ -398,7 +398,7 @@ namespace cooperative_lanechange
         double acc = pow(maneuver.lane_change_maneuver.start_speed,2)/(2*(ending_downtrack - starting_downtrack));
         double end_time = maneuver.lane_change_maneuver.start_speed/acc;
         maneuver.lane_change_maneuver.end_speed = 25.0;
-        maneuver.lane_change_maneuver.end_time = rclcpp::Time(end_time) + rclcpp::Duration(10 * 1e9);
+        maneuver.lane_change_maneuver.end_time = rclcpp::Time(end_time) + rclcpp::Duration::from_nanoseconds(10 * 1e9);
         maneuver.lane_change_maneuver.starting_lane_id = std::to_string(lane_change_start_id);
         maneuver.lane_change_maneuver.ending_lane_id = std::to_string(end_id);
 
@@ -413,7 +413,7 @@ namespace cooperative_lanechange
         carma_planning_msgs::srv::PlanTrajectory::Response resp;
 
         req.maneuver_plan.planning_start_time = worker->now();
-        req.maneuver_plan.planning_completion_time = rclcpp::Time(req.maneuver_plan.planning_start_time) + rclcpp::Duration(10 * 1e9);
+        req.maneuver_plan.planning_completion_time = rclcpp::Time(req.maneuver_plan.planning_start_time) + rclcpp::Duration::from_nanoseconds(10 * 1e9);
         req.vehicle_state.x_pos_global = veh_pos.x();
         req.vehicle_state.y_pos_global = veh_pos.y();
         req.vehicle_state.longitudinal_vel = maneuver.lane_change_maneuver.start_speed;
