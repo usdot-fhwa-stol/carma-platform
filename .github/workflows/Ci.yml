@@ -69,8 +69,9 @@ jobs:
     #  run: sudo bash /opt/carma/src/multiple_object_tracking/scripts/install_dependencies.sh
     # TODO WIP Humble Upgrade: Remove after humble upgrade is done
     - name: Read packages from file
+    # Iterate through package.xml files and read folder names accounting for full path of where the command was initiated
       run: |
-        PACKAGES=$(find ./src/${{ github.event.repository.name }}/ -maxdepth 2 -type f -name package.xml | grep -v "template_package" | sed 's/\.\///' | cut -d/ -f1)
+        PACKAGES=$(find ./src/${{ github.event.repository.name }} -maxdepth 2 -type f -name package.xml | grep -v "template_package" | sed 's/.*\/src\/${{ github.event.repository.name }}\///' | cut -d/ -f1)
         echo "Selected packages to build from this repository: $PACKAGES"
         echo "PACKAGES=$PACKAGES" >> $GITHUB_ENV
 
