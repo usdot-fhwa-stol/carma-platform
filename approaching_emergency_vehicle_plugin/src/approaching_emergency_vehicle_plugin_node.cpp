@@ -1045,7 +1045,7 @@ namespace approaching_emergency_vehicle_plugin
 
     RCLCPP_ERROR_STREAM(rclcpp::get_logger(logger_name),"maneuver_end_dist: " << maneuver_end_dist << ", maneuver_start_dist: " << maneuver_start_dist << ", sum_start_and_end_speed: " << sum_start_and_end_speed);
 
-    maneuver_duration = rclcpp::Duration((maneuver_end_dist - maneuver_start_dist) / (0.5 * sum_start_and_end_speed) * 1e9);
+    maneuver_duration = rclcpp::Duration::from_nanoseconds((maneuver_end_dist - maneuver_start_dist) / (0.5 * sum_start_and_end_speed) * 1e9);
 
     return maneuver_duration;
   }

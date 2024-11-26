@@ -503,7 +503,7 @@ void SCIStrategicPlugin::plan_maneuvers_callback(
           maneuver_planned = composeStopAndWaitManeuverMessage(
           current_state.downtrack, stop_intersection_down_track, current_state.speed, crossed_lanelets[0].id(),
           crossed_lanelets[0].id(), stopping_accel, current_state.stamp,
-          current_state.stamp + rclcpp::Duration(time_to_schedule_stop*1e9));
+          current_state.stamp + rclcpp::Duration::from_nanoseconds(time_to_schedule_stop*1e9));
 
           resp->new_plan.maneuvers.push_back(maneuver_planned);
 
@@ -516,7 +516,7 @@ void SCIStrategicPlugin::plan_maneuvers_callback(
         maneuver_planned = composeStopAndWaitManeuverMessage(
           current_state.downtrack, stop_intersection_down_track, current_state.speed, crossed_lanelets[0].id(),
           crossed_lanelets[0].id(), desired_deceleration, current_state.stamp,
-          current_state.stamp + rclcpp::Duration(time_to_schedule_stop*1e9));
+          current_state.stamp + rclcpp::Duration::from_nanoseconds(time_to_schedule_stop*1e9));
       }
   }
 
@@ -539,7 +539,7 @@ void SCIStrategicPlugin::plan_maneuvers_callback(
     maneuver_planned = composeStopAndWaitManeuverMessage(
           current_state.downtrack, stop_intersection_down_track, current_state.speed, stop_line_lanelet.id(),
           stop_line_lanelet.id(), stopping_accel, current_state.stamp,
-          current_state.stamp + rclcpp::Duration(stop_duration*1e9));
+          current_state.stamp + rclcpp::Duration::from_nanoseconds(stop_duration*1e9));
   }
 
   if (!is_allowed_int_)
@@ -557,7 +557,7 @@ void SCIStrategicPlugin::plan_maneuvers_callback(
       maneuver_planned = composeStopAndWaitManeuverMessage(
           current_state.downtrack, stop_intersection_down_track, current_state.speed, current_state.lane_id,
           current_state.lane_id, stop_acc, current_state.stamp,
-          current_state.stamp + rclcpp::Duration(stop_duration*1e9));
+          current_state.stamp + rclcpp::Duration::from_nanoseconds(stop_duration*1e9));
 
   }
 
@@ -601,7 +601,7 @@ void SCIStrategicPlugin::plan_maneuvers_callback(
 
       maneuver_planned = composeIntersectionTransitMessage(
       current_state.downtrack, current_state.downtrack + end_of_intersection, current_state.speed, intersection_speed_limit,
-      current_state.stamp, rclcpp::Time(req->header.stamp) + rclcpp::Duration(intersection_transit_time*1e9), intersection_turn_direction_, crossed_lanelets.front().id(), crossed_lanelets.back().id());
+      current_state.stamp, rclcpp::Time(req->header.stamp) + rclcpp::Duration::from_nanoseconds(intersection_transit_time*1e9), intersection_turn_direction_, crossed_lanelets.front().id(), crossed_lanelets.back().id());
     
     
     if (distance_to_stopline < -end_of_intersection)
@@ -747,7 +747,7 @@ carma_planning_msgs::msg::Maneuver SCIStrategicPlugin::composeLaneFollowingManeu
   maneuver_msg.lane_following_maneuver.start_speed = start_speed;
   maneuver_msg.lane_following_maneuver.end_speed = target_speed;
   maneuver_msg.lane_following_maneuver.start_time = start_time;
-  maneuver_msg.lane_following_maneuver.end_time =  start_time + rclcpp::Duration(time_to_stop*1e9);
+  maneuver_msg.lane_following_maneuver.end_time =  start_time + rclcpp::Duration::from_nanoseconds(time_to_stop*1e9);
   maneuver_msg.lane_following_maneuver.lane_ids =
       lanelet::utils::transform(lane_ids, [](auto id) { return std::to_string(id); });
 

@@ -49,7 +49,7 @@ TEST(StopAndDwellStrategicPluginTest, composeLaneFollowingManeuverMessage)
   ASSERT_EQ(5, result.lane_following_maneuver.start_speed);
   ASSERT_EQ(10, result.lane_following_maneuver.end_speed);
   ASSERT_EQ(rclcpp::Time(1.2*1e9, RCL_ROS_TIME), result.lane_following_maneuver.start_time);
-  ASSERT_EQ(rclcpp::Time(1.2*1e9, RCL_ROS_TIME) + rclcpp::Duration(1.0*1e9), result.lane_following_maneuver.end_time);
+  ASSERT_EQ(rclcpp::Time(1.2*1e9, RCL_ROS_TIME) + rclcpp::Duration::from_nanoseconds(1.0*1e9), result.lane_following_maneuver.end_time);
   ASSERT_EQ(2, result.lane_following_maneuver.lane_ids.size());
   ASSERT_TRUE(result.lane_following_maneuver.lane_ids[0].compare("1200") == 0);
   ASSERT_TRUE(result.lane_following_maneuver.lane_ids[1].compare("1201") == 0);

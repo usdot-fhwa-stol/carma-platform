@@ -36,7 +36,7 @@ namespace bsm_generator
     std::vector<uint8_t> BSMGeneratorWorker::getMsgId(const rclcpp::Time now, double secs)
     {
         // need to change ID every designated period
-        rclcpp::Duration id_timeout(secs * 1e9);
+        rclcpp::Duration id_timeout = rclcpp::Duration::from_nanoseconds(secs * 1e9);
 
         generator_.seed(std::random_device{}()); // guarantee randomness
         std::uniform_int_distribution<int> dis(0,INT_MAX);
