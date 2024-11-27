@@ -51,12 +51,13 @@ namespace trajectory_executor
         carma_planning_msgs::msg::TrajectoryPlan plan = trajectory_executor_test_suite::buildSampleTraj();
         test_suite_node->traj_pub_->publish(plan);
 
-        // Spin executor for 2 seconds
-        auto end_time = std::chrono::system_clock::now() + std::chrono::seconds(2);
-        while(std::chrono::system_clock::now() < end_time) {
+        // Spin executor for equivalent of 2 seconds = 0.1s * 20
+        int i = 0 ;
+        while(i < 20) {
             executor.spin_some();
             if(test_suite_node->msg_count >= 10) break;
             rclcpp::sleep_for(std::chrono::milliseconds(100));
+            i++;
         }
 
         ASSERT_LE(10, test_suite_node->msg_count) << "Failed to receive whole trajectory from TrajectoryExecutor node.";
