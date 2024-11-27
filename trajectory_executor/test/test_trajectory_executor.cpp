@@ -25,7 +25,7 @@
 namespace trajectory_executor
 {
     /*!
-    * \brief Test that the trajectory executor will output the trajectory on 
+    * \brief Test that the trajectory executor will output the trajectory on
     * the desired topic after receiving a trajectory plan for the Pure Pursuit controller plugin
     */
     TEST(TrajectoryExecutorTest, test_emit_multiple)
@@ -53,15 +53,17 @@ namespace trajectory_executor
 
         // Spin executor for 2 seconds
         auto end_time = std::chrono::system_clock::now() + std::chrono::seconds(2);
-        while(std::chrono::system_clock::now() < end_time){
-            executor.spin_once();
+        while(std::chrono::system_clock::now() < end_time) {
+            executor.spin_some();
+            if(test_suite_node->msg_count >= 10) break;
+            rclcpp::sleep_for(std::chrono::milliseconds(100));
         }
 
         ASSERT_LE(10, test_suite_node->msg_count) << "Failed to receive whole trajectory from TrajectoryExecutor node.";
     }
 
     /*!
-    * \brief Test that the trajectory executor will output the trajectory on 
+    * \brief Test that the trajectory executor will output the trajectory on
     * the desired topic after receiving a trajectory plan for the PlatooningControlPlugin controller plugin
     */
     TEST(TrajectoryExecutorTestSuite, test_emit_traj) {
@@ -93,7 +95,7 @@ namespace trajectory_executor
         }
 
         ASSERT_GT(test_suite_node->msg_count, 0) << "Failed to receive whole trajectory from TrajectoryExecutor node.";
-    } 
+    }
 
     /*!
     * \brief Test that the Trajectory Executor properly shuts down if it encounters a trajectory
@@ -154,4 +156,4 @@ int main(int argc, char ** argv)
     rclcpp::shutdown();
 
     return success;
-} 
+}
