@@ -88,7 +88,7 @@ jobs:
         source "$ROS_2_ENV"
         source /opt/autoware.ai/ros/install/setup.bash
         COLCON_CMD="colcon test --return-code-on-test-failure --parallel-workers 4 --event-handlers console_direct+"
-        NEW_CMD="colcon test --return-code-on-test-failure --continue-on-error --parallel-workers 16 --event-handlers console_cohesion+ --packages-select \$PACKAGES --ctest-args --output-on-failure"
+        NEW_CMD="colcon test --return-code-on-test-failure --parallel-workers 16 --event-handlers console_cohesion+ --packages-select \$PACKAGES --ctest-args --output-on-failure"
         sed -i "s|$COLCON_CMD|$NEW_CMD|" /home/carma/.ci-image/engineering_tools/code_coverage/make_with_coverage.bash
         make_with_coverage.bash -t -e /opt/carma/ -o ./coverage_reports/gcov
 
