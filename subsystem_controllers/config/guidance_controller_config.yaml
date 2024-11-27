@@ -51,6 +51,6 @@
       - /guidance/plugins/stop_and_wait_plugin
       - /guidance/plugins/sci_strategic_plugin
       - /guidance/plugins/stop_controlled_intersection_tactical_plugin
-      - /guidance/plugins/platooning_strategic_ihp
+      - /guidance/plugins/platoon_strategic_ihp
       - /guidance/plugins/platooning_tactical_plugin_node
       - /guidance/plugins/yield_plugin

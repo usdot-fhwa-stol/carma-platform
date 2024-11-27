@@ -63,10 +63,9 @@ jobs:
         source "$INIT_ENV"
         ./src/${{ github.event.repository.name }}/docker/checkout.bash -r /opt/carma/ -b ${{ steps.determine-base-branch.outputs.git_branch }}
 
-    # TODO: WIP Humble Upgrade: Enable when carma_cooperative_perception is ready
-    #- name: Install external dependencies
-    #  # Install the multiple object tracking deps
-    #  run: sudo bash /opt/carma/src/multiple_object_tracking/scripts/install_dependencies.sh
+    - name: Install external dependencies
+      # Install the multiple object tracking deps
+      run: sudo bash /opt/carma/src/multiple_object_tracking/scripts/install_dependencies.sh
     # TODO WIP Humble Upgrade: Remove after humble upgrade is done
     - name: Read packages from file
       run: |
