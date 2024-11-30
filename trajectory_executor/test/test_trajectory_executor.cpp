@@ -56,7 +56,7 @@ namespace trajectory_executor
         while(i < 20) {
             executor.spin_some();
             if(test_suite_node->msg_count >= 10) break;
-            rclcpp::sleep_for(std::chrono::milliseconds(100));
+            rclcpp::sleep_for(std::chrono::milliseconds(1000));
             i++;
         }
 
