@@ -30,26 +30,19 @@ namespace trajectory_executor
     */
     TEST(TrajectoryExecutorTest, test_emit_multiple)
     {
-        // Use unique namespace for test nodes
-        std::string test_namespace = "test_" + std::to_string(rclcpp::Clock().now().nanoseconds());
-        auto options = rclcpp::NodeOptions()
-            .use_intra_process_comms(true)
-            .namespace_(test_namespace);
+        auto options = rclcpp::NodeOptions();
         
         auto traj_executor_node = std::make_shared<trajectory_executor::TrajectoryExecutor>(options);
         traj_executor_node->configure(); //Call configure state transition
         traj_executor_node->activate();  //Call activate state transition to get not read for runtime
 
         // Create and activate TrajectoryExecutorTestSuite node
-        auto options2 = rclcpp::NodeOptions()
-            .use_intra_process_comms(true)
-            .namespace_(test_namespace);
-        auto test_suite_node = std::make_shared<trajectory_executor_test_suite::TrajectoryExecutorTestSuite>(options2);
+        auto test_suite_node = std::make_shared<trajectory_executor_test_suite::TrajectoryExecutorTestSuite>(options);
         test_suite_node->configure();
         test_suite_node->activate();
 
         // Add these nodes to an executor to spin them and trigger callbacks
-        rclcpp::executors::SingleThreadedExecutor executor;
+        rclcpp::executors::MultiThreadedExecutor executor;
         executor.add_node(traj_executor_node->get_node_base_interface());
         executor.add_node(test_suite_node->get_node_base_interface());
 
@@ -58,10 +51,13 @@ namespace trajectory_executor
         test_suite_node->traj_pub_->publish(plan);
 
         // Spin executor for equivalent of 2 seconds = 0.1s * 20
+        int i = 0; // debug
         auto end_time = std::chrono::system_clock::now() + std::chrono::seconds(2);
         while(std::chrono::system_clock::now() < end_time) {
             executor.spin_once(std::chrono::milliseconds(100));  // Add timeout
+            i++;
         }
+        RCLCPP_INFO_STREAM(rclcpp::get_logger("test_emit_multiple"), "Generated i:" << i);
 
         ASSERT_LE(10, test_suite_node->msg_count) << "Failed to receive whole trajectory from TrajectoryExecutor node.";
     }
