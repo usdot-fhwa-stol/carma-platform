@@ -70,14 +70,6 @@ if(BUILD_TESTING)
    target_link_libraries(test_trajectory_executor
         ${node_lib}
    )
-
-   # Add test properties to run in isolation
-   set_tests_properties(test_trajectory_executor
-       PROPERTIES
-       ENVIRONMENT "99" # Attempt to isolate from other unit tests when running in CI
-       TIMEOUT 120  # Optional: Set a timeout in seconds
-       RUN_SERIAL TRUE  # Run this test in isolation
-   )
 endif()
 
 # Install
