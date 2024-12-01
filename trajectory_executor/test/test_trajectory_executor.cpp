@@ -32,34 +32,72 @@ namespace trajectory_executor
     {
         auto options = rclcpp::NodeOptions();
         
+        // Create and configure nodes
         auto traj_executor_node = std::make_shared<trajectory_executor::TrajectoryExecutor>(options);
-        traj_executor_node->configure(); //Call configure state transition
-        traj_executor_node->activate();  //Call activate state transition to get not read for runtime
-
-        // Create and activate TrajectoryExecutorTestSuite node
+        traj_executor_node->configure();
+        traj_executor_node->activate();
+    
         auto test_suite_node = std::make_shared<trajectory_executor_test_suite::TrajectoryExecutorTestSuite>(options);
         test_suite_node->configure();
         test_suite_node->activate();
-
-        // Add these nodes to an executor to spin them and trigger callbacks
-        rclcpp::executors::MultiThreadedExecutor executor;
-        executor.add_node(traj_executor_node->get_node_base_interface());
-        executor.add_node(test_suite_node->get_node_base_interface());
-
-        // Generate a 'Pure Pursuit' trajectory plan and publish it to the /trajectory topic
+    
+        // Create separate executors for publisher and subscriber
+        rclcpp::executors::SingleThreadedExecutor publisher_executor;
+        rclcpp::executors::SingleThreadedExecutor subscriber_executor;
+        
+        publisher_executor.add_node(test_suite_node->get_node_base_interface());
+        subscriber_executor.add_node(traj_executor_node->get_node_base_interface());
+    
+        // Start spinning subscriber executor in a separate thread
+        std::thread subscriber_thread([&]() {
+            while (rclcpp::ok()) {
+                subscriber_executor.spin_some();
+                std::this_thread::sleep_for(std::chrono::milliseconds(10));
+            }
+        });
+    
+        // Generate and publish trajectory plan
         carma_planning_msgs::msg::TrajectoryPlan plan = trajectory_executor_test_suite::buildSampleTraj();
+        
+        // Small delay to ensure setup is complete
+        std::this_thread::sleep_for(std::chrono::milliseconds(100));
+        
         test_suite_node->traj_pub_->publish(plan);
-
-        // Spin executor for equivalent of 2 seconds = 0.1s * 20
-        int i = 0; // debug
-        auto end_time = std::chrono::system_clock::now() + std::chrono::seconds(2);
-        while(std::chrono::system_clock::now() < end_time) {
-            executor.spin_once(std::chrono::milliseconds(100));  // Add timeout
-            i++;
+    
+        // Spin publisher and check results
+        const int MAX_ATTEMPTS = 50;  // 5 seconds total
+        int attempt = 0;
+        const int EXPECTED_MSG_COUNT = 10;
+    
+        while (attempt < MAX_ATTEMPTS) {
+            publisher_executor.spin_once(std::chrono::milliseconds(100));
+            
+            if (test_suite_node->msg_count >= EXPECTED_MSG_COUNT) {
+                break;
+            }
+            
+            attempt++;
+            RCLCPP_INFO(rclcpp::get_logger("test_emit_multiple"), 
+                        "Current msg_count: %d, attempt: %d", 
+                        test_suite_node->msg_count, 
+                        attempt);
         }
-        RCLCPP_INFO_STREAM(rclcpp::get_logger("test_emit_multiple"), "Generated i:" << i);
-
-        ASSERT_LE(10, test_suite_node->msg_count) << "Failed to receive whole trajectory from TrajectoryExecutor node.";
+    
+        // Stop the subscriber thread
+        rclcpp::shutdown();
+        if (subscriber_thread.joinable()) {
+            subscriber_thread.join();
+        }
+    
+        RCLCPP_INFO(rclcpp::get_logger("test_emit_multiple"), 
+                    "Final msg_count: %d after %d attempts", 
+                    test_suite_node->msg_count, 
+                    attempt);
+    
+        ASSERT_GE(test_suite_node->msg_count, EXPECTED_MSG_COUNT) 
+            << "Failed to receive expected number of messages. Received: " 
+            << test_suite_node->msg_count 
+            << " Expected: " << EXPECTED_MSG_COUNT;
     }
 
     /*!
