@@ -34,12 +34,10 @@ namespace trajectory_executor
         
         // Create and configure nodes
         auto traj_executor_node = std::make_shared<trajectory_executor::TrajectoryExecutor>(options);
-        RCLCPP_INFO(traj_executor_node->get_logger(), "Configuring TrajectoryExecutor node");
         traj_executor_node->configure();
         traj_executor_node->activate();
     
         auto test_suite_node = std::make_shared<trajectory_executor_test_suite::TrajectoryExecutorTestSuite>(options);
-        RCLCPP_INFO(test_suite_node->get_logger(), "Configuring test suite node");
         test_suite_node->configure();
         test_suite_node->activate();
     
@@ -62,13 +60,8 @@ namespace trajectory_executor
             }
             RCLCPP_INFO(traj_executor_node->get_logger(), "Subscriber thread ending");
         });
-    
-        // Log publisher topic for debugging
-        RCLCPP_INFO(test_suite_node->get_logger(), "Publisher topic: %s", 
-                    test_suite_node->traj_pub_->get_topic_name());
-    
+        
         // Wait for publisher/subscriber discovery
-        RCLCPP_INFO(test_suite_node->get_logger(), "Waiting for publisher/subscriber discovery");
         test_suite_node->traj_pub_->wait_for_all_acked();
         
         // Additional safety delay for node setup
@@ -76,14 +69,7 @@ namespace trajectory_executor
     
         // Generate and publish trajectory plan
         carma_planning_msgs::msg::TrajectoryPlan plan = trajectory_executor_test_suite::buildSampleTraj();
-        
-        // Log trajectory details before publishing
-        RCLCPP_INFO(test_suite_node->get_logger(), 
-                    "Publishing trajectory plan with %zu points", 
-                    plan.trajectory_points.size());
-        
         test_suite_node->traj_pub_->publish(plan);
-        RCLCPP_INFO(test_suite_node->get_logger(), "Published trajectory plan");
     
         // Spin publisher and check results
         const int MAX_ATTEMPTS = 100;  // 10 seconds total
@@ -105,7 +91,6 @@ namespace trajectory_executor
                         elapsed);
             
             if (test_suite_node->msg_count >= EXPECTED_MSG_COUNT) {
-                RCLCPP_INFO(test_suite_node->get_logger(), "Received expected number of messages");
                 break;
             }
             
@@ -114,19 +99,12 @@ namespace trajectory_executor
         }
     
         // Clean shutdown
-        RCLCPP_INFO(test_suite_node->get_logger(), "Beginning test shutdown");
         stop_thread = true;
-        rclcpp::shutdown();
         
         if (subscriber_thread.joinable()) {
             RCLCPP_INFO(test_suite_node->get_logger(), "Joining subscriber thread");
             subscriber_thread.join();
         }
-    
-        RCLCPP_INFO(test_suite_node->get_logger(), 
-                    "Final msg_count: %d after %d attempts", 
-                    test_suite_node->msg_count, 
-                    attempt);
     
         ASSERT_GE(test_suite_node->msg_count, EXPECTED_MSG_COUNT) 
             << "Failed to receive expected number of messages. Received: " 
