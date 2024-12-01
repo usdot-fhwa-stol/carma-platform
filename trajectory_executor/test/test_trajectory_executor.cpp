@@ -43,7 +43,7 @@ namespace trajectory_executor
         test_suite_node->activate();
 
         // Add these nodes to an executor to spin them and trigger callbacks
-        rclcpp::executors::MultiThreadedExecutor executor;
+        rclcpp::executors::SingleThreadedExecutor executor;
         executor.add_node(traj_executor_node->get_node_base_interface());
         executor.add_node(test_suite_node->get_node_base_interface());
 
@@ -52,12 +52,9 @@ namespace trajectory_executor
         test_suite_node->traj_pub_->publish(plan);
 
         // Spin executor for equivalent of 2 seconds = 0.1s * 20
-        int i = 0 ;
-        while(i < 20) {
-            executor.spin_some();
-            if(test_suite_node->msg_count >= 10) break;
-            rclcpp::sleep_for(std::chrono::milliseconds(1000));
-            i++;
+        auto end_time = std::chrono::system_clock::now() + std::chrono::seconds(2);
+        while(std::chrono::system_clock::now() < end_time) {
+            executor.spin_once(std::chrono::milliseconds(100));  // Add timeout
         }
 
         ASSERT_LE(10, test_suite_node->msg_count) << "Failed to receive whole trajectory from TrajectoryExecutor node.";
