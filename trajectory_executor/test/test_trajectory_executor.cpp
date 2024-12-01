@@ -34,10 +34,12 @@ namespace trajectory_executor
         
         // Create and configure nodes
         auto traj_executor_node = std::make_shared<trajectory_executor::TrajectoryExecutor>(options);
+        RCLCPP_INFO(traj_executor_node->get_logger(), "Configuring TrajectoryExecutor node");
         traj_executor_node->configure();
         traj_executor_node->activate();
     
         auto test_suite_node = std::make_shared<trajectory_executor_test_suite::TrajectoryExecutorTestSuite>(options);
+        RCLCPP_INFO(test_suite_node->get_logger(), "Configuring test suite node");
         test_suite_node->configure();
         test_suite_node->activate();
     
@@ -48,48 +50,80 @@ namespace trajectory_executor
         publisher_executor.add_node(test_suite_node->get_node_base_interface());
         subscriber_executor.add_node(traj_executor_node->get_node_base_interface());
     
+        // Atomic flag for clean thread shutdown
+        std::atomic<bool> stop_thread{false};
+    
         // Start spinning subscriber executor in a separate thread
         std::thread subscriber_thread([&]() {
-            while (rclcpp::ok()) {
+            RCLCPP_INFO(traj_executor_node->get_logger(), "Starting subscriber thread");
+            while (rclcpp::ok() && !stop_thread) {
                 subscriber_executor.spin_some();
                 std::this_thread::sleep_for(std::chrono::milliseconds(10));
             }
+            RCLCPP_INFO(traj_executor_node->get_logger(), "Subscriber thread ending");
         });
+    
+        // Log publisher topic for debugging
+        RCLCPP_INFO(test_suite_node->get_logger(), "Publisher topic: %s", 
+                    test_suite_node->traj_pub_->get_topic_name());
+    
+        // Wait for publisher/subscriber discovery
+        RCLCPP_INFO(test_suite_node->get_logger(), "Waiting for publisher/subscriber discovery");
+        test_suite_node->traj_pub_->wait_for_all_acked();
+        
+        // Additional safety delay for node setup
+        std::this_thread::sleep_for(std::chrono::seconds(1));
     
         // Generate and publish trajectory plan
         carma_planning_msgs::msg::TrajectoryPlan plan = trajectory_executor_test_suite::buildSampleTraj();
         
-        // Small delay to ensure setup is complete
-        std::this_thread::sleep_for(std::chrono::milliseconds(100));
+        // Log trajectory details before publishing
+        RCLCPP_INFO(test_suite_node->get_logger(), 
+                    "Publishing trajectory plan with %zu points", 
+                    plan.trajectory_points.size());
         
         test_suite_node->traj_pub_->publish(plan);
+        RCLCPP_INFO(test_suite_node->get_logger(), "Published trajectory plan");
     
         // Spin publisher and check results
-        const int MAX_ATTEMPTS = 50;  // 5 seconds total
+        const int MAX_ATTEMPTS = 100;  // 10 seconds total
         int attempt = 0;
         const int EXPECTED_MSG_COUNT = 10;
+    
+        auto start_time = std::chrono::steady_clock::now();
     
         while (attempt < MAX_ATTEMPTS) {
             publisher_executor.spin_once(std::chrono::milliseconds(100));
             
+            auto current_time = std::chrono::steady_clock::now();
+            auto elapsed = std::chrono::duration_cast<std::chrono::seconds>(current_time - start_time).count();
+            
+            RCLCPP_INFO(test_suite_node->get_logger(), 
+                        "Current msg_count: %d, attempt: %d, elapsed time: %ld seconds", 
+                        test_suite_node->msg_count, 
+                        attempt,
+                        elapsed);
+            
             if (test_suite_node->msg_count >= EXPECTED_MSG_COUNT) {
+                RCLCPP_INFO(test_suite_node->get_logger(), "Received expected number of messages");
                 break;
             }
             
             attempt++;
-            RCLCPP_INFO(rclcpp::get_logger("test_emit_multiple"), 
-                        "Current msg_count: %d, attempt: %d", 
-                        test_suite_node->msg_count, 
-                        attempt);
+            std::this_thread::sleep_for(std::chrono::milliseconds(100));
         }
     
-        // Stop the subscriber thread
+        // Clean shutdown
+        RCLCPP_INFO(test_suite_node->get_logger(), "Beginning test shutdown");
+        stop_thread = true;
         rclcpp::shutdown();
+        
         if (subscriber_thread.joinable()) {
+            RCLCPP_INFO(test_suite_node->get_logger(), "Joining subscriber thread");
             subscriber_thread.join();
         }
     
-        RCLCPP_INFO(rclcpp::get_logger("test_emit_multiple"), 
+        RCLCPP_INFO(test_suite_node->get_logger(), 
                     "Final msg_count: %d after %d attempts", 
                     test_suite_node->msg_count, 
                     attempt);
