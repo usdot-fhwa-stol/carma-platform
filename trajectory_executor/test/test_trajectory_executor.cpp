@@ -30,14 +30,20 @@ namespace trajectory_executor
     */
     TEST(TrajectoryExecutorTest, test_emit_multiple)
     {
-        // Create and activate TrajectoryExecutor node
-        rclcpp::NodeOptions options;
+        // Use unique namespace for test nodes
+        std::string test_namespace = "test_" + std::to_string(rclcpp::Clock().now().nanoseconds());
+        auto options = rclcpp::NodeOptions()
+            .use_intra_process_comms(true)
+            .namespace_(test_namespace);
+        
         auto traj_executor_node = std::make_shared<trajectory_executor::TrajectoryExecutor>(options);
         traj_executor_node->configure(); //Call configure state transition
         traj_executor_node->activate();  //Call activate state transition to get not read for runtime
 
         // Create and activate TrajectoryExecutorTestSuite node
-        rclcpp::NodeOptions options2;
+        auto options2 = rclcpp::NodeOptions()
+            .use_intra_process_comms(true)
+            .namespace_(test_namespace);
         auto test_suite_node = std::make_shared<trajectory_executor_test_suite::TrajectoryExecutorTestSuite>(options2);
         test_suite_node->configure();
         test_suite_node->activate();
