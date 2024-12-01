@@ -61,6 +61,7 @@ rclcpp_components_register_nodes(roadway_objects
   "roadway_objects::RoadwayObjectsNode"
 )
 # Turned off as we don't use this package actively anymore. Enable and fix when we use it again.
+# https://usdot-carma.atlassian.net/browse/CAR-6091
 # if(roadway_objects_BUILD_TESTS)
 
 #   add_launch_test(test/roadway_objects_no_map_launch_test.py)
