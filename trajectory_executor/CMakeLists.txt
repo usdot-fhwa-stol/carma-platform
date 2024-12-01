@@ -74,7 +74,7 @@ if(BUILD_TESTING)
    # Add test properties to run in isolation
    set_tests_properties(test_trajectory_executor
        PROPERTIES
-       ENVIRONMENT "ROS_DOMAIN_ID=${TEST_DOMAIN_ID_OFFSET}$<PROCESS_ID>"
+       ENVIRONMENT "99" # Attempt to isolate from other unit tests when running in CI
        TIMEOUT 120  # Optional: Set a timeout in seconds
        RUN_SERIAL TRUE  # Run this test in isolation
    )
