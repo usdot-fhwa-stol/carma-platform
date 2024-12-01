@@ -18,6 +18,7 @@
 ament_auto_find_build_dependencies()
 
 # Turned off as we don't use this package actively anymore. Enable and fix when we use it again.
+# https://usdot-carma.atlassian.net/browse/CAR-6091
 
 # if(roadway_objects_BUILD_TESTS)
 #   ament_auto_find_test_dependencies()
