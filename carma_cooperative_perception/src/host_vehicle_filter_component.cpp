@@ -75,7 +75,7 @@ auto HostVehicleFilterNode::handle_on_configure(
 
             RCLCPP_ERROR(
               get_logger(),
-              "Cannot change parameter 'distance_threshold_meters': " + result.reason);
+              ("Cannot change parameter 'distance_threshold_meters': " + result.reason).c_str());
 
             break;
           }
@@ -86,7 +86,7 @@ auto HostVehicleFilterNode::handle_on_configure(
 
             RCLCPP_ERROR(
               get_logger(),
-              "Cannot change parameter 'distance_threshold_meters': " + result.reason);
+              ("Cannot change parameter 'distance_threshold_meters': " + result.reason).c_str());
 
             break;
           } else {

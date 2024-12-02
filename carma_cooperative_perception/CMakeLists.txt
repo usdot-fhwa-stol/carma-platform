@@ -29,11 +29,6 @@ carma_check_ros_version(2)
 # `dependencies.cmake`.
 find_package(ament_cmake_auto REQUIRED)
 
-# Needed so CMake can find the vendored PROJ4 module file. Th FindPROJ4.cmake
-# module file can be removed if we upgrade to a more recent PROJ version. See
-# https://github.com/usdot-fhwa-stol/carma-platform/issues/2139 for updates.
-list(APPEND CMAKE_MODULE_PATH ${CMAKE_CURRENT_SOURCE_DIR}/cmake)
-
 include(cmake_options.cmake)
 include(dependencies.cmake)
 
@@ -48,8 +43,7 @@ file(TOUCH ${PROJECT_BINARY_DIR}/COLCON_IGNORE)
 # Configures CARMA package default settings
 carma_package()
 
-# C17 CMake support added in CMake 3.21
-set(CMAKE_CXX_STANDARD 17)
+set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_C_STANDARD 11)
 
 # This will automatically add include files from include/carma_cooperative_perception
@@ -69,7 +63,7 @@ ament_auto_add_library(carma_cooperative_perception SHARED
 )
 
 target_link_libraries(carma_cooperative_perception
-  ${PROJ4_LIBRARIES}  # Note: Newer versions of PROJ use PROJ::proj
+  ${PROJ_LIBRARIES} 
   GSL  # Note: Newer versions of GSL use Microsoft.GSL::GSL
   units::units
   multiple_object_tracking::multiple_object_tracking

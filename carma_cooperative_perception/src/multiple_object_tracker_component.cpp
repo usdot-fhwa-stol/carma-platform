@@ -14,7 +14,7 @@
 
 #include "carma_cooperative_perception/multiple_object_tracker_component.hpp"
 
-#include <tf2_geometry_msgs/tf2_geometry_msgs.h>
+#include <tf2_geometry_msgs/tf2_geometry_msgs.hpp>
 #include <units.h>
 #include <rclcpp/rclcpp.hpp>
 #include <rclcpp_components/register_node_macro.hpp>
@@ -283,7 +283,7 @@ auto MultipleObjectTrackerNode::handle_on_configure(
             result.reason = "parameter is read-only while node is in 'Active' state";
 
             RCLCPP_ERROR(
-              get_logger(), "Cannot change parameter 'execution_frequency_hz': " + result.reason);
+              get_logger(), ("Cannot change parameter 'execution_frequency_hz': " + result.reason).c_str());
 
             break;
           } else {
@@ -295,7 +295,7 @@ auto MultipleObjectTrackerNode::handle_on_configure(
             result.reason = "parameter is read-only while node is in 'Active' state";
 
             RCLCPP_ERROR(
-              get_logger(), "Cannot change parameter 'execution_frequency_hz': " + result.reason);
+              get_logger(), ("Cannot change parameter 'execution_frequency_hz': " + result.reason).c_str());
 
             break;
           } else {
@@ -313,7 +313,7 @@ auto MultipleObjectTrackerNode::handle_on_configure(
             result.reason = "parameter is read-only while node is in 'Active' state";
 
             RCLCPP_ERROR(
-              get_logger(), "Cannot change parameter 'execution_frequency_hz': " + result.reason);
+              get_logger(), ("Cannot change parameter 'execution_frequency_hz': " + result.reason).c_str());
 
             break;
           } else {

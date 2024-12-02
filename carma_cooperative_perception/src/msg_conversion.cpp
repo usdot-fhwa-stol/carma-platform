@@ -14,7 +14,7 @@
 
 #include "carma_cooperative_perception/msg_conversion.hpp"
 
-#include <tf2_geometry_msgs/tf2_geometry_msgs.h>
+#include <tf2_geometry_msgs/tf2_geometry_msgs.hpp>
 #include <carma_cooperative_perception_interfaces/msg/track.hpp>
 #include <carma_cooperative_perception_interfaces/msg/track_list.hpp>
 #include <carma_perception_msgs/msg/external_object.hpp>
