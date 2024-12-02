@@ -47,7 +47,7 @@ struct Config
 {
     double spin_rate_hz = 10.0;
     bool normal_operation = true;   // if false, other plugins are able to take control over the lightbar status
-    std::vector<std::string> lightbar_priorities = {"lightbar_manager"}; // Tsesters are for unit testing. Keep it there.
+    std::vector<std::string> lightbar_priorities = {"lightbar_manager"}; // Priority in descending order. Higher priority takes over lightbar
     std::vector<std::string> lightbar_cda_table = {"TypeA", "TypeB", "TypeC", "TypeD"}; // Keys for lightbar_cda_to_ind_table, 1-to-1 with lightbar_ind_table
     std::vector<std::string> lightbar_ind_table = {"YELLOW_DIM","YELLOW_DIM","YELLOW_FLASH","YELLOW_SIDES"}; // Values for lightbar_cda_to_ind_table, 1-to-1 with lightbar_cda_table
 
