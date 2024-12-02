@@ -14,19 +14,19 @@
 
 #include "carma_cooperative_perception/msg_conversion.hpp"
 
-#include <tf2_geometry_msgs/tf2_geometry_msgs.hpp>
 #include <carma_cooperative_perception_interfaces/msg/track.hpp>
 #include <carma_cooperative_perception_interfaces/msg/track_list.hpp>
 #include <carma_perception_msgs/msg/external_object.hpp>
 #include <carma_perception_msgs/msg/external_object_list.hpp>
 #include <j2735_v2x_msgs/msg/d_date_time.hpp>
 #include <j2735_v2x_msgs/msg/personal_device_user_type.hpp>
+#include <j2735_v2x_msgs/msg/positional_accuracy.hpp>
 #include <j2735_v2x_msgs/to_floating_point.hpp>
 #include <j3224_v2x_msgs/msg/detected_object_data.hpp>
+#include <j3224_v2x_msgs/msg/equipment_type.hpp>
 #include <j3224_v2x_msgs/msg/measurement_time_offset.hpp>
 #include <j3224_v2x_msgs/msg/object_type.hpp>
-#include <j2735_v2x_msgs/msg/positional_accuracy.hpp>
-#include <j3224_v2x_msgs/msg/equipment_type.hpp>
+#include <tf2_geometry_msgs/tf2_geometry_msgs.hpp>
 
 #include <algorithm>
 #include <cctype>
@@ -577,7 +577,8 @@ auto to_sdsm_msg(
   sdsm.equipment_type.equipment_type = j3224_v2x_msgs::msg::EquipmentType::OBU;
   sdsm.ref_pos_xy_conf.semi_major = j2735_v2x_msgs::msg::PositionalAccuracy::ACCURACY_UNAVAILABLE;
   sdsm.ref_pos_xy_conf.semi_minor = j2735_v2x_msgs::msg::PositionalAccuracy::ACCURACY_UNAVAILABLE;
-  sdsm.ref_pos_xy_conf.orientation = j2735_v2x_msgs::msg::PositionalAccuracy::ACCURACY_ORIENTATION_UNAVAILABLE;
+  sdsm.ref_pos_xy_conf.orientation =
+    j2735_v2x_msgs::msg::PositionalAccuracy::ACCURACY_ORIENTATION_UNAVAILABLE;
   sdsm.objects = detected_object_list;
 
   return sdsm;

@@ -28,7 +28,7 @@ DetectionListVizNode::DetectionListVizNode(const rclcpp::NodeOptions & options)
       [this](carma_cooperative_perception_interfaces::msg::DetectionList::ConstSharedPtr msg_ptr) {
         visualization_msgs::msg::MarkerArray markers;
 
-        for (const auto& detection : msg_ptr->detections) {
+        for (const auto & detection : msg_ptr->detections) {
           visualization_msgs::msg::Marker marker;
 
           marker.header = detection.header;

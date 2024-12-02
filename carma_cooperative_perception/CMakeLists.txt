@@ -63,7 +63,7 @@ ament_auto_add_library(carma_cooperative_perception SHARED
 )
 
 target_link_libraries(carma_cooperative_perception
-  ${PROJ_LIBRARIES} 
+  ${PROJ_LIBRARIES}
   GSL  # Note: Newer versions of GSL use Microsoft.GSL::GSL
   units::units
   multiple_object_tracking::multiple_object_tracking
