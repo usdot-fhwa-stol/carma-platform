@@ -60,14 +60,15 @@ ament_auto_add_executable(roadway_objects_node
 rclcpp_components_register_nodes(roadway_objects
   "roadway_objects::RoadwayObjectsNode"
 )
+# Turned off as we don't use this package actively anymore. Enable and fix when we use it again.
+# https://usdot-carma.atlassian.net/browse/CAR-6091
+# if(roadway_objects_BUILD_TESTS)
 
-if(roadway_objects_BUILD_TESTS)
+#   add_launch_test(test/roadway_objects_no_map_launch_test.py)
+#   add_launch_test(test/roadway_objects_empty_map_launch_test.py)
+#   add_launch_test(test/roadway_objects_regular_map_launch_test.py)
 
-  add_launch_test(test/roadway_objects_no_map_launch_test.py)
-  add_launch_test(test/roadway_objects_empty_map_launch_test.py)
-  add_launch_test(test/roadway_objects_regular_map_launch_test.py)
-
-endif()
+# endif()
 
 ament_auto_package(
   INSTALL_TO_SHARE

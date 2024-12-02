@@ -1,6 +1,6 @@
 <?xml version="1.0"?>
 
-<!--  
+<!--
  Copyright (C) 2022 LEIDOS.
 
  Licensed under the Apache License, Version 2.0 (the "License"); you may not
@@ -18,7 +18,7 @@
 
 <package format="3">
   <name>stop_controlled_intersection_tactical_plugin</name>
-  <version>4.0.0</version>
+  <version>5.0.0</version>
   <description>Creates trajectory plan for stop controlled intersections</description>
   <maintainer email="CARMA@dot.gov">carma</maintainer>
   <license>Apache License 2.0</license>
@@ -37,9 +37,9 @@
   <depend>autoware_msgs</depend>
   <depend>carma_wm</depend>
   <depend>tf2</depend>
-  <depend>tf2_geometry_msgs</depend> 
-  <depend>trajectory_utils_ros2</depend>   
-  <depend>basic_autonomy</depend>   
+  <depend>tf2_geometry_msgs</depend>
+  <depend>trajectory_utils_ros2</depend>
+  <depend>basic_autonomy</depend>
 
   <test_depend>ament_lint_auto</test_depend>
   <test_depend>ament_cmake_gtest</test_depend>

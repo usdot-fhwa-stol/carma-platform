@@ -18,7 +18,7 @@
 
 <package format="3">
   <name>inlanecruising_plugin</name>
-  <version>4.0.0</version>
+  <version>5.0.0</version>
   <description>The inlanecruising_plugin converts final waypoint plan from autoware to a CARMA trajectory</description>
   <maintainer email="CARMA@dot.gov">carma</maintainer>
   <license>Apache License 2.0</license>

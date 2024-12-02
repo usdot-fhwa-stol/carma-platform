@@ -62,8 +62,8 @@ WMBroadcasterNode::WMBroadcasterNode(const rclcpp::NodeOptions &options)
   config_.participant = declare_parameter<std::string>("vehicle_participant_type", config_.participant);
   config_.participant = declare_parameter<double>("config_speed_limit", config_.config_limit);
 
-  declare_parameter("intersection_ids_for_correction");
-  declare_parameter("intersection_coord_correction");
+  declare_parameter("intersection_ids_for_correction", config_.intersection_ids_for_correction);
+  declare_parameter("intersection_coord_correction", config_.intersection_coord_correction);
 };
 
 void WMBroadcasterNode::initializeWorker(std::weak_ptr<carma_ros2_utils::CarmaLifecycleNode> weak_node_pointer)

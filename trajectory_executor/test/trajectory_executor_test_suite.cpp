@@ -91,7 +91,8 @@ namespace trajectory_executor_test_suite
             p.controller_plugin_name = "pure_pursuit_wrapper_node";
             p.lane_id = "0";
             p.planner_plugin_name = "cruising";
-            rclcpp::Duration dur((i * 0.13)*1e9); // Convert seconds to nanoseconds
+            rclcpp::Duration dur =
+                rclcpp::Duration::from_nanoseconds((i * 0.13) * 1e9);  // Convert seconds to nanoseconds
             p.target_time = cur_time + dur;
             p.x = 10 * i;
             p.y = 10 * i;
@@ -119,7 +120,8 @@ namespace trajectory_executor_test_suite
             p.controller_plugin_name = "platooning_control";
             p.lane_id = "0";
             p.planner_plugin_name = "cruising";
-            rclcpp::Duration dur((i * 0.13)*1e9); // Convert seconds to nanoseconds
+            rclcpp::Duration dur =
+                rclcpp::Duration::from_nanoseconds((i * 0.13) * 1e9);  // Convert seconds to nanoseconds
             p.target_time = cur_time + dur;
             p.x = 10 * i;
             p.y = 10 * i;

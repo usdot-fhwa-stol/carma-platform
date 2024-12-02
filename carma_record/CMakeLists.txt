@@ -5,6 +5,12 @@ find_package(carma_cmake_common REQUIRED)
 carma_check_ros_version(1)
 carma_package()
 
+# Use C++17
+if(NOT CMAKE_CXX_STANDARD)
+  set(CMAKE_CXX_STANDARD 17)
+  set(CMAKE_CXX_STANDARD_REQUIRED ON)
+endif()
+
 set( PKG_CATKIN_DEPENDS
   roscpp
   carma_utils
@@ -83,4 +89,3 @@ install(DIRECTORY include/${PROJECT_NAME}/
 install(DIRECTORY
         launch
         DESTINATION ${CATKIN_PACKAGE_SHARE_DESTINATION})
-

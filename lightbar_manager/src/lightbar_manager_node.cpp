@@ -29,9 +29,9 @@ LightBarManager::LightBarManager(const rclcpp::NodeOptions &options) : carma_ros
     config_ = Config();
     config_.spin_rate_hz = declare_parameter<double>("spin_rate_hz", config_.spin_rate_hz);
     config_.normal_operation = declare_parameter<bool>("normal_operation", config_.normal_operation);
-    declare_parameter("lightbar_cda_table");
-    declare_parameter("lightbar_ind_table");
-    declare_parameter("lightbar_priorities");
+    declare_parameter("lightbar_cda_table", config_.lightbar_cda_table);
+    declare_parameter("lightbar_ind_table", config_.lightbar_ind_table);
+    declare_parameter("lightbar_priorities", config_.lightbar_priorities);
     lbm_ = std::make_shared<LightBarManagerWorker>();
 }
 
