@@ -3137,7 +3137,7 @@ namespace platoon_strategic_ihp
         maneuver_msg.lane_following_maneuver.end_speed = target_speed;
 
         // because it is a rough plan, assume vehicle can always reach to the target speed in a lanelet
-        maneuver_msg.lane_following_maneuver.end_time = current_time + rclcpp::Duration(config_.time_step*1e9);
+        maneuver_msg.lane_following_maneuver.end_time = current_time + rclcpp::Duration::from_nanoseconds(config_.time_step*1e9);
         maneuver_msg.lane_following_maneuver.lane_ids = { std::to_string(lane_id) };
 
         RCLCPP_DEBUG_STREAM(rclcpp::get_logger("platoon_strategic_ihp"), "in compose maneuver lane id:"<< lane_id);
@@ -3183,12 +3183,12 @@ namespace platoon_strategic_ihp
         double cur_plus_target = current_speed + target_speed;
         if (cur_plus_target < 0.00001)
         {
-            maneuver_msg.lane_change_maneuver.end_time = current_time + rclcpp::Duration(config_.time_step*1e9);
+            maneuver_msg.lane_change_maneuver.end_time = current_time + rclcpp::Duration::from_nanoseconds(config_.time_step*1e9);
         }
         else
         {
             // maneuver_msg.lane_change_maneuver.end_time = current_time + rclcpp::Duration((end_dist - current_dist) / (0.5 * cur_plus_target));
-            maneuver_msg.lane_change_maneuver.end_time = current_time + rclcpp::Duration(20.0*1e9);
+            maneuver_msg.lane_change_maneuver.end_time = current_time + rclcpp::Duration::from_nanoseconds(20.0*1e9);
 
         }
 
