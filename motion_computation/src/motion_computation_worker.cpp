@@ -143,8 +143,7 @@ void MotionComputationWorker::predictionLogic(
 void MotionComputationWorker::georeferenceCallback(const std_msgs::msg::String::UniquePtr msg)
 {
   // Build projector from proj string
-  if (georeference_ != msg->data)
-  {
+  if (georeference_ != msg->data) {
     georeference_ = msg->data;
     map_projector_ = std::make_shared<lanelet::projection::LocalFrameProjector>(msg->data.c_str());
 
@@ -158,9 +157,9 @@ void MotionComputationWorker::georeferenceCallback(const std_msgs::msg::String::
 
     RCLCPP_DEBUG_STREAM(
       logger_->get_logger(), "Extracted NED in Map Rotation (x,y,z,w) : ( "
-                              << ned_in_map_rotation_.getX() << ", " << ned_in_map_rotation_.getY()
-                              << ", " << ned_in_map_rotation_.getZ() << ", "
-                              << ned_in_map_rotation_.getW());
+                               << ned_in_map_rotation_.getX() << ", " << ned_in_map_rotation_.getY()
+                               << ", " << ned_in_map_rotation_.getZ() << ", "
+                               << ned_in_map_rotation_.getW());
   }
 }
 

@@ -274,7 +274,7 @@ namespace route_following_plugin
         worker->setManeuverStartDist(maneuver, 50.0);
         ASSERT_EQ(maneuver.lane_following_maneuver.start_dist, 50.0);
 
-        rclcpp::Time new_start_time = start_time + rclcpp::Duration(10.0*1e9);
+        rclcpp::Time new_start_time = start_time + rclcpp::Duration::from_nanoseconds(10.0*1e9);
         std::vector<carma_planning_msgs::msg::Maneuver> maneuvers;
         maneuvers.push_back(maneuver);
 

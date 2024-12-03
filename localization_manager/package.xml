@@ -34,6 +34,8 @@
     <depend>carma_localization_msgs</depend>
     <depend>autoware_msgs</depend>
     <depend>message_filters_humble</depend>
+    <depend>tf2_geometry_msgs</depend>
+    <depend>std_srvs</depend>
 
     <test_depend>ament_lint_auto</test_depend>
     <test_depend>ament_cmake_gtest</test_depend>

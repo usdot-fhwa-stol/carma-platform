@@ -18,13 +18,13 @@
 
 #include <iostream>
 
-namespace platoon_strategic_ihp
+namespace platooning_strategic_ihp
 {
 
 /**
  * \brief Stuct containing the algorithm configuration values for the yield_pluginConfig
  */
-struct PlatoonPluginConfig
+struct PlatooningPluginConfig
 {
   // following parameters are for general platooning plugin
   double vehicleLength         = 5.0;     // m
@@ -61,7 +61,7 @@ struct PlatoonPluginConfig
   double maxCutinGap             = 22.0;  // m
   double maxCrosstrackError      = 2.0;   // m
 
-  // Speed adjuster to slow down platoon memebr to create gap
+  // Speed adjuster to slow down platoon member to create gap
   double slowDownAdjuster         = 0.75;    // ratio 
   double createGapAdjuster        = 0.3;     // ratio
 
@@ -91,9 +91,9 @@ struct PlatoonPluginConfig
   int join_index = -1;            // target join index for cut-in join - used for testing purposes. -1: front cutin join, target_platoon.size()-1: cut-in rear
 
 
-  friend std::ostream& operator<<(std::ostream& output, const PlatoonPluginConfig& c)
+  friend std::ostream& operator<<(std::ostream& output, const PlatooningPluginConfig& c)
   {
-    output << "PlatoonPluginConfig { " << std::endl
+    output << "PlatooningPluginConfig { " << std::endl
           << "maxPlatoonSize: " << c.maxPlatoonSize << std::endl
           << "algorithmType: " << c.algorithmType << std::endl
           << "statusMessageInterval: " << c.statusMessageInterval << std::endl
@@ -123,4 +123,4 @@ struct PlatoonPluginConfig
   }
 };
 
-} //platoon_strategic_ihp
+} //platooning_strategic_ihp
