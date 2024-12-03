@@ -23,11 +23,11 @@ namespace carma_wm {
     namespace collision_detection {
 
         //TODO: consider rewriting this method to improve efficiency; it has object_count*prediction_count*trajectory_point sqrt calls!
-        std::vector<carma_perception_msgs::msg::RoadwayObstacle> WorldCollisionDetection(const carma_perception_msgs::msg::RoadwayObstacleList& rwol, const carma_planning_msgs::msg::TrajectoryPlan& tp, 
+        std::vector<carma_perception_msgs::msg::RoadwayObstacle> WorldCollisionDetection(const carma_perception_msgs::msg::RoadwayObstacleList& rwol, const carma_planning_msgs::msg::TrajectoryPlan& tp,
                                                                         const geometry_msgs::msg::Vector3& size, const geometry_msgs::msg::Twist& velocity) {
 
 
-            RCLCPP_DEBUG_STREAM(rclcpp::get_logger("carma_wm::collision_detection"), "WorldCollisionDetection");
+            RCLCPP_ERROR_STREAM(rclcpp::get_logger("carma_wm::collision_detection"), "WorldCollisionDetection");
 
             std::vector<carma_perception_msgs::msg::RoadwayObstacle> rwo_collison;
 
@@ -38,22 +38,22 @@ namespace carma_wm {
 
                     for(size_t k=0; k < tp.trajectory_points.size(); k++) {
 
-                        RCLCPP_DEBUG_STREAM(rclcpp::get_logger("carma_wm::collision_detection"), "in for loop");
+                        RCLCPP_ERROR_STREAM(rclcpp::get_logger("carma_wm::collision_detection"), "in for loop");
 
                         double distancex = (tp.trajectory_points[k].x - j.predicted_position.position.x)*(tp.trajectory_points[k].x - j.predicted_position.position.x);
                         double distancey = (tp.trajectory_points[k].y - j.predicted_position.position.y)*(tp.trajectory_points[k].y - j.predicted_position.position.y);
 
-                        RCLCPP_DEBUG_STREAM(rclcpp::get_logger("carma_wm::collision_detection"), "tp.trajectory_points[k].x");
-                        RCLCPP_DEBUG_STREAM(rclcpp::get_logger("carma_wm::collision_detection"), tp.trajectory_points[k].x);
+                        RCLCPP_ERROR_STREAM(rclcpp::get_logger("carma_wm::collision_detection"), "tp.trajectory_points[k].x");
+                        RCLCPP_ERROR_STREAM(rclcpp::get_logger("carma_wm::collision_detection"), tp.trajectory_points[k].x);
 
-                        RCLCPP_DEBUG_STREAM(rclcpp::get_logger("carma_wm::collision_detection"), "j.predicted_position.position.x");
-                        RCLCPP_DEBUG_STREAM(rclcpp::get_logger("carma_wm::collision_detection"), j.predicted_position.position.x);
+                        RCLCPP_ERROR_STREAM(rclcpp::get_logger("carma_wm::collision_detection"), "j.predicted_position.position.x");
+                        RCLCPP_ERROR_STREAM(rclcpp::get_logger("carma_wm::collision_detection"), j.predicted_position.position.x);
 
-                        RCLCPP_DEBUG_STREAM(rclcpp::get_logger("carma_wm::collision_detection"), "tp.trajectory_points[k].y");
-                        RCLCPP_DEBUG_STREAM(rclcpp::get_logger("carma_wm::collision_detection"), tp.trajectory_points[k].y);
+                        RCLCPP_ERROR_STREAM(rclcpp::get_logger("carma_wm::collision_detection"), "tp.trajectory_points[k].y");
+                        RCLCPP_ERROR_STREAM(rclcpp::get_logger("carma_wm::collision_detection"), tp.trajectory_points[k].y);
 
-                        RCLCPP_DEBUG_STREAM(rclcpp::get_logger("carma_wm::collision_detection"), "j.predicted_position.position.y");
-                        RCLCPP_DEBUG_STREAM(rclcpp::get_logger("carma_wm::collision_detection"), j.predicted_position.position.y);
+                        RCLCPP_ERROR_STREAM(rclcpp::get_logger("carma_wm::collision_detection"), "j.predicted_position.position.y");
+                        RCLCPP_ERROR_STREAM(rclcpp::get_logger("carma_wm::collision_detection"), j.predicted_position.position.y);
 
 
                         double calcdistance = sqrt(abs(distancex + distancey));
@@ -64,7 +64,7 @@ namespace carma_wm {
 
                         double x = (i.object.size.x - size.x)*(i.object.size.x - size.x);
                         double y = (i.object.size.y - size.y)*(i.object.size.y - size.y);
-                        
+
                         double car_t_x = tp.trajectory_points[k].x - tp.trajectory_points[0].x / velocity.linear.x;
                         // double car_t_y = tp.trajectory_points[k].y - tp.trajectory_points[0].y/velocity.linear.y;
 
@@ -92,7 +92,7 @@ namespace carma_wm {
         collision_detection::MovingObject ConvertRoadwayObstacleToMovingObject(const carma_perception_msgs::msg::RoadwayObstacle& rwo){
 
             collision_detection::MovingObject mo;
-            
+
             mo.object_polygon = ObjectToBoostPolygon<polygon_t>(rwo.object.pose.pose, rwo.object.size);
 
             std::tuple <__uint64_t,polygon_t> current_pose(0 , mo.object_polygon);
@@ -101,7 +101,7 @@ namespace carma_wm {
             // Add future polygons for roadway obstacle
             for (auto i : rwo.object.predictions){
                 std::tuple <__uint64_t,polygon_t> future_object((i.header.stamp.sec*1e9 + i.header.stamp.nanosec) / 1000000, ObjectToBoostPolygon<polygon_t>(i.predicted_position, rwo.object.size));
-                
+
                 mo.fp.push_back(future_object);
             }
 
@@ -111,7 +111,7 @@ namespace carma_wm {
         }
 
         collision_detection::MovingObject ConvertVehicleToMovingObject(const carma_planning_msgs::msg::TrajectoryPlan& tp, const geometry_msgs::msg::Vector3& size, const geometry_msgs::msg::Twist& velocity){
-            
+
             collision_detection::MovingObject v;
 
             geometry_msgs::msg::Pose pose;
@@ -160,8 +160,8 @@ namespace carma_wm {
             return v;
         }
 
-        bool DetectCollision(collision_detection::MovingObject const &ob_1, collision_detection::MovingObject const &ob_2, __uint64_t target_time) {            
-            
+        bool DetectCollision(collision_detection::MovingObject const &ob_1, collision_detection::MovingObject const &ob_2, __uint64_t target_time) {
+
             collision_detection::MovingObject ob_1_after = PredictObjectPosition(ob_1,target_time);
 
             collision_detection::MovingObject ob_2_after = PredictObjectPosition(ob_2,target_time);
@@ -169,15 +169,15 @@ namespace carma_wm {
             if(CheckPolygonIntersection(ob_1_after, ob_2_after)){
                 return true;
             }
-            
+
             return false;
         }
 
-        bool CheckPolygonIntersection(collision_detection::MovingObject const &ob_1, collision_detection::MovingObject const &ob_2) {    
+        bool CheckPolygonIntersection(collision_detection::MovingObject const &ob_1, collision_detection::MovingObject const &ob_2) {
 
                 std::deque<polygon_t> output;
 
-                boost::geometry::intersection(ob_1.object_polygon, ob_2.object_polygon, output); 
+                boost::geometry::intersection(ob_1.object_polygon, ob_2.object_polygon, output);
                 // std::cout << boost::geometry::wkt(output) << std::endl;
 
                 if(output.size() > 0){
@@ -188,7 +188,7 @@ namespace carma_wm {
         }
 
         collision_detection::MovingObject PredictObjectPosition(collision_detection::MovingObject const &op,__uint64_t target_time){
-            
+
             int union_polygon_size = 0;
             for (auto i : op.fp){
                 if( std::get<0>(i) <= target_time) {
@@ -205,7 +205,7 @@ namespace carma_wm {
                 }
             }
 
-            polygon_t union_polygon;  
+            polygon_t union_polygon;
             boost::geometry::assign_points(union_polygon, union_future_polygon_points);
 
             polygon_t hull_polygon;
@@ -213,7 +213,7 @@ namespace carma_wm {
 
             std::vector<std::tuple <__uint64_t, collision_detection::polygon_t>> no_future;
             collision_detection::MovingObject output_object = {hull_polygon, op.linear_velocity, no_future};
-            
+
             return output_object;
         }
 

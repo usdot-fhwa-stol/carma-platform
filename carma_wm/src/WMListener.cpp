@@ -31,7 +31,7 @@ WMListener::WMListener(
     :node_base_(node_base),node_logging_(node_logging),node_topics_(node_topics),worker_(std::unique_ptr<WMListenerWorker>(new WMListenerWorker)), multi_threaded_(multi_thread)
 {
 
-  RCLCPP_DEBUG_STREAM(node_logging_->get_logger(), "WMListener: Creating world model listener");
+  RCLCPP_ERROR_STREAM(node_logging_->get_logger(), "WMListener: Creating world model listener");
 
   //Declare parameter if it doesn't exist
   rclcpp::Parameter config_speed_limit_param("config_speed_limit");
@@ -86,7 +86,7 @@ WMListener::WMListener(
 
   if(multi_threaded_)
   {
-    RCLCPP_DEBUG_STREAM(node_logging_->get_logger(), "WMListener: Using a multi-threaded subscription");
+    RCLCPP_ERROR_STREAM(node_logging_->get_logger(), "WMListener: Using a multi-threaded subscription");
 
     map_update_options.callback_group = node_base_->create_callback_group(rclcpp::CallbackGroupType::MutuallyExclusive);
 
