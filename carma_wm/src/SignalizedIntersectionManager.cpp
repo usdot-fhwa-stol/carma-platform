@@ -134,7 +134,10 @@ namespace carma_wm
       {
         RCLCPP_ERROR_STREAM(rclcpp::get_logger("carma_wm::SignalizedIntersectionManager"), "intersection: " << intersection.id.id << ", " << node.x() << ", " << node.y());
       }
-      intersection_nodes_[intersection.id.id] = node_list;
+      RCLCPP_ERROR_STREAM(rclcpp::get_logger("carma_wm_ctrl"), "Adding new node list size: " << node_list.size() );
+      RCLCPP_ERROR_STREAM(rclcpp::get_logger("carma_wm_ctrl"), "to existing size: " << intersection_nodes_[intersection.id.id].size() );
+
+      intersection_nodes_[intersection.id.id].insert(intersection_nodes_[intersection.id.id].end(), node_list.begin(), node_list.end());
 
       // save which signal group connect to which exit lanes
       for (auto connection : lane.connect_to_list)
