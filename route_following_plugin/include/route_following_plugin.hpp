@@ -27,8 +27,9 @@
 #include <carma_planning_msgs/msg/trajectory_plan.hpp>
 #include <gtest/gtest_prod.h>
 #include <tf2_ros/transform_listener.h>
+#include <tf2_ros/buffer.h>
 #include <tf2/LinearMath/Transform.h>
-#include <tf2_geometry_msgs/tf2_geometry_msgs.h>
+#include <tf2_geometry_msgs/tf2_geometry_msgs.hpp>
 #include <unordered_set>
 #include "carma_guidance_plugins/strategic_plugin.hpp"
 #include "route_following_plugin_config.hpp"
