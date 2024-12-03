@@ -47,8 +47,8 @@
 #include <lanelet2_core/geometry/BoundingBox.h>
 #include <lanelet2_extension/traffic_rules/CarmaUSTrafficRules.h>
 #include <lanelet2_extension/regulatory_elements/DigitalMinimumGap.h>
-#include "platoon_config_ihp.h"
-#include "platoon_manager_ihp.h"
+#include "platooning_config_ihp.h"
+#include "platooning_manager_ihp.h"
 #include <tf2_ros/transform_listener.h>
 #include <tf2/LinearMath/Transform.h>
 #include <tf2_geometry_msgs/tf2_geometry_msgs.hpp>
@@ -56,7 +56,7 @@
 #include <std_msgs/msg/string.hpp>
 #include <rclcpp/time.hpp>
 
-namespace platoon_strategic_ihp
+namespace platooning_strategic_ihp
 {
     using MobilityResponseCB = std::function<void(const carma_v2x_msgs::msg::MobilityResponse&)>;
     using MobilityRequestCB = std::function<void(const carma_v2x_msgs::msg::MobilityRequest&)>;
@@ -66,7 +66,7 @@ namespace platoon_strategic_ihp
     /**
     * \brief Class containing the logic for Strategic IHP Plugin. This class is responsible for all the negotiations as well as generating a maneuver msg.
     */
-    class PlatoonStrategicIHPPlugin
+    class PlatooningStrategicIHPPlugin
     {
         public:
 
@@ -76,7 +76,7 @@ namespace platoon_strategic_ihp
             * \param wm Pointer to initalized instance of the carma world model for accessing semantic map data
             * \param config The configuration to be used for this object
             */
-            PlatoonStrategicIHPPlugin(carma_wm::WorldModelConstPtr wm, PlatoonPluginConfig config, MobilityResponseCB mobility_response_publisher,
+            PlatooningStrategicIHPPlugin(carma_wm::WorldModelConstPtr wm, PlatooningPluginConfig config, MobilityResponseCB mobility_response_publisher,
                                 MobilityRequestCB mobility_request_publisher, MobilityOperationCB mobility_operation_publisher,
                                 PlatooningInfoCB platooning_info_publisher,
                                 std::shared_ptr<carma_ros2_utils::timers::TimerFactory> timer_factory);
@@ -284,9 +284,9 @@ namespace platoon_strategic_ihp
             void setHostECEF(carma_v2x_msgs::msg::LocationECEF pose_ecef_point);
 
             /**
-             * \brief UCLA Getter: for PlatoonManager class
+             * \brief UCLA Getter: for PlatooningManager class
              */
-            PlatoonManager getHostPM();
+            PlatooningManager getHostPM();
 
             /**
              * \brief UCLA Setter: function to set pm_.platoon_state
@@ -301,7 +301,7 @@ namespace platoon_strategic_ihp
             /**
              * \brief Set the current config
              */
-            void setConfig(const PlatoonPluginConfig& config);
+            void setConfig(const PlatooningPluginConfig& config);
 
         private:
 
@@ -315,7 +315,7 @@ namespace platoon_strategic_ihp
             carma_wm::WorldModelConstPtr wm_;
 
             // local copy of configuration file
-            PlatoonPluginConfig config_;
+            PlatooningPluginConfig config_;
 
             // local copy of pose
             // Current vehicle pose in map
@@ -815,7 +815,7 @@ namespace platoon_strategic_ihp
             std::shared_ptr<carma_ros2_utils::timers::TimerFactory> timer_factory_;
 
             // Platoon Manager Object
-            PlatoonManager pm_;
+            PlatooningManager pm_;
 
             // Strategy types
             const std::string PLATOONING_STRATEGY = "Carma/Platooning";
@@ -859,7 +859,7 @@ namespace platoon_strategic_ihp
             const std::string JOIN_PARAMS = "SIZE:%1%,SPEED:%2%,ECEFX:%3%,ECEFY:%4%,ECEFZ:%5%,JOINIDX:%6%";
 
             // Unit Test Accessors
-            FRIEND_TEST(PlatoonStrategicIHPPlugin, platoon_info_pub_front);
-            FRIEND_TEST(PlatoonStrategicIHPPlugin, is_lanechange_possible);
+            FRIEND_TEST(PlatooningStrategicIHPPlugin, platoon_info_pub_front);
+            FRIEND_TEST(PlatooningStrategicIHPPlugin, is_lanechange_possible);
     };
 }

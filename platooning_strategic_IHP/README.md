@@ -1,4 +1,4 @@
-# platoon_strategic_ihp
+# platooning_strategic_ihp
 
 Strategic plugin for the Integrated Highway Prototype 2 (IHP2) implementation which allows platooning to include front and rear merge joins. Note despite the name, as of Aug 2022 testing for this IHP2 implementation was only up to 35mph on a closed test track per limitations of the CARMA Platform system.
 

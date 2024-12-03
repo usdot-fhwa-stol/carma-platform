@@ -35,9 +35,9 @@
 #include <boost/uuid/uuid_generators.hpp>
 #include <boost/uuid/uuid_io.hpp>
 #include <carma_ros2_utils/timers/TimerFactory.hpp>
-#include "platoon_config_ihp.h"
+#include "platooning_config_ihp.h"
 
-namespace platoon_strategic_ihp
+namespace platooning_strategic_ihp
 {
     /**
     * \brief Struct for an action plan, which describes a transient joining activity
@@ -117,7 +117,7 @@ namespace platoon_strategic_ihp
     /**
     * \brief Class containing the logic for platoon manager. It is responsible for keeping track of the platoon members and role of the host vehicle in the platoon
     */ 
-    class PlatoonManager
+    class PlatooningManager
     {
     public:
 
@@ -126,7 +126,7 @@ namespace platoon_strategic_ihp
         * 
         * \param timer_factory An interface which can be used to get access to the current time
         */
-        PlatoonManager(std::shared_ptr<carma_ros2_utils::timers::TimerFactory> timer_factory);
+        PlatooningManager(std::shared_ptr<carma_ros2_utils::timers::TimerFactory> timer_factory);
 
         /**
          * \brief Stores the latest info on location of the host vehicle.
@@ -414,7 +414,7 @@ namespace platoon_strategic_ihp
     private:
 
         // local copy of configuration file
-        PlatoonPluginConfig config_;
+        PlatooningPluginConfig config_;
 
         std::string OPERATION_INFO_TYPE = "INFO";
         std::string OPERATION_STATUS_TYPE = "STATUS";

@@ -14,25 +14,20 @@
  * the License.
  */
 
-#include <gtest/gtest.h>
-#include <memory>
-#include <chrono>
-#include <thread>
-#include <future>
+#include <rclcpp/rclcpp.hpp>
+#include "platooning_strategic_ihp/platooning_strategic_plugin_node_ihp.h"
 
-#include "platoon_strategic_ihp/platoon_strategic_plugin_node_ihp.h"
-
-int main(int argc, char ** argv)
+int main(int argc, char **argv) 
 {
-    ::testing::InitGoogleTest(&argc, argv);
+  rclcpp::init(argc, argv);
 
-    //Initialize ROS
-    rclcpp::init(argc, argv);
+  auto node = std::make_shared<platooning_strategic_ihp::Node>(rclcpp::NodeOptions());
+  
+  rclcpp::executors::MultiThreadedExecutor executor;
+  executor.add_node(node->get_node_base_interface());
+  executor.spin();
 
-    bool success = RUN_ALL_TESTS();
+  rclcpp::shutdown();
 
-    //shutdown ROS
-    rclcpp::shutdown();
-
-    return success;
-} 
+  return 0;
+}

@@ -13,11 +13,11 @@
  * License for the specific language governing permissions and limitations under
  * the License.
  */
-#include "platoon_strategic_ihp/platoon_strategic_plugin_node_ihp.h"
+#include "platooning_strategic_ihp/platooning_strategic_plugin_node_ihp.h"
 #include <carma_ros2_utils/timers/TimerFactory.hpp>
 #include <carma_ros2_utils/timers/ROSTimerFactory.hpp>
 
-namespace platoon_strategic_ihp
+namespace platooning_strategic_ihp
 {
   namespace std_ph = std::placeholders;
 
@@ -25,7 +25,7 @@ namespace platoon_strategic_ihp
       : carma_guidance_plugins::StrategicPlugin(options)
   {
     // Create initial config
-    config_ = PlatoonPluginConfig();
+    config_ = PlatooningPluginConfig();
 
     // Declare parameters
 
@@ -118,7 +118,7 @@ namespace platoon_strategic_ihp
   carma_ros2_utils::CallbackReturn Node::on_configure_plugin()
   {
     // Reset config
-    config_ = PlatoonPluginConfig();
+    config_ = PlatooningPluginConfig();
 
     // Load parameters
     get_parameter<bool>("test_front_join", config_.test_front_join);
@@ -164,7 +164,7 @@ namespace platoon_strategic_ihp
 
     // Build worker
 
-    worker_ = std::make_shared<PlatoonStrategicIHPPlugin>(get_world_model(), config_, [this](auto msg) { this->mob_response_pub->publish(msg); },
+    worker_ = std::make_shared<PlatooningStrategicIHPPlugin>(get_world_model(), config_, [this](auto msg) { this->mob_response_pub->publish(msg); },
                                     [this](auto msg) { this->mob_request_pub->publish(msg); }, [this](auto msg) { this->mob_operation_pub->publish(msg); },
                                     [this](auto msg) { this->platoon_info_pub->publish(msg); },
                                     std::make_shared<carma_ros2_utils::timers::ROSTimerFactory>(shared_from_this()));
@@ -172,30 +172,30 @@ namespace platoon_strategic_ihp
 
     // Setup subscribers
     mob_request_sub = create_subscription<carma_v2x_msgs::msg::MobilityRequest>("incoming_mobility_request", 10,
-                                                              std::bind(&PlatoonStrategicIHPPlugin::mob_req_cb,  worker_.get(), std_ph::_1));
+                                                              std::bind(&PlatooningStrategicIHPPlugin::mob_req_cb,  worker_.get(), std_ph::_1));
 
     mob_response_sub = create_subscription<carma_v2x_msgs::msg::MobilityResponse>("incoming_mobility_response", 10,
-                                                              std::bind(&PlatoonStrategicIHPPlugin::mob_resp_cb, worker_.get(), std_ph::_1));
+                                                              std::bind(&PlatooningStrategicIHPPlugin::mob_resp_cb, worker_.get(), std_ph::_1));
 
     mob_operation_sub = create_subscription<carma_v2x_msgs::msg::MobilityOperation>("incoming_mobility_operation", 10,
-                                                              std::bind(&PlatoonStrategicIHPPlugin::mob_op_cb, worker_.get(), std_ph::_1));
+                                                              std::bind(&PlatooningStrategicIHPPlugin::mob_op_cb, worker_.get(), std_ph::_1));
 
     current_pose_sub = create_subscription<geometry_msgs::msg::PoseStamped>("current_pose", 10,
-                                                              std::bind(&PlatoonStrategicIHPPlugin::pose_cb, worker_.get(), std_ph::_1));
+                                                              std::bind(&PlatooningStrategicIHPPlugin::pose_cb, worker_.get(), std_ph::_1));
 
     current_twist_sub = create_subscription<geometry_msgs::msg::TwistStamped>("current_velocity", 10,
-                                                              std::bind(&PlatoonStrategicIHPPlugin::twist_cb, worker_.get(), std_ph::_1));
+                                                              std::bind(&PlatooningStrategicIHPPlugin::twist_cb, worker_.get(), std_ph::_1));
 
     cmd_sub = create_subscription<geometry_msgs::msg::TwistStamped>("twist_raw", 10,
-                                                              std::bind(&PlatoonStrategicIHPPlugin::cmd_cb, worker_.get(), std_ph::_1));
+                                                              std::bind(&PlatooningStrategicIHPPlugin::cmd_cb, worker_.get(), std_ph::_1));
 
     georeference_sub = create_subscription<std_msgs::msg::String>("georeference", 10,
-                                                              std::bind(&PlatoonStrategicIHPPlugin::georeference_cb, worker_.get(), std_ph::_1));
+                                                              std::bind(&PlatooningStrategicIHPPlugin::georeference_cb, worker_.get(), std_ph::_1));
 
     loop_timer_ = create_timer(
         get_clock(),
         std::chrono::milliseconds(100), // 10 Hz frequency
-        std::bind(&PlatoonStrategicIHPPlugin::onSpin, worker_.get()));
+        std::bind(&PlatooningStrategicIHPPlugin::onSpin, worker_.get()));
 
     // Return success if everything initialized successfully
     return CallbackReturn::SUCCESS;
@@ -233,9 +233,9 @@ namespace platoon_strategic_ihp
     return "v4.0";
   }
 
-} // platoon_strategic_ihp
+} // platooning_strategic_ihp
 
 #include "rclcpp_components/register_node_macro.hpp"
 
 // Register the component with class_loader
-RCLCPP_COMPONENTS_REGISTER_NODE(platoon_strategic_ihp::Node)
+RCLCPP_COMPONENTS_REGISTER_NODE(platooning_strategic_ihp::Node)
