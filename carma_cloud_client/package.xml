@@ -37,6 +37,7 @@
   <depend>j2735_v2x_msgs</depend>
   <depend>carma_v2x_msgs</depend>
   <depend>j2735_convertor</depend>
+  <depend>std_srvs</depend>
   
   <!-- <depend>qhttpengine</depend> -->
   <!-- <depend>v2xhubWebAPI</depend> -->

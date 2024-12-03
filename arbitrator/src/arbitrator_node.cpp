@@ -67,7 +67,7 @@ namespace arbitrator
         auto bss = std::make_shared<arbitrator::BeamSearchStrategy>(config_.beam_width);
 
         auto png = std::make_shared<arbitrator::PluginNeighborGenerator<arbitrator::CapabilitiesInterface>>(ci);
-        arbitrator::TreePlanner tp(cf, png, bss, rclcpp::Duration(config_.target_plan_duration* 1e9));
+        arbitrator::TreePlanner tp(cf, png, bss, rclcpp::Duration::from_nanoseconds(config_.target_plan_duration* 1e9));
 
         wm_listener_ = std::make_shared<carma_wm::WMListener>(
             this->get_node_base_interface(), this->get_node_logging_interface(),
@@ -81,7 +81,7 @@ namespace arbitrator
             std::make_shared<ArbitratorStateMachine>(sm),
             ci,
             std::make_shared<TreePlanner>(tp),
-            rclcpp::Duration(config_.min_plan_duration* 1e9),
+            rclcpp::Duration::from_nanoseconds(config_.min_plan_duration* 1e9),
             1/config_.planning_frequency,
             wm_ );
 

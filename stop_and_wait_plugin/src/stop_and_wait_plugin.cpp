@@ -216,7 +216,7 @@ std::vector<carma_planning_msgs::msg::TrajectoryPlanPoint> StopandWait::trajecto
   for (size_t i = 0; i < points.size(); i++)
   {
     carma_planning_msgs::msg::TrajectoryPlanPoint tpp;
-    rclcpp::Duration relative_time(times[i] * 1e9);
+    rclcpp::Duration relative_time = rclcpp::Duration::from_nanoseconds(times[i] * 1e9);
     tpp.target_time = startTime + relative_time;
     tpp.x = points[i].x();
     tpp.y = points[i].y();
@@ -390,10 +390,10 @@ std::vector<carma_planning_msgs::msg::TrajectoryPlanPoint> StopandWait::compose_
 
   auto traj = trajectory_from_points_times_orientations(raw_points, times, yaws, start_time);
 
-  while (rclcpp::Time(traj.back().target_time) - rclcpp::Time(traj.front().target_time) < rclcpp::Duration(config_.minimal_trajectory_duration * 1e9))
+  while (rclcpp::Time(traj.back().target_time) - rclcpp::Time(traj.front().target_time) < rclcpp::Duration::from_nanoseconds(config_.minimal_trajectory_duration * 1e9))
   {
     carma_planning_msgs::msg::TrajectoryPlanPoint new_point = traj.back();
-    new_point.target_time = rclcpp::Time(new_point.target_time) + rclcpp::Duration(config_.stop_timestep * 1e9);
+    new_point.target_time = rclcpp::Time(new_point.target_time) + rclcpp::Duration::from_nanoseconds(config_.stop_timestep * 1e9);
     new_point.planner_plugin_name = plugin_name_;
     traj.push_back(new_point);
   }
