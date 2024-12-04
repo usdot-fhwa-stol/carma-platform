@@ -45,7 +45,6 @@ git clone --depth=1 https://github.com/usdot-fhwa-stol/carma-messenger.git --bra
 # Get humble branch of message filters which supports template Node arguments (foxy version supports rclcpp::Node only)
 git clone --depth=1 https://github.com/usdot-fhwa-stol/carma-message-filters.git --branch "${BRANCH}"
 git clone --depth=1 https://github.com/usdot-fhwa-stol/multiple_object_tracking --branch "${BRANCH}"
-git clone --depth=1 https://github.com/ros2/rosbag2 --branch humble
 
 # add astuff messages
 # NOTE: The ibeo_msgs package is ignored because on build the cmake files in that package run a sed command
@@ -62,10 +61,6 @@ cd ../astuff_sensor_msgs
 echo "" > COLCON_IGNORE
 
 cd ../
-
-# Clone the humble branch of ros2_tracing in order to enable certain analyses of CARMA Platform
-# made possible through collected trace data, such as analyzing ROS 2 callback durations.
-git clone -b humble https://github.com/ros2/ros2_tracing
 
 #rosbridge_suite is a ROS meta-package including all the rosbridge packages.
 # NOTE: clone -b flag is used instead of --branch to avoid hook rewriting it
