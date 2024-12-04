@@ -45,22 +45,6 @@ git clone --depth=1 https://github.com/usdot-fhwa-stol/carma-messenger.git --bra
 git clone --depth=1 https://github.com/usdot-fhwa-stol/carma-message-filters.git --branch "${BRANCH}"
 git clone --depth=1 https://github.com/usdot-fhwa-stol/multiple_object_tracking --branch "${BRANCH}"
 
-# add astuff messages
-# NOTE: The ibeo_msgs package is ignored because on build the cmake files in that package run a sed command
-#       which can make them incompatible with a new ros version after a source switch
-git clone https://github.com/astuff/astuff_sensor_msgs
-
-cd astuff_sensor_msgs
-git checkout 41d5ef0c33fb27eb3c9ba808b51332bcce186a83
-
-# Disable ibeo_msgs
-cd ibeo_msgs
-echo "" > COLCON_IGNORE
-cd ../astuff_sensor_msgs
-echo "" > COLCON_IGNORE
-
-cd ../
-
 #rosbridge_suite is a ROS meta-package including all the rosbridge packages.
 # NOTE: clone -b flag is used instead of --branch to avoid hook rewriting it
 git clone -b ros2 https://github.com/usdot-fhwa-stol/rosbridge_suite
