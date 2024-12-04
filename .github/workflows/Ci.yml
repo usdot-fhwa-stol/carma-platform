@@ -66,11 +66,6 @@ jobs:
     - name: Install external dependencies
       # Install the multiple object tracking deps
       run: sudo bash /opt/carma/src/multiple_object_tracking/scripts/install_dependencies.sh
-    # TODO WIP Humble Upgrade: Remove after humble upgrade is done
-    - name: Read packages from file
-      run: |
-        PACKAGES=$(cat /opt/carma/src/${{ github.event.repository.name }}/.github/workflows/humble-upgraded-packages.txt)
-        echo "PACKAGES=$PACKAGES" >> $GITHUB_ENV
 
     - name: Build ROS2
       run: |
