@@ -39,11 +39,12 @@ FROM ${DOCKER_ORG}/autoware.ai:${DOCKER_TAG} as base-image
 FROM base-image AS source-code
 
 RUN mkdir ~/src
-COPY --chown=carma . /home/carma/src/carma-platform/
+COPY --chown=carma ./docker /home/carma/src/carma-platform/docker
 
 ARG GIT_BRANCH="develop"
 RUN ~/src/carma-platform/docker/checkout.bash -b ${GIT_BRANCH}
 
+COPY --chown=carma . /home/carma/src/carma-platform
 # /////////////////////////////////////////////////////////////////////////////
 # Stage 2 - Build and install the software
 # /////////////////////////////////////////////////////////////////////////////
