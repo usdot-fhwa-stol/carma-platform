@@ -67,6 +67,12 @@ jobs:
       # Install the multiple object tracking deps
       run: sudo bash /opt/carma/src/multiple_object_tracking/scripts/install_dependencies.sh
 
+    - name: Compile list of packages
+      # Get all packages in the respository
+      run: |
+        PACKAGES=$(find ./src/carma-platform -maxdepth 2 -type f -name package.xml | grep -v "template_package" | sed 's/.*\/src\/carma-platform\///' | cut -d/ -f1 | tr '\n' ' ' | sed 's/ $//')
+        echo "PACKAGES=$PACKAGES" >> $GITHUB_ENV
+
     - name: Build ROS2
       run: |
         source "$INIT_ENV"
