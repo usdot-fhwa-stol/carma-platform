@@ -70,7 +70,7 @@ jobs:
     - name: Compile list of packages
       # Get all packages in the respository
       run: |
-        PACKAGES=$(find ./src/carma-platform -maxdepth 2 -type f -name package.xml | grep -v "template_package" | sed 's/.*\/src\/carma-platform\///' | cut -d/ -f1 | tr '\n' ' ' | sed 's/ $//')
+        PACKAGES=$(find ./src/carma-platform -maxdepth 2 -type f -name "package.xml" -exec sh -c 'grep -oPm1 "(?<=<name>)[^<]+" "{}"' \;)
         echo "PACKAGES=$PACKAGES" >> $GITHUB_ENV
 
     - name: Build ROS2
