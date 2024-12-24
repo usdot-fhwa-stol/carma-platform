@@ -52,8 +52,6 @@ git clone -b ros2 https://github.com/usdot-fhwa-stol/rosbridge_suite
 # TODO: Remove V2X-Hub Depedency (CAR-6029)
 git clone -b master --depth 1 https://github.com/etherealjoy/qhttpengine.git
 
-git clone -b 7.6.0 --depth 1 https://github.com/usdot-fhwa-OPS/V2X-Hub.git
+git clone -b 7.6.0 --depth 1 --sparse https://github.com/usdot-fhwa-OPS/V2X-Hub.git
 cd V2X-Hub
-git config core.sparsecheckout true
-git sparse-checkout init
 git sparse-checkout set ext/ccserver
