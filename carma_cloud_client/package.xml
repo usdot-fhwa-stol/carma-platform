@@ -39,10 +39,6 @@
   <depend>j2735_convertor</depend>
   <depend>std_srvs</depend>
   
-  <!-- <depend>qhttpengine</depend> -->
-  <!-- <depend>v2xhubWebAPI</depend> -->
-  
-
   <test_depend>ament_lint_auto</test_depend>
   <test_depend>ament_cmake_gtest</test_depend>
 
