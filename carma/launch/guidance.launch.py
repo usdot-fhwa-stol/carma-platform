@@ -103,6 +103,9 @@ def generate_launch_description():
         description = "Path to file containing override parameters for the subsystem controller"
     )
 
+    carma_wm_log_level = str(GetLogLevel('carma_wm', env_log_levels))
+    basic_autonomy_log_level = str(GetLogLevel('basic_autonomy', env_log_levels))
+
     # Below nodes are separated to individual container such that the nodes with reentrant services are within their separate container.
     # When all nodes are within single container, it is prone to fail throwing runtime_error, and it is currently hypothesized to be
     # because of this issue: https://github.com/ros2/rclcpp/issues/1212, where fix in the rclcpp library, so not able to be integrated at this moment:
@@ -148,6 +151,7 @@ def generate_launch_description():
                 ]
             )
         ]
+
     )
 
     carma_plan_delegator_container = ComposableNodeContainer(
@@ -179,7 +183,10 @@ def generate_launch_description():
                     vehicle_config_param_file
                 ]
             )
-        ]
+        ],
+        arguments = ['--ros-args', 
+                    '--log-level', 
+                    'carma_wm:=' + carma_wm_log_level]
     )
 
     carma_trajectory_executor_and_route_container = ComposableNodeContainer(
@@ -226,7 +233,10 @@ def generate_launch_description():
                     vehicle_config_param_file
                 ]
             )
-        ]
+        ],
+        arguments = ['--ros-args', 
+                     '--log-level', 
+                     'carma_wm:=' + carma_wm_log_level]
     )
 
     carma_arbitrator_container = ComposableNodeContainer(
@@ -256,7 +266,10 @@ def generate_launch_description():
                     vehicle_config_param_file
                 ]
             )
-        ]
+        ],
+        arguments = ['--ros-args', 
+                '--log-level', 
+                'carma_wm:=' + carma_wm_log_level]
     )
     carma_guidance_worker_container = ComposableNodeContainer(
         package='carma_ros2_utils',
@@ -313,7 +326,10 @@ def generate_launch_description():
                     vehicle_config_param_file
                 ]
             )
-        ]
+        ],
+        arguments = ['--ros-args', 
+                '--log-level', 
+                'basic_autonomy:=' + basic_autonomy_log_level]
     )
 
     twist_filter_container = ComposableNodeContainer(

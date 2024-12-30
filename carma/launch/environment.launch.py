@@ -101,6 +101,8 @@ def generate_launch_description():
     cp_multiple_object_tracker_node_file = str(PurePath(get_package_share_directory("carma_cooperative_perception"), "config/cp_multiple_object_tracker_node.yaml"))
     cp_host_vehicle_filter_node_file = str(PurePath(get_package_share_directory("carma_cooperative_perception"), "config/cp_host_vehicle_filter_node.yaml"))
 
+    carma_wm_log_level = str(GetLogLevel('carma_wm', env_log_levels))
+
     # lidar_perception_container contains all nodes for lidar based object perception
     # a failure in any one node in the chain would invalidate the rest of it, so they can all be
     # placed in the same container without reducing fault tolerance
@@ -354,7 +356,8 @@ def generate_launch_description():
                     ]
 
             ),
-        ]
+        ],
+        arguments = ['--ros-args', '--log-level', 'carma_wm:=' + carma_wm_log_level]
     )
 
     # Vector map loader
@@ -527,7 +530,8 @@ def generate_launch_description():
                 ]
             ),
 
-        ]
+        ],
+        arguments = ['--ros-args', '--log-level', 'carma_wm:=' + carma_wm_log_level]
     )
 
     # subsystem_controller which orchestrates the lifecycle of this subsystem's components

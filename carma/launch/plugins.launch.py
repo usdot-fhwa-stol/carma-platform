@@ -89,6 +89,9 @@ def generate_launch_description():
 
     env_log_levels = EnvironmentVariable('CARMA_ROS_LOGGING_CONFIG', default_value='{ "default_level" : "WARN" }')
 
+    carma_wm_log_level = str(GetLogLevel('carma_wm', env_log_levels))
+    basic_autonomy_log_level = str(GetLogLevel('basic_autonomy', env_log_levels))
+
     pure_pursuit_tuning_parameters = [vehicle_calibration_dir, "/pure_pursuit/calibration.yaml"]
 
     unique_vehicle_calibration_params = [vehicle_calibration_dir, "/identifiers/UniqueVehicleParams.yaml"]
@@ -123,7 +126,11 @@ def generate_launch_description():
                     vehicle_config_param_file
                 ]
             ),
-        ]
+        ],
+        arguments = ['--ros-args', 
+            '--log-level', 
+            'carma_wm:=' + carma_wm_log_level,
+            'basic_autonomy:=' + basic_autonomy_log_level]
     )
 
     carma_route_following_plugin_container = ComposableNodeContainer(
@@ -156,7 +163,11 @@ def generate_launch_description():
                     vehicle_config_param_file
                 ]
             ),
-        ]
+        ],
+        arguments = ['--ros-args', 
+            '--log-level', 
+            'carma_wm:=' + carma_wm_log_level,
+            'basic_autonomy:=' + basic_autonomy_log_level]
     )
 
     carma_approaching_emergency_vehicle_plugin_container = ComposableNodeContainer(
@@ -197,7 +208,11 @@ def generate_launch_description():
                     vehicle_config_param_file
                 ]
             ),
-        ]
+        ],
+        arguments = ['--ros-args', 
+            '--log-level', 
+            'carma_wm:=' + carma_wm_log_level,
+            'basic_autonomy:=' + basic_autonomy_log_level]
     )
 
     carma_stop_and_wait_plugin_container = ComposableNodeContainer(
@@ -228,7 +243,11 @@ def generate_launch_description():
                     vehicle_config_param_file
                 ]
             ),
-        ]
+        ],
+        arguments = ['--ros-args', 
+            '--log-level', 
+            'carma_wm:=' + carma_wm_log_level,
+            'basic_autonomy:=' + basic_autonomy_log_level]
     )
 
     carma_sci_strategic_plugin_container = ComposableNodeContainer(
@@ -263,7 +282,11 @@ def generate_launch_description():
                     vehicle_config_param_file
                 ]
             ),
-        ]
+        ],
+        arguments = ['--ros-args', 
+            '--log-level', 
+            'carma_wm:=' + carma_wm_log_level,
+            'basic_autonomy:=' + basic_autonomy_log_level]
     )
 
     carma_lci_strategic_plugin_container = ComposableNodeContainer(
@@ -298,7 +321,11 @@ def generate_launch_description():
                     unique_vehicle_calibration_params
                 ]
             ),
-        ]
+        ],
+        arguments = ['--ros-args', 
+            '--log-level', 
+            'carma_wm:=' + carma_wm_log_level,
+            'basic_autonomy:=' + basic_autonomy_log_level]
     )
 
     carma_stop_controlled_intersection_tactical_plugin_container = ComposableNodeContainer(
@@ -328,7 +355,11 @@ def generate_launch_description():
                     vehicle_config_param_file
                 ]
             ),
-        ]
+        ],
+        arguments = ['--ros-args', 
+            '--log-level', 
+            'carma_wm:=' + carma_wm_log_level,
+            'basic_autonomy:=' + basic_autonomy_log_level]
     )
 
     carma_cooperative_lanechange_plugins_container = ComposableNodeContainer(
@@ -366,7 +397,11 @@ def generate_launch_description():
                     vehicle_config_param_file
                 ]
             ),
-        ]
+        ],
+        arguments = ['--ros-args', 
+            '--log-level', 
+            'carma_wm:=' + carma_wm_log_level,
+            'basic_autonomy:=' + basic_autonomy_log_level]
     )
 
     carma_yield_plugin_container = ComposableNodeContainer(
@@ -401,7 +436,11 @@ def generate_launch_description():
                     vehicle_config_param_file
                 ]
             ),
-        ]
+        ],
+        arguments = ['--ros-args', 
+            '--log-level', 
+            'carma_wm:=' + carma_wm_log_level,
+            'basic_autonomy:=' + basic_autonomy_log_level]
     )
 
     carma_light_controlled_intersection_plugins_container = ComposableNodeContainer(
@@ -431,7 +470,11 @@ def generate_launch_description():
                     light_controlled_intersection_tactical_plugin_param_file
                 ]
             ),
-        ]
+        ],
+        arguments = ['--ros-args', 
+            '--log-level', 
+            'carma_wm:=' + carma_wm_log_level,
+            'basic_autonomy:=' + basic_autonomy_log_level]
     )
 
     carma_pure_pursuit_wrapper_container = ComposableNodeContainer(
@@ -461,7 +504,11 @@ def generate_launch_description():
                     pure_pursuit_tuning_parameters
                 ]
             ),
-        ]
+        ],
+        arguments = ['--ros-args', 
+            '--log-level', 
+            'carma_wm:=' + carma_wm_log_level,
+            'basic_autonomy:=' + basic_autonomy_log_level]
     )
 
     trajectory_follower_container = ComposableNodeContainer(
@@ -521,7 +568,11 @@ def generate_launch_description():
                     [vehicle_calibration_dir, "/trajectory_follower/longitudinal_controller_defaults.yaml"]
                 ]
             )
-        ]
+        ],
+        arguments = ['--ros-args', 
+            '--log-level', 
+            'carma_wm:=' + carma_wm_log_level,
+            'basic_autonomy:=' + basic_autonomy_log_level]
     )
     carma_trajectory_follower_wrapper_container = ComposableNodeContainer(
         package='carma_ros2_utils',
@@ -549,7 +600,11 @@ def generate_launch_description():
                     trajectory_follower_wrapper_param_file
                 ]
             ),
-        ]
+        ],
+        arguments = ['--ros-args', 
+            '--log-level', 
+            'carma_wm:=' + carma_wm_log_level,
+            'basic_autonomy:=' + basic_autonomy_log_level]
     )
 
     platooning_strategic_plugin_container = ComposableNodeContainer(
@@ -590,7 +645,11 @@ def generate_launch_description():
                     vehicle_config_param_file
                 ]
             ),
-        ]
+        ],
+        arguments = ['--ros-args', 
+            '--log-level', 
+            'carma_wm:=' + carma_wm_log_level,
+            'basic_autonomy:=' + basic_autonomy_log_level]
     )
 
     platooning_tactical_plugin_container = ComposableNodeContainer(
@@ -618,7 +677,11 @@ def generate_launch_description():
                 ],
                 parameters=[ platoon_tactical_ihp_param_file, vehicle_config_param_file ]
             ),
-        ]
+        ],
+        arguments = ['--ros-args', 
+            '--log-level', 
+            'carma_wm:=' + carma_wm_log_level,
+            'basic_autonomy:=' + basic_autonomy_log_level]
     )
 
     platooning_control_plugin_container = ComposableNodeContainer(
@@ -645,7 +708,11 @@ def generate_launch_description():
                 ],
                 parameters=[ platooning_control_param_file, vehicle_config_param_file, unique_vehicle_calibration_params ]
             )
-        ]
+        ],
+        arguments = ['--ros-args', 
+            '--log-level', 
+            'carma_wm:=' + carma_wm_log_level,
+            'basic_autonomy:=' + basic_autonomy_log_level]
     )
 
     carma_stop_and_dwell_strategic_plugin_container = ComposableNodeContainer(
@@ -678,7 +745,11 @@ def generate_launch_description():
                     vehicle_config_param_file
                 ]
             ),
-        ]
+        ],
+        arguments = ['--ros-args', 
+            '--log-level', 
+            'carma_wm:=' + carma_wm_log_level,
+            'basic_autonomy:=' + basic_autonomy_log_level]
     )
 
     intersection_transit_maneuvering_container = ComposableNodeContainer(
@@ -700,7 +771,11 @@ def generate_launch_description():
                     vehicle_config_param_file
                 ]
             ),
-        ]
+        ],
+        arguments = ['--ros-args', 
+            '--log-level', 
+            'carma_wm:=' + carma_wm_log_level,
+            'basic_autonomy:=' + basic_autonomy_log_level]
     )
 
     return LaunchDescription([
