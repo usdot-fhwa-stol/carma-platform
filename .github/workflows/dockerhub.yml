@@ -9,7 +9,7 @@ on:
       - "release/*"
     tags:
       - "carma-system-*"
-     workflow_dispatch:
+    workflow_dispatch:
 
 jobs:
   dockerhub:
