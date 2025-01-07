@@ -23,6 +23,7 @@ from launch.substitutions import ThisLaunchFileDir
 from carma_ros2_utils.launch.get_log_level import GetLogLevel
 from carma_ros2_utils.launch.get_current_namespace import GetCurrentNamespace
 from launch.substitutions import LaunchConfiguration
+from launch.launch_context import LaunchContext
 
 import os
 
@@ -37,6 +38,8 @@ from launch_ros.actions import PushRosNamespace
 # Launch file for launching the nodes in the CARMA guidance stack
 
 def generate_launch_description():
+    # Create a launch context
+    context = LaunchContext()
 
     route_file_folder = LaunchConfiguration('route_file_folder')
     vehicle_calibration_dir = LaunchConfiguration('vehicle_calibration_dir')
@@ -103,8 +106,8 @@ def generate_launch_description():
         description = "Path to file containing override parameters for the subsystem controller"
     )
 
-    carma_wm_log_level = str(GetLogLevel('carma_wm', env_log_levels))
-    basic_autonomy_log_level = str(GetLogLevel('basic_autonomy', env_log_levels))
+    carma_wm_log_level = GetLogLevel('carma_wm', env_log_levels).perform(context)
+    basic_autonomy_log_level = GetLogLevel('basic_autonomy', env_log_levels).perform(context)
 
     # Below nodes are separated to individual container such that the nodes with reentrant services are within their separate container.
     # When all nodes are within single container, it is prone to fail throwing runtime_error, and it is currently hypothesized to be
@@ -186,7 +189,7 @@ def generate_launch_description():
         ],
         arguments = ['--ros-args', 
                     '--log-level', 
-                    'carma_wm:=' + carma_wm_log_level]
+                    f'carma_wm:={carma_wm_log_level}']
     )
 
     carma_trajectory_executor_and_route_container = ComposableNodeContainer(
@@ -236,7 +239,7 @@ def generate_launch_description():
         ],
         arguments = ['--ros-args', 
                      '--log-level', 
-                     'carma_wm:=' + carma_wm_log_level]
+                     f'carma_wm:={carma_wm_log_level}']
     )
 
     carma_arbitrator_container = ComposableNodeContainer(
@@ -269,7 +272,7 @@ def generate_launch_description():
         ],
         arguments = ['--ros-args', 
                 '--log-level', 
-                'carma_wm:=' + carma_wm_log_level]
+                f'carma_wm:={carma_wm_log_level}']
     )
     carma_guidance_worker_container = ComposableNodeContainer(
         package='carma_ros2_utils',
@@ -329,7 +332,7 @@ def generate_launch_description():
         ],
         arguments = ['--ros-args', 
                 '--log-level', 
-                'basic_autonomy:=' + basic_autonomy_log_level]
+                f'basic_autonomy:={basic_autonomy_log_level}']
     )
 
     twist_filter_container = ComposableNodeContainer(
