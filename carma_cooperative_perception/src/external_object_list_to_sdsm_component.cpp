@@ -139,10 +139,10 @@ auto ExternalObjectListToSdsmNode::publish_as_sdsm(const external_objects_msg_ty
 
 auto ExternalObjectListToSdsmNode::update_georeference(const georeference_msg_type & msg) -> void
 {
-  if (map_georeference_ != msg.data)
-  {
+  if (map_georeference_ != msg.data) {
     map_georeference_ = msg.data;
-    map_projector_ = std::make_shared<lanelet::projection::LocalFrameProjector>(map_georeference_.c_str());
+    map_projector_ =
+      std::make_shared<lanelet::projection::LocalFrameProjector>(map_georeference_.c_str());
   }
 }
 

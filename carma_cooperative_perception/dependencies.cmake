@@ -28,13 +28,7 @@ CPMAddPackage(NAME units
 
 find_package(multiple_object_tracking REQUIRED)
 
-# CARMA currently uses PROJ version 6.3.1, which is not designed to be incorporated
-# as a subdirectory into larger projects. If CARMA upgrades to a newer version, we
-# could use the CPMAddPackage(...) command to install PROJ as a source dependency
-# if there is no version already locally available.
-# See https://github.com/usdot-fhwa-stol/carma-platform/issues/2139 for the PROJ
-# version upgrade plans.
-find_package(PROJ4 REQUIRED MODULE)
+find_package(PROJ REQUIRED MODULE)
 
 # lint_cmake: -readability/wonkycase
 CPMAddPackage(NAME Microsoft.GSL

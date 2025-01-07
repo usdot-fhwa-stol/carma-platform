@@ -1,6 +1,7 @@
 # This workflow will build and push official docker images when new push occurs to develop, master, release branches but doesn't run any unit test or sonar scanner
 name: Docker Hub build
 on:
+  workflow_dispatch:
   push:
     branches:
       - develop
@@ -9,6 +10,7 @@ on:
       - "release/*"
     tags:
       - "carma-system-*"
+
 jobs:
   dockerhub:
     uses: usdot-fhwa-stol/actions/.github/workflows/dockerhub.yml@main

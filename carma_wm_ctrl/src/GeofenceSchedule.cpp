@@ -83,7 +83,7 @@ std::pair<bool, rclcpp::Time> GeofenceSchedule::getNextInterval(const rclcpp::Ti
 
   // Iterate over the day to find the next control interval
   constexpr int num_sec_in_day = 86400;
-  const rclcpp::Duration full_day(num_sec_in_day* 1e9);
+  const rclcpp::Duration full_day = rclcpp::Duration::from_nanoseconds(num_sec_in_day* 1e9);
   bool time_in_active_period = false;  // Flag indicating if the requested time is within an active control span
 
   while (cur_start < full_day && ros_time_of_day > rclcpp::Time(cur_start.nanoseconds(), clock_type))

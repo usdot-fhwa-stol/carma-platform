@@ -39,10 +39,10 @@
 
 #include <carma_guidance_plugins/strategic_plugin.hpp>
 
-#include "platoon_strategic_ihp.h"
-#include "platoon_config_ihp.h"
+#include "platooning_strategic_ihp.h"
+#include "platooning_config_ihp.h"
 
-namespace platoon_strategic_ihp
+namespace platooning_strategic_ihp
 {
 
   /**
@@ -72,10 +72,10 @@ namespace platoon_strategic_ihp
     rclcpp::TimerBase::SharedPtr loop_timer_;
 
     // Node configuration
-    PlatoonPluginConfig config_;
+    PlatooningPluginConfig config_;
 
     // Worker
-    std::shared_ptr<PlatoonStrategicIHPPlugin> worker_;
+    std::shared_ptr<PlatooningStrategicIHPPlugin> worker_;
 
   public:
     /**
@@ -110,4 +110,4 @@ namespace platoon_strategic_ihp
 
   };
 
-} // platoon_strategic_ihp
+} // platooning_strategic_ihp
