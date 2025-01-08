@@ -651,8 +651,9 @@ namespace plan_delegator
             // Wait for the result.
             if (future_status == std::future_status::ready)
             {
+                auto received_response = plan_response.get();
                 // validate trajectory before add to the plan
-                if(!isTrajectoryValid(plan_response.get()->trajectory_plan))
+                if(!isTrajectoryValid(received_response->trajectory_plan))
                 {
                     RCLCPP_WARN_STREAM(rclcpp::get_logger("plan_delegator"),"Found invalid trajectory with less than 2 trajectory points for " << std::string(latest_maneuver_plan_.maneuver_plan_id));
                     break;
@@ -660,22 +661,22 @@ namespace plan_delegator
                 //Remove duplicate point from start of trajectory
                 if(latest_trajectory_plan.trajectory_points.size() !=0){
 
-                    if(latest_trajectory_plan.trajectory_points.back().target_time == plan_response.get()->trajectory_plan.trajectory_points.front().target_time){
+                    if(latest_trajectory_plan.trajectory_points.back().target_time == received_response->trajectory_plan.trajectory_points.front().target_time){
                         RCLCPP_DEBUG_STREAM(rclcpp::get_logger("plan_delegator"),"Removing duplicate point for planner: " << maneuver_planner);
-                        plan_response.get()->trajectory_plan.trajectory_points.erase(plan_response.get()->trajectory_plan.trajectory_points.begin());
-                        RCLCPP_DEBUG_STREAM(rclcpp::get_logger("plan_delegator"),"plan_response.get()->trajectory_plan size: " << plan_response.get()->trajectory_plan.trajectory_points.size());
+                        received_response->trajectory_plan.trajectory_points.erase(received_response->trajectory_plan.trajectory_points.begin());
+                        RCLCPP_DEBUG_STREAM(rclcpp::get_logger("plan_delegator"),"received_response->trajectory_plan size: " << received_response->trajectory_plan.trajectory_points.size());
 
                     }
                 }
                 latest_trajectory_plan.trajectory_points.insert(latest_trajectory_plan.trajectory_points.end(),
-                                                                plan_response.get()->trajectory_plan.trajectory_points.begin(),
-                                                                plan_response.get()->trajectory_plan.trajectory_points.end());
+                                                                received_response->trajectory_plan.trajectory_points.begin(),
+                                                                received_response->trajectory_plan.trajectory_points.end());
                 RCLCPP_DEBUG_STREAM(rclcpp::get_logger("plan_delegator"),"new latest_trajectory_plan size: " << latest_trajectory_plan.trajectory_points.size());
 
                 // Assign the trajectory plan's initial longitudinal velocity based on the first tactical plugin's response
                 if(first_trajectory_plan == true)
                 {
-                    latest_trajectory_plan.initial_longitudinal_velocity = plan_response.get()->trajectory_plan.initial_longitudinal_velocity;
+                    latest_trajectory_plan.initial_longitudinal_velocity = received_response->trajectory_plan.initial_longitudinal_velocity;
                     first_trajectory_plan = false;
                 }
 
@@ -687,9 +688,9 @@ namespace plan_delegator
 
                 // Update the maneuver plan index based on the last maneuver index converted to a trajectory
                 // This is required since inlanecruising_plugin can plan a trajectory over contiguous LANE_FOLLOWING maneuvers
-                if(plan_response.get()->related_maneuvers.size() > 0)
+                if(received_response->related_maneuvers.size() > 0)
                 {
-                    current_maneuver_index = plan_response.get()->related_maneuvers.back() + 1;
+                    current_maneuver_index = received_response->related_maneuvers.back() + 1;
                 }
             }
             else

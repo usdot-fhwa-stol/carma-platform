@@ -136,6 +136,8 @@ carma_ros2_utils::CallbackReturn MotionComputationNode::handle_on_configure(
   get_parameter<bool>("enable_ctrv_for_pedestrian_obj", config_.enable_ctrv_for_pedestrian_obj);
 
   RCLCPP_INFO_STREAM(get_logger(), "Loaded params: " << config_);
+  RCLCPP_DEBUG_STREAM(rclcpp::get_logger("carma_wm"), "Loaded params: " << config_);
+  RCLCPP_DEBUG_STREAM(rclcpp::get_logger("basic_autonomy"), "Loaded params: " << config_);
 
   // Register runtime parameter update callback
   add_on_set_parameters_callback(
