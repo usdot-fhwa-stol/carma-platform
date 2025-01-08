@@ -483,8 +483,9 @@ def generate_launch_description():
         ],
         arguments = ['--ros-args',
             '--log-level',
-            'carma_wm:=debug',
-            'basic_autonomy:=debug']
+            f'carma_wm:={carma_wm_log_level}',
+            '--log-level',
+            f'basic_autonomy:={basic_autonomy_log_level}']
     )
 
     carma_pure_pursuit_wrapper_container = ComposableNodeContainer(
