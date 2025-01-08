@@ -128,9 +128,10 @@ def generate_launch_description():
                 ]
             ),
         ],
-        arguments = ['--ros-args', 
-            '--log-level', 
+        arguments = ['--ros-args',
+            '--log-level',
             f'carma_wm:={carma_wm_log_level}',
+            '--log-level',
             f'basic_autonomy:={basic_autonomy_log_level}']
     )
 
@@ -165,9 +166,10 @@ def generate_launch_description():
                 ]
             ),
         ],
-        arguments = ['--ros-args', 
-            '--log-level', 
+        arguments = ['--ros-args',
+            '--log-level',
             f'carma_wm:={carma_wm_log_level}',
+            '--log-level',
             f'basic_autonomy:={basic_autonomy_log_level}']
     )
 
@@ -210,9 +212,10 @@ def generate_launch_description():
                 ]
             ),
         ],
-        arguments = ['--ros-args', 
-            '--log-level', 
+        arguments = ['--ros-args',
+            '--log-level',
             f'carma_wm:={carma_wm_log_level}',
+            '--log-level',
             f'basic_autonomy:={basic_autonomy_log_level}']
     )
 
@@ -245,9 +248,10 @@ def generate_launch_description():
                 ]
             ),
         ],
-        arguments = ['--ros-args', 
-            '--log-level', 
+        arguments = ['--ros-args',
+            '--log-level',
             f'carma_wm:={carma_wm_log_level}',
+            '--log-level',
             f'basic_autonomy:={basic_autonomy_log_level}']
     )
 
@@ -284,9 +288,10 @@ def generate_launch_description():
                 ]
             ),
         ],
-        arguments = ['--ros-args', 
-            '--log-level', 
+        arguments = ['--ros-args',
+            '--log-level',
             f'carma_wm:={carma_wm_log_level}',
+            '--log-level',
             f'basic_autonomy:={basic_autonomy_log_level}']
     )
 
@@ -323,9 +328,10 @@ def generate_launch_description():
                 ]
             ),
         ],
-        arguments = ['--ros-args', 
-            '--log-level', 
+        arguments = ['--ros-args',
+            '--log-level',
             f'carma_wm:={carma_wm_log_level}',
+            '--log-level',
             f'basic_autonomy:={basic_autonomy_log_level}']
     )
 
@@ -357,9 +363,10 @@ def generate_launch_description():
                 ]
             ),
         ],
-        arguments = ['--ros-args', 
-            '--log-level', 
+        arguments = ['--ros-args',
+            '--log-level',
             f'carma_wm:={carma_wm_log_level}',
+            '--log-level',
             f'basic_autonomy:={basic_autonomy_log_level}']
     )
 
@@ -399,9 +406,10 @@ def generate_launch_description():
                 ]
             ),
         ],
-        arguments = ['--ros-args', 
-            '--log-level', 
+        arguments = ['--ros-args',
+            '--log-level',
             f'carma_wm:={carma_wm_log_level}',
+            '--log-level',
             f'basic_autonomy:={basic_autonomy_log_level}']
     )
 
@@ -438,9 +446,10 @@ def generate_launch_description():
                 ]
             ),
         ],
-        arguments = ['--ros-args', 
-            '--log-level', 
+        arguments = ['--ros-args',
+            '--log-level',
             f'carma_wm:={carma_wm_log_level}',
+            '--log-level',
             f'basic_autonomy:={basic_autonomy_log_level}']
     )
 
@@ -472,8 +481,8 @@ def generate_launch_description():
                 ]
             ),
         ],
-        arguments = ['--ros-args', 
-            '--log-level', 
+        arguments = ['--ros-args',
+            '--log-level',
             'carma_wm:=debug',
             'basic_autonomy:=debug']
     )
@@ -506,9 +515,10 @@ def generate_launch_description():
                 ]
             ),
         ],
-        arguments = ['--ros-args', 
-            '--log-level', 
+        arguments = ['--ros-args',
+            '--log-level',
             f'carma_wm:={carma_wm_log_level}',
+            '--log-level',
             f'basic_autonomy:={basic_autonomy_log_level}']
     )
 
@@ -570,9 +580,10 @@ def generate_launch_description():
                 ]
             )
         ],
-        arguments = ['--ros-args', 
-            '--log-level', 
+        arguments = ['--ros-args',
+            '--log-level',
             f'carma_wm:={carma_wm_log_level}',
+            '--log-level',
             f'basic_autonomy:={basic_autonomy_log_level}']
     )
     carma_trajectory_follower_wrapper_container = ComposableNodeContainer(
@@ -602,9 +613,10 @@ def generate_launch_description():
                 ]
             ),
         ],
-        arguments = ['--ros-args', 
-            '--log-level', 
+        arguments = ['--ros-args',
+            '--log-level',
             f'carma_wm:={carma_wm_log_level}',
+            '--log-level',
             f'basic_autonomy:={basic_autonomy_log_level}']
     )
 
@@ -647,9 +659,10 @@ def generate_launch_description():
                 ]
             ),
         ],
-        arguments = ['--ros-args', 
-            '--log-level', 
+        arguments = ['--ros-args',
+            '--log-level',
             f'carma_wm:={carma_wm_log_level}',
+            '--log-level',
             f'basic_autonomy:={basic_autonomy_log_level}']
     )
 
@@ -679,9 +692,10 @@ def generate_launch_description():
                 parameters=[ platoon_tactical_ihp_param_file, vehicle_config_param_file ]
             ),
         ],
-        arguments = ['--ros-args', 
-            '--log-level', 
+        arguments = ['--ros-args',
+            '--log-level',
             f'carma_wm:={carma_wm_log_level}',
+            '--log-level',
             f'basic_autonomy:={basic_autonomy_log_level}']
     )
 
@@ -710,9 +724,10 @@ def generate_launch_description():
                 parameters=[ platooning_control_param_file, vehicle_config_param_file, unique_vehicle_calibration_params ]
             )
         ],
-        arguments = ['--ros-args', 
-            '--log-level', 
+        arguments = ['--ros-args',
+            '--log-level',
             f'carma_wm:={carma_wm_log_level}',
+            '--log-level',
             f'basic_autonomy:={basic_autonomy_log_level}']
     )
 
@@ -747,9 +762,10 @@ def generate_launch_description():
                 ]
             ),
         ],
-        arguments = ['--ros-args', 
-            '--log-level', 
+        arguments = ['--ros-args',
+            '--log-level',
             f'carma_wm:={carma_wm_log_level}',
+            '--log-level',
             f'basic_autonomy:={basic_autonomy_log_level}']
     )
 
@@ -773,9 +789,10 @@ def generate_launch_description():
                 ]
             ),
         ],
-        arguments = ['--ros-args', 
-            '--log-level', 
+        arguments = ['--ros-args',
+            '--log-level',
             f'carma_wm:={carma_wm_log_level}',
+            '--log-level',
             f'basic_autonomy:={basic_autonomy_log_level}']
     )
 

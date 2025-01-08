@@ -103,6 +103,7 @@ def generate_launch_description():
     cp_host_vehicle_filter_node_file = str(PurePath(get_package_share_directory("carma_cooperative_perception"), "config/cp_host_vehicle_filter_node.yaml"))
 
     carma_wm_log_level = GetLogLevel('carma_wm', env_log_levels).perform(context)
+    basic_autonomy_log_level = GetLogLevel('basic_autonomy', env_log_levels).perform(context)
 
     # lidar_perception_container contains all nodes for lidar based object perception
     # a failure in any one node in the chain would invalidate the rest of it, so they can all be
@@ -358,7 +359,11 @@ def generate_launch_description():
 
             ),
         ],
-        arguments = ['--ros-args', '--log-level', f'carma_wm:={carma_wm_log_level}']
+        arguments = ['--ros-args',
+                     '--log-level',
+                     f'carma_wm:={carma_wm_log_level}',
+                     '--log-level',
+                     f'basic_autonomy:={basic_autonomy_log_level}']
     )
 
     # Vector map loader
