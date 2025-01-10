@@ -76,14 +76,14 @@ void WMBroadcasterNode::initializeWorker(std::weak_ptr<carma_ros2_utils::CarmaLi
 
 carma_ros2_utils::CallbackReturn WMBroadcasterNode::handle_on_configure(const rclcpp_lifecycle::State &)
 {
-  RCLCPP_INFO_STREAM(rclcpp::get_logger("carma_mw_ctrl"),"Starting configuration!");
+  RCLCPP_INFO_STREAM(rclcpp::get_logger("carma_wm_ctrl"),"Starting configuration!");
 
   // Reset config
   config_ = Config();
 
   initializeWorker(shared_from_this());
 
-  RCLCPP_INFO_STREAM(rclcpp::get_logger("carma_mw_ctrl"),"Done initializing worker!");
+  RCLCPP_INFO_STREAM(rclcpp::get_logger("carma_wm_ctrl"),"Done initializing worker!");
 
   get_parameter<int>("ack_pub_times", config_.ack_pub_times);
   get_parameter<double>("max_lane_width", config_.max_lane_width);
@@ -106,7 +106,7 @@ carma_ros2_utils::CallbackReturn WMBroadcasterNode::handle_on_configure(const rc
 
   wmb_->setIntersectionCoordCorrection(config_.intersection_ids_for_correction, config_.intersection_coord_correction);
 
-  RCLCPP_INFO_STREAM(rclcpp::get_logger("carma_mw_ctrl"),"Done loading parameters: " << config_);
+  RCLCPP_INFO_STREAM(rclcpp::get_logger("carma_wm_ctrl"),"Done loading parameters: " << config_);
 
   /////////////
   // PUBLISHERS
