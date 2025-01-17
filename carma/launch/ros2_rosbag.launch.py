@@ -36,7 +36,6 @@ def record_ros2_rosbag(context: LaunchContext, vehicle_config_param_file, rosbag
 
     overriding_qos_profiles = context.perform_substitution(rosbag2_qos_override_param_file)
 
-    print(f"=====Location found: {overriding_qos_profiles}")
     # Open vehicle config params file to process various rosbag settings
     with open(vehicle_config_param_file_string, 'r') as f:
 
