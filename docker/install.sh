@@ -49,6 +49,5 @@ if [[ ! -z "$PACKAGES" ]]; then
 else
     echo "Building all CARMA components..."
     colcon build  --install-base /opt/carma/install --build-base build --cmake-args -DCMAKE_BUILD_TYPE=Release
-fi
 
 echo "Build of CARMA Components Complete"

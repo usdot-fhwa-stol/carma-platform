@@ -33,7 +33,7 @@
 # Stage 1 - Acquire the CARMA source as well as any extra packages
 # /////////////////////////////////////////////////////////////////////////////
 ARG DOCKER_ORG="usdotfhwastoldev"
-ARG DOCKER_TAG="develop"
+ARG DOCKER_TAG="develop-humble"
 FROM ${DOCKER_ORG}/autoware.ai:${DOCKER_TAG} as base-image
 
 FROM base-image AS source-code
