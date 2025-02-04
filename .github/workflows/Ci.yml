@@ -63,9 +63,13 @@ jobs:
         source "$INIT_ENV"
         ./src/${{ github.event.repository.name }}/docker/checkout.bash -r /opt/carma/ -b ${{ steps.determine-base-branch.outputs.git_branch }}
 
-    - name: Install external dependencies
+    - name: Install multiple object tracking external dependencies
       # Install the multiple object tracking deps
       run: sudo bash /opt/carma/src/multiple_object_tracking/scripts/install_dependencies.sh
+
+    - name: Install cpp message external dependencies
+      # Install the cpp-message deps
+      run: sudo bash /opt/carma/src/v2x-ros-conversion/docker/install_dependencies.sh
 
     - name: Compile list of packages
       # Get all packages in the respository
