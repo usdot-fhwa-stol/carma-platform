@@ -25,6 +25,14 @@ if [[ -z "$PACKAGES" ]]; then
     sudo ./src/multiple_object_tracking/scripts/install_dependencies.sh
 fi
 
+# Install stol-j2735-1 package for cpp_message
+. /etc/lsb-release
+# add the STOL APT repository
+echo "deb [trusted=yes] http://s3.amazonaws.com/stol-apt-repository ${DISTRIB_CODENAME} main" | sudo tee /etc/apt/sources.list.d/stol-apt-repository.list
+# install carma-j2735 library for encoding/decoding of messages
+sudo apt-get update
+sudo apt-get install -y stol-j2735-1
+
 sudo mkdir -p /opt/carma # Create install directory
 sudo chown carma /opt/carma # Set owner to expose permissions for build
 sudo chgrp carma /opt/carma # Set group to expose permissions for build
