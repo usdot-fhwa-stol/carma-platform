@@ -434,13 +434,13 @@ namespace carma_wm
 
     if (!route_)
     {
-      RCLCPP_ERROR_STREAM(rclcpp::get_logger("carma_wm"), "Route has not yet been loaded");
+      RCLCPP_DEBUG_STREAM(rclcpp::get_logger("carma_wm"), "Route has not yet been loaded");
       return boost::none;
     }
 
     if (downtrack < 0 || downtrack > getRouteEndTrackPos().downtrack)
     {
-      RCLCPP_ERROR_STREAM(rclcpp::get_logger("carma_wm"), "Tried to convert a downtrack of: " << downtrack
+      RCLCPP_DEBUG_STREAM(rclcpp::get_logger("carma_wm"), "Tried to convert a downtrack of: " << downtrack
                                                            << " to map point, but it did not fit in route bounds of "
                                                            << getRouteEndTrackPos().downtrack);
       return boost::none;
@@ -1516,7 +1516,7 @@ namespace carma_wm
         // reset states if the intersection's geometry changed
         if (curr_light->revision_ != curr_intersection.revision)
         {
-          RCLCPP_ERROR_STREAM(rclcpp::get_logger("carma_wm"), "Received a new intersection geometry. intersection_id: " << (int)curr_intersection.id.id << ", and signal_group_id: " << (int)current_movement_state.signal_group);
+          RCLCPP_DEBUG_STREAM(rclcpp::get_logger("carma_wm"), "Received a new intersection geometry. intersection_id: " << (int)curr_intersection.id.id << ", and signal_group_id: " << (int)current_movement_state.signal_group);
           sim_.traffic_signal_start_times_[curr_intersection.id.id][current_movement_state.signal_group].clear();
           sim_.traffic_signal_states_[curr_intersection.id.id][current_movement_state.signal_group].clear();
         }
@@ -1524,12 +1524,12 @@ namespace carma_wm
         // all maneuver types in same signal group is currently expected to share signal timing, so only 0th index is used when setting states
         if (current_movement_state.movement_event_list.empty())
         {
-          RCLCPP_ERROR_STREAM(rclcpp::get_logger("carma_wm"), "Movement_event_list is empty . intersection_id: " << (int)curr_intersection.id.id << ", and signal_group_id: " << (int)current_movement_state.signal_group);
+          RCLCPP_DEBUG_STREAM(rclcpp::get_logger("carma_wm"), "Movement_event_list is empty . intersection_id: " << (int)curr_intersection.id.id << ", and signal_group_id: " << (int)current_movement_state.signal_group);
           continue;
         }
         else
         {
-          RCLCPP_ERROR_STREAM(rclcpp::get_logger("carma_wm"), "Movement_event_list size: " << current_movement_state.movement_event_list.size() << " . intersection_id: " << (int)curr_intersection.id.id << ", and signal_group_id: " << (int)current_movement_state.signal_group);
+          RCLCPP_DEBUG_STREAM(rclcpp::get_logger("carma_wm"), "Movement_event_list size: " << current_movement_state.movement_event_list.size() << " . intersection_id: " << (int)curr_intersection.id.id << ", and signal_group_id: " << (int)current_movement_state.signal_group);
         }
 
         curr_light->revision_ = curr_intersection.revision; // valid SPAT msg
@@ -1552,7 +1552,7 @@ namespace carma_wm
           sim_.traffic_signal_start_times_[curr_intersection.id.id][current_movement_state.signal_group].push_back(
                               start_time_dynamic);
 
-          RCLCPP_ERROR_STREAM(rclcpp::get_logger("carma_wm"), "intersection id: " << (int)curr_intersection.id.id << ", signal: " << (int)current_movement_state.signal_group
+          RCLCPP_DEBUG_STREAM(rclcpp::get_logger("carma_wm"), "intersection id: " << (int)curr_intersection.id.id << ", signal: " << (int)current_movement_state.signal_group
             << ", start_time: " << std::to_string(lanelet::time::toSec(start_time_dynamic))
             << ", end_time: " << std::to_string(lanelet::time::toSec(min_end_time_dynamic))
             << ", state: " << received_state_dynamic);
