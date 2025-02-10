@@ -24,14 +24,12 @@ from carma_ros2_utils.launch.get_current_namespace import GetCurrentNamespace
 from launch.substitutions import LaunchConfiguration
 from launch.actions import DeclareLaunchArgument
 
-
 import os
 
 from launch.actions import IncludeLaunchDescription
 from launch.launch_description_sources import PythonLaunchDescriptionSource
 from launch.actions import GroupAction
 from launch_ros.actions import set_remap
-from launch.conditions import IfCondition
 from launch.conditions import UnlessCondition
 from launch.substitutions import LaunchConfiguration, PythonExpression
 
@@ -53,23 +51,14 @@ def generate_launch_description():
         description = "Path to file containing override parameters for the subsystem controller"
     )
 
-    enable_basic_travel_simulator = LaunchConfiguration('enable_basic_travel_simulator')
-    declare_enable_basic_travel_simulator_arg = DeclareLaunchArgument(
-        'enable_basic_travel_simulator',
-        default_value='false',
-        description='Enable or disable the basic travel simulator'
-    )
-
     # Nodes
+    # TODO add ROS2 localization nodes here
 
     gnss_to_map_convertor_param_file = os.path.join(
     get_package_share_directory('gnss_to_map_convertor'), 'config/parameters.yaml')
 
     localization_manager_convertor_param_file = os.path.join(
     get_package_share_directory('localization_manager'), 'config/parameters.yaml')
-
-    basic_travel_simulator_param_file = os.path.join(
-    get_package_share_directory('basic_travel_simulator'), 'config/parameters.yaml')
 
     vehicle_calibration_dir = LaunchConfiguration('vehicle_calibration_dir')
     ndt_matching_param_file = [vehicle_calibration_dir, "/lidar_localizer/ndt_matching/params.yaml"]
@@ -138,30 +127,6 @@ def generate_launch_description():
 
                 ],
                 parameters=[ localization_manager_convertor_param_file, vehicle_config_param_file ]
-        )
-    ])
-
-    basic_travel_simulator_container = ComposableNodeContainer(
-    condition=IfCondition(enable_basic_travel_simulator),        
-    package='carma_ros2_utils',
-    name='basic_travel_simulator_container',
-    executable='carma_component_container_mt',
-    namespace=GetCurrentNamespace(),
-    composable_node_descriptions=[
-        ComposableNode(
-                package='basic_travel_simulator',
-                plugin='basic_travel_simulator::Node',
-                name='basic_travel_simulator',
-                extra_arguments=[
-                    {'use_intra_process_comms': True},
-                    {'--log-level' : GetLogLevel('basic_travel_simulator', env_log_levels) }
-                ],
-                remappings=[
-                    ("vehicle/twist", [ EnvironmentVariable('CARMA_INTR_NS', default_value=''), "/vehicle/twist" ] ),
-                    ("current_pose", [ EnvironmentVariable('CARMA_LOCZ_NS', default_value=''), "/selected_pose" ] ),
-                    ("plan_trajectory", [ EnvironmentVariable('CARMA_GUIDE_NS', default_value=''), "/plan_trajectory" ] ),
-                ],
-                parameters=[ basic_travel_simulator_param_file ]
         )
     ])
 
@@ -417,9 +382,7 @@ def generate_launch_description():
         declare_arealist_path,
         declare_map_file,
         declare_use_sim_time_arg,
-        declare_enable_basic_travel_simulator_arg,
         gnss_to_map_convertor_container,
-        basic_travel_simulator_container,
         localization_manager_container,
         dead_reckoner_container,
         voxel_grid_filter_container,

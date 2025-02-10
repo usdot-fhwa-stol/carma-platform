@@ -65,7 +65,7 @@ def generate_launch_description():
     Launch CARMA System.
     """
 
-    system_controller_default_param_file = os.path.join(
+    system_controller_param_file = os.path.join(
         get_package_share_directory('system_controller'), 'config/config.yaml')
 
     env_log_levels = EnvironmentVariable('CARMA_ROS_LOGGING_CONFIG', default_value='{ "default_level" : "WARN" }')
@@ -85,22 +85,11 @@ def generate_launch_description():
         description = "Path to file containing vehicle config directories"
     )
 
-    system_controller_param_file = os.path.join(
-        vehicle_config_dir, 'config/config.yaml')
-
     vehicle_characteristics_param_file = LaunchConfiguration('vehicle_characteristics_param_file')
     declare_vehicle_characteristics_param_file_arg = DeclareLaunchArgument(
         name = 'vehicle_characteristics_param_file',
         default_value = [vehicle_calibration_dir, "/identifiers/UniqueVehicleParams.yaml"],
         description = "Path to file containing unique vehicle characteristics"
-    )
-
-    # Enables/disables the basic travel simulator in carma-platform only local simulation environment
-    enable_basic_travel_simulator = LaunchConfiguration('enable_basic_travel_simulator')
-    declare_enable_basic_travel_simulator_arg = DeclareLaunchArgument(
-        'enable_basic_travel_simulator',
-        default_value='false',
-        description='Enable or disable the basic travel simulator'
     )
 
     # Declare the vehicle_config_param_file launch argument
@@ -261,8 +250,7 @@ def generate_launch_description():
                     'arealist_path' : arealist_path,
                     'vector_map_file' : vector_map_file,
                     'vehicle_calibration_dir': vehicle_calibration_dir,
-                    'use_sim_time' : use_sim_time,
-                    'enable_basic_travel_simulator': enable_basic_travel_simulator
+                    'use_sim_time' : use_sim_time
                 }.items()
             )
         ]
@@ -325,7 +313,6 @@ def generate_launch_description():
         name='system_controller',
         executable='system_controller',
         parameters=[
-                    system_controller_default_param_file,
                     system_controller_param_file,
                     {"use_sim_time" : use_sim_time}],
         on_exit = Shutdown(), # Mark the subsystem controller as required for segfaults
