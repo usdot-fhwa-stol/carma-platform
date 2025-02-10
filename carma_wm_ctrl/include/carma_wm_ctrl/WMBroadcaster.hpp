@@ -138,7 +138,7 @@ public:
   * \return MarkerArray containing only the new visualization from the gf pts
   *         intended to be appended to the previous markers
   */
-  visualization_msgs::msg::Marker composeMarkerVisualizerFromPts(const visualization_msgs::msg::MarkerArray& marker_array, const std::vector<lanelet::Point3d>& input);
+  visualization_msgs::msg::Marker composeVisualizerMarkerFromPts(const visualization_msgs::msg::MarkerArray& marker_array, const std::vector<lanelet::Point3d>& input);
 
    /*!
   * \brief composeTCRStatus() compose TCM Request visualization on UI

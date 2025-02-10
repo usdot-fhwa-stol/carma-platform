@@ -1529,11 +1529,11 @@ void WMBroadcaster::addGeofence(std::shared_ptr<Geofence> gf_ptr)
     {
       if (update->label_ == carma_wm_ctrl::MAP_MSG_INTERSECTION)
       {
-        j2735_map_msg_marker_array_.markers.push_back(composeMarkerVisualizerFromPts(j2735_map_msg_marker_array_, update->gf_pts));
+        j2735_map_msg_marker_array_.markers.push_back(composeVisualizerMarkerFromPts(j2735_map_msg_marker_array_, update->gf_pts));
       }
       else
       {
-        tcm_marker_array_.markers.push_back(composeMarkerVisualizerFromPts(tcm_marker_array_, update->gf_pts));
+        tcm_marker_array_.markers.push_back(composeVisualizerMarkerFromPts(tcm_marker_array_, update->gf_pts));
       }
     }
 
@@ -1840,7 +1840,7 @@ carma_v2x_msgs::msg::TrafficControlRequestPolygon WMBroadcaster::composeTCRStatu
   return output;
 }
 
-visualization_msgs::msg::Marker WMBroadcaster::composeMarkerVisualizerFromPts(const visualization_msgs::msg::MarkerArray& marker_array, const std::vector<lanelet::Point3d>& input)
+visualization_msgs::msg::Marker WMBroadcaster::composeVisualizerMarkerFromPts(const visualization_msgs::msg::MarkerArray& marker_array, const std::vector<lanelet::Point3d>& input)
 {
   // create the marker msgs
   visualization_msgs::msg::Marker marker;
