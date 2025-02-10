@@ -191,6 +191,7 @@ carma_ros2_utils::CallbackReturn WMBroadcasterNode::handle_on_activate(const rcl
 bool WMBroadcasterNode::spin_callback()
 {
   tcm_visualizer_pub_->publish(wmb_->tcm_marker_array_);
+  j2735_map_msg_visualizer_pub_->publish(wmb_->j2735_map_msg_marker_array_);
   tcr_visualizer_pub_->publish(wmb_->tcr_polygon_);
   wmb_->publishLightId();
   //updating upcoming traffic signal group id and intersection id

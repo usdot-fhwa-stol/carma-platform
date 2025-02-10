@@ -1527,7 +1527,14 @@ void WMBroadcaster::addGeofence(std::shared_ptr<Geofence> gf_ptr)
     // add marker to rviz
     if (!update->gf_pts.empty())
     {
-      tcm_marker_array_.markers.push_back(composeTCMMarkerVisualizer(update->gf_pts)); // create visualizer in rviz
+      if (update->label_ == carma_wm_ctrl::MAP_MSG_INTERSECTION)
+      {
+        j2735_map_msg_marker_array_.markers.push_back(composeMarkerVisualizerFromPts(j2735_map_msg_marker_array_, update->gf_pts));
+      }
+      else
+      {
+        tcm_marker_array_.markers.push_back(composeMarkerVisualizerFromPts(tcm_marker_array_, update->gf_pts));
+      }
     }
 
     if (update->affected_parts_.empty())
@@ -1833,46 +1840,45 @@ carma_v2x_msgs::msg::TrafficControlRequestPolygon WMBroadcaster::composeTCRStatu
   return output;
 }
 
-visualization_msgs::msg::Marker WMBroadcaster::composeTCMMarkerVisualizer(const std::vector<lanelet::Point3d>& input)
- {
+visualization_msgs::msg::Marker WMBroadcaster::composeMarkerVisualizerFromPts(const visualization_msgs::msg::MarkerArray& marker_array, const std::vector<lanelet::Point3d>& input)
+{
+  // create the marker msgs
+  visualization_msgs::msg::Marker marker;
+  marker.header.frame_id = "map";
+  marker.header.stamp = rclcpp::Time();
+  marker.type = visualization_msgs::msg::Marker::SPHERE_LIST;
+  marker.action = visualization_msgs::msg::Marker::ADD;
+  marker.ns = "map_update_visualizer";
 
-         // create the marker msgs
-        visualization_msgs::msg::Marker marker;
-        marker.header.frame_id = "map";
-        marker.header.stamp = rclcpp::Time();
-        marker.type = visualization_msgs::msg::Marker::SPHERE_LIST;
-        marker.action = visualization_msgs::msg::Marker::ADD;
-        marker.ns = "route_visualizer";
+  marker.scale.x = 0.65;
+  marker.scale.y = 0.65;
+  marker.scale.z = 0.65;
+  marker.frame_locked = true;
 
-        marker.scale.x = 0.65;
-        marker.scale.y = 0.65;
-        marker.scale.z = 0.65;
-        marker.frame_locked = true;
+  if (!marker_array.markers.empty())
+  {
+    marker.id = marker_array.markers.back().id + 1;
+  }
+  else
+  {
+    marker.id = 0;
+  }
+  marker.color.r = 0.0F;
+  marker.color.g = 1.0F;
+  marker.color.b = 0.0F;
+  marker.color.a = 1.0F;
 
-        if (!tcm_marker_array_.markers.empty())
-        {
-        marker.id = tcm_marker_array_.markers.back().id + 1;
-        }
-        else
-        {
-        marker.id = 0;
-        }
-        marker.color.r = 0.0F;
-        marker.color.g = 1.0F;
-        marker.color.b = 0.0F;
-        marker.color.a = 1.0F;
+  for (int i = 0; i < input.size(); i++)
+  {
+    geometry_msgs::msg::Point temp_point;
+    temp_point.x = input[i].x();
+    temp_point.y = input[i].y();
+    temp_point.z = 2; //to show up on top of the lanelet lines
 
-        for (int i = 0; i < input.size(); i++)
-        {
-            geometry_msgs::msg::Point temp_point;
-            temp_point.x = input[i].x();
-            temp_point.y = input[i].y();
-            temp_point.z = 2; //to show up on top of the lanelet lines
+    marker.points.push_back(temp_point);
+  }
 
-            marker.points.push_back(temp_point);
-        }
-
-        return marker;
+  return marker;
  }
 
 double WMBroadcaster::distToNearestActiveGeofence(const lanelet::BasicPoint2d& curr_pos)
