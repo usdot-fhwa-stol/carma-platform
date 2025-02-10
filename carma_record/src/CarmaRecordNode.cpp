@@ -86,8 +86,11 @@ int CarmaRecordNode::run() const
   } else {
     cnh_.setParam("no_exclusions", false);
   }
+  // No need to spin here, but it prevents ros1_bridge from continuously 
+  // printing error logs about failing to connect
+  // to this node's services indefinitely which is confusing to many users
+  ros::spin();
 
-  // End node because there is no need to spin
   return 0;
 }
 
