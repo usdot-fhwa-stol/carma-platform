@@ -244,7 +244,7 @@ std::vector<std::shared_ptr<Geofence>> WMBroadcaster::geofenceFromMapMsg(std::sh
     auto j2735_intersection_id = sim_->regem_id_to_intersection_id_[intersection->id()];
     for (auto pt: sim_->intersection_nodes_[j2735_intersection_id])
     {
-      RCLCPP_DEBUG_STREAM(rclcpp::get_logger("carma_wm_ctrl"), "Printing x: " << pt.x() << ", y: " << pt.y());
+      RCLCPP_DEBUG_STREAM(rclcpp::get_logger("carma_wm_ctrl"), "J2735 MAP msg road geometry points: x: " << pt.x() << ", y: " << pt.y());
     }
     update->gf_pts.insert(update->gf_pts.end(), sim_->intersection_nodes_[j2735_intersection_id].begin(), sim_->intersection_nodes_[j2735_intersection_id].end());
     updates_to_send.push_back(update);

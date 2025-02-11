@@ -77,16 +77,6 @@ Visualization Manager:
           Value: true
         novatel_imu:
           Value: true
-        radar_fc:
-          Value: true
-        radar_fl:
-          Value: true
-        radar_fr:
-          Value: true
-        radar_rl:
-          Value: true
-        radar_rr:
-          Value: true
         vehicle_front:
           Value: true
         velodyne:
@@ -108,16 +98,6 @@ Visualization Manager:
             mobileye:
               {}
             novatel_imu:
-              {}
-            radar_fc:
-              {}
-            radar_fl:
-              {}
-            radar_fr:
-              {}
-            radar_rl:
-              {}
-            radar_rr:
               {}
             vehicle_front:
               {}
@@ -300,26 +280,6 @@ Visualization Manager:
           Show Axes: false
           Show Trail: false
         novatel_imu:
-          Alpha: 1
-          Show Axes: false
-          Show Trail: false
-        radar_fc:
-          Alpha: 1
-          Show Axes: false
-          Show Trail: false
-        radar_fl:
-          Alpha: 1
-          Show Axes: false
-          Show Trail: false
-        radar_fr:
-          Alpha: 1
-          Show Axes: false
-          Show Trail: false
-        radar_rl:
-          Alpha: 1
-          Show Axes: false
-          Show Trail: false
-        radar_rr:
           Alpha: 1
           Show Axes: false
           Show Trail: false
