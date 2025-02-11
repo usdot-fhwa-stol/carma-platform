@@ -139,6 +139,9 @@ carma_ros2_utils::CallbackReturn WMBroadcasterNode::handle_on_configure(const rc
   //TCM Visualizer pub
   tcm_visualizer_pub_= create_publisher<visualization_msgs::msg::MarkerArray>("tcm_visualizer",1);
 
+  //J2735 MAP msg Visualizer pub
+  j2735_map_msg_visualizer_pub_= create_publisher<visualization_msgs::msg::MarkerArray>("j2735_map_msg_visualizer",1);
+
   //TCR Visualizer pub (visualized on UI)
   tcr_visualizer_pub_ = create_publisher<carma_v2x_msgs::msg::TrafficControlRequestPolygon>("tcr_bounding_points",1);
 
@@ -191,6 +194,7 @@ carma_ros2_utils::CallbackReturn WMBroadcasterNode::handle_on_activate(const rcl
 bool WMBroadcasterNode::spin_callback()
 {
   tcm_visualizer_pub_->publish(wmb_->tcm_marker_array_);
+  j2735_map_msg_visualizer_pub_->publish(wmb_->j2735_map_msg_marker_array_);
   tcr_visualizer_pub_->publish(wmb_->tcr_polygon_);
   wmb_->publishLightId();
   //updating upcoming traffic signal group id and intersection id
