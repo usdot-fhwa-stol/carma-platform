@@ -86,7 +86,7 @@ The CARMA Platform is distributed as a set of multiple independent packages host
 * [dataspeed_can_driver](https://github.com/VT-ASIM-LAB/dataspeed_can_driver) (Externally managed)
 
 ### Sensor Drivers
-* [carma-cohda-dsrc-driver](https://github.com/usdot-fhwa-stol/carma-cohda-dsrc-driver)
+* [v2x-ros-driver](https://github.com/usdot-fhwa-stol/v2x-ros-driver)
 * [carma-velodyne-lidar-driver](https://github.com/usdot-fhwa-stol/carma-velodyne-lidar-driver)
 * [avt_vimba_camera](https://github.com/usdot-fhwa-stol/avt_vimba_camera)
 * [carma-delphi-srr2-driver](https://github.com/usdot-fhwa-stol/carma-delphi-srr2-driver)
