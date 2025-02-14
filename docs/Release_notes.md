@@ -19,7 +19,7 @@ Newly implemented software package to connect CARMA Messenger with the MOSAIC co
 ### **CDASim**
 Added new ambassadors and functionality to enable communication between CARMA Messenger and the newly developed vehicle driving behavior logic in SUMO. This functionality allows driver behaviors defined in the CARMA Messenger Vehicle Plugin within SUMO to trigger the broadcast of MobilityOperationsMesssages for the TIM Move-Over-Law use case. 
 
-**Enhancements:**
+**Enhancements**
 - **Epic CXC-39: CARMA Messenger Integration with CDASim:** Refer to description above. 
 
     - Pull Requests: [cdasim PR #230](https://github.com/usdot-fhwa-stol/cdasim/pull/230), [cdasim PR #227](https://github.com/usdot-fhwa-stol/cdasim/pull/227), [cdasim PR #228](https://github.com/usdot-fhwa-stol/cdasim/pull/228), [cdasim PR #224](https://github.com/usdot-fhwa-stol/cdasim/pull/224), [cdasim PR #226](https://github.com/usdot-fhwa-stol/cdasim/pull/226), [cdasim PR #231](https://github.com/usdot-fhwa-stol/cdasim/pull/231), [cdasim PR #234](https://github.com/usdot-fhwa-stol/cdasim/pull/234)
@@ -27,7 +27,7 @@ Added new ambassadors and functionality to enable communication between CARMA Me
 ### **CARMA NS3 Adapter**
 Refactored to make interfaces slightly more generic to support the CARMA Messenger integration. 
 
-**Fixes:** 
+**Fixes** 
 
 - **Epic CXC-39: CARMA Messenger Integration with CDASim:** Refer to description above. 
 
@@ -36,33 +36,33 @@ Refactored to make interfaces slightly more generic to support the CARMA Messeng
 ### **CARMA Messenger**
 Minor fixes to TIM plugin to support the CARMA Messenger integration and execution of the TIM Move-Over-Law use case in simulation. There exists a known issue in which CARMA Messenger might fail to initialize the messaging nodes correctly on some runs. 
 
-**Enhancements:**
+**Enhancements**
 
 - **Epic CXC-39: CARMA Messenger Integration with CDASim:** Refer to description above. 
 
     - Pull Requests: [Carma-messenger PR #241](https://github.com/usdot-fhwa-stol/carma-messenger/pull/241)  
 
-**Fixes:** 
+**Fixes** 
 
 - **Epic CXC-39: CARMA Messenger Integration with CDASim:** Refer to description above. 
 
     - Pull Requests: [Carma-messenger PR #243](https://github.com/usdot-fhwa-stol/carma-messenger/pull/243), [Carma-messenger PR #231](https://github.com/usdot-fhwa-stol/carma-messenger/pull/231), [Carma-messenger PR #245](https://github.com/usdot-fhwa-stol/carma-messenger/pull/245)
 
-    - Known Issues:  
-      - [Issue 252](https://github.com/usdot-fhwa-stol/carma-messenger/issues/252):  Missing Mobility Message Broadcast Due to CARMA Messenger Node Failure 
+- **Known Issues**  
+  - [Issue 252](https://github.com/usdot-fhwa-stol/carma-messenger/issues/252):  Missing Mobility Message Broadcast Due to CARMA Messenger Node Failure 
 
 ### **CARMA Config**
 Updated to implement the new TIM Move-Over-Law scenario using the latest CDASim and CARMA Messenger software on Town04. 
  
 Note: In this release, only the configurations in xil_carma_messenger have been tested and released. Other configurations, including those for vehicles, remain in development and should be considered unstable. If you need a specific XIL scenario configuration, please refer to the latest carma-system release where the use case was introduced. 
 
-**Fixes:** 
-- PR #376:  Fixed Incorrect simulation vehicle dimension is erroneously shutting down platform for being out of the road. 
-- PR #390: Updated the hybrid ROS version table in documentation to reflect changes in mock driver configurations. 
-- PR #396: Reverted subsystem controller configurations in CDASIM to ensure compatibility with CARMA Platform version 4.5.0. 
-- PR #400: Fixed Docker configuration issues by correcting the route volume mappings and adjusting paths in launch files. 
-- PR #402: Fixed incorrect paths in the bridge.yml configuration for CARMA driver messages. 
-- PR #391: Updated example folders to better support the installation guide, improving clarity for new users. 
+**Fixes** 
+- [PR #376](https://github.com/usdot-fhwa-stol/carma-config/pull/376):  Fixed Incorrect simulation vehicle dimension is erroneously shutting down platform for being out of the road. 
+- [PR #390](https://github.com/usdot-fhwa-stol/carma-config/pull/390): Updated the hybrid ROS version table in documentation to reflect changes in mock driver configurations. 
+- [PR #396](https://github.com/usdot-fhwa-stol/carma-config/pull/396): Reverted subsystem controller configurations in CDASIM to ensure compatibility with CARMA Platform version 4.5.0. 
+- [PR #400](https://github.com/usdot-fhwa-stol/carma-config/pull/400): Fixed Docker configuration issues by correcting the route volume mappings and adjusting paths in launch files. 
+- [PR #402](https://github.com/usdot-fhwa-stol/carma-config/pull/402): Fixed incorrect paths in the bridge.yml configuration for CARMA driver messages. 
+- [PR #391](https://github.com/usdot-fhwa-stol/carma-config/pull/391): Updated example folders to better support the installation guide, improving clarity for new users. 
 
 
 
