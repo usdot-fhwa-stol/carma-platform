@@ -15,21 +15,13 @@ repositories:
     type: git
     url: git@github.com:usdot-fhwa-stol/carma-base.git
     version: develop
-  src/carma-cohda-dsrc-driver:
+  src/v2x-ros-driver:
     type: git
-    url: git@github.com:usdot-fhwa-stol/carma-cohda-dsrc-driver.git
+    url: git@github.com:usdot-fhwa-stol/v2x-ros-driver.git
     version: develop
   src/carma-config:
     type: git
     url: git@github.com:usdot-fhwa-stol/carma-config.git
-    version: develop
-  src/carma-delphi-esr-driver:
-    type: git
-    url: git@github.com:usdot-fhwa-stol/carma-delphi-esr-driver.git
-    version: develop
-  src/carma-delphi-srr2-driver:
-    type: git
-    url: git@github.com:usdot-fhwa-stol/carma-delphi-srr2-driver.git
     version: develop
   src/carma-garmin-lidar-lite-v3-driver-wrapper:
     type: git
@@ -78,4 +70,8 @@ repositories:
   src/opendrive2lanelet:
     type: git
     url: git@github.com:usdot-fhwa-stol/opendrive2lanelet.git
+    version: develop
+  src/v2x-ros-conversion:
+    type: git
+    url: git@github.com:usdot-fhwa-stol/v2x-ros-conversion.git
     version: develop
