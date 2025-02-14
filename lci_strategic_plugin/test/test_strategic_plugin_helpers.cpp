@@ -35,12 +35,12 @@ TEST_F(LCIStrategicTestFixture, supportedLightState)
   ASSERT_TRUE(lcip->supportedLightState(lanelet::CarmaTrafficSignalState::PROTECTED_MOVEMENT_ALLOWED));
   ASSERT_TRUE(lcip->supportedLightState(lanelet::CarmaTrafficSignalState::PROTECTED_CLEARANCE));
   ASSERT_TRUE(lcip->supportedLightState(lanelet::CarmaTrafficSignalState::STOP_AND_REMAIN));
+  ASSERT_TRUE(lcip->supportedLightState(lanelet::CarmaTrafficSignalState::PERMISSIVE_MOVEMENT_ALLOWED));
 
   ASSERT_FALSE(lcip->supportedLightState(lanelet::CarmaTrafficSignalState::UNAVAILABLE));
   ASSERT_FALSE(lcip->supportedLightState(lanelet::CarmaTrafficSignalState::DARK));
   ASSERT_FALSE(lcip->supportedLightState(lanelet::CarmaTrafficSignalState::STOP_THEN_PROCEED));
   ASSERT_FALSE(lcip->supportedLightState(lanelet::CarmaTrafficSignalState::PRE_MOVEMENT));
-  ASSERT_FALSE(lcip->supportedLightState(lanelet::CarmaTrafficSignalState::PERMISSIVE_MOVEMENT_ALLOWED));
   ASSERT_FALSE(lcip->supportedLightState(lanelet::CarmaTrafficSignalState::PERMISSIVE_CLEARANCE));
   ASSERT_FALSE(lcip->supportedLightState(lanelet::CarmaTrafficSignalState::CAUTION_CONFLICTING_TRAFFIC));
 }
@@ -100,12 +100,12 @@ TEST_F(LCIStrategicTestFixture, validLightState)
   ASSERT_TRUE(lcip->validLightState(std::pair<boost::posix_time::ptime, lanelet::CarmaTrafficSignalState>(dummy_time, lanelet::CarmaTrafficSignalState::PROTECTED_MOVEMENT_ALLOWED), rclcpp::Time(1e9 * 1)));
   ASSERT_TRUE(lcip->validLightState(std::pair<boost::posix_time::ptime, lanelet::CarmaTrafficSignalState>(dummy_time, lanelet::CarmaTrafficSignalState::PROTECTED_CLEARANCE), rclcpp::Time(1e9 * 1)));
   ASSERT_TRUE(lcip->validLightState(std::pair<boost::posix_time::ptime, lanelet::CarmaTrafficSignalState>(dummy_time, lanelet::CarmaTrafficSignalState::STOP_AND_REMAIN), rclcpp::Time(1e9 * 1)));
-  
+  ASSERT_TRUE(lcip->validLightState(std::pair<boost::posix_time::ptime, lanelet::CarmaTrafficSignalState>(dummy_time, lanelet::CarmaTrafficSignalState::PERMISSIVE_MOVEMENT_ALLOWED), rclcpp::Time(1e9 * 1)));
+
   ASSERT_FALSE(lcip->validLightState(std::pair<boost::posix_time::ptime, lanelet::CarmaTrafficSignalState>(dummy_time, lanelet::CarmaTrafficSignalState::UNAVAILABLE), rclcpp::Time(1e9 * 1)));
   ASSERT_FALSE(lcip->validLightState(std::pair<boost::posix_time::ptime, lanelet::CarmaTrafficSignalState>(dummy_time, lanelet::CarmaTrafficSignalState::DARK), rclcpp::Time(1e9 * 1)));
   ASSERT_FALSE(lcip->validLightState(std::pair<boost::posix_time::ptime, lanelet::CarmaTrafficSignalState>(dummy_time, lanelet::CarmaTrafficSignalState::STOP_THEN_PROCEED), rclcpp::Time(1e9 * 1)));
   ASSERT_FALSE(lcip->validLightState(std::pair<boost::posix_time::ptime, lanelet::CarmaTrafficSignalState>(dummy_time, lanelet::CarmaTrafficSignalState::PRE_MOVEMENT), rclcpp::Time(1e9 * 1)));
-  ASSERT_FALSE(lcip->validLightState(std::pair<boost::posix_time::ptime, lanelet::CarmaTrafficSignalState>(dummy_time, lanelet::CarmaTrafficSignalState::PERMISSIVE_MOVEMENT_ALLOWED), rclcpp::Time(1e9 * 1)));
   ASSERT_FALSE(lcip->validLightState(std::pair<boost::posix_time::ptime, lanelet::CarmaTrafficSignalState>(dummy_time, lanelet::CarmaTrafficSignalState::PERMISSIVE_CLEARANCE), rclcpp::Time(1e9 * 1)));
   ASSERT_FALSE(lcip->validLightState(std::pair<boost::posix_time::ptime, lanelet::CarmaTrafficSignalState>(dummy_time, lanelet::CarmaTrafficSignalState::CAUTION_CONFLICTING_TRAFFIC), rclcpp::Time(1e9 * 1)));
   ASSERT_FALSE(lcip->validLightState(boost::none, rclcpp::Time(1e9 * 1)));
@@ -176,7 +176,7 @@ TEST_F(LCIStrategicTestFixture, composeStopAndWaitManeuverMessage)
   ASSERT_EQ(carma_planning_msgs::msg::Maneuver::STOP_AND_WAIT, result.type);
   ASSERT_EQ(carma_planning_msgs::msg::ManeuverParameters::NO_NEGOTIATION, result.stop_and_wait_maneuver.parameters.negotiation_type);
   ASSERT_EQ(carma_planning_msgs::msg::ManeuverParameters::HAS_TACTICAL_PLUGIN | carma_planning_msgs::msg::ManeuverParameters::HAS_FLOAT_META_DATA,
-            result.stop_and_wait_maneuver.parameters.presence_vector);  
+            result.stop_and_wait_maneuver.parameters.presence_vector);
   ASSERT_TRUE(config.stop_and_wait_plugin_name.compare(
                   result.stop_and_wait_maneuver.parameters.planning_tactical_plugin) == 0);
   ASSERT_TRUE(
@@ -232,7 +232,7 @@ TEST_F(LCIStrategicTestFixture, findSpeedLimit)
   auto ll_iterator = cmw_->getMap()->laneletLayer.find(1200);
   if (ll_iterator == cmw_->getMap()->laneletLayer.end())
     FAIL() << "Expected lanelet not present in map. Unit test may not be structured correctly";
-  
+
   ASSERT_NEAR(11.176, lcip->findSpeedLimit(*ll_iterator), 0.00001);
 }
 
