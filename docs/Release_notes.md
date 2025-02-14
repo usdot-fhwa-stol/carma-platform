@@ -12,71 +12,51 @@ Specifically, the integration will support the Traffic Incident Management (Move
 ### **CARMA Messenger Bridge**
 Newly implemented software package to connect CARMA Messenger with the MOSAIC co-simulation system. 
 
-- Epic CXC-39: CARMA Messenger Integration with CDASim: Integrate CARMA Messenger functionality with CDASim to enable testing of connected vehicle applications in CDASim. This integration will focus on the Move-Over-Law use case where the CARMA Messenger-equipped emergency responder vehicle will drive to a location, simulate a traffic stop while broadcasting a lane closure geofence adjacent to itself. 
+- **Epic CXC-39: CARMA Messenger Integration with CDASim:** Integrate CARMA Messenger functionality with CDASim to enable testing of connected vehicle applications in CDASim. This integration will focus on the Move-Over-Law use case where the CARMA Messenger-equipped emergency responder vehicle will drive to a location, simulate a traffic stop while broadcasting a lane closure geofence adjacent to itself. 
 
-**<ins>Pull Requests:</ins>**
-- [carma-messenger-bridge PR #3](https://github.com/usdot-fhwa-stol/carma-messenger-bridge/pull/3)
-- [carma-messenger-bridge PR #1](https://github.com/usdot-fhwa-stol/carma-messenger-bridge/pull/1)
-- [carma-messenger-bridge PR #4](https://github.com/usdot-fhwa-stol/carma-messenger-bridge/pull/4)
-- [carma-messenger-bridge PR #2](https://github.com/usdot-fhwa-stol/carma-messenger-bridge/pull/2)
+    - Pull Requests: [carma-messenger-bridge PR #3](https://github.com/usdot-fhwa-stol/carma-messenger-bridge/pull/3), [carma-messenger-bridge PR #1](https://github.com/usdot-fhwa-stol/carma-messenger-bridge/pull/1), [carma-messenger-bridge PR #4](https://github.com/usdot-fhwa-stol/carma-messenger-bridge/pull/4), [carma-messenger-bridge PR #2](https://github.com/usdot-fhwa-stol/carma-messenger-bridge/pull/2)
 
 ### **CDASim**
 Added new ambassadors and functionality to enable communication between CARMA Messenger and the newly developed vehicle driving behavior logic in SUMO. This functionality allows driver behaviors defined in the CARMA Messenger Vehicle Plugin within SUMO to trigger the broadcast of MobilityOperationsMesssages for the TIM Move-Over-Law use case. 
 
-**<ins>Enhancements:</ins>**
-- Epic CXC-39: CARMA Messenger Integration with CDASim: Refer to description above. 
+**Enhancements:**
+- **Epic CXC-39: CARMA Messenger Integration with CDASim:** Refer to description above. 
 
-**<ins>Pull Requests:</ins>** 
-- [cdasim PR #230](https://github.com/usdot-fhwa-stol/cdasim/pull/230)
-- [cdasim PR #227](https://github.com/usdot-fhwa-stol/cdasim/pull/227)
-- [cdasim PR #228](https://github.com/usdot-fhwa-stol/cdasim/pull/228)
-- [cdasim PR #224](https://github.com/usdot-fhwa-stol/cdasim/pull/224)
-- [cdasim PR #226](https://github.com/usdot-fhwa-stol/cdasim/pull/226)
-- [cdasim PR #231](https://github.com/usdot-fhwa-stol/cdasim/pull/231)
-- [cdasim PR #234](https://github.com/usdot-fhwa-stol/cdasim/pull/234)
+    - Pull Requests: [cdasim PR #230](https://github.com/usdot-fhwa-stol/cdasim/pull/230), [cdasim PR #227](https://github.com/usdot-fhwa-stol/cdasim/pull/227), [cdasim PR #228](https://github.com/usdot-fhwa-stol/cdasim/pull/228), [cdasim PR #224](https://github.com/usdot-fhwa-stol/cdasim/pull/224), [cdasim PR #226](https://github.com/usdot-fhwa-stol/cdasim/pull/226), [cdasim PR #231](https://github.com/usdot-fhwa-stol/cdasim/pull/231), [cdasim PR #234](https://github.com/usdot-fhwa-stol/cdasim/pull/234)
 
 ### **CARMA NS3 Adapter**
 Refactored to make interfaces slightly more generic to support the CARMA Messenger integration. 
 
-**<ins>Fixes:</ins>** 
+**Fixes:** 
 
-- Epic CXC-39: CARMA Messenger Integration with CDASim: Refer to description above. 
+- **Epic CXC-39: CARMA Messenger Integration with CDASim:** Refer to description above. 
 
-**<ins>Pull Requests:</ins>** 
-
-- [carma-ns3-adapter PR #24](https://github.com/usdot-fhwa-stol/carma-ns3-adapter/pull/24)
-- [carma-ns3-adapter PR #22](https://github.com/usdot-fhwa-stol/carma-ns3-adapter/pull/22)
+    - Pull Requests: [carma-ns3-adapter PR #24](https://github.com/usdot-fhwa-stol/carma-ns3-adapter/pull/24), [carma-ns3-adapter PR #22](https://github.com/usdot-fhwa-stol/carma-ns3-adapter/pull/22)
 
 ### **CARMA Messenger**
-Minor fixes to TIM plugin to support the CARMA Messenger integration and execution of the TIM Move-Over-Law usecase in simulation. There exists a known issue in which CARMA Messenger might fail to initialize the messaging nodes correctly on some runs. 
+Minor fixes to TIM plugin to support the CARMA Messenger integration and execution of the TIM Move-Over-Law use case in simulation. There exists a known issue in which CARMA Messenger might fail to initialize the messaging nodes correctly on some runs. 
 
-**<ins>Enhancements:</ins>**
+**Enhancements:**
 
-- Epic CXC-39: CARMA Messenger Integration with CDASim: Refer to description above. 
+- **Epic CXC-39: CARMA Messenger Integration with CDASim:** Refer to description above. 
 
-**<ins>Pull Requests:</ins>**  
-- [Carma-messenger PR #241](https://github.com/usdot-fhwa-stol/carma-messenger/pull/241)  
+    - Pull Requests: [Carma-messenger PR #241](https://github.com/usdot-fhwa-stol/carma-messenger/pull/241)  
 
-**<ins>Fixes:</ins>** 
+**Fixes:** 
 
-- Epic CXC-39: CARMA Messenger Integration with CDASim: Refer to description above. 
+- **Epic CXC-39: CARMA Messenger Integration with CDASim:** Refer to description above. 
 
-**<ins>Pull Requests:</ins>** 
+    - Pull Requests: [Carma-messenger PR #243](https://github.com/usdot-fhwa-stol/carma-messenger/pull/243), [Carma-messenger PR #231](https://github.com/usdot-fhwa-stol/carma-messenger/pull/231), [Carma-messenger PR #245](https://github.com/usdot-fhwa-stol/carma-messenger/pull/245)
 
-- [Carma-messenger PR #243](https://github.com/usdot-fhwa-stol/carma-messenger/pull/243)
-- [Carma-messenger PR #231](https://github.com/usdot-fhwa-stol/carma-messenger/pull/231)
-- [Carma-messenger PR #245](https://github.com/usdot-fhwa-stol/carma-messenger/pull/245)
-
-**<ins>Known Issues:</ins>**  
-
-- Issue 252:  Missing Mobility Message Broadcast Due to CARMA Messenger Node Failure 
+    - Known Issues:  
+      - [Issue 252](https://github.com/usdot-fhwa-stol/carma-messenger/issues/252):  Missing Mobility Message Broadcast Due to CARMA Messenger Node Failure 
 
 ### **CARMA Config**
 Updated to implement the new TIM Move-Over-Law scenario using the latest CDASim and CARMA Messenger software on Town04. 
  
 Note: In this release, only the configurations in xil_carma_messenger have been tested and released. Other configurations, including those for vehicles, remain in development and should be considered unstable. If you need a specific XIL scenario configuration, please refer to the latest carma-system release where the use case was introduced. 
 
-**<ins>Fixes:</ins>** 
+**Fixes:** 
 - PR #376:  Fixed Incorrect simulation vehicle dimension is erroneously shutting down platform for being out of the road. 
 - PR #390: Updated the hybrid ROS version table in documentation to reflect changes in mock driver configurations. 
 - PR #396: Reverted subsystem controller configurations in CDASIM to ensure compatibility with CARMA Platform version 4.5.0. 
