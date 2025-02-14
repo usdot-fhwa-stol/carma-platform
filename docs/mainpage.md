@@ -41,7 +41,7 @@ The current version and release history of the CARMA software platform: [CARMA R
 The current CARMA ecosystem development direction and release plans can be found here: [CARMA Roadmap](https://usdot-carma.atlassian.net/wiki/spaces/CRMECO/pages/1093435397/CARMA+Ecosystem+Roadmap)
 
 ## Architecture Guide
-The documentation describes the software architecture within a single CARMA vehicle.  There may be several of these vehicles operating in concert, communicating with each other via DSRC or cellular means.  They can also communicate with roadside infrastructure using DSRC or cellular.  The communication among software components within a single vehicle, however, is mostly done via the Robot Operating System (ROS) framework.  There are no ROS communications between neighboring vehicles. [CARMA3 System Architecture](https://usdot-carma.atlassian.net/wiki/spaces/CRMPLT/pages/89587713/CARMA3+System+Architecture)
+The documentation describes the software architecture within a single CARMA vehicle.  There may be several of these vehicles operating in concert, communicating with each other through a V2X radio or cellular means.  They can also communicate with roadside infrastructure using a V2X radio or cellular.  The communication among software components within a single vehicle, however, is mostly done via the Robot Operating System (ROS) framework.  There are no ROS communications between neighboring vehicles. [CARMA3 System Architecture](https://usdot-carma.atlassian.net/wiki/spaces/CRMPLT/pages/89587713/CARMA3+System+Architecture)
 
 For information on the CARMA2 architecture, please see [CARMA2 System Architecture](https://usdot-carma.atlassian.net/wiki/spaces/CRMPLT/pages/1160642573/CARMA2+System+Architecture)
 
