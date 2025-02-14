@@ -55,3 +55,6 @@ git clone -b master --depth 1 https://github.com/etherealjoy/qhttpengine.git
 git clone -b 7.6.0 --depth 1 --sparse https://github.com/usdot-fhwa-OPS/V2X-Hub.git
 cd V2X-Hub
 git sparse-checkout set ext/ccserver
+
+# Install dependencies for v2x-ros-conversion - needs branch to pull correct debian version
+v2x-ros-conversion/docker/install_dependencies.sh -b $BRANCH
