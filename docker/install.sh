@@ -25,11 +25,6 @@ if [[ -z "$PACKAGES" ]]; then
     sudo ./src/multiple_object_tracking/scripts/install_dependencies.sh
 fi
 
-if [[ -z "$PACKAGES" ]]; then
-    echo "Installing cpp_message dependencies"
-    sudo ./src/v2x-ros-conversion/docker/install_dependencies.sh
-fi
-
 sudo mkdir -p /opt/carma # Create install directory
 sudo chown carma /opt/carma # Set owner to expose permissions for build
 sudo chgrp carma /opt/carma # Set group to expose permissions for build
