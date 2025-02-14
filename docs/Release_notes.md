@@ -48,7 +48,7 @@ Minor fixes to TIM plugin to support the CARMA Messenger integration and executi
 
     - Pull Requests: [Carma-messenger PR #243](https://github.com/usdot-fhwa-stol/carma-messenger/pull/243), [Carma-messenger PR #231](https://github.com/usdot-fhwa-stol/carma-messenger/pull/231), [Carma-messenger PR #245](https://github.com/usdot-fhwa-stol/carma-messenger/pull/245)
 
-- **Known Issues**  
+**Known Issues**  
   - [Issue 252](https://github.com/usdot-fhwa-stol/carma-messenger/issues/252):  Missing Mobility Message Broadcast Due to CARMA Messenger Node Failure 
 
 ### **CARMA Config**
