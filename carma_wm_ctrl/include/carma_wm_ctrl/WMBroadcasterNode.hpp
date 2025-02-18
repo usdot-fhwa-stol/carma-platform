@@ -104,6 +104,7 @@ private:
   * \brief Spin callback, which will be called frequently based on the configured spin rate
   */
   bool spin_callback();
+  bool spin_viz_callback();
 
   // Node configuration
   Config config_;
@@ -127,6 +128,7 @@ private:
 
   // Timer for publishing TCR and SignalGroup/IntersectionID
   rclcpp::TimerBase::SharedPtr timer_;
+  rclcpp::TimerBase::SharedPtr timer_viz_;
 
   std::shared_ptr<carma_ros2_utils::CarmaLifecycleNode> ptr_;
   std::unique_ptr<carma_wm_ctrl::WMBroadcaster> wmb_;

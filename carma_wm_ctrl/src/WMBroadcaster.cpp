@@ -1541,7 +1541,7 @@ void WMBroadcaster::addGeofence(std::shared_ptr<Geofence> gf_ptr)
       continue;
 
     // Process the geofence object to populate update remove lists
-    addGeofenceHelper(update);
+    //addGeofenceHelper(update); TODO
 
     if (!detected_map_msg_signal)
     {

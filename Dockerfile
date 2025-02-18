@@ -34,9 +34,9 @@
 # /////////////////////////////////////////////////////////////////////////////
 ARG DOCKER_ORG="usdotfhwastoldev"
 ARG DOCKER_TAG="develop"
-FROM ${DOCKER_ORG}/autoware.ai:${DOCKER_TAG} as base-image
+FROM 298ca1633bea as base-image
 
-FROM base-image AS source-code
+FROM 298ca1633bea AS source-code
 
 RUN mkdir ~/src
 COPY --chown=carma . /home/carma/src/carma-platform/
@@ -49,7 +49,7 @@ RUN ~/src/carma-platform/docker/checkout.bash -b ${GIT_BRANCH}
 # /////////////////////////////////////////////////////////////////////////////
 
 
-FROM base-image AS install
+FROM 298ca1633bea AS install
 ARG ROS1_PACKAGES=""
 ENV ROS1_PACKAGES=${ROS1_PACKAGES}
 ARG ROS2_PACKAGES=""
@@ -66,7 +66,7 @@ RUN ~/carma_ws/src/carma-platform/docker/install.sh
 # /////////////////////////////////////////////////////////////////////////////
 
 
-FROM base-image
+FROM 298ca1633bea
 
 ARG BUILD_DATE="NULL"
 ARG VCS_REF="NULL"
