@@ -160,10 +160,6 @@ carma_ros2_utils::CallbackReturn WMBroadcasterNode::handle_on_activate(const rcl
                           std::chrono::milliseconds((int)(config_.traffic_control_request_period * 1000)),
                           std::bind(&WMBroadcasterNode::spin_callback, this));
 
-  timer_viz_ = create_timer(get_clock(),
-                          std::chrono::milliseconds((int)(100)),
-                          std::bind(&WMBroadcasterNode::spin_viz_callback, this));
-
   /////////////
   //SUBSCRIBERS
   ///////////// NOTE: subscriber declaration delayed until here so that when map is received, publisher is already activated to immediately publish back
@@ -197,6 +193,9 @@ carma_ros2_utils::CallbackReturn WMBroadcasterNode::handle_on_activate(const rcl
 
 bool WMBroadcasterNode::spin_callback()
 {
+  tcm_visualizer_pub_->publish(wmb_->tcm_marker_array_);
+  j2735_map_msg_visualizer_pub_->publish(wmb_->j2735_map_msg_marker_array_);
+  tcr_visualizer_pub_->publish(wmb_->tcr_polygon_);
   wmb_->publishLightId();
   //updating upcoming traffic signal group id and intersection id
   wmb_->updateUpcomingSGIntersectionIds();
@@ -204,14 +203,6 @@ bool WMBroadcasterNode::spin_callback()
     upcoming_intersection_ids_pub_->publish(wmb_->upcoming_intersection_ids_);
   if(wmb_->getRoute().route_path_lanelet_ids.size() > 0)
     wmb_->routeCallbackMessage(std::make_unique<carma_planning_msgs::msg::Route>(wmb_->getRoute()));
-  return true;
-}
-
-bool WMBroadcasterNode::spin_viz_callback()
-{
-  tcm_visualizer_pub_->publish(wmb_->tcm_marker_array_);
-  j2735_map_msg_visualizer_pub_->publish(wmb_->j2735_map_msg_marker_array_);
-  tcr_visualizer_pub_->publish(wmb_->tcr_polygon_);
   return true;
 }
 
