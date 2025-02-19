@@ -55,3 +55,7 @@ git clone -b master --depth 1 https://github.com/etherealjoy/qhttpengine.git
 git clone -b 7.6.0 --depth 1 --sparse https://github.com/usdot-fhwa-OPS/V2X-Hub.git
 cd V2X-Hub
 git sparse-checkout set ext/ccserver
+
+# Install dependencies
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+${SCRIPT_DIR}/install_dependencies.sh -b $BRANCH
