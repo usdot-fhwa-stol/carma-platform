@@ -56,5 +56,6 @@ git clone -b 7.6.0 --depth 1 --sparse https://github.com/usdot-fhwa-OPS/V2X-Hub.
 cd V2X-Hub
 git sparse-checkout set ext/ccserver
 
-# Install dependencies for v2x-ros-conversion - needs branch to pull correct debian version
-v2x-ros-conversion/docker/install_dependencies.sh -b $BRANCH
+# Install dependencies
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+${SCRIPT_DIR}/install_dependencies.sh -b $BRANCH
