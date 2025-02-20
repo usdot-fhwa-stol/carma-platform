@@ -1,6 +1,18 @@
 # This workflow will build and push official docker images when new push occurs to develop, master, release branches but doesn't run any unit test or sonar scanner
 name: Docker Hub build
 on:
+  workflow_call:
+    inputs:
+      image_name:
+        description: "Optional: Custom image name to be used, defaults to branch name if not provided"
+        type: "string"
+        required: false
+  workflow_dispatch:
+    inputs:
+      image_name:
+        description: "Optional: Custom image name to be used, defaults to branch name if not provided"
+        type: "string"
+        required: false
   push:
     branches:
       - develop
@@ -10,7 +22,9 @@ on:
       - "carma-system-*"
 jobs:
   dockerhub:
-    uses: usdot-fhwa-stol/actions/.github/workflows/dockerhub.yml@main
+    uses: usdot-fhwa-stol/actions/.github/workflows/dockerhub.yml@arc-254-test
+    with:
+      image_name: ${{ inputs.image_name }}
     secrets:
       DOCKERHUB_USERNAME: ${{ secrets.DOCKERHUB_USERNAME }}
       DOCKERHUB_TOKEN: ${{ secrets.DOCKERHUB_TOKEN }}
