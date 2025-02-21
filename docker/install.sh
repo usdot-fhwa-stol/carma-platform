@@ -49,7 +49,7 @@ if [[ ! -z "$ROS1_PACKAGES$ROS2_PACKAGES" ]]; then
     fi
 else
     echo "Building all ROS1 CARMA Components"
-    colcon build --install-base /opt/carma/install --cmake-args -DCMAKE_BUILD_TYPE=Release --packages-skip novatel_oem7_msgs tracetools tracetools_test
+    colcon build --install-base /opt/carma/install --cmake-args -DCMAKE_BUILD_TYPE=Release --packages-skip dbw_mkz_msgs_ros2 raptor_dbw_msgs novatel_oem7_msgs tracetools tracetools_test
 fi
 echo "Build of ROS1 CARMA Components Complete"
 
