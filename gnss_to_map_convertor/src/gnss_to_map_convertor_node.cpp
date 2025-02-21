@@ -88,9 +88,15 @@ namespace gnss_to_map_convertor
                                                           std::bind(&GNSSToMapConvertor::gnssFixCb, convertor_worker_.get(), std_ph::_1));
 
     // Georeference subsciber
+    rclcpp::SubscriptionOptions georef_sub_options; 
+    georef_sub_options.use_intra_process_comm = rclcpp::IntraProcessSetting::Disable; // Disable intra-process comms for this SubscriptionOptions object
 
-    geo_sub = create_subscription<std_msgs::msg::String>("georeference", 1,
-              std::bind(&GNSSToMapConvertor::geoReferenceCallback, convertor_worker_.get(), std_ph::_1));
+    auto georef_sub_qos = rclcpp::QoS(rclcpp::KeepLast(1)); // Set the queue size for a subscriber with this QoS
+    georef_sub_qos.transient_local();  // If it is possible that this node is a late-joiner to its topic, it must be set to transient_local to receive earlier messages that were missed.
+                                    // NOTE: The publisher's QoS must be set to transisent_local() as well for earlier messages to be resent to this later-joiner.
+
+    geo_sub = create_subscription<std_msgs::msg::String>("georeference", georef_sub_qos,
+              std::bind(&GNSSToMapConvertor::geoReferenceCallback, convertor_worker_.get(), std_ph::_1), georef_sub_options);
     
                             
     // Return success if everthing initialized successfully

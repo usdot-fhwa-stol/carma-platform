@@ -37,21 +37,19 @@ while [[ $# -gt 0 ]]; do
       esac
 done
 
-cd "${dir}"/src
 
-git clone --depth=1 https://github.com/usdot-fhwa-stol/carma-msgs.git --branch "${BRANCH}"
-git clone --depth=1 https://github.com/usdot-fhwa-stol/carma-utils.git --branch "${BRANCH}"
-git clone --depth=1 https://github.com/usdot-fhwa-stol/v2x-ros-conversion.git --branch "develop"
-git clone --depth=1 https://github.com/usdot-fhwa-stol/carma-message-filters.git --branch "${BRANCH}"
-git clone --depth=1 https://github.com/usdot-fhwa-stol/multiple_object_tracking --branch "${BRANCH}"
+# SSC related msgs to record in mcap
+cd ${dir}/src
+# raptor_dbw_msgs (only ROS2 needed)
+git clone --depth 1 --filter=blob:none --sparse https://github.com/NewEagleRaptor/raptor-dbw-ros2.git --depth 1 --branch foxy
+cd ${dir}/src/raptor-dbw-ros2
+git sparse-checkout init --cone
+git sparse-checkout set raptor_dbw_msgs
+cd ${dir}/src
 
-#rosbridge_suite is a ROS meta-package including all the rosbridge packages.
-# NOTE: clone -b flag is used instead of --branch to avoid hook rewriting it
-git clone -b ros2 https://github.com/usdot-fhwa-stol/rosbridge_suite
-
-# TODO: Remove V2X-Hub Depedency (CAR-6029)
-git clone -b master --depth 1 https://github.com/etherealjoy/qhttpengine.git
-
-git clone -b 7.6.0 --depth 1 --sparse https://github.com/usdot-fhwa-OPS/V2X-Hub.git
-cd V2X-Hub
-git sparse-checkout set ext/ccserver
+# dbw_mkz_msgs (only ROS2 needed)
+git clone --depth 1 --filter=blob:none --sparse https://github.com/usdot-fhwa-stol/carma-dbw-mkz-ros.git --depth 1 --branch 1.2.4-ros2
+cd ${dir}/src/carma-dbw-mkz-ros
+git sparse-checkout init --cone
+git sparse-checkout set dbw_mkz_msgs_ros2
+cd ${dir}/src
