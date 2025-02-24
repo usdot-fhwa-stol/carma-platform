@@ -1546,21 +1546,18 @@ void WMBroadcaster::addGeofence(std::shared_ptr<Geofence> gf_ptr)
     }
     catch (const lanelet::InvalidInputError& e) {
       RCLCPP_WARN_STREAM(rclcpp::get_logger("carma_wm_ctrl"), 
-        "carma_wm_ctrl was not able to process incoming MAP or Geofence update: " << e.what());
-      
-      RCLCPP_WARN_STREAM(rclcpp::get_logger("carma_wm_ctrl"), 
-        "marker size: " << j2735_map_msg_marker_array_.markers.size());
+        "carma_wm_ctrl detected a potential issue in processing incoming MAP or Geofence update: " << e.what());
 
       if (!j2735_map_msg_marker_array_.markers.empty()) {
         RCLCPP_WARN_STREAM(rclcpp::get_logger("carma_wm_ctrl"), 
-            "Detected an attempt to add J2735 MAP msg. Please verify J2735 MAP msg visualization or logs for more clues. "
-            "Possibly invalid intersection geometry.");
+          "Detected an attempt to add J2735 MAP msg. May not be error. Please verify J2735 MAP msg visualization or logs for more clues. "
+          "Possibly invalid intersection geometry.");
       }
 
       if (!tcm_marker_array_.markers.empty()) {
         RCLCPP_WARN_STREAM(rclcpp::get_logger("carma_wm_ctrl"), 
-            "Detected an attempt to add map update from TCM msg. Please verify TCM msg visualization or logs for more clues. "
-            "Possibly invalid geofence geometry.");
+          "Detected an attempt to add map update from TCM msg. May not be error. Please verify TCM msg visualization or logs for more clues. "
+          "Possibly invalid geofence geometry.");
       }
     }
 
