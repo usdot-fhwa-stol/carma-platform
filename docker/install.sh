@@ -33,8 +33,8 @@ fi
 
 cd ~/carma_ws
 
-# echo "Installing multiple object tracking dependencies"
-# sudo ./src/multiple_object_tracking/scripts/install_dependencies.sh
+echo "Installing multiple object tracking dependencies"
+sudo ./src/multiple_object_tracking/scripts/install_dependencies.sh
 
 sudo mkdir -p /opt/carma # Create install directory
 sudo chown carma /opt/carma # Set owner to expose permissions for build
