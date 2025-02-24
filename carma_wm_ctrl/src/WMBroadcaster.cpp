@@ -1553,13 +1553,13 @@ void WMBroadcaster::addGeofence(std::shared_ptr<Geofence> gf_ptr)
 
       if (!j2735_map_msg_marker_array_.markers.empty()) {
         RCLCPP_WARN_STREAM(rclcpp::get_logger("carma_wm_ctrl"), 
-            "Detected attempt to add J2735 MAP msg. Please verify J2735 MAP msg visualization or logs for more clues. "
+            "Detected an attempt to add J2735 MAP msg. Please verify J2735 MAP msg visualization or logs for more clues. "
             "Possibly invalid intersection geometry.");
       }
 
       if (!tcm_marker_array_.markers.empty()) {
         RCLCPP_WARN_STREAM(rclcpp::get_logger("carma_wm_ctrl"), 
-            "Detected attempt to add map update from TCM msg. Please verify TCM msg visualization or logs for more clues. "
+            "Detected an attempt to add map update from TCM msg. Please verify TCM msg visualization or logs for more clues. "
             "Possibly invalid geofence geometry.");
       }
     }
