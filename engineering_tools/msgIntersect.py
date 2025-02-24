@@ -5,7 +5,7 @@
 
 # The script can be run on either PC running V2X Hub or CARMA Messenger. The following configurations must be made:
 # ip_listen, port_listen: IPv4 Address and Port where messages will be received. Must match IP:Port set in Immediate Forward Plugin.
-# ip_send, port_send: IPv4 Address and Port where payload will be sent. Must match IP, Port set in v2x-ros-driver dsrc_driver/config/params.yaml.
+# ip_send, port_send: IPv4 Address and Port where payload will be sent. Must match IP, Port set in v2x-ros-driver v2x_ros_driver/config/params.yaml.
 # This script assumes both V2X Hub and CARMA Messenger are running on either the same PC or two separate PCs within the same local network.
 
 
