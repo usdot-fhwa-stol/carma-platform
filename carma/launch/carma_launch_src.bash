@@ -7,4 +7,4 @@ source carma.env
 
 # Launch platform
 echo "Launching CARMA from source with args ${1}"
-roslaunch carma carma_src.launch $1
+ros2 launch carma carma_src.launch.py $1
