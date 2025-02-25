@@ -37,7 +37,7 @@ namespace carma_wm_ctrl
 using namespace lanelet::units::literals;
 
 // Map Update Geofence Common Labels
-const std::string MAP_MSG_INTERSECTION = "MAP_MSG_INTERSECTION"; 
+const std::string MAP_MSG_INTERSECTION = "MAP_MSG_INTERSECTION";
 const std::string MAP_MSG_TF_SIGNAL = "MAP_MSG_TF_SIGNAL";
 
 
@@ -54,19 +54,19 @@ public:
   std::string proj;
 
   std::string type_;
-  
+
   lanelet::Points3d gf_pts;
 
   // lanelets additions needed or broadcasting to the rest of map users
   std::vector<lanelet::Lanelet> lanelet_additions_;
-  
+
   // TODO Add rest of the attributes provided by geofences in the future
-/* following regulatory element pointer is a placeholder created with rule name 'basic_regulatory_element' to later point to 
+/* following regulatory element pointer is a placeholder created with rule name 'basic_regulatory_element' to later point to
 specific type of regulatory element (such as digital speed limit, passing control line)*/
 
   lanelet::RegulatoryElementPtr regulatory_element_ = lanelet::RegulatoryElementFactory::create("regulatory_element", lanelet::DigitalSpeedLimit::buildData(lanelet::InvalId, 5_mph, {}, {},
                                                      { lanelet::Participants::VehicleCar }));
-  
+
   // traffic light id lookup
   std::vector<std::pair<uint32_t, lanelet::Id>> traffic_light_id_lookup_;
   // used in workzone geofence creation. it stores SIG_WZ TCM's label.
@@ -76,7 +76,7 @@ specific type of regulatory element (such as digital speed limit, passing contro
   // elements needed for broadcasting to the rest of map users
   std::vector<std::pair<lanelet::Id, lanelet::RegulatoryElementPtr>> update_list_;
   std::vector<std::pair<lanelet::Id, lanelet::RegulatoryElementPtr>> remove_list_;
-  
+
   // we need mutable elements saved here as they will be added back through update function which only accepts mutable objects
   std::vector<std::pair<lanelet::Id, lanelet::RegulatoryElementPtr>> prev_regems_;
   lanelet::ConstLaneletOrAreas affected_parts_;
@@ -86,7 +86,7 @@ specific type of regulatory element (such as digital speed limit, passing contro
 
   // original MAP message for this geofence
   carma_v2x_msgs::msg::MapData map_msg_;
-  
+
   // Helper member for PassingControlLine type regulatory geofence
   bool pcl_affects_left_ = false;
   bool pcl_affects_right_ = false;
