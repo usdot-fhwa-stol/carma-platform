@@ -132,8 +132,9 @@ namespace carma_wm
 
       for (auto node : node_list)
       {
-        RCLCPP_DEBUG_STREAM(rclcpp::get_logger("carma_wm::SignalizedIntersectionManager"), node.x() << ", " << node.y());
+        RCLCPP_DEBUG_STREAM(rclcpp::get_logger("carma_wm::SignalizedIntersectionManager"), "intersection: " << intersection.id.id << ", " << node.x() << ", " << node.y());
       }
+      intersection_nodes_[intersection.id.id].insert(intersection_nodes_[intersection.id.id].end(), node_list.begin(), node_list.end());
 
       // save which signal group connect to which exit lanes
       for (auto connection : lane.connect_to_list)
@@ -386,6 +387,7 @@ namespace carma_wm
         std::shared_ptr<lanelet::SignalizedIntersection> sig_inter(new lanelet::SignalizedIntersection
                                                           (lanelet::SignalizedIntersection::buildData(intersection_id, entry_llts, exit_llts, interior_llts)));
         intersection_id_to_regem_id_[intersection.id.id] = intersection_id;
+        regem_id_to_intersection_id_[intersection_id] = intersection.id.id;
         sig_intersections.push_back(sig_inter);
       }
     }
