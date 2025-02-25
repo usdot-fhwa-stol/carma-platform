@@ -352,14 +352,14 @@ def generate_launch_description():
         declare_arealist_path,
         declare_vector_map_file,
         declare_is_ros2_tracing_enabled,
+        ros2_rosbag_launch,
+        OpaqueFunction(function=create_ros2_tracing_action),
         drivers_group,
         transform_group,
         environment_group,
         localization_group,
         v2x_group,
         guidance_group,
-        ros2_rosbag_launch,
         ui_group,
-        system_controller,
-        OpaqueFunction(function=create_ros2_tracing_action)
+        system_controller
     ])
