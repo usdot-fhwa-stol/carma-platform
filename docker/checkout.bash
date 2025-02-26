@@ -37,6 +37,7 @@ while [[ $# -gt 0 ]]; do
       esac
 done
 
+cd "${dir}"/src
 
 git clone --depth=1 https://github.com/usdot-fhwa-stol/carma-msgs.git --branch "${BRANCH}"
 git clone --depth=1 https://github.com/usdot-fhwa-stol/carma-utils.git --branch "${BRANCH}"
