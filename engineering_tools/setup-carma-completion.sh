@@ -57,20 +57,27 @@ _git_clone_carma_complete() {
     cur="${COMP_WORDS[COMP_CWORD]}"
     prev="${COMP_WORDS[COMP_CWORD-1]}"
 
-    # Only provide completion for repositories starting with "carma"
+    # Manually add completion repositories
     if [[ ${cur} == carma* ]]; then
         # You can add more repositories to this list as needed
         local repos=(
             "carma-msgs"
+            "carma-utils"
             "carma-platform"
             "carma-cloud"
             "carma-base"
             "carma-vehicle"
             "carma-config"
-            "carma-analytics"
+            "carma-analytics-fotda"
             "carma-utils"
             "carma-web-ui"
             "carma-messenger"
+            "autoware.ai"
+            "autoware.auto"
+            "carma-novatel-oem7-driver-wrapper"
+            "carma-velodyne-lidar-driver"
+            "cdasim"
+
         )
 
         # Filter repositories based on current input
