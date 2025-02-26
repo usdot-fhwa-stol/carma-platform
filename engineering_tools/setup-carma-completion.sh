@@ -58,55 +58,53 @@ _git_clone_carma_complete() {
     prev="${COMP_WORDS[COMP_CWORD-1]}"
 
     # Manually add commonly used repository as autocompletion
-    if [[ ${cur} == carma* ]]; then
-        # You can add more repositories to this list as needed
-        local repos=(
-            "carma-msgs"
-            "carma-utils"
-            "carma-platform"
-            "carma-cloud"
-            "carma-base"
-            "carma-vehicle"
-            "carma-config"
-            "carma-analytics-fotda"
-            "carma-utils"
-            "carma-web-ui"
-            "carma-messenger"
-            "autoware.ai"
-            "autoware.auto"
-            "carma-novatel-oem7-driver-wrapper"
-            "carma-velodyne-lidar-driver"
-            "cdasim"
-            "carma-builds"
-            "carma-time-lib"
-            "actions"
-            "v2x-ros-driver"
-            "carma-ssc-interface-wrapper"
-            "carma-ns3-adapter"
-            "cdasim-config"
-            "carma-dbw-mkz-ros"
-            "evc-sumo"
-            "v2x-ros-conversion"
-            "carma-messenger-bridge"
-            "stol-j2735"
-            "opendrive2lanelet"
-            "carma-lightbar-driver"
-            "multiple_object_tracking"
-            "carma-streets"
-            "ns-3_c-v2x"
-            "carma-developer-tools"
-            "carma-torc-pinpoint-driver"
-            "carma-1-tenth"
-            "carma-carla-integration"
-            "tracetools_analysis"
-            "scenario-runner"
-            "carla-sensor-lib"
-        )
+    # You can add more repositories to this list as needed
+    local repos=(
+        "carma-msgs"
+        "carma-utils"
+        "carma-platform"
+        "carma-cloud"
+        "carma-base"
+        "carma-vehicle"
+        "carma-config"
+        "carma-analytics-fotda"
+        "carma-utils"
+        "carma-web-ui"
+        "carma-messenger"
+        "autoware.ai"
+        "autoware.auto"
+        "carma-novatel-oem7-driver-wrapper"
+        "carma-velodyne-lidar-driver"
+        "cdasim"
+        "carma-builds"
+        "carma-time-lib"
+        "actions"
+        "v2x-ros-driver"
+        "carma-ssc-interface-wrapper"
+        "carma-ns3-adapter"
+        "cdasim-config"
+        "carma-dbw-mkz-ros"
+        "evc-sumo"
+        "v2x-ros-conversion"
+        "carma-messenger-bridge"
+        "stol-j2735"
+        "opendrive2lanelet"
+        "carma-lightbar-driver"
+        "multiple_object_tracking"
+        "carma-streets"
+        "ns-3_c-v2x"
+        "carma-developer-tools"
+        "carma-torc-pinpoint-driver"
+        "carma-1-tenth"
+        "carma-carla-integration"
+        "tracetools_analysis"
+        "scenario-runner"
+        "carla-sensor-lib"
+    )
 
-        # Filter repositories based on current input
-        COMPREPLY=( $(compgen -W "${repos[*]}" -- ${cur}) )
-        return 0
-    fi
+    # Filter repositories based on current input
+    COMPREPLY=( $(compgen -W "${repos[*]}" -- ${cur}) )
+    return 0
 }
 
 # Function to intercept git clone commands
