@@ -225,9 +225,9 @@ public:
   void lookup_ecef_to_map_transform();
 
   /**
-   * \brief checks trajectory for minimum gap associated with it from the road
+   * \brief checks trajectory for minimum gap associated with it
    * \param original_tp original trajectory plan
-   * \return minumum required min_gap from the road, if none exists, return default minimum_safety_gap_in_meters
+   * \return minumum required
    */
   double check_traj_for_digital_min_gap(const carma_planning_msgs::msg::TrajectoryPlan& original_tp) const;
 

@@ -203,6 +203,7 @@ bool WMBroadcasterNode::spin_callback()
     upcoming_intersection_ids_pub_->publish(wmb_->upcoming_intersection_ids_);
   if(wmb_->getRoute().route_path_lanelet_ids.size() > 0)
     wmb_->routeCallbackMessage(std::make_unique<carma_planning_msgs::msg::Route>(wmb_->getRoute()));
+
   return true;
 }
 
