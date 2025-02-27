@@ -374,7 +374,7 @@ PointContainer downsample_centerline_with_meters(
   const PointContainer & original_centerline, double gap_in_meters)
 {
   if (original_centerline.empty()) {
-    return PointContainer();
+    return original_centerline;
   }
 
   PointContainer filtered_centerline;
@@ -537,7 +537,7 @@ std::vector<lanelet::BasicPoint2d> create_lanechange_geometry(
   // Filter with 1 meter to make sure there is no "duplicate" points that would break spline fitting
   downsampled_target_centerline =
     downsample_centerline_with_meters<std::vector<lanelet::BasicPoint2d>>(
-      downsampled_starting_centerline);
+      downsampled_target_centerline);
 
   // Constrain centerlines to starting and ending downtrack
   int start_index_starting_centerline = waypoint_generation::get_nearest_index_by_downtrack(
