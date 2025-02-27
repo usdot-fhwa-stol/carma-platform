@@ -102,16 +102,6 @@ Visualization Manager:
           Value: true
         novatel_imu:
           Value: true
-        radar_fc:
-          Value: true
-        radar_fl:
-          Value: true
-        radar_fr:
-          Value: true
-        radar_rl:
-          Value: true
-        radar_rr:
-          Value: true
         vehicle_front:
           Value: true
         velodyne:
@@ -133,16 +123,6 @@ Visualization Manager:
               {}
             novatel_imu:
               {}
-            radar_fc:
-              {}
-            radar_fl:
-              {}
-            radar_fr:
-              {}
-            radar_rl:
-              {}
-            radar_rr:
-              {}
             vehicle_front:
               {}
             velodyne:
@@ -161,18 +141,6 @@ Visualization Manager:
         Reliability Policy: Reliable
         Value: /guidance/trajectory_visualizer
       Value: true
-    - Class: rviz_default_plugins/MarkerArray
-      Enabled: false
-      Name: LiDaR Detected Objects
-      Namespaces:
-        {}
-      Topic:
-        Depth: 5
-        Durability Policy: Volatile
-        History Policy: Keep Last
-        Reliability Policy: Reliable
-        Value: /environment/detected_objects
-      Value: false
     - Class: rviz_default_plugins/MarkerArray
       Enabled: true
       Name: External Objects Viz
