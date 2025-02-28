@@ -35,10 +35,10 @@ while [[ $# -gt 0 ]]; do
 done
 
 # Install dependencies for v2x-ros-conversion - needs branch to pull correct debian version
-./${dir}/src/v2x-ros-conversion/docker/install_dependencies.sh -b $BRANCH
+sudo ${dir}/src/v2x-ros-conversion/docker/install_dependencies.sh -b $BRANCH
 
 # Install dependencies for multiple_object_tracking
-if [[ -z "$PACKAGES" || "$PACKAGES" == "multiple_object_tracking" ]]; then
+if [[ -z "$PACKAGES"]]; then
     echo "Installing multiple object tracking dependencies"
-    sudo ${dir}/src/multiple_object_tracking/scripts/install_dependencies.sh
+    sudo ${dir}/src/multiple_object_tracking/scripts/install_dependencies.sh -b $BRANCH
 fi
