@@ -42,14 +42,14 @@ class WMBroadcaster;
  * notifying the rest of the system.
  *
  */
-class WMBroadcasterNode : public carma_ros2_utils::CarmaLifecycleNode 
+class WMBroadcasterNode : public carma_ros2_utils::CarmaLifecycleNode
 {
 public:
   /**
    * @brief Constructor
    */
   explicit WMBroadcasterNode(const rclcpp::NodeOptions& options);
-    
+
   ////
   // Overrides
   ////
@@ -62,7 +62,7 @@ public:
    * @param map_msg The map message to publish
    */
   void publishMap(const autoware_lanelet2_msgs::msg::MapBin& map_msg);
-  
+
   /**
    * @brief Initializes the WMBroadcaster worker with reference to the CarmaLifecycleNode itself
    *
@@ -112,18 +112,19 @@ private:
   carma_ros2_utils::PubPtr<autoware_lanelet2_msgs::msg::MapBin> map_update_pub_;
   carma_ros2_utils::PubPtr<carma_v2x_msgs::msg::TrafficControlRequest> control_msg_pub_;
   carma_ros2_utils::PubPtr<visualization_msgs::msg::MarkerArray> tcm_visualizer_pub_;
+  carma_ros2_utils::PubPtr<visualization_msgs::msg::MarkerArray> j2735_map_msg_visualizer_pub_;
   carma_ros2_utils::PubPtr<carma_v2x_msgs::msg::TrafficControlRequestPolygon> tcr_visualizer_pub_;
   carma_ros2_utils::PubPtr<std_msgs::msg::Int32MultiArray> upcoming_intersection_ids_pub_;
   carma_ros2_utils::PubPtr<carma_perception_msgs::msg::CheckActiveGeofence> active_pub_;
   carma_ros2_utils::PubPtr<carma_v2x_msgs::msg::MobilityOperation> tcm_ack_pub_;
-  
+
   carma_ros2_utils::SubPtr<autoware_lanelet2_msgs::msg::MapBin> base_map_sub_;
   carma_ros2_utils::SubPtr<carma_planning_msgs::msg::Route> route_callmsg_sub_;
   carma_ros2_utils::SubPtr<std_msgs::msg::String> georef_sub_;
   carma_ros2_utils::SubPtr<carma_v2x_msgs::msg::TrafficControlMessage> geofence_sub_;
   carma_ros2_utils::SubPtr<carma_v2x_msgs::msg::MapData> incoming_map_sub_;
   carma_ros2_utils::SubPtr<geometry_msgs::msg::PoseStamped> curr_location_sub_;
-  
+
   // Timer for publishing TCR and SignalGroup/IntersectionID
   rclcpp::TimerBase::SharedPtr timer_;
 

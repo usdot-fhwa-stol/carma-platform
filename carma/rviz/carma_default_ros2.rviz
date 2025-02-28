@@ -21,8 +21,11 @@ Panels:
         - /Vehicle Model1
         - /Vehicle Model1/Description Topic1
         - /Vehicle Model1/Links1
+        - /J2735 MAP Msg Viz1
+        - /J2735 MAP Msg Viz1/Status1
+        - /J2735 MAP Msg Viz1/Topic1
       Splitter Ratio: 0.5
-    Tree Height: 1216
+    Tree Height: 733
   - Class: rviz_common/Selection
     Name: Selection
   - Class: rviz_common/Tool Properties
@@ -85,8 +88,6 @@ Visualization Manager:
       Frame Timeout: 15
       Frames:
         All Enabled: true
-        base_footprint:
-          Value: true
         base_link:
           Value: true
         gps:
@@ -101,31 +102,9 @@ Visualization Manager:
           Value: true
         novatel_imu:
           Value: true
-        radar_fc:
-          Value: true
-        radar_fl:
-          Value: true
-        radar_fr:
-          Value: true
-        radar_rl:
-          Value: true
-        radar_rr:
-          Value: true
-        steer_fl:
-          Value: true
-        steer_fr:
-          Value: true
         vehicle_front:
           Value: true
         velodyne:
-          Value: true
-        wheel_fl:
-          Value: true
-        wheel_fr:
-          Value: true
-        wheel_rl:
-          Value: true
-        wheel_rr:
           Value: true
       Marker Scale: 5
       Name: TF
@@ -144,29 +123,9 @@ Visualization Manager:
               {}
             novatel_imu:
               {}
-            radar_fc:
-              {}
-            radar_fl:
-              {}
-            radar_fr:
-              {}
-            radar_rl:
-              {}
-            radar_rr:
-              {}
-            steer_fl:
-              wheel_fl:
-                {}
-            steer_fr:
-              wheel_fr:
-                {}
             vehicle_front:
               {}
             velodyne:
-              {}
-            wheel_rl:
-              {}
-            wheel_rr:
               {}
       Update Interval: 0
       Value: true
@@ -174,7 +133,7 @@ Visualization Manager:
       Enabled: true
       Name: Trajectory Visualizer
       Namespaces:
-        trajectory_visualizer: true
+        {}
       Topic:
         Depth: 10
         Durability Policy: Volatile
@@ -366,7 +325,7 @@ Visualization Manager:
       Enabled: true
       Name: Host MobilityPath Marker
       Namespaces:
-        mobilitypath_visualizer: true
+        {}
       Topic:
         Depth: 5
         Durability Policy: Volatile
@@ -447,6 +406,18 @@ Visualization Manager:
       Update Interval: 0
       Value: true
       Visual Enabled: true
+    - Class: rviz_default_plugins/MarkerArray
+      Enabled: true
+      Name: J2735 MAP Msg Viz
+      Namespaces:
+        map_update_visualizer: true
+      Topic:
+        Depth: 5
+        Durability Policy: System Default
+        History Policy: Keep All
+        Reliability Policy: Reliable
+        Value: /environment/j2735_map_msg_visualizer
+      Value: true
   Enabled: true
   Global Options:
     Background Color: 48; 48; 48
@@ -489,7 +460,7 @@ Visualization Manager:
   Value: true
   Views:
     Current:
-      Angle: -6
+      Angle: -6.744999885559082
       Class: rviz_default_plugins/TopDownOrtho
       Enable Stereo Rendering:
         Stereo Eye Separation: 0.05999999865889549
@@ -499,19 +470,19 @@ Visualization Manager:
       Invert Z Axis: false
       Name: Current View
       Near Clip Distance: 0.009999999776482582
-      Scale: 26.373899459838867
+      Scale: 10.55005931854248
       Target Frame: base_link
       Value: TopDownOrtho (rviz_default_plugins)
-      X: 7.82105827331543
-      Y: 2.148747682571411
+      X: 32.36237716674805
+      Y: -5.630061626434326
     Saved: ~
 Window Geometry:
   Displays:
     collapsed: false
-  Height: 1600
+  Height: 1016
   Hide Left Dock: false
   Hide Right Dock: false
-  QMainWindow State: 000000ff00000000fd0000000400000000000002c0000005aefc020000000afb0000001200530065006c0065006300740069006f006e0200000098000000e9000002c0000000adfb0000001e0054006f006f006c002000500072006f007000650072007400690065007302000001ed000001df000003e1000002d8fb000000120056006900650077007300200054006f006f02000001df000002110000018500000122fb000000200054006f006f006c002000500072006f0070006500720074006900650073003203000002880000011d000002210000017afb000000100044006900730070006c0061007900730100000069000005ae0000017800fffffffb0000002000730065006c0065006300740069006f006e00200062007500660066006500720200000138000000aa0000023a00000294fb00000014005700690064006500530074006500720065006f02000000e6000000d2000003ee0000030bfb0000000c004b0069006e0065006300740200000186000001060000030c00000261fb0000000a0049006d0061006700650000000272000000c10000000000000000fb0000001c005400720061006e00730066006f0072006d006100740069006f006e0000000337000000c1000000e200ffffff000000010000019d000005aefc0200000003fb0000001e0054006f006f006c002000500072006f00700065007200740069006500730100000041000000780000000000000000fb0000000a005600690065007700730100000069000005ae0000012300fffffffb0000001200530065006c0065006300740069006f006e010000025a000000b200000000000000000000000200000490000000a9fc0100000001fb0000000a00560069006500770073030000004e00000080000002e10000019700000003000004420000003efc0100000002fb0000000800540069006d00650100000000000004420000000000000000fb0000000800540069006d00650100000000000004500000000000000000000006f3000005ae00000004000000040000000800000008fc0000000100000002000000010000000a0054006f006f006c00730100000000ffffffff0000000000000000
+  QMainWindow State: 000000ff00000000fd00000004000000000000019f000003a2fc020000000afb0000001200530065006c0065006300740069006f006e0200000098000000e9000002c0000000adfb0000001e0054006f006f006c002000500072006f007000650072007400690065007302000001ed00000160000003e1000002d8fb000000120056006900650077007300200054006f006f02000001df000002110000018500000122fb000000200054006f006f006c002000500072006f0070006500720074006900650073003203000002880000011d000002210000017afb000000100044006900730070006c006100790073010000003b000003a2000000c700fffffffb0000002000730065006c0065006300740069006f006e00200062007500660066006500720200000138000000aa0000023a00000294fb00000014005700690064006500530074006500720065006f02000000e6000000d2000003ee0000030bfb0000000c004b0069006e0065006300740200000186000001060000030c00000261fb0000000a0049006d0061006700650000000272000000c10000000000000000fb0000001c005400720061006e00730066006f0072006d006100740069006f006e0000000337000000c10000007900ffffff000000010000019d000003a2fc0200000003fb0000001e0054006f006f006c002000500072006f00700065007200740069006500730100000041000000780000000000000000fb0000000a00560069006500770073010000003b000003a2000000a000fffffffb0000001200530065006c0065006300740069006f006e010000025a000000b200000000000000000000000200000490000000a9fc0100000001fb0000000a00560069006500770073030000004e00000080000002e10000019700000003000004420000003efc0100000002fb0000000800540069006d00650100000000000004420000000000000000fb0000000800540069006d00650100000000000004500000000000000000000003f0000003a200000004000000040000000800000008fc0000000100000002000000010000000a0054006f006f006c00730100000000ffffffff0000000000000000
   Selection:
     collapsed: false
   Tool Properties:
@@ -520,6 +491,6 @@ Window Geometry:
     collapsed: false
   Views:
     collapsed: false
-  Width: 2920
-  X: 152
-  Y: 54
+  Width: 1848
+  X: 72
+  Y: 27

@@ -1,16 +1,15 @@
 ## Receive and Forward SAE J2735 Message Payload
 # This script receives messages sent by V2X Hub, strips the Active Message File header, and forwards only the message/payload to CARMA Messenger.
 # The Active Message File is an ASCII-encoded hex string that is required by RSUs. Most other applications require only the message payload
-# found at the end of the file, encoded as a UTF-8 hex string. 
+# found at the end of the file, encoded as a UTF-8 hex string.
 
 # The script can be run on either PC running V2X Hub or CARMA Messenger. The following configurations must be made:
 # ip_listen, port_listen: IPv4 Address and Port where messages will be received. Must match IP:Port set in Immediate Forward Plugin.
-# ip_send, port_send: IPv4 Address and Port where payload will be sent. Must match IP, Port set in carma-cohda-dsrc-driver dsrc_driver/config/params.yaml.
-# This script assumes both V2X Hub and CARMA Messenger are running on either the same PC or two separate PCs within the same local network. 
+# ip_send, port_send: IPv4 Address and Port where payload will be sent. Must match IP, Port set in v2x-ros-driver v2x_ros_driver/config/params.yaml.
+# This script assumes both V2X Hub and CARMA Messenger are running on either the same PC or two separate PCs within the same local network.
 
 
 import socket
-from time import sleep
 from binascii import unhexlify
 
 
@@ -50,7 +49,6 @@ def main():
 
         # send
         send(msgBytes, ip_send, port_send)
-        sleep(0.1)
 
 if __name__=="__main__":
     main()

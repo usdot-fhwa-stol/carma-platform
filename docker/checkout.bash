@@ -56,7 +56,23 @@ git clone -b 7.6.0 --depth 1 --sparse https://github.com/usdot-fhwa-OPS/V2X-Hub.
 cd V2X-Hub
 git sparse-checkout set ext/ccserver
 
+# SSC related msgs to record in mcap
+cd ${dir}/src
+# raptor_dbw_msgs (only ROS2 needed)
+git clone --depth 1 --filter=blob:none --sparse https://github.com/NewEagleRaptor/raptor-dbw-ros2.git --depth 1 --branch foxy
+cd ${dir}/src/raptor-dbw-ros2
+git sparse-checkout init --cone
+git sparse-checkout set raptor_dbw_msgs
+cd ${dir}/src
+
+# dbw_mkz_msgs (only ROS2 needed)
+git clone --depth 1 --filter=blob:none --sparse https://github.com/usdot-fhwa-stol/carma-dbw-mkz-ros.git --depth 1 --branch 1.2.4-ros2
+cd ${dir}/src/carma-dbw-mkz-ros
+git sparse-checkout init --cone
+git sparse-checkout set dbw_mkz_msgs_ros2
+cd ${dir}/src
+
 # Install dependencies
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 sudo chmod +x ${SCRIPT_DIR}/install_dependencies.sh
-${SCRIPT_DIR}/install_dependencies.sh -b $BRANCH
+${SCRIPT_DIR}/install_dependencies.sh -b $BRANCH -r $dir

@@ -46,7 +46,7 @@ The current CARMA ecosystem development direction and release plans can be found
 The current CARMA Platform system operates as a hybrid of ROS 1 Noetic and ROS 2 Foxy components. While nearly all components have been upgraded to ROS 2 Foxy, a small amount of ROS 1 Noetic content still exists within the system, including some packages in this repository. For more information, please see the relevant documentation in the [carma-config](https://github.com/usdot-fhwa-stol/carma-config?tab=readme-ov-file#current-status-of-hybrid-ros-1ros-2-system) repository.
 
 ## Architecture Guide
-The documentation describes the software architecture within a single CARMA vehicle.  There may be several of these vehicles operating in concert, communicating with each other via DSRC or cellular means.  They can also communicate with roadside infrastructure using DSRC or cellular.  The communication among software components within a single vehicle, however, is mostly done via the Robot Operating System (ROS) framework.  There are no ROS communications between neighboring vehicles. [CARMA3 System Architecture](https://usdot-carma.atlassian.net/wiki/spaces/CRMPLT/pages/89587713/CARMA3+System+Architecture)
+The documentation describes the software architecture within a single CARMA vehicle.  There may be several of these vehicles operating in concert, communicating with each other through a V2X radio or cellular means.  They can also communicate with roadside infrastructure using a V2X radio or cellular.  The communication among software components within a single vehicle, however, is mostly done via the Robot Operating System (ROS) framework.  There are no ROS communications between neighboring vehicles. [CARMA3 System Architecture](https://usdot-carma.atlassian.net/wiki/spaces/CRMPLT/pages/89587713/CARMA3+System+Architecture)
 
 For information on the CARMA2 architecture, please see [CARMA2 System Architecture](https://usdot-carma.atlassian.net/wiki/spaces/CRMPLT/pages/1160642573/CARMA2+System+Architecture)
 
@@ -86,7 +86,7 @@ The CARMA Platform is distributed as a set of multiple independent packages host
 * [dataspeed_can_driver](https://github.com/VT-ASIM-LAB/dataspeed_can_driver) (Externally managed)
 
 ### Sensor Drivers
-* [carma-cohda-dsrc-driver](https://github.com/usdot-fhwa-stol/carma-cohda-dsrc-driver)
+* [v2x-ros-driver](https://github.com/usdot-fhwa-stol/v2x-ros-driver)
 * [carma-velodyne-lidar-driver](https://github.com/usdot-fhwa-stol/carma-velodyne-lidar-driver)
 * [avt_vimba_camera](https://github.com/usdot-fhwa-stol/avt_vimba_camera)
 * [carma-delphi-srr2-driver](https://github.com/usdot-fhwa-stol/carma-delphi-srr2-driver)
