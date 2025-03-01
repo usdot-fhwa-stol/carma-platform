@@ -105,6 +105,10 @@ class LightBarManager : public carma_ros2_utils::CarmaLifecycleNode
         ////
         carma_ros2_utils::CallbackReturn handle_on_configure(const rclcpp_lifecycle::State &);
         carma_ros2_utils::CallbackReturn handle_on_activate(const rclcpp_lifecycle::State &);
+        carma_ros2_utils::CallbackReturn handle_on_deactivate(const rclcpp_lifecycle::State &);
+        carma_ros2_utils::CallbackReturn handle_on_cleanup(const rclcpp_lifecycle::State &);        
+        carma_ros2_utils::CallbackReturn handle_on_error(const rclcpp_lifecycle::State &);
+        carma_ros2_utils::CallbackReturn handle_on_shutdown(const rclcpp_lifecycle::State &);
 
     private:
 
