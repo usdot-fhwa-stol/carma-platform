@@ -119,28 +119,28 @@ carma_ros2_utils::CallbackReturn LightBarManager::handle_on_activate(const rclcp
     return CallbackReturn::SUCCESS;
 }
 
-carma_ros2_utils::CallbackReturn handle_on_deactivate(const rclcpp_lifecycle::State &)
+carma_ros2_utils::CallbackReturn LightBarManager::handle_on_deactivate(const rclcpp_lifecycle::State &)
 {
     // Deactivate the lightbar if deactivated
     turnOffAll();
     return CallbackReturn::SUCCESS;
 }
 
-carma_ros2_utils::CallbackReturn handle_on_cleanup(const rclcpp_lifecycle::State &)
+carma_ros2_utils::CallbackReturn LightBarManager::handle_on_cleanup(const rclcpp_lifecycle::State &)
 {
     // Cleanup the lightbar if cleaned up
     turnOffAll();
     return CallbackReturn::SUCCESS;
 }
 
-carma_ros2_utils::CallbackReturn handle_on_error(const rclcpp_lifecycle::State &)
+carma_ros2_utils::CallbackReturn LightBarManager::handle_on_error(const rclcpp_lifecycle::State &)
 {
     // Cleanup the lightbar if error
     turnOffAll();
     return CallbackReturn::FAILURE; // By default an error will take us into the finalized sate.
 }
 
-carma_ros2_utils::CallbackReturn handle_on_shutdown(const rclcpp_lifecycle::State &)
+carma_ros2_utils::CallbackReturn LightBarManager::handle_on_shutdown(const rclcpp_lifecycle::State &)
 {
     // Cleanup the lightbar if shutdown
     turnOffAll();
