@@ -651,7 +651,7 @@ namespace plan_delegator
             // Wait for the result.
             if (future_status == std::future_status::ready)
             {
-                auto plan_response = future_response.get()
+                auto plan_response = future_response.get();
                 // validate trajectory before add to the plan
                 if(!isTrajectoryValid(plan_response->trajectory_plan))
                 {
