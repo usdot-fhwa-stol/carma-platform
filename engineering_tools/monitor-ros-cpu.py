@@ -6,6 +6,30 @@ import os
 import argparse
 from datetime import datetime
 
+"""
+CARMA Platform CPU Monitor Script
+Requirements:
+    - Python 3.6 or higher
+    - psutil package (install with: pip3 install psutil)
+Usage:
+    1. Open a new terminal before starting CARMA Platform
+    2. Navigate to the directory containing this script:
+       cd /path/to/script/
+    3. Run this script:
+       python3 monitor-ros-cpu.py
+    4. In a different terminal, start CARMA Platform:
+       carma start all
+    5. The script will automatically monitor and log CPU/memory usage
+       of all ROS2 nodes and related processes during CARMA operation
+    6. To stop monitoring:
+       - Press Ctrl+C ONCE in the monitoring terminal
+       - The CSV output file will be saved in the logs directory following ROS bag naming convention:
+         'logs/cpu_usage_ros2_nodes_YYYY_MM_DD-HH_MM_SS.csv'
+Output:
+    - CSV file containing timestamp, process info, CPU and memory usage
+    - Data can be used to analyze CARMA Platform resource utilization
+"""
+
 # Define ROS-related keywords to filter processes
 ROS_KEYWORDS = {
     "ros",

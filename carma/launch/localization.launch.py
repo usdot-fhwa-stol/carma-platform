@@ -209,7 +209,7 @@ def generate_launch_description():
     )
 
    # NDT Matching
-   # This namesapce sets the parameters which are not set by default in the ndt_matching.launch file
+   # This namespace sets the parameters which are not set by default in the ndt_matching.launch.py file
    # These parameters are not in the ndt_matching node private namespace
 
     ndt_matching_container = ComposableNodeContainer(

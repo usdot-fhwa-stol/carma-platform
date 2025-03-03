@@ -35,6 +35,7 @@ TEST_F(LCIStrategicTestFixture, supportedLightState)
   ASSERT_TRUE(lcip->supportedLightState(lanelet::CarmaTrafficSignalState::PROTECTED_MOVEMENT_ALLOWED));
   ASSERT_TRUE(lcip->supportedLightState(lanelet::CarmaTrafficSignalState::PROTECTED_CLEARANCE));
   ASSERT_TRUE(lcip->supportedLightState(lanelet::CarmaTrafficSignalState::STOP_AND_REMAIN));
+  ASSERT_TRUE(lcip->supportedLightState(lanelet::CarmaTrafficSignalState::PERMISSIVE_MOVEMENT_ALLOWED));
 
   ASSERT_FALSE(lcip->supportedLightState(lanelet::CarmaTrafficSignalState::UNAVAILABLE));
   ASSERT_FALSE(lcip->supportedLightState(lanelet::CarmaTrafficSignalState::DARK));
@@ -100,12 +101,12 @@ TEST_F(LCIStrategicTestFixture, validLightState)
   ASSERT_TRUE(lcip->validLightState(std::pair<boost::posix_time::ptime, lanelet::CarmaTrafficSignalState>(dummy_time, lanelet::CarmaTrafficSignalState::PROTECTED_MOVEMENT_ALLOWED), rclcpp::Time(1e9 * 1)));
   ASSERT_TRUE(lcip->validLightState(std::pair<boost::posix_time::ptime, lanelet::CarmaTrafficSignalState>(dummy_time, lanelet::CarmaTrafficSignalState::PROTECTED_CLEARANCE), rclcpp::Time(1e9 * 1)));
   ASSERT_TRUE(lcip->validLightState(std::pair<boost::posix_time::ptime, lanelet::CarmaTrafficSignalState>(dummy_time, lanelet::CarmaTrafficSignalState::STOP_AND_REMAIN), rclcpp::Time(1e9 * 1)));
+  ASSERT_TRUE(lcip->validLightState(std::pair<boost::posix_time::ptime, lanelet::CarmaTrafficSignalState>(dummy_time, lanelet::CarmaTrafficSignalState::PERMISSIVE_MOVEMENT_ALLOWED), rclcpp::Time(1e9 * 1)));
 
   ASSERT_FALSE(lcip->validLightState(std::pair<boost::posix_time::ptime, lanelet::CarmaTrafficSignalState>(dummy_time, lanelet::CarmaTrafficSignalState::UNAVAILABLE), rclcpp::Time(1e9 * 1)));
   ASSERT_FALSE(lcip->validLightState(std::pair<boost::posix_time::ptime, lanelet::CarmaTrafficSignalState>(dummy_time, lanelet::CarmaTrafficSignalState::DARK), rclcpp::Time(1e9 * 1)));
   ASSERT_FALSE(lcip->validLightState(std::pair<boost::posix_time::ptime, lanelet::CarmaTrafficSignalState>(dummy_time, lanelet::CarmaTrafficSignalState::STOP_THEN_PROCEED), rclcpp::Time(1e9 * 1)));
   ASSERT_FALSE(lcip->validLightState(std::pair<boost::posix_time::ptime, lanelet::CarmaTrafficSignalState>(dummy_time, lanelet::CarmaTrafficSignalState::PRE_MOVEMENT), rclcpp::Time(1e9 * 1)));
-  ASSERT_TRUE(lcip->validLightState(std::pair<boost::posix_time::ptime, lanelet::CarmaTrafficSignalState>(dummy_time, lanelet::CarmaTrafficSignalState::PERMISSIVE_MOVEMENT_ALLOWED), rclcpp::Time(1e9 * 1)));
   ASSERT_FALSE(lcip->validLightState(std::pair<boost::posix_time::ptime, lanelet::CarmaTrafficSignalState>(dummy_time, lanelet::CarmaTrafficSignalState::PERMISSIVE_CLEARANCE), rclcpp::Time(1e9 * 1)));
   ASSERT_FALSE(lcip->validLightState(std::pair<boost::posix_time::ptime, lanelet::CarmaTrafficSignalState>(dummy_time, lanelet::CarmaTrafficSignalState::CAUTION_CONFLICTING_TRAFFIC), rclcpp::Time(1e9 * 1)));
   ASSERT_FALSE(lcip->validLightState(boost::none, rclcpp::Time(1e9 * 1)));
