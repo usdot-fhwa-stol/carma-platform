@@ -11,21 +11,25 @@
   history: keep_last
   reliability: reliable
   durability: transient_local
+  depth: 1
 
 /environment/semantic_map:
   history: keep_last
   reliability: reliable
   durability: transient_local
+  depth: 1
 
 /localization/map_param_loader/georeference:
   history: keep_last
   reliability: reliable
   durability: transient_local
+  depth: 1
 
 /localization/points_map:
   history: keep_last
   reliability: reliable
   durability: transient_local
+  depth: 1
 
 /message/incoming_geofence_control:
   history: keep_all
@@ -46,8 +50,10 @@
   history: keep_last
   reliability: reliable
   durability: transient_local
+  depth: 1
 
 /environment/map_update_debug:
   history: keep_last
   reliability: reliable
   durability: transient_local
+  depth: 1
