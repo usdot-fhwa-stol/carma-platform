@@ -312,7 +312,7 @@ namespace yield_plugin
         resp->trajectory_plan = yield_trajectory;
       }
     }
-    catch(const std::exception& e)
+    catch(const std::runtime_error& e)
     {
       RCLCPP_WARN_STREAM(nh_->get_logger(), "Yield Plugin failed to plan trajectory: " << e.what());
       RCLCPP_WARN_STREAM(nh_->get_logger(), "Returning the original trajectory!");
