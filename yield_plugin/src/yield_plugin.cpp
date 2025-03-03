@@ -1054,6 +1054,8 @@ namespace yield_plugin
       auto llts = wm_->getLaneletsFromPoint(veh_pos, 1);
       if (llts.empty())
       {
+        // This should technically never happen
+        // However, trajectory generation currently may fail due to osm map issue https://github.com/usdot-fhwa-stol/carma-platform/issues/2503
         RCLCPP_WARN_STREAM(nh_->get_logger(),"Trajectory point: x= " << original_tp.trajectory_points.at(i).x << "y="<< original_tp.trajectory_points.at(i).y);
         RCLCPP_WARN_STREAM(nh_->get_logger(),"Trajectory is not on the road, so was unable to get the digital minimum gap. Returning default minimum_safety_gap_in_meters: " << config_.minimum_safety_gap_in_meters);
         return desired_gap;
