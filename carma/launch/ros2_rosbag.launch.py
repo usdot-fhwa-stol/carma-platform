@@ -32,7 +32,7 @@ def record_ros2_rosbag(context: LaunchContext, vehicle_config_param_file, rosbag
     vehicle_config_param_file_string = context.perform_substitution(vehicle_config_param_file)
 
     # Initialize string that will contain the regex for topics to exclude from the ROS 2 rosbag
-    exclude_topics = []  # Use a list instead of concatenating strings with |
+    exclude_topics = []
 
     overriding_qos_profiles = context.perform_substitution(rosbag2_qos_override_param_file)
 
@@ -62,9 +62,6 @@ def record_ros2_rosbag(context: LaunchContext, vehicle_config_param_file, rosbag
 
                 # Join the topics with | to create a proper regex
                 exclude_topics_regex = "|".join(exclude_topics) if exclude_topics else ""
-
-                # Debug print
-                print(f"Excluding topics with regex: {exclude_topics_regex}")
 
                 proc = ExecuteProcess(
                         cmd=['ros2', 'bag', 'record', '-a', '-s', 'mcap',
