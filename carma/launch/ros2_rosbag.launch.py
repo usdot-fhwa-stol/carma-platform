@@ -64,11 +64,13 @@ def record_ros2_rosbag(context: LaunchContext, vehicle_config_param_file, rosbag
                         for topic in vehicle_config_params["excluded_can_topics"]:
                             exclude_topics_regex += str(topic) + "|"
 
+                print(f"Recording these: {exclude_topics_regex}")
                 proc = ExecuteProcess(
                         cmd=['ros2', 'bag', 'record', '-a', '-s', 'mcap',
                             '--qos-profile-overrides-path', overriding_qos_profiles,
                             '-o', '/opt/carma/logs/rosbag2_' + str(datetime.now().strftime('%Y-%m-%d_%H%M%S')),
-                            '-x', exclude_topics_regex],
+                            '-x', exclude_topics_regex
+                            ],
                         output='screen',
                         shell='true'
                     )
