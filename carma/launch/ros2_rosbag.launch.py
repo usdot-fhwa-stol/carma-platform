@@ -31,7 +31,7 @@ def record_ros2_rosbag(context: LaunchContext, vehicle_config_param_file, rosbag
     # Convert LaunchConfiguration object to its string representation
     vehicle_config_param_file_string = context.perform_substitution(vehicle_config_param_file)
 
-    # Initialize string that will contain the regex for topics to exclude from the ROS 2 rosbag
+    # Initialize an array that will contain the regex for topics to exclude from the ROS 2 rosbag
     exclude_topics = []
 
     overriding_qos_profiles = context.perform_substitution(rosbag2_qos_override_param_file)
