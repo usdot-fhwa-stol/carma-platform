@@ -4,7 +4,7 @@ on:
   pull_request:
     types: [opened, synchronize, reopened]
   push:
-    branches: [develop, develop-humble, master]
+    branches: [develop, master]
 jobs:
   determine_docker_org_and_tag:
     runs-on: ubuntu-latest
@@ -14,7 +14,7 @@ jobs:
         uses: usdot-fhwa-stol/actions/docker-org-and-tag@main
     outputs:
       docker_org: ${{ steps.docker-org-and-tag.outputs.docker_organization }}
-      docker_tag: ${{ steps.docker-org-and-tag.outputs.docker_image_tag }}
+      docker_tag: ${{ steps.docker-org-and-tag.outputs.docker_image_tag }}-humble
 
   build:
     needs: determine_docker_org_and_tag
@@ -28,7 +28,7 @@ jobs:
 
     # Set up a Docker container for the job
     container:
-      image: ${{ needs.determine_docker_org_and_tag.outputs.docker_org }}/autoware.ai:${{ needs.determine_docker_org_and_tag.outputs.docker_tag }}
+      image: ${{ needs.determine_docker_org_and_tag.outputs.docker_org }}/autoware.ai:${{ needs.determine_docker_org_and_tag.outputs.docker_tag }}-humble
       env:
         INIT_ENV: "/home/carma/.base-image/init-env.sh"
         ROS_2_ENV: "/opt/ros/humble/setup.bash"

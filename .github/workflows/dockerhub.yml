@@ -6,7 +6,6 @@ on:
     branches:
       - develop
       - master
-      - develop-humble
       - "release/*"
     tags:
       - "carma-system-*"
