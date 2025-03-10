@@ -312,11 +312,18 @@ namespace yield_plugin
         resp->trajectory_plan = yield_trajectory;
       }
     }
-    catch(const std::runtime_error& e)
-    {
-      RCLCPP_WARN_STREAM(nh_->get_logger(), "Yield Plugin failed to plan trajectory: " << e.what());
-      RCLCPP_WARN_STREAM(nh_->get_logger(), "Returning the original trajectory!");
-      resp->trajectory_plan = original_trajectory;
+    catch(const std::runtime_error& e) {
+      std::string error = e.what();
+      if (error.find("cannot store a negative time point") != std::string::npos) {
+        RCLCPP_WARN_STREAM(nh_->get_logger(), "Yield Plugin failed to plan trajectory due to known negative time issue: " << e.what());
+        RCLCPP_WARN_STREAM(nh_->get_logger(), "Returning the original trajectory, and retrying at the next call.");
+        resp->trajectory_plan = original_trajectory;
+      } else {
+          // Log the error using rclcpp and rethrow for other cases
+          RCLCPP_ERROR(rclcpp::get_logger("yield_plugin"), 
+                       "Unknown runtime error: %s - Rethrowing.", error.c_str());
+          throw; // Rethrow the original exception
+      }
     }
 
     rclcpp::Time end_time = system_clock.now();  // Planning complete
