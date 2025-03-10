@@ -31,8 +31,8 @@ def record_ros2_rosbag(context: LaunchContext, vehicle_config_param_file, rosbag
     # Convert LaunchConfiguration object to its string representation
     vehicle_config_param_file_string = context.perform_substitution(vehicle_config_param_file)
 
-    # Initialize string that will contain the regex for topics to exclude from the ROS 2 rosbag
-    exclude_topics_regex = ""
+    # Initialize an array that will contain the regex for topics to exclude from the ROS 2 rosbag
+    exclude_topics = []
 
     overriding_qos_profiles = context.perform_substitution(rosbag2_qos_override_param_file)
 
@@ -46,23 +46,22 @@ def record_ros2_rosbag(context: LaunchContext, vehicle_config_param_file, rosbag
 
                 if "exclude_default" in vehicle_config_params:
                     if (vehicle_config_params["exclude_default"] == True) and ("excluded_default_topics" in vehicle_config_params):
-                        for topic in vehicle_config_params["excluded_default_topics"]:
-                            exclude_topics_regex += str(topic) + "|"
+                        exclude_topics.extend(vehicle_config_params["excluded_default_topics"])
 
                 if "exclude_lidar" in vehicle_config_params:
                     if (vehicle_config_params["exclude_lidar"] == True) and ("excluded_lidar_topics" in vehicle_config_params):
-                        for topic in vehicle_config_params["excluded_lidar_topics"]:
-                            exclude_topics_regex += str(topic) + "|"
+                        exclude_topics.extend(vehicle_config_params["excluded_lidar_topics"])
 
                 if "exclude_camera" in vehicle_config_params:
                     if (vehicle_config_params["exclude_camera"] == True) and ("excluded_camera_topics" in vehicle_config_params):
-                        for topic in vehicle_config_params["excluded_camera_topics"]:
-                            exclude_topics_regex += str(topic) + "|"
+                        exclude_topics.extend(vehicle_config_params["excluded_camera_topics"])
 
                 if "exclude_can" in vehicle_config_params:
                     if (vehicle_config_params["exclude_can"] == True) and ("excluded_can_topics" in vehicle_config_params):
-                        for topic in vehicle_config_params["excluded_can_topics"]:
-                            exclude_topics_regex += str(topic) + "|"
+                        exclude_topics.extend(vehicle_config_params["excluded_can_topics"])
+
+                # Join the topics with | to create a proper regex
+                exclude_topics_regex = "|".join(exclude_topics) if exclude_topics else ""
 
                 proc = ExecuteProcess(
                         cmd=['ros2', 'bag', 'record', '-a', '-s', 'mcap',
