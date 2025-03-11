@@ -55,15 +55,22 @@ git sparse-checkout set ext/ccserver
 # SSC related msgs to record in mcap
 cd ${dir}/src
 # raptor_dbw_msgs (only ROS2 needed)
-git clone --depth 1 --filter=blob:none --sparse https://github.com/NewEagleRaptor/raptor-dbw-ros2.git --depth 1 --branch foxy
+git clone --depth 1 --filter=blob:none --sparse https://github.com/NewEagleRaptor/raptor-dbw-ros2.git --branch foxy
 cd ${dir}/src/raptor-dbw-ros2
 git sparse-checkout init --cone
 git sparse-checkout set raptor_dbw_msgs
 cd ${dir}/src
 
 # dbw_mkz_msgs (only ROS2 needed)
-git clone --depth 1 --filter=blob:none --sparse https://github.com/usdot-fhwa-stol/carma-dbw-mkz-ros.git --depth 1 --branch 1.2.4-ros2
+git clone --depth 1 --filter=blob:none --sparse https://github.com/usdot-fhwa-stol/carma-dbw-mkz-ros.git --branch 1.2.4-ros2
 cd ${dir}/src/carma-dbw-mkz-ros
 git sparse-checkout init --cone
 git sparse-checkout set dbw_mkz_msgs_ros2
+cd ${dir}/src
+
+# Despite installing from debian, the guide still asks to build from source until tracetools
+git clone --depth 1 --filter=blob:none --sparse https://github.com/ros2/ros2_tracing.git --branch humble
+cd ${dir}/src/ros2_tracing
+git sparse-checkout init --cone
+git sparse-checkout set tracetools
 cd ${dir}/src
