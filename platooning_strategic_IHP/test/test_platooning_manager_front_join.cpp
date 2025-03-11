@@ -23,9 +23,9 @@
  * Author: Xu Han, Xin Xia, Jiaqi Ma
  */
 
-#include "platoon_strategic_ihp/platoon_manager_ihp.h"
-#include "platoon_strategic_ihp/platoon_strategic_ihp.h"
-#include "platoon_strategic_ihp/platoon_config_ihp.h"
+#include "platooning_strategic_ihp/platooning_manager_ihp.h"
+#include "platooning_strategic_ihp/platooning_strategic_ihp.h"
+#include "platooning_strategic_ihp/platooning_config_ihp.h"
 #include <gtest/gtest.h>
 #include <rclcpp/logging.hpp>
 #include <carma_wm/WMListener.hpp>
@@ -47,15 +47,15 @@
 using carma_ros2_utils::timers::testing::TestTimer;
 using carma_ros2_utils::timers::testing::TestTimerFactory;
 
-namespace platoon_strategic_ihp
+namespace platooning_strategic_ihp
 {
 
-TEST(PlatoonManagerTestFrontJoin, test_construct_front)
+TEST(PlatooningManagerTestFrontJoin, test_construct_front)
 {
-    PlatoonPluginConfig config;
+    PlatooningPluginConfig config;
     std::shared_ptr<carma_wm::CARMAWorldModel> wm = std::make_shared<carma_wm::CARMAWorldModel>();
 
-    PlatoonStrategicIHPPlugin plugin(wm, config, [&](auto) {}, [&](auto) {}, [&](auto) {}, [&](auto) {},
+    PlatooningStrategicIHPPlugin plugin(wm, config, [&](auto) {}, [&](auto) {}, [&](auto) {}, [&](auto) {},
         std::make_shared<carma_ros2_utils::timers::testing::TestTimerFactory>());
     // Use Getter to retrieve host Platoon Manager class
     // change state
@@ -63,12 +63,12 @@ TEST(PlatoonManagerTestFrontJoin, test_construct_front)
 }
 
 // UCLA: use "run_candidate_leader" to test ecef encoding
-TEST(PlatoonManagerTestFrontJoin, test_ecef_encode_front)
+TEST(PlatooningManagerTestFrontJoin, test_ecef_encode_front)
 {
-    PlatoonPluginConfig config;
+    PlatooningPluginConfig config;
     std::shared_ptr<carma_wm::CARMAWorldModel> wm = std::make_shared<carma_wm::CARMAWorldModel>();
 
-    PlatoonStrategicIHPPlugin plugin(wm, config, [&](auto) {}, [&](auto) {}, [&](auto) {}, [&](auto) {},
+    PlatooningStrategicIHPPlugin plugin(wm, config, [&](auto) {}, [&](auto) {}, [&](auto) {}, [&](auto) {},
         std::make_shared<carma_ros2_utils::timers::testing::TestTimerFactory>());
     carma_v2x_msgs::msg::LocationECEF ecef_point_test;
     ecef_point_test.ecef_x = 1.0;
@@ -80,7 +80,7 @@ TEST(PlatoonManagerTestFrontJoin, test_ecef_encode_front)
 }
 
 
-TEST(PlatoonManagerTestFrontJoin, test_split_front)
+TEST(PlatooningManagerTestFrontJoin, test_split_front)
 {
     carma_v2x_msgs::msg::MobilityOperation msg;
     std::string strategyParams("INFO|REAR:1,LENGTH:2,SPEED:3,SIZE:4");
@@ -98,7 +98,7 @@ TEST(PlatoonManagerTestFrontJoin, test_split_front)
 }
 
 
-TEST(PlatoonManagerTestFrontJoin, test_compose_front)
+TEST(PlatooningManagerTestFrontJoin, test_compose_front)
 {
     std::string OPERATION_STATUS_PARAMS = "STATUS|CMDSPEED:%1%,DTD:%2%,SPEED:%3%";
     double cmdSpeed = 1;
@@ -114,11 +114,11 @@ TEST(PlatoonManagerTestFrontJoin, test_compose_front)
 }
 
 
-TEST(PlatoonStrategicIHPPlugin, mob_resp_cb_front)
+TEST(PlatooningStrategicIHPPlugin, mob_resp_cb_front)
 {
-    PlatoonPluginConfig config;;
+    PlatooningPluginConfig config;;
 
-    PlatoonStrategicIHPPlugin plugin(carma_wm::test::getGuidanceTestMap(), config, [&](auto) {}, [&](auto) {}, [&](auto) {}, [&](auto) {},
+    PlatooningStrategicIHPPlugin plugin(carma_wm::test::getGuidanceTestMap(), config, [&](auto) {}, [&](auto) {}, [&](auto) {}, [&](auto) {},
         std::make_shared<carma_ros2_utils::timers::testing::TestTimerFactory>());
     // change state
     plugin.setPMState(PlatoonState::FOLLOWER);
@@ -126,11 +126,11 @@ TEST(PlatoonStrategicIHPPlugin, mob_resp_cb_front)
     plugin.onSpin();
 }
 
-TEST(PlatoonStrategicIHPPlugin, platoon_info_pub_front)
+TEST(PlatooningStrategicIHPPlugin, platoon_info_pub_front)
 {
-    PlatoonPluginConfig config;
+    PlatooningPluginConfig config;
 
-    PlatoonStrategicIHPPlugin plugin(carma_wm::test::getGuidanceTestMap(), config, [&](auto) {}, [&](auto) {}, [&](auto) {}, [&](auto) {},
+    PlatooningStrategicIHPPlugin plugin(carma_wm::test::getGuidanceTestMap(), config, [&](auto) {}, [&](auto) {}, [&](auto) {}, [&](auto) {},
         std::make_shared<carma_ros2_utils::timers::testing::TestTimerFactory>());
 
     // Use platoon manager setter to set state
@@ -161,18 +161,18 @@ TEST(PlatoonStrategicIHPPlugin, platoon_info_pub_front)
 
 // ---------------------------------------- UCLA Tests for same-lane front join and cut-in front join ---------------------------------------
 // UCLA: Use the transition "leader_aborting --> follower" to test follower functions
-// TEST(PlatoonStrategicIHPPlugin, test_follower_front)
+// TEST(PlatooningStrategicIHPPlugin, test_follower_front)
 // {
 
-//     PlatoonPluginConfig config;
+//     PlatooningPluginConfig config;
 //     std::shared_ptr<carma_wm::CARMAWorldModel> wm = std::make_shared<carma_wm::CARMAWorldModel>();
 
-//     PlatoonStrategicIHPPlugin plugin(wm, config, [&](auto) {}, [&](auto) {}, [&](auto) {}, [&](auto) {},
+//     PlatooningStrategicIHPPlugin plugin(wm, config, [&](auto) {}, [&](auto) {}, [&](auto) {}, [&](auto) {},
 //         std::make_shared<carma_ros2_utils::timers::testing::TestTimerFactory>());
 //     // change state
 //     plugin.setPMState(PlatoonState::LEADERABORTING);
 //     // Use Getter to retrieve host Platoon Manager class
-//     platoon_strategic_ihp::PlatoonManager pm_ = plugin.getHostPM();
+//     platooning_strategic_ihp::PlatooningManager pm_ = plugin.getHostPM();
 //     EXPECT_EQ(pm_.isFollower, false);
 
 //     auto resp = std::make_unique<carma_v2x_msgs::msg::MobilityResponse>();
@@ -185,24 +185,24 @@ TEST(PlatoonStrategicIHPPlugin, platoon_info_pub_front)
 //     plugin.mob_resp_cb(std::move(resp));
 
 //     // Use Getter to retrieve an updated Platoon Manager class
-//     platoon_strategic_ihp::PlatoonManager pm1_ = plugin.getHostPM();
+//     platooning_strategic_ihp::PlatooningManager pm1_ = plugin.getHostPM();
 //     EXPECT_EQ(pm1_.current_platoon_state, PlatoonState::FOLLOWER);
 //     EXPECT_EQ(pm1_.isFollower, true);
 // }
 
 // UCLA: Cut-in front test for platoon leader, Test the transition "lead_with_operation --> leader_aborting"
-// TEST(PlatoonStrategicIHPPlugin, cutin_test_leader_2)
+// TEST(PlatooningStrategicIHPPlugin, cutin_test_leader_2)
 // {
-//     PlatoonPluginConfig config;
+//     PlatooningPluginConfig config;
 //     std::shared_ptr<carma_wm::CARMAWorldModel> wm = std::make_shared<carma_wm::CARMAWorldModel>();
 
-//     PlatoonStrategicIHPPlugin plugin(wm, config, [&](auto) {}, [&](auto) {}, [&](auto) {}, [&](auto) {},
+//     PlatooningStrategicIHPPlugin plugin(wm, config, [&](auto) {}, [&](auto) {}, [&](auto) {}, [&](auto) {},
 //         std::make_shared<carma_ros2_utils::timers::testing::TestTimerFactory>());
 
 //     // change state
 //     plugin.setPMState(PlatoonState::LEADWITHOPERATION);
 //     // Use Getter to retrieve host Platoon Manager class
-//     platoon_strategic_ihp::PlatoonManager pm_ = plugin.getHostPM();
+//     platooning_strategic_ihp::PlatooningManager pm_ = plugin.getHostPM();
 //     EXPECT_EQ(pm_.isFollower, false);
 
 //     // compose dummy request msg
@@ -214,7 +214,7 @@ TEST(PlatoonStrategicIHPPlugin, platoon_info_pub_front)
 //     MobilityRequestResponse resp = plugin.handle_mob_req(msg);
 
 //     // Use Getter to update Platoon Manager class
-//     platoon_strategic_ihp::PlatoonManager pm1_ = plugin.getHostPM();
+//     platooning_strategic_ihp::PlatooningManager pm1_ = plugin.getHostPM();
 
 //     // run test and compare result
 //     EXPECT_EQ(pm1_.current_platoon_state, PlatoonState::LEADERABORTING);
@@ -222,15 +222,15 @@ TEST(PlatoonStrategicIHPPlugin, platoon_info_pub_front)
 // }
 
 // UCLA: Cut-in front test for joining vehicle. Test the transition "leader --> prepare to join"
-// TEST(PlatoonStrategicIHPPlugin, cutin_test_join_1)
+// TEST(PlatooningStrategicIHPPlugin, cutin_test_join_1)
 // {
-//     PlatoonPluginConfig config;
+//     PlatooningPluginConfig config;
 //     std::shared_ptr<carma_wm::CARMAWorldModel> wm = std::make_shared<carma_wm::CARMAWorldModel>();
 
-//     PlatoonStrategicIHPPlugin plugin(wm, config, [&](auto) {}, [&](auto) {}, [&](auto) {}, [&](auto) {},
+//     PlatooningStrategicIHPPlugin plugin(wm, config, [&](auto) {}, [&](auto) {}, [&](auto) {}, [&](auto) {},
 //         std::make_shared<carma_ros2_utils::timers::testing::TestTimerFactory>());
 //     // Use Getter to retrieve host Platoon Manager class
-//     platoon_strategic_ihp::PlatoonManager pm_ = plugin.getHostPM();
+//     platooning_strategic_ihp::PlatooningManager pm_ = plugin.getHostPM();
 //     plugin.setPMState(PlatoonState::LEADER);
 //     EXPECT_EQ(pm_.isFollower, false);
 
@@ -248,23 +248,23 @@ TEST(PlatoonStrategicIHPPlugin, platoon_info_pub_front)
 //     plugin.mob_resp_cb(std::move(resp));
 
 //     // Use Getter to retrieve host Platoon Manager class
-//     platoon_strategic_ihp::PlatoonManager pm1_ = plugin.getHostPM();
+//     platooning_strategic_ihp::PlatooningManager pm1_ = plugin.getHostPM();
 //     EXPECT_EQ(pm1_.current_platoon_state, PlatoonState::PREPARETOJOIN);
 
 // }
 
 //UCLA: Cut-in front test for joining vehicle. Test the transition "prepare to join --> candidate leader"
-// TEST(PlatoonStrategicIHPPlugin, cutin_test_join_2)
+// TEST(PlatooningStrategicIHPPlugin, cutin_test_join_2)
 // {
-//     PlatoonPluginConfig config;
+//     PlatooningPluginConfig config;
 //     std::shared_ptr<carma_wm::CARMAWorldModel> wm = std::make_shared<carma_wm::CARMAWorldModel>();
 
-//     PlatoonStrategicIHPPlugin plugin(wm, config, [&](auto) {}, [&](auto) {}, [&](auto) {}, [&](auto) {},
+//     PlatooningStrategicIHPPlugin plugin(wm, config, [&](auto) {}, [&](auto) {}, [&](auto) {}, [&](auto) {},
 //         std::make_shared<carma_ros2_utils::timers::testing::TestTimerFactory>());
 //     // change state
 //     plugin.setPMState(PlatoonState::PREPARETOJOIN);
 //     // Use Getter to retrieve host Platoon Manager class
-//     platoon_strategic_ihp::PlatoonManager pm_ = plugin.getHostPM();
+//     platooning_strategic_ihp::PlatooningManager pm_ = plugin.getHostPM();
 //     EXPECT_EQ(pm_.isFollower, false);
 
 //     // compose dummy response msg
@@ -281,19 +281,19 @@ TEST(PlatoonStrategicIHPPlugin, platoon_info_pub_front)
 
 //     // run test and compare result
 //     // Use Getter to update Platoon Manager class
-//     platoon_strategic_ihp::PlatoonManager pm1_ = plugin.getHostPM();
+//     platooning_strategic_ihp::PlatooningManager pm1_ = plugin.getHostPM();
 //     EXPECT_EQ(pm1_.current_platoon_state, PlatoonState::CANDIDATELEADER);
 // }
 
 // -------------------------------------------------------------------------------------------------------------------------------------------
 
 // test get leader function
-// TEST(PlatoonStrategicIHPPlugin, test_get_leader_front)
+// TEST(PlatooningStrategicIHPPlugin, test_get_leader_front)
 // {
-//     PlatoonPluginConfig config;
+//     PlatooningPluginConfig config;
 //     std::shared_ptr<carma_wm::CARMAWorldModel> wm = std::make_shared<carma_wm::CARMAWorldModel>();
 
-//     PlatoonStrategicIHPPlugin plugin(wm, config, [&](auto) {}, [&](auto) {}, [&](auto) {}, [&](auto) {},
+//     PlatooningStrategicIHPPlugin plugin(wm, config, [&](auto) {}, [&](auto) {}, [&](auto) {}, [&](auto) {},
 //         std::make_shared<carma_ros2_utils::timers::testing::TestTimerFactory>());
 //     // change state
 //     plugin.setPMState(PlatoonState::FOLLOWER);
@@ -306,7 +306,7 @@ TEST(PlatoonStrategicIHPPlugin, platoon_info_pub_front)
 //     plugin.updatePlatoonList(cur_pl);
 
 //     // Use Getter to retrieve host Platoon Manager class
-//     platoon_strategic_ihp::PlatoonManager pm_ = plugin.getHostPM();
+//     platooning_strategic_ihp::PlatooningManager pm_ = plugin.getHostPM();
 //     // check platoon size
 //     EXPECT_EQ(pm_.host_platoon_.size(), 1ul);
 
@@ -316,7 +316,7 @@ TEST(PlatoonStrategicIHPPlugin, platoon_info_pub_front)
 
 //     // PM should now be follower
 //     // update PM
-//     platoon_strategic_ihp::PlatoonManager pm1_ = plugin.getHostPM();
+//     platooning_strategic_ihp::PlatooningManager pm1_ = plugin.getHostPM();
 //     PlatoonMember platoon_leader = pm1_.getDynamicLeader();
     // check dynamic leader info
 //     EXPECT_EQ(platoon_leader.staticId, "1");
@@ -324,14 +324,14 @@ TEST(PlatoonStrategicIHPPlugin, platoon_info_pub_front)
 // }
 
 // test platoon size and get leader platoon ID
-TEST(PlatoonManagerTestFrontJoin, test2_front)
+TEST(PlatooningManagerTestFrontJoin, test2_front)
 {
-    platoon_strategic_ihp::PlatoonMember* member = new platoon_strategic_ihp::PlatoonMember("1", 1.0, 1.1, 0.1, 0, 100); // dtd: 0.1m, smaller downtrack, at back.
-    std::vector<platoon_strategic_ihp::PlatoonMember> cur_pl;
+    platooning_strategic_ihp::PlatoonMember* member = new platooning_strategic_ihp::PlatoonMember("1", 1.0, 1.1, 0.1, 0, 100); // dtd: 0.1m, smaller downtrack, at back.
+    std::vector<platooning_strategic_ihp::PlatoonMember> cur_pl;
 
     cur_pl.push_back(*member);
 
-    platoon_strategic_ihp::PlatoonManager pm(std::make_shared<carma_ros2_utils::timers::testing::TestTimerFactory>());
+    platooning_strategic_ihp::PlatooningManager pm(std::make_shared<carma_ros2_utils::timers::testing::TestTimerFactory>());
     pm.host_platoon_ = cur_pl;
 
     pm.isFollower = true;
@@ -347,17 +347,17 @@ TEST(PlatoonManagerTestFrontJoin, test2_front)
 }
 
 // add 2 member to platoon, test size
-TEST(PlatoonManagerTestFrontJoin, test3_front)
+TEST(PlatooningManagerTestFrontJoin, test3_front)
 {
     // note: platoon list now include leading vehicle. So platoon_size = host_platoon_.size() , here expect platoon_size == 2.
-    platoon_strategic_ihp::PlatoonMember* member1 = new platoon_strategic_ihp::PlatoonMember("1", 1.0, 1.1, 0.1, 0, 100);
-    platoon_strategic_ihp::PlatoonMember* member2 = new platoon_strategic_ihp::PlatoonMember("2", 2.0, 2.1, 0.2, 0, 200);
-    std::vector<platoon_strategic_ihp::PlatoonMember> cur_pl;
+    platooning_strategic_ihp::PlatoonMember* member1 = new platooning_strategic_ihp::PlatoonMember("1", 1.0, 1.1, 0.1, 0, 100);
+    platooning_strategic_ihp::PlatoonMember* member2 = new platooning_strategic_ihp::PlatoonMember("2", 2.0, 2.1, 0.2, 0, 200);
+    std::vector<platooning_strategic_ihp::PlatoonMember> cur_pl;
 
     cur_pl.push_back(*member1);
     cur_pl.push_back(*member2);
 
-    platoon_strategic_ihp::PlatoonManager pm(std::make_shared<carma_ros2_utils::timers::testing::TestTimerFactory>());
+    platooning_strategic_ihp::PlatooningManager pm(std::make_shared<carma_ros2_utils::timers::testing::TestTimerFactory>());
     pm.host_platoon_ = cur_pl;
 
     pm.isFollower = false;
@@ -370,16 +370,16 @@ TEST(PlatoonManagerTestFrontJoin, test3_front)
 }
 
 // test APF for 3 vehicles
-TEST(PlatoonManagerTestFrontJoin, test4_front)
+TEST(PlatooningManagerTestFrontJoin, test4_front)
 {
-    platoon_strategic_ihp::PlatoonMember* member1 = new platoon_strategic_ihp::PlatoonMember("1", 1.0, 1.1, 0.1, 0, 100);
-    platoon_strategic_ihp::PlatoonMember* member2 = new platoon_strategic_ihp::PlatoonMember("2", 2.0, 2.1, 0.2, 0, 200);
-    std::vector<platoon_strategic_ihp::PlatoonMember> cur_pl;
+    platooning_strategic_ihp::PlatoonMember* member1 = new platooning_strategic_ihp::PlatoonMember("1", 1.0, 1.1, 0.1, 0, 100);
+    platooning_strategic_ihp::PlatoonMember* member2 = new platooning_strategic_ihp::PlatoonMember("2", 2.0, 2.1, 0.2, 0, 200);
+    std::vector<platooning_strategic_ihp::PlatoonMember> cur_pl;
 
     cur_pl.push_back(*member1);
     cur_pl.push_back(*member2);
 
-    platoon_strategic_ihp::PlatoonManager pm(std::make_shared<carma_ros2_utils::timers::testing::TestTimerFactory>());
+    platooning_strategic_ihp::PlatooningManager pm(std::make_shared<carma_ros2_utils::timers::testing::TestTimerFactory>());
     pm.host_platoon_ = cur_pl;
 
     pm.isFollower = true;
@@ -394,9 +394,9 @@ TEST(PlatoonManagerTestFrontJoin, test4_front)
 // These tests has been temporarily disabled to support Continuous Improvement (CI) processes.
 // Related GitHub Issue: <https://github.com/usdot-fhwa-stol/carma-platform/issues/2335>
 
-// TEST(PlatoonStrategicIHPPlugin, is_lanechange_possible)
+// TEST(PlatooningStrategicIHPPlugin, is_lanechange_possible)
 //     {
-//         std::string path = ament_index_cpp::get_package_share_directory("platoon_strategic_ihp");
+//         std::string path = ament_index_cpp::get_package_share_directory("platooning_strategic_ihp");
 //         std::string file = "/resource/map/town01_vector_map_lane_change.osm";
 //         file = path.append(file);
 //         int projector_type = 0;
@@ -417,9 +417,9 @@ TEST(PlatoonManagerTestFrontJoin, test4_front)
 //         carma_wm::test::setRouteByIds({start_id, end_id}, cmw);
 //         cmw->carma_wm::CARMAWorldModel::setMap(map);
 
-//         PlatoonPluginConfig config;
+//         PlatooningPluginConfig config;
 
-//         PlatoonStrategicIHPPlugin plugin(cmw, config, [&](auto) {}, [&](auto) {}, [&](auto) {}, [&](auto) {},
+//         PlatooningStrategicIHPPlugin plugin(cmw, config, [&](auto) {}, [&](auto) {}, [&](auto) {}, [&](auto) {},
 //         std::make_shared<carma_ros2_utils::timers::testing::TestTimerFactory>());
 
 //         lanelet::Id target_id1 = 111;

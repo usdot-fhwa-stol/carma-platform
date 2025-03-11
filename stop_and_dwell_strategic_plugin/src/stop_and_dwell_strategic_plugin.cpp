@@ -287,7 +287,7 @@ void StopAndDwellStrategicPlugin::plan_maneuvers_callback(
   {
     if(first_stop_)
     {
-      time_to_move_ = now() + rclcpp::Duration(config_.dwell_time  * 1e9); 
+      time_to_move_ = now() + rclcpp::Duration::from_nanoseconds(config_.dwell_time  * 1e9); 
       first_stop_ = false;
     }
 
@@ -296,7 +296,7 @@ void StopAndDwellStrategicPlugin::plan_maneuvers_callback(
       std::vector<lanelet::ConstLanelet> crossed_lanelets = getLaneletsBetweenWithException(current_state.downtrack, bus_stop_downtrack_, true, true);
       auto starting_lane_id = crossed_lanelets.front().id();
       auto ending_lane_id = crossed_lanelets.back().id();
-      resp->new_plan.maneuvers.push_back(composeStopAndWaitManeuverMessage(current_state.downtrack ,bus_stop_downtrack_,current_state.speed,starting_lane_id,ending_lane_id,max_comfort_decel_norm_ ,now(),now() + rclcpp::Duration(config_.min_maneuver_planning_period * 1e9) )); 
+      resp->new_plan.maneuvers.push_back(composeStopAndWaitManeuverMessage(current_state.downtrack ,bus_stop_downtrack_,current_state.speed,starting_lane_id,ending_lane_id,max_comfort_decel_norm_ ,now(),now() + rclcpp::Duration::from_nanoseconds(config_.min_maneuver_planning_period * 1e9) )); 
     }
     else
     {
@@ -317,14 +317,14 @@ void StopAndDwellStrategicPlugin::plan_maneuvers_callback(
       auto starting_lane_id = crossed_lanelets.front().id();
       auto ending_lane_id = crossed_lanelets.back().id();
       rclcpp::Time start_time = now();
-      rclcpp::Time end_time = now() + rclcpp::Duration(config_.min_maneuver_planning_period * 1e9) ;
+      rclcpp::Time end_time = now() + rclcpp::Duration::from_nanoseconds(config_.min_maneuver_planning_period * 1e9) ;
       //Stop at desired distance before bus stop
       resp->new_plan.maneuvers.push_back(composeStopAndWaitManeuverMessage(current_state.downtrack ,bus_stop_downtrack_,current_state.speed,starting_lane_id,ending_lane_id,max_comfort_decel_norm_ ,start_time,end_time));
     }
     else
     {    
       double time_to_stop = (distance_remaining_to_bus_stop - desired_distance_to_stop)/speed_limit_;
-      rclcpp::Time timestamp_to_stop = now() + rclcpp::Duration(time_to_stop * 1e9);
+      rclcpp::Time timestamp_to_stop = now() + rclcpp::Duration::from_nanoseconds(time_to_stop * 1e9);
       std::vector<lanelet::ConstLanelet> crossed_lanelets = getLaneletsBetweenWithException(current_state.downtrack, (bus_stop_downtrack_ - desired_distance_to_stop) , true, true);
       std::vector<lanelet::ConstLanelet> crossed_lanelets_stop = getLaneletsBetweenWithException((bus_stop_downtrack_ - desired_distance_to_stop), bus_stop_downtrack_, true, true);
       std::vector<lanelet::Id> lane_ids = lanelet::utils::transform(crossed_lanelets, [](const auto& ll) { return ll.id(); });
@@ -333,7 +333,7 @@ void StopAndDwellStrategicPlugin::plan_maneuvers_callback(
       auto ending_lane_id = crossed_lanelets_stop.back().id();
 
       resp->new_plan.maneuvers.push_back(composeLaneFollowingManeuverMessage(current_state.downtrack ,(bus_stop_downtrack_ - desired_distance_to_stop),current_state.speed,speed_limit_,now(), time_to_stop,lane_ids));
-      resp->new_plan.maneuvers.push_back(composeStopAndWaitManeuverMessage((bus_stop_downtrack_ - desired_distance_to_stop),bus_stop_downtrack_,speed_limit_,starting_lane_id,ending_lane_id,max_comfort_decel_norm_ ,timestamp_to_stop ,(timestamp_to_stop + rclcpp::Duration(config_.min_maneuver_planning_period * 1e9))));
+      resp->new_plan.maneuvers.push_back(composeStopAndWaitManeuverMessage((bus_stop_downtrack_ - desired_distance_to_stop),bus_stop_downtrack_,speed_limit_,starting_lane_id,ending_lane_id,max_comfort_decel_norm_ ,timestamp_to_stop ,(timestamp_to_stop + rclcpp::Duration::from_nanoseconds(config_.min_maneuver_planning_period * 1e9))));
     }
   }
   std::chrono::system_clock::time_point execution_end_time = std::chrono::system_clock::now();  // Planning complete
@@ -361,7 +361,7 @@ carma_planning_msgs::msg::Maneuver StopAndDwellStrategicPlugin::composeLaneFollo
   maneuver_msg.lane_following_maneuver.start_speed = start_speed;
   maneuver_msg.lane_following_maneuver.end_speed = target_speed;
   maneuver_msg.lane_following_maneuver.start_time = start_time;
-  maneuver_msg.lane_following_maneuver.end_time =  start_time + rclcpp::Duration(time_to_stop*1e9);
+  maneuver_msg.lane_following_maneuver.end_time =  start_time + rclcpp::Duration::from_nanoseconds(time_to_stop*1e9);
   maneuver_msg.lane_following_maneuver.lane_ids =
       lanelet::utils::transform(lane_ids, [](auto id) { return std::to_string(id); });
 

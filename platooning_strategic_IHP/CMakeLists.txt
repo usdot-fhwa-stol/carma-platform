@@ -14,7 +14,7 @@
 # the License.
 
 cmake_minimum_required(VERSION 3.5)
-project(platoon_strategic_ihp)
+project(platooning_strategic_ihp)
 
 # Declare carma package and check ROS version
 find_package(carma_cmake_common REQUIRED)
@@ -26,8 +26,8 @@ find_package(ament_cmake_auto REQUIRED)
 ament_auto_find_build_dependencies()
 
 # Name build targets
-set(node_exec platoon_strategic_ihp_node_exec)
-set(node_lib platoon_strategic_ihp_node)
+set(node_exec platooning_strategic_ihp_node_exec)
+set(node_lib platooning_strategic_ihp_node)
 
 # Includes
 include_directories(
@@ -36,9 +36,9 @@ include_directories(
 
 # Build
 ament_auto_add_library(${node_lib} SHARED
-        src/platoon_manager_ihp.cpp
-        src/platoon_strategic_ihp_node.cpp
-        src/platoon_strategic_ihp.cpp
+        src/platooning_manager_ihp.cpp
+        src/platooning_strategic_ihp_node.cpp
+        src/platooning_strategic_ihp.cpp
 )
 
 ament_auto_add_executable(${node_exec} 
@@ -46,7 +46,7 @@ ament_auto_add_executable(${node_exec}
 )
 
 # Register component
-rclcpp_components_register_nodes(${node_lib} "platoon_strategic_ihp::Node")
+rclcpp_components_register_nodes(${node_lib} "platooning_strategic_ihp::Node")
 
 # All locally created targets will need to be manually linked
 # ament auto will handle linking of external dependencies
@@ -66,16 +66,16 @@ if(BUILD_TESTING)
   find_package(ament_lint_auto REQUIRED)
   ament_lint_auto_find_test_dependencies() # This populates the ${${PROJECT_NAME}_FOUND_TEST_DEPENDS} variable
 
-  ament_add_gtest(test_platoon_strategic_ihp 
+  ament_add_gtest(test_platooning_strategic_ihp 
         test/main_test.cpp
         test/mobility_messages.cpp
-        test/test_platoon_manager_front_join.cpp
-        test/test_platoon_manager.cpp
+        test/test_platooning_manager_front_join.cpp
+        test/test_platooning_manager.cpp
   )
 
-  ament_target_dependencies(test_platoon_strategic_ihp ${${PROJECT_NAME}_FOUND_TEST_DEPENDS})
+  ament_target_dependencies(test_platooning_strategic_ihp ${${PROJECT_NAME}_FOUND_TEST_DEPENDS})
 
-  target_link_libraries(test_platoon_strategic_ihp ${node_lib})
+  target_link_libraries(test_platooning_strategic_ihp ${node_lib})
 
 endif()
 

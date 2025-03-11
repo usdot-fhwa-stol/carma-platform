@@ -87,7 +87,7 @@ namespace arbitrator
                         continue;
                     }
 
-                    const auto response = client->async_send_request(msg);
+                    auto response = client->async_send_request(msg);
 
                     switch (const auto status{response.wait_for(500ms)}) {
                         case std::future_status::ready:

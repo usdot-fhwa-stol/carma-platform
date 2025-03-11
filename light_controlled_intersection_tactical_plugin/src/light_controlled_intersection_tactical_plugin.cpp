@@ -146,7 +146,7 @@ namespace light_controlled_intersection_tactical_plugin
             && last_case_.get() == new_case
             && is_new_case_successful == true
             && last_trajectory_.trajectory_points.size() >= 2
-            && rclcpp::Time(last_trajectory_.trajectory_points.back().target_time) > rclcpp::Time(req->header.stamp) + rclcpp::Duration(1 * 1e9)) // Duration is in nanoseconds
+            && rclcpp::Time(last_trajectory_.trajectory_points.back().target_time) > rclcpp::Time(req->header.stamp) + rclcpp::Duration::from_nanoseconds(1 * 1e9)) // Duration is in nanoseconds
         {
             resp->trajectory_plan = last_trajectory_;
             RCLCPP_DEBUG_STREAM(rclcpp::get_logger("light_controlled_intersection_tactical_plugin"), "Last TRAJ's target time: " << std::to_string(rclcpp::Time(last_trajectory_.trajectory_points.back().target_time).seconds()) << ", and stamp:" << std::to_string(rclcpp::Time(req->header.stamp).seconds()));

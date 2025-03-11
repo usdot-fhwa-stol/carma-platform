@@ -18,7 +18,7 @@ limitations under the License.
 
 <package format="3">
   <name>roadway_objects</name>
-  <version>4.0.0</version>
+  <version>5.0.0</version>
   <description>The roadway_objects package</description>
 
   <maintainer email="carma@dot.gov">carma</maintainer>
@@ -40,7 +40,6 @@ limitations under the License.
   <depend>tf2_geometry_msgs</depend>
 
   <test_depend>ament_lint_auto</test_depend>
-  <test_depend>ament_lint_common</test_depend>
   <test_depend>ament_cmake_clang_format</test_depend>
   <test_depend>ament_cmake_gtest</test_depend>
   <test_depend>launch_testing_ament_cmake</test_depend>

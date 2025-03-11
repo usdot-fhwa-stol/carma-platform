@@ -181,7 +181,7 @@ void WMBroadcaster::addScheduleFromMsg(std::shared_ptr<Geofence> gf_ptr, const c
                                   end_time,
                                   rclcpp::Duration(daily_schedule.begin),
                                   rclcpp::Duration(daily_schedule.duration),
-                                  rclcpp::Duration(0.0), // No offset
+                                  rclcpp::Duration::from_nanoseconds(0.0), // No offset
                                   rclcpp::Duration(daily_schedule.duration) - rclcpp::Duration(daily_schedule.begin),   // Compute schedule portion end time
                                   rclcpp::Duration(daily_schedule.duration) - rclcpp::Duration(daily_schedule.begin),   // No repetition so same as portion end time
                                   week_day_set));
@@ -193,8 +193,8 @@ void WMBroadcaster::addScheduleFromMsg(std::shared_ptr<Geofence> gf_ptr, const c
     if (msg_schedule.repeat_exists) {
       gf_ptr->schedules.push_back(GeofenceSchedule({msg_schedule.start, clock_type},
                                   end_time,
-                                  rclcpp::Duration(0.0),
-                                  rclcpp::Duration(86400.0e9), // 24 hr daily application
+                                  rclcpp::Duration::from_nanoseconds(0.0),
+                                  rclcpp::Duration::from_nanoseconds(86400.0e9), // 24 hr daily application
                                   rclcpp::Duration(msg_schedule.repeat.offset),
                                   rclcpp::Duration(msg_schedule.repeat.span),
                                   rclcpp::Duration(msg_schedule.repeat.period),
@@ -202,11 +202,11 @@ void WMBroadcaster::addScheduleFromMsg(std::shared_ptr<Geofence> gf_ptr, const c
     } else {
       gf_ptr->schedules.push_back(GeofenceSchedule({msg_schedule.start, clock_type},
                                   end_time,
-                                  rclcpp::Duration(0.0),
-                                  rclcpp::Duration(86400.0e9), // 24 hr daily application
-                                  rclcpp::Duration(0.0),     // No offset
-                                  rclcpp::Duration(86400.0e9), // Applied for full lenth of 24 hrs
-                                  rclcpp::Duration(86400.0e9), // No repetition
+                                  rclcpp::Duration::from_nanoseconds(0.0),
+                                  rclcpp::Duration::from_nanoseconds(86400.0e9), // 24 hr daily application
+                                  rclcpp::Duration::from_nanoseconds(0.0),     // No offset
+                                  rclcpp::Duration::from_nanoseconds(86400.0e9), // Applied for full lenth of 24 hrs
+                                  rclcpp::Duration::from_nanoseconds(86400.0e9), // No repetition
                                   week_day_set));
     }
 

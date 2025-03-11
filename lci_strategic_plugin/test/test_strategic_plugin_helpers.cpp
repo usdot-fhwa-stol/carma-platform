@@ -41,6 +41,7 @@ TEST_F(LCIStrategicTestFixture, supportedLightState)
   ASSERT_FALSE(lcip->supportedLightState(lanelet::CarmaTrafficSignalState::DARK));
   ASSERT_FALSE(lcip->supportedLightState(lanelet::CarmaTrafficSignalState::STOP_THEN_PROCEED));
   ASSERT_FALSE(lcip->supportedLightState(lanelet::CarmaTrafficSignalState::PRE_MOVEMENT));
+  ASSERT_TRUE(lcip->supportedLightState(lanelet::CarmaTrafficSignalState::PERMISSIVE_MOVEMENT_ALLOWED));
   ASSERT_FALSE(lcip->supportedLightState(lanelet::CarmaTrafficSignalState::PERMISSIVE_CLEARANCE));
   ASSERT_FALSE(lcip->supportedLightState(lanelet::CarmaTrafficSignalState::CAUTION_CONFLICTING_TRAFFIC));
 }

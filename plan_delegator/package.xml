@@ -1,7 +1,7 @@
 <?xml version="1.0"?>
 <package format="3">
   <name>plan_delegator</name>
-  <version>4.0.0</version>
+  <version>5.0.0</version>
   <description>The plan_delegator package</description>
 
   <!-- One maintainer tag required, multiple allowed, one person per tag -->
@@ -18,7 +18,7 @@
   <buildtool_depend>ament_cmake</buildtool_depend>
   <build_depend>carma_cmake_common</build_depend>
   <build_depend>ament_auto_cmake</build_depend>
-  
+
   <depend>carma_planning_msgs</depend>
   <depend>rclcpp</depend>
   <depend>std_msgs</depend>
@@ -26,7 +26,7 @@
   <depend>carma_wm</depend>
   <depend>tf</depend>
   <depend>tf2</depend>
-  <depend>tf2_geometry_msgs</depend> 
+  <depend>tf2_geometry_msgs</depend>
   <depend>autoware_msgs</depend>
 
 
@@ -39,5 +39,5 @@
   <export>
     <build_type>ament_cmake</build_type>
   </export>
-  
+
 </package>

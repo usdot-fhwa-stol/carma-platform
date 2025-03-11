@@ -187,7 +187,7 @@ TEST(MotionComputationWorker, ComposePredictedState)
   tf2::Vector3 prev = {4, 0, 0};
 
   auto res = conversion::impl::composePredictedState(
-    curr, prev, time_stamp, time_stamp + rclcpp::Duration(100000000), 0.0);
+    curr, prev, time_stamp, time_stamp + rclcpp::Duration::from_nanoseconds(100000000), 0.0);
   auto test_result = std::get<0>(res);
 
   ASSERT_NEAR(test_result.predicted_position.position.x, 4.0, 0.0001);
@@ -202,7 +202,8 @@ TEST(MotionComputationWorker, ComposePredictedState)
   prev = {0, 0, 0};
 
   res = conversion::impl::composePredictedState(
-    curr, prev, time_stamp, time_stamp + rclcpp::Duration(100000000), std::get<1>(res));
+    curr, prev, time_stamp, time_stamp + rclcpp::Duration::from_nanoseconds(100000000),
+    std::get<1>(res));
   test_result = std::get<0>(res);
 
   ASSERT_NEAR(test_result.predicted_position.position.x, 0.0, 0.0001);

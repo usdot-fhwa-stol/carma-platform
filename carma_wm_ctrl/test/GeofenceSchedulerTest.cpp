@@ -65,11 +65,11 @@ TEST(GeofenceScheduler, addGeofence)
   gf_ptr->schedules.push_back(
       GeofenceSchedule(rclcpp::Time(1e9),  // Schedule between 1 and 8
                        rclcpp::Time(8e9),
-                       rclcpp::Duration(2e9),    // Starts at 2
-                       rclcpp::Duration(3.5e9),  // Ends at by 5.5
-                       rclcpp::Duration(0),    // repetition start 0 offset, so still start at 2
-                       rclcpp::Duration(1e9),    // Duration of 1 and interval of 2 so active durations are (2-3 and 4-5)
-                       rclcpp::Duration(2e9)));
+                       rclcpp::Duration::from_nanoseconds(2e9),    // Starts at 2
+                       rclcpp::Duration::from_nanoseconds(3.5e9),  // Ends at by 5.5
+                       rclcpp::Duration::from_nanoseconds(0),    // repetition start 0 offset, so still start at 2
+                       rclcpp::Duration::from_nanoseconds(1e9),    // Duration of 1 and interval of 2 so active durations are (2-3 and 4-5)
+                       rclcpp::Duration::from_nanoseconds(2e9)));
   
   std::atomic<uint32_t> active_call_count(0);
   std::atomic<uint32_t> inactive_call_count(0);

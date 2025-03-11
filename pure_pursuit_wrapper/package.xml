@@ -35,6 +35,7 @@
   <depend>pure_pursuit</depend>
   <depend>motion_testing</depend>
   <depend>basic_autonomy</depend>
+  <depend>osrf_testing_tools_cpp</depend>
 
   <test_depend>ament_lint_auto</test_depend>
   <test_depend>ament_cmake_gtest</test_depend>

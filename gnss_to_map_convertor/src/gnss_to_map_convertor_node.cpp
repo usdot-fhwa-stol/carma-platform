@@ -19,8 +19,13 @@ namespace gnss_to_map_convertor
 {
   namespace std_ph = std::placeholders;
 
-  Node::Node(const rclcpp::NodeOptions &options): carma_ros2_utils::CarmaLifecycleNode(options), tfBuffer_(get_clock()), tfListener_(tfBuffer_)
+  Node::Node(const rclcpp::NodeOptions &options): carma_ros2_utils::CarmaLifecycleNode(options)
   {
+    // Initialize tf buffer with clock and duration
+    tfBuffer_ = std::make_shared<tf2_ros::Buffer>(this->get_clock());
+    // Initialize transform listener with buffer
+    tfListener_ = std::make_shared<tf2_ros::TransformListener>(*tfBuffer_);
+
     // Create initial config
     config_ = Config();
 
@@ -65,7 +70,7 @@ namespace gnss_to_map_convertor
           geometry_msgs::msg::TransformStamped tf;
           try
           {
-            tf = tfBuffer_.lookupTransform(target, source, rclcpp::Time(1, 0));
+            tf = tfBuffer_->lookupTransform(target, source, rclcpp::Time(1, 0));
           }
           catch (tf2::TransformException& ex)
           {

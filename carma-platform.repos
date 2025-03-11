@@ -27,9 +27,9 @@ repositories:
     type: git
     url: git@github.com:usdot-fhwa-stol/carma-garmin-lidar-lite-v3-driver-wrapper.git
     version: develop
-  src/carma-messenger:
+  src/v2x-ros-conversion:
     type: git
-    url: git@github.com:usdot-fhwa-stol/carma-messenger.git
+    url: git@github.com:usdot-fhwa-stol/v2x-ros-conversion.git
     version: develop
   src/carma-msgs:
     type: git

@@ -13,13 +13,19 @@
 # License for the specific language governing permissions and limitations under
 # the License.
 
-cmake_minimum_required(VERSION 3.5)
+cmake_minimum_required(VERSION 3.8)
 project(approximate_intersection)
 
 # Declare carma package and check ROS version
 find_package(carma_cmake_common REQUIRED)
 carma_check_ros_version(2)
 carma_package()
+
+# Use C++17
+if(NOT CMAKE_CXX_STANDARD)
+  set(CMAKE_CXX_STANDARD 17)
+  set(CMAKE_CXX_STANDARD_REQUIRED ON)
+endif()
 
 ## Find dependencies using ament auto
 find_package(ament_cmake_auto REQUIRED)
@@ -32,7 +38,7 @@ include_directories(
 )
 
 # Testing
-if(BUILD_TESTING)  
+if(BUILD_TESTING)
 
   find_package(ament_lint_auto REQUIRED)
   ament_lint_auto_find_test_dependencies() # This populates the ${${PROJECT_NAME}_FOUND_TEST_DEPENDS} variable

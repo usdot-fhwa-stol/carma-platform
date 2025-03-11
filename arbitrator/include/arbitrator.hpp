@@ -24,8 +24,9 @@
 #include <geometry_msgs/msg/pose_stamped.hpp>
 #include <geometry_msgs/msg/twist_stamped.hpp>
 #include <tf2_ros/transform_listener.h>
+#include <tf2_ros/buffer.h>
 #include <tf2/LinearMath/Transform.h>
-#include <tf2_geometry_msgs/tf2_geometry_msgs.h>
+#include <tf2_geometry_msgs/tf2_geometry_msgs.hpp>
 
 #include "vehicle_state.hpp"
 #include "arbitrator_state_machine.hpp"
@@ -64,7 +65,7 @@ namespace arbitrator
                 sm_(sm),
                 nh_(nh),
                 min_plan_duration_(min_plan_duration),
-                time_between_plans_(planning_period),
+                time_between_plans_(rclcpp::Duration::from_seconds(planning_period)),
                 capabilities_interface_(ci),
                 planning_strategy_(planning_strategy),
                 initialized_(false),

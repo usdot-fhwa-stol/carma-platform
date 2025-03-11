@@ -229,7 +229,7 @@ namespace mobilitypath_visualizer {
             marker.id = i;
             rclcpp::Time marker_cur_time(marker.header.stamp);
             //Update time by 0.1s
-            rclcpp::Time updated_time =  marker_cur_time + rclcpp::Duration(0.1 * 1e9);
+            rclcpp::Time updated_time =  marker_cur_time + rclcpp::Duration::from_nanoseconds(0.1 * 1e9);
             marker.header.stamp = builtin_interfaces::msg::Time(updated_time);
 
             if (i >= msg.trajectory.offsets.size()) { // If we need to delete previous points
@@ -294,7 +294,7 @@ namespace mobilitypath_visualizer {
         marker.color.b = 1.0;
         marker.color.a = 1.0;
         marker.frame_locked = true;
-        marker.lifetime = builtin_interfaces::msg::Duration((rclcpp::Duration(config_.t * 1e9)));
+        marker.lifetime = builtin_interfaces::msg::Duration((rclcpp::Duration::from_nanoseconds(config_.t * 1e9)));
 
         for (auto const& cav_marker: cav_markers)
         {
@@ -367,7 +367,7 @@ namespace mobilitypath_visualizer {
             rclcpp::Time host_marker_stamp(host_marker.markers[0].header.stamp);
 
 
-            if (curr_cav_marker_stamp + rclcpp::Duration(time_step * 1e9) < host_marker_stamp){
+            if (curr_cav_marker_stamp + rclcpp::Duration::from_nanoseconds(time_step * 1e9) < host_marker_stamp){
                 continue;
             }
 

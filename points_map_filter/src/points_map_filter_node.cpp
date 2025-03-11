@@ -30,10 +30,7 @@
 #include <lanelet2_extension/regulatory_elements/autoware_traffic_light.h>
 #include <pcl_conversions/pcl_conversions.h>
 #include <pcl/point_types.h>
-
-// NOTE: The following include can be changed to <pcl/filters/experimental/functor_filter.h>
-//       once the underlying PCL version is updated to 1.12.1 which should occur with a ROS version update
-#include "pcl_expirimental-1.12.1/functor_filter.h"
+#include <pcl/filters/experimental/functor_filter.h>
 
 namespace points_map_filter
 {

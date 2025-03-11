@@ -19,6 +19,7 @@
 #include <exception>
 #include <memory>
 #include <tuple>
+#include <optional>
 #include <lanelet2_core/LaneletMap.h>
 #include <lanelet2_core/primitives/Area.h>
 #include <lanelet2_core/primitives/Lanelet.h>

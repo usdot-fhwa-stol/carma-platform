@@ -17,7 +17,7 @@
 #include "gnss_to_map_convertor/GNSSToMapConvertor.hpp"
 #include <wgs84_utils/proj_tools.h>
 #include <lanelet2_core/geometry/Point.h>
-#include <tf2_geometry_msgs/tf2_geometry_msgs.h>
+#include <tf2_geometry_msgs/tf2_geometry_msgs.hpp>
 
 namespace gnss_to_map_convertor
 {

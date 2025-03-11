@@ -212,38 +212,38 @@ rclcpp::Duration LCIStrategicPlugin::get_earliest_entry_time(double remaining_di
   rclcpp::Duration t_accel(0,0);
   if ( x < x2 && current_speed > departure_speed)
   {
-    t_accel = rclcpp::Duration(0.0);
+    t_accel = rclcpp::Duration::from_nanoseconds(0.0);
   }
   else
   {
-    t_accel = rclcpp::Duration(std::max((v_hat - current_speed) / max_accel, 0.0) * 1e9);
+    t_accel = rclcpp::Duration::from_nanoseconds(std::max((v_hat - current_speed) / max_accel, 0.0) * 1e9);
   }
   rclcpp::Duration t_decel(0,0);
   if ( x < x2 && current_speed < departure_speed)
   {
-    t_decel = rclcpp::Duration(0.0);
+    t_decel = rclcpp::Duration::from_nanoseconds(0.0);
   }
   else
   {
     if (x < x2)
     {
-      t_decel = rclcpp::Duration(std::max((v_hat - current_speed) / max_decel, 0.0) * 1e9);
+      t_decel = rclcpp::Duration::from_nanoseconds(std::max((v_hat - current_speed) / max_decel, 0.0) * 1e9);
 
     }
     else
     {
-      t_decel = rclcpp::Duration(std::max((departure_speed - v_hat) / max_decel, 0.0) * 1e9);
+      t_decel = rclcpp::Duration::from_nanoseconds(std::max((departure_speed - v_hat) / max_decel, 0.0) * 1e9);
     }
   }
 
   rclcpp::Duration t_cruise(0,0);
   if (x1 <= x)
   {
-    t_cruise = rclcpp::Duration(std::max((x - x1)/v_hat, 0.0) * 1e9);
+    t_cruise = rclcpp::Duration::from_nanoseconds(std::max((x - x1)/v_hat, 0.0) * 1e9);
   }
   else
   {
-    t_cruise = rclcpp::Duration(0.0);
+    t_cruise = rclcpp::Duration::from_nanoseconds(0.0);
   }
   RCLCPP_DEBUG_STREAM(rclcpp::get_logger("lci_strategic_plugin"), "t_accel: " <<  t_accel.seconds() << ", t_cruise: " << t_cruise.seconds() << ", t_decel: " << t_decel.seconds());
   return t_accel + t_cruise + t_decel;
@@ -279,12 +279,12 @@ std::tuple<rclcpp::Time, bool, bool> LCIStrategicPlugin::get_final_entry_time_an
     else
     {
       in_tbd = false;
-      nearest_green_entry_time = nearest_green_entry_time_optional.value() + rclcpp::Duration(EPSILON * 1e9); //0.01sec more buffer since green_light algorithm's timestamp picks the previous signal - Vehicle Estimation
+      nearest_green_entry_time = nearest_green_entry_time_optional.value() + rclcpp::Duration::from_nanoseconds(EPSILON * 1e9); //0.01sec more buffer since green_light algorithm's timestamp picks the previous signal - Vehicle Estimation
     }
   }
   else if(config_.enable_carma_streets_connection ==true && scheduled_enter_time_ != 0 ) // UC3
   {
-    nearest_green_entry_time = rclcpp::Time(std::max(earliest_entry_time.seconds(), (scheduled_enter_time_)/1000.0) * 1e9) + rclcpp::Duration(EPSILON * 1e9); //Carma Street
+    nearest_green_entry_time = rclcpp::Time(std::max(earliest_entry_time.seconds(), (scheduled_enter_time_)/1000.0) * 1e9) + rclcpp::Duration::from_nanoseconds(EPSILON * 1e9); //Carma Street
 
     // check if scheduled_enter_time_ is inside the available states interval
     size_t i = 0;
@@ -339,7 +339,7 @@ std::tuple<rclcpp::Time, bool, bool> LCIStrategicPlugin::get_final_entry_time_an
 
     // check if it needs buffer below:
     rclcpp::Time early_arrival_time_green_et =
-        nearest_green_entry_time - rclcpp::Duration(config_.green_light_time_buffer * 1e9);
+        nearest_green_entry_time - rclcpp::Duration::from_nanoseconds(config_.green_light_time_buffer * 1e9);
 
     RCLCPP_DEBUG_STREAM(rclcpp::get_logger("lci_strategic_plugin"), "early_arrival_time_green_et: " << std::to_string(early_arrival_time_green_et.seconds()));
 
@@ -403,7 +403,7 @@ std::tuple<rclcpp::Time, bool, bool> LCIStrategicPlugin::get_final_entry_time_an
 
       // If ET is within green or TBD, it should always aim for at least minimum of "start_time of green or tdb + green_buffer" for safety
 
-      nearest_green_entry_time_cached_ = nearest_green_signal_start_time + rclcpp::Duration((config_.green_light_time_buffer + EPSILON) * 1e9);
+      nearest_green_entry_time_cached_ = nearest_green_signal_start_time + rclcpp::Duration::from_nanoseconds((config_.green_light_time_buffer + EPSILON) * 1e9);
 
       // EPSILON=0.01 is there because if predictState's input exactly falls on ending_time it picks the previous state.
       //For example, if 0 - 10s is GREEN, and 10 - 12s is YELLOW, checking exactly 10.0s will return GREEN,
