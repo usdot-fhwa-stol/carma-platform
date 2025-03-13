@@ -103,7 +103,7 @@ void WMListenerWorker::mapCallback(const autoware_lanelet2_msgs::msg::MapBin::Sh
 
 void WMListenerWorker::incomingSpatCallback(const carma_v2x_msgs::msg::SPAT::SharedPtr spat_msg)
 {
-  world_model_->processSpatFromMsg(*spat_msg, use_sim_time_, is_spat_wall_time_);
+  world_model_->processSpatFromMsg(*spat_msg, use_sim_time_, is_voices_and_spat_wall_time_);
 }
 
 bool WMListenerWorker::checkIfReRoutingNeeded() const
@@ -705,9 +705,9 @@ void WMListenerWorker::isUsingSimTime(bool use_sim_time)
 {
   use_sim_time_ = use_sim_time;
 }
-void WMListenerWorker::isSpatWallTime(bool is_spat_wall_time)
+void WMListenerWorker::isSpatWallTime(bool is_voices_and_spat_wall_time)
 {
-  is_spat_wall_time_ = is_spat_wall_time;
+  is_voices_and_spat_wall_time_ = is_voices_and_spat_wall_time;
 }
 
 double WMListenerWorker::getConfigSpeedLimit() const
