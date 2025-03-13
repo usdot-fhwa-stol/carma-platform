@@ -54,7 +54,7 @@ git sparse-checkout set ext/ccserver
 
 # SSC related msgs to record in mcap
 cd ${dir}/src
-# raptor_dbw_msgs (only ROS2 needed)
+# raptor_dbw_msgs (only ROS2 needed, foxy still builds in humble)
 git clone --depth 1 --filter=blob:none --sparse https://github.com/NewEagleRaptor/raptor-dbw-ros2.git --branch foxy
 cd ${dir}/src/raptor-dbw-ros2
 git sparse-checkout init --cone

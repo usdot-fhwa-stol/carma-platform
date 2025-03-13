@@ -25,12 +25,12 @@
 namespace object
 {
 
-ObjectDetectionTrackingWorker::ObjectDetectionTrackingWorker(PublishObjectCallback obj_pub, TransformLookupCallback tf_lookup, rclcpp::node_interfaces::NodeLoggingInterface::SharedPtr logger) 
+ObjectDetectionTrackingWorker::ObjectDetectionTrackingWorker(PublishObjectCallback obj_pub, TransformLookupCallback tf_lookup, rclcpp::node_interfaces::NodeLoggingInterface::SharedPtr logger)
   : obj_pub_(obj_pub), tf_lookup_(tf_lookup), logger_(logger) {}
 
 bool ObjectDetectionTrackingWorker::isClass(const autoware_auto_msgs::msg::TrackedObject& obj, uint8_t class_id) {
 
-  return obj.classification.end() != std::find_if(obj.classification.begin(), obj.classification.end(), 
+  return obj.classification.end() != std::find_if(obj.classification.begin(), obj.classification.end(),
     [&class_id](auto o){ return o.classification == class_id; }
   );
 
@@ -51,7 +51,7 @@ void ObjectDetectionTrackingWorker::detectedObjectCallback(autoware_auto_msgs::m
     return;
   }
 
-  geometry_msgs::msg::TransformStamped object_frame_tf = transform.get(); 
+  geometry_msgs::msg::TransformStamped object_frame_tf = transform.get();
 
   for (size_t i = 0; i < obj_array->objects.size(); i++)
   {
@@ -70,7 +70,7 @@ void ObjectDetectionTrackingWorker::detectedObjectCallback(autoware_auto_msgs::m
     obj.presence_vector = obj.presence_vector | obj.OBJECT_TYPE_PRESENCE_VECTOR;
     obj.presence_vector = obj.presence_vector | obj.DYNAMIC_OBJ_PRESENCE;
     obj.presence_vector = obj.presence_vector | obj.CONFIDENCE_PRESENCE_VECTOR;
-     
+
     // Object id. Matching ids on a topic should refer to the same object within some time period, expanded
     obj.id = obj_array->objects[i].object_id;
 
@@ -86,8 +86,7 @@ void ObjectDetectionTrackingWorker::detectedObjectCallback(autoware_auto_msgs::m
 
     obj.pose.pose = output_pose.pose;
 
-    // In ROS2 foxy the doTransform call does not set the covariance, so we need to do it manually
-    // Copy over the position covariance
+    // Coming from legacy code, manually copying over the position covariance
     // Variable names used here are row, column so row major order
     auto xx = obj_array->objects[i].kinematics.position_covariance[0];
     auto xy = obj_array->objects[i].kinematics.position_covariance[1];
@@ -100,7 +99,7 @@ void ObjectDetectionTrackingWorker::detectedObjectCallback(autoware_auto_msgs::m
     auto zz = obj_array->objects[i].kinematics.position_covariance[8];
 
     // This matrix represents the covariance of the object before transformation
-    std::array<double, 36> input_covariance = { 
+    std::array<double, 36> input_covariance = {
       xx, xy, xz,  0, 0, 0,
       yx, yy, yz,  0, 0, 0,
       zx, zy, zz,  0, 0, 0,
@@ -133,7 +132,7 @@ void ObjectDetectionTrackingWorker::detectedObjectCallback(autoware_auto_msgs::m
 
     for(auto shape : obj_array->objects[i].shape) {
       for (auto point :  shape.polygon.points) {
-        
+
         if (point.x > maxX)
           maxX = point.x;
 
@@ -157,7 +156,7 @@ void ObjectDetectionTrackingWorker::detectedObjectCallback(autoware_auto_msgs::m
     obj.size.y = dY / 2.0;
 
     // Height provided by autoware is overall height divide by 2 for delta from centroid
-    obj.size.z = maxHeight / 2.0; 
+    obj.size.z = maxHeight / 2.0;
 
     // Update the object type and generate predictions using CV or CTRV vehicle models.
 		// If the object is a bicycle or motor vehicle use CTRV otherwise use CV.
