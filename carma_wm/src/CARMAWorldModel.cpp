@@ -1427,7 +1427,7 @@ namespace carma_wm
     return curr_light;
   }
 
-  boost::posix_time::ptime CARMAWorldModel::min_end_time_converter_minute_of_year(boost::posix_time::ptime min_end_time,bool moy_exists,uint32_t moy, bool is_simulation, bool is_voices_and_spat_wall_time)
+  boost::posix_time::ptime CARMAWorldModel::min_end_time_converter_minute_of_year(boost::posix_time::ptime min_end_time,bool moy_exists,uint32_t moy, bool is_simulation, bool use_real_time_spat_in_sim)
   {
     double simulation_time_difference_in_seconds = 0.0;
     double wall_time_offset_in_seconds = 0.0;
@@ -1438,7 +1438,7 @@ namespace carma_wm
     {
       simulation_time_difference_in_seconds = ros1_clock_.value().seconds() - simulation_clock_.value().seconds();
     }
-    else if (ros1_clock_ && is_voices_and_spat_wall_time)
+    else if (ros1_clock_ && use_real_time_spat_in_sim)
     {
       // NOTE: If carma-platform is running in simulation with clock synced to sim time but the incoming spat information is based on wall clock
       // the spat signal phase time must be offset to sim time.
@@ -1457,7 +1457,7 @@ namespace carma_wm
       int curr_year = curr_time_boost.date().year();
 
       // Force the current year to start of epoch if it is simulation
-      if (is_simulation && !is_voices_and_spat_wall_time)
+      if (is_simulation && !use_real_time_spat_in_sim)
         curr_year = 1970;
 
       auto curr_year_start_boost(boost::posix_time::time_from_string(std::to_string(curr_year)+ "-01-01 00:00:00.000"));
@@ -1480,7 +1480,7 @@ namespace carma_wm
     }
   }
 
-  void CARMAWorldModel::processSpatFromMsg(const carma_v2x_msgs::msg::SPAT &spat_msg, bool use_sim_time, bool is_voices_and_spat_wall_time)
+  void CARMAWorldModel::processSpatFromMsg(const carma_v2x_msgs::msg::SPAT &spat_msg, bool use_sim_time, bool use_real_time_spat_in_sim)
   {
     if (!semantic_map_)
     {
@@ -1543,8 +1543,8 @@ namespace carma_wm
           boost::posix_time::ptime min_end_time_dynamic = lanelet::time::timeFromSec(current_movement_event.timing.min_end_time);
           boost::posix_time::ptime start_time_dynamic = lanelet::time::timeFromSec(current_movement_event.timing.start_time);
 
-          min_end_time_dynamic=min_end_time_converter_minute_of_year(min_end_time_dynamic,curr_intersection.moy_exists,curr_intersection.moy, use_sim_time, is_voices_and_spat_wall_time); // Accounting minute of the year
-          start_time_dynamic=min_end_time_converter_minute_of_year(start_time_dynamic,curr_intersection.moy_exists,curr_intersection.moy, use_sim_time, is_voices_and_spat_wall_time); // Accounting minute of the year
+          min_end_time_dynamic=min_end_time_converter_minute_of_year(min_end_time_dynamic,curr_intersection.moy_exists,curr_intersection.moy, use_sim_time, use_real_time_spat_in_sim); // Accounting minute of the year
+          start_time_dynamic=min_end_time_converter_minute_of_year(start_time_dynamic,curr_intersection.moy_exists,curr_intersection.moy, use_sim_time, use_real_time_spat_in_sim); // Accounting minute of the year
 
           auto received_state_dynamic = static_cast<lanelet::CarmaTrafficSignalState>(current_movement_event.event_state.movement_phase_state);
 

@@ -107,9 +107,9 @@ def generate_launch_description():
         description = "True of simulation mode is on"
     )
 
-    is_voices_and_spat_wall_time = LaunchConfiguration('is_voices_and_spat_wall_time')
-    declare_is_voices_and_spat_wall_time_arg = DeclareLaunchArgument(
-        name = 'is_voices_and_spat_wall_time',
+    use_real_time_spat_in_sim = LaunchConfiguration('use_real_time_spat_in_sim')
+    declare_use_real_time_spat_in_sim_arg = DeclareLaunchArgument(
+        name = 'use_real_time_spat_in_sim',
         default_value = 'False',
         description = "True if SPaT is being published based on wall clock"
     )
@@ -288,7 +288,7 @@ def generate_launch_description():
                     'control_plugins_to_validate' : control_plugins_to_validate,
                     'subsystem_controller_param_file' : [vehicle_config_dir, '/SubsystemControllerParams.yaml'],
                     'use_sim_time' : use_sim_time,
-                    'is_voices_and_spat_wall_time' : is_voices_and_spat_wall_time
+                    'use_real_time_spat_in_sim' : use_real_time_spat_in_sim
                 }.items()
             ),
         ]
@@ -338,7 +338,7 @@ def generate_launch_description():
         declare_vehicle_characteristics_param_file_arg,
         declare_vehicle_config_param_file_arg,
         declare_use_sim_time_arg,
-        declare_is_voices_and_spat_wall_time_arg,
+        declare_use_real_time_spat_in_sim_arg,
         declare_route_file_folder,
         declare_enable_guidance_plugin_validator,
         declare_strategic_plugins_to_validate,
