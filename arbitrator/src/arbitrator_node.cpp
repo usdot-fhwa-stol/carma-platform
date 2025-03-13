@@ -29,7 +29,7 @@ namespace arbitrator
         config_.planning_frequency = declare_parameter<double>("planning_frequency", config_.planning_frequency);
         config_.beam_width = declare_parameter<int>("beam_width", config_.beam_width);
         config_.use_fixed_costs = declare_parameter<bool>("use_fixed_costs", config_.use_fixed_costs);
-        config_.plugin_priorities = plugin_priorities_map_from_json(declare_parameter<std::string>("plugin_priorities", ""));
+        config_.plugin_priorities = declare_parameter<std::map<std::string, double>>("plugin_priorities", config_.plugin_priorities);
     }
 
     carma_ros2_utils::CallbackReturn ArbitratorNode::handle_on_configure(const rclcpp_lifecycle::State &)
@@ -47,9 +47,9 @@ namespace arbitrator
         get_parameter<int>("beam_width", config_.beam_width);
         get_parameter<bool>("use_fixed_costs", config_.use_fixed_costs);
         std::string json_string;
-        get_parameter<std::string>("plugin_priorities", json_string);
+        get_parameter<std::map<std::string, double>>("plugin_priorities", config_.plugin_priorities );
 
-        config_.plugin_priorities = plugin_priorities_map_from_json(json_string);
+        //config_.plugin_priorities = plugin_priorities_map_from_json(json_string);
 
         RCLCPP_INFO_STREAM(rclcpp::get_logger("arbitrator"), "Arbitrator Loaded Params: " << config_);
 
