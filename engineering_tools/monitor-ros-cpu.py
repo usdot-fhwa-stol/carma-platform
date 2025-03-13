@@ -41,11 +41,8 @@ ROS_KEYWORDS = {
     "roscore",
     "rosmaster",
     "roslaunch",
-    "ros2 launch",
     "rostopic",
-    "ros2 topic"
     "rosnode",
-    "ros2 node",
     "rosbag",
     "ros2",
     "ros1_bridge",
