@@ -63,7 +63,7 @@ def generate_launch_description():
     is_voices_and_spat_wall_time = LaunchConfiguration('is_voices_and_spat_wall_time')
     declare_is_voices_and_spat_wall_time_arg = DeclareLaunchArgument(
         name = 'is_voices_and_spat_wall_time',
-        default_value = 'True',
+        default_value = 'False',
         description = "True if SPaT is being published based on wall clock"
     )
 
