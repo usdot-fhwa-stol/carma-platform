@@ -33,8 +33,7 @@
       - /hardware_interface/temp_gps
 
     # JSON String: Sensor Fault Map
-    # NOTE: It would have been preferable to use a 2d array here but ROS2 Foxy does not support this type of parameter
-    # TODO: Check if this can be cleanly ported now CARMA is in Humble
+    # NOTE: It would have been preferable to use a 2d array here but ROS2 Humble does not support this type of parameter
     # The sensor_fault_map is described as a 2d array where the last element is the desired status alert type
     # The set of values in front should have the same size as the sensor_nodes list and describe the status of those nodes in that order
     # Input Enum Values:

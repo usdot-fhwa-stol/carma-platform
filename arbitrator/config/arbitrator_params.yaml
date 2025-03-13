@@ -1,9 +1,9 @@
-# Float: The minimum amount of time that an arbitrated plan must cover for the 
+# Float: The minimum amount of time that an arbitrated plan must cover for the
 # system to proceed with execution
 # Unit: s
 min_plan_duration: 6.0
 
-# Float: The nominal amount of time that an arbitrated plan should cover for the 
+# Float: The nominal amount of time that an arbitrated plan should cover for the
 # system to operate at best performance
 # Unit: s
 target_plan_duration: 13.0
@@ -12,25 +12,25 @@ target_plan_duration: 13.0
 # Unit: Hz
 planning_frequency: 1.0
 
-# Integer: The width of the search beam to use for arbitrator planning, 1 = 
-# greedy search, as it approaches infinity the search approaches breadth-first 
+# Integer: The width of the search beam to use for arbitrator planning, 1 =
+# greedy search, as it approaches infinity the search approaches breadth-first
 # search
 # Unit: N/a
 beam_width: 3
 
-# Bool: Use fixed priority cost function over using the cost system for 
+# Bool: Use fixed priority cost function over using the cost system for
 # evaluating maneuver plans
 # Unit: N/a
 use_fixed_costs: true
 
   # JSON String: Plugin Priorities Map
-# It would have been preferable to use a dictionary here but ROS2 Foxy does not support this type of parameter
-# Map: The priorities associated with each plugin during the planning 
+# It would have been preferable to use a dictionary here but ROS2 Humble does not support this type of parameter
+# Map: The priorities associated with each plugin during the planning
 # process, values will be normalized at runtime and inverted into costs
 # Unit: N/a
 plugin_priorities: '
   {
- 	  "plugin_priorities": 
+ 	  "plugin_priorities":
       {
         "approaching_emergency_vehicle_plugin": 5.0,
         "platooning_strategic_ihp": 4.0,
