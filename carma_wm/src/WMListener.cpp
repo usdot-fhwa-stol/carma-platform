@@ -53,28 +53,28 @@ WMListener::WMListener(
     use_sim_time_param_value = node_params_->declare_parameter("use_sim_time", rclcpp::ParameterValue (false));
   }
 
-  rclcpp::Parameter is_spat_wall_time_param("is_spat_wall_time");
-  if(!node_params_->get_parameter("is_spat_wall_time", is_spat_wall_time_param)){
-    rclcpp::ParameterValue is_spat_wall_time_param_value;
-    is_spat_wall_time_param_value = node_params_->declare_parameter("is_spat_wall_time", rclcpp::ParameterValue (true));
+  rclcpp::Parameter use_real_time_spat_in_sim_param("use_real_time_spat_in_sim");
+  if(!node_params_->get_parameter("use_real_time_spat_in_sim", use_real_time_spat_in_sim_param)){
+    rclcpp::ParameterValue use_real_time_spat_in_sim_param_value;
+    use_real_time_spat_in_sim_param_value = node_params_->declare_parameter("use_real_time_spat_in_sim", rclcpp::ParameterValue (true));
   }
 
   // Get params
   config_speed_limit_param = node_params_->get_parameter("config_speed_limit");
   participant_param = node_params_->get_parameter("vehicle_participant_type");
   use_sim_time_param = node_params_->get_parameter("use_sim_time");
-  is_spat_wall_time_param = node_params_->get_parameter("is_spat_wall_time");
+  use_real_time_spat_in_sim_param = node_params_->get_parameter("use_real_time_spat_in_sim");
 
   RCLCPP_INFO_STREAM(node_logging->get_logger(), "Loaded config speed limit: " << config_speed_limit_param.as_double());
   RCLCPP_INFO_STREAM(node_logging->get_logger(), "Loaded vehicle participant type: " << participant_param.as_string());
   RCLCPP_INFO_STREAM(node_logging->get_logger(), "Is using simulation time? : " << use_sim_time_param.as_bool());
-  RCLCPP_INFO_STREAM(node_logging->get_logger(), "Is SPaT using wall time? : " << is_spat_wall_time_param.as_bool());
+  RCLCPP_INFO_STREAM(node_logging->get_logger(), "Is SPaT using wall time? : " << use_real_time_spat_in_sim_param.as_bool());
 
 
   setConfigSpeedLimit(config_speed_limit_param.as_double());
   worker_->setVehicleParticipationType(participant_param.as_string());
   worker_->isUsingSimTime(use_sim_time_param.as_bool());
-  worker_->isSpatWallTime(is_spat_wall_time_param.as_bool());
+  worker_->isSpatWallTime(use_real_time_spat_in_sim_param.as_bool());
 
   rclcpp::SubscriptionOptions map_update_options;
   rclcpp::SubscriptionOptions map_options;
