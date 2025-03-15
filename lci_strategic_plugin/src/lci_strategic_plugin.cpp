@@ -312,14 +312,14 @@ boost::optional<bool> LCIStrategicPlugin::canArriveAtGreenWithCertainty(const rc
     if (!validLightState(early_arrival_state_by_algo_optional, early_arrival_time_by_algo))
       return boost::none;
 
-    RCLCPP_DEBUG_STREAM(rclcpp::get_logger("lci_strategic_plugin"), "early_arrival_state_by_algo: " << std::to_string(early_arrival_state_by_algo_optional.get().second));
+    RCLCPP_DEBUG_STREAM(rclcpp::get_logger("lci_strategic_plugin"), "early_arrival_state_by_algo: " << early_arrival_state_by_algo_optional.get().second);
 
     auto late_arrival_state_by_algo_optional = traffic_light->predictState(lanelet::time::timeFromSec(late_arrival_time_by_algo.seconds()));
 
     if (!validLightState(late_arrival_state_by_algo_optional, late_arrival_time_by_algo))
       return boost::none;
 
-    RCLCPP_DEBUG_STREAM(rclcpp::get_logger("lci_strategic_plugin"), "late_arrival_state_by_algo: " << std::to_string(late_arrival_state_by_algo_optional.get().second));
+    RCLCPP_DEBUG_STREAM(rclcpp::get_logger("lci_strategic_plugin"), "late_arrival_state_by_algo: " << late_arrival_state_by_algo_optional.get().second);
 
     bool can_make_early_arrival = true;
     bool can_make_late_arrival = true;
