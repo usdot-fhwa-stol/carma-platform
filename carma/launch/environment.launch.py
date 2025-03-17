@@ -264,6 +264,7 @@ def generate_launch_description():
 
     if PythonExpression(["'", is_cp_mot_enabled, "' == 'true'"]):
         # Add additional remappings when enabled
+        # If CP stack is being used, prediction node should use fused_external_objects not external_objects
         motion_computation_mappings.append(("external_objects", "fused_external_objects"))
 
     carma_external_objects_container = ComposableNodeContainer(
