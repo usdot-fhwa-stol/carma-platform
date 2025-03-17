@@ -192,6 +192,24 @@ def generate_launch_description():
         default_value = 'False',
         description = 'True if user wants ROS 2 Tracing logs to be generated from CARMA Platform.')
 
+    # When enabled, the vehicle fuses incoming SDSM with its own sensor data to create a more accurate representation of the environment
+    # When turned off, topics get remapped to solely rely on its own sensor data
+    is_cp_mot_enabled = LaunchConfiguration('is_cp_mot_enabled')
+    declare_is_cp_mot_enabled = DeclareLaunchArgument(
+        name='is_cp_mot_enabled',
+        default_value = 'False',
+        description = 'True if user wants Cooperative Perception capability using Multiple Object Tracking to be enabled'
+    )
+
+    # When enabled, the vehicle has lidar detected objects in its external objects list
+    # TODO: Currently the stack is not shutting down automatically https://usdot-carma.atlassian.net.mcas-gov.us/browse/CAR-6109
+    is_autoware_lidar_obj_detection_enabled = LaunchConfiguration('is_autoware_lidar_obj_detection_enabled')
+    declare_is_autoware_lidar_obj_detection_enabled = DeclareLaunchArgument(
+        name='is_autoware_lidar_obj_detection_enabled',
+        default_value = 'False',
+        description = 'True if user wants Autoware Lidar Object Detection to be enabled'
+    )
+
     # Launch ROS2 rosbag logging
     ros2_rosbag_launch = GroupAction(
         actions=[
@@ -230,7 +248,9 @@ def generate_launch_description():
                     'vehicle_config_param_file' : vehicle_config_param_file,
                     'vehicle_characteristics_param_file' : vehicle_characteristics_param_file,
                     'vector_map_file' : vector_map_file,
-                    'use_sim_time' : use_sim_time
+                    'use_sim_time' : use_sim_time,
+                    'is_cp_mot_enabled' : is_cp_mot_enabled,
+                    'is_autoware_lidar_obj_detection_enabled' : is_autoware_lidar_obj_detection_enabled
                     }.items()
             ),
         ]
