@@ -110,12 +110,8 @@ public:
    * @brief processSpatFromMsg update map's traffic light states with SPAT msg
    *
    * @param spat_msg Msg to update with
-   * @param use_sim_time Boolean to indicate if it is currently simulation or not
-   * @param use_real_time_spat_in_sim Boolean to indicate if the incoming spat is based on wall clock.
-   * Required in edge cases where deployment in simulation is receiving SPaT messages based on wall clock.
-   * Defaults to false.
    */
-  void processSpatFromMsg(const carma_v2x_msgs::msg::SPAT& spat_msg, bool use_sim_time = false, bool use_real_time_spat_in_sim=false);
+  void processSpatFromMsg(const carma_v2x_msgs::msg::SPAT& spat_msg);
 
   /**
    * \brief This function is called by distanceToObjectBehindInLane or distanceToObjectAheadInLane.
@@ -133,15 +129,6 @@ public:
    * \return An optional tuple of <TrackPos, carma_perception_msgs::msg::RoadwayObstacle> to the closest in lane object. Return empty if there is no objects on current lane or the road
    */
   lanelet::Optional<std::tuple<TrackPos,carma_perception_msgs::msg::RoadwayObstacle>> getNearestObjInLane(const lanelet::BasicPoint2d& object_center, const LaneSection& section = LANE_AHEAD) const;
-
-  /*! \brief update minimum end time to account for minute of the year
-    * \param min_end_time minimum end time of the spat movement event list
-    * \param moy_exists tells weather minute of the year exist or not
-    * \param moy value of the minute of the year
-    * \param use_real_time_spat_in_sim Boolean to indicate if the incoming spat is based on wall clock. Required in edge cases where deployment in simulation is receiving SPaT messages based on wall clock.
-    * Defaults to false.
-   */
-  boost::posix_time::ptime min_end_time_converter_minute_of_year(boost::posix_time::ptime min_end_time,bool moy_exists,uint32_t moy=0, bool is_simulation = true, bool use_real_time_spat_in_sim=false);
 
 /** \param config_lim the configurable speed limit value populated from WMListener using the config_speed_limit parameter
  * in VehicleConfigParams.yaml
@@ -299,9 +286,6 @@ private:
    *  \return A new linestring containing unique ids for all points and the linestring itself
    */
   lanelet::LineString3d copyConstructLineString(const lanelet::ConstLineString3d& line) const;
-
-  std::optional<rclcpp::Time> ros1_clock_ = std::nullopt;
-  std::optional<rclcpp::Time> simulation_clock_ = std::nullopt;
 
   std::shared_ptr<lanelet::LaneletMap> semantic_map_;
   LaneletRoutePtr route_;

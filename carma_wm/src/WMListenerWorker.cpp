@@ -103,7 +103,7 @@ void WMListenerWorker::mapCallback(const autoware_lanelet2_msgs::msg::MapBin::Sh
 
 void WMListenerWorker::incomingSpatCallback(const carma_v2x_msgs::msg::SPAT::SharedPtr spat_msg)
 {
-  world_model_->processSpatFromMsg(*spat_msg, use_sim_time_, use_real_time_spat_in_sim_);
+  world_model_->processSpatFromMsg(*spat_msg);
 }
 
 bool WMListenerWorker::checkIfReRoutingNeeded() const
@@ -698,16 +698,16 @@ void WMListenerWorker::setConfigSpeedLimit(double config_lim)
 {
   config_speed_limit_ = config_lim;
   //Function to load config_limit into CarmaWorldModel
-   world_model_->setConfigSpeedLimit(config_speed_limit_);
+  world_model_->setConfigSpeedLimit(config_speed_limit_);
 }
 
 void WMListenerWorker::isUsingSimTime(bool use_sim_time)
 {
-  use_sim_time_ = use_sim_time;
+  world_model_->sim_.use_sim_time_ = use_sim_time;
 }
 void WMListenerWorker::isSpatWallTime(bool use_real_time_spat_in_sim)
 {
-  use_real_time_spat_in_sim_ = use_real_time_spat_in_sim;
+  world_model_->sim_.use_real_time_spat_in_sim_ = use_real_time_spat_in_sim;
 }
 
 double WMListenerWorker::getConfigSpeedLimit() const
