@@ -34,7 +34,7 @@ namespace carma_wm
 
 TEST(SignalizedIntersectionManger, convertLaneToLaneletId)
 {
-  
+
   /* |1203|1213|1223|
   *  | _  _  _  _  _|
   *  |1202| Ob |1222|
@@ -55,7 +55,7 @@ TEST(SignalizedIntersectionManger, convertLaneToLaneletId)
   carma_wm::SignalizedIntersectionManager sim;
   std::string georeference = "+proj=tmerc +lat_0=0 +lon_0=0 +k=1 +x_0=0 +y_0=0 +datum=WGS84 +units=m +vunits=m +no_defs";
   sim.setTargetFrame(georeference);
-    
+
   std::unordered_map<uint8_t, lanelet::Id> entry;
   std::unordered_map<uint8_t, lanelet::Id> exit;
 
@@ -85,7 +85,7 @@ TEST(SignalizedIntersectionManger, convertLaneToLaneletId)
   intersection.lane_list.push_back(lane);
 
   lane.lane_id = (uint8_t)1211;
-  lane.lane_attributes.directional_use.lane_direction = 1u; // egress imagining intersection 
+  lane.lane_attributes.directional_use.lane_direction = 1u; // egress imagining intersection
                                                             // entering 1210 from left and out through 1220
   lane.node_list = carma_v2x_msgs::msg::NodeListXY();
   lane.connect_to_list = {};
@@ -134,7 +134,7 @@ TEST(SignalizedIntersectionManger, createIntersectionFromMapMsg)
   carma_wm::SignalizedIntersectionManager sim;
   std::string georeference = "+proj=tmerc +lat_0=0 +lon_0=0 +k=1 +x_0=0 +y_0=0 +datum=WGS84 +units=m +vunits=m +no_defs";
   sim.setTargetFrame(georeference);
-    
+
   carma_v2x_msgs::msg::MapData map_msg;
   carma_v2x_msgs::msg::IntersectionGeometry intersection; //ref_point lat, lon, el = 0;
   intersection.id.id = 9001;
@@ -162,7 +162,7 @@ TEST(SignalizedIntersectionManger, createIntersectionFromMapMsg)
   intersection.lane_list.push_back(lane);
 
   lane.lane_id = (uint8_t)1220;
-  lane.lane_attributes.directional_use.lane_direction = 1u; // egress imagining intersection 
+  lane.lane_attributes.directional_use.lane_direction = 1u; // egress imagining intersection
                                                             // entering 1210 from left and out through 1220
   lane.node_list = carma_v2x_msgs::msg::NodeListXY();
   lane.connect_to_list = {};
@@ -193,7 +193,7 @@ TEST(SignalizedIntersectionManger, createIntersectionFromMapMsg)
   EXPECT_EQ(sim.intersection_id_to_regem_id_.size(), 1u);
   EXPECT_EQ(intersections.size(), 1u);
   EXPECT_EQ(traffic_signals.size(), 1u);
-  
+
 }
 
 
@@ -210,17 +210,17 @@ TEST(SignalizedIntersectionManger, matchSignalizedIntersection)
   *  ****************
   *     START_LINE
   */
-  
+
   auto lanelet_map = carma_wm::test::buildGuidanceTestMap(5.0, 25.0);
 
   carma_wm::SignalizedIntersectionManager sim;
   std::string georeference = "+proj=tmerc +lat_0=0 +lon_0=0 +k=1 +x_0=0 +y_0=0 +datum=WGS84 +units=m +vunits=m +no_defs";
   sim.setTargetFrame(georeference);
-  
+
   lanelet::Id intersection_id = lanelet::utils::getId();
-  auto intersection = std::make_shared<lanelet::SignalizedIntersection>(lanelet::SignalizedIntersection::buildData(intersection_id, 
+  auto intersection = std::make_shared<lanelet::SignalizedIntersection>(lanelet::SignalizedIntersection::buildData(intersection_id,
                                                                         {lanelet_map->laneletLayer.get(1210)}, {lanelet_map->laneletLayer.get(1220)}, {}));
-  
+
   lanelet_map->update({lanelet_map->laneletLayer.get(1210)}, intersection);
 
   lanelet::Id queried_id = sim.matchSignalizedIntersection({lanelet_map->laneletLayer.get(1210)}, {lanelet_map->laneletLayer.get(1220)});
@@ -241,13 +241,13 @@ TEST(SignalizedIntersectionManger, createTrafficSignalUsingSGID)
   *  ****************
   *     START_LINE
   */
-  
+
   auto lanelet_map = carma_wm::test::buildGuidanceTestMap(5.0, 25.0);
 
   carma_wm::SignalizedIntersectionManager sim;
   std::string georeference = "+proj=tmerc +lat_0=0 +lon_0=0 +k=1 +x_0=0 +y_0=0 +datum=WGS84 +units=m +vunits=m +no_defs";
   sim.setTargetFrame(georeference);
-  
+
   auto signal = sim.createTrafficSignalUsingSGID(1, {lanelet_map->laneletLayer.get(1210)}, {lanelet_map->laneletLayer.get(1220)});
 
   EXPECT_EQ(sim.signal_group_to_entry_lanelet_ids_.size(), 1u);
@@ -267,13 +267,13 @@ TEST(SignalizedIntersectionManger, identifyInteriorLanelets)
   *  ****************
   *     START_LINE
   */
-  
+
   auto lanelet_map = carma_wm::test::buildGuidanceTestMap(5.0, 25.0);
 
   carma_wm::SignalizedIntersectionManager sim;
   std::string georeference = "+proj=tmerc +lat_0=0 +lon_0=0 +k=1 +x_0=0 +y_0=0 +datum=WGS84 +units=m +vunits=m +no_defs";
   sim.setTargetFrame(georeference);
-  
+
   auto interior = sim.identifyInteriorLanelets({lanelet_map->laneletLayer.get(1203),lanelet_map->laneletLayer.get(1211), lanelet_map->laneletLayer.get(1223)}, lanelet_map);
 
   EXPECT_EQ(interior.size(), 4u);
@@ -281,5 +281,15 @@ TEST(SignalizedIntersectionManger, identifyInteriorLanelets)
 
 }
 
+TEST(SignalizedIntersectionManger, getTrafficSignalId)
+{
+  carma_wm::SignalizedIntersectionManager sim;
+  uint16_t intersection_id=1;
+  uint8_t signal_group_id=1;
+  sim.intersection_id_to_regem_id_[intersection_id] = 1001;
+  sim.signal_group_to_traffic_light_id_[signal_group_id] = 1000;
+
+  EXPECT_EQ(sim.getTrafficSignalId(intersection_id, signal_group_id), 1000);
+}
 
 }  // namespace carma_wm_ctrl

@@ -467,36 +467,90 @@ namespace carma_wm
   }
 
   void SignalizedIntersectionManager::updateSignalAsFixedSignal(
-    const lanelet::CarmaTrafficSignalPtr& curr_light,
-    const std::tuple<
-      std::vector<std::pair<boost::posix_time::ptime, lanelet::CarmaTrafficSignalState>>,
-      std::vector<boost::posix_time::ptime>> signal_state_infos,
-    uint8_t intersection_id,
-    const carma_v2x_msgs::msg::MovementState& current_movement_state)
+    uint8_t intersection_id, const std::shared_ptr<lanelet::LaneletMap>& semantic_map)
   {
+    // Find opposing light
 
+    //
 
   }
-  void SignalizedIntersectionManager::updateSignalAsDynamicSignal(
-    const lanelet::CarmaTrafficSignalPtr& curr_light,
-    const std::tuple<
-      std::vector<std::pair<boost::posix_time::ptime, lanelet::CarmaTrafficSignalState>>,
-      std::vector<boost::posix_time::ptime>> signal_state_infos,
-    uint8_t intersection_id,
-    const carma_v2x_msgs::msg::MovementState& current_movement_state)
+
+  lanelet::Id SignalizedIntersectionManager::getTrafficSignalId(uint16_t intersection_id, uint8_t signal_group_id)
   {
-    traffic_signal_states_[intersection_id][current_movement_state.signal_group]={};
-    traffic_signal_start_times_[intersection_id][current_movement_state.signal_group]={};
+    lanelet::Id inter_id = lanelet::InvalId;
+    lanelet::Id signal_id = lanelet::InvalId;
 
-    traffic_signal_states_[intersection_id][current_movement_state.signal_group] =
-      std::get<0>(signal_state_infos);
-    traffic_signal_start_times_[intersection_id][current_movement_state.signal_group] =
-      std::get<1>(signal_state_infos);
+    if (intersection_id_to_regem_id_.find(intersection_id) != intersection_id_to_regem_id_.end())
+    {
+      inter_id = intersection_id_to_regem_id_[intersection_id];
+    }
 
-    curr_light->recorded_time_stamps =
-      traffic_signal_states_[intersection_id][current_movement_state.signal_group];
-    curr_light->recorded_start_time_stamps  =
-      traffic_signal_start_times_[intersection_id][current_movement_state.signal_group];
+    if (inter_id != lanelet::InvalId && signal_group_to_traffic_light_id_.find(signal_group_id) != signal_group_to_traffic_light_id_.end())
+    {
+      signal_id = signal_group_to_traffic_light_id_[signal_group_id];
+    }
+
+    return signal_id;
+  }
+
+  void SignalizedIntersectionManager::updateSignalAsDynamicSignal(
+    uint8_t intersection_id, const std::shared_ptr<lanelet::LaneletMap>& semantic_map)
+  {
+    const auto& signal_groups_map = traffic_signal_states_[intersection_id];
+
+    // Iterate over all signal groups for this intersection
+    // and directly apply the recorded signal states list to each traffic signal objects
+    for (const auto& [signal_group_id, signal_states] : signal_groups_map) {
+      lanelet::Id curr_light_id = getTrafficSignalId(intersection_id, signal_group_id);
+      lanelet::CarmaTrafficSignalPtr curr_light = getTrafficSignal(curr_light_id, semantic_map);
+
+      curr_light->recorded_time_stamps =
+        traffic_signal_states_[intersection_id][signal_group_id];
+      curr_light->recorded_start_time_stamps  =
+        traffic_signal_start_times_[intersection_id][signal_group_id];
+
+      traffic_signal_states_[intersection_id][signal_group_id]={};
+      traffic_signal_start_times_[intersection_id][signal_group_id]={};
+    }
+  }
+
+  lanelet::CarmaTrafficSignalPtr SignalizedIntersectionManager::getTrafficSignal(const
+    lanelet::Id& id, const std::shared_ptr<lanelet::LaneletMap>& semantic_map) const
+  {
+    auto general_regem = semantic_map->regulatoryElementLayer.get(id);
+
+    auto lanelets_general = semantic_map->laneletLayer.findUsages(general_regem);
+    if (lanelets_general.empty())
+    {
+      RCLCPP_WARN_STREAM(rclcpp::get_logger("carma_wm"), "There was an error querying lanelet for traffic light with id: " << id);
+    }
+
+    auto curr_light_list = lanelets_general[0].regulatoryElementsAs<lanelet::CarmaTrafficSignal>();
+
+    if (curr_light_list.empty())
+    {
+      RCLCPP_WARN_STREAM(rclcpp::get_logger("carma_wm"), "There was an error querying traffic light with id: " << id);
+      return nullptr;
+    }
+
+    lanelet::CarmaTrafficSignalPtr curr_light;
+
+    for (auto signal : lanelets_general[0].regulatoryElementsAs<lanelet::CarmaTrafficSignal>())
+    {
+      if (signal->id() == id)
+      {
+        curr_light = signal;
+        break;
+      }
+    }
+
+    if (!curr_light)
+    {
+      RCLCPP_WARN_STREAM(rclcpp::get_logger("carma_wm"), "Was not able to find traffic signal with id: " << id << ", ignoring...");
+      return nullptr;
+    }
+
+    return curr_light;
   }
 
   std::tuple<std::vector<std::pair<boost::posix_time::ptime, lanelet::CarmaTrafficSignalState>>,

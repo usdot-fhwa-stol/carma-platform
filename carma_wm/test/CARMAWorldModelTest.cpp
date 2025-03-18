@@ -1283,17 +1283,6 @@ TEST(CARMAWorldModelTest, sampleRoutePoints)
   }
 }
 
-TEST(CARMAWorldModelTest, getTrafficSignalId)
-{
-  CARMAWorldModel cmw;
-  uint16_t intersection_id=1;
-  uint8_t signal_group_id=1;
-  cmw.sim_.intersection_id_to_regem_id_[intersection_id] = 1001;
-  cmw.sim_.signal_group_to_traffic_light_id_[signal_group_id] = 1000;
-
-  EXPECT_EQ(cmw.getTrafficSignalId(intersection_id, signal_group_id), 1000);
-}
-
 TEST(CARMAWorldModelTest, processSpatFromMsg)
 {
   CARMAWorldModel cmw;

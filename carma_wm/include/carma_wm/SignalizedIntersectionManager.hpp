@@ -152,26 +152,16 @@ public:
   *         Do nothing if intersection_id is not found.
   *  \param intersection_id of the intersection TODO
   */
-  void updateSignalAsFixedSignal(
-    const lanelet::CarmaTrafficSignalPtr& curr_light,
-    const std::tuple<
-      std::vector<std::pair<boost::posix_time::ptime, lanelet::CarmaTrafficSignalState>>,
-      std::vector<boost::posix_time::ptime>> signal_state_infos,
-    uint8_t intersection_id,
-    const carma_v2x_msgs::msg::MovementState& current_movement_state);
+  void updateSignalAsFixedSignal(uint8_t intersection_id,
+    const std::shared_ptr<lanelet::LaneletMap>& semantic_map);
 
   /*!
   *  \brief Update the recorded traffic signal objects in the intersection as dynamic signal,
   *         directly overwriting any previous states
   *  \param intersection_id of the intersection TODO
   */
-  void updateSignalAsDynamicSignal(
-    const lanelet::CarmaTrafficSignalPtr& curr_light,
-    const std::tuple<
-      std::vector<std::pair<boost::posix_time::ptime, lanelet::CarmaTrafficSignalState>>,
-      std::vector<boost::posix_time::ptime>> signal_state_infos,
-    uint8_t intersection_id,
-    const carma_v2x_msgs::msg::MovementState& current_movement_state);
+  void updateSignalAsDynamicSignal(uint8_t intersection_id,
+    const std::shared_ptr<lanelet::LaneletMap>& semantic_map);
 
   /*!
   *  \brief TODO
@@ -195,6 +185,15 @@ public:
   boost::posix_time::ptime min_end_time_converter_minute_of_year(
     boost::posix_time::ptime min_end_time,bool moy_exists,uint32_t moy=0,
     bool is_simulation = true, bool use_real_time_spat_in_sim=false);
+
+  /*! \brief helper for traffic signal Id
+   */
+  lanelet::Id getTrafficSignalId(uint16_t intersection_id,uint8_t signal_id);
+
+  /*! \brief helper for getting traffic signal with given lanelet::Id
+   */
+  lanelet::CarmaTrafficSignalPtr getTrafficSignal(const lanelet::Id& id,
+    const std::shared_ptr<lanelet::LaneletMap>& semantic_map) const;
 
   // SignalizedIntersection's geometry points from MAP Msg
   std::unordered_map<uint16_t, std::vector<lanelet::Point3d>> intersection_nodes_;

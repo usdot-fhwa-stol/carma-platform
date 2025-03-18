@@ -160,14 +160,6 @@ public:
    */
   void setSimulationClock(const rclcpp::Time& time_now);
 
-  /*! \brief helper for traffic signal Id
-   */
-  lanelet::Id getTrafficSignalId(uint16_t intersection_id,uint8_t signal_id);
-
-  /*! \brief helper for getting traffic signal with given lanelet::Id
-   */
-  lanelet::CarmaTrafficSignalPtr getTrafficSignal(const lanelet::Id& id) const;
-
   /**
    * \brief (non-const version) Gets the underlying lanelet, given the cartesian point on the map
    *

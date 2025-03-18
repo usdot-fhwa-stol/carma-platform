@@ -81,24 +81,6 @@ namespace carma_wm
     return std::make_pair(minPos, maxPos);
   }
 
-  lanelet::Id CARMAWorldModel::getTrafficSignalId(uint16_t intersection_id, uint8_t signal_group_id)
-  {
-    lanelet::Id inter_id = lanelet::InvalId;
-    lanelet::Id signal_id = lanelet::InvalId;
-
-    if (sim_.intersection_id_to_regem_id_.find(intersection_id) != sim_.intersection_id_to_regem_id_.end())
-    {
-      inter_id = sim_.intersection_id_to_regem_id_[intersection_id];
-    }
-
-    if (inter_id != lanelet::InvalId && sim_.signal_group_to_traffic_light_id_.find(signal_group_id) != sim_.signal_group_to_traffic_light_id_.end())
-    {
-      signal_id = sim_.signal_group_to_traffic_light_id_[signal_group_id];
-    }
-
-    return signal_id;
-  }
-
   TrackPos CARMAWorldModel::routeTrackPos(const lanelet::ConstLanelet& lanelet) const
   {
     // Check if the route was loaded yet
@@ -1389,44 +1371,6 @@ namespace carma_wm
     return intersection_list;
   }
 
-  lanelet::CarmaTrafficSignalPtr CARMAWorldModel::getTrafficSignal(const lanelet::Id& id) const
-  {
-    auto general_regem = semantic_map_->regulatoryElementLayer.get(id);
-
-    auto lanelets_general = semantic_map_->laneletLayer.findUsages(general_regem);
-    if (lanelets_general.empty())
-    {
-      RCLCPP_WARN_STREAM(rclcpp::get_logger("carma_wm"), "There was an error querying lanelet for traffic light with id: " << id);
-    }
-
-    auto curr_light_list = lanelets_general[0].regulatoryElementsAs<lanelet::CarmaTrafficSignal>();
-
-    if (curr_light_list.empty())
-    {
-      RCLCPP_WARN_STREAM(rclcpp::get_logger("carma_wm"), "There was an error querying traffic light with id: " << id);
-      return nullptr;
-    }
-
-    lanelet::CarmaTrafficSignalPtr curr_light;
-
-    for (auto signal : lanelets_general[0].regulatoryElementsAs<lanelet::CarmaTrafficSignal>())
-    {
-      if (signal->id() == id)
-      {
-        curr_light = signal;
-        break;
-      }
-    }
-
-    if (!curr_light)
-    {
-      RCLCPP_WARN_STREAM(rclcpp::get_logger("carma_wm"), "Was not able to find traffic signal with id: " << id << ", ignoring...");
-      return nullptr;
-    }
-
-    return curr_light;
-  }
-
   void CARMAWorldModel::processSpatFromMsg(const carma_v2x_msgs::msg::SPAT &spat_msg)
   {
     if (!semantic_map_)
@@ -1441,7 +1385,6 @@ namespace carma_wm
       return;
     }
 
-
     for (const auto& curr_intersection : spat_msg.intersection_state_list)
     {
       // TODO: Just expect fixed signal at this point
@@ -1450,14 +1393,15 @@ namespace carma_wm
 
       for (const auto& current_movement_state : curr_intersection.movement_list)
       {
-        lanelet::Id curr_light_id = getTrafficSignalId(curr_intersection.id.id, current_movement_state.signal_group);
+        lanelet::Id curr_light_id = sim_.getTrafficSignalId(curr_intersection.id.id, current_movement_state.signal_group);
 
         if (curr_light_id == lanelet::InvalId)
         {
           continue;
         }
 
-        lanelet::CarmaTrafficSignalPtr curr_light = getTrafficSignal(curr_light_id);
+        lanelet::CarmaTrafficSignalPtr curr_light =
+          sim_.getTrafficSignal(curr_light_id, semantic_map_);
 
         if (curr_light == nullptr)
         {
@@ -1488,18 +1432,22 @@ namespace carma_wm
         auto extracted_signal_states =
           sim_.extract_signal_states_from_movement_state(curr_intersection, current_movement_state);
 
-        if (is_fixed_signal_intersection_)
-        {
-          // TSMO UC2
-          sim_.updateSignalAsFixedSignal(curr_light, extracted_signal_states,
-            curr_intersection.id.id, current_movement_state);
-        }
-        else
-        {
-          // TSMO UC3
-          sim_.updateSignalAsDynamicSignal(curr_light, extracted_signal_states,
-            curr_intersection.id.id, current_movement_state);
-        }
+        sim_.traffic_signal_states_[curr_intersection.id.id][current_movement_state.signal_group] =
+          std::get<0>(extracted_signal_states);
+        sim_.traffic_signal_start_times_[curr_intersection.id.id][current_movement_state.signal_group] =
+          std::get<1>(extracted_signal_states);
+      }
+
+      // After all signal groups are recorded, update regulatory element objects in the map
+      if (is_fixed_signal_intersection_)
+      {
+        // TSMO UC2
+        sim_.updateSignalAsFixedSignal(curr_intersection.id.id, semantic_map_);
+      }
+      else
+      {
+        // TSMO UC3
+        sim_.updateSignalAsDynamicSignal(curr_intersection.id.id, semantic_map_);
       }
     }
   }
