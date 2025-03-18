@@ -422,7 +422,7 @@ def generate_launch_description():
 
     # Cooperative Perception Stack
     carma_cooperative_perception_container = ComposableNodeContainer(
-        condition=IfCondition(is_cp_mot_enabled), # not needed in simulation
+        condition=IfCondition(is_cp_mot_enabled),
         package='carma_ros2_utils', # rclcpp_components
         name='carma_cooperative_perception_container',
         executable='carma_component_container_mt',
