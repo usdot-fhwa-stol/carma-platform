@@ -1494,6 +1494,8 @@ namespace carma_wm
       return;
     }
 
+    bool is_fixed_signal_intersection = true;
+
     for (const auto& curr_intersection : spat_msg.intersection_state_list)
     {
 
@@ -1561,6 +1563,9 @@ namespace carma_wm
         curr_light->recorded_start_time_stamps  = sim_.traffic_signal_start_times_[curr_intersection.id.id][current_movement_state.signal_group];
       }
     }
+
+    sim_->updateIntersectionAsFixedSignal(curr_intersection.id.id);
+
   }
 
   std::optional<lanelet::ConstLanelet> CARMAWorldModel::getFirstLaneletOnShortestPath(const std::vector<lanelet::ConstLanelet>& lanelets_to_filter) const
