@@ -50,7 +50,7 @@ echo "Building Selected CARMA Components"
 
 if [[ ! -z "$PACKAGES" ]]; then
     echo "Incrementally building following packages and those dependent on them: $PACKAGES"
-    colcon build --install-base /opt/carma/install --cmake-args -DCMAKE_BUILD_TYPE=Release --packages-above $PACKAGES
+    colcon build --install-base /opt/carma/install --cmake-args -DCMAKE_BUILD_TYPE=Release --packages-select $PACKAGES
 else
     echo "Building all CARMA components..."
     colcon build  --install-base /opt/carma/install --build-base build --cmake-args -DCMAKE_BUILD_TYPE=Release

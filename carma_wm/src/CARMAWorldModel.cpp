@@ -1389,7 +1389,7 @@ namespace carma_wm
     {
       // TODO: Just expect fixed signal at this point
       // Need to make read it from parameter specified for the intersection
-      bool is_fixed_signal_intersection_ = true;
+      bool is_fixed_signal_intersection_ = false;
 
       for (const auto& current_movement_state : curr_intersection.movement_list)
       {
@@ -1438,7 +1438,9 @@ namespace carma_wm
           std::get<1>(extracted_signal_states);
       }
 
-      // After all signal groups are recorded, update regulatory element objects in the map
+
+      // After all signal groups are recorded, update regulatory element objects in the map for
+      // this intersection based on whether if it is dynamic or fixed signal intersection
       if (is_fixed_signal_intersection_)
       {
         // TSMO UC2
@@ -1447,6 +1449,8 @@ namespace carma_wm
       else
       {
         // TSMO UC3
+        RCLCPP_DEBUG_STREAM(rclcpp::get_logger("carma_wm"), "Updating as dynamic: "
+          << (int)curr_intersection.id.id);
         sim_.updateSignalAsDynamicSignal(curr_intersection.id.id, semantic_map_);
       }
     }

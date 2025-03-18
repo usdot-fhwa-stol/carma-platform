@@ -152,7 +152,7 @@ public:
   *         Do nothing if intersection_id is not found.
   *  \param intersection_id of the intersection TODO
   */
-  void updateSignalAsFixedSignal(uint8_t intersection_id,
+  void updateSignalAsFixedSignal(uint16_t intersection_id,
     const std::shared_ptr<lanelet::LaneletMap>& semantic_map);
 
   /*!
@@ -160,7 +160,7 @@ public:
   *         directly overwriting any previous states
   *  \param intersection_id of the intersection TODO
   */
-  void updateSignalAsDynamicSignal(uint8_t intersection_id,
+  void updateSignalAsDynamicSignal(uint16_t intersection_id,
     const std::shared_ptr<lanelet::LaneletMap>& semantic_map);
 
   /*!

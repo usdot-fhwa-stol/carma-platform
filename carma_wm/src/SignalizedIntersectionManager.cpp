@@ -467,7 +467,7 @@ namespace carma_wm
   }
 
   void SignalizedIntersectionManager::updateSignalAsFixedSignal(
-    uint8_t intersection_id, const std::shared_ptr<lanelet::LaneletMap>& semantic_map)
+    uint16_t intersection_id, const std::shared_ptr<lanelet::LaneletMap>& semantic_map)
   {
     // Find opposing light
 
@@ -494,24 +494,33 @@ namespace carma_wm
   }
 
   void SignalizedIntersectionManager::updateSignalAsDynamicSignal(
-    uint8_t intersection_id, const std::shared_ptr<lanelet::LaneletMap>& semantic_map)
+    uint16_t intersection_id, const std::shared_ptr<lanelet::LaneletMap>& semantic_map)
   {
     const auto& signal_groups_map = traffic_signal_states_[intersection_id];
-
+    RCLCPP_DEBUG_STREAM(rclcpp::get_logger("carma_wm"), "Got inside the right func");
+    RCLCPP_DEBUG_STREAM(rclcpp::get_logger("carma_wm"), "Map size: " << signal_groups_map.size());
     // Iterate over all signal groups for this intersection
     // and directly apply the recorded signal states list to each traffic signal objects
     for (const auto& [signal_group_id, signal_states] : signal_groups_map) {
       lanelet::Id curr_light_id = getTrafficSignalId(intersection_id, signal_group_id);
       lanelet::CarmaTrafficSignalPtr curr_light = getTrafficSignal(curr_light_id, semantic_map);
 
+
       curr_light->recorded_time_stamps =
         traffic_signal_states_[intersection_id][signal_group_id];
       curr_light->recorded_start_time_stamps  =
         traffic_signal_start_times_[intersection_id][signal_group_id];
 
+      RCLCPP_DEBUG_STREAM(rclcpp::get_logger("carma_wm"), "Updated curr_light: "  <<
+        curr_light->id());
+      RCLCPP_DEBUG_STREAM(rclcpp::get_logger("carma_wm"), "with size: " <<
+        traffic_signal_states_[intersection_id][signal_group_id].size());
+
       traffic_signal_states_[intersection_id][signal_group_id]={};
       traffic_signal_start_times_[intersection_id][signal_group_id]={};
     }
+    RCLCPP_DEBUG_STREAM(rclcpp::get_logger("carma_wm"), "Getting out the func");
+
   }
 
   lanelet::CarmaTrafficSignalPtr SignalizedIntersectionManager::getTrafficSignal(const

@@ -298,7 +298,8 @@ def generate_launch_description():
                     unique_vehicle_calibration_params
                 ]
             ),
-        ]
+        ],
+        arguments=['--ros-args', '--log-level', 'carma_wm:=DEBUG', '--log-level', 'carma_wm::SignalizedIntersectionManager:=DEBUG',]
     )
 
     carma_stop_controlled_intersection_tactical_plugin_container = ComposableNodeContainer(
