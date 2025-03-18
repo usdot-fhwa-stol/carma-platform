@@ -372,6 +372,8 @@ def generate_launch_description():
         declare_arealist_path,
         declare_vector_map_file,
         declare_is_ros2_tracing_enabled,
+        declare_is_cp_mot_enabled,
+        declare_is_autoware_lidar_obj_detection_enabled,
         ros2_rosbag_launch,
         OpaqueFunction(function=create_ros2_tracing_action),
         drivers_group,

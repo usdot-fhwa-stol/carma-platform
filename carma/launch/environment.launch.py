@@ -127,7 +127,7 @@ def generate_launch_description():
     # a lifecycle wrapper container is used to ensure autoware.auto nodes adhere to the subsystem_controller's signals
     # TODO: Currently, the container is shutting down on its own https://usdot-carma.atlassian.net.mcas-gov.us/browse/CAR-6109
     lidar_perception_container = ComposableNodeContainer(
-        IfCondition(is_autoware_lidar_obj_detection_enabled),
+        condition=IfCondition(is_autoware_lidar_obj_detection_enabled),
         package='carma_ros2_utils', # rclcpp_components
         name='perception_points_filter_container',
         executable='lifecycle_component_wrapper_mt',
@@ -251,22 +251,10 @@ def generate_launch_description():
         ]
     )
 
+                                                          
     # carma_external_objects_container contains nodes for object detection and tracking
     # since these nodes can use different object inputs they are a separate container from the lidar_perception_container
     # to preserve fault tolerance
-    motion_computation_mappings = [
-                    ("incoming_mobility_path", [ EnvironmentVariable('CARMA_MSG_NS', default_value=''), "/incoming_mobility_path" ] ),
-                    ("incoming_psm", [ EnvironmentVariable('CARMA_MSG_NS', default_value=''), "/incoming_psm" ] ),
-                    ("incoming_bsm", [ EnvironmentVariable('CARMA_MSG_NS', default_value=''), "/incoming_bsm" ] ),
-                    ("georeference", [ EnvironmentVariable('CARMA_LOCZ_NS', default_value=''), "/map_param_loader/georeference" ] ),
-                    ("external_objects", "")
-                ],
-
-    if PythonExpression(["'", is_cp_mot_enabled, "' == 'true'"]):
-        # Add additional remappings when enabled
-        # If CP stack is being used, prediction node should use fused_external_objects not external_objects
-        motion_computation_mappings.append(("external_objects", "fused_external_objects"))
-
     carma_external_objects_container = ComposableNodeContainer(
         package='carma_ros2_utils',
         name='external_objects_container',
@@ -327,7 +315,14 @@ def generate_launch_description():
                     {'use_intra_process_comms': True},
                     {'--log-level' : GetLogLevel('motion_computation', env_log_levels) }
                 ],
-                remappings= motion_computation_mappings,
+                remappings=[
+                    ("incoming_mobility_path", [ EnvironmentVariable('CARMA_MSG_NS', default_value=''), "/incoming_mobility_path" ] ),
+                    ("incoming_psm", [ EnvironmentVariable('CARMA_MSG_NS', default_value=''), "/incoming_psm" ] ),
+                    ("incoming_bsm", [ EnvironmentVariable('CARMA_MSG_NS', default_value=''), "/incoming_bsm" ] ),
+                    ("georeference", [ EnvironmentVariable('CARMA_LOCZ_NS', default_value=''), "/map_param_loader/georeference" ] ),
+                    # if CP is enabled, use fused objects to predict movements, otherwise use own sensor's objects
+                    ("external_objects", PythonExpression(['"fused_external_objects" if "', is_cp_mot_enabled, '" == "True" else "external_objects"'])),
+                ],
                 parameters=[
                     motion_computation_param_file, vehicle_config_param_file
                 ]
@@ -344,24 +339,6 @@ def generate_launch_description():
                         ("external_objects", "external_object_predictions" ),
                     ],
                     parameters=[ vehicle_config_param_file ]
-            ),
-            ComposableNode(
-                    package='roadway_objects',
-                    plugin='roadway_objects::RoadwayObjectsNode',
-                    name='roadway_objects_node',
-                    extra_arguments=[
-                        {'use_intra_process_comms': True},
-                        {'--log-level' : GetLogLevel('roadway_objects', env_log_levels) }
-                    ],
-                    remappings=[
-                        ("external_objects", "external_object_predictions"),
-                        ("incoming_spat", [ EnvironmentVariable('CARMA_MSG_NS', default_value=''), "/incoming_spat" ] ),
-                        ("route", [ EnvironmentVariable('CARMA_GUIDE_NS', default_value=''), "/route" ] )
-                    ],
-                    parameters = [
-                        vehicle_config_param_file
-                    ]
-
             ),
             ComposableNode(
                     package='traffic_incident_parser',
@@ -576,6 +553,8 @@ def generate_launch_description():
         declare_vehicle_characteristics_param_file_arg,
         declare_vehicle_config_param_file_arg,
         declare_use_sim_time_arg,
+        declare_is_autoware_lidar_obj_detection_enabled,
+        declare_is_cp_mot_enabled,
         declare_subsystem_controller_param_file_arg,
         declare_vector_map_file,
         lidar_perception_container,
