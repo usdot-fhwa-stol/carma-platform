@@ -581,15 +581,23 @@ namespace carma_wm
   void SignalizedIntersectionManager::updateSignalAsDynamicSignal(
     uint16_t intersection_id, const std::shared_ptr<lanelet::LaneletMap>& semantic_map)
   {
+
     const auto& signal_groups_map = traffic_signal_states_[intersection_id];
     RCLCPP_DEBUG_STREAM(rclcpp::get_logger("carma_wm"), "Got inside the right func");
     RCLCPP_DEBUG_STREAM(rclcpp::get_logger("carma_wm"), "Map size: " << signal_groups_map.size());
     // Iterate over all signal groups for this intersection
     // and directly apply the recorded signal states list to each traffic signal objects
     for (const auto& [signal_group_id, signal_states] : signal_groups_map) {
+
+      // If no new update is recorded, it shouldn't update anything and skip
+      if (traffic_signal_states_[intersection_id][signal_group_id].empty() &&
+        traffic_signal_start_times_[intersection_id][signal_group_id].empty())
+      {
+        continue;
+      }
+
       lanelet::Id curr_light_id = getTrafficSignalId(intersection_id, signal_group_id);
       lanelet::CarmaTrafficSignalPtr curr_light = getTrafficSignal(curr_light_id, semantic_map);
-
 
       curr_light->recorded_time_stamps =
         traffic_signal_states_[intersection_id][signal_group_id];
