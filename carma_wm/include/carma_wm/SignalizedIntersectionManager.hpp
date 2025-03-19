@@ -28,8 +28,7 @@
 #include <lanelet2_extension/projection/local_frame_projector.h>
 #include <carma_wm/WorldModelUtils.hpp>
 #include <carma_v2x_msgs/msg/map_data.hpp>
-#include <carma_v2x_msgs/msg/movement_state.hpp>
-#include <carma_v2x_msgs/msg/intersection_state.hpp>
+#include <carma_v2x_msgs/msg/spat.hpp>
 #include <lanelet2_core/Forward.h>
 #include <lanelet2_extension/regulatory_elements/SignalizedIntersection.h>
 #include <lanelet2_core/geometry/LaneletMap.h>
@@ -145,6 +144,14 @@ public:
   *  \return traffic signal corresponding to the signal group
   */
   lanelet::Lanelets identifyInteriorLanelets(const lanelet::Lanelets& entry_llts, const std::shared_ptr<lanelet::LaneletMap>& map);
+
+  /**
+   * @brief processSpatFromMsg update map's traffic light states with SPAT msg
+   *
+   * @param spat_msg Msg to update with
+   */
+  void processSpatFromMsg(const carma_v2x_msgs::msg::SPAT& spat_msg,
+    const std::shared_ptr<lanelet::LaneletMap>& semantic_map);
 
   /*!
   *  \brief Update the recorded traffic signal objects in the intersection as fixed signal,

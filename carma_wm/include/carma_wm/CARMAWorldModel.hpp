@@ -25,7 +25,6 @@
 #include <carma_perception_msgs/msg/roadway_obstacle_list.hpp>
 #include <carma_perception_msgs/msg/external_object.hpp>
 #include <carma_perception_msgs/msg/external_object_list.hpp>
-#include <carma_v2x_msgs/msg/spat.hpp>
 #include "carma_wm/TrackPos.hpp"
 #include "carma_wm/WorldModelUtils.hpp"
 #include <lanelet2_extension/time/TimeConversion.h>
@@ -105,13 +104,6 @@ public:
    * These are detected by the sensor fusion node and are passed as objects compatible with lanelet
    */
   void setRoadwayObjects(const std::vector<carma_perception_msgs::msg::RoadwayObstacle>& rw_objs);
-
-  /**
-   * @brief processSpatFromMsg update map's traffic light states with SPAT msg
-   *
-   * @param spat_msg Msg to update with
-   */
-  void processSpatFromMsg(const carma_v2x_msgs::msg::SPAT& spat_msg);
 
   /**
    * \brief This function is called by distanceToObjectBehindInLane or distanceToObjectAheadInLane.

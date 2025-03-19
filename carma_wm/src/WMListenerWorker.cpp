@@ -103,7 +103,7 @@ void WMListenerWorker::mapCallback(const autoware_lanelet2_msgs::msg::MapBin::Sh
 
 void WMListenerWorker::incomingSpatCallback(const carma_v2x_msgs::msg::SPAT::SharedPtr spat_msg)
 {
-  world_model_->processSpatFromMsg(*spat_msg);
+  world_model_->sim_.processSpatFromMsg(*spat_msg, world_model_->getMutableMap());
 }
 
 bool WMListenerWorker::checkIfReRoutingNeeded() const

@@ -475,6 +475,91 @@ namespace carma_wm
 
   }
 
+  void SignalizedIntersectionManager::processSpatFromMsg(const carma_v2x_msgs::msg::SPAT &spat_msg, const std::shared_ptr<lanelet::LaneletMap>& semantic_map)
+  {
+    if (!semantic_map)
+    {
+      RCLCPP_INFO_STREAM(rclcpp::get_logger("carma_wm"), "Map is not set yet.");
+      return;
+    }
+
+    if (spat_msg.intersection_state_list.empty())
+    {
+      RCLCPP_WARN_STREAM(rclcpp::get_logger("carma_wm"), "No intersection_state_list in the newly received SPAT msg. Returning...");
+      return;
+    }
+
+    for (const auto& curr_intersection : spat_msg.intersection_state_list)
+    {
+      // TODO: Just expect fixed signal at this point
+      // Need to make read it from parameter specified for the intersection
+      bool is_fixed_signal_intersection_ = false;
+
+      for (const auto& current_movement_state : curr_intersection.movement_list)
+      {
+        lanelet::Id curr_light_id = getTrafficSignalId(curr_intersection.id.id, current_movement_state.signal_group);
+
+        if (curr_light_id == lanelet::InvalId)
+        {
+          continue;
+        }
+
+        lanelet::CarmaTrafficSignalPtr curr_light =
+          getTrafficSignal(curr_light_id, semantic_map);
+
+        if (curr_light == nullptr)
+        {
+          continue;
+        }
+
+        // reset states if the intersection's geometry changed
+        if (curr_light->revision_ != curr_intersection.revision)
+        {
+          RCLCPP_DEBUG_STREAM(rclcpp::get_logger("carma_wm"), "Received a new intersection geometry. intersection_id: " << (int)curr_intersection.id.id << ", and signal_group_id: " << (int)current_movement_state.signal_group);
+          traffic_signal_start_times_[curr_intersection.id.id][current_movement_state.signal_group].clear();
+          traffic_signal_states_[curr_intersection.id.id][current_movement_state.signal_group].clear();
+        }
+
+        // all maneuver types in same signal group is currently expected to share signal timing, so only 0th index is used when setting states
+        if (current_movement_state.movement_event_list.empty())
+        {
+          RCLCPP_DEBUG_STREAM(rclcpp::get_logger("carma_wm"), "Movement_event_list is empty . intersection_id: " << (int)curr_intersection.id.id << ", and signal_group_id: " << (int)current_movement_state.signal_group);
+          continue;
+        }
+        else
+        {
+          RCLCPP_DEBUG_STREAM(rclcpp::get_logger("carma_wm"), "Movement_event_list size: " << current_movement_state.movement_event_list.size() << " . intersection_id: " << (int)curr_intersection.id.id << ", and signal_group_id: " << (int)current_movement_state.signal_group);
+        }
+
+        curr_light->revision_ = curr_intersection.revision; // valid SPAT msg
+
+        auto extracted_signal_states =
+          extract_signal_states_from_movement_state(curr_intersection, current_movement_state);
+
+        traffic_signal_states_[curr_intersection.id.id][current_movement_state.signal_group] =
+          std::get<0>(extracted_signal_states);
+        traffic_signal_start_times_[curr_intersection.id.id][current_movement_state.signal_group] =
+          std::get<1>(extracted_signal_states);
+      }
+
+
+      // After all signal groups are recorded, update regulatory element objects in the map for
+      // this intersection based on whether if it is dynamic or fixed signal intersection
+      if (is_fixed_signal_intersection_)
+      {
+        // TSMO UC2
+        updateSignalAsFixedSignal(curr_intersection.id.id, semantic_map);
+      }
+      else
+      {
+        // TSMO UC3
+        RCLCPP_DEBUG_STREAM(rclcpp::get_logger("carma_wm"), "Updating as dynamic: "
+          << (int)curr_intersection.id.id);
+        updateSignalAsDynamicSignal(curr_intersection.id.id, semantic_map);
+      }
+    }
+  }
+
   lanelet::Id SignalizedIntersectionManager::getTrafficSignalId(uint16_t intersection_id, uint8_t signal_group_id)
   {
     lanelet::Id inter_id = lanelet::InvalId;
