@@ -22,6 +22,15 @@
 
 namespace carma_wm
 {
+  namespace
+  {
+    // Helper function to check if a signal state is green (permissive or protected)
+    inline bool isGreenSignalState(const lanelet::CarmaTrafficSignalState& state)
+    {
+        return (state == lanelet::CarmaTrafficSignalState::PERMISSIVE_MOVEMENT_ALLOWED ||
+                state == lanelet::CarmaTrafficSignalState::PROTECTED_MOVEMENT_ALLOWED);
+    }
+  }
   void SignalizedIntersectionManager::setTargetFrame(const std::string& target_frame)
   {
     target_frame_ = target_frame;
@@ -457,6 +466,7 @@ namespace carma_wm
     return *this;
   }
 
+
   SignalizedIntersectionManager::SignalizedIntersectionManager(const SignalizedIntersectionManager& other)
   {
     this->signal_group_to_entry_lanelet_ids_ = other.signal_group_to_entry_lanelet_ids_;
@@ -469,10 +479,134 @@ namespace carma_wm
   void SignalizedIntersectionManager::updateSignalAsFixedSignal(
     uint16_t intersection_id, const std::shared_ptr<lanelet::LaneletMap>& semantic_map)
   {
-    // Find opposing light
+    // Check if the intersection exists in our map
+    auto it_intersection = traffic_signal_states_.find(intersection_id);
+    if (it_intersection == traffic_signal_states_.end())
+    {
+      RCLCPP_WARN_STREAM(rclcpp::get_logger("carma_wm::SignalizedIntersectionManager"),
+        "Intersection ID " << (int)intersection_id << " not found in traffic signal states map");
+      return;
+    }
 
-    // TODO CDAD-79
+    // Find signal groups with red to red transition
+    // ALLRED (AR) -> RED will have the full RED = Y + G + AR
+    uint8_t red_to_red_signal_group = 99;
+    uint8_t opposing_lane_green_signal_group = 98;
 
+    // Save transition indices for later use
+    size_t full_red_index = 0;
+    size_t green_signal_index = 0;
+    boost::posix_time::ptime end_time_of_full_red;
+    boost::posix_time::ptime end_time_of_green;
+    boost::posix_time::ptime end_time_of_yellow;
+    boost::posix_time::ptime start_time_of_full_red;
+
+    // Search in given intersection_id
+    for (const auto& signal_group_pair : it_intersection->second)
+    {
+      uint8_t signal_group_id = signal_group_pair.first;
+      const auto& state_transitions = signal_group_pair.second;
+
+      // Need at least 2 transitions to have a red-to-red or valid green
+      if (state_transitions.size() < 2) {
+        continue;
+      }
+
+      if (isGreenSignalState(state_transitions.back().second))
+      {
+        // When one signal transitions from AR to RED,
+        // One group should be GREEN
+        opposing_lane_green_signal_group = signal_group_id;
+        end_time_of_green = state_transitions.back().first;
+        green_signal_index = state_transitions.size() - 1;
+        continue;
+      }
+
+      // Find red to red transitions
+      for (size_t i = 0; i < state_transitions.size() - 1; ++i)
+      {
+        const auto& current_state = state_transitions[i];
+        const auto& next_state = state_transitions[i + 1];
+
+        // Check if both current and next states are RED
+        if (current_state.second == lanelet::CarmaTrafficSignalState::STOP_AND_REMAIN &&
+            next_state.second == lanelet::CarmaTrafficSignalState::STOP_AND_REMAIN)
+        {
+          red_to_red_signal_group = signal_group_id;
+          full_red_index = i + 1;
+          end_time_of_full_red = next_state.first;
+          start_time_of_full_red = current_state.first;
+          // By ignoring all red, we can approximate end time of yellow is
+          // same as start time of full red
+          end_time_of_yellow = start_time_of_full_red;
+          continue;
+        }
+      }
+    }
+
+    if (red_to_red_signal_group == 99 || opposing_lane_green_signal_group == 98)
+    {
+      RCLCPP_DEBUG_STREAM(rclcpp::get_logger("carma_wm::SignalizedIntersectionManager"),
+        "Intersection ID " << (int)intersection_id << " doesn't have a full cycle of signals yet");
+      return;
+    }
+
+    // Calculate durations
+    auto full_red_duration = (end_time_of_full_red - start_time_of_full_red);
+    auto full_cycle = full_red_duration + full_red_duration;
+    auto green_duration = end_time_of_green - start_time_of_full_red;
+    auto yellow_duration = end_time_of_full_red - end_time_of_green;
+
+    // For each signal group in the intersection, update the traffic signals
+    for (const auto& [signal_group_id, signal_states] : it_intersection->second)
+    {
+      // If no new update is recorded, it shouldn't update anything and skip
+      if (traffic_signal_states_[intersection_id][signal_group_id].empty() &&
+        traffic_signal_start_times_[intersection_id][signal_group_id].empty())
+      {
+        continue;
+      }
+
+      lanelet::Id curr_light_id = getTrafficSignalId(intersection_id, signal_group_id);
+      lanelet::CarmaTrafficSignalPtr curr_light = getTrafficSignal(curr_light_id, semantic_map);
+
+      std::vector<std::pair<boost::posix_time::ptime, lanelet::CarmaTrafficSignalState>>
+        full_cycle_time_steps;
+
+      // Fill in the complete signal cycle based on whether this is the green group or red group
+      if (signal_group_id == opposing_lane_green_signal_group) {
+          // For the green signal group
+          full_cycle_time_steps.push_back(std::make_pair(
+            end_time_of_green, lanelet::CarmaTrafficSignalState::PROTECTED_MOVEMENT_ALLOWED));
+          full_cycle_time_steps.push_back(std::make_pair(
+            end_time_of_yellow,lanelet::CarmaTrafficSignalState::PROTECTED_CLEARANCE));
+          full_cycle_time_steps.push_back(std::make_pair(
+            end_time_of_full_red, lanelet::CarmaTrafficSignalState::STOP_AND_REMAIN));
+          full_cycle_time_steps.push_back(std::make_pair(
+            end_time_of_green + full_cycle,
+            lanelet::CarmaTrafficSignalState::PROTECTED_MOVEMENT_ALLOWED));
+      } else {
+          // For other signal groups (red)
+          full_cycle_time_steps.push_back(std::make_pair(
+            end_time_of_full_red, lanelet::CarmaTrafficSignalState::STOP_AND_REMAIN));
+          full_cycle_time_steps.push_back(std::make_pair(
+            end_time_of_full_red + green_duration,
+            lanelet::CarmaTrafficSignalState::PROTECTED_MOVEMENT_ALLOWED));
+          full_cycle_time_steps.push_back(std::make_pair(
+            end_time_of_full_red + green_duration + yellow_duration,
+            lanelet::CarmaTrafficSignalState::PROTECTED_CLEARANCE));
+          full_cycle_time_steps.push_back(std::make_pair(
+            end_time_of_full_red + full_cycle,
+            lanelet::CarmaTrafficSignalState::STOP_AND_REMAIN));
+      }
+
+      // Set the states with revision number 0
+      curr_light->setStates(full_cycle_time_steps, 0);
+
+      // Clear the recorded states for this signal group
+      traffic_signal_states_[intersection_id][signal_group_id] = {};
+      traffic_signal_start_times_[intersection_id][signal_group_id] = {};
+    }
   }
 
   void SignalizedIntersectionManager::processSpatFromMsg(const carma_v2x_msgs::msg::SPAT &spat_msg, const std::shared_ptr<lanelet::LaneletMap>& semantic_map)
