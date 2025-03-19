@@ -34,9 +34,9 @@
 # /////////////////////////////////////////////////////////////////////////////
 ARG DOCKER_ORG="usdotfhwastoldev"
 ARG DOCKER_TAG="develop"
-FROM 8c3088310ffc as base-image
+FROM ${DOCKER_ORG}/autoware.ai:${DOCKER_TAG} as base-image
 
-FROM 8c3088310ffc AS source-code
+FROM base-image AS source-code
 
 RUN mkdir ~/src
 COPY --chown=carma ./docker /home/carma/src/carma-platform/docker
@@ -49,7 +49,7 @@ COPY --chown=carma . /home/carma/src/carma-platform
 # Stage 2 - Build and install the software
 # /////////////////////////////////////////////////////////////////////////////
 
-FROM 8c3088310ffc AS install
+FROM base-image AS install
 ARG PACKAGES=""
 ENV PACKAGES=${PACKAGES}
 
@@ -64,7 +64,7 @@ RUN ~/carma_ws/src/carma-platform/docker/install.sh
 # /////////////////////////////////////////////////////////////////////////////
 
 
-FROM 8c3088310ffc
+FROM base-image
 
 ARG BUILD_DATE="NULL"
 ARG VCS_REF="NULL"
