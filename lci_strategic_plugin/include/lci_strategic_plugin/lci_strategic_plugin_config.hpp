@@ -68,6 +68,9 @@ struct LCIStrategicPluginConfig
   //! Bool: Enable carma streets connection
   bool  enable_carma_streets_connection = false;
 
+  //! Int: 0 for fixed signalized intersection (UC2), 1 for dynamic signalized intersection (UC3)
+  int signalized_intersection_phase_type = 1;
+
   //! Double: Mobility operation rate
   double mobility_rate = 10.0;
 

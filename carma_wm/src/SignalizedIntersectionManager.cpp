@@ -471,12 +471,17 @@ namespace carma_wm
   {
     // Find opposing light
 
-    //
+    // TODO
 
   }
 
   void SignalizedIntersectionManager::processSpatFromMsg(const carma_v2x_msgs::msg::SPAT &spat_msg, const std::shared_ptr<lanelet::LaneletMap>& semantic_map)
   {
+    if (phase_type_ == signalized_intersection_manager::PHASE_TYPE::OFF)
+    {
+      return;
+    }
+
     if (!semantic_map)
     {
       RCLCPP_INFO_STREAM(rclcpp::get_logger("carma_wm"), "Map is not set yet.");
@@ -493,7 +498,6 @@ namespace carma_wm
     {
       // TODO: Just expect fixed signal at this point
       // Need to make read it from parameter specified for the intersection
-      bool is_fixed_signal_intersection_ = false;
 
       for (const auto& current_movement_state : curr_intersection.movement_list)
       {
@@ -545,7 +549,7 @@ namespace carma_wm
 
       // After all signal groups are recorded, update regulatory element objects in the map for
       // this intersection based on whether if it is dynamic or fixed signal intersection
-      if (is_fixed_signal_intersection_)
+      if (phase_type_ == signalized_intersection_manager::PHASE_TYPE::FIXED)
       {
         // TSMO UC2
         updateSignalAsFixedSignal(curr_intersection.id.id, semantic_map);

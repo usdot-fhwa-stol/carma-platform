@@ -28,6 +28,8 @@
 #include <carma_v2x_msgs/msg/spat.hpp>
 #include <carma_ros2_utils/carma_lifecycle_node.hpp>
 #include <rosgraph_msgs/msg/clock.hpp>
+#include <carma_wm/SignalizedIntersectionManager.hpp>
+
 
 namespace carma_wm
 {
@@ -110,6 +112,13 @@ public:
    * \param config_lim A function that populate the configurable speed limit value after the world model is updated with a new route
    */
   void setConfigSpeedLimit(double config_lim) const;
+
+  /**
+   *  \brief Activate SPAT processor, which is turned off by default,
+  // with OFF (0), DYNAMIC (1), FIXED (2)
+   */
+  void setSpatProcessorType(const
+    carma_wm::signalized_intersection_manager::PHASE_TYPE& phase_type) const;
 
   /*!
    * \brief Use to allow updates to occur even if they invalidate the current route.

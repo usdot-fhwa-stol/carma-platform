@@ -44,6 +44,16 @@ struct LANE_DIRECTION
   static const uint8_t EGRESS = 1;
 };
 
+namespace signalized_intersection_manager
+{
+enum class PHASE_TYPE : uint8_t
+{
+  OFF = 0,
+  DYNAMIC = 1,
+  FIXED = 2
+};
+} // namespace signalized_intersection_manager
+
 using namespace lanelet::units::literals;
 
 /*! \brief This class manages and keeps track of all signalized intersections in the map.
@@ -240,6 +250,8 @@ public:
 
   bool use_sim_time_;
   bool use_real_time_spat_in_sim_;
+  signalized_intersection_manager::PHASE_TYPE phase_type_ =
+    signalized_intersection_manager::PHASE_TYPE::OFF;
 
 private:
   // PROJ string of current map

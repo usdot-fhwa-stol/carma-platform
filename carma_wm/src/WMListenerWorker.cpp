@@ -710,6 +710,12 @@ void WMListenerWorker::isSpatWallTime(bool use_real_time_spat_in_sim)
   world_model_->sim_.use_real_time_spat_in_sim_ = use_real_time_spat_in_sim;
 }
 
+void WMListenerWorker::setSpatProcessorType(const
+  signalized_intersection_manager::PHASE_TYPE& phase_type)
+{
+  world_model_->sim_.phase_type_ = phase_type;
+}
+
 double WMListenerWorker::getConfigSpeedLimit() const
 {
   return config_speed_limit_;

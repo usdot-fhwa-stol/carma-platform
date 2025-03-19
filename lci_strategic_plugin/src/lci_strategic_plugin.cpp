@@ -62,6 +62,9 @@ LCIStrategicPlugin::LCIStrategicPlugin(const rclcpp::NodeOptions &options)
   config_.intersection_transit_plugin_name = declare_parameter<std::string>("intersection_transit_plugin_name", config_.intersection_transit_plugin_name);
   config_.enable_carma_streets_connection = declare_parameter<bool>("enable_carma_streets_connection",config_.enable_carma_streets_connection);
   config_.mobility_rate = declare_parameter<double>("mobility_rate", config_.mobility_rate);
+  config_.signalized_intersection_phase_type =
+    declare_parameter<int>("signalized_intersection_phase_type",
+    config_.signalized_intersection_phase_type);
   config_.vehicle_id = declare_parameter<std::string>("vehicle_id", config_.vehicle_id);
 
   max_comfort_accel_ = config_.vehicle_accel_limit * config_.vehicle_accel_limit_multiplier;
@@ -93,6 +96,7 @@ carma_ros2_utils::CallbackReturn LCIStrategicPlugin::on_configure_plugin()
   get_parameter<std::string>("stop_and_wait_plugin_name", config_.stop_and_wait_plugin_name);
   get_parameter<std::string>("intersection_transit_plugin_name", config_.intersection_transit_plugin_name);
   get_parameter<bool>("enable_carma_streets_connection", config_.enable_carma_streets_connection);
+  get_parameter<int>("signalized_intersection_phase_type", config_.signalized_intersection_phase_type);
   get_parameter<double>("mobility_rate", config_.mobility_rate);
   get_parameter<std::string>("vehicle_id", config_.vehicle_id);
 
@@ -118,8 +122,14 @@ carma_ros2_utils::CallbackReturn LCIStrategicPlugin::on_configure_plugin()
   bsm_sub_ = create_subscription<carma_v2x_msgs::msg::BSM>("bsm_outbound", 1,
     std::bind(&LCIStrategicPlugin::BSMCb,this,std_ph::_1));
 
-  // set world model point form wm listener
+  // set world model point from wm listener
   wm_ = get_world_model();
+
+  // Activate SPAT processor, which is turned off by default,
+  // with OFF (0), DYNAMIC (1), FIXED (2)
+  get_world_model_listener()->setSpatProcessorType(
+    static_cast<carma_wm::signalized_intersection_manager::PHASE_TYPE>
+    (config_.signalized_intersection_phase_type));
 
   // Setup publishers
   mobility_operation_pub_ = create_publisher<carma_v2x_msgs::msg::MobilityOperation>("outgoing_mobility_operation", 1);
@@ -1331,7 +1341,7 @@ void LCIStrategicPlugin::plan_maneuvers_callback(
     current_lanelet = llt_on_route_optional.value();
   }
   else{
-    RCLCPP_WARN_STREAM(rclcpp::get_logger("lci_strategic_plugin"), "When identifying the corresponding lanelet for requested maneuever's state, x: " 
+    RCLCPP_WARN_STREAM(rclcpp::get_logger("lci_strategic_plugin"), "When identifying the corresponding lanelet for requested maneuever's state, x: "
       << req->veh_x << ", y: " << req->veh_y << ", no possible lanelet was found to be on the shortest path."
       << "Picking arbitrary lanelet: " << current_lanelets[0].id() << ", instead");
     current_lanelet = current_lanelets[0];

@@ -32,6 +32,10 @@ min_maneuver_planning_period : 15.1
 # Bool: If enable_carma_streets_connection is true when we want to allow carma streets functionality (UC3) and if its false that means we don't want to allow carma streets behaviour and will only use UC2 behaviour.
 enable_carma_streets_connection : false
 
+# Int: 0 to turn off SPAT processor, 1 for dynamic signalized intersection (UC3),
+# 2 for fixed signalized intersection (UC2)
+signalized_intersection_phase_type: 1
+
 # Double: Mobility operation rate
 mobility_rate : 10.0
 

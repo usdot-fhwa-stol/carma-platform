@@ -156,6 +156,13 @@ public:
    */
   void isSpatWallTime(bool use_real_time_spat_in_sim);
 
+  /**
+   *  \brief Activate SPAT processor, which is turned off by default,
+  // with OFF (0), DYNAMIC (1), FIXED (2)
+   */
+  void setSpatProcessorType(const
+    signalized_intersection_manager::PHASE_TYPE& phase_type);
+
 private:
   std::shared_ptr<CARMAWorldModel> world_model_;
   std::function<void()> map_callback_;
