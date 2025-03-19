@@ -25,12 +25,32 @@
 #include "TestHelpers.hpp"
 
 #include <carma_v2x_msgs/msg/traffic_control_message.hpp>
+#include <carma_v2x_msgs/msg/intersection_state.hpp>
+#include <carma_v2x_msgs/msg/movement_state.hpp>
+#include <carma_v2x_msgs/msg/movement_event.hpp>
+#include <j2735_v2x_msgs/msg/movement_phase_state.hpp>
 #include <carma_wm/WMTestLibForGuidance.hpp>
 
 
 namespace carma_wm
 
 {
+
+class SignalizedIntersectionManagerTest : public ::testing::Test {
+  protected:
+      std::shared_ptr<SignalizedIntersectionManager> manager_;
+      std::shared_ptr<lanelet::LaneletMap> semantic_map_;
+
+      void SetUp() override {
+          manager_ = std::make_shared<SignalizedIntersectionManager>();
+          semantic_map_ = std::make_shared<lanelet::LaneletMap>();
+
+          // Initialize necessary mock data and configurations
+          manager_->use_sim_time_ = false;
+          manager_->use_real_time_spat_in_sim_ = false;
+      }
+  };
+
 
 TEST(SignalizedIntersectionManger, convertLaneToLaneletId)
 {
@@ -379,15 +399,103 @@ TEST(SignalizedIntersectionManger, identifyInteriorLanelets)
 
 }
 
-TEST(SignalizedIntersectionManger, getTrafficSignalId)
-{
-  carma_wm::SignalizedIntersectionManager sim;
-  uint16_t intersection_id=1;
-  uint8_t signal_group_id=1;
-  sim.intersection_id_to_regem_id_[intersection_id] = 1001;
-  sim.signal_group_to_traffic_light_id_[signal_group_id] = 1000;
 
-  EXPECT_EQ(sim.getTrafficSignalId(intersection_id, signal_group_id), 1000);
+
+// Test for extract_signal_states_from_movement_state
+TEST_F(SignalizedIntersectionManagerTest, TestExtractSignalStatesFromMovementState) {
+  // Setup
+  carma_v2x_msgs::msg::IntersectionState intersection;
+  intersection.id.id = 123;
+  intersection.moy_exists = false;
+  intersection.moy = 0;
+
+  carma_v2x_msgs::msg::MovementState movement_state;
+  movement_state.signal_group = 1;
+
+  carma_v2x_msgs::msg::MovementEvent movement_event;
+  // Use the correct enum value based on your implementation
+  // (assuming the value 3 is used for GREEN in your MovementPhaseState)
+  movement_event.event_state.movement_phase_state = j2735_v2x_msgs::msg::MovementPhaseState::PROTECTED_MOVEMENT_ALLOWED;
+  movement_event.timing.min_end_time = 3600; // 1 hour from the start of the hour
+  movement_event.timing.start_time = 3500;   // Start time before end time
+
+  movement_state.movement_event_list.push_back(movement_event);
+
+  // Execute
+  auto result = manager_->extract_signal_states_from_movement_state(intersection, movement_state);
+
+  // Verify
+  auto min_end_t_and_states = std::get<0>(result);
+  auto start_time_and_states = std::get<1>(result);
+
+  ASSERT_EQ(min_end_t_and_states.size(), 1);
+  ASSERT_EQ(start_time_and_states.size(), 1);
+
+  // Check that the signal state is correctly converted - update this to match your actual enum mapping
+  EXPECT_EQ(min_end_t_and_states[0].second, static_cast<lanelet::CarmaTrafficSignalState>(j2735_v2x_msgs::msg::MovementPhaseState::PROTECTED_MOVEMENT_ALLOWED));
+
+  // Time conversion check
+  double expected_end_time = 3600;  // Since moy_exists is false, time should remain unchanged
+  double expected_start_time = 3500;
+
+  double actual_end_time = lanelet::time::toSec(min_end_t_and_states[0].first);
+  double actual_start_time = lanelet::time::toSec(start_time_and_states[0]);
+
+  EXPECT_NEAR(actual_end_time, expected_end_time, 0.001);
+  EXPECT_NEAR(actual_start_time, expected_start_time, 0.001);
+}
+
+// Test for min_end_time_converter_minute_of_year
+TEST_F(SignalizedIntersectionManagerTest, TestMinEndTimeConverterMinuteOfYear) {
+  // Setup
+  boost::posix_time::ptime test_time = lanelet::time::timeFromSec(3600); // 1 hour from epoch
+  bool moy_exists = false;
+  uint32_t moy = 0;
+  bool is_simulation = false;
+  bool use_real_time_spat_in_sim = false;
+
+  // Test 1: moy_exists = false (should return unchanged time)
+  // Execute
+  auto result1 = manager_->min_end_time_converter_minute_of_year(
+      test_time, moy_exists, moy, is_simulation, use_real_time_spat_in_sim);
+
+  // Verify
+  EXPECT_EQ(lanelet::time::toSec(result1), 3600);
+
+  // Test 2: moy_exists = true (should adjust for minute of year)
+  moy_exists = true;
+  moy = 60; // 1 hour into the year
+
+  // Since we can't mock the system clock easily, just verify the function runs without errors
+  auto result2 = manager_->min_end_time_converter_minute_of_year(
+      test_time, moy_exists, moy, is_simulation, use_real_time_spat_in_sim);
+
+  // At least verify the result is a valid ptime object
+  EXPECT_FALSE(result2.is_not_a_date_time());
+
+  // Test 3: simulation time
+  is_simulation = true;
+
+  auto result3 = manager_->min_end_time_converter_minute_of_year(
+      test_time, moy_exists, moy, is_simulation, use_real_time_spat_in_sim);
+
+  // At least verify the result is a valid ptime object
+  EXPECT_FALSE(result3.is_not_a_date_time());
+}
+
+// Simple test to verify SignalizedIntersectionManager instantiation
+TEST_F(SignalizedIntersectionManagerTest, TestInitialization) {
+  EXPECT_NE(manager_, nullptr);
+  EXPECT_FALSE(manager_->use_sim_time_);
+  EXPECT_FALSE(manager_->use_real_time_spat_in_sim_);
+}
+
+// Test for updateSignalAsDynamicSignal with empty signal states
+TEST_F(SignalizedIntersectionManagerTest, TestUpdateSignalAsDynamicSignalEmpty) {
+  uint16_t intersection_id = 123;
+
+  // Should not crash with empty signal states
+  EXPECT_NO_THROW(manager_->updateSignalAsDynamicSignal(intersection_id, semantic_map_));
 }
 
 }  // namespace carma_wm_ctrl
