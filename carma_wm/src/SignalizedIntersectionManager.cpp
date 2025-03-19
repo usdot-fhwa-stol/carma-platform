@@ -554,8 +554,6 @@ namespace carma_wm
       else
       {
         // TSMO UC3
-        RCLCPP_DEBUG_STREAM(rclcpp::get_logger("carma_wm"), "Updating as dynamic: "
-          << (int)curr_intersection.id.id);
         updateSignalAsDynamicSignal(curr_intersection.id.id, semantic_map);
       }
     }
@@ -584,8 +582,6 @@ namespace carma_wm
   {
 
     const auto& signal_groups_map = traffic_signal_states_[intersection_id];
-    RCLCPP_DEBUG_STREAM(rclcpp::get_logger("carma_wm"), "Got inside the right func");
-    RCLCPP_DEBUG_STREAM(rclcpp::get_logger("carma_wm"), "Map size: " << signal_groups_map.size());
     // Iterate over all signal groups for this intersection
     // and directly apply the recorded signal states list to each traffic signal objects
     for (const auto& [signal_group_id, signal_states] : signal_groups_map) {
@@ -605,16 +601,9 @@ namespace carma_wm
       curr_light->recorded_start_time_stamps  =
         traffic_signal_start_times_[intersection_id][signal_group_id];
 
-      RCLCPP_DEBUG_STREAM(rclcpp::get_logger("carma_wm"), "Updated curr_light: "  <<
-        curr_light->id());
-      RCLCPP_DEBUG_STREAM(rclcpp::get_logger("carma_wm"), "with size: " <<
-        traffic_signal_states_[intersection_id][signal_group_id].size());
-
       traffic_signal_states_[intersection_id][signal_group_id]={};
       traffic_signal_start_times_[intersection_id][signal_group_id]={};
     }
-    RCLCPP_DEBUG_STREAM(rclcpp::get_logger("carma_wm"), "Getting out the func");
-
   }
 
   lanelet::CarmaTrafficSignalPtr SignalizedIntersectionManager::getTrafficSignal(const
