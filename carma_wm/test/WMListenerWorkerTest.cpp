@@ -131,7 +131,7 @@ TEST(WMListenerWorkerTest, routeCallback)
   wmlw.mapUpdateCallback(std::make_unique<autoware_lanelet2_msgs::msg::MapBin>(geofence_msg));
   wmlw.enableUpdatesWithoutRoute();
   wmlw.routeCallback(std::make_unique<carma_planning_msgs::msg::Route>(route_msg));
-  
+
 }
 
 TEST(WMListenerWorkerTest, mapUpdateCallback)
@@ -169,7 +169,7 @@ TEST(WMListenerWorkerTest, mapUpdateCallback)
   carma_wm::toBinMsg(received_data, &gf_obj_msg);
 
   // create a listener
-  WMListenerWorker wmlw; 
+  WMListenerWorker wmlw;
   // create basic map
   ll_1.addRegulatoryElement(speed_limit_old);
   lanelet::LaneletMapPtr map = lanelet::utils::createMap({ ll_1 }, { });
@@ -182,18 +182,18 @@ TEST(WMListenerWorkerTest, mapUpdateCallback)
   auto regems = wmlw.getWorldModel()->getMap()->laneletLayer.get(ll_1.id()).regulatoryElements();
   ASSERT_EQ(regems.size(), 1);
   ASSERT_EQ(regems[0]->id(), speed_limit_old->id());
-  ASSERT_NE(wmlw.getWorldModel()->getMap()->regulatoryElementLayer.find(speed_limit_old->id()), 
+  ASSERT_NE(wmlw.getWorldModel()->getMap()->regulatoryElementLayer.find(speed_limit_old->id()),
             wmlw.getWorldModel()->getMap()->regulatoryElementLayer.end());
 
   // test the MapUpdateCallback
   wmlw.mapUpdateCallback(std::make_unique<autoware_lanelet2_msgs::msg::MapBin>(gf_obj_msg));
-  
+
   // check if the map has the new speed limit now
   regems = wmlw.getWorldModel()->getMap()->laneletLayer.get(ll_1.id()).regulatoryElements();
   ASSERT_EQ(regems.size(), 1);
   ASSERT_EQ(regems[0]->id(), speed_limit_new->id());
   // and it is queryable:
-  ASSERT_NE(wmlw.getWorldModel()->getMap()->regulatoryElementLayer.find(speed_limit_new->id()), 
+  ASSERT_NE(wmlw.getWorldModel()->getMap()->regulatoryElementLayer.find(speed_limit_new->id()),
             wmlw.getWorldModel()->getMap()->regulatoryElementLayer.end());
   ASSERT_EQ(wmlw.getWorldModel()->getMap()->laneletLayer.findUsages(speed_limit_new).size(), 0); // same element not not queryable here because different node
                                                                                                  // using different data address. This should be 0
@@ -203,14 +203,14 @@ TEST(WMListenerWorkerTest, mapUpdateCallback)
   // check if the map has the new lanelet now
   ASSERT_EQ(wmlw.getWorldModel()->getMap()->laneletLayer.size(), 2);
   ASSERT_TRUE(wmlw.getWorldModel()->getMap()->laneletLayer.exists(ll_2.id()));
-  
+
   // but old regem should still be there as the updater doesn't completely delete old regems, but only sever the connections
   auto regem_old_correct_data = wmlw.getWorldModel()->getMap()->regulatoryElementLayer.get(speed_limit_old->id());
-  ASSERT_NE(wmlw.getWorldModel()->getMap()->regulatoryElementLayer.find(speed_limit_old->id()), 
+  ASSERT_NE(wmlw.getWorldModel()->getMap()->regulatoryElementLayer.find(speed_limit_old->id()),
             wmlw.getWorldModel()->getMap()->regulatoryElementLayer.end());
   ASSERT_EQ(wmlw.getWorldModel()->getMap()->laneletLayer.findUsages(regem_old_correct_data).size(), 0);
   ASSERT_EQ(wmlw.getWorldModel()->getMap()->laneletLayer.findUsages(speed_limit_old).size(), 0);
-  
+
   // now the change should be reversable
   gf_ptr->update_list_ = {};
   gf_ptr->remove_list_ = {};
@@ -234,7 +234,7 @@ TEST(WMListenerWorkerTest, mapUpdateCallback)
   ASSERT_EQ(regems.size(), 1);
   ASSERT_EQ(regems[0]->id(), speed_limit_old->id()); //TODO- fix
   // and it is queryable:
-  ASSERT_NE(wmlw.getWorldModel()->getMap()->regulatoryElementLayer.find(speed_limit_old->id()), 
+  ASSERT_NE(wmlw.getWorldModel()->getMap()->regulatoryElementLayer.find(speed_limit_old->id()),
             wmlw.getWorldModel()->getMap()->regulatoryElementLayer.end());
 
   // old_speed_limit's data is also stored at a different address from the one we created locally because
@@ -242,7 +242,7 @@ TEST(WMListenerWorkerTest, mapUpdateCallback)
   ASSERT_EQ(wmlw.getWorldModel()->getMap()->regulatoryElementLayer.get(speed_limit_old->id()), regem_old_correct_data); //TODO- fix
   ASSERT_EQ(wmlw.getWorldModel()->getMap()->laneletLayer.findUsages(regem_old_correct_data).size(), 1);
   ASSERT_EQ(wmlw.getWorldModel()->getMap()->laneletLayer.findUsages(regem_old_correct_data)[0].id(), ll_1.id()); //TODO- fix
-  
+
 }
 
 TEST(WMListenerWorkerTest, setConfigSpeedLimitTest)

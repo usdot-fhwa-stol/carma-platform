@@ -167,7 +167,8 @@ public:
   *  \brief Update the recorded traffic signal objects in the intersection as fixed signal,
   *         determining the phase cycles from the available signal durations.
   *         Do nothing if intersection_id is not found.
-  *  \param intersection_id of the intersection TODO
+  *  \param intersection_id of the intersection
+  *  \param lanelet_map to update the regulatory elements according to internal signals recorded
   */
   void updateSignalAsFixedSignal(uint16_t intersection_id,
     const std::shared_ptr<lanelet::LaneletMap>& semantic_map);
@@ -175,14 +176,19 @@ public:
   /*!
   *  \brief Update the recorded traffic signal objects in the intersection as dynamic signal,
   *         directly overwriting any previous states
-  *  \param intersection_id of the intersection TODO
+  *  \param intersection_id of the intersection
+  *  \param lanelet_map to update the regulatory elements according to internal signals recorded
   */
   void updateSignalAsDynamicSignal(uint16_t intersection_id,
     const std::shared_ptr<lanelet::LaneletMap>& semantic_map);
 
   /*!
-  *  \brief TODO
-  *  \param intersection_id of the intersection TODO
+  *  \brief Extract tuple of 1) vector of pair of traffic signal states' min_end_time and their
+            states, which is mainly used by CARMA to comply with traffic signals.
+            2) vector of traffic signal states' start_times that match in order
+  *  \param curr_intersection carma_v2x_msgs::msg::IntersectionState from SPAT
+  *  \param current_movement_state carma_v2x_msgs::msg::MovementState from SPAT
+  *  \return tuple of 2 vectors. 1) vector of min_end_time and state pairs 2) vector of start_time
   */
   std::tuple<std::vector<std::pair<boost::posix_time::ptime, lanelet::CarmaTrafficSignalState>>,
     std::vector<boost::posix_time::ptime>>

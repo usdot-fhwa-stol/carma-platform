@@ -471,7 +471,7 @@ namespace carma_wm
   {
     // Find opposing light
 
-    // TODO
+    // TODO CDAD-79
 
   }
 
@@ -496,9 +496,6 @@ namespace carma_wm
 
     for (const auto& curr_intersection : spat_msg.intersection_state_list)
     {
-      // TODO: Just expect fixed signal at this point
-      // Need to make read it from parameter specified for the intersection
-
       for (const auto& current_movement_state : curr_intersection.movement_list)
       {
         lanelet::Id curr_light_id = getTrafficSignalId(curr_intersection.id.id, current_movement_state.signal_group);
