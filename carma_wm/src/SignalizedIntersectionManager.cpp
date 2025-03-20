@@ -520,7 +520,7 @@ namespace carma_wm
         end_time_of_green = state_transitions.back().first;
         green_signal_index = state_transitions.size() - 1;
         RCLCPP_DEBUG_STREAM(rclcpp::get_logger("carma_wm::SignalizedIntersectionManager"),
-            "Detected the green! for " << signal_group_id);
+            "Detected the green! for " << (int)signal_group_id);
         continue;
       }
 
@@ -530,8 +530,10 @@ namespace carma_wm
         const auto& current_state = state_transitions[i];
         const auto& next_state = state_transitions[i + 1];
 
-        // Check if both current and next states are RED
-        if (current_state.second == lanelet::CarmaTrafficSignalState::STOP_AND_REMAIN &&
+        // We need the transition from ALL RED to RED or
+        // YELLOW TO RED
+        if (
+            current_state.second == lanelet::CarmaTrafficSignalState::PROTECTED_CLEARANCE &&
             next_state.second == lanelet::CarmaTrafficSignalState::STOP_AND_REMAIN)
         {
           RCLCPP_DEBUG_STREAM(rclcpp::get_logger("carma_wm::SignalizedIntersectionManager"),
@@ -691,6 +693,18 @@ namespace carma_wm
         auto extracted_signal_states =
           extract_signal_states_from_movement_state(curr_intersection, current_movement_state);
 
+        // if (phase_type_ == signalized_intersection_manager::PHASE_TYPE::FIXED &&
+        //   traffic_signal_states_[curr_intersection.id.id][current_movement_state.signal_group].size() == 2)
+        // {
+        //   // For detecting fixed signal, we only need latest 2 signals
+        //   RCLCPP_DEBUG_STREAM(rclcpp::get_logger("carma_wm"),
+        //     "Resetting the internal recordings as the bucket is overflowing: intersecton id: "
+        //     << (int) curr_intersection.id.id << ", signal: "
+        //     << (int)current_movement_state.signal_group);
+
+        //   traffic_signal_states_[curr_intersection.id.id][current_movement_state.signal_group] = {};
+        //   traffic_signal_start_times_[curr_intersection.id.id][current_movement_state.signal_group] = {};
+        // }
         traffic_signal_states_[curr_intersection.id.id][current_movement_state.signal_group].insert(
           traffic_signal_states_[curr_intersection.id.id][current_movement_state.signal_group].end(),
           std::get<0>(extracted_signal_states).begin(),
@@ -823,8 +837,6 @@ namespace carma_wm
     const boost::posix_time::ptime& min_end_time,
     lanelet::CarmaTrafficSignalState state)
   {
-    RCLCPP_ERROR_STREAM(rclcpp::get_logger("carma_wm"),
-      "Testing if it was here before!!!!: " << (int)intersection_id << "is not seen before! updating");
     // Check if this intersection and signal group have been seen before
       auto it_intersection = last_seen_state_.find(intersection_id);
       if (it_intersection == last_seen_state_.end()) {
