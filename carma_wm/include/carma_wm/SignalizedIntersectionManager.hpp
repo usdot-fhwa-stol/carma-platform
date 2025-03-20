@@ -196,7 +196,7 @@ public:
       const carma_v2x_msgs::msg::IntersectionState& curr_intersection,
       const carma_v2x_msgs::msg::MovementState& current_movement_state);
 
-    /*! \brief update minimum end time to account for minute of the year
+  /*! \brief update minimum end time to account for minute of the year
     * \param min_end_time minimum end time of the spat movement event list
     * \param moy_exists tells weather minute of the year exist or not
     * \param moy value of the minute of the year
@@ -208,6 +208,36 @@ public:
   boost::posix_time::ptime min_end_time_converter_minute_of_year(
     boost::posix_time::ptime min_end_time,bool moy_exists,uint32_t moy=0,
     bool is_simulation = true, bool use_real_time_spat_in_sim=false);
+
+  /*! \brief Checks if a signal state for a specific intersection and signal group has already been processed
+  * \param intersection_id The ID of the intersection
+  * \param signal_group_id The ID of the signal group within the intersection
+  * \param min_end_time The minimum end time of the signal state
+  * \param state The traffic signal state to check
+  * \return true if this state has already been seen (within tolerance), false otherwise
+  *
+  * This function checks if a particular signal state has already been processed by comparing
+  * it with the last recorded state for the given intersection and signal group. It allows for
+  * a small time tolerance (0.5 seconds) to account for minor timestamp differences.
+  */
+  bool isSignalStateAlreadySeen(
+    uint16_t intersection_id,
+    uint8_t signal_group_id,
+    const boost::posix_time::ptime& min_end_time,
+    lanelet::CarmaTrafficSignalState state);
+
+  /*! \brief Updates the internal variable of last seen state for each signal_group
+  *          Used to compare when new signal info comes from SPAT so as not to re-process
+  * \param intersection_id The ID of the intersection
+  * \param signal_group_id The ID of the signal group within the intersection
+  * \param min_end_time The minimum end time of the signal state
+  * \param state The traffic signal state to check
+  */
+  void updateLastSeenState(
+    uint16_t intersection_id,
+    uint8_t signal_group_id,
+    const boost::posix_time::ptime& min_end_time,
+    lanelet::CarmaTrafficSignalState state);
 
   /*! \brief helper for traffic signal Id
    */
@@ -247,9 +277,6 @@ public:
 
   // Last received signal state from SPAT
   std::unordered_map<uint16_t, std::unordered_map<uint8_t,std::pair<boost::posix_time::ptime, lanelet::CarmaTrafficSignalState>>> last_seen_state_; //[intersection_id][signal_group_id]
-
-  // traffic signal state counter
-  std::unordered_map<uint16_t, std::unordered_map<uint8_t,int>> signal_state_counter_; //[intersection_id][signal_group_id]
 
   std::optional<rclcpp::Time> ros1_clock_ = std::nullopt;
   std::optional<rclcpp::Time> simulation_clock_ = std::nullopt;
