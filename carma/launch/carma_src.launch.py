@@ -345,7 +345,7 @@ def generate_launch_description():
             {'port': 8765},
             {'topic_whitelist': ['.*']},  # All topics bridged
         ],
-        condition=LaunchConfiguration('use_foxglove'),
+        condition=IfCondition(LaunchConfiguration('use_foxglove')),
     )
 
     system_controller = Node(
