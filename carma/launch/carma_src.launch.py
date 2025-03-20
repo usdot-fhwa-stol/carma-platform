@@ -210,6 +210,13 @@ def generate_launch_description():
         description = 'True if user wants Autoware Lidar Object Detection to be enabled'
     )
 
+    use_foxglove_arg = LaunchConfiguration('use_foxglove')
+    declare_use_foxglove_arg = DeclareLaunchArgument(
+        name='use_foxglove',
+        default_value='False',
+        description='Whether to start the Foxglove Bridge'
+    )
+
     # Launch ROS2 rosbag logging
     ros2_rosbag_launch = GroupAction(
         actions=[
@@ -328,6 +335,19 @@ def generate_launch_description():
         ]
     )
 
+    # Create the Foxglove Bridge node
+    foxglove_bridge_node = Node(
+        package='foxglove_bridge',
+        executable='foxglove_bridge',
+        name='foxglove_bridge',
+        output='screen',
+        parameters=[
+            {'port': 8765},
+            {'topic_whitelist': ['.*']},  # All topics bridged
+        ],
+        condition=LaunchConfiguration('use_foxglove'),
+    )
+
     system_controller = Node(
         package='system_controller',
         name='system_controller',
@@ -374,8 +394,10 @@ def generate_launch_description():
         declare_is_ros2_tracing_enabled,
         declare_is_cp_mot_enabled,
         declare_is_autoware_lidar_obj_detection_enabled,
+        declare_use_foxglove_arg,
         ros2_rosbag_launch,
         OpaqueFunction(function=create_ros2_tracing_action),
+        foxglove_bridge_node,
         drivers_group,
         transform_group,
         environment_group,
