@@ -466,15 +466,6 @@ namespace carma_wm
     this->intersection_coord_correction_ = other.intersection_coord_correction_;
   }
 
-  void SignalizedIntersectionManager::updateSignalAsFixedSignal(
-    uint16_t intersection_id, const std::shared_ptr<lanelet::LaneletMap>& semantic_map)
-  {
-    // Find opposing light
-
-    // TODO CDAD-79
-
-  }
-
   void SignalizedIntersectionManager::processSpatFromMsg(const carma_v2x_msgs::msg::SPAT &spat_msg, const std::shared_ptr<lanelet::LaneletMap>& semantic_map)
   {
     if (phase_type_ == SIGNAL_PHASE_PROCESSING::OFF)
@@ -513,14 +504,6 @@ namespace carma_wm
           continue;
         }
 
-        // reset states if the intersection's geometry changed
-        if (curr_light->revision_ != curr_intersection.revision)
-        {
-          RCLCPP_DEBUG_STREAM(rclcpp::get_logger("carma_wm"), "Received a new intersection geometry. intersection_id: " << (int)curr_intersection.id.id << ", and signal_group_id: " << (int)current_movement_state.signal_group);
-          traffic_signal_start_times_[curr_intersection.id.id][current_movement_state.signal_group].clear();
-          traffic_signal_states_[curr_intersection.id.id][current_movement_state.signal_group].clear();
-        }
-
         // all maneuver types in same signal group is currently expected to share signal timing, so only 0th index is used when setting states
         if (current_movement_state.movement_event_list.empty())
         {
@@ -537,24 +520,8 @@ namespace carma_wm
         auto extracted_signal_states =
           extract_signal_states_from_movement_state(curr_intersection, current_movement_state);
 
-        traffic_signal_states_[curr_intersection.id.id][current_movement_state.signal_group] =
-          std::get<0>(extracted_signal_states);
-        traffic_signal_start_times_[curr_intersection.id.id][current_movement_state.signal_group] =
-          std::get<1>(extracted_signal_states);
-      }
-
-
-      // After all signal groups are recorded, update regulatory element objects in the map for
-      // this intersection based on whether if it is dynamic or fixed signal intersection
-      if (phase_type_ == SIGNAL_PHASE_PROCESSING::FIXED)
-      {
-        // TSMO UC2
-        updateSignalAsFixedSignal(curr_intersection.id.id, semantic_map);
-      }
-      else
-      {
-        // TSMO UC3
-        updateSignalsInMap(curr_intersection.id.id, semantic_map);
+        curr_light->recorded_time_stamps = std::get<0>(extracted_signal_states);
+        curr_light->recorded_start_time_stamps = std::get<1>(extracted_signal_states);
       }
     }
   }
@@ -585,35 +552,6 @@ namespace carma_wm
     }
 
     return signal_id;
-  }
-
-  void SignalizedIntersectionManager::updateSignalsInMap(
-    uint16_t intersection_id, const std::shared_ptr<lanelet::LaneletMap>& semantic_map)
-  {
-
-    const auto& signal_groups_map = traffic_signal_states_[intersection_id];
-    // Iterate over all signal groups for this intersection
-    // and directly apply the recorded signal states list to each traffic signal objects
-    for (const auto& [signal_group_id, signal_states] : signal_groups_map) {
-
-      // If no new update is recorded, it shouldn't update anything and skip
-      if (traffic_signal_states_[intersection_id][signal_group_id].empty() &&
-        traffic_signal_start_times_[intersection_id][signal_group_id].empty())
-      {
-        continue;
-      }
-
-      lanelet::Id curr_light_id = getTrafficSignalId(intersection_id, signal_group_id);
-      lanelet::CarmaTrafficSignalPtr curr_light = getTrafficSignal(curr_light_id, semantic_map);
-
-      curr_light->recorded_time_stamps =
-        traffic_signal_states_[intersection_id][signal_group_id];
-      curr_light->recorded_start_time_stamps  =
-        traffic_signal_start_times_[intersection_id][signal_group_id];
-
-      traffic_signal_states_[intersection_id][signal_group_id]={};
-      traffic_signal_start_times_[intersection_id][signal_group_id]={};
-    }
   }
 
   lanelet::CarmaTrafficSignalPtr SignalizedIntersectionManager::getTrafficSignal(const

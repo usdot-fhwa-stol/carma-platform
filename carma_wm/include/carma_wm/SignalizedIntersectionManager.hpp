@@ -161,15 +161,6 @@ public:
     const std::shared_ptr<lanelet::LaneletMap>& semantic_map);
 
   /*!
-  *  \brief Update the recorded traffic signal objects in the map's intersection with the new
-  *         states, directly overwriting any previous states
-  *  \param intersection_id of the intersection
-  *  \param lanelet_map to update the regulatory elements according to internal signals recorded
-  */
-  void updateSignalsInMap(uint16_t intersection_id,
-    const std::shared_ptr<lanelet::LaneletMap>& semantic_map);
-
-  /*!
   *  \brief Extract tuple of 1) vector of pair of traffic signal states' min_end_time and their
             states, which is mainly used by CARMA to comply with traffic signals.
             2) vector of traffic signal states' start_times that match in order
@@ -224,18 +215,6 @@ public:
 
   // CarmaTrafficSignal entry lanelets ids quick lookup
   std::unordered_map<uint8_t, std::unordered_set<lanelet::Id>> signal_group_to_entry_lanelet_ids_;
-
-  // Traffic signal states and their end_time mappings.
-  std::unordered_map<uint16_t, std::unordered_map<uint8_t,std::vector<std::pair<boost::posix_time::ptime, lanelet::CarmaTrafficSignalState>>>> traffic_signal_states_; //[intersection_id][signal_group_id]
-
-  // Traffic signal's start_time mappings (must be same size as traffic_signal_states_)
-  std::unordered_map<uint16_t, std::unordered_map<uint8_t,std::vector<boost::posix_time::ptime>>> traffic_signal_start_times_; //[intersection_id][signal_group_id]
-
-  // Last received signal state from SPAT
-  std::unordered_map<uint16_t, std::unordered_map<uint8_t,std::pair<boost::posix_time::ptime, lanelet::CarmaTrafficSignalState>>> last_seen_state_; //[intersection_id][signal_group_id]
-
-  // traffic signal state counter
-  std::unordered_map<uint16_t, std::unordered_map<uint8_t,int>> signal_state_counter_; //[intersection_id][signal_group_id]
 
   std::optional<rclcpp::Time> ros1_clock_ = std::nullopt;
   std::optional<rclcpp::Time> simulation_clock_ = std::nullopt;
