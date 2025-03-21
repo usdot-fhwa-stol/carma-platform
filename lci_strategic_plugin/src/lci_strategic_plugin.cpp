@@ -127,7 +127,7 @@ carma_ros2_utils::CallbackReturn LCIStrategicPlugin::on_configure_plugin()
 
   // Activate SPAT processor, which is turned off by default,
   // with OFF (0), ON (1)
-  get_world_model_listener()->enableSpatProcessing(
+  get_world_model_listener()->toggleSpatProcessing(
     static_cast<carma_wm::SIGNAL_PHASE_PROCESSING>(config_.enable_spat_processing));
 
   // Setup publishers

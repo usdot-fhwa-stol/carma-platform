@@ -153,7 +153,7 @@ public:
 
   /**
    * \brief processSpatFromMsg update map's traffic light states with SPAT msg
-   *  NOTE: This is enabled in the individual nodes through wm_listener's togglerSpatProcessing()
+   *  NOTE: This is enabled in the individual nodes through wm_listener's toggleSpatProcessing()
    *  \param spat_msg Msg to update with
    *  \param lanelet_map to update the regulatory elements according to internal signals recorded
    */
