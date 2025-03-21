@@ -713,7 +713,7 @@ void WMListenerWorker::isSpatWallTime(bool use_real_time_spat_in_sim)
 void WMListenerWorker::enableSpatProcessing(const
   SIGNAL_PHASE_PROCESSING& phase_type)
 {
-  world_model_->sim_.phase_type_ = phase_type;
+  world_model_->sim_.spat_processor_state_ = phase_type;
 }
 
 double WMListenerWorker::getConfigSpeedLimit() const

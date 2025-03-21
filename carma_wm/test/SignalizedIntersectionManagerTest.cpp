@@ -261,7 +261,7 @@ TEST(SignalizedIntersectionManger, processSpatFromMsg)
   state.movement_list.push_back(movement);
   spat.intersection_state_list.push_back(state);
   sim.processSpatFromMsg(spat, map);
-  sim.phase_type_ = carma_wm::SIGNAL_PHASE_PROCESSING::ON;
+  sim.spat_processor_state_ = carma_wm::SIGNAL_PHASE_PROCESSING::ON;
   auto lights1 = map->laneletLayer.get(ll_1.id()).regulatoryElementsAs<lanelet::CarmaTrafficSignal>();
   // By default, traffic_signal shouldn't have fixed_cycle_duration
   EXPECT_EQ(lanelet::time::durationFromSec(0), lights1[0]->fixed_cycle_duration);

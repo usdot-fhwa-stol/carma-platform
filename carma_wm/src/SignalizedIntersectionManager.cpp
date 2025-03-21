@@ -468,7 +468,7 @@ namespace carma_wm
 
   void SignalizedIntersectionManager::processSpatFromMsg(const carma_v2x_msgs::msg::SPAT &spat_msg, const std::shared_ptr<lanelet::LaneletMap>& semantic_map)
   {
-    if (phase_type_ == SIGNAL_PHASE_PROCESSING::OFF)
+    if (spat_processor_state_ == SIGNAL_PHASE_PROCESSING::OFF)
     {
       return;
     }

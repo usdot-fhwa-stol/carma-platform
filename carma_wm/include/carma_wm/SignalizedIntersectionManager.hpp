@@ -221,7 +221,7 @@ public:
 
   bool use_sim_time_;
   bool use_real_time_spat_in_sim_;
-  SIGNAL_PHASE_PROCESSING phase_type_ = SIGNAL_PHASE_PROCESSING::OFF;
+  SIGNAL_PHASE_PROCESSING spat_processor_state_ = SIGNAL_PHASE_PROCESSING::OFF;
 
 private:
   // PROJ string of current map
