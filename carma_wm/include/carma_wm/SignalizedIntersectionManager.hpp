@@ -44,15 +44,11 @@ struct LANE_DIRECTION
   static const uint8_t EGRESS = 1;
 };
 
-namespace signalized_intersection_manager
-{
-enum class PHASE_TYPE : uint8_t
+enum class SIGNAL_PHASE_PROCESSING : uint8_t
 {
   OFF = 0,
-  DYNAMIC = 1,
-  FIXED = 2
+  ON = 1,
 };
-} // namespace signalized_intersection_manager
 
 using namespace lanelet::units::literals;
 
@@ -156,30 +152,21 @@ public:
   lanelet::Lanelets identifyInteriorLanelets(const lanelet::Lanelets& entry_llts, const std::shared_ptr<lanelet::LaneletMap>& map);
 
   /**
-   * @brief processSpatFromMsg update map's traffic light states with SPAT msg
-   *
-   * @param spat_msg Msg to update with
+   * \brief processSpatFromMsg update map's traffic light states with SPAT msg
+   *  NOTE: This is enabled in the individual nodes through wm_listener's enableSpatProcessing()
+   *  \param spat_msg Msg to update with
+   *  \param lanelet_map to update the regulatory elements according to internal signals recorded
    */
   void processSpatFromMsg(const carma_v2x_msgs::msg::SPAT& spat_msg,
     const std::shared_ptr<lanelet::LaneletMap>& semantic_map);
 
   /*!
-  *  \brief Update the recorded traffic signal objects in the intersection as fixed signal,
-  *         determining the phase cycles from the available signal durations.
-  *         Do nothing if intersection_id is not found.
+  *  \brief Update the recorded traffic signal objects in the map's intersection with the new
+  *         states, directly overwriting any previous states
   *  \param intersection_id of the intersection
   *  \param lanelet_map to update the regulatory elements according to internal signals recorded
   */
-  void updateSignalAsFixedSignal(uint16_t intersection_id,
-    const std::shared_ptr<lanelet::LaneletMap>& semantic_map);
-
-  /*!
-  *  \brief Update the recorded traffic signal objects in the intersection as dynamic signal,
-  *         directly overwriting any previous states
-  *  \param intersection_id of the intersection
-  *  \param lanelet_map to update the regulatory elements according to internal signals recorded
-  */
-  void updateSignalAsDynamicSignal(uint16_t intersection_id,
+  void updateSignalsInMap(uint16_t intersection_id,
     const std::shared_ptr<lanelet::LaneletMap>& semantic_map);
 
   /*!
@@ -203,7 +190,6 @@ public:
     * \param use_real_time_spat_in_sim Boolean to indicate if the incoming spat is based on
     *   wall clock. Required in edge cases where deployment in simulation is receiving
     *   SPaT messages based on wall clock.
-    * Defaults to false.
    */
   boost::posix_time::ptime min_end_time_converter_minute_of_year(
     boost::posix_time::ptime min_end_time,bool moy_exists,uint32_t moy=0,
@@ -256,8 +242,7 @@ public:
 
   bool use_sim_time_;
   bool use_real_time_spat_in_sim_;
-  signalized_intersection_manager::PHASE_TYPE phase_type_ =
-    signalized_intersection_manager::PHASE_TYPE::OFF;
+  SIGNAL_PHASE_PROCESSING phase_type_ = SIGNAL_PHASE_PROCESSING::OFF;
 
 private:
   // PROJ string of current map

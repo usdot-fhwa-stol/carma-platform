@@ -477,7 +477,7 @@ namespace carma_wm
 
   void SignalizedIntersectionManager::processSpatFromMsg(const carma_v2x_msgs::msg::SPAT &spat_msg, const std::shared_ptr<lanelet::LaneletMap>& semantic_map)
   {
-    if (phase_type_ == signalized_intersection_manager::PHASE_TYPE::OFF)
+    if (phase_type_ == SIGNAL_PHASE_PROCESSING::OFF)
     {
       return;
     }
@@ -546,7 +546,7 @@ namespace carma_wm
 
       // After all signal groups are recorded, update regulatory element objects in the map for
       // this intersection based on whether if it is dynamic or fixed signal intersection
-      if (phase_type_ == signalized_intersection_manager::PHASE_TYPE::FIXED)
+      if (phase_type_ == SIGNAL_PHASE_PROCESSING::FIXED)
       {
         // TSMO UC2
         updateSignalAsFixedSignal(curr_intersection.id.id, semantic_map);
@@ -554,7 +554,7 @@ namespace carma_wm
       else
       {
         // TSMO UC3
-        updateSignalAsDynamicSignal(curr_intersection.id.id, semantic_map);
+        updateSignalsInMap(curr_intersection.id.id, semantic_map);
       }
     }
   }
@@ -568,16 +568,26 @@ namespace carma_wm
     {
       inter_id = intersection_id_to_regem_id_[intersection_id];
     }
+    else
+    {
+      RCLCPP_WARN_STREAM(rclcpp::get_logger("carma_wm"), "Intersection id: " << intersection_id << " is not found in the map. Returning...");
+      return inter_id;
+    }
 
-    if (inter_id != lanelet::InvalId && signal_group_to_traffic_light_id_.find(signal_group_id) != signal_group_to_traffic_light_id_.end())
+    if (signal_group_to_traffic_light_id_.find(signal_group_id) != signal_group_to_traffic_light_id_.end())
     {
       signal_id = signal_group_to_traffic_light_id_[signal_group_id];
+    }
+    else
+    {
+      RCLCPP_WARN_STREAM(rclcpp::get_logger("carma_wm"), "Signal group id: " << signal_group_id << " is not found in the map. Returning...");
+      return signal_id;
     }
 
     return signal_id;
   }
 
-  void SignalizedIntersectionManager::updateSignalAsDynamicSignal(
+  void SignalizedIntersectionManager::updateSignalsInMap(
     uint16_t intersection_id, const std::shared_ptr<lanelet::LaneletMap>& semantic_map)
   {
 

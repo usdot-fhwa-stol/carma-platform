@@ -115,10 +115,10 @@ public:
 
   /**
    *  \brief Activate SPAT processor, which is turned off by default,
-  // with OFF (0), DYNAMIC (1), FIXED (2)
+  // with OFF (0), ON (1)
    */
-  void setSpatProcessorType(const
-    carma_wm::signalized_intersection_manager::PHASE_TYPE& phase_type) const;
+  void enableSpatProcessing(const
+    SIGNAL_PHASE_PROCESSING& phase_type) const;
 
   /*!
    * \brief Use to allow updates to occur even if they invalidate the current route.

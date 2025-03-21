@@ -224,13 +224,11 @@ void WMListener::setConfigSpeedLimit(double config_lim) const
   worker_->setConfigSpeedLimit(config_lim);
 }
 
-#ifndef SONAR_SCAN
-void WMListener::setSpatProcessorType(const
-  carma_wm::signalized_intersection_manager::PHASE_TYPE& phase_type) const
+void WMListener::enableSpatProcessing(const
+  carma_wm::SIGNAL_PHASE_PROCESSING& phase_type) const
 {
-  worker_->setSpatProcessorType(phase_type);
+  worker_->enableSpatProcessing(phase_type);
 }
-#endif
 
 // @SONAR_START@
 

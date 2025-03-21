@@ -261,7 +261,7 @@ TEST(SignalizedIntersectionManger, processSpatFromMsg)
   state.movement_list.push_back(movement);
   spat.intersection_state_list.push_back(state);
   sim.processSpatFromMsg(spat, map);
-  sim.phase_type_ = carma_wm::signalized_intersection_manager::PHASE_TYPE::DYNAMIC; //dynamic
+  sim.phase_type_ = carma_wm::SIGNAL_PHASE_PROCESSING::ON; //dynamic
   auto lights1 = map->laneletLayer.get(ll_1.id()).regulatoryElementsAs<lanelet::CarmaTrafficSignal>();
   // By default, traffic_signal shouldn't have fixed_cycle_duration
   EXPECT_EQ(lanelet::time::durationFromSec(0), lights1[0]->fixed_cycle_duration);
@@ -490,12 +490,12 @@ TEST_F(SignalizedIntersectionManagerTest, TestInitialization) {
   EXPECT_FALSE(manager_->use_real_time_spat_in_sim_);
 }
 
-// Test for updateSignalAsDynamicSignal with empty signal states
-TEST_F(SignalizedIntersectionManagerTest, TestUpdateSignalAsDynamicSignalEmpty) {
+// Test for updateSignalsInMap with empty signal states
+TEST_F(SignalizedIntersectionManagerTest, TestupdateSignalsInMapEmpty) {
   uint16_t intersection_id = 123;
 
   // Should not crash with empty signal states
-  EXPECT_NO_THROW(manager_->updateSignalAsDynamicSignal(intersection_id, semantic_map_));
+  EXPECT_NO_THROW(manager_->updateSignalsInMap(intersection_id, semantic_map_));
 }
 
 }  // namespace carma_wm_ctrl

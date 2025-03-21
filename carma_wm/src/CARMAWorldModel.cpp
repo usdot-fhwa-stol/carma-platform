@@ -595,7 +595,6 @@ namespace carma_wm
     return semantic_map_;
   }
 
-  #ifndef SONAR_SCAN
   void CARMAWorldModel::setRos1Clock(const rclcpp::Time& time_now)
   {
     sim_.ros1_clock_ = time_now;
@@ -605,7 +604,6 @@ namespace carma_wm
   {
     sim_.simulation_clock_ = time_now;
   }
-  #endif
 
   void CARMAWorldModel::setRoute(LaneletRoutePtr route)
   {
