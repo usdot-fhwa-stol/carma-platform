@@ -259,7 +259,17 @@ TEST(SignalizedIntersectionManger, processSpatFromMsg)
   event.timing.start_time = 0;
   movement.movement_event_list.push_back(event);
   state.movement_list.push_back(movement);
+
+  // Call with no intersection_state_list
+  EXPECT_NO_THROW(sim.processSpatFromMsg(spat, map));
+  EXPECT_EQ(0, traffic_light->recorded_time_stamps.size());
+
   spat.intersection_state_list.push_back(state);
+
+  // Call with no map:
+  EXPECT_NO_THROW(sim.processSpatFromMsg(spat, nullptr));
+
+  // Call with map
   sim.processSpatFromMsg(spat, map);
   sim.spat_processor_state_ = carma_wm::SIGNAL_PHASE_PROCESSING::ON;
   auto lights1 = map->laneletLayer.get(ll_1.id()).regulatoryElementsAs<lanelet::CarmaTrafficSignal>();
