@@ -394,6 +394,7 @@ def generate_launch_description():
         declare_is_ros2_tracing_enabled,
         declare_is_cp_mot_enabled,
         declare_is_autoware_lidar_obj_detection_enabled,
+        declare_use_foxglove_arg,
         foxglove_bridge_node,
         ros2_rosbag_launch,
         OpaqueFunction(function=create_ros2_tracing_action),
