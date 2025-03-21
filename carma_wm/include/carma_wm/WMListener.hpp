@@ -117,7 +117,7 @@ public:
    *  \brief Activate SPAT processor, which is turned off by default,
   // with OFF (0), ON (1)
    */
-  void enableSpatProcessing(const
+  void togglerSpatProcessing(const
     SIGNAL_PHASE_PROCESSING& phase_type) const;
 
   /*!

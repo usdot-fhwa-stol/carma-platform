@@ -224,10 +224,10 @@ void WMListener::setConfigSpeedLimit(double config_lim) const
   worker_->setConfigSpeedLimit(config_lim);
 }
 
-void WMListener::enableSpatProcessing(const
+void WMListener::togglerSpatProcessing(const
   carma_wm::SIGNAL_PHASE_PROCESSING& phase_type) const
 {
-  worker_->enableSpatProcessing(phase_type);
+  worker_->togglerSpatProcessing(phase_type);
 }
 
 // @SONAR_START@
