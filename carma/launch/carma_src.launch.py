@@ -229,6 +229,9 @@ def generate_launch_description():
         parameters=[
             {'port': 8765},
             {'topic_whitelist': ['.*']},  # All topics bridged
+            {'param_whitelist': ['none']},  # Parameters seem to have bug in Foxglove currently
+            {'send_buffer_limit': 500000000},  # 500MB buffer limit to allow large maps
+            {'use_sim_time': use_sim_time},
         ],
         condition=IfCondition(LaunchConfiguration('use_foxglove')),
     )
