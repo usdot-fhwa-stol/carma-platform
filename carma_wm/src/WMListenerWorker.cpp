@@ -701,22 +701,22 @@ void WMListenerWorker::setConfigSpeedLimit(double config_lim)
   world_model_->setConfigSpeedLimit(config_speed_limit_);
 }
 
-void WMListenerWorker::isUsingSimTime(bool use_sim_time)
+void WMListenerWorker::isUsingSimTime(bool use_sim_time) const
 {
   world_model_->sim_.use_sim_time_ = use_sim_time;
 }
-void WMListenerWorker::isSpatWallTime(bool use_real_time_spat_in_sim)
+void WMListenerWorker::isSpatWallTime(bool use_real_time_spat_in_sim) const
 {
   world_model_->sim_.use_real_time_spat_in_sim_ = use_real_time_spat_in_sim;
 }
 
 void WMListenerWorker::setWMSpatProcessingState(const
-  SIGNAL_PHASE_PROCESSING& phase_type)
+  SIGNAL_PHASE_PROCESSING& phase_type) const
 {
   world_model_->sim_.spat_processor_state_ = phase_type;
 }
 
-SIGNAL_PHASE_PROCESSING WMListenerWorker::getWMSpatProcessingState()
+SIGNAL_PHASE_PROCESSING WMListenerWorker::getWMSpatProcessingState() const
 {
   return world_model_->sim_.spat_processor_state_;
 }

@@ -63,7 +63,7 @@ LCIStrategicPlugin::LCIStrategicPlugin(const rclcpp::NodeOptions &options)
   config_.enable_carma_streets_connection = declare_parameter<bool>("enable_carma_streets_connection",config_.enable_carma_streets_connection);
   config_.mobility_rate = declare_parameter<double>("mobility_rate", config_.mobility_rate);
   config_.enable_carma_wm_spat_processing =
-    declare_parameter<int>("enable_carma_wm_spat_processing",
+    declare_parameter<long>("enable_carma_wm_spat_processing",
     config_.enable_carma_wm_spat_processing);
   config_.vehicle_id = declare_parameter<std::string>("vehicle_id", config_.vehicle_id);
 

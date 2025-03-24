@@ -517,28 +517,25 @@ namespace carma_wm
 
         curr_light->revision_ = curr_intersection.revision; // valid SPAT msg
 
-        auto extracted_signal_states =
+        auto [new_end_times_and_states, new_start_times ]=
           extract_signal_states_from_movement_state(curr_intersection, current_movement_state);
 
-        curr_light->recorded_time_stamps = std::get<0>(extracted_signal_states);
-        curr_light->recorded_start_time_stamps = std::get<1>(extracted_signal_states);
+        curr_light->recorded_time_stamps = new_end_times_and_states;
+        curr_light->recorded_start_time_stamps = new_start_times;
       }
     }
   }
 
   lanelet::Id SignalizedIntersectionManager::getTrafficSignalId(uint16_t intersection_id, uint8_t signal_group_id)
   {
-    lanelet::Id inter_id = lanelet::InvalId;
     lanelet::Id signal_id = lanelet::InvalId;
 
-    if (intersection_id_to_regem_id_.find(intersection_id) != intersection_id_to_regem_id_.end())
+    if (intersection_id_to_regem_id_.find(intersection_id) == intersection_id_to_regem_id_.end())
     {
-      inter_id = intersection_id_to_regem_id_[intersection_id];
-    }
-    else
-    {
+      // Currently, platform is not supporting multiple intersections, so if the id exists
+      // signal_group is expected to be for that intersection
       RCLCPP_WARN_STREAM(rclcpp::get_logger("carma_wm"), "Intersection id: " << intersection_id << " is not found in the map. Returning...");
-      return inter_id;
+      return lanelet::InvalId;
     }
 
     if (signal_group_to_traffic_light_id_.find(signal_group_id) != signal_group_to_traffic_light_id_.end())
@@ -562,14 +559,16 @@ namespace carma_wm
     auto lanelets_general = semantic_map->laneletLayer.findUsages(general_regem);
     if (lanelets_general.empty())
     {
-      RCLCPP_WARN_STREAM(rclcpp::get_logger("carma_wm"), "There was an error querying lanelet for traffic light with id: " << id);
+      RCLCPP_WARN_STREAM(rclcpp::get_logger("carma_wm"),
+        "There was an error querying lanelet for traffic light with id: " << id);
     }
 
-    auto curr_light_list = lanelets_general[0].regulatoryElementsAs<lanelet::CarmaTrafficSignal>();
-
-    if (curr_light_list.empty())
+    if (auto curr_light_list =
+      lanelets_general[0].regulatoryElementsAs<lanelet::CarmaTrafficSignal>();
+    curr_light_list.empty())
     {
-      RCLCPP_WARN_STREAM(rclcpp::get_logger("carma_wm"), "There was an error querying traffic light with id: " << id);
+      RCLCPP_WARN_STREAM(rclcpp::get_logger("carma_wm"),
+        "There was an error querying traffic light with id: " << id);
       return nullptr;
     }
 
@@ -586,7 +585,8 @@ namespace carma_wm
 
     if (!curr_light)
     {
-      RCLCPP_WARN_STREAM(rclcpp::get_logger("carma_wm"), "Was not able to find traffic signal with id: " << id << ", ignoring...");
+      RCLCPP_WARN_STREAM(rclcpp::get_logger("carma_wm"),
+        "Was not able to find traffic signal with id: " << id << ", ignoring...");
       return nullptr;
     }
 
@@ -604,7 +604,7 @@ namespace carma_wm
 
     std::vector<boost::posix_time::ptime> start_time_and_states;
 
-    for(auto current_movement_event:current_movement_state.movement_event_list)
+    for(const auto& current_movement_event:current_movement_state.movement_event_list)
     {
       // raw min_end_time in seconds measured from the most recent full hour
       boost::posix_time::ptime min_end_time = lanelet::time::timeFromSec(
@@ -676,9 +676,9 @@ namespace carma_wm
 
       auto curr_minute_stamp_boost = curr_year_start_boost + boost::posix_time::minutes((int)moy);
 
-      int hours_of_day = curr_minute_stamp_boost.time_of_day().hours();
-      int curr_month = curr_minute_stamp_boost.date().month();
-      int curr_day = curr_minute_stamp_boost.date().day();
+      long hours_of_day = curr_minute_stamp_boost.time_of_day().hours();
+      long curr_month = curr_minute_stamp_boost.date().month();
+      long curr_day = curr_minute_stamp_boost.date().day();
 
       auto curr_day_boost(boost::posix_time::time_from_string(std::to_string(curr_year) + "/" + std::to_string(curr_month) + "/" + std::to_string(curr_day) +" 00:00:00.000")); // GMT is the standard
       auto curr_hour_boost = curr_day_boost + boost::posix_time::hours(hours_of_day);

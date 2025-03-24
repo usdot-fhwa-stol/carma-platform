@@ -115,7 +115,7 @@ public:
 
   /**
    *  \brief Activate SPAT processor, which is turned off by default,
-  // with OFF (0), ON (1)
+   * with OFF (0), ON (1)
    */
   void setWMSpatProcessingState(const
     carma_wm::SIGNAL_PHASE_PROCESSING& phase_type) const;
