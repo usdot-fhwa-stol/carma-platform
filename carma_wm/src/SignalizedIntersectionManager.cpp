@@ -465,4 +465,231 @@ namespace carma_wm
     this->signal_group_to_traffic_light_id_ = other.signal_group_to_traffic_light_id_;
     this->intersection_coord_correction_ = other.intersection_coord_correction_;
   }
+
+  void SignalizedIntersectionManager::processSpatFromMsg(const carma_v2x_msgs::msg::SPAT &spat_msg, const std::shared_ptr<lanelet::LaneletMap>& semantic_map)
+  {
+    if (spat_processor_state_ == SIGNAL_PHASE_PROCESSING::OFF)
+    {
+      return;
+    }
+
+    if (!semantic_map)
+    {
+      RCLCPP_INFO_STREAM(rclcpp::get_logger("carma_wm"), "Map is not set yet.");
+      return;
+    }
+
+    if (spat_msg.intersection_state_list.empty())
+    {
+      RCLCPP_WARN_STREAM(rclcpp::get_logger("carma_wm"), "No intersection_state_list in the newly received SPAT msg. Returning...");
+      return;
+    }
+
+    for (const auto& curr_intersection : spat_msg.intersection_state_list)
+    {
+      for (const auto& current_movement_state : curr_intersection.movement_list)
+      {
+        lanelet::Id curr_light_id = getTrafficSignalId(curr_intersection.id.id, current_movement_state.signal_group);
+
+        if (curr_light_id == lanelet::InvalId)
+        {
+          continue;
+        }
+
+        lanelet::CarmaTrafficSignalPtr curr_light =
+          getTrafficSignal(curr_light_id, semantic_map);
+
+        if (curr_light == nullptr)
+        {
+          continue;
+        }
+
+        // all maneuver types in same signal group is currently expected to share signal timing, so only 0th index is used when setting states
+        if (current_movement_state.movement_event_list.empty())
+        {
+          RCLCPP_DEBUG_STREAM(rclcpp::get_logger("carma_wm"), "Movement_event_list is empty . intersection_id: " << (int)curr_intersection.id.id << ", and signal_group_id: " << (int)current_movement_state.signal_group);
+          continue;
+        }
+        else
+        {
+          RCLCPP_DEBUG_STREAM(rclcpp::get_logger("carma_wm"), "Movement_event_list size: " << current_movement_state.movement_event_list.size() << " . intersection_id: " << (int)curr_intersection.id.id << ", and signal_group_id: " << (int)current_movement_state.signal_group);
+        }
+
+        curr_light->revision_ = curr_intersection.revision; // valid SPAT msg
+
+        auto [new_end_times_and_states, new_start_times ]=
+          extract_signal_states_from_movement_state(curr_intersection, current_movement_state);
+
+        curr_light->recorded_time_stamps = new_end_times_and_states;
+        curr_light->recorded_start_time_stamps = new_start_times;
+      }
+    }
+  }
+
+  lanelet::Id SignalizedIntersectionManager::getTrafficSignalId(uint16_t intersection_id, uint8_t signal_group_id)
+  {
+    lanelet::Id signal_id = lanelet::InvalId;
+
+    if (intersection_id_to_regem_id_.find(intersection_id) == intersection_id_to_regem_id_.end())
+    {
+      // Currently, platform is not supporting multiple intersections, so if the id exists
+      // signal_group is expected to be for that intersection
+      RCLCPP_WARN_STREAM(rclcpp::get_logger("carma_wm"), "Intersection id: " << intersection_id << " is not found in the map. Returning...");
+      return lanelet::InvalId;
+    }
+
+    if (signal_group_to_traffic_light_id_.find(signal_group_id) != signal_group_to_traffic_light_id_.end())
+    {
+      signal_id = signal_group_to_traffic_light_id_[signal_group_id];
+    }
+    else
+    {
+      RCLCPP_WARN_STREAM(rclcpp::get_logger("carma_wm"), "Signal group id: " << signal_group_id << " is not found in the map. Returning...");
+      return signal_id;
+    }
+
+    return signal_id;
+  }
+
+  lanelet::CarmaTrafficSignalPtr SignalizedIntersectionManager::getTrafficSignal(const
+    lanelet::Id& id, const std::shared_ptr<lanelet::LaneletMap>& semantic_map) const
+  {
+    auto general_regem = semantic_map->regulatoryElementLayer.get(id);
+
+    auto lanelets_general = semantic_map->laneletLayer.findUsages(general_regem);
+    if (lanelets_general.empty())
+    {
+      RCLCPP_WARN_STREAM(rclcpp::get_logger("carma_wm"),
+        "There was an error querying lanelet for traffic light with id: " << id);
+    }
+
+    if (auto curr_light_list =
+      lanelets_general[0].regulatoryElementsAs<lanelet::CarmaTrafficSignal>();
+    curr_light_list.empty())
+    {
+      RCLCPP_WARN_STREAM(rclcpp::get_logger("carma_wm"),
+        "There was an error querying traffic light with id: " << id);
+      return nullptr;
+    }
+
+    lanelet::CarmaTrafficSignalPtr curr_light;
+
+    for (auto signal : lanelets_general[0].regulatoryElementsAs<lanelet::CarmaTrafficSignal>())
+    {
+      if (signal->id() == id)
+      {
+        curr_light = signal;
+        break;
+      }
+    }
+
+    if (!curr_light)
+    {
+      RCLCPP_WARN_STREAM(rclcpp::get_logger("carma_wm"),
+        "Was not able to find traffic signal with id: " << id << ", ignoring...");
+      return nullptr;
+    }
+
+    return curr_light;
+  }
+
+  std::tuple<std::vector<std::pair<boost::posix_time::ptime, lanelet::CarmaTrafficSignalState>>,
+    std::vector<boost::posix_time::ptime>>
+    SignalizedIntersectionManager::extract_signal_states_from_movement_state(
+      const carma_v2x_msgs::msg::IntersectionState& curr_intersection,
+      const carma_v2x_msgs::msg::MovementState& current_movement_state)
+  {
+    std::vector<std::pair<boost::posix_time::ptime, lanelet::CarmaTrafficSignalState>>
+      min_end_t_and_states;
+
+    std::vector<boost::posix_time::ptime> start_time_and_states;
+
+    for(const auto& current_movement_event:current_movement_state.movement_event_list)
+    {
+      // raw min_end_time in seconds measured from the most recent full hour
+      boost::posix_time::ptime min_end_time = lanelet::time::timeFromSec(
+        current_movement_event.timing.min_end_time);
+      boost::posix_time::ptime start_time = lanelet::time::timeFromSec(
+        current_movement_event.timing.start_time);
+
+      min_end_time = min_end_time_converter_minute_of_year(min_end_time,
+        curr_intersection.moy_exists,curr_intersection.moy,
+        use_sim_time_, use_real_time_spat_in_sim_); // Accounting minute of the year
+
+      start_time = min_end_time_converter_minute_of_year(start_time,
+        curr_intersection.moy_exists,curr_intersection.moy,
+        use_sim_time_, use_real_time_spat_in_sim_); // Accounting minute of the year
+
+      auto received_state = static_cast<lanelet::CarmaTrafficSignalState>(
+        current_movement_event.event_state.movement_phase_state);
+
+      min_end_t_and_states.push_back(std::make_pair(min_end_time, received_state));
+
+      start_time_and_states.push_back(start_time);
+
+      RCLCPP_DEBUG_STREAM(rclcpp::get_logger("carma_wm"), "intersection id: "
+        << (int)curr_intersection.id.id << ", signal: " << (int)current_movement_state.signal_group
+        << ", start_time: " << std::to_string(lanelet::time::toSec(start_time))
+        << ", end_time: " << std::to_string(lanelet::time::toSec(min_end_time))
+        << ", state: " << received_state);
+    }
+
+    return std::make_tuple(min_end_t_and_states, start_time_and_states);
+  }
+
+  boost::posix_time::ptime SignalizedIntersectionManager::min_end_time_converter_minute_of_year(
+    boost::posix_time::ptime min_end_time,bool moy_exists,uint32_t moy, bool is_simulation,
+    bool use_real_time_spat_in_sim)
+  {
+    double simulation_time_difference_in_seconds = 0.0;
+    double wall_time_offset_in_seconds = 0.0;
+    // NOTE: In simulation, ROS1 clock (often coming from CARLA) can have a large time ahead.
+    // the timing calculated here is in Simulation time, which is behind. Therefore, the world model adds the offset to make it meaningful to carma-platform:
+    // https://github.com/usdot-fhwa-stol/carma-platform/issues/2217
+    if (ros1_clock_ && simulation_clock_)
+    {
+      simulation_time_difference_in_seconds = ros1_clock_.value().seconds() - simulation_clock_.value().seconds();
+    }
+    else if (ros1_clock_ && use_real_time_spat_in_sim)
+    {
+      // NOTE: If carma-platform is running in simulation with clock synced to sim time but the incoming spat information is based on wall clock
+      // the spat signal phase time must be offset to sim time.
+      wall_time_offset_in_seconds = (std::chrono::duration<double>(std::chrono::system_clock::now().time_since_epoch()).count()) - ros1_clock_.value().seconds();
+    }
+
+    min_end_time += lanelet::time::durationFromSec(simulation_time_difference_in_seconds);
+    min_end_time -= lanelet::time::durationFromSec(wall_time_offset_in_seconds);
+
+    if (moy_exists) //account for minute of the year
+    {
+      auto inception_boost(boost::posix_time::time_from_string("1970-01-01 00:00:00.000")); // inception of epoch
+      auto duration_since_inception(lanelet::time::durationFromSec(std::chrono::duration<double>(std::chrono::system_clock::now().time_since_epoch()).count()));
+      auto curr_time_boost = inception_boost + duration_since_inception;
+
+      int curr_year = curr_time_boost.date().year();
+
+      // Force the current year to start of epoch if it is simulation
+      if (is_simulation && !use_real_time_spat_in_sim)
+        curr_year = 1970;
+
+      auto curr_year_start_boost(boost::posix_time::time_from_string(std::to_string(curr_year)+ "-01-01 00:00:00.000"));
+
+      auto curr_minute_stamp_boost = curr_year_start_boost + boost::posix_time::minutes((int)moy);
+
+      long hours_of_day = curr_minute_stamp_boost.time_of_day().hours();
+      long curr_month = curr_minute_stamp_boost.date().month();
+      long curr_day = curr_minute_stamp_boost.date().day();
+
+      auto curr_day_boost(boost::posix_time::time_from_string(std::to_string(curr_year) + "/" + std::to_string(curr_month) + "/" + std::to_string(curr_day) +" 00:00:00.000")); // GMT is the standard
+      auto curr_hour_boost = curr_day_boost + boost::posix_time::hours(hours_of_day);
+
+      min_end_time += lanelet::time::durationFromSec(lanelet::time::toSec(curr_hour_boost));
+      return min_end_time;
+    }
+    else
+    {
+      return min_end_time; // return unchanged
+    }
+  }
+
 }  // namespace carma_wm

@@ -224,6 +224,17 @@ void WMListener::setConfigSpeedLimit(double config_lim) const
   worker_->setConfigSpeedLimit(config_lim);
 }
 
+void WMListener::setWMSpatProcessingState(const
+  carma_wm::SIGNAL_PHASE_PROCESSING& phase_type) const
+{
+  worker_->setWMSpatProcessingState(phase_type);
+}
+
+carma_wm::SIGNAL_PHASE_PROCESSING WMListener::getWMSpatProcessingState() const
+{
+  return worker_->getWMSpatProcessingState();
+}
+
 // @SONAR_START@
 
 }
