@@ -56,7 +56,7 @@ WMListener::WMListener(
   rclcpp::Parameter use_real_time_spat_in_sim_param("use_real_time_spat_in_sim");
   if(!node_params_->get_parameter("use_real_time_spat_in_sim", use_real_time_spat_in_sim_param)){
     rclcpp::ParameterValue use_real_time_spat_in_sim_param_value;
-    use_real_time_spat_in_sim_param_value = node_params_->declare_parameter("use_real_time_spat_in_sim", rclcpp::ParameterValue (true));
+    use_real_time_spat_in_sim_param_value = node_params_->declare_parameter("use_real_time_spat_in_sim", rclcpp::ParameterValue (false));
   }
 
   // Get params
