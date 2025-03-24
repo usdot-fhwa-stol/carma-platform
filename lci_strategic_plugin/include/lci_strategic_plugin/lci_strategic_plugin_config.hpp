@@ -69,7 +69,7 @@ struct LCIStrategicPluginConfig
   bool  enable_carma_streets_connection = false;
 
   //! Int: 0 to turn off and 1 to turn on
-  int enable_spat_processing = 1;
+  int enable_carma_wm_spat_processing = 1;
 
   //! Double: Mobility operation rate
   double mobility_rate = 10.0;

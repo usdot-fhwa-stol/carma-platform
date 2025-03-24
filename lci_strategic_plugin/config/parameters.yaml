@@ -33,7 +33,7 @@ min_maneuver_planning_period : 15.1
 enable_carma_streets_connection : false
 
 # Int: 0 to turn off and 1 turn on SPAT processor
-enable_spat_processing: 1
+enable_carma_wm_spat_processing: 1
 
 # Double: Mobility operation rate
 mobility_rate : 10.0

@@ -62,9 +62,9 @@ LCIStrategicPlugin::LCIStrategicPlugin(const rclcpp::NodeOptions &options)
   config_.intersection_transit_plugin_name = declare_parameter<std::string>("intersection_transit_plugin_name", config_.intersection_transit_plugin_name);
   config_.enable_carma_streets_connection = declare_parameter<bool>("enable_carma_streets_connection",config_.enable_carma_streets_connection);
   config_.mobility_rate = declare_parameter<double>("mobility_rate", config_.mobility_rate);
-  config_.enable_spat_processing =
-    declare_parameter<int>("enable_spat_processing",
-    config_.enable_spat_processing);
+  config_.enable_carma_wm_spat_processing =
+    declare_parameter<int>("enable_carma_wm_spat_processing",
+    config_.enable_carma_wm_spat_processing);
   config_.vehicle_id = declare_parameter<std::string>("vehicle_id", config_.vehicle_id);
 
   max_comfort_accel_ = config_.vehicle_accel_limit * config_.vehicle_accel_limit_multiplier;
@@ -96,7 +96,7 @@ carma_ros2_utils::CallbackReturn LCIStrategicPlugin::on_configure_plugin()
   get_parameter<std::string>("stop_and_wait_plugin_name", config_.stop_and_wait_plugin_name);
   get_parameter<std::string>("intersection_transit_plugin_name", config_.intersection_transit_plugin_name);
   get_parameter<bool>("enable_carma_streets_connection", config_.enable_carma_streets_connection);
-  get_parameter<int>("enable_spat_processing", config_.enable_spat_processing);
+  get_parameter<int>("enable_carma_wm_spat_processing", config_.enable_carma_wm_spat_processing);
   get_parameter<double>("mobility_rate", config_.mobility_rate);
   get_parameter<std::string>("vehicle_id", config_.vehicle_id);
 
@@ -128,7 +128,7 @@ carma_ros2_utils::CallbackReturn LCIStrategicPlugin::on_configure_plugin()
   // Activate SPAT processor, which is turned off by default,
   // with OFF (0), ON (1)
   get_world_model_listener()->toggleSpatProcessing(
-    static_cast<carma_wm::SIGNAL_PHASE_PROCESSING>(config_.enable_spat_processing));
+    static_cast<carma_wm::SIGNAL_PHASE_PROCESSING>(config_.enable_carma_wm_spat_processing));
 
   // Setup publishers
   mobility_operation_pub_ = create_publisher<carma_v2x_msgs::msg::MobilityOperation>("outgoing_mobility_operation", 1);
