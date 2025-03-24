@@ -213,10 +213,6 @@ std::vector<PointSpeedPair> create_lanefollow_geometry(
           centerline, general_config.default_downsample_ratio);
       }
 
-      // Make sure centerline doesn't have overlapping points and 1 meter apart at least
-      downsampled_points =
-        downsample_centerline_with_meters<lanelet::BasicLineString2d>(downsampled_points);
-
       if (
         downsampled_centerline.size() != 0 &&
         downsampled_points.size() != 0  // If this is not the first lanelet and the points are
@@ -370,7 +366,7 @@ std::vector<PointSpeedPair> add_lanefollow_buffer(
 }
 
 template <typename PointContainer>
-PointContainer downsample_centerline_with_meters(
+PointContainer downsample_pts_with_min_meters(
   const PointContainer & original_centerline, double gap_in_meters)
 {
   if (original_centerline.empty()) {
@@ -524,20 +520,10 @@ std::vector<lanelet::BasicPoint2d> create_lanechange_geometry(
   downsampled_starting_centerline =
     carma_ros2_utils::containers::downsample_vector(reference_centerline, downsample_ratio);
 
-  // Filter with 1 meter to make sure there is no "duplicate" points that would break spline fitting
-  downsampled_starting_centerline =
-    downsample_centerline_with_meters<std::vector<lanelet::BasicPoint2d>>(
-      downsampled_starting_centerline);
-
   std::vector<lanelet::BasicPoint2d> downsampled_target_centerline;
   downsampled_target_centerline.reserve(400);
   downsampled_target_centerline =
     carma_ros2_utils::containers::downsample_vector(target_lane_centerline, downsample_ratio);
-
-  // Filter with 1 meter to make sure there is no "duplicate" points that would break spline fitting
-  downsampled_target_centerline =
-    downsample_centerline_with_meters<std::vector<lanelet::BasicPoint2d>>(
-      downsampled_target_centerline);
 
   // Constrain centerlines to starting and ending downtrack
   int start_index_starting_centerline = waypoint_generation::get_nearest_index_by_downtrack(
@@ -972,32 +958,37 @@ std::vector<PointSpeedPair> attach_past_points(
 std::unique_ptr<basic_autonomy::smoothing::SplineI> compute_fit(
   const std::vector<lanelet::BasicPoint2d> & basic_points)
 {
-  if (basic_points.size() < 4) {
+  // When computing fit, there cannot be duplicate points and less than 1 meter is not needed.
+  // Therefore, this function generally cleans the points for robust spline fit
+  auto points_with_min_dis = downsample_pts_with_min_meters
+    <std::vector<lanelet::BasicPoint2d>>(basic_points);
+
+  if (points_with_min_dis.size() < 4) {
     RCLCPP_WARN_STREAM(rclcpp::get_logger(BASIC_AUTONOMY_LOGGER), "Insufficient Spline Points");
     return nullptr;
   }
 
   RCLCPP_DEBUG_STREAM(
     rclcpp::get_logger(BASIC_AUTONOMY_LOGGER),
-    "Original basic_points size: " << basic_points.size());
+    "Original points_with_min_dis size: " << points_with_min_dis.size());
 
-  std::vector<lanelet::BasicPoint2d> resized_basic_points = basic_points;
+  std::vector<lanelet::BasicPoint2d> resized_points_with_min_dis = points_with_min_dis;
 
   // The large the number of points, longer it takes to calculate a spline fit
-  // So if the basic_points vector size is large, only the first 400 points are used to compute a
+  // So if the points_with_min_dis vector size is large, only the first 400 points are used to compute a
   // spline fit.
-  if (resized_basic_points.size() > 400) {
-    resized_basic_points.resize(400);
+  if (resized_points_with_min_dis.size() > 400) {
+    resized_points_with_min_dis.resize(400);
     RCLCPP_DEBUG_STREAM(
       rclcpp::get_logger(BASIC_AUTONOMY_LOGGER),
-      "Resized basic_points size: " << resized_basic_points.size());
+      "Resized points_with_min_dis size: " << resized_points_with_min_dis.size());
 
-    size_t left_points_size = basic_points.size() - resized_basic_points.size();
+    size_t left_points_size = points_with_min_dis.size() - resized_points_with_min_dis.size();
     RCLCPP_DEBUG_STREAM(
       rclcpp::get_logger(BASIC_AUTONOMY_LOGGER),
-      "Number of left out basic_points size: " << left_points_size);
+      "Number of left out points_with_min_dis size: " << left_points_size);
 
-    float percent_points_lost = 100.0 * (float)left_points_size / basic_points.size();
+    float percent_points_lost = 100.0 * (float)left_points_size / points_with_min_dis.size();
 
     if (percent_points_lost > 50.0) {
       RCLCPP_WARN_STREAM(
@@ -1009,7 +1000,7 @@ std::unique_ptr<basic_autonomy::smoothing::SplineI> compute_fit(
   std::unique_ptr<basic_autonomy::smoothing::SplineI> spl =
     std::make_unique<basic_autonomy::smoothing::BSpline>();
 
-  spl->setPoints(resized_basic_points);
+  spl->setPoints(resized_points_with_min_dis);
 
   return spl;
 }

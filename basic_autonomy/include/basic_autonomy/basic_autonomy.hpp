@@ -117,14 +117,16 @@ struct DetailedTrajConfig
  * the centerline.
  *
  * \param original_centerline Container of centerline points to be filtered (BasicLineString2d or
- * vector) \param gap_in_meters Minimum distance between consecutive points (defaults to 1.0 meter)
+ * vector) \param gap_in_meters Minimum distance between consecutive points
+ *          (this defaults to 0.5 meter because carma by default creates a centerline with
+ *          1 meter apart, so it should give just enough points to resample from)
  *
  * \return Filtered container of centerline points with minimum spacing enforced (same type as
  * input)
  */
 template <typename PointContainer>
-PointContainer downsample_centerline_with_meters(
-  const PointContainer & original_centerline, double gap_in_meters = 1.0);
+PointContainer downsample_pts_with_min_meters(
+  const PointContainer & original_centerline, double gap_in_meters = 0.5);
 
 /**
  * \brief Applies the provided speed limits to the provided speeds such that each element is
