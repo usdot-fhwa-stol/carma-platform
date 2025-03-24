@@ -50,10 +50,6 @@ namespace basic_autonomy
         double y_;
     };
 
-    template <typename PointContainer>
-    PointContainer downsample_pts_with_min_meters(
-        const PointContainer & original_centerline, double gap_in_meters);
-
     TEST(BasicAutonomyTest, DownsamplePtsWithMinMeters) {
         // Test case 1: Empty container
         std::vector<lanelet::BasicPoint2d> empty_line;
