@@ -28,6 +28,7 @@
 #include <basic_autonomy/smoothing/BSpline.hpp>
 #include <basic_autonomy/smoothing/SplineI.hpp>
 #include <basic_autonomy/smoothing/filters.hpp>
+#include <basic_autonomy/impl/basic_autonomy.tpp>
 
 #include <boost/geometry.hpp>
 #include <boost/shared_ptr.hpp>
