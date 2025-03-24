@@ -28,6 +28,7 @@
 #include <basic_autonomy/smoothing/BSpline.hpp>
 #include <basic_autonomy/smoothing/SplineI.hpp>
 #include <basic_autonomy/smoothing/filters.hpp>
+
 #include <boost/geometry.hpp>
 #include <boost/shared_ptr.hpp>
 #include <carma_ros2_utils/containers/containers.hpp>

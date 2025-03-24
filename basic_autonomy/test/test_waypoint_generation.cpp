@@ -15,6 +15,8 @@
  */
 
 #include <basic_autonomy/basic_autonomy.hpp>
+#include <basic_autonomy/impl/basic_autonomy.tpp>
+
 #include <basic_autonomy/helper_functions.hpp>
 #include <gtest/gtest.h>
 #include <carma_wm/CARMAWorldModel.hpp>
@@ -48,30 +50,32 @@ namespace basic_autonomy
         double y_;
     };
 
-    // Include the function we're testing
     template <typename PointContainer>
     PointContainer downsample_pts_with_min_meters(
         const PointContainer & original_centerline, double gap_in_meters);
 
-    TEST(DownsampleTest, BasicFunctionality) {
+    TEST(BasicAutonomyTest, DownsamplePtsWithMinMeters) {
         // Test case 1: Empty container
-        std::vector<Point> empty_line;
-        auto empty_result = downsample_pts_with_min_meters(empty_line, 5.0);
+        std::vector<lanelet::BasicPoint2d> empty_line;
+        auto empty_result =
+            basic_autonomy::waypoint_generation::downsample_pts_with_min_meters
+            <std::vector<lanelet::BasicPoint2d>>(empty_line, 5.0);
         EXPECT_TRUE(empty_result.empty());
 
         // Test case 2: Points with mixed spacing
-        std::vector<Point> points = {
-            Point(0.0, 0.0),    // Keep (first point)
-            Point(1.0, 0.0),    // Filter (distance = 1.0)
-            Point(3.0, 0.0),    // Keep (distance from last kept = 3.0)
-            Point(4.0, 0.0),    // Filter (distance = 1.0)
-            Point(7.0, 0.0),    // Keep (distance = 3.0)
-            Point(7.5, 0.5),    // Filter (distance ≈ 0.7)
-            Point(10.0, 2.0)    // Keep (distance ≈ 3.2)
+        std::vector<lanelet::BasicPoint2d> points = {
+            lanelet::BasicPoint2d(0.0, 0.0),    // Keep (first point)
+            lanelet::BasicPoint2d(1.0, 0.0),    // Filter (distance = 1.0)
+            lanelet::BasicPoint2d(3.0, 0.0),    // Keep (distance from last kept = 3.0)
+            lanelet::BasicPoint2d(4.0, 0.0),    // Filter (distance = 1.0)
+            lanelet::BasicPoint2d(7.0, 0.0),    // Keep (distance = 3.0)
+            lanelet::BasicPoint2d(7.5, 0.5),    // Filter (distance ≈ 0.7)
+            lanelet::BasicPoint2d(10.0, 2.0)    // Keep (distance ≈ 3.2)
         };
 
         // With 2.0 meter gap
-        auto result = downsample_pts_with_min_meters(points, 2.0);
+        auto result =
+            basic_autonomy::waypoint_generation::downsample_pts_with_min_meters(points, 2.0);
 
         // Expected: 4 points kept (0.0, 3.0, 7.0, 10.0)
         ASSERT_EQ(result.size(), 4);
