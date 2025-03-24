@@ -56,7 +56,7 @@ WMListener::WMListener(
   rclcpp::Parameter use_real_time_spat_in_sim_param("use_real_time_spat_in_sim");
   if(!node_params_->get_parameter("use_real_time_spat_in_sim", use_real_time_spat_in_sim_param)){
     rclcpp::ParameterValue use_real_time_spat_in_sim_param_value;
-    use_real_time_spat_in_sim_param_value = node_params_->declare_parameter("use_real_time_spat_in_sim", rclcpp::ParameterValue (true));
+    use_real_time_spat_in_sim_param_value = node_params_->declare_parameter("use_real_time_spat_in_sim", rclcpp::ParameterValue (false));
   }
 
   // Get params
@@ -222,6 +222,17 @@ std::unique_lock<std::mutex> WMListener::getLock(bool pre_locked)
 void WMListener::setConfigSpeedLimit(double config_lim) const
 {
   worker_->setConfigSpeedLimit(config_lim);
+}
+
+void WMListener::setWMSpatProcessingState(const
+  carma_wm::SIGNAL_PHASE_PROCESSING& phase_type) const
+{
+  worker_->setWMSpatProcessingState(phase_type);
+}
+
+carma_wm::SIGNAL_PHASE_PROCESSING WMListener::getWMSpatProcessingState() const
+{
+  return worker_->getWMSpatProcessingState();
 }
 
 // @SONAR_START@
