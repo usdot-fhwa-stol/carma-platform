@@ -117,8 +117,14 @@ public:
    *  \brief Activate SPAT processor, which is turned off by default,
   // with OFF (0), ON (1)
    */
-  void toggleSpatProcessing(const
-    SIGNAL_PHASE_PROCESSING& phase_type) const;
+  void setWMSpatProcessingState(const
+    carma_wm::SIGNAL_PHASE_PROCESSING& phase_type) const;
+
+    /**
+   *  \brief Get World Model SPAT processor state
+   *  \return World Model SPAT processor state OFF (0), ON (1)
+   */
+  carma_wm::SIGNAL_PHASE_PROCESSING getWMSpatProcessingState() const;
 
   /*!
    * \brief Use to allow updates to occur even if they invalidate the current route.

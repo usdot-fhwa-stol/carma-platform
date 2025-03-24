@@ -261,6 +261,18 @@ TEST(WMListenerWorkerTest, setConfigSpeedLimitTest)
   RCLCPP_INFO_STREAM(rclcpp::get_logger("WMListenerWorkerTest"), "config_speed_limit = "<< current_cl);
 }
 
+TEST(WMListenerWorkerTest, setWMSpatProcessingState)
+{
+  WMListenerWorker wmlw;
+  // By default the processor state is OFF
+  ASSERT_EQ(carma_wm::SIGNAL_PHASE_PROCESSING::OFF,  wmlw.getWMSpatProcessingState());
+
+  // Test after setting it ON
+  wmlw.setWMSpatProcessingState(carma_wm::SIGNAL_PHASE_PROCESSING::ON);
+
+  ASSERT_EQ(carma_wm::SIGNAL_PHASE_PROCESSING::ON,  wmlw.getWMSpatProcessingState());
+}
+
 TEST(WMListenerWorkerTest, getVehicleParticipationTypeTest)
 {
   WMListenerWorker wmlw;
