@@ -15,7 +15,6 @@
  */
 
 #include <basic_autonomy/basic_autonomy.hpp>
-#include <basic_autonomy/impl/basic_autonomy.tpp>
 
 #include <basic_autonomy/helper_functions.hpp>
 #include <gtest/gtest.h>
