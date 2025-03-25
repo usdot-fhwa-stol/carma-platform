@@ -842,7 +842,9 @@ namespace basic_autonomy
                 size_t left_points_size = points_with_min_dis.size() - resized_basic_points.size();
                 RCLCPP_DEBUG_STREAM(rclcpp::get_logger(BASIC_AUTONOMY_LOGGER), "Number of left out basic_points size: " << left_points_size);
 
-                float percent_points_lost = 100.0 * (float)left_points_size/points_with_min_dis.size();
+                float percent_points_lost = 100.0f
+                    * static_cast<float>(left_points_size) /
+                    static_cast<float>(points_with_min_dis.size());
 
                 if (percent_points_lost > 50.0)
                 {
