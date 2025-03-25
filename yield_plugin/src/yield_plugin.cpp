@@ -427,7 +427,26 @@ namespace yield_plugin
     // Up until goal_pos (which also can be until end of the entire original trajectory), generate new speeds at
     // or near original trajectory points by generating them at a fixed time interval using the JMT polynomial equation
     const double initial_time = 0;
-    const double initial_accel = 0;
+    double initial_accel = 0;
+    if (last_speed_)
+    {
+      initial_accel = (initial_velocity - last_speed_.value()) /
+        (nh_->now() - last_speed_time_.value()).seconds();
+
+      if (!std::isnormal(initial_accel))
+      {
+        RCLCPP_DEBUG_STREAM(rclcpp::get_logger("yield_plugin"),"Detecting nan initial_accel set to 0");
+        initial_accel = 0.0;
+      }
+
+      RCLCPP_DEBUG_STREAM(rclcpp::get_logger("yield_plugin"),"Detecting initial_accel: " << initial_accel
+        << ", initial_velocity:" << initial_velocity
+        << ", last_speed_: " << last_speed_.value()
+        << ", nh_->now(): " << nh_->now().seconds()
+        << ", last_speed_time_.get(): " << last_speed_time_.value().seconds());
+    }
+    last_speed_ = initial_velocity;
+    last_speed_time_ = nh_->now();
     const double goal_accel = 0;
     int new_traj_idx = 1;
     int original_traj_idx = 1;
