@@ -16,22 +16,22 @@
 #define MOTION_COMPUTATION__MOTION_COMPUTATION_NODE_HPP_
 
 #include <lanelet2_extension/projection/local_frame_projector.h>
-#include <tf2_geometry_msgs/tf2_geometry_msgs.h>
-#include <carma_perception_msgs/msg/external_object_list.hpp>
-#include <carma_ros2_utils/carma_lifecycle_node.hpp>
-#include <carma_v2x_msgs/msg/mobility_path.hpp>
-#include <rclcpp/rclcpp.hpp>
-#include <std_msgs/msg/string.hpp>
 
 #include <functional>
 #include <vector>
 
 #include "motion_computation/motion_computation_config.hpp"
 #include "motion_computation/motion_computation_worker.hpp"
+#include <carma_ros2_utils/carma_lifecycle_node.hpp>
+#include <rclcpp/rclcpp.hpp>
+
+#include <carma_perception_msgs/msg/external_object_list.hpp>
+#include <carma_v2x_msgs/msg/mobility_path.hpp>
+#include <std_msgs/msg/string.hpp>
+#include <tf2_geometry_msgs/tf2_geometry_msgs.hpp>
 
 namespace motion_computation
 {
-
 /**
  * \class MotionComputationNode
  * \brief The class responsible for publishing external object predictions

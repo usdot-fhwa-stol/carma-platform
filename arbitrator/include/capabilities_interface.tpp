@@ -27,7 +27,7 @@
 #include <thread>
 namespace arbitrator
 {
-    constexpr auto MAX_RETRY_ATTEMPTS {10};
+    constexpr auto MAX_RETRY_ATTEMPTS {2};
 
     template<typename MSrvReq, typename MSrvRes>
     std::map<std::string, std::shared_ptr<MSrvRes>>
@@ -87,7 +87,7 @@ namespace arbitrator
                         continue;
                     }
 
-                    const auto response = client->async_send_request(msg);
+                    auto response = client->async_send_request(msg);
 
                     switch (const auto status{response.wait_for(500ms)}) {
                         case std::future_status::ready:

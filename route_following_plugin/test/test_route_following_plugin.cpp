@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2019-2023 LEIDOS.
+ * Copyright (C) 2019-2024 LEIDOS.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -14,6 +14,7 @@
  * the License.
  */
 
+#include <ament_index_cpp/get_package_share_directory.hpp>
 #include "route_following_plugin.hpp"
 #include <gtest/gtest.h>
 #include <rclcpp/rclcpp.hpp>
@@ -151,8 +152,11 @@ namespace route_following_plugin
 
     TEST(RouteFollowingPlugin, TestAssociateSpeedLimitusingosm)
     {
-        // File to process. Path is relative to test folder
-        std::string file = "../../install_ros2/route_following_plugin/share/route_following_plugin/resource/map/town01_vector_map_1.osm";
+        // Set file containing lanelet2 map
+        std::string path = ament_index_cpp::get_package_share_directory("route_following_plugin");
+        std::string file = "/resource/map/town01_vector_map_1.osm";
+        file = path.append(file);
+
         lanelet::Id start_id = 100;
         lanelet::Id end_id = 111;
         /***
@@ -270,7 +274,7 @@ namespace route_following_plugin
         worker->setManeuverStartDist(maneuver, 50.0);
         ASSERT_EQ(maneuver.lane_following_maneuver.start_dist, 50.0);
 
-        rclcpp::Time new_start_time = start_time + rclcpp::Duration(10.0*1e9);
+        rclcpp::Time new_start_time = start_time + rclcpp::Duration::from_nanoseconds(10.0*1e9);
         std::vector<carma_planning_msgs::msg::Maneuver> maneuvers;
         maneuvers.push_back(maneuver);
 

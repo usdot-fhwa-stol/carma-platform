@@ -40,8 +40,8 @@ namespace carma_cloud_client
 
   rcl_interfaces::msg::SetParametersResult CarmaCloudClient::parameter_update_callback(const std::vector<rclcpp::Parameter> &parameters)
   {
-    
-    auto error = update_params<std::string>({{"url", config_.url}, 
+
+    auto error = update_params<std::string>({{"url", config_.url},
                                              {"base_req", config_.base_req},
                                              {"base_ack", config_.base_ack},
                                              {"port", config_.port},
@@ -75,10 +75,10 @@ namespace carma_cloud_client
     add_on_set_parameters_callback(std::bind(&CarmaCloudClient::parameter_update_callback, this, std_ph::_1));
     // Setup subscribers
     tcr_sub_ = create_subscription<carma_v2x_msgs::msg::TrafficControlRequest>("outgoing_geofence_request", 10,
-                                                              std::bind(&CarmaCloudClient::tcr_callback, this, std_ph::_1));                                                     
+                                                              std::bind(&CarmaCloudClient::tcr_callback, this, std_ph::_1));
     tcm_pub_ = create_publisher<j2735_v2x_msgs::msg::TrafficControlMessage>("incoming_j2735_geofence_control", 1);
     std::thread webthread(&CarmaCloudClient::StartWebService,this);
-    webthread.detach(); // wait for the thread to finish 
+    webthread.detach(); // wait for the thread to finish
     // Return success if everything initialized successfully
     return CallbackReturn::SUCCESS;
   }
@@ -87,12 +87,12 @@ namespace carma_cloud_client
   {
     carma_v2x_msgs::msg::TrafficControlRequest request_msg(*msg.get());
 
-    char xml_str[10000]; 
+    char xml_str[10000];
 
     XMLconversion(xml_str, request_msg);
 
     CloudSend(xml_str, config_.url, config_.base_req, config_.method);
-    
+
     RCLCPP_DEBUG_STREAM(  get_logger(), "tcr_sub_ callback called ");
   }
 
@@ -102,7 +102,7 @@ namespace carma_cloud_client
 
     j2735_convertor::geofence_request::convert(request_msg, j2735_tcr);
 
-    RCLCPP_DEBUG_STREAM(  get_logger(), "converted: "); 
+    RCLCPP_DEBUG_STREAM(  get_logger(), "converted: ");
 
     size_t hexlen = 2; //size of each hex representation with a leading 0
     char reqid[j2735_tcr.tcr_v01.reqid.id.size() * hexlen + 1];
@@ -112,7 +112,7 @@ namespace carma_cloud_client
     }
 
 	  RCLCPP_DEBUG_STREAM(  get_logger(), "reqid: " << reqid);
-  
+
     long int reqseq = j2735_tcr.tcr_v01.reqseq;
     RCLCPP_DEBUG_STREAM(  get_logger(), "reqseq: " << reqseq);
 
@@ -124,17 +124,17 @@ namespace carma_cloud_client
     char bounds_str[5000];
 		strcpy(bounds_str,"");
 
-    //  get current time 
-    std::time_t tm = this->now().seconds()/60 - config_.fetchtime*24*60; //  T minus fetchtime*24 hours in  min  
+    //  get current time
+    std::time_t tm = this->now().seconds()/60 - config_.fetchtime*24*60; //  T minus fetchtime*24 hours in  min
 
     while(cnt<totBounds)
     {
 
       uint32_t oldest = tm;
-      long lat = j2735_tcr.tcr_v01.bounds[cnt].reflat; 
+      long lat = j2735_tcr.tcr_v01.bounds[cnt].reflat;
       long longg = j2735_tcr.tcr_v01.bounds[cnt].reflon;
 
-    
+
       long dtx0 = j2735_tcr.tcr_v01.bounds[cnt].offsets[0].deltax;
       long dty0 = j2735_tcr.tcr_v01.bounds[cnt].offsets[0].deltay;
       long dtx1 = j2735_tcr.tcr_v01.bounds[cnt].offsets[1].deltax;
@@ -146,16 +146,16 @@ namespace carma_cloud_client
 
       cnt++;
 
-    }	
+    }
 
-    
+
 
     char port[config_.port.size() + 1];
     strcpy(port, config_.port.c_str());
 
     char list[config_.list.size() + 1];
     strcpy(list, config_.list.c_str());
- 
+
     // with port and list
     sprintf(xml_str,"<?xml version=\"1.0\" encoding=\"UTF-8\"?><TrafficControlRequest port=\"%s\" list=\"%s\"><reqid>%s</reqid><reqseq>%ld</reqseq><scale>%ld</scale>%s</TrafficControlRequest>",port, list, reqid, reqseq,scale,bounds_str);
 
@@ -164,10 +164,10 @@ namespace carma_cloud_client
   }
 
   int CarmaCloudClient::CloudSend(const std::string &local_msg, const std::string& local_url, const std::string& local_base, const std::string& local_method)
-  { 	
+  {
     CURL *req;
     CURLcode res;
-    std::string urlfull = local_url + config_.port + local_base;	
+    std::string urlfull = local_url + config_.port + local_base;
     RCLCPP_DEBUG_STREAM(  get_logger(), "full url: " << urlfull);
     req = curl_easy_init();
     if(req) {
@@ -176,24 +176,24 @@ namespace carma_cloud_client
       if(strcmp(local_method.c_str(),"POST")==0)
       {
         curl_easy_setopt(req, CURLOPT_POSTFIELDS, local_msg.c_str());
-        curl_easy_setopt(req, CURLOPT_TIMEOUT_MS, 1000L); // Request operation complete within max millisecond timeout 
+        curl_easy_setopt(req, CURLOPT_TIMEOUT_MS, 1000L); // Request operation complete within max millisecond timeout
         res = curl_easy_perform(req);
         if(res != CURLE_OK)
         {
           RCLCPP_ERROR_STREAM(  get_logger(), "curl send failed: " << curl_easy_strerror(res));
           return 1;
-        }	  
+        }
       }
       curl_easy_cleanup(req);
-    }	
-      
+    }
+
     return 0;
   }
 
   void CarmaCloudClient::CloudSendAsync(const std::string& local_msg,const std::string& local_url, const std::string& local_base, const std::string& local_method)
   {
-    std::thread t([this, &local_msg, &local_url, &local_base, &local_method](){	
-      CloudSend(local_msg, local_url, local_base, local_method);	
+    std::thread t([this, &local_msg, &local_url, &local_base, &local_method](){
+      CloudSend(local_msg, local_url, local_base, local_method);
     });
     t.detach();
   }
@@ -202,17 +202,17 @@ namespace carma_cloud_client
   {
     z_stream strm;
     strm.zalloc = nullptr;//Refer to zlib docs (https://zlib.net/zlib_how.html)
-    strm.zfree = nullptr; 
+    strm.zfree = nullptr;
     strm.opaque = nullptr;
     strm.avail_in = compressedBytes.size();
     strm.next_in = (Byte *)compressedBytes.data();
 	  //checking input z_stream to see if there is any error, eg: invalid data etc.
     auto err = inflateInit2(&strm, MAX_WBITS + 16); // gzip input
     QByteArray outBuf;
-	  //MAX numbers of bytes stored in a buffer 
+	  //MAX numbers of bytes stored in a buffer
     const int BUFFER_SIZE = 4092;
 	  //There is successful, starting to decompress data
-    if (err == Z_OK) 
+    if (err == Z_OK)
     {
       int isDone = 0;
       do
@@ -223,7 +223,7 @@ namespace carma_cloud_client
 			  //Uncompress finished
         isDone = inflate(&strm, Z_FINISH);
         outBuf.append(buffer);
-      } while (Z_STREAM_END != isDone); //Reach the end of stream to be uncompressed 
+      } while (Z_STREAM_END != isDone); //Reach the end of stream to be uncompressed
     }
     else
     {
@@ -236,14 +236,14 @@ namespace carma_cloud_client
 
   void CarmaCloudClient::TCMHandler(QHttpEngine::Socket *socket)
   {
-    QString st; 
+    QString st;
     while(socket->bytesAvailable()>0)
-    {	
+    {
       auto readBytes = socket->readAll();
       if (socket->headers().keys().contains(CONTENT_ENCODING_KEY) && std::string(socket->headers().constFind(CONTENT_ENCODING_KEY).value().data()) == CONTENT_ENCODING_VALUE)
       {
         //readBytes is compressed in gzip format
-        st.append(UncompressBytes(readBytes));			
+        st.append(UncompressBytes(readBytes));
       }
       else
       {
@@ -254,10 +254,10 @@ namespace carma_cloud_client
     QByteArray array = st.toLocal8Bit();
 
     char* _cloudUpdate = array.data(); // would be the cloud update packet, needs parsing
-    
-    
+
+
     std::string tcm_string = _cloudUpdate;
-    
+
     RCLCPP_DEBUG_STREAM(  get_logger(), "Received TCM from cloud");
     RCLCPP_DEBUG_STREAM(  get_logger(), "TCM in XML format: " << tcm_string);
     if(tcm_string.length() == 0)
@@ -267,10 +267,10 @@ namespace carma_cloud_client
     }
 
     boost::property_tree::ptree list_tree;
-    std :: stringstream ss; 
+    std :: stringstream ss;
     ss << tcm_string;
     read_xml(ss, list_tree);
-    
+
 
     auto child_tcm_list = list_tree.get_child_optional("TrafficControlMessageList");
 
@@ -292,7 +292,7 @@ namespace carma_cloud_client
 
     }
 
- 
+
   }
 
   j2735_v2x_msgs::msg::TrafficControlMessage CarmaCloudClient::parseTCMXML(boost::property_tree::ptree& tree)
@@ -366,14 +366,14 @@ namespace carma_cloud_client
 
   int CarmaCloudClient::StartWebService()
   {
-    //Web services 
+    //Web services
     char *placeholderX[1]={0};
     int placeholderC=1;
     QCoreApplication a(placeholderC,placeholderX);
-    
+
     QHostAddress address = QHostAddress(QString::fromStdString (config_.webip));
     quint16 port = static_cast<quint16>(config_.webport);
-    
+
     QSharedPointer<OpenAPI::OAIApiRequestHandler> handler(new OpenAPI::OAIApiRequestHandler());
     handler = QSharedPointer<OpenAPI::OAIApiRequestHandler> (new OpenAPI::OAIApiRequestHandler());
     auto router = QSharedPointer<OpenAPI::OAIApiRouter>::create();
@@ -414,7 +414,7 @@ namespace carma_cloud_client
     }
 
     std::string tcids_string = tree.get<std::string>("tcids");
-    
+
     return tcm_pkg;
 
   }
@@ -432,7 +432,7 @@ namespace carma_cloud_client
     else
     {
       tcm_schedule.end_exists = true;
-      tcm_schedule.end = tree.get<uint64_t>("schedule.end");  
+      tcm_schedule.end = tree.get<uint64_t>("schedule.end");
     }
 
     auto child_dow = tree.get_child_optional("schedule.dow");
@@ -458,7 +458,7 @@ namespace carma_cloud_client
     {
       tcm_schedule.between_exists = true;
       auto child_tree = child_between.get();
-      
+
       for (auto& item : tree.get_child("schedule.between"))
       {
         j2735_v2x_msgs::msg::DailySchedule daily;
@@ -497,78 +497,86 @@ namespace carma_cloud_client
   {
     j2735_v2x_msgs::msg::TrafficControlDetail tcm_detail;
 
-    auto child_closed = tree.get_child_optional( "detail.closed" );
-    if( child_closed )
+    auto detail_tree = tree.get_child("detail");
+
+
+    auto closed_tree = detail_tree.get_child_optional( "closed" );
+    if (closed_tree)
     {
       tcm_detail.choice = j2735_v2x_msgs::msg::TrafficControlDetail::CLOSED_CHOICE;
-      std::string closed_val = tree.get<std::string>("detail.closed");
-      if (closed_val == "open")
+
+      auto open = closed_tree.get().get_child_optional("open");
+      if (open)
       {
         tcm_detail.closed = j2735_v2x_msgs::msg::TrafficControlDetail::OPEN;
       }
-      else if (closed_val == "closed")
+
+      auto notopen = closed_tree.get().get_child_optional("notopen");
+      if (notopen)
       {
         tcm_detail.closed = j2735_v2x_msgs::msg::TrafficControlDetail::CLOSED;
       }
-      else if (closed_val == "taperleft")
+
+      auto taperleft = closed_tree.get().get_child_optional("taperleft");
+      if (taperleft)
       {
         tcm_detail.closed = j2735_v2x_msgs::msg::TrafficControlDetail::TAPERLEFT;
       }
-      else if (closed_val == "taperright")
+
+      auto taperright = closed_tree.get().get_child_optional("taperright");
+      if (taperright)
       {
         tcm_detail.closed = j2735_v2x_msgs::msg::TrafficControlDetail::TAPERRIGHT;
       }
-      else if (closed_val == "openleft")
+
+      auto openleft = closed_tree.get().get_child_optional("openleft");
+      if (openleft)
       {
         tcm_detail.closed = j2735_v2x_msgs::msg::TrafficControlDetail::OPENLEFT;
       }
-      else if (closed_val == "openright")
+
+      auto openright = closed_tree.get().get_child_optional("openright");
+      if (openright)
       {
         tcm_detail.closed = j2735_v2x_msgs::msg::TrafficControlDetail::OPENRIGHT;
       }
-      else tcm_detail.closed = j2735_v2x_msgs::msg::TrafficControlDetail::CLOSED;
-      
+
     }
 
-    auto child_chains = tree.get_child_optional( "detail.chains" );
+    auto child_dir= detail_tree.get_child_optional( "direction" );
+    if (child_dir)
+    {
+      tcm_detail.choice = j2735_v2x_msgs::msg::TrafficControlDetail::DIRECTION_CHOICE;
+
+      auto direction = child_dir.get().get_child_optional("reverse");
+      if (direction)
+      {
+        tcm_detail.direction = j2735_v2x_msgs::msg::TrafficControlDetail::REVERSE;
+      }
+      else tcm_detail.direction = j2735_v2x_msgs::msg::TrafficControlDetail::FORWARD;
+
+    }
+
+    auto child_chains = detail_tree.get_child_optional( "chains" );
     if( child_chains )
     {
       tcm_detail.chains = j2735_v2x_msgs::msg::TrafficControlDetail::CHAINS_CHOICE;
-      std::string chains_val = tree.get<std::string>("detail.chains");
-      if (chains_val == "no")
+      auto no = child_chains.get().get_child_optional("no");
+      if (no)
       {
         tcm_detail.chains = j2735_v2x_msgs::msg::TrafficControlDetail::NO;
       }
-      else if (chains_val == "permitted")
+      auto permitted = child_chains.get().get_child_optional("permitted");
+      if (permitted)
       {
         tcm_detail.chains = j2735_v2x_msgs::msg::TrafficControlDetail::PERMITTED;
       }
-      else if (chains_val == "required")
+      auto required = child_chains.get().get_child_optional("required");
+      if (required)
       {
         tcm_detail.chains = j2735_v2x_msgs::msg::TrafficControlDetail::REQUIRED;
       }
     }
-
-    auto child_direction = tree.get_child_optional( "detail.chains" );
-    if( child_direction )
-    {
-      tcm_detail.direction = j2735_v2x_msgs::msg::TrafficControlDetail::DIRECTION_CHOICE;
-      std::string direction_val = tree.get<std::string>("detail.chains");
-      if( child_direction )
-      {
-        tcm_detail.direction = j2735_v2x_msgs::msg::TrafficControlDetail::DIRECTION_CHOICE;
-        std::string direction_val = tree.get<std::string>("detail.chains");
-        if (direction_val == "forward")
-        {
-          tcm_detail.direction = j2735_v2x_msgs::msg::TrafficControlDetail::FORWARD;
-        }
-        else if (direction_val == "reverse")
-        {
-          tcm_detail.direction = j2735_v2x_msgs::msg::TrafficControlDetail::REVERSE;
-        }
-      }
-    }
-
 
     auto child_mins = tree.get_child_optional( "detail.minspeed" );
     if( child_mins )
@@ -735,17 +743,17 @@ namespace carma_cloud_client
       tcm_params.vclasses.push_back(vclass);
     }
     tcm_params.schedule = parse_schedule(tree);
-    
+
     std::string bool_str = tree.get_value<std::string>("regulatory");
     if (bool_str == "false") tcm_params.regulatory = false;
     else tcm_params.regulatory = true;
-     
+
     tcm_params.detail = parse_detail(tree);
 
     return tcm_params;
 
   }
-    
+
   j2735_v2x_msgs::msg::TrafficControlGeometry CarmaCloudClient::parse_geometry(boost::property_tree::ptree& tree)
   {
     j2735_v2x_msgs::msg::TrafficControlGeometry tcm_geometry;
@@ -758,7 +766,7 @@ namespace carma_cloud_client
     tcm_geometry.reflat = tree.get<int32_t>("reflat");
     tcm_geometry.refelv = tree.get<int32_t>("refelv");
     tcm_geometry.heading = tree.get<int16_t>("heading");
-    
+
     for (auto& item : tree.get_child("nodes"))
     {
       j2735_v2x_msgs::msg::PathNode pathnode;
@@ -769,7 +777,7 @@ namespace carma_cloud_client
           std::string x_val = which.second.get_value<std::string>();
           pathnode.x = std::stoll(x_val);
         }
-        
+
         else if (which.first == "y")
         {
           std::string y_val = which.second.get_value<std::string>();
@@ -786,13 +794,13 @@ namespace carma_cloud_client
           pathnode.width_exists = true;
           std::string w_val = which.second.get_value<std::string>();
           pathnode.width = std::stoll(w_val);
-          
+
         }
-        
+
       }
       tcm_geometry.nodes.push_back(pathnode);
     }
-    
+
     return tcm_geometry;
 
   }

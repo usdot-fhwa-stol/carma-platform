@@ -21,8 +21,8 @@
 #include <tf2/exceptions.h>
 #include <tf2_ros/transform_listener.h>
 #include <tf2_ros/buffer.h>
-#include <tf2_geometry_msgs/tf2_geometry_msgs.h>
-#include <tf2_sensor_msgs/tf2_sensor_msgs.h>
+#include <tf2_geometry_msgs/tf2_geometry_msgs.hpp>
+#include <tf2_sensor_msgs/tf2_sensor_msgs.hpp>
 #include <autoware_auto_tf2/tf2_autoware_auto_msgs_extension.hpp>
 #include <chrono>
 #include <gtest/gtest_prod.h>
@@ -93,7 +93,7 @@ namespace frame_transformer
         std::string error = ex.what();
         error = "Failed to get transform with exception: " + error;
         auto& clk = *node_->get_clock(); // Separate reference required for proper throttle macro call
-        RCLCPP_WARN_THROTTLE(node_->get_logger(), clk, 1000, error);
+        RCLCPP_WARN_THROTTLE(node_->get_logger(), clk, 1000, error.c_str());
 
         return false;
       }

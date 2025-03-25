@@ -55,8 +55,8 @@ namespace trajectory_executor
       out[config_.default_control_plugin] = config_.default_control_plugin_topic;
 
       //Hardcoding platoon control plugins
-      std::string control_plugin2 = "platoon_control";
-      std::string control_plugin_topic2 = "/guidance/plugins/platoon_control/plan_trajectory";
+      std::string control_plugin2 = "platooning_control";
+      std::string control_plugin_topic2 = "/guidance/plugins/platooning_control/plan_trajectory";
       out[control_plugin2] = control_plugin_topic2;
 
       return out;
@@ -112,7 +112,7 @@ namespace trajectory_executor
 
     timer_ = create_timer(
         get_clock(),
-        std::chrono::milliseconds(timer_period_ms), 
+        std::chrono::milliseconds(timer_period_ms),
         std::bind(&TrajectoryExecutor::onTrajEmitTick, this));
 
     return CallbackReturn::SUCCESS;
@@ -136,13 +136,13 @@ namespace trajectory_executor
         it->second->publish(*cur_traj_);
       } else {
         std::ostringstream description_builder;
-              description_builder << "No match found for control plugin " 
-              << control_plugin << " at point " 
+              description_builder << "No match found for control plugin "
+              << control_plugin << " at point "
               << timesteps_since_last_traj_ << " in current trajectory!";
 
         throw std::invalid_argument(description_builder.str());
       }
-      timesteps_since_last_traj_++; 
+      timesteps_since_last_traj_++;
     } else {
       RCLCPP_DEBUG_STREAM(get_logger(), "Awaiting initial trajectory publication...");
     }
@@ -159,7 +159,7 @@ namespace trajectory_executor
 
     cur_traj_ = std::unique_ptr<carma_planning_msgs::msg::TrajectoryPlan>(move(msg));
     timesteps_since_last_traj_ = 0;
-    RCLCPP_INFO_STREAM(get_logger(), "Successfully swapped trajectories!");  
+    RCLCPP_INFO_STREAM(get_logger(), "Successfully swapped trajectories!");
   }
 
   void TrajectoryExecutor::guidanceStateMonitor(carma_planning_msgs::msg::GuidanceState::UniquePtr msg)

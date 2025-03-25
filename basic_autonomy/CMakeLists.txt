@@ -1,5 +1,5 @@
 
-# Copyright (C) 2022 LEIDOS.
+# Copyright (C) 2024 LEIDOS.
 #
 # Licensed under the Apache License, Version 2.0 (the "License"); you may not
 # use this file except in compliance with the License. You may obtain a copy of
@@ -13,13 +13,19 @@
 # License for the specific language governing permissions and limitations under
 # the License.
 
-cmake_minimum_required(VERSION 3.5)
+cmake_minimum_required(VERSION 3.8)
 project(basic_autonomy)
 
 # Declare carma package and check ROS version
 find_package(carma_cmake_common REQUIRED)
 carma_check_ros_version(2)
 carma_package()
+
+# Use C++17
+if(NOT CMAKE_CXX_STANDARD)
+  set(CMAKE_CXX_STANDARD 17)
+  set(CMAKE_CXX_STANDARD_REQUIRED ON)
+endif()
 
 ## Find dependencies using ament auto
 find_package(ament_cmake_auto REQUIRED)
@@ -48,8 +54,7 @@ target_link_libraries(
 
 
 # Testing
-if(BUILD_TESTING)  
-
+if(BUILD_TESTING)
   find_package(ament_lint_auto REQUIRED)
   ament_lint_auto_find_test_dependencies() # This populates the ${${PROJECT_NAME}_FOUND_TEST_DEPENDS} variable
 

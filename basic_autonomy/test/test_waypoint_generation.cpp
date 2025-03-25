@@ -886,7 +886,6 @@ namespace basic_autonomy
                                                                                     detailed_config, visited_lanelets), std::invalid_argument);
     }
 
-
     TEST(BasicAutonomyTest, test_verify_yield)
     {
         auto node = std::make_shared<carma_ros2_utils::CarmaLifecycleNode>(rclcpp::NodeOptions());
@@ -917,7 +916,7 @@ namespace basic_autonomy
         ASSERT_TRUE(basic_autonomy::waypoint_generation::is_valid_yield_plan(node, tp));
 
         carma_planning_msgs::msg::TrajectoryPlan tp2;
-
+        //Test insufficient trajectory points
         carma_planning_msgs::msg::TrajectoryPlanPoint point_4;
         point_4.x = 5.0;
         point_4.y = 0.0;
@@ -928,25 +927,24 @@ namespace basic_autonomy
         ASSERT_FALSE(basic_autonomy::waypoint_generation::is_valid_yield_plan(node, tp2));
 
         carma_planning_msgs::msg::TrajectoryPlan tp3;
-
+        // Test old trajectory
         carma_planning_msgs::msg::TrajectoryPlanPoint point_5;
         point_5.x = 5.0;
         point_5.y = 0.0;
-        point_5.target_time = startTime;
+        point_5.target_time = rclcpp::Time(0,0);
         point_5.lane_id = "1";
         tp3.trajectory_points.push_back(point_5);
 
         carma_planning_msgs::msg::TrajectoryPlanPoint point_6;
         point_6.x = 10.0;
         point_6.y = 0.0;
-        point_6.target_time = startTime + rclcpp::Duration(1, 0);
+        point_6.target_time = rclcpp::Time(1,0);
         point_6.lane_id = "1";
         tp3.trajectory_points.push_back(point_6);
 
-        ASSERT_FALSE(basic_autonomy::waypoint_generation::is_valid_yield_plan(node, tp2));
+        ASSERT_FALSE(basic_autonomy::waypoint_generation::is_valid_yield_plan(node, tp3));
 
     }
-
 
 } // namespace basic_autonomy
 

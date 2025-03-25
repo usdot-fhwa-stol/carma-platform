@@ -25,7 +25,7 @@ GeofenceScheduler::GeofenceScheduler(std::shared_ptr<TimerFactory> timerFactory)
 {
   // Create repeating loop to clear geofence timers which are no longer needed
   deletion_timer_ =
-      timerFactory_->buildTimer(nextId(), rclcpp::Duration(1), std::bind(&GeofenceScheduler::clearTimers, this));
+      timerFactory_->buildTimer(nextId(), rclcpp::Duration::from_nanoseconds(1), std::bind(&GeofenceScheduler::clearTimers, this));
   clock_type_ = timerFactory_->now().get_clock_type();
 }
 
@@ -95,7 +95,7 @@ void GeofenceScheduler::addGeofence(std::shared_ptr<Geofence> gf_ptr)
 
     int32_t timer_id = nextId();
 
-    rclcpp::Duration control_duration = rclcpp::Duration(std::max((startTime - timerFactory_->now()).seconds() * 1e9, 0.0)); //guard for negative value
+    rclcpp::Duration control_duration = rclcpp::Duration::from_nanoseconds(std::max((startTime - timerFactory_->now()).seconds() * 1e9, 0.0)); //guard for negative value
 
     // Build timer to trigger when this geofence becomes active
     TimerPtr timer = timerFactory_->buildTimer(
@@ -119,7 +119,7 @@ void GeofenceScheduler::startGeofenceCallback(std::shared_ptr<Geofence> gf_ptr, 
   // Build timer to trigger when this geofence becomes inactive
   int32_t ending_timer_id = nextId();
 
-  rclcpp::Duration control_duration = rclcpp::Duration(std::max((endTime - timerFactory_->now()).seconds() * 1e9, 0.0)); //guard for negative value
+  rclcpp::Duration control_duration = rclcpp::Duration::from_nanoseconds(std::max((endTime - timerFactory_->now()).seconds() * 1e9, 0.0)); //guard for negative value
 
   TimerPtr timer = timerFactory_->buildTimer(
       ending_timer_id, control_duration,
@@ -157,7 +157,7 @@ void GeofenceScheduler::endGeofenceCallback(std::shared_ptr<Geofence> gf_ptr, co
   // Build timer to trigger when this geofence becomes active
   int32_t start_timer_id = nextId();
 
-  rclcpp::Duration control_duration = rclcpp::Duration(std::max((startTime - timerFactory_->now()).seconds() * 1e9, 0.0)); //guard for negative value
+  rclcpp::Duration control_duration = rclcpp::Duration::from_nanoseconds(std::max((startTime - timerFactory_->now()).seconds() * 1e9, 0.0)); //guard for negative value
 
   TimerPtr timer = timerFactory_->buildTimer(
       start_timer_id, control_duration,

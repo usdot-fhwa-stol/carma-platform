@@ -1,10 +1,16 @@
-cmake_minimum_required(VERSION 3.5)
+cmake_minimum_required(VERSION 3.8)
 project(system_controller)
 
 
 find_package(carma_cmake_common REQUIRED)
 carma_check_ros_version(2)
 carma_package()
+
+# Use C++17
+if(NOT CMAKE_CXX_STANDARD)
+  set(CMAKE_CXX_STANDARD 17)
+  set(CMAKE_CXX_STANDARD_REQUIRED ON)
+endif()
 
 ## Find dependencies
 find_package(ament_cmake_auto REQUIRED)
@@ -26,6 +32,7 @@ ament_auto_add_executable(${executable_name} src/main.cpp)
 target_link_libraries(${executable_name} ${library_name})
 
 # Test
+
 if(BUILD_TESTING)
 
   add_subdirectory(test)

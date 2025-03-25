@@ -12,15 +12,16 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include "motion_computation/motion_computation_worker.hpp"
 #include <wgs84_utils/proj_tools.h>
+
 #include <memory>
 #include <string>
-#include "motion_computation/message_conversions.hpp"
+
+#include <motion_computation/message_conversions.hpp>
+#include <motion_computation/motion_computation_worker.hpp>
 
 namespace motion_computation
 {
-
 MotionComputationWorker::MotionComputationWorker(
   const PublishObjectCallback & obj_pub,
   rclcpp::node_interfaces::NodeLoggingInterface::SharedPtr logger,
@@ -34,6 +35,10 @@ void MotionComputationWorker::predictionLogic(
 {
   carma_perception_msgs::msg::ExternalObjectList sensor_list;
   sensor_list.header = obj_list->header;
+
+  if (!obj_list || obj_list->objects.empty()) {
+    return;
+  }
 
   for (auto obj : obj_list->objects) {
     // Header contains the frame rest of the fields will use
@@ -49,18 +54,18 @@ void MotionComputationWorker::predictionLogic(
     bool use_ctrv_model;
 
     if (obj.object_type == obj.UNKNOWN) {
-      use_ctrv_model = true;
+      use_ctrv_model = enable_ctrv_for_unknown_obj_;
     } else if (obj.object_type == obj.MOTORCYCLE) {
-      use_ctrv_model = true;
+      use_ctrv_model = enable_ctrv_for_motorcycle_obj_;
     } else if (obj.object_type == obj.SMALL_VEHICLE) {
-      use_ctrv_model = true;
+      use_ctrv_model = enable_ctrv_for_small_vehicle_obj_;
     } else if (obj.object_type == obj.LARGE_VEHICLE) {
-      use_ctrv_model = true;
+      use_ctrv_model = enable_ctrv_for_large_vehicle_obj_;
     } else if (obj.object_type == obj.PEDESTRIAN) {
-      use_ctrv_model = false;
+      use_ctrv_model = enable_ctrv_for_pedestrian_obj_;
     } else {
       obj.object_type = obj.UNKNOWN;
-      use_ctrv_model = false;
+      use_ctrv_model = enable_ctrv_for_unknown_obj_;
     }  // end if-else
 
     if (use_ctrv_model == true) {
@@ -72,14 +77,15 @@ void MotionComputationWorker::predictionLogic(
         obj, prediction_time_step_, prediction_period_, cv_x_accel_noise_, cv_y_accel_noise_,
         prediction_process_noise_max_, prediction_confidence_drop_rate_);
     }
+
     sensor_list.objects.emplace_back(obj);
   }  // end for-loop
 
   // Synchronize all data to the current sensor data timestamp
   carma_perception_msgs::msg::ExternalObjectList synchronization_base_objects;
   synchronization_base_objects.header =
-    sensor_list
-      .header;  // Use the current sensing stamp as the sync point even if sensor data is not used
+    sensor_list.header;  // Use the current sensing stamp as the sync point even if sensor data is
+                         // not used
 
   if (enable_sensor_processing_) {
     // If using sensor data add it to the base synchronization list since it
@@ -95,7 +101,8 @@ void MotionComputationWorker::predictionLogic(
   } else {
     RCLCPP_WARN_STREAM(
       logger_->get_logger(),
-      "Not configured to publish any data publishing empty object list. Operating like this is NOT "
+      "Not configured to publish any data publishing empty "
+      "object list. Operating like this is NOT "
       "advised.");
 
     obj_pub_(synchronization_base_objects);
@@ -136,21 +143,24 @@ void MotionComputationWorker::predictionLogic(
 void MotionComputationWorker::georeferenceCallback(const std_msgs::msg::String::UniquePtr msg)
 {
   // Build projector from proj string
-  map_projector_ = std::make_shared<lanelet::projection::LocalFrameProjector>(msg->data.c_str());
+  if (georeference_ != msg->data) {
+    georeference_ = msg->data;
+    map_projector_ = std::make_shared<lanelet::projection::LocalFrameProjector>(msg->data.c_str());
 
-  std::string axis =
-    wgs84_utils::proj_tools::getAxisFromProjString(msg->data);  // Extract axis for orientation calc
+    std::string axis =
+      wgs84_utils::proj_tools::getAxisFromProjString(msg->data);  // Extract axis for orientation
 
-  RCLCPP_INFO_STREAM(logger_->get_logger(), "Extracted Axis: " << axis);
+    RCLCPP_INFO_STREAM(logger_->get_logger(), "Extracted Axis: " << axis);
 
-  ned_in_map_rotation_ =
-    wgs84_utils::proj_tools::getRotationOfNEDFromProjAxis(axis);  // Extract map rotation from axis
+    ned_in_map_rotation_ =
+      wgs84_utils::proj_tools::getRotationOfNEDFromProjAxis(axis);  // Extract map rotation
 
-  RCLCPP_DEBUG_STREAM(
-    logger_->get_logger(), "Extracted NED in Map Rotation (x,y,z,w) : ( "
-                             << ned_in_map_rotation_.getX() << ", " << ned_in_map_rotation_.getY()
-                             << ", " << ned_in_map_rotation_.getZ() << ", "
-                             << ned_in_map_rotation_.getW());
+    RCLCPP_DEBUG_STREAM(
+      logger_->get_logger(), "Extracted NED in Map Rotation (x,y,z,w) : ( "
+                               << ned_in_map_rotation_.getX() << ", " << ned_in_map_rotation_.getY()
+                               << ", " << ned_in_map_rotation_.getZ() << ", "
+                               << ned_in_map_rotation_.getW());
+  }
 }
 
 void MotionComputationWorker::setPredictionTimeStep(double time_step)
@@ -182,6 +192,18 @@ void MotionComputationWorker::setDetectionInputFlags(
   enable_bsm_processing_ = enable_bsm_processing;
   enable_psm_processing_ = enable_psm_processing;
   enable_mobility_path_processing_ = enable_mobility_path_processing;
+}
+
+void MotionComputationWorker::setDetectionMotionModelFlags(
+  bool enable_ctrv_for_unknown_obj, bool enable_ctrv_for_motorcycle_obj,
+  bool enable_ctrv_for_small_vehicle_obj, bool enable_ctrv_for_large_vehicle_obj,
+  bool enable_ctrv_for_pedestrian_obj)
+{
+  enable_ctrv_for_unknown_obj_ = enable_ctrv_for_unknown_obj;
+  enable_ctrv_for_motorcycle_obj_ = enable_ctrv_for_motorcycle_obj;
+  enable_ctrv_for_small_vehicle_obj_ = enable_ctrv_for_small_vehicle_obj;
+  enable_ctrv_for_large_vehicle_obj_ = enable_ctrv_for_large_vehicle_obj;
+  enable_ctrv_for_pedestrian_obj_ = enable_ctrv_for_pedestrian_obj;
 }
 
 void MotionComputationWorker::mobilityPathCallback(

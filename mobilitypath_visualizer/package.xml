@@ -1,6 +1,6 @@
 <?xml version="1.0"?>
 
-<!--  
+<!--
  Copyright (C) 2021 LEIDOS.
 
  Licensed under the Apache License, Version 2.0 (the "License"); you may not
@@ -18,12 +18,12 @@
 
 <package format="3">
   <name>mobilitypath_visualizer</name>
-  <version>3.3.0</version>
+  <version>5.0.0</version>
   <description>The mobilitypath_visualizer package visualizes mobility path of host and surrounding cavs</description>
   <maintainer email="carma@dot.gov">carma</maintainer>
   <license>Apache License 2.0</license>
   <author email="carma@dot.gov">carma</author>
-  
+
   <buildtool_depend>ament_cmake</buildtool_depend>
   <build_depend>carma_cmake_common</build_depend>
   <build_depend>ament_auto_cmake</build_depend>

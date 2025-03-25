@@ -1,19 +1,14 @@
-standStillHeadway: 12.0 # Standstill gap between vehicles (m)
-maxAccel: 1.5 # Maximum acceleration absolute value used in controller filters (m/s^2)
-Kp: 0.4 # Proportional weight for PID controller
-Kd: 0.0  # Derivative Weight for PID controller  
-Ki: 0.03 # Integral weight for PID controller
-maxValue: 2.0 # Max value to restrict speed adjustment at one time step (limit on delta_v) (m/s)
-minValue: -10.0 # Min value to restrict speed adjustment at one time step (limit on delta_v) (m/s)
-cmdTmestamp: 100 # Timestep to calculate ctrl commands (ms)
-adjustmentCap: 15.0 # Adjustment cap for speed command (m/s)
-dt: 0.1 # Timestep to calculate ctrl commands (s)
-integratorMax: 30 # Max limit for integrator term
-integratorMin: -30  # Min limit for integrator term
-lowpassGain: 0.5 ##Lowpass filter gain
-lookaheadRatio: 2.0 # Ratio to calculate lookahead distance
-minLookaheadDist: 15.0 # Min lookahead distance (m)
-correctionAngle: 0.0 # Correction angle to improve steering accuracy
-integratorMax_pp: 0.1 # Max integrator val for pure pursuit integral controller
-integratorMin_pp: -0.1  # Min integrator val for pure pursuit integral controller
-Ki_pp: 0.012 # Integral weight for pure pursuit integral controller
+stand_still_headway_m: 12.0 # Standstill gap between vehicles (m)
+max_accel_ms2: 1.5 # Maximum acceleration absolute value used in controller filters (m/s^2)
+kp: 0.4 # Proportional weight for PID controller
+kd: 0.0  # Derivative Weight for PID controller
+ki: 0.03 # Integral weight for PID controller
+max_delta_speed_per_timestep: 2.0 # Max value to restrict speed adjustment at one time step (limit on delta_v) (m/s)
+min_delta_speed_per_timestep: -10.0 # Min value to restrict speed adjustment at one time step (limit on delta_v) (m/s)
+cmd_timestamp_ms: 100 # Timestep to calculate ctrl commands (ms)
+adjustment_cap_mps: 15.0 # Adjustment cap for speed command (m/s)
+integrator_max: 30.0 # Max limit for integrator term
+integrator_min: -30.0  # Min limit for integrator term
+vehicle_response_lag: 0.2
+enable_max_adjustment_filter: true
+enable_max_accel_filter: true

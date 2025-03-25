@@ -139,8 +139,11 @@ auto ExternalObjectListToSdsmNode::publish_as_sdsm(const external_objects_msg_ty
 
 auto ExternalObjectListToSdsmNode::update_georeference(const georeference_msg_type & msg) -> void
 {
-  map_georeference_ = msg.data;
-  map_projector_ = std::make_shared<lanelet::projection::LocalFrameProjector>(msg.data.c_str());
+  if (map_georeference_ != msg.data) {
+    map_georeference_ = msg.data;
+    map_projector_ =
+      std::make_shared<lanelet::projection::LocalFrameProjector>(map_georeference_.c_str());
+  }
 }
 
 auto ExternalObjectListToSdsmNode::update_current_pose(const pose_msg_type & msg) -> void
@@ -151,8 +154,6 @@ auto ExternalObjectListToSdsmNode::update_current_pose(const pose_msg_type & msg
 }  // namespace carma_cooperative_perception
 
 // This is not our macro, so we should not worry about linting it.
-// clang-tidy added support for ignoring system macros in release 14.0.0 (see the release notes
-// here: https://releases.llvm.org/14.0.0/tools/clang/tools/extra/docs/ReleaseNotes.html), but
-// ament_clang_tidy for ROS 2 Foxy specifically looks for clang-tidy-6.0.
+
 RCLCPP_COMPONENTS_REGISTER_NODE(                               // NOLINT
   carma_cooperative_perception::ExternalObjectListToSdsmNode)  // NOLINT

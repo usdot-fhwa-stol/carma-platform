@@ -1,10 +1,16 @@
-cmake_minimum_required(VERSION 3.5)
+cmake_minimum_required(VERSION 3.8)
 project(subsystem_controllers)
 
 
 find_package(carma_cmake_common REQUIRED)
 carma_check_ros_version(2)
 carma_package()
+
+# Use C++17
+if(NOT CMAKE_CXX_STANDARD)
+  set(CMAKE_CXX_STANDARD 17)
+  set(CMAKE_CXX_STANDARD_REQUIRED ON)
+endif()
 
 ## Find dependencies
 find_package(ament_cmake_auto REQUIRED)
@@ -35,14 +41,14 @@ ament_auto_add_executable(localization_controller src/localization_controller/ma
 target_link_libraries(localization_controller localization_controller_core ${base_lib})
 
 # Guidance Subsystem
-ament_auto_add_library(guidance_controller_core SHARED 
+ament_auto_add_library(guidance_controller_core SHARED
   src/guidance_controller/guidance_controller.cpp
   src/guidance_controller/entry_manager.cpp
   src/guidance_controller/plugin_manager.cpp
 )
 rclcpp_components_register_nodes(guidance_controller_core "subsystem_controllers::GuidanceControllerNode")
 target_link_libraries(guidance_controller_core ${base_lib})
-ament_auto_add_executable(guidance_controller 
+ament_auto_add_executable(guidance_controller
   src/guidance_controller/main.cpp
 )
 target_link_libraries(guidance_controller guidance_controller_core ${base_lib})
@@ -55,10 +61,9 @@ ament_auto_add_executable(environment_perception_controller src/environment_perc
 target_link_libraries(environment_perception_controller environment_perception_controller_core ${base_lib})
 
 # Driver Subsystem
-ament_auto_add_library(drivers_controller_core SHARED 
+ament_auto_add_library(drivers_controller_core SHARED
   src/drivers_controller/drivers_controller_node.cpp
-  src/drivers_controller/entry_manager.cpp
-  src/drivers_controller/driver_manager.cpp
+  src/drivers_controller/ssc_driver_manager.cpp
   )
 rclcpp_components_register_nodes(drivers_controller_core "subsystem_controllers::DriversControllerNode")
 target_link_libraries(drivers_controller_core ${base_lib})

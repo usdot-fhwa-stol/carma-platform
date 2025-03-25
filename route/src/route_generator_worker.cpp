@@ -495,7 +495,7 @@ namespace route {
     {
         try
         {
-            tf_ = tf2_buffer_.lookupTransform("map", "vehicle_front", rclcpp::Time(0,0), rclcpp::Duration(1.0*1e9)); //save to local copy of transform 0.1 sec timeout
+            tf_ = tf2_buffer_.lookupTransform("map", "vehicle_front", rclcpp::Time(0,0), rclcpp::Duration::from_nanoseconds(1.0*1e9)); //save to local copy of transform 0.1 sec timeout
             tf2::fromMsg(tf_, frontbumper_transform_);
         }
         catch (const tf2::TransformException &ex)

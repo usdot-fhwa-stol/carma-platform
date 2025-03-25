@@ -32,7 +32,7 @@
 #include "boost/date_time/posix_time/posix_time.hpp"
 #include "carma_wm/SignalizedIntersectionManager.hpp"
 #include <rosgraph_msgs/msg/clock.hpp>
-
+#include <gtest/gtest_prod.h>
 namespace carma_wm
 {
 /*! \brief Class which implements the WorldModel interface. In addition this class provides write access to the world
@@ -111,8 +111,11 @@ public:
    *
    * @param spat_msg Msg to update with
    * @param use_sim_time Boolean to indicate if it is currently simulation or not
+   * @param use_real_time_spat_in_sim Boolean to indicate if the incoming spat is based on wall clock.
+   * Required in edge cases where deployment in simulation is receiving SPaT messages based on wall clock.
+   * Defaults to false.
    */
-  void processSpatFromMsg(const carma_v2x_msgs::msg::SPAT& spat_msg, bool use_sim_time = false);
+  void processSpatFromMsg(const carma_v2x_msgs::msg::SPAT& spat_msg, bool use_sim_time = false, bool use_real_time_spat_in_sim=false);
 
   /**
    * \brief This function is called by distanceToObjectBehindInLane or distanceToObjectAheadInLane.
@@ -135,8 +138,10 @@ public:
     * \param min_end_time minimum end time of the spat movement event list
     * \param moy_exists tells weather minute of the year exist or not
     * \param moy value of the minute of the year
+    * \param use_real_time_spat_in_sim Boolean to indicate if the incoming spat is based on wall clock. Required in edge cases where deployment in simulation is receiving SPaT messages based on wall clock.
+    * Defaults to false.
    */
-  boost::posix_time::ptime min_end_time_converter_minute_of_year(boost::posix_time::ptime min_end_time,bool moy_exists,uint32_t moy=0, bool is_simulation = false);
+  boost::posix_time::ptime min_end_time_converter_minute_of_year(boost::posix_time::ptime min_end_time,bool moy_exists,uint32_t moy=0, bool is_simulation = true, bool use_real_time_spat_in_sim=false);
 
 /** \param config_lim the configurable speed limit value populated from WMListener using the config_speed_limit parameter
  * in VehicleConfigParams.yaml
@@ -265,6 +270,8 @@ public:
 
   std::vector<lanelet::SignalizedIntersectionPtr> getSignalizedIntersectionsAlongRoute(const lanelet::BasicPoint2d &loc) const;
 
+  std::optional<lanelet::ConstLanelet> getFirstLaneletOnShortestPath(const std::vector<lanelet::ConstLanelet>& lanelets_to_filter) const;
+
   std::unordered_map<uint32_t, lanelet::Id> traffic_light_ids_;
 
   carma_wm::SignalizedIntersectionManager sim_; // records SPAT/MAP lane ids to lanelet ids
@@ -320,5 +327,6 @@ private:
   static constexpr double YELLOW_LIGHT_DURATION = 3.0; //in sec
   static constexpr double GREEN_LIGHT_DURATION = 20.0; //in sec
 
+  FRIEND_TEST(CARMAWorldModelTest, getFirstLaneletOnShortestPath);
 };
 }  // namespace carma_wm

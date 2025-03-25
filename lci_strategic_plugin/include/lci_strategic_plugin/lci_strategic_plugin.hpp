@@ -35,8 +35,9 @@
 #include "lci_strategic_plugin/lci_states.hpp"
 
 #include <tf2_ros/transform_listener.h>
+#include <tf2_ros/buffer.h>
 #include <tf2/LinearMath/Transform.h>
-#include <tf2_geometry_msgs/tf2_geometry_msgs.h>
+#include <tf2_geometry_msgs/tf2_geometry_msgs.hpp>
 #include <std_msgs/msg/int8.hpp>
 #include <std_msgs/msg/float64.hpp>
 #include <math.h>
@@ -244,8 +245,8 @@ private:
   std::string light_controlled_intersection_strategy_ = "Carma/signalized_intersection"; // Strategy carma-streets is sending. Could be more verbose but needs to be changed on both ends
 
   // TF listenser
-  tf2_ros::Buffer tf2_buffer_;
-  std::unique_ptr<tf2_ros::TransformListener> tf2_listener_;
+  std::shared_ptr<tf2_ros::Buffer> tf2_buffer_;
+  std::shared_ptr<tf2_ros::TransformListener> tf2_listener_;
   tf2::Stamped<tf2::Transform> frontbumper_transform_;
   double length_to_front_bumper_ = 3.0;
 
@@ -280,6 +281,20 @@ private:
     double speed;         // The speed of the vehicle at time stamp
     lanelet::Id lane_id;  // The current lane id of the vehicle at time stamp
   };
+
+  /**
+   * \brief Method to check if the state is an allowed green movement state. Currently Permissive and Protected green are supported
+   * \param state The traffic signal state to check for
+   * \return bool value - True if state is PERMISSIVE_MOVEMENT_ALLOWED or PROTECTED_MOVEMENT_ALLOWED
+   */
+  bool isStateAllowedGreen(const lanelet::CarmaTrafficSignalState& state) const;
+
+  /**
+   * \brief Returns the duration for the allowed movements
+   * \param traffic_light The traffic light object to get the green duration for
+   * \return int value of the duration for the allowed movement
+   */
+  boost::posix_time::time_duration getMovementAllowedDuration(lanelet::CarmaTrafficSignalPtr traffic_light);
 
   /**
    * \brief Method for performing maneuver planning when the current plugin state is TransitState::UNAVAILABLE

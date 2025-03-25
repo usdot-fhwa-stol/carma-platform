@@ -21,7 +21,7 @@
 #include <future>
 
 #include <tf2/LinearMath/Transform.h>
-#include <tf2/LinearMath/Vector3.h>
+#include <tf2_bullet/tf2_bullet.h>
 #include <tf2/LinearMath/Quaternion.h>
 
 #include "gnss_to_map_convertor/GNSSToMapConvertor.hpp"

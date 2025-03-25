@@ -14,27 +14,27 @@
 
 #include <lanelet2_extension/regulatory_elements/CarmaTrafficSignal.h>
 #include <tf2/LinearMath/Transform.h>
-#include <tf2_geometry_msgs/tf2_geometry_msgs.h>
 #include <wgs84_utils/wgs84_utils.h>
+
+#include <algorithm>
+#include <string>
+#include <vector>
+
 #include <boost/date_time/posix_time/posix_time.hpp>
-#include <carma_perception_msgs/msg/external_object.hpp>
-#include <carma_v2x_msgs/msg/psm.hpp>
 #include <motion_computation/impl/psm_to_external_object_helpers.hpp>
 #include <motion_computation/message_conversions.hpp>
 #include <rclcpp/logger.hpp>
 #include <rclcpp/logging.hpp>
 #include <rclcpp/rclcpp.hpp>
 
-#include <algorithm>
-#include <string>
-#include <vector>
+#include <carma_perception_msgs/msg/external_object.hpp>
+#include <carma_v2x_msgs/msg/psm.hpp>
+#include <tf2_geometry_msgs/tf2_geometry_msgs.hpp>
 
 namespace motion_computation
 {
-
 namespace conversion
 {
-
 void convert(
   const carma_v2x_msgs::msg::PSM & in_msg, carma_perception_msgs::msg::ExternalObject & out_msg,
   const std::string & map_frame_id, double pred_period, double pred_step_size,
@@ -227,7 +227,8 @@ void convert(
 
   out_msg.predictions = impl::predicted_poses_to_predicted_state(
     predicted_poses, out_msg.velocity.twist.linear.x, rclcpp::Time(out_msg.header.stamp),
-    rclcpp::Duration(pred_step_size * 1e9), map_frame_id, out_msg.confidence, out_msg.confidence);
+    rclcpp::Duration::from_nanoseconds(pred_step_size * 1e9), map_frame_id, out_msg.confidence,
+    out_msg.confidence);
   out_msg.presence_vector |= carma_perception_msgs::msg::ExternalObject::PREDICTION_PRESENCE_VECTOR;
 }
 
@@ -352,9 +353,8 @@ geometry_msgs::msg::PoseWithCovariance pose_from_gnss(
 
   if (
     fabs(map_point.x()) > 10000.0 ||
-    fabs(map_point.y()) >
-      10000.0) {  // Above 10km from map origin earth curvature will start to have a negative
-                  // impact on system performance
+    fabs(map_point.y()) > 10000.0) {  // Above 10km from map origin earth curvature will start to
+                                      // have a negative impact on system performance
 
     RCLCPP_WARN_STREAM(
       rclcpp::get_logger("motion_computation::conversion"),
@@ -464,8 +464,8 @@ std::vector<carma_perception_msgs::msg::PredictedState> predicted_poses_to_predi
 
     pred_state.predicted_velocity.linear.x = constant_velocity;
     pred_state.predicted_velocity_confidence =
-      0.9 * initial_vel_confidence;  // Reduce confidence by 10 % per
-                                     // timestep
+      0.9 * initial_vel_confidence;  // Reduce confidence by
+                                     // 10 % per timestep
     initial_vel_confidence = pred_state.predicted_velocity_confidence;
 
     output.push_back(pred_state);

@@ -1,4 +1,4 @@
-/*
+    /*
  * Copyright (C) 2020-2022 LEIDOS.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
@@ -42,7 +42,7 @@ namespace port_drayage_plugin
 
     PortDrayageWorker::PortDrayageWorker(rclcpp::node_interfaces::NodeLoggingInterface::SharedPtr logger,
                 rclcpp::Clock::SharedPtr clock,
-                std::function<void(carma_v2x_msgs::msg::MobilityOperation)> mobility_operations_publisher, 
+                std::function<void(carma_v2x_msgs::msg::MobilityOperation)> mobility_operations_publisher,
                 std::function<void(carma_msgs::msg::UIInstructions)> ui_instructions_publisher,
                 std::function<bool(std::shared_ptr<carma_planning_msgs::srv::SetActiveRoute::Request>)> call_set_active_route)
         : logger_(logger), clock_(clock),
@@ -58,7 +58,7 @@ namespace port_drayage_plugin
     void PortDrayageWorker::setVehicleID(const std::string& cmv_id) {
         cmv_id_ = cmv_id;
     }
-    
+
     void PortDrayageWorker::setCargoID(const std::string& cargo_id) {
         cargo_id_ = cargo_id;
     }
@@ -76,7 +76,7 @@ namespace port_drayage_plugin
         publish_mobility_operation_(msg);
     }
 
-    void PortDrayageWorker::onReceivedNewDestination() {       
+    void PortDrayageWorker::onReceivedNewDestination() {
         //  Populate the service request with the destination coordinates from the last received port drayage mobility operation message
         auto route_req = composeSetActiveRouteRequest(latest_mobility_operation_msg_.dest_latitude, latest_mobility_operation_msg_.dest_longitude);
 
@@ -105,7 +105,7 @@ namespace port_drayage_plugin
             destination_point.latitude = *latest_mobility_operation_msg_.dest_latitude;
             destination_point.longitude = *latest_mobility_operation_msg_.dest_longitude;
             destination_point.elevation_exists = false;
-            
+
             route_req->destination_points.push_back(destination_point);
         }
         else {
@@ -141,7 +141,7 @@ namespace port_drayage_plugin
         ui_instructions_msg.stamp = clock_->now();
         ui_instructions_msg.msg = popup_text;
         ui_instructions_msg.type = carma_msgs::msg::UIInstructions::ACK_REQUIRED; // The popup will be displayed until the user interacts with it
-        ui_instructions_msg.response_service = SET_GUIDANCE_ACTIVE_SERVICE_ID; 
+        ui_instructions_msg.response_service = SET_GUIDANCE_ACTIVE_SERVICE_ID;
 
         return ui_instructions_msg;
     }
@@ -163,8 +163,8 @@ namespace port_drayage_plugin
 
         // Add current vehicle location (latitude and longitude)
         ptree location;
-        location.put("latitude", current_gps_position_.latitude); 
-        location.put("longitude", current_gps_position_.longitude); 
+        location.put("latitude", current_gps_position_.latitude);
+        location.put("longitude", current_gps_position_.longitude);
         pt.put_child("location", location);
 
         // Add flag to indicate whether CMV is carring cargo
@@ -198,7 +198,7 @@ namespace port_drayage_plugin
             }
             else {
                 RCLCPP_WARN_STREAM(logger_->get_logger(), "CMV has arrived at a received destination, but does not have an action_id to broadcast.");
-            } 
+            }
 
             // Assign specific fields for arrival at a Pickup location
             if (latest_mobility_operation_msg_.operation == OperationID::PICKUP) {
@@ -250,7 +250,7 @@ namespace port_drayage_plugin
 
             std::string mobility_operation_cmv_id = pt.get<std::string>("cmv_id");
 
-            // Check if the received MobilityOperation message is intended for this vehicle's cmv_id   
+            // Check if the received MobilityOperation message is intended for this vehicle's cmv_id
             if(mobility_operation_cmv_id == cmv_id_) {
                 // Since a new message indicates the previous action was completed, update all cargo-related data members based on the previous action that was completed
                 updateCargoInformationAfterActionCompletion(latest_mobility_operation_msg_);
@@ -259,9 +259,9 @@ namespace port_drayage_plugin
                 previously_completed_operation_ = latest_mobility_operation_msg_.operation;
 
                 RCLCPP_DEBUG_STREAM(logger_->get_logger(), "Processing new port drayage MobilityOperation message for cmv_id " << mobility_operation_cmv_id);
-                mobilityOperationMessageParser(msg->strategy_params);  
+                mobilityOperationMessageParser(msg->strategy_params);
                 previous_strategy_params_ = msg->strategy_params;
-                
+
                 pdsm_.processEvent(PortDrayageEvent::RECEIVED_NEW_DESTINATION);
             }
             else {
@@ -331,7 +331,7 @@ namespace port_drayage_plugin
 
             latest_mobility_operation_msg_.cargo_id = boost::optional<std::string>();
         }
-        
+
         // Parse 'action_id' field  if it exists in strategy_params
         if (pt.count("action_id") != 0){
             latest_mobility_operation_msg_.current_action_id = pt.get<std::string>("action_id");
@@ -344,7 +344,7 @@ namespace port_drayage_plugin
         // Parse starting longitude/latitude fields if 'location' field exists in strategy_params:
         if (pt.count("location") != 0){
             latest_mobility_operation_msg_.start_longitude = pt.get<double>("location.longitude");
-            latest_mobility_operation_msg_.start_latitude = pt.get<double>("location.latitude"); 
+            latest_mobility_operation_msg_.start_latitude = pt.get<double>("location.latitude");
             RCLCPP_DEBUG_STREAM(logger_->get_logger(), "start long: " << *latest_mobility_operation_msg_.start_longitude);
             RCLCPP_DEBUG_STREAM(logger_->get_logger(), "start lat: " << *latest_mobility_operation_msg_.start_latitude);
         }
@@ -355,8 +355,8 @@ namespace port_drayage_plugin
 
         // Parse destination longitude/latitude fields if 'destination' field exists in strategy_params:
         if (pt.count("destination") != 0) {
-            latest_mobility_operation_msg_.dest_longitude = pt.get<double>("destination.longitude"); 
-            latest_mobility_operation_msg_.dest_latitude = pt.get<double>("destination.latitude"); 
+            latest_mobility_operation_msg_.dest_longitude = pt.get<double>("destination.longitude");
+            latest_mobility_operation_msg_.dest_latitude = pt.get<double>("destination.latitude");
             RCLCPP_DEBUG_STREAM(logger_->get_logger(), "dest long: " << *latest_mobility_operation_msg_.dest_longitude);
             RCLCPP_DEBUG_STREAM(logger_->get_logger(), "dest lat: " << *latest_mobility_operation_msg_.dest_latitude);
         }
@@ -364,8 +364,8 @@ namespace port_drayage_plugin
             latest_mobility_operation_msg_.dest_longitude = boost::optional<double>();
             latest_mobility_operation_msg_.dest_latitude = boost::optional<double>();
         }
-    }      
-    
+    }
+
     void PortDrayageWorker::onGuidanceState(carma_planning_msgs::msg::GuidanceState::UniquePtr msg) {
         // Drayage operations have started when the CMV has been engaged for the first time
         if ((msg->state == carma_planning_msgs::msg::GuidanceState::ENGAGED) && (pdsm_.getState() == PortDrayageState::INACTIVE) && enable_port_drayage_) {
@@ -382,7 +382,7 @@ namespace port_drayage_plugin
                     RCLCPP_DEBUG_STREAM(logger_->get_logger(), "CMV completed its previous route, and the previous route is no longer active.");
                     RCLCPP_DEBUG_STREAM(logger_->get_logger(), "Processing ARRIVED_AT_DESTINATION event.");
                     pdsm_.processEvent(PortDrayageEvent::ARRIVED_AT_DESTINATION);
-                }           
+                }
             }
         }
 
@@ -406,12 +406,16 @@ namespace port_drayage_plugin
         // Update the locally-stored GPS position of the CMV
         current_gps_position_.latitude = coord.lat;
         current_gps_position_.longitude = coord.lon;
-    }        
+    }
 
     void PortDrayageWorker::onNewGeoreference(std_msgs::msg::String::UniquePtr msg) {
         // Build projector from proj string
-        map_projector_ = std::make_shared<lanelet::projection::LocalFrameProjector>(msg->data.c_str());  
-    }        
+        if (georeference_ != msg->data)
+        {
+            georeference_ = msg->data;
+            map_projector_ = std::make_shared<lanelet::projection::LocalFrameProjector>(msg->data.c_str());
+        }
+    }
 
 
 } // namespace port_drayage_plugin

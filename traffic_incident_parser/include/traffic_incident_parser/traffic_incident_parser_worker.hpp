@@ -50,66 +50,66 @@ class TrafficIncidentParserWorker
   /*!
    * \brief TrafficIncidentParserWorker constructor
    */
-  TrafficIncidentParserWorker(carma_wm::WorldModelConstPtr wm, const PublishTrafficControlCallback &traffic_control_pub, 
+  TrafficIncidentParserWorker(carma_wm::WorldModelConstPtr wm, const PublishTrafficControlCallback &traffic_control_pub,
    rclcpp::node_interfaces::NodeLoggingInterface::SharedPtr logger, rclcpp::Clock::SharedPtr clock);
-    
+
   /*!
    * \brief Callback for the georeference subscriber used to set the map projection.
    * \param msg The latest georeference.
-   */ 
+   */
   void georeferenceCallback(std_msgs::msg::String::UniquePtr projection_msg);
 
-  /*! 
-   *  \brief Function to receive the incoming mobility operation message from the message node 
+  /*!
+   *  \brief Function to receive the incoming mobility operation message from the message node
    *         and publish the geofence message upon processing the mobility msg. Only incoming mobility operation
    *         messages with strategy "carma3/Incident_Use_Case" are processed.
    *  \param mobility_msg Incoming mobility operation message
    */
   void mobilityOperationCallback(carma_v2x_msgs::msg::MobilityOperation::UniquePtr mobility_msg);
 
-  /*! 
+  /*!
    *  \brief Function to help parse incoming mobility operation messages to required format.
    *  \param  mobility_strategy_params The strategy params associated with an incoming mobility operation message.
    *  \return True if the new message is valid and can be used. False if not new or not valid.
    */
   bool mobilityMessageParser(std::string mobility_strategy_params);
 
-  /*! 
+  /*!
    *  \brief Function to help convert string to double data type.
    *  \param  str String object from which to extract the numeric value (a double).
    *  \param  str_idx The String object's index to start looking at.
    *  \return A string object containing only the numeric value included in the str object.
    */
   std::string stringParserHelper(std::string str, unsigned long str_index) const;
-  
-  /*! 
-   *  \brief Algorithm for extracting the closed lanelet from internally saved mobility message (or geofence) params and assigning it to a traffic contol message. 
+
+  /*!
+   *  \brief Algorithm for extracting the closed lanelet from internally saved mobility message (or geofence) params and assigning it to a traffic contol message.
    *         Closed lanelets are represent by vector of points, where each point represents the geometric middle point of a closed lanelet
    *  \return A vector of traffic control messages; one for each closed lane.
    */
   std::vector<carma_v2x_msgs::msg::TrafficControlMessageV01> composeTrafficControlMesssages();
 
-  /*! 
+  /*!
    *  \brief Function to convert internally saved incident origin point from lat/lon to local map frame.
    *  \return The internally saved incident origin point within the local map frame.
    */
   lanelet::BasicPoint2d getIncidentOriginPoint() const;
 
-  /*! 
+  /*!
    *  \brief Helper method to compute the concatenated centerlines of the lanes in front of the emergency vehicle point
-   *  \param adjacentSet The set of adjacent lanes to start from 
+   *  \param adjacentSet The set of adjacent lanes to start from
    *  \param start_point Point to start the downtrack calculation from. Should be the emergency vehicle points
-   *  \param downtrack downtrack distance to grab centerline points from  
+   *  \param downtrack downtrack distance to grab centerline points from
    *  \param forward_lanes Ouput parameter which will be populated with the centerlines for each lane up to the downtrack distance
    */
   void getAdjacentForwardCenterlines(const lanelet::ConstLanelets& adjacentSet,
     const lanelet::BasicPoint2d& start_point, double downtrack, std::vector<std::vector<lanelet::BasicPoint2d>>* forward_lanes) const;
 
-  /*! 
+  /*!
    *  \brief Helper method that is identical to getAdjacentForwardCenterlines except it works in reverse using uptrack distance
-   *  \param adjacentSet The set of adjacent lanes to start from 
+   *  \param adjacentSet The set of adjacent lanes to start from
    *  \param start_point Point to start the downtrack calculation from. Should be the emergency vehicle points
-   *  \param downtrack downtrack distance to grab centerline points from  
+   *  \param downtrack downtrack distance to grab centerline points from
    *  \param forward_lanes Ouput parameter which will be populated with the centerlines for each lane up to the downtrack distance
    */
   void getAdjacentReverseCenterlines(const lanelet::ConstLanelets& adjacentSet,
@@ -132,7 +132,6 @@ class TrafficIncidentParserWorker
   std::string projection_msg_;
   PublishTrafficControlCallback traffic_control_pub_;// local copy of external object publihsers
   carma_wm::WorldModelConstPtr wm_;
-
   // Logger interface
   rclcpp::node_interfaces::NodeLoggingInterface::SharedPtr logger_;
 

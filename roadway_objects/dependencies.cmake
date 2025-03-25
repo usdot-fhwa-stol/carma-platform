@@ -17,19 +17,17 @@
 # for each dependency.
 ament_auto_find_build_dependencies()
 
-if(roadway_objects_BUILD_TESTS)
-  # These CMake commands were added to ament_cmake_auto in ROS 2 Humble. Until
-  # CARMA supports ROS 2 Humble, we will use package-local copies.
-  include(cmake/ament_auto_find_test_dependencies.cmake)
-  include(cmake/ament_auto_add_gtest.cmake)
+# Turned off as we don't use this package actively anymore. Enable and fix when we use it again.
+# https://usdot-carma.atlassian.net/browse/CAR-6091
 
-  ament_auto_find_test_dependencies()
+# if(roadway_objects_BUILD_TESTS)
+#   ament_auto_find_test_dependencies()
 
-  list(APPEND AMENT_LINT_AUTO_EXCLUDE
-    ament_cmake_uncrustify  # Using clang-format instead
-  )
+#   list(APPEND AMENT_LINT_AUTO_EXCLUDE
+#     ament_cmake_uncrustify  # Using clang-format instead
+#   )
 
-  set(ament_cmake_clang_format_CONFIG_FILE ${PROJECT_SOURCE_DIR}/.clang-format)
+#   set(ament_cmake_clang_format_CONFIG_FILE ${PROJECT_SOURCE_DIR}/.clang-format)
 
-  ament_lint_auto_find_test_dependencies()
-endif()
+#   ament_lint_auto_find_test_dependencies()
+# endif()

@@ -37,7 +37,7 @@ TEST(SCIStrategicPluginTest, composeLaneFollowingManeuverMessage)
 
   ASSERT_EQ(carma_planning_msgs::msg::Maneuver::LANE_FOLLOWING, result.type);
   ASSERT_EQ(carma_planning_msgs::msg::ManeuverParameters::NO_NEGOTIATION, result.lane_following_maneuver.parameters.negotiation_type);
-  ASSERT_EQ(carma_planning_msgs::msg::ManeuverParameters::HAS_TACTICAL_PLUGIN | carma_planning_msgs::msg::ManeuverParameters::HAS_INT_META_DATA | 
+  ASSERT_EQ(carma_planning_msgs::msg::ManeuverParameters::HAS_TACTICAL_PLUGIN | carma_planning_msgs::msg::ManeuverParameters::HAS_INT_META_DATA |
   carma_planning_msgs::msg::ManeuverParameters::HAS_FLOAT_META_DATA | carma_planning_msgs::msg::ManeuverParameters::HAS_STRING_META_DATA,
             result.lane_following_maneuver.parameters.presence_vector);
   ASSERT_TRUE(config.lane_following_plugin_name.compare(
@@ -50,7 +50,7 @@ TEST(SCIStrategicPluginTest, composeLaneFollowingManeuverMessage)
   ASSERT_EQ(5, result.lane_following_maneuver.start_speed);
   ASSERT_EQ(10, result.lane_following_maneuver.end_speed);
   ASSERT_EQ(rclcpp::Time(1.2*1e9, RCL_ROS_TIME), result.lane_following_maneuver.start_time);
-  ASSERT_EQ(rclcpp::Time(1.2*1e9, RCL_ROS_TIME) + rclcpp::Duration(1.0*1e9), result.lane_following_maneuver.end_time);
+  ASSERT_EQ(rclcpp::Time(1.2*1e9, RCL_ROS_TIME) + rclcpp::Duration::from_nanoseconds(1.0*1e9), result.lane_following_maneuver.end_time);
   ASSERT_EQ(2, result.lane_following_maneuver.lane_ids.size());
   ASSERT_TRUE(result.lane_following_maneuver.lane_ids[0].compare("1200") == 0);
   ASSERT_TRUE(result.lane_following_maneuver.lane_ids[1].compare("1201") == 0);
@@ -119,7 +119,7 @@ TEST(SCIStrategicPluginTest, findSpeedLimit)
   auto sci_node = std::make_shared<sci_strategic_plugin::SCIStrategicPlugin>(rclcpp::NodeOptions());
   sci_node->configure();
   sci_node->activate();
-  
+
   std::shared_ptr<carma_wm::CARMAWorldModel> wm;
   carma_wm::test::MapOptions options;
   options.lane_length_ = 25;
@@ -134,7 +134,7 @@ TEST(SCIStrategicPluginTest, findSpeedLimit)
   auto ll_iterator = wm->getMap()->laneletLayer.find(1200);
   if (ll_iterator == wm->getMap()->laneletLayer.end())
   FAIL() << "Expected lanelet not present in map. Unit test may not be structured correctly";
-  
+
   ASSERT_NEAR(11.176, sci_node->findSpeedLimit(*ll_iterator), 0.00001);
 }
 
@@ -158,7 +158,7 @@ TEST(SCIStrategicPluginTest, moboperationcbtest)
 
 TEST(SCIStrategicPluginTest, parseStrategyParamstest)
 {
-  
+
   carma_v2x_msgs::msg::MobilityOperation msg;
   msg.strategy_params =  "st:16000,et:32000,dt:48000,dp:1,access:0";
 
@@ -171,7 +171,7 @@ TEST(SCIStrategicPluginTest, parseStrategyParamstest)
 
   sci_node->parseStrategyParams(msg.strategy_params);
 
-  
+
   EXPECT_EQ(16000, sci_node->scheduled_stop_time_);
   EXPECT_EQ(32000, sci_node->scheduled_enter_time_);
   EXPECT_EQ(48000, sci_node->scheduled_depart_time_);
@@ -296,7 +296,7 @@ TEST(SCIStrategicPluginTest, testIntersectionturndirection)
   EXPECT_NEAR(-1.83, dec_val, 0.01);
 }
 
-// The map in this unit test does not support turn direction and therefore it is disabled. 
+// The map in this unit test does not support turn direction and therefore it is disabled.
 // The test can be run if the turn direction detection logic (lines 461-467) is commented.
 
 TEST(SCIStrategicPluginTest, DISABLED_maneuvercbtest)
@@ -367,7 +367,7 @@ TEST(SCIStrategicPluginTest, DISABLED_maneuvercbtest)
 
   // approaching intersection
   req->veh_x = 1.85;
-  req->veh_y = 1.0; 
+  req->veh_y = 1.0;
   req->veh_downtrack = req->veh_y;
   req->veh_logitudinal_velocity = 11.176;
   req->veh_lane_id = "1200";
@@ -391,7 +391,7 @@ TEST(SCIStrategicPluginTest, DISABLED_maneuvercbtest)
 
   sci_node->current_downtrack_ = 9;
   req1->veh_x = 9.85;
-  req1->veh_y = 2.0; 
+  req1->veh_y = 2.0;
   req1->veh_downtrack = req->veh_y;
   req1->veh_logitudinal_velocity = 0.0;
   req1->veh_lane_id = "1209";

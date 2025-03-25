@@ -14,10 +14,10 @@
 
 #include "carma_cooperative_perception/multiple_object_tracker_component.hpp"
 
-#include <tf2_geometry_msgs/tf2_geometry_msgs.h>
 #include <units.h>
 #include <rclcpp/rclcpp.hpp>
 #include <rclcpp_components/register_node_macro.hpp>
+#include <tf2_geometry_msgs/tf2_geometry_msgs.hpp>
 
 #include <algorithm>
 #include <chrono>
@@ -283,7 +283,8 @@ auto MultipleObjectTrackerNode::handle_on_configure(
             result.reason = "parameter is read-only while node is in 'Active' state";
 
             RCLCPP_ERROR(
-              get_logger(), "Cannot change parameter 'execution_frequency_hz': " + result.reason);
+              get_logger(),
+              ("Cannot change parameter 'execution_frequency_hz': " + result.reason).c_str());
 
             break;
           } else {
@@ -295,7 +296,8 @@ auto MultipleObjectTrackerNode::handle_on_configure(
             result.reason = "parameter is read-only while node is in 'Active' state";
 
             RCLCPP_ERROR(
-              get_logger(), "Cannot change parameter 'execution_frequency_hz': " + result.reason);
+              get_logger(),
+              ("Cannot change parameter 'execution_frequency_hz': " + result.reason).c_str());
 
             break;
           } else {
@@ -313,7 +315,8 @@ auto MultipleObjectTrackerNode::handle_on_configure(
             result.reason = "parameter is read-only while node is in 'Active' state";
 
             RCLCPP_ERROR(
-              get_logger(), "Cannot change parameter 'execution_frequency_hz': " + result.reason);
+              get_logger(),
+              ("Cannot change parameter 'execution_frequency_hz': " + result.reason).c_str());
 
             break;
           } else {
@@ -690,7 +693,5 @@ auto MultipleObjectTrackerNode::execute_pipeline() -> void
 }  // namespace carma_cooperative_perception
 
 // This is not our macro, so we should not worry about linting it.
-// clang-tidy added support for ignoring system macros in release 14.0.0 (see the release notes
-// here: https://releases.llvm.org/14.0.0/tools/clang/tools/extra/docs/ReleaseNotes.html), but
-// ament_clang_tidy for ROS 2 Foxy specifically looks for clang-tidy-6.0.
+
 RCLCPP_COMPONENTS_REGISTER_NODE(carma_cooperative_perception::MultipleObjectTrackerNode)  // NOLINT

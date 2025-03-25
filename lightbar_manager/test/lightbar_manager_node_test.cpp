@@ -34,24 +34,24 @@ void setupUnitTest(const std::shared_ptr<lightbar_manager::LightBarManagerWorker
     return;
 }
 
-TEST(LightBarManagerNodeTest, testSetIndicator) 
-{   
+TEST(LightBarManagerNodeTest, testSetIndicator)
+{
     rclcpp::NodeOptions options;
     options.allow_undeclared_parameters(true);
     auto lbm = std::make_shared<lightbar_manager::LightBarManager>(options);
-    setupUnitTest(lbm->lbm_);
     rclcpp_lifecycle::State dummy;
     lbm->handle_on_configure(dummy);
     lbm->handle_on_activate(dummy);
+    setupUnitTest(lbm->lbm_);
 
     int response_code;
     /*
     * Response_code: SUCCESS(0) will never be achieved in unit test
-    * However, receiving ERROR(2) can be thought as successful as it reached 
+    * However, receiving ERROR(2) can be thought as successful as it reached
     * lightbar driver service request stage
     */
 
-    // Lightbar_manager should be able to set the green indicators right away  
+    // Lightbar_manager should be able to set the green indicators right away
     response_code = lbm->setIndicator(GREEN_SOLID, ON, "lightbar_manager");
     EXPECT_EQ(2, response_code);
     // Any other component should not be able to change indicators
@@ -60,26 +60,26 @@ TEST(LightBarManagerNodeTest, testSetIndicator)
     // Empty component should not be able to control as well
     // Although they are technically controlling it
     response_code = lbm->setIndicator(YELLOW_ARROW_LEFT, ON, "");
-    EXPECT_EQ(1, response_code); 
+    EXPECT_EQ(1, response_code);
     // Priority list component cannot change indicator before taking control
     response_code = lbm->setIndicator(YELLOW_ARROW_LEFT, ON, "tester1");
     EXPECT_EQ(1, response_code);
 
 }
 
-TEST(LightBarManagerNodeTest, testTurnOffAll) 
+TEST(LightBarManagerNodeTest, testTurnOffAll)
 {
     rclcpp::NodeOptions options;
     options.allow_undeclared_parameters(true);
     auto lbm = std::make_shared<lightbar_manager::LightBarManager>(options);
-    setupUnitTest(lbm->lbm_);
     rclcpp_lifecycle::State dummy;
     lbm->handle_on_configure(dummy);
     lbm->handle_on_activate(dummy);
+    setupUnitTest(lbm->lbm_);
     auto worker = lbm->lbm_;
 
     // As unit test cannot actually turn on indicators, observing change in control is enough
-    std::vector<LightBarIndicator> some_indicators = 
+    std::vector<LightBarIndicator> some_indicators =
         {YELLOW_ARROW_LEFT, YELLOW_ARROW_OUT, YELLOW_DIM};
     worker->requestControl(some_indicators, "tester1");
     std::map<LightBarIndicator, std::string> curr_owners= worker->getIndicatorControllers();
@@ -99,10 +99,10 @@ TEST(LightBarManagerNodeTest, testTurnSignalCallback)
     rclcpp::NodeOptions options;
     options.allow_undeclared_parameters(true);
     auto lbm = std::make_shared<lightbar_manager::LightBarManager>(options);
-    setupUnitTest(lbm->lbm_);
     rclcpp_lifecycle::State dummy;
     lbm->handle_on_configure(dummy);
     lbm->handle_on_activate(dummy);
+    setupUnitTest(lbm->lbm_);
     auto worker = lbm->lbm_;
 
     //rclcpp::service::waitForService("/hardware_interface/lightbar/set_lights", rclcpp::Duration(60, 0));
@@ -141,7 +141,7 @@ TEST(LightBarManagerNodeTest, testTurnSignalCallback)
     lbm->getWorker()->requestControl({YELLOW_ARROW_RIGHT}, "tester_right");
     owners =lbm->getWorker()->getIndicatorControllers();
     EXPECT_TRUE(owners[YELLOW_ARROW_RIGHT].compare("tester_right") == 0);
-    // turn right and don't finish 
+    // turn right and don't finish
     msg.turn_signal = automotive_platform_msgs::msg::TurnSignalCommand::RIGHT;
     lbm->processTurnSignal(msg);
     // middle of turn
@@ -156,7 +156,7 @@ TEST(LightBarManagerNodeTest, testTurnSignalCallback)
     owners = lbm->getWorker()->getIndicatorControllers();
     EXPECT_TRUE(owners[YELLOW_ARROW_LEFT].compare("tester_left") == 0);
     EXPECT_TRUE(owners[YELLOW_ARROW_RIGHT].compare("tester_right") == 0);
-    
+
 }
 
 } // namespace lightbar_manager
@@ -166,7 +166,7 @@ int main(int argc, char** argv)
 {
   rclcpp::init(argc, argv);
   ::testing::InitGoogleTest(&argc, argv);
- 
+
   bool success = RUN_ALL_TESTS();
 
   //shutdown ROS

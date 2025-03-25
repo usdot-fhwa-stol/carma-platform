@@ -1,13 +1,13 @@
 #!/bin/bash
 
-#  Copyright (C) 2018-2021 LEIDOS.
-# 
+#  Copyright (C) 2018-2024 LEIDOS.
+#
 #  Licensed under the Apache License, Version 2.0 (the "License"); you may not
 #  use this file except in compliance with the License. You may obtain a copy of
 #  the License at
-# 
+#
 #  http://www.apache.org/licenses/LICENSE-2.0
-# 
+#
 #  Unless required by applicable law or agreed to in writing, software
 #  distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
 #  WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
@@ -15,10 +15,51 @@
 #  the License.
 
 # Script sets up the /opt/carma folder for the user
-# Takes in one argument which is the path to the vehicle calibration folder to use
+# Takes in two named arguments:
+#   --calibration-folder: Path to the vehicle calibration folder (required)
+#   --download-maps: Whether to download example maps or not (default: true)
 
-if [ ! -d "$1" ]; then
-    echo "Please specify a path to the location of your vehicle calibration folder. Such as carma-config/example_calibration_folder/vehicle/"
+# Default values
+DOWNLOAD_MAPS=true
+ADD_SIM_FOLDER=false
+
+# Function to display usage message
+usage() {
+    echo "Usage: $0 --calibration-folder <path> [--download-maps <true|false> --add-sim-folder <false|true>]"
+    exit 1
+}
+
+# Parse arguments
+while [[ "$#" -gt 0 ]]; do
+    case $1 in
+        --calibration-folder)
+            CALIBRATION_FOLDER="$2"
+            shift 2
+            ;;
+        --download-maps)
+            DOWNLOAD_MAPS="$2"
+            shift 2
+            ;;
+        --add-sim-folder)
+            ADD_SIM_FOLDER="$2"
+            shift 2
+            ;;
+        *)
+            echo "Unknown parameter passed: $1"
+            usage
+            ;;
+    esac
+done
+
+# Ensure calibration folder is provided
+if [ -z "$CALIBRATION_FOLDER" ]; then
+    echo "Error: --calibration-folder is required."
+    usage
+fi
+
+# Ensure the calibration folder exists
+if [ ! -d "$CALIBRATION_FOLDER" ]; then
+    echo "Please specify a valid path to the vehicle calibration folder. Such as carma-config/example_calibration_folder/vehicle/"
     exit -1
 fi
 
@@ -27,29 +68,44 @@ sudo groupadd --gid $GRP_ID carma # create the carma group if it does not alread
 USERNAME=$(whoami)
 sudo usermod -a -G $GRP_ID $USERNAME
 
-sudo mkdir -p /opt/carma/logs /opt/carma/.ros /opt/carma/maps /opt/carma/routes /opt/carma/yolo/darknet/data
+mkdir -p /opt/carma/logs /opt/carma/.ros /opt/carma/maps /opt/carma/routes /opt/carma/yolo /opt/carma/data
+
+# Check if downloading maps is required
+if [ "$DOWNLOAD_MAPS" == "true" ]; then
+    FILE_EXT=$RANDOM
+    mkdir ~/carma_temp_$FILE_EXT
+    cd ~/carma_temp_$FILE_EXT
+
+    echo "Downloading example maps..."
+    curl -o /opt/carma/maps/pcd_map.pcd -L https://raw.githubusercontent.com/usdot-fhwa-stol/carma-config/develop/example_opt_carma/maps/base_map.pcd
+
+    curl -o /opt/carma/maps/vector_map.osm -L https://raw.githubusercontent.com/usdot-fhwa-stol/carma-platform/develop/route/resource/map/town01_vector_map_1.osm
+
+    curl -o /opt/carma/routes/Test_lanelet111_route_1.csv -L  https://raw.githubusercontent.com/usdot-fhwa-stol/carma-platform/develop/route/resource/route/Test_lanelet111_route_1.csv
+
+    # Clean up temporary files
+    rm -R ~/carma_temp_$FILE_EXT
+else
+    echo "Skipping map downloads..."
+fi
+
 sudo chgrp -R $GRP_ID /opt/carma/
 sudo chmod 775 -R /opt/carma/
-sudo chmod 775 /opt/carma/logs /opt/carma/.ros
 
-FILE_EXT=$RANDOM
-mkdir ~/carma_temp_$FILE_EXT
-cd ~/carma_temp_$FILE_EXT
+# Link the provided vehicle calibration folder
+if [ -L /opt/carma/vehicle ]; then
+    sudo rm /opt/carma/vehicle
+fi
 
-git clone --branch carma-develop --depth 1 https://github.com/usdot-fhwa-stol/autoware.ai.git
-cp -R autoware.ai/core_perception/vision_darknet_detect/darknet/cfg/ /opt/carma/yolo/darknet/cfg/
-curl -o /opt/carma/yolo/darknet/data/yolov3.weights -L https://pjreddie.com/media/files/yolov3.weights
-chmod 775 /opt/carma/yolo/darknet/data/yolov3.weights
+ln -s "$CALIBRATION_FOLDER" /opt/carma/vehicle
 
-curl -o /opt/carma/maps/pcd_map.pcd -L https://raw.githubusercontent.com/usdot-fhwa-stol/carma-config/develop/example_opt_carma/maps/base_map.pcd
-chmod 775 /opt/carma/maps/pcd_map.pcd
-
-curl -o /opt/carma/maps/vector_map.osm -L https://raw.githubusercontent.com/usdot-fhwa-stol/carma-platform/develop/route/resource/map/town01_vector_map_1.osm
-chmod 775 /opt/carma/maps/vector_map.osm
-
-curl -o /opt/carma/routes/Test_lanelet111_route_1.csv -L  https://raw.githubusercontent.com/usdot-fhwa-stol/carma-platform/develop/route/resource/route/Test_lanelet111_route_1.csv
-chmod 775 /opt/carma/routes/Test_lanelet111_route_1.csv
-
-ln -s "$1" /opt/carma/vehicle
-
-sudo rm -R ~/carma_temp_$FILE_EXT
+if [ "$ADD_SIM_FOLDER" == "true" ]; then
+    echo "Adding folders used for CDASim to be able to save logs"
+    mkdir -p /opt/carma/logs/carma_1 /opt/carma/logs/carma_2 /opt/carma-simulation/logs /opt/carma-simulation/scripts /opt/carma-streets/scripts
+    sudo chgrp -R $GRP_ID /opt/carma/
+    sudo chmod 775 -R /opt/carma/
+    sudo chgrp -R $GRP_ID /opt/carma-simulation/
+    sudo chmod 775 -R /opt/carma-simulation/
+    sudo chgrp -R $GRP_ID /opt/carma-streets/
+    sudo chmod 775 -R /opt/carma-streets/
+fi

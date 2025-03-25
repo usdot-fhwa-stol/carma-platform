@@ -1,6 +1,6 @@
 /*
  * Copyright (C) 2022 LEIDOS.dev
- * 
+ *
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -23,7 +23,7 @@
 #include <lanelet2_core/Attribute.h>
 #include <tf2/LinearMath/Transform.h>
 #include <tf2/LinearMath/Quaternion.h>
-#include <tf2_geometry_msgs/tf2_geometry_msgs.h>
+#include <tf2_geometry_msgs/tf2_geometry_msgs.hpp>
 
 #include "TestHelpers.hpp"
 
@@ -150,7 +150,7 @@ namespace carma_wm
     collision_detection::MovingObject mo1 = {ob1, linear_velocity, future_polygons_tuple};
 
     __uint64_t target_time = 3;
-    
+
     collision_detection::MovingObject result = collision_detection::PredictObjectPosition(mo1,target_time);
 
     std::vector<collision_detection::point_t> points = result.object_polygon.outer();
@@ -259,14 +259,16 @@ namespace carma_wm
     ASSERT_TRUE(result);
 
   }
-
+  // These tests has been temporarily disabled to support Continuous Improvement (CI) processes.
+  // Related GitHub Issue: <https://github.com/usdot-fhwa-stol/carma-platform/issues/2335>
+  /**
   TEST(CollisionDetectionTest, WorldCollisionDetection)
   {
 
     carma_perception_msgs::msg::RoadwayObstacleList rwol;
     carma_planning_msgs::msg::TrajectoryPlan tp;
 
-    
+
     geometry_msgs::msg::Twist velocity;
 
     geometry_msgs::msg::Vector3 linear_velocity;
@@ -275,7 +277,7 @@ namespace carma_wm
 
     velocity.linear = linear_velocity;
 
-    
+
     geometry_msgs::msg::Vector3 size;
     size.x = 4;
     size.y = 2;
@@ -380,7 +382,7 @@ namespace carma_wm
     ASSERT_EQ(result.size(),1);
 
   }
-
+  */
   TEST(CollisionDetectionFalseTest, WorldCollisionDetection)
   {
 

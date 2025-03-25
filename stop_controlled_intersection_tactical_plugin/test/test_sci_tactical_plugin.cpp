@@ -91,7 +91,7 @@ namespace stop_controlled_intersection_tactical_plugin
     double t_acc = (speed_before_dec - maneuver.lane_following_maneuver.start_speed)/a_acc;
     double t_dec = (speed_before_dec)/std::abs(a_dec);
 
-    maneuver.lane_following_maneuver.end_time = rclcpp::Time(maneuver.lane_following_maneuver.start_time) + rclcpp::Duration((t_acc + t_dec)*1e9);
+    maneuver.lane_following_maneuver.end_time = rclcpp::Time(maneuver.lane_following_maneuver.start_time) + rclcpp::Duration::from_nanoseconds((t_acc + t_dec)*1e9);
 
     maneuver.lane_following_maneuver.parameters.float_valued_meta_data.push_back(a_acc);
     maneuver.lane_following_maneuver.parameters.float_valued_meta_data.push_back(a_dec);
@@ -220,7 +220,7 @@ namespace stop_controlled_intersection_tactical_plugin
     double t_dec = speed_before_decel/std::abs(a_dec);
     double t_cruising = dist_cruising/speed_before_decel;
 
-    maneuver.lane_following_maneuver.end_time = rclcpp::Time(maneuver.lane_following_maneuver.start_time) + rclcpp::Duration((t_acc + t_cruising + t_dec)*1e9);
+    maneuver.lane_following_maneuver.end_time = rclcpp::Time(maneuver.lane_following_maneuver.start_time) + rclcpp::Duration::from_nanoseconds((t_acc + t_cruising + t_dec)*1e9);
 
     maneuver.lane_following_maneuver.parameters.float_valued_meta_data.push_back(a_acc);
     maneuver.lane_following_maneuver.parameters.float_valued_meta_data.push_back(a_dec);

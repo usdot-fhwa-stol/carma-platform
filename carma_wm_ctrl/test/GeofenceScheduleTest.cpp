@@ -24,11 +24,11 @@ TEST(GeofenceSchedule, scheduleStarted)
   GeofenceSchedule sch;
   sch.schedule_start_ = rclcpp::Time(0);
   sch.schedule_end_ = rclcpp::Time(1);
-  sch.control_start_ = rclcpp::Duration(0);
-  sch.control_duration_ = rclcpp::Duration(1);
-  sch.control_offset_ = rclcpp::Duration(0);
-  sch.control_span_ = rclcpp::Duration(1);
-  sch.control_period_ = rclcpp::Duration(2);
+  sch.control_start_ = rclcpp::Duration::from_nanoseconds(0);
+  sch.control_duration_ = rclcpp::Duration::from_nanoseconds(1);
+  sch.control_offset_ = rclcpp::Duration::from_nanoseconds(0);
+  sch.control_span_ = rclcpp::Duration::from_nanoseconds(1);
+  sch.control_period_ = rclcpp::Duration::from_nanoseconds(2);
 
   ASSERT_TRUE(sch.scheduleStarted(rclcpp::Time(0)));
   ASSERT_TRUE(sch.scheduleStarted(rclcpp::Time(0.9)));
@@ -49,8 +49,8 @@ TEST(GeofenceSchedule, getNextInterval)
 {
   // Test before start
 
-  GeofenceSchedule sch(rclcpp::Time(1e9 * 1), rclcpp::Time(1e9 * 6), rclcpp::Duration(1e9 * 2), rclcpp::Duration(1e9 * 1), rclcpp::Duration(1e9 * 0), rclcpp::Duration(1e9 * 1),
-                       rclcpp::Duration(1e9 * 2)  // This means the next schedule is a 4 (2+2)
+  GeofenceSchedule sch(rclcpp::Time(1e9 * 1), rclcpp::Time(1e9 * 6), rclcpp::Duration::from_nanoseconds(1e9 * 2), rclcpp::Duration::from_nanoseconds(1e9 * 1), rclcpp::Duration::from_nanoseconds(1e9 * 0), rclcpp::Duration::from_nanoseconds(1e9 * 1),
+                       rclcpp::Duration::from_nanoseconds(1e9 * 2)  // This means the next schedule is a 4 (2+2)
   );
 
   // Test before control start
@@ -66,8 +66,8 @@ TEST(GeofenceSchedule, getNextInterval)
   ASSERT_NEAR(0.0, sch.getNextInterval(rclcpp::Time(1e9 * 3.5)).second.seconds(), 0.00001);
   ASSERT_FALSE(sch.getNextInterval(rclcpp::Time(1e9 * 3.5)).first);
 
-  sch = GeofenceSchedule(rclcpp::Time(1e9 * 1), rclcpp::Time(1e9 * 6), rclcpp::Duration(1e9 * 2), rclcpp::Duration(1e9 * 3), rclcpp::Duration(1e9 * 0), rclcpp::Duration(1e9 * 1),
-                         rclcpp::Duration(1e9 * 2)  // This means the next schedule is a 4 (2+2)
+  sch = GeofenceSchedule(rclcpp::Time(1e9 * 1), rclcpp::Time(1e9 * 6), rclcpp::Duration::from_nanoseconds(1e9 * 2), rclcpp::Duration::from_nanoseconds(1e9 * 3), rclcpp::Duration::from_nanoseconds(1e9 * 0), rclcpp::Duration::from_nanoseconds(1e9 * 1),
+                         rclcpp::Duration::from_nanoseconds(1e9 * 2)  // This means the next schedule is a 4 (2+2)
   );
   // Test between end of first control and start of second
   ASSERT_NEAR(4, sch.getNextInterval(rclcpp::Time(1e9 * 3.5)).second.seconds(), 0.00001);

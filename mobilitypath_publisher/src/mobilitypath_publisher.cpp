@@ -59,11 +59,11 @@ namespace mobilitypath_publisher
     add_on_set_parameters_callback(std::bind(&MobilityPathPublication::parameter_update_callback, this, std_ph::_1));
 
     // Setup subscribers
-    traj_sub_ = create_subscription<carma_planning_msgs::msg::TrajectoryPlan>("plan_trajectory", 5, 
+    traj_sub_ = create_subscription<carma_planning_msgs::msg::TrajectoryPlan>("plan_trajectory", 5,
                                                                                std::bind(&MobilityPathPublication::trajectory_cb, this, std_ph::_1));
     bsm_sub_ = create_subscription<carma_v2x_msgs::msg::BSM>("bsm_outbound", 1,
                                                              std::bind(&MobilityPathPublication::bsm_cb, this, std_ph::_1));
-    
+
     guidance_state_sub_ = create_subscription<carma_planning_msgs::msg::GuidanceState>("guidance_state", 5, std::bind(&MobilityPathPublication::guidance_state_cb, this, std::placeholders::_1));
 
     georeference_sub_ = create_subscription<std_msgs::msg::String>("georeference", 1,
@@ -71,7 +71,7 @@ namespace mobilitypath_publisher
 
     // Setup publishers
     path_pub_ = create_publisher<carma_v2x_msgs::msg::MobilityPath>("mobility_path_msg", 5);
-    
+
 
     // Return success if everthing initialized successfully
     return CallbackReturn::SUCCESS;
@@ -106,7 +106,11 @@ namespace mobilitypath_publisher
   void MobilityPathPublication::georeference_cb(const std_msgs::msg::String::UniquePtr msg)
   {
     // Build projector from proj string
-    map_projector_ = std::make_shared<lanelet::projection::LocalFrameProjector>(msg->data.c_str());
+    if (georeference_ != msg->data)
+    {
+      georeference_ = msg->data;
+      map_projector_ = std::make_shared<lanelet::projection::LocalFrameProjector>(msg->data.c_str());
+    }
   }
 
   void MobilityPathPublication::trajectory_cb(const carma_planning_msgs::msg::TrajectoryPlan::UniquePtr msg)
@@ -126,7 +130,7 @@ namespace mobilitypath_publisher
     // TODO this caluclation uses a poor assumption of zero latency see https://github.com/usdot-fhwa-stol/carma-platform/issues/1606
     uint64_t millisecs = get_clock()->now().nanoseconds() / 1000000;
     mobility_path_msg.m_header = compose_mobility_header(millisecs);
-        
+
     if (!map_projector_) {
       RCLCPP_ERROR_STREAM(this->get_logger(), "MobilityPath cannot be populated as map projection is not available");
       return mobility_path_msg;
@@ -148,7 +152,7 @@ namespace mobilitypath_publisher
     // random GUID that identifies this particular plan for future reference
     header.plan_id = boost::uuids::to_string(boost::uuids::random_generator()());
     header.timestamp = time; //time in millisecond
-        
+
     return header;
   }
 
@@ -160,7 +164,7 @@ namespace mobilitypath_publisher
       throw std::invalid_argument("Received an empty vector of Trajectory Plan Points");
     }
 
-    carma_v2x_msgs::msg::LocationECEF ecef_location = trajectory_point_to_ECEF(traj_points[0]); //m to cm to fit the msg standard 
+    carma_v2x_msgs::msg::LocationECEF ecef_location = trajectory_point_to_ECEF(traj_points[0]); //m to cm to fit the msg standard
 
     if (traj_points.size() < 2){
       RCLCPP_WARN_STREAM(this->get_logger(), "Received Trajectory Plan is too small");
@@ -169,10 +173,10 @@ namespace mobilitypath_publisher
     else{
       carma_v2x_msgs::msg::LocationECEF prev_point = ecef_location;
       for (size_t i=1; i<traj_points.size(); i++){
-                
+
         carma_v2x_msgs::msg::LocationOffsetECEF offset;
         carma_v2x_msgs::msg::LocationECEF new_point = trajectory_point_to_ECEF(traj_points[i]); //m to cm to fit the msg standard
-        offset.offset_x = (int16_t)(new_point.ecef_x - prev_point.ecef_x);  
+        offset.offset_x = (int16_t)(new_point.ecef_x - prev_point.ecef_x);
         offset.offset_y = (int16_t)(new_point.ecef_y - prev_point.ecef_y);
         offset.offset_z = (int16_t)(new_point.ecef_z - prev_point.ecef_z);
         prev_point = new_point;
@@ -181,9 +185,9 @@ namespace mobilitypath_publisher
       }
     }
 
-    traj.location = ecef_location; 
+    traj.location = ecef_location;
 
-    return traj;    
+    return traj;
   }
 
   carma_v2x_msgs::msg::LocationECEF MobilityPathPublication::trajectory_point_to_ECEF(const carma_planning_msgs::msg::TrajectoryPlanPoint& traj_point) const
@@ -191,8 +195,8 @@ namespace mobilitypath_publisher
     if (!map_projector_) {
       throw std::invalid_argument("No map projector available for ecef conversion");
     }
-    carma_v2x_msgs::msg::LocationECEF location;    
-        
+    carma_v2x_msgs::msg::LocationECEF location;
+
     lanelet::BasicPoint3d ecef_point = map_projector_->projectECEF({traj_point.x, traj_point.y, 0.0}, 1);
     location.ecef_x = ecef_point.x() * 100.0;
     location.ecef_y = ecef_point.y() * 100.0;
