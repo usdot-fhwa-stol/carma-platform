@@ -38,17 +38,6 @@
 
 namespace basic_autonomy
 {
-    // Define a simple Point class for testing
-    class Point {
-    public:
-        Point(double x_val, double y_val) : x_(x_val), y_(y_val) {}
-        double x() const { return x_; }
-        double y() const { return y_; }
-    private:
-        double x_;
-        double y_;
-    };
-
     TEST(BasicAutonomyTest, DownsamplePtsWithMinMeters) {
         // Test case 1: Empty container
         std::vector<lanelet::BasicPoint2d> empty_line;
