@@ -817,7 +817,7 @@ namespace basic_autonomy
 
         std::unique_ptr<basic_autonomy::smoothing::SplineI> compute_fit(const std::vector<lanelet::BasicPoint2d> &basic_points)
         {
-            // When computing fit, there cannot be duplicate points and less than 1 meter is not needed.
+            // When computing fit, there cannot be duplicate points and less than 0.5 meters is not needed.
             // Therefore, this function generally cleans the points for robust spline fit
             auto points_with_min_dis = downsample_pts_with_min_meters
                 <std::vector<lanelet::BasicPoint2d>>(basic_points);
