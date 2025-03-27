@@ -12,7 +12,7 @@ republish the (possibly pruned) list.
 | `~/input/detection_list`    | [`carma_cooperative_perception_interfaces/DetectionList.msg`][detection_list_msg] | Incoming detections             |
 | `~/input/host_vehicle_pose` | [`geometry_msgs/PoseStamped.msg`][pose_stamped_msg]                               | The host vehicle's current pose |
 
-[pose_stamped_msg]: https://docs.ros.org/en/noetic/api/geometry_msgs/html/msg/PoseStamped.html
+[pose_stamped_msg]: https://docs.ros.org/en/humble/p/geometry_msgs/msg/PoseStamped.html
 
 ## Publishers
 

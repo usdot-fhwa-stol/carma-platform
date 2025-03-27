@@ -45,10 +45,6 @@ git clone --depth=1 https://github.com/usdot-fhwa-stol/v2x-ros-conversion.git --
 git clone --depth=1 https://github.com/usdot-fhwa-stol/carma-message-filters.git --branch "${BRANCH}"
 git clone --depth=1 https://github.com/usdot-fhwa-stol/multiple_object_tracking --branch "${BRANCH}"
 
-#rosbridge_suite is a ROS meta-package including all the rosbridge packages.
-# NOTE: clone -b flag is used instead of --branch to avoid hook rewriting it
-git clone -b ros2 https://github.com/usdot-fhwa-stol/rosbridge_suite
-
 # TODO: Remove V2X-Hub Depedency (CAR-6029)
 git clone -b master --depth 1 https://github.com/etherealjoy/qhttpengine.git
 
@@ -58,19 +54,26 @@ git sparse-checkout set ext/ccserver
 
 # SSC related msgs to record in mcap
 cd ${dir}/src
-# raptor_dbw_msgs (only ROS2 needed)
-git clone --depth 1 --filter=blob:none --sparse https://github.com/NewEagleRaptor/raptor-dbw-ros2.git --depth 1 --branch foxy
+# raptor_dbw_msgs (only ROS2 needed, foxy still builds in humble)
+git clone --depth 1 --filter=blob:none --sparse https://github.com/NewEagleRaptor/raptor-dbw-ros2.git --branch foxy
 cd ${dir}/src/raptor-dbw-ros2
 git sparse-checkout init --cone
 git sparse-checkout set raptor_dbw_msgs
 cd ${dir}/src
 
 # dbw_mkz_msgs (only ROS2 needed)
-git clone --depth 1 --filter=blob:none --sparse https://github.com/usdot-fhwa-stol/carma-dbw-mkz-ros.git --depth 1 --branch 1.2.4-ros2
+git clone --depth 1 --filter=blob:none --sparse https://github.com/usdot-fhwa-stol/carma-dbw-mkz-ros.git --branch 1.2.4-ros2
 cd ${dir}/src/carma-dbw-mkz-ros
 git sparse-checkout init --cone
 git sparse-checkout set dbw_mkz_msgs_ros2
 cd ${dir}/src
+
+
+# Despite installing from debian, the guide still asks to build from source until tracetools
+git clone --depth 1 --filter=blob:none --sparse https://github.com/ros2/ros2_tracing.git --branch humble
+cd ${dir}/src/ros2_tracing
+git sparse-checkout init --cone
+git sparse-checkout set tracetools
 
 # Install dependencies
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"

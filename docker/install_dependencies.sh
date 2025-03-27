@@ -40,5 +40,5 @@ sudo ${dir}/src/v2x-ros-conversion/docker/install_dependencies.sh -b $BRANCH
 # Install dependencies for multiple_object_tracking
 if [[ -z "$PACKAGES" || "$PACKAGES" == "multiple_object_tracking" ]]; then
     echo "Installing multiple object tracking dependencies"
-    sudo ${dir}/src/multiple_object_tracking/scripts/install_dependencies.sh -b $BRANCH
+    sudo ${dir}/src/multiple_object_tracking/scripts/install_dependencies.sh
 fi

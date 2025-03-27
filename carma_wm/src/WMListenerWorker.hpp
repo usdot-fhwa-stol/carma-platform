@@ -149,17 +149,27 @@ public:
   /**
    *  \brief set true if simulation_mode is on
    */
-  void isUsingSimTime(bool use_sim_time);
+  void isUsingSimTime(bool use_sim_time) const;
 
   /**
    *  \brief set true if incoming spat is based on wall clock
    */
-  void isSpatWallTime(bool is_spat_wall_time);
+  void isSpatWallTime(bool use_real_time_spat_in_sim) const;
+
+  /**
+   *  \brief Activate World Model SPAT processor, which is turned off by default,
+   * with OFF (0), ON (1), FIXED (2)
+   */
+  void setWMSpatProcessingState(const SIGNAL_PHASE_PROCESSING& phase_type) const;
+
+  /**
+   *  \brief Get World Model SPAT processor state from signalized intersection manager
+   *  \return World Model SPAT process state OFF (0), ON(1)
+   */
+  SIGNAL_PHASE_PROCESSING getWMSpatProcessingState() const;
 
 private:
   std::shared_ptr<CARMAWorldModel> world_model_;
-  bool use_sim_time_;
-  bool is_spat_wall_time_;
   std::function<void()> map_callback_;
   std::function<void()> route_callback_;
   void newRegemUpdateHelper(lanelet::Lanelet parent_llt, lanelet::RegulatoryElement* regem) const;

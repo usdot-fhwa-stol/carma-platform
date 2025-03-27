@@ -263,55 +263,65 @@ namespace yield_plugin
     carma_planning_msgs::msg::TrajectoryPlan original_trajectory = req->initial_trajectory_plan;
     carma_planning_msgs::msg::TrajectoryPlan yield_trajectory;
 
-
-    double initial_velocity = req->vehicle_state.longitudinal_vel;
-    // If vehicle_state is stopped, non-zero velocity from the trajectory
-    // should be used. Otherwise, vehicle will not move.
-    if (initial_velocity < EPSILON)
+    try
     {
-      initial_velocity = original_trajectory.initial_longitudinal_velocity;
-    }
+      // NOTE: Wrapping entire plan_trajectory logic with try catch because there is intermittent
+      // open issue of which cause is uncertain:
+      // https://github.com/usdot-fhwa-stol/carma-platform/issues/2501
 
-    // seperating cooperative yield with regular object detection for better performance.
-    if (config_.enable_cooperative_behavior && clc_urgency_ > config_.acceptable_urgency)
-    {
-      RCLCPP_DEBUG(nh_->get_logger(),"Only consider high urgency clc");
-      if (timesteps_since_last_req_ < config_.acceptable_passed_timesteps)
+      double initial_velocity = req->vehicle_state.longitudinal_vel;
+      // If vehicle_state is stopped, non-zero velocity from the trajectory
+      // should be used. Otherwise, vehicle will not move.
+      if (initial_velocity < EPSILON)
       {
-        RCLCPP_DEBUG(nh_->get_logger(),"Yield for CLC. We haven't received an updated negotiation this timestep");
-        yield_trajectory = update_traj_for_cooperative_behavior(original_trajectory, initial_velocity);
-        timesteps_since_last_req_++;
+        initial_velocity = original_trajectory.initial_longitudinal_velocity;
+      }
+
+      // seperating cooperative yield with regular object detection for better performance.
+      if (config_.enable_cooperative_behavior && clc_urgency_ > config_.acceptable_urgency)
+      {
+        RCLCPP_DEBUG(nh_->get_logger(),"Only consider high urgency clc");
+        if (timesteps_since_last_req_ < config_.acceptable_passed_timesteps)
+        {
+          RCLCPP_DEBUG(nh_->get_logger(),"Yield for CLC. We haven't received an updated negotiation this timestep");
+          yield_trajectory = update_traj_for_cooperative_behavior(original_trajectory, initial_velocity);
+          timesteps_since_last_req_++;
+        }
+        else
+        {
+          RCLCPP_DEBUG(nh_->get_logger(),"unreliable CLC communication, switching to object avoidance");
+          yield_trajectory = update_traj_for_object(original_trajectory, external_objects_, initial_velocity); // Compute the trajectory
+        }
       }
       else
       {
-        RCLCPP_DEBUG(nh_->get_logger(),"unreliable CLC communication, switching to object avoidance");
+        RCLCPP_DEBUG(nh_->get_logger(),"Yield for object avoidance");
         yield_trajectory = update_traj_for_object(original_trajectory, external_objects_, initial_velocity); // Compute the trajectory
       }
-    }
-    else
-    {
-      RCLCPP_DEBUG(nh_->get_logger(),"Yield for object avoidance");
-      yield_trajectory = update_traj_for_object(original_trajectory, external_objects_, initial_velocity); // Compute the trajectory
-    }
 
-    // return original trajectory if no difference in trajectory points a.k.a no collision
-    if (fabs(get_trajectory_end_time(original_trajectory) - get_trajectory_end_time(yield_trajectory)) < EPSILON)
-    {
-      resp->trajectory_plan = original_trajectory;
+      // return original trajectory if no difference in trajectory points a.k.a no collision
+      if (fabs(get_trajectory_end_time(original_trajectory) - get_trajectory_end_time(yield_trajectory)) < EPSILON)
+      {
+        resp->trajectory_plan = original_trajectory;
+      }
+      else
+      {
+        yield_trajectory.header.frame_id = "map";
+        yield_trajectory.header.stamp = nh_->now();
+        yield_trajectory.trajectory_id = original_trajectory.trajectory_id;
+        resp->trajectory_plan = yield_trajectory;
+      }
     }
-    else
-    {
-      yield_trajectory.header.frame_id = "map";
-      yield_trajectory.header.stamp = nh_->now();
-      yield_trajectory.trajectory_id = original_trajectory.trajectory_id;
-      resp->trajectory_plan = yield_trajectory;
+    catch(const std::runtime_error& e) {
+      RCLCPP_WARN_STREAM(nh_->get_logger(), "Yield Plugin failed to plan trajectory due to known negative time issue: " << e.what());
+      RCLCPP_WARN_STREAM(nh_->get_logger(), "Returning the original trajectory, and retrying at the next call.");
+      resp->trajectory_plan = original_trajectory;
     }
 
     rclcpp::Time end_time = system_clock.now();  // Planning complete
 
     auto duration = end_time - start_time;
     RCLCPP_DEBUG_STREAM(nh_->get_logger(), "ExecutionTime: " << std::to_string(duration.seconds()));
-
   }
 
   carma_planning_msgs::msg::TrajectoryPlan YieldPlugin::update_traj_for_cooperative_behavior(const carma_planning_msgs::msg::TrajectoryPlan& original_tp, double current_speed)
@@ -342,7 +352,7 @@ namespace yield_plugin
       // check if a digital_gap is available
       double digital_gap = check_traj_for_digital_min_gap(original_tp);
       RCLCPP_DEBUG_STREAM(nh_->get_logger(),"digital_gap: " << digital_gap);
-      goal_pos = sqrt(dx*dx + dy*dy) - config_.minimum_safety_gap_in_meters;
+      goal_pos = sqrt(dx*dx + dy*dy) - std::max(config_.minimum_safety_gap_in_meters, digital_gap);
       RCLCPP_DEBUG_STREAM(nh_->get_logger(),"Goal position (goal_pos): " << goal_pos);
       double collision_time = req_timestamp_ + (intersection_points[0].first * ecef_traj_timestep_) - config_.safety_collision_time_gap_in_s;
       RCLCPP_DEBUG_STREAM(nh_->get_logger(),"req time stamp: " << req_timestamp_);
@@ -1043,9 +1053,11 @@ namespace yield_plugin
       auto llts = wm_->getLaneletsFromPoint(veh_pos, 1);
       if (llts.empty())
       {
-       RCLCPP_WARN_STREAM(nh_->get_logger(),"Trajectory point: x= " << original_tp.trajectory_points.at(i).x << "y="<< original_tp.trajectory_points.at(i).y);
-
-        throw std::invalid_argument("Trajectory Point is not on a valid lanelet.");
+        // This should technically never happen
+        // However, trajectory generation currently may fail due to osm map issue https://github.com/usdot-fhwa-stol/carma-platform/issues/2503
+        RCLCPP_WARN_STREAM(nh_->get_logger(),"Trajectory point: x= " << original_tp.trajectory_points.at(i).x << "y="<< original_tp.trajectory_points.at(i).y);
+        RCLCPP_WARN_STREAM(nh_->get_logger(),"Trajectory is not on the road, so was unable to get the digital minimum gap. Returning default minimum_safety_gap_in_meters: " << config_.minimum_safety_gap_in_meters);
+        return desired_gap;
       }
       auto digital_min_gap = llts[0].regulatoryElementsAs<lanelet::DigitalMinimumGap>(); //Returns a list of these elements)
       if (!digital_min_gap.empty())

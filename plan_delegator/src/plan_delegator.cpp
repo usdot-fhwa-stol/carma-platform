@@ -644,59 +644,56 @@ namespace plan_delegator
             // compose service request
             auto plan_req = composePlanTrajectoryRequest(latest_trajectory_plan, current_maneuver_index);
 
-            auto plan_response = client->async_send_request(plan_req);
+            auto future_response = client->async_send_request(plan_req);
 
-            auto future_status = plan_response.wait_for(std::chrono::milliseconds(config_.tactical_plugin_service_call_timeout));
+            auto future_status = future_response.wait_for(std::chrono::milliseconds(config_.tactical_plugin_service_call_timeout));
 
-            // Wait for the result.
-            if (future_status == std::future_status::ready)
-            {
-                // validate trajectory before add to the plan
-                if(!isTrajectoryValid(plan_response.get()->trajectory_plan))
-                {
-                    RCLCPP_WARN_STREAM(rclcpp::get_logger("plan_delegator"),"Found invalid trajectory with less than 2 trajectory points for " << std::string(latest_maneuver_plan_.maneuver_plan_id));
-                    break;
-                }
-                //Remove duplicate point from start of trajectory
-                if(latest_trajectory_plan.trajectory_points.size() !=0){
-
-                    if(latest_trajectory_plan.trajectory_points.back().target_time == plan_response.get()->trajectory_plan.trajectory_points.front().target_time){
-                        RCLCPP_DEBUG_STREAM(rclcpp::get_logger("plan_delegator"),"Removing duplicate point for planner: " << maneuver_planner);
-                        plan_response.get()->trajectory_plan.trajectory_points.erase(plan_response.get()->trajectory_plan.trajectory_points.begin());
-                        RCLCPP_DEBUG_STREAM(rclcpp::get_logger("plan_delegator"),"plan_response.get()->trajectory_plan size: " << plan_response.get()->trajectory_plan.trajectory_points.size());
-
-                    }
-                }
-                latest_trajectory_plan.trajectory_points.insert(latest_trajectory_plan.trajectory_points.end(),
-                                                                plan_response.get()->trajectory_plan.trajectory_points.begin(),
-                                                                plan_response.get()->trajectory_plan.trajectory_points.end());
-                RCLCPP_DEBUG_STREAM(rclcpp::get_logger("plan_delegator"),"new latest_trajectory_plan size: " << latest_trajectory_plan.trajectory_points.size());
-
-                // Assign the trajectory plan's initial longitudinal velocity based on the first tactical plugin's response
-                if(first_trajectory_plan == true)
-                {
-                    latest_trajectory_plan.initial_longitudinal_velocity = plan_response.get()->trajectory_plan.initial_longitudinal_velocity;
-                    first_trajectory_plan = false;
-                }
-
-                if(isTrajectoryLongEnough(latest_trajectory_plan))
-                {
-                    RCLCPP_INFO_STREAM(rclcpp::get_logger("plan_delegator"),"Plan Trajectory completed for " << std::string(latest_maneuver_plan_.maneuver_plan_id));
-                    break;
-                }
-
-                // Update the maneuver plan index based on the last maneuver index converted to a trajectory
-                // This is required since inlanecruising_plugin can plan a trajectory over contiguous LANE_FOLLOWING maneuvers
-                if(plan_response.get()->related_maneuvers.size() > 0)
-                {
-                    current_maneuver_index = plan_response.get()->related_maneuvers.back() + 1;
-                }
-            }
-            else
+            if (future_status != std::future_status::ready)
             {
                 RCLCPP_WARN_STREAM(rclcpp::get_logger("plan_delegator"),"Unsuccessful service call to trajectory planner:" << maneuver_planner << " for plan ID " << std::string(latest_maneuver_plan_.maneuver_plan_id));
                 // if one service call fails, it should end plan immediately because it is there is no point to generate plan with empty space
                 break;
+            }
+
+            // If successful service request
+            auto plan_response = future_response.get();
+            // validate trajectory before add to the plan
+            if(!isTrajectoryValid(plan_response->trajectory_plan))
+            {
+                RCLCPP_WARN_STREAM(rclcpp::get_logger("plan_delegator"),"Found invalid trajectory with less than 2 trajectory points for " << std::string(latest_maneuver_plan_.maneuver_plan_id));
+                break;
+            }
+            //Remove duplicate point from start of trajectory
+            if(latest_trajectory_plan.trajectory_points.size() != 0 &&
+                latest_trajectory_plan.trajectory_points.back().target_time == plan_response->trajectory_plan.trajectory_points.front().target_time)
+            {
+                RCLCPP_DEBUG_STREAM(rclcpp::get_logger("plan_delegator"),"Removing duplicate point for planner: " << maneuver_planner);
+                plan_response->trajectory_plan.trajectory_points.erase(plan_response->trajectory_plan.trajectory_points.begin());
+                RCLCPP_DEBUG_STREAM(rclcpp::get_logger("plan_delegator"),"plan_response->trajectory_plan size: " << plan_response->trajectory_plan.trajectory_points.size());
+            }
+            latest_trajectory_plan.trajectory_points.insert(latest_trajectory_plan.trajectory_points.end(),
+                                                            plan_response->trajectory_plan.trajectory_points.begin(),
+                                                            plan_response->trajectory_plan.trajectory_points.end());
+            RCLCPP_DEBUG_STREAM(rclcpp::get_logger("plan_delegator"),"new latest_trajectory_plan size: " << latest_trajectory_plan.trajectory_points.size());
+
+            // Assign the trajectory plan's initial longitudinal velocity based on the first tactical plugin's response
+            if(first_trajectory_plan == true)
+            {
+                latest_trajectory_plan.initial_longitudinal_velocity = plan_response->trajectory_plan.initial_longitudinal_velocity;
+                first_trajectory_plan = false;
+            }
+
+            if(isTrajectoryLongEnough(latest_trajectory_plan))
+            {
+                RCLCPP_INFO_STREAM(rclcpp::get_logger("plan_delegator"),"Plan Trajectory completed for " << std::string(latest_maneuver_plan_.maneuver_plan_id));
+                break;
+            }
+
+            // Update the maneuver plan index based on the last maneuver index converted to a trajectory
+            // This is required since inlanecruising_plugin can plan a trajectory over contiguous LANE_FOLLOWING maneuvers
+            if(plan_response->related_maneuvers.size() > 0)
+            {
+                current_maneuver_index = plan_response->related_maneuvers.back() + 1;
             }
         }
 

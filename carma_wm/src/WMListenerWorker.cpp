@@ -103,7 +103,7 @@ void WMListenerWorker::mapCallback(const autoware_lanelet2_msgs::msg::MapBin::Sh
 
 void WMListenerWorker::incomingSpatCallback(const carma_v2x_msgs::msg::SPAT::SharedPtr spat_msg)
 {
-  world_model_->processSpatFromMsg(*spat_msg, use_sim_time_, is_spat_wall_time_);
+  world_model_->sim_.processSpatFromMsg(*spat_msg, world_model_->getMutableMap());
 }
 
 bool WMListenerWorker::checkIfReRoutingNeeded() const
@@ -698,16 +698,27 @@ void WMListenerWorker::setConfigSpeedLimit(double config_lim)
 {
   config_speed_limit_ = config_lim;
   //Function to load config_limit into CarmaWorldModel
-   world_model_->setConfigSpeedLimit(config_speed_limit_);
+  world_model_->setConfigSpeedLimit(config_speed_limit_);
 }
 
-void WMListenerWorker::isUsingSimTime(bool use_sim_time)
+void WMListenerWorker::isUsingSimTime(bool use_sim_time) const
 {
-  use_sim_time_ = use_sim_time;
+  world_model_->sim_.use_sim_time_ = use_sim_time;
 }
-void WMListenerWorker::isSpatWallTime(bool is_spat_wall_time)
+void WMListenerWorker::isSpatWallTime(bool use_real_time_spat_in_sim) const
 {
-  is_spat_wall_time_ = is_spat_wall_time;
+  world_model_->sim_.use_real_time_spat_in_sim_ = use_real_time_spat_in_sim;
+}
+
+void WMListenerWorker::setWMSpatProcessingState(const
+  SIGNAL_PHASE_PROCESSING& phase_type) const
+{
+  world_model_->sim_.spat_processor_state_ = phase_type;
+}
+
+SIGNAL_PHASE_PROCESSING WMListenerWorker::getWMSpatProcessingState() const
+{
+  return world_model_->sim_.spat_processor_state_;
 }
 
 double WMListenerWorker::getConfigSpeedLimit() const

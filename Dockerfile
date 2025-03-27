@@ -33,8 +33,10 @@
 # Stage 1 - Acquire the CARMA source as well as any extra packages
 # /////////////////////////////////////////////////////////////////////////////
 ARG DOCKER_ORG="usdotfhwastoldev"
-ARG DOCKER_TAG="develop-humble"
+ARG DOCKER_TAG="develop"
 FROM ${DOCKER_ORG}/autoware.ai:${DOCKER_TAG} as base-image
+ARG PACKAGES=""
+ENV PACKAGES=${PACKAGES}
 
 FROM base-image AS source-code
 
@@ -50,8 +52,6 @@ COPY --chown=carma . /home/carma/src/carma-platform
 # /////////////////////////////////////////////////////////////////////////////
 
 FROM base-image AS install
-ARG PACKAGES=""
-ENV PACKAGES=${PACKAGES}
 
 # Copy the source files from the previous stage and build/install
 RUN mkdir ~/carma_ws
@@ -84,4 +84,4 @@ LABEL org.label-schema.build-date=${BUILD_DATE}
 COPY --from=install --chown=carma /opt/carma /opt/carma
 COPY --from=install --chown=carma /root/.bashrc /home/carma/.bashrc
 
-CMD "roslaunch carma carma_docker.launch"
+CMD "ros2 launch carma carma_docker.launch.py"

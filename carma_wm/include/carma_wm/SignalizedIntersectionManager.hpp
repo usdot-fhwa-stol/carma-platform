@@ -28,6 +28,7 @@
 #include <lanelet2_extension/projection/local_frame_projector.h>
 #include <carma_wm/WorldModelUtils.hpp>
 #include <carma_v2x_msgs/msg/map_data.hpp>
+#include <carma_v2x_msgs/msg/spat.hpp>
 #include <lanelet2_core/Forward.h>
 #include <lanelet2_extension/regulatory_elements/SignalizedIntersection.h>
 #include <lanelet2_core/geometry/LaneletMap.h>
@@ -41,6 +42,12 @@ struct LANE_DIRECTION
 {
   static const uint8_t INGRESS = 2;
   static const uint8_t EGRESS = 1;
+};
+
+enum class SIGNAL_PHASE_PROCESSING : uint8_t
+{
+  OFF = 0,
+  ON = 1,
 };
 
 using namespace lanelet::units::literals;
@@ -144,6 +151,50 @@ public:
   */
   lanelet::Lanelets identifyInteriorLanelets(const lanelet::Lanelets& entry_llts, const std::shared_ptr<lanelet::LaneletMap>& map);
 
+  /**
+   * \brief processSpatFromMsg update map's traffic light states with SPAT msg
+   *  NOTE: This is enabled in the individual nodes through wm_listener's setWMSpatProcessingState()
+   *  \param spat_msg Msg to update with
+   *  \param lanelet_map to update the regulatory elements according to internal signals recorded
+   */
+  void processSpatFromMsg(const carma_v2x_msgs::msg::SPAT& spat_msg,
+    const std::shared_ptr<lanelet::LaneletMap>& semantic_map);
+
+  /*!
+  *  \brief Extract tuple of 1) vector of pair of traffic signal states' min_end_time and their
+            states, which is mainly used by CARMA to comply with traffic signals.
+            2) vector of traffic signal states' start_times that match in order
+  *  \param curr_intersection carma_v2x_msgs::msg::IntersectionState from SPAT
+  *  \param current_movement_state carma_v2x_msgs::msg::MovementState from SPAT
+  *  \return tuple of 2 vectors. 1) vector of min_end_time and state pairs 2) vector of start_time
+  */
+  std::tuple<std::vector<std::pair<boost::posix_time::ptime, lanelet::CarmaTrafficSignalState>>,
+    std::vector<boost::posix_time::ptime>>
+    extract_signal_states_from_movement_state(
+      const carma_v2x_msgs::msg::IntersectionState& curr_intersection,
+      const carma_v2x_msgs::msg::MovementState& current_movement_state);
+
+    /*! \brief update minimum end time to account for minute of the year
+    * \param min_end_time minimum end time of the spat movement event list
+    * \param moy_exists tells weather minute of the year exist or not
+    * \param moy value of the minute of the year
+    * \param use_real_time_spat_in_sim Boolean to indicate if the incoming spat is based on
+    *   wall clock. Required in edge cases where deployment in simulation is receiving
+    *   SPaT messages based on wall clock.
+   */
+  boost::posix_time::ptime min_end_time_converter_minute_of_year(
+    boost::posix_time::ptime min_end_time,bool moy_exists,uint32_t moy=0,
+    bool is_simulation = true, bool use_real_time_spat_in_sim=false);
+
+  /*! \brief helper for traffic signal Id
+   */
+  lanelet::Id getTrafficSignalId(uint16_t intersection_id,uint8_t signal_id);
+
+  /*! \brief helper for getting traffic signal with given lanelet::Id
+   */
+  lanelet::CarmaTrafficSignalPtr getTrafficSignal(const lanelet::Id& id,
+    const std::shared_ptr<lanelet::LaneletMap>& semantic_map) const;
+
   // SignalizedIntersection's geometry points from MAP Msg
   std::unordered_map<uint16_t, std::vector<lanelet::Point3d>> intersection_nodes_;
 
@@ -165,17 +216,12 @@ public:
   // CarmaTrafficSignal entry lanelets ids quick lookup
   std::unordered_map<uint8_t, std::unordered_set<lanelet::Id>> signal_group_to_entry_lanelet_ids_;
 
-  // Traffic signal states and their end_time mappings.
-  std::unordered_map<uint16_t, std::unordered_map<uint8_t,std::vector<std::pair<boost::posix_time::ptime, lanelet::CarmaTrafficSignalState>>>> traffic_signal_states_; //[intersection_id][signal_group_id]
+  std::optional<rclcpp::Time> ros1_clock_ = std::nullopt;
+  std::optional<rclcpp::Time> simulation_clock_ = std::nullopt;
 
-// Traffic signal's start_time mappings (must be same size as traffic_signal_states_)
-  std::unordered_map<uint16_t, std::unordered_map<uint8_t,std::vector<boost::posix_time::ptime>>> traffic_signal_start_times_; //[intersection_id][signal_group_id]
-
-  // Last received signal state from SPAT
-  std::unordered_map<uint16_t, std::unordered_map<uint8_t,std::pair<boost::posix_time::ptime, lanelet::CarmaTrafficSignalState>>> last_seen_state_; //[intersection_id][signal_group_id]
-
-  // traffic signal state counter
-  std::unordered_map<uint16_t, std::unordered_map<uint8_t,int>> signal_state_counter_; //[intersection_id][signal_group_id]
+  bool use_sim_time_;
+  bool use_real_time_spat_in_sim_;
+  SIGNAL_PHASE_PROCESSING spat_processor_state_ = SIGNAL_PHASE_PROCESSING::OFF;
 
 private:
   // PROJ string of current map
