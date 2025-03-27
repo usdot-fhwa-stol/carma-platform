@@ -74,6 +74,7 @@ git clone --depth 1 --filter=blob:none --sparse https://github.com/ros2/ros2_tra
 cd ${dir}/src/ros2_tracing
 git sparse-checkout init --cone
 git sparse-checkout set tracetools
+cd ${dir}/src
 
 # Install dependencies
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
