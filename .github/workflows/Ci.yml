@@ -69,7 +69,7 @@ jobs:
 
     - name: Install cpp message external dependencies
       # Install the cpp-message deps
-      run: sudo bash /opt/carma/src/v2x-ros-conversion/docker/install_dependencies.sh
+      run: sudo bash /opt/carma/src/v2x-ros-conversion/docker/install_dependencies.sh -b ${{ steps.determine-base-branch.outputs.git_branch }}
 
     - name: Compile list of packages
       # Get all packages in the respository

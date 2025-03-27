@@ -27,7 +27,7 @@ fi
 
 if [[ -z "$PACKAGES" ]]; then
     echo "Installing cpp_message dependencies"
-    sudo ./src/v2x-ros-conversion/docker/install_dependencies.sh
+    sudo ./src/v2x-ros-conversion/docker/install_dependencies.sh -b $BRANCH
 fi
 
 sudo mkdir -p /opt/carma # Create install directory
