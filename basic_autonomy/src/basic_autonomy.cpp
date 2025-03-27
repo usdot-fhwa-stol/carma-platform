@@ -817,8 +817,10 @@ namespace basic_autonomy
 
         std::unique_ptr<basic_autonomy::smoothing::SplineI> compute_fit(const std::vector<lanelet::BasicPoint2d> &basic_points)
         {
-            // When computing fit, there cannot be duplicate points and less than 0.5 meters is not needed.
-            // Therefore, this function generally cleans the points for robust spline fit
+            RCLCPP_DEBUG_STREAM(rclcpp::get_logger(BASIC_AUTONOMY_LOGGER), "Original basic_points size: " << basic_points.size());
+
+            // When computing fit, there cannot be duplicate points or points less than 0.5 meters apart.
+            // Therefore, this function generally cleans the points for robust spline fit.
             auto points_with_min_dis = downsample_pts_with_min_meters
                 <std::vector<lanelet::BasicPoint2d>>(basic_points);
 
@@ -828,19 +830,19 @@ namespace basic_autonomy
                 return nullptr;
             }
 
-            RCLCPP_DEBUG_STREAM(rclcpp::get_logger(BASIC_AUTONOMY_LOGGER), "Original basic_points size: " << points_with_min_dis.size());
+            RCLCPP_DEBUG_STREAM(rclcpp::get_logger(BASIC_AUTONOMY_LOGGER), "points_with_min_dis size: " << points_with_min_dis.size());
 
-            std::vector<lanelet::BasicPoint2d> resized_basic_points = points_with_min_dis;
+            std::vector<lanelet::BasicPoint2d> resized_points_with_min_dis = points_with_min_dis;
 
             // The large the number of points, longer it takes to calculate a spline fit
             // So if the basic_points vector size is large, only the first 400 points are used to compute a spline fit.
-            if (resized_basic_points.size() > 400)
+            if (resized_points_with_min_dis.size() > 400)
             {
-                resized_basic_points.resize(400);
-                RCLCPP_DEBUG_STREAM(rclcpp::get_logger(BASIC_AUTONOMY_LOGGER), "Resized basic_points size: " << resized_basic_points.size());
+                resized_points_with_min_dis.resize(400);
+                RCLCPP_DEBUG_STREAM(rclcpp::get_logger(BASIC_AUTONOMY_LOGGER), "resized_points_with_min_dis size: " << resized_points_with_min_dis.size());
 
-                size_t left_points_size = points_with_min_dis.size() - resized_basic_points.size();
-                RCLCPP_DEBUG_STREAM(rclcpp::get_logger(BASIC_AUTONOMY_LOGGER), "Number of left out basic_points size: " << left_points_size);
+                size_t left_points_size = points_with_min_dis.size() - resized_points_with_min_dis.size();
+                RCLCPP_DEBUG_STREAM(rclcpp::get_logger(BASIC_AUTONOMY_LOGGER), "Left out points size: " << left_points_size);
 
                 float percent_points_lost = 100.0f
                     * static_cast<float>(left_points_size) /
@@ -854,7 +856,7 @@ namespace basic_autonomy
 
             std::unique_ptr<basic_autonomy::smoothing::SplineI> spl = std::make_unique<basic_autonomy::smoothing::BSpline>();
 
-            spl->setPoints(resized_basic_points);
+            spl->setPoints(resized_points_with_min_dis);
 
             return spl;
         }
