@@ -34,6 +34,7 @@
 #include <unordered_set>
 #include <autoware_msgs/msg/lane.h>
 #include <lanelet2_core/geometry/Point.h>
+#include <basic_autonomy/impl/basic_autonomy.tpp>
 #include <basic_autonomy/smoothing/SplineI.hpp>
 #include <basic_autonomy/smoothing/BSpline.hpp>
 #include <basic_autonomy/smoothing/filters.hpp>

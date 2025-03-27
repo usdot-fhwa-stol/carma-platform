@@ -15,10 +15,12 @@
  */
 
 #include <basic_autonomy/basic_autonomy.hpp>
+
 #include <basic_autonomy/helper_functions.hpp>
 #include <gtest/gtest.h>
 #include <carma_wm/CARMAWorldModel.hpp>
 #include <math.h>
+#include <cmath>
 #include <tf2/LinearMath/Transform.h>
 #include <carma_wm/WMTestLibForGuidance.hpp>
 #include <lanelet2_routing/RoutingGraph.h>
@@ -36,6 +38,40 @@
 
 namespace basic_autonomy
 {
+    TEST(BasicAutonomyTest, DownsamplePtsWithMinMeters) {
+        // Test case 1: Empty container
+        std::vector<lanelet::BasicPoint2d> empty_line;
+        auto empty_result =
+            basic_autonomy::waypoint_generation::downsample_pts_with_min_meters
+            <std::vector<lanelet::BasicPoint2d>>(empty_line, 5.0);
+        EXPECT_TRUE(empty_result.empty());
+
+        // Test case 2: Points with mixed spacing
+        std::vector<lanelet::BasicPoint2d> points = {
+            lanelet::BasicPoint2d(0.0, 0.0),    // Keep (first point)
+            lanelet::BasicPoint2d(1.0, 0.0),    // Filter (distance = 1.0)
+            lanelet::BasicPoint2d(3.0, 0.0),    // Keep (distance from last kept = 3.0)
+            lanelet::BasicPoint2d(4.0, 0.0),    // Filter (distance = 1.0)
+            lanelet::BasicPoint2d(7.0, 0.0),    // Keep (distance = 3.0)
+            lanelet::BasicPoint2d(7.5, 0.5),    // Filter (distance ≈ 0.7)
+            lanelet::BasicPoint2d(10.0, 2.0)    // Keep (distance ≈ 3.2)
+        };
+
+        // With 2.0 meter gap
+        auto result =
+            basic_autonomy::waypoint_generation::downsample_pts_with_min_meters(points, 2.0);
+
+        // Expected: 4 points kept (0.0, 3.0, 7.0, 10.0)
+        ASSERT_EQ(result.size(), 4);
+        EXPECT_DOUBLE_EQ(result[0].x(), 0.0);
+        EXPECT_DOUBLE_EQ(result[0].y(), 0.0);
+        EXPECT_DOUBLE_EQ(result[1].x(), 3.0);
+        EXPECT_DOUBLE_EQ(result[1].y(), 0.0);
+        EXPECT_DOUBLE_EQ(result[2].x(), 7.0);
+        EXPECT_DOUBLE_EQ(result[2].y(), 0.0);
+        EXPECT_DOUBLE_EQ(result[3].x(), 10.0);
+        EXPECT_DOUBLE_EQ(result[3].y(), 2.0);
+    }
 
     // Test to ensure Eigen::Isometry2d behaves like tf2::Transform
     TEST(BasicAutonomyTest, validate_eigen)
