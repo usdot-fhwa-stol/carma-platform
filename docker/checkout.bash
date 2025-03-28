@@ -30,9 +30,13 @@ while [[ $# -gt 0 ]]; do
                   shift
             ;;
             -r|--root)
-                  dir=$2
-                  shift
-                  shift
+                    dir=$2
+                    shift
+                    shift
+            ;;
+            *)
+                  echo "Unknown argument $1"
+                    shift
             ;;
       esac
 done

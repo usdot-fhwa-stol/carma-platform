@@ -34,13 +34,14 @@
 # /////////////////////////////////////////////////////////////////////////////
 ARG DOCKER_ORG="usdotfhwastoldev"
 ARG DOCKER_TAG="develop"
-FROM ${DOCKER_ORG}/autoware.ai:${DOCKER_TAG} as base-image
 ARG GIT_BRANCH="develop"
-FROM base-image AS source-code
 
+FROM ${DOCKER_ORG}/autoware.ai:${DOCKER_TAG} as base-image
+
+FROM base-image AS source-code
+ARG GIT_BRANCH
 RUN mkdir ~/src
 COPY --chown=carma ./docker /home/carma/src/carma-platform/docker
-
 
 RUN ~/src/carma-platform/docker/checkout.bash -b ${GIT_BRANCH}
 
@@ -50,6 +51,7 @@ COPY --chown=carma . /home/carma/src/carma-platform
 # /////////////////////////////////////////////////////////////////////////////
 
 FROM base-image AS install
+ARG GIT_BRANCH
 ARG PACKAGES=""
 ENV PACKAGES=${PACKAGES}
 
