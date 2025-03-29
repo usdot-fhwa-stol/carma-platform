@@ -200,6 +200,7 @@ namespace light_controlled_intersection_tactical_plugin
         std::vector<double>& blended_speeds);
     void smoothVelocityProfile(std::vector<carma_planning_msgs::msg::TrajectoryPlanPoint>& trajectory_points);
     void ensureMonotonicTimes(std::vector<carma_planning_msgs::msg::TrajectoryPlanPoint>& trajectory_points);
+    bool isLastTrajectoryValid(const rclcpp::Time& current_time, double min_remaining_time_seconds = 0.0) const;
 
     FRIEND_TEST(LCITacticalPluginTest, applyTrajectorySmoothingAlgorithm);
     FRIEND_TEST(LCITacticalPluginTest, applyOptimizedTargetSpeedProfile);

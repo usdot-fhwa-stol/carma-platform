@@ -26,7 +26,35 @@ namespace light_controlled_intersection_tactical_plugin
     {
     }
 
-    // Implementation of the new helper functions
+    bool LightControlledIntersectionTacticalPlugin::isLastTrajectoryValid(
+        const rclcpp::Time& current_time,
+        double min_remaining_time_seconds) const
+    {
+        // Check if we have at least 2 points in the trajectory
+        if (last_trajectory_.trajectory_points.size() < 2) {
+            return false;
+        }
+
+        // Check if the last point's time is sufficiently in the future
+        rclcpp::Time last_point_time = rclcpp::Time(last_trajectory_.trajectory_points.back().target_time);
+        rclcpp::Duration min_time_remaining = rclcpp::Duration::from_seconds(min_remaining_time_seconds);
+
+        if (last_point_time <= current_time + min_time_remaining) {
+            return false;
+        }
+
+        // Check if we have case information from previous planning
+        if (is_last_case_successful_ == boost::none || last_case_ == boost::none) {
+            return false;
+        }
+
+        // Ensure we have consistent speed data
+        if (last_final_speeds_.size() != last_trajectory_.trajectory_points.size()) {
+            return false;
+        }
+
+        return true;
+    }
 
     size_t LightControlledIntersectionTacticalPlugin::findClosestPointIndex(
         const lanelet::BasicPoint2d& position,
@@ -53,13 +81,10 @@ namespace light_controlled_intersection_tactical_plugin
     bool LightControlledIntersectionTacticalPlugin::shouldUseLastTrajectory(
         TSCase new_case, bool is_new_case_successful, const rclcpp::Time& current_time)
     {
-        // Check if we have a valid last trajectory
-        bool is_valid_last_trajectory = (last_trajectory_.trajectory_points.size() >= 2 &&
-                                    rclcpp::Time(last_trajectory_.trajectory_points.back().target_time) > current_time +
-                                    rclcpp::Duration::from_nanoseconds(1 * 1e9));
-
-        if (!is_valid_last_trajectory) return false;
-        if (is_last_case_successful_ == boost::none || last_case_ == boost::none) return false;
+        // Validate trajectory with 1 second minimum remaining time
+        if (!isLastTrajectoryValid(current_time, 1.0)) {
+            return false;
+        }
 
         // Check if case is the same and both cases are successful
         if (last_case_.get() == new_case && is_new_case_successful == true)
@@ -86,12 +111,10 @@ namespace light_controlled_intersection_tactical_plugin
     bool LightControlledIntersectionTacticalPlugin::shouldBlendTrajectories(
         TSCase new_case, bool is_new_case_successful, const rclcpp::Time& current_time)
     {
-        // Check if we have a valid last trajectory
-        bool is_valid_last_trajectory = (last_trajectory_.trajectory_points.size() >= 2 &&
-                                        rclcpp::Time(last_trajectory_.trajectory_points.back().target_time) > current_time);
-
-        if (!is_valid_last_trajectory) return false;
-        if (is_last_case_successful_ == boost::none || last_case_ == boost::none) return false;
+        // Validate trajectory with 1 second minimum remaining time
+        if (!isLastTrajectoryValid(current_time, 1.0)) {
+            return false;
+        }
 
         // Case 1: Same case, successful, but less than 3 seconds remain
         if (last_case_.get() == new_case && is_new_case_successful == true)
