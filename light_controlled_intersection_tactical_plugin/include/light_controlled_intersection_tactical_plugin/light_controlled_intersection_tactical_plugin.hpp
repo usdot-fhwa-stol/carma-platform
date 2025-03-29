@@ -115,7 +115,7 @@ namespace light_controlled_intersection_tactical_plugin
     boost::optional<bool> is_last_case_successful_;
     carma_planning_msgs::msg::TrajectoryPlan last_trajectory_;
     carma_ros2_utils::ClientPtr<carma_planning_msgs::srv::PlanTrajectory> yield_client_;
-
+    const std::string LCI_TACTICAL_LOGGER = "light_controlled_intersection_tactical_plugin";
     carma_planning_msgs::msg::VehicleState ending_state_before_buffer_; //state before applying extra points for curvature calculation that are removed later
 
     double epsilon_ = 0.001; //Small constant to compare (double) 0.0 with
@@ -188,6 +188,7 @@ namespace light_controlled_intersection_tactical_plugin
 
     // New helper functions for trajectory blending
     size_t findClosestPointIndex(const lanelet::BasicPoint2d& position, const std::vector<carma_planning_msgs::msg::TrajectoryPlanPoint>& trajectory);
+    void logDebugInfoAboutPreviousTrajectory();
     bool shouldUseLastTrajectory(TSCase new_case, bool is_new_case_successful, const rclcpp::Time& current_time);
     bool shouldBlendTrajectories(TSCase new_case, bool is_new_case_successful, const rclcpp::Time& current_time);
     carma_planning_msgs::msg::TrajectoryPlan generateNewTrajectory(
