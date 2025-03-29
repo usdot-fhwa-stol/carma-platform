@@ -12,13 +12,13 @@ default_downsample_ratio: 18
 turn_downsample_ratio: 20
 
 # Curve re-sampling step size in m
-curve_resample_step_size: 1.0 
+curve_resample_step_size: 1.0
 
 # Size of the window used in the moving average filter to smooth the computed curvature
-curvature_moving_average_window_size: 9      
+curvature_moving_average_window_size: 9
 
 # Size of the window used in the moving average filter to smooth the output speeds
-speed_moving_average_window_size: 5 
+speed_moving_average_window_size: 5
 
 # Number of meters behind the first maneuver that need to be included in points for curvature calculation
 back_distance: 20.0
