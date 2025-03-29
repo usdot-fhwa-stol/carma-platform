@@ -186,6 +186,21 @@ namespace light_controlled_intersection_tactical_plugin
      */
     double findSpeedLimit(const lanelet::ConstLanelet& llt, const carma_wm::WorldModelConstPtr &wm) const;
 
+    // New helper functions for trajectory blending
+    size_t findClosestPointIndex(const lanelet::BasicPoint2d& position, const std::vector<carma_planning_msgs::msg::TrajectoryPlanPoint>& trajectory);
+    bool shouldUseLastTrajectory(TSCase new_case, bool is_new_case_successful, const rclcpp::Time& current_time);
+    bool shouldBlendTrajectories(TSCase new_case, bool is_new_case_successful, const rclcpp::Time& current_time);
+    carma_planning_msgs::msg::TrajectoryPlan generateNewTrajectory(
+        const std::vector<carma_planning_msgs::msg::Maneuver>& maneuver_plan,
+        const carma_planning_msgs::srv::PlanTrajectory::Request::SharedPtr& req,
+        std::vector<double>& final_speeds);
+    carma_planning_msgs::msg::TrajectoryPlan blendTrajectories(
+        const carma_planning_msgs::msg::TrajectoryPlan& old_trajectory,
+        const carma_planning_msgs::msg::TrajectoryPlan& new_trajectory,
+        std::vector<double>& blended_speeds);
+    void smoothVelocityProfile(std::vector<carma_planning_msgs::msg::TrajectoryPlanPoint>& trajectory_points);
+    void ensureMonotonicTimes(std::vector<carma_planning_msgs::msg::TrajectoryPlanPoint>& trajectory_points);
+
     FRIEND_TEST(LCITacticalPluginTest, applyTrajectorySmoothingAlgorithm);
     FRIEND_TEST(LCITacticalPluginTest, applyOptimizedTargetSpeedProfile);
     FRIEND_TEST(LCITacticalPluginTest, createGeometryProfile);

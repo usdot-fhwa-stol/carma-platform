@@ -26,25 +26,307 @@ namespace light_controlled_intersection_tactical_plugin
     {
     }
 
-    void LightControlledIntersectionTacticalPlugin::planTrajectoryCB(
-        carma_planning_msgs::srv::PlanTrajectory::Request::SharedPtr req,
-        carma_planning_msgs::srv::PlanTrajectory::Response::SharedPtr resp)
+    // Implementation of the new helper functions
+
+    size_t LightControlledIntersectionTacticalPlugin::findClosestPointIndex(
+        const lanelet::BasicPoint2d& position,
+        const std::vector<carma_planning_msgs::msg::TrajectoryPlanPoint>& trajectory)
     {
-        std::chrono::system_clock::time_point start_time = std::chrono::system_clock::now();  // Start timing the execution time for planning so it can be logged
+        size_t closest_idx = 0;
+        double min_dist = std::numeric_limits<double>::max();
 
-        RCLCPP_DEBUG_STREAM(rclcpp::get_logger("light_controlled_intersection_tactical_plugin"), "Starting light controlled intersection trajectory planning");
+        for (size_t i = 0; i < trajectory.size(); i++)
+        {
+            auto dist = sqrt(pow(position.x() - trajectory.at(i).x, 2) +
+                            pow(position.y() - trajectory.at(i).y, 2));
 
+            if (dist < min_dist)
+            {
+                min_dist = dist;
+                closest_idx = i;
+            }
+        }
+
+        return closest_idx;
+    }
+
+    bool LightControlledIntersectionTacticalPlugin::shouldUseLastTrajectory(
+        TSCase new_case, bool is_new_case_successful, const rclcpp::Time& current_time)
+    {
+        // Check if we have a valid last trajectory
+        bool is_valid_last_trajectory = (last_trajectory_.trajectory_points.size() >= 2 &&
+                                    rclcpp::Time(last_trajectory_.trajectory_points.back().target_time) > current_time +
+                                    rclcpp::Duration::from_nanoseconds(1 * 1e9));
+
+        if (!is_valid_last_trajectory) return false;
+        if (is_last_case_successful_ == boost::none || last_case_ == boost::none) return false;
+
+        // Check if case is the same and both cases are successful
+        if (last_case_.get() == new_case && is_new_case_successful == true)
+        {
+            auto remaining_time = rclcpp::Time(last_trajectory_.trajectory_points.back().target_time) - current_time;
+            // Only use last trajectory if we have at least 3 seconds remaining
+            return remaining_time.seconds() >= 3.0;
+        }
+
+        // Edge case - successful to unsuccessful transition
+        if (is_last_case_successful_.get() == true && is_new_case_successful == false)
+        {
+            if (last_successful_ending_downtrack_ - current_downtrack_ < config_.algorithm_evaluation_distance &&
+                last_successful_scheduled_entry_time_ - current_time.seconds() < config_.algorithm_evaluation_period)
+            {
+                auto remaining_time = rclcpp::Time(last_trajectory_.trajectory_points.back().target_time) - current_time;
+                return remaining_time.seconds() >= 3.0;
+            }
+        }
+
+        return false;
+    }
+
+    bool LightControlledIntersectionTacticalPlugin::shouldBlendTrajectories(
+        TSCase new_case, bool is_new_case_successful, const rclcpp::Time& current_time)
+    {
+        // Check if we have a valid last trajectory
+        bool is_valid_last_trajectory = (last_trajectory_.trajectory_points.size() >= 2 &&
+                                        rclcpp::Time(last_trajectory_.trajectory_points.back().target_time) > current_time);
+
+        if (!is_valid_last_trajectory) return false;
+        if (is_last_case_successful_ == boost::none || last_case_ == boost::none) return false;
+
+        // Case 1: Same case, successful, but less than 3 seconds remain
+        if (last_case_.get() == new_case && is_new_case_successful == true)
+        {
+            auto remaining_time = rclcpp::Time(last_trajectory_.trajectory_points.back().target_time) - current_time;
+            if (remaining_time.seconds() < 3.0) return true;
+        }
+
+        // Case 2: Edge case, less than 3 seconds remain
+        if (is_last_case_successful_.get() == true && is_new_case_successful == false &&
+            last_successful_ending_downtrack_ - current_downtrack_ < config_.algorithm_evaluation_distance &&
+            last_successful_scheduled_entry_time_ - current_time.seconds() < config_.algorithm_evaluation_period)
+        {
+            auto remaining_time = rclcpp::Time(last_trajectory_.trajectory_points.back().target_time) - current_time;
+            if (remaining_time.seconds() < 3.0) return true;
+        }
+
+        // Case 3: Same case but different values
+        if (last_case_.get() == new_case) return true;
+
+        return false;
+    }
+
+    carma_planning_msgs::msg::TrajectoryPlan LightControlledIntersectionTacticalPlugin::generateNewTrajectory(
+        const std::vector<carma_planning_msgs::msg::Maneuver>& maneuver_plan,
+        const carma_planning_msgs::srv::PlanTrajectory::Request::SharedPtr& req,
+        std::vector<double>& final_speeds)
+    {
+        DetailedTrajConfig wpg_detail_config;
+        GeneralTrajConfig wpg_general_config;
+
+        wpg_general_config = basic_autonomy::waypoint_generation::compose_general_trajectory_config(
+            "intersection_transit",
+            config_.default_downsample_ratio,
+            config_.turn_downsample_ratio);
+
+        wpg_detail_config = basic_autonomy::waypoint_generation::compose_detailed_trajectory_config(
+            config_.trajectory_time_length,
+            config_.curve_resample_step_size, config_.minimum_speed,
+            config_.vehicle_accel_limit,
+            config_.lateral_accel_limit,
+            config_.speed_moving_average_window_size,
+            config_.curvature_moving_average_window_size, config_.back_distance,
+            config_.buffer_ending_downtrack);
+
+        // Create trajectory with raw speed limits from maneuver
+        auto points_and_target_speeds = createGeometryProfile(
+            maneuver_plan, std::max((double)0, current_downtrack_ - config_.back_distance),
+            wm_, ending_state_before_buffer_, req->vehicle_state, wpg_general_config, wpg_detail_config);
+
+        // Apply optimized speed profile
+        applyOptimizedTargetSpeedProfile(maneuver_plan.front(), req->vehicle_state.longitudinal_vel, points_and_target_speeds);
+
+        // Create new trajectory
+        carma_planning_msgs::msg::TrajectoryPlan new_trajectory;
+        new_trajectory.header.frame_id = "map";
+        new_trajectory.header.stamp = req->header.stamp;
+        new_trajectory.trajectory_id = boost::uuids::to_string(boost::uuids::random_generator()());
+
+        // Generate points
+        new_trajectory.trajectory_points = basic_autonomy::waypoint_generation::compose_lanefollow_trajectory_from_path(
+            points_and_target_speeds,
+            req->vehicle_state, req->header.stamp, wm_, ending_state_before_buffer_, debug_msg_,
+            wpg_detail_config);
+
+        // Set the planning plugin field name
+        for (auto& p : new_trajectory.trajectory_points) {
+            p.planner_plugin_name = plugin_name_;
+        }
+
+        // Save final speeds
+        final_speeds = debug_msg_.velocity_profile;
+
+        return new_trajectory;
+    }
+
+    carma_planning_msgs::msg::TrajectoryPlan LightControlledIntersectionTacticalPlugin::blendTrajectories(
+        const carma_planning_msgs::msg::TrajectoryPlan& old_trajectory,
+        const carma_planning_msgs::msg::TrajectoryPlan& new_trajectory,
+        std::vector<double>& blended_speeds)
+    {
+        // Find the midpoint of the old trajectory for blending
+        size_t half_idx = old_trajectory.trajectory_points.size() / 2;
+
+        // Ensure at least one point from old trajectory
+        if (half_idx < 1) {
+            half_idx = 1;
+        }
+
+        // Create the blended trajectory
+        carma_planning_msgs::msg::TrajectoryPlan blended_trajectory;
+        blended_trajectory.header = new_trajectory.header;
+        blended_trajectory.trajectory_id = new_trajectory.trajectory_id;
+
+        // Keep the first half of the old trajectory
+        blended_trajectory.trajectory_points = std::vector<carma_planning_msgs::msg::TrajectoryPlanPoint>(
+            old_trajectory.trajectory_points.begin(),
+            old_trajectory.trajectory_points.begin() + half_idx);
+
+        // Define blend region parameters
+        const size_t blend_points = 10; // Number of points for blending
+        const double blend_duration = 1.0; // Duration of blend in seconds
+
+        // Get timestamps for blending reference
+        rclcpp::Time last_point_time = rclcpp::Time(blended_trajectory.trajectory_points.back().target_time);
+
+        // Find the closest point in new trajectory based on time
+        size_t new_traj_start_idx = 0;
+        for (size_t i = 0; i < new_trajectory.trajectory_points.size(); i++) {
+            if (rclcpp::Time(new_trajectory.trajectory_points[i].target_time) >= last_point_time) {
+                new_traj_start_idx = i;
+                break;
+            }
+        }
+
+        // Add blend points
+        for (size_t i = 0; i < blend_points && (new_traj_start_idx + i) < new_trajectory.trajectory_points.size(); i++) {
+            double blend_factor = static_cast<double>(i) / blend_points; // 0 to 1
+
+            auto& new_point = new_trajectory.trajectory_points[new_traj_start_idx + i];
+            auto& last_point = blended_trajectory.trajectory_points.back();
+
+            // Create a blended point
+            carma_planning_msgs::msg::TrajectoryPlanPoint blended_point = new_point;
+
+            // Linear interpolation of position and velocity
+            blended_point.x = (1 - blend_factor) * last_point.x + blend_factor * new_point.x;
+            blended_point.y = (1 - blend_factor) * last_point.y + blend_factor * new_point.y;
+            blended_point.z = (1 - blend_factor) * last_point.z + blend_factor * new_point.z;
+
+            // Interpolate velocity components
+            blended_point.longitudinal_velocity = (1 - blend_factor) * last_point.longitudinal_velocity +
+                                                blend_factor * new_point.longitudinal_velocity;
+            blended_point.lateral_velocity = (1 - blend_factor) * last_point.lateral_velocity +
+                                            blend_factor * new_point.lateral_velocity;
+
+            // Set target time for the blended point
+            if (i > 0) {
+                auto prev_time = rclcpp::Time(blended_trajectory.trajectory_points.back().target_time);
+                auto target_time = prev_time + rclcpp::Duration::from_seconds(blend_duration / blend_points);
+                blended_point.target_time = target_time;
+            }
+
+            blended_trajectory.trajectory_points.push_back(blended_point);
+        }
+
+        // Append the rest of the new trajectory after the blend region
+        blended_trajectory.trajectory_points.insert(
+            blended_trajectory.trajectory_points.end(),
+            new_trajectory.trajectory_points.begin() + new_traj_start_idx + blend_points,
+            new_trajectory.trajectory_points.end()
+        );
+
+        // Ensure monotonically increasing timestamps
+        ensureMonotonicTimes(blended_trajectory.trajectory_points);
+
+        // Smooth out speed profile
+        smoothVelocityProfile(blended_trajectory.trajectory_points);
+
+        // Create corresponding final_speeds for blended trajectory
+        blended_speeds.clear();
+        for (const auto& point : blended_trajectory.trajectory_points) {
+            blended_speeds.push_back(point.longitudinal_velocity);
+        }
+
+        return blended_trajectory;
+    }
+
+    void LightControlledIntersectionTacticalPlugin::smoothVelocityProfile(
+        std::vector<carma_planning_msgs::msg::TrajectoryPlanPoint>& trajectory_points)
+    {
+        const int speed_window = 5; // Window size for moving average
+
+        // Create a copy of the velocity values
+        std::vector<double> speeds;
+        for (const auto& point : trajectory_points) {
+            speeds.push_back(point.longitudinal_velocity);
+        }
+
+        // Apply moving average to smooth velocities
+        for (size_t i = 0; i < trajectory_points.size(); i++) {
+            double sum = 0.0;
+            int count = 0;
+
+            for (int j = -speed_window/2; j <= speed_window/2; j++) {
+                if (i + j >= 0 && i + j < speeds.size()) {
+                    sum += speeds[i + j];
+                    count++;
+                }
+            }
+
+            if (count > 0) {
+                trajectory_points[i].longitudinal_velocity = sum / count;
+            }
+        }
+    }
+
+    void LightControlledIntersectionTacticalPlugin::ensureMonotonicTimes(
+        std::vector<carma_planning_msgs::msg::TrajectoryPlanPoint>& trajectory_points)
+    {
+        for (size_t i = 1; i < trajectory_points.size(); i++) {
+            auto prev_time = rclcpp::Time(trajectory_points[i-1].target_time);
+            auto curr_time = rclcpp::Time(trajectory_points[i].target_time);
+
+            if (curr_time <= prev_time) {
+                auto new_time = prev_time + rclcpp::Duration::from_seconds(0.1); // Add 100ms
+                trajectory_points[i].target_time = new_time;
+            }
+        }
+    }
+
+    // Main function refactored to use the helper functions
+    void LightControlledIntersectionTacticalPlugin::planTrajectoryCB(
+            carma_planning_msgs::srv::PlanTrajectory::Request::SharedPtr req,
+            carma_planning_msgs::srv::PlanTrajectory::Response::SharedPtr resp)
+    {
+        std::chrono::system_clock::time_point start_time = std::chrono::system_clock::now();
+
+        RCLCPP_DEBUG_STREAM(rclcpp::get_logger("light_controlled_intersection_tactical_plugin"),
+                            "Starting light controlled intersection trajectory planning");
+
+        // Validate request
         if(req->maneuver_index_to_plan >= req->maneuver_plan.maneuvers.size())
         {
             throw std::invalid_argument(
-                "Light Control Intersection Plugin asked to plan invalid maneuver index: " + std::to_string(req->maneuver_index_to_plan) +
+                "Light Control Intersection Plugin asked to plan invalid maneuver index: " +
+                std::to_string(req->maneuver_index_to_plan) +
                 " for plan of size: " + std::to_string(req->maneuver_plan.maneuvers.size()));
         }
 
+        // Extract maneuver plan
         std::vector<carma_planning_msgs::msg::Maneuver> maneuver_plan;
-        // Expecting only one maneuver for an intersection, which corresponds to the maneuver_index_to_plan value provided in the request
         if(req->maneuver_plan.maneuvers[req->maneuver_index_to_plan].type == carma_planning_msgs::msg::Maneuver::LANE_FOLLOWING
-            && GET_MANEUVER_PROPERTY(req->maneuver_plan.maneuvers[req->maneuver_index_to_plan], parameters.string_valued_meta_data.front()) == light_controlled_intersection_strategy_)
+            && GET_MANEUVER_PROPERTY(req->maneuver_plan.maneuvers[req->maneuver_index_to_plan],
+                                parameters.string_valued_meta_data.front()) == light_controlled_intersection_strategy_)
         {
             maneuver_plan.push_back(req->maneuver_plan.maneuvers[req->maneuver_index_to_plan]);
             resp->related_maneuvers.push_back(req->maneuver_index_to_plan);
@@ -54,202 +336,181 @@ namespace light_controlled_intersection_tactical_plugin
             throw std::invalid_argument("Light Control Intersection Plugin asked to plan unsupported maneuver");
         }
 
+        // Get vehicle position and update tracking variables
         lanelet::BasicPoint2d veh_pos(req->vehicle_state.x_pos_global, req->vehicle_state.y_pos_global);
-        RCLCPP_DEBUG_STREAM(rclcpp::get_logger("light_controlled_intersection_tactical_plugin"), "Planning state x:" << req->vehicle_state.x_pos_global << " , y: " << req->vehicle_state.y_pos_global);
+        RCLCPP_DEBUG_STREAM(rclcpp::get_logger("light_controlled_intersection_tactical_plugin"),
+                        "Planning state x:" << req->vehicle_state.x_pos_global << " , y: " << req->vehicle_state.y_pos_global);
 
         current_downtrack_ = wm_->routeTrackPos(veh_pos).downtrack;
+        RCLCPP_DEBUG_STREAM(rclcpp::get_logger("light_controlled_intersection_tactical_plugin"),
+                        "Current_downtrack: "<< current_downtrack_);
 
-        RCLCPP_DEBUG_STREAM(rclcpp::get_logger("light_controlled_intersection_tactical_plugin"), "Current_downtrack: "<< current_downtrack_);
-
+        // Find current lanelet
         auto current_lanelets = wm_->getLaneletsFromPoint({req->vehicle_state.x_pos_global, req->vehicle_state.y_pos_global});
         lanelet::ConstLanelet current_lanelet;
 
         if (current_lanelets.empty())
         {
-            RCLCPP_ERROR_STREAM(rclcpp::get_logger("light_controlled_intersection_tactical_plugin"), "Given vehicle position is not on the road! Returning...");
+            RCLCPP_ERROR_STREAM(rclcpp::get_logger("light_controlled_intersection_tactical_plugin"),
+                            "Given vehicle position is not on the road! Returning...");
             return;
         }
 
-        // get the lanelet that is on the route in case overlapping ones found
+        // Get the lanelet that is on the route in case overlapping ones found
         auto llt_on_route_optional = wm_->getFirstLaneletOnShortestPath(current_lanelets);
 
         if (llt_on_route_optional){
             current_lanelet = llt_on_route_optional.value();
         }
         else{
-        RCLCPP_WARN_STREAM(rclcpp::get_logger("light_controlled_intersection_tactical_plugin"), "When identifying the corresponding lanelet for requested trajectory plan's state, x: " 
-            << req->vehicle_state.x_pos_global << ", y: " << req->vehicle_state.y_pos_global << ", no possible lanelet was found to be on the shortest path."
-            << "Picking arbitrary lanelet: " << current_lanelets[0].id() << ", instead");
+            RCLCPP_WARN_STREAM(rclcpp::get_logger("light_controlled_intersection_tactical_plugin"),
+                            "When identifying the corresponding lanelet for requested trajectory plan's state, x: "
+                            << req->vehicle_state.x_pos_global << ", y: " << req->vehicle_state.y_pos_global
+                            << ", no possible lanelet was found to be on the shortest path."
+                            << "Picking arbitrary lanelet: " << current_lanelets[0].id() << ", instead");
             current_lanelet = current_lanelets[0];
         }
 
-        RCLCPP_DEBUG_STREAM(rclcpp::get_logger("light_controlled_intersection_tactical_plugin"), "Current_lanelet: " << current_lanelet.id());
+        RCLCPP_DEBUG_STREAM(rclcpp::get_logger("light_controlled_intersection_tactical_plugin"),
+                        "Current_lanelet: " << current_lanelet.id());
 
         speed_limit_ = findSpeedLimit(current_lanelet, wm_);
+        RCLCPP_DEBUG_STREAM(rclcpp::get_logger("light_controlled_intersection_tactical_plugin"),
+                        "speed_limit_: " << speed_limit_);
 
-        RCLCPP_DEBUG_STREAM(rclcpp::get_logger("light_controlled_intersection_tactical_plugin"), "speed_limit_: " << speed_limit_);
-
-        DetailedTrajConfig wpg_detail_config;
-        GeneralTrajConfig wpg_general_config;
-
-        wpg_general_config = basic_autonomy:: waypoint_generation::compose_general_trajectory_config("intersection_transit",
-                                                                                    config_.default_downsample_ratio,
-                                                                                    config_.turn_downsample_ratio);
-
-        wpg_detail_config = basic_autonomy:: waypoint_generation::compose_detailed_trajectory_config(config_.trajectory_time_length,
-                                                                                config_.curve_resample_step_size, config_.minimum_speed,
-                                                                                config_.vehicle_accel_limit,
-                                                                                config_.lateral_accel_limit,
-                                                                                config_.speed_moving_average_window_size,
-                                                                                config_.curvature_moving_average_window_size, config_.back_distance,
-                                                                                config_.buffer_ending_downtrack);
-
-         // CHECK IF LAST TRAJECTORY WILL BE USED
-
+        // Get new case parameters
         bool is_new_case_successful = GET_MANEUVER_PROPERTY(maneuver_plan.front(), parameters.int_valued_meta_data[1]);
         TSCase new_case = static_cast<TSCase>GET_MANEUVER_PROPERTY(maneuver_plan.front(), parameters.int_valued_meta_data[0]);
 
+        // Log debug info about previous trajectory
         if (is_last_case_successful_ != boost::none && last_case_ != boost::none)
         {
-            RCLCPP_DEBUG_STREAM(rclcpp::get_logger("light_controlled_intersection_tactical_plugin"), "all variables are set!");
-            RCLCPP_DEBUG_STREAM(rclcpp::get_logger("light_controlled_intersection_tactical_plugin"), "is_last_case_successful_.get(): " << (int)is_last_case_successful_.get());
-            RCLCPP_DEBUG_STREAM(rclcpp::get_logger("light_controlled_intersection_tactical_plugin"), "evaluation distance: " << last_successful_ending_downtrack_ - current_downtrack_);
-
-            RCLCPP_DEBUG_STREAM(rclcpp::get_logger("light_controlled_intersection_tactical_plugin"), "evaluation time: " << std::to_string(last_successful_scheduled_entry_time_ - rclcpp::Time(req->header.stamp).seconds()));
+            RCLCPP_DEBUG_STREAM(rclcpp::get_logger("light_controlled_intersection_tactical_plugin"),
+                            "all variables are set!");
+            RCLCPP_DEBUG_STREAM(rclcpp::get_logger("light_controlled_intersection_tactical_plugin"),
+                            "is_last_case_successful_.get(): " << (int)is_last_case_successful_.get());
+            RCLCPP_DEBUG_STREAM(rclcpp::get_logger("light_controlled_intersection_tactical_plugin"),
+                            "evaluation distance: " << last_successful_ending_downtrack_ - current_downtrack_);
+            RCLCPP_DEBUG_STREAM(rclcpp::get_logger("light_controlled_intersection_tactical_plugin"),
+                            "evaluation time: " << std::to_string(last_successful_scheduled_entry_time_ -
+                            rclcpp::Time(req->header.stamp).seconds()));
         }
         else
         {
-            RCLCPP_DEBUG_STREAM(rclcpp::get_logger("light_controlled_intersection_tactical_plugin"), "Not all variables are set...");
+            RCLCPP_DEBUG_STREAM(rclcpp::get_logger("light_controlled_intersection_tactical_plugin"),
+                            "Not all variables are set...");
         }
 
+        RCLCPP_DEBUG_STREAM(rclcpp::get_logger("light_controlled_intersection_tactical_plugin"),
+                        "traj points size: " << last_trajectory_.trajectory_points.size() <<
+                        ", last_final_speeds_ size: " << last_final_speeds_.size());
 
+        // Find closest point in last trajectory to current vehicle position
+        size_t idx_to_start_new_traj = findClosestPointIndex(veh_pos, last_trajectory_.trajectory_points);
 
-        RCLCPP_DEBUG_STREAM(rclcpp::get_logger("light_controlled_intersection_tactical_plugin"), "traj points size: " << last_trajectory_.trajectory_points.size() << ", last_final_speeds_ size: " <<
-                            last_final_speeds_.size() );
-
-        size_t idx_to_start_new_traj = 0;
-        for (size_t i = 0; i < last_trajectory_.trajectory_points.size(); i++)
-        {
-            auto dist = sqrt(pow(veh_pos.x() - last_trajectory_.trajectory_points.at(i).x, 2) + std::pow(veh_pos.y() - last_trajectory_.trajectory_points.at(i).y, 2));
-
-            if (dist < 2.0) // reduce until if 2 meters away
-            {
-                idx_to_start_new_traj = i;
-                break;
-            }
+        // Update last trajectory to start from closest point
+        if (!last_trajectory_.trajectory_points.empty()) {
+            last_final_speeds_ = std::vector<double>(last_final_speeds_.begin() + idx_to_start_new_traj,
+                                                last_final_speeds_.end());
+            last_trajectory_.trajectory_points = std::vector<carma_planning_msgs::msg::TrajectoryPlanPoint>
+                                            (last_trajectory_.trajectory_points.begin() + idx_to_start_new_traj,
+                                                last_trajectory_.trajectory_points.end());
         }
 
-        last_final_speeds_ = std::vector<double>(last_final_speeds_.begin() + idx_to_start_new_traj, last_final_speeds_.end());
-        last_trajectory_.trajectory_points = std::vector<carma_planning_msgs::msg::TrajectoryPlanPoint>(last_trajectory_.trajectory_points.begin() + idx_to_start_new_traj, last_trajectory_.trajectory_points.end());
-
-        if (is_last_case_successful_ != boost::none && last_case_ != boost::none
-            && last_case_.get() == new_case
-            && is_new_case_successful == true
-            && last_trajectory_.trajectory_points.size() >= 2
-            && rclcpp::Time(last_trajectory_.trajectory_points.back().target_time) > rclcpp::Time(req->header.stamp) + rclcpp::Duration::from_nanoseconds(1 * 1e9)) // Duration is in nanoseconds
+        // Check if we should use the last trajectory completely
+        rclcpp::Time current_time = rclcpp::Time(req->header.stamp);
+        if (shouldUseLastTrajectory(new_case, is_new_case_successful, current_time))
         {
             resp->trajectory_plan = last_trajectory_;
-            RCLCPP_DEBUG_STREAM(rclcpp::get_logger("light_controlled_intersection_tactical_plugin"), "Last TRAJ's target time: " << std::to_string(rclcpp::Time(last_trajectory_.trajectory_points.back().target_time).seconds()) << ", and stamp:" << std::to_string(rclcpp::Time(req->header.stamp).seconds()));
-            RCLCPP_DEBUG_STREAM(rclcpp::get_logger("light_controlled_intersection_tactical_plugin"), "USING LAST TRAJ: " << (int)last_case_.get());
-        }
-        else if (is_last_case_successful_ != boost::none && last_case_ != boost::none
-            && is_last_case_successful_.get() == true
-            && is_new_case_successful == false
-            && last_successful_ending_downtrack_ - current_downtrack_ < config_.algorithm_evaluation_distance
-            && last_successful_scheduled_entry_time_ - rclcpp::Time(req->header.stamp).seconds() < config_.algorithm_evaluation_period
-            && last_trajectory_.trajectory_points.size() >= 2
-            && rclcpp::Time(last_trajectory_.trajectory_points.back().target_time).seconds() > rclcpp::Time(req->header.stamp).seconds())
-        {
-            resp->trajectory_plan = last_trajectory_;
-            RCLCPP_DEBUG_STREAM(rclcpp::get_logger("light_controlled_intersection_tactical_plugin"), "Last Traj's target time: " << std::to_string(rclcpp::Time(last_trajectory_.trajectory_points.back().target_time).seconds()) << ", and stamp:" << std::to_string(rclcpp::Time(req->header.stamp).seconds()) << ", and scheduled: " << std::to_string(last_successful_scheduled_entry_time_));
-            RCLCPP_DEBUG_STREAM(rclcpp::get_logger("light_controlled_intersection_tactical_plugin"), "EDGE CASE: USING LAST TRAJ: " << (int)last_case_.get());
-        }
-
-        if (!resp->trajectory_plan.trajectory_points.empty()) // if has valid trajectory saved from before return
-        {
-            RCLCPP_DEBUG_STREAM(rclcpp::get_logger("light_controlled_intersection_tactical_plugin"), "Debug: new case:" << (int) new_case << ", is_new_case_successful: " << is_new_case_successful);
+            RCLCPP_DEBUG_STREAM(rclcpp::get_logger("light_controlled_intersection_tactical_plugin"),
+                            "USING LAST TRAJ: " << (int)last_case_.get());
 
             resp->trajectory_plan.initial_longitudinal_velocity = last_final_speeds_.front();
-
             resp->maneuver_status.push_back(carma_planning_msgs::srv::PlanTrajectory::Response::MANEUVER_IN_PROGRESS);
 
-            std::chrono::system_clock::time_point end_time = std::chrono::system_clock::now();  // Planning complete
-
+            std::chrono::system_clock::time_point end_time = std::chrono::system_clock::now();
             auto duration = end_time - start_time;
-            RCLCPP_DEBUG_STREAM(rclcpp::get_logger("light_controlled_intersection_tactical_plugin"), "ExecutionTime Using New: " << std::chrono::duration<double>(duration).count());
-
+            RCLCPP_DEBUG_STREAM(rclcpp::get_logger("light_controlled_intersection_tactical_plugin"),
+                            "ExecutionTime Using Existing: " << std::chrono::duration<double>(duration).count());
             return;
         }
 
-        // IF NOT USING LAST TRAJECTORY PLAN NEW TRAJECTORY
+        // Generate a new trajectory - needed regardless of whether we blend or not
+        std::vector<double> new_final_speeds;
+        carma_planning_msgs::msg::TrajectoryPlan new_trajectory =
+            generateNewTrajectory(maneuver_plan, req, new_final_speeds);
 
-        // Create curve-fitting compatible trajectories (with extra back and front attached points) with raw speed limits from maneuver
-        auto points_and_target_speeds = createGeometryProfile(maneuver_plan, std::max((double)0, current_downtrack_ - config_.back_distance),
-                                                                                wm_, ending_state_before_buffer_, req->vehicle_state, wpg_general_config, wpg_detail_config);
-
-        // Change raw speed limit values to target speeds specified by the algorithm
-        applyOptimizedTargetSpeedProfile(maneuver_plan.front(), req->vehicle_state.longitudinal_vel, points_and_target_speeds);
-
-        RCLCPP_DEBUG_STREAM(rclcpp::get_logger("light_controlled_intersection_tactical_plugin"), "points_and_target_speeds: " << points_and_target_speeds.size());
-
-        RCLCPP_DEBUG_STREAM(rclcpp::get_logger("light_controlled_intersection_tactical_plugin"), "PlanTrajectory");
-
-        //Trajectory Plan
-        carma_planning_msgs::msg::TrajectoryPlan trajectory;
-        trajectory.header.frame_id = "map";
-        trajectory.header.stamp = req->header.stamp;
-        trajectory.trajectory_id = boost::uuids::to_string(boost::uuids::random_generator()());
-
-        // Compose smooth trajectory/speed by resampling
-        trajectory.trajectory_points = basic_autonomy::waypoint_generation::compose_lanefollow_trajectory_from_path(points_and_target_speeds,
-                                                                                    req->vehicle_state, req->header.stamp, wm_, ending_state_before_buffer_, debug_msg_,
-                                                                                    wpg_detail_config); // Compute the trajectory
-
-        // Set the planning plugin field name
-        for (auto& p : trajectory.trajectory_points) {
-            p.planner_plugin_name = plugin_name_;
-        }
-
-        if (trajectory.trajectory_points.size () < 2)
+        // Check if we should blend trajectories
+        if (shouldBlendTrajectories(new_case, is_new_case_successful, current_time) &&
+            last_trajectory_.trajectory_points.size() >= 2 &&
+            new_trajectory.trajectory_points.size() >= 2)
         {
-            if (last_trajectory_.trajectory_points.size() >= 2
-                && rclcpp::Time(last_trajectory_.trajectory_points.back().target_time) > rclcpp::Time(req->header.stamp))
-            {
-                resp->trajectory_plan = last_trajectory_;
-                RCLCPP_WARN_STREAM(rclcpp::get_logger("light_controlled_intersection_tactical_plugin"), "Failed to generate new trajectory, so using last valid trajectory!");
-            }
-            else
-            {
-                resp->trajectory_plan = trajectory;
-                RCLCPP_WARN_STREAM(rclcpp::get_logger("light_controlled_intersection_tactical_plugin"), "Failed to generate new trajectory or use old valid trajectory, so returning empty/invalid trajectory!");
-            }
-        }
-        else
-        {
-            last_trajectory_ = trajectory;
-            resp->trajectory_plan = trajectory;
-            last_case_ = new_case;
-            last_final_speeds_ = debug_msg_.velocity_profile;
-            is_last_case_successful_ = is_new_case_successful;
-            RCLCPP_DEBUG_STREAM(rclcpp::get_logger("light_controlled_intersection_tactical_plugin"), "USING NEW: Target time: " << std::to_string(rclcpp::Time(last_trajectory_.trajectory_points.back().target_time).seconds()) << ", and stamp:" << std::to_string(rclcpp::Time(req->header.stamp).seconds()));
-            if (is_new_case_successful)
-            {
-                last_successful_ending_downtrack_ = GET_MANEUVER_PROPERTY(maneuver_plan.front(), end_dist);              // if algorithm was successful, this is traffic_light_downtrack
-                last_successful_scheduled_entry_time_ = rclcpp::Time(GET_MANEUVER_PROPERTY(maneuver_plan.front(), end_time)).seconds();  // if algorithm was successful, this is also scheduled entry time (ET in TSMO UC2 Algo)
-                RCLCPP_DEBUG_STREAM(rclcpp::get_logger("light_controlled_intersection_tactical_plugin"), "last_successful_ending_downtrack_:" << last_successful_ending_downtrack_ << ", last_successful_scheduled_entry_time_: " << std::to_string(last_successful_scheduled_entry_time_));
-            }
-            RCLCPP_DEBUG_STREAM(rclcpp::get_logger("light_controlled_intersection_tactical_plugin"), "USING NEW CASE!!! : " << (int)last_case_.get());
+            RCLCPP_DEBUG_STREAM(rclcpp::get_logger("light_controlled_intersection_tactical_plugin"),
+                            "Blending trajectories");
 
-        }
-        RCLCPP_DEBUG_STREAM(rclcpp::get_logger("light_controlled_intersection_tactical_plugin"), "Debug: new case:" << (int) new_case << ", is_new_case_successful: " << is_new_case_successful);
+            std::vector<double> blended_speeds;
+            carma_planning_msgs::msg::TrajectoryPlan blended_trajectory =
+                blendTrajectories(last_trajectory_, new_trajectory, blended_speeds);
 
-        resp->trajectory_plan.initial_longitudinal_velocity = last_final_speeds_.front();
+            // Set response
+            resp->trajectory_plan = blended_trajectory;
+            resp->trajectory_plan.initial_longitudinal_velocity = blended_speeds.front();
+
+            // Update stored trajectories for next planning cycle
+            last_trajectory_ = blended_trajectory;
+            last_final_speeds_ = blended_speeds;
+
+            RCLCPP_DEBUG_STREAM(rclcpp::get_logger("light_controlled_intersection_tactical_plugin"),
+                            "USING BLENDED TRAJECTORY for case: " << (int)new_case);
+        }
+        // Use the newly generated trajectory if blending is not possible or not needed
+        else if (new_trajectory.trajectory_points.size() >= 2) {
+            resp->trajectory_plan = new_trajectory;
+            resp->trajectory_plan.initial_longitudinal_velocity = new_final_speeds.front();
+
+            // Update stored trajectories
+            last_trajectory_ = new_trajectory;
+            last_final_speeds_ = new_final_speeds;
+
+            RCLCPP_DEBUG_STREAM(rclcpp::get_logger("light_controlled_intersection_tactical_plugin"),
+                            "USING NEW TRAJECTORY for case: " << (int)new_case);
+        }
+        // Fall back to last trajectory if new is invalid but last is valid
+        else if (last_trajectory_.trajectory_points.size() >= 2 &&
+                rclcpp::Time(last_trajectory_.trajectory_points.back().target_time) > current_time) {
+            resp->trajectory_plan = last_trajectory_;
+            resp->trajectory_plan.initial_longitudinal_velocity = last_final_speeds_.front();
+
+            RCLCPP_WARN_STREAM(rclcpp::get_logger("light_controlled_intersection_tactical_plugin"),
+                            "Failed to generate new trajectory, so using last valid trajectory!");
+        }
+        // Last resort - return the invalid new trajectory
+        else {
+            resp->trajectory_plan = new_trajectory;
+            RCLCPP_WARN_STREAM(rclcpp::get_logger("light_controlled_intersection_tactical_plugin"),
+                            "Failed to generate new trajectory or use old valid trajectory, so returning empty/invalid trajectory!");
+        }
+
+        // Update stored case information
+        last_case_ = new_case;
+        is_last_case_successful_ = is_new_case_successful;
+
+        if (is_new_case_successful) {
+            last_successful_ending_downtrack_ = GET_MANEUVER_PROPERTY(maneuver_plan.front(), end_dist);
+            last_successful_scheduled_entry_time_ = rclcpp::Time(GET_MANEUVER_PROPERTY(maneuver_plan.front(), end_time)).seconds();
+            RCLCPP_DEBUG_STREAM(rclcpp::get_logger("light_controlled_intersection_tactical_plugin"),
+                            "last_successful_ending_downtrack_:" << last_successful_ending_downtrack_ <<
+                            ", last_successful_scheduled_entry_time_: " << std::to_string(last_successful_scheduled_entry_time_));
+        }
+
+        RCLCPP_DEBUG_STREAM(rclcpp::get_logger("light_controlled_intersection_tactical_plugin"),
+                        "Debug: new case:" << (int) new_case << ", is_new_case_successful: " << is_new_case_successful);
 
         // Yield for potential obstacles in the road
-        // Aside from the flag, yield_plugin should not be called on invalid trajectories
         if (config_.enable_object_avoidance && resp->trajectory_plan.trajectory_points.size() >= 2)
         {
-            basic_autonomy::waypoint_generation::modify_trajectory_to_yield_to_obstacles(nh_, req, resp, yield_client_, config_.tactical_plugin_service_call_timeout);
+            basic_autonomy::waypoint_generation::modify_trajectory_to_yield_to_obstacles(
+                nh_, req, resp, yield_client_, config_.tactical_plugin_service_call_timeout);
         }
         else
         {
@@ -258,12 +519,10 @@ namespace light_controlled_intersection_tactical_plugin
 
         resp->maneuver_status.push_back(carma_planning_msgs::srv::PlanTrajectory::Response::MANEUVER_IN_PROGRESS);
 
-        std::chrono::system_clock::time_point end_time = std::chrono::system_clock::now();  // Planning complete
-
+        std::chrono::system_clock::time_point end_time = std::chrono::system_clock::now();
         auto duration = end_time - start_time;
-        RCLCPP_DEBUG_STREAM(rclcpp::get_logger("light_controlled_intersection_tactical_plugin"), "ExecutionTime Using Last: " << std::chrono::duration<double>(duration).count());
-
-        return;
+        RCLCPP_DEBUG_STREAM(rclcpp::get_logger("light_controlled_intersection_tactical_plugin"),
+                        "ExecutionTime: " << std::chrono::duration<double>(duration).count());
     }
 
     void LightControlledIntersectionTacticalPlugin::applyTrajectorySmoothingAlgorithm(const carma_wm::WorldModelConstPtr& wm, std::vector<PointSpeedPair>& points_and_target_speeds, double start_dist, double remaining_dist,
