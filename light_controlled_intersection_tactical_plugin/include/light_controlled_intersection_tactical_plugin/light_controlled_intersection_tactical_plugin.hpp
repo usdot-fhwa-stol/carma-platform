@@ -203,14 +203,12 @@ namespace light_controlled_intersection_tactical_plugin
         const std::vector<carma_planning_msgs::msg::Maneuver>& maneuver_plan,
         const carma_planning_msgs::srv::PlanTrajectory::Request::SharedPtr& req,
         const std::vector<double>& final_speeds);
-    carma_planning_msgs::msg::TrajectoryPlan blendTrajectoryPoints(
+    carma_planning_msgs::msg::TrajectoryPlan blendTrajectories(
         const carma_planning_msgs::msg::TrajectoryPlan& old_trajectory,
-        const carma_planning_msgs::msg::TrajectoryPlan& new_trajectory,
-        size_t transition_point);
+        const carma_planning_msgs::msg::TrajectoryPlan& new_trajectory);
     std::vector<double> blendSpeedProfiles(
         const std::vector<double>& old_speeds,
-        const std::vector<double>& new_speeds,
-        size_t transition_point);
+        const std::vector<double>& new_speeds);
     size_t findTimeBasedTransitionPoint(const carma_planning_msgs::msg::TrajectoryPlan& old_trajectory);
     std::vector<PointSpeedPair> extractPointsAndAssign(
       const std::vector<carma_planning_msgs::msg::TrajectoryPlanPoint>& trajectory_points,

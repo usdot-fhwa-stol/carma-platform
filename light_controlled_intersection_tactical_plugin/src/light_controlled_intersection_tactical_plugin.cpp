@@ -81,74 +81,63 @@ namespace light_controlled_intersection_tactical_plugin
     bool LightControlledIntersectionTacticalPlugin::shouldUseLastTrajectory(
         TSCase new_case, bool is_new_case_successful, const rclcpp::Time& current_time)
     {
-        // Validate trajectory with 1 second minimum remaining time
-        if (!isLastTrajectoryValid(current_time, 1.0)) {
-            return false;
-        }
-
-        // Check if case is the same and both cases are successful
-        if (last_case_.get() == new_case && is_new_case_successful == true)
-        {
-            auto remaining_time = rclcpp::Time(last_trajectory_.trajectory_points.back().target_time) - current_time;
-            // Only use last trajectory if we have at least 3 seconds remaining
-            return remaining_time.seconds() >= 3.0;
-        }
-
         // Edge case - successful to unsuccessful transition
-        if (is_last_case_successful_.get() == true && is_new_case_successful == false)
+        // near the intersection. The vehicle should "lock in" to the last trajectory
+        if (is_last_case_successful_.get() == true && is_new_case_successful == false &&
+            last_successful_ending_downtrack_ - current_downtrack_ < config_.algorithm_evaluation_distance &&
+            last_successful_scheduled_entry_time_ - current_time.seconds() < config_.algorithm_evaluation_period)
         {
-            if (last_successful_ending_downtrack_ - current_downtrack_ < config_.algorithm_evaluation_distance &&
-                last_successful_scheduled_entry_time_ - current_time.seconds() < config_.algorithm_evaluation_period)
-            {
-                auto remaining_time = rclcpp::Time(last_trajectory_.trajectory_points.back().target_time) - current_time;
-                return remaining_time.seconds() >= 3.0;
-            }
+            return true;
         }
 
         return false;
     }
 
-    carma_planning_msgs::msg::TrajectoryPlan LightControlledIntersectionTacticalPlugin::blendTrajectoryPoints(
+    carma_planning_msgs::msg::TrajectoryPlan LightControlledIntersectionTacticalPlugin::blendTrajectories(
         const carma_planning_msgs::msg::TrajectoryPlan& old_trajectory,
-        const carma_planning_msgs::msg::TrajectoryPlan& new_trajectory,
-        size_t transition_point)
+        const carma_planning_msgs::msg::TrajectoryPlan& new_trajectory)
     {
-        // Create a blended trajectory
-        carma_planning_msgs::msg::TrajectoryPlan blended_trajectory;
-        blended_trajectory.header = old_trajectory.header;
-        blended_trajectory.trajectory_id = old_trajectory.trajectory_id;
-
         // Validate inputs
         if (old_trajectory.trajectory_points.empty()) {
             RCLCPP_DEBUG_STREAM(rclcpp::get_logger(LCI_TACTICAL_LOGGER),
-           "Old trajectory is empty, using new trajectory");
+                "Old trajectory is empty, using new trajectory");
             return new_trajectory;
         }
 
         if (new_trajectory.trajectory_points.empty()) {
             RCLCPP_DEBUG_STREAM(rclcpp::get_logger(LCI_TACTICAL_LOGGER),
-           "New trajectory is empty, using old trajectory");
+                "New trajectory is empty, using old trajectory");
             return old_trajectory;
         }
 
-        // Ensure transition point is valid
-        if (transition_point >= old_trajectory.trajectory_points.size()) {
-            transition_point = old_trajectory.trajectory_points.size() / 2;
-            RCLCPP_DEBUG_STREAM(rclcpp::get_logger(LCI_TACTICAL_LOGGER),
-           "Invalid transition point, using default: " << transition_point);
+        // Create a blended trajectory
+        carma_planning_msgs::msg::TrajectoryPlan blended_trajectory;
+        blended_trajectory.header = new_trajectory.header;
+        blended_trajectory.trajectory_id = new_trajectory.trajectory_id;
+        // Because both trajectories are similar or same point in their respective index
+        // iterate through and average the target_time, x, and y values
+        // if old_trajectory runs out, use new_trajectory
+        // And new trajectory is always expected to have more points than old trajectory
+
+        for (size_t i = 0; i < new_trajectory.trajectory_points.size(); i++) {
+            if (i >= old_trajectory.trajectory_points.size()) {
+                blended_trajectory.trajectory_points.push_back(
+                    new_trajectory.trajectory_points[i]);
+                continue;
+            }
+            carma_planning_msgs::msg::TrajectoryPlanPoint blended_point;
+            blended_point.x =
+                (old_trajectory.trajectory_points[i].x +
+                new_trajectory.trajectory_points[i].x) / 2.0;
+            blended_point.y =
+                (old_trajectory.trajectory_points[i].y +
+                new_trajectory.trajectory_points[i].y) / 2.0;
+            blended_point.target_time =
+                (rclcpp::Time(old_trajectory.trajectory_points[i].target_time) +
+                rclcpp::Time(new_trajectory.trajectory_points[i].target_time)) / 2.0;
+
+            blended_trajectory.trajectory_points.push_back(blended_point);
         }
-
-        // Use trajectory points from old trajectory up to transition
-        blended_trajectory.trajectory_points.insert(
-            blended_trajectory.trajectory_points.end(),
-            old_trajectory.trajectory_points.begin(),
-            old_trajectory.trajectory_points.begin() + transition_point
-        );
-
-        // Add the new speeds after the transition point
-        blended_trajectory.trajectory_points.insert(blended_trajectory.trajectory_points.end(),
-    new_trajectory.trajectory_points.begin() + transition_point,
-    new_trajectory.trajectory_points.end());
 
         return blended_trajectory;
     }
@@ -161,24 +150,11 @@ namespace light_controlled_intersection_tactical_plugin
             return false;
         }
 
-        // Case 1: Same case, successful, but less than 3 seconds remain
+        // Same case, successful, but less than 3 seconds remain
         if (last_case_.get() == new_case && is_new_case_successful == true)
         {
-            auto remaining_time = rclcpp::Time(last_trajectory_.trajectory_points.back().target_time) - current_time;
-            if (remaining_time.seconds() < 3.0) return true;
+            return true;
         }
-
-        // Case 2: Edge case, less than 3 seconds remain
-        if (is_last_case_successful_.get() == true && is_new_case_successful == false &&
-            last_successful_ending_downtrack_ - current_downtrack_ < config_.algorithm_evaluation_distance &&
-            last_successful_scheduled_entry_time_ - current_time.seconds() < config_.algorithm_evaluation_period)
-        {
-            auto remaining_time = rclcpp::Time(last_trajectory_.trajectory_points.back().target_time) - current_time;
-            if (remaining_time.seconds() < 3.0) return true;
-        }
-
-        // Case 3: Same case but different values
-        if (last_case_.get() == new_case) return true;
 
         return false;
     }
@@ -363,8 +339,7 @@ namespace light_controlled_intersection_tactical_plugin
     // Modified blending function to use the time-based transition point
     std::vector<double> LightControlledIntersectionTacticalPlugin::blendSpeedProfiles(
         const std::vector<double>& old_speeds,
-        const std::vector<double>& new_speeds,
-        size_t transition_point)
+        const std::vector<double>& new_speeds)
     {
         // Validate inputs
         if (old_speeds.empty() || new_speeds.empty()) {
@@ -373,49 +348,14 @@ namespace light_controlled_intersection_tactical_plugin
             return old_speeds.empty() ? new_speeds : old_speeds;
         }
 
-        // Ensure transition point is valid
-        if (transition_point >= old_speeds.size()) {
-            transition_point = old_speeds.size() / 2;  // Default to half if invalid
-
-            RCLCPP_DEBUG_STREAM(rclcpp::get_logger(LCI_TACTICAL_LOGGER),
-                "Invalid transition point, using default: " << transition_point);
-        }
-
         // Create the blended speed profile
         std::vector<double> blended_speeds;
 
-        // Take the first portion from old speeds (up to transition point)
-        blended_speeds.insert(blended_speeds.end(),
-        old_speeds.begin(),
-        old_speeds.begin() + transition_point);
+        // iterate through the old speeds and blend with new speeds
+        // by averaging the two
+        // if old_speed runs out, use new_speed
+        // TODO
 
-        // Add the new speeds after the transition point
-        blended_speeds.insert(blended_speeds.end(),
-        new_speeds.begin() + transition_point + 1,
-        new_speeds.end());
-
-        // Apply smoothing using the moving average filter
-        try {
-            int window_size = config_.speed_moving_average_window_size;
-            if (window_size % 2 == 0) window_size++; // Ensure odd window size
-
-            // Apply smoothing to the entire profile
-            std::vector<double> smoothed_speeds = basic_autonomy::smoothing::moving_average_filter(
-                blended_speeds,
-                window_size,
-                false  // Don't ignore first point
-            );
-
-            RCLCPP_DEBUG_STREAM(rclcpp::get_logger(LCI_TACTICAL_LOGGER),
-                "Successfully smoothed speed profile at transition point " << transition_point);
-
-            return smoothed_speeds;
-
-        } catch (const std::exception& e) {
-            RCLCPP_WARN_STREAM(rclcpp::get_logger(LCI_TACTICAL_LOGGER),
-                "Error smoothing speed profile: " << e.what() << ". Using basic blended profile.");
-            return blended_speeds;
-        }
     }
     void LightControlledIntersectionTacticalPlugin::logDebugInfoAboutPreviousTrajectory()
     {
@@ -523,7 +463,7 @@ namespace light_controlled_intersection_tactical_plugin
         // Find closest point in last trajectory to current vehicle position
         size_t idx_to_start_new_traj = findClosestPointIndex(veh_pos, last_trajectory_.trajectory_points);
 
-        // Update last trajectory to start from closest point
+        // Update last trajectory to start from closest point (remove passed points)
         if (!last_trajectory_.trajectory_points.empty()) {
             last_final_speeds_ = std::vector<double>(last_final_speeds_.begin() + idx_to_start_new_traj,
                 last_final_speeds_.end());
@@ -556,7 +496,9 @@ namespace light_controlled_intersection_tactical_plugin
         carma_planning_msgs::msg::TrajectoryPlan new_trajectory =
             generateNewTrajectory(maneuver_plan, req, new_final_speeds);
 
-        // Check if we should blend trajectories
+        // We should almost always blend trajectories, which is the normal operation
+        // This is because math is sensitive to small changes in the trajectory
+        // and this helps smooth out the trajectory
         if (shouldBlendTrajectories(new_case, is_new_case_successful, current_time) &&
             last_trajectory_.trajectory_points.size() >= 2 &&
             new_trajectory.trajectory_points.size() >= 2)
@@ -564,25 +506,16 @@ namespace light_controlled_intersection_tactical_plugin
             RCLCPP_DEBUG_STREAM(rclcpp::get_logger(LCI_TACTICAL_LOGGER),
                 "Blending trajectories");
 
-            // Find transition point based on halfway through time
-            size_t transition_point = findTimeBasedTransitionPoint(last_trajectory_);
-
             // Blend the speed profiles
+            // I believe this is mostly only for debugging
             std::vector<double> blended_speeds = blendSpeedProfiles(
                 last_final_speeds_,
-                new_final_speeds,
-                transition_point
+                new_final_speeds
             );
-            // Generate blended trajectory
-            carma_planning_msgs::msg::TrajectoryPlan blended_trajectory =
-                blendTrajectoryPoints(last_trajectory_, new_trajectory, transition_point);
 
-            // Generate the trajectory based on new blended speeds
-            resp->trajectory_plan = reapplyTargetSpeedsToTrajectory(
-                blended_trajectory,
-                maneuver_plan,
-                req,
-                blended_speeds);
+            // Generate blended trajectory
+            // This is the real deal
+            resp->trajectory_plan = blendTrajectoryPoints(last_trajectory_, new_trajectory);
 
             resp->trajectory_plan.initial_longitudinal_velocity = blended_speeds.front();
 
@@ -612,19 +545,20 @@ namespace light_controlled_intersection_tactical_plugin
             resp->trajectory_plan.initial_longitudinal_velocity = last_final_speeds_.front();
 
             RCLCPP_WARN_STREAM(rclcpp::get_logger(LCI_TACTICAL_LOGGER),
-                "Failed to generate new trajectory, so using last valid trajectory!");
+                "Failed to generate a new trajectory, so using last valid trajectory!");
         }
         // Last resort - return the invalid new trajectory
         else {
             resp->trajectory_plan = new_trajectory;
             RCLCPP_WARN_STREAM(rclcpp::get_logger(LCI_TACTICAL_LOGGER),
-                "Failed to generate new trajectory or use old valid trajectory, so returning empty/invalid trajectory!");
+                "Failed to generate a new trajectory or use old valid trajectory, so returning empty/invalid trajectory!");
         }
 
         // Update stored case information
         last_case_ = new_case;
         is_last_case_successful_ = is_new_case_successful;
 
+        // Update variables for next evaluation
         if (is_new_case_successful) {
             last_successful_ending_downtrack_ = GET_MANEUVER_PROPERTY(maneuver_plan.front(), end_dist);
             last_successful_scheduled_entry_time_ = rclcpp::Time(GET_MANEUVER_PROPERTY(maneuver_plan.front(), end_time)).seconds();
