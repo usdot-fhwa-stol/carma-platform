@@ -429,7 +429,7 @@ namespace light_controlled_intersection_tactical_plugin
                 "evaluation distance: " << last_successful_ending_downtrack_ - current_downtrack_);
             RCLCPP_DEBUG_STREAM(rclcpp::get_logger(LCI_TACTICAL_LOGGER),
                 "evaluation time: " << std::to_string(last_successful_scheduled_entry_time_ -
-                rclcpp::Time(req->header.stamp).seconds()));
+                latest_request_header_stamp_.seconds()));
         }
         else
         {
@@ -441,16 +441,12 @@ namespace light_controlled_intersection_tactical_plugin
             "traj points size: " << last_trajectory_.trajectory_points.size() <<
             ", last_final_speeds_ size: " << last_final_speeds_.size());
     }
-    // Main function refactored to use the helper functions
-    void LightControlledIntersectionTacticalPlugin::planTrajectoryCB(
+
+    // Function to process plugin service call for trajectory smoothing without yield
+    void LightControlledIntersectionTacticalPlugin::planTrajectorySmoothing(
             carma_planning_msgs::srv::PlanTrajectory::Request::SharedPtr req,
             carma_planning_msgs::srv::PlanTrajectory::Response::SharedPtr resp)
     {
-        std::chrono::system_clock::time_point start_time = std::chrono::system_clock::now();
-
-        RCLCPP_DEBUG_STREAM(rclcpp::get_logger(LCI_TACTICAL_LOGGER),
-            "Starting light controlled intersection trajectory planning");
-
         // Validate request
         if(req->maneuver_index_to_plan >= req->maneuver_plan.maneuvers.size())
         {
@@ -552,7 +548,7 @@ namespace light_controlled_intersection_tactical_plugin
             RCLCPP_DEBUG_STREAM(rclcpp::get_logger(LCI_TACTICAL_LOGGER),
                 "ExecutionTime Using Existing: " << std::chrono::duration<double>(duration).count());
 
-                return;
+            return;
         }
 
         // Generate a new trajectory - needed regardless of whether we blend or not
@@ -640,6 +636,22 @@ namespace light_controlled_intersection_tactical_plugin
         RCLCPP_DEBUG_STREAM(rclcpp::get_logger(LCI_TACTICAL_LOGGER),
             "Debug: new case:" << (int) new_case << ", is_new_case_successful: " << is_new_case_successful);
 
+        resp->maneuver_status.push_back(carma_planning_msgs::srv::PlanTrajectory::Response::MANEUVER_IN_PROGRESS);
+    }
+
+    // Main function that has yield functionality
+    void LightControlledIntersectionTacticalPlugin::planTrajectoryCB(
+            carma_planning_msgs::srv::PlanTrajectory::Request::SharedPtr req,
+            carma_planning_msgs::srv::PlanTrajectory::Response::SharedPtr resp)
+    {
+        std::chrono::system_clock::time_point start_time = std::chrono::system_clock::now();
+        latest_request_header_stamp_ = rclcpp::Time(req->header.stamp); //for debugging
+        RCLCPP_DEBUG_STREAM(rclcpp::get_logger(LCI_TACTICAL_LOGGER),
+            "Starting light controlled intersection trajectory planning");
+
+        // Call the function to plan trajectory without yield
+        planTrajectoryCBWithoutYield(req, resp);
+
         // Yield for potential obstacles in the road
         if (config_.enable_object_avoidance && resp->trajectory_plan.trajectory_points.size() >= 2)
         {
@@ -650,8 +662,6 @@ namespace light_controlled_intersection_tactical_plugin
         {
             RCLCPP_DEBUG(rclcpp::get_logger(LCI_TACTICAL_LOGGER), "Ignored Object Avoidance");
         }
-
-        resp->maneuver_status.push_back(carma_planning_msgs::srv::PlanTrajectory::Response::MANEUVER_IN_PROGRESS);
 
         std::chrono::system_clock::time_point end_time = std::chrono::system_clock::now();
         auto duration = end_time - start_time;

@@ -117,7 +117,7 @@ namespace light_controlled_intersection_tactical_plugin
     carma_ros2_utils::ClientPtr<carma_planning_msgs::srv::PlanTrajectory> yield_client_;
     const std::string LCI_TACTICAL_LOGGER = "light_controlled_intersection_tactical_plugin";
     carma_planning_msgs::msg::VehicleState ending_state_before_buffer_; //state before applying extra points for curvature calculation that are removed later
-
+    rclcpp::Time latest_request_header_stamp_;
     double epsilon_ = 0.001; //Small constant to compare (double) 0.0 with
 
     // downtrack of host vehicle
@@ -191,6 +191,9 @@ namespace light_controlled_intersection_tactical_plugin
     void logDebugInfoAboutPreviousTrajectory();
     bool shouldUseLastTrajectory(TSCase new_case, bool is_new_case_successful, const rclcpp::Time& current_time);
     bool shouldBlendTrajectories(TSCase new_case, bool is_new_case_successful, const rclcpp::Time& current_time);
+    void planTrajectorySmoothing(
+      carma_planning_msgs::srv::PlanTrajectory::Request::SharedPtr req,
+      carma_planning_msgs::srv::PlanTrajectory::Response::SharedPtr resp);
     carma_planning_msgs::msg::TrajectoryPlan generateNewTrajectory(
         const std::vector<carma_planning_msgs::msg::Maneuver>& maneuver_plan,
         const carma_planning_msgs::srv::PlanTrajectory::Request::SharedPtr& req,
