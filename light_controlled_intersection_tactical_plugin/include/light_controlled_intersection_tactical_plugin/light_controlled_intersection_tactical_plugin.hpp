@@ -194,12 +194,21 @@ namespace light_controlled_intersection_tactical_plugin
         const std::vector<carma_planning_msgs::msg::Maneuver>& maneuver_plan,
         const carma_planning_msgs::srv::PlanTrajectory::Request::SharedPtr& req,
         std::vector<double>& final_speeds);
-    carma_planning_msgs::msg::TrajectoryPlan blendTrajectories(
+    carma_planning_msgs::msg::TrajectoryPlan reapplyTargetSpeedsToTrajectory(
+        const carma_planning_msgs::msg::TrajectoryPlan& old_trajectory,
+        const std::vector<carma_planning_msgs::msg::Maneuver>& maneuver_plan,
+        const carma_planning_msgs::srv::PlanTrajectory::Request::SharedPtr& req,
+        const std::vector<double>& final_speeds);
+    carma_planning_msgs::msg::TrajectoryPlan blendTrajectoryPoints(
         const carma_planning_msgs::msg::TrajectoryPlan& old_trajectory,
         const carma_planning_msgs::msg::TrajectoryPlan& new_trajectory,
-        std::vector<double>& blended_speeds);
-    void smoothVelocityProfile(std::vector<carma_planning_msgs::msg::TrajectoryPlanPoint>& trajectory_points);
-    void ensureMonotonicTimes(std::vector<carma_planning_msgs::msg::TrajectoryPlanPoint>& trajectory_points);
+        size_t transition_point);
+    std::vector<double> blendSpeedProfiles(
+        const std::vector<double>& old_speeds,
+        const std::vector<double>& new_speeds,
+        size_t transition_point);
+    size_t findTimeBasedTransitionPoint(const carma_planning_msgs::msg::TrajectoryPlan& old_trajectory);
+
     bool isLastTrajectoryValid(const rclcpp::Time& current_time, double min_remaining_time_seconds = 0.0) const;
 
     FRIEND_TEST(LCITacticalPluginTest, applyTrajectorySmoothingAlgorithm);

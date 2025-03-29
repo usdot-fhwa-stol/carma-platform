@@ -108,6 +108,51 @@ namespace light_controlled_intersection_tactical_plugin
         return false;
     }
 
+    carma_planning_msgs::msg::TrajectoryPlan LightControlledIntersectionTacticalPlugin::blendTrajectoryPoints(
+        const carma_planning_msgs::msg::TrajectoryPlan& old_trajectory,
+        const carma_planning_msgs::msg::TrajectoryPlan& new_trajectory,
+        size_t transition_point)
+    {
+        // Create a blended trajectory
+        carma_planning_msgs::msg::TrajectoryPlan blended_trajectory;
+        blended_trajectory.header = old_trajectory.header;
+        blended_trajectory.trajectory_id = old_trajectory.trajectory_id;
+
+        // Validate inputs
+        if (old_trajectory.trajectory_points.empty()) {
+            RCLCPP_DEBUG_STREAM(rclcpp::get_logger("light_controlled_intersection_tactical_plugin"),
+                               "Old trajectory is empty, using new trajectory");
+            return new_trajectory;
+        }
+
+        if (new_trajectory.trajectory_points.empty()) {
+            RCLCPP_DEBUG_STREAM(rclcpp::get_logger("light_controlled_intersection_tactical_plugin"),
+                               "New trajectory is empty, using old trajectory");
+            return old_trajectory;
+        }
+
+        // Ensure transition point is valid
+        if (transition_point >= old_trajectory.trajectory_points.size()) {
+            transition_point = old_trajectory.trajectory_points.size() / 2;
+            RCLCPP_DEBUG_STREAM(rclcpp::get_logger("light_controlled_intersection_tactical_plugin"),
+                               "Invalid transition point, using default: " << transition_point);
+        }
+
+        // Use trajectory points from old trajectory up to transition
+        blended_trajectory.trajectory_points.insert(
+            blended_trajectory.trajectory_points.end(),
+            old_trajectory.trajectory_points.begin(),
+            old_trajectory.trajectory_points.begin() + transition_point
+        );
+
+        // Add the new speeds after the transition point
+        blended_trajectory.trajectory_points.insert(blended_trajectory.trajectory_points.end(),
+                        new_trajectory.trajectory_points.begin() + transition_point,
+                        new_trajectory.trajectory_points.end());
+
+        return blended_trajectory;
+    }
+
     bool LightControlledIntersectionTacticalPlugin::shouldBlendTrajectories(
         TSCase new_case, bool is_new_case_successful, const rclcpp::Time& current_time)
     {
@@ -136,6 +181,38 @@ namespace light_controlled_intersection_tactical_plugin
         if (last_case_.get() == new_case) return true;
 
         return false;
+    }
+
+    carma_planning_msgs::msg::TrajectoryPlan LightControlledIntersectionTacticalPlugin::reapplyTargetSpeedsToTrajectory(
+        const carma_planning_msgs::msg::TrajectoryPlan& old_trajectory,
+        const std::vector<carma_planning_msgs::msg::Maneuver>& maneuver_plan,
+        const carma_planning_msgs::srv::PlanTrajectory::Request::SharedPtr& req,
+        const std::vector<double>& final_speeds)
+    {
+        DetailedTrajConfig wpg_detail_config;
+
+        wpg_detail_config = basic_autonomy::waypoint_generation::compose_detailed_trajectory_config(
+            config_.trajectory_time_length,
+            config_.curve_resample_step_size, config_.minimum_speed,
+            config_.vehicle_accel_limit,
+            config_.lateral_accel_limit,
+            config_.speed_moving_average_window_size,
+            config_.curvature_moving_average_window_size, config_.back_distance,
+            config_.buffer_ending_downtrack);
+
+        // Create trajectory with given speeds
+        // TODO: implement the function that extracts points from trajectory points and assigns target speeds to return vector
+        auto points_and_target_speeds = extractPointsAndAssign(old_trajectory.trajectory_points, final_speeds);
+
+        // Generate points
+        carma_debug_ros2_msgs::msg::TrajectoryCurvatureSpeeds debug_msg_unused;
+        auto updated_trajectory = old_trajectory;
+        updated_trajectory.trajectory_points = basic_autonomy::waypoint_generation::compose_lanefollow_trajectory_from_path(
+            points_and_target_speeds,
+            req->vehicle_state, req->header.stamp, wm_, ending_state_before_buffer_, debug_msg_unused,
+            wpg_detail_config);
+
+        return updated_trajectory;
     }
 
     carma_planning_msgs::msg::TrajectoryPlan LightControlledIntersectionTacticalPlugin::generateNewTrajectory(
@@ -191,138 +268,103 @@ namespace light_controlled_intersection_tactical_plugin
         return new_trajectory;
     }
 
-    carma_planning_msgs::msg::TrajectoryPlan LightControlledIntersectionTacticalPlugin::blendTrajectories(
-        const carma_planning_msgs::msg::TrajectoryPlan& old_trajectory,
-        const carma_planning_msgs::msg::TrajectoryPlan& new_trajectory,
-        std::vector<double>& blended_speeds)
+    // Find transition point based on halfway through the time range of the old trajectory
+    size_t LightControlledIntersectionTacticalPlugin::findTimeBasedTransitionPoint(
+        const carma_planning_msgs::msg::TrajectoryPlan& old_trajectory)
     {
-        // Find the midpoint of the old trajectory for blending
-        size_t half_idx = old_trajectory.trajectory_points.size() / 2;
-
-        // Ensure at least one point from old trajectory
-        if (half_idx < 1) {
-            half_idx = 1;
+        if (old_trajectory.trajectory_points.size() <= 1) {
+            return 0;
         }
 
-        // Create the blended trajectory
-        carma_planning_msgs::msg::TrajectoryPlan blended_trajectory;
-        blended_trajectory.header = new_trajectory.header;
-        blended_trajectory.trajectory_id = new_trajectory.trajectory_id;
+        // Get start and end times of the old trajectory
+        rclcpp::Time start_time(old_trajectory.trajectory_points.front().target_time);
+        rclcpp::Time end_time(old_trajectory.trajectory_points.back().target_time);
 
-        // Keep the first half of the old trajectory
-        blended_trajectory.trajectory_points = std::vector<carma_planning_msgs::msg::TrajectoryPlanPoint>(
-            old_trajectory.trajectory_points.begin(),
-            old_trajectory.trajectory_points.begin() + half_idx);
+        // Calculate midpoint in time
+        double total_duration = (end_time - start_time).seconds();
+        rclcpp::Time mid_time = start_time + rclcpp::Duration::from_seconds(total_duration / 2.0);
 
-        // Define blend region parameters
-        const size_t blend_points = 10; // Number of points for blending
-        const double blend_duration = 1.0; // Duration of blend in seconds
+        RCLCPP_DEBUG_STREAM(rclcpp::get_logger("light_controlled_intersection_tactical_plugin"),
+                        "Trajectory time range: " << start_time.seconds() << " to "
+                        << end_time.seconds() << ", midpoint: " << mid_time.seconds());
 
-        // Get timestamps for blending reference
-        rclcpp::Time last_point_time = rclcpp::Time(blended_trajectory.trajectory_points.back().target_time);
+        // Find closest point to mid_time
+        size_t closest_idx = 0;
+        double min_time_diff = std::numeric_limits<double>::max();
 
-        // Find the closest point in new trajectory based on time
-        size_t new_traj_start_idx = 0;
-        for (size_t i = 0; i < new_trajectory.trajectory_points.size(); i++) {
-            if (rclcpp::Time(new_trajectory.trajectory_points[i].target_time) >= last_point_time) {
-                new_traj_start_idx = i;
-                break;
+        for (size_t i = 0; i < old_trajectory.trajectory_points.size(); i++) {
+            rclcpp::Time point_time(old_trajectory.trajectory_points[i].target_time);
+            double time_diff = std::abs((point_time - mid_time).seconds());
+
+            if (time_diff < min_time_diff) {
+                min_time_diff = time_diff;
+                closest_idx = i;
             }
         }
 
-        // Add blend points
-        for (size_t i = 0; i < blend_points && (new_traj_start_idx + i) < new_trajectory.trajectory_points.size(); i++) {
-            double blend_factor = static_cast<double>(i) / blend_points; // 0 to 1
+        RCLCPP_DEBUG_STREAM(rclcpp::get_logger("light_controlled_intersection_tactical_plugin"),
+                        "Selected transition point at index " << closest_idx
+                        << " (time: " << rclcpp::Time(old_trajectory.trajectory_points[closest_idx].target_time).seconds()
+                        << ") which is closest to time midpoint");
 
-            auto& new_point = new_trajectory.trajectory_points[new_traj_start_idx + i];
-            auto& last_point = blended_trajectory.trajectory_points.back();
-
-            // Create a blended point
-            carma_planning_msgs::msg::TrajectoryPlanPoint blended_point = new_point;
-
-            // Linear interpolation of position and velocity
-            blended_point.x = (1 - blend_factor) * last_point.x + blend_factor * new_point.x;
-            blended_point.y = (1 - blend_factor) * last_point.y + blend_factor * new_point.y;
-            blended_point.z = (1 - blend_factor) * last_point.z + blend_factor * new_point.z;
-
-            // Interpolate velocity components
-            blended_point.longitudinal_velocity = (1 - blend_factor) * last_point.longitudinal_velocity +
-                                                blend_factor * new_point.longitudinal_velocity;
-            blended_point.lateral_velocity = (1 - blend_factor) * last_point.lateral_velocity +
-                                            blend_factor * new_point.lateral_velocity;
-
-            // Set target time for the blended point
-            if (i > 0) {
-                auto prev_time = rclcpp::Time(blended_trajectory.trajectory_points.back().target_time);
-                auto target_time = prev_time + rclcpp::Duration::from_seconds(blend_duration / blend_points);
-                blended_point.target_time = target_time;
-            }
-
-            blended_trajectory.trajectory_points.push_back(blended_point);
-        }
-
-        // Append the rest of the new trajectory after the blend region
-        blended_trajectory.trajectory_points.insert(
-            blended_trajectory.trajectory_points.end(),
-            new_trajectory.trajectory_points.begin() + new_traj_start_idx + blend_points,
-            new_trajectory.trajectory_points.end()
-        );
-
-        // Ensure monotonically increasing timestamps
-        ensureMonotonicTimes(blended_trajectory.trajectory_points);
-
-        // Smooth out speed profile
-        smoothVelocityProfile(blended_trajectory.trajectory_points);
-
-        // Create corresponding final_speeds for blended trajectory
-        blended_speeds.clear();
-        for (const auto& point : blended_trajectory.trajectory_points) {
-            blended_speeds.push_back(point.longitudinal_velocity);
-        }
-
-        return blended_trajectory;
+        return closest_idx;
     }
 
-    void LightControlledIntersectionTacticalPlugin::smoothVelocityProfile(
-        std::vector<carma_planning_msgs::msg::TrajectoryPlanPoint>& trajectory_points)
+    // Modified blending function to use the time-based transition point
+    std::vector<double> LightControlledIntersectionTacticalPlugin::blendSpeedProfiles(
+        const std::vector<double>& old_speeds,
+        const std::vector<double>& new_speeds,
+        size_t transition_point)
     {
-        const int speed_window = 5; // Window size for moving average
-
-        // Create a copy of the velocity values
-        std::vector<double> speeds;
-        for (const auto& point : trajectory_points) {
-            speeds.push_back(point.longitudinal_velocity);
+        // Validate inputs
+        if (old_speeds.empty() || new_speeds.empty()) {
+            RCLCPP_WARN_STREAM(rclcpp::get_logger("light_controlled_intersection_tactical_plugin"),
+                            "Empty speed profile provided for blending");
+            return old_speeds.empty() ? new_speeds : old_speeds;
         }
 
-        // Apply moving average to smooth velocities
-        for (size_t i = 0; i < trajectory_points.size(); i++) {
-            double sum = 0.0;
-            int count = 0;
+        // Ensure transition point is valid
+        if (transition_point >= old_speeds.size()) {
+            transition_point = old_speeds.size() / 2;  // Default to half if invalid
 
-            for (int j = -speed_window/2; j <= speed_window/2; j++) {
-                if (i + j >= 0 && i + j < speeds.size()) {
-                    sum += speeds[i + j];
-                    count++;
-                }
-            }
-
-            if (count > 0) {
-                trajectory_points[i].longitudinal_velocity = sum / count;
-            }
+            RCLCPP_DEBUG_STREAM(rclcpp::get_logger("light_controlled_intersection_tactical_plugin"),
+                            "Invalid transition point, using default: " << transition_point);
         }
-    }
 
-    void LightControlledIntersectionTacticalPlugin::ensureMonotonicTimes(
-        std::vector<carma_planning_msgs::msg::TrajectoryPlanPoint>& trajectory_points)
-    {
-        for (size_t i = 1; i < trajectory_points.size(); i++) {
-            auto prev_time = rclcpp::Time(trajectory_points[i-1].target_time);
-            auto curr_time = rclcpp::Time(trajectory_points[i].target_time);
+        // Create the blended speed profile
+        std::vector<double> blended_speeds;
 
-            if (curr_time <= prev_time) {
-                auto new_time = prev_time + rclcpp::Duration::from_seconds(0.1); // Add 100ms
-                trajectory_points[i].target_time = new_time;
-            }
+        // Take the first portion from old speeds (up to transition point)
+        blended_speeds.insert(blended_speeds.end(),
+                            old_speeds.begin(),
+                            old_speeds.begin() + transition_point);
+
+        // Add the new speeds after the transition point
+        blended_speeds.insert(blended_speeds.end(),
+                            new_speeds.begin() + transition_point + 1,
+                            new_speeds.end());
+
+        // Apply smoothing using the moving average filter
+        try {
+            int window_size = detailed_config.speed_moving_average_window_size;
+            if (window_size % 2 == 0) window_size++; // Ensure odd window size
+
+            // Apply smoothing to the entire profile
+            std::vector<double> smoothed_speeds = smoothing::moving_average_filter(
+                blended_speeds,
+                window_size,
+                false  // Don't ignore first point
+            );
+
+            RCLCPP_DEBUG_STREAM(rclcpp::get_logger("light_controlled_intersection_tactical_plugin"),
+                            "Successfully smoothed speed profile at transition point " << transition_point);
+
+            return smoothed_speeds;
+
+        } catch (const std::exception& e) {
+            RCLCPP_WARN_STREAM(rclcpp::get_logger("light_controlled_intersection_tactical_plugin"),
+                            "Error smoothing speed profile: " << e.what() << ". Using basic blended profile.");
+            return blended_speeds;
         }
     }
 
@@ -472,11 +514,27 @@ namespace light_controlled_intersection_tactical_plugin
                             "Blending trajectories");
 
             std::vector<double> blended_speeds;
-            carma_planning_msgs::msg::TrajectoryPlan blended_trajectory =
-                blendTrajectories(last_trajectory_, new_trajectory, blended_speeds);
 
-            // Set response
-            resp->trajectory_plan = blended_trajectory;
+            // Find transition point based on halfway through time
+            size_t transition_point = findTimeBasedTransitionPoint(last_trajectory_);
+
+            // Blend the speed profiles
+            std::vector<double> blended_speeds = blendSpeedProfiles(
+                last_final_speeds_,
+                new_final_speeds,
+                transition_point
+            );
+            // Generate blended trajectory
+            carma_planning_msgs::msg::TrajectoryPlan blended_trajectory =
+                blendTrajectoryPoints(last_trajectory_, new_trajectory, transition_point);
+
+            // Generate the trajectory based on new blended speeds
+            resp->trajectory_plan = reapplyTargetSpeedsToTrajectory(
+                blended_trajectory,
+                maneuver_plan,
+                req,
+                blended_speeds);
+
             resp->trajectory_plan.initial_longitudinal_velocity = blended_speeds.front();
 
             // Update stored trajectories for next planning cycle
