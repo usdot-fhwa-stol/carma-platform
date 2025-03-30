@@ -93,6 +93,26 @@ namespace light_controlled_intersection_tactical_plugin
         return false;
     }
 
+    // helper function to appropriately add two rclcpp::Time objects
+    // so that there is no negative time point exception
+    rclcpp::Time getTimeMidway(const rclcpp::Time& time1, const rclcpp::Time& time2)
+    {
+        // Calculate the duration between times
+        rclcpp::Duration time_difference = (time1 < time2) ? (time2 - time1) : (time1 - time2);
+
+        // Divide the duration by 2
+        rclcpp::Duration half_duration = time_difference * 0.5;
+
+        // Calculate the midpoint by adding half the duration to the earlier time
+        rclcpp::Time midpoint;
+        if (time1 < time2) {
+            midpoint = time1 + half_duration;
+        } else {
+            midpoint = time2 + half_duration;
+        }
+        return midpoint;
+    }
+
     carma_planning_msgs::msg::TrajectoryPlan LightControlledIntersectionTacticalPlugin::blendTrajectories(
         const carma_planning_msgs::msg::TrajectoryPlan& old_trajectory,
         const carma_planning_msgs::msg::TrajectoryPlan& new_trajectory)
@@ -152,9 +172,9 @@ namespace light_controlled_intersection_tactical_plugin
                 << new_trajectory.trajectory_points[i].x << ", new y: "
                 << new_trajectory.trajectory_points[i].y);
 
-            blended_point.target_time = rclcpp::Time(static_cast<int>
-                ((rclcpp::Time(old_trajectory.trajectory_points[i].target_time).nanoseconds() +
-                rclcpp::Time(new_trajectory.trajectory_points[i].target_time).nanoseconds()) / 2.0));
+            blended_point.target_time = getTimeMidway(
+                rclcpp::Time(old_trajectory.trajectory_points[i].target_time),
+                rclcpp::Time(new_trajectory.trajectory_points[i].target_time));
 
             RCLCPP_DEBUG_STREAM(rclcpp::get_logger(LCI_TACTICAL_LOGGER),
                 "Blended_point.target_time: " << rclcpp::Time(blended_point.target_time).seconds());
