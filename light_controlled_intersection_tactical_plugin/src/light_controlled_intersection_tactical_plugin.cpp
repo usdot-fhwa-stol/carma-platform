@@ -399,12 +399,19 @@ namespace light_controlled_intersection_tactical_plugin
         // by averaging the two if old_speed runs out, use new_speed
         for (size_t i = 0; i < new_speeds.size(); i++) {
             if (i >= old_speeds.size()) {
+                RCLCPP_DEBUG_STREAM(rclcpp::get_logger(LCI_TACTICAL_LOGGER),
+                    "new_speeds[i]: " << new_speeds[i]);
                 blended_speeds.push_back(new_speeds[i]);
                 continue;
             }
             auto old_speed = std::max(old_speeds[i], 0.0);
             auto new_speed = std::max(new_speeds[i], 0.0);
             double blended_speed = (old_speed + new_speed) / 2.0;
+            // print DEBUG statements about speed
+            RCLCPP_DEBUG_STREAM(rclcpp::get_logger(LCI_TACTICAL_LOGGER),
+                "Blending speed at index " << i << ": old speed: "
+                << old_speed << ", new speed: " << new_speed
+                << ", blended speed: " << blended_speed);
             blended_speeds.push_back(blended_speed);
         }
 
