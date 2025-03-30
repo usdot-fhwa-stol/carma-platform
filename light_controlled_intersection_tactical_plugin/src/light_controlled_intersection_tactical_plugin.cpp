@@ -132,9 +132,9 @@ namespace light_controlled_intersection_tactical_plugin
             blended_point.y =
                 (old_trajectory.trajectory_points[i].y +
                 new_trajectory.trajectory_points[i].y) / 2.0;
-            blended_point.target_time =
-                (rclcpp::Time(old_trajectory.trajectory_points[i].target_time) +
-                rclcpp::Time(new_trajectory.trajectory_points[i].target_time)) / 2.0;
+            blended_point.target_time = rclcpp::Time(static_cast<int>
+                (rclcpp::Time(old_trajectory.trajectory_points[i].target_time).nanoseconds() +
+                rclcpp::Time(new_trajectory.trajectory_points[i].target_time).nanoseconds()) / 2.0);
 
             blended_trajectory.trajectory_points.push_back(blended_point);
         }
@@ -481,13 +481,8 @@ namespace light_controlled_intersection_tactical_plugin
                 "USING LAST TRAJ: " << (int)last_case_.get());
 
             resp->trajectory_plan.initial_longitudinal_velocity = last_final_speeds_.front();
-            resp->maneuver_status.push_back(carma_planning_msgs::srv::PlanTrajectory::Response::MANEUVER_IN_PROGRESS);
-
-            std::chrono::system_clock::time_point end_time = std::chrono::system_clock::now();
-            auto duration = end_time - start_time;
-            RCLCPP_DEBUG_STREAM(rclcpp::get_logger(LCI_TACTICAL_LOGGER),
-                "ExecutionTime Using Existing: " << std::chrono::duration<double>(duration).count());
-
+            resp->maneuver_status.push_back(
+                carma_planning_msgs::srv::PlanTrajectory::Response::MANEUVER_IN_PROGRESS);
             return;
         }
 
@@ -515,7 +510,8 @@ namespace light_controlled_intersection_tactical_plugin
 
             // Generate blended trajectory
             // This is the real deal
-            resp->trajectory_plan = blendTrajectoryPoints(last_trajectory_, new_trajectory);
+            auto blended_trajectory = blendTrajectories(last_trajectory_, new_trajectory);
+            resp->trajectory_plan = blended_trajectory;
 
             resp->trajectory_plan.initial_longitudinal_velocity = blended_speeds.front();
 
@@ -584,7 +580,7 @@ namespace light_controlled_intersection_tactical_plugin
             "Starting light controlled intersection trajectory planning");
 
         // Call the function to plan trajectory without yield
-        planTrajectoryCBWithoutYield(req, resp);
+        planTrajectorySmoothing(req, resp);
 
         // Yield for potential obstacles in the road
         if (config_.enable_object_avoidance && resp->trajectory_plan.trajectory_points.size() >= 2)
