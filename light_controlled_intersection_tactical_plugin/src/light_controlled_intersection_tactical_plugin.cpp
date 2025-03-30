@@ -121,6 +121,11 @@ namespace light_controlled_intersection_tactical_plugin
 
         for (size_t i = 0; i < new_trajectory.trajectory_points.size(); i++) {
             if (i >= old_trajectory.trajectory_points.size()) {
+                RCLCPP_DEBUG_STREAM(rclcpp::get_logger(LCI_TACTICAL_LOGGER),
+                    "trajectory_points[i].target_time: " << trajectory_points[i].target_time.seconds());
+                RCLCPP_DEBUG_STREAM(rclcpp::get_logger(LCI_TACTICAL_LOGGER),
+                    "trajectory_points[i].x: " << old_trajectory.trajectory_points[i].x <<
+                    ", trajectory_points[i].y: " << old_trajectory.trajectory_points[i].y);
                 blended_trajectory.trajectory_points.push_back(
                     new_trajectory.trajectory_points[i]);
                 continue;
@@ -147,8 +152,11 @@ namespace light_controlled_intersection_tactical_plugin
                 << new_trajectory.trajectory_points[i].y);
 
             blended_point.target_time = rclcpp::Time(static_cast<int>
-                (rclcpp::Time(old_trajectory.trajectory_points[i].target_time).nanoseconds() +
-                rclcpp::Time(new_trajectory.trajectory_points[i].target_time).nanoseconds()) / 2.0);
+                ((rclcpp::Time(old_trajectory.trajectory_points[i].target_time).nanoseconds() +
+                rclcpp::Time(new_trajectory.trajectory_points[i].target_time).nanoseconds()) / 2.0));
+
+            RCLCPP_DEBUG_STREAM(rclcpp::get_logger(LCI_TACTICAL_LOGGER),
+                "Blended_point.target_time: " << blended_point.target_time.seconds());
 
             blended_trajectory.trajectory_points.push_back(blended_point);
         }
