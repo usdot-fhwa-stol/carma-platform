@@ -495,8 +495,6 @@ namespace light_controlled_intersection_tactical_plugin
                 "USING LAST TRAJ: " << (int)last_case_.get());
 
             resp->trajectory_plan.initial_longitudinal_velocity = last_final_speeds_.front();
-            resp->maneuver_status.push_back(
-                carma_planning_msgs::srv::PlanTrajectory::Response::MANEUVER_IN_PROGRESS);
             return;
         }
 
