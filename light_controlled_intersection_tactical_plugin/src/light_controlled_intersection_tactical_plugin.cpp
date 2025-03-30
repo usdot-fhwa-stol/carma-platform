@@ -151,7 +151,9 @@ namespace light_controlled_intersection_tactical_plugin
                     new_trajectory.trajectory_points[i]);
                 continue;
             }
-            carma_planning_msgs::msg::TrajectoryPlanPoint blended_point;
+            // Copy the yaw value
+            carma_planning_msgs::msg::TrajectoryPlanPoint blended_point =
+                old_trajectory.trajectory_points[i];
             blended_point.x =
                 (old_trajectory.trajectory_points[i].x +
                 new_trajectory.trajectory_points[i].x) / 2.0;
