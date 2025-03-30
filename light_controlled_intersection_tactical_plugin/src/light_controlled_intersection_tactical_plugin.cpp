@@ -573,7 +573,8 @@ namespace light_controlled_intersection_tactical_plugin
             auto blended_trajectory = blendTrajectories(last_trajectory_, new_trajectory);
             resp->trajectory_plan = blended_trajectory;
 
-            resp->trajectory_plan.initial_longitudinal_velocity = blended_speeds.front();
+            resp->trajectory_plan.initial_longitudinal_velocity =
+                (last_trajectory_.initial_longitudinal_velocity + new_trajectory.initial_longitudinal_velocity) / 2;
 
             // Update stored trajectories for next planning cycle
             last_trajectory_ = blended_trajectory;
@@ -585,7 +586,7 @@ namespace light_controlled_intersection_tactical_plugin
         // Use the newly generated trajectory if blending is not possible or not needed
         else if (new_trajectory.trajectory_points.size() >= 2) {
             resp->trajectory_plan = new_trajectory;
-            resp->trajectory_plan.initial_longitudinal_velocity = new_final_speeds.front();
+            resp->trajectory_plan.initial_longitudinal_velocity = new_trajectory.initial_longitudinal_velocity;
 
             // Update stored trajectories
             last_trajectory_ = new_trajectory;
@@ -598,7 +599,7 @@ namespace light_controlled_intersection_tactical_plugin
         else if (last_trajectory_.trajectory_points.size() >= 2 &&
                 rclcpp::Time(last_trajectory_.trajectory_points.back().target_time) > current_time) {
             resp->trajectory_plan = last_trajectory_;
-            resp->trajectory_plan.initial_longitudinal_velocity = last_final_speeds_.front();
+            resp->trajectory_plan.initial_longitudinal_velocity = last_trajectory_.initial_longitudinal_velocity;
 
             RCLCPP_WARN_STREAM(rclcpp::get_logger(LCI_TACTICAL_LOGGER),
                 "Failed to generate a new trajectory, so using last valid trajectory!");
