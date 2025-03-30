@@ -87,6 +87,7 @@ namespace light_controlled_intersection_tactical_plugin
   carma_ros2_utils::CallbackReturn LightControlledIntersectionTransitPluginNode::on_configure_plugin()
   {
     RCLCPP_INFO_STREAM(rclcpp::get_logger("light_controlled_intersection_tactical_plugin"), "LightControlledIntersectionTransitPluginNode trying to configure");
+    trajectory_debug_pub_ = create_publisher<carma_debug_ros2_msgs::msg::TrajectoryCurvatureSpeeds>("debug/trajectory_planning", 1);
 
     // Reset config
     config_ = Config();
@@ -125,7 +126,13 @@ namespace light_controlled_intersection_tactical_plugin
     RCLCPP_INFO_STREAM(rclcpp::get_logger("light_controlled_intersection_tactical_plugin"), "Loaded params: " << config_);
 
     // Initialize worker object
-    worker_ = std::make_shared<LightControlledIntersectionTacticalPlugin>(get_world_model(), config_, get_plugin_name(), shared_from_this());
+    worker_ = std::make_shared<LightControlledIntersectionTacticalPlugin>(
+      get_world_model(),
+      config_,
+      [this](const carma_debug_ros2_msgs::msg::TrajectoryCurvatureSpeeds& msg)
+        { trajectory_debug_pub_->publish(msg); },
+      get_plugin_name(),
+      shared_from_this());
 
     yield_client_ = create_client<carma_planning_msgs::srv::PlanTrajectory>("yield_plugin/plan_trajectory");
     worker_->set_yield_client(yield_client_);

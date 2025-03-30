@@ -22,6 +22,7 @@
 #include <carma_guidance_plugins/tactical_plugin.hpp>
 #include "light_controlled_intersection_tactical_plugin/light_controlled_intersection_tactical_plugin_config.hpp"
 #include "light_controlled_intersection_tactical_plugin/light_controlled_intersection_tactical_plugin.hpp"
+#include <carma_debug_ros2_msgs/msg/trajectory_curvature_speeds.hpp>
 
 namespace light_controlled_intersection_tactical_plugin
 {
@@ -36,6 +37,8 @@ namespace light_controlled_intersection_tactical_plugin
     Config config_;
 
     carma_ros2_utils::ClientPtr<carma_planning_msgs::srv::PlanTrajectory> yield_client_;
+
+    carma_ros2_utils::PubPtr<carma_debug_ros2_msgs::msg::TrajectoryCurvatureSpeeds> trajectory_debug_pub_;
 
     // Worker object
     std::shared_ptr<LightControlledIntersectionTacticalPlugin> worker_;

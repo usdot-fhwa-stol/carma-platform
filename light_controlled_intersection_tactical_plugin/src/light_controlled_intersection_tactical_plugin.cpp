@@ -20,9 +20,13 @@ namespace light_controlled_intersection_tactical_plugin
 {
 
 
-    LightControlledIntersectionTacticalPlugin::LightControlledIntersectionTacticalPlugin(carma_wm::WorldModelConstPtr wm, const Config& config, const std::string& plugin_name,
+    LightControlledIntersectionTacticalPlugin::LightControlledIntersectionTacticalPlugin(
+        carma_wm::WorldModelConstPtr wm,
+        const Config& config,
+        const DebugPublisher& debug_publisher,
+        const std::string& plugin_name,
         std::shared_ptr<carma_ros2_utils::CarmaLifecycleNode> nh)
-        :wm_(wm), config_(config), plugin_name_(plugin_name), nh_(nh)
+        :wm_(wm), config_(config), debug_publisher_(debug_publisher), plugin_name_(plugin_name), nh_(nh)
     {
     }
 
@@ -628,6 +632,10 @@ namespace light_controlled_intersection_tactical_plugin
         for (auto& p : resp->trajectory_plan.trajectory_points) {
             p.planner_plugin_name = plugin_name_;
         }
+
+        debug_msg_.trajectory_plan = resp->trajectory_plan;
+        debug_msg_.velocity_profile = last_final_speeds_;
+        debug_publisher_(debug_msg_);
     }
 
     // Main function that has yield functionality

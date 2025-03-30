@@ -54,6 +54,7 @@ namespace light_controlled_intersection_tactical_plugin
   using PointSpeedPair = basic_autonomy::waypoint_generation::PointSpeedPair;
   using GeneralTrajConfig = basic_autonomy::waypoint_generation::GeneralTrajConfig;
   using DetailedTrajConfig = basic_autonomy::waypoint_generation::DetailedTrajConfig;
+  using DebugPublisher = std::function<void(const carma_debug_ros2_msgs::msg::TrajectoryCurvatureSpeeds&)>;
 
   enum TSCase {
     CASE_1 = 1,
@@ -127,6 +128,7 @@ namespace light_controlled_intersection_tactical_plugin
     double last_successful_scheduled_entry_time_;     // if algorithm was successful, this is also scheduled entry time (ET in TSMO UC2 Algo)
 
     std::string plugin_name_;
+    DebugPublisher debug_publisher_;
     carma_debug_ros2_msgs::msg::TrajectoryCurvatureSpeeds debug_msg_;
     std::vector<double> last_final_speeds_;
 
@@ -227,8 +229,11 @@ namespace light_controlled_intersection_tactical_plugin
     /*!
     * \brief LightControlledIntersectionTacticalPlugin constructor
     */
-    LightControlledIntersectionTacticalPlugin(carma_wm::WorldModelConstPtr wm, const Config& config, const std::string& plugin_name,
-        std::shared_ptr<carma_ros2_utils::CarmaLifecycleNode> nh);
+    LightControlledIntersectionTacticalPlugin(carma_wm::WorldModelConstPtr wm,
+      const Config& config,
+      const DebugPublisher& debug_publisher=[](const auto& msg){},
+      const std::string& plugin_name,
+      std::shared_ptr<carma_ros2_utils::CarmaLifecycleNode> nh);
 
     /**
      * \brief Function to process the light controlled intersection tactical plugin service call for trajectory planning
