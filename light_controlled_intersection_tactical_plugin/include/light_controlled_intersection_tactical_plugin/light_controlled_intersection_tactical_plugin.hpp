@@ -231,7 +231,7 @@ namespace light_controlled_intersection_tactical_plugin
     */
     LightControlledIntersectionTacticalPlugin(carma_wm::WorldModelConstPtr wm,
       const Config& config,
-      const DebugPublisher& debug_publisher=[](const auto& msg){},
+      const DebugPublisher& debug_publisher,
       const std::string& plugin_name,
       std::shared_ptr<carma_ros2_utils::CarmaLifecycleNode> nh);
 
