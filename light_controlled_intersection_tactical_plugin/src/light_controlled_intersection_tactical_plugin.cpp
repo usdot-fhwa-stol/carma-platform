@@ -327,11 +327,6 @@ namespace light_controlled_intersection_tactical_plugin
             req->vehicle_state, req->header.stamp, wm_, ending_state_before_buffer_, debug_msg_,
             wpg_detail_config);
 
-        // Set the planning plugin field name
-        for (auto& p : new_trajectory.trajectory_points) {
-            p.planner_plugin_name = plugin_name_;
-        }
-
         // Save final speeds
         final_speeds = debug_msg_.velocity_profile;
 
@@ -626,6 +621,11 @@ namespace light_controlled_intersection_tactical_plugin
             "Debug: new case:" << (int) new_case << ", is_new_case_successful: " << is_new_case_successful);
 
         resp->maneuver_status.push_back(carma_planning_msgs::srv::PlanTrajectory::Response::MANEUVER_IN_PROGRESS);
+
+        // Set the planning plugin field name
+        for (auto& p : resp->trajectory_plan.trajectory_points) {
+            p.planner_plugin_name = plugin_name_;
+        }
     }
 
     // Main function that has yield functionality
