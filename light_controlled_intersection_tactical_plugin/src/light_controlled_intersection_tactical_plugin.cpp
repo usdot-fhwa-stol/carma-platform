@@ -132,6 +132,20 @@ namespace light_controlled_intersection_tactical_plugin
             blended_point.y =
                 (old_trajectory.trajectory_points[i].y +
                 new_trajectory.trajectory_points[i].y) / 2.0;
+            // Print DEBUG statements about time and points
+            RCLCPP_DEBUG_STREAM(rclcpp::get_logger(LCI_TACTICAL_LOGGER),
+                "Blending trajectory point " << i << ": old time: "
+                << rclcpp::Time(old_trajectory.trajectory_points[i].target_time).seconds()
+                << ", new time: "
+                << rclcpp::Time(new_trajectory.trajectory_points[i].target_time).seconds());
+            // Print DEBUG statements about x and y
+            RCLCPP_DEBUG_STREAM(rclcpp::get_logger(LCI_TACTICAL_LOGGER),
+                "Blending trajectory point " << i << ": old x: "
+                << old_trajectory.trajectory_points[i].x << ", old y: "
+                << old_trajectory.trajectory_points[i].y << ", new x: "
+                << new_trajectory.trajectory_points[i].x << ", new y: "
+                << new_trajectory.trajectory_points[i].y);
+
             blended_point.target_time = rclcpp::Time(static_cast<int>
                 (rclcpp::Time(old_trajectory.trajectory_points[i].target_time).nanoseconds() +
                 rclcpp::Time(new_trajectory.trajectory_points[i].target_time).nanoseconds()) / 2.0);
