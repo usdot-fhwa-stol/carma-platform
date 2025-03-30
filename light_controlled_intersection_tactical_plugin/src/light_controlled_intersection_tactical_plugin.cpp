@@ -396,11 +396,21 @@ namespace light_controlled_intersection_tactical_plugin
         std::vector<double> blended_speeds;
 
         // iterate through the old speeds and blend with new speeds
-        // by averaging the two
-        // if old_speed runs out, use new_speed
-        // TODO
+        // by averaging the two if old_speed runs out, use new_speed
+        for (size_t i = 0; i < new_speeds.size(); i++) {
+            if (i >= old_speeds.size()) {
+                blended_speeds.push_back(new_speeds[i]);
+                continue;
+            }
+            auto old_speed = std::max(old_speeds[i], 0.0);
+            auto new_speed = std::max(new_speeds[i], 0.0);
+            double blended_speed = (old_speed + new_speed) / 2.0;
+            blended_speeds.push_back(blended_speed);
+        }
 
+        return blended_speeds;
     }
+
     void LightControlledIntersectionTacticalPlugin::logDebugInfoAboutPreviousTrajectory()
     {
         if (is_last_case_successful_ != boost::none && last_case_ != boost::none)
