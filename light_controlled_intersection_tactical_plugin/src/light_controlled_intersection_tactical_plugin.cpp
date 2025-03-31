@@ -623,7 +623,7 @@ namespace light_controlled_intersection_tactical_plugin
             "Debug: new case:" << (int) new_case << ", is_new_case_successful: " << is_new_case_successful);
 
         resp->maneuver_status.push_back(carma_planning_msgs::srv::PlanTrajectory::Response::MANEUVER_IN_PROGRESS);
-        resp->trajectory_plan.initial_longitudinal_velocity = std::max(req->vehicle_state.longitudinal_vel, config_.minimum_speed);
+        resp->trajectory_plan.initial_longitudinal_velocity = last_final_speeds_.front();
 
         // Set the planning plugin field name
         for (auto& p : resp->trajectory_plan.trajectory_points) {
