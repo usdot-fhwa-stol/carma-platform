@@ -192,7 +192,6 @@ namespace light_controlled_intersection_tactical_plugin
     size_t findClosestPointIndex(const lanelet::BasicPoint2d& position, const std::vector<carma_planning_msgs::msg::TrajectoryPlanPoint>& trajectory);
     void logDebugInfoAboutPreviousTrajectory();
     bool shouldUseLastTrajectory(TSCase new_case, bool is_new_case_successful, const rclcpp::Time& current_time);
-    bool shouldBlendTrajectories(TSCase new_case, bool is_new_case_successful, const rclcpp::Time& current_time);
     void planTrajectorySmoothing(
       carma_planning_msgs::srv::PlanTrajectory::Request::SharedPtr req,
       carma_planning_msgs::srv::PlanTrajectory::Response::SharedPtr resp);
@@ -200,22 +199,6 @@ namespace light_controlled_intersection_tactical_plugin
         const std::vector<carma_planning_msgs::msg::Maneuver>& maneuver_plan,
         const carma_planning_msgs::srv::PlanTrajectory::Request::SharedPtr& req,
         std::vector<double>& final_speeds);
-    carma_planning_msgs::msg::TrajectoryPlan reapplyTargetSpeedsToTrajectory(
-        const carma_planning_msgs::msg::TrajectoryPlan& old_trajectory,
-        const std::vector<carma_planning_msgs::msg::Maneuver>& maneuver_plan,
-        const carma_planning_msgs::srv::PlanTrajectory::Request::SharedPtr& req,
-        const std::vector<double>& final_speeds);
-    carma_planning_msgs::msg::TrajectoryPlan blendTrajectories(
-        const carma_planning_msgs::msg::TrajectoryPlan& old_trajectory,
-        const carma_planning_msgs::msg::TrajectoryPlan& new_trajectory);
-    std::vector<double> blendSpeedProfiles(
-        const std::vector<double>& old_speeds,
-        const std::vector<double>& new_speeds);
-    size_t findTimeBasedTransitionPoint(const carma_planning_msgs::msg::TrajectoryPlan& old_trajectory);
-    std::vector<PointSpeedPair> extractPointsAndAssign(
-      const std::vector<carma_planning_msgs::msg::TrajectoryPlanPoint>& trajectory_points,
-      const std::vector<double>& target_speeds);
-
     bool isLastTrajectoryValid(const rclcpp::Time& current_time, double min_remaining_time_seconds = 0.0) const;
 
     FRIEND_TEST(LCITacticalPluginTest, applyTrajectorySmoothingAlgorithm);

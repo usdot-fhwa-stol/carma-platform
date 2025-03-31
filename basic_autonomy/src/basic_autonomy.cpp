@@ -640,6 +640,31 @@ namespace basic_autonomy
             return carma_wm::geometry::build2dEigenTransform(p1, yaw);
         }
 
+        std::vector<carma_planning_msgs::msg::TrajectoryPlanPoint> constrain_to_time_boundary(
+            const std::vector<carma_planning_msgs::msg::TrajectoryPlanPoint>& trajectory,
+            double time_span)
+        {
+            if (trajectory.empty())
+            {
+                RCLCPP_WARN_STREAM(rclcpp::get_logger(BASIC_AUTONOMY_LOGGER),
+                    "constrain_to_time_boundary received empty trajectory, returning...");
+                return trajectory;
+            }
+            std::vector<carma_planning_msgs::msg::TrajectoryPlanPoint> constrained_points;
+            auto start_time = rclcpp::Time(trajectory.front().target_time);
+            auto end_time = start_time + rclcpp::Duration::from_seconds(time_span);
+            for (const auto& tpp : trajectory)
+            {
+                if (rclcpp::Time(tpp.target_time) > end_time)
+                {
+                    break;
+                }
+                constrained_points.push_back(tpp);
+            }
+
+            return constrained_points;
+        }
+
         std::vector<PointSpeedPair> constrain_to_time_boundary(const std::vector<PointSpeedPair> &points,
                                                                double time_span)
         {
