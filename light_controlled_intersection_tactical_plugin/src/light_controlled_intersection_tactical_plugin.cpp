@@ -287,6 +287,15 @@ namespace light_controlled_intersection_tactical_plugin
                 "USING LAST TRAJ: " << (int)last_case_.get());
 
             resp->trajectory_plan.initial_longitudinal_velocity = last_final_speeds_.front();
+
+            // Set the planning plugin field name
+            for (auto& p : resp->trajectory_plan.trajectory_points) {
+                p.planner_plugin_name = plugin_name_;
+            }
+
+            debug_msg_.trajectory_plan = resp->trajectory_plan;
+            debug_msg_.velocity_profile = last_final_speeds_;
+            debug_publisher_(debug_msg_);
             return;
         }
 
