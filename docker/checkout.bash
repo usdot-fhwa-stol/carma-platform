@@ -45,6 +45,8 @@ git clone --depth=1 https://github.com/usdot-fhwa-stol/v2x-ros-conversion.git --
 git clone --depth=1 https://github.com/usdot-fhwa-stol/carma-message-filters.git --branch "${BRANCH}"
 git clone --depth=1 https://github.com/usdot-fhwa-stol/multiple_object_tracking --branch "${BRANCH}"
 
+# Needs fix added in fork, see https://github.com/RobotWebTools/rosbridge_suite/issues/756
+git clone -b ros2 https://github.com/usdot-fhwa-stol/rosbridge_suite
 # TODO: Remove V2X-Hub Depedency (CAR-6029)
 git clone -b master --depth 1 https://github.com/etherealjoy/qhttpengine.git
 
