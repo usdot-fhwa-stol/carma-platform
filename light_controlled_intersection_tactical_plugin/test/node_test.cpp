@@ -360,7 +360,7 @@ namespace light_controlled_intersection_tactical_plugin
 
     }
 
-    TEST(LCITacticalPluginTest, planTrajectorySmoothingTest)
+    TEST(LCITacticalPluginTest, planTrajectorySmoothing)
     {
         std::shared_ptr<carma_wm::CARMAWorldModel> wm = std::make_shared<carma_wm::CARMAWorldModel>();
         auto map = carma_wm::test::buildGuidanceTestMap(3.7, 10);

@@ -259,6 +259,7 @@ namespace light_controlled_intersection_tactical_plugin
 
     FRIEND_TEST(LCITacticalPluginTest, applyTrajectorySmoothingAlgorithm);
     FRIEND_TEST(LCITacticalPluginTest, applyOptimizedTargetSpeedProfile);
+    FRIEND_TEST(LCITacticalPluginTest, planTrajectorySmoothing);
     FRIEND_TEST(LCITacticalPluginTest, createGeometryProfile);
     FRIEND_TEST(LCITacticalPluginTest, planTrajectoryCB);
     FRIEND_TEST(LCITacticalPluginTest, setConfig);
