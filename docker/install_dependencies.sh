@@ -34,13 +34,11 @@ while [[ $# -gt 0 ]]; do
       esac
 done
 
-if [[ -z "$PACKAGES" ]]; then
-    echo "Installing multiple object tracking dependencies"
-    sudo ./src/multiple_object_tracking/scripts/install_dependencies.sh
-fi
+
+echo "Installing multiple object tracking dependencies"
+sudo ./src/multiple_object_tracking/scripts/install_dependencies.sh
+
 
 # Install dependencies for v2x-ros-conversion - needs branch to pull correct debian version
-if [[ -z "$PACKAGES" ]]; then
-    echo "Installing cpp_message dependencies"
-    sudo ./src/v2x-ros-conversion/docker/install_dependencies.sh -b $BRANCH
-fi
+echo "Installing cpp_message dependencies"
+sudo ./src/v2x-ros-conversion/docker/install_dependencies.sh -b $BRANCH
