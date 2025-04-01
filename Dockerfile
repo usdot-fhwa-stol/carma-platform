@@ -36,7 +36,7 @@ ARG DOCKER_ORG="usdotfhwastoldev"
 ARG DOCKER_TAG="develop"
 FROM ${DOCKER_ORG}/autoware.ai:${DOCKER_TAG} as base-image
 
-FROM base-image AS source-code
+FROM base-image AS install
 ARG PACKAGES=""
 ENV PACKAGES=${PACKAGES}
 
@@ -52,7 +52,7 @@ COPY --chown=carma . /home/carma/src/carma-platform
 RUN ~/src/carma-platform/docker/install.sh
 
 # /////////////////////////////////////////////////////////////////////////////
-# Stage 3 - Finalize deployment
+# Stage 2 - Finalize deployment
 # /////////////////////////////////////////////////////////////////////////////
 
 
@@ -73,7 +73,7 @@ LABEL org.label-schema.vcs-ref=${VCS_REF}
 LABEL org.label-schema.build-date=${BUILD_DATE}
 
 # Migrate the files from the install stage
-COPY --from=source-code --chown=carma /opt/carma /opt/carma
-COPY --from=source-code --chown=carma /root/.bashrc /home/carma/.bashrc
+COPY --from=install --chown=carma /opt/carma /opt/carma
+COPY --from=install --chown=carma /root/.bashrc /home/carma/.bashrc
 
 CMD "ros2 launch carma carma_docker.launch.py"
