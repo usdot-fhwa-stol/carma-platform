@@ -1417,6 +1417,27 @@ namespace basic_autonomy
             return resp;
         }
 
+        size_t find_closest_point_index(
+            const lanelet::BasicPoint2d& position,
+            const std::vector<carma_planning_msgs::msg::TrajectoryPlanPoint>& trajectory) const
+        {
+            size_t closest_idx = 0;
+            double min_dist = std::numeric_limits<double>::max();
+
+            for (size_t i = 0; i < trajectory.size(); i++)
+            {
+                auto dist = sqrt(pow(position.x() - trajectory.at(i).x, 2) +
+                    pow(position.y() - trajectory.at(i).y, 2));
+
+                if (dist < min_dist)
+                {
+                    min_dist = dist;
+                    closest_idx = i;
+                }
+            }
+
+            return closest_idx;
+        }
     } // namespace waypoint_generation
 
 } // basic_autonomy

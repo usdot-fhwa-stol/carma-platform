@@ -190,20 +190,6 @@ namespace light_controlled_intersection_tactical_plugin
     double findSpeedLimit(const lanelet::ConstLanelet& llt, const carma_wm::WorldModelConstPtr &wm) const;
 
     /**
-      * \brief Find the index of the closest trajectory plan point to a given position.
-      *
-      * This function iterates through the trajectory points and determines the one closest
-      * to the provided 2D position.
-      *
-      * \param position The reference 2D point.
-      * \param trajectory A vector of trajectory plan points.
-      *
-      * \return The index of the trajectory point closest to the given position.
-      */
-    size_t findClosestPointIndex(const lanelet::BasicPoint2d& position,
-      const std::vector<carma_planning_msgs::msg::TrajectoryPlanPoint>& trajectory) const;
-
-    /**
       * \brief Logs debug information about the previously planned trajectory.
       *
       * This helper function outputs detailed internal state and trajectory information

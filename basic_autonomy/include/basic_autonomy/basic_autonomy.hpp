@@ -407,6 +407,20 @@ namespace basic_autonomy
          * \return true or false
          */
         bool is_valid_yield_plan(const std::shared_ptr<carma_ros2_utils::CarmaLifecycleNode>& node_handler, const carma_planning_msgs::msg::TrajectoryPlan& yield_plan);
+
+        /**
+        * \brief Find the index of the closest trajectory plan point to a given position.
+        *
+        * This function iterates through the trajectory points and determines the one closest
+        * to the provided 2D position.
+        *
+        * \param position The reference 2D point.
+        * \param trajectory A vector of trajectory plan points.
+        *
+        * \return The index of the trajectory point closest to the given position.
+        */
+        size_t find_closest_point_index(const lanelet::BasicPoint2d& position,
+            const std::vector<carma_planning_msgs::msg::TrajectoryPlanPoint>& trajectory) const;
     }
 
 } // basic_autonomy

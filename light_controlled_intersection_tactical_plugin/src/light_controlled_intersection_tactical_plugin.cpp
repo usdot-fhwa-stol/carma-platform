@@ -67,28 +67,6 @@ namespace light_controlled_intersection_tactical_plugin
         return true;
     }
 
-    size_t LightControlledIntersectionTacticalPlugin::findClosestPointIndex(
-        const lanelet::BasicPoint2d& position,
-        const std::vector<carma_planning_msgs::msg::TrajectoryPlanPoint>& trajectory) const
-    {
-        size_t closest_idx = 0;
-        double min_dist = std::numeric_limits<double>::max();
-
-        for (size_t i = 0; i < trajectory.size(); i++)
-        {
-            auto dist = sqrt(pow(position.x() - trajectory.at(i).x, 2) +
-                pow(position.y() - trajectory.at(i).y, 2));
-
-            if (dist < min_dist)
-            {
-                min_dist = dist;
-                closest_idx = i;
-            }
-        }
-
-        return closest_idx;
-    }
-
     bool LightControlledIntersectionTacticalPlugin::shouldUseLastTrajectory(
         TSCase new_case, bool is_new_case_successful, const rclcpp::Time& current_time)
     {
@@ -288,7 +266,8 @@ namespace light_controlled_intersection_tactical_plugin
 
         // Find closest point in last trajectory to current vehicle position
         size_t idx_to_start_new_traj =
-            findClosestPointIndex(veh_pos, last_trajectory_.trajectory_points);
+            basic_autonomy::waypoint_generation::find_closest_point_index(veh_pos,
+                last_trajectory_.trajectory_points);
 
         // Update last trajectory to start from closest point (remove passed points)
         if (!last_trajectory_.trajectory_points.empty()) {
