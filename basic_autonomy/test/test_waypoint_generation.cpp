@@ -38,6 +38,7 @@
 
 namespace basic_autonomy
 {
+
     TEST(BasicAutonomyTest, DownsamplePtsWithMinMeters) {
         // Test case 1: Empty container
         std::vector<lanelet::BasicPoint2d> empty_line;
@@ -1006,14 +1007,16 @@ namespace basic_autonomy
         return trajectory;
     }
 
-    TEST(BasicAutonomyTest, ConstrainToTimeBoundaryTest)
+    TEST(BasicAutonomyTest, constrain_to_time_boundary_using_trajectory_point)
     {
         // Test 1: Empty trajectory
         {
             std::vector<carma_planning_msgs::msg::TrajectoryPlanPoint> empty_trajectory;
             double time_span = 5.0;
 
-            auto result = constrain_to_time_boundary(empty_trajectory, time_span);
+            auto result =
+                basic_autonomy::waypoint_generation::constrain_to_time_boundary(
+                        empty_trajectory, time_span);
 
             EXPECT_TRUE(result.empty()) << "Empty trajectory test failed";
         }
@@ -1026,7 +1029,9 @@ namespace basic_autonomy
             double time_span = 10.0;  // Greater than the total trajectory time
 
             auto trajectory = createTestTrajectory(start_time, time_step, num_points);
-            auto result = constrain_to_time_boundary(trajectory, time_span);
+            auto result =
+                basic_autonomy::waypoint_generation::constrain_to_time_boundary(
+                        trajectory, time_span);
 
             EXPECT_EQ(result.size(), num_points) << "All points within boundary: Wrong size";
             EXPECT_EQ(rclcpp::Time(result.front().target_time),
@@ -1045,7 +1050,9 @@ namespace basic_autonomy
             double time_span = 5.0;  // Will include points 0-5
 
             auto trajectory = createTestTrajectory(start_time, time_step, num_points);
-            auto result = constrain_to_time_boundary(trajectory, time_span);
+            auto result =
+                basic_autonomy::waypoint_generation::constrain_to_time_boundary(
+                        trajectory, time_span);
 
             // Should include points at times: 100, 101, 102, 103, 104, 105
             EXPECT_EQ(result.size(), 6) << "Some points outside boundary: Wrong size";
@@ -1069,7 +1076,9 @@ namespace basic_autonomy
             double time_span = 0.5;  // Less than one time step
 
             auto trajectory = createTestTrajectory(start_time, time_step, num_points);
-            auto result = constrain_to_time_boundary(trajectory, time_span);
+            auto result =
+                basic_autonomy::waypoint_generation::constrain_to_time_boundary(
+                        trajectory, time_span);
 
             // Should only include the first point
             EXPECT_EQ(result.size(), 1) << "Very small time span: Wrong size";

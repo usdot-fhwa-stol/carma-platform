@@ -286,6 +286,69 @@ namespace light_controlled_intersection_tactical_plugin
 
     }
 
+    TEST(FindClosestPointIndexTest, BasicTest)
+    {
+        // Create a test trajectory
+        std::vector<carma_planning_msgs::msg::TrajectoryPlanPoint> trajectory;
+
+        // Add some points to the trajectory
+        carma_planning_msgs::msg::TrajectoryPlanPoint p1, p2, p3, p4;
+
+        p1.x = 1.0;
+        p1.y = 1.0;
+
+        p2.x = 5.0;
+        p2.y = 5.0;
+
+        p3.x = 10.0;
+        p3.y = 10.0;
+
+        p4.x = 15.0;
+        p4.y = 15.0;
+
+        trajectory.push_back(p1);
+        trajectory.push_back(p2);
+        trajectory.push_back(p3);
+        trajectory.push_back(p4);
+
+        // Test cases with different query points
+
+        // Test case 1: Point exactly at first trajectory point
+        {
+        lanelet::BasicPoint2d position(1.0, 1.0);
+        size_t result = findClosestPointIndex(position, trajectory);
+        EXPECT_EQ(result, 0) << "Query point at first trajectory point should return index 0";
+        }
+
+        // Test case 2: Point exactly at third trajectory point
+        {
+        lanelet::BasicPoint2d position(10.0, 10.0);
+        size_t result = findClosestPointIndex(position, trajectory);
+        EXPECT_EQ(result, 2) << "Query point at third trajectory point should return index 2";
+        }
+
+        // Test case 3: Point close to second trajectory point
+        {
+        lanelet::BasicPoint2d position(5.5, 5.5);
+        size_t result = findClosestPointIndex(position, trajectory);
+        EXPECT_EQ(result, 1) << "Query point near second trajectory point should return index 1";
+        }
+
+        // Test case 4: Point between points but closer to the third
+        {
+        lanelet::BasicPoint2d position(8.0, 8.0);
+        size_t result = findClosestPointIndex(position, trajectory);
+        EXPECT_EQ(result, 2) << "Query point between points but closer to third should return index 2";
+        }
+
+        // Test case 5: Point outside the trajectory but closest to the last point
+        {
+        lanelet::BasicPoint2d position(20.0, 20.0);
+        size_t result = findClosestPointIndex(position, trajectory);
+        EXPECT_EQ(result, 3) << "Query point outside trajectory should return closest index (3)";
+        }
+    }
+
     TEST(LCITacticalPluginTest, planTrajectoryCB)
     {
         std::shared_ptr<carma_wm::CARMAWorldModel> wm = std::make_shared<carma_wm::CARMAWorldModel>();

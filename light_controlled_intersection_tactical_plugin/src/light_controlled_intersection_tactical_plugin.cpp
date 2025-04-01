@@ -70,7 +70,7 @@ namespace light_controlled_intersection_tactical_plugin
         for (size_t i = 0; i < trajectory.size(); i++)
         {
             auto dist = sqrt(pow(position.x() - trajectory.at(i).x, 2) +
-        pow(position.y() - trajectory.at(i).y, 2));
+                pow(position.y() - trajectory.at(i).y, 2));
 
             if (dist < min_dist)
             {
@@ -330,7 +330,6 @@ namespace light_controlled_intersection_tactical_plugin
         // Use the newly generated trajectory if came here
         if (new_trajectory.trajectory_points.size() >= 2)
         {
-
             auto new_trajectory_time_bound =
             basic_autonomy::waypoint_generation::constrain_to_time_boundary(
                 new_trajectory.trajectory_points, config_.trajectory_time_length);
