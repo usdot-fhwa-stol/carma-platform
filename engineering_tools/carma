@@ -497,6 +497,33 @@ carma-config__status() {
     fi
 }
 
+carma__autoupdate_stop() {
+  crontab -l | grep -v "docker pull" | crontab -
+  echo "Docker image auto-updates stopped."
+}
+
+carma__autoupdate_on() {
+  local hour="$1"
+  local minute="$2"
+
+  if ! [[ "$hour" =~ ^([0-1]?[0-9]|2[0-3])$ ]] || ! [[ "$minute" =~ ^([0-5]?[0-9])$ ]]; then
+    echo "Invalid hour or minute. Use hour (0-23) and minute (0-59)."
+    return 1
+  fi
+
+  # local images=$(__get_image_from_config 'carma-platform\|carma-messenger')
+
+  #if [ -z "$images" ]; then
+  #  echo "Could not retrieve images from carma-config. Please ensure carma-config is set."
+  #  return 1
+  #fi
+
+  # Schedule the Docker image updates using cron
+  (crontab -l 2>/dev/null; echo "${minute} ${hour} * * * carma config install") | crontab -
+
+  echo "Docker image updates scheduled for $hour:$minute daily."
+}
+
 carma__exec() {
     local USERNAME=usdotfhwastol
     local TAG=latest
