@@ -982,6 +982,103 @@ namespace basic_autonomy
 
     }
 
+    // Helper function to create a test trajectory
+    std::vector<carma_planning_msgs::msg::TrajectoryPlanPoint> createTestTrajectory(
+        double start_time_sec, double time_step_sec, int num_points)
+    {
+        std::vector<carma_planning_msgs::msg::TrajectoryPlanPoint> trajectory;
+
+        for (int i = 0; i < num_points; ++i)
+        {
+            carma_planning_msgs::msg::TrajectoryPlanPoint point;
+            // Set the target time
+            builtin_interfaces::msg::Time time;
+            time.sec = static_cast<int32_t>(start_time_sec) +
+                i * static_cast<int32_t>(time_step_sec);
+
+            time.nanosec =
+                static_cast<uint32_t>((start_time_sec - static_cast<int32_t>(start_time_sec) +
+                i * (time_step_sec - static_cast<int32_t>(time_step_sec))) * 1e9);
+            point.target_time = time;
+            trajectory.push_back(point);
+        }
+
+        return trajectory;
+    }
+
+    TEST(BasicAutonomyTest, ConstrainToTimeBoundaryTest)
+    {
+        // Test 1: Empty trajectory
+        {
+            std::vector<carma_planning_msgs::msg::TrajectoryPlanPoint> empty_trajectory;
+            double time_span = 5.0;
+
+            auto result = constrain_to_time_boundary(empty_trajectory, time_span);
+
+            EXPECT_TRUE(result.empty()) << "Empty trajectory test failed";
+        }
+
+        // Test 2: All points within the time boundary
+        {
+            double start_time = 100.0;
+            double time_step = 1.0;
+            int num_points = 5;
+            double time_span = 10.0;  // Greater than the total trajectory time
+
+            auto trajectory = createTestTrajectory(start_time, time_step, num_points);
+            auto result = constrain_to_time_boundary(trajectory, time_span);
+
+            EXPECT_EQ(result.size(), num_points) << "All points within boundary: Wrong size";
+            EXPECT_EQ(rclcpp::Time(result.front().target_time),
+                rclcpp::Time(trajectory.front().target_time))
+                << "All points within boundary: First point mismatch";
+            EXPECT_EQ(rclcpp::Time(result.back().target_time),
+                rclcpp::Time(trajectory.back().target_time))
+                << "All points within boundary: Last point mismatch";
+        }
+
+        // Test 3: Some points outside the time boundary
+        {
+            double start_time = 100.0;
+            double time_step = 1.0;
+            int num_points = 10;
+            double time_span = 5.0;  // Will include points 0-5
+
+            auto trajectory = createTestTrajectory(start_time, time_step, num_points);
+            auto result = constrain_to_time_boundary(trajectory, time_span);
+
+            // Should include points at times: 100, 101, 102, 103, 104, 105
+            EXPECT_EQ(result.size(), 6) << "Some points outside boundary: Wrong size";
+            EXPECT_EQ(rclcpp::Time(result.front().target_time),
+                rclcpp::Time(trajectory.front().target_time))
+                << "Some points outside boundary: First point mismatch";
+
+            // Verify the last point is at the correct time (start + 5 seconds)
+            auto expected_last_time = rclcpp::Time(trajectory.front().target_time) +
+                rclcpp::Duration::from_seconds(5.0);
+
+            EXPECT_LE(rclcpp::Time(result.back().target_time), expected_last_time)
+                << "Some points outside boundary: Last point time issue";
+        }
+
+        // Test 4: Very small time span
+        {
+            double start_time = 100.0;
+            double time_step = 1.0;
+            int num_points = 5;
+            double time_span = 0.5;  // Less than one time step
+
+            auto trajectory = createTestTrajectory(start_time, time_step, num_points);
+            auto result = constrain_to_time_boundary(trajectory, time_span);
+
+            // Should only include the first point
+            EXPECT_EQ(result.size(), 1) << "Very small time span: Wrong size";
+            EXPECT_EQ(rclcpp::Time(result.front().target_time),
+                rclcpp::Time(trajectory.front().target_time))
+                << "Very small time span: First point mismatch";
+        }
+    }
+
 } // namespace basic_autonomy
 
 // Run all the tests

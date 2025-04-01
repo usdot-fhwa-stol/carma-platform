@@ -67,20 +67,20 @@ target_link_libraries(${node_exec}
         ${node_lib}
 )
 
-# # Testing
-# TODO enable back
-# if(BUILD_TESTING)
+# Testing
 
-#   find_package(ament_lint_auto REQUIRED)
-#   ament_lint_auto_find_test_dependencies() # This populates the ${${PROJECT_NAME}_FOUND_TEST_DEPENDS} variable
+if(BUILD_TESTING)
 
-#   ament_add_gtest(test_light_controlled_intersection_tactical_plugin test/node_test.cpp)
+  find_package(ament_lint_auto REQUIRED)
+  ament_lint_auto_find_test_dependencies() # This populates the ${${PROJECT_NAME}_FOUND_TEST_DEPENDS} variable
 
-#   ament_target_dependencies(test_light_controlled_intersection_tactical_plugin ${${PROJECT_NAME}_FOUND_TEST_DEPENDS})
+  ament_add_gtest(test_light_controlled_intersection_tactical_plugin test/node_test.cpp)
 
-#   target_link_libraries(test_light_controlled_intersection_tactical_plugin ${node_lib})
+  ament_target_dependencies(test_light_controlled_intersection_tactical_plugin ${${PROJECT_NAME}_FOUND_TEST_DEPENDS})
 
-# endif()
+  target_link_libraries(test_light_controlled_intersection_tactical_plugin ${node_lib})
+
+endif()
 
 # Install
 ament_auto_package(
