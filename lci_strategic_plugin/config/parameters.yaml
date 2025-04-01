@@ -13,10 +13,13 @@ trajectory_smoothing_activation_distance: 200.0
 # Double: A buffer infront of the stopping location which will still be considered a valid stop. Units in meters
 stopping_location_buffer : 8.0
 
-# Double: A buffer in seconds around the green phase which will reduce the phase length such that vehicle still considers it non-green
-# NOTE: Effective value is chosen by picking max of this value and vehicle_response_lag
-#       in /opt/carma/vehicle/calibration/identifiers/UniqueVehicleParams.yaml
-#       order to ensure that the vehicle has time to react to the green light
+# Double: A buffer in seconds around the green phase which will reduce the phase length such that
+#         vehicle still considers it non-green
+# NOTE: The value used internally is actually the max of this value and `vehicle_response_lag` set
+#       in /opt/carma/vehicle/calibration/identifiers/UniqueVehicleParams.yaml. Since
+#       green_light_time_buffer is meant to accommodate the uncertainty of vehicle response to the
+#       planned trajectory, it should be at least the value of `vehicle_response_lag` or more for
+#       successful planning
 green_light_time_buffer : 0.5
 
 # Double: Minimum allowable speed in trajectory smoothing algorithm m/s
