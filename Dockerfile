@@ -73,7 +73,7 @@ LABEL org.label-schema.vcs-ref=${VCS_REF}
 LABEL org.label-schema.build-date=${BUILD_DATE}
 
 # Migrate the files from the install stage
-COPY --from=install --chown=carma /opt/carma /opt/carma
-COPY --from=install --chown=carma /root/.bashrc /home/carma/.bashrc
+COPY --from=source-code --chown=carma /opt/carma /opt/carma
+COPY --from=source-code --chown=carma /root/.bashrc /home/carma/.bashrc
 
 CMD "ros2 launch carma carma_docker.launch.py"
