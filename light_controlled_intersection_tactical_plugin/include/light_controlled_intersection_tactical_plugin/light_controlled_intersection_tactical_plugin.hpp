@@ -128,7 +128,7 @@ namespace light_controlled_intersection_tactical_plugin
     double last_successful_scheduled_entry_time_;     // if algorithm was successful, this is also scheduled entry time (ET in TSMO UC2 Algo)
 
     std::string plugin_name_;
-    DebugPublisher debug_publisher_;
+    DebugPublisher debug_publisher_;  // Publishes the debug message that includes many useful data used to generate the trajectory
     carma_debug_ros2_msgs::msg::TrajectoryCurvatureSpeeds debug_msg_;
     std::vector<double> last_final_speeds_;
 
@@ -178,28 +178,98 @@ namespace light_controlled_intersection_tactical_plugin
                                                                         const GeneralTrajConfig &general_config, const DetailedTrajConfig &detailed_config);
 
     /**
-     * \brief Given a Lanelet, find it's associated Speed Limit
-     *
-     * \param llt Constant Lanelet object
-     *
-     * \throw std::invalid_argument if the speed limit could not be retrieved
-     *
-     * \return value of speed limit in mps
-     */
+    * \brief Given a Lanelet, find its associated Speed Limit.
+    *
+    * \param llt Constant Lanelet object.
+    * \param wm  World model pointer to query additional information.
+    *
+    * \throw std::invalid_argument if the speed limit could not be retrieved.
+    *
+    * \return Speed limit in meters per second.
+    */
     double findSpeedLimit(const lanelet::ConstLanelet& llt, const carma_wm::WorldModelConstPtr &wm) const;
 
-    // New helper functions for trajectory blending
-    size_t findClosestPointIndex(const lanelet::BasicPoint2d& position, const std::vector<carma_planning_msgs::msg::TrajectoryPlanPoint>& trajectory);
+    /**
+      * \brief Find the index of the closest trajectory plan point to a given position.
+      *
+      * This function iterates through the trajectory points and determines the one closest
+      * to the provided 2D position.
+      *
+      * \param position The reference 2D point.
+      * \param trajectory A vector of trajectory plan points.
+      *
+      * \return The index of the trajectory point closest to the given position.
+      */
+    size_t findClosestPointIndex(const lanelet::BasicPoint2d& position,
+      const std::vector<carma_planning_msgs::msg::TrajectoryPlanPoint>& trajectory);
+
+    /**
+      * \brief Logs debug information about the previously planned trajectory.
+      *
+      * This helper function outputs detailed internal state and trajectory information
+      * that can be used for debugging trajectory planning issues.
+      */
     void logDebugInfoAboutPreviousTrajectory();
-    bool shouldUseLastTrajectory(TSCase new_case, bool is_new_case_successful, const rclcpp::Time& current_time);
+
+    /**
+      * \brief Determines whether the last trajectory should be reused based on the planning case.
+      *        Should use last case if 1) last traj is valid, 2) last case is the same as new case,
+      *        or 3) within certain evaluation zone before the intersection, the new case is not
+      *        successful but last case is
+      * \param new_case An enumerated type representing the new trajectory planning case.
+      * \param is_new_case_successful A boolean flag indicating if the new trajectory
+      *                               planning was successful.
+      * \param current_time The current time stamp.
+      *
+      * \return True if the last trajectory should be used, false otherwise.
+      */
+    bool shouldUseLastTrajectory(TSCase new_case, bool is_new_case_successful,
+                                  const rclcpp::Time& current_time);
+
+    /**
+      * \brief Smooths the trajectory as part of the trajectory planning process.
+      *
+      * This function takes a trajectory planning request, applies smoothing algorithms
+      * to refine the trajectory, and populates the response with the smoothed trajectory.
+      *
+      * \param req  Shared pointer to the trajectory planning request message.
+      * \param resp Shared pointer to the trajectory planning response message to be filled.
+      */
     void planTrajectorySmoothing(
       carma_planning_msgs::srv::PlanTrajectory::Request::SharedPtr req,
       carma_planning_msgs::srv::PlanTrajectory::Response::SharedPtr resp);
+
+    /**
+      * \brief Generates a new trajectory plan based on the provided maneuver plan and request.
+      *        NOTE: This function plans for the entire maneuver input and doesn't time bound it.
+      *
+      * \param maneuver_plan A vector of maneuver messages defining the planned maneuvers.
+      * \param req           Shared pointer to the trajectory planning request message.
+      * \param final_speeds  A vector that will be populated with the final speeds for each point
+      *                      as it is useful for late operations or debugging
+      *
+      * \return A newly generated trajectory plan message.
+      */
     carma_planning_msgs::msg::TrajectoryPlan generateNewTrajectory(
         const std::vector<carma_planning_msgs::msg::Maneuver>& maneuver_plan,
         const carma_planning_msgs::srv::PlanTrajectory::Request::SharedPtr& req,
         std::vector<double>& final_speeds);
-    bool isLastTrajectoryValid(const rclcpp::Time& current_time, double min_remaining_time_seconds = 0.0) const;
+
+    /**
+      * \brief Checks if the last trajectory plan remains valid based on the current time.
+      *
+      * This function verifies that the previously generated trajectory still meets timing
+      * and duration requirements. It can also enforce a minimum remaining duration if specified.
+      *
+      * \param current_time               The current time stamp.
+      * \param min_remaining_time_seconds Optional parameter specifying the minimum required
+      *                                   remaining time (in seconds) for the trajectory to be
+      *                                   considered valid.
+      *
+      * \return True if the last trajectory is valid, false otherwise.
+      */
+    bool isLastTrajectoryValid(const rclcpp::Time& current_time,
+      double min_remaining_time_seconds = 0.0) const;
 
     FRIEND_TEST(LCITacticalPluginTest, applyTrajectorySmoothingAlgorithm);
     FRIEND_TEST(LCITacticalPluginTest, applyOptimizedTargetSpeedProfile);
