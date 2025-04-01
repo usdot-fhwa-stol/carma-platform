@@ -34,32 +34,22 @@
 # /////////////////////////////////////////////////////////////////////////////
 ARG DOCKER_ORG="usdotfhwastoldev"
 ARG DOCKER_TAG="develop"
-ARG GIT_BRANCH="develop"
-
 FROM ${DOCKER_ORG}/autoware.ai:${DOCKER_TAG} as base-image
 
 FROM base-image AS source-code
-ARG GIT_BRANCH
-RUN mkdir ~/src
-COPY --chown=carma ./docker /home/carma/src/carma-platform/docker
-
-RUN ~/src/carma-platform/docker/checkout.bash -b ${GIT_BRANCH}
-
-COPY --chown=carma . /home/carma/src/carma-platform
-# /////////////////////////////////////////////////////////////////////////////
-# Stage 2 - Build and install the software
-# /////////////////////////////////////////////////////////////////////////////
-
-FROM base-image AS install
-ARG GIT_BRANCH
 ARG PACKAGES=""
 ENV PACKAGES=${PACKAGES}
 
-# Copy the source files from the previous stage and build/install
-RUN mkdir ~/carma_ws
-COPY --from=source-code --chown=carma /home/carma/src /home/carma/carma_ws/src
+RUN mkdir ~/src
+COPY --chown=carma ./docker /home/carma/src/carma-platform/docker
 
-RUN ~/carma_ws/src/carma-platform/docker/install.sh -b ${GIT_BRANCH}
+ARG GIT_BRANCH="develop"
+RUN ~/src/carma-platform/docker/checkout.bash -b ${GIT_BRANCH}
+
+COPY --chown=carma . /home/carma/src/carma-platform
+
+## Build and install the software
+RUN ~/src/carma-platform/docker/install.sh
 
 # /////////////////////////////////////////////////////////////////////////////
 # Stage 3 - Finalize deployment
