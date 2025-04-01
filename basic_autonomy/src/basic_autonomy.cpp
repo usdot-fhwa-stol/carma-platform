@@ -1419,7 +1419,7 @@ namespace basic_autonomy
 
         size_t find_closest_point_index(
             const lanelet::BasicPoint2d& position,
-            const std::vector<carma_planning_msgs::msg::TrajectoryPlanPoint>& trajectory) const
+            const std::vector<carma_planning_msgs::msg::TrajectoryPlanPoint>& trajectory)
         {
             size_t closest_idx = 0;
             double min_dist = std::numeric_limits<double>::max();

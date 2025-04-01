@@ -420,7 +420,7 @@ namespace basic_autonomy
         * \return The index of the trajectory point closest to the given position.
         */
         size_t find_closest_point_index(const lanelet::BasicPoint2d& position,
-            const std::vector<carma_planning_msgs::msg::TrajectoryPlanPoint>& trajectory) const;
+            const std::vector<carma_planning_msgs::msg::TrajectoryPlanPoint>& trajectory);
     }
 
 } // basic_autonomy
