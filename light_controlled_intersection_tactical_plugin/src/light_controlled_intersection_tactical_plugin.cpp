@@ -218,6 +218,9 @@ namespace light_controlled_intersection_tactical_plugin
         auto current_lanelets = wm_->getLaneletsFromPoint({req->vehicle_state.x_pos_global,
             req->vehicle_state.y_pos_global});
 
+        RCLCPP_DEBUG_STREAM(rclcpp::get_logger(LCI_TACTICAL_LOGGER), "size: "
+            << current_lanelets.size());
+
         lanelet::ConstLanelet current_lanelet;
 
         if (current_lanelets.empty())
@@ -228,9 +231,8 @@ namespace light_controlled_intersection_tactical_plugin
         }
 
         // Get the lanelet that is on the route in case overlapping ones found
-        auto llt_on_route_optional = wm_->getFirstLaneletOnShortestPath(current_lanelets);
-
-        if (llt_on_route_optional)
+        if (auto llt_on_route_optional = wm_->getFirstLaneletOnShortestPath(current_lanelets);
+            llt_on_route_optional)
         {
             current_lanelet = llt_on_route_optional.value();
         }
@@ -257,7 +259,7 @@ namespace light_controlled_intersection_tactical_plugin
         bool is_new_case_successful =
             GET_MANEUVER_PROPERTY(maneuver_plan.front(), parameters.int_valued_meta_data[1]);
 
-        TSCase new_case =
+        auto new_case =
             static_cast<TSCase>GET_MANEUVER_PROPERTY(
                 maneuver_plan.front(), parameters.int_valued_meta_data[0]);
 
@@ -281,7 +283,7 @@ namespace light_controlled_intersection_tactical_plugin
         }
 
         // Check if we should use the last trajectory completely
-        rclcpp::Time current_time = rclcpp::Time(req->header.stamp);
+        auto current_time = rclcpp::Time(req->header.stamp);
 
 
         auto last_trajectory_time_bound =

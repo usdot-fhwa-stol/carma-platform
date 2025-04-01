@@ -387,6 +387,25 @@ namespace light_controlled_intersection_tactical_plugin
         maneuver_msg.lane_following_maneuver.end_dist = 11.0;
         maneuver_msg.lane_following_maneuver.end_speed = 2;
 
+        carma_planning_msgs::msg::Maneuver invalid_maneuver_msg;
+        invalid_maneuver_msg.type = carma_planning_msgs::msg::Maneuver::LANE_CHANGE;
+        invalid_maneuver_msg.lane_following_maneuver.parameters.string_valued_meta_data.push_back(
+            "Carma/signalized_intersection");
+        auto invalid_req = std::make_shared<carma_planning_msgs::srv::PlanTrajectory::Request>();
+        auto invalid_resp = std::make_shared<carma_planning_msgs::srv::PlanTrajectory::Response>();
+        invalid_req->maneuver_plan.maneuvers.push_back(invalid_maneuver_msg);
+        invalid_req->maneuver_index_to_plan = 0;
+
+        EXPECT_THROW(lci_tactical.planTrajectorySmoothing(
+            invalid_req, invalid_resp), std::invalid_argument);
+
+        invalid_maneuver_msg.type = carma_planning_msgs::msg::Maneuver::LANE_FOLLOWING;
+        invalid_req->maneuver_index_to_plan = 2;
+        invalid_req->maneuver_plan.maneuvers = {};
+        invalid_req->maneuver_plan.maneuvers.push_back(invalid_maneuver_msg);
+        EXPECT_THROW(lci_tactical.planTrajectorySmoothing(
+            invalid_req, invalid_resp), std::invalid_argument);
+
         TrajectoryParams tsp;
         tsp.v1_ = 1.0;
         tsp.v2_ = 2.0;
@@ -394,6 +413,14 @@ namespace light_controlled_intersection_tactical_plugin
         tsp.x1_ = 2.0;
         tsp.x2_ = 4.0;
         tsp.x3_ = 5.0;
+
+        carma_planning_msgs::msg::VehicleState invalid_state;
+        invalid_state.x_pos_global = 111.0;
+        invalid_req->vehicle_state = invalid_state;
+        invalid_req->maneuver_index_to_plan = 0;
+
+        lci_tactical.planTrajectorySmoothing(invalid_req, invalid_resp);
+        EXPECT_EQ(invalid_resp->trajectory_plan.trajectory_points.size(), 0);
 
         carma_planning_msgs::msg::VehicleState state;
         state.x_pos_global = 1.0;
@@ -430,6 +457,27 @@ namespace light_controlled_intersection_tactical_plugin
         EXPECT_NEAR(rclcpp::Time(resp->trajectory_plan.trajectory_points.front().target_time).seconds(), 0.0, 0.001);
         EXPECT_NEAR(rclcpp::Time(resp->trajectory_plan.trajectory_points.back().target_time).seconds(), 9.23, 0.1);
         EXPECT_NEAR(resp->trajectory_plan.trajectory_points.front().y, 0.1, 0.001);
+
+        // TEST shouldUseLastTrajectory
+        bool is_new_case_successful = true;
+        auto new_case = light_controlled_intersection_tactical_plugin::TSCase::CASE_1;
+        // same case new case success
+        EXPECT_TRUE(lci_tactical.shouldUseLastTrajectory(
+            new_case, is_new_case_successful,
+            rclcpp::Time(resp->trajectory_plan.trajectory_points.front().target_time)));
+
+        // same case new case failed (edge case)
+        is_new_case_successful = false;
+        EXPECT_TRUE(lci_tactical.shouldUseLastTrajectory(
+            new_case, is_new_case_successful,
+            rclcpp::Time(resp->trajectory_plan.trajectory_points.front().target_time)));
+
+        // different case new case success
+        is_new_case_successful = true;
+        new_case = light_controlled_intersection_tactical_plugin::TSCase::CASE_2;
+        EXPECT_FALSE(lci_tactical.shouldUseLastTrajectory(
+            new_case, is_new_case_successful,
+            rclcpp::Time(resp->trajectory_plan.trajectory_points.front().target_time)));
 
     }
 
