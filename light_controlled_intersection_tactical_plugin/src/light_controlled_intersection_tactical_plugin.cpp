@@ -26,7 +26,8 @@ namespace light_controlled_intersection_tactical_plugin
         const DebugPublisher& debug_publisher,
         const std::string& plugin_name,
         std::shared_ptr<carma_ros2_utils::CarmaLifecycleNode> nh)
-        :wm_(wm), config_(config), debug_publisher_(debug_publisher), plugin_name_(plugin_name), nh_(nh)
+        :wm_(wm), config_(config), nh_(nh), plugin_name_(plugin_name),
+        debug_publisher_(debug_publisher)
     {
     }
 
@@ -35,25 +36,31 @@ namespace light_controlled_intersection_tactical_plugin
         double min_remaining_time_seconds) const
     {
         // Check if we have at least 2 points in the trajectory
-        if (last_trajectory_.trajectory_points.size() < 2) {
+        if (last_trajectory_.trajectory_points.size() < 2)
+        {
             return false;
         }
 
         // Check if the last point's time is sufficiently in the future
-        rclcpp::Time last_point_time = rclcpp::Time(last_trajectory_.trajectory_points.back().target_time);
-        rclcpp::Duration min_time_remaining = rclcpp::Duration::from_seconds(min_remaining_time_seconds);
+        auto last_point_time = rclcpp::Time(last_trajectory_.trajectory_points.back().target_time);
 
-        if (last_point_time <= current_time + min_time_remaining) {
+
+        if (rclcpp::Duration min_time_remaining =
+            rclcpp::Duration::from_seconds(min_remaining_time_seconds);
+            last_point_time <= current_time + min_time_remaining)
+        {
             return false;
         }
 
         // Check if we have case information from previous planning
-        if (is_last_case_successful_ == boost::none || last_case_ == boost::none) {
+        if (is_last_case_successful_ == boost::none || last_case_ == boost::none)
+        {
             return false;
         }
 
         // Ensure we have consistent speed data
-        if (last_final_speeds_.size() != last_trajectory_.trajectory_points.size()) {
+        if (last_final_speeds_.size() != last_trajectory_.trajectory_points.size())
+        {
             return false;
         }
 
@@ -62,7 +69,7 @@ namespace light_controlled_intersection_tactical_plugin
 
     size_t LightControlledIntersectionTacticalPlugin::findClosestPointIndex(
         const lanelet::BasicPoint2d& position,
-        const std::vector<carma_planning_msgs::msg::TrajectoryPlanPoint>& trajectory)
+        const std::vector<carma_planning_msgs::msg::TrajectoryPlanPoint>& trajectory) const
     {
         size_t closest_idx = 0;
         double min_dist = std::numeric_limits<double>::max();
@@ -324,11 +331,11 @@ namespace light_controlled_intersection_tactical_plugin
 
         // Generate a new trajectory - needed regardless of whether we blend or not
         std::vector<double> new_final_speeds;
-        carma_planning_msgs::msg::TrajectoryPlan new_trajectory =
-            generateNewTrajectory(maneuver_plan, req, new_final_speeds);
 
         // Use the newly generated trajectory if came here
-        if (new_trajectory.trajectory_points.size() >= 2)
+        if (carma_planning_msgs::msg::TrajectoryPlan new_trajectory =
+            generateNewTrajectory(maneuver_plan, req, new_final_speeds);
+            new_trajectory.trajectory_points.size() >= 2)
         {
             auto new_trajectory_time_bound =
             basic_autonomy::waypoint_generation::constrain_to_time_boundary(

@@ -201,7 +201,7 @@ namespace light_controlled_intersection_tactical_plugin
       * \return The index of the trajectory point closest to the given position.
       */
     size_t findClosestPointIndex(const lanelet::BasicPoint2d& position,
-      const std::vector<carma_planning_msgs::msg::TrajectoryPlanPoint>& trajectory);
+      const std::vector<carma_planning_msgs::msg::TrajectoryPlanPoint>& trajectory) const;
 
     /**
       * \brief Logs debug information about the previously planned trajectory.
