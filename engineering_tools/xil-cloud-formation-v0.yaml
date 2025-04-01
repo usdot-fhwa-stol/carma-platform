@@ -32,10 +32,10 @@ Parameters:
     Description: The specific carma config which launches xil and platform to make available in the instance
     Type: String
     Default: "usdotfhwastoldev/carma-config:xil-cloud-test"
-Mappings:
-  AMIMap:
-    us-east-1:
-      ami: ami-0c5b5f70bfa4f1021 # Custom Leidos AMI
+  CarmaConfigAMI:
+    Description: The AMI ID to use for the EC2 instance.
+    Type: String
+    Default: ami-0c5b5f70bfa4f1021 # Custom Leidos AMI
 Resources:
   SubnetA:
     Type: AWS::EC2::Subnet
@@ -139,11 +139,7 @@ Resources:
         Count: 1
         Timeout: PT60M
     Properties:
-      ImageId:
-        Fn::FindInMap:
-          - AMIMap
-          - !Ref "AWS::Region"
-          - ami
+      ImageId: !Ref CarmaConfigAMI
       InstanceType: !Ref C9InstanceType
       SubnetId: !Ref SubnetA
       SecurityGroupIds:
