@@ -268,8 +268,9 @@ namespace light_controlled_intersection_tactical_plugin
 
         // Find closest point in last trajectory to current vehicle position
         size_t idx_to_start_new_traj =
-            basic_autonomy::waypoint_generation::find_closest_point_index(veh_pos,
-                last_trajectory_.trajectory_points);
+            basic_autonomy::waypoint_generation::get_nearest_point_index(
+                last_trajectory_.trajectory_points,
+                veh_pos);
 
         // Update last trajectory to start from closest point (remove passed points)
         if (!last_trajectory_.trajectory_points.empty()) {

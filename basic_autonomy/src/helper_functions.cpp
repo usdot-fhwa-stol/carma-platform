@@ -63,6 +63,28 @@ namespace waypoint_generation
         return best_index;
     }
 
+    size_t get_nearest_point_index(
+        const std::vector<carma_planning_msgs::msg::TrajectoryPlanPoint>& trajectory,
+        const lanelet::BasicPoint2d& position)
+    {
+        size_t closest_idx = 0;
+        double min_dist = std::numeric_limits<double>::max();
+
+        for (size_t i = 0; i < trajectory.size(); i++)
+        {
+            auto dist = sqrt(pow(position.x() - trajectory.at(i).x, 2) +
+                pow(position.y() - trajectory.at(i).y, 2));
+
+            if (dist < min_dist)
+            {
+                min_dist = dist;
+                closest_idx = i;
+            }
+        }
+
+        return closest_idx;
+    }
+
     int get_nearest_index_by_downtrack(const std::vector<lanelet::BasicPoint2d>& points, const carma_wm::WorldModelConstPtr& wm, double target_downtrack)
     {
         if(std::empty(points)){
@@ -71,7 +93,7 @@ namespace waypoint_generation
         }
 
         // Find first point with a downtrack greater than target_downtrack
-        const auto itr = std::find_if(std::cbegin(points), std::cend(points), 
+        const auto itr = std::find_if(std::cbegin(points), std::cend(points),
             [&wm = std::as_const(wm), target_downtrack](const auto & point) { return wm->routeTrackPos(point).downtrack > target_downtrack; });
 
         int best_index = std::size(points) - 1;
@@ -85,7 +107,7 @@ namespace waypoint_generation
         }
 
         RCLCPP_DEBUG_STREAM(rclcpp::get_logger(BASIC_AUTONOMY_LOGGER), "get_nearest_index_by_downtrack>> Found best_index: " << best_index<<", points[i].x(): " << points.at(best_index).x() << ", points[i].y(): " << points.at(best_index).y());
-        
+
         return best_index;
     }
 

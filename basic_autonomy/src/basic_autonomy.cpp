@@ -650,6 +650,22 @@ namespace basic_autonomy
                     "constrain_to_time_boundary received empty trajectory, returning...");
                 return trajectory;
             }
+
+            if (time_span <= 0)
+            {
+                RCLCPP_WARN_STREAM(rclcpp::get_logger(BASIC_AUTONOMY_LOGGER),
+                    "constrain_to_time_boundary received non-positive time span, returning...");
+                return trajectory;
+            }
+
+            // return immediately if the trajectory is already within the time span
+            if ((rclcpp::Time(trajectory.back().target_time) -
+                rclcpp::Time(trajectory.front().target_time)).seconds() <= time_span)
+            {
+                return trajectory;
+            }
+
+            // find the first point that is outside the time span
             std::vector<carma_planning_msgs::msg::TrajectoryPlanPoint> constrained_points;
             auto start_time = rclcpp::Time(trajectory.front().target_time);
             auto end_time = start_time + rclcpp::Duration::from_seconds(time_span);
@@ -1415,28 +1431,6 @@ namespace basic_autonomy
             }
 
             return resp;
-        }
-
-        size_t find_closest_point_index(
-            const lanelet::BasicPoint2d& position,
-            const std::vector<carma_planning_msgs::msg::TrajectoryPlanPoint>& trajectory)
-        {
-            size_t closest_idx = 0;
-            double min_dist = std::numeric_limits<double>::max();
-
-            for (size_t i = 0; i < trajectory.size(); i++)
-            {
-                auto dist = sqrt(pow(position.x() - trajectory.at(i).x, 2) +
-                    pow(position.y() - trajectory.at(i).y, 2));
-
-                if (dist < min_dist)
-                {
-                    min_dist = dist;
-                    closest_idx = i;
-                }
-            }
-
-            return closest_idx;
         }
     } // namespace waypoint_generation
 

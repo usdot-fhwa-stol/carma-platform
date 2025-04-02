@@ -994,12 +994,9 @@ namespace basic_autonomy
             carma_planning_msgs::msg::TrajectoryPlanPoint point;
             // Set the target time
             builtin_interfaces::msg::Time time;
-            time.sec = static_cast<int32_t>(start_time_sec) +
-                i * static_cast<int32_t>(time_step_sec);
-
-            time.nanosec =
-                static_cast<uint32_t>((start_time_sec - static_cast<int32_t>(start_time_sec) +
-                i * (time_step_sec - static_cast<int32_t>(time_step_sec))) * 1e9);
+            double total_sec = start_time_sec + i * time_step_sec;
+            time.sec = static_cast<int32_t>(total_sec);
+            time.nanosec = static_cast<int32_t>((total_sec - static_cast<double>(time.sec)) * 1e9);
             point.target_time = time;
             trajectory.push_back(point);
         }
@@ -1088,7 +1085,7 @@ namespace basic_autonomy
         }
     }
 
-    TEST(BasicAutonomyTest, find_closest_point_index_test)
+    TEST(BasicAutonomyTest, get_nearest_point_index_trajctory_test)
     {
         // Create a test trajectory
         std::vector<carma_planning_msgs::msg::TrajectoryPlanPoint> trajectory;
@@ -1119,7 +1116,7 @@ namespace basic_autonomy
         {
         lanelet::BasicPoint2d position(1.0, 1.0);
         size_t result =
-            basic_autonomy::waypoint_generation::find_closest_point_index(position, trajectory);
+            basic_autonomy::waypoint_generation::get_nearest_point_index(trajectory, position);
         EXPECT_EQ(result, 0) << "Query point at first trajectory point should return index 0";
         }
 
@@ -1127,7 +1124,7 @@ namespace basic_autonomy
         {
         lanelet::BasicPoint2d position(10.0, 10.0);
         size_t result =
-            basic_autonomy::waypoint_generation::find_closest_point_index(position, trajectory);
+            basic_autonomy::waypoint_generation::get_nearest_point_index(trajectory, position);
         EXPECT_EQ(result, 2) << "Query point at third trajectory point should return index 2";
         }
 
@@ -1135,7 +1132,7 @@ namespace basic_autonomy
         {
         lanelet::BasicPoint2d position(5.5, 5.5);
         size_t result =
-            basic_autonomy::waypoint_generation::find_closest_point_index(position, trajectory);
+            basic_autonomy::waypoint_generation::get_nearest_point_index(trajectory, position);
         EXPECT_EQ(result, 1) << "Query point near second trajectory point should return index 1";
         }
 
@@ -1143,7 +1140,7 @@ namespace basic_autonomy
         {
         lanelet::BasicPoint2d position(8.0, 8.0);
         size_t result =
-            basic_autonomy::waypoint_generation::find_closest_point_index(position, trajectory);
+            basic_autonomy::waypoint_generation::get_nearest_point_index(trajectory, position);
         EXPECT_EQ(result, 2)
             << "Query point between points but closer to third should return index 2";
         }
@@ -1152,7 +1149,7 @@ namespace basic_autonomy
         {
         lanelet::BasicPoint2d position(20.0, 20.0);
         size_t result =
-            basic_autonomy::waypoint_generation::find_closest_point_index(position, trajectory);
+            basic_autonomy::waypoint_generation::get_nearest_point_index(trajectory, position);
         EXPECT_EQ(result, 3) << "Query point outside trajectory should return closest index (3)";
         }
     }
