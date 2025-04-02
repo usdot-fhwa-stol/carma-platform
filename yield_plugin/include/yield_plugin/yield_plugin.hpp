@@ -327,7 +327,8 @@ private:
   double req_target_plan_time_ = 0;
   int timesteps_since_last_req_ = 0;
   int clc_urgency_ = 0;
-
+  std::optional<double> last_speed_ = std::nullopt;
+  std::optional<rclcpp::Time> last_speed_time_ = std::nullopt;
   // time between ecef trajectory points
   double ecef_traj_timestep_ = 0.1;
 
