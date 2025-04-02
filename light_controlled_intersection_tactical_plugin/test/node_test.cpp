@@ -396,6 +396,7 @@ namespace light_controlled_intersection_tactical_plugin
         invalid_req->maneuver_plan.maneuvers.push_back(invalid_maneuver_msg);
         invalid_req->maneuver_index_to_plan = 0;
 
+        // Throw if maneuver type is not lane following
         EXPECT_THROW(lci_tactical.planTrajectorySmoothing(
             invalid_req, invalid_resp), std::invalid_argument);
 
@@ -403,6 +404,8 @@ namespace light_controlled_intersection_tactical_plugin
         invalid_req->maneuver_index_to_plan = 2;
         invalid_req->maneuver_plan.maneuvers = {};
         invalid_req->maneuver_plan.maneuvers.push_back(invalid_maneuver_msg);
+
+        // Throw if maneuver index is out of bounds
         EXPECT_THROW(lci_tactical.planTrajectorySmoothing(
             invalid_req, invalid_resp), std::invalid_argument);
 
