@@ -1224,29 +1224,11 @@ namespace basic_autonomy
             std::vector<double> times;
             trajectory_utils::conversions::speed_to_time(resampled_downtracks, resampled_speeds, &times);
 
+            //Remove extra points
+            RCLCPP_DEBUG_STREAM(rclcpp::get_logger(BASIC_AUTONOMY_LOGGER), "Before removing extra buffer points, future_geom_points.size()"<< future_geom_points.size());
+
             // Find the ending point index in the resampled points
-            int end_dist_pt_index = 0;
-            double target_downtrack = 0.0;
-
-            // First get the downtrack of the ending state in the original points
-            for (size_t i = 0; i < future_geom_points.size(); i++) {
-                if (std::abs(future_geom_points[i].x() - ending_state_before_buffer.x_pos_global) < 0.1 &&
-                    std::abs(future_geom_points[i].y() - ending_state_before_buffer.y_pos_global) < 0.1) {
-                    target_downtrack = original_downtracks[i];
-                    break;
-                }
-            }
-
-            // Then find the closest point in the resampled points
-            for (size_t i = 0; i < resampled_downtracks.size(); i++) {
-                if (resampled_downtracks[i] >= target_downtrack) {
-                    end_dist_pt_index = i;
-                    break;
-                }
-                if (i == resampled_downtracks.size() - 1) {
-                    end_dist_pt_index = i; // Use the last point if we can't find a match
-                }
-            }
+            int end_dist_pt_index = get_nearest_index_by_downtrack(resampled_points, wm, ending_state_before_buffer);
 
             // Resize all arrays to the endpoint
             RCLCPP_DEBUG_STREAM(rclcpp::get_logger(BASIC_AUTONOMY_LOGGER), "Before removing extra buffer points, resampled_points.size(): " << resampled_points.size());
