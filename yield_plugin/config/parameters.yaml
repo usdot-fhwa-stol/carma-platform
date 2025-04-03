@@ -19,11 +19,11 @@ min_obj_avoidance_plan_time_in_s: 2.0
 # Deceleration value used for yielding trajectories
 # Units: m/s^2
 # Value type: Desired
-yield_max_deceleration_in_ms2: 2.0
+yield_max_deceleration_in_ms2: 3.0
 # Minimum safety gap with an Object/Obstacle
 # Units: meters
 # Value type: Desired
-minimum_safety_gap_in_meters: 30.0
+minimum_safety_gap_in_meters: 4.0
 # Maximum speed value to consider the ego vehicle stopped
 # Units: m/s
 # Value type: Desired
