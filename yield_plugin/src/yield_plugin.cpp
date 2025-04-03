@@ -428,7 +428,7 @@ namespace yield_plugin
     // or near original trajectory points by generating them at a fixed time interval using the JMT polynomial equation
     const double initial_time = 0;
     double initial_accel = 0;
-    if (last_speed_)
+    if (last_speed_ && last_speed_time_)
     {
       initial_accel = (initial_velocity - last_speed_.value()) /
         (nh_->now() - last_speed_time_.value()).seconds();
@@ -473,7 +473,6 @@ namespace yield_plugin
     const auto smallest_time_step = get_smallest_time_step_of_traj(original_tp);
     int new_traj_idx = 1;
     int original_traj_idx = 1;
-    bool is_accelerating = (initial_velocity < goal_velocity) ? true : false;
     while (new_traj_accumulated_downtrack < goal_pos - EPSILON && original_traj_idx < original_traj_relative_downtracks.size())
     {
       const double target_time = new_traj_idx * smallest_time_step;
