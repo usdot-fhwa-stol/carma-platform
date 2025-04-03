@@ -124,7 +124,7 @@ def generate_launch_description():
                     {'--log-level' : GetLogLevel('localization_manager', env_log_levels) }
                 ],
                 remappings=[
-
+                    ("initialpose", "managed_initialpose_test1"),
                 ],
                 parameters=[ localization_manager_convertor_param_file, vehicle_config_param_file ]
         )
@@ -231,7 +231,7 @@ def generate_launch_description():
                     ("/config/ndt", "config/ndt"),
                     ("/imu_raw", [ EnvironmentVariable('CARMA_INTR_NS', default_value=''), "/imu_raw" ] ),
                     ('filtered_points', 'random_points'),
-                    ('initialpose','managed_initialpose'),
+                    ('initialpose','managed_initialpose_test2'),
                     ('/tf', '/tf_ndt_UNUSED'), #renaming /tf to avoid duplocation. Main /tf is published by ekf_localizer
                 ],
                 parameters=[
@@ -269,7 +269,7 @@ def generate_launch_description():
                     ("in_pose_with_covariance", "input_pose_with_cov_UNUSED"),
                     ("in_twist",  [EnvironmentVariable('CARMA_INTR_NS', default_value=''), "/vehicle/twist" ]),
                     ("in_twist_with_covariance", "input_twist_with_covariance_UNUSED"),
-                    ("initialpose", "managed_initialpose"),
+                    ("initialpose", "managed_initialpose_test"),
                     ("ekf_pose", "current_pose"),
                     ("ekf_pose_with_covariance", "current_pose_with_covariance"),
                     # remap to namespace/nodename/topic_name

@@ -24,7 +24,7 @@ auto_initialization_timeout: 30000
 # Units: ms
 gnss_only_operation_timeout: 20000
 
-# Integer: GNSS Data timeout. If exceeded the system will assume the GNSS is no longer functional. 
+# Integer: GNSS Data timeout. If exceeded the system will assume the GNSS is no longer functional.
 # Units: ms
 gnss_data_timeout: 500
 
@@ -40,9 +40,9 @@ sequential_timesteps_until_gps_operation: 5
 # 3 - AUTO select between NDT and GNSS without GNSS timeout
 # 4 - GNSS only with NDT initialization
 # 5 - GNSS only with fixed offset
-localization_mode: 4
+localization_mode: 5
 
 # Fixed offset (in meters in map frame) to use when GNSS only with fixed offset is being used (Mode 5)
-x_offset: 2.8
-y_offset: -2.1
+x_offset: 4.2
+y_offset: -2.5
 z_offset: 0.0

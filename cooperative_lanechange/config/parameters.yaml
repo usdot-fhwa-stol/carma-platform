@@ -3,15 +3,15 @@
 # Licensed under the Apache License, Version 2.0 (the "License"); you may not
 # use this file except in compliance with the License. You may obtain a copy of
 # the License at
- 
+
 # http://www.apache.org/licenses/LICENSE-2.0
- 
+
 # Unless required by applicable law or agreed to in writing, software
 # distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
 # WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
 # License for the specific language governing permissions and limitations under
 # the License.
- 
+
 # Double: The length of the trajectory in time domain, in seconds
 # Units: Seconds
 trajectory_time_length: 6.0
@@ -24,15 +24,15 @@ control_plugin_name: "pure_pursuit"
 # Units : m/s
 minimum_speed : 2.2352
 
-# Double : Maximum allowable longitudinal acceleration 
+# Double : Maximum allowable longitudinal acceleration
 # Units : m/s^2
 max_accel : 1.5
 
-# Double : Minimum value for lookahead distance 
+# Double : Minimum value for lookahead distance
 # Units : meters
 minimum_lookahead_distance : 5.0
 
-# Double : Maximum value for lookahead distance 
+# Double : Maximum value for lookahead distance
 # Units : meters
 maximum_lookahead_distance : 25.0
 
@@ -44,7 +44,7 @@ minimum_lookahead_speed : 2.8
 # Units : m/s
 maximum_lookahead_speed : 13.9
 
-# Double : Maximum allowable lateral acceleration 
+# Double : Maximum allowable lateral acceleration
 # Units : m/s^2
 lateral_accel_limit : 1.5
 

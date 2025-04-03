@@ -1151,53 +1151,113 @@ namespace basic_autonomy
                 throw std::invalid_argument("Could not fit a spline curve along the given trajectory!");
             }
             RCLCPP_DEBUG_STREAM(rclcpp::get_logger(BASIC_AUTONOMY_LOGGER), "Got fit");
-            std::vector<lanelet::BasicPoint2d> all_sampling_points;
-            all_sampling_points.reserve(1 + future_geom_points.size() * 2);
 
+            // Add current vehicle position to front of future geometry points
             lanelet::BasicPoint2d current_vehicle_point(state.x_pos_global, state.y_pos_global);
-
-            future_geom_points.insert(future_geom_points.begin(),
-                                       current_vehicle_point); // Add current vehicle position to front of future geometry points
-
+            future_geom_points.insert(future_geom_points.begin(), current_vehicle_point);
             final_actual_speeds.insert(final_actual_speeds.begin(), state.longitudinal_vel);
 
-            //Compute points to local downtracks
-            std::vector<double> downtracks = carma_wm::geometry::compute_arc_lengths(future_geom_points);
+            // Compute downtracks for original points (for interpolation reference)
+            std::vector<double> original_downtracks = carma_wm::geometry::compute_arc_lengths(future_geom_points);
 
-            auto total_step_along_curve = static_cast<int>(downtracks.back() /detailed_config.curve_resample_step_size);
+            // Now create resampled points using the spline
+            auto total_step_along_curve = static_cast<int>(original_downtracks.back() / detailed_config.curve_resample_step_size);
+            if (total_step_along_curve <= 0) {
+                RCLCPP_WARN_STREAM(rclcpp::get_logger(BASIC_AUTONOMY_LOGGER), "Total steps along curve is 0 or negative. Using original points.");
+                total_step_along_curve = 1; // Avoid division by zero
+            }
 
-            double scaled_steps_along_curve = 0.0; //from 0 (start) to 1 (end) for the whole trajectory
+            std::vector<lanelet::BasicPoint2d> resampled_points;
+            resampled_points.reserve(total_step_along_curve + 1);
 
+            // Add the current vehicle position as first point
+            resampled_points.push_back(current_vehicle_point);
+
+            double scaled_steps_along_curve = 0.0; // from 0 (start) to 1 (end) for the whole trajectory
             for(int steps_along_curve = 0; steps_along_curve < total_step_along_curve; steps_along_curve++){
-                lanelet::BasicPoint2d p = (*fit_curve)(scaled_steps_along_curve);
-
-                all_sampling_points.push_back(p);
-
                 scaled_steps_along_curve += 1.0 / total_step_along_curve;
+                lanelet::BasicPoint2d p = (*fit_curve)(scaled_steps_along_curve);
+                resampled_points.push_back(p);
             }
-            RCLCPP_DEBUG_STREAM(rclcpp::get_logger(BASIC_AUTONOMY_LOGGER), "Got sampled points with size:" << all_sampling_points.size());
+            RCLCPP_DEBUG_STREAM(rclcpp::get_logger(BASIC_AUTONOMY_LOGGER), "Got resampled points with size:" << resampled_points.size());
 
-            std::vector<double> final_yaw_values = carma_wm::geometry::compute_tangent_orientations(future_geom_points);
-            if(final_yaw_values.size() > 0) {
-                final_yaw_values[0] = state.orientation; // Set the initial yaw value based on the initial state
+            // Compute downtracks for the resampled points
+            std::vector<double> resampled_downtracks = carma_wm::geometry::compute_arc_lengths(resampled_points);
+
+            // Interpolate speeds based on downtracks
+            std::vector<double> resampled_speeds;
+            resampled_speeds.reserve(resampled_points.size());
+
+            for (size_t i = 0; i < resampled_downtracks.size(); i++) {
+                double downtrack = resampled_downtracks[i];
+
+                // Find where this downtrack would fit in the original downtracks
+                auto it = std::upper_bound(original_downtracks.begin(), original_downtracks.end(), downtrack);
+                size_t idx = it - original_downtracks.begin();
+
+                if (idx == 0) {
+                    // Point is before first point, use first speed
+                    resampled_speeds.push_back(final_actual_speeds[0]);
+                } else if (idx >= original_downtracks.size()) {
+                    // Point is after last point, use last speed
+                    resampled_speeds.push_back(final_actual_speeds.back());
+                } else {
+                    // Linearly interpolate between the two nearest speeds
+                    double ratio = (downtrack - original_downtracks[idx-1]) /
+                                  (original_downtracks[idx] - original_downtracks[idx-1]);
+                    double interpolated_speed = final_actual_speeds[idx-1] +
+                                               ratio * (final_actual_speeds[idx] - final_actual_speeds[idx-1]);
+                    resampled_speeds.push_back(interpolated_speed);
+                }
             }
 
-            final_actual_speeds = smoothing::moving_average_filter(final_actual_speeds, detailed_config.speed_moving_average_window_size);
+            // Apply the moving average filter to the resampled speeds
+            resampled_speeds = smoothing::moving_average_filter(resampled_speeds, detailed_config.speed_moving_average_window_size);
 
-            //Convert speeds to time
+            // Compute yaw values based on the resampled points
+            std::vector<double> resampled_yaw_values = carma_wm::geometry::compute_tangent_orientations(resampled_points);
+            if (resampled_yaw_values.size() > 0) {
+                resampled_yaw_values[0] = state.orientation; // Set the initial yaw value based on the initial state
+            }
+
+            // Convert speeds to time
             std::vector<double> times;
-            trajectory_utils::conversions::speed_to_time(downtracks, final_actual_speeds, &times);
+            trajectory_utils::conversions::speed_to_time(resampled_downtracks, resampled_speeds, &times);
 
-            //Remove extra points
-            RCLCPP_DEBUG_STREAM(rclcpp::get_logger(BASIC_AUTONOMY_LOGGER), "Before removing extra buffer points, future_geom_points.size()"<< future_geom_points.size());
-            int end_dist_pt_index = get_nearest_index_by_downtrack(future_geom_points, wm, ending_state_before_buffer);
-            future_geom_points.resize(end_dist_pt_index + 1);
+            // Find the ending point index in the resampled points
+            int end_dist_pt_index = 0;
+            double target_downtrack = 0.0;
+
+            // First get the downtrack of the ending state in the original points
+            for (size_t i = 0; i < future_geom_points.size(); i++) {
+                if (std::abs(future_geom_points[i].x() - ending_state_before_buffer.x_pos_global) < 0.1 &&
+                    std::abs(future_geom_points[i].y() - ending_state_before_buffer.y_pos_global) < 0.1) {
+                    target_downtrack = original_downtracks[i];
+                    break;
+                }
+            }
+
+            // Then find the closest point in the resampled points
+            for (size_t i = 0; i < resampled_downtracks.size(); i++) {
+                if (resampled_downtracks[i] >= target_downtrack) {
+                    end_dist_pt_index = i;
+                    break;
+                }
+                if (i == resampled_downtracks.size() - 1) {
+                    end_dist_pt_index = i; // Use the last point if we can't find a match
+                }
+            }
+
+            // Resize all arrays to the endpoint
+            RCLCPP_DEBUG_STREAM(rclcpp::get_logger(BASIC_AUTONOMY_LOGGER), "Before removing extra buffer points, resampled_points.size(): " << resampled_points.size());
+            resampled_points.resize(end_dist_pt_index + 1);
             times.resize(end_dist_pt_index + 1);
-            final_yaw_values.resize(end_dist_pt_index + 1);
-            RCLCPP_DEBUG_STREAM(rclcpp::get_logger(BASIC_AUTONOMY_LOGGER), "After removing extra buffer points, future_geom_points.size():"<< future_geom_points.size());
+            resampled_yaw_values.resize(end_dist_pt_index + 1);
+            RCLCPP_DEBUG_STREAM(rclcpp::get_logger(BASIC_AUTONOMY_LOGGER), "After removing extra buffer points, resampled_points.size(): " << resampled_points.size());
 
+            // Create trajectory points from the resampled data
             std::vector<carma_planning_msgs::msg::TrajectoryPlanPoint> traj_points =
-                trajectory_from_points_times_orientations(future_geom_points, times, final_yaw_values, state_time, detailed_config.desired_controller_plugin);
+                trajectory_from_points_times_orientations(resampled_points, times, resampled_yaw_values, state_time, detailed_config.desired_controller_plugin);
 
             return traj_points;
         }
@@ -1386,7 +1446,8 @@ namespace basic_autonomy
             }
             else
             {
-                throw std::invalid_argument("Invalid Yield Trajectory");
+                //throw std::invalid_argument("Invalid Yield Trajectory");
+
             }
 
             return resp;
