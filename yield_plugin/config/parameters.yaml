@@ -23,7 +23,7 @@ yield_max_deceleration_in_ms2: 3.0
 # Minimum safety gap with an Object/Obstacle
 # Units: meters
 # Value type: Desired
-minimum_safety_gap_in_meters: 4.0
+minimum_safety_gap_in_meters: 10.0
 # Maximum speed value to consider the ego vehicle stopped
 # Units: m/s
 # Value type: Desired
