@@ -46,6 +46,7 @@ namespace light_controlled_intersection_tactical_plugin
     double lateral_accel_limit = 2.5;
     double vehicle_accel_limit = 2.0;
     double vehicle_decel_limit = 2.0;
+    double vehicle_response_lag = 1.0;
     int tactical_plugin_service_call_timeout = 100;
     bool enable_object_avoidance = false;
 
@@ -72,6 +73,7 @@ namespace light_controlled_intersection_tactical_plugin
            << "lateral_accel_limit: " << c.lateral_accel_limit << std::endl
            << "vehicle_accel_limit: " << c.vehicle_accel_limit << std::endl
            << "vehicle_decel_limit: " << c.vehicle_decel_limit << std::endl
+           << "vehicle_response_lag: " << c.vehicle_response_lag << std::endl
            << "tactical_plugin_service_call_timeout: " << c.tactical_plugin_service_call_timeout << std::endl
            << "enable_object_avoidance: " << c.enable_object_avoidance << std::endl
            << "}" << std::endl;

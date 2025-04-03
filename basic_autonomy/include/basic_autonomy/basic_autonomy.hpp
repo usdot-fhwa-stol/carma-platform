@@ -126,7 +126,7 @@ namespace basic_autonomy
         * \brief Reduces the input points to only those points that fit within the provided time
         *        boundary
         *
-        * \param points The input trajectory plan point each with target_time
+        * \param trajectory The input trajectory plan point each with target_time
         * \param time_span The time span in seconds which the output points will fit within
         *
         * \return The subset of points that fit within time_span

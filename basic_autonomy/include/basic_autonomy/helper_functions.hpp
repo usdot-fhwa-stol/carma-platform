@@ -33,17 +33,16 @@ namespace waypoint_generation
     int get_nearest_point_index(const std::vector<lanelet::BasicPoint2d>& points,
                                                  const carma_planning_msgs::msg::VehicleState& state);
 
-                                                 /**
-    * \brief Find the index of the closest trajectory plan point to a given position.
-    *
-    * This function iterates through the trajectory points and determines the one closest
-    * to the provided 2D position.
-    *
-    * \param position The reference 2D point.
-    * \param trajectory A vector of trajectory plan points.
-    *
-    * \return The index of the trajectory point closest to the given position.
-    */
+    /**
+     * \brief Find the index of the closest trajectory plan point to a given position.
+     *
+     * This function iterates through the trajectory points and determines the one closest
+     * to the provided 2D position.
+     *
+     * \param trajectory A vector of trajectory plan points.
+     * \param position The reference 2D point.
+     * \return The index of the trajectory point closest to the given position.
+     */
     size_t get_nearest_point_index(
         const std::vector<carma_planning_msgs::msg::TrajectoryPlanPoint>& trajectory,
         const lanelet::BasicPoint2d& position);

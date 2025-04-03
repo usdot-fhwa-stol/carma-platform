@@ -38,6 +38,7 @@ namespace light_controlled_intersection_tactical_plugin
     config_.vehicle_decel_limit_multiplier = declare_parameter<double>("vehicle_decel_limit_multiplier", config_.vehicle_decel_limit_multiplier);
     config_.vehicle_accel_limit_multiplier = declare_parameter<double>("vehicle_accel_limit_multiplier", config_.vehicle_accel_limit_multiplier);
     config_.lat_accel_multiplier = declare_parameter<double>("lat_accel_multiplier", config_.lat_accel_multiplier);
+    config_.vehicle_response_lag = declare_parameter<double>("vehicle_response_lag", config_.vehicle_response_lag);
     config_.stop_line_buffer = declare_parameter<double>("stop_line_buffer", config_.stop_line_buffer);
     config_.minimum_speed = declare_parameter<double>("minimum_speed", config_.minimum_speed);
     config_.algorithm_evaluation_distance = declare_parameter<double>("algorithm_evaluation_distance", config_.algorithm_evaluation_distance);
@@ -61,6 +62,7 @@ namespace light_controlled_intersection_tactical_plugin
        {"buffer_ending_downtrack", config_.buffer_ending_downtrack},
        {"vehicle_decel_limit_multiplier", config_.vehicle_decel_limit_multiplier},
        {"vehicle_accel_limit_multiplier", config_.vehicle_accel_limit_multiplier},
+       {"vehicle_response_lag", config_.vehicle_response_lag},
        {"lat_accel_multiplier", config_.lat_accel_multiplier},
        {"stop_line_buffer", config_.stop_line_buffer},
        {"minimum_speed", config_.minimum_speed},
@@ -104,6 +106,7 @@ namespace light_controlled_intersection_tactical_plugin
     get_parameter<double>("buffer_ending_downtrack", config_.buffer_ending_downtrack);
     get_parameter<double>("vehicle_decel_limit_multiplier", config_.vehicle_decel_limit_multiplier);
     get_parameter<double>("vehicle_accel_limit_multiplier", config_.vehicle_accel_limit_multiplier);
+    get_parameter<double>("vehicle_response_lag", config_.vehicle_response_lag);
     get_parameter<double>("lat_accel_multiplier", config_.lat_accel_multiplier);
     get_parameter<double>("stop_line_buffer", config_.stop_line_buffer);
     get_parameter<double>("minimum_speed", config_.minimum_speed);

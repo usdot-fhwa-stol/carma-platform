@@ -70,8 +70,11 @@ namespace light_controlled_intersection_tactical_plugin
     bool LightControlledIntersectionTacticalPlugin::shouldUseLastTrajectory(
         TSCase new_case, bool is_new_case_successful, const rclcpp::Time& current_time)
     {
-        // Validate trajectory with 1 second minimum remaining time
-        if (!isLastTrajectoryValid(current_time, 1.0)) {
+        // Validate trajectory with 1 second minimum remaining time or vehicle_response_lag seconds
+        // This is because the vehicle executes speed command of vehicle_response_lag secs ahead
+        // Therefore, the trajectory should be enough to cover the vehicle_response_lag
+        if (!isLastTrajectoryValid(current_time, std::max(config_.vehicle_response_lag, 1.0)))
+        {
             return false;
         }
 
@@ -182,8 +185,8 @@ namespace light_controlled_intersection_tactical_plugin
         if(req->maneuver_index_to_plan >= req->maneuver_plan.maneuvers.size())
         {
             throw std::invalid_argument(
-                "Light Control Intersection Strategic Plugin asked to plan invalid maneuver index: "
-                + std::to_string(req->maneuver_index_to_plan)
+                "Light Control Intersection Tactical Plugin was asked to plan invalid "
+                "maneuver index: " + std::to_string(req->maneuver_index_to_plan)
                 + " for plan of size: " + std::to_string(req->maneuver_plan.maneuvers.size()));
         }
 
@@ -199,14 +202,8 @@ namespace light_controlled_intersection_tactical_plugin
         }
         else
         {
-            throw std::invalid_argument("Light Control Intersection Strategic Plugin "
-                "asked to plan unsupported maneuver");
-        }
-
-        if (maneuver_plan.size() > 1)
-        {
             throw std::invalid_argument("Light Control Intersection Tactical Plugin "
-                "currently only supports one maneuver at a time");
+                "was asked to plan unsupported maneuver");
         }
 
         // Get vehicle position and update tracking variables
@@ -293,13 +290,13 @@ namespace light_controlled_intersection_tactical_plugin
         auto current_time = rclcpp::Time(req->header.stamp);
 
 
-        auto last_trajectory_time_unbound_time_bound =
+        auto last_trajectory_time_bound =
             basic_autonomy::waypoint_generation::constrain_to_time_boundary(
                 last_trajectory_time_unbound_.trajectory_points, config_.trajectory_time_length);
         if (shouldUseLastTrajectory(new_case, is_new_case_successful, current_time))
         {
             resp->trajectory_plan = last_trajectory_time_unbound_;
-            resp->trajectory_plan.trajectory_points = last_trajectory_time_unbound_time_bound;
+            resp->trajectory_plan.trajectory_points = last_trajectory_time_bound;
 
             RCLCPP_DEBUG_STREAM(rclcpp::get_logger(LCI_TACTICAL_LOGGER),
                 "USING LAST TRAJ WITH CASE: " << (int)last_case_.get());
@@ -343,7 +340,7 @@ namespace light_controlled_intersection_tactical_plugin
                 rclcpp::Time(last_trajectory_time_unbound_.trajectory_points.back().target_time) > current_time)
         {
             resp->trajectory_plan = last_trajectory_time_unbound_;
-            resp->trajectory_plan.trajectory_points = last_trajectory_time_unbound_time_bound;
+            resp->trajectory_plan.trajectory_points = last_trajectory_time_bound;
 
             RCLCPP_WARN_STREAM(rclcpp::get_logger(LCI_TACTICAL_LOGGER),
                 "Failed to generate a new trajectory, so using last valid trajectory!");

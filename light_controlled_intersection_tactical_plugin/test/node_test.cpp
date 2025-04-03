@@ -44,7 +44,7 @@ namespace light_controlled_intersection_tactical_plugin
 
         std::vector<PointSpeedPair> points_and_target_speeds;
 
-        auto lci_tactical = LightControlledIntersectionTacticalPlugin(wm, config, [&](auto msg) {}, "", lci_node);
+        auto lci_tactical = LightControlledIntersectionTacticalPlugin(wm, config, [&](auto msg) {}, "test_node", lci_node);
 
         TrajectoryParams tp;
         tp.v1_ = 1.0;
@@ -140,7 +140,7 @@ namespace light_controlled_intersection_tactical_plugin
 
         std::vector<PointSpeedPair> points_and_target_speeds;
 
-        auto lci_tactical = LightControlledIntersectionTacticalPlugin(wm, config, [&](auto msg) {}, "", lci_node);
+        auto lci_tactical = LightControlledIntersectionTacticalPlugin(wm, config, [&](auto msg) {}, "test_node", lci_node);
 
         carma_planning_msgs::msg::Maneuver maneuver_msg;
         maneuver_msg.type = carma_planning_msgs::msg::Maneuver::LANE_FOLLOWING;
@@ -219,7 +219,7 @@ namespace light_controlled_intersection_tactical_plugin
         Config config;
         config.minimum_speed = 1;
 
-        auto lci_tactical = LightControlledIntersectionTacticalPlugin(wm, config, [&](auto msg) {}, "", lci_node);
+        auto lci_tactical = LightControlledIntersectionTacticalPlugin(wm, config, [&](auto msg) {}, "test_node", lci_node);
 
         carma_planning_msgs::msg::Maneuver maneuver_msg;
         maneuver_msg.type = carma_planning_msgs::msg::Maneuver::LANE_FOLLOWING;
@@ -301,7 +301,7 @@ namespace light_controlled_intersection_tactical_plugin
         config.minimum_speed = 1;
         config.default_downsample_ratio = 1;
 
-        auto lci_tactical = LightControlledIntersectionTacticalPlugin(wm, config, [&](auto msg) {}, "", lci_node);
+        auto lci_tactical = LightControlledIntersectionTacticalPlugin(wm, config, [&](auto msg) {}, "test_node", lci_node);
 
         carma_planning_msgs::msg::Maneuver maneuver_msg;
         maneuver_msg.type = carma_planning_msgs::msg::Maneuver::LANE_FOLLOWING;
@@ -374,7 +374,7 @@ namespace light_controlled_intersection_tactical_plugin
         config.minimum_speed = 1;
         config.default_downsample_ratio = 1;
 
-        auto lci_tactical = LightControlledIntersectionTacticalPlugin(wm, config, [&](auto msg) {}, "", lci_node);
+        auto lci_tactical = LightControlledIntersectionTacticalPlugin(wm, config, [&](auto msg) {}, "test_node", lci_node);
 
         carma_planning_msgs::msg::Maneuver maneuver_msg;
         maneuver_msg.type = carma_planning_msgs::msg::Maneuver::LANE_FOLLOWING;
@@ -444,7 +444,8 @@ namespace light_controlled_intersection_tactical_plugin
 
         maneuver_msg.lane_following_maneuver.parameters.int_valued_meta_data.push_back(1);
         maneuver_msg.lane_following_maneuver.parameters.int_valued_meta_data.push_back(1);
-        maneuver_msg.lane_following_maneuver.parameters.string_valued_meta_data.push_back("Carma/signalized_intersection");
+        maneuver_msg.lane_following_maneuver.parameters.string_valued_meta_data.push_back(
+            "Carma/signalized_intersection");
 
         maneuver_msg.lane_following_maneuver.lane_ids.push_back(std::to_string(1200));
 
@@ -457,8 +458,27 @@ namespace light_controlled_intersection_tactical_plugin
 
         lci_tactical.planTrajectorySmoothing(req, resp);
 
-        EXPECT_NEAR(rclcpp::Time(resp->trajectory_plan.trajectory_points.front().target_time).seconds(), 0.0, 0.001);
-        EXPECT_NEAR(rclcpp::Time(resp->trajectory_plan.trajectory_points.back().target_time).seconds(), 9.23, 0.1);
+        EXPECT_NEAR(rclcpp::Time(
+            resp->trajectory_plan.trajectory_points.front().target_time).seconds(), 0.0, 0.001);
+        EXPECT_NEAR(rclcpp::Time(
+            resp->trajectory_plan.trajectory_points.back().target_time).seconds(), 9.23, 0.1);
+        EXPECT_NEAR(resp->trajectory_plan.trajectory_points.front().y, 0.1, 0.001);
+
+        // Check last trajectory and time bound
+        lci_tactical.config_.trajectory_time_length = 2.0;
+        lci_tactical.planTrajectorySmoothing(req, resp);
+
+        EXPECT_NEAR(rclcpp::Time(
+            resp->trajectory_plan.trajectory_points.front().target_time).seconds(), 0.0, 0.001);
+        EXPECT_NEAR(rclcpp::Time(
+            resp->trajectory_plan.trajectory_points.back().target_time).seconds(), 1.237, 0.1);
+        EXPECT_NEAR(resp->trajectory_plan.trajectory_points.front().y, 0.1, 0.001);
+
+        // Check the planner name
+        EXPECT_EQ(resp->trajectory_plan.trajectory_points.back().planner_plugin_name,
+            "test_node");
+        EXPECT_EQ(resp->trajectory_plan.trajectory_points.front().planner_plugin_name,
+            "test_node");
         EXPECT_NEAR(resp->trajectory_plan.trajectory_points.front().y, 0.1, 0.001);
 
         // TEST shouldUseLastTrajectory
