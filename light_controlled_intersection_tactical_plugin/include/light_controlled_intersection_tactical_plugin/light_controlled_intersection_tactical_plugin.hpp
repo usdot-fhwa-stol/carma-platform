@@ -217,8 +217,8 @@ namespace light_controlled_intersection_tactical_plugin
     /**
       * \brief Determines whether the last trajectory should be reused based on the planning case.
       *        Should use last case if 1) last traj is valid AND last case is the same as new case,
-      *        OR 2) last traj is valid AND within certain evaluation zone before the intersection,
-      *        the new case is not successful but last case is
+      *        OR 2) last traj is valid AND within certain evaluation zone before the intersection
+      *        where the new case is not successful but last case is
       * \param new_case An enumerated type representing the new trajectory planning case.
       * \param is_new_case_successful A boolean flag indicating if the new trajectory
       *                               planning was successful.

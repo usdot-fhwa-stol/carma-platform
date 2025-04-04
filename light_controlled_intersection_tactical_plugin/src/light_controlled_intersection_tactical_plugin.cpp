@@ -84,18 +84,21 @@ namespace light_controlled_intersection_tactical_plugin
             return true;
         }
 
-        // Edge case - successful to unsuccessful transition
-        // near the intersection. The vehicle should "lock in" to the last trajectory
+        // Edge case - TS Alorithm successful to unsuccessful transition (Case (1-7) to 8)
+        // near the intersection. The vehicle should "lock in" to the last trajectory as it is
+        // expected for the TS algorithm to be unsuccessful near the intersection.
         if (is_last_case_successful_.get() == true &&
             is_new_case_successful == false &&
             last_successful_ending_downtrack_ - current_downtrack_ <
-                config_.algorithm_evaluation_distance &&
+                config_.dist_before_intersection_to_force_last_traj &&
             last_successful_scheduled_entry_time_ - current_time.seconds() <
-                config_.algorithm_evaluation_period)
+                config_.period_before_intersection_to_force_last_traj)
         {
             return true;
         }
 
+        // Returning false here means that it should use the new trajectory because:
+        // New case is not same as last case and not within the "lock in" distance
         return false;
     }
 

@@ -41,8 +41,8 @@ namespace light_controlled_intersection_tactical_plugin
     config_.vehicle_response_lag = declare_parameter<double>("vehicle_response_lag", config_.vehicle_response_lag);
     config_.stop_line_buffer = declare_parameter<double>("stop_line_buffer", config_.stop_line_buffer);
     config_.minimum_speed = declare_parameter<double>("minimum_speed", config_.minimum_speed);
-    config_.algorithm_evaluation_distance = declare_parameter<double>("algorithm_evaluation_distance", config_.algorithm_evaluation_distance);
-    config_.algorithm_evaluation_period = declare_parameter<double>("algorithm_evaluation_period", config_.algorithm_evaluation_period);
+    config_.dist_before_intersection_to_force_last_traj = declare_parameter<double>("dist_before_intersection_to_force_last_traj", config_.dist_before_intersection_to_force_last_traj);
+    config_.period_before_intersection_to_force_last_traj = declare_parameter<double>("period_before_intersection_to_force_last_traj", config_.period_before_intersection_to_force_last_traj);
 
     config_.lateral_accel_limit = declare_parameter<double>("vehicle_lateral_accel_limit", config_.lateral_accel_limit);
     config_.vehicle_accel_limit = declare_parameter<double>("vehicle_acceleration_limit", config_.vehicle_accel_limit);
@@ -66,8 +66,8 @@ namespace light_controlled_intersection_tactical_plugin
        {"lat_accel_multiplier", config_.lat_accel_multiplier},
        {"stop_line_buffer", config_.stop_line_buffer},
        {"minimum_speed", config_.minimum_speed},
-       {"algorithm_evaluation_distance", config_.algorithm_evaluation_distance},
-       {"algorithm_evaluation_period", config_.algorithm_evaluation_period}}, parameters); // Global acceleration limits not allowed to dynamically update
+       {"dist_before_intersection_to_force_last_traj", config_.dist_before_intersection_to_force_last_traj},
+       {"period_before_intersection_to_force_last_traj", config_.period_before_intersection_to_force_last_traj}}, parameters); // Global acceleration limits not allowed to dynamically update
     auto error_2 = update_params<int>(
       {{"default_downsample_ratio", config_.default_downsample_ratio},
       {"turn_downsample_ratio", config_.turn_downsample_ratio},
@@ -110,8 +110,8 @@ namespace light_controlled_intersection_tactical_plugin
     get_parameter<double>("lat_accel_multiplier", config_.lat_accel_multiplier);
     get_parameter<double>("stop_line_buffer", config_.stop_line_buffer);
     get_parameter<double>("minimum_speed", config_.minimum_speed);
-    get_parameter<double>("algorithm_evaluation_distance", config_.algorithm_evaluation_distance);
-    get_parameter<double>("algorithm_evaluation_period", config_.algorithm_evaluation_period);
+    get_parameter<double>("dist_before_intersection_to_force_last_traj", config_.dist_before_intersection_to_force_last_traj);
+    get_parameter<double>("period_before_intersection_to_force_last_traj", config_.period_before_intersection_to_force_last_traj);
     get_parameter<double>("vehicle_lateral_accel_limit", config_.lateral_accel_limit);
     get_parameter<double>("vehicle_acceleration_limit", config_.vehicle_accel_limit);
     get_parameter<double>("vehicle_deceleration_limit", config_.vehicle_decel_limit);
