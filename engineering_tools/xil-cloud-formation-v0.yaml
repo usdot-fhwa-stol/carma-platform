@@ -35,7 +35,7 @@ Parameters:
   CarmaConfigAMI:
     Description: The AMI ID to use for the EC2 instance.
     Type: String
-    Default: ami-0c5b5f70bfa4f1021 # Custom Leidos AMI
+    Default:  ami-testing123 # Custom Leidos AMI ami-0c5b5f70bfa4f1021
 Resources:
   SubnetA:
     Type: AWS::EC2::Subnet

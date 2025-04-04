@@ -82,18 +82,20 @@ EOF
                 shift
                 shift
                 ;;
-            -am --amiid)
+            -am|--amiid)
 
                 if [[ -z $2 ]]; then
                     echo "When using -am a full ami id must be specified."
                     exit 1
                 fi
 
-                local AMI_ID=$2
+                AMI_ID=$2
+                export AMI_ID
 
                 sed -i "s|AMI_ID=.*|AMI_ID=${AMI_ID}|" "${CARMA_CLOUD_SIM_CONFIG_PATH}"
                 shift
                 shift
+                echo $AMI_ID
                 ;;
             *)
                 echo "Invalid argument $arg"
@@ -132,7 +134,9 @@ cloud-sim__start() {
         echo "No configuration file exists at ${CARMA_CLOUD_SIM_CONFIG_PATH}, please run: carma cloud-sim cofig -a <User ARN> -p <Instance Password> -v <Desired config image>"
         exit 1
     fi
-
+    echo "test"
+    echo $AMI_ID
+    echo $USER_ARN
     echo $1
     if [ ! -f "$CARMA_CLOUD_SIM_CLOUD_FORMATION_PATH" ] || [ "${1}" == '-c'  ]; then
 
