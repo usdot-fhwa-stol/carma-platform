@@ -1188,9 +1188,7 @@ namespace basic_autonomy
             std::vector<double> resampled_speeds;
             resampled_speeds.reserve(resampled_points.size());
 
-            for (size_t i = 0; i < resampled_downtracks.size(); i++) {
-                double downtrack = resampled_downtracks[i];
-
+            for (const auto& downtrack : resampled_downtracks) {
                 // Find where this downtrack would fit in the original downtracks
                 auto it = std::upper_bound(original_downtracks.begin(), original_downtracks.end(), downtrack);
                 size_t idx = it - original_downtracks.begin();
@@ -1216,7 +1214,8 @@ namespace basic_autonomy
 
             // Compute yaw values based on the resampled points
             std::vector<double> resampled_yaw_values = carma_wm::geometry::compute_tangent_orientations(resampled_points);
-            if (resampled_yaw_values.size() > 0) {
+            if (!resampled_yaw_values.empty())
+            {
                 resampled_yaw_values[0] = state.orientation; // Set the initial yaw value based on the initial state
             }
 
