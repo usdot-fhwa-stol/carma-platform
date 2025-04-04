@@ -640,6 +640,47 @@ namespace basic_autonomy
             return carma_wm::geometry::build2dEigenTransform(p1, yaw);
         }
 
+        std::vector<carma_planning_msgs::msg::TrajectoryPlanPoint> constrain_to_time_boundary(
+            const std::vector<carma_planning_msgs::msg::TrajectoryPlanPoint>& trajectory,
+            double time_span)
+        {
+            if (trajectory.empty())
+            {
+                RCLCPP_WARN_STREAM(rclcpp::get_logger(BASIC_AUTONOMY_LOGGER),
+                    "constrain_to_time_boundary received empty trajectory, returning...");
+                return trajectory;
+            }
+
+            if (time_span <= 0)
+            {
+                RCLCPP_WARN_STREAM(rclcpp::get_logger(BASIC_AUTONOMY_LOGGER),
+                    "constrain_to_time_boundary received non-positive time span, returning...");
+                return trajectory;
+            }
+
+            // return immediately if the trajectory is already within the time span
+            if ((rclcpp::Time(trajectory.back().target_time) -
+                rclcpp::Time(trajectory.front().target_time)).seconds() <= time_span)
+            {
+                return trajectory;
+            }
+
+            // find the first point that is outside the time span
+            std::vector<carma_planning_msgs::msg::TrajectoryPlanPoint> constrained_points;
+            auto start_time = rclcpp::Time(trajectory.front().target_time);
+            auto end_time = start_time + rclcpp::Duration::from_seconds(time_span);
+            for (const auto& tpp : trajectory)
+            {
+                if (rclcpp::Time(tpp.target_time) > end_time)
+                {
+                    break;
+                }
+                constrained_points.push_back(tpp);
+            }
+
+            return constrained_points;
+        }
+
         std::vector<PointSpeedPair> constrain_to_time_boundary(const std::vector<PointSpeedPair> &points,
                                                                double time_span)
         {
@@ -1391,7 +1432,6 @@ namespace basic_autonomy
 
             return resp;
         }
-
     } // namespace waypoint_generation
 
 } // basic_autonomy

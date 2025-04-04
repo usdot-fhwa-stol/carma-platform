@@ -52,6 +52,7 @@ LCIStrategicPlugin::LCIStrategicPlugin(const rclcpp::NodeOptions &options)
   config_.trajectory_smoothing_activation_distance = declare_parameter<double>("trajectory_smoothing_activation_distance", config_.trajectory_smoothing_activation_distance);
   config_.stopping_location_buffer = declare_parameter<double>("stopping_location_buffer", config_.stopping_location_buffer);
   config_.green_light_time_buffer = declare_parameter<double>("green_light_time_buffer", config_.green_light_time_buffer);
+  config_.vehicle_response_lag = declare_parameter<double>("vehicle_response_lag", config_.vehicle_response_lag);
   config_.algo_minimum_speed = declare_parameter<double>("algo_minimum_speed", config_.algo_minimum_speed);
   config_.deceleration_fraction = declare_parameter<double>("deceleration_fraction",  config_.deceleration_fraction);
   config_.desired_distance_to_stop_buffer = declare_parameter<double>("desired_distance_to_stop_buffer", config_.desired_distance_to_stop_buffer);
@@ -87,6 +88,7 @@ carma_ros2_utils::CallbackReturn LCIStrategicPlugin::on_configure_plugin()
   get_parameter<double>("trajectory_smoothing_activation_distance", config_.trajectory_smoothing_activation_distance);
   get_parameter<double>("stopping_location_buffer", config_.stopping_location_buffer);
   get_parameter<double>("green_light_time_buffer", config_.green_light_time_buffer);
+  get_parameter<double>("vehicle_response_lag", config_.vehicle_response_lag);
   get_parameter<double>("algo_minimum_speed", config_.algo_minimum_speed);
   get_parameter<double>("deceleration_fraction", config_.deceleration_fraction);
   get_parameter<double>("desired_distance_to_stop_buffer", config_.desired_distance_to_stop_buffer);
@@ -104,6 +106,11 @@ carma_ros2_utils::CallbackReturn LCIStrategicPlugin::on_configure_plugin()
   max_comfort_decel_ = -1 * config_.vehicle_decel_limit * config_.vehicle_decel_limit_multiplier;
   max_comfort_decel_norm_ = config_.vehicle_decel_limit * config_.vehicle_decel_limit_multiplier;
   emergency_decel_norm_ = 2 * config_.vehicle_decel_limit * config_.vehicle_decel_limit_multiplier;
+  config_.green_light_time_buffer =
+    std::max(config_.vehicle_response_lag, config_.green_light_time_buffer);
+  RCLCPP_INFO_STREAM(rclcpp::get_logger("lci_strategic_plugin"),
+    "LCI Strategic Plugin updated green_light_time_buffer based on vehicle_response_lag to "
+    << config_.green_light_time_buffer);
 
   // clang-format on
 
@@ -152,6 +159,7 @@ rcl_interfaces::msg::SetParametersResult LCIStrategicPlugin::parameter_update_ca
     {"trajectory_smoothing_activation_distance", config_.trajectory_smoothing_activation_distance},
     {"stopping_location_buffer", config_.stopping_location_buffer},
     {"green_light_time_buffer", config_.green_light_time_buffer},
+    {"vehicle_response_lag", config_.vehicle_response_lag},
     {"algo_minimum_speed", config_.algo_minimum_speed},
     {"deceleration_fraction", config_.deceleration_fraction},
     {"desired_distance_to_stop_buffer", config_.desired_distance_to_stop_buffer},
@@ -159,6 +167,12 @@ rcl_interfaces::msg::SetParametersResult LCIStrategicPlugin::parameter_update_ca
     {"mobility_rate", config_.mobility_rate},
   }, parameters);
 
+  config_.green_light_time_buffer =
+    std::max(config_.vehicle_response_lag, config_.green_light_time_buffer);
+
+  RCLCPP_INFO_STREAM(rclcpp::get_logger("lci_strategic_plugin"),
+    "LCI Strategic Plugin updated green_light_time_buffer based on vehicle_response_lag to "
+    << config_.green_light_time_buffer);
   rcl_interfaces::msg::SetParametersResult result;
 
   result.successful = !error_double;

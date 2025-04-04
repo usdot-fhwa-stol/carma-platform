@@ -38,6 +38,7 @@
 
 namespace basic_autonomy
 {
+
     TEST(BasicAutonomyTest, DownsamplePtsWithMinMeters) {
         // Test case 1: Empty container
         std::vector<lanelet::BasicPoint2d> empty_line;
@@ -980,6 +981,177 @@ namespace basic_autonomy
 
         ASSERT_FALSE(basic_autonomy::waypoint_generation::is_valid_yield_plan(node, tp3));
 
+    }
+
+    // Helper function to create a test trajectory
+    std::vector<carma_planning_msgs::msg::TrajectoryPlanPoint> createTestTrajectory(
+        double start_time_sec, double time_step_sec, int num_points)
+    {
+        std::vector<carma_planning_msgs::msg::TrajectoryPlanPoint> trajectory;
+
+        for (int i = 0; i < num_points; ++i)
+        {
+            carma_planning_msgs::msg::TrajectoryPlanPoint point;
+            // Set the target time
+            builtin_interfaces::msg::Time time;
+            double total_sec = start_time_sec + i * time_step_sec;
+            time.sec = static_cast<int32_t>(total_sec);
+            time.nanosec = static_cast<int32_t>((total_sec - static_cast<double>(time.sec)) * 1e9);
+            point.target_time = time;
+            trajectory.push_back(point);
+        }
+
+        return trajectory;
+    }
+
+    TEST(BasicAutonomyTest, constrain_to_time_boundary_using_trajectory_point)
+    {
+        // Test 1: Empty trajectory
+        {
+            std::vector<carma_planning_msgs::msg::TrajectoryPlanPoint> empty_trajectory;
+            double time_span = 5.0;
+
+            auto result =
+                basic_autonomy::waypoint_generation::constrain_to_time_boundary(
+                        empty_trajectory, time_span);
+
+            EXPECT_TRUE(result.empty()) << "Empty trajectory test failed";
+        }
+
+        // Test 2: All points within the time boundary
+        {
+            double start_time = 100.0;
+            double time_step = 1.0;
+            int num_points = 5;
+            double time_span = 10.0;  // Greater than the total trajectory time
+
+            auto trajectory = createTestTrajectory(start_time, time_step, num_points);
+            auto result =
+                basic_autonomy::waypoint_generation::constrain_to_time_boundary(
+                        trajectory, time_span);
+
+            EXPECT_EQ(result.size(), num_points) << "All points within boundary: Wrong size";
+            EXPECT_EQ(rclcpp::Time(result.front().target_time),
+                rclcpp::Time(trajectory.front().target_time))
+                << "All points within boundary: First point mismatch";
+            EXPECT_EQ(rclcpp::Time(result.back().target_time),
+                rclcpp::Time(trajectory.back().target_time))
+                << "All points within boundary: Last point mismatch";
+        }
+
+        // Test 3: Some points outside the time boundary
+        {
+            double start_time = 100.0;
+            double time_step = 1.0;
+            int num_points = 10;
+            double time_span = 5.0;  // Will include points 0-5
+
+            auto trajectory = createTestTrajectory(start_time, time_step, num_points);
+            auto result =
+                basic_autonomy::waypoint_generation::constrain_to_time_boundary(
+                        trajectory, time_span);
+
+            // Should include points at times: 100, 101, 102, 103, 104, 105
+            EXPECT_EQ(result.size(), 6) << "Some points outside boundary: Wrong size";
+            EXPECT_EQ(rclcpp::Time(result.front().target_time),
+                rclcpp::Time(trajectory.front().target_time))
+                << "Some points outside boundary: First point mismatch";
+
+            // Verify the last point is at the correct time (start + 5 seconds)
+            auto expected_last_time = rclcpp::Time(trajectory.front().target_time) +
+                rclcpp::Duration::from_seconds(5.0);
+
+            EXPECT_LE(rclcpp::Time(result.back().target_time), expected_last_time)
+                << "Some points outside boundary: Last point time issue";
+        }
+
+        // Test 4: Very small time span
+        {
+            double start_time = 100.0;
+            double time_step = 1.0;
+            int num_points = 5;
+            double time_span = 0.5;  // Less than one time step
+
+            auto trajectory = createTestTrajectory(start_time, time_step, num_points);
+            auto result =
+                basic_autonomy::waypoint_generation::constrain_to_time_boundary(
+                        trajectory, time_span);
+
+            // Should only include the first point
+            EXPECT_EQ(result.size(), 1) << "Very small time span: Wrong size";
+            EXPECT_EQ(rclcpp::Time(result.front().target_time),
+                rclcpp::Time(trajectory.front().target_time))
+                << "Very small time span: First point mismatch";
+        }
+    }
+
+    TEST(BasicAutonomyTest, get_nearest_point_index_trajctory_test)
+    {
+        // Create a test trajectory
+        std::vector<carma_planning_msgs::msg::TrajectoryPlanPoint> trajectory;
+
+        // Add some points to the trajectory
+        carma_planning_msgs::msg::TrajectoryPlanPoint p1, p2, p3, p4;
+
+        p1.x = 1.0;
+        p1.y = 1.0;
+
+        p2.x = 5.0;
+        p2.y = 5.0;
+
+        p3.x = 10.0;
+        p3.y = 10.0;
+
+        p4.x = 15.0;
+        p4.y = 15.0;
+
+        trajectory.push_back(p1);
+        trajectory.push_back(p2);
+        trajectory.push_back(p3);
+        trajectory.push_back(p4);
+
+        // Test cases with different query points
+
+        // Test case 1: Point exactly at first trajectory point
+        {
+        lanelet::BasicPoint2d position(1.0, 1.0);
+        size_t result =
+            basic_autonomy::waypoint_generation::get_nearest_point_index(trajectory, position);
+        EXPECT_EQ(result, 0) << "Query point at first trajectory point should return index 0";
+        }
+
+        // Test case 2: Point exactly at third trajectory point
+        {
+        lanelet::BasicPoint2d position(10.0, 10.0);
+        size_t result =
+            basic_autonomy::waypoint_generation::get_nearest_point_index(trajectory, position);
+        EXPECT_EQ(result, 2) << "Query point at third trajectory point should return index 2";
+        }
+
+        // Test case 3: Point close to second trajectory point
+        {
+        lanelet::BasicPoint2d position(5.5, 5.5);
+        size_t result =
+            basic_autonomy::waypoint_generation::get_nearest_point_index(trajectory, position);
+        EXPECT_EQ(result, 1) << "Query point near second trajectory point should return index 1";
+        }
+
+        // Test case 4: Point between points but closer to the third
+        {
+        lanelet::BasicPoint2d position(8.0, 8.0);
+        size_t result =
+            basic_autonomy::waypoint_generation::get_nearest_point_index(trajectory, position);
+        EXPECT_EQ(result, 2)
+            << "Query point between points but closer to third should return index 2";
+        }
+
+        // Test case 5: Point outside the trajectory but closest to the last point
+        {
+        lanelet::BasicPoint2d position(20.0, 20.0);
+        size_t result =
+            basic_autonomy::waypoint_generation::get_nearest_point_index(trajectory, position);
+        EXPECT_EQ(result, 3) << "Query point outside trajectory should return closest index (3)";
+        }
     }
 
 } // namespace basic_autonomy

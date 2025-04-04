@@ -46,6 +46,9 @@ struct LCIStrategicPluginConfig
   //! A buffer in seconds around the green phase which will reduce the phase length such that vehicle still considers it non-green
   double green_light_time_buffer = 0.0;
 
+  //! An approximation of the delay (sec) between sent vehicle commands and the vehicle begining a meaningful acceleration to that command
+  double vehicle_response_lag = 0.0;
+
   //! Minimum allowable speed TS algorithm in m/s
   double algo_minimum_speed = 2.2352;
 
@@ -103,6 +106,7 @@ struct LCIStrategicPluginConfig
           << "trajectory_smoothing_activation_distance: " << c.trajectory_smoothing_activation_distance << std::endl
           << "stopping_location_buffer: " << c.stopping_location_buffer << std::endl
           << "green_light_time_buffer: " << c.green_light_time_buffer << std::endl
+          << "vehicle_response_lag: " << c.vehicle_response_lag << std::endl
           << "algo_minimum_speed: " << c.algo_minimum_speed << std::endl
           << "deceleration_fraction: " << c.deceleration_fraction << std::endl
           << "desired_distance_to_stop_buffer: " << c.desired_distance_to_stop_buffer << std::endl
