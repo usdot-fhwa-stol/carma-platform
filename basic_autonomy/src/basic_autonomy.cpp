@@ -1162,19 +1162,19 @@ namespace basic_autonomy
 
             // Now create resampled points using the spline
             auto total_step_along_curve = static_cast<int>(original_downtracks.back() / detailed_config.curve_resample_step_size);
-            if (total_step_along_curve <= 0) {
-                RCLCPP_WARN_STREAM(rclcpp::get_logger(BASIC_AUTONOMY_LOGGER), "Total steps along curve is 0 or negative. Using original points.");
-                total_step_along_curve = 1; // Avoid division by zero
+            if (total_step_along_curve == 0) {
+                RCLCPP_WARN_STREAM(rclcpp::get_logger(BASIC_AUTONOMY_LOGGER),
+                "Available distance to resample is less than curve_resample_step_size. "
+                "Only considering the last point of the target destination to generate trajectory."
+                );
+                total_step_along_curve = 1; // This also avoids division by zero
             }
 
             std::vector<lanelet::BasicPoint2d> resampled_points;
-            resampled_points.reserve(total_step_along_curve + 1);
-
-            // Add the current vehicle position as first point
-            resampled_points.push_back(current_vehicle_point);
+            resampled_points.reserve(total_step_along_curve);
 
             double scaled_steps_along_curve = 0.0; // from 0 (start) to 1 (end) for the whole trajectory
-            for(int steps_along_curve = 0; steps_along_curve < total_step_along_curve; steps_along_curve++){
+            for(int step = 0; step < total_step_along_curve; step++){
                 scaled_steps_along_curve += 1.0 / total_step_along_curve;
                 lanelet::BasicPoint2d p = (*fit_curve)(scaled_steps_along_curve);
                 resampled_points.push_back(p);
