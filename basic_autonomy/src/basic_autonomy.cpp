@@ -1367,7 +1367,7 @@ namespace basic_autonomy
         {
             if (yield_plan.trajectory_points.size() < 2)
             {
-                RCLCPP_WARN(node_handler->get_logger(), "Invalid Yield Trajectory");
+                RCLCPP_WARN(node_handler->get_logger(), "Invalid Yield Trajectory with less than 2 points!");
                 return false;
             }
 
@@ -1380,7 +1380,9 @@ namespace basic_autonomy
             }
             else
             {
-                RCLCPP_DEBUG(node_handler->get_logger(), "Old Yield Trajectory");
+                RCLCPP_WARN_STREAM(node_handler->get_logger(), "Invalid Yeild Trajectory with old target_time: " << 
+                    std::string(rclcpp::Time(yield_plan.trajectory_points[0].target_time).seconds() << ", where now: " <<
+                    std::string(node_handler->now());
             }
 
             return false;
@@ -1393,7 +1395,7 @@ namespace basic_autonomy
             const carma_ros2_utils::ClientPtr<carma_planning_msgs::srv::PlanTrajectory>& yield_client,
             int yield_plugin_service_call_timeout)
         {
-            RCLCPP_DEBUG(node_handler->get_logger(), "Activate Object Avoidance");
+            RCLCPP_DEBUG(node_handler->get_logger(), "Object avoidance activated");
 
             if (!yield_client || !yield_client->service_is_ready())
             {
@@ -1427,7 +1429,8 @@ namespace basic_autonomy
             }
             else
             {
-                throw std::invalid_argument("Invalid Yield Trajectory");
+                RCLCPP_WARN_STREAM(node_handler->get_logger(), "Invalid yield trajectory detected, returning original trajectory of size: " <<
+                    resp->trajectory_plan.trajectory_points.size());
             }
 
             return resp;
