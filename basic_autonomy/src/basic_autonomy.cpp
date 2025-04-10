@@ -1381,8 +1381,8 @@ namespace basic_autonomy
             else
             {
                 RCLCPP_WARN_STREAM(node_handler->get_logger(), "Invalid Yeild Trajectory with old target_time: " << 
-                    std::string(rclcpp::Time(yield_plan.trajectory_points[0].target_time).seconds()) << ", where now: " <<
-                    std::string(node_handler->now()));
+                    std::to_string(rclcpp::Time(yield_plan.trajectory_points[0].target_time).seconds()) << ", where now: " <<
+                    std::to_string(node_handler->now().seconds()));
             }
 
             return false;
