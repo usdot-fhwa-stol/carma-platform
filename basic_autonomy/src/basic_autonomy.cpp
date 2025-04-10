@@ -933,7 +933,7 @@ namespace basic_autonomy
             std::vector<double> better_curvature;
             better_curvature.reserve(1 + curve_points.size() * 2);
 
-            for (int steps_along_curve = 0; steps_along_curve < total_step_along_curve; steps_along_curve++) // Resample curve at tighter resolution
+            for (int steps_along_curve = 0; steps_along_curve < total_step_along_curve + 1; steps_along_curve++) // Resample curve at tighter resolution
             {
                 lanelet::BasicPoint2d p = (*fit_curve)(scaled_steps_along_curve);
 
@@ -1200,12 +1200,9 @@ namespace basic_autonomy
                     // Point is after last point, use last speed
                     resampled_speeds.push_back(final_actual_speeds.back());
                 } else {
-                    // Linearly interpolate between the two nearest speeds
-                    double ratio = (downtrack - original_downtracks[idx-1]) /
-                                  (original_downtracks[idx] - original_downtracks[idx-1]);
-                    double interpolated_speed = final_actual_speeds[idx-1] +
-                                               ratio * (final_actual_speeds[idx] - final_actual_speeds[idx-1]);
-                    resampled_speeds.push_back(interpolated_speed);
+                    // Approximating the speed to the original because moving average filter
+                    // will smooth the speed values anyways
+                    resampled_speeds.push_back(final_actual_speeds[idx]);
                 }
             }
 
