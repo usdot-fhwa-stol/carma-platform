@@ -2,7 +2,7 @@
 prediction_time_step: 0.2
 
 # Period of prediction in seconds
-prediction_period: 10.0
+prediction_period: 30.0
 
 # CV Model X-Axis Acceleration Noise
 cv_x_accel_noise: 9.0
@@ -30,7 +30,7 @@ enable_mobility_path_processing: false
 
 # Boolean: If true then ExternalObjects generated from sensor data will be processed.
 #          If other object sources are enabled, they will be synchronized but no fusion will occur (objects may be duplicated)
-enable_sensor_processing: false
+enable_sensor_processing: true
 
 # Boolean: True if CTRV motion model should be used for the object type. False, if CV should be used:
 enable_ctrv_for_unknown_obj: true

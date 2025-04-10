@@ -154,7 +154,7 @@ def generate_launch_description():
                     {'--log-level' : GetLogLevel('cpp_message', env_log_levels) }
                 ],
                 remappings=[
-                    ("inbound_binary_msg", [ EnvironmentVariable('CARMA_INTR_NS', default_value=''), "/comms/inbound_binary_msg" ] ),
+                    ("inbound_binary_msg", [ EnvironmentVariable('CARMA_INTR_NS', default_value=''), "/comms/inbound_binary_msg_test" ] ),
                     ("outbound_binary_msg", [ EnvironmentVariable('CARMA_INTR_NS', default_value=''), "/comms/outbound_binary_msg" ] ),
                 ],
                 parameters=[
@@ -247,5 +247,3 @@ def generate_launch_description():
         carma_v2x_container,
         subsystem_controller
     ])
-
-
