@@ -1171,11 +1171,17 @@ namespace basic_autonomy
             }
 
             std::vector<lanelet::BasicPoint2d> resampled_points;
-            resampled_points.reserve(total_step_along_curve);
+            resampled_points.reserve(total_step_along_curve + 1);
+            // Add the current vehicle position as first point
+            resampled_points.push_back(current_vehicle_point);
 
             double scaled_steps_along_curve = 0.0; // from 0 (start) to 1 (end) for the whole trajectory
             for(int step = 0; step <= total_step_along_curve; step++){
                 scaled_steps_along_curve += 1.0 / total_step_along_curve;
+                // For the last step, ensure we hit exactly 1.0
+                if (step == total_step_along_curve) {
+                    scaled_steps_along_curve = 1.0;
+                }
                 lanelet::BasicPoint2d p = (*fit_curve)(scaled_steps_along_curve);
                 resampled_points.push_back(p);
             }
