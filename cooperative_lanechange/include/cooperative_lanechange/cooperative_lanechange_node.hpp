@@ -89,9 +89,6 @@ namespace cooperative_lanechange
     std::string map_georeference_{""};
     std::shared_ptr<lanelet::projection::LocalFrameProjector> map_projector_;
 
-    // The name of the plugin
-    std::string plugin_name_ = "cooperative_lanechange";
-
     // Trajectory frequency
     double traj_freq_ = 10;
 

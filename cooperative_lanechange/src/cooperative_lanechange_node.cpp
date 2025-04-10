@@ -421,7 +421,7 @@ namespace cooperative_lanechange
 
     // Set the planning plugin field name
     for (auto& p : resp->trajectory_plan.trajectory_points) {
-      p.planner_plugin_name = plugin_name_;
+      p.planner_plugin_name = get_plugin_name();
     }
 
     return;
