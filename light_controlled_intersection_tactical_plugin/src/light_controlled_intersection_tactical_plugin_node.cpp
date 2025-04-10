@@ -38,10 +38,11 @@ namespace light_controlled_intersection_tactical_plugin
     config_.vehicle_decel_limit_multiplier = declare_parameter<double>("vehicle_decel_limit_multiplier", config_.vehicle_decel_limit_multiplier);
     config_.vehicle_accel_limit_multiplier = declare_parameter<double>("vehicle_accel_limit_multiplier", config_.vehicle_accel_limit_multiplier);
     config_.lat_accel_multiplier = declare_parameter<double>("lat_accel_multiplier", config_.lat_accel_multiplier);
+    config_.vehicle_response_lag = declare_parameter<double>("vehicle_response_lag", config_.vehicle_response_lag);
     config_.stop_line_buffer = declare_parameter<double>("stop_line_buffer", config_.stop_line_buffer);
     config_.minimum_speed = declare_parameter<double>("minimum_speed", config_.minimum_speed);
-    config_.algorithm_evaluation_distance = declare_parameter<double>("algorithm_evaluation_distance", config_.algorithm_evaluation_distance);
-    config_.algorithm_evaluation_period = declare_parameter<double>("algorithm_evaluation_period", config_.algorithm_evaluation_period);
+    config_.dist_before_intersection_to_force_last_traj = declare_parameter<double>("dist_before_intersection_to_force_last_traj", config_.dist_before_intersection_to_force_last_traj);
+    config_.period_before_intersection_to_force_last_traj = declare_parameter<double>("period_before_intersection_to_force_last_traj", config_.period_before_intersection_to_force_last_traj);
 
     config_.lateral_accel_limit = declare_parameter<double>("vehicle_lateral_accel_limit", config_.lateral_accel_limit);
     config_.vehicle_accel_limit = declare_parameter<double>("vehicle_acceleration_limit", config_.vehicle_accel_limit);
@@ -61,11 +62,12 @@ namespace light_controlled_intersection_tactical_plugin
        {"buffer_ending_downtrack", config_.buffer_ending_downtrack},
        {"vehicle_decel_limit_multiplier", config_.vehicle_decel_limit_multiplier},
        {"vehicle_accel_limit_multiplier", config_.vehicle_accel_limit_multiplier},
+       {"vehicle_response_lag", config_.vehicle_response_lag},
        {"lat_accel_multiplier", config_.lat_accel_multiplier},
        {"stop_line_buffer", config_.stop_line_buffer},
        {"minimum_speed", config_.minimum_speed},
-       {"algorithm_evaluation_distance", config_.algorithm_evaluation_distance},
-       {"algorithm_evaluation_period", config_.algorithm_evaluation_period}}, parameters); // Global acceleration limits not allowed to dynamically update
+       {"dist_before_intersection_to_force_last_traj", config_.dist_before_intersection_to_force_last_traj},
+       {"period_before_intersection_to_force_last_traj", config_.period_before_intersection_to_force_last_traj}}, parameters); // Global acceleration limits not allowed to dynamically update
     auto error_2 = update_params<int>(
       {{"default_downsample_ratio", config_.default_downsample_ratio},
       {"turn_downsample_ratio", config_.turn_downsample_ratio},
@@ -87,6 +89,7 @@ namespace light_controlled_intersection_tactical_plugin
   carma_ros2_utils::CallbackReturn LightControlledIntersectionTransitPluginNode::on_configure_plugin()
   {
     RCLCPP_INFO_STREAM(rclcpp::get_logger("light_controlled_intersection_tactical_plugin"), "LightControlledIntersectionTransitPluginNode trying to configure");
+    trajectory_debug_pub_ = create_publisher<carma_debug_ros2_msgs::msg::TrajectoryCurvatureSpeeds>("debug/trajectory_planning", 1);
 
     // Reset config
     config_ = Config();
@@ -103,11 +106,12 @@ namespace light_controlled_intersection_tactical_plugin
     get_parameter<double>("buffer_ending_downtrack", config_.buffer_ending_downtrack);
     get_parameter<double>("vehicle_decel_limit_multiplier", config_.vehicle_decel_limit_multiplier);
     get_parameter<double>("vehicle_accel_limit_multiplier", config_.vehicle_accel_limit_multiplier);
+    get_parameter<double>("vehicle_response_lag", config_.vehicle_response_lag);
     get_parameter<double>("lat_accel_multiplier", config_.lat_accel_multiplier);
     get_parameter<double>("stop_line_buffer", config_.stop_line_buffer);
     get_parameter<double>("minimum_speed", config_.minimum_speed);
-    get_parameter<double>("algorithm_evaluation_distance", config_.algorithm_evaluation_distance);
-    get_parameter<double>("algorithm_evaluation_period", config_.algorithm_evaluation_period);
+    get_parameter<double>("dist_before_intersection_to_force_last_traj", config_.dist_before_intersection_to_force_last_traj);
+    get_parameter<double>("period_before_intersection_to_force_last_traj", config_.period_before_intersection_to_force_last_traj);
     get_parameter<double>("vehicle_lateral_accel_limit", config_.lateral_accel_limit);
     get_parameter<double>("vehicle_acceleration_limit", config_.vehicle_accel_limit);
     get_parameter<double>("vehicle_deceleration_limit", config_.vehicle_decel_limit);
@@ -125,7 +129,13 @@ namespace light_controlled_intersection_tactical_plugin
     RCLCPP_INFO_STREAM(rclcpp::get_logger("light_controlled_intersection_tactical_plugin"), "Loaded params: " << config_);
 
     // Initialize worker object
-    worker_ = std::make_shared<LightControlledIntersectionTacticalPlugin>(get_world_model(), config_, get_plugin_name(), shared_from_this());
+    worker_ = std::make_shared<LightControlledIntersectionTacticalPlugin>(
+      get_world_model(),
+      config_,
+      [this](const carma_debug_ros2_msgs::msg::TrajectoryCurvatureSpeeds& msg)
+        { trajectory_debug_pub_->publish(msg); },
+      get_plugin_name(),
+      shared_from_this());
 
     yield_client_ = create_client<carma_planning_msgs::srv::PlanTrajectory>("yield_plugin/plan_trajectory");
     worker_->set_yield_client(yield_client_);

@@ -429,6 +429,7 @@ def generate_launch_description():
                 ],
                 parameters=[
                     vehicle_config_param_file,
+                    vehicle_characteristics_param_file,
                     light_controlled_intersection_tactical_plugin_param_file
                 ]
             ),

@@ -44,7 +44,7 @@ namespace light_controlled_intersection_tactical_plugin
 
         std::vector<PointSpeedPair> points_and_target_speeds;
 
-        auto lci_tactical = LightControlledIntersectionTacticalPlugin(wm, config, "", lci_node);
+        auto lci_tactical = LightControlledIntersectionTacticalPlugin(wm, config, [&](auto msg) {}, "test_node", lci_node);
 
         TrajectoryParams tp;
         tp.v1_ = 1.0;
@@ -140,7 +140,7 @@ namespace light_controlled_intersection_tactical_plugin
 
         std::vector<PointSpeedPair> points_and_target_speeds;
 
-        auto lci_tactical = LightControlledIntersectionTacticalPlugin(wm, config, "", lci_node);
+        auto lci_tactical = LightControlledIntersectionTacticalPlugin(wm, config, [&](auto msg) {}, "test_node", lci_node);
 
         carma_planning_msgs::msg::Maneuver maneuver_msg;
         maneuver_msg.type = carma_planning_msgs::msg::Maneuver::LANE_FOLLOWING;
@@ -219,7 +219,7 @@ namespace light_controlled_intersection_tactical_plugin
         Config config;
         config.minimum_speed = 1;
 
-        auto lci_tactical = LightControlledIntersectionTacticalPlugin(wm, config, "", lci_node);
+        auto lci_tactical = LightControlledIntersectionTacticalPlugin(wm, config, [&](auto msg) {}, "test_node", lci_node);
 
         carma_planning_msgs::msg::Maneuver maneuver_msg;
         maneuver_msg.type = carma_planning_msgs::msg::Maneuver::LANE_FOLLOWING;
@@ -301,7 +301,7 @@ namespace light_controlled_intersection_tactical_plugin
         config.minimum_speed = 1;
         config.default_downsample_ratio = 1;
 
-        auto lci_tactical = LightControlledIntersectionTacticalPlugin(wm, config, "", lci_node);
+        auto lci_tactical = LightControlledIntersectionTacticalPlugin(wm, config, [&](auto msg) {}, "test_node", lci_node);
 
         carma_planning_msgs::msg::Maneuver maneuver_msg;
         maneuver_msg.type = carma_planning_msgs::msg::Maneuver::LANE_FOLLOWING;
@@ -357,6 +357,150 @@ namespace light_controlled_intersection_tactical_plugin
         EXPECT_NEAR(rclcpp::Time(resp->trajectory_plan.trajectory_points.front().target_time).seconds(), 0.0, 0.001);
         EXPECT_NEAR(rclcpp::Time(resp->trajectory_plan.trajectory_points.back().target_time).seconds(), 9.23, 0.1);
         EXPECT_NEAR(resp->trajectory_plan.trajectory_points.front().y, 0.1, 0.001);
+
+    }
+
+    TEST(LCITacticalPluginTest, planTrajectorySmoothing)
+    {
+        std::shared_ptr<carma_wm::CARMAWorldModel> wm = std::make_shared<carma_wm::CARMAWorldModel>();
+        auto map = carma_wm::test::buildGuidanceTestMap(3.7, 10);
+        wm->setMap(map);
+        carma_wm::test::setSpeedLimit(15_mph, wm);
+        carma_wm::test::setRouteByIds({ 1200, 1201, 1202, 1203 }, wm);
+
+        rclcpp::NodeOptions options;
+        auto lci_node = std::make_shared<light_controlled_intersection_tactical_plugin::LightControlledIntersectionTransitPluginNode>(options);
+        Config config;
+        config.minimum_speed = 1;
+        config.default_downsample_ratio = 1;
+
+        auto lci_tactical = LightControlledIntersectionTacticalPlugin(wm, config, [&](auto msg) {}, "test_node", lci_node);
+
+        carma_planning_msgs::msg::Maneuver maneuver_msg;
+        maneuver_msg.type = carma_planning_msgs::msg::Maneuver::LANE_FOLLOWING;
+        maneuver_msg.lane_following_maneuver.parameters.negotiation_type =
+            carma_planning_msgs::msg::ManeuverParameters::NO_NEGOTIATION;
+        maneuver_msg.lane_following_maneuver.parameters.presence_vector =
+            carma_planning_msgs::msg::ManeuverParameters::HAS_TACTICAL_PLUGIN | carma_planning_msgs::msg::ManeuverParameters::HAS_FLOAT_META_DATA | carma_planning_msgs::msg::ManeuverParameters::HAS_INT_META_DATA;
+        maneuver_msg.lane_following_maneuver.start_dist = 1;
+        maneuver_msg.lane_following_maneuver.start_speed = 1;
+        maneuver_msg.lane_following_maneuver.end_dist = 11.0;
+        maneuver_msg.lane_following_maneuver.end_speed = 2;
+
+        carma_planning_msgs::msg::Maneuver invalid_maneuver_msg;
+        invalid_maneuver_msg.type = carma_planning_msgs::msg::Maneuver::LANE_CHANGE;
+        invalid_maneuver_msg.lane_following_maneuver.parameters.string_valued_meta_data.push_back(
+            "Carma/signalized_intersection");
+        auto invalid_req = std::make_shared<carma_planning_msgs::srv::PlanTrajectory::Request>();
+        auto invalid_resp = std::make_shared<carma_planning_msgs::srv::PlanTrajectory::Response>();
+        invalid_req->maneuver_plan.maneuvers.push_back(invalid_maneuver_msg);
+        invalid_req->maneuver_index_to_plan = 0;
+
+        // Throw if maneuver type is not lane following
+        EXPECT_THROW(lci_tactical.planTrajectorySmoothing(
+            invalid_req, invalid_resp), std::invalid_argument);
+
+        invalid_maneuver_msg.type = carma_planning_msgs::msg::Maneuver::LANE_FOLLOWING;
+        invalid_req->maneuver_index_to_plan = 2;
+        invalid_req->maneuver_plan.maneuvers = {};
+        invalid_req->maneuver_plan.maneuvers.push_back(invalid_maneuver_msg);
+
+        // Throw if maneuver index is out of bounds
+        EXPECT_THROW(lci_tactical.planTrajectorySmoothing(
+            invalid_req, invalid_resp), std::invalid_argument);
+
+        TrajectoryParams tsp;
+        tsp.v1_ = 1.0;
+        tsp.v2_ = 2.0;
+        tsp.v3_ = 2.0;
+        tsp.x1_ = 2.0;
+        tsp.x2_ = 4.0;
+        tsp.x3_ = 5.0;
+
+        carma_planning_msgs::msg::VehicleState invalid_state;
+        invalid_state.x_pos_global = 111.0;
+        invalid_req->vehicle_state = invalid_state;
+        invalid_req->maneuver_index_to_plan = 0;
+
+        lci_tactical.planTrajectorySmoothing(invalid_req, invalid_resp);
+        EXPECT_EQ(invalid_resp->trajectory_plan.trajectory_points.size(), 0);
+
+        carma_planning_msgs::msg::VehicleState state;
+        state.x_pos_global = 1.0;
+        state.y_pos_global = 0.1;
+        state.longitudinal_vel = 1;
+
+        maneuver_msg.lane_following_maneuver.parameters.float_valued_meta_data.push_back(tsp.a1_);
+        maneuver_msg.lane_following_maneuver.parameters.float_valued_meta_data.push_back(tsp.v1_);
+        maneuver_msg.lane_following_maneuver.parameters.float_valued_meta_data.push_back(tsp.x1_);
+
+        maneuver_msg.lane_following_maneuver.parameters.float_valued_meta_data.push_back(tsp.a2_);
+        maneuver_msg.lane_following_maneuver.parameters.float_valued_meta_data.push_back(tsp.v2_);
+        maneuver_msg.lane_following_maneuver.parameters.float_valued_meta_data.push_back(tsp.x2_);
+
+        maneuver_msg.lane_following_maneuver.parameters.float_valued_meta_data.push_back(tsp.a3_);
+        maneuver_msg.lane_following_maneuver.parameters.float_valued_meta_data.push_back(tsp.v3_);
+        maneuver_msg.lane_following_maneuver.parameters.float_valued_meta_data.push_back(tsp.x3_);
+
+        maneuver_msg.lane_following_maneuver.parameters.int_valued_meta_data.push_back(1);
+        maneuver_msg.lane_following_maneuver.parameters.int_valued_meta_data.push_back(1);
+        maneuver_msg.lane_following_maneuver.parameters.string_valued_meta_data.push_back(
+            "Carma/signalized_intersection");
+
+        maneuver_msg.lane_following_maneuver.lane_ids.push_back(std::to_string(1200));
+
+        auto req = std::make_shared<carma_planning_msgs::srv::PlanTrajectory::Request>();
+        auto resp = std::make_shared<carma_planning_msgs::srv::PlanTrajectory::Response>();
+
+        req->maneuver_plan.maneuvers.push_back(maneuver_msg);
+        req->maneuver_index_to_plan = 0;
+        req->vehicle_state = state;
+
+        lci_tactical.planTrajectorySmoothing(req, resp);
+
+        EXPECT_NEAR(rclcpp::Time(
+            resp->trajectory_plan.trajectory_points.front().target_time).seconds(), 0.0, 0.001);
+        EXPECT_NEAR(rclcpp::Time(
+            resp->trajectory_plan.trajectory_points.back().target_time).seconds(), 9.23, 0.1);
+        EXPECT_NEAR(resp->trajectory_plan.trajectory_points.front().y, 0.1, 0.001);
+
+        // Check last trajectory and time bound
+        lci_tactical.config_.trajectory_time_length = 2.0;
+        lci_tactical.planTrajectorySmoothing(req, resp);
+
+        EXPECT_NEAR(rclcpp::Time(
+            resp->trajectory_plan.trajectory_points.front().target_time).seconds(), 0.0, 0.001);
+        EXPECT_NEAR(rclcpp::Time(
+            resp->trajectory_plan.trajectory_points.back().target_time).seconds(), 1.237, 0.1);
+        EXPECT_NEAR(resp->trajectory_plan.trajectory_points.front().y, 0.1, 0.001);
+
+        // Check the planner name
+        EXPECT_EQ(resp->trajectory_plan.trajectory_points.back().planner_plugin_name,
+            "test_node");
+        EXPECT_EQ(resp->trajectory_plan.trajectory_points.front().planner_plugin_name,
+            "test_node");
+        EXPECT_NEAR(resp->trajectory_plan.trajectory_points.front().y, 0.1, 0.001);
+
+        // TEST shouldUseLastTrajectory
+        bool is_new_case_successful = true;
+        auto new_case = light_controlled_intersection_tactical_plugin::TSCase::CASE_1;
+        // same case new case success
+        EXPECT_TRUE(lci_tactical.shouldUseLastTrajectory(
+            new_case, is_new_case_successful,
+            rclcpp::Time(resp->trajectory_plan.trajectory_points.front().target_time)));
+
+        // same case new case failed (edge case)
+        is_new_case_successful = false;
+        EXPECT_TRUE(lci_tactical.shouldUseLastTrajectory(
+            new_case, is_new_case_successful,
+            rclcpp::Time(resp->trajectory_plan.trajectory_points.front().target_time)));
+
+        // different case new case success
+        is_new_case_successful = true;
+        new_case = light_controlled_intersection_tactical_plugin::TSCase::CASE_2;
+        EXPECT_FALSE(lci_tactical.shouldUseLastTrajectory(
+            new_case, is_new_case_successful,
+            rclcpp::Time(resp->trajectory_plan.trajectory_points.front().target_time)));
 
     }
 
