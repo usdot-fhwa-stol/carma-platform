@@ -933,7 +933,7 @@ namespace basic_autonomy
             std::vector<double> better_curvature;
             better_curvature.reserve(1 + curve_points.size() * 2);
 
-            for (int steps_along_curve = 0; steps_along_curve < total_step_along_curve + 1; steps_along_curve++) // Resample curve at tighter resolution
+            for (int steps_along_curve = 0; steps_along_curve < total_step_along_curve; steps_along_curve++) // Resample curve at tighter resolution
             {
                 lanelet::BasicPoint2d p = (*fit_curve)(scaled_steps_along_curve);
 
@@ -1174,7 +1174,7 @@ namespace basic_autonomy
             resampled_points.reserve(total_step_along_curve);
 
             double scaled_steps_along_curve = 0.0; // from 0 (start) to 1 (end) for the whole trajectory
-            for(int step = 0; step < total_step_along_curve; step++){
+            for(int step = 0; step <= total_step_along_curve; step++){
                 scaled_steps_along_curve += 1.0 / total_step_along_curve;
                 lanelet::BasicPoint2d p = (*fit_curve)(scaled_steps_along_curve);
                 resampled_points.push_back(p);
