@@ -1429,6 +1429,8 @@ namespace basic_autonomy
             }
             else
             {
+                // This logic used to throw. However, yield_plugin is intermittently returning invalid trajectory when it shouldn't
+                // TODO: CAR-6118 is tracking it 
                 RCLCPP_WARN_STREAM(node_handler->get_logger(), "Invalid yield trajectory detected, returning original trajectory of size: " <<
                     resp->trajectory_plan.trajectory_points.size());
             }
