@@ -421,6 +421,9 @@ auto MultipleObjectTrackerNode::store_new_detections(
     RCLCPP_WARN(this->get_logger(), "Not storing detections: incoming detection list is empty");
     return;
   }
+  else{
+    RCLCPP_ERROR_STREAM(this->get_logger(), "Storing detections from msg");
+  }
 
   for (const auto & detection_msg : msg.detections) {
     try {
@@ -584,6 +587,7 @@ auto MultipleObjectTrackerNode::execute_pipeline() -> void
       get_logger(), "List of tracks is empty. Converting detections to tentative tracks");
 
     RCLCPP_ERROR_LOG(this->get_logger(), "Execute pipeline Print 2");
+    RCLCPP_ERROR_LOG(this->get_logger(), "Size of detections: "<< detections_.size());
     // This clustering distance is an arbitrarily-chosen heuristic. It is working well for our
     // current purposes, but there's no reason it couldn't be restricted or loosened.
     const auto clusters{mot::cluster_detections(detections_, 0.75)};
@@ -649,6 +653,7 @@ auto MultipleObjectTrackerNode::execute_pipeline() -> void
     }
   }
   RCLCPP_ERROR_LOG(this->get_logger(), "Execute pipeline Print 12");
+  RCLCPP_ERROR_LOG(this->get_logger(),"unassociated detections size: "<< unassociated_detections.size())
   // We want to remove unassociated tracks that are close enough to existing tracks
   // to avoid creating duplicates. Duplicate tracks will cause association inconsistencies
   // (flip flopping associations between the two tracks).
@@ -669,7 +674,7 @@ auto MultipleObjectTrackerNode::execute_pipeline() -> void
     })};
   RCLCPP_ERROR_LOG(this->get_logger(), "Execute pipeline Print 13");
   unassociated_detections.erase(remove_start, std::end(unassociated_detections));
-
+  RCLCPP_ERROR_LOG(this->get_logger(),"After removing - unassociated detections size: "<< unassociated_detections.size())
   // This clustering distance is an arbitrarily-chosen heuristic. It is working well for our
   // current purposes, but there's no reason it couldn't be restricted or loosened.
   const auto clusters{mot::cluster_detections(unassociated_detections, 0.75, MetricSe2{})};

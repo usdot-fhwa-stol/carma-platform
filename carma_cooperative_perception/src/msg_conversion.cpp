@@ -248,9 +248,9 @@ auto to_detection_list_msg(
   -> carma_cooperative_perception_interfaces::msg::DetectionList
 {
   carma_cooperative_perception_interfaces::msg::DetectionList detection_list;
-  RCLCPP_ERROR_STREAM(rclcpp::get_logger("carma_cooperative_perception"), "Print 1");
+
   const auto ref_pos_3d{Position3D::from_msg(sdsm.ref_pos)};
-  RCLCPP_ERROR_STREAM(rclcpp::get_logger("carma_cooperative_perception"), "Print 1a");
+
 
   units::length::meter_t elevation(0.0);
   if(ref_pos_3d.elevation){
@@ -258,44 +258,44 @@ auto to_detection_list_msg(
   }
   const Wgs84Coordinate ref_pos_wgs84{
     ref_pos_3d.latitude, ref_pos_3d.longitude, elevation};
-  RCLCPP_ERROR_STREAM(rclcpp::get_logger("carma_cooperative_perception"), "Print 1b");
+
   const auto ref_pos_map{project_to_carma_map(ref_pos_wgs84, georeference)};
-  RCLCPP_ERROR_STREAM(rclcpp::get_logger("carma_cooperative_perception"), "Print 2");
+
   for (const auto & object_data : sdsm.objects.detected_object_data) {
     const auto common_data{object_data.detected_object_common_data};
 
     carma_cooperative_perception_interfaces::msg::Detection detection;
     detection.header.frame_id = "map";
-    RCLCPP_ERROR_STREAM(rclcpp::get_logger("carma_cooperative_perception"), "Print 3");
+
     const auto detection_time{calc_detection_time_stamp(
       DDateTime::from_msg(sdsm.sdsm_time_stamp),
       MeasurementTimeOffset::from_msg(common_data.measurement_time))};
-    RCLCPP_ERROR_STREAM(rclcpp::get_logger("carma_cooperative_perception"), "Print 4");
+
     detection.header.stamp = to_time_msg(detection_time);
 
     // TemporaryID and octet string terms come from the SAE J2735 message definitions
     static constexpr auto to_string = [](const std::vector<std::uint8_t> & temporary_id) {
       std::string str;
       str.reserve(2 * std::size(temporary_id));  // Two hex characters per octet string
-      RCLCPP_ERROR_STREAM(rclcpp::get_logger("carma_cooperative_perception"), "Print 5");
+
       std::array<char, 2> buffer;
       for (const auto & octet_string : temporary_id) {
         std::to_chars(std::begin(buffer), std::end(buffer), octet_string, 16);
         str.push_back(std::toupper(std::get<0>(buffer)));
         str.push_back(std::toupper(std::get<1>(buffer)));
       }
-      RCLCPP_ERROR_STREAM(rclcpp::get_logger("carma_cooperative_perception"), "Print 6");
+
       return str;
     };
 
     detection.id =
       to_string(sdsm.source_id.id) + "-" + std::to_string(common_data.detected_id.object_id);
-    RCLCPP_ERROR_STREAM(rclcpp::get_logger("carma_cooperative_perception"), "Print 7");
+
     const auto pos_offset_enu{ned_to_enu(PositionOffsetXYZ::from_msg(common_data.pos))};
     detection.pose.pose.position = to_position_msg(MapCoordinate{
       ref_pos_map.easting + pos_offset_enu.offset_x, ref_pos_map.northing + pos_offset_enu.offset_y,
       ref_pos_map.elevation + pos_offset_enu.offset_z.value_or(units::length::meter_t{0.0})});
-    RCLCPP_ERROR_STREAM(rclcpp::get_logger("carma_cooperative_perception"), "Print 8");
+
     // Pose covariance is flattened 6x6 matrix with rows/columns of x, y, z, roll, pitch, yaw
     try {
       detection.pose.covariance.at(0) =
@@ -305,7 +305,7 @@ auto to_detection_list_msg(
     } catch (const std::bad_optional_access &) {
       throw std::runtime_error("missing position confidence");
     }
-    RCLCPP_ERROR_STREAM(rclcpp::get_logger("carma_cooperative_perception"), "Print 9");
+
     try {
       detection.pose.covariance.at(14) =
         0.5 * std::pow(j2735_v2x_msgs::to_double(common_data.pos_confidence.elevation).value(), 2);
@@ -314,19 +314,19 @@ auto to_detection_list_msg(
     }
 
     const auto true_heading{units::angle::degree_t{Heading::from_msg(common_data.heading).heading}};
-    RCLCPP_ERROR_STREAM(rclcpp::get_logger("carma_cooperative_perception"), "Print 10");
+
     // Note: This should really use the detection's WGS-84 position, so the
     // convergence will be off slightly. TODO
     const units::angle::degree_t grid_convergence{
       calculate_grid_convergence(ref_pos_wgs84, georeference)};
-    RCLCPP_ERROR_STREAM(rclcpp::get_logger("carma_cooperative_perception"), "Print 11");
+
     const auto grid_heading{true_heading - grid_convergence};
     const auto enu_yaw{heading_to_enu_yaw(grid_heading)};
-    RCLCPP_ERROR_STREAM(rclcpp::get_logger("carma_cooperative_perception"), "Print 12");
+
     tf2::Quaternion quat_tf;
     quat_tf.setRPY(0, 0, remove_units(units::angle::radian_t{enu_yaw}));
     detection.pose.pose.orientation = tf2::toMsg(quat_tf);
-    RCLCPP_ERROR_STREAM(rclcpp::get_logger("carma_cooperative_perception"), "Print 13");
+
     try {
       // Pose covariance is flattened 6x6 matrix with rows/columns of x, y, z, roll, pitch, yaw
       detection.pose.covariance.at(35) =
@@ -364,7 +364,7 @@ auto to_detection_list_msg(
       detection.twist.covariance.at(14) = 0.0;
     }
 
-    RCLCPP_ERROR_STREAM(rclcpp::get_logger("carma_cooperative_perception"), "Print 14");
+
 
     if(common_data.accel_4_way.yaw_rate){
       const auto accel_set{AccelerationSet4Way::from_msg(common_data.accel_4_way)};
@@ -383,7 +383,7 @@ auto to_detection_list_msg(
       detection.twist.covariance.at(35) = 0.0;
     }
 
-    RCLCPP_ERROR_STREAM(rclcpp::get_logger("carma_cooperative_perception"), "Print 15");
+
     switch (common_data.obj_type.object_type) {
       case common_data.obj_type.ANIMAL:
         detection.motion_model = detection.MOTION_MODEL_CTRV;
@@ -405,7 +405,7 @@ auto to_detection_list_msg(
 
     detection_list.detections.push_back(std::move(detection));
   }
-  RCLCPP_ERROR_STREAM(rclcpp::get_logger("carma_cooperative_perception"), "Print 16");
+
   return detection_list;
 }
 
