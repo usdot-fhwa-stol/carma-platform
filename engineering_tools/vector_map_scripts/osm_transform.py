@@ -1,54 +1,3 @@
-"""
-This script relocates and optionally rotates an OpenStreetMap (OSM) file that uses a custom geoReference. It's useful when you want to:
-- Move a local map to a new geographic location.
-- Preserve geometry, scale, and layout.
-- Rotate the map around its origin (for alignment or testing).
----
-
-Steps:
-
-1. Read the input OSM XML file.
-2. Extract the original geoReference (a Transverse Mercator projection centered at some latitude/longitude).
-3. Convert each nodes lat/lon to projected (X, Y) coordinates using the original projection.
-4. Apply a 2D rotation (optional) around the local origin (0, 0).
-5. Transform the rotated (X, Y) into new lat/lon coordinates using a new projection centered at a new location.
-6. Update the <geoReference> tag to reflect the new center.
-7. Save the updated OSM XML file with transformed coordinates.
-
----
-
-Inputs:
-
-1- input_file.osm: An OSM XML file that:
-- Contains a <geoReference> string using +proj=tmerc
-- Has <node> elements with lat and lon attributes
-
-2- output_file.osm: The transformed OSM map name that:
-- All node positions have been relocated and optionally rotated
-- The <geoReference> tag is updated to match the new map center
-- The map geometry is preserved in relative terms but relocated globally
-
----
-
-Parameters to adjust to transform:
-
-- rotation_deg: Rotation angle in degrees (positive = counter-clockwise)
-- rotate_lat, rotate_lon: Rotation reference point, where the map is rotated around
-- new_lat_0, new_lon_0: New center location in geographic coordinates (latitude, longitude)
-
---
-
-Dependency:
-pip install lxml pyproj
-
---
-how to run the script:
-
-python osm_transform.py suntrax.osm suntrax_transformed.osm
-
-
-"""
-
 import argparse
 from lxml import etree
 from pyproj import CRS, Transformer
@@ -75,6 +24,10 @@ parser.add_argument("input_file", help="Path to the input .osm file")
 parser.add_argument("output_file", help="Path to the output .osm file")
 args = parser.parse_args()
 
+# === Fixed rotation angle ===
+rotation_deg = 0  # Counter-clockwise
+theta_rad = math.radians(rotation_deg)
+
 # === Parse XML ===
 tree = etree.parse(args.input_file)
 root = tree.getroot()
@@ -87,7 +40,9 @@ if geo_ref_elem is None or not geo_ref_elem.text:
 old_proj_str = geo_ref_elem.text.strip()
 print(f"📌 Extracted old geoReference:\n{old_proj_str}\n")
 
-# === Define new geoReference projection string ===
+# === New map center for updated geoReference ===
+new_lat_0 = 38.955789
+new_lon_0 = -77.150789
 new_proj_str = f"+proj=tmerc +lat_0={new_lat_0} +lon_0={new_lon_0} +k=1 +x_0=0 +y_0=0 +datum=WGS84 +units=m +geoidgrids=egm96_15.gtx +vunits=m +no_defs"
 print(f"📌 Updated new geoReference:\n{new_proj_str}\n")
 
