@@ -513,7 +513,7 @@ carma__autoupdate_on() {
   COMPOSE_ENV_FILES_WITH_DEFAULT="$(pwd)/../.env"
 
   # Schedule the Docker image updates using cron
-  (crontab -l 2>/dev/null; echo "${minute} ${hour} * * * docker run --rm --volumes-from carma-config:ro--entrypoint cat busybox:latest /opt/carma/vehicle/config/docker-compose.yml | COMPOSE_ENV_FILES="$COMPOSE_ENV_FILES_WITH_DEFAULT", docker compose -f - pull --ignore-pull-failures") | crontab -
+  (crontab -l 2>/dev/null; echo "${minute} ${hour} * * * docker run --rm --volumes-from carma-config:ro --entrypoint cat busybox:latest /opt/carma/vehicle/config/docker-compose.yml | COMPOSE_ENV_FILES="$COMPOSE_ENV_FILES_WITH_DEFAULT", docker compose -f - pull --ignore-pull-failures") | crontab -
 
   echo "Docker image updates scheduled for $hour:$minute daily."
 }
