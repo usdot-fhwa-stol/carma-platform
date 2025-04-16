@@ -99,6 +99,14 @@ auto to_detection_list_msg(
 auto to_external_object_msg(const carma_cooperative_perception_interfaces::msg::Track & track)
   -> carma_perception_msgs::msg::ExternalObject;
 
+auto to_external_object_msg(
+  const carma_cooperative_perception_interfaces::msg::Detection & detection)
+  -> carma_perception_msgs::msg::ExternalObject;
+
+auto to_external_object_list_msg(
+  const carma_cooperative_perception_interfaces::msg::DetectionList & detection_list)
+  -> carma_perception_msgs::msg::ExternalObjectList;
+
 auto to_external_object_list_msg(
   const carma_cooperative_perception_interfaces::msg::TrackList & track_list)
   -> carma_perception_msgs::msg::ExternalObjectList;
