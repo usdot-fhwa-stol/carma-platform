@@ -94,6 +94,8 @@ auto make_ctrv_detection(const carma_cooperative_perception_interfaces::msg::Det
   tf2::Matrix3x3 matrix{orientation};
   matrix.getRPY(roll, pitch, yaw);
 
+  RCLCPP_ERROR_STREAM(rclcpp::get_logger("carma_cooperative_perception"), "Make ctrv_detection pose x: "<<msg.pose.pose.position.x<<" y:"<<msg.pose.pose.position.y);
+
   const mot::CtrvState state{
     units::length::meter_t{msg.pose.pose.position.x},
     units::length::meter_t{msg.pose.pose.position.y},
@@ -610,11 +612,11 @@ auto MultipleObjectTrackerNode::execute_pipeline() -> void
     uuid_index_map_.clear();
     return;
   }
-  RCLCPP_ERROR_STREAM(this->get_logger(), "Execute pipeline Print 5");
+
   const units::time::second_t current_time{this->now().seconds()};
 
   temporally_align_detections(detections_, current_time);
-  RCLCPP_ERROR_STREAM(this->get_logger(), "Execute pipeline Print 6");
+
   const auto predicted_tracks{predict_track_states(track_manager_.get_all_tracks(), current_time)};
   auto scores{
     mot::score_tracks_and_detections(predicted_tracks, detections_, SemanticDistance2dScore{})};
