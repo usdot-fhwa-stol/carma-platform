@@ -197,7 +197,7 @@ def generate_launch_description():
     is_cp_mot_enabled = LaunchConfiguration('is_cp_mot_enabled')
     declare_is_cp_mot_enabled = DeclareLaunchArgument(
         name='is_cp_mot_enabled',
-        default_value = 'False',
+        default_value = 'True',
         description = 'True if user wants Cooperative Perception capability using Multiple Object Tracking to be enabled'
     )
 

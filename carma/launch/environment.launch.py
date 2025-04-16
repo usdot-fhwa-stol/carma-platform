@@ -508,7 +508,7 @@ def generate_launch_description():
                     {'--log-level' : GetLogLevel('cp_track_list_to_external_object_list_node', env_log_levels) },
                 ],
                 remappings=[
-                    ("input/track_list", "filtered_detection_list"),
+                    ("input/detection_list", "filtered_detection_list"),
                     ("output/external_object_list", "fused_external_objects"),
                 ],
                 parameters=[
