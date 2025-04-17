@@ -72,7 +72,7 @@ void MotionComputationWorker::predictionLogic(
         (pedestrian_speed_ > 0.0)) {
       // If the object is a pedestrian, overwrite the speed and orientation
       obj.velocity.twist.linear.x = pedestrian_speed_;
-      obj.pose.orientation = pedestrian_orientation_;
+      obj.pose.pose.orientation = pedestrian_orientation_;
     }
 
     if (use_ctrv_model == true) {
