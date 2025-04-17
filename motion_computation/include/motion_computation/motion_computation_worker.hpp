@@ -36,6 +36,7 @@
 #include <carma_v2x_msgs/msg/psm.hpp>
 #include <std_msgs/msg/string.hpp>
 #include <tf2_geometry_msgs/tf2_geometry_msgs.hpp>
+#include <geometry_msgs/msg/quaternion.hpp>
 
 namespace motion_computation
 {
@@ -135,7 +136,7 @@ private:
 
   // Pedestrian overwrite values
   double pedestrian_speed_ = -1.0;  // Default pedestrian speed (in m/s)
-  tf2::Quaternion pedestrian_orientation_ = {};  // Default pedestrian orientation
+  geometry_msgs::msg::Quaternion pedestrian_orientation_ = {};  // Default pedestrian orientation
                                                                 // (in quaternion)
   // Prediction parameters
 

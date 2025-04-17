@@ -248,7 +248,11 @@ void MotionComputationWorker::setPedestrianOverwriteValues(
   double speed, const std::vector<double> & orientation)
 {
   pedestrian_speed_ = speed;
-  pedestrian_orientation_{orientation[0], orientation[1], orientation[2], orientation[3]};
+  pedestrian_orientation_.x = orientation[0];
+  pedestrian_orientation_.y = orientation[1];
+  pedestrian_orientation_.z = orientation[2];
+  pedestrian_orientation_.w = orientation[3];
+
   RCLCPP_INFO_STREAM(
     logger_->get_logger(), "Pedestrian speed: " << pedestrian_speed_ << " m/s");
   RCLCPP_INFO_STREAM(
