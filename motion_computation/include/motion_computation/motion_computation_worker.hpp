@@ -136,7 +136,7 @@ private:
 
   // Pedestrian overwrite values
   double pedestrian_speed_ = -1.0;  // Default pedestrian speed (in m/s)
-  geometry_msgs::msg::Quaternion pedestrian_orientation_ = {};  // Default pedestrian orientation
+  tf2::Quaternion pedestrian_orientation_ = {};  // Default pedestrian orientation
                                                                 // (in quaternion)
   // Prediction parameters
 

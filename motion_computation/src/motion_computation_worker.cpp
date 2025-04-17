@@ -249,9 +249,9 @@ void MotionComputationWorker::setPedestrianOverwriteValues(
 {
   pedestrian_speed_ = speed;
   pedestrian_orientation_{orientation[0], orientation[1], orientation[2], orientation[3]};
-  RCLCPP_DEBUG_STREAM(
+  RCLCPP_INFO_STREAM(
     logger_->get_logger(), "Pedestrian speed: " << pedestrian_speed_ << " m/s");
-  RCLCPP_DEBUG_STREAM(
+  RCLCPP_INFO_STREAM(
     logger_->get_logger(), "Pedestrian orientation: (" << pedestrian_orientation_.x << ", "
                                                          << pedestrian_orientation_.y << ", "
                                                          << pedestrian_orientation_.z << ", "
@@ -273,9 +273,16 @@ void MotionComputationWorker::psmCallback(const carma_v2x_msgs::msg::PSM::Unique
   }
 
   carma_perception_msgs::msg::ExternalObject obj_msg;
+
   conversion::convert(
     *msg, obj_msg, map_frame_id_, prediction_period_, prediction_time_step_, *map_projector_,
     ned_in_map_rotation_, node_clock_);
+
+  // DEMO PURPOSES ONLY
+  if (pedestrian_speed_ > 0.0) {
+    obj_msg.velocity.twist.linear.x = pedestrian_speed_;
+    obj_msg.pose.orientation = pedestrian_orientation_;
+  }
 
   // Check if this psm is from an object already being queded.
   // If so then update the existing object, if not add it to the queue

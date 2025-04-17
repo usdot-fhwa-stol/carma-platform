@@ -119,11 +119,6 @@ void convert(
   // Set the velocity
 
   out_msg.velocity.twist.linear.x = in_msg.speed.velocity;
-  // DEMO PURPOSES ONLY
-  if (out_msg.object_type == carma_perception_msgs::msg::ExternalObject::PEDESTRIAN &&
-      pedestrian_speed_ > 0.0) {
-    out_msg.velocity.twist.linear.x = pedestrian_speed_;
-  }
 
   out_msg.presence_vector |= carma_perception_msgs::msg::ExternalObject::VELOCITY_PRESENCE_VECTOR;
   // NOTE: The velocity covariance is not provided in the PSM. In order to
@@ -211,12 +206,6 @@ void convert(
   out_msg.pose = impl::pose_from_gnss(
     map_projector, ned_in_map_rotation, gps_point, in_msg.heading.heading, lat_variance,
     lon_variance, heading_variance);
-
-  // DEMO PURPOSES ONLY
-  if (out_msg.object_type == carma_perception_msgs::msg::ExternalObject::PEDESTRIAN &&
-      pedestrian_speed_ > 0.0) {
-    out_msg.pose.pose.orientation = pedestrian_orientation_;
-  }
 
   out_msg.presence_vector |= carma_perception_msgs::msg::ExternalObject::POSE_PRESENCE_VECTOR;
 
