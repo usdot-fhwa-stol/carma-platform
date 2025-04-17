@@ -281,7 +281,7 @@ void MotionComputationWorker::psmCallback(const carma_v2x_msgs::msg::PSM::Unique
   // DEMO PURPOSES ONLY
   if (pedestrian_speed_ > 0.0) {
     obj_msg.velocity.twist.linear.x = pedestrian_speed_;
-    obj_msg.pose.orientation = pedestrian_orientation_;
+    obj_msg.pose.pose.orientation = pedestrian_orientation_;
   }
 
   // Check if this psm is from an object already being queded.
