@@ -68,6 +68,13 @@ void MotionComputationWorker::predictionLogic(
       use_ctrv_model = enable_ctrv_for_unknown_obj_;
     }  // end if-else
 
+    if (obj.object_type == obj.PEDESTRIAN &&
+        (pedestrian_speed_ > 0.0)) {
+      // If the object is a pedestrian, overwrite the speed and orientation
+      obj.velocity.twist.linear.x = pedestrian_speed_;
+      obj.pose.orientation = pedestrian_orientation_;
+    }
+
     if (use_ctrv_model == true) {
       obj.predictions = motion_predict::ctrv::predictPeriod(
         obj, prediction_time_step_, prediction_period_, prediction_process_noise_max_,
@@ -235,6 +242,20 @@ void MotionComputationWorker::mobilityPathCallback(
     mobility_path_obj_id_map_[obj_msg.id] = mobility_path_list_.objects.size();
     mobility_path_list_.objects.push_back(obj_msg);
   }
+}
+
+void MotionComputationWorker::setPedestrianOverwriteValues(
+  double speed, const std::vector<double> & orientation)
+{
+  pedestrian_speed_ = speed;
+  pedestrian_orientation_{orientation[0], orientation[1], orientation[2], orientation[3]};
+  RCLCPP_DEBUG_STREAM(
+    logger_->get_logger(), "Pedestrian speed: " << pedestrian_speed_ << " m/s");
+  RCLCPP_DEBUG_STREAM(
+    logger_->get_logger(), "Pedestrian orientation: (" << pedestrian_orientation_.x << ", "
+                                                         << pedestrian_orientation_.y << ", "
+                                                         << pedestrian_orientation_.z << ", "
+                                                         << pedestrian_orientation_.w << ")");
 }
 
 void MotionComputationWorker::psmCallback(const carma_v2x_msgs::msg::PSM::UniquePtr msg)

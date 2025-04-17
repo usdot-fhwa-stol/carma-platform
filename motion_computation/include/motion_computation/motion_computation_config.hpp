@@ -26,6 +26,8 @@ namespace motion_computation
 struct Config
 {
   double prediction_time_step = 0.1;  // Time between predicted states (in seconds)
+  double pedestrian_speed = 1.0;  // Default pedestrian speed (in m/s) Negative value will turn off
+  std::vector<double> pedestrian_orientation = {}; // Default pedestrian orientation (in quaternion)
   double mobility_path_time_step =
     0.1;  // Time between received mobility path predicted states (in seconds)
   double prediction_period = 2.0;                // Period of prediction (in seconds)
