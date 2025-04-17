@@ -36,7 +36,6 @@
 #include <carma_v2x_msgs/msg/psm.hpp>
 #include <std_msgs/msg/string.hpp>
 #include <tf2_geometry_msgs/tf2_geometry_msgs.hpp>
-#include <geometry_msgs/msg/Quaternion.hpp>
 
 namespace motion_computation
 {
