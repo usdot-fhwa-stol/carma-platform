@@ -36,6 +36,9 @@ namespace object_visualizer
     // Unsigned int: Visualization marker shape: CUBE=1, SPHERE=2, CYLINDER=3
     uint8_t marker_shape = 2;
 
+    //Temporary configuration parameter to allow maintaining rviz marker for external objects.
+    int maintain_rviz_marker_for_ms = 1000;
+
     //! External Objects marker rviz namespace
     std::string external_objects_viz_ns = "external_objects";
 
@@ -51,6 +54,7 @@ namespace object_visualizer
            << "external_objects_viz_ns: " << c.external_objects_viz_ns << std::endl
            << "roadway_obstacles_viz_ns: " << c.roadway_obstacles_viz_ns << std::endl
            << "marker_shape: " << c.marker_shape << std::endl
+           << "maintain_rviz_marker_for_ms: " << c.maintain_rviz_marker_for_ms << std::endl
            << "}" << std::endl;
       return output;
     }
