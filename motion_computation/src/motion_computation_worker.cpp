@@ -278,12 +278,6 @@ void MotionComputationWorker::psmCallback(const carma_v2x_msgs::msg::PSM::Unique
     *msg, obj_msg, map_frame_id_, prediction_period_, prediction_time_step_, *map_projector_,
     ned_in_map_rotation_, node_clock_);
 
-  // DEMO PURPOSES ONLY
-  if (pedestrian_speed_ > 0.0) {
-    obj_msg.velocity.twist.linear.x = pedestrian_speed_;
-    obj_msg.pose.pose.orientation = pedestrian_orientation_;
-  }
-
   // Check if this psm is from an object already being queded.
   // If so then update the existing object, if not add it to the queue
   if (psm_obj_id_map_.find(obj_msg.id) != psm_obj_id_map_.end()) {

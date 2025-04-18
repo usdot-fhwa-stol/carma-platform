@@ -41,7 +41,9 @@ void convert(
 
   const lanelet::projection::LocalFrameProjector & map_projector,
   const tf2::Quaternion & ned_in_map_rotation,
-  rclcpp::node_interfaces::NodeClockInterface::SharedPtr node_clock)
+  rclcpp::node_interfaces::NodeClockInterface::SharedPtr node_clock,
+  double pedestrian_speed = -1.0,
+  geometry_msgs::msg::Quaternion pedestrian_orientation = geometry_msgs::msg::Quaternion())
 {
   /////// Dynamic Object /////////
   out_msg.dynamic_obj = true;  // If a PSM is sent then the object is dynamic
@@ -119,6 +121,10 @@ void convert(
   // Set the velocity
 
   out_msg.velocity.twist.linear.x = in_msg.speed.velocity;
+  // DEMO PURPOSES ONLY
+  if (pedestrian_speed > 0.0) {
+    out_msg.velocity.twist.linear.x = pedestrian_speed;
+  }
 
   out_msg.presence_vector |= carma_perception_msgs::msg::ExternalObject::VELOCITY_PRESENCE_VECTOR;
   // NOTE: The velocity covariance is not provided in the PSM. In order to
@@ -206,6 +212,10 @@ void convert(
   out_msg.pose = impl::pose_from_gnss(
     map_projector, ned_in_map_rotation, gps_point, in_msg.heading.heading, lat_variance,
     lon_variance, heading_variance);
+
+  if (pedestrian_speed > 0.0) {
+    out_msg.pose.pose.orientation = pedestrian_orientation;
+  }
 
   out_msg.presence_vector |= carma_perception_msgs::msg::ExternalObject::POSE_PRESENCE_VECTOR;
 
