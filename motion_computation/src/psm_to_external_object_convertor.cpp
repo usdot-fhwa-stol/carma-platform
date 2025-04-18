@@ -226,16 +226,16 @@ void convert(
 
   std::vector<geometry_msgs::msg::Pose> predicted_poses;
 
-  if (in_msg.presence_vector & carma_v2x_msgs::msg::PSM::HAS_PATH_PREDICTION) {
-    // Based on the vehicle frame used in j2735 positive should be to the right
-    // and negative to the left
-    predicted_poses = impl::sample_2d_path_from_radius(
-      out_msg.pose.pose, out_msg.velocity.twist.linear.x,
-      -in_msg.path_prediction.radius_of_curvature, pred_period, pred_step_size);
-  } else {
+  // if (in_msg.presence_vector & carma_v2x_msgs::msg::PSM::HAS_PATH_PREDICTION) {
+  //   // Based on the vehicle frame used in j2735 positive should be to the right
+  //   // and negative to the left
+  //   predicted_poses = impl::sample_2d_path_from_radius(
+  //     out_msg.pose.pose, out_msg.velocity.twist.linear.x,
+  //     -in_msg.path_prediction.radius_of_curvature, pred_period, pred_step_size);
+  // } else {
     predicted_poses = impl::sample_2d_linear_motion(
       out_msg.pose.pose, out_msg.velocity.twist.linear.x, pred_period, pred_step_size);
-  }
+  // }
 
   out_msg.predictions = impl::predicted_poses_to_predicted_state(
     predicted_poses, out_msg.velocity.twist.linear.x, rclcpp::Time(out_msg.header.stamp),
@@ -318,16 +318,14 @@ std::vector<geometry_msgs::msg::Pose> sample_2d_linear_motion(
   double total_dt = 0;
 
   while (total_dt < period) {
-    // Compute the 2d position and orientation in the Pose frame
+    // Increment time
     total_dt += step_size;
-    double dx_from_start = velocity * total_dt;  // Assuming linear motion in pose frame
+    double distance = velocity * total_dt;  // Total distance traveled
 
-    double x = pose.position.x + dx_from_start;
+    // Create a transform that moves forward along the local x-axis by 'distance'
+    tf2::Transform pose_to_sample(tf2::Quaternion::getIdentity(), tf2::Vector3(distance, 0, 0));
 
-    tf2::Vector3 position(x, 0, 0);
-
-    // Convert the position and orientation in the pose frame to the map frame
-    tf2::Transform pose_to_sample(tf2::Quaternion::getIdentity(), position);
+    // Transform to map coordinates
     tf2::Transform map_to_sample = pose_in_map * pose_to_sample;
 
     geometry_msgs::msg::Pose sample_pose;
