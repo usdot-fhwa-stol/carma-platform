@@ -276,7 +276,7 @@ void MotionComputationWorker::psmCallback(const carma_v2x_msgs::msg::PSM::Unique
 
   conversion::convert(
     *msg, obj_msg, map_frame_id_, prediction_period_, prediction_time_step_, *map_projector_,
-    ned_in_map_rotation_, node_clock_);
+    ned_in_map_rotation_, node_clock_, pedestrian_speed_, pedestrian_orientation_);
 
   // Check if this psm is from an object already being queded.
   // If so then update the existing object, if not add it to the queue
