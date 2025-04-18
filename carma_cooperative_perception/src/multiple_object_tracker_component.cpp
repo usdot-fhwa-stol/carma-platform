@@ -94,8 +94,6 @@ auto make_ctrv_detection(const carma_cooperative_perception_interfaces::msg::Det
   tf2::Matrix3x3 matrix{orientation};
   matrix.getRPY(roll, pitch, yaw);
 
-  RCLCPP_ERROR_STREAM(rclcpp::get_logger("carma_cooperative_perception"), "Make ctrv_detection pose x: "<<msg.pose.pose.position.x<<" y:"<<msg.pose.pose.position.y);
-
   const mot::CtrvState state{
     units::length::meter_t{msg.pose.pose.position.x},
     units::length::meter_t{msg.pose.pose.position.y},
@@ -418,21 +416,16 @@ auto MultipleObjectTrackerNode::handle_on_shutdown(
 auto MultipleObjectTrackerNode::store_new_detections(
   const carma_cooperative_perception_interfaces::msg::DetectionList & msg) -> void
 {
-  RCLCPP_ERROR_STREAM(this->get_logger(), "Entering store_new_detections");
   if (std::size(msg.detections) == 0) {
     RCLCPP_WARN(this->get_logger(), "Not storing detections: incoming detection list is empty");
     return;
   }
-  else{
-    RCLCPP_ERROR_STREAM(this->get_logger(), "Storing detections from msg");
-  }
 
   for (const auto & detection_msg : msg.detections) {
     try {
-      RCLCPP_ERROR_STREAM(this->get_logger(), " store_new_detections Print 1");
       const auto detection{make_detection(detection_msg)};
       const auto uuid{mot::get_uuid(detection)};
-      RCLCPP_ERROR_STREAM(this->get_logger(), " store_new_detections Print 2");
+
       if (uuid_index_map_.count(uuid) == 0) {
         detections_.push_back(std::move(detection));
         uuid_index_map_[uuid] = std::size(detections_) - 1;
@@ -447,7 +440,6 @@ auto MultipleObjectTrackerNode::store_new_detections(
         this->get_logger(), "Ignoring detection with ID '%s': %s", detection_msg.id.c_str(),
         error.what());
     }
-    RCLCPP_ERROR_STREAM(this->get_logger(), " store_new_detections Print 3");
   }
 }
 
@@ -570,7 +562,6 @@ struct MetricSe2
 
 auto MultipleObjectTrackerNode::execute_pipeline() -> void
 {
-  RCLCPP_ERROR_STREAM(this->get_logger(), "Entering execute pipeline");
   static constexpr mot::Visitor make_track_visitor{
     [](const mot::CtrvDetection & d, const mot::Uuid & u) {
       return Track{mot::make_track<mot::CtrvTrack>(d, u)};
@@ -583,18 +574,15 @@ auto MultipleObjectTrackerNode::execute_pipeline() -> void
       throw std::runtime_error("cannot make track from given detection");
     },
   };
-  RCLCPP_ERROR_STREAM(this->get_logger(), "Execute pipeline Print 1");
+
   if (track_manager_.get_all_tracks().empty()) {
     RCLCPP_DEBUG(
       get_logger(), "List of tracks is empty. Converting detections to tentative tracks");
 
-    RCLCPP_ERROR_STREAM(this->get_logger(), "Execute pipeline Print 2");
-    RCLCPP_ERROR_STREAM(this->get_logger(), "Size of detections: "<< detections_.size());
     // This clustering distance is an arbitrarily-chosen heuristic. It is working well for our
     // current purposes, but there's no reason it couldn't be restricted or loosened.
     const auto clusters{mot::cluster_detections(detections_, 0.75)};
     for (const auto & cluster : clusters) {
-      RCLCPP_ERROR_STREAM(this->get_logger(), "Execute pipeline Print 3");
       const auto detection{std::cbegin(cluster.get_detections())->second};
       const auto uuid_str{mot::get_uuid(detection).value()};
       // CARLA uses three-digit actor identifiers. We want to UUID scheme to be
@@ -605,7 +593,7 @@ auto MultipleObjectTrackerNode::execute_pipeline() -> void
       track_manager_.add_tentative_track(
         std::visit(make_track_visitor, detection, std::variant<mot::Uuid>(new_uuid)));
     }
-    RCLCPP_ERROR_STREAM(this->get_logger(), "Execute pipeline Print 4");
+
     track_list_pub_->publish(carma_cooperative_perception_interfaces::msg::TrackList{});
 
     detections_.clear();
@@ -624,17 +612,17 @@ auto MultipleObjectTrackerNode::execute_pipeline() -> void
   // This pruning distance is an arbitrarily-chosen heuristic. It is working well for our
   // current purposes, but there's no reason it couldn't be restricted or loosened.
   mot::prune_track_and_detection_scores_if(scores, [](const auto & score) { return score > 1.0; });
-  RCLCPP_ERROR_STREAM(this->get_logger(), "Execute pipeline Print 7");
+
   const auto associations{
     mot::associate_detections_to_tracks(scores, mot::gnn_association_visitor)};
-  RCLCPP_ERROR_STREAM(this->get_logger(), "Execute pipeline Print 8");
+
   track_manager_.update_track_lists(associations);
-  RCLCPP_ERROR_STREAM(this->get_logger(), "Execute pipeline Print 9");
+
   std::unordered_map<mot::Uuid, Detection> detection_map;
   for (const auto & detection : detections_) {
     detection_map[mot::get_uuid(detection)] = detection;
   }
-  RCLCPP_ERROR_STREAM(this->get_logger(), "Execute pipeline Print 10");
+
   const mot::HasAssociation has_association{associations};
   for (auto & track : track_manager_.get_all_tracks()) {
     if (has_association(track)) {
@@ -645,7 +633,7 @@ auto MultipleObjectTrackerNode::execute_pipeline() -> void
       track_manager_.update_track(mot::get_uuid(track), fused_track);
     }
   }
-  RCLCPP_ERROR_STREAM(this->get_logger(), "Execute pipeline Print 11");
+
   // Unassociated detections don't influence the tracking pipeline, so we can add
   // them to the tracker at the end.
   std::vector<Detection> unassociated_detections;
@@ -654,8 +642,7 @@ auto MultipleObjectTrackerNode::execute_pipeline() -> void
       unassociated_detections.push_back(detection);
     }
   }
-  RCLCPP_ERROR_STREAM(this->get_logger(), "Execute pipeline Print 12");
-  RCLCPP_ERROR_STREAM(this->get_logger(),"unassociated detections size: "<< unassociated_detections.size());
+
   // We want to remove unassociated tracks that are close enough to existing tracks
   // to avoid creating duplicates. Duplicate tracks will cause association inconsistencies
   // (flip flopping associations between the two tracks).
@@ -674,9 +661,9 @@ auto MultipleObjectTrackerNode::execute_pipeline() -> void
       // current purposes, but there's no reason it couldn't be restricted or loosened.
       return min_score < 1.0;
     })};
-  RCLCPP_ERROR_STREAM(this->get_logger(), "Execute pipeline Print 13");
+
   unassociated_detections.erase(remove_start, std::end(unassociated_detections));
-  RCLCPP_ERROR_STREAM(this->get_logger(),"After removing - unassociated detections size: "<< unassociated_detections.size());
+
   // This clustering distance is an arbitrarily-chosen heuristic. It is working well for our
   // current purposes, but there's no reason it couldn't be restricted or loosened.
   const auto clusters{mot::cluster_detections(unassociated_detections, 0.75, MetricSe2{})};
@@ -691,12 +678,12 @@ auto MultipleObjectTrackerNode::execute_pipeline() -> void
     track_manager_.add_tentative_track(
       std::visit(make_track_visitor, detection, std::variant<mot::Uuid>(new_uuid)));
   }
-  RCLCPP_ERROR_STREAM(this->get_logger(), "Execute pipeline Print 14");
+
   carma_cooperative_perception_interfaces::msg::TrackList track_list;
   for (const auto & track : track_manager_.get_confirmed_tracks()) {
     track_list.tracks.push_back(to_ros_msg(track));
   }
-  RCLCPP_ERROR_STREAM(this->get_logger(), "Execute pipeline Print 15");
+
   track_list_pub_->publish(track_list);
 
   detections_.clear();

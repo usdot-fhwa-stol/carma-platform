@@ -17,7 +17,7 @@
 
 #include <proj.h>
 
-#include <carma_cooperative_perception_interfaces/msg/detection_list.hpp>
+#include <carma_cooperative_perception_interfaces/msg/track_list.hpp>
 #include <carma_perception_msgs/msg/external_object_list.hpp>
 #include <carma_ros2_utils/carma_lifecycle_node.hpp>
 #include <rclcpp/rclcpp.hpp>
@@ -44,12 +44,12 @@ public:
     -> carma_ros2_utils::CallbackReturn override;
 
   auto publish_as_external_object_list(
-    const carma_cooperative_perception_interfaces::msg::DetectionList & msg) const -> void;
+    const carma_cooperative_perception_interfaces::msg::TrackList & msg) const -> void;
 
 private:
   rclcpp_lifecycle::LifecyclePublisher<carma_perception_msgs::msg::ExternalObjectList>::SharedPtr
     publisher_{nullptr};
-  rclcpp::Subscription<carma_cooperative_perception_interfaces::msg::DetectionList>::SharedPtr
+  rclcpp::Subscription<carma_cooperative_perception_interfaces::msg::TrackList>::SharedPtr
     track_list_subscription_{nullptr};
   std::string map_georeference_{""};
   OnSetParametersCallbackHandle::SharedPtr on_set_parameters_callback_{nullptr};

@@ -59,10 +59,7 @@ auto to_time_msg(const DDateTime & d_date_time) -> builtin_interfaces::msg::Time
 {
   double seconds;
   const auto fractional_secs{std::modf(
-    remove_units(units::time::second_t{d_date_time.year.value_or(units::time::second_t{0.0})}) +
-      remove_units(units::time::second_t{d_date_time.year.value_or(units::time::second_t{0.0})}) +
-      remove_units(units::time::second_t{d_date_time.year.value_or(units::time::second_t{0.0})}) +
-      remove_units(units::time::second_t{d_date_time.hour.value_or(units::time::second_t{0.0})}) +
+    remove_units(units::time::second_t{d_date_time.hour.value_or(units::time::second_t{0.0})}) +
       remove_units(units::time::second_t{d_date_time.minute.value_or(units::time::second_t{0.0})}) +
       remove_units(units::time::second_t{d_date_time.second.value_or(units::time::second_t{0.0})}),
     &seconds)};
@@ -253,15 +250,8 @@ auto to_detection_list_msg(
   carma_cooperative_perception_interfaces::msg::DetectionList detection_list;
 
   const auto ref_pos_3d{Position3D::from_msg(sdsm.ref_pos)};
-
-
-  units::length::meter_t elevation(0.0);
-  if(ref_pos_3d.elevation){
-    elevation = ref_pos_3d.elevation.value();
-  }
   const Wgs84Coordinate ref_pos_wgs84{
-    ref_pos_3d.latitude, ref_pos_3d.longitude, elevation};
-
+    ref_pos_3d.latitude, ref_pos_3d.longitude, ref_pos_3d.elevation.value()};
   const auto ref_pos_map{project_to_carma_map(ref_pos_wgs84, georeference)};
 
   for (const auto & object_data : sdsm.objects.detected_object_data) {
@@ -342,6 +332,10 @@ auto to_detection_list_msg(
     detection.twist.twist.linear.x =
       remove_units(units::velocity::meters_per_second_t{speed.speed});
 
+    const auto speed_z{Speed::from_msg(common_data.speed_z)};
+    detection.twist.twist.linear.z =
+      remove_units(units::velocity::meters_per_second_t{speed_z.speed});
+
     try {
       // Twist covariance is flattened 6x6 matrix with rows/columns of x, y, z, roll, pitch, yaw
       detection.twist.covariance.at(0) =
@@ -350,42 +344,23 @@ auto to_detection_list_msg(
       throw std::runtime_error("missing speed confidence");
     }
 
-    if (common_data.speed_z.speed){
-      const auto speed_z{Speed::from_msg(common_data.speed_z)};
-      detection.twist.twist.linear.z =
-        remove_units(units::velocity::meters_per_second_t{speed_z.speed});
-
-      try {
-        detection.twist.covariance.at(14) =
-          0.5 * std::pow(j2735_v2x_msgs::to_double(common_data.speed_confidence_z).value(), 2);
-      } catch (const std::bad_optional_access &) {
-        throw std::runtime_error("missing z-speed confidence");
-      }
-    }
-    else{
-      detection.twist.twist.linear.z = remove_units(units::velocity::meters_per_second_t{0.0});
-      detection.twist.covariance.at(14) = 0.0;
+    try {
+      detection.twist.covariance.at(14) =
+        0.5 * std::pow(j2735_v2x_msgs::to_double(common_data.speed_confidence_z).value(), 2);
+    } catch (const std::bad_optional_access &) {
+      throw std::runtime_error("missing z-speed confidence");
     }
 
+    const auto accel_set{AccelerationSet4Way::from_msg(common_data.accel_4_way)};
+    detection.twist.twist.angular.z =
+      remove_units(units::angular_velocity::degrees_per_second_t{accel_set.yaw_rate});
 
-
-    if(common_data.accel_4_way.yaw_rate){
-      const auto accel_set{AccelerationSet4Way::from_msg(common_data.accel_4_way)};
-      detection.twist.twist.angular.z =
-        remove_units(units::angular_velocity::degrees_per_second_t{accel_set.yaw_rate});
-
-      try {
-        detection.twist.covariance.at(35) =
-          0.5 * std::pow(j2735_v2x_msgs::to_double(common_data.acc_cfd_yaw).value(), 2);
-      } catch (const std::bad_optional_access &) {
-        throw std::runtime_error("missing yaw-rate confidence");
-      }
+    try {
+      detection.twist.covariance.at(35) =
+        0.5 * std::pow(j2735_v2x_msgs::to_double(common_data.acc_cfd_yaw).value(), 2);
+    } catch (const std::bad_optional_access &) {
+      throw std::runtime_error("missing yaw-rate confidence");
     }
-    else{
-      detection.twist.twist.angular.z = 0.0;
-      detection.twist.covariance.at(35) = 0.0;
-    }
-
 
     switch (common_data.obj_type.object_type) {
       case common_data.obj_type.ANIMAL:
@@ -485,78 +460,6 @@ auto to_detection_list_msg(
   return detection_list;
 }
 
-auto to_external_object_msg(
-  const carma_cooperative_perception_interfaces::msg::Detection & detection)
-  -> carma_perception_msgs::msg::ExternalObject
-{
-  carma_perception_msgs::msg::ExternalObject external_object;
-  external_object.header = detection.header;
-  external_object.presence_vector = 0;
-
-  const auto to_numeric_id = [](std::string string_id) -> std::optional<uint32_t> {
-    auto non_digit_start = std::remove_if(
-      std::begin(string_id), std::end(string_id),
-      [](const auto & ch) { return !std::isdigit(ch); });
-
-    std::uint32_t numeric_id;
-    const auto digit_substr_size{std::distance(std::begin(string_id), non_digit_start)};
-    if (
-      std::from_chars(string_id.c_str(), string_id.c_str() + digit_substr_size, numeric_id).ec ==
-      std::errc{}) {
-      return numeric_id;
-    }
-
-    return std::nullopt;
-  };
-
-  if (const auto numeric_id{to_numeric_id(detection.id)}) {
-    external_object.presence_vector |= external_object.ID_PRESENCE_VECTOR;
-    external_object.id = numeric_id.value();
-  } else {
-    external_object.presence_vector &= ~external_object.ID_PRESENCE_VECTOR;
-  }
-
-  external_object.presence_vector |= external_object.POSE_PRESENCE_VECTOR;
-  external_object.pose = detection.pose;
-
-  external_object.presence_vector |= external_object.VELOCITY_PRESENCE_VECTOR;
-
-  const auto detection_longitudinal_velocity{detection.twist.twist.linear.x};
-  const auto detection_orientation = detection.pose.pose.orientation;
-
-  tf2::Quaternion q(
-    detection_orientation.x, detection_orientation.y, detection_orientation.z, detection_orientation.w);
-  tf2::Matrix3x3 m(q);
-  double roll, pitch, yaw;
-  m.getRPY(roll, pitch, yaw);
-
-  external_object.velocity.twist.linear.x = detection_longitudinal_velocity * std::cos(yaw);
-  external_object.velocity.twist.linear.y = detection_longitudinal_velocity * std::sin(yaw);
-
-  external_object.object_type = detection.semantic_class;
-
-  external_object.presence_vector |= external_object.OBJECT_TYPE_PRESENCE_VECTOR;
-  switch (detection.semantic_class) {
-    case detection.SEMANTIC_CLASS_SMALL_VEHICLE:
-      external_object.object_type = external_object.SMALL_VEHICLE;
-      break;
-    case detection.SEMANTIC_CLASS_LARGE_VEHICLE:
-      external_object.object_type = external_object.LARGE_VEHICLE;
-      break;
-    case detection.SEMANTIC_CLASS_MOTORCYCLE:
-      external_object.object_type = external_object.MOTORCYCLE;
-      break;
-    case detection.SEMANTIC_CLASS_PEDESTRIAN:
-      external_object.object_type = external_object.PEDESTRIAN;
-      break;
-    case detection.SEMANTIC_CLASS_UNKNOWN:
-    default:
-      external_object.object_type = external_object.UNKNOWN;
-  }
-
-  return external_object;
-}
-
 auto to_external_object_msg(const carma_cooperative_perception_interfaces::msg::Track & track)
   -> carma_perception_msgs::msg::ExternalObject
 {
@@ -626,19 +529,6 @@ auto to_external_object_msg(const carma_cooperative_perception_interfaces::msg::
   }
 
   return external_object;
-}
-
-auto to_external_object_list_msg(
-  const carma_cooperative_perception_interfaces::msg::DetectionList & detection_list)
-  -> carma_perception_msgs::msg::ExternalObjectList
-{
-  carma_perception_msgs::msg::ExternalObjectList external_object_list;
-
-  for (const auto & detection : detection_list.detections) {
-    external_object_list.objects.push_back(to_external_object_msg(detection));
-  }
-
-  return external_object_list;
 }
 
 auto to_external_object_list_msg(
