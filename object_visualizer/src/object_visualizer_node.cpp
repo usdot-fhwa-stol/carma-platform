@@ -31,6 +31,7 @@ namespace object_visualizer
     config_.external_objects_viz_ns = declare_parameter<std::string>("external_objects_viz_ns", config_.external_objects_viz_ns);
     config_.roadway_obstacles_viz_ns = declare_parameter<std::string>("roadway_obstacles_viz_ns", config_.roadway_obstacles_viz_ns);
     config_.marker_shape = declare_parameter<uint8_t>("marker_shape", config_.marker_shape);
+    config_.maintain_rviz_marker_for_ms = declare_parameter<int>("maintain_rviz_marker_for_ms", config_.maintain_rviz_marker_for_ms);
 
   }
 
@@ -51,7 +52,8 @@ namespace object_visualizer
 
     auto error3 = update_params<uint8_t>(
       {
-        {"marker_shape", config_.marker_shape}
+        {"marker_shape", config_.marker_shape},
+        {"maintain_rviz_marker_for_ms", config_.maintain_rviz_marker_for_ms}
       }, parameters);
 
     rcl_interfaces::msg::SetParametersResult result;
@@ -72,7 +74,8 @@ namespace object_visualizer
     get_parameter<std::string>("external_objects_viz_ns", config_.external_objects_viz_ns);
     get_parameter<std::string>("roadway_obstacles_viz_ns", config_.roadway_obstacles_viz_ns);
     get_parameter<uint8_t>("marker_shape", config_.marker_shape);
-
+    get_parameter<int>("maintain_rviz_marker_for_ms", config_.maintain_rviz_marker_for_ms);
+    RCLCPP_DEBUG_STREAM(get_logger(), "Config: " << config_);
     // Register runtime parameter update callback
     add_on_set_parameters_callback(std::bind(&Node::parameter_update_callback, this, std_ph::_1));
 
@@ -102,6 +105,17 @@ namespace object_visualizer
 
     visualization_msgs::msg::MarkerArray viz_msg;
     //delete all markers before adding new ones
+    // TODO: Temporary fix - wait a configured number of timesteps before deleting
+    // all markers. This is to prevent flickering of the markers when the
+    // external objects are not detected for a short period of time.
+    if (prev_external_objects_size_ > 0 && msg->objects.empty()) {
+      auto now = this->now();
+      auto time_since_last_update = now - last_external_objects_update_time_;
+      if (time_since_last_update < rclcpp::Duration::from_seconds(config_.maintain_rviz_marker_for_ms / 1000.0)) {
+        return;
+      }
+    }
+
     visualization_msgs::msg::Marker marker;
     viz_msg.markers.reserve(msg->objects.size() + 1); //+1 to account for delete all marker
     marker.id = 0;
@@ -158,6 +172,8 @@ namespace object_visualizer
     }
 
     clear_and_update_old_objects(viz_msg, prev_external_objects_size_);
+
+    last_external_objects_update_time_ = this->now();
 
     external_objects_viz_pub_->publish(viz_msg);
 

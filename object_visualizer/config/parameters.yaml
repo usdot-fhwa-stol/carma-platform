@@ -7,6 +7,8 @@ enable_roadway_objects_viz : False
 # Unsigned int: Visualization marker shape: CUBE=1, SPHERE=2, CYLINDER=3
 marker_shape: 2
 
+maintain_rviz_marker_for_ms: 1000
+
 # String: External Objects marker rviz namespace
 external_objects_viz_ns : "external_objects"
 
