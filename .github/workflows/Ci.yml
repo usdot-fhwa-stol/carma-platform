@@ -28,7 +28,7 @@ jobs:
 
     # Set up a Docker container for the job
     container:
-      image: ${{ needs.determine_docker_org_and_tag.outputs.docker_org }}/autoware.ai:${{ needs.determine_docker_org_and_tag.outputs.docker_tag }}
+      image: usdotfhwastoldev/autoware.ai:develop
       env:
         INIT_ENV: "/home/carma/.base-image/init-env.sh"
         ROS_2_ENV: "/opt/ros/humble/setup.bash"
