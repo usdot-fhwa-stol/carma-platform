@@ -12,3 +12,8 @@ external_objects_viz_ns : "external_objects"
 
 # String: Roadway Obstacles marker rviz namespace
 roadway_obstacles_viz_ns : "roadway_obstacles"
+
+# Pedestrian visualization parameters
+use_pedestrian_icon: true
+pedestrian_icon_path: "package://object_visualizer/meshes/pedestrian.dae"
+pedestrian_icon_scale: 1.0

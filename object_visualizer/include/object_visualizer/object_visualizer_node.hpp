@@ -14,88 +14,105 @@
  * the License.
  */
 
-#pragma once
+ #pragma once
 
-#include <rclcpp/rclcpp.hpp>
-#include <functional>
-#include <carma_perception_msgs/msg/external_object_list.hpp>
-#include <carma_perception_msgs/msg/roadway_obstacle_list.hpp>
-#include <visualization_msgs/msg/marker_array.hpp>
-#include <visualization_msgs/msg/marker.hpp>
+ #include <rclcpp/rclcpp.hpp>
+ #include <functional>
+ #include <carma_perception_msgs/msg/external_object_list.hpp>
+ #include <carma_perception_msgs/msg/roadway_obstacle_list.hpp>
+ #include <visualization_msgs/msg/marker_array.hpp>
+ #include <visualization_msgs/msg/marker.hpp>
 
-#include <carma_ros2_utils/carma_lifecycle_node.hpp>
-#include "object_visualizer/object_visualizer_config.hpp"
+ #include <carma_ros2_utils/carma_lifecycle_node.hpp>
+ #include "object_visualizer/object_visualizer_config.hpp"
 
-namespace object_visualizer
-{
+ namespace object_visualizer
+ {
 
-  /**
-   * \brief This node provides RViz visualization messages for recieved ExternalObject and RoadwayObstacle messages in carma-platform.
-   * 
-   */
-  class Node : public carma_ros2_utils::CarmaLifecycleNode
-  {
+   /**
+    * \brief This node provides RViz visualization messages for recieved ExternalObject and RoadwayObstacle messages in carma-platform.
+    *
+    */
+   class Node : public carma_ros2_utils::CarmaLifecycleNode
+   {
 
-  private:
-    // Subscribers
-    carma_ros2_utils::SubPtr<carma_perception_msgs::msg::ExternalObjectList> external_objects_sub_;
-    carma_ros2_utils::SubPtr<carma_perception_msgs::msg::RoadwayObstacleList> roadway_obstacles_sub_;
+   private:
+     // Subscribers
+     carma_ros2_utils::SubPtr<carma_perception_msgs::msg::ExternalObjectList> external_objects_sub_;
+     carma_ros2_utils::SubPtr<carma_perception_msgs::msg::RoadwayObstacleList> roadway_obstacles_sub_;
 
-    // Publishers
-    carma_ros2_utils::PubPtr<visualization_msgs::msg::MarkerArray> external_objects_viz_pub_;
-    carma_ros2_utils::PubPtr<visualization_msgs::msg::MarkerArray> roadway_obstacles_viz_pub_;
+     // Publishers
+     carma_ros2_utils::PubPtr<visualization_msgs::msg::MarkerArray> external_objects_viz_pub_;
+     carma_ros2_utils::PubPtr<visualization_msgs::msg::MarkerArray> roadway_obstacles_viz_pub_;
 
-    // Node configuration
-    Config config_;
+     // Node configuration
+     Config config_;
 
-    // Previous object report sizes for clearing visualization on deleted objects
-    size_t prev_external_objects_size_ = 0;
-    size_t prev_roadway_obstacles_size_ = 0;
+     // Previous object report sizes for clearing visualization on deleted objects
+     size_t prev_external_objects_size_ = 0;
+     size_t prev_roadway_obstacles_size_ = 0;
 
-    /**
-     * \brief Adds a marker deletion for a number of markers which is the delta
-     *        between the new marker count and the previously published count
-     * 
-     * ASSUMPTION: The marker array's ids are already recomputed starting from zero, such that tracking ids is not needed.
-     * 
-     * \param[in/out] viz_msg The marker array to add deletion markers to
-     * \param[in/out] old_size The size of the previous published marker array. 
-     *                The positive delta between this and the size of the viz_msg determines the number of deletions added
-     */ 
-    void clear_and_update_old_objects(visualization_msgs::msg::MarkerArray &viz_msg, size_t &old_size);
+     /**
+      * \brief Creates a pedestrian marker with specialized visualization
+      *
+      * \param[out] marker The marker to be configured for pedestrian visualization
+      * \param[in] header The header to use for the marker
+      * \param[in] pose The pose to use for the marker
+      * \param[in] id The ID for the marker
+      * \param[in] ns The namespace for the marker
+      * \param[in] size The size vector for the pedestrian (x, y, z)
+      */
+     void createPedestrianMarker(visualization_msgs::msg::Marker& marker,
+                               const std_msgs::msg::Header& header,
+                               const geometry_msgs::msg::Pose& pose,
+                               size_t id,
+                               const std::string& ns,
+                               const geometry_msgs::msg::Vector3& size);
 
-  public:
-    /**
-     * \brief Node constructor 
-     */
-    explicit Node(const rclcpp::NodeOptions &);
+     /**
+      * \brief Adds a marker deletion for a number of markers which is the delta
+      *        between the new marker count and the previously published count
+      *
+      * ASSUMPTION: The marker array's ids are already recomputed starting from zero, such that tracking ids is not needed.
+      *
+      * \param[in/out] viz_msg The marker array to add deletion markers to
+      * \param[in/out] old_size The size of the previous published marker array.
+      *                The positive delta between this and the size of the viz_msg determines the number of deletions added
+      */
+     void clear_and_update_old_objects(visualization_msgs::msg::MarkerArray &viz_msg, size_t &old_size);
 
-    /**
-     * \brief Example callback for dynamic parameter updates
-     */
-    rcl_interfaces::msg::SetParametersResult 
-    parameter_update_callback(const std::vector<rclcpp::Parameter> &parameters);
+   public:
+     /**
+      * \brief Node constructor
+      */
+     explicit Node(const rclcpp::NodeOptions &);
 
-    /**
-     * \brief External objects callback. Converts the message to a visualization message to republish
-     * 
-     * \param msg The received message
-     */
-    void external_objects_callback(carma_perception_msgs::msg::ExternalObjectList::UniquePtr msg);
+     /**
+      * \brief Example callback for dynamic parameter updates
+      */
+     rcl_interfaces::msg::SetParametersResult
+     parameter_update_callback(const std::vector<rclcpp::Parameter> &parameters);
 
-    /**
-     * \brief Roadway obstacles callback. Converts the message to a visualization message to republish
-     * 
-     * \param msg The received message
-     */
-    void roadway_obstacles_callback(carma_perception_msgs::msg::RoadwayObstacleList::UniquePtr msg);
+     /**
+      * \brief External objects callback. Converts the message to a visualization message to republish
+      *
+      * \param msg The received message
+      */
+     void external_objects_callback(carma_perception_msgs::msg::ExternalObjectList::UniquePtr msg);
+
+     /**
+      * \brief Roadway obstacles callback. Converts the message to a visualization message to republish
+      *
+      * \param msg The received message
+      */
+     void roadway_obstacles_callback(carma_perception_msgs::msg::RoadwayObstacleList::UniquePtr msg);
 
 
-    ////
-    // Overrides
-    ////
-    carma_ros2_utils::CallbackReturn handle_on_configure(const rclcpp_lifecycle::State &);
+     ////
+     // Overrides
+     ////
+     carma_ros2_utils::CallbackReturn handle_on_configure(const rclcpp_lifecycle::State &);
 
-  };
+   };
 
-} // object_visualizer
+ } // object_visualizer
