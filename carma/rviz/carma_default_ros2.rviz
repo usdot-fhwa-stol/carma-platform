@@ -24,7 +24,7 @@ Panels:
         - /J2735 MAP Msg Viz1
         - /J2735 MAP Msg Viz1/Topic1
       Splitter Ratio: 0.5
-    Tree Height: 79
+    Tree Height: 303
   - Class: rviz_common/Selection
     Name: Selection
   - Class: rviz_common/Tool Properties
@@ -70,12 +70,7 @@ Visualization Manager:
       Enabled: true
       Name: LaneLet2 Map
       Namespaces:
-        center_lane_line: true
-        lanelet direction: true
-        left_lane_bound: true
-        right_lane_bound: true
-        road_lanelets: true
-        stop_sign_stop_lines: true
+        {}
       Topic:
         Depth: 1
         Durability Policy: Transient Local
@@ -93,8 +88,6 @@ Visualization Manager:
         gps:
           Value: true
         host_vehicle:
-          Value: true
-        map:
           Value: true
         mobileye:
           Value: true
@@ -122,38 +115,14 @@ Visualization Manager:
       Show Axes: true
       Show Names: true
       Tree:
-        map:
-          base_link:
-            gps:
-              ned_heading:
-                {}
-            host_vehicle:
-              {}
-            mobileye:
-              {}
-            novatel_imu:
-              {}
-            radar_fc:
-              {}
-            radar_fl:
-              {}
-            radar_fr:
-              {}
-            radar_rl:
-              {}
-            radar_rr:
-              {}
-            vehicle_front:
-              {}
-            velodyne:
-              {}
+        {}
       Update Interval: 0
       Value: true
     - Class: rviz_default_plugins/MarkerArray
       Enabled: true
       Name: Trajectory Visualizer
       Namespaces:
-        trajectory_visualizer: true
+        {}
       Topic:
         Depth: 10
         Durability Policy: Volatile
@@ -177,7 +146,7 @@ Visualization Manager:
       Enabled: true
       Name: Fused External Objects Viz
       Namespaces:
-        external_objects: true
+        {}
       Topic:
         Depth: 5
         Durability Policy: Volatile
@@ -290,7 +259,7 @@ Visualization Manager:
       Enabled: true
       Name: Route Marker
       Namespaces:
-        route_visualizer: true
+        {}
       Topic:
         Depth: 10
         Durability Policy: System Default
@@ -315,7 +284,7 @@ Visualization Manager:
       Enabled: true
       Name: Host MobilityPath Marker
       Namespaces:
-        mobilitypath_visualizer: true
+        {}
       Topic:
         Depth: 5
         Durability Policy: Volatile
