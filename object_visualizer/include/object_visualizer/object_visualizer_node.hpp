@@ -25,6 +25,8 @@
 
 #include <carma_ros2_utils/carma_lifecycle_node.hpp>
 #include "object_visualizer/object_visualizer_config.hpp"
+#include <tf2/LinearMath/Quaternion.h>
+#include <tf2_geometry_msgs/tf2_geometry_msgs.hpp>
 
 namespace object_visualizer
 {
