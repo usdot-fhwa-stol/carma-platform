@@ -43,11 +43,11 @@ done
 
 cd "${dir}"/src
 
-git clone --depth=1 https://github.com/usdot-fhwa-stol/carma-msgs.git --branch "${BRANCH}"
-git clone --depth=1 https://github.com/usdot-fhwa-stol/carma-utils.git --branch "${BRANCH}"
+git clone --depth=1 https://github.com/usdot-fhwa-stol/carma-msgs.git --branch "develop"
+git clone --depth=1 https://github.com/usdot-fhwa-stol/carma-utils.git --branch "develop"
 git clone --depth=1 https://github.com/usdot-fhwa-stol/v2x-ros-conversion.git --branch "develop"
-git clone --depth=1 https://github.com/usdot-fhwa-stol/carma-message-filters.git --branch "${BRANCH}"
-git clone --depth=1 https://github.com/usdot-fhwa-stol/multiple_object_tracking --branch "${BRANCH}"
+git clone --depth=1 https://github.com/usdot-fhwa-stol/carma-message-filters.git --branch "develop"
+git clone --depth=1 https://github.com/usdot-fhwa-stol/multiple_object_tracking --branch "develop"
 
 # TODO: Remove V2X-Hub Depedency (CAR-6029)
 git clone -b master --depth 1 https://github.com/etherealjoy/qhttpengine.git
@@ -85,5 +85,5 @@ cd ${dir}
 if [[ -z "$PACKAGES" ]]; then
       SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
       sudo chmod +x ${SCRIPT_DIR}/install_dependencies.sh
-      ${SCRIPT_DIR}/install_dependencies.sh -b $BRANCH -r $dir
+      ${SCRIPT_DIR}/install_dependencies.sh -b "develop" -r $dir
 fi
