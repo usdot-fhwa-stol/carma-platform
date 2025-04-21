@@ -119,6 +119,14 @@ namespace object_visualizer
     marker.id = id;
     marker.pose = pose;
 
+    // Rotate the pose by 180 degrees around the Z axis to fix the STL asset's orientation
+    tf2::Quaternion q;
+    tf2::fromMsg(pose.orientation, q);
+    tf2::Quaternion rotation;
+    rotation.setRPY(0, 0, M_PI); // Rotate 180 degrees (π radians) around Z
+    q = rotation * q; // Apply rotation
+    pose.orientation = tf2::toMsg(q);
+
     if (config_.use_pedestrian_icon && !config_.pedestrian_icon_path.empty()) {
       // Use a mesh resource marker for pedestrian representation
       marker.type = visualization_msgs::msg::Marker::MESH_RESOURCE;
@@ -129,6 +137,12 @@ namespace object_visualizer
       marker.scale.x = config_.pedestrian_icon_scale;
       marker.scale.y = config_.pedestrian_icon_scale;
       marker.scale.z = config_.pedestrian_icon_scale;
+
+      // White color for the pedestrian icon
+      marker.color.r = 1.0;
+      marker.color.g = 1.0;
+      marker.color.b = 1.0;
+      marker.color.a = 1.0;
     } else {
       // Fallback to a person-shaped marker using cylinder (if mesh isn't available)
       marker.type = visualization_msgs::msg::Marker::CYLINDER;
@@ -137,13 +151,13 @@ namespace object_visualizer
       marker.scale.x = std::max(0.5, size.x * 2.0);  // Width
       marker.scale.y = std::max(0.5, size.y * 2.0);  // Depth
       marker.scale.z = std::max(1.7, size.z * 2.0);  // Height - typical human height
-    }
 
-    // Distinctive color for pedestrians - keep the red color
-    marker.color.r = 1.0;
-    marker.color.g = 0.0;
-    marker.color.b = 0.0;
-    marker.color.a = 1.0;
+      // Set the color to red for the pedestrian marker
+      marker.color.r = 1.0;
+      marker.color.g = 0.0;
+      marker.color.b = 0.0;
+      marker.color.a = 1.0;
+    }
 
     marker.action = visualization_msgs::msg::Marker::ADD;
   }
