@@ -125,7 +125,7 @@ namespace object_visualizer
     tf2::Quaternion rotation;
     rotation.setRPY(0, 0, M_PI); // Rotate 180 degrees (π radians) around Z
     q = rotation * q; // Apply rotation
-    pose.orientation = tf2::toMsg(q);
+    marker.pose.orientation = tf2::toMsg(q);
 
     if (config_.use_pedestrian_icon && !config_.pedestrian_icon_path.empty()) {
       // Use a mesh resource marker for pedestrian representation
