@@ -45,8 +45,8 @@ namespace object_visualizer
     //! If true, pedestrians will be visualized using specialized icons/models instead of basic markers
     bool use_pedestrian_icon = true;
 
-    //! Path to the 3D model file for pedestrian visualization
-    std::string pedestrian_icon_path = "package://object_visualizer/meshes/pedestrian.dae";
+    //! Path to the model file for pedestrian visualization
+    std::string pedestrian_icon_path = "package://object_visualizer/meshes/pedestrian.stl";
 
     //! Scale factor to apply to the pedestrian icon model
     double pedestrian_icon_scale = 1.0;
