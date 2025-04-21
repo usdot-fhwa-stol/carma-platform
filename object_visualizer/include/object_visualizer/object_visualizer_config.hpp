@@ -37,7 +37,7 @@ namespace object_visualizer
     uint8_t marker_shape = 2;
 
     //Temporary configuration parameter to allow maintaining rviz marker for external objects.
-    int maintain_rviz_marker_for_ms = 1000;
+    uint8_t maintain_rviz_marker_for_ms = 1000;
 
     //! External Objects marker rviz namespace
     std::string external_objects_viz_ns = "external_objects";

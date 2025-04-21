@@ -51,6 +51,7 @@ namespace object_visualizer
     // Previous object report sizes for clearing visualization on deleted objects
     size_t prev_external_objects_size_ = 0;
     size_t prev_roadway_obstacles_size_ = 0;
+    rclcpp::Time last_external_objects_update_time_;
 
     /**
      * \brief Adds a marker deletion for a number of markers which is the delta

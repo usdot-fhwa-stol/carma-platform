@@ -31,7 +31,7 @@ namespace object_visualizer
     config_.external_objects_viz_ns = declare_parameter<std::string>("external_objects_viz_ns", config_.external_objects_viz_ns);
     config_.roadway_obstacles_viz_ns = declare_parameter<std::string>("roadway_obstacles_viz_ns", config_.roadway_obstacles_viz_ns);
     config_.marker_shape = declare_parameter<uint8_t>("marker_shape", config_.marker_shape);
-    config_.maintain_rviz_marker_for_ms = declare_parameter<int>("maintain_rviz_marker_for_ms", config_.maintain_rviz_marker_for_ms);
+    config_.maintain_rviz_marker_for_ms = declare_parameter<uint8_t>("maintain_rviz_marker_for_ms", config_.maintain_rviz_marker_for_ms);
 
   }
 
@@ -74,7 +74,7 @@ namespace object_visualizer
     get_parameter<std::string>("external_objects_viz_ns", config_.external_objects_viz_ns);
     get_parameter<std::string>("roadway_obstacles_viz_ns", config_.roadway_obstacles_viz_ns);
     get_parameter<uint8_t>("marker_shape", config_.marker_shape);
-    get_parameter<int>("maintain_rviz_marker_for_ms", config_.maintain_rviz_marker_for_ms);
+    get_parameter<uint8_t>("maintain_rviz_marker_for_ms", config_.maintain_rviz_marker_for_ms);
     RCLCPP_DEBUG_STREAM(get_logger(), "Config: " << config_);
     // Register runtime parameter update callback
     add_on_set_parameters_callback(std::bind(&Node::parameter_update_callback, this, std_ph::_1));
@@ -108,10 +108,12 @@ namespace object_visualizer
     // TODO: Temporary fix - wait a configured number of timesteps before deleting
     // all markers. This is to prevent flickering of the markers when the
     // external objects are not detected for a short period of time.
-    if (prev_external_objects_size_ > 0 && msg->objects.empty()) {
+    if (msg->objects.empty()) {
+      RCLCPP_ERROR_STREAM(this->get_logger(),"Entering conditional check message not empty");
       auto now = this->now();
       auto time_since_last_update = now - last_external_objects_update_time_;
       if (time_since_last_update < rclcpp::Duration::from_seconds(config_.maintain_rviz_marker_for_ms / 1000.0)) {
+        RCLCPP_ERROR_STREAM(this->get_logger(),"Entering second conditional check ");
         return;
       }
     }
