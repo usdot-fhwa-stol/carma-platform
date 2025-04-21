@@ -8,7 +8,7 @@ prediction_period: 30.0
 pedestrian_speed: 0.80
 
 # DEMO MODE orientation (4 values as reported from using "2D select pose" in rviz2)
-pedestrian_orientation: [0, 0, 0.742275, 0.670096]
+pedestrian_orientation: [0, 0, 0.6688446004928342, 0.743402246695274]
 
 # CV Model X-Axis Acceleration Noise
 cv_x_accel_noise: 9.0
