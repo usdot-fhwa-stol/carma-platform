@@ -42,11 +42,17 @@ while [[ $# -gt 0 ]]; do
 done
 
 cd "${dir}"/src
-git clone --depth=1 https://github.com/usdot-fhwa-stol/multiple_object_tracking --branch "${BRANCH}"
+
+git clone --depth=1 https://github.com/usdot-fhwa-stol/carma-msgs.git --branch "develop"
+git clone --depth=1 https://github.com/usdot-fhwa-stol/carma-utils.git --branch "develop"
+git clone --depth=1 https://github.com/usdot-fhwa-stol/v2x-ros-conversion.git --branch "develop"
+git clone --depth=1 https://github.com/usdot-fhwa-stol/carma-message-filters.git --branch "develop"
+git clone --depth=1 https://github.com/usdot-fhwa-stol/multiple_object_tracking --branch "develop"
 
 
 # Install dependencies
-SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-echo $SCRIPT_DIR
-sudo chmod +x ${SCRIPT_DIR}/install_dependencies.sh
-${SCRIPT_DIR}/install_dependencies.sh -b $BRANCH -r $dir
+if [[ -z "$PACKAGES" ]]; then
+      SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+      sudo chmod +x ${SCRIPT_DIR}/install_dependencies.sh
+      ${SCRIPT_DIR}/install_dependencies.sh -b "develop" -r $dir
+fi
