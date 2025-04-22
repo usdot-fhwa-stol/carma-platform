@@ -177,20 +177,7 @@ namespace object_visualizer
       id++;
     }
 
-    if (msg->objects.empty()) {
-      auto now = this->now();
-      auto time_since_last_update = now - last_external_objects_update_time_;
-      //If empty remove all markers after a delay
-      if (time_since_last_update <= rclcpp::Duration::from_seconds(config_.maintain_rviz_marker_for_ms / 1000.0)) {
-        visualization_msgs::msg::Marker delete_all_marker;
-        delete_all_marker.id = 0;
-        delete_all_marker.action = visualization_msgs::msg::Marker::DELETEALL;
-        external_objects_viz_msg_.markers.push_back(delete_all_marker);
-      }
-    }
-    else{
-      clear_and_update_old_objects(external_objects_viz_msg_, prev_external_objects_size_);
-    }
+    clear_and_update_old_objects(external_objects_viz_msg_, prev_external_objects_size_);
 
     last_external_objects_update_time_ = this->now();
 
