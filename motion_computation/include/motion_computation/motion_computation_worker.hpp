@@ -36,6 +36,7 @@
 #include <carma_v2x_msgs/msg/psm.hpp>
 #include <std_msgs/msg/string.hpp>
 #include <tf2_geometry_msgs/tf2_geometry_msgs.hpp>
+#include <geometry_msgs/msg/quaternion.hpp>
 
 namespace motion_computation
 {
@@ -78,6 +79,8 @@ public:
     bool enable_ctrv_for_unknown_obj, bool enable_ctrv_for_motorcycle_obj,
     bool enable_ctrv_for_small_vehicle_obj, bool enable_ctrv_for_large_vehicle_obj,
     bool enable_ctrv_for_pedestrian_obj);
+  void setPedestrianOverwriteValues(
+    double speed, const std::vector<double> & orientation);
 
   // callbacks
   void mobilityPathCallback(const carma_v2x_msgs::msg::MobilityPath::UniquePtr msg);
@@ -131,6 +134,10 @@ private:
   // Local copy of external object publisher
   PublishObjectCallback obj_pub_;
 
+  // Pedestrian overwrite values
+  double pedestrian_speed_ = -1.0;  // Default pedestrian speed (in m/s)
+  geometry_msgs::msg::Quaternion pedestrian_orientation_ = {};  // Default pedestrian orientation
+                                                                // (in quaternion)
   // Prediction parameters
 
   double prediction_time_step_ = 0.1;  // Seconds

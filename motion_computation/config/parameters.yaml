@@ -2,7 +2,13 @@
 prediction_time_step: 0.2
 
 # Period of prediction in seconds
-prediction_period: 10.0
+prediction_period: 30.0
+
+# DEMO MODE Pedestrian speed to overwrite m/s (Negative value will not overwrite)
+pedestrian_speed: 0.80
+
+# DEMO MODE orientation (4 values as reported from using "2D select pose" in rviz2)
+pedestrian_orientation: [0, 0, 0.6688446004928342, 0.743402246695274]
 
 # CV Model X-Axis Acceleration Noise
 cv_x_accel_noise: 9.0
@@ -22,7 +28,7 @@ enable_bsm_processing: false
 
 # Boolean: If true then PSM messages will be converted to ExternalObjects.
 #          If other object sources are enabled, they will be synchronized but no fusion will occur (objects may be duplicated)
-enable_psm_processing: false
+enable_psm_processing: true
 
 # Boolean: If true then MobilityPath messages will be converted to ExternalObjects.
 #          If other object sources are enabled, they will be synchronized but no fusion will occur (objects may be duplicated)

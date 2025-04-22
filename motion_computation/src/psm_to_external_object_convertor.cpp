@@ -41,7 +41,9 @@ void convert(
 
   const lanelet::projection::LocalFrameProjector & map_projector,
   const tf2::Quaternion & ned_in_map_rotation,
-  rclcpp::node_interfaces::NodeClockInterface::SharedPtr node_clock)
+  rclcpp::node_interfaces::NodeClockInterface::SharedPtr node_clock,
+  double pedestrian_speed = -1.0,
+  geometry_msgs::msg::Quaternion pedestrian_orientation = geometry_msgs::msg::Quaternion())
 {
   /////// Dynamic Object /////////
   out_msg.dynamic_obj = true;  // If a PSM is sent then the object is dynamic
@@ -119,6 +121,11 @@ void convert(
   // Set the velocity
 
   out_msg.velocity.twist.linear.x = in_msg.speed.velocity;
+  // DEMO PURPOSES ONLY
+  if (pedestrian_speed > 0.0) {
+    out_msg.velocity.twist.linear.x = pedestrian_speed;
+  }
+
   out_msg.presence_vector |= carma_perception_msgs::msg::ExternalObject::VELOCITY_PRESENCE_VECTOR;
   // NOTE: The velocity covariance is not provided in the PSM. In order to
   // compute it you need at least two PSM messages
@@ -205,6 +212,11 @@ void convert(
   out_msg.pose = impl::pose_from_gnss(
     map_projector, ned_in_map_rotation, gps_point, in_msg.heading.heading, lat_variance,
     lon_variance, heading_variance);
+
+  if (pedestrian_speed > 0.0) {
+    out_msg.pose.pose.orientation = pedestrian_orientation;
+  }
+
   out_msg.presence_vector |= carma_perception_msgs::msg::ExternalObject::POSE_PRESENCE_VECTOR;
 
   /////// Predictions /////////
@@ -214,16 +226,16 @@ void convert(
 
   std::vector<geometry_msgs::msg::Pose> predicted_poses;
 
-  if (in_msg.presence_vector & carma_v2x_msgs::msg::PSM::HAS_PATH_PREDICTION) {
-    // Based on the vehicle frame used in j2735 positive should be to the right
-    // and negative to the left
-    predicted_poses = impl::sample_2d_path_from_radius(
-      out_msg.pose.pose, out_msg.velocity.twist.linear.x,
-      -in_msg.path_prediction.radius_of_curvature, pred_period, pred_step_size);
-  } else {
+  // if (in_msg.presence_vector & carma_v2x_msgs::msg::PSM::HAS_PATH_PREDICTION) {
+  //   // Based on the vehicle frame used in j2735 positive should be to the right
+  //   // and negative to the left
+  //   predicted_poses = impl::sample_2d_path_from_radius(
+  //     out_msg.pose.pose, out_msg.velocity.twist.linear.x,
+  //     -in_msg.path_prediction.radius_of_curvature, pred_period, pred_step_size);
+  // } else {
     predicted_poses = impl::sample_2d_linear_motion(
       out_msg.pose.pose, out_msg.velocity.twist.linear.x, pred_period, pred_step_size);
-  }
+  // }
 
   out_msg.predictions = impl::predicted_poses_to_predicted_state(
     predicted_poses, out_msg.velocity.twist.linear.x, rclcpp::Time(out_msg.header.stamp),
@@ -306,16 +318,14 @@ std::vector<geometry_msgs::msg::Pose> sample_2d_linear_motion(
   double total_dt = 0;
 
   while (total_dt < period) {
-    // Compute the 2d position and orientation in the Pose frame
+    // Increment time
     total_dt += step_size;
-    double dx_from_start = velocity * total_dt;  // Assuming linear motion in pose frame
+    double distance = velocity * total_dt;  // Total distance traveled
 
-    double x = pose.position.x + dx_from_start;
+    // Create a transform that moves forward along the local x-axis by 'distance'
+    tf2::Transform pose_to_sample(tf2::Quaternion::getIdentity(), tf2::Vector3(distance, 0, 0));
 
-    tf2::Vector3 position(x, 0, 0);
-
-    // Convert the position and orientation in the pose frame to the map frame
-    tf2::Transform pose_to_sample(tf2::Quaternion::getIdentity(), position);
+    // Transform to map coordinates
     tf2::Transform map_to_sample = pose_in_map * pose_to_sample;
 
     geometry_msgs::msg::Pose sample_pose;

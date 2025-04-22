@@ -49,37 +49,6 @@ git clone --depth=1 https://github.com/usdot-fhwa-stol/v2x-ros-conversion.git --
 git clone --depth=1 https://github.com/usdot-fhwa-stol/carma-message-filters.git --branch "develop"
 git clone --depth=1 https://github.com/usdot-fhwa-stol/multiple_object_tracking --branch "develop"
 
-# TODO: Remove V2X-Hub Depedency (CAR-6029)
-git clone -b master --depth 1 https://github.com/etherealjoy/qhttpengine.git
-
-git clone -b 7.6.0 --depth 1 --sparse https://github.com/usdot-fhwa-OPS/V2X-Hub.git
-cd V2X-Hub
-git sparse-checkout set ext/ccserver
-
-# SSC related msgs to record in mcap
-cd ${dir}/src
-# raptor_dbw_msgs (only ROS2 needed, foxy still builds in humble)
-git clone --depth 1 --filter=blob:none --sparse https://github.com/NewEagleRaptor/raptor-dbw-ros2.git --branch foxy
-cd ${dir}/src/raptor-dbw-ros2
-git sparse-checkout init --cone
-git sparse-checkout set raptor_dbw_msgs
-cd ${dir}/src
-
-# dbw_mkz_msgs (only ROS2 needed)
-git clone --depth 1 --filter=blob:none --sparse https://github.com/usdot-fhwa-stol/carma-dbw-mkz-ros.git --branch 1.2.4-ros2
-cd ${dir}/src/carma-dbw-mkz-ros
-git sparse-checkout init --cone
-git sparse-checkout set dbw_mkz_msgs_ros2
-cd ${dir}/src
-
-# Despite installing from debian, the guide still asks to build from source until tracetools
-git clone --depth 1 --filter=blob:none --sparse https://github.com/ros2/ros2_tracing.git --branch humble
-cd ${dir}/src/ros2_tracing
-git sparse-checkout init --cone
-git sparse-checkout set tracetools
-cd ${dir}/src
-
-cd ${dir}
 
 # Install dependencies
 if [[ -z "$PACKAGES" ]]; then

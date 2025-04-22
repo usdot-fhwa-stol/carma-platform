@@ -36,10 +36,6 @@ void MotionComputationWorker::predictionLogic(
   carma_perception_msgs::msg::ExternalObjectList sensor_list;
   sensor_list.header = obj_list->header;
 
-  if (!obj_list || obj_list->objects.empty()) {
-    return;
-  }
-
   for (auto obj : obj_list->objects) {
     // Header contains the frame rest of the fields will use
     // obj.header = obj_list.objects[i].header;
@@ -67,6 +63,13 @@ void MotionComputationWorker::predictionLogic(
       obj.object_type = obj.UNKNOWN;
       use_ctrv_model = enable_ctrv_for_unknown_obj_;
     }  // end if-else
+
+    if (obj.object_type == obj.PEDESTRIAN &&
+        (pedestrian_speed_ > 0.0)) {
+      // If the object is a pedestrian, overwrite the speed and orientation
+      obj.velocity.twist.linear.x = pedestrian_speed_;
+      obj.pose.pose.orientation = pedestrian_orientation_;
+    }
 
     if (use_ctrv_model == true) {
       obj.predictions = motion_predict::ctrv::predictPeriod(
@@ -237,6 +240,24 @@ void MotionComputationWorker::mobilityPathCallback(
   }
 }
 
+void MotionComputationWorker::setPedestrianOverwriteValues(
+  double speed, const std::vector<double> & orientation)
+{
+  pedestrian_speed_ = speed;
+  pedestrian_orientation_.x = orientation[0];
+  pedestrian_orientation_.y = orientation[1];
+  pedestrian_orientation_.z = orientation[2];
+  pedestrian_orientation_.w = orientation[3];
+
+  RCLCPP_INFO_STREAM(
+    logger_->get_logger(), "Pedestrian speed: " << pedestrian_speed_ << " m/s");
+  RCLCPP_INFO_STREAM(
+    logger_->get_logger(), "Pedestrian orientation: (" << pedestrian_orientation_.x << ", "
+                                                         << pedestrian_orientation_.y << ", "
+                                                         << pedestrian_orientation_.z << ", "
+                                                         << pedestrian_orientation_.w << ")");
+}
+
 void MotionComputationWorker::psmCallback(const carma_v2x_msgs::msg::PSM::UniquePtr msg)
 {
   if (!map_projector_) {
@@ -252,9 +273,10 @@ void MotionComputationWorker::psmCallback(const carma_v2x_msgs::msg::PSM::Unique
   }
 
   carma_perception_msgs::msg::ExternalObject obj_msg;
+
   conversion::convert(
     *msg, obj_msg, map_frame_id_, prediction_period_, prediction_time_step_, *map_projector_,
-    ned_in_map_rotation_, node_clock_);
+    ned_in_map_rotation_, node_clock_, pedestrian_speed_, pedestrian_orientation_);
 
   // Check if this psm is from an object already being queded.
   // If so then update the existing object, if not add it to the queue

@@ -30,6 +30,9 @@ MotionComputationNode::MotionComputationNode(const rclcpp::NodeOptions & options
   // Declare parameters
   config_.prediction_time_step =
     declare_parameter<double>("prediction_time_step", config_.prediction_time_step);
+  config_.pedestrian_speed =
+    declare_parameter<double>("pedestrian_speed", config_.pedestrian_speed);
+  declare_parameter("pedestrian_orientation", config_.pedestrian_orientation);
   config_.prediction_period =
     declare_parameter<double>("prediction_period", config_.prediction_period);
   config_.cv_x_accel_noise =
@@ -66,6 +69,7 @@ rcl_interfaces::msg::SetParametersResult MotionComputationNode::parameter_update
   auto error = update_params<double>(
     {{"prediction_time_step", config_.prediction_time_step},
      {"prediction_period", config_.prediction_period},
+     {"pedestrian_speed", config_.pedestrian_speed},
      {"cv_x_accel_noise", config_.cv_x_accel_noise},
      {"cv_y_accel_noise", config_.cv_y_accel_noise},
      {"prediction_process_noise_max", config_.prediction_process_noise_max},
@@ -117,7 +121,10 @@ carma_ros2_utils::CallbackReturn MotionComputationNode::handle_on_configure(
   config_ = Config();
 
   // Load parameters
+  rclcpp::Parameter pedestrian_orientation_param = get_parameter("pedestrian_orientation");
+  config_.pedestrian_orientation = pedestrian_orientation_param.as_double_array();
   get_parameter<double>("prediction_time_step", config_.prediction_time_step);
+  get_parameter<double>("pedestrian_speed", config_.pedestrian_speed);
   get_parameter<double>("prediction_period", config_.prediction_period);
   get_parameter<double>("cv_x_accel_noise", config_.cv_x_accel_noise);
   get_parameter<double>("cv_y_accel_noise", config_.cv_y_accel_noise);
@@ -173,6 +180,8 @@ carma_ros2_utils::CallbackReturn MotionComputationNode::handle_on_configure(
   motion_worker_.setYAccelerationNoise(config_.cv_y_accel_noise);
   motion_worker_.setProcessNoiseMax(config_.prediction_process_noise_max);
   motion_worker_.setConfidenceDropRate(config_.prediction_confidence_drop_rate);
+  motion_worker_.setPedestrianOverwriteValues(config_.pedestrian_speed,
+    config_.pedestrian_orientation);
   motion_worker_.setDetectionInputFlags(
     config_.enable_sensor_processing, config_.enable_bsm_processing, config_.enable_psm_processing,
     config_.enable_mobility_path_processing);
