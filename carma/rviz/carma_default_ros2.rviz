@@ -82,71 +82,19 @@ Visualization Manager:
         Value: /environment/lanelet2_map_viz
       Value: true
     - Class: rviz_default_plugins/TF
-      Enabled: true
+      Enabled: false
       Frame Timeout: 15
       Frames:
         All Enabled: true
-        base_link:
-          Value: true
-        gps:
-          Value: true
-        host_vehicle:
-          Value: true
-        map:
-          Value: true
-        mobileye:
-          Value: true
-        ned_heading:
-          Value: true
-        novatel_imu:
-          Value: true
-        radar_fc:
-          Value: true
-        radar_fl:
-          Value: true
-        radar_fr:
-          Value: true
-        radar_rl:
-          Value: true
-        radar_rr:
-          Value: true
-        vehicle_front:
-          Value: true
-        velodyne:
-          Value: true
       Marker Scale: 5
       Name: TF
       Show Arrows: false
       Show Axes: true
       Show Names: true
       Tree:
-        map:
-          base_link:
-            gps:
-              ned_heading:
-                {}
-            host_vehicle:
-              {}
-            mobileye:
-              {}
-            novatel_imu:
-              {}
-            radar_fc:
-              {}
-            radar_fl:
-              {}
-            radar_fr:
-              {}
-            radar_rl:
-              {}
-            radar_rr:
-              {}
-            vehicle_front:
-              {}
-            velodyne:
-              {}
+        {}
       Update Interval: 0
-      Value: true
+      Value: false
     - Class: rviz_default_plugins/MarkerArray
       Enabled: true
       Name: Trajectory Visualizer
@@ -521,7 +469,7 @@ Visualization Manager:
   Value: true
   Views:
     Current:
-      Angle: -6.474998474121094
+      Angle: -0.3449999690055847
       Class: rviz_default_plugins/TopDownOrtho
       Enable Stereo Rendering:
         Stereo Eye Separation: 0.05999999865889549
@@ -531,11 +479,11 @@ Visualization Manager:
       Invert Z Axis: false
       Name: Current View
       Near Clip Distance: 0.009999999776482582
-      Scale: 5.267112731933594
+      Scale: 9.067720413208008
       Target Frame: map
       Value: TopDownOrtho (rviz_default_plugins)
-      X: 5.110437393188477
-      Y: 315.72967529296875
+      X: 25.118213653564453
+      Y: 334.5371398925781
     Saved: ~
 Window Geometry:
   Displays:
