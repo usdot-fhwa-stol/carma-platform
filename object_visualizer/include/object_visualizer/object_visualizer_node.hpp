@@ -52,6 +52,11 @@ namespace object_visualizer
     size_t prev_external_objects_size_ = 0;
     size_t prev_roadway_obstacles_size_ = 0;
     rclcpp::Time last_external_objects_update_time_ = rclcpp::Time(0,0,RCL_ROS_TIME);
+    visualization_msgs::msg::MarkerArray external_objects_viz_msg_;
+    rclcpp::TimerBase::SharedPtr viz_pub_timer_;
+
+
+    void publish_external_objects_viz();
 
     /**
      * \brief Adds a marker deletion for a number of markers which is the delta

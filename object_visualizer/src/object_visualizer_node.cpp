@@ -32,6 +32,7 @@ namespace object_visualizer
     config_.roadway_obstacles_viz_ns = declare_parameter<std::string>("roadway_obstacles_viz_ns", config_.roadway_obstacles_viz_ns);
     config_.marker_shape = declare_parameter<uint8_t>("marker_shape", config_.marker_shape);
     config_.maintain_rviz_marker_for_ms = declare_parameter<uint8_t>("maintain_rviz_marker_for_ms", config_.maintain_rviz_marker_for_ms);
+    config_.external_object_viz_frequency = declare_parameter<double>("external_object_viz_frequency", config_.external_object_viz_frequency);
 
   }
 
@@ -56,9 +57,14 @@ namespace object_visualizer
         {"maintain_rviz_marker_for_ms", config_.maintain_rviz_marker_for_ms}
       }, parameters);
 
+    auto error4 = update_params<double>(
+      {
+        {"external_object_viz_frequency", config_.external_object_viz_frequency}
+      }, parameters);
+
     rcl_interfaces::msg::SetParametersResult result;
 
-    result.successful = !error && !error2 && !error3;
+    result.successful = !error && !error2 && !error3 && !error4;
 
     return result;
   }
@@ -75,6 +81,7 @@ namespace object_visualizer
     get_parameter<std::string>("roadway_obstacles_viz_ns", config_.roadway_obstacles_viz_ns);
     get_parameter<uint8_t>("marker_shape", config_.marker_shape);
     get_parameter<uint8_t>("maintain_rviz_marker_for_ms", config_.maintain_rviz_marker_for_ms);
+    get_parameter<double>("external_object_viz_frequency", config_.external_object_viz_frequency);
     RCLCPP_DEBUG_STREAM(get_logger(), "Config: " << config_);
     // Register runtime parameter update callback
     add_on_set_parameters_callback(std::bind(&Node::parameter_update_callback, this, std_ph::_1));
@@ -90,9 +97,19 @@ namespace object_visualizer
     external_objects_viz_pub_ = create_publisher<visualization_msgs::msg::MarkerArray>("external_objects_viz", 10);
     roadway_obstacles_viz_pub_ = create_publisher<visualization_msgs::msg::MarkerArray>("roadway_obstacles_viz", 10);
 
+    viz_pub_timer_ = create_timer(get_clock(),
+                        std::chrono::duration<double>(1/(config_.external_object_viz_frequency )), //there is waiting state between each planning state
+                       std::bind(&Node::publish_external_objects_viz, this));
+
     // Return success if everthing initialized successfully
     return CallbackReturn::SUCCESS;
   }
+
+  void Node::publish_external_objects_viz()
+  {
+    external_objects_viz_pub_->publish(external_objects_viz_msg_);
+  }
+
 
   void Node::external_objects_callback(carma_perception_msgs::msg::ExternalObjectList::UniquePtr msg)
   {
@@ -103,14 +120,13 @@ namespace object_visualizer
       return;
     }
 
-    visualization_msgs::msg::MarkerArray viz_msg;
     //delete all markers before adding new ones
 
     visualization_msgs::msg::Marker marker;
-    viz_msg.markers.reserve(msg->objects.size() + 1); //+1 to account for delete all marker
+    external_objects_viz_msg_.markers.reserve(msg->objects.size() + 1); //+1 to account for delete all marker
     marker.id = 0;
     marker.action = visualization_msgs::msg::Marker::DELETEALL;
-    viz_msg.markers.push_back(marker);
+    external_objects_viz_msg_.markers.push_back(marker);
 
 
     size_t id = 0; // We always count the id from zero so we can delete markers later in a consistent manner
@@ -156,7 +172,7 @@ namespace object_visualizer
       marker.scale.y = std::max(1.0, obj.size.y) * 2;
       marker.scale.z = std::max(1.0, obj.size.z) * 2;
 
-      viz_msg.markers.push_back(marker);
+      external_objects_viz_msg_.markers.push_back(marker);
 
       id++;
     }
@@ -169,16 +185,15 @@ namespace object_visualizer
         visualization_msgs::msg::Marker delete_all_marker;
         delete_all_marker.id = 0;
         delete_all_marker.action = visualization_msgs::msg::Marker::DELETEALL;
-        viz_msg.markers.push_back(delete_all_marker);
+        external_objects_viz_msg_.markers.push_back(delete_all_marker);
       }
     }
-    else{}
-      clear_and_update_old_objects(viz_msg, prev_external_objects_size_);
+    else{
+      clear_and_update_old_objects(external_objects_viz_msg_, prev_external_objects_size_);
     }
 
     last_external_objects_update_time_ = this->now();
 
-    external_objects_viz_pub_->publish(viz_msg);
 
   }
 

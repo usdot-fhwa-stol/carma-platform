@@ -9,6 +9,8 @@ marker_shape: 2
 
 maintain_rviz_marker_for_ms: 2500
 
+external_object_viz_frequency: 10.0
+
 # String: External Objects marker rviz namespace
 external_objects_viz_ns : "external_objects"
 

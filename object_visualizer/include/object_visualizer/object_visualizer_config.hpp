@@ -39,6 +39,8 @@ namespace object_visualizer
     //Temporary configuration parameter to allow maintaining rviz marker for external objects.
     uint8_t maintain_rviz_marker_for_ms = 1000;
 
+    double external_object_viz_frequency = 10.0;
+
     //! External Objects marker rviz namespace
     std::string external_objects_viz_ns = "external_objects";
 
@@ -55,6 +57,7 @@ namespace object_visualizer
            << "roadway_obstacles_viz_ns: " << c.roadway_obstacles_viz_ns << std::endl
            << "marker_shape: " << c.marker_shape << std::endl
            << "maintain_rviz_marker_for_ms: " << c.maintain_rviz_marker_for_ms << std::endl
+           << "double external_object_viz_frequency:" << c.external_object_viz_frequency << std::endl
            << "}" << std::endl;
       return output;
     }
