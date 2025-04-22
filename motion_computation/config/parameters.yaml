@@ -4,10 +4,12 @@ prediction_time_step: 0.2
 # Period of prediction in seconds
 prediction_period: 30.0
 
-# DEMO MODE Pedestrian speed to overwrite m/s (Negative value will not overwrite)
+# DEMO MODE Pedestrian speed to overwrite m/s
+# NOTE: Negative value will not overwrite
 pedestrian_speed: 0.80
 
 # DEMO MODE orientation (4 values as reported from using "2D select pose" in rviz2)
+# NOTE: Negative pedestrian_speed will not overwrite
 pedestrian_orientation: [0, 0, 0.6688446004928342, 0.743402246695274]
 
 # CV Model X-Axis Acceleration Noise
