@@ -105,16 +105,6 @@ namespace object_visualizer
 
     visualization_msgs::msg::MarkerArray viz_msg;
     //delete all markers before adding new ones
-    // TODO: Temporary fix - wait a configured number of timesteps before deleting
-    // all markers. This is to prevent flickering of the markers when the
-    // external objects are not detected for a short period of time.
-    if (msg->objects.empty()) {
-      auto now = this->now();
-      auto time_since_last_update = now - last_external_objects_update_time_;
-      if (time_since_last_update < rclcpp::Duration::from_seconds(config_.maintain_rviz_marker_for_ms / 1000.0)) {
-        return;
-      }
-    }
 
     visualization_msgs::msg::Marker marker;
     viz_msg.markers.reserve(msg->objects.size() + 1); //+1 to account for delete all marker
@@ -171,7 +161,20 @@ namespace object_visualizer
       id++;
     }
 
-    clear_and_update_old_objects(viz_msg, prev_external_objects_size_);
+    if (msg->objects.empty()) {
+      auto now = this->now();
+      auto time_since_last_update = now - last_external_objects_update_time_;
+      //If empty remove all markers after a delay
+      if (time_since_last_update <= rclcpp::Duration::from_seconds(config_.maintain_rviz_marker_for_ms / 1000.0)) {
+        visualization_msgs::msg::Marker delete_all_marker;
+        delete_all_marker.id = 0;
+        delete_all_marker.action = visualization_msgs::msg::Marker::DELETEALL;
+        viz_msg.markers.push_back(delete_all_marker);
+      }
+    }
+    else{}
+      clear_and_update_old_objects(viz_msg, prev_external_objects_size_);
+    }
 
     last_external_objects_update_time_ = this->now();
 
