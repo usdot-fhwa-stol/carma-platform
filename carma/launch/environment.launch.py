@@ -525,7 +525,7 @@ def generate_launch_description():
                 ],
                 remappings=[
                     ("output/track_list", "cooperative_perception_track_list"),
-                    ("input/detection_list", "filtered_detection_list"), #TODO effectivly bypass
+                    ("input/detection_list", "filtered_detection_list"),
                 ],
                 parameters=[
                     cp_multiple_object_tracker_node_file,
