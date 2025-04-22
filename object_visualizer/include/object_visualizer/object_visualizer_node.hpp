@@ -31,7 +31,7 @@ namespace object_visualizer
 
   /**
    * \brief This node provides RViz visualization messages for recieved ExternalObject and RoadwayObstacle messages in carma-platform.
-   * 
+   *
    */
   class Node : public carma_ros2_utils::CarmaLifecycleNode
   {
@@ -51,42 +51,42 @@ namespace object_visualizer
     // Previous object report sizes for clearing visualization on deleted objects
     size_t prev_external_objects_size_ = 0;
     size_t prev_roadway_obstacles_size_ = 0;
-    rclcpp::Time last_external_objects_update_time_;
+    rclcpp::Time last_external_objects_update_time_ = rclcpp::Time(0,0,RCL_ROS_TIME);
 
     /**
      * \brief Adds a marker deletion for a number of markers which is the delta
      *        between the new marker count and the previously published count
-     * 
+     *
      * ASSUMPTION: The marker array's ids are already recomputed starting from zero, such that tracking ids is not needed.
-     * 
+     *
      * \param[in/out] viz_msg The marker array to add deletion markers to
-     * \param[in/out] old_size The size of the previous published marker array. 
+     * \param[in/out] old_size The size of the previous published marker array.
      *                The positive delta between this and the size of the viz_msg determines the number of deletions added
-     */ 
+     */
     void clear_and_update_old_objects(visualization_msgs::msg::MarkerArray &viz_msg, size_t &old_size);
 
   public:
     /**
-     * \brief Node constructor 
+     * \brief Node constructor
      */
     explicit Node(const rclcpp::NodeOptions &);
 
     /**
      * \brief Example callback for dynamic parameter updates
      */
-    rcl_interfaces::msg::SetParametersResult 
+    rcl_interfaces::msg::SetParametersResult
     parameter_update_callback(const std::vector<rclcpp::Parameter> &parameters);
 
     /**
      * \brief External objects callback. Converts the message to a visualization message to republish
-     * 
+     *
      * \param msg The received message
      */
     void external_objects_callback(carma_perception_msgs::msg::ExternalObjectList::UniquePtr msg);
 
     /**
      * \brief Roadway obstacles callback. Converts the message to a visualization message to republish
-     * 
+     *
      * \param msg The received message
      */
     void roadway_obstacles_callback(carma_perception_msgs::msg::RoadwayObstacleList::UniquePtr msg);

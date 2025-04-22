@@ -439,7 +439,7 @@ def generate_launch_description():
                 remappings=[
                     ("input/georeference", [EnvironmentVariable("CARMA_LOCZ_NS", default_value=""), "/map_param_loader/georeference"]),
                     ("output/detections", "full_detection_list"),
-                    ("input/external_objects", "external_objects"),
+                    ("input/external_objects", "fused_external_objects"),
                 ],
                 parameters=[
                     vehicle_config_param_file

@@ -109,11 +109,9 @@ namespace object_visualizer
     // all markers. This is to prevent flickering of the markers when the
     // external objects are not detected for a short period of time.
     if (msg->objects.empty()) {
-      RCLCPP_ERROR_STREAM(this->get_logger(),"Entering conditional check message not empty");
       auto now = this->now();
       auto time_since_last_update = now - last_external_objects_update_time_;
       if (time_since_last_update < rclcpp::Duration::from_seconds(config_.maintain_rviz_marker_for_ms / 1000.0)) {
-        RCLCPP_ERROR_STREAM(this->get_logger(),"Entering second conditional check ");
         return;
       }
     }
