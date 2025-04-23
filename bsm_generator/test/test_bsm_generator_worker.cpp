@@ -107,6 +107,21 @@ TEST(BSMWorkerTest, testHeading)
     EXPECT_NEAR(300.001f, worker.getHeadingInRange(300.001f), 0.0001);
 }
 
+TEST(BSMWorkerTest, testHeading) {
+    bsm_generator::BSMGeneratorWorker worker;
+    geometry_msgs::msg::Quaternion q;
+    q.x = 0.0;
+    q.y = 0.0;
+    q.z = 0.0;
+    q.w = 1.0;
+    EXPECT_NEAR(0.0f, worker.getHeading(q), 0.0001);
+    q.x = 1.0;
+    EXPECT_NEAR(90.0f, worker.getHeading(q), 0.0001);
+    q.x = 0.7071;
+    q.y = 0.7071;
+    EXPECT_NEAR(45.0f, worker.getHeading(q), 0.0001);
+}
+
 int main(int argc, char ** argv)
 {
     ::testing::InitGoogleTest(&argc, argv);

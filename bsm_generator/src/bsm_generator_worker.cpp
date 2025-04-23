@@ -97,4 +97,29 @@ namespace bsm_generator
     {
         return std::max(std::min(heading, 359.9875f), 0.0f);
     }
+
+    float BSMGeneratorWorker::getHeading(const geometry_msgs::msg::Quaternion & quaternion)
+    {
+        tf2::Quaternion orientation;
+        orientation.setX(quaternion.x);
+        orientation.setY(quaternion.y);
+        orientation.setZ(quaternion.z);
+        orientation.setW(quaternion.w);
+      
+        double roll;
+        double pitch;
+        double yaw;
+        tf2::Matrix3x3(orientation).getRPY(roll, pitch, yaw);
+        // Convert yaw radians to degrees
+        yaw = yaw * 180 / M_PI;
+        // Convert to NED frame
+        yaw = -yaw+90;
+        // Convert to range [0, 360]
+        yaw = std::fmod(yaw, 360.0);
+        if ( yaw < 0  )
+        {
+          yaw = 360 + yaw;
+        }
+        return static_cast<float>(yaw);
+    }
 } // namespace bsm_generator
