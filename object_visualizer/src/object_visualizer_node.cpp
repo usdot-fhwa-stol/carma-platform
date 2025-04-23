@@ -135,7 +135,7 @@ namespace object_visualizer
 
       // Scale the pedestrian mesh appropriately
       marker.scale.x = config_.pedestrian_icon_scale;
-      marker.scale.y = config_.pedestrian_icon_scale;
+      marker.scale.y = - config_.pedestrian_icon_scale; // Invert Y to fix the STL orientation
       marker.scale.z = config_.pedestrian_icon_scale;
 
       // White color for the pedestrian icon
