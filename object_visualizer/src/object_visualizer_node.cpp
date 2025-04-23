@@ -120,12 +120,10 @@ namespace object_visualizer
     marker.pose = pose;
 
     // Rotate the pose by 180 degrees around the Z axis to fix the STL asset's orientation
-    tf2::Quaternion q;
-    tf2::fromMsg(pose.orientation, q);
+    // Use fixed orientation
     tf2::Quaternion rotation;
     rotation.setRPY(0, 0, M_PI); // Rotate 180 degrees (π radians) around Z
-    q = rotation * q; // Apply rotation
-    marker.pose.orientation = tf2::toMsg(q);
+    marker.pose.orientation = tf2::toMsg(rotation);
 
     if (config_.use_pedestrian_icon && !config_.pedestrian_icon_path.empty()) {
       // Use a mesh resource marker for pedestrian representation
@@ -135,7 +133,7 @@ namespace object_visualizer
 
       // Scale the pedestrian mesh appropriately
       marker.scale.x = config_.pedestrian_icon_scale;
-      marker.scale.y = config_.pedestrian_icon_scale;
+      marker.scale.y = - config_.pedestrian_icon_scale; // Invert Y to fix the STL orientation
       marker.scale.z = config_.pedestrian_icon_scale;
 
       // White color for the pedestrian icon
