@@ -251,7 +251,7 @@ def generate_launch_description():
         ]
     )
 
-                                                          
+
     # carma_external_objects_container contains nodes for object detection and tracking
     # since these nodes can use different object inputs they are a separate container from the lidar_perception_container
     # to preserve fault tolerance
@@ -305,8 +305,8 @@ def generate_launch_description():
                         ("external_objects", "external_object_predictions"),
                         ("external_objects_viz", "fused_external_objects_viz")
                     ],
-                    parameters=[object_visualizer_param_file, vehicle_config_param_file, 
-                                {'pedestrian_icon_path': "file:///opt/carma/vehicle/calibration/meshes/pedestrian.stl"}
+                    parameters=[object_visualizer_param_file, vehicle_config_param_file,
+                                {'pedestrian_icon_path': "file:///opt/carma/vehicle/calibration/visualization_meshes/pedestrian.stl"}
                                 ]
             ),
             ComposableNode(
