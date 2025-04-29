@@ -214,11 +214,16 @@ void convert(
 
   std::vector<geometry_msgs::msg::Pose> predicted_poses;
 
-  // TODO: For demo purpose, we are forcing linear motion prediction temporarily
-  // by ignoring psm.path_prediction.radius_of_curvature field of the PSM
+  if (in_msg.presence_vector & carma_v2x_msgs::msg::PSM::HAS_PATH_PREDICTION) {
+    // Based on the vehicle frame used in j2735 positive should be to the right
+    // and negative to the left
+    predicted_poses = impl::sample_2d_path_from_radius(
+      out_msg.pose.pose, out_msg.velocity.twist.linear.x,
+      -in_msg.path_prediction.radius_of_curvature, pred_period, pred_step_size);
+  } else {
   predicted_poses = impl::sample_2d_linear_motion(
     out_msg.pose.pose, out_msg.velocity.twist.linear.x, pred_period, pred_step_size);
-
+  }
 
   out_msg.predictions = impl::predicted_poses_to_predicted_state(
     predicted_poses, out_msg.velocity.twist.linear.x, rclcpp::Time(out_msg.header.stamp),
