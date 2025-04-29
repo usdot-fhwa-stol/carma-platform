@@ -314,7 +314,7 @@ auto to_detection_list_msg(
     detection.id =
       to_string(sdsm.source_id.id) + "-" + std::to_string(common_data.detected_id.object_id);
 
-    const auto pos_offset_enu{(PositionOffsetXYZ::from_msg(common_data.pos))};
+    const auto pos_offset_enu{ned_to_enu(PositionOffsetXYZ::from_msg(common_data.pos))};
     detection.pose.pose.position = to_position_msg(MapCoordinate{
       ref_pos_map.easting + pos_offset_enu.offset_x, ref_pos_map.northing + pos_offset_enu.offset_y,
       ref_pos_map.elevation + pos_offset_enu.offset_z.value_or(units::length::meter_t{0.0})});
