@@ -23,7 +23,6 @@
 #include "carma_cooperative_perception/geodetic.hpp"
 #include "carma_cooperative_perception/units_extensions.hpp"
 
-// THIS NODE IS A TEMPORARY MADE TO PROCESS DETECTIONS!
 namespace carma_cooperative_perception
 {
 TrackListToExternalObjectListNode::TrackListToExternalObjectListNode(
@@ -41,9 +40,9 @@ auto TrackListToExternalObjectListNode::handle_on_configure(
     "output/external_object_list", 1);
 
   track_list_subscription_ = create_subscription<
-    carma_cooperative_perception_interfaces::msg::DetectionList>(
-    "input/detection_list", 1,
-    [this](const carma_cooperative_perception_interfaces::msg::DetectionList::SharedPtr msg_ptr) {
+    carma_cooperative_perception_interfaces::msg::TrackList>(
+    "input/track_list", 1,
+    [this](const carma_cooperative_perception_interfaces::msg::TrackList::SharedPtr msg_ptr) {
       if (const auto current_state{this->get_current_state().label()}; current_state == "active") {
         publish_as_external_object_list(*msg_ptr);
       } else {
@@ -77,7 +76,7 @@ auto TrackListToExternalObjectListNode::handle_on_shutdown(
 }
 
 auto TrackListToExternalObjectListNode::publish_as_external_object_list(
-  const carma_cooperative_perception_interfaces::msg::DetectionList & msg) const -> void
+  const carma_cooperative_perception_interfaces::msg::TrackList & msg) const -> void
 {
   auto external_object_list{to_external_object_list_msg(msg)};
   external_object_list.header.stamp = now();

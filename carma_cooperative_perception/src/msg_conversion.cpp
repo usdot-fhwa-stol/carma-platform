@@ -505,78 +505,6 @@ auto to_detection_list_msg(
   return detection_list;
 }
 
-auto to_external_object_msg(
-  const carma_cooperative_perception_interfaces::msg::Detection & detection)
-  -> carma_perception_msgs::msg::ExternalObject
-{
-  carma_perception_msgs::msg::ExternalObject external_object;
-  external_object.header = detection.header;
-  external_object.presence_vector = 0;
-
-  const auto to_numeric_id = [](std::string string_id) -> std::optional<uint32_t> {
-    auto non_digit_start = std::remove_if(
-      std::begin(string_id), std::end(string_id),
-      [](const auto & ch) { return !std::isdigit(ch); });
-
-    std::uint32_t numeric_id;
-    const auto digit_substr_size{std::distance(std::begin(string_id), non_digit_start)};
-    if (
-      std::from_chars(string_id.c_str(), string_id.c_str() + digit_substr_size, numeric_id).ec ==
-      std::errc{}) {
-      return numeric_id;
-    }
-
-    return std::nullopt;
-  };
-
-  if (const auto numeric_id{to_numeric_id(detection.id)}) {
-    external_object.presence_vector |= external_object.ID_PRESENCE_VECTOR;
-    external_object.id = numeric_id.value();
-  } else {
-    external_object.presence_vector &= ~external_object.ID_PRESENCE_VECTOR;
-  }
-
-  external_object.presence_vector |= external_object.POSE_PRESENCE_VECTOR;
-  external_object.pose = detection.pose;
-
-  external_object.presence_vector |= external_object.VELOCITY_PRESENCE_VECTOR;
-
-  const auto detection_longitudinal_velocity{detection.twist.twist.linear.x};
-  const auto detection_orientation = detection.pose.pose.orientation;
-
-  tf2::Quaternion q(
-    detection_orientation.x, detection_orientation.y, detection_orientation.z, detection_orientation.w);
-  tf2::Matrix3x3 m(q);
-  double roll, pitch, yaw;
-  m.getRPY(roll, pitch, yaw);
-
-  external_object.velocity.twist.linear.x = detection_longitudinal_velocity * std::cos(yaw);
-  external_object.velocity.twist.linear.y = detection_longitudinal_velocity * std::sin(yaw);
-
-  external_object.object_type = detection.semantic_class;
-
-  external_object.presence_vector |= external_object.OBJECT_TYPE_PRESENCE_VECTOR;
-  switch (detection.semantic_class) {
-    case detection.SEMANTIC_CLASS_SMALL_VEHICLE:
-      external_object.object_type = external_object.SMALL_VEHICLE;
-      break;
-    case detection.SEMANTIC_CLASS_LARGE_VEHICLE:
-      external_object.object_type = external_object.LARGE_VEHICLE;
-      break;
-    case detection.SEMANTIC_CLASS_MOTORCYCLE:
-      external_object.object_type = external_object.MOTORCYCLE;
-      break;
-    case detection.SEMANTIC_CLASS_PEDESTRIAN:
-      external_object.object_type = external_object.PEDESTRIAN;
-      break;
-    case detection.SEMANTIC_CLASS_UNKNOWN:
-    default:
-      external_object.object_type = external_object.UNKNOWN;
-  }
-
-  return external_object;
-}
-
 auto to_external_object_msg(const carma_cooperative_perception_interfaces::msg::Track & track)
   -> carma_perception_msgs::msg::ExternalObject
 {
@@ -646,19 +574,6 @@ auto to_external_object_msg(const carma_cooperative_perception_interfaces::msg::
   }
 
   return external_object;
-}
-
-auto to_external_object_list_msg(
-  const carma_cooperative_perception_interfaces::msg::DetectionList & detection_list)
-  -> carma_perception_msgs::msg::ExternalObjectList
-{
-  carma_perception_msgs::msg::ExternalObjectList external_object_list;
-
-  for (const auto & detection : detection_list.detections) {
-    external_object_list.objects.push_back(to_external_object_msg(detection));
-  }
-
-  return external_object_list;
 }
 
 auto to_external_object_list_msg(
