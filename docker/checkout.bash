@@ -30,9 +30,13 @@ while [[ $# -gt 0 ]]; do
                   shift
             ;;
             -r|--root)
-                  dir=$2
-                  shift
-                  shift
+                    dir=$2
+                    shift
+                    shift
+            ;;
+            *)
+                  echo "Unknown argument $1"
+                    shift
             ;;
       esac
 done
@@ -74,3 +78,12 @@ cd ${dir}/src/ros2_tracing
 git sparse-checkout init --cone
 git sparse-checkout set tracetools
 cd ${dir}/src
+
+cd ${dir}
+
+# Install dependencies
+if [[ -z "$PACKAGES" ]]; then
+      SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+      sudo chmod +x ${SCRIPT_DIR}/install_dependencies.sh
+      ${SCRIPT_DIR}/install_dependencies.sh -b $BRANCH -r $dir
+fi
