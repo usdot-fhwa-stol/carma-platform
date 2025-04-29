@@ -42,6 +42,15 @@ namespace object_visualizer
     //! Roadway Obstacles marker rviz namespace
     std::string roadway_obstacles_viz_ns = "roadway_obstacles";
 
+    //! If true, pedestrians will be visualized using specialized icons/models instead of basic markers
+    bool use_pedestrian_icon = true;
+
+    //! Path to the model file for pedestrian visualization
+    std::string pedestrian_icon_path = "package://object_visualizer/meshes/pedestrian.stl";
+
+    //! Scale factor to apply to the pedestrian icon model
+    double pedestrian_icon_scale = 1.0;
+
     // Stream operator for this config
     friend std::ostream &operator<<(std::ostream &output, const Config &c)
     {
@@ -50,7 +59,10 @@ namespace object_visualizer
            << "enable_roadway_objects_viz: " << c.enable_roadway_objects_viz << std::endl
            << "external_objects_viz_ns: " << c.external_objects_viz_ns << std::endl
            << "roadway_obstacles_viz_ns: " << c.roadway_obstacles_viz_ns << std::endl
-           << "marker_shape: " << c.marker_shape << std::endl
+           << "marker_shape: " << static_cast<int>(c.marker_shape) << std::endl
+           << "use_pedestrian_icon: " << c.use_pedestrian_icon << std::endl
+           << "pedestrian_icon_path: " << c.pedestrian_icon_path << std::endl
+           << "pedestrian_icon_scale: " << c.pedestrian_icon_scale << std::endl
            << "}" << std::endl;
       return output;
     }
