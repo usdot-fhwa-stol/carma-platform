@@ -52,9 +52,8 @@ public:
   auto sdsm_msg_callback(const input_msg_type & msg) const -> void
   {
     try {
-      RCLCPP_ERROR_STREAM(get_logger(), "Received a sdsm msg");
       auto detection_list_msg{to_detection_list_msg(msg, georeference_)};
-      RCLCPP_ERROR_STREAM(get_logger(), "Completed to detection list msg");
+
       if (cdasim_time_) {
         // When in simulation, ROS time is CARLA time, but SDSMs use CDASim time
         const auto time_delta{now() - cdasim_time_.value()};
@@ -63,9 +62,8 @@ public:
           detection.header.stamp = rclcpp::Time(detection.header.stamp) + time_delta;
         }
       }
-      RCLCPP_ERROR_STREAM(get_logger(), "Before publishing sdsm msg");
+
       publisher_->publish(detection_list_msg);
-      RCLCPP_ERROR_STREAM(get_logger(), "After publishing sdsm msg");
     } catch (const std::runtime_error & e) {
       RCLCPP_ERROR_STREAM(get_logger(), "Failed to convert SDSM to detection list: " << e.what());
     }
