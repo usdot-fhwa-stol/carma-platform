@@ -58,7 +58,6 @@ namespace carma_cooperative_perception
 auto to_time_msg(const DDateTime & d_date_time) -> builtin_interfaces::msg::Time
 {
   std::tm timeinfo = {};
-  // timeinfo.tm_year = d_date_time.year.value_or(units::time::year_t{0.0});
   timeinfo.tm_year = static_cast<int>(d_date_time.year.value());
   if(timeinfo.tm_year > 1900){
     timeinfo.tm_year = timeinfo.tm_year - 1900;
