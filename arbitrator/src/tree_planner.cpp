@@ -42,7 +42,7 @@ namespace arbitrator
             for (auto it = open_list_to_evaluate.begin(); it != open_list_to_evaluate.end(); it++)
             {
                 // Pop the first element off the open list
-                carma_planning_msgs::msg::ManeuverPlan cur_plan = it->first;
+                auto& cur_plan = it->first;
 
                 if (cur_plan.maneuver_plan_id == "")
                 {
