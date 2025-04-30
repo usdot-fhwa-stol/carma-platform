@@ -142,7 +142,7 @@ namespace arbitrator
                 return cur_plan;
             }
         }
-        longest_plan.maneuver_plan_id = boost::uuids::random_generator()();
+        longest_plan.maneuver_plan_id = boost::uuids::to_string(boost::uuids::random_generator()());
 
         // If no perfect match is found, return the longest plan that fit the criteria
         return longest_plan;

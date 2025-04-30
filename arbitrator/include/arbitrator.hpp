@@ -30,7 +30,6 @@
 #include <boost/uuid/uuid.hpp>
 #include <boost/uuid/uuid_io.hpp>
 #include <boost/uuid/uuid_generators.hpp>
-
 #include "vehicle_state.hpp"
 #include "arbitrator_state_machine.hpp"
 #include "planning_strategy.hpp"

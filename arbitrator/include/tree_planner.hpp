@@ -24,6 +24,9 @@
 #include "neighbor_generator.hpp"
 #include "search_strategy.hpp"
 #include "vehicle_state.hpp"
+#include <boost/uuid/uuid.hpp>
+#include <boost/uuid/uuid_io.hpp>
+#include <boost/uuid/uuid_generators.hpp>
 #include <rclcpp/rclcpp.hpp>
 
 namespace arbitrator
