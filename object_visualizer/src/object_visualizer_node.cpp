@@ -119,12 +119,6 @@ namespace object_visualizer
     marker.id = id;
     marker.pose = pose;
 
-    // Rotate the pose by 180 degrees around the Z axis to fix the STL asset's orientation
-    // Use fixed orientation
-    tf2::Quaternion rotation;
-    rotation.setRPY(0, 0, M_PI); // Rotate 180 degrees (π radians) around Z
-    marker.pose.orientation = tf2::toMsg(rotation);
-
     if (config_.use_pedestrian_icon && !config_.pedestrian_icon_path.empty()) {
       // Use a mesh resource marker for pedestrian representation
       marker.type = visualization_msgs::msg::Marker::MESH_RESOURCE;
