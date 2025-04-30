@@ -44,6 +44,13 @@ namespace arbitrator
                 // Pop the first element off the open list
                 carma_planning_msgs::msg::ManeuverPlan cur_plan = it->first;
 
+                if (cur_plan.maneuver_plan_id == "")
+                {
+                    // Generate a new unique id for the maneuver plan
+                    cur_plan.maneuver_plan_id =
+                        boost::uuids::to_string(boost::uuids::random_generator()());
+                }
+
                 RCLCPP_DEBUG_STREAM(rclcpp::get_logger("arbitrator"),
                     "Start printing newly requested maneuver plan for debugging:");
 
@@ -91,13 +98,12 @@ namespace arbitrator
                 // Compute cost for each child and store in open list
                 for (auto child = children.begin(); child != children.end(); child++)
                 {
-
                     if (child->maneuvers.empty())
                     {
 
                         RCLCPP_WARN_STREAM(
                             rclcpp::get_logger("arbitrator"),
-                            "Arbitrator didn't get successful maneuver plan for plan_id"
+                            "Arbitrator didn't get successful maneuver plan for plan_id: "
                             << std::string(child->maneuver_plan_id)
                             <<", with manuever types listed in order as: "
                         );
@@ -142,7 +148,6 @@ namespace arbitrator
                 return cur_plan;
             }
         }
-        longest_plan.maneuver_plan_id = boost::uuids::to_string(boost::uuids::random_generator()());
 
         // If no perfect match is found, return the longest plan that fit the criteria
         return longest_plan;
