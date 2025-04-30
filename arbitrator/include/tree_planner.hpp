@@ -36,7 +36,7 @@ namespace arbitrator
      * @param type The maneuver type enum value
      * @return String representation of the maneuver type
      */
-    std::string maneuver_type_to_string(uint8_t type) {
+    inline std::string maneuver_type_to_string(uint8_t type) {
         switch(type) {
             case carma_planning_msgs::msg::Maneuver::LANE_FOLLOWING:
                 return "LANE_FOLLOWING";

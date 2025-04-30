@@ -42,7 +42,7 @@ namespace arbitrator
      * @param state The guidance state enum value
      * @return String representation of the guidance state
      */
-    std::string guidance_state_to_string(uint8_t state) {
+    inline std::string guidance_state_to_string(uint8_t state) {
         switch(state) {
             case carma_planning_msgs::msg::GuidanceState::STARTUP:
                 return "STARTUP";
