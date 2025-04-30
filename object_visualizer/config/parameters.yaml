@@ -14,6 +14,6 @@ external_objects_viz_ns : "external_objects"
 roadway_obstacles_viz_ns : "roadway_obstacles"
 
 # Pedestrian visualization parameters
-use_pedestrian_icon: true
+use_pedestrian_icon: false
 pedestrian_icon_path: "package://object_visualizer/meshes/pedestrian.stl"
 pedestrian_icon_scale: 0.5
