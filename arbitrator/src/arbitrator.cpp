@@ -33,23 +33,23 @@ namespace arbitrator
             switch (sm_->get_state())
             {
                 case INITIAL:
-                    RCLCPP_DEBUG_STREAM(nh_->get_logger(), "Arbitrator spinning in INITIAL state.");
+                    RCLCPP_INFO_STREAM(nh_->get_logger(), "Arbitrator spinning in INITIAL state.");
                     initial_state();
                     break;
                 case PLANNING:
-                    RCLCPP_DEBUG_STREAM(nh_->get_logger(), "Arbitrator spinning in PLANNING state.");
+                    RCLCPP_INFO_STREAM(nh_->get_logger(), "Arbitrator spinning in PLANNING state.");
                     planning_state();
                     break;
                 case WAITING:
-                    RCLCPP_DEBUG_STREAM(nh_->get_logger(), "Arbitrator spinning in WAITING state.");
+                    RCLCPP_INFO_STREAM(nh_->get_logger(), "Arbitrator spinning in WAITING state.");
                     waiting_state();
                     break;
                 case PAUSED:
-                    RCLCPP_DEBUG_STREAM(nh_->get_logger(), "Arbitrator spinning in PAUSED state.");
+                    RCLCPP_INFO_STREAM(nh_->get_logger(), "Arbitrator spinning in PAUSED state.");
                     paused_state();
                     break;
                 case SHUTDOWN:
-                    RCLCPP_DEBUG_STREAM(nh_->get_logger(), "Arbitrator shutting down after being commanded to shutdown!");
+                    RCLCPP_INFO_STREAM(nh_->get_logger(), "Arbitrator shutting down after being commanded to shutdown!");
                     rclcpp::shutdown();
                     exit(0);
                     break;
@@ -152,7 +152,10 @@ namespace arbitrator
             }
             else
             {
-                RCLCPP_INFO_STREAM(nh_->get_logger(), "Arbitrator is publishing plan " << std::string(plan.maneuver_plan_id) << " of duration " << plan_duration.seconds() << " as current maneuver plan");
+                RCLCPP_DEBUG_STREAM(nh_->get_logger(),
+                    "Arbitrator is publishing plan id: "
+                    << std::string(plan.maneuver_plan_id)
+                    << " of duration " << plan_duration.seconds() << " as current maneuver plan");
             }
             final_plan_pub_->publish(plan);
         }
@@ -168,7 +171,6 @@ namespace arbitrator
 
     void Arbitrator::waiting_state()
     {
-        RCLCPP_INFO_STREAM(nh_->get_logger(), "Arbitrator transitioning from WAITING to PLANNING state.");
         sm_->submit_event(ArbitratorEvent::PLANNING_TIMER_TRIGGER);
     }
 

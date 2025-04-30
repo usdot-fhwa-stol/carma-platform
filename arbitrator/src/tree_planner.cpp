@@ -94,13 +94,18 @@ namespace arbitrator
 
                 // Expand it, and reprioritize
                 std::vector<carma_planning_msgs::msg::ManeuverPlan> children = neighbor_generator_->generate_neighbors(cur_plan, start_state);
-
+                RCLCPP_DEBUG_STREAM(
+                    rclcpp::get_logger("arbitrator"),
+                    "Arbitrator received total of " << children.size()
+                    << " response from strategic_plugins for plan_id: "
+                    << std::string(cur_plan.maneuver_plan_id)
+                );
                 // Compute cost for each child and store in open list
                 for (auto child = children.begin(); child != children.end(); child++)
                 {
                     if (child->maneuvers.empty())
                     {
-                        RCLCPP_WARN_STREAM(
+                        RCLCPP_DEBUG_STREAM(
                             rclcpp::get_logger("arbitrator"),
                             "Arbitrator didn't get successful maneuver plan for plan_id: "
                             << std::string(cur_plan.maneuver_plan_id)
@@ -108,11 +113,11 @@ namespace arbitrator
                         );
                         for (auto mvr : cur_plan.maneuvers)
                         {
-                            RCLCPP_WARN_STREAM(
+                            RCLCPP_DEBUG_STREAM(
                                 rclcpp::get_logger("arbitrator"),
                                 "Maneuver type: " << maneuver_type_to_string(mvr.type);
                             );
-                        };
+                        }
                         continue;
                     }
 

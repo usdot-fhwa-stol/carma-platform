@@ -546,7 +546,8 @@ namespace carma_wm
     else
     {
       RCLCPP_WARN_STREAM(rclcpp::get_logger("carma_wm"), "Signal group id: "
-        << (int)signal_group_id << " is not found in the map. Returning...");
+        << (int)signal_group_id << " for intersection id: "
+        << (int)intersection_id << " is not found in the map. Returning...");
       return signal_id;
     }
 

@@ -660,7 +660,10 @@ namespace plan_delegator
             // validate trajectory before add to the plan
             if(!isTrajectoryValid(plan_response->trajectory_plan))
             {
-                RCLCPP_WARN_STREAM(rclcpp::get_logger("plan_delegator"),"Found invalid trajectory with less than 2 trajectory points for " << std::string(latest_maneuver_plan_.maneuver_plan_id));
+                RCLCPP_WARN_STREAM(rclcpp::get_logger("plan_delegator"),
+                    "Found invalid trajectory with less than 2 trajectory "
+                    << "points for maneuver_plan_id: "
+                    << std::string(latest_maneuver_plan_.maneuver_plan_id));
                 break;
             }
             //Remove duplicate point from start of trajectory
