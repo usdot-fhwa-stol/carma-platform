@@ -27,6 +27,9 @@
 #include <tf2_ros/buffer.h>
 #include <tf2/LinearMath/Transform.h>
 #include <tf2_geometry_msgs/tf2_geometry_msgs.hpp>
+#include <boost/uuid/uuid.hpp>
+#include <boost/uuid/uuid_io.hpp>
+#include <boost/uuid/uuid_generators.hpp>
 
 #include "vehicle_state.hpp"
 #include "arbitrator_state_machine.hpp"
@@ -35,6 +38,30 @@
 
 namespace arbitrator
 {
+    /**
+     * @brief Convert guidance state enum to string representation
+     * @param state The guidance state enum value
+     * @return String representation of the guidance state
+     */
+    std::string guidance_state_to_string(uint8_t state) {
+        switch(state) {
+            case carma_planning_msgs::msg::GuidanceState::STARTUP:
+                return "STARTUP";
+            case carma_planning_msgs::msg::GuidanceState::DRIVERS_READY:
+                return "DRIVERS_READY";
+            case carma_planning_msgs::msg::GuidanceState::ACTIVE:
+                return "ACTIVE";
+            case carma_planning_msgs::msg::GuidanceState::ENGAGED:
+                return "ENGAGED";
+            case carma_planning_msgs::msg::GuidanceState::INACTIVE:
+                return "INACTIVE";
+            case carma_planning_msgs::msg::GuidanceState::SHUTDOWN:
+                return "SHUTDOWN";
+            default:
+                return "UNKNOWN";
+        }
+    }
+
     /**
      * Primary work class for the Arbitrator package
      *
@@ -152,6 +179,8 @@ namespace arbitrator
             // transform from front bumper to map
             tf2::Stamped<tf2::Transform> bumper_transform_;
             bool planning_in_progress_ = false;
+            carma_planning_msgs::msg::GuidanceState::_state_type previous_guidance_state_ =
+                carma_planning_msgs::msg::GuidanceState::STARTUP;  // Initialize to default value
     };
 }
 

@@ -702,6 +702,10 @@ namespace plan_delegator
 
     void PlanDelegator::onTrajPlanTick()
     {
+        if (!guidance_engaged)
+        {
+            return;
+        }
         carma_planning_msgs::msg::TrajectoryPlan trajectory_plan = planTrajectory();
 
         // Check if planned trajectory is valid before send out
@@ -712,7 +716,9 @@ namespace plan_delegator
         }
         else
         {
-            RCLCPP_WARN_STREAM(rclcpp::get_logger("plan_delegator"),"Planned trajectory is empty. It will not be published!");
+            RCLCPP_WARN_STREAM(rclcpp::get_logger("plan_delegator"),
+                "Guidance is engaged, but planned trajectory has less than 2 points. " <<
+                "It will not be published!");
         }
     }
 

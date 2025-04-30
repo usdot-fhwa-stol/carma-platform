@@ -29,6 +29,29 @@
 namespace arbitrator
 {
     /**
+     * @brief Convert maneuver type enum to string representation
+     * @param type The maneuver type enum value
+     * @return String representation of the maneuver type
+     */
+    std::string maneuver_type_to_string(uint8_t type) {
+        switch(type) {
+            case carma_planning_msgs::msg::Maneuver::LANE_FOLLOWING:
+                return "LANE_FOLLOWING";
+            case carma_planning_msgs::msg::Maneuver::LANE_CHANGE:
+                return "LANE_CHANGE";
+            case carma_planning_msgs::msg::Maneuver::INTERSECTION_TRANSIT_STRAIGHT:
+                return "INTERSECTION_TRANSIT_STRAIGHT";
+            case carma_planning_msgs::msg::Maneuver::INTERSECTION_TRANSIT_LEFT_TURN:
+                return "INTERSECTION_TRANSIT_LEFT_TURN";
+            case carma_planning_msgs::msg::Maneuver::INTERSECTION_TRANSIT_RIGHT_TURN:
+                return "INTERSECTION_TRANSIT_RIGHT_TURN";
+            case carma_planning_msgs::msg::Maneuver::STOP_AND_WAIT:
+                return "STOP_AND_WAIT";
+            default:
+                return "UNKNOWN";
+        }
+    }
+    /**
      * \brief Implementation of PlanningStrategy using a generic tree search
      *      algorithm
      *

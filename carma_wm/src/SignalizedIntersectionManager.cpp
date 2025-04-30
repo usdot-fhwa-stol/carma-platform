@@ -534,7 +534,8 @@ namespace carma_wm
     {
       // Currently, platform is not supporting multiple intersections, so if the id exists
       // signal_group is expected to be for that intersection
-      RCLCPP_WARN_STREAM(rclcpp::get_logger("carma_wm"), "Intersection id: " << intersection_id << " is not found in the map. Returning...");
+      RCLCPP_WARN_STREAM(rclcpp::get_logger("carma_wm"), "Intersection id: "
+        << (int)intersection_id << " is not found in the map. Returning...");
       return lanelet::InvalId;
     }
 
@@ -544,7 +545,8 @@ namespace carma_wm
     }
     else
     {
-      RCLCPP_WARN_STREAM(rclcpp::get_logger("carma_wm"), "Signal group id: " << signal_group_id << " is not found in the map. Returning...");
+      RCLCPP_WARN_STREAM(rclcpp::get_logger("carma_wm"), "Signal group id: "
+        << (int)signal_group_id << " is not found in the map. Returning...");
       return signal_id;
     }
 

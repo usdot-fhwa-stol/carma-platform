@@ -33,23 +33,23 @@ namespace arbitrator
             switch (sm_->get_state())
             {
                 case INITIAL:
-                    RCLCPP_INFO_STREAM(nh_->get_logger(), "Arbitrator spinning in INITIAL state.");
+                    RCLCPP_DEBUG_STREAM(nh_->get_logger(), "Arbitrator spinning in INITIAL state.");
                     initial_state();
                     break;
                 case PLANNING:
-                    RCLCPP_INFO_STREAM(nh_->get_logger(), "Arbitrator spinning in PLANNING state.");
+                    RCLCPP_DEBUG_STREAM(nh_->get_logger(), "Arbitrator spinning in PLANNING state.");
                     planning_state();
                     break;
                 case WAITING:
-                    RCLCPP_INFO_STREAM(nh_->get_logger(), "Arbitrator spinning in WAITING state.");
+                    RCLCPP_DEBUG_STREAM(nh_->get_logger(), "Arbitrator spinning in WAITING state.");
                     waiting_state();
                     break;
                 case PAUSED:
-                    RCLCPP_INFO_STREAM(nh_->get_logger(), "Arbitrator spinning in PAUSED state.");
+                    RCLCPP_DEBUG_STREAM(nh_->get_logger(), "Arbitrator spinning in PAUSED state.");
                     paused_state();
                     break;
                 case SHUTDOWN:
-                    RCLCPP_INFO_STREAM(nh_->get_logger(), "Arbitrator shutting down after being commanded to shutdown!");
+                    RCLCPP_DEBUG_STREAM(nh_->get_logger(), "Arbitrator shutting down after being commanded to shutdown!");
                     rclcpp::shutdown();
                     exit(0);
                     break;
@@ -64,17 +64,21 @@ namespace arbitrator
         planning_in_progress_ = false;
     }
 
-    void Arbitrator::guidance_state_cb(carma_planning_msgs::msg::GuidanceState::UniquePtr msg)
-    {
-        switch (msg->state)
-        {
+    void Arbitrator::guidance_state_cb(carma_planning_msgs::msg::GuidanceState::UniquePtr msg) {
+        // Flag to determine if this is a new state
+        bool is_new_state = (msg->state != previous_guidance_state_);
+
+        switch (msg->state) {
             case carma_planning_msgs::msg::GuidanceState::STARTUP:
                 // NO-OP
                 break;
             case carma_planning_msgs::msg::GuidanceState::DRIVERS_READY:
-                if(sm_->get_state() == ArbitratorState::PLANNING || sm_->get_state() == ArbitratorState::WAITING)
-                {
-                    RCLCPP_INFO_STREAM(nh_->get_logger(), "Received notice that guidance has been restarted, pausing arbitrator.");
+                if(sm_->get_state() == ArbitratorState::PLANNING ||
+                   sm_->get_state() == ArbitratorState::WAITING) {
+                    if (is_new_state) {
+                        RCLCPP_INFO_STREAM(nh_->get_logger(),
+                            "Guidance has been restarted, pausing arbitrator...");
+                    }
                     sm_->submit_event(ArbitratorEvent::ARBITRATOR_PAUSED);
                 }
                 break;
@@ -82,7 +86,10 @@ namespace arbitrator
                 // NO-OP
                 break;
             case carma_planning_msgs::msg::GuidanceState::ENGAGED:
-                RCLCPP_INFO_STREAM(nh_->get_logger(), "Received notice that guidance has been engaged!");
+                if (is_new_state) {
+                    RCLCPP_INFO_STREAM(nh_->get_logger(),
+                        "Guidance has been engaged!");
+                }
                 if (sm_->get_state() == ArbitratorState::INITIAL) {
                     sm_->submit_event(ArbitratorEvent::SYSTEM_STARTUP_COMPLETE);
                 } else if (sm_->get_state() == ArbitratorState::PAUSED) {
@@ -90,16 +97,25 @@ namespace arbitrator
                 }
                 break;
             case carma_planning_msgs::msg::GuidanceState::INACTIVE:
-                RCLCPP_INFO_STREAM(nh_->get_logger(), "Received notice that guidance has been disengaged, pausing arbitrator.");
+                if (is_new_state) {
+                    RCLCPP_INFO_STREAM(nh_->get_logger(),
+                        "Guidance has been disengaged, pausing arbitrator.");
+                }
                 sm_->submit_event(ArbitratorEvent::ARBITRATOR_PAUSED);
                 break;
             case carma_planning_msgs::msg::GuidanceState::SHUTDOWN:
-                RCLCPP_INFO_STREAM(nh_->get_logger(), "Received notice that guidance has been shutdown, shutting down arbitrator.");
+                if (is_new_state) {
+                    RCLCPP_INFO_STREAM(nh_->get_logger(),
+                        "Guidance has been shutdown, shutting down arbitrator...");
+                }
                 sm_->submit_event(ArbitratorEvent::SYSTEM_SHUTDOWN_INITIATED);
                 break;
             default:
                 break;
         }
+
+        // Update previous state
+        previous_guidance_state_ = msg->state;
     }
 
     void Arbitrator::initial_state()
