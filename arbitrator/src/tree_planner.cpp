@@ -100,12 +100,11 @@ namespace arbitrator
                 {
                     if (child->maneuvers.empty())
                     {
-
                         RCLCPP_WARN_STREAM(
                             rclcpp::get_logger("arbitrator"),
                             "Arbitrator didn't get successful maneuver plan for plan_id: "
-                            << std::string(child->maneuver_plan_id)
-                            <<", with manuever types listed in order as: "
+                            << std::string(cur_plan.maneuver_plan_id)
+                            <<", from one of the strategic plugin, which so far had maneuvers: "
                         );
                         for (auto mvr : cur_plan.maneuvers)
                         {

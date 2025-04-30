@@ -68,7 +68,7 @@ def record_ros2_rosbag(context: LaunchContext, vehicle_config_param_file, rosbag
                             '--qos-profile-overrides-path', overriding_qos_profiles,
                             '-o', '/opt/carma/logs/rosbag2_' + str(datetime.now().strftime('%Y-%m-%d_%H%M%S')),
                             '-x', exclude_topics_regex],
-                        output='screen',
+                        output='none', # 'screen' or 'log' to enable if needed for debugging
                         shell='true'
                     )
 
