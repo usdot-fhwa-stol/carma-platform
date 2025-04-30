@@ -526,6 +526,34 @@ namespace carma_wm
     }
   }
 
+  /**
+   * @brief Log an info message only once per unique message
+   * @param message The message to log
+   */
+  void SignalizedIntersectionManager::logInfoOnce(const std::string& message) {
+    static std::mutex log_mutex;
+
+    std::lock_guard<std::mutex> lock(log_mutex);
+    if (previous_busy_log_streams_.find(message) == previous_busy_log_streams_.end()) {
+      RCLCPP_INFO_STREAM(rclcpp::get_logger("carma_wm"), message);
+      previous_busy_log_streams_.insert(message);
+    }
+  }
+
+  /**
+   * @brief Log a warning message only once per unique message
+   * @param message The message to log
+   */
+  void SignalizedIntersectionManager::logWarnOnce(const std::string& message) {
+    static std::mutex log_mutex;
+
+    std::lock_guard<std::mutex> lock(log_mutex);
+    if (previous_busy_log_streams_.find(message) == previous_busy_log_streams_.end()) {
+      RCLCPP_WARN_STREAM(rclcpp::get_logger("carma_wm"), message);
+      previous_busy_log_streams_.insert(message);
+    }
+  }
+
   lanelet::Id SignalizedIntersectionManager::getTrafficSignalId(uint16_t intersection_id, uint8_t signal_group_id)
   {
     lanelet::Id signal_id = lanelet::InvalId;
@@ -535,8 +563,9 @@ namespace carma_wm
     {
       // Currently, platform is not supporting multiple intersections, so if the id exists
       // signal_group is expected to be for that intersection
-      RCLCPP_WARN_STREAM_ONCE(rclcpp::get_logger("carma_wm"), "Intersection id: "
-        << (int)intersection_id << " is not found in the map. Only printing once. Returning...");
+      logWarnOnce("Intersection id: "
+        + std::to_string((int)intersection_id)
+        + " is not found in the map. Only printing once. Returning...");
       return lanelet::InvalId;
     }
 
@@ -547,16 +576,17 @@ namespace carma_wm
     }
     else
     {
-      RCLCPP_WARN_STREAM_ONCE(rclcpp::get_logger("carma_wm"), "Signal group id: "
-        << (int)signal_group_id << " for intersection id: "
-        << (int)intersection_id << " is not found in the map. "
-        << "Only printing once until found. Returning...");
+      logWarnOnce("Signal group id: "
+        + std::to_string((int)signal_group_id) + " for intersection id: "
+        + std::to_string((int)intersection_id) + " is not found in the map. "
+        + "Only printing once until found. Returning...");
       return signal_id;
     }
 
-    RCLCPP_INFO_STREAM_ONCE(rclcpp::get_logger("carma_wm"), "Signal group id: "
-        << (int)signal_group_id << " for intersection id: "
-        << (int)intersection_id << " is now found in the map with regem id: " << (int)signal_id);
+    logInfoOnce("Signal group id: "
+      + std::to_string((int)signal_group_id) + " for intersection id: "
+      + std::to_string((int)intersection_id) + " is found in the map with regem id: "
+      + std::to_string((int)signal_id));
 
     return signal_id;
   }
