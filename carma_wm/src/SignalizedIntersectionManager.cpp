@@ -530,26 +530,33 @@ namespace carma_wm
   {
     lanelet::Id signal_id = lanelet::InvalId;
 
+    // Printing only once because MAP/SPAT is broadcasted frequently and can easily spam the log
     if (intersection_id_to_regem_id_.find(intersection_id) == intersection_id_to_regem_id_.end())
     {
       // Currently, platform is not supporting multiple intersections, so if the id exists
       // signal_group is expected to be for that intersection
-      RCLCPP_WARN_STREAM(rclcpp::get_logger("carma_wm"), "Intersection id: "
-        << (int)intersection_id << " is not found in the map. Returning...");
+      RCLCPP_WARN_STREAM_ONCE(rclcpp::get_logger("carma_wm"), "Intersection id: "
+        << (int)intersection_id << " is not found in the map. Only printing once. Returning...");
       return lanelet::InvalId;
     }
 
-    if (signal_group_to_traffic_light_id_.find(signal_group_id) != signal_group_to_traffic_light_id_.end())
+    if (signal_group_to_traffic_light_id_.find(signal_group_id)
+      != signal_group_to_traffic_light_id_.end())
     {
       signal_id = signal_group_to_traffic_light_id_[signal_group_id];
     }
     else
     {
-      RCLCPP_WARN_STREAM(rclcpp::get_logger("carma_wm"), "Signal group id: "
+      RCLCPP_WARN_STREAM_ONCE(rclcpp::get_logger("carma_wm"), "Signal group id: "
         << (int)signal_group_id << " for intersection id: "
-        << (int)intersection_id << " is not found in the map. Returning...");
+        << (int)intersection_id << " is not found in the map. "
+        << "Only printing once until found. Returning...");
       return signal_id;
     }
+
+    RCLCPP_INFO_STREAM_ONCE(rclcpp::get_logger("carma_wm"), "Signal group id: "
+        << (int)signal_group_id << " for intersection id: "
+        << (int)intersection_id << " is now found in the map with regem id: " << (int)signal_id);
 
     return signal_id;
   }

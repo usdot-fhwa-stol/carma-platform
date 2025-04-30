@@ -135,7 +135,6 @@ namespace arbitrator
 
     void Arbitrator::planning_state()
     {
-        RCLCPP_INFO_STREAM(nh_->get_logger(), "Arbitrator beginning planning process!");
         rclcpp::Time planning_process_start = nh_->get_clock()->now();
 
         carma_planning_msgs::msg::ManeuverPlan plan = planning_strategy_->generate_plan(vehicle_state_);

@@ -18,12 +18,12 @@
 
 namespace route {
 
-    RouteStateWorker::RouteState RouteStateWorker::getRouteState() const {
+    RouteState RouteStateWorker::getRouteState() const {
         return state_;
     }
 
     void RouteStateWorker::onRouteEvent(RouteEvent event) {
-        
+
         auto old_state = state_;
 
         switch (state_)
@@ -53,7 +53,7 @@ namespace route {
             if(event == RouteEvent::ROUTE_COMPLETED || event == RouteEvent::ROUTE_DEPARTED || event == RouteEvent::ROUTE_ABORTED)
             {
                 state_ = RouteState::LOADING;
-            } 
+            }
             else if(event == RouteEvent::ROUTE_INVALIDATION)
             {
                 state_ = RouteState::ROUTING;
@@ -64,12 +64,15 @@ namespace route {
             throw std::invalid_argument("Current state is illegal: " + std::to_string(state_));
         }
 
-        RCLCPP_INFO_STREAM(logger_->get_logger(), "Received Route Event: " << event << " transitioning from: " << old_state << " to: " << state_);
+        RCLCPP_INFO_STREAM(logger_->get_logger(), "Received Route Event: "
+            << static_cast<RouteEvent>(event) << " transitioning from: "
+            << static_cast<RouteState>(old_state) << " to: "
+            << static_cast<RouteState>(state_));
     }
 
     void RouteStateWorker::setLoggerInterface(rclcpp::node_interfaces::NodeLoggingInterface::SharedPtr logger)
     {
         logger_ = logger;
     }
-    
+
 } // route
