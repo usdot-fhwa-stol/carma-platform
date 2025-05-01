@@ -73,7 +73,7 @@ public:
    *
    */
   GNSSToMapConvertor(PosePubCallback pose_pub, TransformLookupCallback tf_lookup, std::string map_frame_id,
-                     std::string base_link_frame_id, std::string heading_frame_id, 
+                     std::string base_link_frame_id, std::string heading_frame_id,
                      std::shared_ptr<carma_ros2_utils::CarmaLifecycleNode> nh);
 
   /**
@@ -154,9 +154,9 @@ private:
   boost::optional<tf2::Transform> baselink_in_sensor_;  // A transform describing the relation of the baselink frame
                                                         // with the frame provided by the gnss message
 
-  // Logger interface
-  std::shared_ptr<carma_ros2_utils::CarmaLifecycleNode> nh;
-  
+  // Nodehandle
+  std::shared_ptr<carma_ros2_utils::CarmaLifecycleNode> nh_;
+
 
 };
 

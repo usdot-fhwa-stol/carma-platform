@@ -62,7 +62,7 @@ namespace gnss_to_map_convertor
     // Map pose publisher
     map_pose_pub = create_publisher<geometry_msgs::msg::PoseStamped>("gnss_pose", 10);
 
-    // Initialize primary worker object 
+    // Initialize primary worker object
     convertor_worker_ = std::make_shared<GNSSToMapConvertor>(
         [this](const auto& msg) { map_pose_pub->publish(msg); },  // Lambda representing publication
 
@@ -80,7 +80,7 @@ namespace gnss_to_map_convertor
           return tf;
         },
 
-        config_.map_frame, config_.base_link_frame, config_.heading_frame, this->get_node_logging_interface());
+        config_.map_frame, config_.base_link_frame, config_.heading_frame, this->shared_from_this());
 
     // Fix Subscriber
 
@@ -91,8 +91,8 @@ namespace gnss_to_map_convertor
 
     geo_sub = create_subscription<std_msgs::msg::String>("georeference", 1,
               std::bind(&GNSSToMapConvertor::geoReferenceCallback, convertor_worker_.get(), std_ph::_1));
-    
-                            
+
+
     // Return success if everthing initialized successfully
     return CallbackReturn::SUCCESS;
   }

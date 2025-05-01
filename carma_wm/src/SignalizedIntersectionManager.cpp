@@ -106,7 +106,7 @@ namespace carma_wm
 
       if (size_of_available_points < min_number_of_points)
       {
-        logWarnOnce("WARN Log Once: Not enough points are provided to match a lane. Skipping... ");
+        logWarnOnce("Logging Once: Not enough points are provided to match a lane. Skipping... ");
         continue;
       }
 
@@ -152,7 +152,7 @@ namespace carma_wm
       {
         // https://github.com/usdot-fhwa-stol/carma-platform/issues/1593
         // Open issue TODO on how this error is handled
-        logWarnOnce("WARN Log Once: Given offset points are not inside the map for lane: " + std::to_string((int)lane.lane_id));
+        logWarnOnce("Logging Once: Given offset points are not inside the map for lane: " + std::to_string((int)lane.lane_id));
         continue;
       }
 
@@ -195,7 +195,7 @@ namespace carma_wm
           }
           else
           {
-            logWarnOnce("WARN Log Once: No connecting lanelets were detected inside!");
+            logWarnOnce("Logging Once: No connecting lanelets were detected inside!");
             continue;
           }
 
@@ -232,7 +232,8 @@ namespace carma_wm
         {
           // https://github.com/usdot-fhwa-stol/carma-platform/issues/1593
           // Open issue TODO on how this error is handled
-          logWarnOnce("WARN Log Once: Unable to convert exit lane Id: "  + std::to_string((int)exit_lane) + ", to lanelet id using the given MAP.msg!");
+          logWarnOnce("Logging Once: Unable to convert exit lane Id: "
+            + std::to_string((int)exit_lane) + ", to lanelet id using the given MAP.msg!");
         }
       }
     }
@@ -251,7 +252,8 @@ namespace carma_wm
         {
           // https://github.com/usdot-fhwa-stol/carma-platform/issues/1593
           // Open issue TODO on how this error is handled
-          logWarnOnce("WARN Log Once: Unable to convert entry lane Id: "  + std::to_string((int)entry_lane) + ", to lanelet id using the given MAP.msg!");
+          logWarnOnce("Logging Once: Unable to convert entry lane Id: "
+            + std::to_string((int)entry_lane) + ", to lanelet id using the given MAP.msg!");
         }
       }
     }
@@ -352,7 +354,7 @@ namespace carma_wm
 
     if (target_frame_ == "")
     {
-      logWarnOnce("WARN Log Once: Georeference is not loaded yet. Returning without processing this MAP msg.");
+      logWarnOnce("Logging Once: Georeference is not loaded yet. Returning without processing this MAP msg.");
       return;
     }
 
@@ -481,7 +483,7 @@ namespace carma_wm
 
     if (spat_msg.intersection_state_list.empty())
     {
-      logWarnOnce("WARN Log Once: No intersection_state_list in the newly received SPAT msg. Returning...");
+      logWarnOnce("Logging Once: No intersection_state_list in the newly received SPAT msg. Returning...");
       return;
     }
 
@@ -530,7 +532,7 @@ namespace carma_wm
    * @brief Log an info message only once per unique message
    * @param message The message to log
    */
-  void SignalizedIntersectionManager::logInfoOnce(const std::string& message) {
+  void SignalizedIntersectionManager::logInfoOnce(const std::string& message) const {
     static std::mutex log_mutex;
 
     std::lock_guard<std::mutex> lock(log_mutex);
@@ -544,12 +546,12 @@ namespace carma_wm
    * @brief Log a warning message only once per unique message
    * @param message The message to log
    */
-  void SignalizedIntersectionManager::logWarnOnce(const std::string& message) {
+  void SignalizedIntersectionManager::logWarnOnce(const std::string& message) const {
     static std::mutex log_mutex;
 
     std::lock_guard<std::mutex> lock(log_mutex);
     if (previous_busy_log_streams_.find(message) == previous_busy_log_streams_.end()) {
-      logWarnOnce(rclcpp::get_logger("carma_wm"), message);
+      RCLCPP_WARN_STREAM(rclcpp::get_logger("carma_wm"), message);
       previous_busy_log_streams_.insert(message);
     }
   }
@@ -563,7 +565,7 @@ namespace carma_wm
     {
       // Currently, platform is not supporting multiple intersections, so if the id exists
       // signal_group is expected to be for that intersection
-      logWarnOnce("WARN Log Once: Intersection id: "
+      logWarnOnce("Logging Once: Intersection id: "
         + std::to_string((int)intersection_id)
         + " is not found in the map. Only printing once. Returning...");
       return lanelet::InvalId;
@@ -576,7 +578,7 @@ namespace carma_wm
     }
     else
     {
-      logWarnOnce("WARN Log Once: Signal group id: "
+      logWarnOnce("Logging Once: Signal group id: "
         + std::to_string((int)signal_group_id) + " for intersection id: "
         + std::to_string((int)intersection_id) + " is not found in the map. "
         + "Only printing once until found. Returning...");
@@ -600,15 +602,17 @@ namespace carma_wm
     if (lanelets_general.empty())
     {
       logWarnOnce(
-        "There was an error querying lanelet for traffic light with id: " + std::to_string((int)id));
+        "Logging Once: There was an error querying lanelet for traffic light with id: "
+        + std::to_string((int)id));
     }
 
     if (auto curr_light_list =
       lanelets_general[0].regulatoryElementsAs<lanelet::CarmaTrafficSignal>();
     curr_light_list.empty())
     {
-      logWarnOnce(rclcpp::get_logger("carma_wm"),
-        "There was an error querying traffic light with id: " + std::to_string((int)id));
+      logWarnOnce(
+        "Logging Once: There was an error querying traffic light with id: "
+        + std::to_string((int)id));
       return nullptr;
     }
 
@@ -626,7 +630,8 @@ namespace carma_wm
     if (!curr_light)
     {
       logWarnOnce(
-        "Was not able to find traffic signal with id: " + std::to_string((int)id) + ", ignoring...");
+        "Logging Once: Was not able to find traffic signal with id: "
+        + std::to_string((int)id) + ", ignoring...");
       return nullptr;
     }
 
