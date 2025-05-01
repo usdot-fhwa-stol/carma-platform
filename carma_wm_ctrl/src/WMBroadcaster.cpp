@@ -1045,21 +1045,18 @@ void WMBroadcaster::externalMapMsgCallback(carma_v2x_msgs::msg::MapData::UniqueP
   }
 
   // check if we have seen this message already
-  bool up_to_date = false;
-  if (sim_->intersection_id_to_regem_id_.size() == map_msg->intersections.size())
+  bool up_to_date = true;
+
+  // check id of the intersection only
+  for (auto intersection : map_msg->intersections)
   {
-    up_to_date = true;
-    // check id of the intersection only
-    for (auto intersection : map_msg->intersections)
+    if (sim_->intersection_id_to_regem_id_.find(intersection.id.id) == sim_->intersection_id_to_regem_id_.end())
     {
-      if (sim_->intersection_id_to_regem_id_.find(intersection.id.id) == sim_->intersection_id_to_regem_id_.end())
-      {
-        up_to_date = false;
-        break;
-      }
+      up_to_date = false;
+      break;
     }
   }
-
+  
   if(up_to_date)
   {
     return;
