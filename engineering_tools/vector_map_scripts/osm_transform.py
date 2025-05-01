@@ -74,7 +74,7 @@ args = parser.parse_args()
 
 # TODO Add the desired rotation of the output map here
 # === Fixed rotation angle ===
-rotation_deg = 0  # Counter-clockwise
+rotation_deg = -27  # Counter-clockwise
 theta_rad = math.radians(rotation_deg)
 
 # === Parse XML ===
@@ -83,16 +83,16 @@ root = tree.getroot()
 
 # === Read original geoReference string from map file ===
 geo_ref_elem = root.find("geoReference")
-if geo_ref_elem is None or not geo_ref_elem.text:
+if geo_ref_elem is None or not geo_ref_elem.attrib.get("v"):
     raise ValueError("❌ geoReference tag not found or is empty in the OSM file.")
 
-old_proj_str = geo_ref_elem.text.strip()
+old_proj_str = geo_ref_elem.attrib.get("v").strip()
 print(f"📌 Extracted old geoReference:\n{old_proj_str}\n")
 
 # TODO Add the desired geoReference for the output map here
 # === New map center for updated geoReference ===
-new_lat_0 = 0.0
-new_lon_0 = 0.0
+new_lat_0 = 38.955841120439274
+new_lon_0 = -77.14887348459752
 new_proj_str = f"+proj=tmerc +lat_0={new_lat_0} +lon_0={new_lon_0} +k=1 +x_0=0 +y_0=0 +datum=WGS84 +units=m +geoidgrids=egm96_15.gtx +vunits=m +no_defs"
 print(f"📌 Updated new geoReference:\n{new_proj_str}\n")
 
@@ -106,7 +106,7 @@ to_old_xy = Transformer.from_crs(crs_wgs84, crs_old, always_xy=True)
 to_new_latlon = Transformer.from_crs(crs_new, crs_wgs84, always_xy=True)
 
 # === Update <geoReference> to new projection ===
-geo_ref_elem.text = new_proj_str
+geo_ref_elem.set("v", new_proj_str)
 
 # === Step 1: Convert all nodes to old projected coordinates and compute centroid ===
 xs_old, ys_old = [], []
@@ -144,6 +144,12 @@ for i, node in enumerate(root.findall("node")):
     new_lon, new_lat = to_new_latlon.transform(x_rot, y_rot)
     node.set("lat", f"{new_lat:.10f}")
     node.set("lon", f"{new_lon:.10f}")
+    # Update tag values for lat and lon
+    for tag in node.findall('tag'):
+        if tag.get('k') == 'lat':
+            tag.set('v', f"{new_lat:.10f}")
+        elif tag.get('k') == 'lon':
+            tag.set('v', f"{new_lon:.10f}")
 
 # === Save transformed file ===
 tree.write(args.output_file, pretty_print=True, xml_declaration=True, encoding="UTF-8")
