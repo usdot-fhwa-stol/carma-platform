@@ -68,7 +68,7 @@ public:
    * \param map_frame_id The frame id of the frame which the output pose should be considered in
    * \param base_link_frame_id The frame id of the frame which the output pose defines the position and orientation of
    * \param heading_frame_id The frame id of the frame which the heading report aligns with an NED frame
-   *
+   * \param nh A shared pointer to the node handle which will be used to log messages and get clock
    * in the map frame.
    *
    */
