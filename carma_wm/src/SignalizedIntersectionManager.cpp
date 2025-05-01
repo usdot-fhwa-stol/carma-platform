@@ -106,7 +106,9 @@ namespace carma_wm
 
       if (size_of_available_points < min_number_of_points)
       {
-        logWarnOnce("Logging Once: Not enough points are provided to match a lane. Skipping... ");
+        logWarnOnce(
+          std::string("Logging Once: Not enough points are provided to match a lane. Skipping... ")
+          + "| intersection id: " + std::to_string((int)intersection.id.id));
         continue;
       }
 
@@ -152,7 +154,9 @@ namespace carma_wm
       {
         // https://github.com/usdot-fhwa-stol/carma-platform/issues/1593
         // Open issue TODO on how this error is handled
-        logWarnOnce("Logging Once: Given offset points are not inside the map for lane: " + std::to_string((int)lane.lane_id));
+        logWarnOnce("Logging Once: Given offset points are not inside the map for lane: " 
+          + std::to_string((int)lane.lane_id)
+          + "| intersection id: " + std::to_string((int)intersection.id.id));
         continue;
       }
 
@@ -195,7 +199,9 @@ namespace carma_wm
           }
           else
           {
-            logWarnOnce("Logging Once: No connecting lanelets were detected inside!");
+            logWarnOnce(
+              std::string("Logging Once: No connecting lanelets were detected inside!")
+              + " | intersection id: " + std::to_string((int)intersection.id.id));
             continue;
           }
 
@@ -233,7 +239,8 @@ namespace carma_wm
           // https://github.com/usdot-fhwa-stol/carma-platform/issues/1593
           // Open issue TODO on how this error is handled
           logWarnOnce("Logging Once: Unable to convert exit lane Id: "
-            + std::to_string((int)exit_lane) + ", to lanelet id using the given MAP.msg!");
+            + std::to_string((int)exit_lane) + ", to lanelet id using the given MAP.msg!"
+            + "| intersection id: " + std::to_string((int)intersection.id.id));
         }
       }
     }
@@ -253,7 +260,8 @@ namespace carma_wm
           // https://github.com/usdot-fhwa-stol/carma-platform/issues/1593
           // Open issue TODO on how this error is handled
           logWarnOnce("Logging Once: Unable to convert entry lane Id: "
-            + std::to_string((int)entry_lane) + ", to lanelet id using the given MAP.msg!");
+            + std::to_string((int)entry_lane) + ", to lanelet id using the given MAP.msg!"
+            + "| intersection id: " + std::to_string((int)intersection.id.id));
         }
       }
     }
