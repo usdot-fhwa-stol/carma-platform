@@ -68,11 +68,13 @@ public:
    * \param map_frame_id The frame id of the frame which the output pose should be considered in
    * \param base_link_frame_id The frame id of the frame which the output pose defines the position and orientation of
    * \param heading_frame_id The frame id of the frame which the heading report aligns with an NED frame
+   *
    * in the map frame.
    *
    */
   GNSSToMapConvertor(PosePubCallback pose_pub, TransformLookupCallback tf_lookup, std::string map_frame_id,
-                     std::string base_link_frame_id, std::string heading_frame_id, rclcpp::node_interfaces::NodeLoggingInterface::SharedPtr logger);
+                     std::string base_link_frame_id, std::string heading_frame_id, 
+                     std::shared_ptr<carma_ros2_utils::CarmaLifecycleNode> nh);
 
   /**
    * \brief GNSS Fix callback which will publish a pose representing that fix in the map frame if the required
@@ -153,7 +155,8 @@ private:
                                                         // with the frame provided by the gnss message
 
   // Logger interface
-  rclcpp::node_interfaces::NodeLoggingInterface::SharedPtr logger_;
+  std::shared_ptr<carma_ros2_utils::CarmaLifecycleNode> nh;
+  
 
 };
 
