@@ -69,7 +69,8 @@ def record_ros2_rosbag(context: LaunchContext, vehicle_config_param_file, rosbag
                             + overriding_qos_profiles + ' -o /opt/carma/logs/rosbag2_'
                             + str(datetime.now().strftime('%Y-%m-%d_%H%M%S')) + ' -x "'
                             + exclude_topics_regex
-                            + '" >/dev/null 2>&1'],  # Remove the line to enable logging
+                            #+ '"'], # Uncomment this line to see ros2bag topic subscriptions
+                            + '" >/dev/null 2>&1'],  # Turns off ros2bag print statements
                         output='screen',
                         shell='true'
                     )
