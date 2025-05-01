@@ -83,8 +83,6 @@ namespace object_visualizer
     get_parameter<std::string>("external_objects_viz_ns", config_.external_objects_viz_ns);
     get_parameter<std::string>("roadway_obstacles_viz_ns", config_.roadway_obstacles_viz_ns);
     get_parameter<uint8_t>("marker_shape", config_.marker_shape);
-
-    // Load new parameters for pedestrian visualization
     get_parameter<bool>("use_pedestrian_icon", config_.use_pedestrian_icon);
     get_parameter<std::string>("pedestrian_icon_path", config_.pedestrian_icon_path);
     get_parameter<double>("pedestrian_icon_scale", config_.pedestrian_icon_scale);
