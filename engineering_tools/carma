@@ -497,6 +497,27 @@ carma-config__status() {
     fi
 }
 
+carma__autoupdate_stop() {
+  crontab -l | grep -v "docker pull" | crontab -
+  echo "Docker image auto-updates stopped."
+}
+
+carma__autoupdate_on() {
+  local hour="$1"
+  local minute="$2"
+
+  if ! [[ "$hour" =~ ^([0-1]?[0-9]|2[0-3])$ ]] || ! [[ "$minute" =~ ^([0-5]?[0-9])$ ]]; then
+    echo "Invalid hour or minute. Use hour (0-23) and minute (0-59)."
+    return 1
+  fi
+  COMPOSE_ENV_FILES_WITH_DEFAULT="$(pwd)/../.env"
+
+  # Schedule the Docker image updates using cron
+  (crontab -l 2>/dev/null; echo "${minute} ${hour} * * * docker run --rm --volumes-from carma-config:ro --entrypoint cat busybox:latest /opt/carma/vehicle/config/docker-compose.yml | COMPOSE_ENV_FILES="$COMPOSE_ENV_FILES_WITH_DEFAULT", docker compose -f - pull --ignore-pull-failures") | crontab -
+
+  echo "Docker image updates scheduled for $hour:$minute daily."
+}
+
 carma__exec() {
     local USERNAME=usdotfhwastol
     local TAG=latest
@@ -685,6 +706,14 @@ Please enter one of the following commands:
     <script extension>
         - Script extensions can be added by placing a file in ~/.carma_script_extensions/ with the name of the new subcommand and no file extension.
           The file should contain a matching carma__<script extension>() function to recieve the commands.
+    autoupdate
+        - Must excecute inside cdasim_config folder
+        - _stop
+            - Stop the auto-update cron job
+        - _on <hour> <minute>
+            - Start the auto-update cron job at the specified hour and minute
+            - Hour: 0-23
+            - Minute: 0-59
     help
         - Display this information"
 HELP
