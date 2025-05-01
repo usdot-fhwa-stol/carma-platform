@@ -68,12 +68,12 @@ public:
    * \param map_frame_id The frame id of the frame which the output pose should be considered in
    * \param base_link_frame_id The frame id of the frame which the output pose defines the position and orientation of
    * \param heading_frame_id The frame id of the frame which the heading report aligns with an NED frame
-   *
+   * \param nh A shared pointer to the node handle which will be used to log messages and get clock
    * in the map frame.
    *
    */
   GNSSToMapConvertor(PosePubCallback pose_pub, TransformLookupCallback tf_lookup, std::string map_frame_id,
-                     std::string base_link_frame_id, std::string heading_frame_id, 
+                     std::string base_link_frame_id, std::string heading_frame_id,
                      std::shared_ptr<carma_ros2_utils::CarmaLifecycleNode> nh);
 
   /**
@@ -154,9 +154,9 @@ private:
   boost::optional<tf2::Transform> baselink_in_sensor_;  // A transform describing the relation of the baselink frame
                                                         // with the frame provided by the gnss message
 
-  // Logger interface
-  std::shared_ptr<carma_ros2_utils::CarmaLifecycleNode> nh;
-  
+  // Nodehandle
+  std::shared_ptr<carma_ros2_utils::CarmaLifecycleNode> nh_;
+
 
 };
 

@@ -199,13 +199,13 @@ public:
    * @brief Log an info message only once per unique message
    * @param message The message to log
    */
-  void logInfoOnce(const std::string& message);
+  void logInfoOnce(const std::string& message) const;
 
   /**
    * @brief Log a warning message only once per unique message
    * @param message The message to log
    */
-  void logWarnOnce(const std::string& message);
+  void logWarnOnce(const std::string& message) const;
 
   // SignalizedIntersection's geometry points from MAP Msg
   std::unordered_map<uint16_t, std::vector<lanelet::Point3d>> intersection_nodes_;
@@ -235,7 +235,9 @@ public:
   bool use_real_time_spat_in_sim_;
   SIGNAL_PHASE_PROCESSING spat_processor_state_ = SIGNAL_PHASE_PROCESSING::OFF;
 
-  std::set<std::string> previous_busy_log_streams_; // Helps avoid duplicate logging
+  // Helps avoid duplicate logging
+  // Mutable because it is used by a non-const logging function that can be used in a const function
+  mutable std::set<std::string> previous_busy_log_streams_;
 private:
   // PROJ string of current map
   std::string target_frame_ = "";

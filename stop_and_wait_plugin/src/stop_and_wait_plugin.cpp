@@ -376,7 +376,7 @@ std::vector<carma_planning_msgs::msg::TrajectoryPlanPoint> StopandWait::compose_
     if (times[i] != 0 && !std::isnormal(times[i]) && i != 0)
     {  // If the time
       RCLCPP_WARN_STREAM_THROTTLE(rclcpp::get_logger("stop_and_wait_plugin"),
-        nh_->get_clock(), 1000,
+        *nh_->get_clock(), 1000,
         "(Throttled Log 1s) Detected non-normal (nan, inf, etc.) time. Making it same as before: "
         << times[i-1]);
       // NOTE: overriding the timestamps in assumption that pure_pursuit_wrapper will detect it as stopping case
