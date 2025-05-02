@@ -4,13 +4,13 @@ The script can be run from the command line with the following arguments:
 - filename: The output filename for the vector map.
 - total_length: The length of the lanes (default is 50.0).
 - lane_width: The width of the lanes (default is 3.7).
-- points_per_lanelet: The number of points in the lane (default is 10).
+- points_per_meter: The number of points per meter (default is 5).
 
 Dependencies:
 - lanelet2: The Lanelet2 library for handling lanelet maps.
 - argparse: For parsing command line arguments.
 Usage:
-    python3 create_two_lane_map.py output.osm --total_length <total_length> --lane_width <lane_width> --points_per_lanelet <points_per_lanelet>
+    python3 create_two_lane_map.py --filename output.osm --total_length <total_length> --lane_width <lane_width> --points_per_meter <points_per_meter>
 """
 
 from pyproj import Proj, Transformer
@@ -65,32 +65,31 @@ def create_lanelet(left_id, right_id, tags):
     relations.append((relation_id, rel))
     relation_id += 1
 
-def create_vector_map(filename, total_length, lane_width, points_per_lanelet):
+def create_vector_map(filename, total_length, lane_width, points_per_meter):
     """
     Create a vector map with two parallel lanes.
     Inputs:
     - filename: The output filename for the vector map.
     - total_length: The length of the lanes.
     - lane_width: The width of the lanes.
-    - points_per_lanelet: The number of points in the lane.
+    - points_per_meter: The number of points per meter.
     """
     # Road geometry
     lanelet_length = 25.0
-    point_spacing = lanelet_length / (points_per_lanelet - 1)
-    total_points = int(total_length / point_spacing) + 1  # +1 to include final point
-    
+    total_points = int(total_length * points_per_meter) + 1
+    points_per_lanelet = int(lanelet_length * points_per_meter) + 1
     # Generate lane boundaries
     x_offset = -total_length / 2
     y_offset = -lane_width
     left1, right1, left2, right2 = [], [], [], []
     for i in range(total_points):
-        x = i * point_spacing + x_offset
+        x = i / points_per_meter + x_offset
         right1.append(add_node(x, 0 + y_offset))
         left1.append(add_node(x, lane_width + y_offset))
         right2.append(add_node(x, lane_width + y_offset))
         left2.append(add_node(x, 2 * lane_width + y_offset))
 
-    stride = points_per_lanelet - 1  # 4-point stride = 5 total points
+    stride = points_per_lanelet - 1
     way_dict = {"type": "line_thin", "subtype": "solid"}
     lanelet_dict = {"type": "lanelet",
                     "subtype": "road",
@@ -138,10 +137,10 @@ def create_vector_map(filename, total_length, lane_width, points_per_lanelet):
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="Create a vector map with two parallel lanes.")
-    parser.add_argument("filename", type=str, help="Output filename for the vector map.")
-    parser.add_argument("--total_length", type=float, default=100.0, help="Length of the lanes.")
+    parser.add_argument("--filename", type=str, default="two_lane_straight.osm", help="Output filename for the vector map.")
+    parser.add_argument("--total_length", type=float, default=50.0, help="Length of the lanes.")
     parser.add_argument("--lane_width", type=float, default=3.7, help="Width of the lanes.")
-    parser.add_argument("--points_per_lanelet", type=int, default=50, help="Number of points in the lane.")
+    parser.add_argument("--points_per_meter", type=int, default=5, help="Number of points in the lane.")
     args = parser.parse_args()
-    create_vector_map(args.filename, args.total_length, args.lane_width, args.points_per_lanelet)
+    create_vector_map(args.filename, args.total_length, args.lane_width, args.points_per_meter)
     print("Vector map with two parallel lanes created successfully.")
