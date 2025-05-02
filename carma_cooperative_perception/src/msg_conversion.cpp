@@ -284,19 +284,29 @@ auto transform_pose_from_map_to_wgs84(
 
   return ref_pos;
 }
-
-double convertToTrueNorthClockwise(double counterclockwiseDegrees) {
-  // Step 1: Convert from counterclockwise to clockwise (360 - angle)
-  // Step 2: Shift the reference point by 90 degrees
-  // Step 3: Apply modulo 360 to keep the result in the range [0, 360)
-  double trueNorthClockwise = fmod((360.0 - counterclockwiseDegrees + 90.0), 360.0);
+/**
+ * Converts an object's angle from TrafiSense camera coordinates to true north clockwise heading
+ * 
+ * Assumptions:
+ * - Camera internally uses 0° as its heading reference
+ * - Camera angles increase clockwise
+ * - Camera's true north heading is 255°
+ * 
+ * @param cameraAngle The angle of the object in camera coordinates (clockwise from camera's 0°)
+ * @param cameraHeading The camera's heading in degrees from true north (clockwise, 255° by default)
+ * @return The object's heading in degrees from true north (clockwise)
+ */
+double convertToTrueNorthHeading(double cameraAngle, double cameraHeading = 255.0) {
+  // Simply add the camera's heading to the camera angle
+  // This works because both are in the same coordinate system (clockwise)
+  double trueNorthHeading = fmod(cameraHeading + cameraAngle, 360.0);
   
-  // Handle floating point precision issues for values very close to 0 or 360
-  if (fabs(trueNorthClockwise - 360.0) < 0.000001) {
-      trueNorthClockwise = 0.0;
+  // Handle floating point precision issues
+  if (fabs(trueNorthHeading - 360.0) < 0.000001) {
+      trueNorthHeading = 0.0;
   }
   
-  return trueNorthClockwise;
+  return trueNorthHeading;
 }
 
 auto to_detection_list_msg(
@@ -379,7 +389,7 @@ auto to_detection_list_msg(
 
     // Temporary Fix for 192.168.55.182 camera which has heading 255 NED
     auto new_heading = common_data.heading;
-    new_heading.heading = convertToTrueNorthClockwise(common_data.heading.heading);
+    new_heading.heading = convertToTrueNorthHeading(common_data.heading.heading, 255.0);
 
     const auto true_heading{units::angle::degree_t{Heading::from_msg(new_heading).heading}};
 
