@@ -141,7 +141,7 @@ if __name__ == "__main__":
     parser.add_argument("filename", type=str, help="Output filename for the vector map.")
     parser.add_argument("--total_length", type=float, default=100.0, help="Length of the lanes.")
     parser.add_argument("--lane_width", type=float, default=3.7, help="Width of the lanes.")
-    parser.add_argument("--points_per_lanelet", type=int, default=25, help="Number of points in the lane.")
+    parser.add_argument("--points_per_lanelet", type=int, default=50, help="Number of points in the lane.")
     args = parser.parse_args()
     create_vector_map(args.filename, args.total_length, args.lane_width, args.points_per_lanelet)
     print("Vector map with two parallel lanes created successfully.")
