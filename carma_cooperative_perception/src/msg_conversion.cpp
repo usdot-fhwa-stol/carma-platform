@@ -79,6 +79,25 @@ auto calc_detection_time_stamp(DDateTime sdsm_time, const MeasurementTimeOffset 
   return sdsm_time;
 }
 
+// Function to convert degrees to radians
+// TODO
+double degToRad(double degrees) {
+  return degrees * M_PI / 180.0;
+}
+
+// TODO
+// Function to rotate coordinates back from a 255 degree rotation
+std::pair<double, double> correctOffsets(double offset_x, double offset_y, double rotationDegrees = 255.0) {
+  // To rotate back, we use the negative of the rotation angle
+  double rotationRad = degToRad(-rotationDegrees);
+
+  // Apply the rotation matrix to rotate back
+  double corrected_x = offset_x * cos(rotationRad) - offset_y * sin(rotationRad);
+  double corrected_y = offset_x * sin(rotationRad) + offset_y * cos(rotationRad);
+
+  return {corrected_x, corrected_y};
+}
+
 auto ned_to_enu(const PositionOffsetXYZ & offset_ned) noexcept
 {
   auto offset_enu{offset_ned};
@@ -281,10 +300,18 @@ auto to_detection_list_msg(
       return str;
     };
 
+    // Temporary Fix for 192.168.55.182 camera which has heading 255
     detection.id =
       to_string(sdsm.source_id.id) + "-" + std::to_string(common_data.detected_id.object_id);
 
-    const auto pos_offset_enu{ned_to_enu(PositionOffsetXYZ::from_msg(common_data.pos))};
+    auto new_pos = common_data.pos;
+    auto new_coord_pair = correctOffsets(
+      common_data.pos.offset_x.object_distance, common_data.pos.offset_y.object_distance, 255.0);
+    new_pos.offset_x.object_distance = new_coord_pair.first;
+    new_pos.offset_y.object_distance = new_coord_pair.second;
+    /////////////////////////////////////////////////////////////
+
+    const auto pos_offset_enu{ned_to_enu(PositionOffsetXYZ::from_msg(new_pos))};
     detection.pose.pose.position = to_position_msg(MapCoordinate{
       ref_pos_map.easting + pos_offset_enu.offset_x, ref_pos_map.northing + pos_offset_enu.offset_y,
       ref_pos_map.elevation + pos_offset_enu.offset_z.value_or(units::length::meter_t{0.0})});
@@ -306,7 +333,11 @@ auto to_detection_list_msg(
       throw std::runtime_error("missing elevation confidence");
     }
 
-    const auto true_heading{units::angle::degree_t{Heading::from_msg(common_data.heading).heading}};
+    // Temporary Fix for 192.168.55.182 camera which has heading 255
+    auto new_heading_double = common_data.heading.heading - 255.0 + 360.0;
+    auto new_heading = common_data.heading;
+    new_heading.heading = new_heading_double;
+    const auto true_heading{units::angle::degree_t{Heading::from_msg(new_heading).heading}};
 
     // Note: This should really use the detection's WGS-84 position, so the
     // convergence will be off slightly. TODO
