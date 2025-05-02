@@ -3,17 +3,16 @@ import xml.etree.ElementTree as ET
 from xml.dom import minidom
 
 
-
-
-
 # Road geometry
 lane_width = 3.5
-length = 100
-num_points = 11
-dx = length / (num_points - 1)
+total_length = 100.0
+lanelet_length = 25.0
+points_per_lanelet = 5
+point_spacing = lanelet_length / (points_per_lanelet - 1)
+total_points = int(total_length / point_spacing) + 1  # +1 to include final point
+
 
 # Adjusted geoReference (removed vertical geoid grid)
-# TODO: Needs to be centroid of route file
 geo_reference = "+proj=tmerc +lat_0=0 +lon_0=0 +k=1 +x_0=0 +y_0=0 +datum=WGS84 +units=m +no_defs"
 
 # Coordinate transformer (meters → lat/lon)
@@ -29,7 +28,7 @@ nodes, ways, relations = [], [], []
 def add_node(x, y, z=0.0):
     global node_id
     lon, lat = transformer.transform(x, y)
-    node = ET.Element("node", id=str(node_id), lat=f"{lat:.9f}", lon=f"{lon:.9f}", visible="true")
+    node = ET.Element("node", id=str(node_id), version="1", lat=f"{lat:.9f}", lon=f"{lon:.9f}", visible="true")
     ET.SubElement(node, "tag", k="ele", v=f"{z:.2f}")
     ET.SubElement(node, "tag", k="lat", v=f"{lat:.9f}")
     ET.SubElement(node, "tag", k="lon", v=f"{lon:.9f}")
@@ -39,7 +38,7 @@ def add_node(x, y, z=0.0):
 
 def create_way(node_ids, tags):
     global way_id
-    way = ET.Element("way", id=str(way_id), visible="true")
+    way = ET.Element("way", id=str(way_id), version="1", visible="true")
     for nid in node_ids:
         ET.SubElement(way, "nd", ref=str(nid))
     for k, v in tags.items():
@@ -50,7 +49,7 @@ def create_way(node_ids, tags):
 
 def create_lanelet(left_id, right_id, tags):
     global relation_id
-    rel = ET.Element("relation", id=str(relation_id), visible="true")
+    rel = ET.Element("relation", id=str(relation_id), version="1", visible="true")
     ET.SubElement(rel, "member", type="way", ref=str(left_id), role="left")
     ET.SubElement(rel, "member", type="way", ref=str(right_id), role="right")
     for k, v in tags.items():
@@ -60,24 +59,18 @@ def create_lanelet(left_id, right_id, tags):
     relation_id += 1
 
 # Generate lane boundaries
-x_offset = -length / 2
+x_offset = -total_length / 2
 y_offset = -lane_width
 left1, right1, left2, right2 = [], [], [], []
-for i in range(num_points):
-    x = i * dx + x_offset
+for i in range(total_points):
+    x = i * point_spacing + x_offset
     right1.append(add_node(x, 0 + y_offset))
     left1.append(add_node(x, lane_width + y_offset))
     right2.append(add_node(x, lane_width + y_offset))
     left2.append(add_node(x, 2 * lane_width + y_offset))
 
-# Create ways for boundaries
+stride = points_per_lanelet - 1  # 4-point stride = 5 total points
 way_dict = {"type": "line_thin", "subtype": "solid"}
-left1_id = create_way(left1, way_dict)
-right1_id = create_way(right1, way_dict)
-left2_id = create_way(left2, way_dict)
-right2_id = create_way(right2, way_dict)
-
-# Create lanelet relations
 lanelet_dict = {"type": "lanelet",
                 "subtype": "road",
                 "road_type": "road",
@@ -90,8 +83,20 @@ lanelet_dict = {"type": "lanelet",
                 "participant:vehicle" : "yes",
                 "to_cad_id" : [],
                 }
-create_lanelet(left1_id, right1_id, lanelet_dict)
-create_lanelet(left2_id, right2_id, lanelet_dict)
+for i in range(0, total_points - stride, stride):
+    # Lane 1
+    l1_nodes = left1[i:i + points_per_lanelet]
+    r1_nodes = right1[i:i + points_per_lanelet]
+    l1_id = create_way(l1_nodes, way_dict)
+    r1_id = create_way(r1_nodes, way_dict)
+    create_lanelet(l1_id, r1_id, lanelet_dict)
+
+    # Lane 2
+    l2_nodes = left2[i:i + points_per_lanelet]
+    r2_nodes = right2[i:i + points_per_lanelet]
+    l2_id = create_way(l2_nodes, way_dict)
+    r2_id = create_way(r2_nodes, way_dict)
+    create_lanelet(l2_id, r2_id, lanelet_dict)
 
 # Build OSM XML tree
 osm = ET.Element("osm", version="0.6")

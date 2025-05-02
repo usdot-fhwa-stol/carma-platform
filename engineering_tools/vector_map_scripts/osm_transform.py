@@ -74,7 +74,7 @@ args = parser.parse_args()
 
 # TODO Add the desired rotation of the output map here
 # === Fixed rotation angle ===
-rotation_deg = -27  # Counter-clockwise
+rotation_deg = -23 # Counter-clockwise
 theta_rad = math.radians(rotation_deg)
 
 # === Parse XML ===
@@ -91,8 +91,9 @@ print(f"📌 Extracted old geoReference:\n{old_proj_str}\n")
 
 # TODO Add the desired geoReference for the output map here
 # === New map center for updated geoReference ===
-new_lat_0 = 38.955841120439274
-new_lon_0 = -77.14887348459752
+
+new_lat_0 = 38.955828715923026
+new_lon_0 = -77.14887909002265
 new_proj_str = f"+proj=tmerc +lat_0={new_lat_0} +lon_0={new_lon_0} +k=1 +x_0=0 +y_0=0 +datum=WGS84 +units=m +geoidgrids=egm96_15.gtx +vunits=m +no_defs"
 print(f"📌 Updated new geoReference:\n{new_proj_str}\n")
 
