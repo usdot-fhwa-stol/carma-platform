@@ -104,19 +104,23 @@ def create_vector_map(filename, total_length, lane_width, points_per_meter):
                     "to_cad_id" : [],
                     }
     for i in range(0, total_points - stride, stride):
-        # Lane 1
-        l1_nodes = left1[i:i + points_per_lanelet]
-        r1_nodes = right1[i:i + points_per_lanelet]
-        l1_id = create_way(l1_nodes, way_dict)
-        r1_id = create_way(r1_nodes, way_dict)
-        create_lanelet(l1_id, r1_id, lanelet_dict)
-
-        # Lane 2
+         # Outer left boundary of lane 2
         l2_nodes = left2[i:i + points_per_lanelet]
-        r2_nodes = right2[i:i + points_per_lanelet]
-        l2_id = create_way(l2_nodes, way_dict)
-        r2_id = create_way(r2_nodes, way_dict)
-        create_lanelet(l2_id, r2_id, lanelet_dict)
+        l2_id = create_way(l2_nodes, way_dict)  # solid
+
+        # Shared dashed centerline between lanes
+        center_nodes = right2[i:i + points_per_lanelet]
+        center_id = create_way(center_nodes, {"type": "line_thin", "subtype": "dashed"})
+
+        # Outer right boundary of lane 1
+        r1_nodes = right1[i:i + points_per_lanelet]
+        r1_id = create_way(r1_nodes, way_dict)  # solid
+
+        # Lanelet for lane 2 (left: outer left, right: dashed center)
+        create_lanelet(l2_id, center_id, lanelet_dict)
+
+        # Lanelet for lane 1 (left: dashed center, right: outer right)
+        create_lanelet(center_id, r1_id, lanelet_dict)
 
     # Build OSM XML tree
     osm = ET.Element("osm", version="0.6")
