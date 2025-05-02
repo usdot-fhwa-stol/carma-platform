@@ -25,6 +25,8 @@ carma_package()
 find_package(ament_cmake_auto REQUIRED)
 ament_auto_find_build_dependencies()
 
+find_package(Boost REQUIRED)
+
 # Name build targets
 set(node_exec arbitrator_node_exec)
 set(node_lib arbitrator_node_lib)
@@ -47,7 +49,7 @@ ament_auto_add_library(${node_lib} SHARED
   src/tree_planner.cpp
 )
 
-ament_auto_add_executable(${node_exec} 
+ament_auto_add_executable(${node_exec}
   src/main.cpp
 )
 
@@ -59,15 +61,16 @@ rclcpp_components_register_nodes(${node_lib} "arbitrator::ArbitratorNode")
 # ament auto will handle linking of external dependencies
 target_link_libraries(${node_exec}
   ${node_lib}
+  ${Boost_LIBRARIES}
 )
 
 # Testing
- if(BUILD_TESTING)  
- 
+ if(BUILD_TESTING)
+
   find_package(ament_lint_auto REQUIRED)
   ament_lint_auto_find_test_dependencies() # This populates the ${${PROJECT_NAME}_FOUND_TEST_DEPENDS} variable
 
-  ament_add_gmock(test_arbitrator 
+  ament_add_gmock(test_arbitrator
   test/test_arbitrator_state_machine.cpp
   test/test_plugin_neighbor_generator.cpp
   test/test_fixed_priority_cost_function.cpp
@@ -79,7 +82,7 @@ target_link_libraries(${node_exec}
   ament_target_dependencies(test_arbitrator ${${PROJECT_NAME}_FOUND_TEST_DEPENDS})
 
   target_link_libraries(test_arbitrator ${node_lib})
- 
+
  endif()
 
 # Install

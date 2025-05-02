@@ -73,7 +73,7 @@ namespace route {
          * \brief setReroutingChecker function to set the rerouting flag
          */
         void setReroutingChecker(const std::function<bool()> inputFunction);
-        
+
         /**
          * \brief Dependency injection for world model pointer.
          * \param wm CARMA world model object providing lanelet vector map and traffic regulations
@@ -114,10 +114,10 @@ namespace route {
         bool getAvailableRouteCb(const std::shared_ptr<rmw_request_id_t>,
                                 const std::shared_ptr<carma_planning_msgs::srv::GetAvailableRoutes::Request>,
                                 std::shared_ptr<carma_planning_msgs::srv::GetAvailableRoutes::Response> resp);
-        
+
         /**
          * \brief Set_active_route service callback. User can select a route to start following by calling this service
-         * \param req A carma_planning_msgs::srv::SetActiveRoute::Request msg which contains either a route name a user wants to select or 
+         * \param req A carma_planning_msgs::srv::SetActiveRoute::Request msg which contains either a route name a user wants to select or
          *            an array of carma_v2x_msgs::msg::Position3D destination points to generate a route from.
          * \param resp A carma_planning_msgs::srv::SetActiveRoute::Response msg contains error status indicating whether the routing succeeded
          */
@@ -148,7 +148,7 @@ namespace route {
         /**
          * \brief Callback for the georeference subscriber used to set the map projection
          * \param msg The latest georeference
-         */ 
+         */
         void georeferenceCb(std_msgs::msg::String::UniquePtr msg);
 
         /**
@@ -174,7 +174,7 @@ namespace route {
                         const carma_ros2_utils::PubPtr<carma_planning_msgs::msg::RouteState>& route_state_pub,
                         const carma_ros2_utils::PubPtr<carma_planning_msgs::msg::Route>& route_pub,
                         const carma_ros2_utils::PubPtr<visualization_msgs::msg::Marker>& route_marker_pub);
-        
+
         /**
          * \brief Helper function to check whether a route's shortest path contains any duplicate Lanelet IDs.
          *        'true' indicates that the route's shortest path contains duplicate Lanelet IDs.
@@ -214,7 +214,7 @@ namespace route {
         /**
         * \brief crosstrackErrorCheck is a function that determines when the vehicle has left the route and reports when a crosstrack error has
         * taken place
-        * 
+        *
         *  \param msg Msg that contains the vehicle's current position
         *  \param current_llt The lanelet that the vehicle is currently in
         * */
@@ -222,22 +222,22 @@ namespace route {
 
         /**
          * \brief set the crosstrack error counter maximum limit
-         * 
+         *
          *  \param cte_max the maximum amount of acceptable crosstrack error instances
         */
         void setCrosstrackErrorCountMax(int cte_max);
 
         /**
          * \brief set the maximum crosstrack error distance
-         * 
+         *
          *  \param cte_dist maximum distance value (specified in the this package's parameters.yaml configuration file)
         */
         void setCrosstrackErrorDistance(double cte_dist);
 
         /**
-         * \brief "Get the closest lanelet on the route relative to the vehicle's current position. 
+         * \brief "Get the closest lanelet on the route relative to the vehicle's current position.
          * If the input list does not contain lanelets on the route, still closest lanelet from the route will be returned
-         * 
+         *
          *  \param position the current position of the vehicle
         */
         lanelet::ConstLanelet getClosestLaneletFromRouteLanelets(lanelet::BasicPoint2d position) const;
@@ -263,7 +263,7 @@ namespace route {
     private:
 
         const double DEG_TO_RAD = 0.0174533;
-        
+
         // route state worker
         RouteStateWorker rs_worker_;
 
@@ -279,11 +279,11 @@ namespace route {
         carma_planning_msgs::msg::RouteState route_state_msg_;
         visualization_msgs::msg::Marker route_marker_msg_;
 
-        std::vector<lanelet::ConstPoint3d> points_; 
-        
+        std::vector<lanelet::ConstPoint3d> points_;
+
         //List of lanelets in the route
         lanelet::ConstLanelets route_llts;
-        
+
         // minimum down track error which can trigger route complete event
         double down_track_target_range_;
 
@@ -325,7 +325,7 @@ namespace route {
         std::queue<uint8_t> route_event_queue;
 
         // private helper function to add a new route event into event queue
-        void publishRouteEvent(uint8_t event_type);        
+        void publishRouteEvent(uint8_t event_type);
 
         // maximum cross track error which can trigger left route event
         double cross_track_dist_;

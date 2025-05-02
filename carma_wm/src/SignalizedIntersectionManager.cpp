@@ -106,7 +106,9 @@ namespace carma_wm
 
       if (size_of_available_points < min_number_of_points)
       {
-        RCLCPP_WARN_STREAM(rclcpp::get_logger("carma_wm::SignalizedIntersectionManager"), "Not enough points are provided to match a lane. Skipping... ");
+        logWarnOnce(
+          std::string("Logging Once: Not enough points are provided to match a lane. Skipping... ")
+          + "| intersection id: " + std::to_string((int)intersection.id.id));
         continue;
       }
 
@@ -152,7 +154,9 @@ namespace carma_wm
       {
         // https://github.com/usdot-fhwa-stol/carma-platform/issues/1593
         // Open issue TODO on how this error is handled
-        RCLCPP_WARN_STREAM(rclcpp::get_logger("carma_wm::SignalizedIntersectionManager"), "Given offset points are not inside the map for lane: " << (int)lane.lane_id);
+        logWarnOnce("Logging Once: Given offset points are not inside the map for lane: " 
+          + std::to_string((int)lane.lane_id)
+          + "| intersection id: " + std::to_string((int)intersection.id.id));
         continue;
       }
 
@@ -195,7 +199,9 @@ namespace carma_wm
           }
           else
           {
-            RCLCPP_WARN_STREAM(rclcpp::get_logger("carma_wm::SignalizedIntersectionManager"), "Interestingly, did not detect here");
+            logWarnOnce(
+              std::string("Logging Once: No connecting lanelets were detected inside!")
+              + " | intersection id: " + std::to_string((int)intersection.id.id));
             continue;
           }
 
@@ -232,7 +238,9 @@ namespace carma_wm
         {
           // https://github.com/usdot-fhwa-stol/carma-platform/issues/1593
           // Open issue TODO on how this error is handled
-          RCLCPP_WARN_STREAM(rclcpp::get_logger("carma_wm::SignalizedIntersectionManager"), "Unable to convert exit lane Id: "  + std::to_string((int)exit_lane) + ", to lanelet id using the given MAP.msg!");
+          logWarnOnce("Logging Once: Unable to convert exit lane Id: "
+            + std::to_string((int)exit_lane) + ", to lanelet id using the given MAP.msg!"
+            + "| intersection id: " + std::to_string((int)intersection.id.id));
         }
       }
     }
@@ -251,7 +259,9 @@ namespace carma_wm
         {
           // https://github.com/usdot-fhwa-stol/carma-platform/issues/1593
           // Open issue TODO on how this error is handled
-          RCLCPP_WARN_STREAM(rclcpp::get_logger("carma_wm::SignalizedIntersectionManager"), "Unable to convert entry lane Id: "  + std::to_string((int)entry_lane) + ", to lanelet id using the given MAP.msg!");
+          logWarnOnce("Logging Once: Unable to convert entry lane Id: "
+            + std::to_string((int)entry_lane) + ", to lanelet id using the given MAP.msg!"
+            + "| intersection id: " + std::to_string((int)intersection.id.id));
         }
       }
     }
@@ -352,7 +362,7 @@ namespace carma_wm
 
     if (target_frame_ == "")
     {
-      RCLCPP_WARN_STREAM(rclcpp::get_logger("carma_wm::SignalizedIntersectionManager"), "Georeference is not loaded yet. Returning without processing this MAP msg.");
+      logWarnOnce("Logging Once: Georeference is not loaded yet. Returning without processing this MAP msg.");
       return;
     }
 
@@ -481,7 +491,7 @@ namespace carma_wm
 
     if (spat_msg.intersection_state_list.empty())
     {
-      RCLCPP_WARN_STREAM(rclcpp::get_logger("carma_wm"), "No intersection_state_list in the newly received SPAT msg. Returning...");
+      logWarnOnce("Logging Once: No intersection_state_list in the newly received SPAT msg. Returning...");
       return;
     }
 
@@ -526,27 +536,67 @@ namespace carma_wm
     }
   }
 
+  /**
+   * @brief Log an info message only once per unique message
+   * @param message The message to log
+   */
+  void SignalizedIntersectionManager::logInfoOnce(const std::string& message) const {
+    static std::mutex log_mutex;
+
+    std::lock_guard<std::mutex> lock(log_mutex);
+    if (previous_busy_log_streams_.find(message) == previous_busy_log_streams_.end()) {
+      RCLCPP_INFO_STREAM(rclcpp::get_logger("carma_wm"), message);
+      previous_busy_log_streams_.insert(message);
+    }
+  }
+
+  /**
+   * @brief Log a warning message only once per unique message
+   * @param message The message to log
+   */
+  void SignalizedIntersectionManager::logWarnOnce(const std::string& message) const {
+    static std::mutex log_mutex;
+
+    std::lock_guard<std::mutex> lock(log_mutex);
+    if (previous_busy_log_streams_.find(message) == previous_busy_log_streams_.end()) {
+      RCLCPP_WARN_STREAM(rclcpp::get_logger("carma_wm"), message);
+      previous_busy_log_streams_.insert(message);
+    }
+  }
+
   lanelet::Id SignalizedIntersectionManager::getTrafficSignalId(uint16_t intersection_id, uint8_t signal_group_id)
   {
     lanelet::Id signal_id = lanelet::InvalId;
 
+    // Printing only once because MAP/SPAT is broadcasted frequently and can easily spam the log
     if (intersection_id_to_regem_id_.find(intersection_id) == intersection_id_to_regem_id_.end())
     {
       // Currently, platform is not supporting multiple intersections, so if the id exists
       // signal_group is expected to be for that intersection
-      RCLCPP_WARN_STREAM(rclcpp::get_logger("carma_wm"), "Intersection id: " << intersection_id << " is not found in the map. Returning...");
+      logWarnOnce("Logging Once: Intersection id: "
+        + std::to_string((int)intersection_id)
+        + " is not found in the map. Only printing once. Returning...");
       return lanelet::InvalId;
     }
 
-    if (signal_group_to_traffic_light_id_.find(signal_group_id) != signal_group_to_traffic_light_id_.end())
+    if (signal_group_to_traffic_light_id_.find(signal_group_id)
+      != signal_group_to_traffic_light_id_.end())
     {
       signal_id = signal_group_to_traffic_light_id_[signal_group_id];
     }
     else
     {
-      RCLCPP_WARN_STREAM(rclcpp::get_logger("carma_wm"), "Signal group id: " << signal_group_id << " is not found in the map. Returning...");
+      logWarnOnce("Logging Once: Signal group id: "
+        + std::to_string((int)signal_group_id) + " for intersection id: "
+        + std::to_string((int)intersection_id) + " is not found in the map. "
+        + "Only printing once until found. Returning...");
       return signal_id;
     }
+
+    logInfoOnce("Signal group id: "
+      + std::to_string((int)signal_group_id) + " for intersection id: "
+      + std::to_string((int)intersection_id) + " is found in the map with regem id: "
+      + std::to_string((int)signal_id));
 
     return signal_id;
   }
@@ -559,16 +609,18 @@ namespace carma_wm
     auto lanelets_general = semantic_map->laneletLayer.findUsages(general_regem);
     if (lanelets_general.empty())
     {
-      RCLCPP_WARN_STREAM(rclcpp::get_logger("carma_wm"),
-        "There was an error querying lanelet for traffic light with id: " << id);
+      logWarnOnce(
+        "Logging Once: There was an error querying lanelet for traffic light with id: "
+        + std::to_string((int)id));
     }
 
     if (auto curr_light_list =
       lanelets_general[0].regulatoryElementsAs<lanelet::CarmaTrafficSignal>();
     curr_light_list.empty())
     {
-      RCLCPP_WARN_STREAM(rclcpp::get_logger("carma_wm"),
-        "There was an error querying traffic light with id: " << id);
+      logWarnOnce(
+        "Logging Once: There was an error querying traffic light with id: "
+        + std::to_string((int)id));
       return nullptr;
     }
 
@@ -585,8 +637,9 @@ namespace carma_wm
 
     if (!curr_light)
     {
-      RCLCPP_WARN_STREAM(rclcpp::get_logger("carma_wm"),
-        "Was not able to find traffic signal with id: " << id << ", ignoring...");
+      logWarnOnce(
+        "Logging Once: Was not able to find traffic signal with id: "
+        + std::to_string((int)id) + ", ignoring...");
       return nullptr;
     }
 

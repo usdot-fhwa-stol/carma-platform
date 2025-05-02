@@ -660,7 +660,10 @@ namespace plan_delegator
             // validate trajectory before add to the plan
             if(!isTrajectoryValid(plan_response->trajectory_plan))
             {
-                RCLCPP_WARN_STREAM(rclcpp::get_logger("plan_delegator"),"Found invalid trajectory with less than 2 trajectory points for " << std::string(latest_maneuver_plan_.maneuver_plan_id));
+                RCLCPP_WARN_STREAM(rclcpp::get_logger("plan_delegator"),
+                    "Found invalid trajectory with less than 2 trajectory "
+                    << "points for maneuver_plan_id: "
+                    << std::string(latest_maneuver_plan_.maneuver_plan_id));
                 break;
             }
             //Remove duplicate point from start of trajectory
@@ -702,6 +705,10 @@ namespace plan_delegator
 
     void PlanDelegator::onTrajPlanTick()
     {
+        if (!guidance_engaged)
+        {
+            return;
+        }
         carma_planning_msgs::msg::TrajectoryPlan trajectory_plan = planTrajectory();
 
         // Check if planned trajectory is valid before send out
@@ -712,7 +719,9 @@ namespace plan_delegator
         }
         else
         {
-            RCLCPP_WARN_STREAM(rclcpp::get_logger("plan_delegator"),"Planned trajectory is empty. It will not be published!");
+            RCLCPP_WARN_STREAM(rclcpp::get_logger("plan_delegator"),
+                "Guidance is engaged, but planned trajectory has less than 2 points. " <<
+                "It will not be published!");
         }
     }
 

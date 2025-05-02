@@ -45,7 +45,7 @@ cd "${dir}"/src
 
 git clone --depth=1 https://github.com/usdot-fhwa-stol/carma-msgs.git --branch "${BRANCH}"
 git clone --depth=1 https://github.com/usdot-fhwa-stol/carma-utils.git --branch "${BRANCH}"
-git clone --depth=1 https://github.com/usdot-fhwa-stol/v2x-ros-conversion.git --branch "develop"
+git clone --depth=1 https://github.com/usdot-fhwa-stol/v2x-ros-conversion.git --branch "${BRANCH}"
 git clone --depth=1 https://github.com/usdot-fhwa-stol/carma-message-filters.git --branch "${BRANCH}"
 git clone --depth=1 https://github.com/usdot-fhwa-stol/multiple_object_tracking --branch "${BRANCH}"
 
