@@ -117,7 +117,8 @@ std::pair<double, double> correctOffsets(double offset_x, double offset_y, doubl
   double corrected_x = offset_x * cos(rotationRad) - offset_y * sin(rotationRad);
   double corrected_y = offset_x * sin(rotationRad) + offset_y * cos(rotationRad);
 
-  return {corrected_x, corrected_y};
+  // Now this should be in NED, so:
+  return {corrected_y, corrected_x};
 }
 
 auto ned_to_enu(const PositionOffsetXYZ & offset_ned) noexcept
@@ -284,6 +285,20 @@ auto transform_pose_from_map_to_wgs84(
   return ref_pos;
 }
 
+double convertToTrueNorthClockwise(double counterclockwiseDegrees) {
+  // Step 1: Convert from counterclockwise to clockwise (360 - angle)
+  // Step 2: Shift the reference point by 90 degrees
+  // Step 3: Apply modulo 360 to keep the result in the range [0, 360)
+  double trueNorthClockwise = fmod((360.0 - counterclockwiseDegrees + 90.0), 360.0);
+  
+  // Handle floating point precision issues for values very close to 0 or 360
+  if (fabs(trueNorthClockwise - 360.0) < 0.000001) {
+      trueNorthClockwise = 0.0;
+  }
+  
+  return trueNorthClockwise;
+}
+
 auto to_detection_list_msg(
   const carma_v2x_msgs::msg::SensorDataSharingMessage & sdsm, std::string_view georeference)
   -> carma_cooperative_perception_interfaces::msg::DetectionList
@@ -362,10 +377,10 @@ auto to_detection_list_msg(
       throw std::runtime_error("missing elevation confidence");
     }
 
-    // Temporary Fix for 192.168.55.182 camera which has heading 255
-    auto new_heading_double = common_data.heading.heading - 255.0 + 360.0;
+    // Temporary Fix for 192.168.55.182 camera which has heading 255 NED
     auto new_heading = common_data.heading;
-    new_heading.heading = new_heading_double;
+    new_heading.heading = convertToTrueNorthClockwise(common_data.heading.heading);
+
     const auto true_heading{units::angle::degree_t{Heading::from_msg(new_heading).heading}};
 
     // Note: This should really use the detection's WGS-84 position, so the
