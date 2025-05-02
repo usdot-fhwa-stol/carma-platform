@@ -58,14 +58,14 @@ import numpy as np
 # === Fixed reference and rotation config ===
 # TODO Add the desired geoReference and rotation reference for the output map here (They can both be the same or different based on the application)
 # New Georeference
-new_lat_0 = 38.956279917377
-new_lon_0 = -77.15038251550128
+new_lat_0 = 0.0
+new_lon_0 = 0.0
 # New Rotation Reference
-rotate_lat = 38.956279917377
-rotate_lon = -77.15038251550128
+rotate_lat = 0.0
+rotate_lon = 0.0
 # Rotation Reference
 # TODO Add the desired rotation of the output map here
-rotation_deg = -10.0  # Counter-clockwise
+rotation_deg = 0.0  # Counter-clockwise
 
 theta_rad = math.radians(rotation_deg)
 
