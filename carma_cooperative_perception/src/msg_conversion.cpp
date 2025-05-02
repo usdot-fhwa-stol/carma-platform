@@ -57,16 +57,38 @@ namespace carma_cooperative_perception
 {
 auto to_time_msg(const DDateTime & d_date_time) -> builtin_interfaces::msg::Time
 {
-  double seconds;
-  const auto fractional_secs{std::modf(
-    remove_units(units::time::second_t{d_date_time.hour.value_or(units::time::second_t{0.0})}) +
-      remove_units(units::time::second_t{d_date_time.minute.value_or(units::time::second_t{0.0})}) +
-      remove_units(units::time::second_t{d_date_time.second.value_or(units::time::second_t{0.0})}),
-    &seconds)};
+  std::tm timeinfo = {};
+  timeinfo.tm_year = static_cast<int>(d_date_time.year.value());
+  if(timeinfo.tm_year > 1900){
+    timeinfo.tm_year = timeinfo.tm_year - 1900;
+  }
+  timeinfo.tm_mon = static_cast<int>(d_date_time.month.value().get_value());
+  if (timeinfo.tm_mon != 0){
+    timeinfo.tm_mon = timeinfo.tm_mon - 1;
+  }
+
+  timeinfo.tm_mday = static_cast<int>(d_date_time.day.value());
+  timeinfo.tm_hour = static_cast<int>(d_date_time.hour.value());
+  timeinfo.tm_min = static_cast<int>(d_date_time.minute.value());
+  timeinfo.tm_sec = 0;
+
+  std::time_t timeT = std::mktime(&timeinfo);
+
+  // Convert time_t to system_clock::time_point
+  auto timePoint = std::chrono::system_clock::from_time_t(timeT);
+
+  // Add milliseconds
+  auto milliseconds = static_cast<int>(d_date_time.second.value());
+  timePoint += std::chrono::milliseconds(milliseconds);
+
+  // Extract seconds and nanoseconds since epoch
+  auto duration = timePoint.time_since_epoch();
+  auto seconds = std::chrono::duration_cast<std::chrono::seconds>(duration);
+  auto nanoseconds = std::chrono::duration_cast<std::chrono::nanoseconds>(duration - seconds);
 
   builtin_interfaces::msg::Time msg;
-  msg.sec = static_cast<std::int32_t>(seconds);
-  msg.nanosec = static_cast<std::int32_t>(fractional_secs * 1e9);
+  msg.sec = static_cast<int32_t>(seconds.count());
+  msg.nanosec = static_cast<uint32_t>(nanoseconds.count());
 
   return msg;
 }
@@ -269,8 +291,15 @@ auto to_detection_list_msg(
   carma_cooperative_perception_interfaces::msg::DetectionList detection_list;
 
   const auto ref_pos_3d{Position3D::from_msg(sdsm.ref_pos)};
+
+
+  units::length::meter_t elevation(0.0);
+  if(ref_pos_3d.elevation){
+    elevation = ref_pos_3d.elevation.value();
+  }
   const Wgs84Coordinate ref_pos_wgs84{
-    ref_pos_3d.latitude, ref_pos_3d.longitude, ref_pos_3d.elevation.value()};
+    ref_pos_3d.latitude, ref_pos_3d.longitude, elevation};
+
   const auto ref_pos_map{project_to_carma_map(ref_pos_wgs84, georeference)};
 
   for (const auto & object_data : sdsm.objects.detected_object_data) {
@@ -363,10 +392,6 @@ auto to_detection_list_msg(
     detection.twist.twist.linear.x =
       remove_units(units::velocity::meters_per_second_t{speed.speed});
 
-    const auto speed_z{Speed::from_msg(common_data.speed_z)};
-    detection.twist.twist.linear.z =
-      remove_units(units::velocity::meters_per_second_t{speed_z.speed});
-
     try {
       // Twist covariance is flattened 6x6 matrix with rows/columns of x, y, z, roll, pitch, yaw
       detection.twist.covariance.at(0) =
@@ -375,23 +400,42 @@ auto to_detection_list_msg(
       throw std::runtime_error("missing speed confidence");
     }
 
-    try {
-      detection.twist.covariance.at(14) =
-        0.5 * std::pow(j2735_v2x_msgs::to_double(common_data.speed_confidence_z).value(), 2);
-    } catch (const std::bad_optional_access &) {
-      throw std::runtime_error("missing z-speed confidence");
+    if (common_data.speed_z.speed){
+      const auto speed_z{Speed::from_msg(common_data.speed_z)};
+      detection.twist.twist.linear.z =
+        remove_units(units::velocity::meters_per_second_t{speed_z.speed});
+
+      try {
+        detection.twist.covariance.at(14) =
+          0.5 * std::pow(j2735_v2x_msgs::to_double(common_data.speed_confidence_z).value(), 2);
+      } catch (const std::bad_optional_access &) {
+        throw std::runtime_error("missing z-speed confidence");
+      }
+    }
+    else{
+      detection.twist.twist.linear.z = remove_units(units::velocity::meters_per_second_t{0.0});
+      detection.twist.covariance.at(14) = 0.0;
     }
 
-    const auto accel_set{AccelerationSet4Way::from_msg(common_data.accel_4_way)};
-    detection.twist.twist.angular.z =
-      remove_units(units::angular_velocity::degrees_per_second_t{accel_set.yaw_rate});
 
-    try {
-      detection.twist.covariance.at(35) =
-        0.5 * std::pow(j2735_v2x_msgs::to_double(common_data.acc_cfd_yaw).value(), 2);
-    } catch (const std::bad_optional_access &) {
-      throw std::runtime_error("missing yaw-rate confidence");
+
+    if(common_data.accel_4_way.yaw_rate){
+      const auto accel_set{AccelerationSet4Way::from_msg(common_data.accel_4_way)};
+      detection.twist.twist.angular.z =
+        remove_units(units::angular_velocity::degrees_per_second_t{accel_set.yaw_rate});
+
+      try {
+        detection.twist.covariance.at(35) =
+          0.5 * std::pow(j2735_v2x_msgs::to_double(common_data.acc_cfd_yaw).value(), 2);
+      } catch (const std::bad_optional_access &) {
+        throw std::runtime_error("missing yaw-rate confidence");
+      }
     }
+    else{
+      detection.twist.twist.angular.z = 0.0;
+      detection.twist.covariance.at(35) = 0.0;
+    }
+
 
     switch (common_data.obj_type.object_type) {
       case common_data.obj_type.ANIMAL:
