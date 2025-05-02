@@ -34,9 +34,9 @@
 # /////////////////////////////////////////////////////////////////////////////
 ARG DOCKER_ORG="usdotfhwastoldev"
 ARG DOCKER_TAG="develop"
-FROM ${DOCKER_ORG}/autoware.ai:${DOCKER_TAG} as base-image
+FROM 0ffad8c4193e as base-image
 
-FROM base-image AS install
+FROM 0ffad8c4193e AS install
 ARG PACKAGES=""
 ENV PACKAGES=${PACKAGES}
 
@@ -56,7 +56,7 @@ RUN ~/src/carma-platform/docker/install.sh
 # /////////////////////////////////////////////////////////////////////////////
 
 
-FROM base-image
+FROM 0ffad8c4193e
 
 ARG BUILD_DATE="NULL"
 ARG VCS_REF="NULL"
