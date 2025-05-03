@@ -43,11 +43,14 @@ done
 
 cd "${dir}"/src
 
-git clone --depth=1 https://github.com/usdot-fhwa-stol/multiple_object_tracking --branch "${BRANCH}"
+git clone --depth=1 https://github.com/usdot-fhwa-stol/multiple_object_tracking --branch "print-logs"
 
-cd ${dir}
+cd ${dir}/src
+ls -la
+ls -la
+realpath .
 
 # Install dependencies
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 sudo chmod +x ${SCRIPT_DIR}/install_dependencies.sh
-${SCRIPT_DIR}/install_dependencies.sh -b $BRANCH -r $dir
+${SCRIPT_DIR}/install_dependencies.sh -b print-logs -r $dir

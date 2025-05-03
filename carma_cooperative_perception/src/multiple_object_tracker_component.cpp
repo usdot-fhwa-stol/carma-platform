@@ -251,6 +251,8 @@ auto MultipleObjectTrackerNode::handle_on_configure(
   const rclcpp_lifecycle::State & /* previous_state */) -> carma_ros2_utils::CallbackReturn
 {
   RCLCPP_INFO(get_logger(), "Lifecycle transition: configuring");
+  setvbuf(stdout, NULL, _IONBF, BUFSIZ);
+  setvbuf(stderr, NULL, _IONBF, BUFSIZ);
 
   track_list_pub_ = create_publisher<carma_cooperative_perception_interfaces::msg::TrackList>(
     "output/track_list", 1);
@@ -576,11 +578,13 @@ auto MultipleObjectTrackerNode::execute_pipeline() -> void
   };
 
   if (track_manager_.get_all_tracks().empty()) {
-    RCLCPP_DEBUG(
+    RCLCPP_ERROR(
       get_logger(), "List of tracks is empty. Converting detections to tentative tracks");
 
     // This clustering distance is an arbitrarily-chosen heuristic. It is working well for our
     // current purposes, but there's no reason it couldn't be restricted or loosened.
+    RCLCPP_ERROR_STREAM(
+      get_logger(), "Detection size before clustering: " << detections_.size());
     const auto clusters{mot::cluster_detections(detections_, 0.75)};
     for (const auto & cluster : clusters) {
       const auto detection{std::cbegin(cluster.get_detections())->second};
@@ -593,7 +597,9 @@ auto MultipleObjectTrackerNode::execute_pipeline() -> void
       track_manager_.add_tentative_track(
         std::visit(make_track_visitor, detection, std::variant<mot::Uuid>(new_uuid)));
     }
-
+    RCLCPP_ERROR_STREAM(
+      get_logger(), "Track size after detection clustering: "
+      << track_manager_.get_all_tracks().size());
     track_list_pub_->publish(carma_cooperative_perception_interfaces::msg::TrackList{});
 
     detections_.clear();
@@ -606,18 +612,25 @@ auto MultipleObjectTrackerNode::execute_pipeline() -> void
   temporally_align_detections(detections_, current_time);
 
   const auto predicted_tracks{predict_track_states(track_manager_.get_all_tracks(), current_time)};
+  RCLCPP_ERROR_STREAM(
+    get_logger(), "Track size after prediction: " << predicted_tracks.size());
   auto scores{
     mot::score_tracks_and_detections(predicted_tracks, detections_, SemanticDistance2dScore{})};
 
+      // std::visit([](const auto& obj) {
+      //   RCLCPP_ERROR_STREAM(get_logger(), "Track Pose: x: " << mot::remove_units(obj.state.position_x)
+      //             << ", y: " << mot::remove_units(obj.state.position_y)
+      //             << ", twist.x: " << mot::remove_units(obj.state.velocity)/* other properties */;)}, track);
   // This pruning distance is an arbitrarily-chosen heuristic. It is working well for our
   // current purposes, but there's no reason it couldn't be restricted or loosened.
-  mot::prune_track_and_detection_scores_if(scores, [](const auto & score) { return score > 1.0; });
+  //mot::prune_track_and_detection_scores_if(scores, [](const auto & score) { return score > 99.0; });
 
   const auto associations{
     mot::associate_detections_to_tracks(scores, mot::gnn_association_visitor)};
 
   track_manager_.update_track_lists(associations);
-
+  RCLCPP_ERROR_STREAM(
+    get_logger(), "Track size after association: " << track_manager_.get_all_tracks().size());
   std::unordered_map<mot::Uuid, Detection> detection_map;
   for (const auto & detection : detections_) {
     detection_map[mot::get_uuid(detection)] = detection;
@@ -631,6 +644,8 @@ auto MultipleObjectTrackerNode::execute_pipeline() -> void
       const auto fused_track{
         std::visit(mot::covariance_intersection_visitor, track, first_detection)};
       track_manager_.update_track(mot::get_uuid(track), fused_track);
+      RCLCPP_ERROR_STREAM(
+        get_logger(), "Updating track: " << mot::get_uuid(track).value());
     }
   }
 
@@ -642,6 +657,8 @@ auto MultipleObjectTrackerNode::execute_pipeline() -> void
       unassociated_detections.push_back(detection);
     }
   }
+  RCLCPP_ERROR_STREAM(
+    get_logger(), "Unassociated detection size: " << unassociated_detections.size());
 
   // We want to remove unassociated tracks that are close enough to existing tracks
   // to avoid creating duplicates. Duplicate tracks will cause association inconsistencies
@@ -664,6 +681,10 @@ auto MultipleObjectTrackerNode::execute_pipeline() -> void
 
   unassociated_detections.erase(remove_start, std::end(unassociated_detections));
 
+  RCLCPP_ERROR_STREAM(
+    get_logger(), "Unassociated detection size after removal: "
+    << unassociated_detections.size());
+
   // This clustering distance is an arbitrarily-chosen heuristic. It is working well for our
   // current purposes, but there's no reason it couldn't be restricted or loosened.
   const auto clusters{mot::cluster_detections(unassociated_detections, 0.75, MetricSe2{})};
@@ -679,11 +700,18 @@ auto MultipleObjectTrackerNode::execute_pipeline() -> void
       std::visit(make_track_visitor, detection, std::variant<mot::Uuid>(new_uuid)));
   }
 
+  RCLCPP_ERROR_STREAM(
+    get_logger(), "Track size after adding unassociated detections: "
+    << track_manager_.get_all_tracks().size());
+
   carma_cooperative_perception_interfaces::msg::TrackList track_list;
   for (const auto & track : track_manager_.get_confirmed_tracks()) {
     track_list.tracks.push_back(to_ros_msg(track));
   }
 
+  RCLCPP_ERROR_STREAM(
+    get_logger(), "Confirmed Track size after converting to ROS message: "
+    << track_list.tracks.size());
   track_list_pub_->publish(track_list);
 
   detections_.clear();

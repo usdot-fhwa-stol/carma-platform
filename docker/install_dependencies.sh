@@ -36,6 +36,9 @@ done
 
 
 echo "Installing multiple object tracking dependencies"
+cd ${dir}/src/multiple_object_tracking/scripts/
+sudo chmod +x install_dependencies.sh
+ls -la
 sudo ${dir}/src/multiple_object_tracking/scripts/install_dependencies.sh
 
 

@@ -52,10 +52,12 @@ public:
   auto sdsm_msg_callback(const input_msg_type & msg) const -> void
   {
     try {
-      auto detection_list_msg{to_detection_list_msg(now(), msg, georeference_)};
+      auto detection_list_msg{to_detection_list_msg(msg, georeference_)};
 
       // hardcode for now as we are replaying the SDSM
-      detection_list_msg.header.stamp = now();
+      for (auto & detection : detection_list_msg.detections) {
+        detection.header.stamp = now();
+      }
       if (cdasim_time_) {
         // When in simulation, ROS time is CARLA time, but SDSMs use CDASim time
         const auto time_delta{now() - cdasim_time_.value()};
