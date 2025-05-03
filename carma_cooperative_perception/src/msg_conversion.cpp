@@ -286,12 +286,12 @@ auto transform_pose_from_map_to_wgs84(
 }
 /**
  * Converts an object's angle from TrafiSense camera coordinates to true north clockwise heading
- * 
+ *
  * Assumptions:
  * - Camera internally uses 0° as its heading reference
  * - Camera angles increase clockwise
  * - Camera's true north heading is 255°
- * 
+ *
  * @param cameraAngle The angle of the object in camera coordinates (clockwise from camera's 0°)
  * @param cameraHeading The camera's heading in degrees from true north (clockwise, 255° by default)
  * @return The object's heading in degrees from true north (clockwise)
@@ -300,12 +300,12 @@ double convertToTrueNorthHeading(double cameraAngle, double cameraHeading = 255.
   // Simply add the camera's heading to the camera angle
   // This works because both are in the same coordinate system (clockwise)
   double trueNorthHeading = fmod(cameraHeading + cameraAngle, 360.0);
-  
+
   // Handle floating point precision issues
   if (fabs(trueNorthHeading - 360.0) < 0.000001) {
       trueNorthHeading = 0.0;
   }
-  
+
   return trueNorthHeading;
 }
 
@@ -316,7 +316,6 @@ auto to_detection_list_msg(
   carma_cooperative_perception_interfaces::msg::DetectionList detection_list;
 
   const auto ref_pos_3d{Position3D::from_msg(sdsm.ref_pos)};
-
 
   units::length::meter_t elevation(0.0);
   if(ref_pos_3d.elevation){
@@ -370,21 +369,37 @@ auto to_detection_list_msg(
       ref_pos_map.easting + pos_offset_enu.offset_x, ref_pos_map.northing + pos_offset_enu.offset_y,
       ref_pos_map.elevation + pos_offset_enu.offset_z.value_or(units::length::meter_t{0.0})});
 
-    // Pose covariance is flattened 6x6 matrix with rows/columns of x, y, z, roll, pitch, yaw
+    // Variables to store original covariance values for debugging
+    double original_pose_covariance_x = 0.0;
+    double original_pose_covariance_y = 0.0;
+    double original_pose_covariance_z = 0.0;
+    double original_pose_covariance_yaw = 0.0;
+    double original_twist_covariance_x = 0.0;
+    double original_twist_covariance_z = 0.0;
+    double original_twist_covariance_yaw = 0.0;
+
+    // Calculate and log original pose covariance values
     try {
-      detection.pose.covariance.at(0) =
+      original_pose_covariance_x =
         0.5 * std::pow(j2735_v2x_msgs::to_double(common_data.pos_confidence.pos).value(), 2);
-      detection.pose.covariance.at(7) =
-        0.5 * std::pow(j2735_v2x_msgs::to_double(common_data.pos_confidence.pos).value(), 2);
+      original_pose_covariance_y = original_pose_covariance_x;
+
+      RCLCPP_ERROR_STREAM(rclcpp::get_logger("to_detection_list_msg"),
+        "Original pose covariance X/Y: " << original_pose_covariance_x);
     } catch (const std::bad_optional_access &) {
-      throw std::runtime_error("missing position confidence");
+      RCLCPP_ERROR_STREAM(rclcpp::get_logger("to_detection_list_msg"),
+        "Missing position confidence");
     }
 
     try {
-      detection.pose.covariance.at(14) =
+      original_pose_covariance_z =
         0.5 * std::pow(j2735_v2x_msgs::to_double(common_data.pos_confidence.elevation).value(), 2);
+
+      RCLCPP_ERROR_STREAM(rclcpp::get_logger("to_detection_list_msg"),
+        "Original pose covariance Z: " << original_pose_covariance_z);
     } catch (const std::bad_optional_access &) {
-      throw std::runtime_error("missing elevation confidence");
+      RCLCPP_ERROR_STREAM(rclcpp::get_logger("to_detection_list_msg"),
+        "Missing elevation confidence");
     }
 
     // Temporary Fix for 192.168.55.182 camera which has heading 255 NED
@@ -406,11 +421,15 @@ auto to_detection_list_msg(
     detection.pose.pose.orientation = tf2::toMsg(quat_tf);
 
     try {
-      // Pose covariance is flattened 6x6 matrix with rows/columns of x, y, z, roll, pitch, yaw
-      detection.pose.covariance.at(35) =
+      // Get original heading/yaw covariance
+      original_pose_covariance_yaw =
         0.5 * std::pow(j2735_v2x_msgs::to_double(common_data.heading_conf).value(), 2);
+
+      RCLCPP_ERROR_STREAM(rclcpp::get_logger("to_detection_list_msg"),
+        "Original pose covariance yaw: " << original_pose_covariance_yaw);
     } catch (const std::bad_optional_access &) {
-      throw std::runtime_error("missing heading confidence");
+      RCLCPP_ERROR_STREAM(rclcpp::get_logger("to_detection_list_msg"),
+        "Missing heading confidence");
     }
 
     const auto speed{Speed::from_msg(common_data.speed)};
@@ -418,11 +437,15 @@ auto to_detection_list_msg(
       remove_units(units::velocity::meters_per_second_t{speed.speed});
 
     try {
-      // Twist covariance is flattened 6x6 matrix with rows/columns of x, y, z, roll, pitch, yaw
-      detection.twist.covariance.at(0) =
+      // Get original linear x velocity covariance
+      original_twist_covariance_x =
         0.5 * std::pow(j2735_v2x_msgs::to_double(common_data.speed_confidence).value(), 2);
+
+      RCLCPP_ERROR_STREAM(rclcpp::get_logger("to_detection_list_msg"),
+        "Original twist covariance X: " << original_twist_covariance_x);
     } catch (const std::bad_optional_access &) {
-      throw std::runtime_error("missing speed confidence");
+      RCLCPP_ERROR_STREAM(rclcpp::get_logger("to_detection_list_msg"),
+        "Missing speed confidence");
     }
 
     if (common_data.speed_z.speed){
@@ -431,18 +454,23 @@ auto to_detection_list_msg(
         remove_units(units::velocity::meters_per_second_t{speed_z.speed});
 
       try {
-        detection.twist.covariance.at(14) =
+        // Get original linear z velocity covariance
+        original_twist_covariance_z =
           0.5 * std::pow(j2735_v2x_msgs::to_double(common_data.speed_confidence_z).value(), 2);
+
+        RCLCPP_ERROR_STREAM(rclcpp::get_logger("to_detection_list_msg"),
+          "Original twist covariance Z: " << original_twist_covariance_z);
       } catch (const std::bad_optional_access &) {
-        throw std::runtime_error("missing z-speed confidence");
+        RCLCPP_ERROR_STREAM(rclcpp::get_logger("to_detection_list_msg"),
+          "Missing z-speed confidence");
       }
     }
     else{
       detection.twist.twist.linear.z = remove_units(units::velocity::meters_per_second_t{0.0});
-      detection.twist.covariance.at(14) = 0.0;
+      original_twist_covariance_z = 0.0;
+      RCLCPP_ERROR_STREAM(rclcpp::get_logger("to_detection_list_msg"),
+        "Original twist covariance Z: 0.0 (speed_z not provided)");
     }
-
-
 
     if(common_data.accel_4_way.yaw_rate){
       const auto accel_set{AccelerationSet4Way::from_msg(common_data.accel_4_way)};
@@ -450,17 +478,62 @@ auto to_detection_list_msg(
         remove_units(units::angular_velocity::degrees_per_second_t{accel_set.yaw_rate});
 
       try {
-        detection.twist.covariance.at(35) =
+        // Get original angular z velocity (yaw rate) covariance
+        original_twist_covariance_yaw =
           0.5 * std::pow(j2735_v2x_msgs::to_double(common_data.acc_cfd_yaw).value(), 2);
+
+        RCLCPP_ERROR_STREAM(rclcpp::get_logger("to_detection_list_msg"),
+          "Original twist covariance yaw: " << original_twist_covariance_yaw);
       } catch (const std::bad_optional_access &) {
-        throw std::runtime_error("missing yaw-rate confidence");
+        RCLCPP_ERROR_STREAM(rclcpp::get_logger("to_detection_list_msg"),
+          "Missing yaw-rate confidence");
       }
     }
     else{
       detection.twist.twist.angular.z = 0.0;
-      detection.twist.covariance.at(35) = 0.0;
+      original_twist_covariance_yaw = 0.0;
+      RCLCPP_ERROR_STREAM(rclcpp::get_logger("to_detection_list_msg"),
+        "Original twist covariance yaw: 0.0 (yaw_rate not provided)");
     }
 
+    // Hardcoded pose covariance
+    detection.pose.covariance[0] = 0.125;        // x position variance
+    detection.pose.covariance[7] = 0.125;        // y position variance
+    detection.pose.covariance[14] = 0.125;       // z position variance
+    detection.pose.covariance[35] = 0.005000000000000001; // yaw variance
+
+    // Fill zeros for all other pose covariance values
+    for (size_t i = 0; i < 36; ++i) {
+      if (i != 0 && i != 7 && i != 14 && i != 35) {
+        detection.pose.covariance[i] = 0.0;
+      }
+    }
+
+    // Hardcoded twist covariance
+    detection.twist.covariance[0] = 0.005000000000000001;  // x velocity variance
+    detection.twist.covariance[14] = 0.005000000000000001; // z velocity variance
+    detection.twist.covariance[35] = 0.005000000000000001; // yaw rate variance
+
+    // Fill zeros for all other twist covariance values
+    for (size_t i = 0; i < 36; ++i) {
+      if (i != 0 && i != 14 && i != 35) {
+        detection.twist.covariance[i] = 0.0;
+      }
+    }
+
+    // Print comparison between original and hardcoded values
+    RCLCPP_ERROR_STREAM(rclcpp::get_logger("to_detection_list_msg"),
+      "POSE COVARIANCE COMPARISON - Original vs Hardcoded: " <<
+      "X: " << original_pose_covariance_x << " -> 0.125, "
+      "Y: " << original_pose_covariance_y << " -> 0.125, "
+      "Z: " << original_pose_covariance_z << " -> 0.125, "
+      "Yaw: " << original_pose_covariance_yaw << " -> 0.005000000000000001");
+
+    RCLCPP_ERROR_STREAM(rclcpp::get_logger("to_detection_list_msg"),
+      "TWIST COVARIANCE COMPARISON - Original vs Hardcoded: " <<
+      "X: " << original_twist_covariance_x << " -> 0.005000000000000001, "
+      "Z: " << original_twist_covariance_z << " -> 0.005000000000000001, "
+      "Yaw: " << original_twist_covariance_yaw << " -> 0.005000000000000001");
 
     switch (common_data.obj_type.object_type) {
       case common_data.obj_type.ANIMAL:
