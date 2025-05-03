@@ -608,6 +608,8 @@ auto MultipleObjectTrackerNode::execute_pipeline() -> void
   }
 
   const units::time::second_t current_time{this->now().seconds()};
+  RCLCPP_ERROR_STREAM(
+    get_logger(), "Starting new cycle, detection size: " << detections_.size());
 
   temporally_align_detections(detections_, current_time);
 
