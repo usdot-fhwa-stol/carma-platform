@@ -625,7 +625,7 @@ auto MultipleObjectTrackerNode::execute_pipeline() -> void
       //             << ", twist.x: " << mot::remove_units(obj.state.velocity)/* other properties */;)}, track);
   // This pruning distance is an arbitrarily-chosen heuristic. It is working well for our
   // current purposes, but there's no reason it couldn't be restricted or loosened.
-  //mot::prune_track_and_detection_scores_if(scores, [](const auto & score) { return score > 99.0; });
+  mot::prune_track_and_detection_scores_if(scores, [](const auto & score) { return score > 1.0; });
 
   const auto associations{
     mot::associate_detections_to_tracks(scores, mot::gnn_association_visitor)};
