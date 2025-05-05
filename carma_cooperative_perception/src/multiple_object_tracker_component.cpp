@@ -259,7 +259,7 @@ auto MultipleObjectTrackerNode::handle_on_configure(
 
   detection_list_sub_ = create_subscription<
     carma_cooperative_perception_interfaces::msg::DetectionList>(
-    "input/detection_list", 1,
+    "input/detection_list", 100,
     [this](const carma_cooperative_perception_interfaces::msg::DetectionList::SharedPtr msg_ptr) {
       if (const auto current_state{this->get_current_state().label()}; current_state == "active") {
         this->store_new_detections(*msg_ptr);

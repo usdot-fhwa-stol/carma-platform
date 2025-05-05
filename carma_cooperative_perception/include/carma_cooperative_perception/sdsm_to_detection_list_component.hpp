@@ -39,7 +39,7 @@ public:
   : CarmaLifecycleNode{options},
     publisher_{create_publisher<output_msg_type>("output/detections", 1)},
     subscription_{create_subscription<input_msg_type>(
-      "input/sdsm", 1, [this](input_msg_shared_pointer msg_ptr) { sdsm_msg_callback(*msg_ptr); })},
+      "input/sdsm", 100, [this](input_msg_shared_pointer msg_ptr) { sdsm_msg_callback(*msg_ptr); })},
     georeference_subscription_{create_subscription<std_msgs::msg::String>(
       "input/georeference", 1,
       [this](std_msgs::msg::String::SharedPtr msg_ptr) { georeference_ = msg_ptr->data; })},
@@ -52,21 +52,28 @@ public:
   auto sdsm_msg_callback(const input_msg_type & msg) const -> void
   {
     try {
-      auto detection_list_msg{to_detection_list_msg(msg, georeference_)};
+      auto detection_list_msg{
+        to_detection_list_msg(msg, georeference_, cdasim_time_ != std::nullopt)
+      };
 
       // hardcode for now as we are replaying the SDSM
-      for (auto & detection : detection_list_msg.detections) {
-        detection.header.stamp = now();
-      }
+      // for (auto & detection : detection_list_msg.detections) {
+      //   detection.header.stamp = now();
+      // }
       if (cdasim_time_) {
         // When in simulation, ROS time is CARLA time, but SDSMs use CDASim time
         const auto time_delta{now() - cdasim_time_.value()};
 
         for (auto & detection : detection_list_msg.detections) {
           detection.header.stamp = rclcpp::Time(detection.header.stamp) + time_delta;
+          RCLCPP_ERROR_STREAM(
+            get_logger(), "SDSM to detection list conversion: "
+            << rclcpp::Time(detection.header.stamp).seconds() << " s");
         }
       }
-
+      RCLCPP_ERROR_STREAM(
+        get_logger(), "SDSM to detection list conversion: "
+        << detection_list_msg.detections.size() << " detections");
       publisher_->publish(detection_list_msg);
     } catch (const std::runtime_error & e) {
       RCLCPP_ERROR_STREAM(get_logger(), "Failed to convert SDSM to detection list: " << e.what());

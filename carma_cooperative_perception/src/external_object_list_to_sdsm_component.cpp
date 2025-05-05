@@ -37,7 +37,7 @@ auto ExternalObjectListToSdsmNode::handle_on_configure(
   sdsm_publisher_ = create_publisher<sdsm_msg_type>("output/sdsms", 1);
 
   external_objects_subscription_ = create_subscription<external_objects_msg_type>(
-    "input/external_objects", 1, [this](const external_objects_msg_type::SharedPtr msg_ptr) {
+    "input/external_objects", 100, [this](const external_objects_msg_type::SharedPtr msg_ptr) {
       const auto current_state{this->get_current_state().label()};
 
       if (current_state == "active") {
@@ -52,7 +52,7 @@ auto ExternalObjectListToSdsmNode::handle_on_configure(
     });
 
   georeference_subscription_ = create_subscription<georeference_msg_type>(
-    "input/georeference", 1, [this](const georeference_msg_type::SharedPtr msg_ptr) {
+    "input/georeference", 100, [this](const georeference_msg_type::SharedPtr msg_ptr) {
       const auto current_state{this->get_current_state().label()};
 
       if (current_state == "active") {
@@ -68,7 +68,7 @@ auto ExternalObjectListToSdsmNode::handle_on_configure(
     });
 
   current_pose_subscription_ = create_subscription<pose_msg_type>(
-    "input/pose_stamped", 1, [this](const pose_msg_type::SharedPtr msg_ptr) {
+    "input/pose_stamped", 100, [this](const pose_msg_type::SharedPtr msg_ptr) {
       const auto current_state{this->get_current_state().label()};
 
       if (current_state == "active") {

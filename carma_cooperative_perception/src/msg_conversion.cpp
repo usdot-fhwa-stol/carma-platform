@@ -55,40 +55,59 @@
 
 namespace carma_cooperative_perception
 {
-auto to_time_msg(const DDateTime & d_date_time) -> builtin_interfaces::msg::Time
+auto to_time_msg(const DDateTime & d_date_time, bool is_simulation) -> builtin_interfaces::msg::Time
 {
-  std::tm timeinfo = {};
-  timeinfo.tm_year = static_cast<int>(d_date_time.year.value());
-  if(timeinfo.tm_year > 1900){
-    timeinfo.tm_year = timeinfo.tm_year - 1900;
-  }
-  timeinfo.tm_mon = static_cast<int>(d_date_time.month.value().get_value());
-  if (timeinfo.tm_mon != 0){
-    timeinfo.tm_mon = timeinfo.tm_mon - 1;
-  }
-
-  timeinfo.tm_mday = static_cast<int>(d_date_time.day.value());
-  timeinfo.tm_hour = static_cast<int>(d_date_time.hour.value());
-  timeinfo.tm_min = static_cast<int>(d_date_time.minute.value());
-  timeinfo.tm_sec = 0;
-
-  std::time_t timeT = std::mktime(&timeinfo);
-
-  // Convert time_t to system_clock::time_point
-  auto timePoint = std::chrono::system_clock::from_time_t(timeT);
-
-  // Add milliseconds
-  auto milliseconds = static_cast<int>(d_date_time.second.value());
-  timePoint += std::chrono::milliseconds(milliseconds);
-
-  // Extract seconds and nanoseconds since epoch
-  auto duration = timePoint.time_since_epoch();
-  auto seconds = std::chrono::duration_cast<std::chrono::seconds>(duration);
-  auto nanoseconds = std::chrono::duration_cast<std::chrono::nanoseconds>(duration - seconds);
-
   builtin_interfaces::msg::Time msg;
-  msg.sec = static_cast<int32_t>(seconds.count());
-  msg.nanosec = static_cast<uint32_t>(nanoseconds.count());
+
+  if (!is_simulation) {
+    std::tm timeinfo = {};
+    timeinfo.tm_year = static_cast<int>(d_date_time.year.value());
+    if(timeinfo.tm_year > 1900){
+        timeinfo.tm_year = timeinfo.tm_year - 1900;
+    }
+    timeinfo.tm_mon = static_cast<int>(d_date_time.month.value().get_value());
+    if (timeinfo.tm_mon != 0){
+        timeinfo.tm_mon = timeinfo.tm_mon - 1;
+    }
+    timeinfo.tm_mday = static_cast<int>(d_date_time.day.value());
+    timeinfo.tm_hour = static_cast<int>(d_date_time.hour.value());
+    timeinfo.tm_min = static_cast<int>(d_date_time.minute.value());
+    timeinfo.tm_sec = 0;
+
+    // Use gmtime functions instead of mktime to work with UTC/GMT
+    // Convert struct tm to time_t using timegm (GNU extension) or equivalent
+    // POSIX approach (GNU extension)
+    std::time_t timeT = timegm(&timeinfo);
+
+    // Convert time_t to system_clock::time_point
+    auto timePoint = std::chrono::system_clock::from_time_t(timeT);
+
+    // Add milliseconds
+    auto milliseconds = static_cast<int>(d_date_time.second.value());
+    timePoint += std::chrono::milliseconds(milliseconds);
+
+    // Extract seconds and nanoseconds since epoch
+    auto duration = timePoint.time_since_epoch();
+    auto seconds = std::chrono::duration_cast<std::chrono::seconds>(duration);
+    auto nanoseconds = std::chrono::duration_cast<std::chrono::nanoseconds>(duration - seconds);
+
+
+    msg.sec = static_cast<int32_t>(seconds.count());
+    msg.nanosec = static_cast<uint32_t>(nanoseconds.count());
+  }
+  else
+  {
+    // if simulation, we ignore the date, month, year etc because the simulation won't be that long
+    double seconds;
+    const auto fractional_secs{std::modf(
+      remove_units(units::time::second_t{d_date_time.hour.value_or(units::time::second_t{0.0})}) +
+        remove_units(units::time::second_t{d_date_time.minute.value_or(units::time::second_t{0.0})}) +
+        remove_units(units::time::second_t{d_date_time.second.value_or(units::time::second_t{0.0})}),
+      &seconds)};
+
+    msg.sec = static_cast<std::int32_t>(seconds);
+    msg.nanosec = static_cast<std::int32_t>(fractional_secs * 1e9);
+  }
 
   return msg;
 }
@@ -310,7 +329,8 @@ double convertToTrueNorthHeading(double cameraAngle, double cameraHeading = 255.
 }
 
 auto to_detection_list_msg(
-  const carma_v2x_msgs::msg::SensorDataSharingMessage & sdsm, std::string_view georeference)
+  const carma_v2x_msgs::msg::SensorDataSharingMessage & sdsm, std::string_view georeference,
+  bool is_simulation)
   -> carma_cooperative_perception_interfaces::msg::DetectionList
 {
   carma_cooperative_perception_interfaces::msg::DetectionList detection_list;
@@ -336,7 +356,7 @@ auto to_detection_list_msg(
       DDateTime::from_msg(sdsm.sdsm_time_stamp),
       MeasurementTimeOffset::from_msg(common_data.measurement_time))};
 
-    detection.header.stamp = to_time_msg(detection_time);
+    detection.header.stamp = to_time_msg(detection_time, is_simulation);
 
     // TemporaryID and octet string terms come from the SAE J2735 message definitions
     static constexpr auto to_string = [](const std::vector<std::uint8_t> & temporary_id) {
@@ -353,10 +373,10 @@ auto to_detection_list_msg(
       return str;
     };
 
-    // Temporary Fix for 192.168.55.182 camera which has heading 255
+
     detection.id =
       to_string(sdsm.source_id.id) + "-" + std::to_string(common_data.detected_id.object_id);
-
+    // Temporary Fix for 192.168.55.182 camera which has heading 255
     auto new_pos = common_data.pos;
     auto new_coord_pair = correctOffsets(
       common_data.pos.offset_x.object_distance, common_data.pos.offset_y.object_distance, 255.0);
@@ -364,7 +384,7 @@ auto to_detection_list_msg(
     new_pos.offset_y.object_distance = new_coord_pair.second;
     /////////////////////////////////////////////////////////////
 
-    const auto pos_offset_enu{ned_to_enu(PositionOffsetXYZ::from_msg(new_pos))};
+    const auto pos_offset_enu{ned_to_enu(PositionOffsetXYZ::from_msg(common_data.pos))};
     detection.pose.pose.position = to_position_msg(MapCoordinate{
       ref_pos_map.easting + pos_offset_enu.offset_x, ref_pos_map.northing + pos_offset_enu.offset_y,
       ref_pos_map.elevation + pos_offset_enu.offset_z.value_or(units::length::meter_t{0.0})});
@@ -406,7 +426,7 @@ auto to_detection_list_msg(
     auto new_heading = common_data.heading;
     new_heading.heading = convertToTrueNorthHeading(common_data.heading.heading, 255.0);
 
-    const auto true_heading{units::angle::degree_t{Heading::from_msg(new_heading).heading}};
+    const auto true_heading{units::angle::degree_t{Heading::from_msg(common_data.heading).heading}};
 
     // Note: This should really use the detection's WGS-84 position, so the
     // convergence will be off slightly. TODO

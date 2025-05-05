@@ -41,7 +41,7 @@
 
 namespace carma_cooperative_perception
 {
-auto to_time_msg(const DDateTime & d_date_time) -> builtin_interfaces::msg::Time;
+auto to_time_msg(const DDateTime & d_date_time, bool is_simulation) -> builtin_interfaces::msg::Time;
 
 auto calc_detection_time_stamp(DDateTime d_date_time, const MeasurementTimeOffset & offset)
   -> DDateTime;
@@ -69,7 +69,8 @@ auto transform_pose_from_map_to_wgs84(
   -> carma_v2x_msgs::msg::Position3D;
 
 auto to_detection_list_msg(
-  const carma_v2x_msgs::msg::SensorDataSharingMessage & sdsm, std::string_view georeference)
+  const carma_v2x_msgs::msg::SensorDataSharingMessage & sdsm, std::string_view georeference,
+  bool is_simulation)
   -> carma_cooperative_perception_interfaces::msg::DetectionList;
 
 struct MotionModelMapping
