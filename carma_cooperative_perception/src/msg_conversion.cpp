@@ -401,7 +401,7 @@ auto to_detection_list_msg(
     new_pos.offset_y.object_distance = new_coord_pair.second;
     /////////////////////////////////////////////////////////////
 
-    const auto pos_offset_enu{ned_to_enu(PositionOffsetXYZ::from_msg(common_data.pos))};
+    const auto pos_offset_enu{ned_to_enu(PositionOffsetXYZ::from_msg(new_pos))};
     detection.pose.pose.position = to_position_msg(MapCoordinate{
       ref_pos_map.easting + pos_offset_enu.offset_x, ref_pos_map.northing + pos_offset_enu.offset_y,
       ref_pos_map.elevation + pos_offset_enu.offset_z.value_or(units::length::meter_t{0.0})});
@@ -443,7 +443,7 @@ auto to_detection_list_msg(
     auto new_heading = common_data.heading;
     new_heading.heading = convertToTrueNorthHeading(common_data.heading.heading, 255.0);
 
-    const auto true_heading{units::angle::degree_t{Heading::from_msg(common_data.heading).heading}};
+    const auto true_heading{units::angle::degree_t{Heading::from_msg(new_heading).heading}};
 
     // Note: This should really use the detection's WGS-84 position, so the
     // convergence will be off slightly. TODO
