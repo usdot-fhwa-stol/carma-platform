@@ -37,6 +37,8 @@
 #include <numeric>
 #include <string>
 #include <utility>
+#include <cstdlib>  // for setenv, unsetenv
+#include <ctime>    // for tzset
 
 #include <proj.h>
 #include <gsl/pointers>
@@ -57,9 +59,10 @@ namespace carma_cooperative_perception
 {
 auto to_time_msg(const DDateTime & d_date_time, bool is_simulation) -> builtin_interfaces::msg::Time
 {
+  // Convert DDateTime to builtin_interfaces::msg::Time
   builtin_interfaces::msg::Time msg;
-
   if (!is_simulation) {
+    // Create a tm structure to hold the date and time components
     std::tm timeinfo = {};
     timeinfo.tm_year = static_cast<int>(d_date_time.year.value());
     if(timeinfo.tm_year > 1900){
@@ -73,11 +76,26 @@ auto to_time_msg(const DDateTime & d_date_time, bool is_simulation) -> builtin_i
     timeinfo.tm_hour = static_cast<int>(d_date_time.hour.value());
     timeinfo.tm_min = static_cast<int>(d_date_time.minute.value());
     timeinfo.tm_sec = 0;
+    timeinfo.tm_isdst = 1;  // Force EDT (Daylight Saving Time)
 
-    // Use gmtime functions instead of mktime to work with UTC/GMT
-    // Convert struct tm to time_t using timegm (GNU extension) or equivalent
-    // POSIX approach (GNU extension)
-    std::time_t timeT = timegm(&timeinfo);
+    // Store current TZ environment variable
+    char* old_tz = getenv("TZ");
+    std::string old_tz_str = old_tz ? old_tz : "";
+
+    // Set timezone to EDT
+    setenv("TZ", "America/New_York", 1);
+    tzset();
+
+    // Convert EDT time to time_t (which is always in UTC)
+    std::time_t timeT = std::mktime(&timeinfo);
+
+    // Restore original timezone
+    if (old_tz_str.empty()) {
+        unsetenv("TZ");
+    } else {
+        setenv("TZ", old_tz_str.c_str(), 1);
+    }
+    tzset();
 
     // Convert time_t to system_clock::time_point
     auto timePoint = std::chrono::system_clock::from_time_t(timeT);
@@ -90,7 +108,6 @@ auto to_time_msg(const DDateTime & d_date_time, bool is_simulation) -> builtin_i
     auto duration = timePoint.time_since_epoch();
     auto seconds = std::chrono::duration_cast<std::chrono::seconds>(duration);
     auto nanoseconds = std::chrono::duration_cast<std::chrono::nanoseconds>(duration - seconds);
-
 
     msg.sec = static_cast<int32_t>(seconds.count());
     msg.nanosec = static_cast<uint32_t>(nanoseconds.count());
