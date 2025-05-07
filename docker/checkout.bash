@@ -43,12 +43,13 @@ done
 
 cd "${dir}"/src
 
-git clone --depth=1 https://github.com/usdot-fhwa-stol/multiple_object_tracking --branch "print-logs"
+git clone --depth=1 https://github.com/usdot-fhwa-stol/multiple_object_tracking --branch "cdar-745-angle-wrap"
 
 cd ${dir}/src
 ls -la
 ls -la
 realpath .
+
 
 # Install dependencies
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"

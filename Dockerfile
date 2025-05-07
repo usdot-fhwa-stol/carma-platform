@@ -34,9 +34,9 @@
 # /////////////////////////////////////////////////////////////////////////////
 ARG DOCKER_ORG="usdotfhwastoldev"
 ARG DOCKER_TAG="develop"
-FROM be1f21d0f8d1 as base-image
+FROM 6ad90bfe458b as base-image
 
-FROM be1f21d0f8d1 AS install
+FROM 6ad90bfe458b AS install
 ARG PACKAGES=""
 ENV PACKAGES=${PACKAGES}
 
@@ -56,7 +56,7 @@ RUN ~/src/carma-platform/docker/install.sh
 # /////////////////////////////////////////////////////////////////////////////
 
 
-FROM be1f21d0f8d1
+FROM 6ad90bfe458b
 
 ARG BUILD_DATE="NULL"
 ARG VCS_REF="NULL"

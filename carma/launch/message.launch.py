@@ -171,6 +171,7 @@ def generate_launch_description():
                 ],
                 remappings=[
                     ("outgoing_bsm", "bsm_outbound" )
+                    #("incoming_sdsm", "incoming_sdsm_test" )
                 ],
                 parameters=[
                     vehicle_config_param_file

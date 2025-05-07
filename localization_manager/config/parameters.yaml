@@ -43,6 +43,6 @@ sequential_timesteps_until_gps_operation: 5
 localization_mode: 5
 
 # Fixed offset (in meters in map frame) to use when GNSS only with fixed offset is being used (Mode 5)
-x_offset: 2.8
-y_offset: -2.1
+x_offset: 1.5
+y_offset: -1.4
 z_offset: 0.0
