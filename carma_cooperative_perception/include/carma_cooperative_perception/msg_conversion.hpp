@@ -41,6 +41,36 @@
 
 namespace carma_cooperative_perception
 {
+class SdsmToDetectionListConfig
+{
+public:
+  SdsmToDetectionListConfig() = default;
+  bool overwrite_covariance{false};
+  double pose_covariance_x{0.125};
+  double pose_covariance_y{0.125};
+  double pose_covariance_z{0.125};
+  double pose_covariance_yaw{0.005000000000000001};
+  double twist_covariance_x{0.005000000000000001};
+  double twist_covariance_z{0.005000000000000001};
+  double twist_covariance_yaw{0.005000000000000001};
+
+  // Stream operator for logging
+  friend std::ostream & operator<<(std::ostream & os, const SdsmToDetectionListConfig & config)
+  {
+    os << "SdsmToDetectionListConfig{"
+       << "\n  overwrite_covariance: " << config.overwrite_covariance
+       << "\n  pose_covariance_x: " << config.pose_covariance_x
+       << "\n  pose_covariance_y: " << config.pose_covariance_y
+       << "\n  pose_covariance_z: " << config.pose_covariance_z
+       << "\n  pose_covariance_yaw: " << config.pose_covariance_yaw
+       << "\n  twist_covariance_x: " << config.twist_covariance_x
+       << "\n  twist_covariance_z: " << config.twist_covariance_z
+       << "\n  twist_covariance_yaw: " << config.twist_covariance_yaw
+       << "\n}";
+    return os;
+  }
+};
+
 auto to_time_msg(const DDateTime & d_date_time, bool is_simulation) -> builtin_interfaces::msg::Time;
 
 auto calc_detection_time_stamp(DDateTime d_date_time, const MeasurementTimeOffset & offset)
@@ -70,7 +100,7 @@ auto transform_pose_from_map_to_wgs84(
 
 auto to_detection_list_msg(
   const carma_v2x_msgs::msg::SensorDataSharingMessage & sdsm, std::string_view georeference,
-  bool is_simulation)
+  bool is_simulation, const std::optional<SdsmToDetectionListConfig>& covariance_to_overwrite)
   -> carma_cooperative_perception_interfaces::msg::DetectionList;
 
 struct MotionModelMapping

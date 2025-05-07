@@ -347,7 +347,7 @@ double convertToTrueNorthHeading(double cameraAngle, double cameraHeading = 255.
 
 auto to_detection_list_msg(
   const carma_v2x_msgs::msg::SensorDataSharingMessage & sdsm, std::string_view georeference,
-  bool is_simulation)
+  bool is_simulation, const std::optional<SdsmToDetectionListConfig>& covariance_to_overwrite)
   -> carma_cooperative_perception_interfaces::msg::DetectionList
 {
   carma_cooperative_perception_interfaces::msg::DetectionList detection_list;
@@ -533,23 +533,46 @@ auto to_detection_list_msg(
         "Original twist covariance yaw: 0.0 (yaw_rate not provided)");
     }
 
-    // Hardcoded pose covariance
-    detection.pose.covariance[0] = 0.125;        // x position variance
-    detection.pose.covariance[7] = 0.125;        // y position variance
-    detection.pose.covariance[14] = 0.125;       // z position variance
-    detection.pose.covariance[35] = 0.005000000000000001; // yaw variance
+    if (covariance_to_overwrite)
+    {
+      // Hardcoded pose covariance
+      detection.pose.covariance[0] = covariance_to_overwrite.value().pose_covariance_x;
+      detection.pose.covariance[7] = covariance_to_overwrite.value().pose_covariance_y;
+      detection.pose.covariance[14] = covariance_to_overwrite.value().pose_covariance_z;
+      detection.pose.covariance[35] = covariance_to_overwrite.value().pose_covariance_yaw;
 
-    // Fill zeros for all other pose covariance values
-    for (size_t i = 0; i < 36; ++i) {
-      if (i != 0 && i != 7 && i != 14 && i != 35) {
-        detection.pose.covariance[i] = 0.0;
-      }
+      // Hardcoded twist covariance
+      detection.twist.covariance[0] = covariance_to_overwrite.value().twist_covariance_x;
+      detection.twist.covariance[14] = covariance_to_overwrite.value().twist_covariance_z;
+      detection.twist.covariance[35] = covariance_to_overwrite.value().twist_covariance_yaw;
+
+      // Print comparison between original and hardcoded values
+      RCLCPP_ERROR_STREAM(rclcpp::get_logger("to_detection_list_msg"),
+        "POSE COVARIANCE COMPARISON - Original vs Hardcoded: " <<
+        "X: " << original_pose_covariance_x << " -> " << detection.pose.covariance[0] << ", " <<
+        "Y: " << original_pose_covariance_y << " -> " << detection.pose.covariance[7] << ", " <<
+        "Z: " << original_pose_covariance_z << " -> " << detection.pose.covariance[14] << ", " <<
+        "Yaw: " << original_pose_covariance_yaw << " -> " << detection.pose.covariance[35]);
+
+      RCLCPP_ERROR_STREAM(rclcpp::get_logger("to_detection_list_msg"),
+        "TWIST COVARIANCE COMPARISON - Original vs Hardcoded: " <<
+        "X: " << original_twist_covariance_x << " -> , " << detection.twist.covariance[0] << ", " <<
+        "Z: " << original_twist_covariance_z << " -> , " << detection.twist.covariance[14] << ", " <<
+        "Yaw: " << original_twist_covariance_yaw << " -> " << detection.twist.covariance[35]);
     }
+    else
+    {
+      // Original pose covariance
+      detection.pose.covariance[0] = original_pose_covariance_x;
+      detection.pose.covariance[7] = original_pose_covariance_y;
+      detection.pose.covariance[14] = original_pose_covariance_z;
+      detection.pose.covariance[35] = original_pose_covariance_yaw;
 
-    // Hardcoded twist covariance
-    detection.twist.covariance[0] = 0.005000000000000001;  // x velocity variance
-    detection.twist.covariance[14] = 0.005000000000000001; // z velocity variance
-    detection.twist.covariance[35] = 0.005000000000000001; // yaw rate variance
+      // Original twist covariance
+      detection.twist.covariance[0] = original_twist_covariance_x;
+      detection.twist.covariance[14] = original_twist_covariance_z;
+      detection.twist.covariance[35] = original_twist_covariance_yaw;
+    }
 
     // Fill zeros for all other twist covariance values
     for (size_t i = 0; i < 36; ++i) {
@@ -558,19 +581,12 @@ auto to_detection_list_msg(
       }
     }
 
-    // Print comparison between original and hardcoded values
-    RCLCPP_ERROR_STREAM(rclcpp::get_logger("to_detection_list_msg"),
-      "POSE COVARIANCE COMPARISON - Original vs Hardcoded: " <<
-      "X: " << original_pose_covariance_x << " -> 0.125, "
-      "Y: " << original_pose_covariance_y << " -> 0.125, "
-      "Z: " << original_pose_covariance_z << " -> 0.125, "
-      "Yaw: " << original_pose_covariance_yaw << " -> 0.005000000000000001");
-
-    RCLCPP_ERROR_STREAM(rclcpp::get_logger("to_detection_list_msg"),
-      "TWIST COVARIANCE COMPARISON - Original vs Hardcoded: " <<
-      "X: " << original_twist_covariance_x << " -> 0.005000000000000001, "
-      "Z: " << original_twist_covariance_z << " -> 0.005000000000000001, "
-      "Yaw: " << original_twist_covariance_yaw << " -> 0.005000000000000001");
+    // Fill zeros for all other pose covariance values
+    for (size_t i = 0; i < 36; ++i) {
+      if (i != 0 && i != 7 && i != 14 && i != 35) {
+        detection.pose.covariance[i] = 0.0;
+      }
+    }
 
     switch (common_data.obj_type.object_type) {
       case common_data.obj_type.ANIMAL:

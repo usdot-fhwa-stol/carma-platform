@@ -28,6 +28,7 @@
 
 namespace carma_cooperative_perception
 {
+
 class SdsmToDetectionListNode : public carma_ros2_utils::CarmaLifecycleNode
 {
   using input_msg_type = carma_v2x_msgs::msg::SensorDataSharingMessage;
@@ -35,6 +36,41 @@ class SdsmToDetectionListNode : public carma_ros2_utils::CarmaLifecycleNode
   using output_msg_type = carma_cooperative_perception_interfaces::msg::DetectionList;
 
 public:
+  auto handle_on_configure(const rclcpp_lifecycle::State & /* previous_state */)
+  -> carma_ros2_utils::CallbackReturn override
+  {
+    // Declare parameters
+    declare_parameter("overwrite_covariance", config_.overwrite_covariance);
+    declare_parameter("pose_covariance_x", config_.pose_covariance_x);
+    declare_parameter("pose_covariance_y", config_.pose_covariance_y);
+    declare_parameter("pose_covariance_z", config_.pose_covariance_z);
+    declare_parameter("pose_covariance_yaw", config_.pose_covariance_yaw);
+    declare_parameter("twist_covariance_x", config_.twist_covariance_x);
+    declare_parameter("twist_covariance_z", config_.twist_covariance_z);
+    declare_parameter("twist_covariance_yaw", config_.twist_covariance_yaw);
+
+    // Get parameters
+    config_.overwrite_covariance = get_parameter("overwrite_covariance").as_bool();
+    config_.pose_covariance_x = get_parameter("pose_covariance_x").as_double();
+    config_.pose_covariance_y = get_parameter("pose_covariance_y").as_double();
+    config_.pose_covariance_z = get_parameter("pose_covariance_z").as_double();
+    config_.pose_covariance_yaw = get_parameter("pose_covariance_yaw").as_double();
+    config_.twist_covariance_x = get_parameter("twist_covariance_x").as_double();
+    config_.twist_covariance_z = get_parameter("twist_covariance_z").as_double();
+    config_.twist_covariance_yaw = get_parameter("twist_covariance_yaw").as_double();
+
+    // Set up parameter validation callback
+    on_set_parameters_callback_ = add_on_set_parameters_callback(
+      [this](const std::vector<rclcpp::Parameter> & parameters) {
+        return update_parameters(parameters);
+      });
+
+    // Use the stream operator for debug output
+    RCLCPP_INFO_STREAM(get_logger(), "SdsmToDetectionListNode Configuration: " << config_);
+
+    return carma_ros2_utils::CallbackReturn::SUCCESS;
+  }
+
   explicit SdsmToDetectionListNode(const rclcpp::NodeOptions & options)
   : CarmaLifecycleNode{options},
     publisher_{create_publisher<output_msg_type>("output/detections", 1)},
@@ -47,19 +83,35 @@ public:
       "input/cdasim_clock", 1,
       [this](rosgraph_msgs::msg::Clock::ConstSharedPtr msg_ptr) { cdasim_time_ = msg_ptr->clock; })}
   {
+    // Initialize the valid parameter names to check when setting the at runtime
+    valid_parameter_names_ = {
+      "overwrite_covariance",
+      "pose_covariance_x",
+      "pose_covariance_y",
+      "pose_covariance_z",
+      "pose_covariance_yaw",
+      "twist_covariance_x",
+      "twist_covariance_z",
+      "twist_covariance_yaw"
+    };
   }
 
   auto sdsm_msg_callback(const input_msg_type & msg) const -> void
   {
     try {
+      std::optional<SdsmToDetectionListConfig> covariance_to_overwrite = std::nullopt;
+      if (config_.overwrite_covariance) {
+        covariance_to_overwrite = config_;
+      }
       auto detection_list_msg{
-        to_detection_list_msg(msg, georeference_, cdasim_time_ != std::nullopt)
+        to_detection_list_msg(msg, georeference_, cdasim_time_ != std::nullopt,
+          covariance_to_overwrite)
       };
 
       // hardcode for now as we are replaying the SDSM
-      // for (auto & detection : detection_list_msg.detections) {
-      //   detection.header.stamp = now();
-      // }
+      for (auto & detection : detection_list_msg.detections) {
+        detection.header.stamp = now();
+      }
       if (cdasim_time_) {
         // When in simulation, ROS time is CARLA time, but SDSMs use CDASim time
         const auto time_delta{now() - cdasim_time_.value()};
@@ -89,6 +141,80 @@ private:
   std::optional<rclcpp::Time> cdasim_time_{std::nullopt};
 
   std::string georeference_{""};
+
+  // Configuration object
+  SdsmToDetectionListConfig config_{};
+
+  OnSetParametersCallbackHandle::SharedPtr on_set_parameters_callback_{nullptr};
+
+  // Parameter validation function
+  rcl_interfaces::msg::SetParametersResult update_parameters(
+    const std::vector<rclcpp::Parameter> & parameters)
+  {
+    rcl_interfaces::msg::SetParametersResult result;
+    result.successful = true;
+    result.reason = "success";
+
+    for (const auto & parameter : parameters) {
+      // Check if parameter name is valid
+      if (valid_parameter_names_.find(parameter.get_name()) == valid_parameter_names_.end()) {
+        result.successful = false;
+        result.reason = "Unexpected parameter name '" + parameter.get_name() + "'";
+        RCLCPP_ERROR_STREAM(get_logger(), "Cannot change parameter: " << result.reason);
+        break;
+      }
+
+      // Validate covariance values (must be non-negative)
+      if (parameter.get_name().find("covariance") != std::string::npos &&
+          parameter.get_name() != "overwrite_covariance") {
+        if (const auto value{parameter.as_double()}; value < 0.0) {
+          result.successful = false;
+          result.reason = "Covariance parameter must be non-negative";
+          RCLCPP_ERROR_STREAM(
+            get_logger(),
+            "Cannot change parameter '" << parameter.get_name() << "': " << result.reason);
+          break;
+        } else {
+          // Update the appropriate parameter in the config
+          update_config_parameter(parameter);
+        }
+      } else if (parameter.get_name() == "overwrite_covariance") {
+        config_.overwrite_covariance = parameter.as_bool();
+      }
+    }
+
+    // If parameters were successfully updated, log the new configuration
+    if (result.successful) {
+      RCLCPP_DEBUG_STREAM(get_logger(), "Updated configuration: " << config_);
+    }
+
+    return result;
+  }
+
+  // Helper function to update a specific parameter in the config
+  void update_config_parameter(const rclcpp::Parameter & parameter) {
+    const std::string & name = parameter.get_name();
+    const double value = parameter.as_double();
+
+    if (name == "pose_covariance_x") {
+      config_.pose_covariance_x = value;
+    } else if (name == "pose_covariance_y") {
+      config_.pose_covariance_y = value;
+    } else if (name == "pose_covariance_z") {
+      config_.pose_covariance_z = value;
+    } else if (name == "pose_covariance_yaw") {
+      config_.pose_covariance_yaw = value;
+    } else if (name == "twist_covariance_x") {
+      config_.twist_covariance_x = value;
+    } else if (name == "twist_covariance_z") {
+      config_.twist_covariance_z = value;
+    } else if (name == "twist_covariance_yaw") {
+      config_.twist_covariance_yaw = value;
+    }
+  }
+
+  // Set of valid parameter names for validation
+  std::unordered_set<std::string> valid_parameter_names_;
 };
 
 }  // namespace carma_cooperative_perception
