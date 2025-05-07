@@ -25,4 +25,4 @@ twist_covariance_yaw: 0.005  # Yaw angular velocity uncertainty
 
 adjust_position: true
 x_offset: -1.0
-y_offset: -1.4
+y_offset: -0.7
