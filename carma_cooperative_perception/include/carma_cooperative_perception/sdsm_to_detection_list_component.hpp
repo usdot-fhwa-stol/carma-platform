@@ -173,7 +173,7 @@ private:
       }
 
       // Validate covariance values (must be non-negative)
-      if (parameter.get_name().find("covariance") != std::string::npos &&
+      if (parameter.get_name() != "adjust_position" &&
           parameter.get_name() != "overwrite_covariance") {
         if (const auto value{parameter.as_double()}; value < 0.0) {
           result.successful = false;
@@ -184,10 +184,12 @@ private:
           break;
         } else {
           // Update the appropriate parameter in the config
-          update_config_parameter(parameter);
+          update_config_double_parameter(parameter);
         }
-      } else if (parameter.get_name() == "overwrite_covariance") {
+      } else if (parameter.get_name() == "overwrite_covariance"){
         config_.overwrite_covariance = parameter.as_bool();
+      } else if (parameter.get_name() == "adjust_position"){
+        config_.adjust_position = parameter.as_bool();
       }
     }
 
@@ -200,7 +202,7 @@ private:
   }
 
   // Helper function to update a specific parameter in the config
-  void update_config_parameter(const rclcpp::Parameter & parameter) {
+  void update_config_double_parameter(const rclcpp::Parameter & parameter) {
     const std::string & name = parameter.get_name();
     const double value = parameter.as_double();
 
@@ -218,8 +220,6 @@ private:
       config_.twist_covariance_z = value;
     } else if (name == "twist_covariance_yaw") {
       config_.twist_covariance_yaw = value;
-    } else if (name == "adjust_position") {
-      config_.adjust_position = value;
     } else if (name == "x_offset") {
       config_.x_offset = value;
     } else if (name == "y_offset") {
