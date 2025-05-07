@@ -542,15 +542,15 @@ auto to_detection_list_msg(
     if (conversion_adjustment && conversion_adjustment.value().overwrite_covariance)
     {
       // Hardcoded pose covariance
-      detection.pose.covariance[0] = converstion_adjustment.value().pose_covariance_x;
-      detection.pose.covariance[7] = converstion_adjustment.value().pose_covariance_y;
-      detection.pose.covariance[14] = converstion_adjustment.value().pose_covariance_z;
-      detection.pose.covariance[35] = converstion_adjustment.value().pose_covariance_yaw;
+      detection.pose.covariance[0] = conversion_adjustment.value().pose_covariance_x;
+      detection.pose.covariance[7] = conversion_adjustment.value().pose_covariance_y;
+      detection.pose.covariance[14] = conversion_adjustment.value().pose_covariance_z;
+      detection.pose.covariance[35] = conversion_adjustment.value().pose_covariance_yaw;
 
       // Hardcoded twist covariance
-      detection.twist.covariance[0] = converstion_adjustment.value().twist_covariance_x;
-      detection.twist.covariance[14] = converstion_adjustment.value().twist_covariance_z;
-      detection.twist.covariance[35] = converstion_adjustment.value().twist_covariance_yaw;
+      detection.twist.covariance[0] = conversion_adjustment.value().twist_covariance_x;
+      detection.twist.covariance[14] = conversion_adjustment.value().twist_covariance_z;
+      detection.twist.covariance[35] = conversion_adjustment.value().twist_covariance_yaw;
 
       // Print comparison between original and hardcoded values
       RCLCPP_ERROR_STREAM(rclcpp::get_logger("to_detection_list_msg"),
