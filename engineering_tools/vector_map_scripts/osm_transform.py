@@ -9,7 +9,7 @@ Steps:
 
 1. Read the input OSM XML file.
 2. Extract the original geoReference (a Transverse Mercator projection centered at some latitude/longitude).
-3. Convert each node’s lat/lon to projected (X, Y) coordinates using the original projection.
+3. Convert each nodes lat/lon to projected (X, Y) coordinates using the original projection.
 4. Apply a 2D rotation (optional) around the local origin (0, 0).
 5. Transform the rotated (X, Y) into new lat/lon coordinates using a new projection centered at a new location.
 6. Update the <geoReference> tag to reflect the new center.
@@ -72,11 +72,6 @@ parser.add_argument("input_file", help="Path to the input .osm file")
 parser.add_argument("output_file", help="Path to the output .osm file")
 args = parser.parse_args()
 
-# TODO Add the desired rotation of the output map here
-# === Fixed rotation angle ===
-rotation_deg = -23 # Counter-clockwise
-theta_rad = math.radians(rotation_deg)
-
 # === Parse XML ===
 tree = etree.parse(args.input_file)
 root = tree.getroot()
@@ -89,11 +84,6 @@ if geo_ref_elem is None or not geo_ref_elem.attrib.get("v"):
 old_proj_str = geo_ref_elem.attrib.get("v").strip()
 print(f"📌 Extracted old geoReference:\n{old_proj_str}\n")
 
-# TODO Add the desired geoReference for the output map here
-# === New map center for updated geoReference ===
-
-new_lat_0 = 38.955828715923026
-new_lon_0 = -77.14887909002265
 new_proj_str = f"+proj=tmerc +lat_0={new_lat_0} +lon_0={new_lon_0} +k=1 +x_0=0 +y_0=0 +datum=WGS84 +units=m +geoidgrids=egm96_15.gtx +vunits=m +no_defs"
 print(f"📌 Updated new geoReference:\n{new_proj_str}\n")
 
