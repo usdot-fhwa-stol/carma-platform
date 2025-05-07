@@ -347,7 +347,7 @@ double convertToTrueNorthHeading(double cameraAngle, double cameraHeading = 255.
 
 auto to_detection_list_msg(
   const carma_v2x_msgs::msg::SensorDataSharingMessage & sdsm, std::string_view georeference,
-  bool is_simulation, const std::optional<SdsmToDetectionListConfig>& covariance_to_overwrite)
+  bool is_simulation, const std::optional<SdsmToDetectionListConfig>& conversion_adjustment)
   -> carma_cooperative_perception_interfaces::msg::DetectionList
 {
   carma_cooperative_perception_interfaces::msg::DetectionList detection_list;
@@ -405,7 +405,13 @@ auto to_detection_list_msg(
     detection.pose.pose.position = to_position_msg(MapCoordinate{
       ref_pos_map.easting + pos_offset_enu.offset_x, ref_pos_map.northing + pos_offset_enu.offset_y,
       ref_pos_map.elevation + pos_offset_enu.offset_z.value_or(units::length::meter_t{0.0})});
-
+    
+    if (conversion_adjustment && conversion_adjustment.value().adjust_position)
+    {
+      detection.pose.pose.position.x += conversion_adjustment.value().x_offset;
+      detection.pose.pose.position.y += conversion_adjustment.value().y_offset;
+    }
+    
     // Variables to store original covariance values for debugging
     double original_pose_covariance_x = 0.0;
     double original_pose_covariance_y = 0.0;
@@ -533,18 +539,18 @@ auto to_detection_list_msg(
         "Original twist covariance yaw: 0.0 (yaw_rate not provided)");
     }
 
-    if (covariance_to_overwrite)
+    if (conversion_adjustment && conversion_adjustment.value().overwrite_covariance)
     {
       // Hardcoded pose covariance
-      detection.pose.covariance[0] = covariance_to_overwrite.value().pose_covariance_x;
-      detection.pose.covariance[7] = covariance_to_overwrite.value().pose_covariance_y;
-      detection.pose.covariance[14] = covariance_to_overwrite.value().pose_covariance_z;
-      detection.pose.covariance[35] = covariance_to_overwrite.value().pose_covariance_yaw;
+      detection.pose.covariance[0] = converstion_adjustment.value().pose_covariance_x;
+      detection.pose.covariance[7] = converstion_adjustment.value().pose_covariance_y;
+      detection.pose.covariance[14] = converstion_adjustment.value().pose_covariance_z;
+      detection.pose.covariance[35] = converstion_adjustment.value().pose_covariance_yaw;
 
       // Hardcoded twist covariance
-      detection.twist.covariance[0] = covariance_to_overwrite.value().twist_covariance_x;
-      detection.twist.covariance[14] = covariance_to_overwrite.value().twist_covariance_z;
-      detection.twist.covariance[35] = covariance_to_overwrite.value().twist_covariance_yaw;
+      detection.twist.covariance[0] = converstion_adjustment.value().twist_covariance_x;
+      detection.twist.covariance[14] = converstion_adjustment.value().twist_covariance_z;
+      detection.twist.covariance[35] = converstion_adjustment.value().twist_covariance_yaw;
 
       // Print comparison between original and hardcoded values
       RCLCPP_ERROR_STREAM(rclcpp::get_logger("to_detection_list_msg"),

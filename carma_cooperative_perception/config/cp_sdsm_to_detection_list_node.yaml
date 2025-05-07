@@ -22,3 +22,7 @@ twist_covariance_z: 0.005  # Z-axis velocity uncertainty
 
 # Twist angular velocity covariance value (in (rad/s)^2)
 twist_covariance_yaw: 0.005  # Yaw angular velocity uncertainty
+
+adjust_position: true
+x_offset: -1.0
+y_offset: -1.4

@@ -53,6 +53,9 @@ public:
   double twist_covariance_x{0.005000000000000001};
   double twist_covariance_z{0.005000000000000001};
   double twist_covariance_yaw{0.005000000000000001};
+  bool adjust_position{false};
+  double x_offset{0.0};
+  double y_offset{0.0};
 
   // Stream operator for logging
   friend std::ostream & operator<<(std::ostream & os, const SdsmToDetectionListConfig & config)
@@ -66,6 +69,9 @@ public:
        << "\n  twist_covariance_x: " << config.twist_covariance_x
        << "\n  twist_covariance_z: " << config.twist_covariance_z
        << "\n  twist_covariance_yaw: " << config.twist_covariance_yaw
+       << "\n  adjust_position: " << config.adjust_position
+       << "\n  x_offset: " << config.x_offset
+       << "\n  y_offset: " << config.y_offset
        << "\n}";
     return os;
   }
@@ -100,7 +106,7 @@ auto transform_pose_from_map_to_wgs84(
 
 auto to_detection_list_msg(
   const carma_v2x_msgs::msg::SensorDataSharingMessage & sdsm, std::string_view georeference,
-  bool is_simulation, const std::optional<SdsmToDetectionListConfig>& covariance_to_overwrite)
+  bool is_simulation, const std::optional<SdsmToDetectionListConfig>& conversion_adjustment)
   -> carma_cooperative_perception_interfaces::msg::DetectionList;
 
 struct MotionModelMapping

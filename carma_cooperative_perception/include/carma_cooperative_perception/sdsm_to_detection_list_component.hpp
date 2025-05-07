@@ -48,6 +48,9 @@ public:
     declare_parameter("twist_covariance_x", config_.twist_covariance_x);
     declare_parameter("twist_covariance_z", config_.twist_covariance_z);
     declare_parameter("twist_covariance_yaw", config_.twist_covariance_yaw);
+    declare_parameter("adjust_position", config_.adjust_position);
+    declare_parameter("x_offset", config_.x_offset);
+    declare_parameter("y_offset", config_.y_offset);
 
     // Get parameters
     config_.overwrite_covariance = get_parameter("overwrite_covariance").as_bool();
@@ -57,7 +60,9 @@ public:
     config_.pose_covariance_yaw = get_parameter("pose_covariance_yaw").as_double();
     config_.twist_covariance_x = get_parameter("twist_covariance_x").as_double();
     config_.twist_covariance_z = get_parameter("twist_covariance_z").as_double();
-    config_.twist_covariance_yaw = get_parameter("twist_covariance_yaw").as_double();
+    config_.adjust_position = get_parameter("adjust_position").as_bool();
+    config_.x_offset = get_parameter("x_offset").as_double();
+    config_.y_offset = get_parameter("y_offset").as_double();
 
     // Set up parameter validation callback
     on_set_parameters_callback_ = add_on_set_parameters_callback(
@@ -92,20 +97,23 @@ public:
       "pose_covariance_yaw",
       "twist_covariance_x",
       "twist_covariance_z",
-      "twist_covariance_yaw"
+      "twist_covariance_yaw",
+      "adjust_position",
+      "x_offset",
+      "y_offset"
     };
   }
 
   auto sdsm_msg_callback(const input_msg_type & msg) const -> void
   {
     try {
-      std::optional<SdsmToDetectionListConfig> covariance_to_overwrite = std::nullopt;
-      if (config_.overwrite_covariance) {
-        covariance_to_overwrite = config_;
+      std::optional<SdsmToDetectionListConfig> conversion_adjustment = std::nullopt;
+      if (config_.overwrite_covariance || config_.adjust_position) {
+        conversion_adjustment = config_;
       }
       auto detection_list_msg{
         to_detection_list_msg(msg, georeference_, cdasim_time_ != std::nullopt,
-          covariance_to_overwrite)
+          conversion_adjustment)
       };
 
       // hardcode for now as we are replaying the SDSM
@@ -210,6 +218,12 @@ private:
       config_.twist_covariance_z = value;
     } else if (name == "twist_covariance_yaw") {
       config_.twist_covariance_yaw = value;
+    } else if (name == "adjust_position") {
+      config_.adjust_position = value;
+    } else if (name == "x_offset") {
+      config_.x_offset = value;
+    } else if (name == "y_offset") {
+      config_.y_offset = value;
     }
   }
 
