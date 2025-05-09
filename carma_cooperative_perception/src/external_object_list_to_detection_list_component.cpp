@@ -101,7 +101,7 @@ auto ExternalObjectListToDetectionListNode::handle_on_configure(
     });
 
   georeference_subscription_ = create_subscription<std_msgs::msg::String>(
-    "input/georeference", 100, [this](std_msgs::msg::String::SharedPtr msg_ptr) {
+    "input/georeference", 1, [this](std_msgs::msg::String::SharedPtr msg_ptr) {
       const auto current_state{this->get_current_state().label()};
 
       if (current_state == "active") {

@@ -436,7 +436,6 @@ def generate_launch_description():
         name='carma_cooperative_perception_container',
         executable='carma_component_container_mt',
         namespace= GetCurrentNamespace(),
-        output='screen',
         composable_node_descriptions=[
             ComposableNode(
                 package='carma_cooperative_perception',

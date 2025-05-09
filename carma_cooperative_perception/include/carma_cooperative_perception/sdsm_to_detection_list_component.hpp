@@ -116,22 +116,15 @@ public:
           conversion_adjustment)
       };
 
-      // hardcode for now as we are replaying the SDSM
-      // for (auto & detection : detection_list_msg.detections) {
-      //   detection.header.stamp = now();
-      // }
       if (cdasim_time_) {
         // When in simulation, ROS time is CARLA time, but SDSMs use CDASim time
         const auto time_delta{now() - cdasim_time_.value()};
 
         for (auto & detection : detection_list_msg.detections) {
           detection.header.stamp = rclcpp::Time(detection.header.stamp) + time_delta;
-          RCLCPP_ERROR_STREAM(
-            get_logger(), "SDSM to detection list conversion: "
-            << rclcpp::Time(detection.header.stamp).seconds() << " s");
         }
       }
-      RCLCPP_ERROR_STREAM(
+      RCLCPP_DEBUG_STREAM(
         get_logger(), "SDSM to detection list conversion: "
         << detection_list_msg.detections.size() << " detections");
       publisher_->publish(detection_list_msg);

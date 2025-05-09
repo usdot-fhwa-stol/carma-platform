@@ -345,6 +345,32 @@ double convertToTrueNorthHeading(double cameraAngle, double cameraHeading = 255.
   return trueNorthHeading;
 }
 
+/**
+ * @brief Converts a SDSM (Sensor Data Sharing Message) to DetectionList format
+ *
+ * This function transforms data from the V2X SDSM format into the CARMA cooperative perception
+ * DetectionList format, handling the necessary coordinate transformations.
+ *
+ * @details Important coordinate system transformations:
+ * - SDSM uses NED (North-East-Down) coordinate system for position offsets
+ * - SDSM heading is measured clockwise from true north (0° at north, 90° at east)
+ * - Output DetectionList uses ENU (East-North-Up) coordinate system
+ * - Output heading is converted to ENU yaw (0° at east, 90° at north)
+ *
+ * The function performs the following key operations:
+ * 1. Projects reference position from WGS84 to the local map frame
+ * 2. Converts NED position offsets to ENU
+ * 3. Handles heading conversion from true north to map grid
+ * 4. Transforms detection confidence values to covariance values
+ * 5. Maps object types to appropriate semantic classes
+ *
+ * @param sdsm The input J3224 SDSM message containing detected objects
+ * @param georeference String containing the georeference information for coordinate projection
+ * @param is_simulation Boolean flag indicating if running in simulation mode (affects timestamps)
+ * @param conversion_adjustment Optional configuration for position and covariance adjustments
+ *
+ * @return DetectionList message containing the transformed detections in CARMA Platform format
+ */
 auto to_detection_list_msg(
   const carma_v2x_msgs::msg::SensorDataSharingMessage & sdsm, std::string_view georeference,
   bool is_simulation, const std::optional<SdsmToDetectionListConfig>& conversion_adjustment)
@@ -390,28 +416,22 @@ auto to_detection_list_msg(
       return str;
     };
 
-
     detection.id =
       to_string(sdsm.source_id.id) + "-" + std::to_string(common_data.detected_id.object_id);
-    // Temporary Fix for 192.168.55.182 camera which has heading 255
-    auto new_pos = common_data.pos;
-    auto new_coord_pair = correctOffsets(
-      common_data.pos.offset_x.object_distance, common_data.pos.offset_y.object_distance, 255.0);
-    new_pos.offset_x.object_distance = new_coord_pair.first;
-    new_pos.offset_y.object_distance = new_coord_pair.second;
-    /////////////////////////////////////////////////////////////
 
-    const auto pos_offset_enu{ned_to_enu(PositionOffsetXYZ::from_msg(new_pos))};
+    const auto pos_offset_enu{ned_to_enu(PositionOffsetXYZ::from_msg(common_data.pos))};
     detection.pose.pose.position = to_position_msg(MapCoordinate{
       ref_pos_map.easting + pos_offset_enu.offset_x, ref_pos_map.northing + pos_offset_enu.offset_y,
       ref_pos_map.elevation + pos_offset_enu.offset_z.value_or(units::length::meter_t{0.0})});
-    
+
+    // Adjust object's position to match vector map coordinates as sensor calibrations are not
+    // always reliable
     if (conversion_adjustment && conversion_adjustment.value().adjust_position)
     {
       detection.pose.pose.position.x += conversion_adjustment.value().x_offset;
       detection.pose.pose.position.y += conversion_adjustment.value().y_offset;
     }
-    
+
     // Variables to store original covariance values for debugging
     double original_pose_covariance_x = 0.0;
     double original_pose_covariance_y = 0.0;
@@ -427,10 +447,10 @@ auto to_detection_list_msg(
         0.5 * std::pow(j2735_v2x_msgs::to_double(common_data.pos_confidence.pos).value(), 2);
       original_pose_covariance_y = original_pose_covariance_x;
 
-      RCLCPP_ERROR_STREAM(rclcpp::get_logger("to_detection_list_msg"),
+      RCLCPP_DEBUG_STREAM(rclcpp::get_logger("sdsm_to_detection_list_node"),
         "Original pose covariance X/Y: " << original_pose_covariance_x);
     } catch (const std::bad_optional_access &) {
-      RCLCPP_ERROR_STREAM(rclcpp::get_logger("to_detection_list_msg"),
+      RCLCPP_DEBUG_STREAM(rclcpp::get_logger("sdsm_to_detection_list_node"),
         "Missing position confidence");
     }
 
@@ -438,18 +458,14 @@ auto to_detection_list_msg(
       original_pose_covariance_z =
         0.5 * std::pow(j2735_v2x_msgs::to_double(common_data.pos_confidence.elevation).value(), 2);
 
-      RCLCPP_ERROR_STREAM(rclcpp::get_logger("to_detection_list_msg"),
+      RCLCPP_DEBUG_STREAM(rclcpp::get_logger("sdsm_to_detection_list_node"),
         "Original pose covariance Z: " << original_pose_covariance_z);
     } catch (const std::bad_optional_access &) {
-      RCLCPP_ERROR_STREAM(rclcpp::get_logger("to_detection_list_msg"),
+      RCLCPP_DEBUG_STREAM(rclcpp::get_logger("sdsm_to_detection_list_node"),
         "Missing elevation confidence");
     }
 
-    // Temporary Fix for 192.168.55.182 camera which has heading 255 NED
-    auto new_heading = common_data.heading;
-    new_heading.heading = convertToTrueNorthHeading(common_data.heading.heading, 255.0);
-
-    const auto true_heading{units::angle::degree_t{Heading::from_msg(new_heading).heading}};
+    const auto true_heading{units::angle::degree_t{Heading::from_msg(common_data.heading).heading}};
 
     // Note: This should really use the detection's WGS-84 position, so the
     // convergence will be off slightly. TODO
@@ -468,10 +484,10 @@ auto to_detection_list_msg(
       original_pose_covariance_yaw =
         0.5 * std::pow(j2735_v2x_msgs::to_double(common_data.heading_conf).value(), 2);
 
-      RCLCPP_ERROR_STREAM(rclcpp::get_logger("to_detection_list_msg"),
+      RCLCPP_DEBUG_STREAM(rclcpp::get_logger("sdsm_to_detection_list_node"),
         "Original pose covariance yaw: " << original_pose_covariance_yaw);
     } catch (const std::bad_optional_access &) {
-      RCLCPP_ERROR_STREAM(rclcpp::get_logger("to_detection_list_msg"),
+      RCLCPP_DEBUG_STREAM(rclcpp::get_logger("sdsm_to_detection_list_node"),
         "Missing heading confidence");
     }
 
@@ -484,10 +500,10 @@ auto to_detection_list_msg(
       original_twist_covariance_x =
         0.5 * std::pow(j2735_v2x_msgs::to_double(common_data.speed_confidence).value(), 2);
 
-      RCLCPP_ERROR_STREAM(rclcpp::get_logger("to_detection_list_msg"),
+      RCLCPP_DEBUG_STREAM(rclcpp::get_logger("sdsm_to_detection_list_node"),
         "Original twist covariance X: " << original_twist_covariance_x);
     } catch (const std::bad_optional_access &) {
-      RCLCPP_ERROR_STREAM(rclcpp::get_logger("to_detection_list_msg"),
+      RCLCPP_DEBUG_STREAM(rclcpp::get_logger("sdsm_to_detection_list_node"),
         "Missing speed confidence");
     }
 
@@ -501,17 +517,17 @@ auto to_detection_list_msg(
         original_twist_covariance_z =
           0.5 * std::pow(j2735_v2x_msgs::to_double(common_data.speed_confidence_z).value(), 2);
 
-        RCLCPP_ERROR_STREAM(rclcpp::get_logger("to_detection_list_msg"),
+        RCLCPP_DEBUG_STREAM(rclcpp::get_logger("sdsm_to_detection_list_node"),
           "Original twist covariance Z: " << original_twist_covariance_z);
       } catch (const std::bad_optional_access &) {
-        RCLCPP_ERROR_STREAM(rclcpp::get_logger("to_detection_list_msg"),
+        RCLCPP_DEBUG_STREAM(rclcpp::get_logger("sdsm_to_detection_list_node"),
           "Missing z-speed confidence");
       }
     }
     else{
       detection.twist.twist.linear.z = remove_units(units::velocity::meters_per_second_t{0.0});
       original_twist_covariance_z = 0.0;
-      RCLCPP_ERROR_STREAM(rclcpp::get_logger("to_detection_list_msg"),
+      RCLCPP_DEBUG_STREAM(rclcpp::get_logger("sdsm_to_detection_list_node"),
         "Original twist covariance Z: 0.0 (speed_z not provided)");
     }
 
@@ -525,17 +541,17 @@ auto to_detection_list_msg(
         original_twist_covariance_yaw =
           0.5 * std::pow(j2735_v2x_msgs::to_double(common_data.acc_cfd_yaw).value(), 2);
 
-        RCLCPP_ERROR_STREAM(rclcpp::get_logger("to_detection_list_msg"),
+        RCLCPP_DEBUG_STREAM(rclcpp::get_logger("sdsm_to_detection_list_node"),
           "Original twist covariance yaw: " << original_twist_covariance_yaw);
       } catch (const std::bad_optional_access &) {
-        RCLCPP_ERROR_STREAM(rclcpp::get_logger("to_detection_list_msg"),
+        RCLCPP_DEBUG_STREAM(rclcpp::get_logger("sdsm_to_detection_list_node"),
           "Missing yaw-rate confidence");
       }
     }
     else{
       detection.twist.twist.angular.z = 0.0;
       original_twist_covariance_yaw = 0.0;
-      RCLCPP_ERROR_STREAM(rclcpp::get_logger("to_detection_list_msg"),
+      RCLCPP_DEBUG_STREAM(rclcpp::get_logger("sdsm_to_detection_list_node"),
         "Original twist covariance yaw: 0.0 (yaw_rate not provided)");
     }
 
@@ -553,14 +569,14 @@ auto to_detection_list_msg(
       detection.twist.covariance[35] = conversion_adjustment.value().twist_covariance_yaw;
 
       // Print comparison between original and hardcoded values
-      RCLCPP_ERROR_STREAM(rclcpp::get_logger("to_detection_list_msg"),
+      RCLCPP_DEBUG_STREAM(rclcpp::get_logger("sdsm_to_detection_list_node"),
         "POSE COVARIANCE COMPARISON - Original vs Hardcoded: " <<
         "X: " << original_pose_covariance_x << " -> " << detection.pose.covariance[0] << ", " <<
         "Y: " << original_pose_covariance_y << " -> " << detection.pose.covariance[7] << ", " <<
         "Z: " << original_pose_covariance_z << " -> " << detection.pose.covariance[14] << ", " <<
         "Yaw: " << original_pose_covariance_yaw << " -> " << detection.pose.covariance[35]);
 
-      RCLCPP_ERROR_STREAM(rclcpp::get_logger("to_detection_list_msg"),
+      RCLCPP_DEBUG_STREAM(rclcpp::get_logger("sdsm_to_detection_list_node"),
         "TWIST COVARIANCE COMPARISON - Original vs Hardcoded: " <<
         "X: " << original_twist_covariance_x << " -> , " << detection.twist.covariance[0] << ", " <<
         "Z: " << original_twist_covariance_z << " -> , " << detection.twist.covariance[14] << ", " <<
