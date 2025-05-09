@@ -32,7 +32,7 @@ public:
   Month() = default;
 
   uint8_t get_value() const { return month_value_; }
-  
+
   /**
    * @brief Create a Month instance with the specified value
    *

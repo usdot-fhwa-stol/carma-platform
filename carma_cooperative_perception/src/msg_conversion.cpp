@@ -64,17 +64,46 @@ auto to_time_msg(const DDateTime & d_date_time, bool is_simulation) -> builtin_i
   if (!is_simulation) {
     // Create a tm structure to hold the date and time components
     std::tm timeinfo = {};
-    timeinfo.tm_year = static_cast<int>(d_date_time.year.value());
-    if(timeinfo.tm_year > 1900){
-        timeinfo.tm_year = timeinfo.tm_year - 1900;
+
+    // Year
+    if (d_date_time.year){
+      if(remove_units(d_date_time.year.value()) >= 1970){
+        // std::tm is counted since 1900
+        timeinfo.tm_year = remove_units(d_date_time.year.value()) - 1900;
+      }
+      else{
+        throw std::invalid_argument(
+          "Year must be greater than 1970 for live date/time conversion");
+      }
     }
-    timeinfo.tm_mon = static_cast<int>(d_date_time.month.value().get_value());
-    if (timeinfo.tm_mon != 0){
-        timeinfo.tm_mon = timeinfo.tm_mon - 1;
+
+    // Month
+    if (d_date_time.month)
+    {
+      timeinfo.tm_mon = static_cast<int>(d_date_time.month.value().get_value());
+      // std::tm is counted from 0 to 11
+      if (timeinfo.tm_mon != 0){
+          timeinfo.tm_mon = timeinfo.tm_mon - 1;
+      }
     }
-    timeinfo.tm_mday = static_cast<int>(d_date_time.day.value());
-    timeinfo.tm_hour = static_cast<int>(d_date_time.hour.value());
-    timeinfo.tm_min = static_cast<int>(d_date_time.minute.value());
+
+    // Day
+    if (d_date_time.day)
+    {
+      timeinfo.tm_mday = static_cast<int>(d_date_time.day.value());
+    }
+    // Hour
+    if (d_date_time.hour)
+    {
+      timeinfo.tm_hour = static_cast<int>(d_date_time.hour.value());
+    }
+    // Minute
+    if (d_date_time.minute)
+    {
+      timeinfo.tm_min = static_cast<int>(d_date_time.minute.value());
+    }
+    // Set seconds field (which is actually ms in j2735) to 0
+    // for now and add milliseconds later
     timeinfo.tm_sec = 0;
     timeinfo.tm_isdst = 1;  // Force EDT (Daylight Saving Time)
 
@@ -101,7 +130,11 @@ auto to_time_msg(const DDateTime & d_date_time, bool is_simulation) -> builtin_i
     auto timePoint = std::chrono::system_clock::from_time_t(timeT);
 
     // Add milliseconds
-    auto milliseconds = static_cast<int>(d_date_time.second.value());
+    int milliseconds = 0;
+    if (d_date_time.second)
+    {
+      milliseconds = static_cast<int>(d_date_time.second.value());
+    }
     timePoint += std::chrono::milliseconds(milliseconds);
 
     // Extract seconds and nanoseconds since epoch
@@ -377,7 +410,9 @@ auto to_detection_list_msg(
   -> carma_cooperative_perception_interfaces::msg::DetectionList
 {
   carma_cooperative_perception_interfaces::msg::DetectionList detection_list;
-
+  RCLCPP_ERROR_STREAM(
+    rclcpp::get_logger("sdsm_to_detection_list_node"),
+    "Converting SDSM to DetectionList message...");
   const auto ref_pos_3d{Position3D::from_msg(sdsm.ref_pos)};
 
   units::length::meter_t elevation(0.0);
@@ -389,18 +424,26 @@ auto to_detection_list_msg(
 
   const auto ref_pos_map{project_to_carma_map(ref_pos_wgs84, georeference)};
 
+  RCLCPP_ERROR_STREAM(
+    rclcpp::get_logger("sdsm_to_detection_list_node"),
+    "Starting the iteration...");
   for (const auto & object_data : sdsm.objects.detected_object_data) {
     const auto common_data{object_data.detected_object_common_data};
 
     carma_cooperative_perception_interfaces::msg::Detection detection;
     detection.header.frame_id = "map";
 
+    RCLCPP_ERROR_STREAM(
+      rclcpp::get_logger("sdsm_to_detection_list_node"),
+      ">>>1...");
     const auto detection_time{calc_detection_time_stamp(
       DDateTime::from_msg(sdsm.sdsm_time_stamp),
       MeasurementTimeOffset::from_msg(common_data.measurement_time))};
 
     detection.header.stamp = to_time_msg(detection_time, is_simulation);
-
+    RCLCPP_ERROR_STREAM(
+      rclcpp::get_logger("sdsm_to_detection_list_node"),
+      ">>>2...");
     // TemporaryID and octet string terms come from the SAE J2735 message definitions
     static constexpr auto to_string = [](const std::vector<std::uint8_t> & temporary_id) {
       std::string str;
@@ -531,6 +574,8 @@ auto to_detection_list_msg(
         "Original twist covariance Z: 0.0 (speed_z not provided)");
     }
 
+    // NOTE: common_data.accel_4_way.longitudinal, lateral, vert not supported
+    // and not needed at the moment for multiple object tracking algorithm
     if(common_data.accel_4_way.yaw_rate){
       const auto accel_set{AccelerationSet4Way::from_msg(common_data.accel_4_way)};
       detection.twist.twist.angular.z =
@@ -628,7 +673,9 @@ auto to_detection_list_msg(
         detection.motion_model = detection.MOTION_MODEL_CTRV;
         detection.semantic_class = detection.SEMANTIC_CLASS_UNKNOWN;
     }
-
+    RCLCPP_ERROR_STREAM(
+      rclcpp::get_logger("sdsm_to_detection_list_node"),
+      ">>>3...");
     detection_list.detections.push_back(std::move(detection));
   }
 
