@@ -115,7 +115,14 @@ EOF
     done
 
     if [[ $region_set -eq 0 ]]; then
-        sed -i "s|REGION=.*|REGION=us-east-1|" "${CARMA_CLOUD_SIM_CONFIG_PATH}"
+
+        local_aws_region=$(aws configure get region 2>/dev/null)
+
+        if [[ -z "$local_aws_region" ]]; then
+            local_aws_region="us-east-1"
+        fi
+
+        sed -i "s|REGION=.*|REGION=${local_aws_region}|" "${CARMA_CLOUD_SIM_CONFIG_PATH}"
     fi
 
     if ! command -v "aws" &> /dev/null
