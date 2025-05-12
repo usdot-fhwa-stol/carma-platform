@@ -77,6 +77,10 @@ public:
   }
 };
 
+// NOTE: If incoming SDSM message doesn't have timezone enabled,
+// it automatically uses the local timezone. If the node is running in a container,
+// it would mean the container's default timezone (most likely UTC), unless otherwise set.
+// Please make sure to set the timezone in the container to match the one used in the SDSM message.
 auto to_time_msg(const DDateTime & d_date_time, bool is_simulation) -> builtin_interfaces::msg::Time;
 
 auto calc_detection_time_stamp(DDateTime d_date_time, const MeasurementTimeOffset & offset)
