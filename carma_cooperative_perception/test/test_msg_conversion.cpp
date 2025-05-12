@@ -28,6 +28,9 @@
 
 TEST(ToTimeMsg, LiveDateTime)
 {
+  // Force tests to be in EDT timezone specifically (not switching between EST/EDT)
+  setenv("TZ", "EDT4", 1);  // EDT is UTC-4, no DST transition
+  tzset();
   // Test with full date/time
   {
     carma_cooperative_perception::DDateTime d_date_time;
@@ -61,14 +64,29 @@ TEST(ToTimeMsg, LiveDateTime)
   // Test optional fields
   {
     carma_cooperative_perception::DDateTime d_date_time;
-    d_date_time.year = units::time::year_t{1970};
+    d_date_time.year = units::time::year_t{1970}; //1970 Jan 1st 0:0:0 ET is epoch 18000
 
     const auto msg = carma_cooperative_perception::to_time_msg(d_date_time, false);
-    EXPECT_EQ(msg.sec, 18000);
+    // should be 18000 because this date was not Daylight time, but
+    // since the test is in EDT timezone, it will be 14400 seconds
+    EXPECT_EQ(msg.sec, 14400);
+    EXPECT_EQ(msg.nanosec, 0);
+  }
+
+  // Force tests to be in arbitrary timezone
+  setenv("TZ", "EDT15", 1);  // EDT is UTC-4, no DST transition
+  tzset();
+  // Test optional fields
+  {
+    carma_cooperative_perception::DDateTime d_date_time;
+    d_date_time.year = units::time::year_t{1970}; //1970 Jan 1st 0:0:0 ET is epoch 18000
+
+    const auto msg = carma_cooperative_perception::to_time_msg(d_date_time, false);
+    EXPECT_EQ(msg.sec, 54000);
     EXPECT_EQ(msg.nanosec, 0);
   }
 }
-/*
+
 TEST(ToTimeMsg, SimulationModeHasSeconds)
 {
   carma_cooperative_perception::DDateTime d_date_time;
@@ -142,10 +160,6 @@ TEST(ToTimeMsg, SimulationModeGeneralConversions)
   EXPECT_DOUBLE_EQ(actual_msg.sec, 10850);
   EXPECT_DOUBLE_EQ(actual_msg.nanosec, 250000000);
 }
-// These tests has been temporarily disabled to support Continuous Improvement (CI) processes.
-// Related GitHub Issue: <https://github.com/usdot-fhwa-stol/carma-platform/issues/2335>
-
-*/
 
 TEST(ToDetectionMsg, Simple)
 {
@@ -157,8 +171,6 @@ TEST(ToDetectionMsg, Simple)
   sdsm_msg.ref_pos.latitude = 32.801128;    // degrees
   sdsm_msg.ref_pos.elevation_exists = true;
   sdsm_msg.ref_pos.elevation = 300.0;  // m
-  RCLCPP_ERROR_STREAM(
-    rclcpp::get_logger("test"), "Got here 0");
   carma_v2x_msgs::msg::DetectedObjectData object_data;
   object_data.detected_object_common_data.detected_id.object_id = 1;
   object_data.detected_object_common_data.measurement_time.measurement_time_offset = -0.1;  // s
@@ -190,8 +202,6 @@ TEST(ToDetectionMsg, Simple)
   ASSERT_EQ(std::size(detection_list.detections), 1U);
 
   const auto detection{detection_list.detections.at(0)};
-  RCLCPP_ERROR_STREAM(
-    rclcpp::get_logger("test"), "Got here 1");
   EXPECT_EQ(detection.header.stamp.sec, 0);
   EXPECT_NEAR(detection.header.stamp.nanosec, 900'000'000U, 2);  // +/- 2 ns is probably good enough
   EXPECT_EQ(detection.header.frame_id, "map");
@@ -209,9 +219,6 @@ TEST(ToDetectionMsg, Simple)
   EXPECT_DOUBLE_EQ(detection.twist.twist.linear.z, 20.0);
   EXPECT_DOUBLE_EQ(detection.twist.twist.angular.z, 5.0);
 
-  RCLCPP_ERROR_STREAM(
-    rclcpp::get_logger("test"), "Got here 2");
-
   EXPECT_DOUBLE_EQ(detection.accel.accel.linear.x, 0.0); //not supported
   EXPECT_DOUBLE_EQ(detection.accel.accel.linear.y, 0.0); //not supported
   EXPECT_DOUBLE_EQ(detection.accel.accel.linear.z, 0.0); //not supported
@@ -219,7 +226,7 @@ TEST(ToDetectionMsg, Simple)
   EXPECT_EQ(detection.id, "BADDCAFE-1");
   EXPECT_EQ(detection.motion_model, detection.MOTION_MODEL_CTRV);
 }
-/*
+
 TEST(CalcDetectionTimeStamp, Simple)
 {
   carma_cooperative_perception::DDateTime d_date_time;
@@ -320,10 +327,6 @@ TEST(ToDetectionListMsg, FromExternalObjectList)
   EXPECT_EQ(std::size(detection_list.detections), 2U);
 }
 
-// These tests has been temporarily disabled to support Continuous Improvement (CI) processes.
-// Related GitHub Issue: <https://github.com/usdot-fhwa-stol/carma-platform/issues/2335>
-
-
 TEST(ToExternalObject, FromTrack)
 {
   carma_cooperative_perception_interfaces::msg::Track track;
@@ -345,8 +348,8 @@ TEST(ToExternalObject, FromTrack)
   std::iota(std::begin(track.pose.covariance), std::end(track.pose.covariance), 1U);
 
   track.twist.twist.linear.x = 1;
-  track.twist.twist.linear.y = 2;
-  track.twist.twist.linear.z = 3;
+  track.twist.twist.linear.y = 2; //ignored as they are in base_link frame, signifying "drift"
+  track.twist.twist.linear.z = 3; //ignored as they are in base_link frame, signifying "lift up"
 
   track.twist.twist.angular.x = 4;
   track.twist.twist.angular.y = 5;
@@ -364,13 +367,9 @@ TEST(ToExternalObject, FromTrack)
 
   EXPECT_EQ(external_object.header, track.header);
   EXPECT_EQ(external_object.pose, track.pose);
-  EXPECT_EQ(external_object.velocity.twist.linear.x, track.twist.twist.linear.x);
-  EXPECT_EQ(external_object.velocity.twist.linear.x, track.twist.twist.linear.x);
-  EXPECT_EQ(external_object.velocity.twist.linear.x, track.twist.twist.linear.x);
-  EXPECT_EQ(external_object.velocity.twist.linear.x, track.twist.twist.linear.x);
-  EXPECT_EQ(external_object.velocity.twist.linear.x, track.twist.twist.linear.x);
-  EXPECT_EQ(external_object.velocity.twist.linear.x, track.twist.twist.linear.x);
-
+  // From base_link frame to map_frame twist accounting for orientation
+  EXPECT_NEAR(external_object.velocity.twist.linear.x, 0.0322413, 0.001);
+  EXPECT_NEAR(external_object.velocity.twist.linear.y, 0.99948, 0.001);
 }
 
 
@@ -412,7 +411,9 @@ TEST(ToExternalObject, FromTrackNonNumericId)
 
   EXPECT_EQ(external_object.header, track.header);
   EXPECT_EQ(external_object.pose, track.pose);
-  EXPECT_EQ(external_object.velocity, track.twist);
+  // From base_link frame to map_frame twist accounting for orientation
+  EXPECT_NEAR(external_object.velocity.twist.linear.x, 0.0322413, 0.001);
+  EXPECT_NEAR(external_object.velocity.twist.linear.y, 0.99948, 0.001);
 }
 
 TEST(ToExternalObject, FromTrackNegativeId)
@@ -447,13 +448,16 @@ TEST(ToExternalObject, FromTrackNegativeId)
 
   const auto external_object{carma_cooperative_perception::to_external_object_msg(track)};
 
-  EXPECT_FALSE(external_object.presence_vector & external_object.ID_PRESENCE_VECTOR);
+  // Negative id is expected and converted into positive id (-1234 -> 1234)
+  EXPECT_TRUE(external_object.presence_vector & external_object.ID_PRESENCE_VECTOR);
   EXPECT_TRUE(external_object.presence_vector & external_object.POSE_PRESENCE_VECTOR);
   EXPECT_TRUE(external_object.presence_vector & external_object.VELOCITY_PRESENCE_VECTOR);
 
   EXPECT_EQ(external_object.header, track.header);
   EXPECT_EQ(external_object.pose, track.pose);
-  EXPECT_EQ(external_object.velocity, track.twist);
+  // From base_link frame to map_frame twist accounting for orientation
+  EXPECT_NEAR(external_object.velocity.twist.linear.x, 0.0322413, 0.001);
+  EXPECT_NEAR(external_object.velocity.twist.linear.y, 0.99948, 0.001);
 }
 
 TEST(ToExternalObject, FromTrackIdTooLarge)
@@ -494,7 +498,9 @@ TEST(ToExternalObject, FromTrackIdTooLarge)
 
   EXPECT_EQ(external_object.header, track.header);
   EXPECT_EQ(external_object.pose, track.pose);
-  EXPECT_EQ(external_object.velocity, track.twist);
+  // From base_link frame to map_frame twist accounting for orientation
+  EXPECT_NEAR(external_object.velocity.twist.linear.x, 0.0322413, 0.001);
+  EXPECT_NEAR(external_object.velocity.twist.linear.y, 0.99948, 0.001);
 }
 
 TEST(ToExternalObjectList, FromTrackList)
@@ -634,5 +640,3 @@ TEST(ToSdsmMsg, getRelativePosition)
     carma_cooperative_perception::calc_relative_position(source_pose, position_offset);
   EXPECT_EQ(adjusted_pose.offset_x.object_distance, 10);
 }
-
-*/

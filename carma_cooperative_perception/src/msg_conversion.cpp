@@ -92,6 +92,9 @@ auto to_time_msg(const DDateTime & d_date_time, bool is_simulation) -> builtin_i
     {
       timeinfo.tm_mday = static_cast<int>(d_date_time.day.value());
     }
+    else{
+      timeinfo.tm_mday = 1;  // Default first day of month is 1 not 0
+    }
     // Hour
     if (d_date_time.hour)
     {
@@ -102,29 +105,35 @@ auto to_time_msg(const DDateTime & d_date_time, bool is_simulation) -> builtin_i
     {
       timeinfo.tm_min = static_cast<int>(d_date_time.minute.value());
     }
-    // Set seconds field (which is actually ms in j2735) to 0
+    // Set seconds field (which actually uses ms in j2735) to 0
     // for now and add milliseconds later
     timeinfo.tm_sec = 0;
-    timeinfo.tm_isdst = 1;  // Force EDT (Daylight Saving Time)
 
-    // Store current TZ environment variable
-    char* old_tz = getenv("TZ");
-    std::string old_tz_str = old_tz ? old_tz : "";
+    std::time_t timeT;
 
-    // Set timezone to EDT
-    setenv("TZ", "America/New_York", 1);
-    tzset();
-
-    // Convert EDT time to time_t (which is always in UTC)
-    std::time_t timeT = std::mktime(&timeinfo);
-
-    // Restore original timezone
-    if (old_tz_str.empty()) {
-        unsetenv("TZ");
-    } else {
-        setenv("TZ", old_tz_str.c_str(), 1);
+    if (d_date_time.time_zone_offset)
+    {
+      timeinfo.tm_gmtoff = static_cast<int>(d_date_time.time_zone_offset.value());
+      timeT = std::mktime(&timeinfo);
     }
-    tzset();
+    else
+    {
+      // Get the current timezone from the system
+      // Use tzset() to initialize timezone data from system
+      tzset();
+
+      // Get current timestamp to determine DST status
+      std::time_t currentTime = std::time(nullptr);
+      std::tm* localTimeInfo = std::localtime(&currentTime);
+
+      long timezone_offset = localTimeInfo->tm_gmtoff;
+
+      timeinfo.tm_gmtoff = timezone_offset;
+      timeinfo.tm_isdst = localTimeInfo->tm_isdst;
+
+      // Convert to time_t
+      timeT = std::mktime(&timeinfo);
+    }
 
     // Convert time_t to system_clock::time_point
     auto timePoint = std::chrono::system_clock::from_time_t(timeT);
@@ -410,9 +419,6 @@ auto to_detection_list_msg(
   -> carma_cooperative_perception_interfaces::msg::DetectionList
 {
   carma_cooperative_perception_interfaces::msg::DetectionList detection_list;
-  RCLCPP_ERROR_STREAM(
-    rclcpp::get_logger("sdsm_to_detection_list_node"),
-    "Converting SDSM to DetectionList message...");
   const auto ref_pos_3d{Position3D::from_msg(sdsm.ref_pos)};
 
   units::length::meter_t elevation(0.0);
@@ -424,26 +430,17 @@ auto to_detection_list_msg(
 
   const auto ref_pos_map{project_to_carma_map(ref_pos_wgs84, georeference)};
 
-  RCLCPP_ERROR_STREAM(
-    rclcpp::get_logger("sdsm_to_detection_list_node"),
-    "Starting the iteration...");
   for (const auto & object_data : sdsm.objects.detected_object_data) {
     const auto common_data{object_data.detected_object_common_data};
 
     carma_cooperative_perception_interfaces::msg::Detection detection;
     detection.header.frame_id = "map";
 
-    RCLCPP_ERROR_STREAM(
-      rclcpp::get_logger("sdsm_to_detection_list_node"),
-      ">>>1...");
     const auto detection_time{calc_detection_time_stamp(
       DDateTime::from_msg(sdsm.sdsm_time_stamp),
       MeasurementTimeOffset::from_msg(common_data.measurement_time))};
 
     detection.header.stamp = to_time_msg(detection_time, is_simulation);
-    RCLCPP_ERROR_STREAM(
-      rclcpp::get_logger("sdsm_to_detection_list_node"),
-      ">>>2...");
     // TemporaryID and octet string terms come from the SAE J2735 message definitions
     static constexpr auto to_string = [](const std::vector<std::uint8_t> & temporary_id) {
       std::string str;
@@ -673,9 +670,6 @@ auto to_detection_list_msg(
         detection.motion_model = detection.MOTION_MODEL_CTRV;
         detection.semantic_class = detection.SEMANTIC_CLASS_UNKNOWN;
     }
-    RCLCPP_ERROR_STREAM(
-      rclcpp::get_logger("sdsm_to_detection_list_node"),
-      ">>>3...");
     detection_list.detections.push_back(std::move(detection));
   }
 

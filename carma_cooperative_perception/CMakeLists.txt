@@ -114,11 +114,11 @@ if(carma_cooperative_perception_BUILD_TESTS)
   # directory. Moving this command to test/CMakeLists.txt will prevent the
   # header files from getting included.
   ament_auto_add_gtest(carma_cooperative_perception_tests
-    #test/test_external_object_list_to_detection_list_component.cpp
-    #test/test_geodetic.cpp
-    #test/test_j2735_types.cpp
-    #test/test_j3224_types.cpp
-    #test/test_month.cpp
+    test/test_external_object_list_to_detection_list_component.cpp
+    test/test_geodetic.cpp
+    test/test_j2735_types.cpp
+    test/test_j3224_types.cpp
+    test/test_month.cpp
     test/test_msg_conversion.cpp
   )
 
