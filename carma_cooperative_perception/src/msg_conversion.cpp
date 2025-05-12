@@ -123,6 +123,8 @@ auto to_time_msg(const DDateTime & d_date_time, bool is_simulation) -> builtin_i
       tzset();
 
       // Get current timestamp to determine DST status
+      // NOTE: If the system is running in a docker container (which it mostly is),
+      // the timezone is by default GMT unless otherwise set. Just a caution.
       std::time_t currentTime = std::time(nullptr);
       std::tm* localTimeInfo = std::localtime(&currentTime);
 
