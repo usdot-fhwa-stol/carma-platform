@@ -181,6 +181,26 @@ auto calc_detection_time_stamp(DDateTime sdsm_time, const MeasurementTimeOffset 
   return sdsm_time;
 }
 
+// Function to convert degrees to radians
+// TODO
+double degToRad(double degrees) {
+  return degrees * M_PI / 180.0;
+}
+
+// TODO
+// Function to rotate coordinates back from a 255 degree rotation
+std::pair<double, double> correctOffsets(double offset_x, double offset_y, double rotationDegrees = 255.0) {
+  // To rotate back, we use the negative of the rotation angle
+  double rotationRad = degToRad(-rotationDegrees);
+
+  // Apply the rotation matrix to rotate back
+  double corrected_x = offset_x * cos(rotationRad) - offset_y * sin(rotationRad);
+  double corrected_y = offset_x * sin(rotationRad) + offset_y * cos(rotationRad);
+
+  // Now this should be in NED, so:
+  return {corrected_y, corrected_x};
+}
+
 auto ned_to_enu(const PositionOffsetXYZ & offset_ned) noexcept
 {
   auto offset_enu{offset_ned};
@@ -344,7 +364,30 @@ auto transform_pose_from_map_to_wgs84(
 
   return ref_pos;
 }
+/**
+ * Converts an object's angle from TrafiSense camera coordinates to true north clockwise heading
+ *
+ * Assumptions:
+ * - Camera internally uses 0° as its heading reference
+ * - Camera angles increase clockwise
+ * - Camera's true north heading is 255°
+ *
+ * @param cameraAngle The angle of the object in camera coordinates (clockwise from camera's 0°)
+ * @param cameraHeading The camera's heading in degrees from true north (clockwise, 255° by default)
+ * @return The object's heading in degrees from true north (clockwise)
+ */
+double convertToTrueNorthHeading(double cameraAngle, double cameraHeading = 255.0) {
+  // Simply add the camera's heading to the camera angle
+  // This works because both are in the same coordinate system (clockwise)
+  double trueNorthHeading = fmod(cameraHeading + cameraAngle, 360.0);
 
+  // Handle floating point precision issues
+  if (fabs(trueNorthHeading - 360.0) < 0.000001) {
+      trueNorthHeading = 0.0;
+  }
+
+  return trueNorthHeading;
+}
 
 /**
  * @brief Converts a SDSM (Sensor Data Sharing Message) to DetectionList format
