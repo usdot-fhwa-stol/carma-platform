@@ -62,12 +62,14 @@ def transform_xodr_file(input_path, output_path, new_lat, new_lon, angle_deg):
     transformer_to_utm = Transformer.from_crs("EPSG:4326", crs_orig, always_xy=True)
     transformer_from_utm = Transformer.from_crs("EPSG:4326", crs_new, always_xy=True)
 
-    # Update all elements with lat/lon/hdg attributes
     for elem in root.iter():
         lat = elem.attrib.get("lat")
         lon = elem.attrib.get("lon")
+        x = elem.attrib.get("x")
+        y = elem.attrib.get("y")
         hdg = elem.attrib.get("hdg")
 
+        # Transform GPS-based coordinates
         if lat and lon:
             lat_f = float(lat)
             lon_f = float(lon)
@@ -75,6 +77,15 @@ def transform_xodr_file(input_path, output_path, new_lat, new_lon, angle_deg):
             elem.set("lat", f"{lat_new_val:.8f}")
             elem.set("lon", f"{lon_new_val:.8f}")
 
+        # Transform local x, y coordinates
+        if x and y:
+            x_f = float(x)
+            y_f = float(y)
+            x_rot, y_rot = rotate(x_f, y_f, angle_deg)
+            elem.set("x", f"{x_rot:.8f}")
+            elem.set("y", f"{y_rot:.8f}")
+
+        # Adjust heading
         if hdg:
             hdg_f = float(hdg)
             hdg_new = transform_hdg(hdg_f, angle_deg)
