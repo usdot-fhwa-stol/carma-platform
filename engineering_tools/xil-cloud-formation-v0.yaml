@@ -21,7 +21,7 @@ Parameters:
   ExistingVPCID:
     Description: The existing VPCId to use for the instance
     Type: String
-    Default: vpc-00b15acce1e7ffb81
+    Default: vpc-testing123
   ExistingRouteTableID:
     Type: String
     Default: rtb-03394845bff781cd9
@@ -35,7 +35,7 @@ Parameters:
   CarmaConfigAMI:
     Description: The AMI ID to use for the EC2 instance.
     Type: String
-    Default:  ami-testing123 # Custom Leidos AMI ami-0c5b5f70bfa4f1021
+    Default:  ami-testing123
   KeyPair:
     Type: 'AWS::EC2::KeyPair'
     Properties:
