@@ -80,31 +80,31 @@ auto to_time_msg(const DDateTime & d_date_time, bool is_simulation) -> builtin_i
     // Month
     if (d_date_time.month && static_cast<int>(d_date_time.month.value().get_value()) != 0)
     {
-      // std::tm is counted from 0 to 11
+      // std::tm is counted from 0 to 11, J2735 is counted from 1 to 12
       timeinfo.tm_mon = static_cast<int>(d_date_time.month.value().get_value()) - 1;
     }
 
     // Day
     if (d_date_time.day && static_cast<int>(d_date_time.day.value()) != 0)
     {
-      // Day is counted from 1 to 31
+      // Day is counted from 1 to 31 in both std::tm and J2735
       timeinfo.tm_mday = static_cast<int>(d_date_time.day.value());
     }
     else{
-      timeinfo.tm_mday = 1; // Default to 1 if day is not provided
+      timeinfo.tm_mday = 1; // Default to 1 if day is not provided as C++ initializes to 0
     }
 
     // Hour
     if (d_date_time.hour && static_cast<int>(d_date_time.hour.value()) != 31)
     {
-      // Hour is counted from 0 to 23
+      // Hour is counted from 0 to 23 in both std::tm and J2735
       timeinfo.tm_hour = static_cast<int>(d_date_time.hour.value());
     }
 
     // Minute
     if (d_date_time.minute && static_cast<int>(d_date_time.minute.value()) != 60)
     {
-      // Minute is counted from 0 to 59
+      // Minute is counted from 0 to 59 in both std::tm and J2735
       timeinfo.tm_min = static_cast<int>(d_date_time.minute.value());
     }
     // Set seconds field (which actually uses ms in j2735) to 0
