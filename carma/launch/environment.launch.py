@@ -307,7 +307,7 @@ def generate_launch_description():
                         ("external_objects_viz", "fused_external_objects_viz")
                     ],
                     parameters=[object_visualizer_param_file, vehicle_config_param_file,
-                                {'pedestrian_icon_path': 'file:///', vehicle_calibration_dir, '/visualization_meshes/pedestrian.stl'}
+                                {'pedestrian_icon_path': ['file:///', vehicle_calibration_dir, '/visualization_meshes/pedestrian.stl']}
                                 ]
             ),
             ComposableNode(
