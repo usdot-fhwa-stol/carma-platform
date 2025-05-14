@@ -48,9 +48,10 @@ public:
     declare_parameter("twist_covariance_x", config_.twist_covariance_x);
     declare_parameter("twist_covariance_z", config_.twist_covariance_z);
     declare_parameter("twist_covariance_yaw", config_.twist_covariance_yaw);
-    declare_parameter("adjust_position", config_.adjust_position);
+    declare_parameter("adjust_pose", config_.adjust_pose);
     declare_parameter("x_offset", config_.x_offset);
     declare_parameter("y_offset", config_.y_offset);
+    declare_parameter("yaw_offset", config_.yaw_offset);
 
     // Get parameters
     config_.overwrite_covariance = get_parameter("overwrite_covariance").as_bool();
@@ -60,9 +61,10 @@ public:
     config_.pose_covariance_yaw = get_parameter("pose_covariance_yaw").as_double();
     config_.twist_covariance_x = get_parameter("twist_covariance_x").as_double();
     config_.twist_covariance_z = get_parameter("twist_covariance_z").as_double();
-    config_.adjust_position = get_parameter("adjust_position").as_bool();
+    config_.adjust_pose = get_parameter("adjust_pose").as_bool();
     config_.x_offset = get_parameter("x_offset").as_double();
     config_.y_offset = get_parameter("y_offset").as_double();
+    config_.yaw_offset = get_parameter("yaw_offset").as_double();
 
     // Set up parameter validation callback
     on_set_parameters_callback_ = add_on_set_parameters_callback(
@@ -98,9 +100,10 @@ public:
       "twist_covariance_x",
       "twist_covariance_z",
       "twist_covariance_yaw",
-      "adjust_position",
+      "adjust_pose",
       "x_offset",
-      "y_offset"
+      "y_offset",
+      "yaw_offset"
     };
   }
 
@@ -108,7 +111,7 @@ public:
   {
     try {
       std::optional<SdsmToDetectionListConfig> conversion_adjustment = std::nullopt;
-      if (config_.overwrite_covariance || config_.adjust_position) {
+      if (config_.overwrite_covariance || config_.adjust_pose) {
         conversion_adjustment = config_;
       }
       auto detection_list_msg{
@@ -170,7 +173,7 @@ private:
       }
 
       // Validate covariance values (must be non-negative)
-      if (parameter.get_name() != "adjust_position" &&
+      if (parameter.get_name() != "adjust_pose" &&
           parameter.get_name() != "overwrite_covariance") {
         if (const auto value{parameter.as_double()}; value < 0.0) {
           result.successful = false;
@@ -185,8 +188,8 @@ private:
         }
       } else if (parameter.get_name() == "overwrite_covariance"){
         config_.overwrite_covariance = parameter.as_bool();
-      } else if (parameter.get_name() == "adjust_position"){
-        config_.adjust_position = parameter.as_bool();
+      } else if (parameter.get_name() == "adjust_pose"){
+        config_.adjust_pose = parameter.as_bool();
       }
     }
 
@@ -221,6 +224,8 @@ private:
       config_.x_offset = value;
     } else if (name == "y_offset") {
       config_.y_offset = value;
+    } else if (name == "yaw_offset") {
+      config_.yaw_offset = value;
     }
   }
 

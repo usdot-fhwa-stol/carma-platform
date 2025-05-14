@@ -78,31 +78,33 @@ auto to_time_msg(const DDateTime & d_date_time, bool is_simulation) -> builtin_i
     }
 
     // Month
-    if (d_date_time.month)
+    if (d_date_time.month && static_cast<int>(d_date_time.month.value().get_value()) != 0)
     {
-      timeinfo.tm_mon = static_cast<int>(d_date_time.month.value().get_value());
-      // std::tm is counted from 0 to 11
-      if (timeinfo.tm_mon != 0){
-          timeinfo.tm_mon = timeinfo.tm_mon - 1;
-      }
+      // std::tm is counted from 0 to 11, J2735 is counted from 1 to 12
+      timeinfo.tm_mon = static_cast<int>(d_date_time.month.value().get_value()) - 1;
     }
 
     // Day
-    if (d_date_time.day)
+    if (d_date_time.day && static_cast<int>(d_date_time.day.value()) != 0)
     {
+      // Day is counted from 1 to 31 in both std::tm and J2735
       timeinfo.tm_mday = static_cast<int>(d_date_time.day.value());
     }
     else{
-      timeinfo.tm_mday = 1;  // Default first day of month is 1 not 0
+      timeinfo.tm_mday = 1; // Default to 1 if day is not provided as C++ initializes to 0
     }
+
     // Hour
-    if (d_date_time.hour)
+    if (d_date_time.hour && static_cast<int>(d_date_time.hour.value()) != 31)
     {
+      // Hour is counted from 0 to 23 in both std::tm and J2735
       timeinfo.tm_hour = static_cast<int>(d_date_time.hour.value());
     }
+
     // Minute
-    if (d_date_time.minute)
+    if (d_date_time.minute && static_cast<int>(d_date_time.minute.value()) != 60)
     {
+      // Minute is counted from 0 to 59 in both std::tm and J2735
       timeinfo.tm_min = static_cast<int>(d_date_time.minute.value());
     }
     // Set seconds field (which actually uses ms in j2735) to 0
@@ -397,7 +399,8 @@ double convertToTrueNorthHeading(double cameraAngle, double cameraHeading = 355.
 }
 
 /**
- * @brief Converts a SDSM (Sensor Data Sharing Message) to DetectionList format
+ * @brief Converts a carma_v2x_msgs::msg::SensorDataSharingMessage (SDSM)
+ *  to carma_cooperative_perception_interfaces::msg::DetectionList format
  *
  * This function transforms data from the V2X SDSM format into the CARMA cooperative perception
  * DetectionList format, handling the necessary coordinate transformations.
@@ -420,7 +423,8 @@ double convertToTrueNorthHeading(double cameraAngle, double cameraHeading = 355.
  * @param is_simulation Boolean flag indicating if running in simulation mode (affects timestamps)
  * @param conversion_adjustment Optional configuration for position and covariance adjustments
  *
- * @return DetectionList message containing the transformed detections in CARMA Platform format
+ * @return carma_cooperative_perception_interfaces::msg::DetectionList
+ *          message containing the transformed detections in CARMA Platform format
  */
 auto to_detection_list_msg(
   const carma_v2x_msgs::msg::SensorDataSharingMessage & sdsm, std::string_view georeference,
@@ -482,7 +486,7 @@ auto to_detection_list_msg(
 
     // Adjust object's position to match vector map coordinates as sensor calibrations are not
     // always reliable
-    if (conversion_adjustment && conversion_adjustment.value().adjust_position)
+    if (conversion_adjustment && conversion_adjustment.value().adjust_pose)
     {
       detection.pose.pose.position.x += conversion_adjustment.value().x_offset;
       detection.pose.pose.position.y += conversion_adjustment.value().y_offset;
@@ -536,7 +540,22 @@ auto to_detection_list_msg(
     const auto enu_yaw{heading_to_enu_yaw(grid_heading)};
 
     tf2::Quaternion quat_tf;
-    quat_tf.setRPY(0, 0, remove_units(units::angle::radian_t{enu_yaw}));
+
+    if (conversion_adjustment && conversion_adjustment.value().adjust_pose)
+    {
+      // Adjust object's heading to match vector map coordinates as sensor calibrations are not
+      // always reliable
+      auto yaw_with_offset = units::angle::radian_t{enu_yaw} +
+        units::angle::radian_t{units::angle::degree_t{conversion_adjustment.value().yaw_offset}};
+      auto new_yaw = std::fmod(remove_units(yaw_with_offset) + 2 * M_PI, 2 * M_PI);
+      quat_tf.setRPY(0, 0, new_yaw);
+    }
+    else
+    {
+      // No adjustment needed
+      quat_tf.setRPY(0, 0, remove_units(units::angle::radian_t{enu_yaw}));
+    }
+
     detection.pose.pose.orientation = tf2::toMsg(quat_tf);
 
     try {

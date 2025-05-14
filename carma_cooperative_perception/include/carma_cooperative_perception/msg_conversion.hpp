@@ -53,9 +53,10 @@ public:
   double twist_covariance_x{0.005000000000000001};
   double twist_covariance_z{0.005000000000000001};
   double twist_covariance_yaw{0.005000000000000001};
-  bool adjust_position{false};
+  bool adjust_pose{false};
   double x_offset{0.0};
   double y_offset{0.0};
+  double yaw_offset{0.0};
 
   // Stream operator for logging
   friend std::ostream & operator<<(std::ostream & os, const SdsmToDetectionListConfig & config)
@@ -69,9 +70,10 @@ public:
        << "\n  twist_covariance_x: " << config.twist_covariance_x
        << "\n  twist_covariance_z: " << config.twist_covariance_z
        << "\n  twist_covariance_yaw: " << config.twist_covariance_yaw
-       << "\n  adjust_position: " << config.adjust_position
+       << "\n  adjust_pose: " << config.adjust_pose
        << "\n  x_offset: " << config.x_offset
        << "\n  y_offset: " << config.y_offset
+       << "\n  yaw_offset: " << config.yaw_offset
        << "\n}";
     return os;
   }
@@ -80,8 +82,9 @@ public:
 // NOTE: If incoming SDSM message doesn't have timezone enabled,
 // it automatically uses the local timezone. If the node is running in a container,
 // it would mean the container's default timezone (most likely UTC), unless otherwise set.
-// Please make sure to set the timezone in the container to match the one used in the SDSM message.
-auto to_time_msg(const DDateTime & d_date_time, bool is_simulation) -> builtin_interfaces::msg::Time;
+// Make sure the container's timezone is same as the implicit timezone of the SDSM's timestamp
+auto to_time_msg(
+  const DDateTime & d_date_time, bool is_simulation) -> builtin_interfaces::msg::Time;
 
 auto calc_detection_time_stamp(DDateTime d_date_time, const MeasurementTimeOffset & offset)
   -> DDateTime;
