@@ -26,7 +26,7 @@ cloud-sim__config() {
         mkdir "${CARMA_CLOUD_SIM_CONFIG_DIR}"
     fi
 
-    local region_set = 0
+    local region_set=0
 
     # Create config file if it does not already exist
     if [ ! -f "$CARMA_CLOUD_SIM_CONFIG_PATH" ]; then
@@ -191,7 +191,7 @@ cloud-sim__start() {
     fi
 
     if [ -z "$REGION" ]; then
-        echo "Configuration does not include region. Please run: carma cloud-sim config -r <Region>"
+        echo "Configuration does not include region, defaulting to ${local_aws_region}. To change region, please run: carma cloud-sim config -r <Region>"
     fi
 
     if ! command -v "aws" &> /dev/null
