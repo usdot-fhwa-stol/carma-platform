@@ -257,14 +257,6 @@ public:
 
   bool is_trajectory_on_route(
     const std::vector<carma_perception_msgs::msg::PredictedState>& trajectory);
-  std::optional<GetCollisionResult> refine_collision_point(
-    const carma_planning_msgs::msg::TrajectoryPlanPoint& prev1,
-    const carma_planning_msgs::msg::TrajectoryPlanPoint& point1,
-    const carma_planning_msgs::msg::TrajectoryPlanPoint& next1,
-    const carma_perception_msgs::msg::PredictedState& prev2,
-    const carma_perception_msgs::msg::PredictedState& point2,
-    const carma_perception_msgs::msg::PredictedState& next2,
-    double collision_radius);
 
     /**
    * \brief Return collision time given two trajectories with one being external object with predicted steps
