@@ -81,8 +81,7 @@ private:
   units::time::nanosecond_t execution_period_{1 / units::frequency::hertz_t{2.0}};
   OnSetParametersCallbackHandle::SharedPtr on_set_parameters_callback_{nullptr};
   std::size_t lifetime_generated_track_count_{0U};
-  // Overwrite the get_logger function to use hardcoded node name as currently
-  // setting the node name in carma_rosconsole.conf to enable logging doesn't work as intended
+  // Overwrite the get_logger function to use hardcoded node name
   rclcpp::Logger get_logger() const
   {
     return rclcpp::get_logger("cp_multiple_object_tracker_node");
