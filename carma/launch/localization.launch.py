@@ -270,7 +270,7 @@ def generate_launch_description():
                     ("in_twist",  [EnvironmentVariable('CARMA_INTR_NS', default_value=''), "/vehicle/twist" ]),
                     ("in_twist_with_covariance", "input_twist_with_covariance_UNUSED"),
                     ("initialpose", "managed_initialpose"),
-                    ("ekf_pose", "current_pose"),
+                    ("ekf_pose", "current_pose_test"),
                     ("ekf_pose_with_covariance", "current_pose_with_covariance"),
                     # remap to namespace/nodename/topic_name
                     ("debug", "~/debug"),

@@ -69,7 +69,8 @@ void convert(
   // Compute the timestamp
 
   auto psm_timestamp = impl::get_psm_timestamp(in_msg, node_clock->get_clock());
-  out_msg.header.stamp = builtin_interfaces::msg::Time(psm_timestamp);
+  // out_msg.header.stamp = builtin_interfaces::msg::Time(psm_timestamp);
+  out_msg.header.stamp = builtin_interfaces::msg::Time(now());
   out_msg.header.frame_id = map_frame_id;
 
   /////// Object Type and Size /////////

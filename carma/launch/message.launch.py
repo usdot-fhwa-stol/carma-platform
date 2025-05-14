@@ -155,7 +155,7 @@ def generate_launch_description():
                 ],
                 remappings=[
                     ("inbound_binary_msg", [ EnvironmentVariable('CARMA_INTR_NS', default_value=''), "/comms/inbound_binary_msg" ] ),
-                    ("outbound_binary_msg", [ EnvironmentVariable('CARMA_INTR_NS', default_value=''), "/comms/outbound_binary_msg" ] ),
+                    ("outbound_binary_msg", [ EnvironmentVariable('CARMA_INTR_NS', default_value=''), "/comms/outbound_binary_msg_test" ] ),
                 ],
                 parameters=[
                     vehicle_config_param_file
@@ -247,5 +247,3 @@ def generate_launch_description():
         carma_v2x_container,
         subsystem_controller
     ])
-
-

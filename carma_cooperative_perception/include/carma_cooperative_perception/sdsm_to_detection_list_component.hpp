@@ -116,6 +116,10 @@ public:
           conversion_adjustment)
       };
 
+      for (auto & detection : detection_list_msg.detections) {
+        detection.header.stamp = now();
+      }
+
       if (cdasim_time_) {
         // When in simulation, ROS time is CARLA time, but SDSMs use CDASim time
         const auto time_delta{now() - cdasim_time_.value()};

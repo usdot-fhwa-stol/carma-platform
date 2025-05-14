@@ -115,6 +115,9 @@ auto to_time_msg(const DDateTime & d_date_time, bool is_simulation) -> builtin_i
     {
       timeinfo.tm_gmtoff = static_cast<int>(d_date_time.time_zone_offset.value());
       timeT = std::mktime(&timeinfo);
+      RCLCPP_ERROR_STREAM(
+        rclcpp::get_logger("sdsm_to_detection_list_node"),
+        "Time zone offset is selected... with: " << timeinfo.tm_gmtoff);
     }
     else
     {
@@ -132,6 +135,10 @@ auto to_time_msg(const DDateTime & d_date_time, bool is_simulation) -> builtin_i
 
       timeinfo.tm_gmtoff = timezone_offset;
       timeinfo.tm_isdst = localTimeInfo->tm_isdst;
+
+      RCLCPP_ERROR_STREAM(
+        rclcpp::get_logger("sdsm_to_detection_list_node"),
+        "Time zone offset is NOT selected... using local timezone: " << timeinfo.tm_gmtoff);
 
       // Convert to time_t
       timeT = std::mktime(&timeinfo);
@@ -189,7 +196,7 @@ double degToRad(double degrees) {
 
 // TODO
 // Function to rotate coordinates back from a 255 degree rotation
-std::pair<double, double> correctOffsets(double offset_x, double offset_y, double rotationDegrees = 255.0) {
+std::pair<double, double> correctOffsets(double offset_x, double offset_y, double rotationDegrees = 355.0) {
   // To rotate back, we use the negative of the rotation angle
   double rotationRad = degToRad(-rotationDegrees);
 
@@ -376,7 +383,7 @@ auto transform_pose_from_map_to_wgs84(
  * @param cameraHeading The camera's heading in degrees from true north (clockwise, 255° by default)
  * @return The object's heading in degrees from true north (clockwise)
  */
-double convertToTrueNorthHeading(double cameraAngle, double cameraHeading = 255.0) {
+double convertToTrueNorthHeading(double cameraAngle, double cameraHeading = 355.0) {
   // Simply add the camera's heading to the camera angle
   // This works because both are in the same coordinate system (clockwise)
   double trueNorthHeading = fmod(cameraHeading + cameraAngle, 360.0);
@@ -460,8 +467,15 @@ auto to_detection_list_msg(
 
     detection.id =
       to_string(sdsm.source_id.id) + "-" + std::to_string(common_data.detected_id.object_id);
+    // Temporary Fix for 192.168.55.182 camera which has heading 255
+    auto new_pos = common_data.pos;
+    auto new_coord_pair = correctOffsets(
+      common_data.pos.offset_x.object_distance, common_data.pos.offset_y.object_distance, 355.0);
+    new_pos.offset_x.object_distance = new_coord_pair.first;
+    new_pos.offset_y.object_distance = new_coord_pair.second;
+    /////////////////////////////////////////////////////////////
 
-    const auto pos_offset_enu{ned_to_enu(PositionOffsetXYZ::from_msg(common_data.pos))};
+    const auto pos_offset_enu{ned_to_enu(PositionOffsetXYZ::from_msg(new_pos))};
     detection.pose.pose.position = to_position_msg(MapCoordinate{
       ref_pos_map.easting + pos_offset_enu.offset_x, ref_pos_map.northing + pos_offset_enu.offset_y,
       ref_pos_map.elevation + pos_offset_enu.offset_z.value_or(units::length::meter_t{0.0})});
@@ -507,7 +521,11 @@ auto to_detection_list_msg(
         "Missing elevation confidence");
     }
 
-    const auto true_heading{units::angle::degree_t{Heading::from_msg(common_data.heading).heading}};
+    // Temporary Fix for 192.168.55.182 camera which has heading 255 NED
+    auto new_heading = common_data.heading;
+    new_heading.heading = convertToTrueNorthHeading(common_data.heading.heading, 355.0);
+
+    const auto true_heading{units::angle::degree_t{Heading::from_msg(new_heading).heading}};
 
     // Note: This should really use the detection's WGS-84 position, so the
     // convergence will be off slightly. TODO

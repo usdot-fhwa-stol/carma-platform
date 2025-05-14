@@ -34,11 +34,8 @@ while [[ $# -gt 0 ]]; do
       esac
 done
 
+cd ${dir}
 
 echo "Installing multiple object tracking dependencies"
+sudo chmod +x ./src/multiple_object_tracking/scripts/install_dependencies.sh
 sudo ./src/multiple_object_tracking/scripts/install_dependencies.sh
-
-
-# Install dependencies for v2x-ros-conversion - needs branch to pull correct debian version
-echo "Installing cpp_message dependencies"
-sudo ./src/v2x-ros-conversion/docker/install_dependencies.sh -b $BRANCH
