@@ -255,7 +255,18 @@ public:
    */
   std::optional<GetCollisionResult> get_collision(const carma_planning_msgs::msg::TrajectoryPlan& trajectory1, const std::vector<carma_perception_msgs::msg::PredictedState>& trajectory2, double collision_radius, double trajectory1_max_speed);
 
-  /**
+  bool is_trajectory_on_route(
+    const std::vector<carma_perception_msgs::msg::PredictedState>& trajectory);
+  std::optional<GetCollisionResult> refine_collision_point(
+    const carma_planning_msgs::msg::TrajectoryPlanPoint& prev1,
+    const carma_planning_msgs::msg::TrajectoryPlanPoint& point1,
+    const carma_planning_msgs::msg::TrajectoryPlanPoint& next1,
+    const carma_perception_msgs::msg::PredictedState& prev2,
+    const carma_perception_msgs::msg::PredictedState& point2,
+    const carma_perception_msgs::msg::PredictedState& next2,
+    double collision_radius);
+
+    /**
    * \brief Return collision time given two trajectories with one being external object with predicted steps
    * \param trajectory1 trajectory of the ego vehicle
    * \param trajectory2 trajectory of the obstacle
