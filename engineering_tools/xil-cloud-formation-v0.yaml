@@ -36,10 +36,6 @@ Parameters:
     Description: The AMI ID to use for the EC2 instance.
     Type: String
     Default:  ami-testing123
-  KeyPair:
-    Type: 'AWS::EC2::KeyPair'
-    Properties:
-    KeyName: !Sub 'cloud9-key-${AWS::StackName}'
 Resources:
   SubnetA:
     Type: AWS::EC2::Subnet
@@ -148,7 +144,6 @@ Resources:
       SubnetId: !Ref SubnetA
       SecurityGroupIds:
         - Ref: InstanceSecurityGroup
-      KeyName: !Ref KeyPair
       BlockDeviceMappings:
         - DeviceName: /dev/sda1
           Ebs:
