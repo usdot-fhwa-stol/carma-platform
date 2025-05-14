@@ -66,7 +66,7 @@ auto to_time_msg(const DDateTime & d_date_time, bool is_simulation) -> builtin_i
     std::tm timeinfo = {};
 
     // Year
-    if (d_date_time.year && ){
+    if (d_date_time.year){
       if(remove_units(d_date_time.year.value()) >= 1970){
         // std::tm is counted since 1900
         timeinfo.tm_year = remove_units(d_date_time.year.value()) - 1900;
@@ -78,10 +78,10 @@ auto to_time_msg(const DDateTime & d_date_time, bool is_simulation) -> builtin_i
     }
 
     // Month
-    if (d_date_time.month && static_cast<int>(d_date_time.month.value()) != 0)
+    if (d_date_time.month && static_cast<int>(d_date_time.month.value().get_value()) != 0)
     {
       // std::tm is counted from 0 to 11
-      timeinfo.tm_mon = static_cast<int>(d_date_time.month.value()) - 1;
+      timeinfo.tm_mon = static_cast<int>(d_date_time.month.value().get_value()) - 1;
     }
 
     // Day
@@ -89,6 +89,9 @@ auto to_time_msg(const DDateTime & d_date_time, bool is_simulation) -> builtin_i
     {
       // Day is counted from 1 to 31
       timeinfo.tm_mday = static_cast<int>(d_date_time.day.value());
+    }
+    else{
+      timeinfo.tm_mday = 1; // Default to 1 if day is not provided
     }
 
     // Hour
@@ -482,7 +485,7 @@ auto to_detection_list_msg(
       // Adjust object's heading to match vector map coordinates as sensor calibrations are not
       // always reliable
       auto yaw_with_offset = units::angle::radian_t{enu_yaw} +
-            units::angle::degree_t{conversion_adjustment.value().yaw_offset}.to_radian();
+        units::angle::radian_t{units::angle::degree_t{conversion_adjustment.value().yaw_offset}};
       auto new_yaw = std::fmod(remove_units(yaw_with_offset) + 2 * M_PI, 2 * M_PI);
       quat_tf.setRPY(0, 0, new_yaw);
     }
