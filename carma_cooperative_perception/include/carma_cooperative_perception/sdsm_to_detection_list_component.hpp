@@ -107,8 +107,9 @@ public:
     };
   }
 
-  auto sdsm_msg_callback(const input_msg_type & msg) const -> void
+  auto sdsm_msg_callback(const input_msg_type & msg) -> void
   {
+
     try {
       std::optional<SdsmToDetectionListConfig> conversion_adjustment = std::nullopt;
       if (config_.overwrite_covariance || config_.adjust_pose) {
@@ -119,8 +120,13 @@ public:
           conversion_adjustment)
       };
 
+      if (!sdsm_time_offset_)
+      {
+        sdsm_time_offset_ = now() - rclcpp::Time(detection_list_msg.detections.front().header.stamp);
+      }
+
       for (auto & detection : detection_list_msg.detections) {
-        detection.header.stamp = now();
+        detection.header.stamp = rclcpp::Time(detection.header.stamp) + sdsm_time_offset_.value();
       }
 
       if (cdasim_time_) {
@@ -141,6 +147,8 @@ public:
   }
 
 private:
+  // Time offset for SDSM messages
+  std::optional<rclcpp::Duration> sdsm_time_offset_ = std::nullopt;
   rclcpp::Publisher<output_msg_type>::SharedPtr publisher_;
   rclcpp::Subscription<input_msg_type>::SharedPtr subscription_;
   rclcpp::Subscription<std_msgs::msg::String>::SharedPtr georeference_subscription_;

@@ -270,7 +270,7 @@ def generate_launch_description():
                     ("in_twist",  [EnvironmentVariable('CARMA_INTR_NS', default_value=''), "/vehicle/twist" ]),
                     ("in_twist_with_covariance", "input_twist_with_covariance_UNUSED"),
                     ("initialpose", "managed_initialpose"),
-                    ("ekf_pose", "current_pose_test"),
+                    ("ekf_pose", "current_pose"),
                     ("ekf_pose_with_covariance", "current_pose_with_covariance"),
                     # remap to namespace/nodename/topic_name
                     ("debug", "~/debug"),
@@ -361,6 +361,54 @@ def generate_launch_description():
     )
 
 
+    basic_travel_simulator_param_file = os.path.join(
+        get_package_share_directory("basic_travel_simulator"), "config/parameters.yaml"
+    )
+    basic_travel_simulator_container = ComposableNodeContainer(
+        package="carma_ros2_utils",
+        name="basic_travel_simulator_container",
+        executable="carma_component_container_mt",
+        namespace=GetCurrentNamespace(),
+        composable_node_descriptions=[
+            ComposableNode(
+                package="basic_travel_simulator",
+                plugin="basic_travel_simulator::Node",
+                name="basic_travel_simulator",
+                extra_arguments=[
+                    {"use_intra_process_comms": True},
+                    {
+                        "--log-level": GetLogLevel(
+                            "basic_travel_simulator", env_log_levels
+                        )
+                    },
+                ],
+                remappings=[
+                    (
+                        "vehicle/twist",
+                        [
+                            EnvironmentVariable("CARMA_INTR_NS", default_value=""),
+                            "/vehicle/twist",
+                        ],
+                    ),
+                    (
+                        "current_pose",
+                        [
+                            EnvironmentVariable("CARMA_LOCZ_NS", default_value=""),
+                            "/selected_pose",
+                        ],
+                    ),
+                    (
+                        "plan_trajectory",
+                        [
+                            EnvironmentVariable("CARMA_GUIDE_NS", default_value=""),
+                            "/plan_trajectory",
+                        ],
+                    ),
+                ],
+                parameters=[basic_travel_simulator_param_file],
+            )
+        ],
+    )
     # subsystem_controller which orchestrates the lifecycle of this subsystem's components
     subsystem_controller = Node(
         package='subsystem_controllers',
@@ -383,6 +431,7 @@ def generate_launch_description():
         declare_map_file,
         declare_use_sim_time_arg,
         gnss_to_map_convertor_container,
+        basic_travel_simulator_container,
         localization_manager_container,
         dead_reckoner_container,
         voxel_grid_filter_container,
