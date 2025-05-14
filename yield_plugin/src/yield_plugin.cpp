@@ -321,7 +321,7 @@ namespace yield_plugin
     rclcpp::Time end_time = system_clock.now();  // Planning complete
 
     auto duration = end_time - start_time;
-    RCLCPP_DEBUG_STREAM(nh_->get_logger(), "ExecutionTime: " << std::to_string(duration.seconds()));
+    RCLCPP_DEBUG_STREAM(rclcpp::get_logger("yield_plugin"), "ExecutionTime: " << std::to_string(duration.seconds()));
   }
 
   carma_planning_msgs::msg::TrajectoryPlan YieldPlugin::update_traj_for_cooperative_behavior(const carma_planning_msgs::msg::TrajectoryPlan& original_tp, double current_speed)
@@ -594,7 +594,7 @@ namespace yield_plugin
     int geographic_checks = 0;
     int temporal_checks = 0;
 
-    RCLCPP_DEBUG_STREAM(nh_->get_logger(), "Starting collision detection, trajectory1 size: "
+    RCLCPP_DEBUG_STREAM(rclcpp::get_logger("yield_plugin"), "Starting collision detection, trajectory1 size: "
       << trajectory1.trajectory_points.size() << ", trajectory2 size: " << trajectory2.size());
 
     // Validate input trajectories
@@ -605,7 +605,7 @@ namespace yield_plugin
 
     // Verify the predicted trajectory is on the route
     if (!is_trajectory_on_route(trajectory2)) {
-        RCLCPP_DEBUG(nh_->get_logger(), "Predicted states are not on the route! Ignoring");
+        RCLCPP_DEBUG(rclcpp::get_logger("yield_plugin"), "Predicted states are not on the route! Ignoring");
         return std::nullopt;
     }
 
@@ -625,7 +625,7 @@ namespace yield_plugin
         max_collision_time_diff = 1.0; // 1 second
     }
 
-    RCLCPP_DEBUG_STREAM(nh_->get_logger(), "Max collision time difference: " << max_collision_time_diff
+    RCLCPP_DEBUG_STREAM(rclcpp::get_logger("yield_plugin"), "Max collision time difference: " << max_collision_time_diff
                        << "s, traj1_speed: " << traj1_speed << ", traj2_speed: " << traj2_speed);
 
     // Build spatial index for faster geographic lookup
@@ -688,13 +688,13 @@ namespace yield_plugin
         }
     }
 
-    RCLCPP_DEBUG_STREAM(nh_->get_logger(), "Found " << candidate_collisions.size()
+    RCLCPP_DEBUG_STREAM(rclcpp::get_logger("yield_plugin"), "Found " << candidate_collisions.size()
                        << " geographic collision candidates");
 
     // If no geographic collisions, exit early
     if (candidate_collisions.empty()) {
         auto end_time = nh_->now();
-        RCLCPP_DEBUG_STREAM(nh_->get_logger(), "No geographic collisions found. Completed in "
+        RCLCPP_DEBUG_STREAM(rclcpp::get_logger("yield_plugin"), "No geographic collisions found. Completed in "
                           << (end_time - start_time).seconds() << "s with "
                           << geographic_checks << " geographic checks.");
         return std::nullopt;
@@ -743,13 +743,13 @@ namespace yield_plugin
     double computation_time = (end_time - start_time).seconds();
 
     if (best_collision) {
-        RCLCPP_DEBUG_STREAM(nh_->get_logger(),
+        RCLCPP_DEBUG_STREAM(rclcpp::get_logger("yield_plugin"),
             "Collision detected! Processing took " << computation_time << "s. "
             "Geographic checks: " << geographic_checks <<
             ", temporal checks: " << temporal_checks <<
             ", time difference: " << smallest_time_diff << "s");
     } else {
-        RCLCPP_DEBUG_STREAM(nh_->get_logger(),
+        RCLCPP_DEBUG_STREAM(rclcpp::get_logger("yield_plugin"),
             "No collision detected. Processing took " << computation_time << "s. "
             "Geographic checks: " << geographic_checks <<
             ", temporal checks: " << temporal_checks);
