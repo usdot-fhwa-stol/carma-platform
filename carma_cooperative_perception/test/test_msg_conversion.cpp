@@ -194,14 +194,21 @@ TEST(ToDetectionMsg, Simple)
   object_data.detected_object_common_data.accel_4_way.vert = 23.536;       // m/s^2
   object_data.detected_object_common_data.accel_4_way.yaw_rate = 5.0;      // degrees/s
 
+  object_data.detected_object_common_data.heading_conf.confidence = 3;  // 1 deg
+  object_data.detected_object_common_data.pos_confidence.pos.confidence = 9;  // 1 m
+  object_data.detected_object_common_data.pos_confidence.elevation.confidence = 9;  // 1 m
+  object_data.detected_object_common_data.speed_confidence_z.speed_confidence = 4;  // 1m/s
+  object_data.detected_object_common_data.speed_confidence.speed_confidence = 4;  // 1m/s
+  object_data.detected_object_common_data.acc_cfd_yaw.yaw_rate_confidence = 4;  // 1 deg/sec
+
   sdsm_msg.objects.detected_object_data.push_back(object_data);
   constexpr std::string_view georeference{"+proj=utm +zone=15 +datum=WGS84 +units=m +no_defs"};
 
-  const auto detection_list{
+  auto detection_list{
     carma_cooperative_perception::to_detection_list_msg(sdsm_msg, georeference, true, std::nullopt)};
   ASSERT_EQ(std::size(detection_list.detections), 1U);
 
-  const auto detection{detection_list.detections.at(0)};
+  auto detection{detection_list.detections.at(0)};
   EXPECT_EQ(detection.header.stamp.sec, 0);
   EXPECT_NEAR(detection.header.stamp.nanosec, 900'000'000U, 2);  // +/- 2 ns is probably good enough
   EXPECT_EQ(detection.header.frame_id, "map");
@@ -225,6 +232,69 @@ TEST(ToDetectionMsg, Simple)
 
   EXPECT_EQ(detection.id, "BADDCAFE-1");
   EXPECT_EQ(detection.motion_model, detection.MOTION_MODEL_CTRV);
+
+  EXPECT_DOUBLE_EQ(detection.pose.covariance[0], 0.5);
+  EXPECT_DOUBLE_EQ(detection.pose.covariance[7], 0.5);
+  EXPECT_DOUBLE_EQ(detection.pose.covariance[14], 0.5);
+  EXPECT_DOUBLE_EQ(detection.pose.covariance[35], 0.5);
+
+  EXPECT_DOUBLE_EQ(detection.twist.covariance[0], 0.5);
+  EXPECT_DOUBLE_EQ(detection.twist.covariance[14], 0.5);
+  EXPECT_DOUBLE_EQ(detection.twist.covariance[35], 0.5);
+
+  // Test with offsets
+  carma_cooperative_perception::SdsmToDetectionListConfig config;
+  config.overwrite_covariance = true;
+  config.adjust_pose = true;
+  config.x_offset = 10.0;
+  config.y_offset = 50.0;
+  config.yaw_offset = 25.0;
+  const auto detection_list_with_offsets{
+    carma_cooperative_perception::to_detection_list_msg(sdsm_msg, georeference, true, config)};
+  ASSERT_EQ(std::size(detection_list_with_offsets.detections), 1U);
+
+  detection = detection_list_with_offsets.detections.at(0);
+  EXPECT_EQ(detection.header.stamp.sec, 0);
+  EXPECT_NEAR(detection.header.stamp.nanosec, 900'000'000U, 2);  // +/- 2 ns is probably good enough
+  EXPECT_EQ(detection.header.frame_id, "map");
+
+  EXPECT_NEAR(detection.pose.pose.position.x, 715068.54 + 100.0 + 10.0, 1e-2);   // m (NED->ENU x, y swaps)
+  EXPECT_NEAR(detection.pose.pose.position.y, 3631576.38 + 50.0 + 50.0, 1e-2); // m (NED->ENU x, y swaps)
+  EXPECT_NEAR(detection.pose.pose.position.z, 300.0 - 100.0, 1e-3); // m (NED->ENU y sign flips)
+  EXPECT_DOUBLE_EQ(detection.pose.pose.orientation.x, 0.0);
+  EXPECT_DOUBLE_EQ(detection.pose.pose.orientation.y, 0.0);
+  EXPECT_NEAR(detection.pose.pose.orientation.z, 0.657670, 1e-5); // added 25 degrees
+  EXPECT_NEAR(detection.pose.pose.orientation.w, 0.753307, 1e-5); // added 25 degrees
+
+  EXPECT_DOUBLE_EQ(detection.twist.twist.linear.x, 10.0);
+  EXPECT_DOUBLE_EQ(detection.twist.twist.linear.y, 0.0);
+  EXPECT_DOUBLE_EQ(detection.twist.twist.linear.z, 20.0);
+  EXPECT_DOUBLE_EQ(detection.twist.twist.angular.z, 5.0);
+
+  EXPECT_DOUBLE_EQ(detection.accel.accel.linear.x, 0.0); //not supported
+  EXPECT_DOUBLE_EQ(detection.accel.accel.linear.y, 0.0); //not supported
+  EXPECT_DOUBLE_EQ(detection.accel.accel.linear.z, 0.0); //not supported
+
+  for (size_t i = 0; i < 36; ++i) {
+    if (i != 0 && i != 7 && i != 14 && i != 35) {
+      EXPECT_DOUBLE_EQ(detection.pose.covariance[i], 0.0);
+    }
+  }
+  for (size_t i = 0; i < 36; ++i) {
+    if (i != 0 && i != 14 && i != 35) {
+      EXPECT_DOUBLE_EQ(detection.twist.covariance[i], 0.0);
+    }
+  }
+  EXPECT_DOUBLE_EQ(detection.pose.covariance[0], 0.125);
+  EXPECT_DOUBLE_EQ(detection.pose.covariance[7], 0.125);
+  EXPECT_DOUBLE_EQ(detection.pose.covariance[14], 0.125);
+  EXPECT_DOUBLE_EQ(detection.pose.covariance[35], 0.005);
+
+  EXPECT_DOUBLE_EQ(detection.twist.covariance[0], 0.005);
+  EXPECT_DOUBLE_EQ(detection.twist.covariance[14], 0.005);
+  EXPECT_DOUBLE_EQ(detection.twist.covariance[35], 0.005);
+
+
 }
 
 TEST(CalcDetectionTimeStamp, Simple)

@@ -49,10 +49,10 @@ public:
   double pose_covariance_x{0.125};
   double pose_covariance_y{0.125};
   double pose_covariance_z{0.125};
-  double pose_covariance_yaw{0.005000000000000001};
-  double twist_covariance_x{0.005000000000000001};
-  double twist_covariance_z{0.005000000000000001};
-  double twist_covariance_yaw{0.005000000000000001};
+  double pose_covariance_yaw{0.005};
+  double twist_covariance_x{0.005};
+  double twist_covariance_z{0.005};
+  double twist_covariance_yaw{0.005};
   bool adjust_pose{false};
   double x_offset{0.0};
   double y_offset{0.0};
