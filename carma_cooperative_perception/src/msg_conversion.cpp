@@ -39,6 +39,7 @@
 #include <utility>
 #include <cstdlib>  // for setenv, unsetenv
 #include <ctime>    // for tzset
+#include <fmt/format.h>
 
 #include <proj.h>
 #include <gsl/pointers>
@@ -600,8 +601,9 @@ auto to_detection_list_msg(
 
     detection.header.stamp = to_time_msg(detection_time, is_simulation);
 
-    detection.id =
-      carma_cooperative_perception::to_string(sdsm.source_id.id) + "-" + std::to_string(common_data.detected_id.object_id);
+    detection.id = fmt::format("{}-{}",
+      carma_cooperative_perception::to_string(sdsm.source_id.id),
+      common_data.detected_id.object_id);
 
     const auto pos_offset_enu{ned_to_enu(PositionOffsetXYZ::from_msg(common_data.pos))};
     detection.pose.pose.position = to_position_msg(MapCoordinate{
@@ -649,7 +651,7 @@ auto to_detection_list_msg(
     detection.twist.twist.linear.x =
       remove_units(units::velocity::meters_per_second_t{speed.speed});
 
-    if (common_data.speed_z.speed){
+    if (!common_data.speed_z.unavailable){
       const auto speed_z{Speed::from_msg(common_data.speed_z)};
       detection.twist.twist.linear.z =
         remove_units(units::velocity::meters_per_second_t{speed_z.speed});
@@ -660,7 +662,8 @@ auto to_detection_list_msg(
 
     // NOTE: common_data.accel_4_way.longitudinal, lateral, vert not supported
     // and not needed at the moment for multiple object tracking algorithm
-    if(common_data.accel_4_way.yaw_rate){
+    // Having non-zero yaw_rate value means available
+    if(static_cast<bool>(common_data.accel_4_way.yaw_rate)){
       const auto accel_set{AccelerationSet4Way::from_msg(common_data.accel_4_way)};
       detection.twist.twist.angular.z =
         remove_units(units::angular_velocity::degrees_per_second_t{accel_set.yaw_rate});
