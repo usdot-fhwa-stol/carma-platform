@@ -33,13 +33,13 @@ namespace yield_plugin
 {
 /**
  * \brief ROS node for the YieldPlugin
- */ 
+ */
 class YieldPluginNode : public carma_guidance_plugins::TacticalPlugin
 {
 public:
 
      /**
-    * \brief Node constructor 
+    * \brief Node constructor
     */
     explicit YieldPluginNode(const rclcpp::NodeOptions &);
 
@@ -47,26 +47,29 @@ public:
     // Overrides
     ////
     carma_ros2_utils::CallbackReturn on_configure_plugin();
-   
+
     bool get_availability() override;
 
     std::string get_version_id() override final;
 
     void plan_trajectory_callback(
-    std::shared_ptr<rmw_request_id_t> srv_header, 
-    carma_planning_msgs::srv::PlanTrajectory::Request::SharedPtr req, 
+    std::shared_ptr<rmw_request_id_t> srv_header,
+    carma_planning_msgs::srv::PlanTrajectory::Request::SharedPtr req,
     carma_planning_msgs::srv::PlanTrajectory::Response::SharedPtr resp) override;
 
 private:
-
+    auto get_logger() -> rclcpp::Logger
+    {
+        return rclcpp::get_logger("yield_plugin");
+    }
     // Config
     YieldPluginConfig config_;
-    
+
     // Worker
     std::shared_ptr<YieldPlugin> worker_;
-    
+
     std::string version_id_;
-    
+
     // Publishers
     rclcpp_lifecycle::LifecyclePublisher<carma_v2x_msgs::msg::MobilityResponse>::SharedPtr mob_resp_pub_;
     rclcpp_lifecycle::LifecyclePublisher<carma_planning_msgs::msg::LaneChangeStatus>::SharedPtr lc_status_pub_;
@@ -79,6 +82,3 @@ private:
 };
 
 }  // namespace yield_plugin
-
- 
-      
