@@ -763,7 +763,7 @@ namespace yield_plugin
     const std::vector<carma_perception_msgs::msg::PredictedState>& trajectory) {
 
     // Skip every few points for efficiency
-    const int stride = std::max(1, static_cast<int>(trajectory.size() / 4));
+    const int stride = std::max(1, static_cast<int>(trajectory.size() / 10));
 
     for (size_t j = 0; j < trajectory.size(); j += stride) {
         lanelet::BasicPoint2d curr_point;
