@@ -69,7 +69,7 @@ auto to_time_msg(const DDateTime & d_date_time, bool is_simulation) -> builtin_i
     if (d_date_time.year){
       if(remove_units(d_date_time.year.value()) >= 1970){
         // std::tm is counted since 1900
-        timeinfo.tm_year = remove_units(d_date_time.year.value()) - 1900;
+        timeinfo.tm_year = static_cast<int>(remove_units(d_date_time.year.value())) - 1900;
       }
       else{
         throw std::invalid_argument(
@@ -157,20 +157,20 @@ auto to_time_msg(const DDateTime & d_date_time, bool is_simulation) -> builtin_i
 
     msg.sec = static_cast<int32_t>(seconds.count());
     msg.nanosec = static_cast<uint32_t>(nanoseconds.count());
-  }
-  else
-  {
-    // if simulation, we ignore the date, month, year etc because the simulation won't be that long
-    double seconds;
-    const auto fractional_secs{std::modf(
-      remove_units(units::time::second_t{d_date_time.hour.value_or(units::time::second_t{0.0})}) +
-        remove_units(units::time::second_t{d_date_time.minute.value_or(units::time::second_t{0.0})}) +
-        remove_units(units::time::second_t{d_date_time.second.value_or(units::time::second_t{0.0})}),
-      &seconds)};
 
-    msg.sec = static_cast<std::int32_t>(seconds);
-    msg.nanosec = static_cast<std::int32_t>(fractional_secs * 1e9);
+    return msg;
   }
+
+  // if simulation, we ignore the date, month, year etc because the simulation won't be that long
+  double seconds;
+  const auto fractional_secs{std::modf(
+    remove_units(units::time::second_t{d_date_time.hour.value_or(units::time::second_t{0.0})}) +
+      remove_units(units::time::second_t{d_date_time.minute.value_or(units::time::second_t{0.0})}) +
+      remove_units(units::time::second_t{d_date_time.second.value_or(units::time::second_t{0.0})}),
+    &seconds)};
+
+  msg.sec = static_cast<std::int32_t>(seconds);
+  msg.nanosec = static_cast<std::int32_t>(fractional_secs * 1e9);
 
   return msg;
 }
@@ -347,7 +347,201 @@ auto transform_pose_from_map_to_wgs84(
   return ref_pos;
 }
 
+// Helper function to convert a vector of uint8_t to a hex string
+// TemporaryID and octet string terms come from the SAE J2735 message definitions
+std::string to_string(const std::vector<std::uint8_t> & temporary_id) {
+  std::string str;
+  str.reserve(2 * std::size(temporary_id));  // Two hex characters per octet string
 
+  std::array<char, 2> buffer;
+  for (const auto & octet_string : temporary_id) {
+    std::to_chars(std::begin(buffer), std::end(buffer), octet_string, 16);
+    str.push_back(std::toupper(std::get<0>(buffer)));
+    str.push_back(std::toupper(std::get<1>(buffer)));
+  }
+
+  return str;
+};
+
+// Helper function to fill the type from J3224 ObjectType to CARMA Detection
+void convert_object_type(carma_cooperative_perception_interfaces::msg::Detection& detection,
+  const j3224_v2x_msgs::msg::ObjectType& j3224_obj_type)
+{
+  switch (j3224_obj_type.object_type) {
+    case j3224_obj_type.ANIMAL:
+      detection.motion_model = detection.MOTION_MODEL_CTRV;
+      // We don't have a good semantic class mapping for animals
+      detection.semantic_class = detection.SEMANTIC_CLASS_UNKNOWN;
+      break;
+    case j3224_obj_type.VRU:
+      detection.motion_model = detection.MOTION_MODEL_CTRV;
+      detection.semantic_class = detection.SEMANTIC_CLASS_PEDESTRIAN;
+      break;
+    case j3224_obj_type.VEHICLE:
+      detection.motion_model = detection.MOTION_MODEL_CTRV;
+      detection.semantic_class = detection.SEMANTIC_CLASS_SMALL_VEHICLE;
+      break;
+    default:
+      detection.motion_model = detection.MOTION_MODEL_CTRV;
+      detection.semantic_class = detection.SEMANTIC_CLASS_UNKNOWN;
+  }
+}
+// Helper function to fill all concariance related values from J3324 confidence values to covariance
+void convert_covariances(carma_cooperative_perception_interfaces::msg::Detection& detection,
+  const carma_v2x_msgs::msg::DetectedObjectCommonData& common_data,
+  const std::optional<SdsmToDetectionListConfig>& conversion_adjustment)
+{
+  // Variables to store original covariance values for debugging
+  double original_pose_covariance_x = 0.0;
+  double original_pose_covariance_y = 0.0;
+  double original_pose_covariance_z = 0.0;
+  double original_pose_covariance_yaw = 0.0;
+  double original_twist_covariance_x = 0.0;
+  double original_twist_covariance_z = 0.0;
+  double original_twist_covariance_yaw = 0.0;
+
+  // Calculate and log original pose covariance values
+  try {
+    original_pose_covariance_x =
+      0.5 * std::pow(j2735_v2x_msgs::to_double(common_data.pos_confidence.pos).value(), 2);
+    original_pose_covariance_y = original_pose_covariance_x;
+
+    RCLCPP_DEBUG_STREAM(rclcpp::get_logger("sdsm_to_detection_list_node"),
+      "Original pose covariance X/Y: " << original_pose_covariance_x);
+  } catch (const std::bad_optional_access &) {
+    RCLCPP_DEBUG_STREAM(rclcpp::get_logger("sdsm_to_detection_list_node"),
+      "Missing position confidence");
+  }
+
+  try {
+    original_pose_covariance_z =
+      0.5 * std::pow(j2735_v2x_msgs::to_double(common_data.pos_confidence.elevation).value(), 2);
+
+    RCLCPP_DEBUG_STREAM(rclcpp::get_logger("sdsm_to_detection_list_node"),
+      "Original pose covariance Z: " << original_pose_covariance_z);
+  } catch (const std::bad_optional_access &) {
+    RCLCPP_DEBUG_STREAM(rclcpp::get_logger("sdsm_to_detection_list_node"),
+      "Missing elevation confidence");
+  }
+
+  try {
+    // Get original heading/yaw covariance
+    original_pose_covariance_yaw =
+      0.5 * std::pow(j2735_v2x_msgs::to_double(common_data.heading_conf).value(), 2);
+
+    RCLCPP_DEBUG_STREAM(rclcpp::get_logger("sdsm_to_detection_list_node"),
+      "Original pose covariance yaw: " << original_pose_covariance_yaw);
+  } catch (const std::bad_optional_access &) {
+    RCLCPP_DEBUG_STREAM(rclcpp::get_logger("sdsm_to_detection_list_node"),
+      "Missing heading confidence");
+  }
+
+  try {
+    // Get original linear x velocity covariance
+    original_twist_covariance_x =
+      0.5 * std::pow(j2735_v2x_msgs::to_double(common_data.speed_confidence).value(), 2);
+
+    RCLCPP_DEBUG_STREAM(rclcpp::get_logger("sdsm_to_detection_list_node"),
+      "Original twist covariance X: " << original_twist_covariance_x);
+  } catch (const std::bad_optional_access &) {
+    RCLCPP_DEBUG_STREAM(rclcpp::get_logger("sdsm_to_detection_list_node"),
+      "Missing speed confidence");
+  }
+
+  if (!common_data.speed_z.unavailable){
+    try {
+      // Get original linear z velocity covariance
+      original_twist_covariance_z =
+        0.5 * std::pow(j2735_v2x_msgs::to_double(common_data.speed_confidence_z).value(), 2);
+
+      RCLCPP_DEBUG_STREAM(rclcpp::get_logger("sdsm_to_detection_list_node"),
+        "Original twist covariance Z: " << original_twist_covariance_z);
+    } catch (const std::bad_optional_access &) {
+      RCLCPP_DEBUG_STREAM(rclcpp::get_logger("sdsm_to_detection_list_node"),
+        "Missing z-speed confidence");
+    }
+  }
+  else{
+    original_twist_covariance_z = 0.0;
+    RCLCPP_DEBUG_STREAM(rclcpp::get_logger("sdsm_to_detection_list_node"),
+      "Original twist covariance Z: 0.0 (speed_z not provided)");
+  }
+
+  // Having non-zero value means available
+  if(static_cast<bool>(common_data.accel_4_way.yaw_rate)){
+    try {
+      // Get original angular z velocity (yaw rate) covariance
+      original_twist_covariance_yaw =
+        0.5 * std::pow(j2735_v2x_msgs::to_double(common_data.acc_cfd_yaw).value(), 2);
+
+      RCLCPP_DEBUG_STREAM(rclcpp::get_logger("sdsm_to_detection_list_node"),
+        "Original twist covariance yaw: " << original_twist_covariance_yaw);
+    } catch (const std::bad_optional_access &) {
+      RCLCPP_DEBUG_STREAM(rclcpp::get_logger("sdsm_to_detection_list_node"),
+        "Missing yaw-rate confidence");
+    }
+  }
+  else{
+    original_twist_covariance_yaw = 0.0;
+    RCLCPP_DEBUG_STREAM(rclcpp::get_logger("sdsm_to_detection_list_node"),
+      "Original twist covariance yaw: 0.0 (yaw_rate not provided)");
+  }
+
+  if (conversion_adjustment && conversion_adjustment.value().overwrite_covariance)
+  {
+    // Hardcoded pose covariance
+    detection.pose.covariance[0] = conversion_adjustment.value().pose_covariance_x;
+    detection.pose.covariance[7] = conversion_adjustment.value().pose_covariance_y;
+    detection.pose.covariance[14] = conversion_adjustment.value().pose_covariance_z;
+    detection.pose.covariance[35] = conversion_adjustment.value().pose_covariance_yaw;
+
+    // Hardcoded twist covariance
+    detection.twist.covariance[0] = conversion_adjustment.value().twist_covariance_x;
+    detection.twist.covariance[14] = conversion_adjustment.value().twist_covariance_z;
+    detection.twist.covariance[35] = conversion_adjustment.value().twist_covariance_yaw;
+
+    // Print comparison between original and hardcoded values
+    RCLCPP_DEBUG_STREAM(rclcpp::get_logger("sdsm_to_detection_list_node"),
+      "POSE COVARIANCE COMPARISON - Original vs Hardcoded: " <<
+      "X: " << original_pose_covariance_x << " -> " << detection.pose.covariance[0] << ", " <<
+      "Y: " << original_pose_covariance_y << " -> " << detection.pose.covariance[7] << ", " <<
+      "Z: " << original_pose_covariance_z << " -> " << detection.pose.covariance[14] << ", " <<
+      "Yaw: " << original_pose_covariance_yaw << " -> " << detection.pose.covariance[35]);
+
+    RCLCPP_DEBUG_STREAM(rclcpp::get_logger("sdsm_to_detection_list_node"),
+      "TWIST COVARIANCE COMPARISON - Original vs Hardcoded: " <<
+      "X: " << original_twist_covariance_x << " -> , " << detection.twist.covariance[0] << ", " <<
+      "Z: " << original_twist_covariance_z << " -> , " << detection.twist.covariance[14] << ", " <<
+      "Yaw: " << original_twist_covariance_yaw << " -> " << detection.twist.covariance[35]);
+  }
+  else
+  {
+    // Original pose covariance
+    detection.pose.covariance[0] = original_pose_covariance_x;
+    detection.pose.covariance[7] = original_pose_covariance_y;
+    detection.pose.covariance[14] = original_pose_covariance_z;
+    detection.pose.covariance[35] = original_pose_covariance_yaw;
+
+    // Original twist covariance
+    detection.twist.covariance[0] = original_twist_covariance_x;
+    detection.twist.covariance[14] = original_twist_covariance_z;
+    detection.twist.covariance[35] = original_twist_covariance_yaw;
+  }
+
+  // Fill zeros for all other twist covariance values
+  for (size_t i = 0; i < 36; ++i) {
+    if (i != 0 && i != 14 && i != 35) {
+      detection.twist.covariance[i] = 0.0;
+    }
+  }
+
+  // Fill zeros for all other pose covariance values
+  for (size_t i = 0; i < 36; ++i) {
+    if (i != 0 && i != 7 && i != 14 && i != 35) {
+      detection.pose.covariance[i] = 0.0;
+    }
+  }
+}
 /**
  * @brief Converts a carma_v2x_msgs::msg::SensorDataSharingMessage (SDSM)
  *  to carma_cooperative_perception_interfaces::msg::DetectionList format
@@ -376,6 +570,7 @@ auto transform_pose_from_map_to_wgs84(
  * @return carma_cooperative_perception_interfaces::msg::DetectionList
  *          message containing the transformed detections in CARMA Platform format
  */
+
 auto to_detection_list_msg(
   const carma_v2x_msgs::msg::SensorDataSharingMessage & sdsm, std::string_view georeference,
   bool is_simulation, const std::optional<SdsmToDetectionListConfig>& conversion_adjustment)
@@ -404,23 +599,9 @@ auto to_detection_list_msg(
       MeasurementTimeOffset::from_msg(common_data.measurement_time))};
 
     detection.header.stamp = to_time_msg(detection_time, is_simulation);
-    // TemporaryID and octet string terms come from the SAE J2735 message definitions
-    static constexpr auto to_string = [](const std::vector<std::uint8_t> & temporary_id) {
-      std::string str;
-      str.reserve(2 * std::size(temporary_id));  // Two hex characters per octet string
-
-      std::array<char, 2> buffer;
-      for (const auto & octet_string : temporary_id) {
-        std::to_chars(std::begin(buffer), std::end(buffer), octet_string, 16);
-        str.push_back(std::toupper(std::get<0>(buffer)));
-        str.push_back(std::toupper(std::get<1>(buffer)));
-      }
-
-      return str;
-    };
 
     detection.id =
-      to_string(sdsm.source_id.id) + "-" + std::to_string(common_data.detected_id.object_id);
+      carma_cooperative_perception::to_string(sdsm.source_id.id) + "-" + std::to_string(common_data.detected_id.object_id);
 
     const auto pos_offset_enu{ned_to_enu(PositionOffsetXYZ::from_msg(common_data.pos))};
     detection.pose.pose.position = to_position_msg(MapCoordinate{
@@ -433,39 +614,6 @@ auto to_detection_list_msg(
     {
       detection.pose.pose.position.x += conversion_adjustment.value().x_offset;
       detection.pose.pose.position.y += conversion_adjustment.value().y_offset;
-    }
-
-    // Variables to store original covariance values for debugging
-    double original_pose_covariance_x = 0.0;
-    double original_pose_covariance_y = 0.0;
-    double original_pose_covariance_z = 0.0;
-    double original_pose_covariance_yaw = 0.0;
-    double original_twist_covariance_x = 0.0;
-    double original_twist_covariance_z = 0.0;
-    double original_twist_covariance_yaw = 0.0;
-
-    // Calculate and log original pose covariance values
-    try {
-      original_pose_covariance_x =
-        0.5 * std::pow(j2735_v2x_msgs::to_double(common_data.pos_confidence.pos).value(), 2);
-      original_pose_covariance_y = original_pose_covariance_x;
-
-      RCLCPP_DEBUG_STREAM(rclcpp::get_logger("sdsm_to_detection_list_node"),
-        "Original pose covariance X/Y: " << original_pose_covariance_x);
-    } catch (const std::bad_optional_access &) {
-      RCLCPP_DEBUG_STREAM(rclcpp::get_logger("sdsm_to_detection_list_node"),
-        "Missing position confidence");
-    }
-
-    try {
-      original_pose_covariance_z =
-        0.5 * std::pow(j2735_v2x_msgs::to_double(common_data.pos_confidence.elevation).value(), 2);
-
-      RCLCPP_DEBUG_STREAM(rclcpp::get_logger("sdsm_to_detection_list_node"),
-        "Original pose covariance Z: " << original_pose_covariance_z);
-    } catch (const std::bad_optional_access &) {
-      RCLCPP_DEBUG_STREAM(rclcpp::get_logger("sdsm_to_detection_list_node"),
-        "Missing elevation confidence");
     }
 
     const auto true_heading{units::angle::degree_t{Heading::from_msg(common_data.heading).heading}};
@@ -497,56 +645,17 @@ auto to_detection_list_msg(
 
     detection.pose.pose.orientation = tf2::toMsg(quat_tf);
 
-    try {
-      // Get original heading/yaw covariance
-      original_pose_covariance_yaw =
-        0.5 * std::pow(j2735_v2x_msgs::to_double(common_data.heading_conf).value(), 2);
-
-      RCLCPP_DEBUG_STREAM(rclcpp::get_logger("sdsm_to_detection_list_node"),
-        "Original pose covariance yaw: " << original_pose_covariance_yaw);
-    } catch (const std::bad_optional_access &) {
-      RCLCPP_DEBUG_STREAM(rclcpp::get_logger("sdsm_to_detection_list_node"),
-        "Missing heading confidence");
-    }
-
     const auto speed{Speed::from_msg(common_data.speed)};
     detection.twist.twist.linear.x =
       remove_units(units::velocity::meters_per_second_t{speed.speed});
-
-    try {
-      // Get original linear x velocity covariance
-      original_twist_covariance_x =
-        0.5 * std::pow(j2735_v2x_msgs::to_double(common_data.speed_confidence).value(), 2);
-
-      RCLCPP_DEBUG_STREAM(rclcpp::get_logger("sdsm_to_detection_list_node"),
-        "Original twist covariance X: " << original_twist_covariance_x);
-    } catch (const std::bad_optional_access &) {
-      RCLCPP_DEBUG_STREAM(rclcpp::get_logger("sdsm_to_detection_list_node"),
-        "Missing speed confidence");
-    }
 
     if (common_data.speed_z.speed){
       const auto speed_z{Speed::from_msg(common_data.speed_z)};
       detection.twist.twist.linear.z =
         remove_units(units::velocity::meters_per_second_t{speed_z.speed});
-
-      try {
-        // Get original linear z velocity covariance
-        original_twist_covariance_z =
-          0.5 * std::pow(j2735_v2x_msgs::to_double(common_data.speed_confidence_z).value(), 2);
-
-        RCLCPP_DEBUG_STREAM(rclcpp::get_logger("sdsm_to_detection_list_node"),
-          "Original twist covariance Z: " << original_twist_covariance_z);
-      } catch (const std::bad_optional_access &) {
-        RCLCPP_DEBUG_STREAM(rclcpp::get_logger("sdsm_to_detection_list_node"),
-          "Missing z-speed confidence");
-      }
     }
     else{
       detection.twist.twist.linear.z = remove_units(units::velocity::meters_per_second_t{0.0});
-      original_twist_covariance_z = 0.0;
-      RCLCPP_DEBUG_STREAM(rclcpp::get_logger("sdsm_to_detection_list_node"),
-        "Original twist covariance Z: 0.0 (speed_z not provided)");
     }
 
     // NOTE: common_data.accel_4_way.longitudinal, lateral, vert not supported
@@ -555,99 +664,15 @@ auto to_detection_list_msg(
       const auto accel_set{AccelerationSet4Way::from_msg(common_data.accel_4_way)};
       detection.twist.twist.angular.z =
         remove_units(units::angular_velocity::degrees_per_second_t{accel_set.yaw_rate});
-
-      try {
-        // Get original angular z velocity (yaw rate) covariance
-        original_twist_covariance_yaw =
-          0.5 * std::pow(j2735_v2x_msgs::to_double(common_data.acc_cfd_yaw).value(), 2);
-
-        RCLCPP_DEBUG_STREAM(rclcpp::get_logger("sdsm_to_detection_list_node"),
-          "Original twist covariance yaw: " << original_twist_covariance_yaw);
-      } catch (const std::bad_optional_access &) {
-        RCLCPP_DEBUG_STREAM(rclcpp::get_logger("sdsm_to_detection_list_node"),
-          "Missing yaw-rate confidence");
-      }
     }
     else{
       detection.twist.twist.angular.z = 0.0;
-      original_twist_covariance_yaw = 0.0;
-      RCLCPP_DEBUG_STREAM(rclcpp::get_logger("sdsm_to_detection_list_node"),
-        "Original twist covariance yaw: 0.0 (yaw_rate not provided)");
     }
 
-    if (conversion_adjustment && conversion_adjustment.value().overwrite_covariance)
-    {
-      // Hardcoded pose covariance
-      detection.pose.covariance[0] = conversion_adjustment.value().pose_covariance_x;
-      detection.pose.covariance[7] = conversion_adjustment.value().pose_covariance_y;
-      detection.pose.covariance[14] = conversion_adjustment.value().pose_covariance_z;
-      detection.pose.covariance[35] = conversion_adjustment.value().pose_covariance_yaw;
+    convert_covariances(detection, common_data, conversion_adjustment);
 
-      // Hardcoded twist covariance
-      detection.twist.covariance[0] = conversion_adjustment.value().twist_covariance_x;
-      detection.twist.covariance[14] = conversion_adjustment.value().twist_covariance_z;
-      detection.twist.covariance[35] = conversion_adjustment.value().twist_covariance_yaw;
+    convert_object_type(detection, common_data.obj_type);
 
-      // Print comparison between original and hardcoded values
-      RCLCPP_DEBUG_STREAM(rclcpp::get_logger("sdsm_to_detection_list_node"),
-        "POSE COVARIANCE COMPARISON - Original vs Hardcoded: " <<
-        "X: " << original_pose_covariance_x << " -> " << detection.pose.covariance[0] << ", " <<
-        "Y: " << original_pose_covariance_y << " -> " << detection.pose.covariance[7] << ", " <<
-        "Z: " << original_pose_covariance_z << " -> " << detection.pose.covariance[14] << ", " <<
-        "Yaw: " << original_pose_covariance_yaw << " -> " << detection.pose.covariance[35]);
-
-      RCLCPP_DEBUG_STREAM(rclcpp::get_logger("sdsm_to_detection_list_node"),
-        "TWIST COVARIANCE COMPARISON - Original vs Hardcoded: " <<
-        "X: " << original_twist_covariance_x << " -> , " << detection.twist.covariance[0] << ", " <<
-        "Z: " << original_twist_covariance_z << " -> , " << detection.twist.covariance[14] << ", " <<
-        "Yaw: " << original_twist_covariance_yaw << " -> " << detection.twist.covariance[35]);
-    }
-    else
-    {
-      // Original pose covariance
-      detection.pose.covariance[0] = original_pose_covariance_x;
-      detection.pose.covariance[7] = original_pose_covariance_y;
-      detection.pose.covariance[14] = original_pose_covariance_z;
-      detection.pose.covariance[35] = original_pose_covariance_yaw;
-
-      // Original twist covariance
-      detection.twist.covariance[0] = original_twist_covariance_x;
-      detection.twist.covariance[14] = original_twist_covariance_z;
-      detection.twist.covariance[35] = original_twist_covariance_yaw;
-    }
-
-    // Fill zeros for all other twist covariance values
-    for (size_t i = 0; i < 36; ++i) {
-      if (i != 0 && i != 14 && i != 35) {
-        detection.twist.covariance[i] = 0.0;
-      }
-    }
-
-    // Fill zeros for all other pose covariance values
-    for (size_t i = 0; i < 36; ++i) {
-      if (i != 0 && i != 7 && i != 14 && i != 35) {
-        detection.pose.covariance[i] = 0.0;
-      }
-    }
-
-    switch (common_data.obj_type.object_type) {
-      case common_data.obj_type.ANIMAL:
-        detection.motion_model = detection.MOTION_MODEL_CTRV;
-        // We don't have a good semantic class mapping for animals
-        detection.semantic_class = detection.SEMANTIC_CLASS_UNKNOWN;
-        break;
-      case common_data.obj_type.VRU:
-        detection.motion_model = detection.MOTION_MODEL_CTRV;
-        detection.semantic_class = detection.SEMANTIC_CLASS_PEDESTRIAN;
-        break;
-      case common_data.obj_type.VEHICLE:
-        detection.motion_model = detection.MOTION_MODEL_CTRV;
-        detection.semantic_class = detection.SEMANTIC_CLASS_SMALL_VEHICLE;
-        break;
-      default:
-        detection.motion_model = detection.MOTION_MODEL_CTRV;
-        detection.semantic_class = detection.SEMANTIC_CLASS_UNKNOWN;
-    }
     detection_list.detections.push_back(std::move(detection));
   }
 
