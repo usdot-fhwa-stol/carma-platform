@@ -708,8 +708,6 @@ namespace yield_plugin
       << "s, traj1_speed: " << traj1_speed << ", traj2_speed: " << traj2_speed);
 
     for (const auto& [idx1, idx2] : candidate_collisions) {
-        temporal_checks++;
-
         const auto& point1 = trajectory1.trajectory_points[idx1];
         const auto& point2 = trajectory2[idx2];
 
@@ -743,15 +741,13 @@ namespace yield_plugin
     }
     return best_collision;
   }
+
+
   std::optional<GetCollisionResult> YieldPlugin::get_collision(
     const carma_planning_msgs::msg::TrajectoryPlan& trajectory1,
     const std::vector<carma_perception_msgs::msg::PredictedState>& trajectory2,
     double collision_radius)
   {
-    // Start timing for performance metrics
-    auto start_time = nh_->now();
-    int geographic_checks = 0;
-    int temporal_checks = 0;
 
     RCLCPP_DEBUG_STREAM(rclcpp::get_logger("yield_plugin"),
       "Starting collision detection, trajectory1 size: "
@@ -786,9 +782,7 @@ namespace yield_plugin
     if (candidate_collisions.empty()) {
         auto end_time = nh_->now();
         RCLCPP_DEBUG_STREAM(rclcpp::get_logger("yield_plugin"),
-          "No geographic collisions found. Completed in "
-          << (end_time - start_time).seconds() << "s with "
-          << geographic_checks << " geographic checks.");
+          "No geographic collisions found.");
         return std::nullopt;
     }
 
@@ -805,21 +799,6 @@ namespace yield_plugin
         trajectory1, trajectory2, candidate_collisions, collision_radius);
 
     auto end_time = nh_->now();
-    double computation_time = (end_time - start_time).seconds();
-
-    if (best_collision) {
-        RCLCPP_DEBUG_STREAM(rclcpp::get_logger("yield_plugin"),
-            "Collision detected! Processing took " << computation_time << "s. "
-            "Geographic checks: " << geographic_checks <<
-            ", temporal checks: " << temporal_checks <<
-            ", time difference: " << smallest_time_diff << "s");
-    } else {
-        RCLCPP_DEBUG_STREAM(rclcpp::get_logger("yield_plugin"),
-            "No collision detected. Processing took " << computation_time << "s. "
-            "Geographic checks: " << geographic_checks <<
-            ", temporal checks: " << temporal_checks);
-    }
-
     return best_collision;
   }
 
@@ -933,7 +912,8 @@ namespace yield_plugin
     return collision_result.value().collision_time;
   }
 
-  std::unordered_map<uint32_t, rclcpp::Time> YieldPlugin::get_collision_times_concurrently(const carma_planning_msgs::msg::TrajectoryPlan& original_tp,
+  std::unordered_map<uint32_t, rclcpp::Time> YieldPlugin::get_collision_times_concurrently(
+    const carma_planning_msgs::msg::TrajectoryPlan& original_tp,
     const std::vector<carma_perception_msgs::msg::ExternalObject>& external_objects)
   {
 
@@ -977,7 +957,7 @@ namespace yield_plugin
 
     RCLCPP_DEBUG_STREAM(nh_->get_logger(),"External Object List (external_objects) size: " << external_objects.size());
     const double original_max_speed = max_trajectory_speed(original_tp.trajectory_points, get_trajectory_end_time(original_tp));
-    std::unordered_map<uint32_t, rclcpp::Time> collision_times = get_collision_times_concurrently(original_tp,external_objects);
+    std::unordered_map<uint32_t, rclcpp::Time> collision_times = get_collision_times_concurrently(original_tp, external_objects);
 
     if (collision_times.empty()) { return std::nullopt; }
 
