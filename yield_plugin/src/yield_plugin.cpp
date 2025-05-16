@@ -672,9 +672,60 @@ namespace yield_plugin
     return candidate_collisions;
   }
 
+  /**
+   * Calculates the speed at a specific point in a trajectory by examining adjacent points
+   *
+   * @param trajectory The full trajectory plan
+   * @param idx The index of the point for which to calculate speed
+   * @return The calculated speed in distance units per second
+   */
+  double calculateTrajectorySpeed(
+    const carma_planning_msgs::msg::TrajectoryPlan& trajectory,
+    size_t idx)
+  {
+    if (trajectory.trajectory_points.empty()) {
+        return 0.0;
+    }
+
+    // If we have only one point, we can't calculate speed
+    if (trajectory.trajectory_points.size() == 1) {
+        return 0.0;
+    }
+
+    const auto& point = trajectory.trajectory_points[idx];
+
+    if (idx < trajectory.trajectory_points.size() - 1) {
+        // Calculate speed using the current point and the next point
+        const auto& next_point = trajectory.trajectory_points[idx + 1];
+        double dx = next_point.x - point.x;
+        double dy = next_point.y - point.y;
+        double dt = (rclcpp::Time(next_point.target_time) - rclcpp::Time(point.target_time)).seconds();
+
+        if (dt > 0.0) {
+            double distance = std::hypot(dx, dy);
+            return distance / dt;
+        }
+    } else if (idx > 0) {
+        // For the last point, use previous point for calculation
+        const auto& prev_point = trajectory.trajectory_points[idx - 1];
+        double dx = point.x - prev_point.x;
+        double dy = point.y - prev_point.y;
+        double dt = (rclcpp::Time(point.target_time) -
+          rclcpp::Time(prev_point.target_time)).seconds();
+
+        if (dt > 0.0) {
+            double distance = std::hypot(dx, dy);
+            return distance / dt;
+        }
+    }
+
+    // Return 0 if we couldn't calculate a speed
+    return 0.0;
+  }
+
   /*
     * @brief Get the best collision point based on temporal checks
-             from the candidate collisions filtered from spatial checks
+    *        from the candidate collisions filtered from spatial checks
     * @param trajectory1 The trajectory of the host vehicle
     * @param trajectory2 The predicted state trajectory (often incoming object)
     * @param candidate_collisions A vector of pairs of indices representing potential
@@ -689,33 +740,40 @@ namespace yield_plugin
     double collision_radius)
   {
     double smallest_time_diff = std::numeric_limits<double>::infinity();
+    double smallest_time_diff_2 = std::numeric_limits<double>::infinity();
+
     std::optional<CollisionData> best_collision = std::nullopt;
-
-    const double traj1_speed = 8.99; //TODO fix
-    const double traj2_speed = std::hypot(trajectory2.front().predicted_velocity.linear.x,
-                                          trajectory2.front().predicted_velocity.linear.y);
-    double max_collision_time_diff = 0.0;
-    if (traj1_speed > 0.0 || traj2_speed > 0.0) {
-        max_collision_time_diff =
-          std::max(1.0, 2 * collision_radius / std::hypot(traj1_speed, traj2_speed));
-    } else {
-        // If both objects have zero speed, use a constant time window
-        max_collision_time_diff = 1.0; // 1 second
-    }
-
-    RCLCPP_DEBUG_STREAM(rclcpp::get_logger("yield_plugin"),
-      "Max collision time difference: " << max_collision_time_diff
-      << "s, traj1_speed: " << traj1_speed << ", traj2_speed: " << traj2_speed);
 
     for (const auto& [idx1, idx2] : candidate_collisions) {
         const auto& point1 = trajectory1.trajectory_points[idx1];
         const auto& point2 = trajectory2[idx2];
 
+        // Calculate velocity for trajectory1 using the refactored function
+        double traj1_speed = calculateTrajectorySpeed(trajectory1, idx1);
+
+        // Calculate speed for trajectory2
+        double traj2_speed = std::hypot(
+          point2.predicted_velocity.linear.x, point2.predicted_velocity.linear.y);
+
+        // Calculate the maximum time difference for a potential collision based on actual speeds
+        double max_collision_time_diff = 0.0;
+        if (traj1_speed > 0.0 || traj2_speed > 0.0) {
+            // Calculate how long it would be to travel 2*collision_radius given the combined speed
+            // Use a minimum speed to avoid division by very small numbers
+            double combined_speed = std::max(0.1, std::hypot(traj1_speed, traj2_speed));
+            max_collision_time_diff = std::max(1.0, 2 * collision_radius / combined_speed);
+        } else {
+            // If both objects have zero speed, use a constant time window
+            max_collision_time_diff = 1.0; // 1 second
+        }
+
         double t1 = rclcpp::Time(point1.target_time).seconds();
         double t2 = rclcpp::Time(point2.header.stamp).seconds();
         double time_diff = std::abs(t1 - t2);
 
-        // Skip if time difference is too large
+        smallest_time_diff_2 = std::min(smallest_time_diff_2, time_diff);
+
+        // Skip if time difference is too large for the current speeds
         if (time_diff > max_collision_time_diff) {
             continue;
         }
@@ -723,7 +781,6 @@ namespace yield_plugin
         // Capture current collision if it has the smallest time difference
         if (time_diff < smallest_time_diff) {
             smallest_time_diff = time_diff;
-
             CollisionData collision_result;
             collision_result.point1 = lanelet::BasicPoint2d(point1.x, point1.y);
             collision_result.point2 = lanelet::BasicPoint2d(
@@ -737,11 +794,24 @@ namespace yield_plugin
                 rclcpp::Time(point2.header.stamp);
 
             best_collision = collision_result;
+
+            RCLCPP_DEBUG_STREAM(rclcpp::get_logger("yield_plugin"),
+                "Potential collision found: time_diff=" << time_diff
+                << "s, max_allowed=" << max_collision_time_diff
+                << "s, traj1_speed=" << traj1_speed << ", traj2_speed=" << traj2_speed);
         }
+    }
+    if (!best_collision) {
+        RCLCPP_DEBUG_STREAM(rclcpp::get_logger("yield_plugin"),
+            "No valid collision found after temporal checks"
+            << ", smallest_time_diff_2=" << smallest_time_diff_2);
+    } else {
+        RCLCPP_DEBUG_STREAM(rclcpp::get_logger("yield_plugin"),
+            "Best collision found: time_diff=" << smallest_time_diff
+            << "s, collision_time=" << best_collision->collision_time.seconds());
     }
     return best_collision;
   }
-
 
   std::optional<CollisionData> YieldPlugin::get_collision(
     const carma_planning_msgs::msg::TrajectoryPlan& trajectory1,
