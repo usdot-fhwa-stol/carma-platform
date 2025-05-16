@@ -257,7 +257,7 @@ auto MultipleObjectTrackerNode::handle_on_configure(
 
   detection_list_sub_ = create_subscription<
     carma_cooperative_perception_interfaces::msg::DetectionList>(
-    "input/detection_list", 1,
+    "input/detection_list", 100,
     [this](const carma_cooperative_perception_interfaces::msg::DetectionList::SharedPtr msg_ptr) {
       if (const auto current_state{this->get_current_state().label()}; current_state == "active") {
         this->store_new_detections(*msg_ptr);
@@ -282,7 +282,7 @@ auto MultipleObjectTrackerNode::handle_on_configure(
             result.successful = false;
             result.reason = "parameter is read-only while node is in 'Active' state";
 
-            RCLCPP_ERROR(
+            RCLCPP_DEBUG(
               get_logger(),
               ("Cannot change parameter 'execution_frequency_hz': " + result.reason).c_str());
 
@@ -581,6 +581,8 @@ auto MultipleObjectTrackerNode::execute_pipeline() -> void
 
     // This clustering distance is an arbitrarily-chosen heuristic. It is working well for our
     // current purposes, but there's no reason it couldn't be restricted or loosened.
+    RCLCPP_DEBUG_STREAM(
+      get_logger(), "Detection size before clustering: " << detections_.size());
     const auto clusters{mot::cluster_detections(detections_, 0.75)};
     for (const auto & cluster : clusters) {
       const auto detection{std::cbegin(cluster.get_detections())->second};
@@ -593,7 +595,9 @@ auto MultipleObjectTrackerNode::execute_pipeline() -> void
       track_manager_.add_tentative_track(
         std::visit(make_track_visitor, detection, std::variant<mot::Uuid>(new_uuid)));
     }
-
+    RCLCPP_DEBUG_STREAM(
+      get_logger(), "Track size after detection clustering: "
+      << track_manager_.get_all_tracks().size());
     track_list_pub_->publish(carma_cooperative_perception_interfaces::msg::TrackList{});
 
     detections_.clear();
@@ -602,10 +606,14 @@ auto MultipleObjectTrackerNode::execute_pipeline() -> void
   }
 
   const units::time::second_t current_time{this->now().seconds()};
+  RCLCPP_DEBUG_STREAM(
+    get_logger(), "Starting new cycle, detection size: " << detections_.size());
 
   temporally_align_detections(detections_, current_time);
 
   const auto predicted_tracks{predict_track_states(track_manager_.get_all_tracks(), current_time)};
+  RCLCPP_DEBUG_STREAM(
+    get_logger(), "Track size after prediction: " << predicted_tracks.size());
   auto scores{
     mot::score_tracks_and_detections(predicted_tracks, detections_, SemanticDistance2dScore{})};
 
@@ -617,7 +625,8 @@ auto MultipleObjectTrackerNode::execute_pipeline() -> void
     mot::associate_detections_to_tracks(scores, mot::gnn_association_visitor)};
 
   track_manager_.update_track_lists(associations);
-
+  RCLCPP_DEBUG_STREAM(
+    get_logger(), "Track size after association: " << track_manager_.get_all_tracks().size());
   std::unordered_map<mot::Uuid, Detection> detection_map;
   for (const auto & detection : detections_) {
     detection_map[mot::get_uuid(detection)] = detection;
@@ -631,6 +640,8 @@ auto MultipleObjectTrackerNode::execute_pipeline() -> void
       const auto fused_track{
         std::visit(mot::covariance_intersection_visitor, track, first_detection)};
       track_manager_.update_track(mot::get_uuid(track), fused_track);
+      RCLCPP_DEBUG_STREAM(
+        get_logger(), "Updating track: " << mot::get_uuid(track).value());
     }
   }
 
@@ -642,6 +653,8 @@ auto MultipleObjectTrackerNode::execute_pipeline() -> void
       unassociated_detections.push_back(detection);
     }
   }
+  RCLCPP_DEBUG_STREAM(
+    get_logger(), "Unassociated detection size: " << unassociated_detections.size());
 
   // We want to remove unassociated tracks that are close enough to existing tracks
   // to avoid creating duplicates. Duplicate tracks will cause association inconsistencies
@@ -664,6 +677,10 @@ auto MultipleObjectTrackerNode::execute_pipeline() -> void
 
   unassociated_detections.erase(remove_start, std::end(unassociated_detections));
 
+  RCLCPP_DEBUG_STREAM(
+    get_logger(), "Unassociated detection size after removal: "
+    << unassociated_detections.size());
+
   // This clustering distance is an arbitrarily-chosen heuristic. It is working well for our
   // current purposes, but there's no reason it couldn't be restricted or loosened.
   const auto clusters{mot::cluster_detections(unassociated_detections, 0.75, MetricSe2{})};
@@ -679,11 +696,18 @@ auto MultipleObjectTrackerNode::execute_pipeline() -> void
       std::visit(make_track_visitor, detection, std::variant<mot::Uuid>(new_uuid)));
   }
 
+  RCLCPP_DEBUG_STREAM(
+    get_logger(), "Track size after adding unassociated detections: "
+    << track_manager_.get_all_tracks().size());
+
   carma_cooperative_perception_interfaces::msg::TrackList track_list;
   for (const auto & track : track_manager_.get_confirmed_tracks()) {
     track_list.tracks.push_back(to_ros_msg(track));
   }
 
+  RCLCPP_DEBUG_STREAM(
+    get_logger(), "Confirmed Track size after converting to ROS message: "
+    << track_list.tracks.size());
   track_list_pub_->publish(track_list);
 
   detections_.clear();
