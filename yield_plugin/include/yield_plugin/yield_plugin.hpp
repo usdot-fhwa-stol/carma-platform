@@ -63,7 +63,7 @@ struct PointSpeedPair
 /**
  * \brief Convenience class for saving collision results
  */
-struct GetCollisionResult
+struct CollisionData
 {
   rclcpp::Time collision_time;
   lanelet::BasicPoint2d point1;
@@ -252,7 +252,7 @@ public:
    * NOTE: Collisions are based on only collision radius at the same predicted time even if ego vehicle maybe past the obstacle. To filter these cases, see `is_object_behind_vehicle()`
    * \return data of time of collision if detected, otherwise, std::nullopt
    */
-  std::optional<GetCollisionResult> get_collision(const carma_planning_msgs::msg::TrajectoryPlan& trajectory1, const std::vector<carma_perception_msgs::msg::PredictedState>& trajectory2, double collision_radius);
+  std::optional<CollisionData> get_collision(const carma_planning_msgs::msg::TrajectoryPlan& trajectory1, const std::vector<carma_perception_msgs::msg::PredictedState>& trajectory2, double collision_radius);
 
   bool is_trajectory_on_route(
     const std::vector<carma_perception_msgs::msg::PredictedState>& trajectory);

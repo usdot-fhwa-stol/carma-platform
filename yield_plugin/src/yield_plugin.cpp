@@ -680,16 +680,16 @@ namespace yield_plugin
     * @param candidate_collisions A vector of pairs of indices representing potential
     *         collision points in the form of (trajectory1_index, trajectory2_index)
     * @param collision_radius The radius within which to check for collisions
-    * @return An optional GetCollisionResult containing the best collision candidate
+    * @return An optional CollisionData containing the best collision candidate
   */
-  std::optional<GetCollisionResult> get_temporal_collision(
+  std::optional<CollisionData> get_temporal_collision(
     const carma_planning_msgs::msg::TrajectoryPlan& trajectory1,
     const std::vector<carma_perception_msgs::msg::PredictedState>& trajectory2,
     const std::vector<std::pair<size_t, size_t>>& candidate_collisions,
     double collision_radius)
   {
     double smallest_time_diff = std::numeric_limits<double>::infinity();
-    std::optional<GetCollisionResult> best_collision = std::nullopt;
+    std::optional<CollisionData> best_collision = std::nullopt;
 
     const double traj1_speed = 8.99; //TODO fix
     const double traj2_speed = std::hypot(trajectory2.front().predicted_velocity.linear.x,
@@ -724,7 +724,7 @@ namespace yield_plugin
         if (time_diff < smallest_time_diff) {
             smallest_time_diff = time_diff;
 
-            GetCollisionResult collision_result;
+            CollisionData collision_result;
             collision_result.point1 = lanelet::BasicPoint2d(point1.x, point1.y);
             collision_result.point2 = lanelet::BasicPoint2d(
                 point2.predicted_position.position.x,
@@ -743,7 +743,7 @@ namespace yield_plugin
   }
 
 
-  std::optional<GetCollisionResult> YieldPlugin::get_collision(
+  std::optional<CollisionData> YieldPlugin::get_collision(
     const carma_planning_msgs::msg::TrajectoryPlan& trajectory1,
     const std::vector<carma_perception_msgs::msg::PredictedState>& trajectory2,
     double collision_radius)
@@ -795,11 +795,8 @@ namespace yield_plugin
     // Formula: collision_radius = sqrt((v1*t)^2 + (v2*t)^2), solve for t
 
     // Extract speeds - we'll use these for temporal calculations later
-    const auto best_collision = get_temporal_collision(
-        trajectory1, trajectory2, candidate_collisions, collision_radius);
-
-    auto end_time = nh_->now();
-    return best_collision;
+    return get_temporal_collision(
+      trajectory1, trajectory2, candidate_collisions, collision_radius);;
   }
 
   // Helper method to check if a trajectory is on route
