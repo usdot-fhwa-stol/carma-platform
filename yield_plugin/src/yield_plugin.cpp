@@ -697,7 +697,7 @@ namespace yield_plugin
     double max_collision_time_diff = 0.0;
     if (traj1_speed > 0.0 || traj2_speed > 0.0) {
         max_collision_time_diff =
-          std::max(1.0, collision_radius / std::hypot(traj1_speed, traj2_speed));
+          std::max(1.0, 2 * collision_radius / std::hypot(traj1_speed, traj2_speed));
     } else {
         // If both objects have zero speed, use a constant time window
         max_collision_time_diff = 1.0; // 1 second
