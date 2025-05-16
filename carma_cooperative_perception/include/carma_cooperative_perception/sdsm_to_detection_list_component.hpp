@@ -28,6 +28,7 @@
 
 namespace carma_cooperative_perception
 {
+
 class SdsmToDetectionListNode : public carma_ros2_utils::CarmaLifecycleNode
 {
   using input_msg_type = carma_v2x_msgs::msg::SensorDataSharingMessage;
@@ -35,11 +36,53 @@ class SdsmToDetectionListNode : public carma_ros2_utils::CarmaLifecycleNode
   using output_msg_type = carma_cooperative_perception_interfaces::msg::DetectionList;
 
 public:
+  auto handle_on_configure(const rclcpp_lifecycle::State & /* previous_state */)
+  -> carma_ros2_utils::CallbackReturn override
+  {
+    // Declare parameters
+    declare_parameter("overwrite_covariance", config_.overwrite_covariance);
+    declare_parameter("pose_covariance_x", config_.pose_covariance_x);
+    declare_parameter("pose_covariance_y", config_.pose_covariance_y);
+    declare_parameter("pose_covariance_z", config_.pose_covariance_z);
+    declare_parameter("pose_covariance_yaw", config_.pose_covariance_yaw);
+    declare_parameter("twist_covariance_x", config_.twist_covariance_x);
+    declare_parameter("twist_covariance_z", config_.twist_covariance_z);
+    declare_parameter("twist_covariance_yaw", config_.twist_covariance_yaw);
+    declare_parameter("adjust_pose", config_.adjust_pose);
+    declare_parameter("x_offset", config_.x_offset);
+    declare_parameter("y_offset", config_.y_offset);
+    declare_parameter("yaw_offset", config_.yaw_offset);
+
+    // Get parameters
+    config_.overwrite_covariance = get_parameter("overwrite_covariance").as_bool();
+    config_.pose_covariance_x = get_parameter("pose_covariance_x").as_double();
+    config_.pose_covariance_y = get_parameter("pose_covariance_y").as_double();
+    config_.pose_covariance_z = get_parameter("pose_covariance_z").as_double();
+    config_.pose_covariance_yaw = get_parameter("pose_covariance_yaw").as_double();
+    config_.twist_covariance_x = get_parameter("twist_covariance_x").as_double();
+    config_.twist_covariance_z = get_parameter("twist_covariance_z").as_double();
+    config_.adjust_pose = get_parameter("adjust_pose").as_bool();
+    config_.x_offset = get_parameter("x_offset").as_double();
+    config_.y_offset = get_parameter("y_offset").as_double();
+    config_.yaw_offset = get_parameter("yaw_offset").as_double();
+
+    // Set up parameter validation callback
+    on_set_parameters_callback_ = add_on_set_parameters_callback(
+      [this](const std::vector<rclcpp::Parameter> & parameters) {
+        return update_parameters(parameters);
+      });
+
+    // Use the stream operator for debug output
+    RCLCPP_INFO_STREAM(get_logger(), "SdsmToDetectionListNode Configuration: " << config_);
+
+    return carma_ros2_utils::CallbackReturn::SUCCESS;
+  }
+
   explicit SdsmToDetectionListNode(const rclcpp::NodeOptions & options)
   : CarmaLifecycleNode{options},
     publisher_{create_publisher<output_msg_type>("output/detections", 1)},
     subscription_{create_subscription<input_msg_type>(
-      "input/sdsm", 1, [this](input_msg_shared_pointer msg_ptr) { sdsm_msg_callback(*msg_ptr); })},
+      "input/sdsm", 100, [this](input_msg_shared_pointer msg_ptr) { sdsm_msg_callback(*msg_ptr); })},
     georeference_subscription_{create_subscription<std_msgs::msg::String>(
       "input/georeference", 1,
       [this](std_msgs::msg::String::SharedPtr msg_ptr) { georeference_ = msg_ptr->data; })},
@@ -47,12 +90,34 @@ public:
       "input/cdasim_clock", 1,
       [this](rosgraph_msgs::msg::Clock::ConstSharedPtr msg_ptr) { cdasim_time_ = msg_ptr->clock; })}
   {
+    // Initialize the valid parameter names to check when setting the at runtime
+    valid_parameter_names_ = {
+      "overwrite_covariance",
+      "pose_covariance_x",
+      "pose_covariance_y",
+      "pose_covariance_z",
+      "pose_covariance_yaw",
+      "twist_covariance_x",
+      "twist_covariance_z",
+      "twist_covariance_yaw",
+      "adjust_pose",
+      "x_offset",
+      "y_offset",
+      "yaw_offset"
+    };
   }
 
   auto sdsm_msg_callback(const input_msg_type & msg) const -> void
   {
     try {
-      auto detection_list_msg{to_detection_list_msg(msg, georeference_)};
+      std::optional<SdsmToDetectionListConfig> conversion_adjustment = std::nullopt;
+      if (config_.overwrite_covariance || config_.adjust_pose) {
+        conversion_adjustment = config_;
+      }
+      auto detection_list_msg{
+        to_detection_list_msg(msg, georeference_, cdasim_time_ != std::nullopt,
+          conversion_adjustment)
+      };
 
       if (cdasim_time_) {
         // When in simulation, ROS time is CARLA time, but SDSMs use CDASim time
@@ -62,7 +127,9 @@ public:
           detection.header.stamp = rclcpp::Time(detection.header.stamp) + time_delta;
         }
       }
-
+      RCLCPP_DEBUG_STREAM(
+        get_logger(), "SDSM to detection list conversion: "
+        << detection_list_msg.detections.size() << " detections");
       publisher_->publish(detection_list_msg);
     } catch (const std::runtime_error & e) {
       RCLCPP_ERROR_STREAM(get_logger(), "Failed to convert SDSM to detection list: " << e.what());
@@ -78,6 +145,88 @@ private:
   std::optional<rclcpp::Time> cdasim_time_{std::nullopt};
 
   std::string georeference_{""};
+
+  // Configuration object
+  SdsmToDetectionListConfig config_{};
+
+  OnSetParametersCallbackHandle::SharedPtr on_set_parameters_callback_{nullptr};
+
+  // Parameter validation function
+  rcl_interfaces::msg::SetParametersResult update_parameters(
+    const std::vector<rclcpp::Parameter> & parameters)
+  {
+    rcl_interfaces::msg::SetParametersResult result;
+    result.successful = true;
+    result.reason = "success";
+
+    for (const auto & parameter : parameters) {
+      // Check if parameter name is valid
+      if (valid_parameter_names_.find(parameter.get_name()) == valid_parameter_names_.end()) {
+        result.successful = false;
+        result.reason = "Unexpected parameter name '" + parameter.get_name() + "'";
+        RCLCPP_ERROR_STREAM(get_logger(), "Cannot change parameter: " << result.reason);
+        break;
+      }
+
+      // Validate covariance values (must be non-negative)
+      if (parameter.get_name() != "adjust_pose" &&
+          parameter.get_name() != "overwrite_covariance") {
+        if (const auto value{parameter.as_double()}; value < 0.0) {
+          result.successful = false;
+          result.reason = "Covariance parameter must be non-negative";
+          RCLCPP_ERROR_STREAM(
+            get_logger(),
+            "Cannot change parameter '" << parameter.get_name() << "': " << result.reason);
+          break;
+        } else {
+          // Update the appropriate parameter in the config
+          update_config_double_parameter(parameter);
+        }
+      } else if (parameter.get_name() == "overwrite_covariance"){
+        config_.overwrite_covariance = parameter.as_bool();
+      } else if (parameter.get_name() == "adjust_pose"){
+        config_.adjust_pose = parameter.as_bool();
+      }
+    }
+
+    // If parameters were successfully updated, log the new configuration
+    if (result.successful) {
+      RCLCPP_DEBUG_STREAM(get_logger(), "Updated configuration: " << config_);
+    }
+
+    return result;
+  }
+
+  // Helper function to update a specific parameter in the config
+  void update_config_double_parameter(const rclcpp::Parameter & parameter) {
+    const std::string & name = parameter.get_name();
+    const double value = parameter.as_double();
+
+    if (name == "pose_covariance_x") {
+      config_.pose_covariance_x = value;
+    } else if (name == "pose_covariance_y") {
+      config_.pose_covariance_y = value;
+    } else if (name == "pose_covariance_z") {
+      config_.pose_covariance_z = value;
+    } else if (name == "pose_covariance_yaw") {
+      config_.pose_covariance_yaw = value;
+    } else if (name == "twist_covariance_x") {
+      config_.twist_covariance_x = value;
+    } else if (name == "twist_covariance_z") {
+      config_.twist_covariance_z = value;
+    } else if (name == "twist_covariance_yaw") {
+      config_.twist_covariance_yaw = value;
+    } else if (name == "x_offset") {
+      config_.x_offset = value;
+    } else if (name == "y_offset") {
+      config_.y_offset = value;
+    } else if (name == "yaw_offset") {
+      config_.yaw_offset = value;
+    }
+  }
+
+  // Set of valid parameter names for validation
+  std::unordered_set<std::string> valid_parameter_names_;
 };
 
 }  // namespace carma_cooperative_perception
