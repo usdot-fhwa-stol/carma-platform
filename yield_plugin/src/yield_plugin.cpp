@@ -980,23 +980,36 @@ namespace yield_plugin
     const carma_planning_msgs::msg::TrajectoryPlan& original_tp,
     const std::vector<carma_perception_msgs::msg::ExternalObject>& external_objects)
   {
+    const unsigned int max_threads = std::thread::hardware_concurrency();
+    RCLCPP_INFO_STREAM(rclcpp::get_logger("yield_plugin"),
+                      "Detected max threads: " << max_threads);
 
-    std::unordered_map<uint32_t, std::future<std::optional<rclcpp::Time>>> futures;
+    std::unordered_map<uint32_t, std::future<std::optional<rclcpp::Time>>> all_futures;
+
+    // Launch all tasks at once
+    for (size_t i = 0; i < external_objects.size(); ++i) {
+        const auto& object = external_objects[i];
+        RCLCPP_DEBUG_STREAM(
+            rclcpp::get_logger("yield_plugin"),
+            "Launching task for object: " << i);
+
+        all_futures[object.id] = std::async(std::launch::async,
+            [this, &original_tp, &object]() {
+                return get_collision_time(original_tp, object);
+            });
+    }
+
+    // Collect all results
     std::unordered_map<uint32_t, rclcpp::Time> collision_times;
-
-    // Launch asynchronous tasks to check for collision times
-    for (const auto& object : external_objects) {
-      futures[object.id] = std::async(std::launch::async,[this, &original_tp, &object]{
-          return get_collision_time(original_tp, object);
-        });
+    for (auto& [id, future] : all_futures) {
+        if (const auto collision_time = future.get()) {
+            collision_times[id] = collision_time.value();
+        }
     }
 
-    // Collect results from futures and update collision_times
-    for (const auto& object : external_objects) {
-      if (const auto collision_time{futures.at(object.id).get()}) {
-        collision_times[object.id] = collision_time.value();
-      }
-    }
+    RCLCPP_INFO_STREAM(
+        rclcpp::get_logger("yield_plugin"),
+        "Processed " << external_objects.size() << " objects");
 
     return collision_times;
   }
