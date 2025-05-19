@@ -873,10 +873,7 @@ namespace yield_plugin
   bool YieldPlugin::is_trajectory_on_route(
     const std::vector<carma_perception_msgs::msg::PredictedState>& trajectory) {
 
-    // Skip every few points for efficiency
-    const int stride = std::max(1, static_cast<int>(trajectory.size() / 10));
-
-    for (size_t j = 0; j < trajectory.size(); j += stride) {
+    for (size_t j = 0; j < trajectory.size(); j ++) {
         lanelet::BasicPoint2d curr_point;
         curr_point.x() = trajectory.at(j).predicted_position.position.x;
         curr_point.y() = trajectory.at(j).predicted_position.position.y;
