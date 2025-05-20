@@ -25,7 +25,7 @@ Usage:
     python3 xodr_transform.py <input_file> <output_file>
 """
 
-import xml.etree.ElementTree as ET
+from lxml import etree
 from pyproj import CRS, Transformer
 import math
 import re
@@ -69,7 +69,7 @@ def transform_hdg(hdg, angle_deg):
 
 
 def transform_xodr_file(input_path, output_path):
-    tree = ET.parse(input_path)
+    tree = etree.parse(input_path)
     root = tree.getroot()
 
     ### INPUT REQUIRED ###
@@ -91,7 +91,7 @@ def transform_xodr_file(input_path, output_path):
         new_lon = orig_lon
 
     # Update geoReference tag for new output
-    geo_ref_tag.text = update_georeference_text(geo_ref_tag.text, new_lat, new_lon)
+    geo_ref_tag.text = etree.CDATA(update_georeference_text(geo_ref_tag.text, new_lat, new_lon))
 
     # Define projections
     crs_orig = CRS.from_proj4(f"+proj=tmerc +lat_0={orig_lat} +lon_0={orig_lon} +ellps=WGS84 +datum=WGS84 +units=m +no_defs")
