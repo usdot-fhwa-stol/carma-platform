@@ -254,6 +254,12 @@ public:
    */
   std::optional<CollisionData> get_collision(const carma_planning_msgs::msg::TrajectoryPlan& trajectory1, const std::vector<carma_perception_msgs::msg::PredictedState>& trajectory2, double collision_radius);
 
+  // TODO
+  std::optional<CollisionData> get_temporal_collision(
+    const carma_planning_msgs::msg::TrajectoryPlan& trajectory1,
+    const std::vector<carma_perception_msgs::msg::PredictedState>& trajectory2,
+    const std::vector<std::pair<size_t, size_t>>& candidate_collisions,
+    double collision_radius);
   bool is_trajectory_on_route(
     const std::vector<carma_perception_msgs::msg::PredictedState>& trajectory);
 

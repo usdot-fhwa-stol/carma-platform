@@ -733,7 +733,7 @@ namespace yield_plugin
     * @param collision_radius The radius within which to check for collisions
     * @return An optional CollisionData containing the best collision candidate
   */
-  std::optional<CollisionData> get_temporal_collision(
+  std::optional<CollisionData> YieldPlugin::get_temporal_collision(
     const carma_planning_msgs::msg::TrajectoryPlan& trajectory1,
     const std::vector<carma_perception_msgs::msg::PredictedState>& trajectory2,
     const std::vector<std::pair<size_t, size_t>>& candidate_collisions,
@@ -756,16 +756,16 @@ namespace yield_plugin
           point2.predicted_velocity.linear.x, point2.predicted_velocity.linear.y);
 
         // Calculate the maximum time difference for a potential collision based on actual speeds
-        double max_collision_time_diff = 0.0;
-        if (traj1_speed > 0.0 || traj2_speed > 0.0) {
-            // Calculate how long it would be to travel 2*collision_radius given the combined speed
-            // Use a minimum speed to avoid division by very small numbers
-            double combined_speed = std::max(0.1, std::hypot(traj1_speed, traj2_speed));
-            max_collision_time_diff = std::max(1.0, 2 * collision_radius / combined_speed);
-        } else {
-            // If both objects have zero speed, use a constant time window
-            max_collision_time_diff = 1.0; // 1 second
-        }
+        double max_collision_time_diff = 3.0;
+        // if (traj1_speed > 0.0 || traj2_speed > 0.0) {
+        //     // Calculate how long it would be to travel 2*collision_radius given the combined speed
+        //     // Use a minimum speed to avoid division by very small numbers
+        //     double combined_speed = std::max(0.1, std::hypot(traj1_speed, traj2_speed));
+        //     max_collision_time_diff = std::max(2.0, 2 * collision_radius / combined_speed);
+        // } else {
+        //     // If both objects have zero speed, use a constant time window
+        //     max_collision_time_diff = 1.0; // 1 second
+        // }
 
         double t1 = rclcpp::Time(point1.target_time).seconds();
         double t2 = rclcpp::Time(point2.header.stamp).seconds();
@@ -802,11 +802,11 @@ namespace yield_plugin
         }
     }
     if (!best_collision) {
-        RCLCPP_DEBUG_STREAM(rclcpp::get_logger("yield_plugin"),
+        RCLCPP_WARN_STREAM(nh_->get_logger(),
             "No valid collision found after temporal checks"
             << ", smallest_time_diff_2=" << smallest_time_diff_2);
     } else {
-        RCLCPP_DEBUG_STREAM(rclcpp::get_logger("yield_plugin"),
+        RCLCPP_WARN_STREAM(nh_->get_logger(),
             "Best collision found: time_diff=" << smallest_time_diff
             << "s, collision_time=" << best_collision->collision_time.seconds());
     }
@@ -984,7 +984,7 @@ namespace yield_plugin
     RCLCPP_INFO_STREAM(rclcpp::get_logger("yield_plugin"),
                       "Detected max threads: " << max_threads);
 
-    std::unordered_map<uint32_t, std::future<std::optional<rclcpp::Time>>> all_futures;
+    std::unordered_map<size_t, std::future<std::optional<rclcpp::Time>>> all_futures;
 
     // Launch all tasks at once
     for (size_t i = 0; i < external_objects.size(); ++i) {
@@ -1003,14 +1003,20 @@ namespace yield_plugin
     std::unordered_map<uint32_t, rclcpp::Time> collision_times;
     for (auto& [id, future] : all_futures) {
         if (const auto collision_time = future.get()) {
-            collision_times[id] = collision_time.value();
+            if (collision_time == std::nullopt)
+            {
+              RCLCPP_ERROR_STREAM(rclcpp::get_logger("yield_plugin"),
+                "Collision time is null for object: " << id);
+            }
+            else{
+              collision_times[id] = collision_time.value();
+            }
         }
     }
 
     RCLCPP_INFO_STREAM(
         rclcpp::get_logger("yield_plugin"),
         "Processed " << external_objects.size() << " objects");
-
     return collision_times;
   }
 
