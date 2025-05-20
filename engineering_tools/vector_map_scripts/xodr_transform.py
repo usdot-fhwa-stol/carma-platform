@@ -20,7 +20,7 @@ The script can be run from the command line with the following arguments:
 - input_file: The path to the input XODR file.
 - output_file: The path to the output XODR file.
 Dependency:
-- pip install pyproj argparse
+- pip install pyproj argparse lxml
 Usage:
     python3 xodr_transform.py <input_file> <output_file>
 """
