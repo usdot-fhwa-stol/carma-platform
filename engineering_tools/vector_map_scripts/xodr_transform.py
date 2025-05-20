@@ -1,3 +1,30 @@
+# Copyright 2025 Leidos
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#     http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
+"""
+This script transforms an XODR file by updating the geoReference and rotating the coordinates.
+It reads the input XODR file, extracts the original latitude and longitude from the geoReference tag,
+applies a transformation to the coordinates, and writes the modified data to a new XODR file.
+The script can be run from the command line with the following arguments:
+- input_file: The path to the input XODR file.
+- output_file: The path to the output XODR file.
+Dependency:
+- pip install pyproj argparse
+Usage:
+    python3 xodr_transform.py <input_file> <output_file>
+"""
+
 import xml.etree.ElementTree as ET
 from pyproj import CRS, Transformer
 import math
@@ -41,9 +68,16 @@ def transform_hdg(hdg, angle_deg):
     return hdg + math.radians(angle_deg)
 
 
-def transform_xodr_file(input_path, output_path, new_lat, new_lon, angle_deg):
+def transform_xodr_file(input_path, output_path):
     tree = ET.parse(input_path)
     root = tree.getroot()
+
+    ### INPUT REQUIRED ###
+    # Adjust these values as needed
+    new_lat = None
+    new_lon = None
+    angle_deg = 0.0
+    ######################
 
     # Get original lat/lon from geoReference tag
     geo_ref_tag = root.find("header/geoReference")
@@ -51,6 +85,10 @@ def transform_xodr_file(input_path, output_path, new_lat, new_lon, angle_deg):
         raise ValueError("No geoReference tag found.")
 
     orig_lat, orig_lon = extract_lat_lon_from_georeference(geo_ref_tag.text)
+
+    if new_lat is None or new_lon is None:
+        new_lat = orig_lat
+        new_lon = orig_lon
 
     # Update geoReference tag for new output
     geo_ref_tag.text = update_georeference_text(geo_ref_tag.text, new_lat, new_lon)
@@ -101,10 +139,7 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="Transform XODR GPS-coordinates with a new geoReference and rotation.")
     parser.add_argument("input_file", help="Path to input .xodr file")
     parser.add_argument("output_file", help="Path to output .xodr file")
-    parser.add_argument("--new_lat", type=float, default=0.0, help="New GPS reference latitude")
-    parser.add_argument("--new_lon", type=float, default=0.0, help="New GPS reference longitude")
-    parser.add_argument("--angle_deg", type=float, default=0.0, help="Rotation angle in degrees")
 
     args = parser.parse_args()
 
-    transform_xodr_file(args.input_file, args.output_file, args.new_lat, args.new_lon, args.angle_deg)
+    transform_xodr_file(args.input_file, args.output_file)
