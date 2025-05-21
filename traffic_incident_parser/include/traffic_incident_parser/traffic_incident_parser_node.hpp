@@ -30,9 +30,9 @@ namespace traffic_incident_parser
 
   /**
    * \class TrafficIncidentParserNode
-   * \brief The class responsible for processing incoming MobilityOperation messages with strategy 
+   * \brief The class responsible for processing incoming MobilityOperation messages with strategy
    *        "carma3/Incident_Use_Case"
-   * 
+   *
    */
   class TrafficIncidentParserNode : public carma_ros2_utils::CarmaLifecycleNode
   {
@@ -41,20 +41,21 @@ namespace traffic_incident_parser
     // Subscribers
     carma_ros2_utils::SubPtr<std_msgs::msg::String> projection_sub_;
     carma_ros2_utils::SubPtr<carma_v2x_msgs::msg::MobilityOperation> mobility_operation_sub_;
+    carma_ros2_utils::SubPtr<carma_planning_msgs::msg::RouteState> route_state_sub_;
 
     // Publishers
     carma_ros2_utils::PubPtr<carma_v2x_msgs::msg::TrafficControlMessage> traffic_control_msg_pub_;
 
     // World Model Listener; must be declared before traffic_parser_worker_ for proper initialization
     std::shared_ptr<carma_wm::WMListener> wm_listener_;
-    
+
     // TrafficIncidentParserWorker class object
     std::shared_ptr<TrafficIncidentParserWorker> traffic_parser_worker_;
 
   public:
 
     /**
-     * \brief TrafficIncidentParserNode constructor 
+     * \brief TrafficIncidentParserNode constructor
      */
     explicit TrafficIncidentParserNode(const rclcpp::NodeOptions &);
 
@@ -64,7 +65,7 @@ namespace traffic_incident_parser
     carma_ros2_utils::CallbackReturn handle_on_configure(const rclcpp_lifecycle::State &);
 
     /**
-     * \brief Publish traffic control message 
+     * \brief Publish traffic control message
      */
     void publishTrafficControlMessage(const carma_v2x_msgs::msg::TrafficControlMessage& traffic_control_msg) const;
   };

@@ -37,7 +37,7 @@ namespace traffic_incident_parser
 
             bool valid_msg = mobilityMessageParser(mobility_msg->strategy_params);
 
-            if(valid_msg && event_type=="CLOSED")
+            if(valid_msg && event_type=="CLOSED" && route_ready_)
             {
                 previous_strategy_params=mobility_msg->strategy_params;
                 carma_v2x_msgs::msg::TrafficControlMessage traffic_control_msg;
@@ -60,6 +60,17 @@ namespace traffic_incident_parser
         projection_msg_=projection_msg->data;
     }
 
+    void TrafficIncidentParserWorker::routeStateCallback(carma_planning_msgs::msg::RouteState::UniquePtr route_state_msg)
+    {
+        if (route_state_msg->state == carma_planning_msgs::msg::RouteState::FOLLOWING)
+        {
+            route_ready_ = true;
+        }
+        else
+        {
+            route_ready_ = false;
+        }
+    }
 
     bool TrafficIncidentParserWorker::mobilityMessageParser(std::string mobility_strategy_params)
     {
@@ -78,7 +89,7 @@ namespace traffic_incident_parser
 
         if (vec.size() != 8)
         {
-            RCLCPP_ERROR_STREAM(logger_->get_logger(),"Given mobility strategy params are not correctly formatted.");
+            RCLCPP_ERROR_STREAM(rclcpp::get_logger("traffic_incident_parser"),"Given mobility strategy params are not correctly formatted.");
             return false;
         }
 
@@ -107,7 +118,9 @@ namespace traffic_incident_parser
         std::string temp_event_reason=stringParserHelper(event_reason_str,event_reason_str.find_last_of("event_reason:"));
         std::string temp_event_type=stringParserHelper(event_type_str,event_type_str.find_last_of("event_type:"));
 
-        if ( approximate_degree_delta < APPROXIMATE_DEG_PER_5M // If the vehicle has not moved more than 5m and the parameters remain unchanged
+        // If route was not ready, previous message was not sent, so we need to send the new one
+        if (route_ready_
+          && approximate_degree_delta < APPROXIMATE_DEG_PER_5M // If the vehicle has not moved more than 5m and the parameters remain unchanged
           && temp_down_track == down_track
           && temp_up_track == up_track
           && temp_min_gap == min_gap
@@ -115,12 +128,11 @@ namespace traffic_incident_parser
           && temp_event_reason == event_reason
           && temp_event_type == event_type) {
 
-            RCLCPP_DEBUG_STREAM(logger_->get_logger(), "Strategy params are unchanged so ignoring new message: " << mobility_strategy_params
+            RCLCPP_DEBUG_STREAM(rclcpp::get_logger("traffic_incident_parser"), "Strategy params are unchanged so ignoring new message: " << mobility_strategy_params
                 << " degree_delta: " << approximate_degree_delta
                 << " prev_lat: " << latitude << " prev_lon: " << longitude);
 
             return false;
-
         }
 
         // Valid message contents so populate member variables
@@ -183,9 +195,9 @@ namespace traffic_incident_parser
     void TrafficIncidentParserWorker::getAdjacentForwardCenterlines(const lanelet::ConstLanelets& adjacentSet,
         const lanelet::BasicPoint2d& start_point, double downtrack, std::vector<std::vector<lanelet::BasicPoint2d>>* forward_lanes) const
     {
-        RCLCPP_DEBUG_STREAM(logger_->get_logger(), "getAdjacentForwardCenterlines");
+        RCLCPP_DEBUG_STREAM(rclcpp::get_logger("traffic_incident_parser"), "getAdjacentForwardCenterlines");
         for (const auto& ll : adjacentSet) {
-            RCLCPP_DEBUG_STREAM(logger_->get_logger(), "Processing adjacent lanelet: " << ll.id());
+            RCLCPP_DEBUG_STREAM(rclcpp::get_logger("traffic_incident_parser"), "Processing adjacent lanelet: " << ll.id());
             std::vector<lanelet::BasicPoint2d> following_lane;
             auto cur_ll = ll;
             double dist = 0;
@@ -196,21 +208,21 @@ namespace traffic_incident_parser
 
             lanelet::BasicPoint2d prev_point = cur_ll.centerline()[p_idx].basicPoint2d();
 
-            RCLCPP_DEBUG_STREAM(logger_->get_logger(), "nearest point" << cur_ll.centerline()[p_idx].id() << " : " << prev_point.x() << ", " << prev_point.y());
+            RCLCPP_DEBUG_STREAM(rclcpp::get_logger("traffic_incident_parser"), "nearest point" << cur_ll.centerline()[p_idx].id() << " : " << prev_point.x() << ", " << prev_point.y());
 
-            RCLCPP_DEBUG_STREAM(logger_->get_logger(), "p_idx: " << p_idx);
+            RCLCPP_DEBUG_STREAM(rclcpp::get_logger("traffic_incident_parser"), "p_idx: " << p_idx);
 
             // Accumulate distance
             while (dist < downtrack) {
-                RCLCPP_DEBUG_STREAM(logger_->get_logger(), "Accumulating lanelet: " << cur_ll.id());
+                RCLCPP_DEBUG_STREAM(rclcpp::get_logger("traffic_incident_parser"), "Accumulating lanelet: " << cur_ll.id());
                 if (p_idx == cur_ll.centerline().size()) {
                     auto next_lls = wm_->getMapRoutingGraph()->following(cur_ll, false);
                     if (next_lls.empty()) {
-                        RCLCPP_DEBUG_STREAM(logger_->get_logger(), "No followers");
+                        RCLCPP_DEBUG_STREAM(rclcpp::get_logger("traffic_incident_parser"), "No followers");
                         break;
                     }
                     const auto& next = next_lls[0];
-                    RCLCPP_DEBUG_STREAM(logger_->get_logger(), "Getting next lanelet: " << next.id());
+                    RCLCPP_DEBUG_STREAM(rclcpp::get_logger("traffic_incident_parser"), "Getting next lanelet: " << next.id());
                     cur_ll = next;
                     p_idx = 0;
                 }
@@ -218,11 +230,11 @@ namespace traffic_incident_parser
                     following_lane.push_back(lanelet::traits::to2D(cur_ll.centerline()[p_idx]));
                     dist += lanelet::geometry::distance2d(prev_point, following_lane.back());
                 }
-                RCLCPP_DEBUG_STREAM(logger_->get_logger(), "distance " << dist);
+                RCLCPP_DEBUG_STREAM(rclcpp::get_logger("traffic_incident_parser"), "distance " << dist);
                 prev_point = lanelet::traits::to2D(cur_ll.centerline()[p_idx]);
                 p_idx++;
             }
-            RCLCPP_DEBUG_STREAM(logger_->get_logger(), "Adding lane with size: " << following_lane.size());
+            RCLCPP_DEBUG_STREAM(rclcpp::get_logger("traffic_incident_parser"), "Adding lane with size: " << following_lane.size());
             forward_lanes->emplace_back(following_lane);
         }
     }
@@ -230,9 +242,9 @@ namespace traffic_incident_parser
     void TrafficIncidentParserWorker::getAdjacentReverseCenterlines(const lanelet::ConstLanelets& adjacentSet,
         const lanelet::BasicPoint2d& start_point, double uptrack, std::vector<std::vector<lanelet::BasicPoint2d>>* reverse_lanes) const
     {
-        RCLCPP_DEBUG_STREAM(logger_->get_logger(), "getAdjacentReverseCenterlines");
+        RCLCPP_DEBUG_STREAM(rclcpp::get_logger("traffic_incident_parser"), "getAdjacentReverseCenterlines");
         for (const auto& ll : adjacentSet) {
-            RCLCPP_DEBUG_STREAM(logger_->get_logger(), "Processing adjacent lanelet: " << ll.id());
+            RCLCPP_DEBUG_STREAM(rclcpp::get_logger("traffic_incident_parser"), "Processing adjacent lanelet: " << ll.id());
             std::vector<lanelet::BasicPoint2d> previous_lane;
             auto cur_ll = ll;
             double dist = 0;
@@ -242,21 +254,21 @@ namespace traffic_incident_parser
 
             lanelet::BasicPoint2d prev_point = cur_ll.centerline()[p_idx].basicPoint2d();
 
-            RCLCPP_DEBUG_STREAM(logger_->get_logger(), "nearest point" << cur_ll.centerline()[p_idx].id() << " : " << prev_point.x() << ", " << prev_point.y());
+            RCLCPP_DEBUG_STREAM(rclcpp::get_logger("traffic_incident_parser"), "nearest point" << cur_ll.centerline()[p_idx].id() << " : " << prev_point.x() << ", " << prev_point.y());
 
-            RCLCPP_DEBUG_STREAM(logger_->get_logger(), "p_idx: " << p_idx);
+            RCLCPP_DEBUG_STREAM(rclcpp::get_logger("traffic_incident_parser"), "p_idx: " << p_idx);
 
             // Accumulate distance
             while (dist < uptrack) {
-                RCLCPP_DEBUG_STREAM(logger_->get_logger(), "Accumulating lanelet: " << cur_ll.id());
+                RCLCPP_DEBUG_STREAM(rclcpp::get_logger("traffic_incident_parser"), "Accumulating lanelet: " << cur_ll.id());
                 if (p_idx == 0) {
                     auto next_lls = wm_->getMapRoutingGraph()->previous(cur_ll, false);
                     if (next_lls.empty()) {
-                        RCLCPP_DEBUG_STREAM(logger_->get_logger(), "No previous lanelets");
+                        RCLCPP_DEBUG_STREAM(rclcpp::get_logger("traffic_incident_parser"), "No previous lanelets");
                         break;
                     }
                     const auto& next = next_lls[0];
-                    RCLCPP_DEBUG_STREAM(logger_->get_logger(), "Getting next lanelet: " << next.id());
+                    RCLCPP_DEBUG_STREAM(rclcpp::get_logger("traffic_incident_parser"), "Getting next lanelet: " << next.id());
                     cur_ll = next;
                     p_idx = cur_ll.centerline().size() - 1;
                 }
@@ -265,49 +277,49 @@ namespace traffic_incident_parser
                     previous_lane.push_back(lanelet::traits::to2D(cur_ll.centerline()[p_idx]));
                     dist += lanelet::geometry::distance2d(prev_point, previous_lane.back());
                 }
-                RCLCPP_DEBUG_STREAM(logger_->get_logger(), "distance " << dist);
+                RCLCPP_DEBUG_STREAM(rclcpp::get_logger("traffic_incident_parser"), "distance " << dist);
                 prev_point = lanelet::traits::to2D(cur_ll.centerline()[p_idx]);
                 p_idx--;
             }
-            RCLCPP_DEBUG_STREAM(logger_->get_logger(), "Adding lane with size: " << previous_lane.size());
+            RCLCPP_DEBUG_STREAM(rclcpp::get_logger("traffic_incident_parser"), "Adding lane with size: " << previous_lane.size());
             reverse_lanes->emplace_back(previous_lane);
         }
     }
 
     std::vector<carma_v2x_msgs::msg::TrafficControlMessageV01> TrafficIncidentParserWorker::composeTrafficControlMesssages()
     {
-        RCLCPP_DEBUG_STREAM(logger_->get_logger(), "In composeTrafficControlMesssages");
+        RCLCPP_DEBUG_STREAM(rclcpp::get_logger("traffic_incident_parser"), "In composeTrafficControlMesssages");
         if(!wm_->getMap())
         {
-            RCLCPP_WARN_STREAM(logger_->get_logger(), "Traffic Incident Parser is composing a Traffic Control Message, but it has not loaded the map yet. Returning empty list");
+            RCLCPP_WARN_STREAM(rclcpp::get_logger("traffic_incident_parser"), "Traffic Incident Parser is composing a Traffic Control Message, but it has not loaded the map yet. Returning empty list");
             return {};
         }
         if (projection_msg_ == "")
         {
-            RCLCPP_WARN_STREAM(logger_->get_logger(), "Traffic Incident Parser is composing a Traffic Control Message, but georeference has not loaded yet. Returning empty list");
+            RCLCPP_WARN_STREAM(rclcpp::get_logger("traffic_incident_parser"), "Traffic Incident Parser is composing a Traffic Control Message, but georeference has not loaded yet. Returning empty list");
             return {};
         }
         local_point_=getIncidentOriginPoint();
-        RCLCPP_DEBUG_STREAM(logger_->get_logger(), "Responder point in map frame: " << local_point_.x() << ", " << local_point_.y());
+        RCLCPP_DEBUG_STREAM(rclcpp::get_logger("traffic_incident_parser"), "Responder point in map frame: " << local_point_.x() << ", " << local_point_.y());
         auto current_lanelets = lanelet::geometry::findNearest(wm_->getMap()->laneletLayer, local_point_, 1);
         if (current_lanelets.empty()) {
-            RCLCPP_DEBUG_STREAM(logger_->get_logger(), "No nearest lanelet to responder vehicle in map point: " << local_point_.x() << ", " << local_point_.y());
+            RCLCPP_DEBUG_STREAM(rclcpp::get_logger("traffic_incident_parser"), "No nearest lanelet to responder vehicle in map point: " << local_point_.x() << ", " << local_point_.y());
             return {};
         }
 
         lanelet::ConstLanelet current_lanelet = current_lanelets[0].second;
 
-        RCLCPP_DEBUG_STREAM(logger_->get_logger(), "Nearest Lanelet: " << current_lanelet.id());
+        RCLCPP_DEBUG_STREAM(rclcpp::get_logger("traffic_incident_parser"), "Nearest Lanelet: " << current_lanelet.id());
 
         lanelet::ConstLanelets lefts = { current_lanelet };
         for (const auto& l : wm_->getMapRoutingGraph()->lefts(current_lanelet)) {
             lefts.emplace_back(l);
-            RCLCPP_DEBUG_STREAM(logger_->get_logger(), "Left lanelet: " << l.id());
+            RCLCPP_DEBUG_STREAM(rclcpp::get_logger("traffic_incident_parser"), "Left lanelet: " << l.id());
         }
 
         lanelet::ConstLanelets rights = wm_->getMapRoutingGraph()->rights(current_lanelet);
         for (const auto& l : rights) {
-            RCLCPP_DEBUG_STREAM(logger_->get_logger(), "Right lanelet: " << l.id());
+            RCLCPP_DEBUG_STREAM(rclcpp::get_logger("traffic_incident_parser"), "Right lanelet: " << l.id());
         }
 
         // Assume that if there are more lanelets to the left than the right then the tahoe is on the left
@@ -315,11 +327,11 @@ namespace traffic_incident_parser
         std::vector<std::vector<lanelet::BasicPoint2d>> reverse_lanes;
 
         if (lefts.size() >=  rights.size()) {
-            RCLCPP_DEBUG_STREAM(logger_->get_logger(), "Emergency vehicle on the right ");
+            RCLCPP_DEBUG_STREAM(rclcpp::get_logger("traffic_incident_parser"), "Emergency vehicle on the right ");
             getAdjacentForwardCenterlines(lefts, local_point_, down_track, &forward_lanes);
             getAdjacentReverseCenterlines(lefts, local_point_, up_track, &reverse_lanes);
         } else {
-            RCLCPP_DEBUG_STREAM(logger_->get_logger(), "Emergency vehicle on the left ");
+            RCLCPP_DEBUG_STREAM(rclcpp::get_logger("traffic_incident_parser"), "Emergency vehicle on the left ");
             getAdjacentForwardCenterlines(rights, local_point_, down_track, &forward_lanes);
             getAdjacentReverseCenterlines(rights, local_point_, up_track, &reverse_lanes);
         }
@@ -335,7 +347,7 @@ namespace traffic_incident_parser
             }
         }
 
-        RCLCPP_DEBUG_STREAM(logger_->get_logger(), "Constructing message for lanes: " << reverse_lanes.size());
+        RCLCPP_DEBUG_STREAM(rclcpp::get_logger("traffic_incident_parser"), "Constructing message for lanes: " << reverse_lanes.size());
         std::vector<carma_v2x_msgs::msg::TrafficControlMessageV01> output_msg;
 
         carma_v2x_msgs::msg::TrafficControlMessageV01 traffic_mobility_msg;
@@ -363,7 +375,7 @@ namespace traffic_incident_parser
 
         if (common_to_map_proj == nullptr) { // proj_create_crs_to_crs returns 0 when there is an error in the projection
 
-            RCLCPP_ERROR_STREAM(logger_->get_logger(), "Failed to generate projection between map  georeference and common frame with error number: " <<  proj_context_errno(PJ_DEFAULT_CTX)
+            RCLCPP_ERROR_STREAM(rclcpp::get_logger("traffic_incident_parser"), "Failed to generate projection between map  georeference and common frame with error number: " <<  proj_context_errno(PJ_DEFAULT_CTX)
                 << " projection_msg_: " << projection_msg_ << " common_frame: " << common_frame);
 
             return {}; // Ignore geofence if it could not be projected into the map frame
@@ -395,7 +407,7 @@ namespace traffic_incident_parser
 
         if (map_to_tmerc_proj == nullptr) { // proj_create_crs_to_crs returns 0 when there is an error in the projection
 
-            RCLCPP_ERROR_STREAM(logger_->get_logger(), "Failed to generate projection between map  georeference and tmerc frame with error number: " <<  proj_context_errno(PJ_DEFAULT_CTX)
+            RCLCPP_ERROR_STREAM(rclcpp::get_logger("traffic_incident_parser"), "Failed to generate projection between map  georeference and tmerc frame with error number: " <<  proj_context_errno(PJ_DEFAULT_CTX)
                 << " projection_msg_: " << projection_msg_ << " local_tmerc_enu_proj: " << local_tmerc_enu_proj);
 
             return {}; // Ignore geofence if it could not be projected into the map frame
@@ -403,7 +415,7 @@ namespace traffic_incident_parser
 
         traffic_mobility_msg.geometry.proj = local_tmerc_enu_proj;
 
-        RCLCPP_DEBUG_STREAM(logger_->get_logger(), "Projection in message: " << traffic_mobility_msg.geometry.proj);
+        RCLCPP_DEBUG_STREAM(rclcpp::get_logger("traffic_incident_parser"), "Projection in message: " << traffic_mobility_msg.geometry.proj);
 
         ////
         // Projections setup. Next projections will be used for node computation
@@ -413,7 +425,7 @@ namespace traffic_incident_parser
 
             traffic_mobility_msg.geometry.nodes.clear();
             if (reverse_lanes[i].size() == 0) {
-                RCLCPP_DEBUG_STREAM(logger_->get_logger(), "Skipping empty lane");
+                RCLCPP_DEBUG_STREAM(rclcpp::get_logger("traffic_incident_parser"), "Skipping empty lane");
                 continue;
             }
 
@@ -436,11 +448,11 @@ namespace traffic_incident_parser
                 delta.x=tmerc_pt.xyz.x - prev_point.x;
                 delta.y=tmerc_pt.xyz.y - prev_point.y;
 
-                RCLCPP_DEBUG_STREAM(logger_->get_logger(), "prev_point x" << prev_point.x << ", prev_point y " << prev_point.y);
-                RCLCPP_DEBUG_STREAM(logger_->get_logger(), "tmerc_pt.xyz.x" << tmerc_pt.xyz.x << ", tmerc_pt.xyz.y " << tmerc_pt.xyz.y);
-                RCLCPP_DEBUG_STREAM(logger_->get_logger(), "map_pt x" << p.x() << ", map_pt y " << p.y());
+                RCLCPP_DEBUG_STREAM(rclcpp::get_logger("traffic_incident_parser"), "prev_point x" << prev_point.x << ", prev_point y " << prev_point.y);
+                RCLCPP_DEBUG_STREAM(rclcpp::get_logger("traffic_incident_parser"), "tmerc_pt.xyz.x" << tmerc_pt.xyz.x << ", tmerc_pt.xyz.y " << tmerc_pt.xyz.y);
+                RCLCPP_DEBUG_STREAM(rclcpp::get_logger("traffic_incident_parser"), "map_pt x" << p.x() << ", map_pt y " << p.y());
 
-                RCLCPP_DEBUG_STREAM(logger_->get_logger(), "calculated diff x" << delta.x << ", diff y" << delta.y);
+                RCLCPP_DEBUG_STREAM(rclcpp::get_logger("traffic_incident_parser"), "calculated diff x" << delta.x << ", diff y" << delta.y);
                 if (first)
                 {
                     traffic_mobility_msg.geometry.nodes.push_back(prev_point);

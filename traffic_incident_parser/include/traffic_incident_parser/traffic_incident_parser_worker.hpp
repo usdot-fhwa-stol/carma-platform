@@ -20,6 +20,7 @@
 #include <carma_v2x_msgs/msg/mobility_operation.hpp>
 #include <carma_v2x_msgs/msg/traffic_control_message_v01.hpp>
 #include <carma_v2x_msgs/msg/traffic_control_message.hpp>
+#include <carma_planning_msgs/msg/route_state.hpp>
 #include <std_msgs/msg/string.hpp>
 #include <functional>
 #include <iostream>
@@ -115,6 +116,12 @@ class TrafficIncidentParserWorker
   void getAdjacentReverseCenterlines(const lanelet::ConstLanelets& adjacentSet,
     const lanelet::BasicPoint2d& start_point, double uptrack, std::vector<std::vector<lanelet::BasicPoint2d>>* reverse_lanes) const;
 
+  /*!
+   *  \brief Route state callback to set the route ready flag. The route ready flag helps
+   *         determine if the mobility operation message needs to be resent
+   */
+  void routeStateCallback(carma_planning_msgs::msg::RouteState::UniquePtr route_state_msg);
+
   double latitude = 0.0;
   double longitude = 0.0;
   double down_track = 0.0;
@@ -125,6 +132,7 @@ class TrafficIncidentParserWorker
   std::string event_type;
 
   std::string previous_strategy_params="";
+  bool route_ready_ = false;
 
  private:
 
