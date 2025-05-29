@@ -37,6 +37,9 @@
 #include <numeric>
 #include <string>
 #include <utility>
+#include <cstdlib>  // for setenv, unsetenv
+#include <ctime>    // for tzset
+#include <fmt/format.h>
 
 #include <proj.h>
 #include <gsl/pointers>
@@ -55,8 +58,111 @@
 
 namespace carma_cooperative_perception
 {
-auto to_time_msg(const DDateTime & d_date_time) -> builtin_interfaces::msg::Time
+auto to_time_msg(const DDateTime & d_date_time, bool is_simulation) -> builtin_interfaces::msg::Time
 {
+  // Convert DDateTime to builtin_interfaces::msg::Time
+  builtin_interfaces::msg::Time msg;
+  if (!is_simulation) {
+    // Create a tm structure to hold the date and time components
+    std::tm timeinfo = {};
+
+    // Year
+    if (d_date_time.year){
+      if(remove_units(d_date_time.year.value()) >= 1970){
+        // std::tm is counted since 1900
+        timeinfo.tm_year = static_cast<int>(remove_units(d_date_time.year.value())) - 1900;
+      }
+      else{
+        throw std::invalid_argument(
+          "Year must be greater than 1970 for live date/time conversion");
+      }
+    }
+
+    // Month
+    if (d_date_time.month && static_cast<int>(d_date_time.month.value().get_value()) != 0)
+    {
+      // std::tm is counted from 0 to 11, J2735 is counted from 1 to 12
+      timeinfo.tm_mon = static_cast<int>(d_date_time.month.value().get_value()) - 1;
+    }
+
+    // Day
+    if (d_date_time.day && static_cast<int>(d_date_time.day.value()) != 0)
+    {
+      // Day is counted from 1 to 31 in both std::tm and J2735
+      timeinfo.tm_mday = static_cast<int>(d_date_time.day.value());
+    }
+    else{
+      timeinfo.tm_mday = 1; // Default to 1 if day is not provided as C++ initializes to 0
+    }
+
+    // Hour
+    if (d_date_time.hour && static_cast<int>(d_date_time.hour.value()) != 31)
+    {
+      // Hour is counted from 0 to 23 in both std::tm and J2735
+      timeinfo.tm_hour = static_cast<int>(d_date_time.hour.value());
+    }
+
+    // Minute
+    if (d_date_time.minute && static_cast<int>(d_date_time.minute.value()) != 60)
+    {
+      // Minute is counted from 0 to 59 in both std::tm and J2735
+      timeinfo.tm_min = static_cast<int>(d_date_time.minute.value());
+    }
+    // Set seconds field (which actually uses ms in j2735) to 0
+    // for now and add milliseconds later
+    timeinfo.tm_sec = 0;
+
+    std::time_t timeT;
+
+    if (d_date_time.time_zone_offset)
+    {
+      timeinfo.tm_gmtoff = static_cast<int>(d_date_time.time_zone_offset.value());
+      timeT = std::mktime(&timeinfo);
+    }
+    else
+    {
+      // Get the current timezone from the system
+      // Use tzset() to initialize timezone data from system
+      tzset();
+
+      // Get current timestamp to determine DST status
+      // NOTE: If the system is running in a docker container (which it mostly is),
+      // the timezone is by default GMT unless otherwise set. Just a caution.
+      std::time_t currentTime = std::time(nullptr);
+      std::tm* localTimeInfo = std::localtime(&currentTime);
+
+      long timezone_offset = localTimeInfo->tm_gmtoff;
+
+      timeinfo.tm_gmtoff = timezone_offset;
+      timeinfo.tm_isdst = localTimeInfo->tm_isdst;
+
+      // Convert to time_t
+      timeT = std::mktime(&timeinfo);
+    }
+
+    // Convert time_t to system_clock::time_point
+    auto timePoint = std::chrono::system_clock::from_time_t(timeT);
+
+    // Add milliseconds
+    int milliseconds = 0;
+    if (d_date_time.second)
+    {
+      milliseconds = static_cast<int>(d_date_time.second.value());
+    }
+    timePoint += std::chrono::milliseconds(milliseconds);
+
+    // Extract seconds and nanoseconds since epoch
+    auto duration = timePoint.time_since_epoch();
+    auto seconds = std::chrono::duration_cast<std::chrono::seconds>(duration);
+    auto nanoseconds = std::chrono::duration_cast<std::chrono::nanoseconds>(duration - seconds);
+
+    msg.sec = static_cast<int32_t>(seconds.count());
+    msg.nanosec = static_cast<uint32_t>(nanoseconds.count());
+
+    return msg;
+  }
+
+  // if simulation, we ignore the date, month, year etc because the simulation won't be that long
   double seconds;
   const auto fractional_secs{std::modf(
     remove_units(units::time::second_t{d_date_time.hour.value_or(units::time::second_t{0.0})}) +
@@ -64,7 +170,6 @@ auto to_time_msg(const DDateTime & d_date_time) -> builtin_interfaces::msg::Time
       remove_units(units::time::second_t{d_date_time.second.value_or(units::time::second_t{0.0})}),
     &seconds)};
 
-  builtin_interfaces::msg::Time msg;
   msg.sec = static_cast<std::int32_t>(seconds);
   msg.nanosec = static_cast<std::int32_t>(fractional_secs * 1e9);
 
@@ -243,15 +348,245 @@ auto transform_pose_from_map_to_wgs84(
   return ref_pos;
 }
 
+// Helper function to convert a vector of uint8_t to a hex string
+// TemporaryID and octet string terms come from the SAE J2735 message definitions
+std::string to_string(const std::vector<std::uint8_t> & temporary_id) {
+  std::string str;
+  str.reserve(2 * std::size(temporary_id));  // Two hex characters per octet string
+
+  std::array<char, 2> buffer;
+  for (const auto & octet_string : temporary_id) {
+    std::to_chars(std::begin(buffer), std::end(buffer), octet_string, 16);
+    str.push_back(std::toupper(std::get<0>(buffer)));
+    str.push_back(std::toupper(std::get<1>(buffer)));
+  }
+
+  return str;
+};
+
+// Helper function to fill the type from J3224 ObjectType to CARMA Detection
+void convert_object_type(carma_cooperative_perception_interfaces::msg::Detection& detection,
+  const j3224_v2x_msgs::msg::ObjectType& j3224_obj_type)
+{
+  switch (j3224_obj_type.object_type) {
+    case j3224_obj_type.ANIMAL:
+      detection.motion_model = detection.MOTION_MODEL_CTRV;
+      // We don't have a good semantic class mapping for animals
+      detection.semantic_class = detection.SEMANTIC_CLASS_UNKNOWN;
+      break;
+    case j3224_obj_type.VRU:
+      detection.motion_model = detection.MOTION_MODEL_CTRV;
+      detection.semantic_class = detection.SEMANTIC_CLASS_PEDESTRIAN;
+      break;
+    case j3224_obj_type.VEHICLE:
+      detection.motion_model = detection.MOTION_MODEL_CTRV;
+      detection.semantic_class = detection.SEMANTIC_CLASS_SMALL_VEHICLE;
+      break;
+    default:
+      detection.motion_model = detection.MOTION_MODEL_CTRV;
+      detection.semantic_class = detection.SEMANTIC_CLASS_UNKNOWN;
+  }
+}
+// Helper function to fill all concariance related values from J3324 confidence values to covariance
+void convert_covariances(carma_cooperative_perception_interfaces::msg::Detection& detection,
+  const carma_v2x_msgs::msg::DetectedObjectCommonData& common_data,
+  const std::optional<SdsmToDetectionListConfig>& conversion_adjustment)
+{
+  // Variables to store original covariance values for debugging
+  double original_pose_covariance_x = 0.0;
+  double original_pose_covariance_y = 0.0;
+  double original_pose_covariance_z = 0.0;
+  double original_pose_covariance_yaw = 0.0;
+  double original_twist_covariance_x = 0.0;
+  double original_twist_covariance_z = 0.0;
+  double original_twist_covariance_yaw = 0.0;
+
+  // Calculate and log original pose covariance values
+  try {
+    original_pose_covariance_x =
+      0.5 * std::pow(j2735_v2x_msgs::to_double(common_data.pos_confidence.pos).value(), 2);
+    original_pose_covariance_y = original_pose_covariance_x;
+
+    RCLCPP_DEBUG_STREAM(rclcpp::get_logger("sdsm_to_detection_list_node"),
+      "Original pose covariance X/Y: " << original_pose_covariance_x);
+  } catch (const std::bad_optional_access &) {
+    RCLCPP_DEBUG_STREAM(rclcpp::get_logger("sdsm_to_detection_list_node"),
+      "Missing position confidence");
+  }
+
+  try {
+    original_pose_covariance_z =
+      0.5 * std::pow(j2735_v2x_msgs::to_double(common_data.pos_confidence.elevation).value(), 2);
+
+    RCLCPP_DEBUG_STREAM(rclcpp::get_logger("sdsm_to_detection_list_node"),
+      "Original pose covariance Z: " << original_pose_covariance_z);
+  } catch (const std::bad_optional_access &) {
+    RCLCPP_DEBUG_STREAM(rclcpp::get_logger("sdsm_to_detection_list_node"),
+      "Missing elevation confidence");
+  }
+
+  try {
+    // Get original heading/yaw covariance
+    original_pose_covariance_yaw =
+      0.5 * std::pow(j2735_v2x_msgs::to_double(common_data.heading_conf).value(), 2);
+
+    RCLCPP_DEBUG_STREAM(rclcpp::get_logger("sdsm_to_detection_list_node"),
+      "Original pose covariance yaw: " << original_pose_covariance_yaw);
+  } catch (const std::bad_optional_access &) {
+    RCLCPP_DEBUG_STREAM(rclcpp::get_logger("sdsm_to_detection_list_node"),
+      "Missing heading confidence");
+  }
+
+  try {
+    // Get original linear x velocity covariance
+    original_twist_covariance_x =
+      0.5 * std::pow(j2735_v2x_msgs::to_double(common_data.speed_confidence).value(), 2);
+
+    RCLCPP_DEBUG_STREAM(rclcpp::get_logger("sdsm_to_detection_list_node"),
+      "Original twist covariance X: " << original_twist_covariance_x);
+  } catch (const std::bad_optional_access &) {
+    RCLCPP_DEBUG_STREAM(rclcpp::get_logger("sdsm_to_detection_list_node"),
+      "Missing speed confidence");
+  }
+
+  if (!common_data.speed_z.unavailable){
+    try {
+      // Get original linear z velocity covariance
+      original_twist_covariance_z =
+        0.5 * std::pow(j2735_v2x_msgs::to_double(common_data.speed_confidence_z).value(), 2);
+
+      RCLCPP_DEBUG_STREAM(rclcpp::get_logger("sdsm_to_detection_list_node"),
+        "Original twist covariance Z: " << original_twist_covariance_z);
+    } catch (const std::bad_optional_access &) {
+      RCLCPP_DEBUG_STREAM(rclcpp::get_logger("sdsm_to_detection_list_node"),
+        "Missing z-speed confidence");
+    }
+  }
+  else{
+    original_twist_covariance_z = 0.0;
+    RCLCPP_DEBUG_STREAM(rclcpp::get_logger("sdsm_to_detection_list_node"),
+      "Original twist covariance Z: 0.0 (speed_z not provided)");
+  }
+
+  // Having non-zero value means available
+  if(static_cast<bool>(common_data.accel_4_way.yaw_rate)){
+    try {
+      // Get original angular z velocity (yaw rate) covariance
+      original_twist_covariance_yaw =
+        0.5 * std::pow(j2735_v2x_msgs::to_double(common_data.acc_cfd_yaw).value(), 2);
+
+      RCLCPP_DEBUG_STREAM(rclcpp::get_logger("sdsm_to_detection_list_node"),
+        "Original twist covariance yaw: " << original_twist_covariance_yaw);
+    } catch (const std::bad_optional_access &) {
+      RCLCPP_DEBUG_STREAM(rclcpp::get_logger("sdsm_to_detection_list_node"),
+        "Missing yaw-rate confidence");
+    }
+  }
+  else{
+    original_twist_covariance_yaw = 0.0;
+    RCLCPP_DEBUG_STREAM(rclcpp::get_logger("sdsm_to_detection_list_node"),
+      "Original twist covariance yaw: 0.0 (yaw_rate not provided)");
+  }
+
+  if (conversion_adjustment && conversion_adjustment.value().overwrite_covariance)
+  {
+    // Hardcoded pose covariance
+    detection.pose.covariance[0] = conversion_adjustment.value().pose_covariance_x;
+    detection.pose.covariance[7] = conversion_adjustment.value().pose_covariance_y;
+    detection.pose.covariance[14] = conversion_adjustment.value().pose_covariance_z;
+    detection.pose.covariance[35] = conversion_adjustment.value().pose_covariance_yaw;
+
+    // Hardcoded twist covariance
+    detection.twist.covariance[0] = conversion_adjustment.value().twist_covariance_x;
+    detection.twist.covariance[14] = conversion_adjustment.value().twist_covariance_z;
+    detection.twist.covariance[35] = conversion_adjustment.value().twist_covariance_yaw;
+
+    // Print comparison between original and hardcoded values
+    RCLCPP_DEBUG_STREAM(rclcpp::get_logger("sdsm_to_detection_list_node"),
+      "POSE COVARIANCE COMPARISON - Original vs Hardcoded: " <<
+      "X: " << original_pose_covariance_x << " -> " << detection.pose.covariance[0] << ", " <<
+      "Y: " << original_pose_covariance_y << " -> " << detection.pose.covariance[7] << ", " <<
+      "Z: " << original_pose_covariance_z << " -> " << detection.pose.covariance[14] << ", " <<
+      "Yaw: " << original_pose_covariance_yaw << " -> " << detection.pose.covariance[35]);
+
+    RCLCPP_DEBUG_STREAM(rclcpp::get_logger("sdsm_to_detection_list_node"),
+      "TWIST COVARIANCE COMPARISON - Original vs Hardcoded: " <<
+      "X: " << original_twist_covariance_x << " -> , " << detection.twist.covariance[0] << ", " <<
+      "Z: " << original_twist_covariance_z << " -> , " << detection.twist.covariance[14] << ", " <<
+      "Yaw: " << original_twist_covariance_yaw << " -> " << detection.twist.covariance[35]);
+  }
+  else
+  {
+    // Original pose covariance
+    detection.pose.covariance[0] = original_pose_covariance_x;
+    detection.pose.covariance[7] = original_pose_covariance_y;
+    detection.pose.covariance[14] = original_pose_covariance_z;
+    detection.pose.covariance[35] = original_pose_covariance_yaw;
+
+    // Original twist covariance
+    detection.twist.covariance[0] = original_twist_covariance_x;
+    detection.twist.covariance[14] = original_twist_covariance_z;
+    detection.twist.covariance[35] = original_twist_covariance_yaw;
+  }
+
+  // Fill zeros for all other twist covariance values
+  for (size_t i = 0; i < 36; ++i) {
+    if (i != 0 && i != 14 && i != 35) {
+      detection.twist.covariance[i] = 0.0;
+    }
+  }
+
+  // Fill zeros for all other pose covariance values
+  for (size_t i = 0; i < 36; ++i) {
+    if (i != 0 && i != 7 && i != 14 && i != 35) {
+      detection.pose.covariance[i] = 0.0;
+    }
+  }
+}
+/**
+ * @brief Converts a carma_v2x_msgs::msg::SensorDataSharingMessage (SDSM)
+ *  to carma_cooperative_perception_interfaces::msg::DetectionList format
+ *
+ * This function transforms data from the V2X SDSM format into the CARMA cooperative perception
+ * DetectionList format, handling the necessary coordinate transformations.
+ *
+ * @details Important coordinate system transformations:
+ * - SDSM uses NED (North-East-Down) coordinate system for position offsets
+ * - SDSM heading is measured clockwise from true north (0° at north, 90° at east)
+ * - Output DetectionList uses ENU (East-North-Up) coordinate system
+ * - Output heading is converted to ENU yaw (0° at east, 90° at north)
+ *
+ * The function performs the following key operations:
+ * 1. Projects reference position from WGS84 to the local map frame
+ * 2. Converts NED position offsets to ENU
+ * 3. Handles heading conversion from true north to map grid
+ * 4. Transforms detection confidence values to covariance values
+ * 5. Maps object types to appropriate semantic classes
+ *
+ * @param sdsm The input J3224 SDSM message containing detected objects
+ * @param georeference String containing the georeference information for coordinate projection
+ * @param is_simulation Boolean flag indicating if running in simulation mode (affects timestamps)
+ * @param conversion_adjustment Optional configuration for position and covariance adjustments
+ *
+ * @return carma_cooperative_perception_interfaces::msg::DetectionList
+ *          message containing the transformed detections in CARMA Platform format
+ */
+
 auto to_detection_list_msg(
-  const carma_v2x_msgs::msg::SensorDataSharingMessage & sdsm, std::string_view georeference)
+  const carma_v2x_msgs::msg::SensorDataSharingMessage & sdsm, std::string_view georeference,
+  bool is_simulation, const std::optional<SdsmToDetectionListConfig>& conversion_adjustment)
   -> carma_cooperative_perception_interfaces::msg::DetectionList
 {
   carma_cooperative_perception_interfaces::msg::DetectionList detection_list;
-
   const auto ref_pos_3d{Position3D::from_msg(sdsm.ref_pos)};
+
+  units::length::meter_t elevation(0.0);
+  if(ref_pos_3d.elevation){
+    elevation = ref_pos_3d.elevation.value();
+  }
   const Wgs84Coordinate ref_pos_wgs84{
-    ref_pos_3d.latitude, ref_pos_3d.longitude, ref_pos_3d.elevation.value()};
+    ref_pos_3d.latitude, ref_pos_3d.longitude, elevation};
+
   const auto ref_pos_map{project_to_carma_map(ref_pos_wgs84, georeference)};
 
   for (const auto & object_data : sdsm.objects.detected_object_data) {
@@ -264,46 +599,23 @@ auto to_detection_list_msg(
       DDateTime::from_msg(sdsm.sdsm_time_stamp),
       MeasurementTimeOffset::from_msg(common_data.measurement_time))};
 
-    detection.header.stamp = to_time_msg(detection_time);
+    detection.header.stamp = to_time_msg(detection_time, is_simulation);
 
-    // TemporaryID and octet string terms come from the SAE J2735 message definitions
-    static constexpr auto to_string = [](const std::vector<std::uint8_t> & temporary_id) {
-      std::string str;
-      str.reserve(2 * std::size(temporary_id));  // Two hex characters per octet string
-
-      std::array<char, 2> buffer;
-      for (const auto & octet_string : temporary_id) {
-        std::to_chars(std::begin(buffer), std::end(buffer), octet_string, 16);
-        str.push_back(std::toupper(std::get<0>(buffer)));
-        str.push_back(std::toupper(std::get<1>(buffer)));
-      }
-
-      return str;
-    };
-
-    detection.id =
-      to_string(sdsm.source_id.id) + "-" + std::to_string(common_data.detected_id.object_id);
+    detection.id = fmt::format("{}-{}",
+      carma_cooperative_perception::to_string(sdsm.source_id.id),
+      common_data.detected_id.object_id);
 
     const auto pos_offset_enu{ned_to_enu(PositionOffsetXYZ::from_msg(common_data.pos))};
     detection.pose.pose.position = to_position_msg(MapCoordinate{
       ref_pos_map.easting + pos_offset_enu.offset_x, ref_pos_map.northing + pos_offset_enu.offset_y,
       ref_pos_map.elevation + pos_offset_enu.offset_z.value_or(units::length::meter_t{0.0})});
 
-    // Pose covariance is flattened 6x6 matrix with rows/columns of x, y, z, roll, pitch, yaw
-    try {
-      detection.pose.covariance.at(0) =
-        0.5 * std::pow(j2735_v2x_msgs::to_double(common_data.pos_confidence.pos).value(), 2);
-      detection.pose.covariance.at(7) =
-        0.5 * std::pow(j2735_v2x_msgs::to_double(common_data.pos_confidence.pos).value(), 2);
-    } catch (const std::bad_optional_access &) {
-      throw std::runtime_error("missing position confidence");
-    }
-
-    try {
-      detection.pose.covariance.at(14) =
-        0.5 * std::pow(j2735_v2x_msgs::to_double(common_data.pos_confidence.elevation).value(), 2);
-    } catch (const std::bad_optional_access &) {
-      throw std::runtime_error("missing elevation confidence");
+    // Adjust object's position to match vector map coordinates as sensor calibrations are not
+    // always reliable
+    if (conversion_adjustment && conversion_adjustment.value().adjust_pose)
+    {
+      detection.pose.pose.position.x += conversion_adjustment.value().x_offset;
+      detection.pose.pose.position.y += conversion_adjustment.value().y_offset;
     }
 
     const auto true_heading{units::angle::degree_t{Heading::from_msg(common_data.heading).heading}};
@@ -317,69 +629,52 @@ auto to_detection_list_msg(
     const auto enu_yaw{heading_to_enu_yaw(grid_heading)};
 
     tf2::Quaternion quat_tf;
-    quat_tf.setRPY(0, 0, remove_units(units::angle::radian_t{enu_yaw}));
-    detection.pose.pose.orientation = tf2::toMsg(quat_tf);
 
-    try {
-      // Pose covariance is flattened 6x6 matrix with rows/columns of x, y, z, roll, pitch, yaw
-      detection.pose.covariance.at(35) =
-        0.5 * std::pow(j2735_v2x_msgs::to_double(common_data.heading_conf).value(), 2);
-    } catch (const std::bad_optional_access &) {
-      throw std::runtime_error("missing heading confidence");
+    if (conversion_adjustment && conversion_adjustment.value().adjust_pose)
+    {
+      // Adjust object's heading to match vector map coordinates as sensor calibrations are not
+      // always reliable
+      auto yaw_with_offset = units::angle::radian_t{enu_yaw} +
+        units::angle::radian_t{units::angle::degree_t{conversion_adjustment.value().yaw_offset}};
+      auto new_yaw = std::fmod(remove_units(yaw_with_offset) + 2 * M_PI, 2 * M_PI);
+      quat_tf.setRPY(0, 0, new_yaw);
     }
+    else
+    {
+      // No adjustment needed
+      quat_tf.setRPY(0, 0, remove_units(units::angle::radian_t{enu_yaw}));
+    }
+
+    detection.pose.pose.orientation = tf2::toMsg(quat_tf);
 
     const auto speed{Speed::from_msg(common_data.speed)};
     detection.twist.twist.linear.x =
       remove_units(units::velocity::meters_per_second_t{speed.speed});
 
-    const auto speed_z{Speed::from_msg(common_data.speed_z)};
-    detection.twist.twist.linear.z =
-      remove_units(units::velocity::meters_per_second_t{speed_z.speed});
-
-    try {
-      // Twist covariance is flattened 6x6 matrix with rows/columns of x, y, z, roll, pitch, yaw
-      detection.twist.covariance.at(0) =
-        0.5 * std::pow(j2735_v2x_msgs::to_double(common_data.speed_confidence).value(), 2);
-    } catch (const std::bad_optional_access &) {
-      throw std::runtime_error("missing speed confidence");
+    if (!common_data.speed_z.unavailable){
+      const auto speed_z{Speed::from_msg(common_data.speed_z)};
+      detection.twist.twist.linear.z =
+        remove_units(units::velocity::meters_per_second_t{speed_z.speed});
+    }
+    else{
+      detection.twist.twist.linear.z = remove_units(units::velocity::meters_per_second_t{0.0});
     }
 
-    try {
-      detection.twist.covariance.at(14) =
-        0.5 * std::pow(j2735_v2x_msgs::to_double(common_data.speed_confidence_z).value(), 2);
-    } catch (const std::bad_optional_access &) {
-      throw std::runtime_error("missing z-speed confidence");
+    // NOTE: common_data.accel_4_way.longitudinal, lateral, vert not supported
+    // and not needed at the moment for multiple object tracking algorithm
+    // Having non-zero yaw_rate value means available
+    if(static_cast<bool>(common_data.accel_4_way.yaw_rate)){
+      const auto accel_set{AccelerationSet4Way::from_msg(common_data.accel_4_way)};
+      detection.twist.twist.angular.z =
+        remove_units(units::angular_velocity::degrees_per_second_t{accel_set.yaw_rate});
+    }
+    else{
+      detection.twist.twist.angular.z = 0.0;
     }
 
-    const auto accel_set{AccelerationSet4Way::from_msg(common_data.accel_4_way)};
-    detection.twist.twist.angular.z =
-      remove_units(units::angular_velocity::degrees_per_second_t{accel_set.yaw_rate});
+    convert_covariances(detection, common_data, conversion_adjustment);
 
-    try {
-      detection.twist.covariance.at(35) =
-        0.5 * std::pow(j2735_v2x_msgs::to_double(common_data.acc_cfd_yaw).value(), 2);
-    } catch (const std::bad_optional_access &) {
-      throw std::runtime_error("missing yaw-rate confidence");
-    }
-
-    switch (common_data.obj_type.object_type) {
-      case common_data.obj_type.ANIMAL:
-        detection.motion_model = detection.MOTION_MODEL_CTRV;
-        // We don't have a good semantic class mapping for animals
-        detection.semantic_class = detection.SEMANTIC_CLASS_UNKNOWN;
-        break;
-      case common_data.obj_type.VRU:
-        detection.motion_model = detection.MOTION_MODEL_CTRV;
-        detection.semantic_class = detection.SEMANTIC_CLASS_PEDESTRIAN;
-        break;
-      case common_data.obj_type.VEHICLE:
-        detection.motion_model = detection.MOTION_MODEL_CTRV;
-        detection.semantic_class = detection.SEMANTIC_CLASS_SMALL_VEHICLE;
-        break;
-      default:
-        detection.motion_model = detection.MOTION_MODEL_CTRV;
-        detection.semantic_class = detection.SEMANTIC_CLASS_UNKNOWN;
-    }
+    convert_object_type(detection, common_data.obj_type);
 
     detection_list.detections.push_back(std::move(detection));
   }
