@@ -50,7 +50,7 @@ include_directories(
   ${EIGEN3_INCLUDE_DIRS}
 )
 
-# Build
+# Build libraries first (BEFORE SIMD configuration)
 ament_auto_add_library(${node_lib} SHARED
         src/yield_plugin.cpp
         src/yield_plugin_node.cpp
@@ -59,6 +59,58 @@ ament_auto_add_library(${node_lib} SHARED
 ament_auto_add_executable(${node_exec}
         src/main.cpp
 )
+
+# SIMD support configuration (AFTER targets are created)
+if(CMAKE_SYSTEM_PROCESSOR MATCHES "x86_64" OR CMAKE_SYSTEM_PROCESSOR MATCHES "amd64")
+    # Check for AVX2 support
+    include(CheckCXXSourceCompiles)
+
+    # Save original flags
+    set(CMAKE_REQUIRED_FLAGS_BACKUP "${CMAKE_REQUIRED_FLAGS}")
+    set(CMAKE_REQUIRED_FLAGS "-mavx2")
+
+    check_cxx_source_compiles("
+        #include <immintrin.h>
+        int main() {
+            __m256 a = _mm256_set1_ps(1.0f);
+            return 0;
+        }" HAVE_AVX2)
+
+    # Restore original flags
+    set(CMAKE_REQUIRED_FLAGS "${CMAKE_REQUIRED_FLAGS_BACKUP}")
+
+    if(HAVE_AVX2)
+        target_compile_options(${node_lib} PRIVATE -mavx2 -mfma)
+        target_compile_definitions(${node_lib} PRIVATE HAVE_AVX2)
+        message(STATUS "AVX2 support enabled for ${node_lib}")
+    else()
+        # Check for SSE4.1 support
+        set(CMAKE_REQUIRED_FLAGS "-msse4.1")
+        check_cxx_source_compiles("
+            #include <smmintrin.h>
+            int main() {
+                __m128 a = _mm_set1_ps(1.0f);
+                return 0;
+            }" HAVE_SSE41)
+
+        if(HAVE_SSE41)
+            target_compile_options(${node_lib} PRIVATE -msse4.1)
+            target_compile_definitions(${node_lib} PRIVATE HAVE_SSE)
+            message(STATUS "SSE4.1 support enabled for ${node_lib}")
+        else()
+            message(STATUS "No SIMD support available")
+        endif()
+    endif()
+
+    # Also apply SIMD flags to the executable if it contains relevant code
+    if(HAVE_AVX2)
+        target_compile_options(${node_exec} PRIVATE -mavx2 -mfma)
+        target_compile_definitions(${node_exec} PRIVATE HAVE_AVX2)
+    elseif(HAVE_SSE41)
+        target_compile_options(${node_exec} PRIVATE -msse4.1)
+        target_compile_definitions(${node_exec} PRIVATE HAVE_SSE)
+    endif()
+endif()
 
 # Register component
 rclcpp_components_register_nodes(${node_lib} "yield_plugin::YieldPluginNode")
@@ -88,6 +140,17 @@ if(BUILD_TESTING)
   ament_target_dependencies(test_yield_plugin ${${PROJECT_NAME}_FOUND_TEST_DEPENDS})
 
   target_link_libraries(test_yield_plugin ${node_lib})
+
+  # Apply SIMD flags to tests as well if they use SIMD code
+  if(CMAKE_SYSTEM_PROCESSOR MATCHES "x86_64" OR CMAKE_SYSTEM_PROCESSOR MATCHES "amd64")
+    if(HAVE_AVX2)
+        target_compile_options(test_yield_plugin PRIVATE -mavx2 -mfma)
+        target_compile_definitions(test_yield_plugin PRIVATE HAVE_AVX2)
+    elseif(HAVE_SSE41)
+        target_compile_options(test_yield_plugin PRIVATE -msse4.1)
+        target_compile_definitions(test_yield_plugin PRIVATE HAVE_SSE)
+    endif()
+  endif()
 
 endif()
 

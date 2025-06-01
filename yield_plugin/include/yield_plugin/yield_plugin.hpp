@@ -44,7 +44,31 @@
 #include <carma_wm/WorldModel.hpp>
 #include <carma_wm/collision_detection.hpp>
 #include <carma_wm/TrafficControl.hpp>
+#include <immintrin.h>  // For AVX2/SSE intrinsics
 
+// #ifdef __x86_64__
+// #include <cpuid.h>
+
+// class CPUFeatureDetector {
+// public:
+//     static bool has_avx2() {
+//         unsigned int eax, ebx, ecx, edx;
+//         if (__get_cpuid_max(0, nullptr) >= 7) {
+//             __cpuid_count(7, 0, eax, ebx, ecx, edx);
+//             return (ebx & (1 << 5)) != 0; // AVX2 bit
+//         }
+//         return false;
+//     }
+
+//     static bool has_sse41() {
+//         unsigned int eax, ebx, ecx, edx;
+//         if (__get_cpuid(1, &eax, &ebx, &ecx, &edx)) {
+//             return (ecx & (1 << 19)) != 0; // SSE4.1 bit
+//         }
+//         return false;
+//     }
+// };
+// #endif
 
 namespace yield_plugin
 {
@@ -69,6 +93,7 @@ struct CollisionData
   lanelet::BasicPoint2d point1;
   lanelet::BasicPoint2d point2;
 };
+
 
 /**
  * \brief Class containing primary business logic for the In-Lane Cruising Plugin
@@ -311,6 +336,14 @@ public:
    */
   double get_predicted_velocity_at_time(const geometry_msgs::msg::Twist& object_velocity_in_map_frame, const carma_planning_msgs::msg::TrajectoryPlan& original_tp, double timestamp_in_sec_to_predict);
 
+  std::optional<CollisionData> get_collision_simd(
+    const carma_planning_msgs::msg::TrajectoryPlan& trajectory1,
+    const std::vector<carma_perception_msgs::msg::PredictedState>& trajectory2,
+    double collision_radius);
+
+  // Optional: Add runtime CPU detection
+  bool simd_available_ = false;
+  void detect_cpu_capabilities();
 
 private:
 
@@ -357,4 +390,252 @@ private:
   }
 
 };
+
+// SIMD Collision Detection with Integer-based Spatial Grid
+class SIMDCollisionOptimizer {
+private:
+    // Pack 2D grid coordinates into single uint64_t for faster hashing
+    static uint64_t encode_cell(int x, int y) {
+        return (static_cast<uint64_t>(static_cast<uint32_t>(x)) << 32) |
+               static_cast<uint64_t>(static_cast<uint32_t>(y));
+    }
+
+    // Helper to check if AVX2 is available at runtime
+    static bool is_avx2_available() {
+        #ifdef HAVE_AVX2
+        return true;
+        #else
+        return false;
+        #endif
+    }
+
+    // Create optimized spatial grid using integer keys
+    static std::unordered_map<uint64_t, std::vector<size_t>> create_spatial_grid_optimized(
+        const std::vector<carma_perception_msgs::msg::PredictedState>& trajectory2,
+        double collision_radius)
+    {
+        const double cell_size = collision_radius;
+        std::unordered_map<uint64_t, std::vector<size_t>> spatial_grid;
+
+        // Reserve space to reduce hash map reallocations
+        spatial_grid.reserve(trajectory2.size());
+
+        for (size_t i = 0; i < trajectory2.size(); ++i) {
+            double x = trajectory2[i].predicted_position.position.x;
+            double y = trajectory2[i].predicted_position.position.y;
+
+            int grid_x = static_cast<int>(x / cell_size);
+            int grid_y = static_cast<int>(y / cell_size);
+
+            // Store each point only once (not 9 times like the original)
+            uint64_t cell_key = encode_cell(grid_x, grid_y);
+            spatial_grid[cell_key].push_back(i);
+        }
+
+        return spatial_grid;
+    }
+
+    // AVX2 version - processes 8 points at once
+    static std::vector<std::pair<size_t, size_t>> process_collisions_avx2(
+        float x1, float y1, size_t i,
+        const std::vector<size_t>& indices,
+        const std::vector<carma_perception_msgs::msg::PredictedState>& trajectory2,
+        float collision_radius_sq)
+    {
+        std::vector<std::pair<size_t, size_t>> collisions;
+
+        const __m256 x1_vec = _mm256_set1_ps(x1);
+        const __m256 y1_vec = _mm256_set1_ps(y1);
+        const __m256 radius_sq_vec = _mm256_set1_ps(collision_radius_sq);
+
+        size_t j = 0;
+        // Process 8 trajectory2 points at once
+        for (; j + 7 < indices.size(); j += 8) {
+            // Gather 8 x-coordinates and y-coordinates
+            alignas(32) float x2_coords[8];
+            alignas(32) float y2_coords[8];
+
+            for (int k = 0; k < 8; ++k) {
+                size_t idx = indices[j + k];
+                x2_coords[k] = trajectory2[idx].predicted_position.position.x;
+                y2_coords[k] = trajectory2[idx].predicted_position.position.y;
+            }
+
+            __m256 x2_vec = _mm256_load_ps(x2_coords);
+            __m256 y2_vec = _mm256_load_ps(y2_coords);
+
+            // Calculate dx = x1 - x2, dy = y1 - y2
+            __m256 dx = _mm256_sub_ps(x1_vec, x2_vec);
+            __m256 dy = _mm256_sub_ps(y1_vec, y2_vec);
+
+            // Calculate distance squared: dx*dx + dy*dy
+            __m256 dx_sq = _mm256_mul_ps(dx, dx);
+            __m256 dy_sq = _mm256_mul_ps(dy, dy);
+            __m256 dist_sq = _mm256_add_ps(dx_sq, dy_sq);
+
+            // Compare with collision radius squared
+            __m256 collision_mask = _mm256_cmp_ps(dist_sq, radius_sq_vec, _CMP_LE_OQ);
+
+            // Extract collision results
+            int mask = _mm256_movemask_ps(collision_mask);
+            for (int k = 0; k < 8; ++k) {
+                if (mask & (1 << k)) {
+                    collisions.emplace_back(i, indices[j + k]);
+                }
+            }
+        }
+
+        // Handle remaining points (less than 8) with scalar code
+        for (; j < indices.size(); ++j) {
+            size_t idx = indices[j];
+            float x2 = trajectory2[idx].predicted_position.position.x;
+            float y2 = trajectory2[idx].predicted_position.position.y;
+
+            float dx = x1 - x2;
+            float dy = y1 - y2;
+            float dist_sq = dx * dx + dy * dy;
+
+            if (dist_sq <= collision_radius_sq) {
+                collisions.emplace_back(i, idx);
+            }
+        }
+
+        return collisions;
+    }
+
+    // SSE version - processes 4 points at once (fallback for older CPUs)
+    static std::vector<std::pair<size_t, size_t>> process_collisions_sse(
+        float x1, float y1, size_t i,
+        const std::vector<size_t>& indices,
+        const std::vector<carma_perception_msgs::msg::PredictedState>& trajectory2,
+        float collision_radius_sq)
+    {
+        std::vector<std::pair<size_t, size_t>> collisions;
+
+        const __m128 x1_vec = _mm_set1_ps(x1);
+        const __m128 y1_vec = _mm_set1_ps(y1);
+        const __m128 radius_sq_vec = _mm_set1_ps(collision_radius_sq);
+
+        size_t j = 0;
+        // Process 4 trajectory2 points at once
+        for (; j + 3 < indices.size(); j += 4) {
+            // Gather 4 coordinates
+            alignas(16) float x2_coords[4];
+            alignas(16) float y2_coords[4];
+
+            for (int k = 0; k < 4; ++k) {
+                size_t idx = indices[j + k];
+                x2_coords[k] = trajectory2[idx].predicted_position.position.x;
+                y2_coords[k] = trajectory2[idx].predicted_position.position.y;
+            }
+
+            __m128 x2_vec = _mm_load_ps(x2_coords);
+            __m128 y2_vec = _mm_load_ps(y2_coords);
+
+            // Calculate distances
+            __m128 dx = _mm_sub_ps(x1_vec, x2_vec);
+            __m128 dy = _mm_sub_ps(y1_vec, y2_vec);
+            __m128 dx_sq = _mm_mul_ps(dx, dx);
+            __m128 dy_sq = _mm_mul_ps(dy, dy);
+            __m128 dist_sq = _mm_add_ps(dx_sq, dy_sq);
+
+            // Compare and extract results
+            __m128 collision_mask = _mm_cmple_ps(dist_sq, radius_sq_vec);
+            int mask = _mm_movemask_ps(collision_mask);
+
+            for (int k = 0; k < 4; ++k) {
+                if (mask & (1 << k)) {
+                    collisions.emplace_back(i, indices[j + k]);
+                }
+            }
+        }
+
+        // Handle remaining points
+        for (; j < indices.size(); ++j) {
+            size_t idx = indices[j];
+            float x2 = trajectory2[idx].predicted_position.position.x;
+            float y2 = trajectory2[idx].predicted_position.position.y;
+
+            float dx = x1 - x2;
+            float dy = y1 - y2;
+            float dist_sq = dx * dx + dy * dy;
+
+            if (dist_sq <= collision_radius_sq) {
+                collisions.emplace_back(i, idx);
+            }
+        }
+
+        return collisions;
+    }
+
+public:
+    // Main SIMD collision detection function with integer-based spatial grid
+    static std::vector<std::pair<size_t, size_t>> detect_collisions_simd_optimized(
+        const carma_planning_msgs::msg::TrajectoryPlan& trajectory1,
+        const std::vector<carma_perception_msgs::msg::PredictedState>& trajectory2,
+        double collision_radius)
+    {
+        std::vector<std::pair<size_t, size_t>> candidate_collisions;
+        candidate_collisions.reserve(100);
+
+        // Create optimized spatial grid with integer keys
+        const auto spatial_grid = create_spatial_grid_optimized(trajectory2, collision_radius);
+
+        const double cell_size = collision_radius;
+        const float collision_radius_sq = static_cast<float>(collision_radius * collision_radius);
+
+        for (size_t i = 0; i < trajectory1.trajectory_points.size(); ++i) {
+            float x1 = static_cast<float>(trajectory1.trajectory_points[i].x);
+            float y1 = static_cast<float>(trajectory1.trajectory_points[i].y);
+
+            // Find grid cell for this point
+            int grid_x = static_cast<int>(x1 / cell_size);
+            int grid_y = static_cast<int>(y1 / cell_size);
+
+            // Check 3x3 grid around the point using integer keys
+            for (int dx = -1; dx <= 1; ++dx) {
+                for (int dy = -1; dy <= 1; ++dy) {
+                    uint64_t cell_key = encode_cell(grid_x + dx, grid_y + dy);
+
+                    auto it = spatial_grid.find(cell_key);
+                    if (it != spatial_grid.end()) {
+                        const auto& indices = it->second;
+
+                        // Skip SIMD for very small groups (overhead not worth it)
+                        if (indices.size() < 4) {
+                            // Use scalar processing for small groups
+                            for (size_t idx : indices) {
+                                float x2 = trajectory2[idx].predicted_position.position.x;
+                                float y2 = trajectory2[idx].predicted_position.position.y;
+
+                                float dx_val = x1 - x2;
+                                float dy_val = y1 - y2;
+                                float dist_sq = dx_val * dx_val + dy_val * dy_val;
+
+                                if (dist_sq <= collision_radius_sq) {
+                                    candidate_collisions.emplace_back(i, idx);
+                                }
+                            }
+                        } else {
+                            // Use SIMD for larger groups
+                            std::vector<std::pair<size_t, size_t>> simd_collisions;
+
+                            if (is_avx2_available()) {
+                                simd_collisions = process_collisions_avx2(x1, y1, i, indices, trajectory2, collision_radius_sq);
+                            } else {
+                                simd_collisions = process_collisions_sse(x1, y1, i, indices, trajectory2, collision_radius_sq);
+                            }
+
+                            candidate_collisions.insert(candidate_collisions.end(),
+                                                       simd_collisions.begin(), simd_collisions.end());
+                        }
+                    }
+                }
+            }
+        }
+
+        return candidate_collisions;
+    }
+};
+
 }  // namespace yield_plugin

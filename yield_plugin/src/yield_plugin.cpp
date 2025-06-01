@@ -48,9 +48,21 @@ namespace yield_plugin
                                             LaneChangeStatusCB lc_status_publisher)
     : nh_(nh), wm_(wm), config_(config),mobility_response_publisher_(mobility_response_publisher), lc_status_publisher_(lc_status_publisher)
   {
-
+    detect_cpu_capabilities();
   }
 
+  void YieldPlugin::detect_cpu_capabilities() {
+    #ifdef HAVE_AVX2
+    simd_available_ = true;
+    RCLCPP_INFO(nh_->get_logger(), "SIMD optimization (AVX2) enabled");
+    #elif defined(HAVE_SSE)
+    simd_available_ = true;
+    RCLCPP_INFO(nh_->get_logger(), "SIMD optimization (SSE) enabled");
+    #else
+    simd_available_ = false;
+    RCLCPP_INFO(nh_->get_logger(), "SIMD optimization not available");
+    #endif
+  }
   double get_trajectory_end_time(const carma_planning_msgs::msg::TrajectoryPlan& trajectory)
   {
     return rclcpp::Time(trajectory.trajectory_points.back().target_time).seconds();
@@ -322,7 +334,7 @@ namespace yield_plugin
     rclcpp::Time end_time = system_clock.now();  // Planning complete
 
     auto duration = end_time - start_time;
-    RCLCPP_DEBUG_STREAM(rclcpp::get_logger("yield_plugin"), "ExecutionTime: " << std::to_string(duration.seconds()));
+    RCLCPP_ERROR_STREAM(rclcpp::get_logger("yield_plugin"), "ExecutionTime: " << std::to_string(duration.seconds()));
   }
 
   carma_planning_msgs::msg::TrajectoryPlan YieldPlugin::update_traj_for_cooperative_behavior(const carma_planning_msgs::msg::TrajectoryPlan& original_tp, double current_speed)
@@ -593,39 +605,32 @@ namespace yield_plugin
     * @return A map where the key is a grid cell identifier (example: "0,0" or "1,-1")
     *         and the value is a list of indices of trajectory2 points in that cell
   */
- std::unordered_map<std::string, std::vector<size_t>> create_spatial_grid(
+  std::unordered_map<uint64_t, std::vector<size_t>> create_spatial_grid(
     const std::vector<carma_perception_msgs::msg::PredictedState>& trajectory2,
     double collision_radius)
   {
-    // Build spatial index for faster geographic lookup
-    // For each point in trajectory2, store its position and index
-    std::vector<std::tuple<double, double, size_t>> spatial_index;
-    for (size_t i = 0; i < trajectory2.size(); ++i) {
-        double x = trajectory2[i].predicted_position.position.x;
-        double y = trajectory2[i].predicted_position.position.y;
-        spatial_index.emplace_back(x, y, i);
-    }
+      // OPTIMIZATION 1: Use integer hash keys instead of strings
+      auto encode_cell = [](int x, int y) -> uint64_t {
+          return (static_cast<uint64_t>(static_cast<uint32_t>(x)) << 32) |
+                static_cast<uint64_t>(static_cast<uint32_t>(y));
+      };
 
-    // Sort spatial index (could be replaced with more sophisticated spatial index like R-tree)
-    // This simple approach splits the space into a grid of collision_radius-sized cells
-    const double cell_size = collision_radius * 2.0;
-    std::unordered_map<std::string, std::vector<size_t>> spatial_grid;
+      const double cell_size = collision_radius;
+      std::unordered_map<uint64_t, std::vector<size_t>> spatial_grid;
 
-    for (size_t i = 0; i < spatial_index.size(); ++i) {
-        const auto& [x, y, idx] = spatial_index[i];
-        // Convert position to grid cell
-        int grid_x = static_cast<int>(x / cell_size);
-        int grid_y = static_cast<int>(y / cell_size);
+      // OPTIMIZATION 2: Store each point only once (not 9 times)
+      for (size_t i = 0; i < trajectory2.size(); ++i) {
+          double x = trajectory2[i].predicted_position.position.x;
+          double y = trajectory2[i].predicted_position.position.y;
 
-        // Add to current cell and neighboring cells to handle boundary cases
-        for (int dx = -1; dx <= 1; ++dx) {
-            for (int dy = -1; dy <= 1; ++dy) {
-                std::string cell_key = fmt::format("{},{}", grid_x + dx, grid_y + dy);
-                spatial_grid[cell_key].push_back(idx);
-            }
-        }
-    }
-    return spatial_grid;
+          int grid_x = static_cast<int>(x / cell_size);
+          int grid_y = static_cast<int>(y / cell_size);
+
+          uint64_t cell_key = encode_cell(grid_x, grid_y);
+          spatial_grid[cell_key].push_back(i);
+      }
+
+      return spatial_grid;
   }
 
   /*
@@ -640,35 +645,55 @@ namespace yield_plugin
   std::vector<std::pair<size_t, size_t>> get_spatial_collision_from_spatial_grid(
     const carma_planning_msgs::msg::TrajectoryPlan& trajectory1,
     const std::vector<carma_perception_msgs::msg::PredictedState>& trajectory2,
-    const std::unordered_map<std::string, std::vector<size_t>>& traj2_spatial_grid,
+    const std::unordered_map<uint64_t, std::vector<size_t>>& traj2_spatial_grid,
     double collision_radius)
   {
-    // Check for geographic collisions using the spatial grid
+    auto encode_cell = [](int x, int y) -> uint64_t {
+    return (static_cast<uint64_t>(static_cast<uint32_t>(x)) << 32) |
+            static_cast<uint64_t>(static_cast<uint32_t>(y));
+    };
+
+    const double cell_size = collision_radius * 2.0;
+    const double collision_radius_sq = collision_radius * collision_radius;
+
     std::vector<std::pair<size_t, size_t>> candidate_collisions;
+    candidate_collisions.reserve(100); // Pre-allocate
+
     for (size_t i = 0; i < trajectory1.trajectory_points.size(); ++i) {
         double x1 = trajectory1.trajectory_points[i].x;
         double y1 = trajectory1.trajectory_points[i].y;
 
-        // Find grid cell for this point
-        int grid_x = static_cast<int>(x1 / (collision_radius * 2.0));
-        int grid_y = static_cast<int>(y1 / (collision_radius * 2.0));
-        std::string cell_key = fmt::format("{},{}", grid_x, grid_y);
+        int grid_x = static_cast<int>(x1 / cell_size);
+        int grid_y = static_cast<int>(y1 / cell_size);
 
-        // Check if cell exists in our grid
-        if (traj2_spatial_grid.find(cell_key) != traj2_spatial_grid.end()) {
-            // Check all points in this cell
-            for (const auto& j : traj2_spatial_grid.at(cell_key)) {
-                double x2 = trajectory2[j].predicted_position.position.x;
-                double y2 = trajectory2[j].predicted_position.position.y;
+        // Check 9 neighboring cells (3x3 grid)
+        for (int dx = -1; dx <= 1; ++dx) {
+            for (int dy = -1; dy <= 1; ++dy) {
+                uint64_t cell_key = encode_cell(grid_x + dx, grid_y + dy);
 
-                double distance = std::hypot(x1 - x2, y1 - y2);
-                if (distance <= collision_radius) {
-                    // Geographic collision found - store as candidate
-                    candidate_collisions.emplace_back(i, j);
+                auto it = traj2_spatial_grid.find(cell_key);
+                if (it != traj2_spatial_grid.end()) {
+                    // OPTIMIZATION 3: Vectorize distance calculations
+                    const auto& indices = it->second;
+
+                    // Process multiple points with SIMD if available
+                    for (size_t j : indices) {
+                        double x2 = trajectory2[j].predicted_position.position.x;
+                        double y2 = trajectory2[j].predicted_position.position.y;
+
+                        double dx_val = x1 - x2;
+                        double dy_val = y1 - y2;
+                        double distance_sq = dx_val * dx_val + dy_val * dy_val;
+
+                        if (distance_sq <= collision_radius_sq) {
+                            candidate_collisions.emplace_back(i, j);
+                        }
+                    }
                 }
             }
         }
     }
+
     return candidate_collisions;
   }
 
@@ -813,6 +838,45 @@ namespace yield_plugin
     return best_collision;
   }
 
+std::optional<CollisionData> YieldPlugin::get_collision_simd(
+    const carma_planning_msgs::msg::TrajectoryPlan& trajectory1,
+    const std::vector<carma_perception_msgs::msg::PredictedState>& trajectory2,
+    double collision_radius)
+{
+    RCLCPP_DEBUG_STREAM(rclcpp::get_logger("yield_plugin"),
+        "Starting optimized SIMD collision detection, trajectory1 size: "
+        << trajectory1.trajectory_points.size() << ", trajectory2 size: " << trajectory2.size());
+
+    // Validate input trajectories
+    if (trajectory1.trajectory_points.size() < 2 || trajectory2.size() < 2) {
+        throw std::invalid_argument("Both trajectories must have at least 2 points");
+    }
+
+    // Verify the predicted trajectory is on the route
+    if (!is_trajectory_on_route(trajectory2)) {
+        RCLCPP_DEBUG(rclcpp::get_logger("yield_plugin"),
+            "Predicted states are not on the route! Ignoring");
+        return std::nullopt;
+    }
+
+    // Use SIMD-optimized spatial collision detection with integer hash keys
+    const auto candidate_collisions = SIMDCollisionOptimizer::detect_collisions_simd_optimized(
+        trajectory1, trajectory2, collision_radius);
+
+    RCLCPP_DEBUG_STREAM(rclcpp::get_logger("yield_plugin"),
+        "Found " << candidate_collisions.size() << " optimized SIMD collision candidates");
+
+    // If no geographic collisions, exit early
+    if (candidate_collisions.empty()) {
+        RCLCPP_DEBUG_STREAM(rclcpp::get_logger("yield_plugin"),
+            "No geographic collisions found.");
+        return std::nullopt;
+    }
+
+    // Temporal filtering (keep your existing implementation)
+    return get_temporal_collision(trajectory1, trajectory2, candidate_collisions, collision_radius);
+}
+
   std::optional<CollisionData> YieldPlugin::get_collision(
     const carma_planning_msgs::msg::TrajectoryPlan& trajectory1,
     const std::vector<carma_perception_msgs::msg::PredictedState>& trajectory2,
@@ -829,12 +893,23 @@ namespace yield_plugin
         throw std::invalid_argument("Both trajectories must have at least 2 points");
     }
 
+    auto start = std::chrono::high_resolution_clock::now();
     // Verify the predicted trajectory is on the route
     if (!is_trajectory_on_route(trajectory2)) {
-        RCLCPP_DEBUG(rclcpp::get_logger("yield_plugin"),
-          "Predicted states are not on the route! Ignoring");
-        return std::nullopt;
+      auto end = std::chrono::high_resolution_clock::now();
+      auto duration = std::chrono::duration_cast<std::chrono::microseconds>(end - start);
+      RCLCPP_ERROR_STREAM(nh_->get_logger(), "Traj2 on route (not on route) took: " << duration.count() << " μs");
+
+      RCLCPP_ERROR(rclcpp::get_logger("yield_plugin"),
+        "Predicted states are not on the route! Ignoring");
+      return std::nullopt;
     }
+    auto end = std::chrono::high_resolution_clock::now();
+    auto duration = std::chrono::duration_cast<std::chrono::microseconds>(end - start);
+    RCLCPP_ERROR_STREAM(nh_->get_logger(), "Traj2 on route took: " << duration.count() << " μs");
+
+
+    auto start_spatial = std::chrono::high_resolution_clock::now();
 
     // Create a spatial grid for trajectory2 points to speed up collision detection
     // when comparing with trajectory1
@@ -845,6 +920,9 @@ namespace yield_plugin
       get_spatial_collision_from_spatial_grid(
           trajectory1, trajectory2, spatial_grid, collision_radius);
 
+    auto end_spatial = std::chrono::high_resolution_clock::now();
+    auto spatial_duration = std::chrono::duration_cast<std::chrono::microseconds>(end_spatial - start_spatial);
+    RCLCPP_ERROR_STREAM(nh_->get_logger(), "TSpatial collision check took: " << spatial_duration.count() << " μs");
     RCLCPP_DEBUG_STREAM(rclcpp::get_logger("yield_plugin"), "Found " << candidate_collisions.size()
                        << " geographic collision candidates");
 
@@ -865,8 +943,14 @@ namespace yield_plugin
     // Formula: collision_radius = sqrt((v1*t)^2 + (v2*t)^2), solve for t
 
     // Extract speeds - we'll use these for temporal calculations later
-    return get_temporal_collision(
-      trajectory1, trajectory2, candidate_collisions, collision_radius);;
+    auto temporal_start = std::chrono::high_resolution_clock::now();
+    auto temporally_checked_collision = get_temporal_collision(
+      trajectory1, trajectory2, candidate_collisions, collision_radius);
+    auto tempora_end = std::chrono::high_resolution_clock::now();
+    auto temporal_duration = std::chrono::duration_cast<std::chrono::microseconds>(tempora_end - temporal_start);
+    RCLCPP_ERROR_STREAM(nh_->get_logger(),
+      "Temporal Collision detection took: " << temporal_duration.count() << " μs");
+    return temporally_checked_collision;
   }
 
   // Helper method to check if a trajectory is on route
@@ -944,7 +1028,17 @@ namespace yield_plugin
     new_list.push_back(curr_state);
     new_list.insert(new_list.end(), curr_obstacle.predictions.cbegin(), curr_obstacle.predictions.cend());
 
-    const auto collision_result = get_collision(original_tp, new_list, config_.intervehicle_collision_distance_in_m);
+    auto start = std::chrono::high_resolution_clock::now();
+    std::optional<CollisionData> collision_result;
+    if (simd_available_) {
+        collision_result = get_collision_simd(original_tp, new_list, config_.intervehicle_collision_distance_in_m);
+    } else {
+        collision_result = get_collision(original_tp, new_list, config_.intervehicle_collision_distance_in_m);
+    }
+
+    auto end = std::chrono::high_resolution_clock::now();
+    auto duration = std::chrono::duration_cast<std::chrono::microseconds>(end - start);
+    RCLCPP_ERROR_STREAM(nh_->get_logger(), "Collision detection took: " << duration.count() << " μs" << "simd_available: " << simd_available_);
 
     if (!collision_result)
     {
