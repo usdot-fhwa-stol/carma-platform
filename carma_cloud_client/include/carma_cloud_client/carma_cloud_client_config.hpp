@@ -28,7 +28,7 @@ namespace carma_cloud_client
   struct Config
   {
     //host machine IP
-    std::string url ="http://127.0.0.1:"; 
+    std::string url ="http://127.0.0.1:";
     std::string base_hb = "/carmacloud/v2xhub";
     //URL for traffic control request
     std::string base_req = "/carmacloud/tcmreq";
@@ -57,6 +57,8 @@ namespace carma_cloud_client
            << "list: " << c.list << std::endl
            << "fetchtime: " << c.fetchtime << std::endl
            << "method: " << c.method << std::endl
+           << "webport: " << c.webport << std::endl
+           << "webip: " << c.webip << std::endl
            << "}" << std::endl;
       return output;
     }
