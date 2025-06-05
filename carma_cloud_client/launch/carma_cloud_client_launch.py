@@ -33,21 +33,21 @@ This file is can be used to launch the CARMA carma_cloud_client_node.
 def open_tunnels():
 
     REMOTE_USER="ubuntu"
-    REMOTE_ADDR="www.carma-cloud.com"
-    KEY_FILE="carma-cloud-test-1.pem"
+    REMOTE_ADDR="carma-cloud.com" # Dev instance is www.carma-cloud.com, prod instance is carma-cloud.com
+    KEY_FILE="carma-cloud-1.pem" # Dev key is carma-cloud-test-1.pem, prod key is carma-cloud-1.pem
     HOST_PORT="33333" # This port is forwarded to remote host (carma-cloud)
-    REMOTE_PORT="33333" # This port is forwarded to local host 
+    REMOTE_PORT="22222" # This port is forwarded to local host
 
     param_launch_path = os.path.join(
         get_package_share_directory('carma_cloud_client'), 'launch/scripts')
-        
-    
+
+
     cmd = param_launch_path + '/open_tunnels.sh'
 
     subprocess.check_call(['chmod','u+x', cmd])
 
     key_path = "/opt/carma/vehicle/calibration/cloud_permission"
-    
+
     key = key_path + '/' + KEY_FILE
 
     subprocess.check_call(['sudo','chmod','400', key])
@@ -61,12 +61,12 @@ def generate_launch_description():
     log_level = LaunchConfiguration('log_level')
     declare_log_level_arg = DeclareLaunchArgument(
         name ='log_level', default_value='WARN')
-    
+
     # Get parameter file path
     param_file_path = os.path.join(
         get_package_share_directory('carma_cloud_client'), 'config/parameters.yaml')
 
-        
+
     # Launch node(s) in a carma container to allow logging to be configured
     container = ComposableNodeContainer(
         package='carma_ros2_utils',
@@ -74,7 +74,7 @@ def generate_launch_description():
         namespace=GetCurrentNamespace(),
         executable='carma_component_container_mt',
         composable_node_descriptions=[
-            
+
             # Launch the core node(s)
             ComposableNode(
                     package='carma_cloud_client',
