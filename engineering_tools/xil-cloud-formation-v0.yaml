@@ -35,7 +35,7 @@ Parameters:
   CarmaConfigAMI:
     Description: The AMI ID to use for the EC2 instance.
     Type: String
-    Default: ami-0c5b5f70bfa4f1021
+    Default: ami-09a2a0cffadb19b64 #training partner needs to use this aws ami subscription https://aws.amazon.com/marketplace/pp/prodview-ch24i42e34ezm?applicationId=AWS-EC2-Console&ref_=beagle&sr=0-5 to get the ami
 Resources:
   SubnetA:
     Type: AWS::EC2::Subnet
@@ -398,6 +398,8 @@ Resources:
           ### 7. COMPLETION
 
           # Signal creation complete
+          sudo apt-get update
+          sudo apt-get install -y unzip
           wget https://s3.amazonaws.com/cloudformation-examples/aws-cfn-bootstrap-py3-latest.zip
           unzip aws-cfn-bootstrap-py3-latest.zip
           cd aws-cfn-bootstrap-2.0/
@@ -421,6 +423,40 @@ Resources:
           DOCKER_VERSION=$(sudo curl --silent https://api.github.com/repos/docker/compose/releases/latest | grep -oP '"tag_name": "\K(.*)(?=")')
           sudo curl -L "https://github.com/docker/compose/releases/download/$DOCKER_VERSION/docker-compose-$(uname -s)-$(uname -m)" -o $DESTINATION
           sudo chmod 755 $DESTINATION
+
+          # Install XFCE desktop environment
+          sudo apt update
+          sudo apt install -y xfce4 xfce4-goodies
+
+
+          # Install docker
+          # Install Docker
+          sudo apt-get update
+          sudo apt-get install -y ca-certificates curl gnupg lsb-release
+
+          # Add Docker GPG key
+          sudo mkdir -p /etc/apt/keyrings
+          curl -fsSL https://download.docker.com/linux/ubuntu/gpg | \
+            sudo gpg --dearmor -o /etc/apt/keyrings/docker.gpg
+
+          # Add Docker stable repo
+          echo \
+            "deb [arch=$(dpkg --print-architecture) \
+            signed-by=/etc/apt/keyrings/docker.gpg] \
+            https://download.docker.com/linux/ubuntu \
+            $(lsb_release -cs) stable" | \
+            sudo tee /etc/apt/sources.list.d/docker.list > /dev/null
+
+          # Install Docker engine
+          sudo apt-get update
+          sudo apt-get install -y docker-ce docker-ce-cli containerd.io docker-buildx-plugin docker-compose-plugin
+
+          # Enable and start Docker
+          sudo systemctl enable docker
+          sudo systemctl start docker
+
+          # Add ubuntu user to docker group
+          sudo usermod -aG docker ubuntu
 
           # Install carma-config
           carma config install ${CarmaConfigImage}
@@ -451,7 +487,7 @@ Resources:
 
           # Clone Repos
           cd /home/ubuntu/carma_ws
-          curl -L https://raw.githubusercontent.com/usdot-fhwa-stol/carma-platform/develop/carma-platform.repos | sed 's/git@github.com:/https:\/\/github.com\//' | vcs import
+          curl -L https://raw.githubusercontent.com/usdot-fhwa-stol/carma-platform/develop/cdasim.repos | sed 's/git@github.com:/https:\/\/github.com\//' | vcs import
 
           # Setup /opt/carma folder
           sudo curl -L https://raw.githubusercontent.com/usdot-fhwa-stol/carma-platform/develop/engineering_tools/opt_carma_setup.bash > /home/ubuntu/opt_carma_setup.bash
@@ -465,6 +501,48 @@ Resources:
 
           # Install default route
           sudo curl -o /opt/carma/routes/Release_test_case_1.csv -L https://raw.githubusercontent.com/usdot-fhwa-stol/carma-platform/develop/testing_maps/Release_test_case_1.csv
+
+          #Install nice-xdcv
+          cd /tmp
+          wget https://d1uj6qtbmh3dt5.cloudfront.net/2024.0/Servers/nice-dcv-2024.0-19030-ubuntu2204-x86_64.tgz
+          tar -xvzf nice-dcv-2024.0-19030-ubuntu2204-x86_64.tgz
+          cd nice-dcv-2024.0-19030-ubuntu2204-x86_64
+          sudo apt update
+          sudo apt install -y ./*.deb
+
+          # Enable and start dcvserver on boot
+          sudo systemctl enable dcvserver
+          sudo systemctl start dcvserver
+
+          # (Optional) Create a virtual DCV session
+          sudo -u ubuntu dcv create-session ubuntu --owner ubuntu --type virtual
+          
+          # Create systemd service to recreate DCV session after reboot
+          cat <<EOF | sudo tee /etc/systemd/system/create-dcv-session.service
+          [Unit]
+          Description=Create NICE DCV Virtual Session
+          After=network.target dcvserver.service
+          Requires=dcvserver.service
+
+          [Service]
+          ExecStart=/usr/bin/dcv create-session ubuntu --owner ubuntu --type virtual
+          Restart=on-failure
+          User=root
+
+          [Install]
+          WantedBy=multi-user.target
+          EOF
+
+          # Enable the service
+          sudo systemctl daemon-reexec
+          sudo systemctl daemon-reload
+          sudo systemctl enable create-dcv-session.service
+
+          # Create basic .xsession for DCV virtual desktop
+          echo "xfce4-session" > /home/ubuntu/.xsession
+          chmod +x /home/ubuntu/.xsession
+          chown ubuntu:ubuntu /home/ubuntu/.xsession
+
 
           reboot
 

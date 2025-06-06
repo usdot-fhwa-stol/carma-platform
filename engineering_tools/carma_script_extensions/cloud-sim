@@ -173,6 +173,10 @@ cloud-sim__start() {
     local CONFIG_IMAGE=$(cat ${CARMA_CLOUD_SIM_CONFIG_PATH} | grep "CONFIG_IMAGE=" | sed "s|CONFIG_IMAGE=||")
     local AMI_ID=$(cat ${CARMA_CLOUD_SIM_CONFIG_PATH} | grep "AMI_ID=" | sed "s|AMI_ID=||")
     local REGION=$(cat ${CARMA_CLOUD_SIM_CONFIG_PATH} | grep "REGION=" | sed "s|REGION=||")
+    if [ -z "$REGION" ]; then
+        REGION="us-east-1"
+        echo "No region specified in config. Defaulting to us-east-1."
+    fi
 
     if [ -z "$USER_ARN" ]; then
         echo "Configuration does not include AWS User ARN. Please run: carma cloud-sim config -a <User ARN>"
