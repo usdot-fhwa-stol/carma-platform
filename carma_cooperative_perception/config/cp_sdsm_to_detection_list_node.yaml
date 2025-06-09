@@ -30,4 +30,4 @@ x_offset: -1.0
 # Meters in map frame
 y_offset: -0.7
 # Degrees in map frame, a.k.a positive is counter-clockwise
-yaw_offset: 30.0
+yaw_offset: 0.0
