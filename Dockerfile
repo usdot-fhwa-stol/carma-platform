@@ -43,7 +43,7 @@ ENV PACKAGES=${PACKAGES}
 RUN mkdir ~/src
 COPY --chown=carma ./docker /home/carma/src/carma-platform/docker
 
-ARG GIT_BRANCH="develop"
+ARG GIT_BRANCH="release/stingray"
 RUN ~/src/carma-platform/docker/checkout.bash -b ${GIT_BRANCH}
 
 COPY --chown=carma . /home/carma/src/carma-platform
