@@ -112,27 +112,23 @@ auto to_time_msg(const DDateTime & d_date_time, bool is_simulation) -> builtin_i
     // for now and add milliseconds later
     timeinfo.tm_sec = 0;
 
-    std::time_t timeT; // seconds since the Unix epoch
+    std::time_t timeT; // Integer number of seconds since the Unix epoch
+
+    // Treat the time as UTC to adjust the timezone offset later
+    // which also works if no timezone offset is provided because J3223 SDSM is in UTC
+    timeinfo.tm_gmtoff = 0; // Set to 0 for UTC
+    timeinfo.tm_isdst = 0; // UTC doesn't observe DST
+    std::time_t utc_time = timegm(&timeinfo); // func is available on GNU-based systems (ubuntu etc)
 
     if (d_date_time.time_zone_offset) {
-      // Get time as if it were local time
-      std::time_t local_time = std::mktime(&timeinfo);
-
-      // Manually adjust for the difference between actual offset and system offset
-      int system_offset = /* get system timezone offset */;
-      int desired_offset = static_cast<int>(d_date_time.time_zone_offset.value());
-      int offset_diff = desired_offset - system_offset;
-
-      timeT = local_time - offset_diff;
-    }
-    else
-    {
-      // J3224 SDSM standard expects UTC timezone
-      timeinfo.tm_gmtoff = 0; // Set to 0 for UTC
-      timeinfo.tm_isdst = 0; // UTC doesn't observe DST
-
-      // Convert to time_t
-      timeT = timegm(&timeinfo); // Available function in GNU-based system (Ubuntu 20.04, 22.04 etc)
+      // Offset is in minutes, convert to seconds
+      // If offset is negative (e.g., -5 for EST), we add 5 hours to get UTC
+      // If offset is positive (e.g., +9 for JST), we subtract 9 hours to get UTC
+      int offset_seconds = static_cast<int>(d_date_time.time_zone_offset.value()) * 60;
+      timeT = utc_time - offset_seconds; // Subtract offset to get UTC
+    } else {
+      // No timezone offset provided, assume input is already UTC
+      timeT = utc_time;
     }
 
     // Convert time_t to system_clock::time_point
