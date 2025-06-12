@@ -1,9 +1,0 @@
-pedestrian_publisher:
-  ros__parameters:
-    start_x: -39.3998
-    start_y: 315.655
-    end_x: -38.5408
-    end_y: 330.401
-    speed: 1.00
-    update_rate: 10.0
-    use_sim_time: false
