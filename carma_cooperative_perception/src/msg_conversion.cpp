@@ -112,32 +112,27 @@ auto to_time_msg(const DDateTime & d_date_time, bool is_simulation) -> builtin_i
     // for now and add milliseconds later
     timeinfo.tm_sec = 0;
 
-    std::time_t timeT;
+    std::time_t timeT; // seconds since the Unix epoch
 
-    if (d_date_time.time_zone_offset)
-    {
-      timeinfo.tm_gmtoff = static_cast<int>(d_date_time.time_zone_offset.value());
-      timeT = std::mktime(&timeinfo);
+    if (d_date_time.time_zone_offset) {
+      // Get time as if it were local time
+      std::time_t local_time = std::mktime(&timeinfo);
+
+      // Manually adjust for the difference between actual offset and system offset
+      int system_offset = /* get system timezone offset */;
+      int desired_offset = static_cast<int>(d_date_time.time_zone_offset.value());
+      int offset_diff = desired_offset - system_offset;
+
+      timeT = local_time - offset_diff;
     }
     else
     {
-      // Get the current timezone from the system
-      // Use tzset() to initialize timezone data from system
-      tzset();
-
-      // Get current timestamp to determine DST status
-      // NOTE: If the system is running in a docker container (which it mostly is),
-      // the timezone is by default GMT unless otherwise set. Just a caution.
-      std::time_t currentTime = std::time(nullptr);
-      std::tm* localTimeInfo = std::localtime(&currentTime);
-
-      long timezone_offset = localTimeInfo->tm_gmtoff;
-
-      timeinfo.tm_gmtoff = timezone_offset;
-      timeinfo.tm_isdst = localTimeInfo->tm_isdst;
+      // J3224 SDSM standard expects UTC timezone
+      timeinfo.tm_gmtoff = 0; // Set to 0 for UTC
+      timeinfo.tm_isdst = 0; // UTC doesn't observe DST
 
       // Convert to time_t
-      timeT = std::mktime(&timeinfo);
+      timeT = timegm(&timeinfo); // Available function in GNU-based system (Ubuntu 20.04, 22.04 etc)
     }
 
     // Convert time_t to system_clock::time_point
