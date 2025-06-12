@@ -3,7 +3,6 @@
 |----------------------|---------------------|---------------------|
  [![Build Workflows](https://github.com/usdot-fhwa-stol/carma-platform/actions/workflows/dockerhub.yml/badge.svg?branch=develop)](https://github.com/usdot-fhwa-stol/carma-platform/actions/workflows/dockerhub.yml) |  [![Build Workflows](https://github.com/usdot-fhwa-stol/carma-platform/actions/workflows/Ci.yml/badge.svg?branch=develop)](https://github.com/usdot-fhwa-stol/carma-platform/actions/workflows/Ci.yml) | [![Quality Gate Status](https://sonarcloud.io/api/project_badges/measure?project=usdot-fhwa-stol_CARMAPlatform&metric=alert_status)](https://sonarcloud.io/dashboard?id=usdot-fhwa-stol_CARMAPlatform) |
 
-
 # CARMA
 ![CARMA Arch](docs/image/CARMA3_Vehicles.jpg)
 
