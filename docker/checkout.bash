@@ -34,12 +34,26 @@ while [[ $# -gt 0 ]]; do
                     shift
                     shift
             ;;
+            -t|--token)
+                    token=$2
+                    shift
+                    shift
+            ;;
             *)
-                   token=$1
+                  echo "Unknown argument $1"
                     shift
             ;;
       esac
 done
+
+# If token not defined, load as environment variable
+if [[ -z "$token" ]]; then
+      if [[ -z "$GH_PAT" ]]; then
+            exit 1
+      else
+            token=$GH_PAT
+      fi
+fi
 
 cd "${dir}"/src
 

@@ -48,7 +48,7 @@ COPY --chown=carma ./docker /home/carma/src/carma-platform/docker
 ARG GIT_BRANCH="develop"
 # Token for private repositories
 ARG TOKEN="NULL"
-RUN ~/src/carma-platform/docker/checkout.bash -b ${GIT_BRANCH} ${TOKEN}
+RUN ~/src/carma-platform/docker/checkout.bash -b ${GIT_BRANCH} -t ${TOKEN}
 
 COPY --chown=carma . /home/carma/src/carma-platform
 
