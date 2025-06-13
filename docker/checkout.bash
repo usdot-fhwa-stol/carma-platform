@@ -34,11 +34,9 @@ while [[ $# -gt 0 ]]; do
                     shift
                     shift
             ;;
-            *) ## Handle token for private repos
-                token="$1"
-                shift
-                shift
-                ;;
+            *)
+                   token=$1
+                    shift
             ;;
       esac
 done
