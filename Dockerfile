@@ -34,6 +34,10 @@
 # /////////////////////////////////////////////////////////////////////////////
 ARG DOCKER_ORG="usdotfhwastoldev"
 ARG DOCKER_TAG="develop"
+
+# Token for private repositories
+ARG TOKEN="NULL"
+
 FROM ${DOCKER_ORG}/autoware.ai:${DOCKER_TAG} as base-image
 
 FROM base-image AS install
@@ -44,7 +48,7 @@ RUN mkdir ~/src
 COPY --chown=carma ./docker /home/carma/src/carma-platform/docker
 
 ARG GIT_BRANCH="develop"
-RUN ~/src/carma-platform/docker/checkout.bash -b ${GIT_BRANCH}
+RUN ~/src/carma-platform/docker/checkout.bash -b ${GIT_BRANCH} ${TOKEN}
 
 COPY --chown=carma . /home/carma/src/carma-platform
 
