@@ -1,4 +1,4 @@
-# This workflow will only build for Pull Requests which are opened, changed , merged 
+# This workflow will only build for Pull Requests which are opened, changed , merged
 name: Docker build
 on:
   pull_request:
@@ -7,3 +7,5 @@ on:
 jobs:
   docker:
     uses: usdot-fhwa-stol/actions/.github/workflows/docker.yml@main
+    secrets:
+      GH_PAT: ${{ secrets.GH_PAT }}

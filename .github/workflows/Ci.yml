@@ -58,6 +58,8 @@ jobs:
       run: mv $GITHUB_WORKSPACE/src /opt/carma/
 
     - name: Checkout dependencies
+      env:
+        GH_PAT: ${{ secrets.GH_PAT }}
       # Checkout project dependencies
       run: |
         source "$INIT_ENV"

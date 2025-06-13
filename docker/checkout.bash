@@ -34,12 +34,26 @@ while [[ $# -gt 0 ]]; do
                     shift
                     shift
             ;;
+            -t|--token)
+                    token=$2
+                    shift
+                    shift
+            ;;
             *)
                   echo "Unknown argument $1"
                     shift
             ;;
       esac
 done
+
+# If token not defined, load as environment variable
+if [[ -z "$token" ]]; then
+      if [[ -z "$GH_PAT" ]]; then
+            exit 1
+      else
+            token=$GH_PAT
+      fi
+fi
 
 cd "${dir}"/src
 
@@ -48,6 +62,7 @@ git clone --depth=1 https://github.com/usdot-fhwa-stol/carma-utils.git --branch 
 git clone --depth=1 https://github.com/usdot-fhwa-stol/v2x-ros-conversion.git --branch "${BRANCH}"
 git clone --depth=1 https://github.com/usdot-fhwa-stol/carma-message-filters.git --branch "${BRANCH}"
 git clone --depth=1 https://github.com/usdot-fhwa-stol/multiple_object_tracking --branch "${BRANCH}"
+git clone --depth=1 https://$token@github.com/usdot-fhwa-stol/carma-developer-tools --branch "${BRANCH}"
 
 # TODO: Remove V2X-Hub Depedency (CAR-6029)
 git clone -b master --depth 1 https://github.com/etherealjoy/qhttpengine.git
