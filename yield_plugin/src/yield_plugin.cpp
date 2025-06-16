@@ -30,6 +30,7 @@
 #include <Eigen/Geometry>
 #include <Eigen/LU>
 #include <Eigen/SVD>
+#include <fmt/format.h>
 #include <yield_plugin/yield_plugin.hpp>
 #include <carma_v2x_msgs/msg/location_ecef.hpp>
 #include <carma_v2x_msgs/msg/trajectory.hpp>
@@ -321,7 +322,7 @@ namespace yield_plugin
     rclcpp::Time end_time = system_clock.now();  // Planning complete
 
     auto duration = end_time - start_time;
-    RCLCPP_DEBUG_STREAM(nh_->get_logger(), "ExecutionTime: " << std::to_string(duration.seconds()));
+    RCLCPP_DEBUG_STREAM(rclcpp::get_logger("yield_plugin"), "ExecutionTime: " << std::to_string(duration.seconds()));
   }
 
   carma_planning_msgs::msg::TrajectoryPlan YieldPlugin::update_traj_for_cooperative_behavior(const carma_planning_msgs::msg::TrajectoryPlan& original_tp, double current_speed)
@@ -583,151 +584,310 @@ namespace yield_plugin
     return jmt_trajectory;
   }
 
-  std::optional<GetCollisionResult> YieldPlugin::get_collision(const carma_planning_msgs::msg::TrajectoryPlan& trajectory1,
-    const std::vector<carma_perception_msgs::msg::PredictedState>& trajectory2, double collision_radius, double trajectory1_max_speed)
+  /*
+    * @brief Create a spatial grid for the trajectory2 points to speed up collision detection
+    *        Spatial grid is created by dividing the space into cells of size 2 * collision_radius
+    *        Each cell contains a list of indices of trajectory2 points that fall within that cell
+    * @param trajectory2 A predicted state trajectory (often incoming object)
+    * @param collision_radius The radius within which to check for collisions
+    * @return A map where the key is a grid cell identifier (example: "0,0" or "1,-1")
+    *         and the value is a list of indices of trajectory2 points in that cell
+  */
+ std::unordered_map<std::string, std::vector<size_t>> create_spatial_grid(
+    const std::vector<carma_perception_msgs::msg::PredictedState>& trajectory2,
+    double collision_radius)
+  {
+    // Build spatial index for faster geographic lookup
+    // For each point in trajectory2, store its position and index
+    std::vector<std::tuple<double, double, size_t>> spatial_index;
+    for (size_t i = 0; i < trajectory2.size(); ++i) {
+        double x = trajectory2[i].predicted_position.position.x;
+        double y = trajectory2[i].predicted_position.position.y;
+        spatial_index.emplace_back(x, y, i);
+    }
+
+    // Sort spatial index (could be replaced with more sophisticated spatial index like R-tree)
+    // This simple approach splits the space into a grid of collision_radius-sized cells
+    const double cell_size = collision_radius * 2.0;
+    std::unordered_map<std::string, std::vector<size_t>> spatial_grid;
+
+    for (size_t i = 0; i < spatial_index.size(); ++i) {
+        const auto& [x, y, idx] = spatial_index[i];
+        // Convert position to grid cell
+        int grid_x = static_cast<int>(x / cell_size);
+        int grid_y = static_cast<int>(y / cell_size);
+
+        // Add to current cell and neighboring cells to handle boundary cases
+        for (int dx = -1; dx <= 1; ++dx) {
+            for (int dy = -1; dy <= 1; ++dy) {
+                std::string cell_key = fmt::format("{},{}", grid_x + dx, grid_y + dy);
+                spatial_grid[cell_key].push_back(idx);
+            }
+        }
+    }
+    return spatial_grid;
+  }
+
+  /*
+    * Get collision candidates purely from spatial perspective using spatial grid
+    * @param trajectory1 The trajectory of the host vehicle
+    * @param trajectory2 The predicted state trajectory (often incoming object)
+    * @param traj2_spatial_grid The spatial grid created from trajectory2
+    * @param collision_radius The radius within which to check for collisions
+    * @return A vector of pairs of indices representing potential collision points
+    *         in the form of (trajectory1_index, trajectory2_index)
+  */
+  std::vector<std::pair<size_t, size_t>> get_spatial_collision_from_spatial_grid(
+    const carma_planning_msgs::msg::TrajectoryPlan& trajectory1,
+    const std::vector<carma_perception_msgs::msg::PredictedState>& trajectory2,
+    const std::unordered_map<std::string, std::vector<size_t>>& traj2_spatial_grid,
+    double collision_radius)
+  {
+    // Check for geographic collisions using the spatial grid
+    std::vector<std::pair<size_t, size_t>> candidate_collisions;
+    for (size_t i = 0; i < trajectory1.trajectory_points.size(); ++i) {
+        double x1 = trajectory1.trajectory_points[i].x;
+        double y1 = trajectory1.trajectory_points[i].y;
+
+        // Find grid cell for this point
+        int grid_x = static_cast<int>(x1 / (collision_radius * 2.0));
+        int grid_y = static_cast<int>(y1 / (collision_radius * 2.0));
+        std::string cell_key = fmt::format("{},{}", grid_x, grid_y);
+
+        // Check if cell exists in our grid
+        if (traj2_spatial_grid.find(cell_key) != traj2_spatial_grid.end()) {
+            // Check all points in this cell
+            for (const auto& j : traj2_spatial_grid.at(cell_key)) {
+                double x2 = trajectory2[j].predicted_position.position.x;
+                double y2 = trajectory2[j].predicted_position.position.y;
+
+                double distance = std::hypot(x1 - x2, y1 - y2);
+                if (distance <= collision_radius) {
+                    // Geographic collision found - store as candidate
+                    candidate_collisions.emplace_back(i, j);
+                }
+            }
+        }
+    }
+    return candidate_collisions;
+  }
+
+  /**
+   * Calculates the speed at a specific point in a trajectory by examining adjacent points
+   *
+   * @param trajectory The full trajectory plan
+   * @param idx The index of the point for which to calculate speed
+   * @return The calculated speed in distance units per second
+   */
+  double calculateTrajectorySpeed(
+    const carma_planning_msgs::msg::TrajectoryPlan& trajectory,
+    size_t idx)
+  {
+    if (trajectory.trajectory_points.empty()) {
+        return 0.0;
+    }
+
+    // If we have only one point, we can't calculate speed
+    if (trajectory.trajectory_points.size() == 1) {
+        return 0.0;
+    }
+
+    const auto& point = trajectory.trajectory_points[idx];
+
+    if (idx < trajectory.trajectory_points.size() - 1) {
+        // Calculate speed using the current point and the next point
+        const auto& next_point = trajectory.trajectory_points[idx + 1];
+        double dx = next_point.x - point.x;
+        double dy = next_point.y - point.y;
+        double dt = (rclcpp::Time(next_point.target_time) - rclcpp::Time(point.target_time)).seconds();
+
+        if (dt > 0.0) {
+            double distance = std::hypot(dx, dy);
+            return distance / dt;
+        }
+    } else if (idx > 0) {
+        // For the last point, use previous point for calculation
+        const auto& prev_point = trajectory.trajectory_points[idx - 1];
+        double dx = point.x - prev_point.x;
+        double dy = point.y - prev_point.y;
+        double dt = (rclcpp::Time(point.target_time) -
+          rclcpp::Time(prev_point.target_time)).seconds();
+
+        if (dt > 0.0) {
+            double distance = std::hypot(dx, dy);
+            return distance / dt;
+        }
+    }
+
+    // Return 0 if we couldn't calculate a speed
+    return 0.0;
+  }
+
+  /*
+    * @brief Get the best collision point based on temporal checks
+    *        from the candidate collisions filtered from spatial checks
+    * @param trajectory1 The trajectory of the host vehicle
+    * @param trajectory2 The predicted state trajectory (often incoming object)
+    * @param candidate_collisions A vector of pairs of indices representing potential
+    *         collision points in the form of (trajectory1_index, trajectory2_index)
+    * @param collision_radius The radius within which to check for collisions
+    * @return An optional CollisionData containing the best collision candidate
+  */
+  std::optional<CollisionData> YieldPlugin::get_temporal_collision(
+    const carma_planning_msgs::msg::TrajectoryPlan& trajectory1,
+    const std::vector<carma_perception_msgs::msg::PredictedState>& trajectory2,
+    const std::vector<std::pair<size_t, size_t>>& candidate_collisions,
+    double collision_radius)
+  {
+    double smallest_time_diff = std::numeric_limits<double>::infinity();
+    double smallest_time_diff_2 = std::numeric_limits<double>::infinity();
+
+    std::optional<CollisionData> best_collision = std::nullopt;
+
+    for (const auto& [idx1, idx2] : candidate_collisions) {
+        const auto& point1 = trajectory1.trajectory_points[idx1];
+        const auto& point2 = trajectory2[idx2];
+
+        // Calculate velocity for trajectory1 using the refactored function
+        double traj1_speed = calculateTrajectorySpeed(trajectory1, idx1);
+
+        // Calculate speed for trajectory2
+        double traj2_speed = std::hypot(
+          point2.predicted_velocity.linear.x, point2.predicted_velocity.linear.y);
+
+        // Calculate the maximum time difference for a potential collision based on actual speeds
+        double max_collision_time_diff = 3.0;
+        // if (traj1_speed > 0.0 || traj2_speed > 0.0) {
+        //     // Calculate how long it would be to travel 2*collision_radius given the combined speed
+        //     // Use a minimum speed to avoid division by very small numbers
+        //     double combined_speed = std::max(0.1, std::hypot(traj1_speed, traj2_speed));
+        //     max_collision_time_diff = std::max(2.0, 2 * collision_radius / combined_speed);
+        // } else {
+        //     // If both objects have zero speed, use a constant time window
+        //     max_collision_time_diff = 1.0; // 1 second
+        // }
+
+        double t1 = rclcpp::Time(point1.target_time).seconds();
+        double t2 = rclcpp::Time(point2.header.stamp).seconds();
+        double time_diff = std::abs(t1 - t2);
+
+        smallest_time_diff_2 = std::min(smallest_time_diff_2, time_diff);
+
+        // Skip if time difference is too large for the current speeds
+        if (time_diff > max_collision_time_diff) {
+            continue;
+        }
+
+        // Capture current collision if it has the smallest time difference
+        if (time_diff < smallest_time_diff) {
+            smallest_time_diff = time_diff;
+            CollisionData collision_result;
+            collision_result.point1 = lanelet::BasicPoint2d(point1.x, point1.y);
+            collision_result.point2 = lanelet::BasicPoint2d(
+                point2.predicted_position.position.x,
+                point2.predicted_position.position.y
+            );
+
+            // Use the earlier timestamp for collision time
+            collision_result.collision_time = (t1 < t2) ?
+                rclcpp::Time(point1.target_time) :
+                rclcpp::Time(point2.header.stamp);
+
+            best_collision = collision_result;
+
+            RCLCPP_DEBUG_STREAM(rclcpp::get_logger("yield_plugin"),
+                "Potential collision found: time_diff=" << time_diff
+                << "s, max_allowed=" << max_collision_time_diff
+                << "s, traj1_speed=" << traj1_speed << ", traj2_speed=" << traj2_speed);
+        }
+    }
+    if (!best_collision) {
+        RCLCPP_WARN_STREAM(nh_->get_logger(),
+            "No valid collision found after temporal checks"
+            << ", smallest_time_diff_2=" << smallest_time_diff_2);
+    } else {
+        RCLCPP_WARN_STREAM(nh_->get_logger(),
+            "Best collision found: time_diff=" << smallest_time_diff
+            << "s, collision_time=" << best_collision->collision_time.seconds());
+    }
+    return best_collision;
+  }
+
+  std::optional<CollisionData> YieldPlugin::get_collision(
+    const carma_planning_msgs::msg::TrajectoryPlan& trajectory1,
+    const std::vector<carma_perception_msgs::msg::PredictedState>& trajectory2,
+    double collision_radius)
   {
 
-    // Iterate through each pair of consecutive points in the trajectories
-    RCLCPP_DEBUG_STREAM(nh_->get_logger(), "Starting a new collision detection, trajectory size: "
-      << trajectory1.trajectory_points.size() << ". prediction size: " << trajectory2.size());
+    RCLCPP_DEBUG_STREAM(rclcpp::get_logger("yield_plugin"),
+      "Starting collision detection, trajectory1 size: "
+      << trajectory1.trajectory_points.size() << ", trajectory2 size: " << trajectory2.size());
 
-    // Iterate through the object to check if it's on the route
-    bool on_route = false;
-    int on_route_idx = 0;
-
-    // A flag to stop searching more than one lanelet if the object has no velocity
-    const auto traj2_speed{std::hypot(trajectory2.front().predicted_velocity.linear.x,
-                                  trajectory2.front().predicted_velocity.linear.y)};
-    bool traj2_has_zero_speed = traj2_speed < config_.obstacle_zero_speed_threshold_in_ms;
-
-    if (trajectory2.size() < 2)
+    // Validate input trajectories
+    if (trajectory1.trajectory_points.size() < 2 || trajectory2.size() < 2)
     {
-      throw std::invalid_argument("Object on ther road doesn't have enough predicted states! Please check motion_computation is correctly applying predicted states");
-    }
-    const double predict_step_duration = (rclcpp::Time(trajectory2.at(1).header.stamp) - rclcpp::Time(trajectory2.front().header.stamp)).seconds();
-    const double predict_total_duration = get_trajectory_duration(trajectory2);
-
-    if (predict_step_duration < 0.0)
-    {
-      throw std::invalid_argument("Predicted states of the object is malformed. Detected trajectory going backwards in time!");
+        throw std::invalid_argument("Both trajectories must have at least 2 points");
     }
 
-    // In order to optimize the for loops for comparing two trajectories, following logic skips every iteration_stride-th points of the traj2.
-    // Since skipping number of points from the traj2 may result in ignoring potential collisions, its value is dependent on two
-    // trajectories' speeds and intervehicle_collision_distance_in_m radius.
-    // Therefore, the derivation first calculates the max time, t, that both actors can move while still being in collision radius:
-    // sqrt( (v1 * t / 2)^2 + (v2 * t / 2)^2 ) = collision_radius. Here v1 and v2 are assumed to be perpendicular to each other and
-    // intersecting at t/2 to get max possible collision_radius. Solving for t gives following:
-    double iteration_stride_max_time_s = 2 * config_.intervehicle_collision_distance_in_m / sqrt(pow(traj2_speed, 2) + pow(trajectory1_max_speed, 2));
-    int iteration_stride = std::max(1, static_cast<int>(iteration_stride_max_time_s / predict_step_duration));
+    // Verify the predicted trajectory is on the route
+    if (!is_trajectory_on_route(trajectory2)) {
+        RCLCPP_DEBUG(rclcpp::get_logger("yield_plugin"),
+          "Predicted states are not on the route! Ignoring");
+        return std::nullopt;
+    }
 
-    RCLCPP_DEBUG_STREAM(nh_->get_logger(), "Determined iteration_stride: " << iteration_stride
-      << ", with traj2_speed: " << traj2_speed
-      << ", with trajectory1_max_speed: " << trajectory1_max_speed
-      << ", with predict_step_duration: " << predict_step_duration
-      << ", iteration_stride_max_time_s: " << iteration_stride_max_time_s);
+    // Create a spatial grid for trajectory2 points to speed up collision detection
+    // when comparing with trajectory1
+    const auto spatial_grid = create_spatial_grid(trajectory2, collision_radius);
 
-    for (size_t j = 0; j < trajectory2.size(); j += iteration_stride) // Saving computation time aiming for 1.5 meter interval
-    {
-      lanelet::BasicPoint2d curr_point;
-      curr_point.x() = trajectory2.at(j).predicted_position.position.x;
-      curr_point.y() = trajectory2.at(j).predicted_position.position.y;
+    // First pass: Check geographic collisions using spatial grid
+    const auto candidate_collisions =
+      get_spatial_collision_from_spatial_grid(
+          trajectory1, trajectory2, spatial_grid, collision_radius);
 
-      auto corresponding_lanelets = wm_->getLaneletsFromPoint(curr_point, 8); // some intersection can have 8 overlapping lanelets
+    RCLCPP_DEBUG_STREAM(rclcpp::get_logger("yield_plugin"), "Found " << candidate_collisions.size()
+                       << " geographic collision candidates");
 
-      for (const auto& llt: corresponding_lanelets)
-      {
-        RCLCPP_DEBUG_STREAM(nh_->get_logger(), "Checking llt: " << llt.id());
+    // If no geographic collisions, exit early
+    if (candidate_collisions.empty()) {
+        auto end_time = nh_->now();
+        RCLCPP_DEBUG_STREAM(rclcpp::get_logger("yield_plugin"),
+          "No geographic collisions found.");
+        return std::nullopt;
+    }
 
-        if (route_llt_ids_.find(llt.id()) != route_llt_ids_.end())
-        {
-          on_route = true;
-          on_route_idx = j;
-          break;
+    // Second pass: Now check temporal constraints for each geographic collision
+
+    // TODO: FIX
+    // Calculate maximum time difference to consider for collision
+    // This is the time it would take both objects to travel their speeds to cover
+    // the collision radius
+    // Formula: collision_radius = sqrt((v1*t)^2 + (v2*t)^2), solve for t
+
+    // Extract speeds - we'll use these for temporal calculations later
+    return get_temporal_collision(
+      trajectory1, trajectory2, candidate_collisions, collision_radius);;
+  }
+
+  // Helper method to check if a trajectory is on route
+  bool YieldPlugin::is_trajectory_on_route(
+    const std::vector<carma_perception_msgs::msg::PredictedState>& trajectory) {
+
+    for (size_t j = 0; j < trajectory.size(); j ++) {
+        lanelet::BasicPoint2d curr_point;
+        curr_point.x() = trajectory.at(j).predicted_position.position.x;
+        curr_point.y() = trajectory.at(j).predicted_position.position.y;
+
+        auto corresponding_lanelets = wm_->getLaneletsFromPoint(curr_point, 8);
+
+        for (const auto& llt: corresponding_lanelets) {
+            if (route_llt_ids_.find(llt.id()) != route_llt_ids_.end()) {
+                return true;
+            }
         }
-      }
-      if (on_route || traj2_has_zero_speed)
-        break;
     }
 
-    if (!on_route)
-    {
-      RCLCPP_DEBUG(nh_->get_logger(), "Predicted states are not on the route! ignoring");
-      return std::nullopt;
-    }
-
-    double smallest_dist = std::numeric_limits<double>::infinity();
-    for (size_t i = 0; i < trajectory1.trajectory_points.size() - 1; ++i)
-    {
-      auto p1a = trajectory1.trajectory_points.at(i);
-      auto p1b = trajectory1.trajectory_points.at(i + 1);
-      double previous_distance_between_predictions = std::numeric_limits<double>::infinity();
-      for (size_t j = on_route_idx; j < trajectory2.size() - 1; j += iteration_stride)
-      {
-        auto p2a = trajectory2.at(j);
-        auto p2b = trajectory2.at(j + 1);
-        double p1a_t = rclcpp::Time(p1a.target_time).seconds();
-        double p1b_t = rclcpp::Time(p1b.target_time).seconds();
-        double p2a_t = rclcpp::Time(p2a.header.stamp).seconds();
-        double p2b_t = rclcpp::Time(p2b.header.stamp).seconds();
-
-        RCLCPP_DEBUG_STREAM(nh_->get_logger(), "p1a.target_time: " << std::to_string(p1a_t) << ", p1b.target_time: " << std::to_string(p1b_t));
-        RCLCPP_DEBUG_STREAM(nh_->get_logger(), "p2a.target_time: " << std::to_string(p2a_t) << ", p2b.target_time: " << std::to_string(p2b_t));
-        RCLCPP_DEBUG_STREAM(nh_->get_logger(), "p1a.x: " << p1a.x << ", p1a.y: " << p1a.y);
-        RCLCPP_DEBUG_STREAM(nh_->get_logger(), "p1b.x: " << p1b.x << ", p1b.y: " << p1b.y);
-
-        RCLCPP_DEBUG_STREAM(nh_->get_logger(), "p2a.x: " << p2a.predicted_position.position.x << ", p2a.y: " << p2a.predicted_position.position.y);
-        RCLCPP_DEBUG_STREAM(nh_->get_logger(), "p2b.x: " << p2b.predicted_position.position.x << ", p2b.y: " << p2b.predicted_position.position.y);
-
-        // Linearly interpolate positions at a common timestamp for both trajectories
-        double dt = (p2a_t - p1a_t) / (p1b_t - p1a_t);
-        double x1 = p1a.x + dt * (p1b.x - p1a.x);
-        double y1 = p1a.y + dt * (p1b.y - p1a.y);
-        double x2 = p2a.predicted_position.position.x;
-        double y2 = p2a.predicted_position.position.y;
-
-        // Calculate the distance between the two interpolated points
-        const auto distance{std::hypot(x1 - x2, y1 - y2)};
-
-        smallest_dist = std::min(distance, smallest_dist);
-        RCLCPP_DEBUG_STREAM(nh_->get_logger(), "Smallest_dist: " << smallest_dist << ", distance: " << distance << ", dt: " << dt
-          << ", x1: " << x1 << ", y1: " << y1
-          << ", x2: " << x2 << ", y2: " << y2
-          << ", p2a_t:" << std::to_string(p2a_t));
-
-        // Following "if logic" assumes the traj2 is a simple cv model, aka, traj2 point is a straight line over time.
-        // And current traj1 point is fixed in this iteration.
-        // Then once the distance between the two start to increase over traj2 iteration,
-        // the distance will always increase and it's unnecessary to continue the logic to find the smallest_dist
-        if (previous_distance_between_predictions < distance)
-        {
-          RCLCPP_DEBUG_STREAM(nh_->get_logger(), "Stopping search here because the distance between predictions started to increase");
-          break;
-        }
-        previous_distance_between_predictions = distance;
-
-        if (i == 0 && j == 0 && distance > config_.collision_check_radius_in_m)
-        {
-          RCLCPP_DEBUG(nh_->get_logger(), "Too far away" );
-          return std::nullopt;
-        }
-
-        if (distance > collision_radius)
-        {
-          // continue searching for collision
-          continue;
-        }
-
-        GetCollisionResult collision_result;
-        collision_result.point1 = lanelet::BasicPoint2d(x1,y1);
-        collision_result.point2 = lanelet::BasicPoint2d(x2,y2);
-        collision_result.collision_time = rclcpp::Time(p2a.header.stamp);
-        return collision_result;
-      }
-    }
-
-    // No collision detected
-    return std::nullopt;
+    return false;
   }
 
   bool YieldPlugin::is_object_behind_vehicle(uint32_t object_id, const rclcpp::Time& collision_time, double vehicle_downtrack, double object_downtrack)
@@ -757,7 +917,7 @@ namespace yield_plugin
   }
 
   std::optional<rclcpp::Time> YieldPlugin::get_collision_time(const carma_planning_msgs::msg::TrajectoryPlan& original_tp,
-    const carma_perception_msgs::msg::ExternalObject& curr_obstacle, double original_tp_max_speed)
+    const carma_perception_msgs::msg::ExternalObject& curr_obstacle)
   {
     auto plan_start_time = get_trajectory_start_time(original_tp);
 
@@ -784,7 +944,7 @@ namespace yield_plugin
     new_list.push_back(curr_state);
     new_list.insert(new_list.end(), curr_obstacle.predictions.cbegin(), curr_obstacle.predictions.cend());
 
-    const auto collision_result = get_collision(original_tp, new_list, config_.intervehicle_collision_distance_in_m, original_tp_max_speed);
+    const auto collision_result = get_collision(original_tp, new_list, config_.intervehicle_collision_distance_in_m);
 
     if (!collision_result)
     {
@@ -816,27 +976,47 @@ namespace yield_plugin
     return collision_result.value().collision_time;
   }
 
-  std::unordered_map<uint32_t, rclcpp::Time> YieldPlugin::get_collision_times_concurrently(const carma_planning_msgs::msg::TrajectoryPlan& original_tp,
-    const std::vector<carma_perception_msgs::msg::ExternalObject>& external_objects, double original_tp_max_speed)
+  std::unordered_map<uint32_t, rclcpp::Time> YieldPlugin::get_collision_times_concurrently(
+    const carma_planning_msgs::msg::TrajectoryPlan& original_tp,
+    const std::vector<carma_perception_msgs::msg::ExternalObject>& external_objects)
   {
+    const unsigned int max_threads = std::thread::hardware_concurrency();
+    RCLCPP_INFO_STREAM(rclcpp::get_logger("yield_plugin"),
+                      "Detected max threads: " << max_threads);
 
-    std::unordered_map<uint32_t, std::future<std::optional<rclcpp::Time>>> futures;
+    std::unordered_map<size_t, std::future<std::optional<rclcpp::Time>>> all_futures;
+
+    // Launch all tasks at once
+    for (size_t i = 0; i < external_objects.size(); ++i) {
+        const auto& object = external_objects[i];
+        RCLCPP_DEBUG_STREAM(
+            rclcpp::get_logger("yield_plugin"),
+            "Launching task for object: " << i);
+
+        all_futures[object.id] = std::async(std::launch::async,
+            [this, &original_tp, &object]() {
+                return get_collision_time(original_tp, object);
+            });
+    }
+
+    // Collect all results
     std::unordered_map<uint32_t, rclcpp::Time> collision_times;
-
-    // Launch asynchronous tasks to check for collision times
-    for (const auto& object : external_objects) {
-      futures[object.id] = std::async(std::launch::async,[this, &original_tp, &object, &original_tp_max_speed]{
-          return get_collision_time(original_tp, object, original_tp_max_speed);
-        });
+    for (auto& [id, future] : all_futures) {
+        if (const auto collision_time = future.get()) {
+            if (collision_time == std::nullopt)
+            {
+              RCLCPP_ERROR_STREAM(rclcpp::get_logger("yield_plugin"),
+                "Collision time is null for object: " << id);
+            }
+            else{
+              collision_times[id] = collision_time.value();
+            }
+        }
     }
 
-    // Collect results from futures and update collision_times
-    for (const auto& object : external_objects) {
-      if (const auto collision_time{futures.at(object.id).get()}) {
-        collision_times[object.id] = collision_time.value();
-      }
-    }
-
+    RCLCPP_INFO_STREAM(
+        rclcpp::get_logger("yield_plugin"),
+        "Processed " << external_objects.size() << " objects");
     return collision_times;
   }
 
@@ -860,7 +1040,7 @@ namespace yield_plugin
 
     RCLCPP_DEBUG_STREAM(nh_->get_logger(),"External Object List (external_objects) size: " << external_objects.size());
     const double original_max_speed = max_trajectory_speed(original_tp.trajectory_points, get_trajectory_end_time(original_tp));
-    std::unordered_map<uint32_t, rclcpp::Time> collision_times = get_collision_times_concurrently(original_tp,external_objects, original_max_speed);
+    std::unordered_map<uint32_t, rclcpp::Time> collision_times = get_collision_times_concurrently(original_tp, external_objects);
 
     if (collision_times.empty()) { return std::nullopt; }
 
