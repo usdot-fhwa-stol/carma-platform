@@ -51,7 +51,6 @@ include_directories(
 ament_auto_add_library(${node_lib} SHARED
         src/inlanecruising_plugin.cpp
         src/inlanecruising_plugin_node.cpp
-        src/smoothing/BSpline.cpp
 )
 
 ament_auto_add_executable(${node_exec}
