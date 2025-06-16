@@ -115,7 +115,7 @@ auto to_time_msg(const DDateTime & d_date_time, bool is_simulation) -> builtin_i
     std::time_t timeT; // Integer number of seconds since the Unix epoch
 
     // Treat the time as UTC to adjust the timezone offset later
-    // which also works if no timezone offset is provided because J3223 SDSM is in UTC
+    // which also works if no timezone offset is provided because SAE J3224 SDSM is in UTC
     timeinfo.tm_gmtoff = 0; // Set to 0 for UTC
     timeinfo.tm_isdst = 0; // UTC doesn't observe DST
     std::time_t utc_time = timegm(&timeinfo); // func is available on GNU-based systems (ubuntu etc)
