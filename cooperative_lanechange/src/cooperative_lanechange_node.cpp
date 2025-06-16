@@ -269,6 +269,7 @@ namespace cooperative_lanechange
     {
       clc_called_ = true;
     }
+
     //  Only plan the trajectory for the requested LANE_CHANGE maneuver
     std::vector<carma_planning_msgs::msg::Maneuver> maneuver_plan;
     if(req->maneuver_plan.maneuvers[req->maneuver_index_to_plan].type != carma_planning_msgs::msg::Maneuver::LANE_CHANGE)
@@ -423,8 +424,6 @@ namespace cooperative_lanechange
       p.planner_plugin_name = get_plugin_name();
     }
 
-    RCLCPP_ERROR_STREAM(get_logger(), "Return trajectory number of points: "
-      << resp->trajectory_plan.trajectory_points.size());
     return;
   }
 
@@ -630,11 +629,10 @@ namespace cooperative_lanechange
 
     RCLCPP_DEBUG_STREAM(get_logger(), "Maneuvers to points size: " << points_and_target_speeds.size());
     auto downsampled_points = carma_ros2_utils::containers::downsample_vector(points_and_target_speeds, config_.downsample_ratio);
-    RCLCPP_DEBUG_STREAM(get_logger(), "downsampled_points: " << downsampled_points.size());
 
     std::vector<carma_planning_msgs::msg::TrajectoryPlanPoint> trajectory_points = basic_autonomy::waypoint_generation::compose_lanechange_trajectory_from_path(downsampled_points, req->vehicle_state, req->header.stamp,
                                                                                       wm_, ending_state_before_buffer_, wpg_detail_config);
-                                                                                      RCLCPP_DEBUG_STREAM(get_logger(), "Compose Trajectory size: " << trajectory_points.size());
+    RCLCPP_DEBUG_STREAM(get_logger(), "Compose Trajectory size: " << trajectory_points.size());
     return trajectory_points;
   }
 
