@@ -1270,7 +1270,7 @@ namespace basic_autonomy
             // we added the current vehicle position and the division of 0 guard before
             int end_dist_pt_index =
                 std::max(1, get_nearest_index_by_downtrack(
-                    resampled_points, wm, ending_state_before_buffer);
+                    resampled_points, wm, ending_state_before_buffer)
                 );
 
             // Resize all arrays to the endpoint
