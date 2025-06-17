@@ -112,32 +112,23 @@ auto to_time_msg(const DDateTime & d_date_time, bool is_simulation) -> builtin_i
     // for now and add milliseconds later
     timeinfo.tm_sec = 0;
 
-    std::time_t timeT;
+    std::time_t timeT; // Integer number of seconds since the Unix epoch
 
-    if (d_date_time.time_zone_offset)
-    {
-      timeinfo.tm_gmtoff = static_cast<int>(d_date_time.time_zone_offset.value());
-      timeT = std::mktime(&timeinfo);
-    }
-    else
-    {
-      // Get the current timezone from the system
-      // Use tzset() to initialize timezone data from system
-      tzset();
+    // Treat the time as UTC to adjust the timezone offset later
+    // which also works if no timezone offset is provided because SAE J3224 SDSM is in UTC
+    timeinfo.tm_gmtoff = 0; // Set to 0 for UTC
+    timeinfo.tm_isdst = 0; // UTC doesn't observe DST
+    std::time_t utc_time = timegm(&timeinfo); // func is available on GNU-based systems (ubuntu etc)
 
-      // Get current timestamp to determine DST status
-      // NOTE: If the system is running in a docker container (which it mostly is),
-      // the timezone is by default GMT unless otherwise set. Just a caution.
-      std::time_t currentTime = std::time(nullptr);
-      std::tm* localTimeInfo = std::localtime(&currentTime);
-
-      long timezone_offset = localTimeInfo->tm_gmtoff;
-
-      timeinfo.tm_gmtoff = timezone_offset;
-      timeinfo.tm_isdst = localTimeInfo->tm_isdst;
-
-      // Convert to time_t
-      timeT = std::mktime(&timeinfo);
+    if (d_date_time.time_zone_offset) {
+      // Offset is in minutes, convert to seconds
+      // If offset is negative (e.g., -5 for EST), we add 5 hours to get UTC
+      // If offset is positive (e.g., +9 for JST), we subtract 9 hours to get UTC
+      int offset_seconds = static_cast<int>(d_date_time.time_zone_offset.value()) * 60;
+      timeT = utc_time - offset_seconds; // Subtract offset to get UTC
+    } else {
+      // No timezone offset provided, assume input is already UTC
+      timeT = utc_time;
     }
 
     // Convert time_t to system_clock::time_point
