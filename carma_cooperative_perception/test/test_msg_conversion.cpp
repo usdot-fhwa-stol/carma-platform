@@ -42,7 +42,7 @@ TEST(ToTimeMsg, LiveDateTime)
     d_date_time.second = units::time::second_t{25.975};
 
     const auto msg = carma_cooperative_perception::to_time_msg(d_date_time, false);
-    EXPECT_EQ(msg.sec, 1689445825);
+    EXPECT_EQ(msg.sec, 1689431425); // SDSM is UTC by default if timezone is specified
     EXPECT_EQ(msg.nanosec, 975'000'000);
   }
 
@@ -67,9 +67,8 @@ TEST(ToTimeMsg, LiveDateTime)
     d_date_time.year = units::time::year_t{1970}; //1970 Jan 1st 0:0:0 ET is epoch 18000
 
     const auto msg = carma_cooperative_perception::to_time_msg(d_date_time, false);
-    // should be 18000 because this date was not Daylight time, but
-    // since the test is in EDT timezone, it will be 14400 seconds
-    EXPECT_EQ(msg.sec, 14400);
+    // By default SDSM is in UTC, so 1970 Jan 1st 0:0:0 UTC is epoch 0 despite what timezone is set
+    EXPECT_EQ(msg.sec, 0);
     EXPECT_EQ(msg.nanosec, 0);
   }
 
@@ -79,11 +78,27 @@ TEST(ToTimeMsg, LiveDateTime)
   // Test optional fields
   {
     carma_cooperative_perception::DDateTime d_date_time;
-    d_date_time.year = units::time::year_t{1970}; //1970 Jan 1st 0:0:0 ET is epoch 18000
+    d_date_time.year = units::time::year_t{1970}; //1970 Jan 1st 0:0:0 UTC is epoch 0
 
     const auto msg = carma_cooperative_perception::to_time_msg(d_date_time, false);
-    EXPECT_EQ(msg.sec, 54000);
+    // unless timezone is specified in the message, it is still UTC
+    EXPECT_EQ(msg.sec, 0);
     EXPECT_EQ(msg.nanosec, 0);
+  }
+
+  // Test with timezone
+  {
+    carma_cooperative_perception::DDateTime d_date_time;
+    d_date_time.year = units::time::year_t{2023};
+    d_date_time.month = carma_cooperative_perception::Month{7};
+    d_date_time.day = units::time::day_t{15};
+    d_date_time.hour = units::time::hour_t{14};
+    d_date_time.minute = units::time::minute_t{30};
+    d_date_time.second = units::time::second_t{25.975};
+    d_date_time.time_zone_offset = units::time::hour_t{-4}; // UTC-4 for EDT
+    const auto msg = carma_cooperative_perception::to_time_msg(d_date_time, false);
+    EXPECT_EQ(msg.sec, 1689445825); // SDSM is in America/New_York timezone
+    EXPECT_EQ(msg.nanosec, 975'000'000);
   }
 }
 
