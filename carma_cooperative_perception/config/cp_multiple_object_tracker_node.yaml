@@ -10,8 +10,8 @@ track_promotion_threshold: 3
 # Number of consecutive misses or non-occurrence to
 # happen for a confirmed track to be removed.
 # Any time, a confirmed track gets a new occurrence,
-# it's counter updates to this value
-# For example if 10, a confirmed track will only be removed
+# its counter updates to this value
+# For example" if threshold is 10, a confirmed track will only be removed
 # after 10 "consecutive" non-occurrence to be removed
 track_removal_threshold: 10
 
