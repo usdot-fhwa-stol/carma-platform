@@ -1,3 +1,18 @@
 execution_frequency_hz: 10.0
+# Number of occurrences to promote a track to be confirmed.
+# If there is occurrence of existing tentative tracks, the counter
+# is incremented and decreased for misses
+# For example: Occurrence (Count 1) + Occurrence (Count 2)
+# + Miss (Count 1) + Occurrence (Count 2) + Occurrence (Count 3)
+# will make the Tentative Track into a Confirmed Track.
 track_promotion_threshold: 3
-track_removal_threshold: 0
+
+# Number of consecutive misses or non-occurrence to
+# happen for a confirmed track to be removed.
+# Any time, a confirmed track gets a new occurrence,
+# its counter updates to this value
+# For example" if threshold is 10, a confirmed track will only be removed
+# after 10 "consecutive" non-occurrence to be removed
+track_removal_threshold: 10
+
+# All tentative and confirmed tracks are removed at 0 counter

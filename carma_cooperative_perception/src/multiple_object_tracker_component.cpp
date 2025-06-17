@@ -324,7 +324,7 @@ auto MultipleObjectTrackerNode::handle_on_configure(
               result.successful = false;
               result.reason = "parameter must be nonnegative";
             } else {
-              this->track_manager_.set_removal_threshold_and_update(
+              this->track_manager_.set_confirmed_to_removal_threshold_and_update(
                 mot::RemovalThreshold{static_cast<std::size_t>(value)});
             }
           }
