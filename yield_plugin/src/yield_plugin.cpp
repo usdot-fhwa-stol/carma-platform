@@ -36,6 +36,7 @@
 #include <carma_v2x_msgs/msg/plan_type.hpp>
 #include <basic_autonomy/smoothing/filters.hpp>
 #include <future>
+#include <basic_autonomy/helper_functions.hpp>
 
 using oss = std::ostringstream;
 constexpr auto EPSILON {0.01}; //small value to compare doubles
@@ -286,7 +287,7 @@ namespace yield_plugin
               updated_trajectory.trajectory_points.end());
       }
       last_traj_plan_committed_to_stopping_ = updated_trajectory;
-      resp->trajectory_plan = last_traj_plan_committed_to_stopping_;
+      resp->trajectory_plan = last_traj_plan_committed_to_stopping_.value();
 
       rclcpp::Time end_time = system_clock.now();  // Planning complete
 
@@ -1061,7 +1062,7 @@ namespace yield_plugin
 
     RCLCPP_DEBUG_STREAM(nh_->get_logger(),"Object avoidance planning time: " << planning_time_in_s);
 
-    auto jmt_trajectory = generate_jmt_trajectory(original_tp,
+    auto jmt_trajectory = generate_JMT_trajectory(original_tp,
       initial_pos, goal_pos, initial_velocity, goal_velocity,
       planning_time_in_s, original_max_speed);
 
