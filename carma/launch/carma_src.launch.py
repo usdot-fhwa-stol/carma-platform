@@ -210,6 +210,32 @@ def generate_launch_description():
         description = 'True if user wants Autoware Lidar Object Detection to be enabled'
     )
 
+    # When enabled, the Foxglove Bridge node will be started
+    # By default, port 8765 needs to be exposed from carma-platform container to host machine
+    # then start foxglove studio and select "Open Connect" to use Foxglove Websocket with port 8765
+    use_foxglove_arg = LaunchConfiguration('use_foxglove')
+    declare_use_foxglove_arg = DeclareLaunchArgument(
+        name='use_foxglove',
+        default_value='False',
+        description='Whether to start the Foxglove Bridge'
+    )
+
+    # Create the Foxglove Bridge node
+    foxglove_bridge_node = Node(
+        package='foxglove_bridge',
+        executable='foxglove_bridge',
+        name='foxglove_bridge',
+        output='screen',
+        parameters=[
+            {'port': 8765},
+            {'topic_whitelist': ['.*']},  # All topics bridged
+            {'param_whitelist': ['none']},  # Parameters seem to have bug in Foxglove currently
+            {'send_buffer_limit': 100000000},  # 100MB buffer limit to allow large maps, pcd_map deemed unnecessary
+            {'use_sim_time': use_sim_time},
+        ],
+        condition=IfCondition(LaunchConfiguration('use_foxglove')),
+    )
+
     # Launch ROS2 rosbag logging
     ros2_rosbag_launch = GroupAction(
         actions=[
@@ -375,6 +401,8 @@ def generate_launch_description():
         declare_is_ros2_tracing_enabled,
         declare_is_cp_mot_enabled,
         declare_is_autoware_lidar_obj_detection_enabled,
+        declare_use_foxglove_arg,
+        foxglove_bridge_node,
         ros2_rosbag_launch,
         OpaqueFunction(function=create_ros2_tracing_action),
         drivers_group,
