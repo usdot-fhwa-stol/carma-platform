@@ -311,7 +311,8 @@ namespace yield_plugin
       {
         initial_velocity = original_trajectory.initial_longitudinal_velocity;
         // Record the time when vehicle was stopped first due to collision avoidance
-        if (!first_time_stopped_to_prevent_collision_.has_value())
+        if (last_traj_plan_committed_to_stopping_.has_value() &&
+          !first_time_stopped_to_prevent_collision_.has_value())
         {
           first_time_stopped_to_prevent_collision_ = nh_->now();
           RCLCPP_DEBUG(nh_->get_logger(), "First time stopped to prevent collision: %f",
