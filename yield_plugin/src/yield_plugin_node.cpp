@@ -27,6 +27,8 @@ namespace yield_plugin
   {
     // Declare parameters
     config_.acceleration_adjustment_factor = declare_parameter<double>("acceleration_adjustment_factor", config_.acceleration_adjustment_factor);
+    config_.time_horizon_until_collision_to_commit_to_stop_in_s = declare_parameter<double>("time_horizon_until_collision_to_commit_to_stop_in_s", config_.time_horizon_until_collision_to_commit_to_stop_in_s);
+    config_.time_horizon_since_obj_clearance_to_start_moving_in_s = declare_parameter<double>("time_horizon_since_obj_clearance_to_start_moving_in_s", config_.time_horizon_since_obj_clearance_to_start_moving_in_s);
     config_.obstacle_zero_speed_threshold_in_ms = declare_parameter<double>("obstacle_zero_speed_threshold_in_ms", config_.obstacle_zero_speed_threshold_in_ms);
     config_.on_route_vehicle_collision_horizon_in_s = declare_parameter<double>("on_route_vehicle_collision_horizon_in_s", config_.on_route_vehicle_collision_horizon_in_s);
     config_.collision_check_radius_in_m = declare_parameter<double>("collision_check_radius_in_m", config_.collision_check_radius_in_m);
@@ -37,8 +39,8 @@ namespace yield_plugin
     config_.enable_cooperative_behavior = declare_parameter< bool>("enable_cooperative_behavior", config_.enable_cooperative_behavior);
     config_.always_accept_mobility_request = declare_parameter< bool>("always_accept_mobility_request", config_.always_accept_mobility_request);
     config_.acceptable_passed_timesteps = declare_parameter<int>("acceptable_passed_timesteps", config_.acceptable_passed_timesteps);
-    config_.consecutive_clearance_count_for_obstacles_threshold = declare_parameter<int>("consecutive_clearance_count_for_obstacles_threshold",
-      config_.consecutive_clearance_count_for_obstacles_threshold);
+    config_.consecutive_clearance_count_for_passed_obstacles_threshold = declare_parameter<int>("consecutive_clearance_count_for_passed_obstacles_threshold",
+      config_.consecutive_clearance_count_for_passed_obstacles_threshold);
     config_.intervehicle_collision_distance_in_m = declare_parameter<double>("intervehicle_collision_distance_in_m", config_.intervehicle_collision_distance_in_m);
     config_.safety_collision_time_gap_in_s = declare_parameter<double>("safety_collision_time_gap_in_s", config_.safety_collision_time_gap_in_s);
     config_.enable_adjustable_gap = declare_parameter<bool>("enable_adjustable_gap", config_.enable_adjustable_gap);
@@ -56,6 +58,8 @@ namespace yield_plugin
     config_ = YieldPluginConfig();
 
     get_parameter<double>("acceleration_adjustment_factor", config_.acceleration_adjustment_factor);
+    get_parameter<double>("time_horizon_until_collision_to_commit_to_stop_in_s", config_.time_horizon_until_collision_to_commit_to_stop_in_s);
+    get_parameter<double>("time_horizon_since_obj_clearance_to_start_moving_in_s", config_.time_horizon_since_obj_clearance_to_start_moving_in_s)
     get_parameter<double>("obstacle_zero_speed_threshold_in_ms", config_.obstacle_zero_speed_threshold_in_ms);
     get_parameter<double>("on_route_vehicle_collision_horizon_in_s", config_.on_route_vehicle_collision_horizon_in_s);
     get_parameter<double>("collision_check_radius_in_m", config_.collision_check_radius_in_m);
@@ -65,7 +69,7 @@ namespace yield_plugin
     get_parameter<bool>("enable_cooperative_behavior", config_.enable_cooperative_behavior);
     get_parameter<bool>("always_accept_mobility_request", config_.always_accept_mobility_request);
     get_parameter<int>("acceptable_passed_timesteps", config_.acceptable_passed_timesteps);
-    get_parameter<int>("consecutive_clearance_count_for_obstacles_threshold", config_.consecutive_clearance_count_for_obstacles_threshold);
+    get_parameter<int>("consecutive_clearance_count_for_passed_obstacles_threshold", config_.consecutive_clearance_count_for_passed_obstacles_threshold);
     get_parameter<double>("intervehicle_collision_distance_in_m", config_.intervehicle_collision_distance_in_m);
     get_parameter<double>("safety_collision_time_gap_in_s", config_.safety_collision_time_gap_in_s);
     get_parameter<bool>("enable_adjustable_gap", config_.enable_adjustable_gap);

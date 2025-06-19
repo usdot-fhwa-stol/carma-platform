@@ -263,6 +263,40 @@ namespace yield_plugin
     carma_planning_msgs::msg::TrajectoryPlan original_trajectory = req->initial_trajectory_plan;
     carma_planning_msgs::msg::TrajectoryPlan yield_trajectory;
 
+    // if ego is not stopped and we committed to stopping, use the last committed trajectory
+    if (req->vehicle_state.longitudinal_vel > EPSILON &&
+      last_traj_plan_committed_to_stopping_)
+    {
+      RCLCPP_DEBUG(nh_->get_logger(), "Using last committed trajectory to stopping");
+      lanelet::BasicPoint2d veh_pos(req->vehicle_state.x_pos_global,
+            req->vehicle_state.y_pos_global);
+      auto updated_trajectory = last_traj_plan_committed_to_stopping_.value();
+
+      // Find closest point in last trajectory to current vehicle position
+      size_t idx_to_start_new_traj =
+          basic_autonomy::waypoint_generation::get_nearest_point_index(
+              updated_trajectory.trajectory_points,
+              veh_pos);
+
+      // Update last trajectory to start from closest point (remove passed points)
+      if (!updated_trajectory.trajectory_points.empty()) {
+          updated_trajectory.trajectory_points =
+              std::vector<carma_planning_msgs::msg::TrajectoryPlanPoint>
+              (updated_trajectory.trajectory_points.begin() + idx_to_start_new_traj,
+              updated_trajectory.trajectory_points.end());
+      }
+      last_traj_plan_committed_to_stopping_ = updated_trajectory;
+      resp->trajectory_plan = last_traj_plan_committed_to_stopping_;
+
+      rclcpp::Time end_time = system_clock.now();  // Planning complete
+
+      auto duration = end_time - start_time;
+      RCLCPP_DEBUG_STREAM(nh_->get_logger(),
+        "ExecutionTime: " << std::to_string(duration.seconds()));
+      return;
+    }
+
+    // Otherwise, we are planning a new trajectory by checking collision
     try
     {
       // NOTE: Wrapping entire plan_trajectory logic with try catch because there is intermittent
@@ -275,6 +309,13 @@ namespace yield_plugin
       if (initial_velocity < EPSILON)
       {
         initial_velocity = original_trajectory.initial_longitudinal_velocity;
+        // Record the time when vehicle was stopped first due to collision avoidance
+        if (!first_time_stopped_to_prevent_collision_.has_value())
+        {
+          first_time_stopped_to_prevent_collision_ = nh_->now();
+          RCLCPP_DEBUG(nh_->get_logger(), "First time stopped to prevent collision: %f",
+            first_time_stopped_to_prevent_collision_.value().seconds());
+        }
       }
 
       // seperating cooperative yield with regular object detection for better performance.
@@ -299,10 +340,25 @@ namespace yield_plugin
         yield_trajectory = update_traj_for_object(original_trajectory, external_objects_, initial_velocity); // Compute the trajectory
       }
 
+
       // return original trajectory if no difference in trajectory points a.k.a no collision
       if (fabs(get_trajectory_end_time(original_trajectory) - get_trajectory_end_time(yield_trajectory)) < EPSILON)
       {
-        resp->trajectory_plan = original_trajectory;
+        // Despite the obstacle clearance, we should be wait for some time before
+        // executing the new trajectory if we had previously committed to stopping
+        if (first_time_stopped_to_prevent_collision_.has_value() &&
+            nh_->now().seconds() - first_time_stopped_to_prevent_collision_.value().seconds() <
+            config_.time_horizon_since_obj_clearance_to_start_moving_in_s)
+        {
+          resp->trajectory_plan = last_traj_plan_committed_to_stopping_.value();
+        }
+        else
+        {
+          resp->trajectory_plan = original_trajectory;
+          // Reset the collision prevention variables
+          first_time_stopped_to_prevent_collision_ = std::nullopt;
+          last_traj_plan_committed_to_stopping_ = std::nullopt;
+        }
       }
       else
       {
@@ -737,12 +793,12 @@ namespace yield_plugin
     // half a length of the vehicle to conservatively estimate the rear axle to rear bumper length
     if (object_downtrack < vehicle_downtrack - config_.vehicle_length / 2)
     {
-      consecutive_clearance_count_for_obstacles_[object_id] = std::min(consecutive_clearance_count_for_obstacles_[object_id] + 1, config_.consecutive_clearance_count_for_obstacles_threshold);
+      consecutive_clearance_count_for_obstacles_[object_id] = std::min(consecutive_clearance_count_for_obstacles_[object_id] + 1, config_.consecutive_clearance_count_for_passed_obstacles_threshold);
       RCLCPP_INFO_STREAM(nh_->get_logger(), "Detected an object nearby might be behind the vehicle at timestamp: " << std::to_string(collision_time.seconds()) <<
         ", and consecutive_clearance_count_for obstacle: " <<  object_id << ", is: " << consecutive_clearance_count_for_obstacles_[object_id]);
     }
     // confirmed false positive for a collision
-    if (consecutive_clearance_count_for_obstacles_[object_id] >= config_.consecutive_clearance_count_for_obstacles_threshold)
+    if (consecutive_clearance_count_for_obstacles_[object_id] >= config_.consecutive_clearance_count_for_passed_obstacles_threshold)
     {
       return true;
     }
@@ -1005,7 +1061,18 @@ namespace yield_plugin
 
     RCLCPP_DEBUG_STREAM(nh_->get_logger(),"Object avoidance planning time: " << planning_time_in_s);
 
-    return generate_JMT_trajectory(original_tp, initial_pos, goal_pos, initial_velocity, goal_velocity, planning_time_in_s, original_max_speed);
+    auto jmt_trajectory = generate_jmt_trajectory(original_tp,
+      initial_pos, goal_pos, initial_velocity, goal_velocity,
+      planning_time_in_s, original_max_speed);
+
+    // If expected to stop to prevent collision, we should save this trajectory to commit to it
+    if (goal_velocity < EPSILON &&
+      earliest_collision_time_in_seconds - nh_->now().seconds()
+        <= config_.time_horizon_until_collision_to_commit_to_stop_in_s)
+    {
+      last_traj_plan_committed_to_stopping_ = jmt_trajectory;
+    }
+    return jmt_trajectory;
   }
 
 

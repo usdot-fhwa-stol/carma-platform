@@ -1,8 +1,6 @@
-
-# Adjustment factor for safe and comfortable acceleration/deceleration
-# Value type: Desired
-# No unit
-acceleration_adjustment_factor: 1.0
+###################################################
+# COLLISION CHECK RELATED PARAMETERS
+###################################################
 # Time horizon for collision detection for vehicles on the route
 # NOTE: not applied for pedestrians or other non-vehicle obstacles on the road
 # Units: s
@@ -12,11 +10,41 @@ on_route_vehicle_collision_horizon_in_s: 10.0
 # Units: m/s
 # Value type: Desired
 obstacle_zero_speed_threshold_in_ms: 0.25
+# Time horizon until collision to commit to last stopping trajectory
+# NOTE: Only applies to situations if the ego was expected to stop completely due to the collision
+# not just yield and follow with a lower speed
+# Units: s
+time_horizon_until_collision_to_commit_to_stop_in_s: 3.0
+# Time horizon since stopping and verified obstacle is cleard to start moving again
+# Units: s
+time_horizon_since_obj_clearance_to_start_moving_in_s: 3.0
+# Number of consecutive times the vehicle detects that the obstacle is behind
+# to confirm the obstacle is actually behind
+# Value type: Desired
+consecutive_clearance_count_for_passed_obstacles_threshold: 20
+# Intervehicle distance that is considered a collision
+# Unit: m
+# Value type: Desired
+intervehicle_collision_distance_in_m: 6.0
+# Radius to check for potential collision
+# Unit: m
+# Value type: Desired
+collision_check_radius_in_m: 150.0
+
+######################################
+# YIELD PLANNING RELATED PARAMETERS
+######################################
+
 # Minimum object avoidance planning time
 # Units: s
 # Value type: Desired
 min_obj_avoidance_plan_time_in_s: 2.0
+# Adjustment factor for safe and comfortable acceleration/deceleration
+# Value type: Desired
+# No unit
+acceleration_adjustment_factor: 1.0
 # Deceleration value used for yielding trajectories
+# This is a desired value and the yield can plan larger deceleration if needed
 # Units: m/s^2
 # Value type: Desired
 yield_max_deceleration_in_ms2: 3.0
@@ -28,6 +56,20 @@ minimum_safety_gap_in_meters: 10.0
 # Units: m/s
 # Value type: Desired
 max_stop_speed_in_ms: 0.15
+# Time gap to finish planning a yield earlier than collision time
+# Unit: s
+# Value type: Desired
+safety_collision_time_gap_in_s: 2.0
+# Flag to enable yield plugin to check for adjustable gap (for example digital gap from map)
+# Value type: Desired
+enable_adjustable_gap: true
+# Window size for speed moving average filter
+# Value type: Desired (must be odd)
+speed_moving_average_window_size: 3.0
+
+###################################################
+# COOPERATIVE BEHAVIOR RELATED PARAMETERS
+###################################################
 # parameter to enable cooperative behavior
 # Value type: Desired
 enable_cooperative_behavior: false
@@ -37,28 +79,6 @@ always_accept_mobility_request: false
 # Acceptable number of timesteps to use the latest known mobility request before switching to yield
 # Value type: Desired
 acceptable_passed_timesteps: 5
-# Number of consecutive times the vehicle detects that the obstacle is behind
-# to confirm the obstacle is actually behind
-# Value type: Desired
-consecutive_clearance_count_for_obstacles_threshold: 20
-# Intervehicle distance that is considered a collision
-# Unit: m
-# Value type: Desired
-intervehicle_collision_distance_in_m: 6.0
-# Radius to check for potential collision
-# Unit: m
-# Value type: Desired
-collision_check_radius_in_m: 150.0
-# Time gap to finish planning a yield earlier than collision time
-# Unit: s
-# Value type: Desired
-safety_collision_time_gap_in_s: 2.0
-# Flag to enable yield plugin to check for adjustable gap (for example digital gap from map)
-# Value type: Desired
-enable_adjustable_gap: true
 # Minimum urgency value to consider the mobility request
 # Value type: Desired
 acceptable_urgency: 5
-# Window size for speed moving average filter
-# Value type: Desired (must be odd)
-speed_moving_average_window_size: 3.0

@@ -272,7 +272,7 @@ public:
    * \param vehicle_downtrack at the time of collision
    * \param object_downtrack at the time of collision
    * NOTE: Uses internal counter low pass filter to confirm the object is behind only if it counted continuously above
-           config_.consecutive_clearance_count_for_obstacles_threshold
+           config_.consecutive_clearance_count_for_passed_obstacles_threshold
    * \return return true if object is behind the vehicle
    */
   bool is_object_behind_vehicle(uint32_t object_id, const rclcpp::Time& collision_time, double vehicle_point, double object_downtrack);
@@ -329,6 +329,9 @@ private:
   int clc_urgency_ = 0;
   std::optional<double> last_speed_ = std::nullopt;
   std::optional<rclcpp::Time> last_speed_time_ = std::nullopt;
+  std::optional<rclcpp::Time> first_time_stopped_to_prevent_collision_ = std::nullopt;
+  std::optional<
+    carma_planning_msgs::msg::TrajectoryPlan> last_traj_plan_committed_to_stopping_ = std::nullopt;
   // time between ecef trajectory points
   double ecef_traj_timestep_ = 0.1;
 
