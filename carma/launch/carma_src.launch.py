@@ -246,6 +246,7 @@ def generate_launch_description():
                 launch_arguments = {
                     'subsystem_controller_param_file' : [vehicle_config_dir, '/SubsystemControllerParams.yaml'],
                     'vehicle_config_param_file' : vehicle_config_param_file,
+                    'vehicle_calibration_dir': vehicle_calibration_dir,
                     'vehicle_characteristics_param_file' : vehicle_characteristics_param_file,
                     'vector_map_file' : vector_map_file,
                     'use_sim_time' : use_sim_time,

@@ -21,6 +21,9 @@
 #include <vector>
 #include <climits>
 #include <random>
+#include <tf2/LinearMath/Transform.h>
+#include <tf2_geometry_msgs/tf2_geometry_msgs.hpp>
+
 
 namespace bsm_generator
 {
@@ -107,6 +110,10 @@ namespace bsm_generator
              * \return Vehicle heading value (minimum limit is 0.0, maximum limit is 359.9875)
              */
             float getHeadingInRange(const float heading);
+            /**
+             * \brief Function to convert a quaternion to a positive NED heading value
+             */
+            float getHeading(const geometry_msgs::msg::Quaternion & quaternion);
 
         private:
             // Random number generator for BSM id

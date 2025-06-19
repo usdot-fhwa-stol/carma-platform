@@ -1045,21 +1045,18 @@ void WMBroadcaster::externalMapMsgCallback(carma_v2x_msgs::msg::MapData::UniqueP
   }
 
   // check if we have seen this message already
-  bool up_to_date = false;
-  if (sim_->intersection_id_to_regem_id_.size() == map_msg->intersections.size())
+  bool up_to_date = true;
+
+  // check id of the intersection only
+  for (auto intersection : map_msg->intersections)
   {
-    up_to_date = true;
-    // check id of the intersection only
-    for (auto intersection : map_msg->intersections)
+    if (sim_->intersection_id_to_regem_id_.find(intersection.id.id) == sim_->intersection_id_to_regem_id_.end())
     {
-      if (sim_->intersection_id_to_regem_id_.find(intersection.id.id) == sim_->intersection_id_to_regem_id_.end())
-      {
-        up_to_date = false;
-        break;
-      }
+      up_to_date = false;
+      break;
     }
   }
-
+  
   if(up_to_date)
   {
     return;
@@ -1545,17 +1542,17 @@ void WMBroadcaster::addGeofence(std::shared_ptr<Geofence> gf_ptr)
       addGeofenceHelper(update);
     }
     catch (const lanelet::InvalidInputError& e) {
-      RCLCPP_WARN_STREAM(rclcpp::get_logger("carma_wm_ctrl"), 
+      RCLCPP_WARN_STREAM(rclcpp::get_logger("carma_wm_ctrl"),
         "carma_wm_ctrl detected a potential issue in processing incoming MAP or Geofence update: " << e.what());
 
       if (!j2735_map_msg_marker_array_.markers.empty()) {
-        RCLCPP_WARN_STREAM(rclcpp::get_logger("carma_wm_ctrl"), 
+        RCLCPP_WARN_STREAM(rclcpp::get_logger("carma_wm_ctrl"),
           "Detected an attempt to add J2735 MAP msg. May not be error. Please verify J2735 MAP msg visualization or logs for more clues. "
           "Possibly invalid intersection geometry.");
       }
 
       if (!tcm_marker_array_.markers.empty()) {
-        RCLCPP_WARN_STREAM(rclcpp::get_logger("carma_wm_ctrl"), 
+        RCLCPP_WARN_STREAM(rclcpp::get_logger("carma_wm_ctrl"),
           "Detected an attempt to add map update from TCM msg. May not be error. Please verify TCM msg visualization or logs for more clues. "
           "Possibly invalid geofence geometry.");
       }
@@ -2055,9 +2052,6 @@ carma_perception_msgs::msg::CheckActiveGeofence WMBroadcaster::checkActiveGeofen
   double current_pos_x = current_pos.pose.position.x;
   double current_pos_y = current_pos.pose.position.y;
 
-
-
-
   lanelet::BasicPoint2d curr_pos;
   curr_pos.x() = current_pos_x;
   curr_pos.y() = current_pos_y;
@@ -2069,8 +2063,6 @@ carma_perception_msgs::msg::CheckActiveGeofence WMBroadcaster::checkActiveGeofen
   {
     return outgoing_geof;
   }
-
-  RCLCPP_INFO_STREAM(rclcpp::get_logger("carma_wm_ctrl"), "Active geofence llt ids are loaded to the WMBroadcaster");
 
   // Obtain the closest lanelet to the vehicle's current position
   auto current_llt = lanelet::geometry::findNearest(current_map_->laneletLayer, curr_pos, 1)[0].second;

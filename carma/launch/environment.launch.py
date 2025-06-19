@@ -33,6 +33,7 @@ def generate_launch_description():
     """
     Launch perception nodes.
     """
+    vehicle_calibration_dir = LaunchConfiguration('vehicle_calibration_dir')
 
     vehicle_config_param_file = LaunchConfiguration('vehicle_config_param_file')
     declare_vehicle_config_param_file_arg = DeclareLaunchArgument(
@@ -118,9 +119,15 @@ def generate_launch_description():
     carma_wm_ctrl_param_file = os.path.join(
         get_package_share_directory('carma_wm_ctrl'), 'config/parameters.yaml')
 
-    cp_multiple_object_tracker_node_file = str(PurePath(get_package_share_directory("carma_cooperative_perception"), "config/cp_multiple_object_tracker_node.yaml"))
-    cp_host_vehicle_filter_node_file = str(PurePath(get_package_share_directory("carma_cooperative_perception"), "config/cp_host_vehicle_filter_node.yaml"))
-
+    cp_multiple_object_tracker_node_file = str(
+        PurePath(get_package_share_directory("carma_cooperative_perception"),
+                 "config/cp_multiple_object_tracker_node.yaml"))
+    cp_host_vehicle_filter_node_file = str(
+        PurePath(get_package_share_directory("carma_cooperative_perception"),
+                 "config/cp_host_vehicle_filter_node.yaml"))
+    cp_sdsm_to_detection_list_node_file = str(
+        PurePath(get_package_share_directory("carma_cooperative_perception"),
+                 "config/cp_sdsm_to_detection_list_node.yaml"))
     # lidar_perception_container contains all nodes for lidar based object perception
     # a failure in any one node in the chain would invalidate the rest of it, so they can all be
     # placed in the same container without reducing fault tolerance
@@ -251,7 +258,7 @@ def generate_launch_description():
         ]
     )
 
-                                                          
+
     # carma_external_objects_container contains nodes for object detection and tracking
     # since these nodes can use different object inputs they are a separate container from the lidar_perception_container
     # to preserve fault tolerance
@@ -305,7 +312,9 @@ def generate_launch_description():
                         ("external_objects", "external_object_predictions"),
                         ("external_objects_viz", "fused_external_objects_viz")
                     ],
-                    parameters=[ object_visualizer_param_file, vehicle_config_param_file ]
+                    parameters=[object_visualizer_param_file, vehicle_config_param_file,
+                                {'pedestrian_icon_path': ['file:///', vehicle_calibration_dir, '/visualization_meshes/pedestrian.stl']}
+                                ]
             ),
             ComposableNode(
                 package='motion_computation',
@@ -496,7 +505,8 @@ def generate_launch_description():
                     ("output/detections", "full_detection_list"),
                 ],
                 parameters=[
-                    vehicle_config_param_file
+                    vehicle_config_param_file,
+                    cp_sdsm_to_detection_list_node_file
                 ]
             ),
             ComposableNode(
@@ -531,6 +541,7 @@ def generate_launch_description():
                     cp_multiple_object_tracker_node_file,
                     vehicle_config_param_file
                 ]
+
             ),
 
         ]

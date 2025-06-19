@@ -22,14 +22,14 @@
 namespace arbitrator
 {
     const std::string CapabilitiesInterface::STRATEGIC_PLAN_CAPABILITY = "strategic_plan/plan_maneuvers";
-    
+
     std::vector<std::string> CapabilitiesInterface::get_topics_for_capability(const std::string& query_string)
     {
         std::vector<std::string> topics = {};
-        
+
         auto srv = std::make_shared<carma_planning_msgs::srv::GetPluginApi::Request>();
         srv->capability = "";
-        
+
         auto plan_response = sc_s_->async_send_request(srv);
 
         auto future_status = plan_response.wait_for(std::chrono::milliseconds(200));
@@ -37,7 +37,7 @@ namespace arbitrator
         if (query_string == STRATEGIC_PLAN_CAPABILITY && future_status == std::future_status::ready)
         {
             topics = plan_response.get()->plan_service;
-            
+
             // Log the topics
             std::ostringstream stream;
             stream << "Received Topics: ";
@@ -45,7 +45,7 @@ namespace arbitrator
                 stream << topic << ", ";
             }
             stream << std::endl;
-            RCLCPP_INFO_STREAM(nh_->get_logger(), stream.str().c_str());
+            RCLCPP_DEBUG_STREAM(nh_->get_logger(), stream.str().c_str());
         }
         else
         {

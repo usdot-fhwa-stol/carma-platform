@@ -1,0 +1,33 @@
+# Whether to overwrite the default covariance values with those specified below
+overwrite_covariance: true
+
+##################################################
+# NONE of the covariance values can be set to zero!
+##################################################
+
+# Pose position covariance values (in meters^2)
+# These represent uncertainty in position measurements
+pose_covariance_x: 0.02  # X-axis position uncertainty (lateral)
+pose_covariance_y: 0.02  # Y-axis position uncertainty (longitudinal)
+pose_covariance_z: 0.02  # Z-axis position uncertainty (vertical)
+
+# Pose orientation covariance value (in radians^2)
+# 10% error in yaw angle, which is (0.1 * 2 pi) ^ 2 = 0.394384
+pose_covariance_yaw: 0.394384  # Yaw angle uncertainty (heading)
+
+# Twist linear velocity covariance values (in (m/s)^2)
+# These represent uncertainty in velocity measurements
+twist_covariance_x: 0.005  # X-axis velocity uncertainty
+twist_covariance_z: 0.005  # Z-axis velocity uncertainty
+
+# Twist angular velocity covariance value (in (rad/s)^2)
+twist_covariance_yaw: 0.005  # Yaw angular velocity uncertainty
+
+# True to enable adding offsets to the pose of the detected object generated from the SDSM
+adjust_pose: true
+# Meters in map frame
+x_offset: -1.0
+# Meters in map frame
+y_offset: -0.7
+# Degrees in map frame, a.k.a positive is counter-clockwise
+yaw_offset: 0.0

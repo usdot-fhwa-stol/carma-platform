@@ -24,7 +24,7 @@ DetectionListVizNode::DetectionListVizNode(const rclcpp::NodeOptions & options)
 {
   detection_list_sub_ =
     create_subscription<carma_cooperative_perception_interfaces::msg::DetectionList>(
-      "input/detections_lists", 1,
+      "input/detections_lists", 100,
       [this](carma_cooperative_perception_interfaces::msg::DetectionList::ConstSharedPtr msg_ptr) {
         visualization_msgs::msg::MarkerArray markers;
 
