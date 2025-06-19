@@ -265,7 +265,7 @@ namespace yield_plugin
 
     // if ego is not stopped and we committed to stopping, use the last committed trajectory
     if (req->vehicle_state.longitudinal_vel > EPSILON &&
-      last_traj_plan_committed_to_stopping_)
+      last_traj_plan_committed_to_stopping_.has_value())
     {
       RCLCPP_DEBUG(nh_->get_logger(), "Using last committed trajectory to stopping");
       lanelet::BasicPoint2d veh_pos(req->vehicle_state.x_pos_global,
@@ -344,7 +344,7 @@ namespace yield_plugin
       // return original trajectory if no difference in trajectory points a.k.a no collision
       if (fabs(get_trajectory_end_time(original_trajectory) - get_trajectory_end_time(yield_trajectory)) < EPSILON)
       {
-        // Despite the obstacle clearance, we should be wait for some time before
+        // Despite the obstacle clearance, we should wait for some time before
         // executing the new trajectory if we had previously committed to stopping
         if (first_time_stopped_to_prevent_collision_.has_value() &&
             nh_->now().seconds() - first_time_stopped_to_prevent_collision_.value().seconds() <
@@ -1066,8 +1066,9 @@ namespace yield_plugin
       planning_time_in_s, original_max_speed);
 
     // If expected to stop to prevent collision, we should save this trajectory to commit to it
-    if (goal_velocity < EPSILON &&
-      earliest_collision_time_in_seconds - nh_->now().seconds()
+    if (!last_traj_plan_committed_to_stopping_.has_value() &&
+        goal_velocity < EPSILON &&
+        earliest_collision_time_in_seconds - nh_->now().seconds()
         <= config_.time_horizon_until_collision_to_commit_to_stop_in_s)
     {
       last_traj_plan_committed_to_stopping_ = jmt_trajectory;
