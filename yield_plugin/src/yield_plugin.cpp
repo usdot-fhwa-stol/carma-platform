@@ -346,21 +346,12 @@ namespace yield_plugin
       // return original trajectory if no difference in trajectory points a.k.a no collision
       if (fabs(get_trajectory_end_time(original_trajectory) - get_trajectory_end_time(yield_trajectory)) < EPSILON)
       {
-        // Despite the obstacle clearance, we should wait for some time before
-        // executing the new trajectory if we had previously committed to stopping
-        if (first_time_stopped_to_prevent_collision_.has_value() &&
-            nh_->now().seconds() - first_time_stopped_to_prevent_collision_.value().seconds() <
-            config_.time_horizon_since_obj_clearance_to_start_moving_in_s)
-        {
-          resp->trajectory_plan = last_traj_plan_committed_to_stopping_.value();
-        }
-        else
-        {
-          resp->trajectory_plan = original_trajectory;
-          // Reset the collision prevention variables
-          first_time_stopped_to_prevent_collision_ = std::nullopt;
-          last_traj_plan_committed_to_stopping_ = std::nullopt;
-        }
+        
+        resp->trajectory_plan = original_trajectory;
+        // Reset the collision prevention variables
+        first_time_stopped_to_prevent_collision_ = std::nullopt;
+        last_traj_plan_committed_to_stopping_ = std::nullopt;
+        
       }
       else
       {

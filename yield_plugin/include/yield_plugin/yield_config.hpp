@@ -25,7 +25,6 @@ struct YieldPluginConfig
 {
   double acceleration_adjustment_factor = 4.0;  // Adjustment factor for safe and comfortable acceleration/deceleration
   double time_horizon_until_collision_to_commit_to_stop_in_s = 4.0;  // Time horizon until collision to commit to last stopping trajectory
-  double time_horizon_since_obj_clearance_to_start_moving_in_s = 4.0;  // Time horizon since stopping and verified obstacle is cleard to start moving again
   double on_route_vehicle_collision_horizon_in_s = 10.0;        // time horizon for collision detection in s
   double obstacle_zero_speed_threshold_in_ms = 0.25;       // Minimum speed threshold for moving obstacle in m/s to be considered stopped
   double min_obj_avoidance_plan_time_in_s = 2.0;                     // minimum object avoidance planning time in s
@@ -52,7 +51,6 @@ struct YieldPluginConfig
     output << "YieldPluginConfig { " << std::endl
           << "acceleration_adjustment_factor: " << c.acceleration_adjustment_factor << std::endl
           << "time_horizon_until_collision_to_commit_to_stop_in_s: " << c.time_horizon_until_collision_to_commit_to_stop_in_s << std::endl
-          << "time_horizon_since_obj_clearance_to_start_moving_in_s: " << c.time_horizon_since_obj_clearance_to_start_moving_in_s << std::endl
           << "on_route_vehicle_collision_horizon_in_s: " << c.on_route_vehicle_collision_horizon_in_s << std::endl
           << "obstacle_zero_speed_threshold_in_ms: " << c.obstacle_zero_speed_threshold_in_ms << std::endl
           << "yield_max_deceleration_in_ms2: " << c.yield_max_deceleration_in_ms2 << std::endl

@@ -28,7 +28,6 @@ namespace yield_plugin
     // Declare parameters
     config_.acceleration_adjustment_factor = declare_parameter<double>("acceleration_adjustment_factor", config_.acceleration_adjustment_factor);
     config_.time_horizon_until_collision_to_commit_to_stop_in_s = declare_parameter<double>("time_horizon_until_collision_to_commit_to_stop_in_s", config_.time_horizon_until_collision_to_commit_to_stop_in_s);
-    config_.time_horizon_since_obj_clearance_to_start_moving_in_s = declare_parameter<double>("time_horizon_since_obj_clearance_to_start_moving_in_s", config_.time_horizon_since_obj_clearance_to_start_moving_in_s);
     config_.obstacle_zero_speed_threshold_in_ms = declare_parameter<double>("obstacle_zero_speed_threshold_in_ms", config_.obstacle_zero_speed_threshold_in_ms);
     config_.on_route_vehicle_collision_horizon_in_s = declare_parameter<double>("on_route_vehicle_collision_horizon_in_s", config_.on_route_vehicle_collision_horizon_in_s);
     config_.collision_check_radius_in_m = declare_parameter<double>("collision_check_radius_in_m", config_.collision_check_radius_in_m);
@@ -59,7 +58,6 @@ namespace yield_plugin
 
     get_parameter<double>("acceleration_adjustment_factor", config_.acceleration_adjustment_factor);
     get_parameter<double>("time_horizon_until_collision_to_commit_to_stop_in_s", config_.time_horizon_until_collision_to_commit_to_stop_in_s);
-    get_parameter<double>("time_horizon_since_obj_clearance_to_start_moving_in_s", config_.time_horizon_since_obj_clearance_to_start_moving_in_s);
     get_parameter<double>("obstacle_zero_speed_threshold_in_ms", config_.obstacle_zero_speed_threshold_in_ms);
     get_parameter<double>("on_route_vehicle_collision_horizon_in_s", config_.on_route_vehicle_collision_horizon_in_s);
     get_parameter<double>("collision_check_radius_in_m", config_.collision_check_radius_in_m);
