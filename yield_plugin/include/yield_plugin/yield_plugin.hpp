@@ -225,9 +225,9 @@ public:
   void lookup_ecef_to_map_transform();
 
   /**
-   * \brief checks trajectory for minimum gap associated with it
+   * \brief checks trajectory for minimum gap associated with it from the road
    * \param original_tp original trajectory plan
-   * \return minumum required
+   * \return minumum required min_gap from the road, if none exists, return default minimum_safety_gap_in_meters
    */
   double check_traj_for_digital_min_gap(const carma_planning_msgs::msg::TrajectoryPlan& original_tp) const;
 
@@ -327,7 +327,8 @@ private:
   double req_target_plan_time_ = 0;
   int timesteps_since_last_req_ = 0;
   int clc_urgency_ = 0;
-
+  std::optional<double> last_speed_ = std::nullopt;
+  std::optional<rclcpp::Time> last_speed_time_ = std::nullopt;
   // time between ecef trajectory points
   double ecef_traj_timestep_ = 0.1;
 
@@ -336,6 +337,7 @@ private:
   // BSM Message
   std::string host_bsm_id_;
 
+  std::string georeference_{""};
   std::shared_ptr<lanelet::projection::LocalFrameProjector> map_projector_;
 
   std::string bsmIDtoString(carma_v2x_msgs::msg::BSMCoreData bsm_core)

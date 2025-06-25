@@ -27,7 +27,7 @@ minimum_safety_gap_in_meters: 10.0
 # Maximum speed value to consider the ego vehicle stopped
 # Units: m/s
 # Value type: Desired
-max_stop_speed_in_ms: 1.0
+max_stop_speed_in_ms: 0.15
 # parameter to enable cooperative behavior
 # Value type: Desired
 enable_cooperative_behavior: false

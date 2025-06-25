@@ -1,6 +1,6 @@
 <?xml version="1.0"?>
 <?xml-model href="http://download.ros.org/schema/package_format3.xsd" schematypens="http://www.w3.org/2001/XMLSchema"?>
-<!--  
+<!--
  Copyright (C) 2021 LEIDOS.
 
  Licensed under the Apache License, Version 2.0 (the "License"); you may not
@@ -17,7 +17,7 @@
 -->
 <package format="3">
   <name>system_controller</name>
-  <version>1.0.0</version>
+  <version>5.0.0</version>
   <description>A overall system controller for CARMA Platform and CARMA Messenger.</description>
   <author email="Michael.McConnell-2@leidos.com">Michael McConnell</author>
   <maintainer email="carma@dot.gov">CARMA</maintainer>

@@ -24,6 +24,7 @@ from launch_ros.actions import ComposableNodeContainer
 from launch_ros.descriptions import ComposableNode
 from carma_ros2_utils.launch.get_log_level import GetLogLevel
 from carma_ros2_utils.launch.get_current_namespace import GetCurrentNamespace
+from launch.conditions import IfCondition
 import os
 
 
@@ -46,6 +47,7 @@ def generate_launch_description():
         default_value = "False",
         description = "True if simulation mode is on"
     )
+
 
     env_log_levels = EnvironmentVariable('CARMA_ROS_LOGGING_CONFIG', default_value='{ "default_level" : "WARN" }')
 
@@ -107,5 +109,5 @@ def generate_launch_description():
         declare_vehicle_config_param_file_arg,
         declare_use_sim_time_arg,
         lightbar_manager_container,
-        subsystem_controller
+        subsystem_controller,
     ])

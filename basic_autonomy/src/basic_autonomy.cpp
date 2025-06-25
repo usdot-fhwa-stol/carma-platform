@@ -252,7 +252,7 @@ namespace basic_autonomy
                 }
 
                 double delta_d = lanelet::geometry::distance2d(prev_point, current_point);
-                
+
                 dist_accumulator += delta_d;
                 RCLCPP_DEBUG_STREAM(rclcpp::get_logger(BASIC_AUTONOMY_LOGGER), "Index i: " << i << ", delta_d: " << delta_d << ", dist_accumulator:" << dist_accumulator <<", current_point.x():" << current_point.x() <<
                 "current_point.y():" << current_point.y());
@@ -640,6 +640,47 @@ namespace basic_autonomy
             return carma_wm::geometry::build2dEigenTransform(p1, yaw);
         }
 
+        std::vector<carma_planning_msgs::msg::TrajectoryPlanPoint> constrain_to_time_boundary(
+            const std::vector<carma_planning_msgs::msg::TrajectoryPlanPoint>& trajectory,
+            double time_span)
+        {
+            if (trajectory.empty())
+            {
+                RCLCPP_WARN_STREAM(rclcpp::get_logger(BASIC_AUTONOMY_LOGGER),
+                    "constrain_to_time_boundary received empty trajectory, returning...");
+                return trajectory;
+            }
+
+            if (time_span <= 0)
+            {
+                RCLCPP_WARN_STREAM(rclcpp::get_logger(BASIC_AUTONOMY_LOGGER),
+                    "constrain_to_time_boundary received non-positive time span, returning...");
+                return trajectory;
+            }
+
+            // return immediately if the trajectory is already within the time span
+            if ((rclcpp::Time(trajectory.back().target_time) -
+                rclcpp::Time(trajectory.front().target_time)).seconds() <= time_span)
+            {
+                return trajectory;
+            }
+
+            // find the first point that is outside the time span
+            std::vector<carma_planning_msgs::msg::TrajectoryPlanPoint> constrained_points;
+            auto start_time = rclcpp::Time(trajectory.front().target_time);
+            auto end_time = start_time + rclcpp::Duration::from_seconds(time_span);
+            for (const auto& tpp : trajectory)
+            {
+                if (rclcpp::Time(tpp.target_time) > end_time)
+                {
+                    break;
+                }
+                constrained_points.push_back(tpp);
+            }
+
+            return constrained_points;
+        }
+
         std::vector<PointSpeedPair> constrain_to_time_boundary(const std::vector<PointSpeedPair> &points,
                                                                double time_span)
         {
@@ -774,7 +815,7 @@ namespace basic_autonomy
             for (size_t i = 0; i < points.size(); i++)
             {
                 carma_planning_msgs::msg::TrajectoryPlanPoint tpp;
-                rclcpp::Duration relative_time(times[i] * 1e9); // Conversion of times[i] from seconds to nanoseconds
+                rclcpp::Duration relative_time = rclcpp::Duration::from_nanoseconds(static_cast<int64_t>(times[i] * 1e9)); // Conversion of times[i] from seconds to nanoseconds
                 tpp.target_time = startTime + relative_time;
                 tpp.x = points[i].x();
                 tpp.y = points[i].y();
@@ -817,27 +858,36 @@ namespace basic_autonomy
 
         std::unique_ptr<basic_autonomy::smoothing::SplineI> compute_fit(const std::vector<lanelet::BasicPoint2d> &basic_points)
         {
-            if (basic_points.size() < 4)
+            RCLCPP_DEBUG_STREAM(rclcpp::get_logger(BASIC_AUTONOMY_LOGGER), "Original basic_points size: " << basic_points.size());
+
+            // When computing fit, there cannot be duplicate points or points less than 0.5 meters apart.
+            // Therefore, this function generally cleans the points for robust spline fit.
+            auto points_with_min_dis = downsample_pts_with_min_meters
+                <std::vector<lanelet::BasicPoint2d>>(basic_points);
+
+            if (points_with_min_dis.size() < 4)
             {
                 RCLCPP_WARN_STREAM(rclcpp::get_logger(BASIC_AUTONOMY_LOGGER), "Insufficient Spline Points");
                 return nullptr;
             }
 
-            RCLCPP_DEBUG_STREAM(rclcpp::get_logger(BASIC_AUTONOMY_LOGGER), "Original basic_points size: " << basic_points.size());
+            RCLCPP_DEBUG_STREAM(rclcpp::get_logger(BASIC_AUTONOMY_LOGGER), "points_with_min_dis size: " << points_with_min_dis.size());
 
-            std::vector<lanelet::BasicPoint2d> resized_basic_points = basic_points;
+            std::vector<lanelet::BasicPoint2d> resized_points_with_min_dis = points_with_min_dis;
 
             // The large the number of points, longer it takes to calculate a spline fit
             // So if the basic_points vector size is large, only the first 400 points are used to compute a spline fit.
-            if (resized_basic_points.size() > 400)
+            if (resized_points_with_min_dis.size() > 400)
             {
-                resized_basic_points.resize(400);
-                RCLCPP_DEBUG_STREAM(rclcpp::get_logger(BASIC_AUTONOMY_LOGGER), "Resized basic_points size: " << resized_basic_points.size());
+                resized_points_with_min_dis.resize(400);
+                RCLCPP_DEBUG_STREAM(rclcpp::get_logger(BASIC_AUTONOMY_LOGGER), "resized_points_with_min_dis size: " << resized_points_with_min_dis.size());
 
-                size_t left_points_size = basic_points.size() - resized_basic_points.size();
-                RCLCPP_DEBUG_STREAM(rclcpp::get_logger(BASIC_AUTONOMY_LOGGER), "Number of left out basic_points size: " << left_points_size);
+                size_t left_points_size = points_with_min_dis.size() - resized_points_with_min_dis.size();
+                RCLCPP_DEBUG_STREAM(rclcpp::get_logger(BASIC_AUTONOMY_LOGGER), "Left out points size: " << left_points_size);
 
-                float percent_points_lost = 100.0 * (float)left_points_size/basic_points.size();
+                float percent_points_lost = 100.0f
+                    * static_cast<float>(left_points_size) /
+                    static_cast<float>(points_with_min_dis.size());
 
                 if (percent_points_lost > 50.0)
                 {
@@ -847,7 +897,7 @@ namespace basic_autonomy
 
             std::unique_ptr<basic_autonomy::smoothing::SplineI> spl = std::make_unique<basic_autonomy::smoothing::BSpline>();
 
-            spl->setPoints(resized_basic_points);
+            spl->setPoints(resized_points_with_min_dis);
 
             return spl;
         }
@@ -1142,53 +1192,91 @@ namespace basic_autonomy
                 throw std::invalid_argument("Could not fit a spline curve along the given trajectory!");
             }
             RCLCPP_DEBUG_STREAM(rclcpp::get_logger(BASIC_AUTONOMY_LOGGER), "Got fit");
-            std::vector<lanelet::BasicPoint2d> all_sampling_points;
-            all_sampling_points.reserve(1 + future_geom_points.size() * 2);
 
+            // Add current vehicle position to front of future geometry points
             lanelet::BasicPoint2d current_vehicle_point(state.x_pos_global, state.y_pos_global);
-
-            future_geom_points.insert(future_geom_points.begin(),
-                                       current_vehicle_point); // Add current vehicle position to front of future geometry points
-
+            future_geom_points.insert(future_geom_points.begin(), current_vehicle_point);
             final_actual_speeds.insert(final_actual_speeds.begin(), state.longitudinal_vel);
 
-            //Compute points to local downtracks
-            std::vector<double> downtracks = carma_wm::geometry::compute_arc_lengths(future_geom_points);
+            // Compute downtracks for original points (for interpolation reference)
+            std::vector<double> original_downtracks = carma_wm::geometry::compute_arc_lengths(future_geom_points);
 
-            auto total_step_along_curve = static_cast<int>(downtracks.back() /detailed_config.curve_resample_step_size);
+            // Now create resampled points using the spline
+            auto total_step_along_curve = static_cast<int>(original_downtracks.back() / detailed_config.curve_resample_step_size);
+            if (total_step_along_curve == 0) {
+                RCLCPP_WARN_STREAM(rclcpp::get_logger(BASIC_AUTONOMY_LOGGER),
+                "Available distance to resample is less than curve_resample_step_size. "
+                "Only considering the last point of the target destination to generate trajectory."
+                );
+                total_step_along_curve = 1; // This also avoids division by zero
+            }
 
-            double scaled_steps_along_curve = 0.0; //from 0 (start) to 1 (end) for the whole trajectory
+            std::vector<lanelet::BasicPoint2d> resampled_points;
+            resampled_points.reserve(total_step_along_curve + 1);
 
-            for(int steps_along_curve = 0; steps_along_curve < total_step_along_curve; steps_along_curve++){
+            double scaled_steps_along_curve = 0.0; // from 0 (start) to 1 (end) for the whole trajectory
+            for(int step = 0; step <= total_step_along_curve; step++){
+                scaled_steps_along_curve = static_cast<double>(step) / total_step_along_curve;
                 lanelet::BasicPoint2d p = (*fit_curve)(scaled_steps_along_curve);
-
-                all_sampling_points.push_back(p);
-
-                scaled_steps_along_curve += 1.0 / total_step_along_curve;
+                resampled_points.push_back(p);
             }
-            RCLCPP_DEBUG_STREAM(rclcpp::get_logger(BASIC_AUTONOMY_LOGGER), "Got sampled points with size:" << all_sampling_points.size());
+            RCLCPP_DEBUG_STREAM(rclcpp::get_logger(BASIC_AUTONOMY_LOGGER), "Got resampled points with size:" << resampled_points.size());
 
-            std::vector<double> final_yaw_values = carma_wm::geometry::compute_tangent_orientations(future_geom_points);
-            if(final_yaw_values.size() > 0) {
-                final_yaw_values[0] = state.orientation; // Set the initial yaw value based on the initial state
+            // Compute downtracks for the resampled points
+            std::vector<double> resampled_downtracks = carma_wm::geometry::compute_arc_lengths(resampled_points);
+
+            // Interpolate speeds based on downtracks
+            std::vector<double> resampled_speeds;
+            resampled_speeds.reserve(resampled_points.size());
+
+            for (const auto& downtrack : resampled_downtracks) {
+                // Find where this downtrack would fit in the original downtracks
+                auto it = std::upper_bound(original_downtracks.begin(), original_downtracks.end(), downtrack);
+                size_t idx = it - original_downtracks.begin();
+
+                if (idx == 0) {
+                    // Point is before first point, use first speed
+                    resampled_speeds.push_back(final_actual_speeds[0]);
+                } else if (idx >= original_downtracks.size()) {
+                    // Point is after last point, use last speed
+                    resampled_speeds.push_back(final_actual_speeds.back());
+                } else {
+                    // Approximating the speed to the original because moving average filter
+                    // will smooth the speed values anyways
+                    resampled_speeds.push_back(final_actual_speeds[idx]);
+                }
             }
 
-            final_actual_speeds = smoothing::moving_average_filter(final_actual_speeds, detailed_config.speed_moving_average_window_size);
+            // Apply the moving average filter to the resampled speeds
+            resampled_speeds = smoothing::moving_average_filter(resampled_speeds, detailed_config.speed_moving_average_window_size);
 
-            //Convert speeds to time
+            // Compute yaw values based on the resampled points
+            std::vector<double> resampled_yaw_values = carma_wm::geometry::compute_tangent_orientations(resampled_points);
+            if (!resampled_yaw_values.empty())
+            {
+                resampled_yaw_values[0] = state.orientation; // Set the initial yaw value based on the initial state
+            }
+
+            // Convert speeds to time
             std::vector<double> times;
-            trajectory_utils::conversions::speed_to_time(downtracks, final_actual_speeds, &times);
+            trajectory_utils::conversions::speed_to_time(resampled_downtracks, resampled_speeds, &times);
 
             //Remove extra points
             RCLCPP_DEBUG_STREAM(rclcpp::get_logger(BASIC_AUTONOMY_LOGGER), "Before removing extra buffer points, future_geom_points.size()"<< future_geom_points.size());
-            int end_dist_pt_index = get_nearest_index_by_downtrack(future_geom_points, wm, ending_state_before_buffer);
-            future_geom_points.resize(end_dist_pt_index + 1);
-            times.resize(end_dist_pt_index + 1);
-            final_yaw_values.resize(end_dist_pt_index + 1);
-            RCLCPP_DEBUG_STREAM(rclcpp::get_logger(BASIC_AUTONOMY_LOGGER), "After removing extra buffer points, future_geom_points.size():"<< future_geom_points.size());
 
+            // Find the ending point index in the resampled points
+            int end_dist_pt_index = get_nearest_index_by_downtrack(resampled_points, wm, ending_state_before_buffer);
+
+            // Resize all arrays to the endpoint
+            RCLCPP_DEBUG_STREAM(rclcpp::get_logger(BASIC_AUTONOMY_LOGGER), "Before removing extra buffer points, resampled_points.size(): " << resampled_points.size());
+            resampled_points.resize(end_dist_pt_index + 1);
+            times.resize(end_dist_pt_index + 1);
+            resampled_yaw_values.resize(end_dist_pt_index + 1);
+            RCLCPP_DEBUG_STREAM(rclcpp::get_logger(BASIC_AUTONOMY_LOGGER), "After removing extra buffer points, resampled_points.size(): " << resampled_points.size());
+
+            // Create trajectory points from the resampled data
             std::vector<carma_planning_msgs::msg::TrajectoryPlanPoint> traj_points =
-                trajectory_from_points_times_orientations(future_geom_points, times, final_yaw_values, state_time, detailed_config.desired_controller_plugin);
+                trajectory_from_points_times_orientations(resampled_points, times, resampled_yaw_values, state_time, detailed_config.desired_controller_plugin);
 
             return traj_points;
         }
@@ -1269,8 +1357,21 @@ namespace basic_autonomy
                 autoware_point.x = trajectory_points[i].x;
                 autoware_point.y = trajectory_points[i].y;
                 autoware_point.longitudinal_velocity_mps = lag_speeds[i];
+                double yaw = 0.0;
+                if (i< max_size-1)
+                {
+                    yaw = std::atan2(trajectory_points[i+1].y - trajectory_points[i].y, trajectory_points[i+1].x - trajectory_points[i].x);
 
-                autoware_point.time_from_start = rclcpp::Duration(times[i] * 1e9);
+                }
+                else
+                {
+                    yaw = std::atan2(trajectory_points[max_size-1].y - trajectory_points[max_size-2].y, trajectory_points[max_size-1].x - trajectory_points[max_size-2].x);
+                    // last point in the trajectory will have yaw value of its previous point to avoid sudden steering in some conditions
+                }
+                autoware_point.heading.real = std::cos(yaw/2);
+                autoware_point.heading.imag = std::sin(yaw/2);
+
+                autoware_point.time_from_start = rclcpp::Duration::from_nanoseconds(static_cast<int64_t>(times[i] * 1e9));
                 RCLCPP_DEBUG_STREAM(rclcpp::get_logger(BASIC_AUTONOMY_LOGGER), "Setting waypoint idx: " << i <<", with planner: << " << trajectory_points[i].planner_plugin_name << ", x: " << trajectory_points[i].x <<
                                         ", y: " << trajectory_points[i].y <<
                                         ", speed: " << lag_speeds[i]* 2.23694 << "mph");
@@ -1304,7 +1405,8 @@ namespace basic_autonomy
         {
             if (yield_plan.trajectory_points.size() < 2)
             {
-                RCLCPP_WARN(node_handler->get_logger(), "Invalid Yield Trajectory");
+                RCLCPP_WARN(node_handler->get_logger(), "Invalid Yield Trajectory with less than 2 points!");
+                return false;
             }
 
             RCLCPP_DEBUG_STREAM(node_handler->get_logger(), "Yield Trajectory Time" << rclcpp::Time(yield_plan.trajectory_points[0].target_time).seconds());
@@ -1316,7 +1418,9 @@ namespace basic_autonomy
             }
             else
             {
-                RCLCPP_DEBUG(node_handler->get_logger(), "Old Yield Trajectory");
+                RCLCPP_WARN_STREAM(node_handler->get_logger(), "Invalid Yield Trajectory with old target_time: " << 
+                    std::to_string(rclcpp::Time(yield_plan.trajectory_points[0].target_time).seconds()) << ", where now: " <<
+                    std::to_string(node_handler->now().seconds()));
             }
 
             return false;
@@ -1329,7 +1433,7 @@ namespace basic_autonomy
             const carma_ros2_utils::ClientPtr<carma_planning_msgs::srv::PlanTrajectory>& yield_client,
             int yield_plugin_service_call_timeout)
         {
-            RCLCPP_DEBUG(node_handler->get_logger(), "Activate Object Avoidance");
+            RCLCPP_DEBUG(node_handler->get_logger(), "Object avoidance activated");
 
             if (!yield_client || !yield_client->service_is_ready())
             {
@@ -1363,12 +1467,14 @@ namespace basic_autonomy
             }
             else
             {
-                throw std::invalid_argument("Invalid Yield Trajectory");
+                // This logic used to throw. However, yield_plugin is intermittently returning invalid trajectory when it shouldn't
+                // TODO: CAR-6118 is tracking it 
+                RCLCPP_WARN_STREAM(node_handler->get_logger(), "Invalid yield trajectory detected, returning original trajectory of size: " <<
+                    resp->trajectory_plan.trajectory_points.size());
             }
 
             return resp;
         }
-
     } // namespace waypoint_generation
 
 } // basic_autonomy

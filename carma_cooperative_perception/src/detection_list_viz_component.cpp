@@ -28,7 +28,7 @@ DetectionListVizNode::DetectionListVizNode(const rclcpp::NodeOptions & options)
       [this](carma_cooperative_perception_interfaces::msg::DetectionList::ConstSharedPtr msg_ptr) {
         visualization_msgs::msg::MarkerArray markers;
 
-        for (const auto detection : msg_ptr->detections) {
+        for (const auto & detection : msg_ptr->detections) {
           visualization_msgs::msg::Marker marker;
 
           marker.header = detection.header;
@@ -52,7 +52,4 @@ DetectionListVizNode::DetectionListVizNode(const rclcpp::NodeOptions & options)
 }  // namespace carma_cooperative_perception
 
 // This is not our macro, so we should not worry about linting it.
-// clang-tidy added support for ignoring system macros in release 14.0.0 (see the release notes
-// here: https://releases.llvm.org/14.0.0/tools/clang/tools/extra/docs/ReleaseNotes.html), but
-// ament_clang_tidy for ROS 2 Foxy specifically looks for clang-tidy-6.0.
 RCLCPP_COMPONENTS_REGISTER_NODE(carma_cooperative_perception::DetectionListVizNode)  // NOLINT

@@ -39,8 +39,25 @@
 /**
  * \brief Macro definition to enable easier access to fields shared across the maneuver types
  * \param mvr The maneuver object to invoke the accessors on
- * \param property The name of the field to access on the specific maneuver types. Must be shared by all extant maneuver types
- * \return Expands to an expression (in the form of chained ternary operators) that evalutes to the desired field
+ * \param property The name of the field to access on the specific maneuver types.
+ *                 Must be shared by all extant maneuver types
+ * \return Expands to an expression (in the form of chained ternary operators) that evaluates to
+ *         the desired field
+ * NOTE: Here is the definition of the int_valued, float_valued, and string_valued meta data
+ *       parameters that is implicitly agreed between LCI Strategic and Tactical plugins
+ *       All lane_following_maneuver.properties:
+ *        string_valued_meta_data[0]: light_controlled_intersection_strategy name
+ *        float_valued_meta_data[0]: Trajectory Segment 1 starting acceleration a1_;
+ *        float_valued_meta_data[1]: Trajectory Segment 1 starting velocity v1_;
+ *        float_valued_meta_data[2]: Trajectory Segment 1 starting downtrack x1_;
+ *        float_valued_meta_data[3]: Trajectory Segment 2 starting acceleration a2_;
+ *        float_valued_meta_data[4]: Trajectory Segment 2 starting velocity v2_;
+ *        float_valued_meta_data[5]: Trajectory Segment 2 starting downtrack x2_;
+ *        float_valued_meta_data[6]: Trajectory Segment 3 starting acceleration a3_;
+ *        float_valued_meta_data[7]: Trajectory Segment 3 starting velocity v3_;
+ *        float_valued_meta_data[8]: Trajectory Segment 3 starting downtrack x3_;
+ *        int_valued_meta_data[0]: Trajectory Smoothing Case Number
+ *        int_valued_meta_data[1]: Is Trajectory Smoothing Algorithm Successful? (0: False, 1: True)
  */
 #define GET_MANEUVER_PROPERTY(mvr, property)\
         (((mvr).type == carma_planning_msgs::msg::Maneuver::INTERSECTION_TRANSIT_LEFT_TURN ? (mvr).intersection_transit_left_turn_maneuver.property :\
@@ -54,6 +71,7 @@ namespace light_controlled_intersection_tactical_plugin
   using PointSpeedPair = basic_autonomy::waypoint_generation::PointSpeedPair;
   using GeneralTrajConfig = basic_autonomy::waypoint_generation::GeneralTrajConfig;
   using DetailedTrajConfig = basic_autonomy::waypoint_generation::DetailedTrajConfig;
+  using DebugPublisher = std::function<void(const carma_debug_ros2_msgs::msg::TrajectoryCurvatureSpeeds&)>;
 
   enum TSCase {
     CASE_1 = 1,
@@ -113,11 +131,11 @@ namespace light_controlled_intersection_tactical_plugin
     double speed_limit_ = 11.176; // Approximate speed limit; 25 mph by default
     boost::optional<TSCase> last_case_;
     boost::optional<bool> is_last_case_successful_;
-    carma_planning_msgs::msg::TrajectoryPlan last_trajectory_;
+    carma_planning_msgs::msg::TrajectoryPlan last_trajectory_time_unbound_;
     carma_ros2_utils::ClientPtr<carma_planning_msgs::srv::PlanTrajectory> yield_client_;
-
+    const std::string LCI_TACTICAL_LOGGER = "light_controlled_intersection_tactical_plugin";
     carma_planning_msgs::msg::VehicleState ending_state_before_buffer_; //state before applying extra points for curvature calculation that are removed later
-
+    rclcpp::Time latest_traj_request_header_stamp_;
     double epsilon_ = 0.001; //Small constant to compare (double) 0.0 with
 
     // downtrack of host vehicle
@@ -127,8 +145,9 @@ namespace light_controlled_intersection_tactical_plugin
     double last_successful_scheduled_entry_time_;     // if algorithm was successful, this is also scheduled entry time (ET in TSMO UC2 Algo)
 
     std::string plugin_name_;
+    DebugPublisher debug_publisher_;  // Publishes the debug message that includes many useful data used to generate the trajectory
     carma_debug_ros2_msgs::msg::TrajectoryCurvatureSpeeds debug_msg_;
-    std::vector<double> last_final_speeds_;
+    std::vector<double> last_speeds_time_unbound_;
 
     std::string light_controlled_intersection_strategy_ = "Carma/signalized_intersection"; // Strategy carma-streets is sending. Could be more verbose but needs to be changed on both ends
 
@@ -176,18 +195,89 @@ namespace light_controlled_intersection_tactical_plugin
                                                                         const GeneralTrajConfig &general_config, const DetailedTrajConfig &detailed_config);
 
     /**
-     * \brief Given a Lanelet, find it's associated Speed Limit
-     *
-     * \param llt Constant Lanelet object
-     *
-     * \throw std::invalid_argument if the speed limit could not be retrieved
-     *
-     * \return value of speed limit in mps
-     */
+    * \brief Given a Lanelet, find its associated Speed Limit.
+    *
+    * \param llt Constant Lanelet object.
+    * \param wm  World model pointer to query additional information.
+    *
+    * \throw std::invalid_argument if the speed limit could not be retrieved.
+    *
+    * \return Speed limit in meters per second.
+    */
     double findSpeedLimit(const lanelet::ConstLanelet& llt, const carma_wm::WorldModelConstPtr &wm) const;
+
+    /**
+      * \brief Logs debug information about the previously planned trajectory.
+      *
+      * This helper function outputs detailed internal state and trajectory information
+      * that can be used for debugging trajectory planning issues.
+      */
+    void logDebugInfoAboutPreviousTrajectory();
+
+    /**
+      * \brief Determines whether the last trajectory should be reused based on the planning case.
+      *        Should use last case if 1) last traj is valid AND last case is the same as new case,
+      *        OR 2) last traj is valid AND within certain evaluation zone before the intersection
+      *        where the new case is not successful but last case is
+      * \param new_case An enumerated type representing the new trajectory planning case.
+      * \param is_new_case_successful A boolean flag indicating if the new trajectory
+      *                               planning was successful.
+      * \param current_time The current time stamp.
+      *
+      * \return True if the last trajectory should be used, false otherwise.
+      */
+    bool shouldUseLastTrajectory(TSCase new_case, bool is_new_case_successful,
+                                  const rclcpp::Time& current_time);
+
+    /**
+      * \brief Smooths the trajectory as part of the trajectory planning process.
+      *
+      * This function takes a trajectory planning request, applies smoothing algorithms
+      * to refine the trajectory, and populates the response with the smoothed trajectory.
+      * NOTE: Function is called by planTrajectoryCB and doesn't use yield client
+      * \param req  Shared pointer to the trajectory planning request message.
+      * \param resp Shared pointer to the trajectory planning response message to be filled.
+      */
+    void planTrajectorySmoothing(
+      carma_planning_msgs::srv::PlanTrajectory::Request::SharedPtr req,
+      carma_planning_msgs::srv::PlanTrajectory::Response::SharedPtr resp);
+
+    /**
+      * \brief Generates a new trajectory plan based on the provided maneuver plan and request.
+      *        NOTE: This function plans for the entire maneuver input and doesn't time bound it.
+      *
+      * \param maneuver_plan A vector of maneuver messages defining the planned maneuvers.
+      *                      The first maneuver is expected to have all the necessary TS parameters.
+      * \param req           Shared pointer to the trajectory planning request message.
+      * \param final_speeds  A vector that will be populated with the final speeds for each point
+      *                      as it is useful for late operations or debugging
+      *
+      * \return A newly generated trajectory plan message.
+      */
+    carma_planning_msgs::msg::TrajectoryPlan generateNewTrajectory(
+        const std::vector<carma_planning_msgs::msg::Maneuver>& maneuver_plan,
+        const carma_planning_msgs::srv::PlanTrajectory::Request::SharedPtr& req,
+        std::vector<double>& final_speeds);
+
+    /**
+      * \brief Checks if the last trajectory plan remains valid based on the current time.
+      *
+      * This function verifies that the previously generated trajectory still meets timing
+      * and duration requirements. It can also enforce a minimum remaining duration if specified.
+      *
+      * \param current_time               The current time stamp.
+      * \param min_remaining_time_seconds Optional parameter specifying the minimum required
+      *                                   remaining time (in seconds) for the trajectory to be
+      *                                   considered valid.
+      *
+      * \return True if the last trajectory is valid, false otherwise.
+      */
+    bool isLastTrajectoryValid(const rclcpp::Time& current_time,
+      double min_remaining_time_seconds = 0.0) const;
 
     FRIEND_TEST(LCITacticalPluginTest, applyTrajectorySmoothingAlgorithm);
     FRIEND_TEST(LCITacticalPluginTest, applyOptimizedTargetSpeedProfile);
+    FRIEND_TEST(LCITacticalPluginTest, planTrajectorySmoothing);
     FRIEND_TEST(LCITacticalPluginTest, createGeometryProfile);
     FRIEND_TEST(LCITacticalPluginTest, planTrajectoryCB);
     FRIEND_TEST(LCITacticalPluginTest, setConfig);
@@ -197,8 +287,11 @@ namespace light_controlled_intersection_tactical_plugin
     /*!
     * \brief LightControlledIntersectionTacticalPlugin constructor
     */
-    LightControlledIntersectionTacticalPlugin(carma_wm::WorldModelConstPtr wm, const Config& config, const std::string& plugin_name,
-        std::shared_ptr<carma_ros2_utils::CarmaLifecycleNode> nh);
+    LightControlledIntersectionTacticalPlugin(carma_wm::WorldModelConstPtr wm,
+      const Config& config,
+      const DebugPublisher& debug_publisher,
+      const std::string& plugin_name,
+      std::shared_ptr<carma_ros2_utils::CarmaLifecycleNode> nh);
 
     /**
      * \brief Function to process the light controlled intersection tactical plugin service call for trajectory planning

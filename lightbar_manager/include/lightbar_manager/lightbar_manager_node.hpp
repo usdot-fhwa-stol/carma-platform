@@ -47,9 +47,9 @@ struct Config
 {
     double spin_rate_hz = 10.0;
     bool normal_operation = true;   // if false, other plugins are able to take control over the lightbar status
-    std::vector<std::string> lightbar_priorities = {}; // Tsesters are for unit testing. Keep it there.
-    std::vector<std::string> lightbar_cda_table = {}; // Keys for lightbar_cda_to_ind_table, 1-to-1 with lightbar_ind_table
-    std::vector<std::string> lightbar_ind_table = {}; // Values for lightbar_cda_to_ind_table, 1-to-1 with lightbar_cda_table
+    std::vector<std::string> lightbar_priorities = {"lightbar_manager"}; // Priority in descending order. Higher priority takes over lightbar
+    std::vector<std::string> lightbar_cda_table = {"TypeA", "TypeB", "TypeC", "TypeD"}; // Keys for lightbar_cda_to_ind_table, 1-to-1 with lightbar_ind_table
+    std::vector<std::string> lightbar_ind_table = {"YELLOW_DIM","YELLOW_DIM","YELLOW_FLASH","YELLOW_SIDES"}; // Values for lightbar_cda_to_ind_table, 1-to-1 with lightbar_cda_table
 
     // Stream operator for this config
     friend std::ostream &operator<<(std::ostream &output, const Config &c)
@@ -72,16 +72,16 @@ class LightBarManager : public carma_ros2_utils::CarmaLifecycleNode
         /**
          * \class LightBarManager
          * \brief The class responsible for managing light bar status based on the guidance status
-         * 
+         *
          */
         explicit LightBarManager(const rclcpp::NodeOptions &);
-        
+
         /*!
         * \brief Get ptr to lightbar_manager_worker (for ease of unit testing)
         * \return LightBarManagerWorker
         */
         std::shared_ptr<LightBarManagerWorker> getWorker();
- 
+
         /*!
         * \brief Miscellaneous function that forces the state to disengaged and turn off all indicators.
         * Used in special demo cases as well as when carma is disengaged
@@ -96,7 +96,7 @@ class LightBarManager : public carma_ros2_utils::CarmaLifecycleNode
 
         /*!
         * \brief Callback function for turning signal
-        * \return 
+        * \return
         */
         void turnSignalCallback(automotive_platform_msgs::msg::TurnSignalCommand::UniquePtr msg_ptr);
 
@@ -105,14 +105,18 @@ class LightBarManager : public carma_ros2_utils::CarmaLifecycleNode
         ////
         carma_ros2_utils::CallbackReturn handle_on_configure(const rclcpp_lifecycle::State &);
         carma_ros2_utils::CallbackReturn handle_on_activate(const rclcpp_lifecycle::State &);
+        carma_ros2_utils::CallbackReturn handle_on_deactivate(const rclcpp_lifecycle::State &);
+        carma_ros2_utils::CallbackReturn handle_on_cleanup(const rclcpp_lifecycle::State &);        
+        carma_ros2_utils::CallbackReturn handle_on_error(const rclcpp_lifecycle::State &);
+        carma_ros2_utils::CallbackReturn handle_on_shutdown(const rclcpp_lifecycle::State &);
 
     private:
-        
+
         Config config_;
 
         /*!
         * \brief Turn signal callback function helper
-        * \return 
+        * \return
         */
         void processTurnSignal(const automotive_platform_msgs::msg::TurnSignalCommand& msg);
 

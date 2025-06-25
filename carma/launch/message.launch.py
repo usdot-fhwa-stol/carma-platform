@@ -211,10 +211,10 @@ def generate_launch_description():
     # Info needed for opening the tunnels
     # TODO: Investigate if this can be further cleaned up
     REMOTE_USER="ubuntu"
-    REMOTE_ADDR="www.carma-cloud.com"
-    KEY_FILE="carma-cloud-test-1.pem"
+    REMOTE_ADDR="carma-cloud.com" # Dev instance is www.carma-cloud.com, prod instance is carma-cloud.com
+    KEY_FILE="carma-cloud-1.pem" # Dev key is carma-cloud-test-1.pem, prod key is carma-cloud-1.pem
     HOST_PORT="33333" # This port is forwarded to remote host (carma-cloud)
-    REMOTE_PORT="10001" # This port is forwarded to local host
+    REMOTE_PORT="22222" # This port is forwarded to local host
     param_launch_path = os.path.join(
         get_package_share_directory('carma_cloud_client'), 'launch/scripts')
 
@@ -247,5 +247,3 @@ def generate_launch_description():
         carma_v2x_container,
         subsystem_controller
     ])
-
-

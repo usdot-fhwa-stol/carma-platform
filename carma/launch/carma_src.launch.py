@@ -107,6 +107,13 @@ def generate_launch_description():
         description = "True of simulation mode is on"
     )
 
+    use_real_time_spat_in_sim = LaunchConfiguration('use_real_time_spat_in_sim')
+    declare_use_real_time_spat_in_sim_arg = DeclareLaunchArgument(
+        name = 'use_real_time_spat_in_sim',
+        default_value = 'False',
+        description = "True if SPaT is being published based on wall clock"
+    )
+
     #Declare the route file folder launch argument
     route_file_folder = LaunchConfiguration('route_file_folder')
     declare_route_file_folder = DeclareLaunchArgument(
@@ -185,6 +192,24 @@ def generate_launch_description():
         default_value = 'False',
         description = 'True if user wants ROS 2 Tracing logs to be generated from CARMA Platform.')
 
+    # When enabled, the vehicle fuses incoming SDSM with its own sensor data to create a more accurate representation of the environment
+    # When turned off, topics get remapped to solely rely on its own sensor data
+    is_cp_mot_enabled = LaunchConfiguration('is_cp_mot_enabled')
+    declare_is_cp_mot_enabled = DeclareLaunchArgument(
+        name='is_cp_mot_enabled',
+        default_value = 'False',
+        description = 'True if user wants Cooperative Perception capability using Multiple Object Tracking to be enabled'
+    )
+
+    # When enabled, the vehicle has lidar detected objects in its external objects list
+    # TODO: Currently the stack is not shutting down automatically https://usdot-carma.atlassian.net.mcas-gov.us/browse/CAR-6109
+    is_autoware_lidar_obj_detection_enabled = LaunchConfiguration('is_autoware_lidar_obj_detection_enabled')
+    declare_is_autoware_lidar_obj_detection_enabled = DeclareLaunchArgument(
+        name='is_autoware_lidar_obj_detection_enabled',
+        default_value = 'False',
+        description = 'True if user wants Autoware Lidar Object Detection to be enabled'
+    )
+
     # Launch ROS2 rosbag logging
     ros2_rosbag_launch = GroupAction(
         actions=[
@@ -221,9 +246,12 @@ def generate_launch_description():
                 launch_arguments = {
                     'subsystem_controller_param_file' : [vehicle_config_dir, '/SubsystemControllerParams.yaml'],
                     'vehicle_config_param_file' : vehicle_config_param_file,
+                    'vehicle_calibration_dir': vehicle_calibration_dir,
                     'vehicle_characteristics_param_file' : vehicle_characteristics_param_file,
                     'vector_map_file' : vector_map_file,
-                    'use_sim_time' : use_sim_time
+                    'use_sim_time' : use_sim_time,
+                    'is_cp_mot_enabled' : is_cp_mot_enabled,
+                    'is_autoware_lidar_obj_detection_enabled' : is_autoware_lidar_obj_detection_enabled
                     }.items()
             ),
         ]
@@ -280,7 +308,8 @@ def generate_launch_description():
                     'tactical_plugins_to_validate' : tactical_plugins_to_validate,
                     'control_plugins_to_validate' : control_plugins_to_validate,
                     'subsystem_controller_param_file' : [vehicle_config_dir, '/SubsystemControllerParams.yaml'],
-                    'use_sim_time' : use_sim_time
+                    'use_sim_time' : use_sim_time,
+                    'use_real_time_spat_in_sim' : use_real_time_spat_in_sim
                 }.items()
             ),
         ]
@@ -330,6 +359,7 @@ def generate_launch_description():
         declare_vehicle_characteristics_param_file_arg,
         declare_vehicle_config_param_file_arg,
         declare_use_sim_time_arg,
+        declare_use_real_time_spat_in_sim_arg,
         declare_route_file_folder,
         declare_enable_guidance_plugin_validator,
         declare_strategic_plugins_to_validate,
@@ -343,14 +373,16 @@ def generate_launch_description():
         declare_arealist_path,
         declare_vector_map_file,
         declare_is_ros2_tracing_enabled,
+        declare_is_cp_mot_enabled,
+        declare_is_autoware_lidar_obj_detection_enabled,
+        ros2_rosbag_launch,
+        OpaqueFunction(function=create_ros2_tracing_action),
         drivers_group,
         transform_group,
         environment_group,
         localization_group,
         v2x_group,
         guidance_group,
-        ros2_rosbag_launch,
         ui_group,
-        system_controller,
-        OpaqueFunction(function=create_ros2_tracing_action)
+        system_controller
     ])

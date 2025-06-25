@@ -22,7 +22,7 @@ enable_bsm_processing: false
 
 # Boolean: If true then PSM messages will be converted to ExternalObjects.
 #          If other object sources are enabled, they will be synchronized but no fusion will occur (objects may be duplicated)
-enable_psm_processing: false
+enable_psm_processing: true
 
 # Boolean: If true then MobilityPath messages will be converted to ExternalObjects.
 #          If other object sources are enabled, they will be synchronized but no fusion will occur (objects may be duplicated)
@@ -30,4 +30,11 @@ enable_mobility_path_processing: false
 
 # Boolean: If true then ExternalObjects generated from sensor data will be processed.
 #          If other object sources are enabled, they will be synchronized but no fusion will occur (objects may be duplicated)
-enable_sensor_processing: false
+enable_sensor_processing: true
+
+# Boolean: True if CTRV motion model should be used for the object type. False, if CV should be used:
+enable_ctrv_for_unknown_obj: true
+enable_ctrv_for_motorcycle_obj: true
+enable_ctrv_for_small_vehicle_obj: true
+enable_ctrv_for_large_vehicle_obj: true
+enable_ctrv_for_pedestrian_obj: false

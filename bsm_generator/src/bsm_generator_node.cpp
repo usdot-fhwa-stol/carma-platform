@@ -87,8 +87,6 @@ namespace bsm_generator
                                                               std::bind(&BSMGenerator::steerWheelAngleCallback, this, std_ph::_1));
     brake_sub_ = create_subscription<std_msgs::msg::Float64>("brake_position", 1,
                                                               std::bind(&BSMGenerator::brakeCallback, this, std_ph::_1));
-    heading_sub_ = create_subscription<gps_msgs::msg::GPSFix>("gnss_fix_fused", 1,
-                                                              std::bind(&BSMGenerator::headingCallback, this, std_ph::_1));
     georeference_sub_ = create_subscription<std_msgs::msg::String>("georeference", 1,
                                                               std::bind(&BSMGenerator::georeferenceCallback, this, std_ph::_1));
 
@@ -127,7 +125,11 @@ namespace bsm_generator
   void BSMGenerator::georeferenceCallback(const std_msgs::msg::String::UniquePtr msg)
   {
     // Build projector from proj string
-    map_projector_ = std::make_shared<lanelet::projection::LocalFrameProjector>(msg->data.c_str());
+    if (georeference_ != msg->data)
+    {
+      georeference_ = msg->data;
+      map_projector_ = std::make_shared<lanelet::projection::LocalFrameProjector>(msg->data.c_str());
+    }
   }
 
   void BSMGenerator::speedCallback(const geometry_msgs::msg::TwistStamped::UniquePtr msg)
@@ -177,9 +179,12 @@ namespace bsm_generator
     bsm_.core_data.longitude = coord.lon;
     bsm_.core_data.latitude = coord.lat;
     bsm_.core_data.elev = coord.ele;
+    
+    bsm_.core_data.heading = worker->getHeadingInRange(static_cast<float>(worker->getHeading(msg->pose.orientation)));
     bsm_.core_data.presence_vector = bsm_.core_data.presence_vector | bsm_.core_data.LONGITUDE_AVAILABLE;
     bsm_.core_data.presence_vector = bsm_.core_data.presence_vector | bsm_.core_data.LATITUDE_AVAILABLE;
     bsm_.core_data.presence_vector = bsm_.core_data.presence_vector | bsm_.core_data.ELEVATION_AVAILABLE;
+    bsm_.core_data.presence_vector = bsm_.core_data.presence_vector | bsm_.core_data.HEADING_AVAILABLE;
   }
 
   void BSMGenerator::headingCallback(const gps_msgs::msg::GPSFix::UniquePtr msg)

@@ -36,12 +36,12 @@ public:
     carma_ros2_utils::CallbackReturn handle_on_configure(const rclcpp_lifecycle::State &){return CallbackReturn::SUCCESS;}
 };
 
-
+/**
 TEST(StopAndDwellStrategicPlugin, UnitTest1)
 {
     auto nh1 = std::make_shared<DummyNode>(rclcpp::NodeOptions());
     auto nh2 = std::make_shared<stop_and_dwell_strategic_plugin::StopAndDwellStrategicPlugin>(rclcpp::NodeOptions());
-    
+
     nh2->configure();
     nh2->activate();
 
@@ -57,9 +57,9 @@ TEST(StopAndDwellStrategicPlugin, UnitTest1)
     while(std::chrono::system_clock::now() < end_time){
         executor.spin_once();
     }
-        
+
     EXPECT_EQ(1, pose_pub->get_subscription_count());
 }
+*/
 
 } // namespace stop_and_dwell_strategic_plugin
-

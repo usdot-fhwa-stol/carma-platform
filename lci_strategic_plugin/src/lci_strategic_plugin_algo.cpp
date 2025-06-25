@@ -73,8 +73,7 @@ std::optional<rclcpp::Time> LCIStrategicPlugin::get_nearest_green_entry_time(con
   bool has_green_signal = false;
   for (auto pair : signal->recorded_time_stamps)
   {
-    if (pair.second == lanelet::CarmaTrafficSignalState::PROTECTED_MOVEMENT_ALLOWED &&
-      t <= pair.first )
+    if (isStateAllowedGreen(pair.second) && t <= pair.first )
     {
       has_green_signal = true;
       break;
@@ -92,9 +91,9 @@ std::optional<rclcpp::Time> LCIStrategicPlugin::get_nearest_green_entry_time(con
 
   boost::posix_time::time_duration theta =  curr_pair.get().first - t;   // remaining time left in this state
   auto p = curr_pair.get().second;
-  while ( 0.0 < g.total_milliseconds() || p != lanelet::CarmaTrafficSignalState::PROTECTED_MOVEMENT_ALLOWED) //green
+  while ( 0.0 < g.total_milliseconds() || (!isStateAllowedGreen(p))) //green
   {
-    if ( p == lanelet::CarmaTrafficSignalState::PROTECTED_MOVEMENT_ALLOWED)
+    if (isStateAllowedGreen(p))
     {
       if (g < theta)
       {
@@ -130,9 +129,9 @@ std::optional<rclcpp::Time> LCIStrategicPlugin::get_nearest_green_entry_time(con
     curr_pair = signal->predictState(t + boost::posix_time::milliseconds(20)); // select next phase
     p = curr_pair.get().second;
     theta = curr_pair.get().first - t;
-    while ( t < eet || p != lanelet::CarmaTrafficSignalState::PROTECTED_MOVEMENT_ALLOWED)
+    while ( t < eet || !isStateAllowedGreen(p))
     {
-      if ( p == lanelet::CarmaTrafficSignalState::PROTECTED_MOVEMENT_ALLOWED && eet - t < theta)
+      if ( (isStateAllowedGreen(p)) && eet - t < theta)
       {
         t = eet;
         theta = theta - (eet - t);
@@ -213,41 +212,52 @@ rclcpp::Duration LCIStrategicPlugin::get_earliest_entry_time(double remaining_di
   rclcpp::Duration t_accel(0,0);
   if ( x < x2 && current_speed > departure_speed)
   {
-    t_accel = rclcpp::Duration(0.0);
+    t_accel = rclcpp::Duration::from_nanoseconds(0.0);
   }
   else
   {
-    t_accel = rclcpp::Duration(std::max((v_hat - current_speed) / max_accel, 0.0) * 1e9);
+    t_accel = rclcpp::Duration::from_nanoseconds(std::max((v_hat - current_speed) / max_accel, 0.0) * 1e9);
   }
   rclcpp::Duration t_decel(0,0);
   if ( x < x2 && current_speed < departure_speed)
   {
-    t_decel = rclcpp::Duration(0.0);
+    t_decel = rclcpp::Duration::from_nanoseconds(0.0);
   }
   else
   {
     if (x < x2)
     {
-      t_decel = rclcpp::Duration(std::max((v_hat - current_speed) / max_decel, 0.0) * 1e9);
+      t_decel = rclcpp::Duration::from_nanoseconds(std::max((v_hat - current_speed) / max_decel, 0.0) * 1e9);
 
     }
     else
     {
-      t_decel = rclcpp::Duration(std::max((departure_speed - v_hat) / max_decel, 0.0) * 1e9);
+      t_decel = rclcpp::Duration::from_nanoseconds(std::max((departure_speed - v_hat) / max_decel, 0.0) * 1e9);
     }
   }
 
   rclcpp::Duration t_cruise(0,0);
   if (x1 <= x)
   {
-    t_cruise = rclcpp::Duration(std::max((x - x1)/v_hat, 0.0) * 1e9);
+    t_cruise = rclcpp::Duration::from_nanoseconds(std::max((x - x1)/v_hat, 0.0) * 1e9);
   }
   else
   {
-    t_cruise = rclcpp::Duration(0.0);
+    t_cruise = rclcpp::Duration::from_nanoseconds(0.0);
   }
   RCLCPP_DEBUG_STREAM(rclcpp::get_logger("lci_strategic_plugin"), "t_accel: " <<  t_accel.seconds() << ", t_cruise: " << t_cruise.seconds() << ", t_decel: " << t_decel.seconds());
   return t_accel + t_cruise + t_decel;
+
+}
+
+boost::posix_time::time_duration LCIStrategicPlugin::getMovementAllowedDuration(lanelet::CarmaTrafficSignalPtr traffic_light)
+{
+  if(traffic_light->signal_durations.find(lanelet::CarmaTrafficSignalState::PROTECTED_MOVEMENT_ALLOWED) != traffic_light->signal_durations.end())
+  {
+    return traffic_light->signal_durations[lanelet::CarmaTrafficSignalState::PROTECTED_MOVEMENT_ALLOWED];
+  }
+
+  return traffic_light->signal_durations[lanelet::CarmaTrafficSignalState::PERMISSIVE_MOVEMENT_ALLOWED];
 
 }
 
@@ -269,12 +279,12 @@ std::tuple<rclcpp::Time, bool, bool> LCIStrategicPlugin::get_final_entry_time_an
     else
     {
       in_tbd = false;
-      nearest_green_entry_time = nearest_green_entry_time_optional.value() + rclcpp::Duration(EPSILON * 1e9); //0.01sec more buffer since green_light algorithm's timestamp picks the previous signal - Vehicle Estimation
+      nearest_green_entry_time = nearest_green_entry_time_optional.value() + rclcpp::Duration::from_nanoseconds(EPSILON * 1e9); //0.01sec more buffer since green_light algorithm's timestamp picks the previous signal - Vehicle Estimation
     }
   }
   else if(config_.enable_carma_streets_connection ==true && scheduled_enter_time_ != 0 ) // UC3
   {
-    nearest_green_entry_time = rclcpp::Time(std::max(earliest_entry_time.seconds(), (scheduled_enter_time_)/1000.0) * 1e9) + rclcpp::Duration(EPSILON * 1e9); //Carma Street
+    nearest_green_entry_time = rclcpp::Time(std::max(earliest_entry_time.seconds(), (scheduled_enter_time_)/1000.0) * 1e9) + rclcpp::Duration::from_nanoseconds(EPSILON * 1e9); //Carma Street
 
     // check if scheduled_enter_time_ is inside the available states interval
     size_t i = 0;
@@ -284,7 +294,7 @@ std::tuple<rclcpp::Time, bool, bool> LCIStrategicPlugin::get_final_entry_time_an
     {
       if (lanelet::time::timeFromSec(nearest_green_entry_time.seconds()) < pair.first)
       {
-        if (pair.second == lanelet::CarmaTrafficSignalState::PROTECTED_MOVEMENT_ALLOWED)
+        if (isStateAllowedGreen(pair.second))
         {
           RCLCPP_DEBUG_STREAM(rclcpp::get_logger("lci_strategic_plugin"), "ET is inside the GREEN phase! where starting time: " << std::to_string(lanelet::time::toSec(traffic_light->recorded_start_time_stamps[i]))
             << ", ending time of that green signal is: " << std::to_string(lanelet::time::toSec(pair.first)));
@@ -329,7 +339,7 @@ std::tuple<rclcpp::Time, bool, bool> LCIStrategicPlugin::get_final_entry_time_an
 
     // check if it needs buffer below:
     rclcpp::Time early_arrival_time_green_et =
-        nearest_green_entry_time - rclcpp::Duration(config_.green_light_time_buffer * 1e9);
+        nearest_green_entry_time - rclcpp::Duration::from_nanoseconds(config_.green_light_time_buffer * 1e9);
 
     RCLCPP_DEBUG_STREAM(rclcpp::get_logger("lci_strategic_plugin"), "early_arrival_time_green_et: " << std::to_string(early_arrival_time_green_et.seconds()));
 
@@ -343,7 +353,7 @@ std::tuple<rclcpp::Time, bool, bool> LCIStrategicPlugin::get_final_entry_time_an
 
     RCLCPP_DEBUG_STREAM(rclcpp::get_logger("lci_strategic_plugin"), "early_arrival_state_green_et: " << early_arrival_state_green_et_optional.get().second);
 
-    bool can_make_early_arrival  = (early_arrival_state_green_et_optional.get().second == lanelet::CarmaTrafficSignalState::PROTECTED_MOVEMENT_ALLOWED);
+    bool can_make_early_arrival  = isStateAllowedGreen(early_arrival_state_green_et_optional.get().second);
 
     // nearest_green_entry_time is by definition on green, so only check early_arrival
     if (can_make_early_arrival)  // Green light with Certainty
@@ -369,7 +379,7 @@ std::tuple<rclcpp::Time, bool, bool> LCIStrategicPlugin::get_final_entry_time_an
         RCLCPP_DEBUG_STREAM(rclcpp::get_logger("lci_strategic_plugin"), "normal_arrival_signal_end_time: " << std::to_string(lanelet::time::toSec(normal_arrival_state_green_et_optional.get().first)));
 
         // nearest_green_signal_start_time = normal_arrival_signal_end_time (green guaranteed) - green_signal_duration
-        nearest_green_signal_start_time = rclcpp::Time(lanelet::time::toSec(normal_arrival_state_green_et_optional.get().first - traffic_light->signal_durations[lanelet::CarmaTrafficSignalState::PROTECTED_MOVEMENT_ALLOWED]) * 1e9);
+        nearest_green_signal_start_time = rclcpp::Time(lanelet::time::toSec(getMovementAllowedDuration(traffic_light)));
       }
       else  // UC3
       {
@@ -377,7 +387,7 @@ std::tuple<rclcpp::Time, bool, bool> LCIStrategicPlugin::get_final_entry_time_an
 
         for (size_t i = 0; i < traffic_light->recorded_start_time_stamps.size(); i++)
         {
-          if (traffic_light->recorded_time_stamps[i].second == lanelet::CarmaTrafficSignalState::PROTECTED_MOVEMENT_ALLOWED &&
+          if (isStateAllowedGreen(traffic_light->recorded_time_stamps[i].second) &&
             lanelet::time::timeFromSec(nearest_green_entry_time.seconds()) < traffic_light->recorded_time_stamps[i].first ) // Make sure it is in correct GREEN phase there are multiple
           {
             nearest_green_signal_start_time = rclcpp::Time(lanelet::time::toSec(traffic_light->recorded_start_time_stamps[i]) * 1e9);
@@ -393,7 +403,7 @@ std::tuple<rclcpp::Time, bool, bool> LCIStrategicPlugin::get_final_entry_time_an
 
       // If ET is within green or TBD, it should always aim for at least minimum of "start_time of green or tdb + green_buffer" for safety
 
-      nearest_green_entry_time_cached_ = nearest_green_signal_start_time + rclcpp::Duration((config_.green_light_time_buffer + EPSILON) * 1e9);
+      nearest_green_entry_time_cached_ = nearest_green_signal_start_time + rclcpp::Duration::from_nanoseconds((config_.green_light_time_buffer + EPSILON) * 1e9);
 
       // EPSILON=0.01 is there because if predictState's input exactly falls on ending_time it picks the previous state.
       //For example, if 0 - 10s is GREEN, and 10 - 12s is YELLOW, checking exactly 10.0s will return GREEN,

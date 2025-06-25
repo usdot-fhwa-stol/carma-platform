@@ -99,12 +99,67 @@ TEST(BSMWorkerTest, testBrakeAppliedStatus)
     EXPECT_EQ(0, worker.getBrakeAppliedStatus(0));
 }
 
-TEST(BSMWorkerTest, testHeading)
+TEST(BSMWorkerTest, testHeadingInRange)
 {
     bsm_generator::BSMGeneratorWorker worker;
     EXPECT_NEAR(359.9875f, worker.getHeadingInRange(360.0f), 0.0001);
     EXPECT_NEAR(0.0f, worker.getHeadingInRange(-60.0f), 0.0001);
     EXPECT_NEAR(300.001f, worker.getHeadingInRange(300.001f), 0.0001);
+}
+
+TEST(BSMWorkerTest, testHeading) {
+    bsm_generator::BSMGeneratorWorker worker;
+    geometry_msgs::msg::Quaternion q;
+    // Yaw of 0 degrees ENU or 90 degrees NED
+    q.x = 0.0;
+    q.y = 0.0;
+    q.z = 0.0;
+    q.w = 1.0;
+    EXPECT_FLOAT_EQ(90.0, worker.getHeading(q));
+    // Yaw of 45 degrees ENU or 45 degrees NED
+    q.x = 0.0;
+    q.y = 0.0;
+    q.z = 0.3826834;
+    q.w = 0.9238795;
+    EXPECT_FLOAT_EQ(45.0, worker.getHeading(q));
+    // Yaw of 90 degrees ENU or 0 degrees NED
+    q.x = 0.0;
+    q.y = 0.0;
+    q.z = 0.7071;
+    q.w = 0.7071;
+    EXPECT_FLOAT_EQ(0.0, worker.getHeading(q));
+    // Yaw of 135 degrees ENU or 315 degrees NED
+    q.x = 0.0;
+    q.y = 0.0;
+    q.z = 0.9238795;
+    q.w = 0.3826834;
+    EXPECT_FLOAT_EQ(315.0, worker.getHeading(q));
+    // Yaw of 180 degrees ENU or 270 degrees NED
+    q.x = 0.0;
+    q.y = 0.0;
+    q.z = 1;
+    q.w = 0.0;
+    EXPECT_FLOAT_EQ(270.0, worker.getHeading(q));
+    // Yaw of 225 degrees ENU or 225 degrees NED
+    q.x = 0.0;
+    q.y = 0.0;
+    q.z = 0.9238795;
+    q.w = -0.3826834;
+    EXPECT_FLOAT_EQ(225.0, worker.getHeading(q));
+    // Yaw of 270 degrees ENU or 180 degrees NED
+    q.x = 0.0;
+    q.y = 0.0;
+    q.z = 0.7071;
+    q.w = -0.7071;
+    EXPECT_FLOAT_EQ(180.0, worker.getHeading(q));
+    // Yaw of 315 degrees ENU or 135 degrees NED
+    q.x = 0.0;
+    q.y = 0.0;
+    q.z = 0.3826834;
+    q.w = -0.9238795;
+    EXPECT_FLOAT_EQ(135.0, worker.getHeading(q));
+   
+
 }
 
 int main(int argc, char ** argv)

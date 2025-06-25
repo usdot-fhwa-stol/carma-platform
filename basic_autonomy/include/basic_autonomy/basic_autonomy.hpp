@@ -34,6 +34,7 @@
 #include <unordered_set>
 #include <autoware_msgs/msg/lane.h>
 #include <lanelet2_core/geometry/Point.h>
+#include <basic_autonomy/impl/basic_autonomy.tpp>
 #include <basic_autonomy/smoothing/SplineI.hpp>
 #include <basic_autonomy/smoothing/BSpline.hpp>
 #include <basic_autonomy/smoothing/filters.hpp>
@@ -120,6 +121,19 @@ namespace basic_autonomy
         * \return The subset of points that fit within time_span
         */
         std::vector<PointSpeedPair> constrain_to_time_boundary(const std::vector<PointSpeedPair> &points, double time_span);
+
+       /**
+        * \brief Reduces the input points to only those points that fit within the provided time
+        *        boundary
+        *
+        * \param trajectory The input trajectory plan point each with target_time
+        * \param time_span The time span in seconds which the output points will fit within
+        *
+        * \return The subset of points that fit within time_span
+        */
+        std::vector<carma_planning_msgs::msg::TrajectoryPlanPoint> constrain_to_time_boundary(
+            const std::vector<carma_planning_msgs::msg::TrajectoryPlanPoint>& trajectory,
+            double time_span);
 
        /**
         * \brief Returns the min, and its idx, from the vector of values, excluding given set of values
@@ -393,6 +407,7 @@ namespace basic_autonomy
          * \return true or false
          */
         bool is_valid_yield_plan(const std::shared_ptr<carma_ros2_utils::CarmaLifecycleNode>& node_handler, const carma_planning_msgs::msg::TrajectoryPlan& yield_plan);
+
     }
 
 } // basic_autonomy

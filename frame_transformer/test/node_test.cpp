@@ -92,13 +92,13 @@ namespace frame_transformer
             });
 
         { // Protective scope for raw pointer access from unique_ptr
-        
+
             ASSERT_NE(nullptr, worker_node->transformer_.get());
 
             // Raw pointer access to transformer for downcasting unique_ptr
             TransformerBase* transformer = worker_node->transformer_.get();
             Transformer<geometry_msgs::msg::PointStamped>* cast_transformer = static_cast<Transformer<geometry_msgs::msg::PointStamped>*>(transformer);
-            
+
             // Trigger the callback
             cast_transformer->input_callback(std::move(msg));
         }
@@ -114,9 +114,6 @@ namespace frame_transformer
         ASSERT_NEAR(result.point.z, 0.0, 1e-6);
     }
 
-    // NOTE: This test uses deprecated sensor_msgs/PointCloud (not PointCloud2) to convert to PointCloud2 messages
-    //       This results in a deprecated warning message at compile time. 
-    //       If the ROS2 version is upgrade beyond foxy this test will need to be updated
     TEST(frame_transformer_test, point_cloud_transform_test)
     {
 
@@ -200,13 +197,13 @@ namespace frame_transformer
             });
 
         { // Protective scope for raw pointer access from unique_ptr
-        
+
             ASSERT_NE(nullptr, worker_node->transformer_.get());
 
             // Raw pointer access to transformer for downcasting unique_ptr
             TransformerBase* transformer = worker_node->transformer_.get();
             Transformer<sensor_msgs::msg::PointCloud2>* cast_transformer = static_cast<Transformer<sensor_msgs::msg::PointCloud2>*>(transformer);
-            
+
             // Trigger the callback
             cast_transformer->input_callback(std::move(msg));
         }
@@ -216,13 +213,13 @@ namespace frame_transformer
         rclcpp::spin_some(worker_node->get_node_base_interface()); // Spin current queue to allow for subscription callback to trigger
 
         // Verify that the message was transformed
-        
+
         sensor_msgs::msg::PointCloud readable_result;
         sensor_msgs::convertPointCloud2ToPointCloud(result, readable_result);
 
         ASSERT_EQ(readable_result.header.frame_id, "base_link");
         ASSERT_EQ(readable_result.points.size(), 2u);
-        
+
         ASSERT_NEAR(readable_result.points[0].x, 2.0, 1e-6);
         ASSERT_NEAR(readable_result.points[0].y, 2.0, 1e-6);
         ASSERT_NEAR(readable_result.points[0].z, 3.0, 1e-6);

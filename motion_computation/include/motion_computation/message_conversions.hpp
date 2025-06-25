@@ -17,19 +17,20 @@
 
 #include <lanelet2_extension/projection/local_frame_projector.h>
 #include <tf2/LinearMath/Quaternion.h>
+
+#include <string>
+
+#include <rclcpp/rclcpp.hpp>
+
 #include <carma_perception_msgs/msg/external_object.hpp>
 #include <carma_v2x_msgs/msg/bsm.hpp>
 #include <carma_v2x_msgs/msg/mobility_path.hpp>
 #include <carma_v2x_msgs/msg/psm.hpp>
-#include <rclcpp/rclcpp.hpp>
-#include <string>
 
 namespace motion_computation
 {
-
 namespace conversion
 {
-
 void convert(
   const carma_v2x_msgs::msg::PSM & in_msg, carma_perception_msgs::msg::ExternalObject & out_msg,
   const std::string & map_frame_id, double pred_period, double pred_step_size,

@@ -37,38 +37,38 @@
 
 /**
  * This node provides some debugging functionality for carma_wm in order to allow for inspection of map updates.
- * The node can be run with 
+ * The node can be run with
  *    rosrun carma_wm map_update_logger_node
- * 
- * The map updates can be inspected with 
- *    rostopic echo /map_update_debug
- */ 
+ *
+ * The map updates can be inspected with
+ *    ros2 topic echo /map_update_debug
+ */
 
 class MapUpdateLogger : public rclcpp::Node
 {
   public:
     MapUpdateLogger(const rclcpp::NodeOptions& options);
-    
+
     private:
     rclcpp::Publisher<carma_debug_ros2_msgs::msg::MapUpdateReadable>::SharedPtr readable_pub_;
     rclcpp::Subscription<autoware_lanelet2_msgs::msg::MapBin>::SharedPtr update_sub_;
 
     /**
      * \brief Converts a TrafficControl pair into the corresponding debug message type
-     * 
+     *
      * \param id_reg_pair The pair to convert
-     * 
+     *
      * \return A corresponding carma_debug_ros2_msgs::msg::LaneletIdRegulatoryElementPair
      */
     carma_debug_ros2_msgs::msg::LaneletIdRegulatoryElementPair pairToDebugMessage(const std::pair<lanelet::Id, lanelet::RegulatoryElementPtr>& id_reg_pair);
-    
+
     /**
      * \brief Callback for map updates that converts them to a human readable format
-     * 
+     *
      * \param update Msg to convert
-     * 
+     *
      * \return Returned converted message
-     */ 
+     */
     carma_debug_ros2_msgs::msg::MapUpdateReadable mapUpdateCallback(const autoware_lanelet2_msgs::msg::MapBin& update);
 
     void raw_callback(const autoware_lanelet2_msgs::msg::MapBin::SharedPtr msg) {
@@ -82,11 +82,11 @@ MapUpdateLogger::MapUpdateLogger(const rclcpp::NodeOptions& options)
     // Setup publishers
 
     // NOTE: Currently, intra-process comms must be disabled for publishers that are transient_local: https://github.com/ros2/rclcpp/issues/1753
-    rclcpp::PublisherOptions readable_pub_options; 
+    rclcpp::PublisherOptions readable_pub_options;
     readable_pub_options.use_intra_process_comm = rclcpp::IntraProcessSetting::Disable; // Disable intra-process comms for the map update debug publisher
 
     auto readable_pub_qos = rclcpp::QoS(rclcpp::KeepAll()); // A publisher with this QoS will store all messages that it has sent on the topic
-    readable_pub_qos.transient_local();  // A publisher with this QoS will re-send all (when KeepAll is used) messages to all late-joining subscribers 
+    readable_pub_qos.transient_local();  // A publisher with this QoS will re-send all (when KeepAll is used) messages to all late-joining subscribers
                                          // NOTE: The subscriber's QoS must be set to transisent_local() as well for earlier messages to be resent to the later-joiner.
 
     // Create map update debug publisher, which will send all previously published messages to late-joining subscribers ONLY If the subscriber is transient_local too
@@ -95,7 +95,7 @@ MapUpdateLogger::MapUpdateLogger(const rclcpp::NodeOptions& options)
     // Setup subscribers
 
     // NOTE: Currently, intra-process comms must be disabled for subcribers that are transient_local: https://github.com/ros2/rclcpp/issues/1753
-    rclcpp::SubscriptionOptions update_sub_options; 
+    rclcpp::SubscriptionOptions update_sub_options;
     update_sub_options.use_intra_process_comm = rclcpp::IntraProcessSetting::Disable; // Disable intra-process comms for this SubscriptionOptions object
 
     auto update_sub_qos = rclcpp::QoS(rclcpp::KeepLast(100)); // Set the queue size for a subscriber with this QoS
@@ -115,7 +115,7 @@ carma_debug_ros2_msgs::msg::LaneletIdRegulatoryElementPair MapUpdateLogger::pair
   pair.element.rule_name = rule_name;
 
   if (rule_name.compare("digital_minimum_gap") == 0) {
-    
+
     auto cast = std::static_pointer_cast<lanelet::DigitalMinimumGap>(element);
     pair.element.min_gap = cast->getMinimumGap();
     pair.element.participants.insert(pair.element.participants.begin(), cast->participants_.begin(), cast->participants_.end());
@@ -152,7 +152,7 @@ carma_debug_ros2_msgs::msg::LaneletIdRegulatoryElementPair MapUpdateLogger::pair
   } else {
 
     RCLCPP_WARN_STREAM(rclcpp::get_logger("map_update_debug"), "MapUpdateLogger recieved unsupported regulatory element in map update.");
-    pair.element.unsupported_type = true; 
+    pair.element.unsupported_type = true;
 
   }
   return pair;
@@ -160,7 +160,7 @@ carma_debug_ros2_msgs::msg::LaneletIdRegulatoryElementPair MapUpdateLogger::pair
 
 
 carma_debug_ros2_msgs::msg::MapUpdateReadable MapUpdateLogger::mapUpdateCallback(const autoware_lanelet2_msgs::msg::MapBin& update) {
-  
+
   RCLCPP_INFO_STREAM(get_logger(), "Recieved map update ");
 
   auto control = std::make_shared<carma_wm::TrafficControl>(carma_wm::TrafficControl());
@@ -200,7 +200,7 @@ int main(int argc, char** argv)
   rclcpp::init(argc, argv);
 
   rclcpp::spin(std::make_shared<MapUpdateLogger>(rclcpp::NodeOptions()));
-  
+
   rclcpp::shutdown();
 
   return 0;

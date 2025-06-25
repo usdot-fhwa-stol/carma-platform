@@ -23,6 +23,8 @@ from carma_ros2_utils.launch.get_log_level import GetLogLevel
 from carma_ros2_utils.launch.get_current_namespace import GetCurrentNamespace
 from launch.substitutions import LaunchConfiguration
 from launch.actions import DeclareLaunchArgument
+from launch.conditions import IfCondition
+from launch.substitutions import PythonExpression
 from pathlib import PurePath
 import os
 
@@ -31,6 +33,7 @@ def generate_launch_description():
     """
     Launch perception nodes.
     """
+    vehicle_calibration_dir = LaunchConfiguration('vehicle_calibration_dir')
 
     vehicle_config_param_file = LaunchConfiguration('vehicle_config_param_file')
     declare_vehicle_config_param_file_arg = DeclareLaunchArgument(
@@ -55,6 +58,24 @@ def generate_launch_description():
 
     vector_map_file = LaunchConfiguration('vector_map_file')
     declare_vector_map_file = DeclareLaunchArgument(name='vector_map_file', default_value = 'vector_map.osm', description = "Path to the map osm file if using the noupdate load type")
+
+    # When enabled, the vehicle fuses incoming SDSM with its own sensor data to create a more accurate representation of the environment
+    # When turned off, topics get remapped to solely rely on its own sensor data
+    is_cp_mot_enabled = LaunchConfiguration('is_cp_mot_enabled')
+    declare_is_cp_mot_enabled = DeclareLaunchArgument(
+        name='is_cp_mot_enabled',
+        default_value = 'False',
+        description = 'True if user wants Cooperative Perception capability using Multiple Object Tracking to be enabled'
+    )
+
+    # When enabled, the vehicle has lidar detected objects in its external objects list
+    # TODO: Currently the stack is not shutting down automatically https://usdot-carma.atlassian.net.mcas-gov.us/browse/CAR-6109
+    is_autoware_lidar_obj_detection_enabled = LaunchConfiguration('is_autoware_lidar_obj_detection_enabled')
+    declare_is_autoware_lidar_obj_detection_enabled = DeclareLaunchArgument(
+        name='is_autoware_lidar_obj_detection_enabled',
+        default_value = 'False',
+        description = 'True if user wants Autoware Lidar Object Detection to be enabled'
+    )
 
     autoware_auto_launch_pkg_prefix = get_package_share_directory(
         'autoware_auto_launch')
@@ -105,7 +126,9 @@ def generate_launch_description():
     # a failure in any one node in the chain would invalidate the rest of it, so they can all be
     # placed in the same container without reducing fault tolerance
     # a lifecycle wrapper container is used to ensure autoware.auto nodes adhere to the subsystem_controller's signals
+    # TODO: Currently, the container is shutting down on its own https://usdot-carma.atlassian.net.mcas-gov.us/browse/CAR-6109
     lidar_perception_container = ComposableNodeContainer(
+        condition=IfCondition(is_autoware_lidar_obj_detection_enabled),
         package='carma_ros2_utils', # rclcpp_components
         name='perception_points_filter_container',
         executable='lifecycle_component_wrapper_mt',
@@ -229,6 +252,7 @@ def generate_launch_description():
         ]
     )
 
+
     # carma_external_objects_container contains nodes for object detection and tracking
     # since these nodes can use different object inputs they are a separate container from the lidar_perception_container
     # to preserve fault tolerance
@@ -282,7 +306,9 @@ def generate_launch_description():
                         ("external_objects", "external_object_predictions"),
                         ("external_objects_viz", "fused_external_objects_viz")
                     ],
-                    parameters=[ object_visualizer_param_file, vehicle_config_param_file ]
+                    parameters=[object_visualizer_param_file, vehicle_config_param_file,
+                                {'pedestrian_icon_path': ['file:///', vehicle_calibration_dir, '/visualization_meshes/pedestrian.stl']}
+                                ]
             ),
             ComposableNode(
                 package='motion_computation',
@@ -297,7 +323,8 @@ def generate_launch_description():
                     ("incoming_psm", [ EnvironmentVariable('CARMA_MSG_NS', default_value=''), "/incoming_psm" ] ),
                     ("incoming_bsm", [ EnvironmentVariable('CARMA_MSG_NS', default_value=''), "/incoming_bsm" ] ),
                     ("georeference", [ EnvironmentVariable('CARMA_LOCZ_NS', default_value=''), "/map_param_loader/georeference" ] ),
-                    ("external_objects", "fused_external_objects")
+                    # if CP is enabled, use fused objects to predict movements, otherwise use own sensor's objects
+                    ("external_objects", PythonExpression(['"fused_external_objects" if "', is_cp_mot_enabled, '" == "True" else "external_objects"'])),
                 ],
                 parameters=[
                     motion_computation_param_file, vehicle_config_param_file
@@ -315,24 +342,6 @@ def generate_launch_description():
                         ("external_objects", "external_object_predictions" ),
                     ],
                     parameters=[ vehicle_config_param_file ]
-            ),
-            ComposableNode(
-                    package='roadway_objects',
-                    plugin='roadway_objects::RoadwayObjectsNode',
-                    name='roadway_objects_node',
-                    extra_arguments=[
-                        {'use_intra_process_comms': True},
-                        {'--log-level' : GetLogLevel('roadway_objects', env_log_levels) }
-                    ],
-                    remappings=[
-                        ("external_objects", "external_object_predictions"),
-                        ("incoming_spat", [ EnvironmentVariable('CARMA_MSG_NS', default_value=''), "/incoming_spat" ] ),
-                        ("route", [ EnvironmentVariable('CARMA_GUIDE_NS', default_value=''), "/route" ] )
-                    ],
-                    parameters = [
-                        vehicle_config_param_file
-                    ]
-
             ),
             ComposableNode(
                     package='traffic_incident_parser',
@@ -386,7 +395,6 @@ def generate_launch_description():
         ]
     )
 
-
     # Vector map visualization
     lanelet2_map_visualization_container = ComposableNodeContainer(
         package='carma_ros2_utils', # rclcpp_components
@@ -417,10 +425,12 @@ def generate_launch_description():
 
     # Cooperative Perception Stack
     carma_cooperative_perception_container = ComposableNodeContainer(
+        condition=IfCondition(is_cp_mot_enabled),
         package='carma_ros2_utils', # rclcpp_components
         name='carma_cooperative_perception_container',
         executable='carma_component_container_mt',
         namespace= GetCurrentNamespace(),
+        output='screen',
         composable_node_descriptions=[
             ComposableNode(
                 package='carma_cooperative_perception',
@@ -525,6 +535,7 @@ def generate_launch_description():
                     cp_multiple_object_tracker_node_file,
                     vehicle_config_param_file
                 ]
+
             ),
 
         ]
@@ -547,6 +558,8 @@ def generate_launch_description():
         declare_vehicle_characteristics_param_file_arg,
         declare_vehicle_config_param_file_arg,
         declare_use_sim_time_arg,
+        declare_is_autoware_lidar_obj_detection_enabled,
+        declare_is_cp_mot_enabled,
         declare_subsystem_controller_param_file_arg,
         declare_vector_map_file,
         lidar_perception_container,

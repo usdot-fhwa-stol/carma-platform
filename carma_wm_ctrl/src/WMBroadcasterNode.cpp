@@ -62,8 +62,8 @@ WMBroadcasterNode::WMBroadcasterNode(const rclcpp::NodeOptions &options)
   config_.participant = declare_parameter<std::string>("vehicle_participant_type", config_.participant);
   config_.participant = declare_parameter<double>("config_speed_limit", config_.config_limit);
 
-  declare_parameter("intersection_ids_for_correction");
-  declare_parameter("intersection_coord_correction");
+  declare_parameter("intersection_ids_for_correction", config_.intersection_ids_for_correction);
+  declare_parameter("intersection_coord_correction", config_.intersection_coord_correction);
 };
 
 void WMBroadcasterNode::initializeWorker(std::weak_ptr<carma_ros2_utils::CarmaLifecycleNode> weak_node_pointer)
@@ -76,14 +76,14 @@ void WMBroadcasterNode::initializeWorker(std::weak_ptr<carma_ros2_utils::CarmaLi
 
 carma_ros2_utils::CallbackReturn WMBroadcasterNode::handle_on_configure(const rclcpp_lifecycle::State &)
 {
-  RCLCPP_INFO_STREAM(rclcpp::get_logger("carma_mw_ctrl"),"Starting configuration!");
+  RCLCPP_INFO_STREAM(rclcpp::get_logger("carma_wm_ctrl"),"Starting configuration!");
 
   // Reset config
   config_ = Config();
 
   initializeWorker(shared_from_this());
 
-  RCLCPP_INFO_STREAM(rclcpp::get_logger("carma_mw_ctrl"),"Done initializing worker!");
+  RCLCPP_INFO_STREAM(rclcpp::get_logger("carma_wm_ctrl"),"Done initializing worker!");
 
   get_parameter<int>("ack_pub_times", config_.ack_pub_times);
   get_parameter<double>("max_lane_width", config_.max_lane_width);
@@ -106,7 +106,7 @@ carma_ros2_utils::CallbackReturn WMBroadcasterNode::handle_on_configure(const rc
 
   wmb_->setIntersectionCoordCorrection(config_.intersection_ids_for_correction, config_.intersection_coord_correction);
 
-  RCLCPP_INFO_STREAM(rclcpp::get_logger("carma_mw_ctrl"),"Done loading parameters: " << config_);
+  RCLCPP_INFO_STREAM(rclcpp::get_logger("carma_wm_ctrl"),"Done loading parameters: " << config_);
 
   /////////////
   // PUBLISHERS
@@ -138,6 +138,9 @@ carma_ros2_utils::CallbackReturn WMBroadcasterNode::handle_on_configure(const rc
 
   //TCM Visualizer pub
   tcm_visualizer_pub_= create_publisher<visualization_msgs::msg::MarkerArray>("tcm_visualizer",1);
+
+  //J2735 MAP msg Visualizer pub
+  j2735_map_msg_visualizer_pub_= create_publisher<visualization_msgs::msg::MarkerArray>("j2735_map_msg_visualizer",1);
 
   //TCR Visualizer pub (visualized on UI)
   tcr_visualizer_pub_ = create_publisher<carma_v2x_msgs::msg::TrafficControlRequestPolygon>("tcr_bounding_points",1);
@@ -191,6 +194,7 @@ carma_ros2_utils::CallbackReturn WMBroadcasterNode::handle_on_activate(const rcl
 bool WMBroadcasterNode::spin_callback()
 {
   tcm_visualizer_pub_->publish(wmb_->tcm_marker_array_);
+  j2735_map_msg_visualizer_pub_->publish(wmb_->j2735_map_msg_marker_array_);
   tcr_visualizer_pub_->publish(wmb_->tcr_polygon_);
   wmb_->publishLightId();
   //updating upcoming traffic signal group id and intersection id
@@ -199,7 +203,6 @@ bool WMBroadcasterNode::spin_callback()
     upcoming_intersection_ids_pub_->publish(wmb_->upcoming_intersection_ids_);
   if(wmb_->getRoute().route_path_lanelet_ids.size() > 0)
     wmb_->routeCallbackMessage(std::make_unique<carma_planning_msgs::msg::Route>(wmb_->getRoute()));
-
   return true;
 }
 

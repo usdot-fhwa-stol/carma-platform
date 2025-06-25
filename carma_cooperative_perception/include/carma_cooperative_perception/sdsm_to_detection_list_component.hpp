@@ -44,9 +44,8 @@ public:
       "input/georeference", 1,
       [this](std_msgs::msg::String::SharedPtr msg_ptr) { georeference_ = msg_ptr->data; })},
     cdasim_clock_sub_{create_subscription<rosgraph_msgs::msg::Clock>(
-      "input/cdasim_clock", 1, [this](rosgraph_msgs::msg::Clock::ConstSharedPtr msg_ptr) {
-        cdasim_time_ = msg_ptr->clock;
-      })}
+      "input/cdasim_clock", 1,
+      [this](rosgraph_msgs::msg::Clock::ConstSharedPtr msg_ptr) { cdasim_time_ = msg_ptr->clock; })}
   {
   }
 

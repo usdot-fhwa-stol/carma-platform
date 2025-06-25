@@ -68,11 +68,13 @@ public:
    * \param map_frame_id The frame id of the frame which the output pose should be considered in
    * \param base_link_frame_id The frame id of the frame which the output pose defines the position and orientation of
    * \param heading_frame_id The frame id of the frame which the heading report aligns with an NED frame
+   * \param nh A shared pointer to the node handle which will be used to log messages and get clock
    * in the map frame.
    *
    */
   GNSSToMapConvertor(PosePubCallback pose_pub, TransformLookupCallback tf_lookup, std::string map_frame_id,
-                     std::string base_link_frame_id, std::string heading_frame_id, rclcpp::node_interfaces::NodeLoggingInterface::SharedPtr logger);
+                     std::string base_link_frame_id, std::string heading_frame_id,
+                     std::shared_ptr<carma_ros2_utils::CarmaLifecycleNode> nh);
 
   /**
    * \brief GNSS Fix callback which will publish a pose representing that fix in the map frame if the required
@@ -136,6 +138,7 @@ private:
   std::string map_frame_id_;           // The frame id of the map which the output pose will be in.
   std::string base_link_frame_id_;     // The frame id of the final reported pose
   std::string heading_frame_id_;       // The frame id of the heading frame
+  std::string georeference_{""};
 
   // Rotation describing the orientation of an NED frame relative to the map frame located at the map origin.
   // This is derived from the received georeference
@@ -143,16 +146,17 @@ private:
 
   // Rotation describing orientation of sensor in heading frame
   boost::optional<tf2::Quaternion> sensor_in_ned_heading_rotation_;
-  
+
   std::shared_ptr<lanelet::projection::LocalFrameProjector> map_projector_;  // Must be shared pointer instead of
                                                                              // optional since for some reason optional
                                                                              // does not work with this class
 
   boost::optional<tf2::Transform> baselink_in_sensor_;  // A transform describing the relation of the baselink frame
                                                         // with the frame provided by the gnss message
-  
-  // Logger interface
-  rclcpp::node_interfaces::NodeLoggingInterface::SharedPtr logger_;
+
+  // Nodehandle
+  std::shared_ptr<carma_ros2_utils::CarmaLifecycleNode> nh_;
+
 
 };
 

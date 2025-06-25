@@ -620,7 +620,7 @@ void setManeuverLaneletIds(carma_planning_msgs::msg::Maneuver& mvr, lanelet::Id 
 
         RCLCPP_DEBUG_STREAM(get_logger(),"maneuver_end_dist: " << maneuver_end_dist << ", maneuver_start_dist: " << maneuver_start_dist << ", cur_plus_target: " << cur_plus_target);
 
-        duration = rclcpp::Duration((maneuver_end_dist - maneuver_start_dist) / (0.5 * cur_plus_target) * 1e9);
+        duration = rclcpp::Duration::from_nanoseconds((maneuver_end_dist - maneuver_start_dist) / (0.5 * cur_plus_target) * 1e9);
 
         return duration;
     }

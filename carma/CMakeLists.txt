@@ -18,11 +18,17 @@
 # CMake
 ##############################################################################
 
-cmake_minimum_required(VERSION 3.5)
+cmake_minimum_required(VERSION 3.8)
 project(carma)
 
 find_package(carma_cmake_common REQUIRED)
 carma_package()
+
+# Use C++17
+if(NOT CMAKE_CXX_STANDARD)
+  set(CMAKE_CXX_STANDARD 17)
+  set(CMAKE_CXX_STANDARD_REQUIRED ON)
+endif()
 
 find_package(ros_environment REQUIRED)
 
@@ -55,10 +61,8 @@ else() # ROS2
         find_package(ament_cmake_auto REQUIRED)
         ament_auto_find_build_dependencies()
 
-        
+
         ament_auto_package(
                 INSTALL_TO_SHARE config launch routes scripts rviz
         )
 endif()
-
-

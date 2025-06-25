@@ -25,14 +25,13 @@
 #include <carma_perception_msgs/msg/roadway_obstacle_list.hpp>
 #include <carma_perception_msgs/msg/external_object.hpp>
 #include <carma_perception_msgs/msg/external_object_list.hpp>
-#include <carma_v2x_msgs/msg/spat.hpp>
 #include "carma_wm/TrackPos.hpp"
 #include "carma_wm/WorldModelUtils.hpp"
 #include <lanelet2_extension/time/TimeConversion.h>
 #include "boost/date_time/posix_time/posix_time.hpp"
 #include "carma_wm/SignalizedIntersectionManager.hpp"
 #include <rosgraph_msgs/msg/clock.hpp>
-
+#include <gtest/gtest_prod.h>
 namespace carma_wm
 {
 /*! \brief Class which implements the WorldModel interface. In addition this class provides write access to the world
@@ -107,14 +106,6 @@ public:
   void setRoadwayObjects(const std::vector<carma_perception_msgs::msg::RoadwayObstacle>& rw_objs);
 
   /**
-   * @brief processSpatFromMsg update map's traffic light states with SPAT msg
-   *
-   * @param spat_msg Msg to update with
-   * @param use_sim_time Boolean to indicate if it is currently simulation or not
-   */
-  void processSpatFromMsg(const carma_v2x_msgs::msg::SPAT& spat_msg, bool use_sim_time = false);
-
-  /**
    * \brief This function is called by distanceToObjectBehindInLane or distanceToObjectAheadInLane.
    * Gets Downtrack distance to AND copy of the closest object on the same lane as the given point. Also returns crosstrack
    * distance relative to that object. Plus downtrack if the object is ahead along the lane, and also plus crosstrack
@@ -130,13 +121,6 @@ public:
    * \return An optional tuple of <TrackPos, carma_perception_msgs::msg::RoadwayObstacle> to the closest in lane object. Return empty if there is no objects on current lane or the road
    */
   lanelet::Optional<std::tuple<TrackPos,carma_perception_msgs::msg::RoadwayObstacle>> getNearestObjInLane(const lanelet::BasicPoint2d& object_center, const LaneSection& section = LANE_AHEAD) const;
-
-  /*! \brief update minimum end time to account for minute of the year
-    * \param min_end_time minimum end time of the spat movement event list
-    * \param moy_exists tells weather minute of the year exist or not
-    * \param moy value of the minute of the year
-   */
-  boost::posix_time::ptime min_end_time_converter_minute_of_year(boost::posix_time::ptime min_end_time,bool moy_exists,uint32_t moy=0, bool is_simulation = false);
 
 /** \param config_lim the configurable speed limit value populated from WMListener using the config_speed_limit parameter
  * in VehicleConfigParams.yaml
@@ -167,14 +151,6 @@ public:
   /*! \brief Set simulation clock clock (only used in simulation runs)
    */
   void setSimulationClock(const rclcpp::Time& time_now);
-
-  /*! \brief helper for traffic signal Id
-   */
-  lanelet::Id getTrafficSignalId(uint16_t intersection_id,uint8_t signal_id);
-
-  /*! \brief helper for getting traffic signal with given lanelet::Id
-   */
-  lanelet::CarmaTrafficSignalPtr getTrafficSignal(const lanelet::Id& id) const;
 
   /**
    * \brief (non-const version) Gets the underlying lanelet, given the cartesian point on the map
@@ -265,6 +241,8 @@ public:
 
   std::vector<lanelet::SignalizedIntersectionPtr> getSignalizedIntersectionsAlongRoute(const lanelet::BasicPoint2d &loc) const;
 
+  std::optional<lanelet::ConstLanelet> getFirstLaneletOnShortestPath(const std::vector<lanelet::ConstLanelet>& lanelets_to_filter) const;
+
   std::unordered_map<uint32_t, lanelet::Id> traffic_light_ids_;
 
   carma_wm::SignalizedIntersectionManager sim_; // records SPAT/MAP lane ids to lanelet ids
@@ -293,9 +271,6 @@ private:
    */
   lanelet::LineString3d copyConstructLineString(const lanelet::ConstLineString3d& line) const;
 
-  std::optional<rclcpp::Time> ros1_clock_ = std::nullopt;
-  std::optional<rclcpp::Time> simulation_clock_ = std::nullopt;
-
   std::shared_ptr<lanelet::LaneletMap> semantic_map_;
   LaneletRoutePtr route_;
   LaneletRoutingGraphPtr map_routing_graph_;
@@ -320,5 +295,6 @@ private:
   static constexpr double YELLOW_LIGHT_DURATION = 3.0; //in sec
   static constexpr double GREEN_LIGHT_DURATION = 20.0; //in sec
 
+  FRIEND_TEST(CARMAWorldModelTest, getFirstLaneletOnShortestPath);
 };
 }  // namespace carma_wm

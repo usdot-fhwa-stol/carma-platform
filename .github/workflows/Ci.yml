@@ -1,0 +1,97 @@
+# GitHub Actions triggers based on the PR's and each commits on develop and master
+name: "CI: Run tests"
+on:
+  pull_request:
+    types: [opened, synchronize, reopened]
+  push:
+    branches: [develop, master]
+jobs:
+  determine_docker_org_and_tag:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Determine Docker organization and tag
+        id: docker-org-and-tag
+        uses: usdot-fhwa-stol/actions/docker-org-and-tag@main
+    outputs:
+      docker_org: ${{ steps.docker-org-and-tag.outputs.docker_organization }}
+      docker_tag: ${{ steps.docker-org-and-tag.outputs.docker_image_tag }}
+
+  build:
+    needs: determine_docker_org_and_tag
+    defaults:
+      run:
+        shell: bash
+        working-directory: "/opt/carma/"
+
+    # Specify the runner environment
+    runs-on: ubuntu-latest-16-cores
+
+    # Set up a Docker container for the job
+    container:
+      image: ${{ needs.determine_docker_org_and_tag.outputs.docker_org }}/autoware.ai:${{ needs.determine_docker_org_and_tag.outputs.docker_tag }}
+      env:
+        INIT_ENV: "/home/carma/.base-image/init-env.sh"
+        ROS_2_ENV: "/opt/ros/humble/setup.bash"
+        TERM: xterm
+      options: "--user root"
+
+    steps:
+
+    - name: Determine base branch
+      id: determine-base-branch
+      run: |
+        if [[ "$GITHUB_EVENT_NAME" == "pull_request" ]]; then
+          echo git_branch="$GITHUB_BASE_REF" >> $GITHUB_OUTPUT
+        else
+          echo git_branch="$GITHUB_REF_NAME" >> $GITHUB_OUTPUT
+        fi
+
+    - name: Checkout ${{ github.event.repository.name }}
+      # Check out the repository code
+      uses: actions/checkout@v3.3.0
+      with:
+        fetch-depth: 0
+        path: src/${{ github.event.repository.name }}
+
+    - name: Move source code
+      # Move the source code to the desired location
+      run: mv $GITHUB_WORKSPACE/src /opt/carma/
+
+    - name: Checkout dependencies
+      # Checkout project dependencies
+      run: |
+        source "$INIT_ENV"
+        ./src/${{ github.event.repository.name }}/docker/checkout.bash -r /opt/carma/ -b ${{ steps.determine-base-branch.outputs.git_branch }}
+
+    - name: Compile list of packages
+      # Get all packages in the respository
+      run: |
+        PACKAGES=$(find ./src/carma-platform -maxdepth 2 -type f -name "package.xml" -exec sh -c 'grep -oPm1 "(?<=<name>)[^<]+" "{}"' \; | cut -d/ -f1 | tr '\n' ' ' | sed 's/ $//')
+        echo "PACKAGES=$PACKAGES" >> $GITHUB_ENV
+
+    - name: Build ROS2
+      run: |
+        source "$INIT_ENV"
+        source "$ROS_2_ENV"
+        source /opt/autoware.ai/ros/install/setup.bash
+        COLCON_CMD="colcon build --parallel-workers 4"
+        NEW_CMD="colcon build --continue-on-error --parallel-workers 16 --packages-up-to \$PACKAGES"
+        sed -i "s|$COLCON_CMD|$NEW_CMD|" /home/carma/.ci-image/engineering_tools/code_coverage/make_with_coverage.bash
+        make_with_coverage.bash -m -e /opt/carma/ -o ./coverage_reports/gcov
+
+    - name: Run ROS2 C++ Tests
+      run: |
+        source "$INIT_ENV"
+        source "$ROS_2_ENV"
+        source /opt/autoware.ai/ros/install/setup.bash
+        COLCON_CMD="colcon test --return-code-on-test-failure --parallel-workers 4 --event-handlers console_direct+"
+        NEW_CMD="colcon test --return-code-on-test-failure --parallel-workers 16 --event-handlers console_cohesion+ --packages-select \$PACKAGES --ctest-args --output-on-failure"
+        sed -i "s|$COLCON_CMD|$NEW_CMD|" /home/carma/.ci-image/engineering_tools/code_coverage/make_with_coverage.bash
+        make_with_coverage.bash -t -e /opt/carma/ -o ./coverage_reports/gcov
+
+    - name: Run SonarScanner
+      # Run SonarScanner for code analysis
+      uses: usdot-fhwa-stol/actions/sonar-scanner@main
+      with:
+        sonar-token: ${{ secrets.SONAR_TOKEN }}
+        working-dir: "/opt/carma/src/${{ github.event.repository.name }}"

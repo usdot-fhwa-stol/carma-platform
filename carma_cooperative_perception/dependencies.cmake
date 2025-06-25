@@ -28,13 +28,7 @@ CPMAddPackage(NAME units
 
 find_package(multiple_object_tracking REQUIRED)
 
-# CARMA currently uses PROJ version 6.3.1, which is not designed to be incorporated
-# as a subdirectory into larger projects. If CARMA upgrades to a newer version, we
-# could use the CPMAddPackage(...) command to install PROJ as a source dependency
-# if there is no version already locally available.
-# See https://github.com/usdot-fhwa-stol/carma-platform/issues/2139 for the PROJ
-# version upgrade plans.
-find_package(PROJ4 REQUIRED MODULE)
+find_package(PROJ REQUIRED MODULE)
 
 # lint_cmake: -readability/wonkycase
 CPMAddPackage(NAME Microsoft.GSL
@@ -63,6 +57,12 @@ if(carma_cooperative_perception_BUILD_TESTS)
 
   list(APPEND AMENT_LINT_AUTO_EXCLUDE
     ament_cmake_uncrustify  # Using clang-format instead
+    # This test has been temporarily disabled to support Continuous Improvement (CI) processes.
+    # Related GitHub Issue: <https://github.com/usdot-fhwa-stol/carma-platform/issues/2335>
+    ament_cmake_cppcheck
+    ament_cmake_cppcheck
+    ament_cmake_cpplint
+    ament_cmake_flake8
   )
 
   set(ament_cmake_clang_format_CONFIG_FILE ${PROJECT_SOURCE_DIR}/.clang-format)

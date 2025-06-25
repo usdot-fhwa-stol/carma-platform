@@ -17,19 +17,20 @@
 #include "gnss_to_map_convertor/GNSSToMapConvertor.hpp"
 #include <wgs84_utils/proj_tools.h>
 #include <lanelet2_core/geometry/Point.h>
-#include <tf2_geometry_msgs/tf2_geometry_msgs.h>
+#include <tf2_geometry_msgs/tf2_geometry_msgs.hpp>
 
 namespace gnss_to_map_convertor
 {
 GNSSToMapConvertor::GNSSToMapConvertor(PosePubCallback pose_pub, TransformLookupCallback tf_lookup,
                                        std::string map_frame_id, std::string base_link_frame_id,
-                                       std::string heading_frame_id,rclcpp::node_interfaces::NodeLoggingInterface::SharedPtr logger)
+                                       std::string heading_frame_id,
+                                       std::shared_ptr<carma_ros2_utils::CarmaLifecycleNode> nh)
   : pose_pub_(pose_pub)
   , tf_lookup_(tf_lookup)
   , map_frame_id_(map_frame_id)
   , base_link_frame_id_(base_link_frame_id)
-  , heading_frame_id_(heading_frame_id) 
-  , logger_(logger)
+  , heading_frame_id_(heading_frame_id)
+  , nh_(nh)
 {
 }
 
@@ -41,8 +42,9 @@ void GNSSToMapConvertor::gnssFixCb(gps_msgs::msg::GPSFix::UniquePtr fix_msg)
     auto tf_msg = tf_lookup_(fix_msg->header.frame_id, base_link_frame_id_);
     if (!tf_msg)  // Failed to get transform
     {
-      RCLCPP_WARN_STREAM(logger_->get_logger(),"Ignoring fix message: Could not locate static transform between "
-                     << fix_msg->header.frame_id << " and " << base_link_frame_id_);
+      RCLCPP_WARN_STREAM_THROTTLE(nh_->get_logger(), *nh_->get_clock(), 1000,
+        "Throttled Log 1s: Ignoring fix message: Could not locate static transform between "
+        << fix_msg->header.frame_id << " and " << base_link_frame_id_);
       return;
     }
 
@@ -58,8 +60,10 @@ void GNSSToMapConvertor::gnssFixCb(gps_msgs::msg::GPSFix::UniquePtr fix_msg)
     auto tf_msg = tf_lookup_(fix_msg->header.frame_id, heading_frame_id_);
     if (!tf_msg)  // Failed to get transform
     {
-      RCLCPP_WARN_STREAM(logger_->get_logger(), "Ignoring fix message: Could not locate static transform between " << heading_frame_id_ << " and "
-                                                                                        << fix_msg->header.frame_id);
+      RCLCPP_WARN_STREAM_THROTTLE(nh_->get_logger(), *nh_->get_clock(), 1000,
+        "Throttled Log 1s: Ignoring fix message: Could not locate static transform between "
+        << heading_frame_id_ << " and "
+        << fix_msg->header.frame_id);
       return;
     }
 
@@ -68,7 +72,7 @@ void GNSSToMapConvertor::gnssFixCb(gps_msgs::msg::GPSFix::UniquePtr fix_msg)
 
     if (tf.getOrigin().x() != 0.0 || tf.getOrigin().y() != 0.0 || tf.getOrigin().z() != 0.0)
     {
-      RCLCPP_WARN_STREAM(logger_->get_logger(), "Heading frame does not have rotation only transform with sensor frame. The translation will not "
+      RCLCPP_WARN_STREAM(nh_->get_logger(), "Heading frame does not have rotation only transform with sensor frame. The translation will not "
                      "be handled by the GNSS convertor");
     }
 
@@ -77,7 +81,8 @@ void GNSSToMapConvertor::gnssFixCb(gps_msgs::msg::GPSFix::UniquePtr fix_msg)
 
   if (!map_projector_ || !ned_in_map_rotation_)  // Check if map projection is available
   {
-    RCLCPP_WARN_STREAM(logger_->get_logger(), "Ignoring fix message as no map projection has been recieved.");
+    RCLCPP_WARN_STREAM_THROTTLE(nh_->get_logger(), *nh_->get_clock(), 1000,
+      "Throttled Log 1s: Ignoring fix message as no map projection has been received.");
     return;
   }
 
@@ -94,21 +99,24 @@ void GNSSToMapConvertor::gnssFixCb(gps_msgs::msg::GPSFix::UniquePtr fix_msg)
 
 void GNSSToMapConvertor::geoReferenceCallback(std_msgs::msg::String::UniquePtr geo_ref)
 {
-
-  map_projector_ = std::make_shared<lanelet::projection::LocalFrameProjector>(
+  if (georeference_ != geo_ref->data)
+  {
+    georeference_ = geo_ref->data;
+    map_projector_ = std::make_shared<lanelet::projection::LocalFrameProjector>(
       geo_ref->data.c_str());  // Build projector from proj string
 
-  RCLCPP_INFO_STREAM(logger_->get_logger(), "Recieved map georeference: " << geo_ref->data);
+    RCLCPP_INFO_STREAM(nh_->get_logger(), "Received map georeference: " << geo_ref->data);
 
-  std::string axis = wgs84_utils::proj_tools::getAxisFromProjString(geo_ref->data);  // Extract axis for orientation calc
+    std::string axis = wgs84_utils::proj_tools::getAxisFromProjString(geo_ref->data);  // Extract axis for orientation calc
 
-  RCLCPP_INFO_STREAM(logger_->get_logger(), "Extracted Axis: " << axis);
+    RCLCPP_INFO_STREAM(nh_->get_logger(), "Extracted Axis: " << axis);
 
-  ned_in_map_rotation_ = wgs84_utils::proj_tools::getRotationOfNEDFromProjAxis(axis);  // Extract map rotation from axis
+    ned_in_map_rotation_ = wgs84_utils::proj_tools::getRotationOfNEDFromProjAxis(axis);  // Extract map rotation from axis
 
-  RCLCPP_INFO_STREAM(logger_->get_logger(), "Extracted NED in Map Rotation (x,y,z,w) : ( "
-                  << ned_in_map_rotation_.get().x() << ", " << ned_in_map_rotation_.get().y() << ", "
-                  << ned_in_map_rotation_.get().z() << ", " << ned_in_map_rotation_.get().w());
+    RCLCPP_INFO_STREAM(nh_->get_logger(), "Extracted NED in Map Rotation (x,y,z,w) : ( "
+                    << ned_in_map_rotation_.get().x() << ", " << ned_in_map_rotation_.get().y() << ", "
+                    << ned_in_map_rotation_.get().z() << ", " << ned_in_map_rotation_.get().w());
+  }
 }
 
 boost::optional<tf2::Quaternion> GNSSToMapConvertor::getNedInMapRotation()
@@ -123,9 +131,9 @@ std::shared_ptr<lanelet::projection::LocalFrameProjector> GNSSToMapConvertor::ge
 
 
 geometry_msgs::msg::PoseWithCovarianceStamped GNSSToMapConvertor::poseFromGnss(
-    const tf2::Transform& baselink_in_sensor, 
+    const tf2::Transform& baselink_in_sensor,
     const tf2::Quaternion& sensor_in_ned_heading_rotation,
-    const lanelet::projection::LocalFrameProjector& projector, 
+    const lanelet::projection::LocalFrameProjector& projector,
     const tf2::Quaternion& ned_in_map_rotation,
     gps_msgs::msg::GPSFix fix_msg)
 {
@@ -135,12 +143,12 @@ geometry_msgs::msg::PoseWithCovarianceStamped GNSSToMapConvertor::poseFromGnss(
   const double alt = fix_msg.altitude;
 
   lanelet::BasicPoint3d map_point = projector.forward({ lat, lon, alt });
-  RCLCPP_DEBUG_STREAM(logger_->get_logger(), "map_point: " << map_point.x() << ", " << map_point.y() << ", " << map_point.z());
+  RCLCPP_DEBUG_STREAM(nh_->get_logger(), "map_point: " << map_point.x() << ", " << map_point.y() << ", " << map_point.z());
 
   if (fabs(map_point.x()) > 10000.0 || fabs(map_point.y()) > 10000.0)
   {  // Above 10km from map origin earth curvature will start to have a negative impact on system performance
 
-    RCLCPP_WARN_STREAM(logger_->get_logger(), "Distance from map origin is larger than supported by system assumptions. Strongly advise "
+    RCLCPP_WARN_STREAM(nh_->get_logger(), "Distance from map origin is larger than supported by system assumptions. Strongly advise "
                    "alternative map origin be used. ");
   }
 
@@ -160,19 +168,19 @@ geometry_msgs::msg::PoseWithCovarianceStamped GNSSToMapConvertor::poseFromGnss(
       R_m_n * R_n_h * R_h_s;  // Rotation of sensor in map frame under assumption that distance from map origin is
                               // sufficiently small so as to ignore local changes in NED orientation
 
-    RCLCPP_DEBUG_STREAM(logger_->get_logger(), "R_m_n (x,y,z,w) : ( "
+    RCLCPP_DEBUG_STREAM(nh_->get_logger(), "R_m_n (x,y,z,w) : ( "
                   << R_m_n.x() << ", " << R_m_n.y() << ", "
                   << R_m_n.z() << ", " << R_m_n.w());
-    
-    RCLCPP_DEBUG_STREAM(logger_->get_logger(), "R_n_h (x,y,z,w) : ( "
+
+    RCLCPP_DEBUG_STREAM(nh_->get_logger(), "R_n_h (x,y,z,w) : ( "
                   << R_n_h.x() << ", " << R_n_h.y() << ", "
                   << R_n_h.z() << ", " << R_n_h.w());
-    
-    RCLCPP_DEBUG_STREAM(logger_->get_logger(), "R_h_s (x,y,z,w) : ( "
+
+    RCLCPP_DEBUG_STREAM(nh_->get_logger(), "R_h_s (x,y,z,w) : ( "
                   << R_h_s.x() << ", " << R_h_s.y() << ", "
                   << R_h_s.z() << ", " << R_h_s.w());
 
-    RCLCPP_DEBUG_STREAM(logger_->get_logger(), "R_m_s (x,y,z,w) : ( "
+    RCLCPP_DEBUG_STREAM(nh_->get_logger(), "R_m_s (x,y,z,w) : ( "
                   << R_m_s.x() << ", " << R_m_s.y() << ", "
                   << R_m_s.z() << ", " << R_m_s.w());
 
@@ -182,13 +190,13 @@ geometry_msgs::msg::PoseWithCovarianceStamped GNSSToMapConvertor::poseFromGnss(
   tf2::Transform T_s_b(baselink_in_sensor);  // Transform between sensor and baselink frame
   tf2::Transform T_m_b = T_m_s * T_s_b;      // Transform between map and baselink frame
 
-  RCLCPP_DEBUG_STREAM(logger_->get_logger(), "T_m_s (x,y,z,w) : ( "
+  RCLCPP_DEBUG_STREAM(nh_->get_logger(), "T_m_s (x,y,z,w) : ( "
                << T_m_s.getRotation().x() << ", " << T_m_s.getRotation().y() << ", "
                << T_m_s.getRotation().z() << ", " << T_m_s.getRotation().w());
-  RCLCPP_DEBUG_STREAM(logger_->get_logger(), "T_s_b (x,y,z,w) : ( "
+  RCLCPP_DEBUG_STREAM(nh_->get_logger(), "T_s_b (x,y,z,w) : ( "
                << T_s_b.getRotation().x() << ", " << T_s_b.getRotation().y() << ", "
                << T_s_b.getRotation().z() << ", " << T_s_b.getRotation().w());
-  RCLCPP_DEBUG_STREAM(logger_->get_logger(), "T_m_b (x,y,z,w) : ( "
+  RCLCPP_DEBUG_STREAM(nh_->get_logger(), "T_m_b (x,y,z,w) : ( "
                << T_m_b.getRotation().x() << ", " << T_m_b.getRotation().y() << ", "
                << T_m_b.getRotation().z() << ", " << T_m_b.getRotation().w());
 

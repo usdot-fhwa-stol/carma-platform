@@ -279,7 +279,7 @@ TEST(MobilityPathVisualizerTest, TestComposeLabelMarker)
     // INPUT RESULT STATIC INFO
     visualization_msgs::msg::MarkerArray host_msg;
     visualization_msgs::msg::Marker marker;
-    marker.header.stamp = builtin_interfaces::msg::Time(viz_node->now() + rclcpp::Duration(10.0 * 10e9)); //10sec
+    marker.header.stamp = builtin_interfaces::msg::Time(viz_node->now() + rclcpp::Duration::from_nanoseconds(10.0 * 10e9)); //10sec
     marker.type = visualization_msgs::msg::Marker::ARROW;
     marker.action = visualization_msgs::msg::Marker::ADD;
     marker.ns = "mobilitypath_visualizer";

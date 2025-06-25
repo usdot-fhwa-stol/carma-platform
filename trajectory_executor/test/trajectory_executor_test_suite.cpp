@@ -39,11 +39,11 @@ namespace trajectory_executor_test_suite
         /*!
         * \brief Constructor for TrajectoryExecutorTestSuite
         */
-        explicit TrajectoryExecutorTestSuite(const rclcpp::NodeOptions &options) 
+        explicit TrajectoryExecutorTestSuite(const rclcpp::NodeOptions &options)
             : carma_ros2_utils::CarmaLifecycleNode(options) {}
 
         // Publisher
-        carma_ros2_utils::PubPtr<carma_planning_msgs::msg::TrajectoryPlan> traj_pub_; 
+        carma_ros2_utils::PubPtr<carma_planning_msgs::msg::TrajectoryPlan> traj_pub_;
 
         // Subscribers
         carma_ros2_utils::SubPtr<carma_planning_msgs::msg::TrajectoryPlan> traj_sub_;
@@ -65,18 +65,18 @@ namespace trajectory_executor_test_suite
             // Setup Subscribers
             traj_sub_ = create_subscription<carma_planning_msgs::msg::TrajectoryPlan>("/guidance/plugins/pure_pursuit/plan_trajectory", 100,
                                                                     std::bind(&TrajectoryExecutorTestSuite::trajEmitCallback, this, std_ph::_1));
-            traj_sub2_ = create_subscription<carma_planning_msgs::msg::TrajectoryPlan>("/guidance/plugins/platoon_control/plan_trajectory", 100,
+            traj_sub2_ = create_subscription<carma_planning_msgs::msg::TrajectoryPlan>("/guidance/plugins/platooning_control/plan_trajectory", 100,
                                                                     std::bind(&TrajectoryExecutorTestSuite::trajEmitCallback, this, std_ph::_1));
-            
+
             return CallbackReturn::SUCCESS;
         }
 
     };
 
     /*!
-    * \brief Helper Function: Builds a small sample TrajectoryPlan message for the Pure Pursuit 
+    * \brief Helper Function: Builds a small sample TrajectoryPlan message for the Pure Pursuit
     *                         controller plugin
-    * 
+    *
     * \return A 10-point TrajectoryPlan message containing sample data
     */
     carma_planning_msgs::msg::TrajectoryPlan buildSampleTraj() {
@@ -91,7 +91,8 @@ namespace trajectory_executor_test_suite
             p.controller_plugin_name = "pure_pursuit_wrapper_node";
             p.lane_id = "0";
             p.planner_plugin_name = "cruising";
-            rclcpp::Duration dur((i * 0.13)*1e9); // Convert seconds to nanoseconds
+            rclcpp::Duration dur =
+                rclcpp::Duration::from_nanoseconds((i * 0.13) * 1e9);  // Convert seconds to nanoseconds
             p.target_time = cur_time + dur;
             p.x = 10 * i;
             p.y = 10 * i;
@@ -102,9 +103,9 @@ namespace trajectory_executor_test_suite
     }
 
     /*!
-    * \brief Helper Function: Builds a small sample TrajectoryPlan message for the PlatooningControlPlugin 
+    * \brief Helper Function: Builds a small sample TrajectoryPlan message for the PlatooningControlPlugin
     *                         controller plugin
-    * 
+    *
     * \return A 10-point TrajectoryPlan message containing sample data
     */
     carma_planning_msgs::msg::TrajectoryPlan buildSampleTraj2() {
@@ -116,10 +117,11 @@ namespace trajectory_executor_test_suite
         rclcpp::Time cur_time = rclcpp::Time(0,0);
         for (int i = 0; i < 10; i++) {
             carma_planning_msgs::msg::TrajectoryPlanPoint p;
-            p.controller_plugin_name = "platoon_control";
+            p.controller_plugin_name = "platooning_control";
             p.lane_id = "0";
             p.planner_plugin_name = "cruising";
-            rclcpp::Duration dur((i * 0.13)*1e9); // Convert seconds to nanoseconds
+            rclcpp::Duration dur =
+                rclcpp::Duration::from_nanoseconds((i * 0.13) * 1e9);  // Convert seconds to nanoseconds
             p.target_time = cur_time + dur;
             p.x = 10 * i;
             p.y = 10 * i;

@@ -32,6 +32,8 @@
 #include <vector>
 
 #include <carma_ros2_utils/carma_lifecycle_node.hpp>
+#include <tf2/LinearMath/Transform.h>
+
 #include "bsm_generator/bsm_generator_worker.hpp"
 #include "bsm_generator/bsm_generator_config.hpp"
 
@@ -71,7 +73,8 @@ namespace bsm_generator
 
     // The BSM object that all subscribers make updates to
     carma_v2x_msgs::msg::BSM bsm_;
-  
+
+    std::string georeference_ {""};
     std::shared_ptr<lanelet::projection::LocalFrameProjector> map_projector_;
 
     std::vector<uint8_t> bsm_message_id_;

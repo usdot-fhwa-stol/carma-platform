@@ -209,7 +209,7 @@ def generate_launch_description():
     )
 
    # NDT Matching
-   # This namesapce sets the parameters which are not set by default in the ndt_matching.launch file
+   # This namespace sets the parameters which are not set by default in the ndt_matching.launch.py file
    # These parameters are not in the ndt_matching node private namespace
 
     ndt_matching_container = ComposableNodeContainer(
@@ -232,6 +232,7 @@ def generate_launch_description():
                     ("/imu_raw", [ EnvironmentVariable('CARMA_INTR_NS', default_value=''), "/imu_raw" ] ),
                     ('filtered_points', 'random_points'),
                     ('initialpose','managed_initialpose'),
+                    ('/tf', '/tf_ndt_UNUSED'), #renaming /tf to avoid duplocation. Main /tf is published by ekf_localizer
                 ],
                 parameters=[
                     ndt_matching_param_file,

@@ -36,7 +36,7 @@ namespace bsm_generator
     std::vector<uint8_t> BSMGeneratorWorker::getMsgId(const rclcpp::Time now, double secs)
     {
         // need to change ID every designated period
-        rclcpp::Duration id_timeout(secs * 1e9);
+        rclcpp::Duration id_timeout = rclcpp::Duration::from_nanoseconds(secs * 1e9);
 
         generator_.seed(std::random_device{}()); // guarantee randomness
         std::uniform_int_distribution<int> dis(0,INT_MAX);
@@ -96,5 +96,30 @@ namespace bsm_generator
     float BSMGeneratorWorker::getHeadingInRange(const float heading)
     {
         return std::max(std::min(heading, 359.9875f), 0.0f);
+    }
+
+    float BSMGeneratorWorker::getHeading(const geometry_msgs::msg::Quaternion & quaternion)
+    {
+        tf2::Quaternion orientation;
+        orientation.setX(quaternion.x);
+        orientation.setY(quaternion.y);
+        orientation.setZ(quaternion.z);
+        orientation.setW(quaternion.w);
+      
+        double roll;
+        double pitch;
+        double yaw;
+        tf2::Matrix3x3(orientation).getRPY(roll, pitch, yaw);
+        // Convert yaw radians to degrees
+        yaw = yaw * 180 / M_PI;
+        // Convert to NED frame
+        yaw = -yaw+90;
+        // Convert to range [0, 360]
+        yaw = std::fmod(yaw, 360.0);
+        if ( yaw < 0  )
+        {
+          yaw = 360 + yaw;
+        }
+        return static_cast<float>(yaw);
     }
 } // namespace bsm_generator

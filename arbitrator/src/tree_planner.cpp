@@ -32,7 +32,7 @@ namespace arbitrator
         open_list_to_evaluate.push_back(std::make_pair(root, INF));
 
         carma_planning_msgs::msg::ManeuverPlan longest_plan = root; // Track longest plan in case target length is never reached
-        rclcpp::Duration longest_plan_duration = rclcpp::Duration(0);
+        rclcpp::Duration longest_plan_duration = rclcpp::Duration::from_nanoseconds(0);
 
 
         while (!open_list_to_evaluate.empty())
@@ -42,16 +42,26 @@ namespace arbitrator
             for (auto it = open_list_to_evaluate.begin(); it != open_list_to_evaluate.end(); it++)
             {
                 // Pop the first element off the open list
-                carma_planning_msgs::msg::ManeuverPlan cur_plan = it->first;
+                auto& cur_plan = it->first;
 
-                RCLCPP_DEBUG_STREAM(rclcpp::get_logger("arbitrator"), "START");
+                if (cur_plan.maneuver_plan_id == "")
+                {
+                    // Generate a new unique id for the maneuver plan
+                    cur_plan.maneuver_plan_id =
+                        boost::uuids::to_string(boost::uuids::random_generator()());
+                }
+
+                RCLCPP_DEBUG_STREAM(rclcpp::get_logger("arbitrator"),
+                    "Start printing newly requested maneuver plan for debugging:");
 
                 for (auto mvr : cur_plan.maneuvers)
                 {
-                    RCLCPP_DEBUG_STREAM(rclcpp::get_logger("arbitrator"), "Printing cur_plan: mvr: "<< (int)mvr.type);
+                    RCLCPP_DEBUG_STREAM(rclcpp::get_logger("arbitrator"),
+                        "Maneuver: "<< maneuver_type_to_string(mvr.type));
                 }
 
-                RCLCPP_DEBUG_STREAM(rclcpp::get_logger("arbitrator"), "PRINT END");
+                RCLCPP_DEBUG_STREAM(rclcpp::get_logger("arbitrator"),
+                    "Ended printing newly requested maneuver plan for debugging");
 
                 auto plan_duration = rclcpp::Duration(0, 0); // zero duration
 
@@ -76,21 +86,38 @@ namespace arbitrator
                     RCLCPP_DEBUG_STREAM(rclcpp::get_logger("arbitrator"), "Has enough duration, skipping that which has following mvrs..:");
                     for (auto mvr : it->first.maneuvers)
                     {
-                        RCLCPP_DEBUG_STREAM(rclcpp::get_logger("arbitrator"), "Printing mvr: "<< (int)mvr.type);
+                        RCLCPP_DEBUG_STREAM(rclcpp::get_logger("arbitrator"),
+                            "Printing successful mvr: " << maneuver_type_to_string(mvr.type));
                     }
                     continue;
                 }
 
                 // Expand it, and reprioritize
                 std::vector<carma_planning_msgs::msg::ManeuverPlan> children = neighbor_generator_->generate_neighbors(cur_plan, start_state);
-
+                RCLCPP_DEBUG_STREAM(
+                    rclcpp::get_logger("arbitrator"),
+                    "Arbitrator received total of " << children.size()
+                    << " response from strategic_plugins for plan_id: "
+                    << std::string(cur_plan.maneuver_plan_id)
+                );
                 // Compute cost for each child and store in open list
                 for (auto child = children.begin(); child != children.end(); child++)
                 {
-
                     if (child->maneuvers.empty())
                     {
-                        RCLCPP_WARN_STREAM(rclcpp::get_logger("arbitrator"), "Child was empty for id: " << std::string(child->maneuver_plan_id));
+                        RCLCPP_DEBUG_STREAM(
+                            rclcpp::get_logger("arbitrator"),
+                            "Arbitrator didn't get successful maneuver plan for plan_id: "
+                            << std::string(cur_plan.maneuver_plan_id)
+                            <<", from one of the strategic plugin, which so far had maneuvers: "
+                        );
+                        for (auto mvr : cur_plan.maneuvers)
+                        {
+                            RCLCPP_DEBUG_STREAM(
+                                rclcpp::get_logger("arbitrator"),
+                                "Maneuver type: " << maneuver_type_to_string(mvr.type);
+                            );
+                        }
                         continue;
                     }
 

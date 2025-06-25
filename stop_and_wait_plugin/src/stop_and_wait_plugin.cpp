@@ -216,7 +216,7 @@ std::vector<carma_planning_msgs::msg::TrajectoryPlanPoint> StopandWait::trajecto
   for (size_t i = 0; i < points.size(); i++)
   {
     carma_planning_msgs::msg::TrajectoryPlanPoint tpp;
-    rclcpp::Duration relative_time(times[i] * 1e9);
+    rclcpp::Duration relative_time = rclcpp::Duration::from_nanoseconds(times[i] * 1e9);
     tpp.target_time = startTime + relative_time;
     tpp.x = points[i].x();
     tpp.y = points[i].y();
@@ -375,7 +375,10 @@ std::vector<carma_planning_msgs::msg::TrajectoryPlanPoint> StopandWait::compose_
   {
     if (times[i] != 0 && !std::isnormal(times[i]) && i != 0)
     {  // If the time
-      RCLCPP_WARN_STREAM(rclcpp::get_logger("stop_and_wait_plugin"),"Detected non-normal (nan, inf, etc.) time. Making it same as before: " << times[i-1]);
+      RCLCPP_WARN_STREAM_THROTTLE(rclcpp::get_logger("stop_and_wait_plugin"),
+        *nh_->get_clock(), 1000,
+        "(Throttled Log 1s) Detected non-normal (nan, inf, etc.) time. Making it same as before: "
+        << times[i-1]);
       // NOTE: overriding the timestamps in assumption that pure_pursuit_wrapper will detect it as stopping case
       times[i] = times[i - 1];
     }
@@ -390,10 +393,10 @@ std::vector<carma_planning_msgs::msg::TrajectoryPlanPoint> StopandWait::compose_
 
   auto traj = trajectory_from_points_times_orientations(raw_points, times, yaws, start_time);
 
-  while (rclcpp::Time(traj.back().target_time) - rclcpp::Time(traj.front().target_time) < rclcpp::Duration(config_.minimal_trajectory_duration * 1e9))
+  while (rclcpp::Time(traj.back().target_time) - rclcpp::Time(traj.front().target_time) < rclcpp::Duration::from_nanoseconds(config_.minimal_trajectory_duration * 1e9))
   {
     carma_planning_msgs::msg::TrajectoryPlanPoint new_point = traj.back();
-    new_point.target_time = rclcpp::Time(new_point.target_time) + rclcpp::Duration(config_.stop_timestep * 1e9);
+    new_point.target_time = rclcpp::Time(new_point.target_time) + rclcpp::Duration::from_nanoseconds(config_.stop_timestep * 1e9);
     new_point.planner_plugin_name = plugin_name_;
     traj.push_back(new_point);
   }

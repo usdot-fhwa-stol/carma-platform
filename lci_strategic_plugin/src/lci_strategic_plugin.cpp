@@ -40,7 +40,7 @@ namespace lci_strategic_plugin
   namespace std_ph = std::placeholders;
 
 LCIStrategicPlugin::LCIStrategicPlugin(const rclcpp::NodeOptions &options)
-  : carma_guidance_plugins::StrategicPlugin(options), tf2_buffer_(this->get_clock())
+  : carma_guidance_plugins::StrategicPlugin(options), tf2_buffer_(std::make_shared<tf2_ros::Buffer>(this->get_clock()))
 {
   config_ = LCIStrategicPluginConfig();
 
@@ -52,6 +52,7 @@ LCIStrategicPlugin::LCIStrategicPlugin(const rclcpp::NodeOptions &options)
   config_.trajectory_smoothing_activation_distance = declare_parameter<double>("trajectory_smoothing_activation_distance", config_.trajectory_smoothing_activation_distance);
   config_.stopping_location_buffer = declare_parameter<double>("stopping_location_buffer", config_.stopping_location_buffer);
   config_.green_light_time_buffer = declare_parameter<double>("green_light_time_buffer", config_.green_light_time_buffer);
+  config_.vehicle_response_lag = declare_parameter<double>("vehicle_response_lag", config_.vehicle_response_lag);
   config_.algo_minimum_speed = declare_parameter<double>("algo_minimum_speed", config_.algo_minimum_speed);
   config_.deceleration_fraction = declare_parameter<double>("deceleration_fraction",  config_.deceleration_fraction);
   config_.desired_distance_to_stop_buffer = declare_parameter<double>("desired_distance_to_stop_buffer", config_.desired_distance_to_stop_buffer);
@@ -62,6 +63,9 @@ LCIStrategicPlugin::LCIStrategicPlugin(const rclcpp::NodeOptions &options)
   config_.intersection_transit_plugin_name = declare_parameter<std::string>("intersection_transit_plugin_name", config_.intersection_transit_plugin_name);
   config_.enable_carma_streets_connection = declare_parameter<bool>("enable_carma_streets_connection",config_.enable_carma_streets_connection);
   config_.mobility_rate = declare_parameter<double>("mobility_rate", config_.mobility_rate);
+  config_.enable_carma_wm_spat_processing =
+    declare_parameter<long>("enable_carma_wm_spat_processing",
+    config_.enable_carma_wm_spat_processing);
   config_.vehicle_id = declare_parameter<std::string>("vehicle_id", config_.vehicle_id);
 
   max_comfort_accel_ = config_.vehicle_accel_limit * config_.vehicle_accel_limit_multiplier;
@@ -84,6 +88,7 @@ carma_ros2_utils::CallbackReturn LCIStrategicPlugin::on_configure_plugin()
   get_parameter<double>("trajectory_smoothing_activation_distance", config_.trajectory_smoothing_activation_distance);
   get_parameter<double>("stopping_location_buffer", config_.stopping_location_buffer);
   get_parameter<double>("green_light_time_buffer", config_.green_light_time_buffer);
+  get_parameter<double>("vehicle_response_lag", config_.vehicle_response_lag);
   get_parameter<double>("algo_minimum_speed", config_.algo_minimum_speed);
   get_parameter<double>("deceleration_fraction", config_.deceleration_fraction);
   get_parameter<double>("desired_distance_to_stop_buffer", config_.desired_distance_to_stop_buffer);
@@ -93,6 +98,7 @@ carma_ros2_utils::CallbackReturn LCIStrategicPlugin::on_configure_plugin()
   get_parameter<std::string>("stop_and_wait_plugin_name", config_.stop_and_wait_plugin_name);
   get_parameter<std::string>("intersection_transit_plugin_name", config_.intersection_transit_plugin_name);
   get_parameter<bool>("enable_carma_streets_connection", config_.enable_carma_streets_connection);
+  get_parameter<int>("enable_carma_wm_spat_processing", config_.enable_carma_wm_spat_processing);
   get_parameter<double>("mobility_rate", config_.mobility_rate);
   get_parameter<std::string>("vehicle_id", config_.vehicle_id);
 
@@ -100,6 +106,11 @@ carma_ros2_utils::CallbackReturn LCIStrategicPlugin::on_configure_plugin()
   max_comfort_decel_ = -1 * config_.vehicle_decel_limit * config_.vehicle_decel_limit_multiplier;
   max_comfort_decel_norm_ = config_.vehicle_decel_limit * config_.vehicle_decel_limit_multiplier;
   emergency_decel_norm_ = 2 * config_.vehicle_decel_limit * config_.vehicle_decel_limit_multiplier;
+  config_.green_light_time_buffer =
+    std::max(config_.vehicle_response_lag, config_.green_light_time_buffer);
+  RCLCPP_INFO_STREAM(rclcpp::get_logger("lci_strategic_plugin"),
+    "LCI Strategic Plugin updated green_light_time_buffer based on vehicle_response_lag to "
+    << config_.green_light_time_buffer);
 
   // clang-format on
 
@@ -118,8 +129,13 @@ carma_ros2_utils::CallbackReturn LCIStrategicPlugin::on_configure_plugin()
   bsm_sub_ = create_subscription<carma_v2x_msgs::msg::BSM>("bsm_outbound", 1,
     std::bind(&LCIStrategicPlugin::BSMCb,this,std_ph::_1));
 
-  // set world model point form wm listener
+  // set world model point from wm listener
   wm_ = get_world_model();
+
+  // Activate SPAT processor, which is turned off by default,
+  // with OFF (0), ON (1)
+  get_world_model_listener()->setWMSpatProcessingState(
+    static_cast<carma_wm::SIGNAL_PHASE_PROCESSING>(config_.enable_carma_wm_spat_processing));
 
   // Setup publishers
   mobility_operation_pub_ = create_publisher<carma_v2x_msgs::msg::MobilityOperation>("outgoing_mobility_operation", 1);
@@ -143,6 +159,7 @@ rcl_interfaces::msg::SetParametersResult LCIStrategicPlugin::parameter_update_ca
     {"trajectory_smoothing_activation_distance", config_.trajectory_smoothing_activation_distance},
     {"stopping_location_buffer", config_.stopping_location_buffer},
     {"green_light_time_buffer", config_.green_light_time_buffer},
+    {"vehicle_response_lag", config_.vehicle_response_lag},
     {"algo_minimum_speed", config_.algo_minimum_speed},
     {"deceleration_fraction", config_.deceleration_fraction},
     {"desired_distance_to_stop_buffer", config_.desired_distance_to_stop_buffer},
@@ -150,6 +167,12 @@ rcl_interfaces::msg::SetParametersResult LCIStrategicPlugin::parameter_update_ca
     {"mobility_rate", config_.mobility_rate},
   }, parameters);
 
+  config_.green_light_time_buffer =
+    std::max(config_.vehicle_response_lag, config_.green_light_time_buffer);
+
+  RCLCPP_INFO_STREAM(rclcpp::get_logger("lci_strategic_plugin"),
+    "LCI Strategic Plugin updated green_light_time_buffer based on vehicle_response_lag to "
+    << config_.green_light_time_buffer);
   rcl_interfaces::msg::SetParametersResult result;
 
   result.successful = !error_double;
@@ -196,12 +219,12 @@ bool LCIStrategicPlugin::supportedLightState(lanelet::CarmaTrafficSignalState st
     // Supported light states
     case lanelet::CarmaTrafficSignalState::STOP_AND_REMAIN:              // Solid Red
     case lanelet::CarmaTrafficSignalState::PROTECTED_CLEARANCE:          // Yellow Solid no chance of conflicting traffic
+    case lanelet::CarmaTrafficSignalState::PERMISSIVE_MOVEMENT_ALLOWED:  // Solid Green there could be conflict traffic
     case lanelet::CarmaTrafficSignalState::PROTECTED_MOVEMENT_ALLOWED:   // Solid Green no chance of conflict traffic
                                                                         // (normally used with arrows)
       return true;
 
     // Unsupported light states
-    case lanelet::CarmaTrafficSignalState::PERMISSIVE_MOVEMENT_ALLOWED:  // Solid Green there could be conflict traffic
     case lanelet::CarmaTrafficSignalState::PERMISSIVE_CLEARANCE:         // Yellow Solid there is a chance of conflicting
                                                                         // traffic
     case lanelet::CarmaTrafficSignalState::UNAVAILABLE:                  // No data available
@@ -218,11 +241,11 @@ bool LCIStrategicPlugin::supportedLightState(lanelet::CarmaTrafficSignalState st
 
 void LCIStrategicPlugin::lookupFrontBumperTransform()
 {
-    tf2_listener_.reset(new tf2_ros::TransformListener(tf2_buffer_));
-    tf2_buffer_.setUsingDedicatedThread(true);
+    tf2_listener_ = std::make_shared<tf2_ros::TransformListener>(*tf2_buffer_);
+    tf2_buffer_->setUsingDedicatedThread(true);
     try
     {
-        geometry_msgs::msg::TransformStamped tf2 = tf2_buffer_.lookupTransform("base_link", "vehicle_front", rclcpp::Time(0), rclcpp::Duration(20.0 * 1e9)); //save to local copy of transform 20 sec timeout
+        geometry_msgs::msg::TransformStamped tf2 = tf2_buffer_->lookupTransform("base_link", "vehicle_front", rclcpp::Time(0), rclcpp::Duration::from_nanoseconds(20.0 * 1e9)); //save to local copy of transform 20 sec timeout
         length_to_front_bumper_ = tf2.transform.translation.x;
         RCLCPP_DEBUG_STREAM(rclcpp::get_logger("lci_strategic_plugin"), "length_to_front_bumper_: " << length_to_front_bumper_);
 
@@ -298,10 +321,10 @@ bool LCIStrategicPlugin::validLightState(const boost::optional<std::pair<boost::
 boost::optional<bool> LCIStrategicPlugin::canArriveAtGreenWithCertainty(const rclcpp::Time& light_arrival_time_by_algo, const lanelet::CarmaTrafficSignalPtr& traffic_light, bool check_late = true, bool check_early = true) const
 {
     rclcpp::Time early_arrival_time_by_algo =
-        light_arrival_time_by_algo - rclcpp::Duration(config_.green_light_time_buffer * 1e9);
+        light_arrival_time_by_algo - rclcpp::Duration::from_nanoseconds(config_.green_light_time_buffer * 1e9);
 
     rclcpp::Time late_arrival_time_by_algo =
-        light_arrival_time_by_algo + rclcpp::Duration(config_.green_light_time_buffer * 1e9);
+        light_arrival_time_by_algo + rclcpp::Duration::from_nanoseconds(config_.green_light_time_buffer * 1e9);
 
     RCLCPP_DEBUG_STREAM(rclcpp::get_logger("lci_strategic_plugin"), "light_arrival_time_by_algo: " << std::to_string(light_arrival_time_by_algo.seconds()));
     RCLCPP_DEBUG_STREAM(rclcpp::get_logger("lci_strategic_plugin"), "early_arrival_time_by_algo: " << std::to_string(early_arrival_time_by_algo.seconds()));
@@ -325,10 +348,10 @@ boost::optional<bool> LCIStrategicPlugin::canArriveAtGreenWithCertainty(const rc
     bool can_make_late_arrival = true;
 
     if (check_early)
-      can_make_early_arrival = (early_arrival_state_by_algo_optional.get().second == lanelet::CarmaTrafficSignalState::PROTECTED_MOVEMENT_ALLOWED);
+      can_make_early_arrival = isStateAllowedGreen(early_arrival_state_by_algo_optional.get().second);
 
     if (check_late)
-      can_make_late_arrival = (late_arrival_state_by_algo_optional.get().second == lanelet::CarmaTrafficSignalState::PROTECTED_MOVEMENT_ALLOWED);
+      can_make_late_arrival = isStateAllowedGreen(late_arrival_state_by_algo_optional.get().second);
 
     // We will cross the light on the green phase even if we arrive early or late
     if (can_make_early_arrival && can_make_late_arrival)  // Green light
@@ -336,6 +359,11 @@ boost::optional<bool> LCIStrategicPlugin::canArriveAtGreenWithCertainty(const rc
     else
       return false;
 
+}
+
+bool LCIStrategicPlugin::isStateAllowedGreen(const lanelet::CarmaTrafficSignalState& state) const{
+    return state == lanelet::CarmaTrafficSignalState::PROTECTED_MOVEMENT_ALLOWED ||
+           state == lanelet::CarmaTrafficSignalState::PERMISSIVE_MOVEMENT_ALLOWED;
 }
 
 std::vector<lanelet::ConstLanelet> LCIStrategicPlugin::getLaneletsBetweenWithException(double start_downtrack,
@@ -387,7 +415,7 @@ void LCIStrategicPlugin::handleStopping(carma_planning_msgs::srv::PlanManeuvers:
   resp->new_plan.maneuvers.push_back(composeStopAndWaitManeuverMessage(
     current_state.downtrack, traffic_light_down_track, current_state.speed, crossed_lanelets.front().id(),
     crossed_lanelets.back().id(), current_state.stamp,
-    current_state.stamp + rclcpp::Duration(config_.min_maneuver_planning_period * 1e9), decel_rate));
+    current_state.stamp + rclcpp::Duration::from_nanoseconds(config_.min_maneuver_planning_period * 1e9), decel_rate));
 }
 
 
@@ -416,16 +444,16 @@ void LCIStrategicPlugin::handleFailureCase(carma_planning_msgs::srv::PlanManeuve
   }
 
   resp->new_plan.maneuvers.push_back(composeTrajectorySmoothingManeuverMessage(current_state.downtrack, traffic_light_down_track, crossed_lanelets,
-                                          current_state_speed, incomplete_traj_params.modified_departure_speed, current_state.stamp, current_state.stamp + rclcpp::Duration(incomplete_traj_params.modified_remaining_time * 1e9), incomplete_traj_params));
+                                          current_state_speed, incomplete_traj_params.modified_departure_speed, current_state.stamp, current_state.stamp + rclcpp::Duration::from_nanoseconds(incomplete_traj_params.modified_remaining_time * 1e9), incomplete_traj_params));
 
   double intersection_length = intersection_end_downtrack_.get() - traffic_light_down_track;
 
   rclcpp::Time intersection_exit_time =
-      current_state.stamp + rclcpp::Duration(incomplete_traj_params.modified_remaining_time * 1e9) + rclcpp::Duration(intersection_length / incomplete_traj_params.modified_departure_speed * 1e9);
+      current_state.stamp + rclcpp::Duration::from_nanoseconds(incomplete_traj_params.modified_remaining_time * 1e9) + rclcpp::Duration::from_nanoseconds(intersection_length / incomplete_traj_params.modified_departure_speed * 1e9);
 
   resp->new_plan.maneuvers.push_back(composeIntersectionTransitMessage(
       traffic_light_down_track, intersection_end_downtrack_.get(), intersection_speed_.get(),
-      incomplete_traj_params.modified_departure_speed, current_state.stamp + rclcpp::Duration(incomplete_traj_params.modified_remaining_time * 1e9), intersection_exit_time, crossed_lanelets.back().id(), crossed_lanelets.back().id()));
+      incomplete_traj_params.modified_departure_speed, current_state.stamp + rclcpp::Duration::from_nanoseconds(incomplete_traj_params.modified_remaining_time * 1e9), intersection_exit_time, crossed_lanelets.back().id(), crossed_lanelets.back().id()));
 
   last_case_num_ = TSCase::DEGRADED_TSCASE;
 }
@@ -468,7 +496,7 @@ void LCIStrategicPlugin::handleCruisingUntilStop(carma_planning_msgs::srv::PlanM
   resp->new_plan.maneuvers.push_back(composeStopAndWaitManeuverMessage(
     new_ts_params.x2_, traffic_light_down_track, new_ts_params.v2_, case_8_crossed_lanelets.front().id(),
     case_8_crossed_lanelets.back().id(), rclcpp::Time(new_ts_params.t2_ * 1e9),
-    rclcpp::Time(new_ts_params.t2_ * 1e9) + rclcpp::Duration(config_.min_maneuver_planning_period * 1e9), decel_rate));
+    rclcpp::Time(new_ts_params.t2_ * 1e9) + rclcpp::Duration::from_nanoseconds(config_.min_maneuver_planning_period * 1e9), decel_rate));
 
   return;
 }
@@ -509,7 +537,7 @@ void LCIStrategicPlugin::handleGreenSignalScenario(carma_planning_msgs::srv::Pla
     double intersection_length = intersection_end_downtrack_.get() - traffic_light_down_track;
 
     rclcpp::Time intersection_exit_time =
-        light_arrival_time_by_algo + rclcpp::Duration(intersection_length / intersection_speed_.get() * 1e9);
+        light_arrival_time_by_algo + rclcpp::Duration::from_nanoseconds(intersection_length / intersection_speed_.get() * 1e9);
 
     resp->new_plan.maneuvers.push_back(composeIntersectionTransitMessage(
         traffic_light_down_track, intersection_end_downtrack_.get(), intersection_speed_.get(),
@@ -693,7 +721,7 @@ TrajectoryParams LCIStrategicPlugin::handleFailureCaseHelper(const lanelet::Carm
     }
     else
     {
-      if (upper_optional.get().second == lanelet::CarmaTrafficSignalState::PROTECTED_MOVEMENT_ALLOWED)
+      if (isStateAllowedGreen(upper_optional.get().second))
       {
         RCLCPP_DEBUG_STREAM(rclcpp::get_logger("lci_strategic_plugin"), "Detected Upper GREEN case");
         return_params = traj_upper;
@@ -712,7 +740,7 @@ TrajectoryParams LCIStrategicPlugin::handleFailureCaseHelper(const lanelet::Carm
     }
     else
     {
-      if (lower_optional.get().second == lanelet::CarmaTrafficSignalState::PROTECTED_MOVEMENT_ALLOWED)
+      if (isStateAllowedGreen(lower_optional.get().second))
       {
         RCLCPP_DEBUG_STREAM(rclcpp::get_logger("lci_strategic_plugin"), "Detected Lower GREEN case");
         return_params = traj_lower;
@@ -959,7 +987,7 @@ void LCIStrategicPlugin::planWhenAPPROACHING(carma_planning_msgs::srv::PlanManeu
     double stopping_time = current_state.speed / 1.5 / max_comfort_decel_norm_; //one half the acceleration (twice the acceleration to stop) to account for emergency case, see emergency_decel_norm_
 
     rclcpp::Time stopping_arrival_time =
-          current_state.stamp + rclcpp::Duration(stopping_time * 1e9);
+          current_state.stamp + rclcpp::Duration::from_nanoseconds(stopping_time * 1e9);
 
     RCLCPP_DEBUG_STREAM(rclcpp::get_logger("lci_strategic_plugin"), "stopping_arrival_time: " << std::to_string(stopping_arrival_time.seconds()));
 
@@ -1098,8 +1126,7 @@ void LCIStrategicPlugin::planWhenWAITING(carma_planning_msgs::srv::PlanManeuvers
   if (config_.enable_carma_streets_connection && entering_time > current_state.stamp.seconds()) //uc3
     should_enter = false;
 
-  if (current_light_state_optional.get().second == lanelet::CarmaTrafficSignalState::PROTECTED_MOVEMENT_ALLOWED &&
-        bool_optional_late_certainty.get() && should_enter) // if can make with certainty
+  if (isStateAllowedGreen(current_light_state_optional.get().second) && bool_optional_late_certainty.get() && should_enter) // if can make with certainty
   {
     transition_table_.signal(TransitEvent::RED_TO_GREEN_LIGHT);  // If the light is green send the light transition
                                                                  // signal
@@ -1116,7 +1143,7 @@ void LCIStrategicPlugin::planWhenWAITING(carma_planning_msgs::srv::PlanManeuvers
   resp->new_plan.maneuvers.push_back(composeStopAndWaitManeuverMessage(
       current_state.downtrack - stop_maneuver_buffer, traffic_light_down_track, current_state.speed,
       current_state.lane_id, current_state.lane_id, rclcpp::Time(entering_time * 1e9),
-      rclcpp::Time(entering_time * 1e9) + rclcpp::Duration(config_.min_maneuver_planning_period * 1e9), stopping_accel));
+      rclcpp::Time(entering_time * 1e9) + rclcpp::Duration::from_nanoseconds(config_.min_maneuver_planning_period * 1e9), stopping_accel));
 }
 
 void LCIStrategicPlugin::planWhenDEPARTING(carma_planning_msgs::srv::PlanManeuvers::Request::SharedPtr req,
@@ -1134,7 +1161,7 @@ void LCIStrategicPlugin::planWhenDEPARTING(carma_planning_msgs::srv::PlanManeuve
   // Calculate exit time assuming constant acceleration
   rclcpp::Time intersection_exit_time =
       current_state.stamp +
-      rclcpp::Duration(2.0 * (intersection_end_downtrack - current_state.downtrack) / (current_state.speed + intersection_speed_limit) * 1e9);
+      rclcpp::Duration::from_nanoseconds(2.0 * (intersection_end_downtrack - current_state.downtrack) / (current_state.speed + intersection_speed_limit) * 1e9);
 
   // Identify the lanelets which will be crossed by approach maneuvers lane follow maneuver
   std::vector<lanelet::ConstLanelet> crossed_lanelets =
@@ -1321,14 +1348,16 @@ void LCIStrategicPlugin::plan_maneuvers_callback(
   }
 
   // get the lanelet that is on the route in case overlapping ones found
-  for (auto llt : current_lanelets)
-  {
-    auto route = wm_->getRoute()->shortestPath();
-    if (std::find(route.begin(), route.end(), llt) != route.end())
-    {
-      current_lanelet = llt;
-      break;
-    }
+  auto llt_on_route_optional = wm_->getFirstLaneletOnShortestPath(current_lanelets);
+
+  if (llt_on_route_optional){
+    current_lanelet = llt_on_route_optional.value();
+  }
+  else{
+    RCLCPP_WARN_STREAM(rclcpp::get_logger("lci_strategic_plugin"), "When identifying the corresponding lanelet for requested maneuever's state, x: "
+      << req->veh_x << ", y: " << req->veh_y << ", no possible lanelet was found to be on the shortest path."
+      << "Picking arbitrary lanelet: " << current_lanelets[0].id() << ", instead");
+    current_lanelet = current_lanelets[0];
   }
 
   lanelet::CarmaTrafficSignalPtr nearest_traffic_signal = nullptr;

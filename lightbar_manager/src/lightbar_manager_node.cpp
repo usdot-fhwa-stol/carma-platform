@@ -29,9 +29,9 @@ LightBarManager::LightBarManager(const rclcpp::NodeOptions &options) : carma_ros
     config_ = Config();
     config_.spin_rate_hz = declare_parameter<double>("spin_rate_hz", config_.spin_rate_hz);
     config_.normal_operation = declare_parameter<bool>("normal_operation", config_.normal_operation);
-    declare_parameter("lightbar_cda_table");
-    declare_parameter("lightbar_ind_table");
-    declare_parameter("lightbar_priorities");
+    declare_parameter("lightbar_cda_table", config_.lightbar_cda_table);
+    declare_parameter("lightbar_ind_table", config_.lightbar_ind_table);
+    declare_parameter("lightbar_priorities", config_.lightbar_priorities);
     lbm_ = std::make_shared<LightBarManagerWorker>();
 }
 
@@ -117,6 +117,34 @@ carma_ros2_utils::CallbackReturn LightBarManager::handle_on_activate(const rclcp
             std::chrono::milliseconds((int)(1 / config_.spin_rate_hz * 1000)),
             std::bind(&LightBarManager::spinCallBack, this));
     return CallbackReturn::SUCCESS;
+}
+
+carma_ros2_utils::CallbackReturn LightBarManager::handle_on_deactivate(const rclcpp_lifecycle::State &)
+{
+    // Deactivate the lightbar if deactivated
+    turnOffAll();
+    return CallbackReturn::SUCCESS;
+}
+
+carma_ros2_utils::CallbackReturn LightBarManager::handle_on_cleanup(const rclcpp_lifecycle::State &)
+{
+    // Cleanup the lightbar if cleaned up
+    turnOffAll();
+    return CallbackReturn::SUCCESS;
+}
+
+carma_ros2_utils::CallbackReturn LightBarManager::handle_on_error(const rclcpp_lifecycle::State &)
+{
+    // Cleanup the lightbar if error
+    turnOffAll();
+    return CallbackReturn::FAILURE; // By default an error will take us into the finalized sate.
+}
+
+carma_ros2_utils::CallbackReturn LightBarManager::handle_on_shutdown(const rclcpp_lifecycle::State &)
+{
+    // Cleanup the lightbar if shutdown
+    turnOffAll();
+    return CallbackReturn::SUCCESS; // By default shutdown will take us into the finalized state.
 }
 
 void LightBarManager::turnOffAll()

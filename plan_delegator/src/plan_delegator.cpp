@@ -129,7 +129,7 @@ namespace plan_delegator
 
 
     PlanDelegator::PlanDelegator(const rclcpp::NodeOptions &options) : carma_ros2_utils::CarmaLifecycleNode(options),
-                                                                        tf2_buffer_(this->get_clock()),
+                                                                        tf2_buffer_(std::make_shared<tf2_ros::Buffer>(this->get_clock())),
                                                                         wml_(this->get_node_base_interface(), this->get_node_logging_interface(),
                                                                             this->get_node_topics_interface(), this->get_node_parameters_interface())
     {
@@ -495,20 +495,22 @@ namespace plan_delegator
             if(adjusted_start_dist < original_starting_lanelet_centerline_start_point_dt){
 
                 auto previous_lanelets = wm_->getMapRoutingGraph()->previous(original_starting_lanelet, false);
-                auto previous_lanelet_to_add = previous_lanelets[0];
-
-                // pick a lanelet on the shortest path
-                for (const auto& llt : previous_lanelets)
-                {
-                    auto route = wm_->getRoute()->shortestPath();
-                    if (std::find(route.begin(), route.end(), llt) != route.end())
-                    {
-                        previous_lanelet_to_add = llt;
-                        break;
-                    }
-                }
 
                 if(!previous_lanelets.empty()){
+
+                    auto llt_on_route_optional = wm_->getFirstLaneletOnShortestPath(previous_lanelets);
+
+                    lanelet::ConstLanelet previous_lanelet_to_add;
+
+                    if (llt_on_route_optional){
+                        previous_lanelet_to_add = llt_on_route_optional.value();
+                    }
+                    else{
+                        RCLCPP_WARN_STREAM(rclcpp::get_logger("plan_delegator"), "When adjusting maneuver for lane follow, no previous lanelet found on the shortest path for lanelet "
+                            << original_starting_lanelet.id() << ". Picking arbitrary lanelet: " << previous_lanelets[0].id() << ", instead");
+                        previous_lanelet_to_add = previous_lanelets[0];
+                    }
+
                     // lane_ids array is ordered by increasing downtrack, so this new starting lanelet is inserted at the front
                     maneuver.lane_following_maneuver.lane_ids.insert(maneuver.lane_following_maneuver.lane_ids.begin(), std::to_string(previous_lanelet_to_add.id()));
 
@@ -547,9 +549,19 @@ namespace plan_delegator
 
             if(adjusted_start_dist < original_starting_lanelet_centerline_start_point_dt){
                 auto previous_lanelets = wm_->getMapRoutingGraph()->previous(original_starting_lanelet, false);
-
                 if(!previous_lanelets.empty()){
-                    setManeuverStartingLaneletId(maneuver, previous_lanelets[0].id());
+                    auto llt_on_route_optional = wm_->getFirstLaneletOnShortestPath(previous_lanelets);
+                    lanelet::ConstLanelet previous_lanelet_to_add;
+
+                    if (llt_on_route_optional){
+                        previous_lanelet_to_add = llt_on_route_optional.value();
+                    }
+                    else{
+                        RCLCPP_WARN_STREAM(rclcpp::get_logger("plan_delegator"), "When adjusting non-lane follow maneuver, no previous lanelet found on the shortest path for lanelet "
+                            << original_starting_lanelet.id() << ". Picking arbitrary lanelet: " << previous_lanelets[0].id() << ", instead");
+                        previous_lanelet_to_add = previous_lanelets[0];
+                    }
+                    setManeuverStartingLaneletId(maneuver, previous_lanelet_to_add.id());
                 }
                 else{
                     RCLCPP_WARN_STREAM(rclcpp::get_logger("plan_delegator"), "No previous lanelet was found for lanelet " << original_starting_lanelet.id());
@@ -632,59 +644,59 @@ namespace plan_delegator
             // compose service request
             auto plan_req = composePlanTrajectoryRequest(latest_trajectory_plan, current_maneuver_index);
 
-            auto plan_response = client->async_send_request(plan_req);
+            auto future_response = client->async_send_request(plan_req);
 
-            auto future_status = plan_response.wait_for(std::chrono::milliseconds(config_.tactical_plugin_service_call_timeout));
+            auto future_status = future_response.wait_for(std::chrono::milliseconds(config_.tactical_plugin_service_call_timeout));
 
-            // Wait for the result.
-            if (future_status == std::future_status::ready)
-            {
-                // validate trajectory before add to the plan
-                if(!isTrajectoryValid(plan_response.get()->trajectory_plan))
-                {
-                    RCLCPP_WARN_STREAM(rclcpp::get_logger("plan_delegator"),"Found invalid trajectory with less than 2 trajectory points for " << std::string(latest_maneuver_plan_.maneuver_plan_id));
-                    break;
-                }
-                //Remove duplicate point from start of trajectory
-                if(latest_trajectory_plan.trajectory_points.size() !=0){
-
-                    if(latest_trajectory_plan.trajectory_points.back().target_time == plan_response.get()->trajectory_plan.trajectory_points.front().target_time){
-                        RCLCPP_DEBUG_STREAM(rclcpp::get_logger("plan_delegator"),"Removing duplicate point for planner: " << maneuver_planner);
-                        plan_response.get()->trajectory_plan.trajectory_points.erase(plan_response.get()->trajectory_plan.trajectory_points.begin());
-                        RCLCPP_DEBUG_STREAM(rclcpp::get_logger("plan_delegator"),"plan_response.get()->trajectory_plan size: " << plan_response.get()->trajectory_plan.trajectory_points.size());
-
-                    }
-                }
-                latest_trajectory_plan.trajectory_points.insert(latest_trajectory_plan.trajectory_points.end(),
-                                                                plan_response.get()->trajectory_plan.trajectory_points.begin(),
-                                                                plan_response.get()->trajectory_plan.trajectory_points.end());
-                RCLCPP_DEBUG_STREAM(rclcpp::get_logger("plan_delegator"),"new latest_trajectory_plan size: " << latest_trajectory_plan.trajectory_points.size());
-
-                // Assign the trajectory plan's initial longitudinal velocity based on the first tactical plugin's response
-                if(first_trajectory_plan == true)
-                {
-                    latest_trajectory_plan.initial_longitudinal_velocity = plan_response.get()->trajectory_plan.initial_longitudinal_velocity;
-                    first_trajectory_plan = false;
-                }
-
-                if(isTrajectoryLongEnough(latest_trajectory_plan))
-                {
-                    RCLCPP_INFO_STREAM(rclcpp::get_logger("plan_delegator"),"Plan Trajectory completed for " << std::string(latest_maneuver_plan_.maneuver_plan_id));
-                    break;
-                }
-
-                // Update the maneuver plan index based on the last maneuver index converted to a trajectory
-                // This is required since inlanecruising_plugin can plan a trajectory over contiguous LANE_FOLLOWING maneuvers
-                if(plan_response.get()->related_maneuvers.size() > 0)
-                {
-                    current_maneuver_index = plan_response.get()->related_maneuvers.back() + 1;
-                }
-            }
-            else
+            if (future_status != std::future_status::ready)
             {
                 RCLCPP_WARN_STREAM(rclcpp::get_logger("plan_delegator"),"Unsuccessful service call to trajectory planner:" << maneuver_planner << " for plan ID " << std::string(latest_maneuver_plan_.maneuver_plan_id));
                 // if one service call fails, it should end plan immediately because it is there is no point to generate plan with empty space
                 break;
+            }
+
+            // If successful service request
+            auto plan_response = future_response.get();
+            // validate trajectory before add to the plan
+            if(!isTrajectoryValid(plan_response->trajectory_plan))
+            {
+                RCLCPP_WARN_STREAM(rclcpp::get_logger("plan_delegator"),
+                    "Found invalid trajectory with less than 2 trajectory "
+                    << "points for maneuver_plan_id: "
+                    << std::string(latest_maneuver_plan_.maneuver_plan_id));
+                break;
+            }
+            //Remove duplicate point from start of trajectory
+            if(latest_trajectory_plan.trajectory_points.size() != 0 &&
+                latest_trajectory_plan.trajectory_points.back().target_time == plan_response->trajectory_plan.trajectory_points.front().target_time)
+            {
+                RCLCPP_DEBUG_STREAM(rclcpp::get_logger("plan_delegator"),"Removing duplicate point for planner: " << maneuver_planner);
+                plan_response->trajectory_plan.trajectory_points.erase(plan_response->trajectory_plan.trajectory_points.begin());
+                RCLCPP_DEBUG_STREAM(rclcpp::get_logger("plan_delegator"),"plan_response->trajectory_plan size: " << plan_response->trajectory_plan.trajectory_points.size());
+            }
+            latest_trajectory_plan.trajectory_points.insert(latest_trajectory_plan.trajectory_points.end(),
+                                                            plan_response->trajectory_plan.trajectory_points.begin(),
+                                                            plan_response->trajectory_plan.trajectory_points.end());
+            RCLCPP_DEBUG_STREAM(rclcpp::get_logger("plan_delegator"),"new latest_trajectory_plan size: " << latest_trajectory_plan.trajectory_points.size());
+
+            // Assign the trajectory plan's initial longitudinal velocity based on the first tactical plugin's response
+            if(first_trajectory_plan == true)
+            {
+                latest_trajectory_plan.initial_longitudinal_velocity = plan_response->trajectory_plan.initial_longitudinal_velocity;
+                first_trajectory_plan = false;
+            }
+
+            if(isTrajectoryLongEnough(latest_trajectory_plan))
+            {
+                RCLCPP_INFO_STREAM(rclcpp::get_logger("plan_delegator"),"Plan Trajectory completed for " << std::string(latest_maneuver_plan_.maneuver_plan_id));
+                break;
+            }
+
+            // Update the maneuver plan index based on the last maneuver index converted to a trajectory
+            // This is required since inlanecruising_plugin can plan a trajectory over contiguous LANE_FOLLOWING maneuvers
+            if(plan_response->related_maneuvers.size() > 0)
+            {
+                current_maneuver_index = plan_response->related_maneuvers.back() + 1;
             }
         }
 
@@ -693,6 +705,10 @@ namespace plan_delegator
 
     void PlanDelegator::onTrajPlanTick()
     {
+        if (!guidance_engaged)
+        {
+            return;
+        }
         carma_planning_msgs::msg::TrajectoryPlan trajectory_plan = planTrajectory();
 
         // Check if planned trajectory is valid before send out
@@ -703,17 +719,19 @@ namespace plan_delegator
         }
         else
         {
-            RCLCPP_WARN_STREAM(rclcpp::get_logger("plan_delegator"),"Planned trajectory is empty. It will not be published!");
+            RCLCPP_WARN_STREAM(rclcpp::get_logger("plan_delegator"),
+                "Guidance is engaged, but planned trajectory has less than 2 points. " <<
+                "It will not be published!");
         }
     }
 
     void PlanDelegator::lookupFrontBumperTransform()
     {
-        tf2_listener_.reset(new tf2_ros::TransformListener(tf2_buffer_));
-        tf2_buffer_.setUsingDedicatedThread(true);
+        tf2_listener_ = std::make_shared<tf2_ros::TransformListener>(*tf2_buffer_);
+        tf2_buffer_->setUsingDedicatedThread(true);
         try
         {
-            geometry_msgs::msg::TransformStamped tf = tf2_buffer_.lookupTransform("base_link", "vehicle_front", rclcpp::Time(0), rclcpp::Duration(20.0, 0)); //save to local copy of transform 20 sec timeout
+            geometry_msgs::msg::TransformStamped tf = tf2_buffer_->lookupTransform("base_link", "vehicle_front", rclcpp::Time(0), rclcpp::Duration(20.0, 0)); //save to local copy of transform 20 sec timeout
             length_to_front_bumper_ = tf.transform.translation.x;
             RCLCPP_DEBUG_STREAM(rclcpp::get_logger("plan_delegator"),"length_to_front_bumper_: " << length_to_front_bumper_);
 

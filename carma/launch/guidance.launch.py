@@ -60,6 +60,13 @@ def generate_launch_description():
         description = "True if simulation mode is on"
     )
 
+    use_real_time_spat_in_sim = LaunchConfiguration('use_real_time_spat_in_sim')
+    declare_use_real_time_spat_in_sim_arg = DeclareLaunchArgument(
+        name = 'use_real_time_spat_in_sim',
+        default_value = 'False',
+        description = "True if SPaT is being published based on wall clock"
+    )
+
     subsystem_controller_default_param_file = os.path.join(
         get_package_share_directory('subsystem_controllers'), 'config/guidance_controller_config.yaml')
 
@@ -393,7 +400,8 @@ def generate_launch_description():
         parameters=[
             subsystem_controller_default_param_file,
             subsystem_controller_param_file,
-            {"use_sim_time" : use_sim_time}],
+            {"use_sim_time" : use_sim_time},
+            {"use_real_time_spat_in_sim" : use_real_time_spat_in_sim}],
         on_exit= Shutdown(), # Mark the subsystem controller as required
         arguments=['--ros-args', '--log-level', GetLogLevel('subsystem_controllers', env_log_levels)]
     )
@@ -402,6 +410,7 @@ def generate_launch_description():
         declare_vehicle_config_param_file_arg,
         declare_use_sim_time_arg,
         declare_subsystem_controller_param_file_arg,
+        declare_use_real_time_spat_in_sim_arg,
         carma_trajectory_executor_and_route_container,
         carma_guidance_visualizer_container,
         carma_guidance_worker_container,

@@ -55,8 +55,8 @@ namespace carma_wm
     return is_same;
   }
 
-  void SignalizedIntersectionManager::convertLaneToLaneletId(std::unordered_map<uint8_t, lanelet::Id>& entry, std::unordered_map<uint8_t, lanelet::Id>& exit, const carma_v2x_msgs::msg::IntersectionGeometry& intersection, 
-                                                              const std::shared_ptr<lanelet::LaneletMap>& map, std::shared_ptr<const lanelet::routing::RoutingGraph> current_routing_graph) 
+  void SignalizedIntersectionManager::convertLaneToLaneletId(std::unordered_map<uint8_t, lanelet::Id>& entry, std::unordered_map<uint8_t, lanelet::Id>& exit, const carma_v2x_msgs::msg::IntersectionGeometry& intersection,
+                                                              const std::shared_ptr<lanelet::LaneletMap>& map, std::shared_ptr<const lanelet::routing::RoutingGraph> current_routing_graph)
   {
     std::unordered_map<uint8_t, std::unordered_set<uint16_t>> signal_group_to_exit_lanes;
     std::unordered_map<uint8_t, std::unordered_set<uint16_t>> signal_group_to_entry_lanes;
@@ -76,7 +76,7 @@ namespace carma_wm
     auto ref_node  = local_projector.forward(gps_point);
 
     RCLCPP_DEBUG_STREAM(rclcpp::get_logger("carma_wm::SignalizedIntersectionManager"), "Reference node in map frame x: " << ref_node.x() << ", y: " << ref_node.y());
-    
+
 
     for (auto lane : intersection.lane_list)
     {
@@ -99,14 +99,16 @@ namespace carma_wm
       }
 
       RCLCPP_DEBUG_STREAM(rclcpp::get_logger("carma_wm::SignalizedIntersectionManager"), "Processing Lane id: " << (int)lane.lane_id);
-      
+
       size_t min_number_of_points = 2; // two points minimum are required
 
       size_t size_of_available_points = lane.node_list.nodes.node_set_xy.size();
 
       if (size_of_available_points < min_number_of_points)
       {
-        RCLCPP_WARN_STREAM(rclcpp::get_logger("carma_wm::SignalizedIntersectionManager"), "Not enough points are provided to match a lane. Skipping... ");
+        logWarnOnce(
+          std::string("Logging Once: Not enough points are provided to match a lane. Skipping... ")
+          + "| intersection id: " + std::to_string((int)intersection.id.id));
         continue;
       }
 
@@ -121,58 +123,61 @@ namespace carma_wm
         node_list.push_back(curr_node);
       }
 
-      RCLCPP_DEBUG_STREAM(rclcpp::get_logger("carma_wm::SignalizedIntersectionManager"), "Lane directions: " << (int)lane.lane_attributes.directional_use.lane_direction); 
-      
+      RCLCPP_DEBUG_STREAM(rclcpp::get_logger("carma_wm::SignalizedIntersectionManager"), "Lane directions: " << (int)lane.lane_attributes.directional_use.lane_direction);
+
       if (lane.lane_attributes.directional_use.lane_direction == LANE_DIRECTION::INGRESS)
       {
         // flip direction if ingress to pick up correct lanelets
         RCLCPP_DEBUG_STREAM(rclcpp::get_logger("carma_wm::SignalizedIntersectionManager"), "Reversed the node list!");
         std::reverse(node_list.begin(), node_list.end());
       }
-      
+
       for (auto node : node_list)
       {
-        RCLCPP_DEBUG_STREAM(rclcpp::get_logger("carma_wm::SignalizedIntersectionManager"), node.x() << ", " << node.y());
+        RCLCPP_DEBUG_STREAM(rclcpp::get_logger("carma_wm::SignalizedIntersectionManager"), "intersection: " << intersection.id.id << ", " << node.x() << ", " << node.y());
       }
+      intersection_nodes_[intersection.id.id].insert(intersection_nodes_[intersection.id.id].end(), node_list.begin(), node_list.end());
 
       // save which signal group connect to which exit lanes
       for (auto connection : lane.connect_to_list)
       {
         signal_group_to_exit_lanes[connection.signal_group].emplace(connection.connecting_lane.lane);
-        
+
         if (lane.lane_attributes.directional_use.lane_direction == LANE_DIRECTION::INGRESS)
           signal_group_to_entry_lanes[connection.signal_group].emplace(lane.lane_id);
       }
-      
+
       // query corresponding lanelet lane from local map
       auto affected_llts = carma_wm::query::getAffectedLaneletOrAreas(node_list, map, current_routing_graph, max_lane_width_);
 
       if (affected_llts.empty())
       {
-        // https://github.com/usdot-fhwa-stol/carma-platform/issues/1593 
+        // https://github.com/usdot-fhwa-stol/carma-platform/issues/1593
         // Open issue TODO on how this error is handled
-        RCLCPP_WARN_STREAM(rclcpp::get_logger("carma_wm::SignalizedIntersectionManager"), "Given offset points are not inside the map for lane: " << (int)lane.lane_id);
+        logWarnOnce("Logging Once: Given offset points are not inside the map for lane: " 
+          + std::to_string((int)lane.lane_id)
+          + "| intersection id: " + std::to_string((int)intersection.id.id));
         continue;
       }
 
       lanelet::Id corresponding_lanelet_id;
       if (lane.lane_attributes.directional_use.lane_direction == LANE_DIRECTION::EGRESS)
-      {        
-        corresponding_lanelet_id = affected_llts.front().id(); 
+      {
+        corresponding_lanelet_id = affected_llts.front().id();
         RCLCPP_DEBUG_STREAM(rclcpp::get_logger("carma_wm::SignalizedIntersectionManager"), "Default corresponding_lanelet_id: " << corresponding_lanelet_id <<", in EGRESS");
 
       }
       else //ingress
-      {        
-        corresponding_lanelet_id = affected_llts.back().id(); 
+      {
+        corresponding_lanelet_id = affected_llts.back().id();
         RCLCPP_DEBUG_STREAM(rclcpp::get_logger("carma_wm::SignalizedIntersectionManager"), "Default corresponding_lanelet_id: " << corresponding_lanelet_id <<", in INGRESS");
-      } 
+      }
 
       for (auto llt : affected_llts) // filter out intersection lanelets
       {
         RCLCPP_DEBUG_STREAM(rclcpp::get_logger("carma_wm::SignalizedIntersectionManager"), "Checking if we can get entry/exit from lanelet " << llt.id());
         //TODO direction of affected_llts may play role, but it should be good
-        if (llt.lanelet().get().hasAttribute("turn_direction") && 
+        if (llt.lanelet().get().hasAttribute("turn_direction") &&
             (llt.lanelet().get().attribute("turn_direction").value().compare("left") == 0 ||
             llt.lanelet().get().attribute("turn_direction").value().compare("right") == 0))
         {
@@ -188,13 +193,15 @@ namespace carma_wm
             connecting_llts = current_routing_graph->previous(llt.lanelet().get());
           }
 
-          if (!connecting_llts.empty()) 
+          if (!connecting_llts.empty())
           {
             corresponding_lanelet_id = connecting_llts[0].id();
           }
           else
           {
-            RCLCPP_WARN_STREAM(rclcpp::get_logger("carma_wm::SignalizedIntersectionManager"), "Interestingly, did not detect here");
+            logWarnOnce(
+              std::string("Logging Once: No connecting lanelets were detected inside!")
+              + " | intersection id: " + std::to_string((int)intersection.id.id));
             continue;
           }
 
@@ -214,7 +221,7 @@ namespace carma_wm
         RCLCPP_DEBUG_STREAM(rclcpp::get_logger("carma_wm::SignalizedIntersectionManager"), "Detected EGRESS, " << (int)lane.lane_id);
         exit[lane.lane_id] = corresponding_lanelet_id;
       }
-      // ignoring types that are neither ingress nor egress 
+      // ignoring types that are neither ingress nor egress
     }
 
     // convert and save exit lane ids into lanelet ids with their corresponding signal group ids
@@ -229,9 +236,11 @@ namespace carma_wm
         }
         else
         {
-          // https://github.com/usdot-fhwa-stol/carma-platform/issues/1593 
+          // https://github.com/usdot-fhwa-stol/carma-platform/issues/1593
           // Open issue TODO on how this error is handled
-          RCLCPP_WARN_STREAM(rclcpp::get_logger("carma_wm::SignalizedIntersectionManager"), "Unable to convert exit lane Id: "  + std::to_string((int)exit_lane) + ", to lanelet id using the given MAP.msg!");
+          logWarnOnce("Logging Once: Unable to convert exit lane Id: "
+            + std::to_string((int)exit_lane) + ", to lanelet id using the given MAP.msg!"
+            + "| intersection id: " + std::to_string((int)intersection.id.id));
         }
       }
     }
@@ -248,9 +257,11 @@ namespace carma_wm
         }
         else
         {
-          // https://github.com/usdot-fhwa-stol/carma-platform/issues/1593 
+          // https://github.com/usdot-fhwa-stol/carma-platform/issues/1593
           // Open issue TODO on how this error is handled
-          RCLCPP_WARN_STREAM(rclcpp::get_logger("carma_wm::SignalizedIntersectionManager"), "Unable to convert entry lane Id: "  + std::to_string((int)entry_lane) + ", to lanelet id using the given MAP.msg!");
+          logWarnOnce("Logging Once: Unable to convert entry lane Id: "
+            + std::to_string((int)entry_lane) + ", to lanelet id using the given MAP.msg!"
+            + "| intersection id: " + std::to_string((int)intersection.id.id));
         }
       }
     }
@@ -328,12 +339,12 @@ namespace carma_wm
 
       lanelet::LineString3d stop_line(lanelet::utils::getId(), points);
       stop_lines.push_back(stop_line);
-    }    
-    
+    }
+
     lanelet::Id traffic_light_id = lanelet::utils::getId();
     std::shared_ptr<lanelet::CarmaTrafficSignal> traffic_light(new lanelet::CarmaTrafficSignal(lanelet::CarmaTrafficSignal::buildData(traffic_light_id, stop_lines, entry_lanelets, exit_lanelets)));
     signal_group_to_traffic_light_id_[signal_group_id] =  traffic_light_id;
-    
+
     for (auto llt : exit_lanelets)
     {
       signal_group_to_exit_lanelet_ids_[signal_group_id].insert(llt.id());
@@ -345,10 +356,16 @@ namespace carma_wm
     return traffic_light;
   }
 
-  void SignalizedIntersectionManager::createIntersectionFromMapMsg(std::vector<lanelet::SignalizedIntersectionPtr>& sig_intersections, std::vector<lanelet::CarmaTrafficSignalPtr>& traffic_signals, const carma_v2x_msgs::msg::MapData& map_msg, 
+  void SignalizedIntersectionManager::createIntersectionFromMapMsg(std::vector<lanelet::SignalizedIntersectionPtr>& sig_intersections, std::vector<lanelet::CarmaTrafficSignalPtr>& traffic_signals, const carma_v2x_msgs::msg::MapData& map_msg,
                                                                       const std::shared_ptr<lanelet::LaneletMap>& map, std::shared_ptr<const lanelet::routing::RoutingGraph> routing_graph)
-  { 
-    
+  {
+
+    if (target_frame_ == "")
+    {
+      logWarnOnce("Logging Once: Georeference is not loaded yet. Returning without processing this MAP msg.");
+      return;
+    }
+
     for (auto const& intersection : map_msg.intersections)
     {
       std::unordered_map<uint8_t, lanelet::Id> entry;
@@ -361,11 +378,11 @@ namespace carma_wm
 
       for (auto iter = entry.begin(); iter != entry.end(); iter++)
       {
-        entry_llts.push_back(map->laneletLayer.get(iter->second));  
+        entry_llts.push_back(map->laneletLayer.get(iter->second));
       }
       for (auto iter = exit.begin(); iter != exit.end(); iter++)
       {
-        exit_llts.push_back(map->laneletLayer.get(iter->second));  
+        exit_llts.push_back(map->laneletLayer.get(iter->second));
       }
 
       lanelet::Id intersection_id = matchSignalizedIntersection(entry_llts, exit_llts);
@@ -376,13 +393,15 @@ namespace carma_wm
         intersection_id = lanelet::utils::getId();
 
         std::vector<lanelet::Lanelet> interior_llts = identifyInteriorLanelets(entry_llts, map);
-        
+
         std::shared_ptr<lanelet::SignalizedIntersection> sig_inter(new lanelet::SignalizedIntersection
                                                           (lanelet::SignalizedIntersection::buildData(intersection_id, entry_llts, exit_llts, interior_llts)));
         intersection_id_to_regem_id_[intersection.id.id] = intersection_id;
+        regem_id_to_intersection_id_[intersection_id] = intersection.id.id;
         sig_intersections.push_back(sig_inter);
       }
     }
+
 
     // create signal group for each from the message
     // check if it already exists
@@ -395,7 +414,7 @@ namespace carma_wm
       {
         continue;
       }
-      
+
       std::vector<lanelet::Lanelet> exit_lanelets;
       for (auto iter = sig_grp_pair.second.begin(); iter != sig_grp_pair.second.end(); iter++)
       {
@@ -414,7 +433,7 @@ namespace carma_wm
   lanelet::Lanelets SignalizedIntersectionManager::identifyInteriorLanelets(const lanelet::Lanelets& entry_llts, const std::shared_ptr<lanelet::LaneletMap>& map)
   {
     lanelet::BasicLineString2d polygon_corners;
-    
+
     if (entry_llts.size() < 2) //at least two lanes (1 ingress and 1 egress) needed to form intersection
     {
       return {};
@@ -428,7 +447,7 @@ namespace carma_wm
     lanelet::BasicPolygon2d polygon(polygon_corners);
     auto interior_llt_pairs = lanelet::geometry::findWithin2d(map->laneletLayer, polygon);
     lanelet::Lanelets interior_llts;
-    
+
     for (auto pair : interior_llt_pairs)
     {
       if (std::find(entry_llts.begin(),entry_llts.end(), pair.second) == entry_llts.end())
@@ -436,7 +455,7 @@ namespace carma_wm
     }
     return interior_llts;
   }
-  
+
   SignalizedIntersectionManager& SignalizedIntersectionManager::operator=(SignalizedIntersectionManager other)
   {
     this->signal_group_to_entry_lanelet_ids_ = other.signal_group_to_entry_lanelet_ids_;
@@ -456,4 +475,274 @@ namespace carma_wm
     this->signal_group_to_traffic_light_id_ = other.signal_group_to_traffic_light_id_;
     this->intersection_coord_correction_ = other.intersection_coord_correction_;
   }
+
+  void SignalizedIntersectionManager::processSpatFromMsg(const carma_v2x_msgs::msg::SPAT &spat_msg, const std::shared_ptr<lanelet::LaneletMap>& semantic_map)
+  {
+    if (spat_processor_state_ == SIGNAL_PHASE_PROCESSING::OFF)
+    {
+      return;
+    }
+
+    if (!semantic_map)
+    {
+      RCLCPP_INFO_STREAM(rclcpp::get_logger("carma_wm"), "Map is not set yet.");
+      return;
+    }
+
+    if (spat_msg.intersection_state_list.empty())
+    {
+      logWarnOnce("Logging Once: No intersection_state_list in the newly received SPAT msg. Returning...");
+      return;
+    }
+
+    for (const auto& curr_intersection : spat_msg.intersection_state_list)
+    {
+      for (const auto& current_movement_state : curr_intersection.movement_list)
+      {
+        lanelet::Id curr_light_id = getTrafficSignalId(curr_intersection.id.id, current_movement_state.signal_group);
+
+        if (curr_light_id == lanelet::InvalId)
+        {
+          continue;
+        }
+
+        lanelet::CarmaTrafficSignalPtr curr_light =
+          getTrafficSignal(curr_light_id, semantic_map);
+
+        if (curr_light == nullptr)
+        {
+          continue;
+        }
+
+        // all maneuver types in same signal group is currently expected to share signal timing, so only 0th index is used when setting states
+        if (current_movement_state.movement_event_list.empty())
+        {
+          RCLCPP_DEBUG_STREAM(rclcpp::get_logger("carma_wm"), "Movement_event_list is empty . intersection_id: " << (int)curr_intersection.id.id << ", and signal_group_id: " << (int)current_movement_state.signal_group);
+          continue;
+        }
+        else
+        {
+          RCLCPP_DEBUG_STREAM(rclcpp::get_logger("carma_wm"), "Movement_event_list size: " << current_movement_state.movement_event_list.size() << " . intersection_id: " << (int)curr_intersection.id.id << ", and signal_group_id: " << (int)current_movement_state.signal_group);
+        }
+
+        curr_light->revision_ = curr_intersection.revision; // valid SPAT msg
+
+        auto [new_end_times_and_states, new_start_times ]=
+          extract_signal_states_from_movement_state(curr_intersection, current_movement_state);
+
+        curr_light->recorded_time_stamps = new_end_times_and_states;
+        curr_light->recorded_start_time_stamps = new_start_times;
+      }
+    }
+  }
+
+  /**
+   * @brief Log an info message only once per unique message
+   * @param message The message to log
+   */
+  void SignalizedIntersectionManager::logInfoOnce(const std::string& message) const {
+    static std::mutex log_mutex;
+
+    std::lock_guard<std::mutex> lock(log_mutex);
+    if (previous_busy_log_streams_.find(message) == previous_busy_log_streams_.end()) {
+      RCLCPP_INFO_STREAM(rclcpp::get_logger("carma_wm"), message);
+      previous_busy_log_streams_.insert(message);
+    }
+  }
+
+  /**
+   * @brief Log a warning message only once per unique message
+   * @param message The message to log
+   */
+  void SignalizedIntersectionManager::logWarnOnce(const std::string& message) const {
+    static std::mutex log_mutex;
+
+    std::lock_guard<std::mutex> lock(log_mutex);
+    if (previous_busy_log_streams_.find(message) == previous_busy_log_streams_.end()) {
+      RCLCPP_WARN_STREAM(rclcpp::get_logger("carma_wm"), message);
+      previous_busy_log_streams_.insert(message);
+    }
+  }
+
+  lanelet::Id SignalizedIntersectionManager::getTrafficSignalId(uint16_t intersection_id, uint8_t signal_group_id)
+  {
+    lanelet::Id signal_id = lanelet::InvalId;
+
+    // Printing only once because MAP/SPAT is broadcasted frequently and can easily spam the log
+    if (intersection_id_to_regem_id_.find(intersection_id) == intersection_id_to_regem_id_.end())
+    {
+      // Currently, platform is not supporting multiple intersections, so if the id exists
+      // signal_group is expected to be for that intersection
+      logWarnOnce("Logging Once: Intersection id: "
+        + std::to_string((int)intersection_id)
+        + " is not found in the map. Only printing once. Returning...");
+      return lanelet::InvalId;
+    }
+
+    if (signal_group_to_traffic_light_id_.find(signal_group_id)
+      != signal_group_to_traffic_light_id_.end())
+    {
+      signal_id = signal_group_to_traffic_light_id_[signal_group_id];
+    }
+    else
+    {
+      logWarnOnce("Logging Once: Signal group id: "
+        + std::to_string((int)signal_group_id) + " for intersection id: "
+        + std::to_string((int)intersection_id) + " is not found in the map. "
+        + "Only printing once until found. Returning...");
+      return signal_id;
+    }
+
+    logInfoOnce("Signal group id: "
+      + std::to_string((int)signal_group_id) + " for intersection id: "
+      + std::to_string((int)intersection_id) + " is found in the map with regem id: "
+      + std::to_string((int)signal_id));
+
+    return signal_id;
+  }
+
+  lanelet::CarmaTrafficSignalPtr SignalizedIntersectionManager::getTrafficSignal(const
+    lanelet::Id& id, const std::shared_ptr<lanelet::LaneletMap>& semantic_map) const
+  {
+    auto general_regem = semantic_map->regulatoryElementLayer.get(id);
+
+    auto lanelets_general = semantic_map->laneletLayer.findUsages(general_regem);
+    if (lanelets_general.empty())
+    {
+      logWarnOnce(
+        "Logging Once: There was an error querying lanelet for traffic light with id: "
+        + std::to_string((int)id));
+    }
+
+    if (auto curr_light_list =
+      lanelets_general[0].regulatoryElementsAs<lanelet::CarmaTrafficSignal>();
+    curr_light_list.empty())
+    {
+      logWarnOnce(
+        "Logging Once: There was an error querying traffic light with id: "
+        + std::to_string((int)id));
+      return nullptr;
+    }
+
+    lanelet::CarmaTrafficSignalPtr curr_light;
+
+    for (auto signal : lanelets_general[0].regulatoryElementsAs<lanelet::CarmaTrafficSignal>())
+    {
+      if (signal->id() == id)
+      {
+        curr_light = signal;
+        break;
+      }
+    }
+
+    if (!curr_light)
+    {
+      logWarnOnce(
+        "Logging Once: Was not able to find traffic signal with id: "
+        + std::to_string((int)id) + ", ignoring...");
+      return nullptr;
+    }
+
+    return curr_light;
+  }
+
+  std::tuple<std::vector<std::pair<boost::posix_time::ptime, lanelet::CarmaTrafficSignalState>>,
+    std::vector<boost::posix_time::ptime>>
+    SignalizedIntersectionManager::extract_signal_states_from_movement_state(
+      const carma_v2x_msgs::msg::IntersectionState& curr_intersection,
+      const carma_v2x_msgs::msg::MovementState& current_movement_state)
+  {
+    std::vector<std::pair<boost::posix_time::ptime, lanelet::CarmaTrafficSignalState>>
+      min_end_t_and_states;
+
+    std::vector<boost::posix_time::ptime> start_time_and_states;
+
+    for(const auto& current_movement_event:current_movement_state.movement_event_list)
+    {
+      // raw min_end_time in seconds measured from the most recent full hour
+      boost::posix_time::ptime min_end_time = lanelet::time::timeFromSec(
+        current_movement_event.timing.min_end_time);
+      boost::posix_time::ptime start_time = lanelet::time::timeFromSec(
+        current_movement_event.timing.start_time);
+
+      min_end_time = min_end_time_converter_minute_of_year(min_end_time,
+        curr_intersection.moy_exists,curr_intersection.moy,
+        use_sim_time_, use_real_time_spat_in_sim_); // Accounting minute of the year
+
+      start_time = min_end_time_converter_minute_of_year(start_time,
+        curr_intersection.moy_exists,curr_intersection.moy,
+        use_sim_time_, use_real_time_spat_in_sim_); // Accounting minute of the year
+
+      auto received_state = static_cast<lanelet::CarmaTrafficSignalState>(
+        current_movement_event.event_state.movement_phase_state);
+
+      min_end_t_and_states.push_back(std::make_pair(min_end_time, received_state));
+
+      start_time_and_states.push_back(start_time);
+
+      RCLCPP_DEBUG_STREAM(rclcpp::get_logger("carma_wm"), "intersection id: "
+        << (int)curr_intersection.id.id << ", signal: " << (int)current_movement_state.signal_group
+        << ", start_time: " << std::to_string(lanelet::time::toSec(start_time))
+        << ", end_time: " << std::to_string(lanelet::time::toSec(min_end_time))
+        << ", state: " << received_state);
+    }
+
+    return std::make_tuple(min_end_t_and_states, start_time_and_states);
+  }
+
+  boost::posix_time::ptime SignalizedIntersectionManager::min_end_time_converter_minute_of_year(
+    boost::posix_time::ptime min_end_time,bool moy_exists,uint32_t moy, bool is_simulation,
+    bool use_real_time_spat_in_sim)
+  {
+    double simulation_time_difference_in_seconds = 0.0;
+    double wall_time_offset_in_seconds = 0.0;
+    // NOTE: In simulation, ROS1 clock (often coming from CARLA) can have a large time ahead.
+    // the timing calculated here is in Simulation time, which is behind. Therefore, the world model adds the offset to make it meaningful to carma-platform:
+    // https://github.com/usdot-fhwa-stol/carma-platform/issues/2217
+    if (ros1_clock_ && simulation_clock_)
+    {
+      simulation_time_difference_in_seconds = ros1_clock_.value().seconds() - simulation_clock_.value().seconds();
+    }
+    else if (ros1_clock_ && use_real_time_spat_in_sim)
+    {
+      // NOTE: If carma-platform is running in simulation with clock synced to sim time but the incoming spat information is based on wall clock
+      // the spat signal phase time must be offset to sim time.
+      wall_time_offset_in_seconds = (std::chrono::duration<double>(std::chrono::system_clock::now().time_since_epoch()).count()) - ros1_clock_.value().seconds();
+    }
+
+    min_end_time += lanelet::time::durationFromSec(simulation_time_difference_in_seconds);
+    min_end_time -= lanelet::time::durationFromSec(wall_time_offset_in_seconds);
+
+    if (moy_exists) //account for minute of the year
+    {
+      auto inception_boost(boost::posix_time::time_from_string("1970-01-01 00:00:00.000")); // inception of epoch
+      auto duration_since_inception(lanelet::time::durationFromSec(std::chrono::duration<double>(std::chrono::system_clock::now().time_since_epoch()).count()));
+      auto curr_time_boost = inception_boost + duration_since_inception;
+
+      int curr_year = curr_time_boost.date().year();
+
+      // Force the current year to start of epoch if it is simulation
+      if (is_simulation && !use_real_time_spat_in_sim)
+        curr_year = 1970;
+
+      auto curr_year_start_boost(boost::posix_time::time_from_string(std::to_string(curr_year)+ "-01-01 00:00:00.000"));
+
+      auto curr_minute_stamp_boost = curr_year_start_boost + boost::posix_time::minutes((int)moy);
+
+      long hours_of_day = curr_minute_stamp_boost.time_of_day().hours();
+      long curr_month = curr_minute_stamp_boost.date().month();
+      long curr_day = curr_minute_stamp_boost.date().day();
+
+      auto curr_day_boost(boost::posix_time::time_from_string(std::to_string(curr_year) + "/" + std::to_string(curr_month) + "/" + std::to_string(curr_day) +" 00:00:00.000")); // GMT is the standard
+      auto curr_hour_boost = curr_day_boost + boost::posix_time::hours(hours_of_day);
+
+      min_end_time += lanelet::time::durationFromSec(lanelet::time::toSec(curr_hour_boost));
+      return min_end_time;
+    }
+    else
+    {
+      return min_end_time; // return unchanged
+    }
+  }
+
 }  // namespace carma_wm
