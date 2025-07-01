@@ -31,6 +31,21 @@ namespace traffic_incident_parser
 
     void TrafficIncidentParserWorker::mobilityOperationCallback(carma_v2x_msgs::msg::MobilityOperation::UniquePtr mobility_msg)
     {
+        if(!wm_->getMap())
+        {
+            RCLCPP_WARN_STREAM(logger_->get_logger(), "The map is not loaded yet, ignoring the Traffic Incident Mobility Message");
+            return;
+        }
+        if (projection_msg_ == "")
+        {
+            RCLCPP_WARN_STREAM(logger_->get_logger(), "The georeference is not loaded yet, ignoring the Traffic Incident Mobility Message");
+            return;
+        }
+        if(!wm_->getRoute())
+        {
+            RCLCPP_WARN_STREAM(logger_->get_logger(), "The route is not loaded yet, ignoring the Traffic Incident Mobility Message");
+            return;
+        }
 
         if(mobility_msg->strategy=="carma3/Incident_Use_Case")
         {
@@ -277,21 +292,7 @@ namespace traffic_incident_parser
     std::vector<carma_v2x_msgs::msg::TrafficControlMessageV01> TrafficIncidentParserWorker::composeTrafficControlMesssages()
     {
         RCLCPP_DEBUG_STREAM(logger_->get_logger(), "In composeTrafficControlMesssages");
-        if(!wm_->getMap())
-        {
-            RCLCPP_WARN_STREAM(logger_->get_logger(), "Traffic Incident Parser is composing a Traffic Control Message, but it has not loaded the map yet. Returning empty list");
-            return {};
-        }
-        if(!wm_->getRoute())
-        {
-            RCLCPP_WARN_STREAM(logger_->get_logger(), "Traffic Incident Parser is composing a Traffic Control Message, but route is not selected yet. Returning empty list");
-            return {};
-        }
-        if (projection_msg_ == "")
-        {
-            RCLCPP_WARN_STREAM(logger_->get_logger(), "Traffic Incident Parser is composing a Traffic Control Message, but georeference has not loaded yet. Returning empty list");
-            return {};
-        }
+
         local_point_=getIncidentOriginPoint();
         RCLCPP_DEBUG_STREAM(logger_->get_logger(), "Responder point in map frame: " << local_point_.x() << ", " << local_point_.y());
         auto current_lanelets = lanelet::geometry::findNearest(wm_->getMap()->laneletLayer, local_point_, 1);
