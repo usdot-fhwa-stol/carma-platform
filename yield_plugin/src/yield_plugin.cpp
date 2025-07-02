@@ -746,12 +746,6 @@ namespace yield_plugin
     {
       return true;
     }
-    // if the clearance counter didn't increase by this point, true collision was detected
-    // therefore reset the consecutive clearance counter as it is no longer consecutive
-    if (consecutive_clearance_count_for_obstacles_[object_id] == previous_clearance_count)
-    {
-      consecutive_clearance_count_for_obstacles_[object_id] = 0;
-    }
 
     return false;
   }
@@ -792,6 +786,7 @@ namespace yield_plugin
       consecutive_clearance_count_for_obstacles_[curr_obstacle.id] = 0;
       return std::nullopt;
     }
+    consecutive_clearance_count_for_obstacles_[curr_obstacle.id]++;
 
     // if within collision radius, it is not a collision if obstacle is behind the vehicle despite being in collision radius
     const double vehicle_downtrack = wm_->routeTrackPos(collision_result.value().point1).downtrack;
