@@ -779,6 +779,7 @@ namespace yield_plugin
     return std::nullopt;
   }
 
+  //TODO: Revisit this logic. Further investigation required for this logic since it currently seems like it will never return true
   bool YieldPlugin::is_object_behind_vehicle(uint32_t object_id, const rclcpp::Time& collision_time, double vehicle_downtrack, double object_downtrack)
   {
     const auto previous_clearance_count = consecutive_clearance_count_for_obstacles_[object_id];

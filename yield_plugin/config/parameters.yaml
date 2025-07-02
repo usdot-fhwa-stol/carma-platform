@@ -18,6 +18,7 @@ time_horizon_until_collision_to_commit_to_stop_in_s: 3.0
 # Number of consecutive times the vehicle detects that the obstacle is behind
 # to confirm the obstacle is actually behind
 # Value type: Desired
+# TODO: Further investigation required for the logic calling this parameter.
 consecutive_clearance_count_for_passed_obstacles_threshold: 20
 # Intervehicle distance that is considered a collision
 # Unit: m
