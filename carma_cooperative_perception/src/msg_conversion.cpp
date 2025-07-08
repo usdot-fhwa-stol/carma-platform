@@ -569,107 +569,113 @@ auto to_detection_list_msg(
   -> carma_cooperative_perception_interfaces::msg::DetectionList
 {
   carma_cooperative_perception_interfaces::msg::DetectionList detection_list;
-  const auto ref_pos_3d{Position3D::from_msg(sdsm.ref_pos)};
+  try{
+  
+    const auto ref_pos_3d{Position3D::from_msg(sdsm.ref_pos)};
 
-  units::length::meter_t elevation(0.0);
-  if(ref_pos_3d.elevation){
-    elevation = ref_pos_3d.elevation.value();
-  }
-  const Wgs84Coordinate ref_pos_wgs84{
-    ref_pos_3d.latitude, ref_pos_3d.longitude, elevation};
-
-  const auto ref_pos_map{project_to_carma_map(ref_pos_wgs84, georeference)};
-
-  for (const auto & object_data : sdsm.objects.detected_object_data) {
-    const auto common_data{object_data.detected_object_common_data};
-
-    carma_cooperative_perception_interfaces::msg::Detection detection;
-    detection.header.frame_id = "map";
-
-    const auto detection_time{calc_detection_time_stamp(
-      DDateTime::from_msg(sdsm.sdsm_time_stamp),
-      MeasurementTimeOffset::from_msg(common_data.measurement_time))};
-
-    detection.header.stamp = to_time_msg(detection_time, is_simulation);
-
-    detection.id = fmt::format("{}-{}",
-      carma_cooperative_perception::to_string(sdsm.source_id.id),
-      common_data.detected_id.object_id);
-
-    const auto pos_offset_enu{ned_to_enu(PositionOffsetXYZ::from_msg(common_data.pos))};
-    detection.pose.pose.position = to_position_msg(MapCoordinate{
-      ref_pos_map.easting + pos_offset_enu.offset_x, ref_pos_map.northing + pos_offset_enu.offset_y,
-      ref_pos_map.elevation + pos_offset_enu.offset_z.value_or(units::length::meter_t{0.0})});
-
-    // Adjust object's position to match vector map coordinates as sensor calibrations are not
-    // always reliable
-    if (conversion_adjustment && conversion_adjustment.value().adjust_pose)
-    {
-      detection.pose.pose.position.x += conversion_adjustment.value().x_offset;
-      detection.pose.pose.position.y += conversion_adjustment.value().y_offset;
+    units::length::meter_t elevation(0.0);
+    if(ref_pos_3d.elevation){
+      elevation = ref_pos_3d.elevation.value();
     }
+    const Wgs84Coordinate ref_pos_wgs84{
+      ref_pos_3d.latitude, ref_pos_3d.longitude, elevation};
 
-    const auto true_heading{units::angle::degree_t{Heading::from_msg(common_data.heading).heading}};
+    const auto ref_pos_map{project_to_carma_map(ref_pos_wgs84, georeference)};
 
-    // Note: This should really use the detection's WGS-84 position, so the
-    // convergence will be off slightly. TODO
-    const units::angle::degree_t grid_convergence{
-      calculate_grid_convergence(ref_pos_wgs84, georeference)};
+    for (const auto & object_data : sdsm.objects.detected_object_data) {
+      const auto common_data{object_data.detected_object_common_data};
 
-    const auto grid_heading{true_heading - grid_convergence};
-    const auto enu_yaw{heading_to_enu_yaw(grid_heading)};
+      carma_cooperative_perception_interfaces::msg::Detection detection;
+      detection.header.frame_id = "map";
 
-    tf2::Quaternion quat_tf;
+      const auto detection_time{calc_detection_time_stamp(
+        DDateTime::from_msg(sdsm.sdsm_time_stamp),
+        MeasurementTimeOffset::from_msg(common_data.measurement_time))};
 
-    if (conversion_adjustment && conversion_adjustment.value().adjust_pose)
-    {
-      // Adjust object's heading to match vector map coordinates as sensor calibrations are not
+      detection.header.stamp = to_time_msg(detection_time, is_simulation);
+
+      detection.id = fmt::format("{}-{}",
+        carma_cooperative_perception::to_string(sdsm.source_id.id),
+        common_data.detected_id.object_id);
+
+      const auto pos_offset_enu{ned_to_enu(PositionOffsetXYZ::from_msg(common_data.pos))};
+      detection.pose.pose.position = to_position_msg(MapCoordinate{
+        ref_pos_map.easting + pos_offset_enu.offset_x, ref_pos_map.northing + pos_offset_enu.offset_y,
+        ref_pos_map.elevation + pos_offset_enu.offset_z.value_or(units::length::meter_t{0.0})});
+
+      // Adjust object's position to match vector map coordinates as sensor calibrations are not
       // always reliable
-      auto yaw_with_offset = units::angle::radian_t{enu_yaw} +
-        units::angle::radian_t{units::angle::degree_t{conversion_adjustment.value().yaw_offset}};
-      auto new_yaw = std::fmod(remove_units(yaw_with_offset) + 2 * M_PI, 2 * M_PI);
-      quat_tf.setRPY(0, 0, new_yaw);
+      if (conversion_adjustment && conversion_adjustment.value().adjust_pose)
+      {
+        detection.pose.pose.position.x += conversion_adjustment.value().x_offset;
+        detection.pose.pose.position.y += conversion_adjustment.value().y_offset;
+      }
+
+      const auto true_heading{units::angle::degree_t{Heading::from_msg(common_data.heading).heading}};
+
+      // Note: This should really use the detection's WGS-84 position, so the
+      // convergence will be off slightly. TODO
+      const units::angle::degree_t grid_convergence{
+        calculate_grid_convergence(ref_pos_wgs84, georeference)};
+
+      const auto grid_heading{true_heading - grid_convergence};
+      const auto enu_yaw{heading_to_enu_yaw(grid_heading)};
+
+      tf2::Quaternion quat_tf;
+
+      if (conversion_adjustment && conversion_adjustment.value().adjust_pose)
+      {
+        // Adjust object's heading to match vector map coordinates as sensor calibrations are not
+        // always reliable
+        auto yaw_with_offset = units::angle::radian_t{enu_yaw} +
+          units::angle::radian_t{units::angle::degree_t{conversion_adjustment.value().yaw_offset}};
+        auto new_yaw = std::fmod(remove_units(yaw_with_offset) + 2 * M_PI, 2 * M_PI);
+        quat_tf.setRPY(0, 0, new_yaw);
+      }
+      else
+      {
+        // No adjustment needed
+        quat_tf.setRPY(0, 0, remove_units(units::angle::radian_t{enu_yaw}));
+      }
+
+      detection.pose.pose.orientation = tf2::toMsg(quat_tf);
+
+      const auto speed{Speed::from_msg(common_data.speed)};
+      detection.twist.twist.linear.x =
+        remove_units(units::velocity::meters_per_second_t{speed.speed});
+
+      if (!common_data.speed_z.unavailable){
+        const auto speed_z{Speed::from_msg(common_data.speed_z)};
+        detection.twist.twist.linear.z =
+          remove_units(units::velocity::meters_per_second_t{speed_z.speed});
+      }
+      else{
+        detection.twist.twist.linear.z = remove_units(units::velocity::meters_per_second_t{0.0});
+      }
+
+      // NOTE: common_data.accel_4_way.longitudinal, lateral, vert not supported
+      // and not needed at the moment for multiple object tracking algorithm
+      // Having non-zero yaw_rate value means available
+      if(static_cast<bool>(common_data.accel_4_way.yaw_rate)){
+        const auto accel_set{AccelerationSet4Way::from_msg(common_data.accel_4_way)};
+        detection.twist.twist.angular.z =
+          remove_units(units::angular_velocity::degrees_per_second_t{accel_set.yaw_rate});
+      }
+      else{
+        detection.twist.twist.angular.z = 0.0;
+      }
+
+      convert_covariances(detection, common_data, conversion_adjustment);
+
+      convert_object_type(detection, common_data.obj_type);
+
+      detection_list.detections.push_back(std::move(detection));
     }
-    else
-    {
-      // No adjustment needed
-      quat_tf.setRPY(0, 0, remove_units(units::angle::radian_t{enu_yaw}));
-    }
-
-    detection.pose.pose.orientation = tf2::toMsg(quat_tf);
-
-    const auto speed{Speed::from_msg(common_data.speed)};
-    detection.twist.twist.linear.x =
-      remove_units(units::velocity::meters_per_second_t{speed.speed});
-
-    if (!common_data.speed_z.unavailable){
-      const auto speed_z{Speed::from_msg(common_data.speed_z)};
-      detection.twist.twist.linear.z =
-        remove_units(units::velocity::meters_per_second_t{speed_z.speed});
-    }
-    else{
-      detection.twist.twist.linear.z = remove_units(units::velocity::meters_per_second_t{0.0});
-    }
-
-    // NOTE: common_data.accel_4_way.longitudinal, lateral, vert not supported
-    // and not needed at the moment for multiple object tracking algorithm
-    // Having non-zero yaw_rate value means available
-    if(static_cast<bool>(common_data.accel_4_way.yaw_rate)){
-      const auto accel_set{AccelerationSet4Way::from_msg(common_data.accel_4_way)};
-      detection.twist.twist.angular.z =
-        remove_units(units::angular_velocity::degrees_per_second_t{accel_set.yaw_rate});
-    }
-    else{
-      detection.twist.twist.angular.z = 0.0;
-    }
-
-    convert_covariances(detection, common_data, conversion_adjustment);
-
-    convert_object_type(detection, common_data.obj_type);
-
-    detection_list.detections.push_back(std::move(detection));
   }
-
+  catch (...) {
+    RCLCPP_ERROR_STREAM(rclcpp::get_logger("sdsm_to_detection_list_node"), "Error converting SDSM to object, ignoring sdsm message.")
+  }
+  
   return detection_list;
 }
 
