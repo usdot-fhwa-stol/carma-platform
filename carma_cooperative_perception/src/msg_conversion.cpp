@@ -673,7 +673,7 @@ auto to_detection_list_msg(
     }
   }
   catch (...) {
-    RCLCPP_ERROR_STREAM(rclcpp::get_logger("sdsm_to_detection_list_node"), "Error converting SDSM to object, ignoring sdsm message.")
+    RCLCPP_ERROR_STREAM(rclcpp::get_logger("sdsm_to_detection_list_node"), "Error converting SDSM to object, ignoring sdsm message.");
   }
   
   return detection_list;
