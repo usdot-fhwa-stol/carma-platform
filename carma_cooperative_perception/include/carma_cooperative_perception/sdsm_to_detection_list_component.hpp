@@ -109,6 +109,11 @@ public:
 
   auto sdsm_msg_callback(const input_msg_type & msg) const -> void
   {
+    if (!georeference_){
+      RCLCPP_WARN_STREAM(get_logger(), "Georeference not defined yet, ignoring SDSM.");
+      return;
+    }
+
     try {
       std::optional<SdsmToDetectionListConfig> conversion_adjustment = std::nullopt;
       if (config_.overwrite_covariance || config_.adjust_pose) {
