@@ -109,7 +109,7 @@ public:
 
   auto sdsm_msg_callback(const input_msg_type & msg) const -> void
   {
-    if (!georeference_){
+    if (georeference_.empty()){
       RCLCPP_WARN_STREAM(get_logger(), "Georeference not defined yet, ignoring SDSM.");
       return;
     }
