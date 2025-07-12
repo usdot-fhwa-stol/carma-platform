@@ -179,9 +179,10 @@ namespace plan_delegator
 
     carma_ros2_utils::CallbackReturn PlanDelegator::handle_on_activate(const rclcpp_lifecycle::State &)
     {
+        timer_callback_group_ = create_callback_group(rclcpp::CallbackGroupType::MutuallyExclusive);
         traj_timer_ = create_timer(get_clock(),
             std::chrono::milliseconds((int)(1 / config_.trajectory_planning_rate * 1000)),
-            std::bind(&PlanDelegator::onTrajPlanTick, this));
+            std::bind(&PlanDelegator::onTrajPlanTick, this), timer_callback_group_);
          return CallbackReturn::SUCCESS;
     }
 

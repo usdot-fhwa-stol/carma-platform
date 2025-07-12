@@ -200,6 +200,8 @@ namespace plan_delegator
             carma_ros2_utils::SubPtr<carma_planning_msgs::msg::GuidanceState> guidance_state_sub_;
 
             rclcpp::TimerBase::SharedPtr traj_timer_;
+            // Separate callback group for the timer to avoid blocking other callbacks like pose
+            rclcpp::CallbackGroup::SharedPtr timer_callback_group_;
 
             bool guidance_engaged = false;
 
@@ -208,7 +210,7 @@ namespace plan_delegator
             // TF listenser
             std::shared_ptr<tf2_ros::Buffer> tf2_buffer_;
             std::shared_ptr<tf2_ros::TransformListener> tf2_listener_;
-            
+
             // Object to store information regarding the next upcoming lane change in latest_maneuver_plan_; empty if no upcoming lane change exists in latest_maneuver_plan_
             boost::optional<LaneChangeInformation> upcoming_lane_change_information_;
 
