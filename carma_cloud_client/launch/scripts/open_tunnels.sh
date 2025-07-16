@@ -79,6 +79,8 @@ fi
 
 if sudo lsof -t -i:$HOST_PORT >/dev/null; then
     echo "Forward tunnel is successfully opened!"
+else
+        echo "Failed to open forward tunnel"
 fi
 
 
@@ -118,5 +120,7 @@ exec $CMD &> /dev/null  # create the new tunnel
 if [ "$?" -eq 0 ]; then
    if ssh -i $KEY_FILE $REMOTE_USER@$REMOTE_ADDR "sudo lsof -Pi:$REMOTE_PORT -sTCP:LISTEN" >/dev/null; then
         echo "Reverse tunnel is successfully opened!"
+    else
+        echo "Failed to open reverse tunnel"
     fi
 fi

@@ -6,3 +6,4 @@ list : "true" #list determines how the TCMs will be sent in response. "true" mea
 fetchtime : 15  # number of days back when a geofence is valid
 method : "POST"
 webip : "WebServicePort"
+webport : 22222
