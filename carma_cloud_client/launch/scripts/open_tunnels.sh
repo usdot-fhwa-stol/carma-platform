@@ -38,6 +38,37 @@ if [ -z "$TEMP_FILE" ]; then
     TEMP_FILE="/dev/shm/rt_temp.txt"
 fi
 
+# Sends curl request on local port which is supposed to connect to remote instance, to test connection.
+test_forward_tunnel_connectivity() {
+    # small delay to ensure tunnel is ready
+    sleep 1
+
+    if command -v curl >/dev/null 2>&1; then
+        # Use curl to check HTTP response code with retry logic
+        for i in {1..3}; do
+            HTTP_CODE=$(curl --silent --write-out '%{http_code}' --output /dev/null \
+                             --max-time 3 "http://localhost:$HOST_PORT")
+            if [ "$HTTP_CODE" -ge 200 ] && [ "$HTTP_CODE" -lt 400 ]; then
+                return 0
+            fi
+            sleep 1  # Wait before retrying
+        done
+    fi
+    return 1
+}
+
+test_reverse_tunnel_connectivity() {
+    # small delay to ensure tunnel is ready
+    sleep 1
+
+    ssh -o StrictHostKeyChecking=no \
+        -o UserKnownHostsFile=/dev/null \
+        -o LogLevel=ERROR \
+        -i "$KEY_FILE" "$REMOTE_USER@$REMOTE_ADDR" \
+        "timeout 3 bash -c '</dev/tcp/localhost/$REMOTE_PORT'" >/dev/null 2>&1
+
+    return $?
+}
 
 # open http tunnel, port-forwarding from HOST_PORT to port 8080 (8080: running on carma cloud)
 if  [ -z "$REMOTE_USER" ] || [ -z "$REMOTE_ADDR" ] || [ -z "$KEY_FILE" ]; then
@@ -79,6 +110,16 @@ fi
 
 if sudo lsof -t -i:$HOST_PORT >/dev/null; then
     echo "Forward tunnel is successfully opened!"
+
+    # Test connectivity
+    if test_forward_tunnel_connectivity; then
+        echo "Forward tunnel connectivity test passed"
+    else
+        echo "Forward tunnel connectivity test failed"
+        kill_port_processes "$HOST_PORT" "local"
+        return 0
+    fi
+
 else
         echo "Failed to open forward tunnel"
 fi
@@ -115,12 +156,8 @@ done < $TEMP_FILE
 rm $TEMP_FILE
 exec $CMD &> /dev/null  # create the new tunnel
 
-
-
-if [ "$?" -eq 0 ]; then
-   if ssh -i $KEY_FILE $REMOTE_USER@$REMOTE_ADDR "sudo lsof -Pi:$REMOTE_PORT -sTCP:LISTEN" >/dev/null; then
-        echo "Reverse tunnel is successfully opened!"
-    else
-        echo "Failed to open reverse tunnel"
-    fi
+if test_reverse_tunnel_connectivity; then
+    echo "Reverse tunnel successfully created and operational."
+else
+    echo "Reverse tunnel reported created but failed connectivity test."
 fi
