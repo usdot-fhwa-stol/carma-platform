@@ -742,6 +742,7 @@ namespace plan_delegator
                 "It will not be published! Consecutive failure count: "
                 << consecutive_traj_gen_failure_num_);
 
+            // case where traj generation fails after a successful one
             if (last_successful_traj_.has_value()
                 && consecutive_traj_gen_failure_num_
                     <= config_.max_traj_generation_reattempt)
@@ -751,6 +752,13 @@ namespace plan_delegator
                     << std::to_string(
                         rclcpp::Time(last_successful_traj_.value().header.stamp).seconds()));
                 traj_pub_->publish(last_successful_traj_.value());
+            }
+            // case where traj generation fails from the beginning
+            else if (!last_successful_traj_.has_value() &&
+                consecutive_traj_gen_failure_num_ <= config_.max_traj_generation_reattempt)
+            {
+                RCLCPP_WARN_STREAM(rclcpp::get_logger("plan_delegator"),
+                    "Instead, tried publishing last available trajectory, but it is not available!");
             }
             else
             {
