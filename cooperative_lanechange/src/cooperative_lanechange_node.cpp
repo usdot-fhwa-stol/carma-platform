@@ -292,7 +292,17 @@ namespace cooperative_lanechange
     RCLCPP_DEBUG_STREAM(get_logger(), "Starting CLC downtrack: " << maneuver_plan[0].lane_change_maneuver.start_dist);
 
     if(current_downtrack < maneuver_plan[0].lane_change_maneuver.start_dist - config_.starting_downtrack_range){
+<<<<<<< Updated upstream
       RCLCPP_DEBUG_STREAM(get_logger(), "Lane change trajectory will not be planned. current_downtrack is more than " << config_.starting_downtrack_range << " meters before starting CLC downtrack");
+=======
+      RCLCPP_ERROR_STREAM(get_logger(), "Lane change trajectory will not be planned. current_downtrack is more than " << config_.starting_downtrack_range << " meters before starting CLC downtrack");
+
+      std::chrono::system_clock::time_point end_time = std::chrono::system_clock::now();  // Planning complete
+
+      auto duration = end_time - start_time;
+      RCLCPP_ERROR_STREAM(get_logger(), "CLC ExecutionTime: " << std::chrono::duration<double>(duration).count());
+      RCLCPP_WARN_STREAM(get_logger(), "CLC ExecutionTime: " << std::chrono::duration<double>(duration).count());
+>>>>>>> Stashed changes
       return;
     }
     auto current_lanelets = lanelet::geometry::findNearest(wm_->getMap()->laneletLayer, veh_pos, 10);
@@ -424,7 +434,15 @@ namespace cooperative_lanechange
       p.planner_plugin_name = get_plugin_name();
     }
 
+<<<<<<< Updated upstream
     return;
+=======
+    std::chrono::system_clock::time_point end_time = std::chrono::system_clock::now();  // Planning complete
+
+    auto duration = end_time - start_time;
+    RCLCPP_ERROR_STREAM(get_logger(), "CLC ExecutionTime: " << std::chrono::duration<double>(duration).count());
+    RCLCPP_WARN_STREAM(get_logger(), "CLC ExecutionTime: " << std::chrono::duration<double>(duration).count());
+>>>>>>> Stashed changes
   }
 
   void CooperativeLaneChangePlugin::add_trajectory_to_response(carma_planning_msgs::srv::PlanTrajectory::Request::SharedPtr req,

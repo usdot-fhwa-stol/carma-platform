@@ -292,8 +292,12 @@ namespace yield_plugin
       rclcpp::Time end_time = system_clock.now();  // Planning complete
 
       auto duration = end_time - start_time;
-      RCLCPP_DEBUG_STREAM(nh_->get_logger(),
-        "ExecutionTime: " << std::to_string(duration.seconds()));
+      RCLCPP_WARN_STREAM(nh_->get_logger(),
+        "ExecutionTime Yield: " << std::to_string(duration.seconds()));
+      RCLCPP_ERROR_STREAM(nh_->get_logger(),
+        "ExecutionTime Yield: " << std::to_string(duration.seconds()));
+      RCLCPP_ERROR_STREAM(rclcpp::get_logger("yield_plugin"),
+        "ExecutionTime Yield: " << std::to_string(duration.seconds()));
       return;
     }
 
@@ -346,12 +350,12 @@ namespace yield_plugin
       // return original trajectory if no difference in trajectory points a.k.a no collision
       if (fabs(get_trajectory_end_time(original_trajectory) - get_trajectory_end_time(yield_trajectory)) < EPSILON)
       {
-        
+
         resp->trajectory_plan = original_trajectory;
         // Reset the collision prevention variables
         first_time_stopped_to_prevent_collision_ = std::nullopt;
         last_traj_plan_committed_to_stopping_ = std::nullopt;
-        
+
       }
       else
       {
@@ -370,7 +374,10 @@ namespace yield_plugin
     rclcpp::Time end_time = system_clock.now();  // Planning complete
 
     auto duration = end_time - start_time;
-    RCLCPP_DEBUG_STREAM(nh_->get_logger(), "ExecutionTime: " << std::to_string(duration.seconds()));
+    RCLCPP_WARN_STREAM(nh_->get_logger(),
+        "ExecutionTime Yield: " << std::to_string(duration.seconds()));
+      RCLCPP_ERROR_STREAM(rclcpp::get_logger("yield_plugin"),
+        "ExecutionTime Yield: " << std::to_string(duration.seconds()));
   }
 
   carma_planning_msgs::msg::TrajectoryPlan YieldPlugin::update_traj_for_cooperative_behavior(const carma_planning_msgs::msg::TrajectoryPlan& original_tp, double current_speed)
@@ -739,10 +746,10 @@ namespace yield_plugin
         const auto distance{std::hypot(x1 - x2, y1 - y2)};
 
         smallest_dist = std::min(distance, smallest_dist);
-        RCLCPP_DEBUG_STREAM(nh_->get_logger(), "Smallest_dist: " << smallest_dist << ", distance: " << distance << ", dt: " << dt
-          << ", x1: " << x1 << ", y1: " << y1
-          << ", x2: " << x2 << ", y2: " << y2
-          << ", p2a_t:" << std::to_string(p2a_t));
+        // RCLCPP_DEBUG_STREAM(rclcpp::get_logger("yield_plugin"), "Smallest_dist: " << smallest_dist << ", distance: " << distance << ", dt: " << dt
+        //   << ", x1: " << x1 << ", y1: " << y1
+        //   << ", x2: " << x2 << ", y2: " << y2
+        //   << ", p2a_t:" << std::to_string(p2a_t));
 
         // Following "if logic" assumes the traj2 is a simple cv model, aka, traj2 point is a straight line over time.
         // And current traj1 point is fixed in this iteration.
@@ -774,6 +781,8 @@ namespace yield_plugin
         return collision_result;
       }
     }
+    RCLCPP_DEBUG_STREAM(rclcpp::get_logger("yield_plugin"), "Smallest_dist: " << smallest_dist);
+    RCLCPP_WARN_STREAM(nh_->get_logger(), "Smallest_dist: " << smallest_dist);
 
     // No collision detected
     return std::nullopt;

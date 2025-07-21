@@ -189,6 +189,7 @@ namespace plan_delegator
 
         private:
             // ROS Publishers
+            std::optional<carma_planning_msgs::msg::TrajectoryPlan> last_successful_traj_;
             carma_ros2_utils::PubPtr<carma_planning_msgs::msg::TrajectoryPlan> traj_pub_;
             carma_ros2_utils::PubPtr<carma_planning_msgs::msg::UpcomingLaneChangeStatus> upcoming_lane_change_status_pub_;
             carma_ros2_utils::PubPtr<autoware_msgs::msg::LampCmd> turn_signal_command_pub_;
