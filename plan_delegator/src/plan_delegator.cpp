@@ -753,7 +753,7 @@ namespace plan_delegator
                         rclcpp::Time(last_successful_traj_.value().header.stamp).seconds()));
                 traj_pub_->publish(last_successful_traj_.value());
             }
-            // case where traj generation fails from the beginning
+            // case where traj generation fails from the beginning. Attempt replanning for configured number of tries before throwing runtime error.
             else if (!last_successful_traj_.has_value() &&
                 consecutive_traj_gen_failure_num_ <= config_.max_traj_generation_reattempt)
             {
