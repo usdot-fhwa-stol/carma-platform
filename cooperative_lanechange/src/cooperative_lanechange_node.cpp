@@ -264,6 +264,8 @@ namespace cooperative_lanechange
     carma_planning_msgs::srv::PlanTrajectory::Request::SharedPtr req,
     carma_planning_msgs::srv::PlanTrajectory::Response::SharedPtr resp)
   {
+    std::chrono::system_clock::time_point start_time = std::chrono::system_clock::now();
+
     // Set boolean flag if this is the first time this service has been called
     if (!clc_called_)
     {
