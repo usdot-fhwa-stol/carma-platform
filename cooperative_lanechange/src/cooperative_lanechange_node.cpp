@@ -292,7 +292,9 @@ namespace cooperative_lanechange
     RCLCPP_DEBUG_STREAM(get_logger(), "Starting CLC downtrack: " << maneuver_plan[0].lane_change_maneuver.start_dist);
 
     if(current_downtrack < maneuver_plan[0].lane_change_maneuver.start_dist - config_.starting_downtrack_range){
-      RCLCPP_ERROR_STREAM(get_logger(), "Lane change trajectory will not be planned. current_downtrack is more than " << config_.starting_downtrack_range << " meters before starting CLC downtrack");
+      RCLCPP_WARN_STREAM(get_logger(),
+      "Lane change trajectory will not be planned. current_downtrack is more than "
+      << config_.starting_downtrack_range << " meters before starting CLC downtrack");
 
       std::chrono::system_clock::time_point end_time = std::chrono::system_clock::now();  // Planning complete
 
