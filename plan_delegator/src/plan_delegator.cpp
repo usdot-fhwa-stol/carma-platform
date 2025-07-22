@@ -601,7 +601,8 @@ namespace plan_delegator
             RCLCPP_INFO_STREAM(rclcpp::get_logger("plan_delegator"),"Guidance is not engaged. Plan delegator will not plan trajectory.");
             return latest_trajectory_plan;
         }
-
+        // latest_maneuver_plan may get updated, so this is to avoid race condition
+        const auto& locked_maneuver_plan = latest_maneuver_plan_;
         // Flag for the first received trajectory plan service response
         bool first_trajectory_plan = true;
 
@@ -609,10 +610,9 @@ namespace plan_delegator
         uint16_t current_maneuver_index = 0;
 
         // Loop through maneuver list to make service call to applicable Tactical Plugin
-        while(current_maneuver_index < latest_maneuver_plan_.maneuvers.size())
+        while(current_maneuver_index < locked_maneuver_plan.maneuvers.size())
         {
-            // const auto& maneuver = latest_maneuver_plan_.maneuvers[current_maneuver_index];
-            auto& maneuver = latest_maneuver_plan_.maneuvers[current_maneuver_index];
+            auto& maneuver = locked_maneuver_plan.maneuvers[current_maneuver_index];
 
             // ignore expired maneuvers
             if(isManeuverExpired(maneuver, get_clock()->now()))
@@ -654,7 +654,7 @@ namespace plan_delegator
 
             if (future_status != std::future_status::ready)
             {
-                RCLCPP_WARN_STREAM(rclcpp::get_logger("plan_delegator"),"Unsuccessful service call to trajectory planner:" << maneuver_planner << " for plan ID " << std::string(latest_maneuver_plan_.maneuver_plan_id));
+                RCLCPP_WARN_STREAM(rclcpp::get_logger("plan_delegator"),"Unsuccessful service call to trajectory planner:" << maneuver_planner << " for plan ID " << std::string(locked_maneuver_plan.maneuver_plan_id));
                 // if one service call fails, it should end plan immediately because it is there is no point to generate plan with empty space
                 full_plan_generation_failed = true;
                 break;
@@ -668,7 +668,7 @@ namespace plan_delegator
                 RCLCPP_WARN_STREAM(rclcpp::get_logger("plan_delegator"),
                     "Found invalid trajectory with less than 2 trajectory "
                     << "points for maneuver_plan_id: "
-                    << std::string(latest_maneuver_plan_.maneuver_plan_id));
+                    << std::string(locked_maneuver_plan.maneuver_plan_id));
                 full_plan_generation_failed = true;
                 break;
             }
@@ -694,7 +694,7 @@ namespace plan_delegator
 
             if(isTrajectoryLongEnough(latest_trajectory_plan))
             {
-                RCLCPP_INFO_STREAM(rclcpp::get_logger("plan_delegator"),"Plan Trajectory completed for " << std::string(latest_maneuver_plan_.maneuver_plan_id));
+                RCLCPP_INFO_STREAM(rclcpp::get_logger("plan_delegator"),"Plan Trajectory completed for " << std::string(locked_maneuver_plan.maneuver_plan_id));
                 break;
             }
 
