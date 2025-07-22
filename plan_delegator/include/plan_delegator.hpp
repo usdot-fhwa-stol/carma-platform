@@ -183,6 +183,7 @@ namespace plan_delegator
             std::unordered_map<std::string, carma_ros2_utils::ClientPtr<carma_planning_msgs::srv::PlanTrajectory>> trajectory_planners_;
             // local storage of incoming messages
             carma_planning_msgs::msg::ManeuverPlan latest_maneuver_plan_;
+            bool received_maneuver_plan_ = false;
             geometry_msgs::msg::PoseStamped latest_pose_;
             geometry_msgs::msg::TwistStamped latest_twist_;
 

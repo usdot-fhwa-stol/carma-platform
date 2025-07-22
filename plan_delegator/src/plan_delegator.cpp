@@ -198,7 +198,7 @@ namespace plan_delegator
         RCLCPP_INFO_STREAM(rclcpp::get_logger("plan_delegator"),"Received request to delegate plan ID " << std::string(plan->maneuver_plan_id));
         // do basic check to see if the input is valid
         auto copy_plan = *plan;
-
+        received_maneuver_plan_ = true;
         if (isManeuverPlanValid(copy_plan))
         {
             latest_maneuver_plan_ = copy_plan;
@@ -721,7 +721,7 @@ namespace plan_delegator
     void PlanDelegator::onTrajPlanTick()
     {
         // Guidance not engaged or haven't received a maneuver plan yet
-        if (!guidance_engaged || latest_maneuver_plan_.header.stamp.sec == 0)
+        if (!guidance_engaged || !received_maneuver_plan_)
         {
             return;
         }
