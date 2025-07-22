@@ -264,6 +264,8 @@ namespace cooperative_lanechange
     carma_planning_msgs::srv::PlanTrajectory::Request::SharedPtr req,
     carma_planning_msgs::srv::PlanTrajectory::Response::SharedPtr resp)
   {
+    std::chrono::system_clock::time_point start_time = std::chrono::system_clock::now();
+
     // Set boolean flag if this is the first time this service has been called
     if (!clc_called_)
     {
@@ -292,7 +294,16 @@ namespace cooperative_lanechange
     RCLCPP_DEBUG_STREAM(get_logger(), "Starting CLC downtrack: " << maneuver_plan[0].lane_change_maneuver.start_dist);
 
     if(current_downtrack < maneuver_plan[0].lane_change_maneuver.start_dist - config_.starting_downtrack_range){
-      RCLCPP_DEBUG_STREAM(get_logger(), "Lane change trajectory will not be planned. current_downtrack is more than " << config_.starting_downtrack_range << " meters before starting CLC downtrack");
+      RCLCPP_WARN_STREAM(get_logger(),
+      "Lane change trajectory will not be planned. current_downtrack is more than "
+      << config_.starting_downtrack_range << " meters before starting CLC downtrack");
+
+      std::chrono::system_clock::time_point end_time = std::chrono::system_clock::now();  // Planning complete
+
+      auto duration = end_time - start_time;
+      RCLCPP_DEBUG_STREAM(
+        rclcpp::get_logger("cooperative_lanechange"),
+        "CLC ExecutionTime: " << std::chrono::duration<double>(duration).count());
       return;
     }
     auto current_lanelets = lanelet::geometry::findNearest(wm_->getMap()->laneletLayer, veh_pos, 10);
@@ -424,7 +435,12 @@ namespace cooperative_lanechange
       p.planner_plugin_name = get_plugin_name();
     }
 
-    return;
+    std::chrono::system_clock::time_point end_time = std::chrono::system_clock::now();  // Planning complete
+
+    auto duration = end_time - start_time;
+    RCLCPP_DEBUG_STREAM(
+      rclcpp::get_logger("cooperative_lanechange"),
+      "CLC ExecutionTime: " << std::chrono::duration<double>(duration).count());
   }
 
   void CooperativeLaneChangePlugin::add_trajectory_to_response(carma_planning_msgs::srv::PlanTrajectory::Request::SharedPtr req,

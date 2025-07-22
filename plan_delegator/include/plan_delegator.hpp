@@ -79,6 +79,7 @@ namespace plan_delegator
         double duration_to_signal_before_lane_change = 2.5; // (Seconds) If an upcoming lane change will begin in under this time threshold, a turn signal activation command will be published.
         int tactical_plugin_service_call_timeout = 100; // (Milliseconds) The maximum duration that Plan Delegator will wait after calling a tactical plugin's trajectory planning service; if trajectory
                                                         // generation takes longer than this, then planning will immediately end for the current trajectory planning iteration.
+        int max_traj_generation_reattempt = 5; // The maximum number of times plan_delegator attempts to generate a trajectory before giving up
 
         // Stream operator for this config
         friend std::ostream &operator<<(std::ostream &output, const Config &c)
@@ -89,6 +90,8 @@ namespace plan_delegator
             << "trajectory_planning_rate: " << c.trajectory_planning_rate << std::endl
             << "max_trajectory_duration: " << c.max_trajectory_duration << std::endl
             << "min_crawl_speed: " << c.min_crawl_speed << std::endl
+            << "tactical_plugin_service_call_timeout: " << c.tactical_plugin_service_call_timeout << std::endl
+            << "max_traj_generation_reattempt: " << c.max_traj_generation_reattempt << std::endl
             << "duration_to_signal_before_lane_change: " << c.duration_to_signal_before_lane_change << std::endl
             << "}" << std::endl;
         return output;
@@ -189,6 +192,7 @@ namespace plan_delegator
 
         private:
             // ROS Publishers
+            std::optional<carma_planning_msgs::msg::TrajectoryPlan> last_successful_traj_;
             carma_ros2_utils::PubPtr<carma_planning_msgs::msg::TrajectoryPlan> traj_pub_;
             carma_ros2_utils::PubPtr<carma_planning_msgs::msg::UpcomingLaneChangeStatus> upcoming_lane_change_status_pub_;
             carma_ros2_utils::PubPtr<autoware_msgs::msg::LampCmd> turn_signal_command_pub_;
@@ -204,6 +208,7 @@ namespace plan_delegator
             rclcpp::CallbackGroup::SharedPtr timer_callback_group_;
 
             bool guidance_engaged = false;
+            int consecutive_traj_gen_failure_num_ = 0; // Number of consecutive trajectory generation failures
 
             double length_to_front_bumper_ = 3.0;
 

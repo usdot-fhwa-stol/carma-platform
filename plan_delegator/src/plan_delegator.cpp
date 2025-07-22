@@ -142,6 +142,7 @@ namespace plan_delegator
         config_.max_trajectory_duration = declare_parameter<double>("trajectory_duration_threshold", config_.max_trajectory_duration);
         config_.min_crawl_speed = declare_parameter<double>("min_speed", config_.min_crawl_speed);
         config_.duration_to_signal_before_lane_change = declare_parameter<double>("duration_to_signal_before_lane_change", config_.duration_to_signal_before_lane_change);
+        config_.max_traj_generation_reattempt = declare_parameter<int>("max_traj_generation_reattempt", config_.max_traj_generation_reattempt);
         config_.tactical_plugin_service_call_timeout = declare_parameter<int>("tactical_plugin_service_call_timeout", config_.tactical_plugin_service_call_timeout);
     }
 
@@ -157,6 +158,7 @@ namespace plan_delegator
         get_parameter<double>("min_speed", config_.min_crawl_speed);
         get_parameter<double>("duration_to_signal_before_lane_change", config_.duration_to_signal_before_lane_change);
         get_parameter<int>("tactical_plugin_service_call_timeout", config_.tactical_plugin_service_call_timeout);
+        get_parameter<int>("max_traj_generation_reattempt", config_.max_traj_generation_reattempt);
 
         RCLCPP_INFO_STREAM(rclcpp::get_logger("plan_delegator"),"Done loading parameters: " << config_);
 
@@ -593,6 +595,7 @@ namespace plan_delegator
     carma_planning_msgs::msg::TrajectoryPlan PlanDelegator::planTrajectory()
     {
         carma_planning_msgs::msg::TrajectoryPlan latest_trajectory_plan;
+        bool full_plan_generation_failed = false;
         if(!guidance_engaged)
         {
             RCLCPP_INFO_STREAM(rclcpp::get_logger("plan_delegator"),"Guidance is not engaged. Plan delegator will not plan trajectory.");
@@ -653,6 +656,7 @@ namespace plan_delegator
             {
                 RCLCPP_WARN_STREAM(rclcpp::get_logger("plan_delegator"),"Unsuccessful service call to trajectory planner:" << maneuver_planner << " for plan ID " << std::string(latest_maneuver_plan_.maneuver_plan_id));
                 // if one service call fails, it should end plan immediately because it is there is no point to generate plan with empty space
+                full_plan_generation_failed = true;
                 break;
             }
 
@@ -665,6 +669,7 @@ namespace plan_delegator
                     "Found invalid trajectory with less than 2 trajectory "
                     << "points for maneuver_plan_id: "
                     << std::string(latest_maneuver_plan_.maneuver_plan_id));
+                full_plan_generation_failed = true;
                 break;
             }
             //Remove duplicate point from start of trajectory
@@ -701,6 +706,15 @@ namespace plan_delegator
             }
         }
 
+        if (full_plan_generation_failed)
+        {
+            RCLCPP_WARN_STREAM(rclcpp::get_logger("plan_delegator"),
+                "Plan_delegator's current run wasn't fully able to generate trajectory!");
+
+            carma_planning_msgs::msg::TrajectoryPlan empty_plan;
+            return empty_plan;
+        }
+
         return latest_trajectory_plan;
     }
 
@@ -716,13 +730,43 @@ namespace plan_delegator
         if(isTrajectoryValid(trajectory_plan))
         {
             trajectory_plan.header.stamp = get_clock()->now();
+            last_successful_traj_ = trajectory_plan;
             traj_pub_->publish(trajectory_plan);
+            consecutive_traj_gen_failure_num_ = 0;
         }
         else
         {
+            consecutive_traj_gen_failure_num_ ++;
             RCLCPP_WARN_STREAM(rclcpp::get_logger("plan_delegator"),
-                "Guidance is engaged, but planned trajectory has less than 2 points. " <<
-                "It will not be published!");
+                "Guidance is engaged, but new planned trajectory has less than 2 points. " <<
+                "It will not be published! Consecutive failure count: "
+                << consecutive_traj_gen_failure_num_);
+
+            // case where traj generation fails after a successful one
+            if (last_successful_traj_.has_value()
+                && consecutive_traj_gen_failure_num_
+                    <= config_.max_traj_generation_reattempt)
+            {
+                RCLCPP_WARN_STREAM(rclcpp::get_logger("plan_delegator"),
+                    "Instead, last available trajectory is published with outdated timestamp of:"
+                    << std::to_string(
+                        rclcpp::Time(last_successful_traj_.value().header.stamp).seconds()));
+                traj_pub_->publish(last_successful_traj_.value());
+            }
+            // case where traj generation fails from the beginning. Attempt replanning for configured number of tries before throwing runtime error.
+            else if (!last_successful_traj_.has_value() &&
+                consecutive_traj_gen_failure_num_ <= config_.max_traj_generation_reattempt)
+            {
+                RCLCPP_WARN_STREAM(rclcpp::get_logger("plan_delegator"),
+                    "Instead, tried publishing last available trajectory, but it is not available!");
+            }
+            else
+            {
+                RCLCPP_ERROR_STREAM(rclcpp::get_logger("plan_delegator"),
+                    "No valid trajectory is available to publish! "
+                    "Please check the planner plugins and their configurations.");
+                throw std::runtime_error("No valid trajectory is available to publish!");
+            }
         }
     }
 
