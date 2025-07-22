@@ -607,7 +607,7 @@ namespace plan_delegator
 
         // Track the index of the starting maneuver in the maneuver plan that this trajectory plan service request is for
         uint16_t current_maneuver_index = 0;
-
+        int count_expired_maneuvers = 0;
         // Loop through maneuver list to make service call to applicable Tactical Plugin
         while(current_maneuver_index < latest_maneuver_plan_.maneuvers.size())
         {
@@ -620,6 +620,12 @@ namespace plan_delegator
                 RCLCPP_INFO_STREAM(rclcpp::get_logger("plan_delegator"),"Dropping expired maneuver: " << GET_MANEUVER_PROPERTY(maneuver, parameters.maneuver_id));
                 // Update the maneuver plan index for the next loop
                 ++current_maneuver_index;
+                // only LANE_FOLLOWING are expected to be contiguous,
+                // so accounting for expired maneuvers is crucial to correctly track the curr index
+                if (maneuver.type == carma_planning_msgs::msg::Maneuver::LANE_FOLLOWING)
+                {
+                    count_expired_maneuvers++;
+                }
                 continue;
             }
             lanelet::BasicPoint2d current_loc(latest_pose_.pose.position.x, latest_pose_.pose.position.y);
@@ -634,9 +640,14 @@ namespace plan_delegator
                 RCLCPP_INFO_STREAM(rclcpp::get_logger("plan_delegator"),"Dropping passed maneuver: " << GET_MANEUVER_PROPERTY(maneuver, parameters.maneuver_id));
                 // Update the maneuver plan index for the next loop
                 ++current_maneuver_index;
+                // only LANE_FOLLOWING are expected to be contiguous,
+                // so accounting for expired maneuvers is crucial to correctly track the curr index
+                if (maneuver.type == carma_planning_msgs::msg::Maneuver::LANE_FOLLOWING)
+                {
+                    count_expired_maneuvers++;
+                }
                 continue;
             }
-
 
             // get corresponding ros service client for plan trajectory
             auto maneuver_planner = GET_MANEUVER_PROPERTY(maneuver, parameters.planning_tactical_plugin);
@@ -702,8 +713,12 @@ namespace plan_delegator
             // This is required since inlanecruising_plugin can plan a trajectory over contiguous LANE_FOLLOWING maneuvers
             if(plan_response->related_maneuvers.size() > 0)
             {
-                current_maneuver_index = plan_response->related_maneuvers.back() + 1;
+                // also expired maneuvers were ignored, so it shouldn't affect the index
+                current_maneuver_index =
+                    plan_response->related_maneuvers.back() + 1 - count_expired_maneuvers;
             }
+            // safely reset the counter, because by this point they are accounted
+            count_expired_maneuvers = 0;
         }
 
         if (full_plan_generation_failed)
