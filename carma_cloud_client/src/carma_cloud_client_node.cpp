@@ -57,7 +57,7 @@ namespace carma_cloud_client
 
   carma_ros2_utils::CallbackReturn CarmaCloudClient::handle_on_configure(const rclcpp_lifecycle::State &)
   {
-    RCLCPP_WARN_STREAM(this->get_logger(), "CarmaCloudClient trying to configure");
+    RCLCPP_DEBUG_STREAM(this->get_logger(), "CarmaCloudClient trying to configure");
     // Reset config
     config_ = Config();
     // Load parameters
@@ -93,7 +93,7 @@ namespace carma_cloud_client
 
     CloudSend(xml_str, config_.url, config_.base_req, config_.method);
 
-    RCLCPP_WARN_STREAM(  get_logger(), "tcr_sub_ callback called ");
+    RCLCPP_DEBUG_STREAM(  get_logger(), "tcr_sub_ callback called ");
   }
 
   void CarmaCloudClient::XMLconversion(char* xml_str, carma_v2x_msgs::msg::TrafficControlRequest request_msg)
@@ -102,7 +102,7 @@ namespace carma_cloud_client
 
     j2735_convertor::geofence_request::convert(request_msg, j2735_tcr);
 
-    RCLCPP_WARN_STREAM(  get_logger(), "converted: ");
+    RCLCPP_DEBUG_STREAM(  get_logger(), "converted: ");
 
     size_t hexlen = 2; //size of each hex representation with a leading 0
     char reqid[j2735_tcr.tcr_v01.reqid.id.size() * hexlen + 1];
@@ -111,13 +111,13 @@ namespace carma_cloud_client
       sprintf(reqid+(i*hexlen), "%.2X", j2735_tcr.tcr_v01.reqid.id[i]);
     }
 
-	  RCLCPP_WARN_STREAM(  get_logger(), "reqid: " << reqid);
+	  RCLCPP_DEBUG_STREAM(  get_logger(), "reqid: " << reqid);
 
     long int reqseq = j2735_tcr.tcr_v01.reqseq;
-    RCLCPP_WARN_STREAM(  get_logger(), "reqseq: " << reqseq);
+    RCLCPP_DEBUG_STREAM(  get_logger(), "reqseq: " << reqseq);
 
 	  long int scale = j2735_tcr.tcr_v01.scale;
-    RCLCPP_WARN_STREAM(  get_logger(), "scale: " << scale);
+    RCLCPP_DEBUG_STREAM(  get_logger(), "scale: " << scale);
 
     int totBounds =  j2735_tcr.tcr_v01.bounds.size();
     int cnt=0;
@@ -154,7 +154,7 @@ namespace carma_cloud_client
     // with port and list
     sprintf(xml_str,"<?xml version=\"1.0\" encoding=\"UTF-8\"?><TrafficControlRequest port=\"%s\" list=\"%s\"><reqid>%s</reqid><reqseq>%ld</reqseq><scale>%ld</scale>%s</TrafficControlRequest>", std::to_string(config_.webport).c_str(), list, reqid, reqseq,scale,bounds_str);
 
-    RCLCPP_WARN_STREAM(  get_logger(), "xml_str: " << xml_str);
+    RCLCPP_DEBUG_STREAM(  get_logger(), "xml_str: " << xml_str);
 
   }
 
@@ -163,7 +163,7 @@ namespace carma_cloud_client
     CURL *req;
     CURLcode res;
     std::string urlfull = local_url + config_.port + local_base;
-    RCLCPP_WARN_STREAM(  get_logger(), "full url: " << urlfull);
+    RCLCPP_DEBUG_STREAM(  get_logger(), "full url: " << urlfull);
     req = curl_easy_init();
     if(req) {
       curl_easy_setopt(req, CURLOPT_URL, urlfull.c_str());
@@ -222,7 +222,7 @@ namespace carma_cloud_client
     }
     else
     {
-		  RCLCPP_WARN_STREAM(  get_logger(), "Error initalize stream. Err code = " << err);
+		  RCLCPP_DEBUG_STREAM(  get_logger(), "Error initalize stream. Err code = " << err);
     }
     //Finished decompress data stream
     inflateEnd(&strm);
@@ -253,11 +253,11 @@ namespace carma_cloud_client
 
     std::string tcm_string = _cloudUpdate;
 
-    RCLCPP_WARN_STREAM(  get_logger(), "Received TCM from cloud");
-    RCLCPP_WARN_STREAM(  get_logger(), "TCM in XML format: " << tcm_string);
+    RCLCPP_DEBUG_STREAM(  get_logger(), "Received TCM from cloud");
+    RCLCPP_DEBUG_STREAM(  get_logger(), "TCM in XML format: " << tcm_string);
     if(tcm_string.length() == 0)
     {
-      RCLCPP_WARN_STREAM(  get_logger(), "Received TCM length is zero, and skipped.");
+      RCLCPP_DEBUG_STREAM(  get_logger(), "Received TCM length is zero, and skipped.");
       return;
     }
 
@@ -388,7 +388,7 @@ namespace carma_cloud_client
         return 1;
     }
 
-    RCLCPP_WARN_STREAM(this->get_logger(), "CarmaCloudClient :: Started web service");
+    RCLCPP_DEBUG_STREAM(this->get_logger(), "CarmaCloudClient :: Started web service");
     return a.exec();
 
   }
