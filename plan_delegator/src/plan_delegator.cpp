@@ -414,10 +414,14 @@ namespace plan_delegator
         return false;
     }
 
-    std::shared_ptr<carma_planning_msgs::srv::PlanTrajectory::Request> PlanDelegator::composePlanTrajectoryRequest(const carma_planning_msgs::msg::TrajectoryPlan& latest_trajectory_plan, const uint16_t& current_maneuver_index) const
+    std::shared_ptr<carma_planning_msgs::srv::PlanTrajectory::Request>
+    PlanDelegator::composePlanTrajectoryRequest(
+        const carma_planning_msgs::msg::TrajectoryPlan& latest_trajectory_plan,
+        const carma_planning_msgs::msg::Maneuver& maneuver,
+        const uint16_t& current_maneuver_index) const
     {
         auto plan_req = std::make_shared<carma_planning_msgs::srv::PlanTrajectory::Request>();
-        plan_req->maneuver_plan = latest_maneuver_plan_;
+        plan_req->maneuver_plan = maneuver;
 
         // set current vehicle state if we have NOT planned any previous trajectories
         if(latest_trajectory_plan.trajectory_points.empty())
@@ -603,6 +607,7 @@ namespace plan_delegator
         }
         // latest_maneuver_plan may get updated, so this is to avoid race condition
         const auto& locked_maneuver_plan = latest_maneuver_plan_;
+
         // Flag for the first received trajectory plan service response
         bool first_trajectory_plan = true;
 
@@ -637,7 +642,6 @@ namespace plan_delegator
                 continue;
             }
 
-
             // get corresponding ros service client for plan trajectory
             auto maneuver_planner = GET_MANEUVER_PROPERTY(maneuver, parameters.planning_tactical_plugin);
 
@@ -646,7 +650,8 @@ namespace plan_delegator
             RCLCPP_DEBUG_STREAM(rclcpp::get_logger("plan_delegator"),"Current planner: " << maneuver_planner);
 
             // compose service request
-            auto plan_req = composePlanTrajectoryRequest(latest_trajectory_plan, current_maneuver_index);
+            auto plan_req = composePlanTrajectoryRequest(
+                latest_trajectory_plan, locked_maneuver_plan, current_maneuver_index);
 
             auto future_response = client->async_send_request(plan_req);
 

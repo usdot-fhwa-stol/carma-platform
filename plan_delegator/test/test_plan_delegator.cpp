@@ -116,7 +116,7 @@ namespace plan_delegator{
         point_2.target_time = rclcpp::Time(1.41421e9, pd->get_clock()->get_clock_type());
         traj_plan.trajectory_points.push_back(point_1);
         traj_plan.trajectory_points.push_back(point_2);
-        auto req = pd->composePlanTrajectoryRequest(traj_plan, current_maneuver_index);
+        auto req = pd->composePlanTrajectoryRequest(traj_plan, new_plan, current_maneuver_index);
         EXPECT_NEAR(1.0, req->vehicle_state.x_pos_global, 0.01);
         EXPECT_NEAR(1.0, req->vehicle_state.y_pos_global, 0.01);
         EXPECT_NEAR(1.0, req->vehicle_state.longitudinal_vel, 0.1);

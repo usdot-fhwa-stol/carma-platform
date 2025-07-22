@@ -154,7 +154,11 @@ namespace plan_delegator
              * \brief Generate new PlanTrajecory service request based on current planning progress
              * \return a PlanTrajectoryRequest which is ready to be used in the following service call
              */
-            std::shared_ptr<carma_planning_msgs::srv::PlanTrajectory::Request> composePlanTrajectoryRequest(const carma_planning_msgs::msg::TrajectoryPlan& latest_trajectory_plan, const uint16_t& current_maneuver_index) const;
+            std::shared_ptr<carma_planning_msgs::srv::PlanTrajectory::Request>
+                composePlanTrajectoryRequest(
+                    const carma_planning_msgs::msg::TrajectoryPlan& latest_trajectory_plan,
+                    const carma_planning_msgs::msg::Maneuver& maneuver, const uint16_t&
+                    current_maneuver_index) const;
 
             /**
              * \brief Lookup transfrom from front bumper to base link
