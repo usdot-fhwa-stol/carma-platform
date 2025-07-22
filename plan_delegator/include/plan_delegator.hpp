@@ -152,7 +152,11 @@ namespace plan_delegator
 
             /**
              * \brief Generate new PlanTrajecory service request based on current planning progress
-             * \return a PlanTrajectoryRequest which is ready to be used in the following service call
+             * \param latest_trajectory_plan The trajectory plan to append the resulting trajectory
+             * \param locked_maneuver_plan The maneuver plan to send to the tactical plugin
+             * \param current_maneuver_index The idx of the maneuver in the maneuver plan that
+                this request is for
+             * \return a PlanTrajectoryRequest to be used in the service call to the tactical plugin
              */
             std::shared_ptr<carma_planning_msgs::srv::PlanTrajectory::Request>
                 composePlanTrajectoryRequest(
