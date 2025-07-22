@@ -720,7 +720,8 @@ namespace plan_delegator
 
     void PlanDelegator::onTrajPlanTick()
     {
-        if (!guidance_engaged)
+        // Guidance not engaged or haven't received a maneuver plan yet
+        if (!guidance_engaged || latest_maneuver_plan_.header.stamp.sec == 0)
         {
             return;
         }
