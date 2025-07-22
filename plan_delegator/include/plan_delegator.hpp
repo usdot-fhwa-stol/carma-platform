@@ -161,7 +161,7 @@ namespace plan_delegator
             std::shared_ptr<carma_planning_msgs::srv::PlanTrajectory::Request>
                 composePlanTrajectoryRequest(
                     const carma_planning_msgs::msg::TrajectoryPlan& latest_trajectory_plan,
-                    const carma_planning_msgs::msg::Maneuver& locked_maneuver_plan,
+                    const carma_planning_msgs::msg::ManeuverPlan& locked_maneuver_plan,
                     const uint16_t& current_maneuver_index) const;
 
             /**
