@@ -417,11 +417,11 @@ namespace plan_delegator
     std::shared_ptr<carma_planning_msgs::srv::PlanTrajectory::Request>
     PlanDelegator::composePlanTrajectoryRequest(
         const carma_planning_msgs::msg::TrajectoryPlan& latest_trajectory_plan,
-        const carma_planning_msgs::msg::Maneuver& maneuver,
+        const carma_planning_msgs::msg::Maneuver& locked_maneuver_plan,
         const uint16_t& current_maneuver_index) const
     {
         auto plan_req = std::make_shared<carma_planning_msgs::srv::PlanTrajectory::Request>();
-        plan_req->maneuver_plan = maneuver;
+        plan_req->maneuver_plan = locked_maneuver_plan;
 
         // set current vehicle state if we have NOT planned any previous trajectories
         if(latest_trajectory_plan.trajectory_points.empty())

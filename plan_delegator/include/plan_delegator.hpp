@@ -157,8 +157,8 @@ namespace plan_delegator
             std::shared_ptr<carma_planning_msgs::srv::PlanTrajectory::Request>
                 composePlanTrajectoryRequest(
                     const carma_planning_msgs::msg::TrajectoryPlan& latest_trajectory_plan,
-                    const carma_planning_msgs::msg::Maneuver& maneuver, const uint16_t&
-                    current_maneuver_index) const;
+                    const carma_planning_msgs::msg::Maneuver& locked_maneuver_plan,
+                    const uint16_t& current_maneuver_index) const;
 
             /**
              * \brief Lookup transfrom from front bumper to base link
