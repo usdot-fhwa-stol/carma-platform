@@ -605,8 +605,8 @@ namespace plan_delegator
             RCLCPP_INFO_STREAM(rclcpp::get_logger("plan_delegator"),"Guidance is not engaged. Plan delegator will not plan trajectory.");
             return latest_trajectory_plan;
         }
-        // latest_maneuver_plan may get updated, so this is to avoid race condition
-        const auto& locked_maneuver_plan = latest_maneuver_plan_;
+        // latest_maneuver_plan may get updated, so local copy to avoid race condition
+        auto locked_maneuver_plan = latest_maneuver_plan_;
 
         // Flag for the first received trajectory plan service response
         bool first_trajectory_plan = true;
