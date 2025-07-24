@@ -724,7 +724,7 @@ namespace yield_plugin
         // Temporary workaround for the issue CDAD-187 and CDAD-141
         // //magic collision time horizon hardcoded at the moment
         // //we shouldn't extrapolate the trajectory more than 2 seconds this will give wrong results
-        // double collision_time_radius = std::fabs(p2a_t - p1a_t);
+        double collision_time_radius = std::fabs(p2a_t - p1a_t);
         // if (collision_time_radius > 2.0)
         // {
         //   RCLCPP_DEBUG_STREAM(nh_->get_logger(),
