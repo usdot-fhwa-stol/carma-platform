@@ -725,13 +725,13 @@ namespace yield_plugin
         // //magic collision time horizon hardcoded at the moment
         // //we shouldn't extrapolate the trajectory more than 2 seconds this will give wrong results
         double collision_time_radius = std::fabs(p2a_t - p1a_t);
-        // if (collision_time_radius > 2.0)
-        // {
-        //   RCLCPP_DEBUG_STREAM(nh_->get_logger(),
-        //     "Skipping pair of points because the time horizon is too large: "
-        //     << collision_time_radius);
-        //   continue;
-        // }
+        if (collision_time_radius > 2.0)
+        {
+          RCLCPP_DEBUG_STREAM(nh_->get_logger(),
+            "Skipping pair of points because the time horizon is too large: "
+            << collision_time_radius);
+          continue;
+        }
 
         RCLCPP_DEBUG_STREAM(nh_->get_logger(), "p1a.target_time: " << std::to_string(p1a_t) << ", p1b.target_time: " << std::to_string(p1b_t));
         RCLCPP_DEBUG_STREAM(nh_->get_logger(), "p2a.target_time: " << std::to_string(p2a_t) << ", p2b.target_time: " << std::to_string(p2b_t));
@@ -780,14 +780,6 @@ namespace yield_plugin
           rclcpp::get_logger("yield_plugin"),
           "Returning collision with interpolation of time: " <<
           collision_time_radius << " seconds.");
-
-        if (collision_time_radius > 2.0)
-        {
-          RCLCPP_ERROR_STREAM(
-          rclcpp::get_logger("yield_plugin"),
-          "This interpolation is too extended: " <<
-          collision_time_radius << " seconds.");
-        }
 
         GetCollisionResult collision_result;
         collision_result.point1 = lanelet::BasicPoint2d(x1,y1);
