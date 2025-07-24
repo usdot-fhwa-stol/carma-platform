@@ -724,7 +724,7 @@ namespace yield_plugin
         // Temporary workaround for the issue CDAD-187 and CDAD-141
         // //magic collision time horizon hardcoded at the moment
         // //we shouldn't extrapolate the trajectory more than 2 seconds this will give wrong results
-        // double collision_time_radius = std::fabs(p1b_t - p1a_t);
+        // double collision_time_radius = std::fabs(p2a_t - p1a_t);
         // if (collision_time_radius > 2.0)
         // {
         //   RCLCPP_DEBUG_STREAM(nh_->get_logger(),
@@ -778,8 +778,16 @@ namespace yield_plugin
 
         RCLCPP_ERROR_STREAM(
           rclcpp::get_logger("yield_plugin"),
-          "Returning collision with extended interpolation of time: " <<
-          collision_time_radius << " seconds. This is WRONG!");
+          "Returning collision with interpolation of time: " <<
+          collision_time_radius << " seconds.");
+
+        if (collision_time_radius > 2.0)
+        {
+          RCLCPP_ERROR_STREAM(
+          rclcpp::get_logger("yield_plugin"),
+          "This interpolation is too extended: " <<
+          collision_time_radius << " seconds.");
+        }
 
         GetCollisionResult collision_result;
         collision_result.point1 = lanelet::BasicPoint2d(x1,y1);
