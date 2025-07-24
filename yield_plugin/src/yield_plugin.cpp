@@ -722,9 +722,11 @@ namespace yield_plugin
         double p2b_t = rclcpp::Time(p2b.header.stamp).seconds();
 
         // Temporary workaround for the issue CDAD-187 and CDAD-141
-        // //magic collision time horizon hardcoded at the moment
-        // //we shouldn't extrapolate the trajectory more than 2 seconds this will give wrong results
         double collision_time_radius = std::fabs(p2a_t - p1a_t);
+        // magic collision time horizon hardcoded at the moment
+        // extrapolating more than this will result in collision location
+        // too far out in the future. such collisions should be 
+        // calculated from trajectory points close to that collision time
         if (collision_time_radius > 2.0)
         {
           RCLCPP_DEBUG_STREAM(nh_->get_logger(),
@@ -776,9 +778,9 @@ namespace yield_plugin
           continue;
         }
 
-        RCLCPP_ERROR_STREAM(
+        RCLCPP_DEBUG_STREAM(
           rclcpp::get_logger("yield_plugin"),
-          "Returning collision with interpolation of time: " <<
+          "Returning collision with extrapolation of time: " <<
           collision_time_radius << " seconds.");
 
         GetCollisionResult collision_result;
