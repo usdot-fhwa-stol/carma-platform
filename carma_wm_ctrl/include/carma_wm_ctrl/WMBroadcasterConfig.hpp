@@ -29,6 +29,7 @@ namespace carma_wm_ctrl
   {
     int ack_pub_times = 1; // The number of times it publishes Geofence Acknowledgement.
     double max_lane_width = 4.0; // Max lane width in meters within which geofence points are associated to a lanelet as those points are guaranteed to apply to a single lane
+    double tcr_bbox_expansion_meters = 50.0; // How much in meters to expand the TCR Bounding Box
     double traffic_control_request_period = 1.0; //Period in seconds between traffic control requests after route selection
     std::vector<double> intersection_coord_correction = {}; // Every element corresponds to intersection_id of every two elements (x,y) in intersection_coord_correction (id must be [0, +65535] ranges)
     std::vector<int64_t> intersection_ids_for_correction = {}; //Every 2 element describes coordinate correction [delta_x, delta_y] for each intersection_id in intersection_ids_for_correction in same order
