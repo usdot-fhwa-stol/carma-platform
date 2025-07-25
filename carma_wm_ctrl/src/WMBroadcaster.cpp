@@ -1661,6 +1661,11 @@ carma_planning_msgs::msg::Route WMBroadcaster::getRoute()
   return current_route;
 }
 
+void WMBroadcaster::setTCRBoundBoxExpansionMeters(double tcr_bbox_expansion_meters)
+{
+  tcr_bbox_expansion_meters_ = tcr_bbox_expansion_meters;
+}
+
 void  WMBroadcaster::routeCallbackMessage(carma_planning_msgs::msg::Route::UniquePtr route_msg)
 {
  current_route = *route_msg;
@@ -1743,6 +1748,11 @@ carma_v2x_msgs::msg::TrafficControlRequest WMBroadcaster::controlRequestFromRout
   lanelet::projection::LocalFrameProjector local_projector(target_frame.c_str());
   lanelet::BasicPoint3d localPoint;
 
+  minX -= tcr_bbox_expansion_meters_;
+  minY -= tcr_bbox_expansion_meters_;
+  maxX += tcr_bbox_expansion_meters_;
+  maxY += tcr_bbox_expansion_meters_;
+  
   localPoint.x()= minX;
   localPoint.y()= minY;
 

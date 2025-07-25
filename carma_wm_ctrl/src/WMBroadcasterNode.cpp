@@ -57,6 +57,7 @@ WMBroadcasterNode::WMBroadcasterNode(const rclcpp::NodeOptions &options)
 
   config_.ack_pub_times = declare_parameter<int>("ack_pub_times", config_.ack_pub_times);
   config_.max_lane_width = declare_parameter<double>("max_lane_width", config_.max_lane_width);
+  config_.tcr_bbox_expansion_meters = declare_parameter<double>("tcr_bbox_expansion_meters", config_.tcr_bbox_expansion_meters);
   config_.traffic_control_request_period = declare_parameter<double>("traffic_control_request_period", config_.traffic_control_request_period);
   config_.vehicle_id = declare_parameter<std::string>("vehicle_id", config_.vehicle_id);
   config_.participant = declare_parameter<std::string>("vehicle_participant_type", config_.participant);
@@ -87,6 +88,7 @@ carma_ros2_utils::CallbackReturn WMBroadcasterNode::handle_on_configure(const rc
 
   get_parameter<int>("ack_pub_times", config_.ack_pub_times);
   get_parameter<double>("max_lane_width", config_.max_lane_width);
+  get_parameter<double>("tcr_bbox_expansion_meters", config_.tcr_bbox_expansion_meters);
   get_parameter<double>("traffic_control_request_period", config_.traffic_control_request_period);
   get_parameter<std::string>("vehicle_id", config_.vehicle_id);
   get_parameter<std::string>("vehicle_participant_type", config_.participant);
@@ -94,6 +96,7 @@ carma_ros2_utils::CallbackReturn WMBroadcasterNode::handle_on_configure(const rc
 
   wmb_->setConfigACKPubTimes(config_.ack_pub_times);
   wmb_->setMaxLaneWidth(config_.max_lane_width);
+  wmb_->setTCRBoundBoxExpansionMeters(config_.tcr_bbox_expansion_meters);
   wmb_->setConfigSpeedLimit(config_.config_limit);
   wmb_->setConfigVehicleId(config_.vehicle_id);
   wmb_->setVehicleParticipationType(config_.participant);
