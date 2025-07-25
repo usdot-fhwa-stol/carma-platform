@@ -4,7 +4,7 @@ ack_pub_times: 1
 #Double; Max lane width in meters within which geofence points are associated to a lanelet as those points are guaranteed to apply to a single lane
 max_lane_width: 4.0
 
-#Double: How much more in meters should the TCR bounding box be expanded\
+#Double: How much more in meters should the TCR bounding box be expanded on each side of the box
 #        This helps avoid certain situations where the box's angle
 #        might prevent carma-cloud from generating TCM.
 tcr_bbox_expansion_meters: 50.0
