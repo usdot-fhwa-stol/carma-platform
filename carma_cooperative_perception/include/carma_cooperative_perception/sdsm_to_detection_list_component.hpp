@@ -70,7 +70,7 @@ public:
     rclcpp::Parameter source_ids_param =
       get_parameter("source_ids");
     config_.source_ids =
-      source_ids_param.as_string_array();
+      std::to_string(source_ids_param.as_integer_array());
 
     rclcpp::Parameter equipment_types_param =
       get_parameter("equipment_types");

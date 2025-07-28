@@ -355,6 +355,17 @@ std::string to_string(const std::vector<std::uint8_t> & temporary_id) {
   return str;
 };
 
+// Helper function to convert a vector vector of uint8_t to a hex string
+// TemporaryID and octet string terms come from the SAE J2735 message definitions
+std::string to_string(
+  const std::vector<const std::vector<std::uint8_t>> & temporary_id_list) {
+  std::vector<std::string> str_list;
+  for (const auto & temporary_id : temporary_id_list) {
+    str_list.push_back(to_string(temporary_id));
+  }
+  return str;
+};
+
 // Helper function to fill the type from J3224 ObjectType to CARMA Detection
 void convert_object_type(carma_cooperative_perception_interfaces::msg::Detection& detection,
   const j3224_v2x_msgs::msg::ObjectType& j3224_obj_type)
