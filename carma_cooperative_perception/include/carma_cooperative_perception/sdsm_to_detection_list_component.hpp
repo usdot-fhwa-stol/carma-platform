@@ -127,6 +127,34 @@ public:
       return;
     }
 
+    try {
+      // Check if the SDSM source ID is in the configured list
+      if (!config_.source_ids.empty() &&
+          std::find(config_.source_ids.begin(), config_.source_ids.end(),
+          std::to_string(msg.source_id.id)) == config_.source_ids.end())
+      {
+        RCLCPP_DEBUG_STREAM(get_logger(),
+          "Ignoring SDSM from source ID: " << msg.source_id.id
+          << " (not in configured source_ids list)");
+        return;
+      }
+
+      // Check if the SDSM equipment type is in the configured list
+      if (!config_.equipment_types.empty() &&
+          std::find(config_.equipment_types.begin(), config_.equipment_types.end(),
+          (int)msg.equipment_type.equipment_type) == config_.equipment_types.end())
+      {
+        RCLCPP_DEBUG_STREAM(get_logger(),
+          "Ignoring SDSM with equipment type: " << msg.equipment_type.equipment_type
+          << " (not in configured equipment_types list)");
+        return;
+      }
+    } catch (const std::exception & e) {
+      RCLCPP_ERROR_STREAM(get_logger(),
+      "Error accessing SDSM source ID or equipmen type, so ignoring: " << e.what());
+      return;
+    }
+
     // Check if the SDSM source ID is in the configured list
     if (!config_.source_ids.empty() &&
         std::find(config_.source_ids.begin(), config_.source_ids.end(),
