@@ -570,7 +570,7 @@ auto to_detection_list_msg(
 {
   carma_cooperative_perception_interfaces::msg::DetectionList detection_list;
   try{
-  
+
     const auto ref_pos_3d{Position3D::from_msg(sdsm.ref_pos)};
 
     units::length::meter_t elevation(0.0);
@@ -675,7 +675,7 @@ auto to_detection_list_msg(
   catch (...) {
     RCLCPP_ERROR_STREAM(rclcpp::get_logger("sdsm_to_detection_list_node"), "Error converting SDSM to object, ignoring sdsm message.");
   }
-  
+
   return detection_list;
 }
 

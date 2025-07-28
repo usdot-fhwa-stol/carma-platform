@@ -31,3 +31,10 @@ x_offset: 7.5
 y_offset: -0.7
 # Degrees in map frame, a.k.a positive is counter-clockwise
 yaw_offset: 0.0
+
+# List (String): Only process SDSMs from these source IDs
+source_ids: ["1234"]
+
+# List (Int): Filter SDSMs to process using the equipment types
+# UNKNOWN = 0, RSU = 1, OBU = 2, VRU = 3
+equipment_types: [1]
