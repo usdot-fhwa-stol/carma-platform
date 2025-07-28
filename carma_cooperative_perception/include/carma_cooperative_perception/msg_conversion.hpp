@@ -59,6 +59,8 @@ public:
   double yaw_offset{0.0};
   std::vector<std::string> source_ids;
   std::vector<int> equipment_types;
+  std::string vector_to_string(const std::vector<std::string>& vec) const;
+  std::string vector_to_string(const std::vector<int>& vec) const;
 
   // Stream operator for logging
   friend std::ostream & operator<<(std::ostream & os, const SdsmToDetectionListConfig & config)
@@ -76,8 +78,8 @@ public:
        << "\n  x_offset: " << config.x_offset
        << "\n  y_offset: " << config.y_offset
        << "\n  yaw_offset: " << config.yaw_offset
-       << "\n  source_ids: " << config.source_ids
-       << "\n  equipment_types: " << config.equipment_types
+       << "\n  source_ids: " << config.vector_to_string(config.source_ids)
+       << "\n  equipment_types: " << config.vector_to_string(config.equipment_types)
        << "\n}";
     return os;
   }

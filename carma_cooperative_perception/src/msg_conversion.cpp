@@ -58,6 +58,7 @@
 
 namespace carma_cooperative_perception
 {
+
 auto to_time_msg(const DDateTime & d_date_time, bool is_simulation) -> builtin_interfaces::msg::Time
 {
   // Convert DDateTime to builtin_interfaces::msg::Time
@@ -363,7 +364,7 @@ std::string to_string(
   for (const auto & temporary_id : temporary_id_list) {
     str_list.push_back(to_string(temporary_id));
   }
-  return str;
+  return str_list;
 };
 
 // Helper function to fill the type from J3224 ObjectType to CARMA Detection
@@ -1024,6 +1025,32 @@ auto to_detected_object_data_msg(
   detected_object_data.detected_object_optional_data = std::move(detected_object_optional_data);
 
   return detected_object_data;
+}
+
+// Helper function to convert vector<string> to string representation
+std::string SdsmToDetectionListConfig::vector_to_string(const std::vector<std::string>& vec) const {
+  if (vec.empty()) return "[]";
+
+  std::string result = "[";
+  for (size_t i = 0; i < vec.size(); ++i) {
+    result += "\"" + vec[i] + "\"";
+    if (i < vec.size() - 1) result += ", ";
+  }
+  result += "]";
+  return result;
+}
+
+// Helper function to convert vector<int> to string representation
+std::string SdsmToDetectionListConfig::vector_to_string(const std::vector<int>& vec) const {
+  if (vec.empty()) return "[]";
+
+  std::string result = "[";
+  for (size_t i = 0; i < vec.size(); ++i) {
+    result += std::to_string(vec[i]);
+    if (i < vec.size() - 1) result += ", ";
+  }
+  result += "]";
+  return result;
 }
 
 }  // namespace carma_cooperative_perception
