@@ -49,9 +49,8 @@ carma_msgs::msg::SystemAlert SSCDriverManager::get_latest_system_alert(
     alert.type = carma_msgs::msg::SystemAlert::NOT_READY;
     return alert;
   } else if (!ssc_is_operational) {
-    // Driver takeover currently throws a SSC failure alert.
-    // This is a temporary workaround until the driver takeover alert is updated to be more descriptive
-    alert.description = "System shutting down";
+    // Driver takeover currently also throws a SSC shutdown alert. Issue tracked under: https://usdot-carma.atlassian.net/browse/CAR-6140
+    alert.description = "SSC shut down";
     alert.type = carma_msgs::msg::SystemAlert::SHUTDOWN;
     return alert;
   } else {
