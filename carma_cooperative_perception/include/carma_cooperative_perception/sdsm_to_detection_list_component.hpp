@@ -130,13 +130,13 @@ public:
 
     try {
       // Check if the SDSM source ID is in the configured list
-      source_id = carma_cooperative_perception::to_string(msg.source_id.id);
+      auto source_id = carma_cooperative_perception::to_string(msg.source_id.id);
       if (!config_.source_ids.empty() &&
         std::find(config_.source_ids.begin(), config_.source_ids.end(),
         source_id)==config_.source_ids.end())
       {
         RCLCPP_DEBUG_STREAM(get_logger(),
-          "Ignoring SDSM from source ID: " << source_id <<
+          "Ignoring SDSM from source ID: " << source_id
           << " (not in configured source_ids list)");
         return;
       }
