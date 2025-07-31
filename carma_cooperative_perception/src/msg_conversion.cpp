@@ -342,7 +342,7 @@ auto transform_pose_from_map_to_wgs84(
 
 // Helper function to convert a vector of uint8_t to a hex string
 // TemporaryID and octet string terms come from the SAE J2735 message definitions
-std::string to_string(std::vector<std::uint8_t> & temporary_id) {
+std::string to_string(const std::vector<std::uint8_t> & temporary_id) {
   std::string str;
   str.reserve(2 * std::size(temporary_id));  // Two hex characters per octet string
 
