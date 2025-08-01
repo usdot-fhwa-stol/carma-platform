@@ -51,7 +51,7 @@ git clone --depth=1 https://github.com/usdot-fhwa-stol/multiple_object_tracking 
 if [[ "$BRANCH" == "master" ]]; then
   git clone --depth=1 https://github.com/usdot-fhwa-stol/carma-message-filters.git --branch carma-master
 else
-  git clone --depth=1 https://github.com/usdot-fhwa-stol/carma-message-filters-test.git --branch "$BRANCH"
+  git clone --depth=1 https://github.com/usdot-fhwa-stol/carma-message-filters.git --branch "$BRANCH"
 fi
 
 # TODO: Remove V2X-Hub Depedency (CAR-6029)
