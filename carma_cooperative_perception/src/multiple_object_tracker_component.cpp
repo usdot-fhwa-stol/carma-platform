@@ -607,7 +607,7 @@ auto MultipleObjectTrackerNode::execute_pipeline() -> void
       << track_manager_.get_all_tracks().size());
     track_list_pub_->publish(carma_cooperative_perception_interfaces::msg::TrackList{});
 
-    detections.clear();
+    detections_.clear();
     uuid_index_map_.clear();
     return;
   }
