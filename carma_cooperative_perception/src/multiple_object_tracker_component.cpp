@@ -362,8 +362,10 @@ auto MultipleObjectTrackerNode::handle_on_activate(
   }
 
   const std::chrono::duration<double, std::nano> period_ns{mot::remove_units(execution_period_)};
+  timer_callback_group_ = create_callback_group(rclcpp::CallbackGroupType::MutuallyExclusive);
   pipeline_execution_timer_ =
-    rclcpp::create_timer(this, this->get_clock(), period_ns, [this] { execute_pipeline(); });
+    create_timer(this->get_clock(), period_ns, [this] { execute_pipeline(); },
+    timer_callback_group_);
 
   RCLCPP_INFO(get_logger(), "Lifecycle transition: successfully activated");
 
@@ -562,6 +564,11 @@ struct MetricSe2
 
 auto MultipleObjectTrackerNode::execute_pipeline() -> void
 {
+  // local copy of detections and uuid_index_map_ to avoid
+  // modifying the original data while iterating over it
+  auto detections = detections_;
+  auto uuid_index_map = uuid_index_map_;
+
   static constexpr mot::Visitor make_track_visitor{
     [](const mot::CtrvDetection & d, const mot::Uuid & u) {
       return Track{mot::make_track<mot::CtrvTrack>(d, u)};
@@ -582,8 +589,8 @@ auto MultipleObjectTrackerNode::execute_pipeline() -> void
     // This clustering distance is an arbitrarily-chosen heuristic. It is working well for our
     // current purposes, but there's no reason it couldn't be restricted or loosened.
     RCLCPP_DEBUG_STREAM(
-      get_logger(), "Detection size before clustering: " << detections_.size());
-    const auto clusters{mot::cluster_detections(detections_, 0.75)};
+      get_logger(), "Detection size before clustering: " << detections.size());
+    const auto clusters{mot::cluster_detections(detections, 0.75)};
     for (const auto & cluster : clusters) {
       const auto detection{std::cbegin(cluster.get_detections())->second};
       const auto uuid_str{mot::get_uuid(detection).value()};
@@ -600,22 +607,22 @@ auto MultipleObjectTrackerNode::execute_pipeline() -> void
       << track_manager_.get_all_tracks().size());
     track_list_pub_->publish(carma_cooperative_perception_interfaces::msg::TrackList{});
 
-    detections_.clear();
+    detections.clear();
     uuid_index_map_.clear();
     return;
   }
 
   const units::time::second_t current_time{this->now().seconds()};
   RCLCPP_DEBUG_STREAM(
-    get_logger(), "Starting new cycle, detection size: " << detections_.size());
+    get_logger(), "Starting new cycle, detection size: " << detections.size());
 
-  temporally_align_detections(detections_, current_time);
+  temporally_align_detections(detections, current_time);
 
   const auto predicted_tracks{predict_track_states(track_manager_.get_all_tracks(), current_time)};
   RCLCPP_DEBUG_STREAM(
     get_logger(), "Track size after prediction: " << predicted_tracks.size());
   auto scores{
-    mot::score_tracks_and_detections(predicted_tracks, detections_, SemanticDistance2dScore{})};
+    mot::score_tracks_and_detections(predicted_tracks, detections, SemanticDistance2dScore{})};
 
   // This pruning distance is an arbitrarily-chosen heuristic. It is working well for our
   // current purposes, but there's no reason it couldn't be restricted or loosened.
@@ -628,7 +635,7 @@ auto MultipleObjectTrackerNode::execute_pipeline() -> void
   RCLCPP_DEBUG_STREAM(
     get_logger(), "Track size after association: " << track_manager_.get_all_tracks().size());
   std::unordered_map<mot::Uuid, Detection> detection_map;
-  for (const auto & detection : detections_) {
+  for (const auto & detection : detections) {
     detection_map[mot::get_uuid(detection)] = detection;
   }
 

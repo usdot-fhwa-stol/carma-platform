@@ -71,6 +71,8 @@ private:
   rclcpp_lifecycle::LifecyclePublisher<
     carma_cooperative_perception_interfaces::msg::TrackList>::SharedPtr track_list_pub_{nullptr};
 
+  // Separate callback group for the timer to avoid blocking other callbacks like SDSM subscription
+  rclcpp::CallbackGroup::SharedPtr timer_callback_group_;
   rclcpp::TimerBase::SharedPtr pipeline_execution_timer_{nullptr};
 
   std::vector<Detection> detections_;
