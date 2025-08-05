@@ -43,14 +43,14 @@ done
 
 cd "${dir}"/src
 
-git clone --depth=1 https://github.com/usdot-fhwa-stol/carma-msgs.git --branch "${BRANCH}"
-git clone --depth=1 https://github.com/usdot-fhwa-stol/carma-utils.git --branch "${BRANCH}"
-git clone --depth=1 https://github.com/usdot-fhwa-stol/v2x-ros-conversion.git --branch "${BRANCH}"
-git clone --depth=1 https://github.com/usdot-fhwa-stol/multiple_object_tracking --branch "${BRANCH}"
+git clone --depth=1 https://github.com/usdot-fhwa-stol/carma-msgs.git --branch release/tempest
+git clone --depth=1 https://github.com/usdot-fhwa-stol/carma-utils.git --branch release/tempest
+git clone --depth=1 https://github.com/usdot-fhwa-stol/v2x-ros-conversion.git --branch release/tempest
+git clone --depth=1 https://github.com/usdot-fhwa-stol/multiple_object_tracking --branch release/tempest
 if [[ "$BRANCH" == "master" ]]; then
-  git clone --depth=1 https://github.com/usdot-fhwa-stol/carma-message-filters.git --branch carma-master
+  git clone --depth=1 https://github.com/usdot-fhwa-stol/carma-message-filters.git --branch release/tempest
 else
-  git clone --depth=1 https://github.com/usdot-fhwa-stol/carma-message-filters.git --branch "$BRANCH"
+  git clone --depth=1 https://github.com/usdot-fhwa-stol/carma-message-filters.git --branch release/tempest
 fi
 
 # TODO: Remove V2X-Hub Depedency (CAR-6029)
