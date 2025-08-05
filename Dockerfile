@@ -34,7 +34,7 @@
 # /////////////////////////////////////////////////////////////////////////////
 ARG DOCKER_ORG="usdotfhwastoldev"
 ARG DOCKER_TAG="develop"
-FROM ${DOCKER_ORG}/autoware.ai:${DOCKER_TAG} as base-image
+FROM ${DOCKER_ORG}/autoware.ai:tempest as base-image
 
 FROM base-image AS install
 ARG PACKAGES=""

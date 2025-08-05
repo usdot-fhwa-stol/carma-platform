@@ -37,4 +37,6 @@ duration_to_signal_before_lane_change: 2.5
 # Int: The maximum number of times plan_delegator attempts to generate a trajectory before giving up
 # When trajectory generations fails, it reuses the last successful trajectory until tries again
 # in the next iteration.
-max_traj_generation_reattempt: 10
+# TODO: This essentially means allowing 5s outdated (but successful) trajectory.
+# Until this issue is resolved, such high tolerance is needed (https://usdot-carma.atlassian.net/browse/CDAD-191)
+max_traj_generation_reattempt: 50

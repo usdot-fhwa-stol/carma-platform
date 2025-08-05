@@ -14,7 +14,7 @@ jobs:
         uses: usdot-fhwa-stol/actions/docker-org-and-tag@main
     outputs:
       docker_org: ${{ steps.docker-org-and-tag.outputs.docker_organization }}
-      docker_tag: ${{ steps.docker-org-and-tag.outputs.docker_image_tag }}
+      docker_tag: tempest
 
   build:
     needs: determine_docker_org_and_tag

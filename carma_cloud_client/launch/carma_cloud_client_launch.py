@@ -33,8 +33,8 @@ This file is can be used to launch the CARMA carma_cloud_client_node.
 def open_tunnels():
 
     REMOTE_USER="ubuntu"
-    REMOTE_ADDR="carma-cloud.com" # Dev instance is www.carma-cloud.com, prod instance is carma-cloud.com
-    KEY_FILE="carma-cloud-1.pem" # Dev key is carma-cloud-test-1.pem, prod key is carma-cloud-1.pem
+    REMOTE_ADDR="www.carma-cloud.com" # Dev instance is www.carma-cloud.com, prod instance is carma-cloud.com
+    KEY_FILE="carma-cloud-test-1.pem" # Dev key is carma-cloud-test-1.pem, prod key is carma-cloud-1.pem
     HOST_PORT="33333" # This port is forwarded to remote host (carma-cloud)
     REMOTE_PORT="22222" # This port is forwarded to local host
 
