@@ -17,6 +17,7 @@
 
 #include <string>
 
+#include "carma_cooperative_perception/msg_conversion.hpp"
 #include <carma_cooperative_perception_interfaces/msg/detection_list.hpp>
 #include <carma_ros2_utils/carma_lifecycle_node.hpp>
 #include <carma_v2x_msgs/msg/sensor_data_sharing_message.hpp>
@@ -24,7 +25,7 @@
 #include <rosgraph_msgs/msg/clock.hpp>
 #include <std_msgs/msg/string.hpp>
 
-#include "carma_cooperative_perception/msg_conversion.hpp"
+
 
 namespace carma_cooperative_perception
 {
@@ -52,6 +53,8 @@ public:
     declare_parameter("x_offset", config_.x_offset);
     declare_parameter("y_offset", config_.y_offset);
     declare_parameter("yaw_offset", config_.yaw_offset);
+    declare_parameter("source_ids", config_.source_ids);
+    declare_parameter("equipment_types", config_.equipment_types);
 
     // Get parameters
     config_.overwrite_covariance = get_parameter("overwrite_covariance").as_bool();
@@ -65,6 +68,15 @@ public:
     config_.x_offset = get_parameter("x_offset").as_double();
     config_.y_offset = get_parameter("y_offset").as_double();
     config_.yaw_offset = get_parameter("yaw_offset").as_double();
+    rclcpp::Parameter source_ids_param =
+      get_parameter("source_ids");
+    config_.source_ids =
+      source_ids_param.as_string_array();
+
+    rclcpp::Parameter equipment_types_param =
+      get_parameter("equipment_types");
+    config_.equipment_types =
+      equipment_types_param.as_integer_array();
 
     // Set up parameter validation callback
     on_set_parameters_callback_ = add_on_set_parameters_callback(
@@ -103,7 +115,9 @@ public:
       "adjust_pose",
       "x_offset",
       "y_offset",
-      "yaw_offset"
+      "yaw_offset",
+      "source_ids",
+      "equipment_types",
     };
   }
 
@@ -113,6 +127,36 @@ public:
       RCLCPP_WARN_STREAM(get_logger(), "Georeference not defined yet, ignoring SDSM.");
       return;
     }
+
+    try {
+      // Check if the SDSM source ID is in the configured list
+      auto source_id = carma_cooperative_perception::to_string(msg.source_id.id);
+      if (!config_.source_ids.empty() &&
+        std::find(config_.source_ids.begin(), config_.source_ids.end(),
+        source_id)==config_.source_ids.end())
+      {
+        RCLCPP_DEBUG_STREAM(get_logger(),
+          "Ignoring SDSM from source ID: " << source_id
+          << " (not in configured source_ids list)");
+        return;
+      }
+
+      // Check if the SDSM equipment type is in the configured list
+      if (!config_.equipment_types.empty() &&
+          std::find(config_.equipment_types.begin(), config_.equipment_types.end(),
+          (int)msg.equipment_type.equipment_type) == config_.equipment_types.end())
+      {
+        RCLCPP_DEBUG_STREAM(get_logger(),
+          "Ignoring SDSM with equipment type: " << msg.equipment_type.equipment_type
+          << " (not in configured equipment_types list)");
+        return;
+      }
+    } catch (const std::exception & e) {
+      RCLCPP_ERROR_STREAM(get_logger(),
+      "Error accessing SDSM source ID or equipment type, so ignoring: " << e.what());
+      return;
+    }
+
 
     try {
       std::optional<SdsmToDetectionListConfig> conversion_adjustment = std::nullopt;
@@ -175,7 +219,9 @@ private:
 
       // Validate covariance values (must be non-negative)
       if (parameter.get_name() != "adjust_pose" &&
-          parameter.get_name() != "overwrite_covariance") {
+          parameter.get_name() != "overwrite_covariance" &&
+          parameter.get_name() != "source_ids" &&
+          parameter.get_name() != "equipment_types") {
         if (const auto value{parameter.as_double()}; value < 0.0) {
           result.successful = false;
           result.reason = "Covariance parameter must be non-negative";

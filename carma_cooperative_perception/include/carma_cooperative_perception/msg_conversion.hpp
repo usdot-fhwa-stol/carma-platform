@@ -57,6 +57,10 @@ public:
   double x_offset{0.0};
   double y_offset{0.0};
   double yaw_offset{0.0};
+  std::vector<std::string> source_ids;
+  std::vector<int64_t> equipment_types;
+  std::string vector_to_string(const std::vector<std::string>& vec) const;
+  std::string vector_to_string(const std::vector<int64_t>& vec) const;
 
   // Stream operator for logging
   friend std::ostream & operator<<(std::ostream & os, const SdsmToDetectionListConfig & config)
@@ -74,6 +78,8 @@ public:
        << "\n  x_offset: " << config.x_offset
        << "\n  y_offset: " << config.y_offset
        << "\n  yaw_offset: " << config.yaw_offset
+       << "\n  source_ids: " << config.vector_to_string(config.source_ids)
+       << "\n  equipment_types: " << config.vector_to_string(config.equipment_types)
        << "\n}";
     return os;
   }
@@ -163,6 +169,7 @@ auto enu_orientation_to_true_heading(
   const std::shared_ptr<lanelet::projection::LocalFrameProjector> & map_projection)
   -> units::angle::degree_t;
 
+std::string to_string(const std::vector<std::uint8_t> & temporary_id);
 }  // namespace carma_cooperative_perception
 
 #endif  // CARMA_COOPERATIVE_PERCEPTION__MSG_CONVERSION_HPP_

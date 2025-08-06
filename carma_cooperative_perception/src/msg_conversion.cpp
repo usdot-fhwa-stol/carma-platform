@@ -58,6 +58,7 @@
 
 namespace carma_cooperative_perception
 {
+
 auto to_time_msg(const DDateTime & d_date_time, bool is_simulation) -> builtin_interfaces::msg::Time
 {
   // Convert DDateTime to builtin_interfaces::msg::Time
@@ -570,7 +571,7 @@ auto to_detection_list_msg(
 {
   carma_cooperative_perception_interfaces::msg::DetectionList detection_list;
   try{
-  
+
     const auto ref_pos_3d{Position3D::from_msg(sdsm.ref_pos)};
 
     units::length::meter_t elevation(0.0);
@@ -675,7 +676,7 @@ auto to_detection_list_msg(
   catch (...) {
     RCLCPP_ERROR_STREAM(rclcpp::get_logger("sdsm_to_detection_list_node"), "Error converting SDSM to object, ignoring sdsm message.");
   }
-  
+
   return detection_list;
 }
 
@@ -1013,6 +1014,32 @@ auto to_detected_object_data_msg(
   detected_object_data.detected_object_optional_data = std::move(detected_object_optional_data);
 
   return detected_object_data;
+}
+
+// Helper function to convert vector<string> to string representation
+std::string SdsmToDetectionListConfig::vector_to_string(const std::vector<std::string>& vec) const {
+  if (vec.empty()) return "[]";
+
+  std::string result = "[";
+  for (size_t i = 0; i < vec.size(); ++i) {
+    result += "\"" + vec[i] + "\"";
+    if (i < vec.size() - 1) result += ", ";
+  }
+  result += "]";
+  return result;
+}
+
+// Helper function to convert vector<int> to string representation
+std::string SdsmToDetectionListConfig::vector_to_string(const std::vector<int64_t>& vec) const {
+  if (vec.empty()) return "[]";
+
+  std::string result = "[";
+  for (size_t i = 0; i < vec.size(); ++i) {
+    result += std::to_string(vec[i]);
+    if (i < vec.size() - 1) result += ", ";
+  }
+  result += "]";
+  return result;
 }
 
 }  // namespace carma_cooperative_perception
