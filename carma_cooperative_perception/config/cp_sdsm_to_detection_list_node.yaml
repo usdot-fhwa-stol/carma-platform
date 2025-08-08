@@ -38,7 +38,7 @@ yaw_offset: 0.0
 # if source_id = "infra_1234", id encoded in SDSM is "a_12"
 # if source_id = "rsu_1234567", id encoded in SDSM is "1234"
 # List must NOT be empty. "*" to allow from any source ids.
-# From ASCII to Hex, following IDs correspond to ["1234", "9945", "9709"] respectively
+# From Hex to ASCII, following IDs correspond to ["1234", "9945", "9709"] respectively
 source_ids: ["31323334", "39393435", "39373039"]
 
 # List (Int): Filter SDSMs to process using the equipment types
