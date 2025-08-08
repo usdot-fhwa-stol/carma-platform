@@ -33,14 +33,14 @@ y_offset: -0.7
 yaw_offset: 0.0
 
 # List (String): Only process SDSMs from these source IDs
-# NOTE: CARMA Streets sends SDSMs only 4 chars starting from its 3rd index starting from 0:
+# NOTE: CARMA Streets sends SDSMs only 4 chars between indices inclusive [3:6]:
 # if source_id = "rsu_1234", id encoded in SDSM is "1234"
-# if source_id = "infra_1234", id encoded in SDSM is "_123"
+# if source_id = "infra_1234", id encoded in SDSM is "a_12"
 # if source_id = "rsu_1234567", id encoded in SDSM is "1234"
 # List must NOT be empty. "*" to allow from any source ids.
 source_ids: ["1234", "9945", "9709"]
 
 # List (Int): Filter SDSMs to process using the equipment types
 # UNKNOWN = 0, RSU = 1, OBU = 2, VRU = 3
-# List must NOT be empty. 99 to allow from any source ids.
+# List must NOT be empty. 99 to allow from any equipment ids.
 equipment_types: [1]
