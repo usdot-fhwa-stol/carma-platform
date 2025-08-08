@@ -340,22 +340,6 @@ auto transform_pose_from_map_to_wgs84(
   return ref_pos;
 }
 
-// Helper function to convert a vector of uint8_t to a hex string
-// TemporaryID and octet string terms come from the SAE J2735 message definitions
-std::string to_string(const std::vector<std::uint8_t> & temporary_id) {
-  std::string str;
-  str.reserve(2 * std::size(temporary_id));  // Two hex characters per octet string
-
-  std::array<char, 2> buffer;
-  for (const auto & octet_string : temporary_id) {
-    std::to_chars(std::begin(buffer), std::end(buffer), octet_string, 16);
-    str.push_back(std::toupper(std::get<0>(buffer)));
-    str.push_back(std::toupper(std::get<1>(buffer)));
-  }
-
-  return str;
-};
-
 // Helper function to fill the type from J3224 ObjectType to CARMA Detection
 void convert_object_type(carma_cooperative_perception_interfaces::msg::Detection& detection,
   const j3224_v2x_msgs::msg::ObjectType& j3224_obj_type)
@@ -596,7 +580,7 @@ auto to_detection_list_msg(
       detection.header.stamp = to_time_msg(detection_time, is_simulation);
 
       detection.id = fmt::format("{}-{}",
-        carma_cooperative_perception::to_string(sdsm.source_id.id),
+        std::string(sdsm.source_id.id.begin(), sdsm.source_id.id.end()),
         common_data.detected_id.object_id);
 
       const auto pos_offset_enu{ned_to_enu(PositionOffsetXYZ::from_msg(common_data.pos))};

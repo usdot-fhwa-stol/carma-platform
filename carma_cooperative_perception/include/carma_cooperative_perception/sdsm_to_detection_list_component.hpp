@@ -68,15 +68,36 @@ public:
     config_.x_offset = get_parameter("x_offset").as_double();
     config_.y_offset = get_parameter("y_offset").as_double();
     config_.yaw_offset = get_parameter("yaw_offset").as_double();
-    rclcpp::Parameter source_ids_param =
-      get_parameter("source_ids");
-    config_.source_ids =
-      source_ids_param.as_string_array();
 
-    rclcpp::Parameter equipment_types_param =
-      get_parameter("equipment_types");
-    config_.equipment_types =
-      equipment_types_param.as_integer_array();
+    rclcpp::Parameter source_ids_param = get_parameter("source_ids");
+    if (std::find(source_ids_param.as_string_array().begin(),
+                  source_ids_param.as_string_array().end(), "*") !=
+        source_ids_param.as_string_array().end())
+    {
+      RCLCPP_WARN_STREAM(
+        get_logger(),
+        "Parameter 'source_ids' is set to process SDSMs from any source_ids");
+      config_.source_ids.clear();
+    }
+    else
+    {
+      config_.source_ids = source_ids_param.as_string_array();
+    }
+
+    rclcpp::Parameter equipment_types_param = get_parameter("equipment_types");
+    if (std::find(equipment_types_param.as_integer_array().begin(),
+                  equipment_types_param.as_integer_array().end(), 99) !=
+        equipment_types_param.as_integer_array().end())
+    {
+      RCLCPP_WARN_STREAM(
+        get_logger(),
+        "Parameter 'equipment_types' is set to process SDSMs from any equipment_types");
+      config_.equipment_types.clear();
+    }
+    else
+    {
+      config_.equipment_types = equipment_types_param.as_integer_array();
+    }
 
     // Set up parameter validation callback
     on_set_parameters_callback_ = add_on_set_parameters_callback(
@@ -130,7 +151,7 @@ public:
 
     try {
       // Check if the SDSM source ID is in the configured list
-      auto source_id = carma_cooperative_perception::to_string(msg.source_id.id);
+      auto source_id = std::string(msg.source_id.id.begin(), msg.source_id.id.end());
       if (!config_.source_ids.empty() &&
         std::find(config_.source_ids.begin(), config_.source_ids.end(),
         source_id)==config_.source_ids.end())
