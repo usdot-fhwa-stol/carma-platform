@@ -179,7 +179,7 @@ TEST(ToTimeMsg, SimulationModeGeneralConversions)
 TEST(ToDetectionMsg, Simple)
 {
   carma_v2x_msgs::msg::SensorDataSharingMessage sdsm_msg;
-  sdsm_msg.source_id.id = {0xBA, 0xDD, 0xCA, 0xFE};
+  sdsm_msg.source_id.id = {0x05, 0xDD, 0xCA, 0xFE};
   sdsm_msg.sdsm_time_stamp.second.millisecond = 1000;
   sdsm_msg.sdsm_time_stamp.presence_vector |= sdsm_msg.sdsm_time_stamp.SECOND;
   sdsm_msg.ref_pos.longitude = -90.703125;  // degrees
@@ -245,7 +245,7 @@ TEST(ToDetectionMsg, Simple)
   EXPECT_DOUBLE_EQ(detection.accel.accel.linear.y, 0.0); //not supported
   EXPECT_DOUBLE_EQ(detection.accel.accel.linear.z, 0.0); //not supported
 
-  EXPECT_EQ(detection.id, "BADDCAFE-1");
+  EXPECT_EQ(detection.id, "05DDCAFE-1");
   EXPECT_EQ(detection.motion_model, detection.MOTION_MODEL_CTRV);
 
   EXPECT_DOUBLE_EQ(detection.pose.covariance[0], 0.5);
