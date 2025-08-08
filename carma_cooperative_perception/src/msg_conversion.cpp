@@ -523,18 +523,23 @@ void convert_covariances(carma_cooperative_perception_interfaces::msg::Detection
 // Helper function to convert a vector of uint8_t to a hex string
 // TemporaryID and octet string terms come from the SAE J2735 message definitions
 std::string to_string(const std::vector<std::uint8_t> & temporary_id) {
-  std::string str;
-  str.reserve(2 * std::size(temporary_id));  // Two hex characters per octet string
-
-  std::array<char, 2> buffer;
-  for (const auto & octet_string : temporary_id) {
-    std::to_chars(std::begin(buffer), std::end(buffer), octet_string, 16);
-    str.push_back(std::toupper(std::get<0>(buffer)));
-    str.push_back(std::toupper(std::get<1>(buffer)));
-  }
-
-  return str;
-};
+    std::string str;
+    str.reserve(temporary_id.size() * 2);  // Fixed
+    std::array<char, 3> buffer;
+    for (uint8_t byte : temporary_id) {    // Fixed
+        auto [ptr, ec] = std::to_chars(buffer.data(), buffer.data() + 2, byte, 16);
+        if (ec == std::errc()) {
+            if (ptr - buffer.data() == 1) {
+                str.push_back('0');
+                str.push_back(std::toupper(buffer[0]));
+            } else {
+                str.push_back(std::toupper(buffer[0]));
+                str.push_back(std::toupper(buffer[1]));
+            }
+        }
+    }
+    return str;
+}
 
 /**
  * @brief Converts a carma_v2x_msgs::msg::SensorDataSharingMessage (SDSM)
