@@ -169,6 +169,7 @@ auto enu_orientation_to_true_heading(
   const std::shared_ptr<lanelet::projection::LocalFrameProjector> & map_projection)
   -> units::angle::degree_t;
 
+std::string to_string(const std::vector<std::uint8_t> & temporary_id);
 }  // namespace carma_cooperative_perception
 
 #endif  // CARMA_COOPERATIVE_PERCEPTION__MSG_CONVERSION_HPP_

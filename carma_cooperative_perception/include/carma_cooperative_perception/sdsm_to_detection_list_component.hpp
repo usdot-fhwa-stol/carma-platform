@@ -151,7 +151,7 @@ public:
 
     try {
       // Check if the SDSM source ID is in the configured list
-      auto source_id = std::string(msg.source_id.id.begin(), msg.source_id.id.end());
+      auto source_id = carma_cooperative_perception::to_string(msg.source_id.id);
       if (!config_.source_ids.empty() &&
         std::find(config_.source_ids.begin(), config_.source_ids.end(),
         source_id)==config_.source_ids.end())
