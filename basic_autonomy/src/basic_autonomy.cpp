@@ -1265,7 +1265,13 @@ namespace basic_autonomy
             RCLCPP_DEBUG_STREAM(rclcpp::get_logger(BASIC_AUTONOMY_LOGGER), "Before removing extra buffer points, future_geom_points.size()"<< future_geom_points.size());
 
             // Find the ending point index in the resampled points
-            int end_dist_pt_index = get_nearest_index_by_downtrack(resampled_points, wm, ending_state_before_buffer);
+            // Always leave at least 2 points in the trajectory
+            // NOTE: resampled_points.size() is always >= 2 because
+            // we added the current vehicle position and the division of 0 guard before
+            int end_dist_pt_index =
+                std::max(1, get_nearest_index_by_downtrack(
+                    resampled_points, wm, ending_state_before_buffer)
+                );
 
             // Resize all arrays to the endpoint
             RCLCPP_DEBUG_STREAM(rclcpp::get_logger(BASIC_AUTONOMY_LOGGER), "Before removing extra buffer points, resampled_points.size(): " << resampled_points.size());
@@ -1418,7 +1424,7 @@ namespace basic_autonomy
             }
             else
             {
-                RCLCPP_WARN_STREAM(node_handler->get_logger(), "Invalid Yield Trajectory with old target_time: " << 
+                RCLCPP_WARN_STREAM(node_handler->get_logger(), "Invalid Yield Trajectory with old target_time: " <<
                     std::to_string(rclcpp::Time(yield_plan.trajectory_points[0].target_time).seconds()) << ", where now: " <<
                     std::to_string(node_handler->now().seconds()));
             }
@@ -1468,7 +1474,7 @@ namespace basic_autonomy
             else
             {
                 // This logic used to throw. However, yield_plugin is intermittently returning invalid trajectory when it shouldn't
-                // TODO: CAR-6118 is tracking it 
+                // TODO: CAR-6118 is tracking it
                 RCLCPP_WARN_STREAM(node_handler->get_logger(), "Invalid yield trajectory detected, returning original trajectory of size: " <<
                     resp->trajectory_plan.trajectory_points.size());
             }

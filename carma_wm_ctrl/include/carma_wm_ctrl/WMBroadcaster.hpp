@@ -177,6 +177,13 @@ public:
   void setMaxLaneWidth(double max_lane_width);
 
   /*!
+   * \brief Sets much more bigger the TCR bounding box should be in addition to the route's 
+   *        original bounding box. This helps avoid certain situations where the box's angle
+   *        might prevent carma-cloud from generating TCM.
+   */
+  void setTCRBoundBoxExpansionMeters(double tcr_bbox_expansion_meters);
+
+  /*!
    * \brief Sets the coordinate correction for intersection
      \param list of intersection_ids corresponding to every two elements in correction list
      \param list of intersection coord correction parameters in double in every 2 elements: delta_x, delta_y
@@ -446,6 +453,7 @@ private:
   PublishMobilityOperationCallback tcm_ack_pub_;
   std::string base_map_georef_;
   double max_lane_width_;
+  double tcr_bbox_expansion_meters_;
   std::vector<carma_v2x_msgs::msg::TrafficControlMessageV01> workzone_remaining_msgs_;
   bool workzone_geometry_published_ = false;
   /* Version ID of the current_map_ variable. Monotonically increasing value

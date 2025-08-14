@@ -129,7 +129,9 @@ void InLaneCruisingPlugin::plan_trajectory_callback(
   std::chrono::system_clock::time_point end_time = std::chrono::system_clock::now();  // Planning complete
 
   auto duration = end_time - start_time;
-  RCLCPP_DEBUG_STREAM(nh_->get_logger(), "ExecutionTime: " << std::chrono::duration<double>(duration).count());
+  RCLCPP_DEBUG_STREAM(
+    rclcpp::get_logger("inlanecruising_plugin"),
+    "ILC ExecutionTime: " << std::chrono::duration<double>(duration).count());
 }
 
 void InLaneCruisingPlugin::set_yield_client(carma_ros2_utils::ClientPtr<carma_planning_msgs::srv::PlanTrajectory> client)

@@ -41,12 +41,13 @@ TEST(TrafficIncidentParserWorkerTest, testMobilityMessageParser1)
   std::string mobility_strategy_params="lat:0.435,lon:0.555,downtrack:5,uptrack:5,min_gap:2,advisory_speed:1.2,event_reason:MOVE OVER LAW,event_type:CLOSED";
   traffic_worker.mobilityMessageParser(mobility_strategy_params);
 
+  const double MphToMetersPerSec = 0.44704; //Convert miles per hour to meters per second
   EXPECT_EQ(traffic_worker.latitude,0.435);
   EXPECT_EQ(traffic_worker.longitude,0.555);
   EXPECT_EQ(traffic_worker.down_track,5);
   EXPECT_EQ(traffic_worker.up_track,5);
   EXPECT_EQ(traffic_worker.min_gap,2);
-  EXPECT_EQ(traffic_worker.speed_advisory,1.2);
+  EXPECT_EQ(traffic_worker.speed_advisory,1.2 * MphToMetersPerSec);
   EXPECT_EQ(traffic_worker.event_reason,"MOVE OVER LAW");
   EXPECT_EQ(traffic_worker.event_type,"CLOSED");
 
@@ -65,12 +66,13 @@ TEST(TrafficIncidentParserWorkerTest, testMobilityMessageParser2)
   std::string mobility_strategy_params="lat:0.75,lon:0.555,downtrack:75,uptrack:55,min_gap:2,advisory_speed:1.2,event_reason:MOVE OVER LAW3,event_type:OPEN";
   traffic_worker.mobilityMessageParser(mobility_strategy_params);
 
+  const double MphToMetersPerSec = 0.44704; //Convert miles per hour to meters per second
   EXPECT_EQ(traffic_worker.latitude,0.75);
   EXPECT_EQ(traffic_worker.longitude,0.555);
   EXPECT_EQ(traffic_worker.down_track,75);
   EXPECT_EQ(traffic_worker.up_track,55);
   EXPECT_EQ(traffic_worker.min_gap,2);
-  EXPECT_EQ(traffic_worker.speed_advisory,1.2);
+  EXPECT_EQ(traffic_worker.speed_advisory,1.2 * MphToMetersPerSec);
   EXPECT_EQ(traffic_worker.event_reason,"MOVE OVER LAW3");
   EXPECT_EQ(traffic_worker.event_type,"OPEN");
 
@@ -89,12 +91,13 @@ TEST(TrafficIncidentParserWorkerTest, testMobilityMessageParser3)
   std::string mobility_strategy_params="lat:0.3,lon:0.95,downtrack:57,uptrack:59,min_gap:2,advisory_speed:1.2,event_reason:MOVE OVER LAW,event_type:CLOSED";
   traffic_worker.mobilityMessageParser(mobility_strategy_params);
 
+  const double MphToMetersPerSec = 0.44704; //Convert miles per hour to meters per second
   EXPECT_EQ(traffic_worker.latitude,0.3);
   EXPECT_EQ(traffic_worker.longitude,0.95);
   EXPECT_EQ(traffic_worker.down_track,57);
   EXPECT_EQ(traffic_worker.up_track,59);
   EXPECT_EQ(traffic_worker.min_gap,2);
-  EXPECT_EQ(traffic_worker.speed_advisory,1.2);
+  EXPECT_EQ(traffic_worker.speed_advisory,1.2 * MphToMetersPerSec);
   EXPECT_EQ(traffic_worker.event_reason,"MOVE OVER LAW");
   EXPECT_EQ(traffic_worker.event_type,"CLOSED");
 

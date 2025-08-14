@@ -86,7 +86,7 @@ auto ExternalObjectListToDetectionListNode::handle_on_configure(
   publisher_ = create_publisher<output_msg_type>("output/detections", 1);
 
   external_objects_subscription_ = create_subscription<input_msg_type>(
-    "input/external_objects", 1, [this](input_msg_shared_pointer msg_ptr) {
+    "input/external_objects", 100, [this](input_msg_shared_pointer msg_ptr) {
       const auto current_state{this->get_current_state().label()};
 
       if (current_state == "active") {

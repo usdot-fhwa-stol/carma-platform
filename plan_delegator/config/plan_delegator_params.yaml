@@ -33,3 +33,8 @@ duration_to_signal_before_lane_change: 2.5
 # Units: Milliseconds
 # Configured in VehicleConfigPrams.yaml in carma-config
 # tactical_plugin_service_call_timeout: 100
+
+# Int: The maximum number of times plan_delegator attempts to generate a trajectory before giving up
+# When trajectory generations fails, it reuses the last successful trajectory until tries again
+# in the next iteration.
+max_traj_generation_reattempt: 10
