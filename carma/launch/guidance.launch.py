@@ -416,7 +416,7 @@ def generate_launch_description():
         carma_guidance_worker_container,
         carma_plan_delegator_container,
         carma_arbitrator_container,
-        carma_port_drayage_plugin_container,
+        #carma_port_drayage_plugin_container,
         twist_filter_container,
         plugins_group,
         subsystem_controller

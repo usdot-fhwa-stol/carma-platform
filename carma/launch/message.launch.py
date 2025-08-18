@@ -100,26 +100,26 @@ def generate_launch_description():
         namespace=GetCurrentNamespace(),
         composable_node_descriptions=[
 
-            ComposableNode(
-                package='mobilitypath_publisher',
-                plugin='mobilitypath_publisher::MobilityPathPublication',
-                name='mobilitypath_publisher_node',
-                extra_arguments=[
-                    {'use_intra_process_comms': True},
-                    {'--log-level' : GetLogLevel('mobilitypath_publisher', env_log_levels) }
-                ],
-                remappings=[
-                    ("plan_trajectory", [ EnvironmentVariable('CARMA_GUIDE_NS', default_value=''), "/plan_trajectory" ] ),
-                    ("guidance_state", [ EnvironmentVariable('CARMA_GUIDE_NS', default_value=''), "/state" ] ),
-                    ("georeference", [ EnvironmentVariable('CARMA_LOCZ_NS', default_value=''), "/map_param_loader/georeference" ] ),
-                    ("mobility_path_msg", [ EnvironmentVariable('CARMA_MSG_NS', default_value=''), "/outgoing_mobility_path" ] )
-                ],
-                parameters=[
-                    mobilitypath_publisher_param_file,
-                    vehicle_characteristics_param_file,
-                    vehicle_config_param_file
-                ]
-            ),
+            # ComposableNode(
+            #     package='mobilitypath_publisher',
+            #     plugin='mobilitypath_publisher::MobilityPathPublication',
+            #     name='mobilitypath_publisher_node',
+            #     extra_arguments=[
+            #         {'use_intra_process_comms': True},
+            #         {'--log-level' : GetLogLevel('mobilitypath_publisher', env_log_levels) }
+            #     ],
+            #     remappings=[
+            #         ("plan_trajectory", [ EnvironmentVariable('CARMA_GUIDE_NS', default_value=''), "/plan_trajectory" ] ),
+            #         ("guidance_state", [ EnvironmentVariable('CARMA_GUIDE_NS', default_value=''), "/state" ] ),
+            #         ("georeference", [ EnvironmentVariable('CARMA_LOCZ_NS', default_value=''), "/map_param_loader/georeference" ] ),
+            #         ("mobility_path_msg", [ EnvironmentVariable('CARMA_MSG_NS', default_value=''), "/outgoing_mobility_path" ] )
+            #     ],
+            #     parameters=[
+            #         mobilitypath_publisher_param_file,
+            #         vehicle_characteristics_param_file,
+            #         vehicle_config_param_file
+            #     ]
+            # ),
             ComposableNode(
                 package='bsm_generator',
                 plugin='bsm_generator::BSMGenerator',
@@ -176,22 +176,22 @@ def generate_launch_description():
                     vehicle_config_param_file
                 ]
             ),
-            ComposableNode(
-                package='carma_cloud_client',
-                plugin='carma_cloud_client::CarmaCloudClient',
-                name='carma_cloud_client_node',
-                extra_arguments=[
-                    {'use_intra_process_comms': True},
-                    {'--log-level' : GetLogLevel('carma_cloud_client', env_log_levels) }
-                ],
-                remappings=[
-                    ("incoming_geofence_control", [ EnvironmentVariable('CARMA_MSG_NS', default_value=''), "/incoming_geofence_control" ] ),
-                ],
-                parameters = [
-                    vehicle_config_param_file, carma_cloud_client_param_file
-                ]
+            # ComposableNode(
+            #     package='carma_cloud_client',
+            #     plugin='carma_cloud_client::CarmaCloudClient',
+            #     name='carma_cloud_client_node',
+            #     extra_arguments=[
+            #         {'use_intra_process_comms': True},
+            #         {'--log-level' : GetLogLevel('carma_cloud_client', env_log_levels) }
+            #     ],
+            #     remappings=[
+            #         ("incoming_geofence_control", [ EnvironmentVariable('CARMA_MSG_NS', default_value=''), "/incoming_geofence_control" ] ),
+            #     ],
+            #     parameters = [
+            #         vehicle_config_param_file, carma_cloud_client_param_file
+            #     ]
 
-            ),
+            # ),
         ]
     )
 
@@ -243,7 +243,7 @@ def generate_launch_description():
         declare_vehicle_characteristics_param_file_arg,
         declare_subsystem_controller_param_file_arg,
         declare_enable_opening_tunnels,
-        open_tunnels_action,
+        #open_tunnels_action,
         carma_v2x_container,
         subsystem_controller
     ])
