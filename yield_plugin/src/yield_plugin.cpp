@@ -731,6 +731,11 @@ namespace yield_plugin
 
         // Linearly interpolate positions at a common timestamp for both trajectories
         double dt = (p2a_t - p1a_t) / (p1b_t - p1a_t);
+        // if negative extrapolation, skip because car wouldn't go backwards
+        if (dt < 0)
+        {
+          continue;
+        }
         double x1 = p1a.x + dt * (p1b.x - p1a.x);
         double y1 = p1a.y + dt * (p1b.y - p1a.y);
         double x2 = p2a.predicted_position.position.x;

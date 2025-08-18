@@ -58,6 +58,7 @@
 
 namespace carma_cooperative_perception
 {
+
 auto to_time_msg(const DDateTime & d_date_time, bool is_simulation) -> builtin_interfaces::msg::Time
 {
   // Convert DDateTime to builtin_interfaces::msg::Time
@@ -339,22 +340,6 @@ auto transform_pose_from_map_to_wgs84(
   return ref_pos;
 }
 
-// Helper function to convert a vector of uint8_t to a hex string
-// TemporaryID and octet string terms come from the SAE J2735 message definitions
-std::string to_string(const std::vector<std::uint8_t> & temporary_id) {
-  std::string str;
-  str.reserve(2 * std::size(temporary_id));  // Two hex characters per octet string
-
-  std::array<char, 2> buffer;
-  for (const auto & octet_string : temporary_id) {
-    std::to_chars(std::begin(buffer), std::end(buffer), octet_string, 16);
-    str.push_back(std::toupper(std::get<0>(buffer)));
-    str.push_back(std::toupper(std::get<1>(buffer)));
-  }
-
-  return str;
-};
-
 // Helper function to fill the type from J3224 ObjectType to CARMA Detection
 void convert_object_type(carma_cooperative_perception_interfaces::msg::Detection& detection,
   const j3224_v2x_msgs::msg::ObjectType& j3224_obj_type)
@@ -534,6 +519,28 @@ void convert_covariances(carma_cooperative_perception_interfaces::msg::Detection
     }
   }
 }
+
+// Helper function to convert a vector of uint8_t to a hex string
+// TemporaryID and octet string terms come from the SAE J2735 message definitions
+std::string to_string(const std::vector<std::uint8_t> & temporary_id) {
+    std::string str;
+    str.reserve(temporary_id.size() * 2);  // Fixed
+    std::array<char, 3> buffer;
+    for (uint8_t byte : temporary_id) {    // Fixed
+        auto [ptr, ec] = std::to_chars(buffer.data(), buffer.data() + 2, byte, 16);
+        if (ec == std::errc()) {
+            if (ptr - buffer.data() == 1) {
+                str.push_back('0');
+                str.push_back(std::toupper(buffer[0]));
+            } else {
+                str.push_back(std::toupper(buffer[0]));
+                str.push_back(std::toupper(buffer[1]));
+            }
+        }
+    }
+    return str;
+}
+
 /**
  * @brief Converts a carma_v2x_msgs::msg::SensorDataSharingMessage (SDSM)
  *  to carma_cooperative_perception_interfaces::msg::DetectionList format
@@ -570,7 +577,7 @@ auto to_detection_list_msg(
 {
   carma_cooperative_perception_interfaces::msg::DetectionList detection_list;
   try{
-  
+
     const auto ref_pos_3d{Position3D::from_msg(sdsm.ref_pos)};
 
     units::length::meter_t elevation(0.0);
@@ -675,7 +682,7 @@ auto to_detection_list_msg(
   catch (...) {
     RCLCPP_ERROR_STREAM(rclcpp::get_logger("sdsm_to_detection_list_node"), "Error converting SDSM to object, ignoring sdsm message.");
   }
-  
+
   return detection_list;
 }
 
@@ -1013,6 +1020,32 @@ auto to_detected_object_data_msg(
   detected_object_data.detected_object_optional_data = std::move(detected_object_optional_data);
 
   return detected_object_data;
+}
+
+// Helper function to convert vector<string> to string representation
+std::string SdsmToDetectionListConfig::vector_to_string(const std::vector<std::string>& vec) const {
+  if (vec.empty()) return "[]";
+
+  std::string result = "[";
+  for (size_t i = 0; i < vec.size(); ++i) {
+    result += "\"" + vec[i] + "\"";
+    if (i < vec.size() - 1) result += ", ";
+  }
+  result += "]";
+  return result;
+}
+
+// Helper function to convert vector<int> to string representation
+std::string SdsmToDetectionListConfig::vector_to_string(const std::vector<int64_t>& vec) const {
+  if (vec.empty()) return "[]";
+
+  std::string result = "[";
+  for (size_t i = 0; i < vec.size(); ++i) {
+    result += std::to_string(vec[i]);
+    if (i < vec.size() - 1) result += ", ";
+  }
+  result += "]";
+  return result;
 }
 
 }  // namespace carma_cooperative_perception
