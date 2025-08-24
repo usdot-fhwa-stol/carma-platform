@@ -18,7 +18,7 @@ Panels:
         - /Vehicle Model1/Description Topic1
         - /J2735 MAP Msg Viz1/Topic1
       Splitter Ratio: 0.5
-    Tree Height: 727
+    Tree Height: 303
   - Class: rviz_common/Selection
     Name: Selection
   - Class: rviz_common/Tool Properties
@@ -94,7 +94,7 @@ Visualization Manager:
       Enabled: true
       Name: Trajectory Visualizer
       Namespaces:
-        {}
+        trajectory_visualizer: true
       Topic:
         Depth: 10
         Durability Policy: Volatile
@@ -231,7 +231,7 @@ Visualization Manager:
       Enabled: true
       Name: Route Marker
       Namespaces:
-        {}
+        route_visualizer: true
       Topic:
         Depth: 10
         Durability Policy: System Default
@@ -256,7 +256,7 @@ Visualization Manager:
       Enabled: true
       Name: Host MobilityPath Marker
       Namespaces:
-        {}
+        mobilitypath_visualizer: true
       Topic:
         Depth: 5
         Durability Policy: Volatile
@@ -473,7 +473,7 @@ Visualization Manager:
   Value: true
   Views:
     Current:
-      Angle: 0.8050000667572021
+      Angle: -1.594999074935913
       Class: rviz_default_plugins/TopDownOrtho
       Enable Stereo Rendering:
         Stereo Eye Separation: 0.05999999865889549
@@ -483,11 +483,11 @@ Visualization Manager:
       Invert Z Axis: false
       Name: Current View
       Near Clip Distance: 0.009999999776482582
-      Scale: 9.32369327545166
+      Scale: 10.399213790893555
       Target Frame: host_vehicle
       Value: TopDownOrtho (rviz_default_plugins)
-      X: -12.327485084533691
-      Y: -32.56051254272461
+      X: 1.5848302841186523
+      Y: 1.2383919954299927
     Saved: ~
 Window Geometry:
   Displays:
