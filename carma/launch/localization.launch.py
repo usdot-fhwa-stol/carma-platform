@@ -409,6 +409,7 @@ def generate_launch_description():
         declare_arealist_path,
         declare_map_file,
         declare_use_sim_time_arg,
+        declare_global_params_override_file_arg,
         gnss_to_map_convertor_container,
         localization_manager_container,
         dead_reckoner_container,

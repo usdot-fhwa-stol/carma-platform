@@ -746,6 +746,8 @@ def generate_launch_description():
     )
 
     return LaunchDescription([
+        declare_vehicle_config_dir_arg,
+        declare_global_params_override_file_arg,
         carma_inlanecruising_plugin_container,
         carma_route_following_plugin_container,
         carma_approaching_emergency_vehicle_plugin_container,
