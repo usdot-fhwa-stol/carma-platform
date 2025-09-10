@@ -86,7 +86,7 @@ def generate_launch_description():
     global_params_override_file = LaunchConfiguration('global_params_override_file')
     declare_global_params_override_file_arg = DeclareLaunchArgument(
         name = 'global_params_override_file',
-        default_value = [vehicle_config_dir, "/global_params_overwrite.yaml"],
+        default_value = [vehicle_config_dir, "/GlobalParamsOverride.yaml"],
         description = "Path to global file containing the parameters overwrite"
     )
 
