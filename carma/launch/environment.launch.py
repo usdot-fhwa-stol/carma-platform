@@ -610,6 +610,7 @@ def generate_launch_description():
     return LaunchDescription([
         declare_vehicle_characteristics_param_file_arg,
         declare_vehicle_config_param_file_arg,
+        declare_vehicle_config_dir_arg,
         declare_global_params_override_file_arg,
         declare_use_sim_time_arg,
         declare_is_autoware_lidar_obj_detection_enabled,
