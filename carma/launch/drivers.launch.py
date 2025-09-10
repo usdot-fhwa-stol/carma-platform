@@ -61,6 +61,22 @@ def generate_launch_description():
         description = "Path to file containing override parameters for the subsystem controller"
     )
 
+    vehicle_config_dir = LaunchConfiguration('vehicle_config_dir')
+    declare_vehicle_config_dir_arg = DeclareLaunchArgument(
+        name = 'vehicle_config_dir',
+        default_value = "/opt/carma/vehicle/config",
+        description = "Path to file containing vehicle config directories"
+    )
+
+    # Declare the global_params_override_file launch argument
+    # Parameters in this file will override any parameters loaded in their respective packages
+    global_params_override_file = LaunchConfiguration('global_params_override_file')
+    declare_global_params_override_file_arg = DeclareLaunchArgument(
+        name = 'global_params_override_file',
+        default_value = [vehicle_config_dir, "/global_params_overwrite.yaml"],
+        description = "Path to global file containing the parameters overwrite"
+    )
+
     lightbar_manager_param_file = os.path.join(
         get_package_share_directory('lightbar_manager'), 'config/params.yaml')
 
@@ -85,7 +101,8 @@ def generate_launch_description():
                 ],
                 parameters=[
                     lightbar_manager_param_file,
-                    vehicle_config_param_file
+                    vehicle_config_param_file,
+                    global_params_override_file
                 ]
             )
         ]

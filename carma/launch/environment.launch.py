@@ -56,6 +56,22 @@ def generate_launch_description():
         description = "Path to file containing unique vehicle calibrations"
     )
 
+    vehicle_config_dir = LaunchConfiguration('vehicle_config_dir')
+    declare_vehicle_config_dir_arg = DeclareLaunchArgument(
+        name = 'vehicle_config_dir',
+        default_value = "/opt/carma/vehicle/config",
+        description = "Path to file containing vehicle config directories"
+    )
+
+    # Declare the global_params_override_file launch argument
+    # Parameters in this file will override any parameters loaded in their respective packages
+    global_params_override_file = LaunchConfiguration('global_params_override_file')
+    declare_global_params_override_file_arg = DeclareLaunchArgument(
+        name = 'global_params_override_file',
+        default_value = [vehicle_config_dir, "/global_params_overwrite.yaml"],
+        description = "Path to global file containing the parameters overwrite"
+    )
+
     vector_map_file = LaunchConfiguration('vector_map_file')
     declare_vector_map_file = DeclareLaunchArgument(name='vector_map_file', default_value = 'vector_map.osm', description = "Path to the map osm file if using the noupdate load type")
 
@@ -160,7 +176,8 @@ def generate_launch_description():
                     { "message_type" : "sensor_msgs/PointCloud2"},
                     { "queue_size" : 1},
                     { "timeout" : 50 },
-                    vehicle_config_param_file
+                    vehicle_config_param_file,
+                    global_params_override_file
                 ]
             ),
             ComposableNode(
@@ -179,7 +196,9 @@ def generate_launch_description():
                     ("change_state", "disabled_change_state"), # Disable lifecycle topics since this is a lifecycle wrapper container
                     ("get_state", "disabled_get_state")        # Disable lifecycle topics since this is a lifecycle wrapper container
                 ],
-                parameters=[ points_map_filter_param_file, vehicle_config_param_file ]
+                parameters=[ points_map_filter_param_file,
+                            vehicle_config_param_file,
+                            global_params_override_file]
             ),
             ComposableNode(
                 package='frame_transformer',
@@ -196,7 +215,9 @@ def generate_launch_description():
                     ("change_state", "disabled_change_state"), # Disable lifecycle topics since this is a lifecycle wrapper container
                     ("get_state", "disabled_get_state")        # Disable lifecycle topics since this is a lifecycle wrapper container
                 ],
-                parameters=[ frame_transformer_param_file, vehicle_config_param_file ]
+                parameters=[frame_transformer_param_file,
+                            vehicle_config_param_file,
+                            global_params_override_file]
             ),
             ComposableNode(
                 package='ray_ground_classifier_nodes',
@@ -210,7 +231,9 @@ def generate_launch_description():
                     ("points_in", "points_in_base_link"),
                     ("points_nonground", "points_no_ground")
                 ],
-                parameters=[ ray_ground_classifier_param_file, vehicle_config_param_file]
+                parameters=[ray_ground_classifier_param_file,
+                            vehicle_config_param_file,
+                            global_params_override_file]
             ),
             ComposableNode(
                 package='euclidean_cluster_nodes',
@@ -223,7 +246,9 @@ def generate_launch_description():
                 remappings=[
                     ("points_in", "points_no_ground")
                 ],
-                parameters=[ euclidean_cluster_param_file, vehicle_config_param_file]
+                parameters=[euclidean_cluster_param_file,
+                            vehicle_config_param_file,
+                            global_params_override_file]
             ),
             ComposableNode(
                 package='object_detection_tracking',
@@ -238,7 +263,7 @@ def generate_launch_description():
                     ("bounding_boxes", "lidar_bounding_boxes"),
                     ("lidar_detected_objects", "detected_objects"),
                 ],
-                parameters=[vehicle_config_param_file]
+                parameters=[vehicle_config_param_file, global_params_override_file]
             ),
             ComposableNode(
                     package='tracking_nodes',
@@ -253,7 +278,9 @@ def generate_launch_description():
                         # TODO note classified_rois1 is the default single camera input topic
                         # TODO when camera detection is added, we will wan to separate this node into a different component to preserve fault tolerance
                     ],
-                    parameters=[ tracking_nodes_param_file, vehicle_config_param_file]
+                    parameters=[tracking_nodes_param_file,
+                                vehicle_config_param_file,
+                                global_params_override_file]
             )
         ]
     )
@@ -285,7 +312,10 @@ def generate_launch_description():
                     ("outgoing_geofence_ack", [ EnvironmentVariable('CARMA_MSG_NS', default_value=''), "/outgoing_mobility_operation" ] ),
                     ("outgoing_geofence_request", [ EnvironmentVariable('CARMA_MSG_NS', default_value=''), "/outgoing_geofence_request" ] )
                 ],
-                parameters=[ carma_wm_ctrl_param_file, vehicle_config_param_file, vehicle_characteristics_param_file ]
+                parameters=[carma_wm_ctrl_param_file,
+                            vehicle_config_param_file,
+                            vehicle_characteristics_param_file,
+                            global_params_override_file]
             ),
             ComposableNode(
                     package='object_detection_tracking',
@@ -298,7 +328,9 @@ def generate_launch_description():
                     remappings=[
                         ("detected_objects", "tracked_objects"),
                     ],
-                    parameters=[ object_detection_tracking_param_file, vehicle_config_param_file]
+                    parameters=[object_detection_tracking_param_file,
+                                vehicle_config_param_file,
+                                global_params_override_file]
             ),
             ComposableNode(
                     package='object_visualizer',
@@ -313,7 +345,11 @@ def generate_launch_description():
                         ("external_objects_viz", "fused_external_objects_viz")
                     ],
                     parameters=[object_visualizer_param_file, vehicle_config_param_file,
-                                {'pedestrian_icon_path': ['file:///', vehicle_calibration_dir, '/visualization_meshes/pedestrian.stl']}
+                                {'pedestrian_icon_path': [
+                                    'file:///',
+                                    vehicle_calibration_dir,
+                                    '/visualization_meshes/pedestrian.stl']},
+                                global_params_override_file
                                 ]
             ),
             ComposableNode(
@@ -333,7 +369,9 @@ def generate_launch_description():
                     ("external_objects", PythonExpression(['"fused_external_objects" if "', is_cp_mot_enabled, '" == "True" else "external_objects"'])),
                 ],
                 parameters=[
-                    motion_computation_param_file, vehicle_config_param_file
+                    motion_computation_param_file,
+                    vehicle_config_param_file,
+                    global_params_override_file
                 ]
             ),
             ComposableNode( #CARMA Motion Prediction Visualizer Node
@@ -347,7 +385,7 @@ def generate_launch_description():
                     remappings=[
                         ("external_objects", "external_object_predictions" ),
                     ],
-                    parameters=[ vehicle_config_param_file ]
+                    parameters=[ vehicle_config_param_file, global_params_override_file ]
             ),
             ComposableNode(
                     package='traffic_incident_parser',
@@ -365,7 +403,7 @@ def generate_launch_description():
                         ("route", [ EnvironmentVariable('CARMA_GUIDE_NS', default_value=''), "/route" ] )
                     ],
                     parameters = [
-                        vehicle_config_param_file
+                        vehicle_config_param_file, global_params_override_file
                     ]
 
             ),
@@ -395,7 +433,8 @@ def generate_launch_description():
                 ],
                 parameters=[
                     { "lanelet2_filename" : vector_map_file},
-                    vehicle_config_param_file
+                    vehicle_config_param_file,
+                    global_params_override_file
                 ]
             )
         ]
@@ -423,7 +462,8 @@ def generate_launch_description():
                     ("get_state", "disabled_get_state")        # Disable lifecycle topics since this is a lifecycle wrapper container
                 ],
                 parameters=[
-                    vehicle_config_param_file
+                    vehicle_config_param_file,
+                    global_params_override_file
                 ]
             )
         ]
@@ -452,7 +492,8 @@ def generate_launch_description():
                     ("input/external_objects", "external_objects"),
                 ],
                 parameters=[
-                    vehicle_config_param_file
+                    vehicle_config_param_file,
+                    global_params_override_file
                 ]
             ),
             ComposableNode(
@@ -470,7 +511,8 @@ def generate_launch_description():
                     ("input/external_objects", "external_objects"),
                 ],
                 parameters=[
-                    vehicle_config_param_file
+                    vehicle_config_param_file,
+                    global_params_override_file
                 ]
             ),
             ComposableNode(
@@ -488,7 +530,8 @@ def generate_launch_description():
                 ],
                 parameters=[
                     cp_host_vehicle_filter_node_file,
-                    vehicle_config_param_file
+                    vehicle_config_param_file,
+                    global_params_override_file
                 ]
             ),
             ComposableNode(
@@ -507,7 +550,8 @@ def generate_launch_description():
                 ],
                 parameters=[
                     vehicle_config_param_file,
-                    cp_sdsm_to_detection_list_node_file
+                    cp_sdsm_to_detection_list_node_file,
+                    global_params_override_file
                 ]
             ),
             ComposableNode(
@@ -523,7 +567,8 @@ def generate_launch_description():
                     ("output/external_object_list", "fused_external_objects"),
                 ],
                 parameters=[
-                    vehicle_config_param_file
+                    vehicle_config_param_file,
+                    global_params_override_file
                 ]
             ),
             ComposableNode(
@@ -540,7 +585,8 @@ def generate_launch_description():
                 ],
                 parameters=[
                     cp_multiple_object_tracker_node_file,
-                    vehicle_config_param_file
+                    vehicle_config_param_file,
+                    global_params_override_file
                 ]
 
             ),

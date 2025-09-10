@@ -45,6 +45,22 @@ def generate_launch_description():
 
     vehicle_config_param_file = LaunchConfiguration('vehicle_config_param_file')
 
+    vehicle_config_dir = LaunchConfiguration('vehicle_config_dir')
+    declare_vehicle_config_dir_arg = DeclareLaunchArgument(
+        name = 'vehicle_config_dir',
+        default_value = "/opt/carma/vehicle/config",
+        description = "Path to file containing vehicle config directories"
+    )
+
+    # Declare the global_params_override_file launch argument
+    # Parameters in this file will override any parameters loaded in their respective packages
+    global_params_override_file = LaunchConfiguration('global_params_override_file')
+    declare_global_params_override_file_arg = DeclareLaunchArgument(
+        name = 'global_params_override_file',
+        default_value = [vehicle_config_dir, "/global_params_overwrite.yaml"],
+        description = "Path to global file containing the parameters overwrite"
+    )
+
     inlanecruising_plugin_file_path = os.path.join(
         get_package_share_directory('inlanecruising_plugin'), 'config/parameters.yaml')
 
@@ -120,7 +136,8 @@ def generate_launch_description():
                 ],
                 parameters=[
                     inlanecruising_plugin_file_path,
-                    vehicle_config_param_file
+                    vehicle_config_param_file,
+                    global_params_override_file
                 ]
             ),
         ]
@@ -153,7 +170,8 @@ def generate_launch_description():
                 ],
                 parameters=[
                     route_following_plugin_file_path,
-                    vehicle_config_param_file
+                    vehicle_config_param_file,
+                    global_params_override_file
                 ]
             ),
         ]
@@ -194,7 +212,8 @@ def generate_launch_description():
                 parameters=[
                     approaching_emergency_vehicle_plugin_param_file,
                     vehicle_characteristics_param_file,
-                    vehicle_config_param_file
+                    vehicle_config_param_file,
+                    global_params_override_file
                 ]
             ),
         ]
@@ -225,7 +244,8 @@ def generate_launch_description():
                 ],
                 parameters=[
                     stop_and_wait_plugin_param_file,
-                    vehicle_config_param_file
+                    vehicle_config_param_file,
+                    global_params_override_file
                 ]
             ),
         ]
@@ -260,7 +280,8 @@ def generate_launch_description():
                 ],
                 parameters=[
                     sci_strategic_plugin_file_path,
-                    vehicle_config_param_file
+                    vehicle_config_param_file,
+                    global_params_override_file
                 ]
             ),
         ]
@@ -295,7 +316,8 @@ def generate_launch_description():
                 parameters=[
                     lci_strategic_plugin_file_path,
                     vehicle_config_param_file,
-                    unique_vehicle_calibration_params
+                    unique_vehicle_calibration_params,
+                    global_params_override_file
                 ]
             ),
         ]
@@ -325,7 +347,8 @@ def generate_launch_description():
                 ],
                 parameters=[
                     stop_controlled_intersection_tactical_plugin_file_path,
-                    vehicle_config_param_file
+                    vehicle_config_param_file,
+                    global_params_override_file
                 ]
             ),
         ]
@@ -363,7 +386,8 @@ def generate_launch_description():
                 parameters=[
                     cooperative_lanechange_param_file,
                     vehicle_characteristics_param_file,
-                    vehicle_config_param_file
+                    vehicle_config_param_file,
+                    global_params_override_file
                 ]
             ),
         ]
@@ -398,7 +422,8 @@ def generate_launch_description():
                 ],
                 parameters=[
                     yield_plugin_file_path,
-                    vehicle_config_param_file
+                    vehicle_config_param_file,
+                    global_params_override_file
                 ]
             ),
         ]
@@ -429,7 +454,8 @@ def generate_launch_description():
                 parameters=[
                     vehicle_config_param_file,
                     vehicle_characteristics_param_file,
-                    light_controlled_intersection_tactical_plugin_param_file
+                    light_controlled_intersection_tactical_plugin_param_file,
+                    global_params_override_file
                 ]
             ),
         ]
@@ -459,7 +485,8 @@ def generate_launch_description():
                 parameters=[
                     vehicle_characteristics_param_file, #vehicle_response_lag
                     vehicle_config_param_file,
-                    pure_pursuit_tuning_parameters
+                    pure_pursuit_tuning_parameters,
+                    global_params_override_file
                 ]
             ),
         ]
@@ -485,7 +512,8 @@ def generate_launch_description():
                       ("output/control_cmd", "trajectory_follower/control_cmd")
                 ],
                 parameters=[
-                    {'timeout_thr_sec':0.5}
+                    {'timeout_thr_sec':0.5},
+                    global_params_override_file
                 ]
             ),
             ComposableNode(
@@ -502,7 +530,9 @@ def generate_launch_description():
                       ("input/reference_trajectory","trajectory_follower/reference_trajectory" )
                 ],
                 parameters = [
-                    [vehicle_calibration_dir, "/trajectory_follower/lateral_controller_defaults.yaml"]
+                    [vehicle_calibration_dir,
+                     "/trajectory_follower/lateral_controller_defaults.yaml"],
+                    global_params_override_file
                 ]
             ),
             ComposableNode(
@@ -519,7 +549,9 @@ def generate_launch_description():
                       ("input/current_state", "trajectory_follower/current_kinematic_state")
                 ],
                 parameters = [
-                    [vehicle_calibration_dir, "/trajectory_follower/longitudinal_controller_defaults.yaml"]
+                    [vehicle_calibration_dir,
+                     "/trajectory_follower/longitudinal_controller_defaults.yaml"],
+                    global_params_override_file
                 ]
             )
         ]
@@ -547,7 +579,8 @@ def generate_launch_description():
                 ],
                 parameters=[
                     vehicle_characteristics_param_file,
-                    trajectory_follower_wrapper_param_file
+                    trajectory_follower_wrapper_param_file,
+                    global_params_override_file
                 ]
             ),
         ]
@@ -588,7 +621,8 @@ def generate_launch_description():
                 ],
                 parameters=[
                     platooning_strategic_ihp_param_file,
-                    vehicle_config_param_file
+                    vehicle_config_param_file,
+                    global_params_override_file
                 ]
             ),
         ]
@@ -617,7 +651,9 @@ def generate_launch_description():
                     ("plugin_discovery", [ EnvironmentVariable('CARMA_GUIDE_NS', default_value=''), "/plugin_discovery" ] ),
                     ("route", [ EnvironmentVariable('CARMA_GUIDE_NS', default_value=''), "/route" ] ),
                 ],
-                parameters=[ platoon_tactical_ihp_param_file, vehicle_config_param_file ]
+                parameters=[platoon_tactical_ihp_param_file,
+                            vehicle_config_param_file,
+                            global_params_override_file]
             ),
         ]
     )
@@ -644,7 +680,10 @@ def generate_launch_description():
                     ("current_pose", [ EnvironmentVariable('CARMA_LOCZ_NS', default_value=''), "/current_pose" ] ),
                     ("vehicle/twist", [ EnvironmentVariable('CARMA_INTR_NS', default_value=''), "/vehicle/twist" ] ),
                 ],
-                parameters=[ platooning_control_param_file, vehicle_config_param_file, unique_vehicle_calibration_params ]
+                parameters=[ platooning_control_param_file,
+                            vehicle_config_param_file,
+                            unique_vehicle_calibration_params,
+                            global_params_override_file]
             )
         ]
     )
@@ -676,7 +715,8 @@ def generate_launch_description():
                 ],
                 parameters=[
                     stop_and_dwell_strategic_plugin_container_file_path,
-                    vehicle_config_param_file
+                    vehicle_config_param_file,
+                    global_params_override_file
                 ]
             ),
         ]
@@ -698,7 +738,8 @@ def generate_launch_description():
                 ],
                 remappings = [],
                 parameters=[
-                    vehicle_config_param_file
+                    vehicle_config_param_file,
+                    global_params_override_file
                 ]
             ),
         ]

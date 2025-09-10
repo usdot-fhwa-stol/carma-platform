@@ -74,6 +74,22 @@ def generate_launch_description():
         description = "Path to file containing override parameters for the subsystem controller"
     )
 
+    vehicle_config_dir = LaunchConfiguration('vehicle_config_dir')
+    declare_vehicle_config_dir_arg = DeclareLaunchArgument(
+        name = 'vehicle_config_dir',
+        default_value = "/opt/carma/vehicle/config",
+        description = "Path to file containing vehicle config directories"
+    )
+
+    # Declare the global_params_override_file launch argument
+    # Parameters in this file will override any parameters loaded in their respective packages
+    global_params_override_file = LaunchConfiguration('global_params_override_file')
+    declare_global_params_override_file_arg = DeclareLaunchArgument(
+        name = 'global_params_override_file',
+        default_value = [vehicle_config_dir, "/global_params_overwrite.yaml"],
+        description = "Path to global file containing the parameters overwrite"
+    )
+
     # Declare enable_opening_tunnels
     enable_opening_tunnels = LaunchConfiguration('enable_opening_tunnels')
     declare_enable_opening_tunnels = DeclareLaunchArgument(
@@ -117,7 +133,8 @@ def generate_launch_description():
                 parameters=[
                     mobilitypath_publisher_param_file,
                     vehicle_characteristics_param_file,
-                    vehicle_config_param_file
+                    vehicle_config_param_file,
+                    global_params_override_file
                 ]
             ),
             ComposableNode(
@@ -142,7 +159,8 @@ def generate_launch_description():
                 parameters=[
                     bsm_generator_param_file,
                     vehicle_characteristics_param_file,
-                    vehicle_config_param_file
+                    vehicle_config_param_file,
+                    global_params_override_file
                 ]
             ),
             ComposableNode(
@@ -158,7 +176,8 @@ def generate_launch_description():
                     ("outbound_binary_msg", [ EnvironmentVariable('CARMA_INTR_NS', default_value=''), "/comms/outbound_binary_msg" ] ),
                 ],
                 parameters=[
-                    vehicle_config_param_file
+                    vehicle_config_param_file,
+                    global_params_override_file
                 ]
             ),
             ComposableNode(
@@ -173,7 +192,8 @@ def generate_launch_description():
                     ("outgoing_bsm", "bsm_outbound" )
                 ],
                 parameters=[
-                    vehicle_config_param_file
+                    vehicle_config_param_file,
+                    global_params_override_file
                 ]
             ),
             ComposableNode(
@@ -188,7 +208,9 @@ def generate_launch_description():
                     ("incoming_geofence_control", [ EnvironmentVariable('CARMA_MSG_NS', default_value=''), "/incoming_geofence_control" ] ),
                 ],
                 parameters = [
-                    vehicle_config_param_file, carma_cloud_client_param_file
+                    vehicle_config_param_file,
+                    carma_cloud_client_param_file,
+                    global_params_override_file
                 ]
 
             ),
