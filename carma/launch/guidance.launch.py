@@ -403,7 +403,7 @@ def generate_launch_description():
                 PythonLaunchDescriptionSource([ThisLaunchFileDir(), '/plugins.launch.py']),
                 launch_arguments={
                     'route_file_folder' : route_file_folder,
-                    'global_params_override_file', global_params_override_file,
+                    'global_params_override_file' : global_params_override_file,
                     'vehicle_calibration_dir' : vehicle_calibration_dir,
                     'vehicle_characteristics_param_file' : vehicle_characteristics_param_file,
                     'vehicle_config_param_file' : vehicle_config_param_file,

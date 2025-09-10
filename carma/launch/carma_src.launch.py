@@ -349,7 +349,8 @@ def generate_launch_description():
         executable='system_controller',
         parameters=[
                     system_controller_param_file,
-                    {"use_sim_time" : use_sim_time}],
+                    {"use_sim_time" : use_sim_time},
+                    global_params_override_file],
         on_exit = Shutdown(), # Mark the subsystem controller as required for segfaults
         arguments=['--ros-args', '--log-level', GetLogLevel('system_controller', env_log_levels)]
     )
