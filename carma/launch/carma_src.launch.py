@@ -82,7 +82,7 @@ def generate_launch_description():
     declare_vehicle_config_dir_arg = DeclareLaunchArgument(
         name = 'vehicle_config_dir',
         default_value = "/opt/carma/vehicle/config",
-        description = "Path to file containing vehicle config directories"
+        description = "Path to vehicle configuration directory populated by carma-config"
     )
 
     vehicle_characteristics_param_file = LaunchConfiguration('vehicle_characteristics_param_file')
