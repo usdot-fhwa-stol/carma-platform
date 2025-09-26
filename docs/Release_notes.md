@@ -32,7 +32,7 @@ Additionally, scripts are added to create, transform, and rotate Lanelet2 (.osm)
 **Enhancements**
 
 - Yield to VRU using cooperative perception (with SDSMs): This includes all enhancements required to enable CARMA Platform to receive and process received SDSMs and yield if necessary. These enhancements have been field tested using outputs from a FLIR Camera, which are processed by V2X Hub and CARMA Streets. All field testing was conducted with a pedestrian dummy.
-  - Pull Requests: [carma-platform PR #2563](https://github.com/usdot-fhwa-stol/carma-platform/pull/2563), [carma-platform PR #2575](https://github.com/usdot-fhwa-stol/carma-platform/pull/2575), [carma-platform PR #2581](https://github.com/usdot-fhwa-stol/carma-platform/pull/2581), [carma-platform PR #2582](https://github.com/usdot-fhwa-stol/carma-platform/pull/2582), [carma-platform PR #2583](https://github.com/usdot-fhwa-stol/carma-platform/pull/2483), [carma-platform PR #2589](https://github.com/usdot-fhwa-stol/carma-platform/pull/2589), [carma-platform PR #2615](https://github.com/usdot-fhwa-stol/carma-platform/pull/2615)
+  - Pull Requests: [carma-platform PR #2563](https://github.com/usdot-fhwa-stol/carma-platform/pull/2563), [carma-platform PR #2575](https://github.com/usdot-fhwa-stol/carma-platform/pull/2575), [carma-platform PR #2581](https://github.com/usdot-fhwa-stol/carma-platform/pull/2581), [carma-platform PR #2582](https://github.com/usdot-fhwa-stol/carma-platform/pull/2582), [carma-platform PR #2583](https://github.com/usdot-fhwa-stol/carma-platform/pull/2583), [carma-platform PR #2589](https://github.com/usdot-fhwa-stol/carma-platform/pull/2589), [carma-platform PR #2615](https://github.com/usdot-fhwa-stol/carma-platform/pull/2615)
   
 - Lanelet2 and OpenDrive Map Creation and Transformation: This includes all enhancements to enable Lanelet2 (.osm) maps to be created from scratch and for Lanelet2 and OpenDrive (.xodr) maps to be edited (trimming, shifting, rotating around a new reference point, etc.). 
   - Pull Requests: [carma-platform PR #2561](https://github.com/usdot-fhwa-stol/carma-platform/pull/2561), [carma-platform PR #2562](https://github.com/usdot-fhwa-stol/carma-platform/pull/2562), [carma-platform PR #2566](https://github.com/usdot-fhwa-stol/carma-platform/pull/2566), [carma-platform PR #2572](https://github.com/usdot-fhwa-stol/carma-platform/pull/2572)
@@ -86,7 +86,7 @@ The main update in this release for CARMA Streets is that Sensor Data Sharing Se
 - TT-91: CARMA Streets MMITSS integration (beta)
   - Pull Requests: [carma-streets PR #432](https://github.com/usdot-fhwa-stol/carma-streets/pull/432), [carma-streets PR #433](https://github.com/usdot-fhwa-stol/carma-streets/pull/433)
 - FCP-1: CARMA Streets MUST Sensor integration fixes and improvements in sensor_data_sharing_service for Cooperative Perception (beta)
-  - Pull Requests: [carma-streets PR #426](https://github.com/usdot-fhwa-stol/carma-streets/pull/432), [carma-streets PR #433](https://github.com/usdot-fhwa-stol/carma-streets/pull/429)
+  - Pull Requests: [carma-streets PR #426](https://github.com/usdot-fhwa-stol/carma-streets/pull/426), [carma-streets PR #429](https://github.com/usdot-fhwa-stol/carma-streets/pull/429)
 
 **Fixes** 
 - Pull Requests:
