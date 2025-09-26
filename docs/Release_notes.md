@@ -1,6 +1,179 @@
 CARMA System Release Notes
 ----------------------------
 
+Version 4.11.0, released Aug 14th, 2025
+----------------------------------------
+
+### **Summary**
+The CARMA System 4.11.0 release includes the following significant updates: 
+
+- Enhancements have been made to CARMA Platform’s cooperative perception pipeline and planning nodes to enable it to correctly process and yield to objects based on received Sensor Data Sharing Messages (SDSMs) as part of live vehicle field testing. This has been tested using a pedestrian dummy and a smart infrastructure system running V2X Hub version 7.10.0.  
+- The CARMA Messenger UI for Traffic Incident Manager has been updated to be more interactive for users. 
+- Scripts have been added to CARMA Platform’s repository to support creating, transforming, and rotating Lanelet2 (.osm) and OpenDrive (.xodr) maps to support testing of specific road networks at different test locations. 
+- A new automation workflow has been added to all repositories, which sends an email to Cavsupportservices@dot.gov when a GitHub issue is created by an external user. 
+- Note: Software in release CARMA System 4.11.0 was tested against V2X Hub release 7.10.0. 
+
+## **Changes to Key Existing Repositories**
+
+### **CARMA Cloud**
+
+In this release, the deployment configuration for CARMA Cloud is updated. Updates include adding environment variables for default user credentials of the CARMA Cloud instance. Additionally, a volume has been added to the JSON files required to load an OpenDrive (.xodr) map file.
+
+**Enhancements** 
+
+- Pull Requests: [carma-cloud PR #68](https://github.com/usdot-fhwa-stol/carma-cloud/pull/68), [carma-cloud PR #74](https://github.com/usdot-fhwa-stol/carma-cloud/pull/74)
+
+### **CARMA Platform**
+
+In this release, enhancements and fixes are added to CARMA Platform’s planning nodes to [1] enable the ego vehicle to yield to objects based on received SDSMs in real world field testing and [2] enable parallel processing of various callbacks. Item [1] was initially part of the CARMA System 4.5.0 release, which was tested in CDASim. In this CARMA System 4.11.0 release, this functionality has been tested in the real world with a pedestrian dummy. 
+
+Additionally, scripts are added to create, transform, and rotate Lanelet2 (.osm) maps and OpenDrive (.xodr) maps to support testing of specific road networks at different test locations. 
+
+**Enhancements**
+
+- Yield to VRU using cooperative perception (with SDSMs): This includes all enhancements required to enable CARMA Platform to receive and process received SDSMs and yield if necessary. These enhancements have been field tested using outputs from a FLIR Camera, which are processed by V2X Hub and CARMA Streets. All field testing was conducted with a pedestrian dummy.
+  - Pull Requests: [carma-platform PR #2563](https://github.com/usdot-fhwa-stol/carma-platform/pull/2563), [carma-platform PR #2575](https://github.com/usdot-fhwa-stol/carma-platform/pull/2575), [carma-platform PR #2581](https://github.com/usdot-fhwa-stol/carma-platform/pull/2581), [carma-platform PR #2582](https://github.com/usdot-fhwa-stol/carma-platform/pull/2582), [carma-platform PR #2583](https://github.com/usdot-fhwa-stol/carma-platform/pull/2583), [carma-platform PR #2589](https://github.com/usdot-fhwa-stol/carma-platform/pull/2589), [carma-platform PR #2615](https://github.com/usdot-fhwa-stol/carma-platform/pull/2615)
+  
+- Lanelet2 and OpenDrive Map Creation and Transformation: This includes all enhancements to enable Lanelet2 (.osm) maps to be created from scratch and for Lanelet2 and OpenDrive (.xodr) maps to be edited (trimming, shifting, rotating around a new reference point, etc.). 
+  - Pull Requests: [carma-platform PR #2561](https://github.com/usdot-fhwa-stol/carma-platform/pull/2561), [carma-platform PR #2562](https://github.com/usdot-fhwa-stol/carma-platform/pull/2562), [carma-platform PR #2566](https://github.com/usdot-fhwa-stol/carma-platform/pull/2566), [carma-platform PR #2572](https://github.com/usdot-fhwa-stol/carma-platform/pull/2572)
+
+- CDASim Live Training: Improvements to aws instance scripts for CDASim deployment in the cloud with better user experience.
+  - Pull Requests: [carma-platform PR #2564](https://github.com/usdot-fhwa-stol/carma-platform/pull/2564), [carma-platform PR #2573](https://github.com/usdot-fhwa-stol/carma-platform/pull/2573)
+  
+**Fixes**  
+
+Planning nodes’ (arbitrator and plan_delegator) parallel processing improvements: These changes allow planning nodes to correctly update the vehicle state such as location and speed while waiting for response from the tactical plugins: 
+  - Pull Requests: [carma-platform PR #2591](https://github.com/usdot-fhwa-stol/carma-platform/pull/2591), [carma-platform PR #2596](https://github.com/usdot-fhwa-stol/carma-platform/pull/2596), [carma-platform PR #2597](https://github.com/usdot-fhwa-stol/carma-platform/pull/2597), [carma-platform PR #2598](https://github.com/usdot-fhwa-stol/carma-platform/pull/2598), [carma-platform PR #2602](https://github.com/usdot-fhwa-stol/carma-platform/pull/2602), [carma-platform PR #2607](https://github.com/usdot-fhwa-stol/carma-platform/pull/2607)
+
+**Other**  
+  
+  - [carma-platform PR #2567](https://github.com/usdot-fhwa-stol/carma-platform/pull/2567): Fix object visualizer launch parameter syntax error that is causing carma-platform shut down.
+  - [carma-platform PR #2579](https://github.com/usdot-fhwa-stol/carma-platform/pull/2579): Fix Lane change recover by removing extra unused code from ILC.
+  - [carma-platform PR #2586](https://github.com/usdot-fhwa-stol/carma-platform/pull/2586): Fix Traffic Incident Parser so that it doesn’t ignore some messages and speed limit change
+  - [carma-platform PR #2590](https://github.com/usdot-fhwa-stol/carma-platform/pull/2590): Remove outdated OBU scripts from engineering_tools.
+
+**Other Updates**  
+
+- Pull Requests:
+  - [carma-platform PR #2571](https://github.com/usdot-fhwa-stol/carma-platform/pull/2571): Create External Issues notification workflow. 
+  - [carma-platform PR #2606](https://github.com/usdot-fhwa-stol/carma-platform/pull/2606): Add feature to increase TCR bounding box.
+
+### **CARMA Messenger**
+
+In this release, the CARMA Messenger UI is updated to enable a more interactive Traffic Incident Management (TIM) interface. TIM message can now be broadcasted using GPS location from either TORC pinpoint driver or selected zones on Google Maps.  
+
+NOTE: Multiple lane selection of UI is not connected to the back end and only broadcasts the main lane’s info as TIM message.
+
+**Enhancements**
+
+- Add interactive UI design for CARMA Messenger that lets the user select TIM zones on Google Maps:. 
+  - Pull Requests: [carma-messenger PR #272](https://github.com/usdot-fhwa-stol/carma-messenger/pull/272), [carma-messenger PR #276](https://github.com/usdot-fhwa-stol/carma-messenger/pull/276), [carma-messenger PR #277](https://github.com/usdot-fhwa-stol/carma-messenger/pull/277), [carma-messenger PR #278](https://github.com/usdot-fhwa-stol/carma-messenger/pull/278), [carma-messenger PR #281](https://github.com/usdot-fhwa-stol/carma-messenger/pull/281), [carma-messenger PR #282](https://github.com/usdot-fhwa-stol/carma-messenger/pull/282)
+
+**Other Updates**  
+
+- Pull Requests:
+  - [carma-messenger PR#279](https://github.com/usdot-fhwa-stol/carma-messenger/pull/279): Update docker base image with Debian Bullseye for the CARMA Messenger UI.
+  - [carma-messenger PR#280](https://github.com/usdot-fhwa-stol/carma-messenger/pull/280): Add incremental ROS package build option for CARMA Messenger.
+
+### **CARMA Streets**
+
+The main update in this release for CARMA Streets is that Sensor Data Sharing Service was updated to support TraffiSense 2 FLIR Camera Pedestrian Presence detection data for generating Sensor Data Sharing messages (J3224). Several enhancements and fixes were also implemented because of TFHRC and Summit Point Testing. 
+
+**Enhancements**
+
+- CDAD-130: Enable infrastructure to consume TraffiSense 2 FLIR Camera Pedestrian Detection data and generate Sensor Data Sharing Messages (J3224) for Cooperative Perception.
+  - Pull Requests: [carma-streets PR #439](https://github.com/usdot-fhwa-stol/carma-streets/pull/439), [carma-streets PR #441](https://github.com/usdot-fhwa-stol/carma-streets/pull/441), [carma-streets PR #442](https://github.com/usdot-fhwa-stol/carma-streets/pull/442), [carma-streets PR #443](https://github.com/usdot-fhwa-stol/carma-streets/pull/443), [carma-streets PR #445](https://github.com/usdot-fhwa-stol/carma-streets/pull/445), [carma-streets PR #446](https://github.com/usdot-fhwa-stol/carma-streets/pull/446), [carma-streets PR #436](https://github.com/usdot-fhwa-stol/carma-streets/pull/436), [carma-streets PR #437](https://github.com/usdot-fhwa-stol/carma-streets/pull/437)
+- TT-91: CARMA Streets MMITSS integration (beta)
+  - Pull Requests: [carma-streets PR #432](https://github.com/usdot-fhwa-stol/carma-streets/pull/432), [carma-streets PR #433](https://github.com/usdot-fhwa-stol/carma-streets/pull/433)
+- FCP-1: CARMA Streets MUST Sensor integration fixes and improvements in sensor_data_sharing_service for Cooperative Perception (beta)
+  - Pull Requests: [carma-streets PR #426](https://github.com/usdot-fhwa-stol/carma-streets/pull/426), [carma-streets PR #429](https://github.com/usdot-fhwa-stol/carma-streets/pull/429)
+
+**Fixes** 
+- Pull Requests:
+  - [carma-streets PR #413](https://github.com/usdot-fhwa-stol/carma-streets/pull/413): Failing unit test in sensor data sharing service. 
+  - [carma-streets PR #427](https://github.com/usdot-fhwa-stol/carma-streets/pull/427): Sensor Data Sharing Service currently depends on an OSM map for getting georeference information detection.
+  - [carma-streets PR #437](https://github.com/usdot-fhwa-stol/carma-streets/pull/437): Fix detected object JSON processing.
+  - [carma-streets PR #447](https://github.com/usdot-fhwa-stol/carma-streets/pull/447): Fix release-candidate setup for CARMA Streets initialization script.
+    
+**Other Updates**  
+
+- Pull Requests:
+  - [carma-streets PR #422](https://github.com/usdot-fhwa-stol/carma-streets/pull/422): Upgrade base lanelet2 aware image ubuntu bionic to focal. 
+  - [carma-streets PR #424](https://github.com/usdot-fhwa-stol/carma-streets/pull/424): Update GitHub action (develop.yml) to use ubuntu focal version of lanelet aware image.
+  - [carma-streets PR #431](https://github.com/usdot-fhwa-stol/carma-streets/pull/431): Update GitHub Actions Third-Party Action Versions.
+  - [carma-streets PR #435](https://github.com/usdot-fhwa-stol/carma-streets/pull/435): Add Workflow for External Issues Notification.
+
+## **Other Existing Repositories**
+
+Email Notification When a GitHub Issue is Created
+  - For the following existing repositories, this release added a new automation workflow that sends an email to **Cavsupportservices@dot.gov** when a GitHub issue is created by an external user:
+
+| Repository                        | Pull Request                                   |
+|-----------------------------------|------------------------------------------------|
+| CARMA Base                        | [carma-base PR #244](https://github.com/usdot-fhwa-stol/carma-base/pull/244) |
+| Autoware.Auto                     | [autoware.auto PR #37](https://github.com/usdot-fhwa-stol/autoware.auto/pull/37) |
+| CARMA SSC Interface Wrapper       | [carma-ssc-interface-wrapper PR #181](https://github.com/usdot-fhwa-stol/carma-ssc-interface-wrapper/pull/181) |
+| CARMA Utils                       | [carma-utils PR #251](https://github.com/usdot-fhwa-stol/carma-utils/pull/251) |
+| CARMA Velodyne Lidar Driver       | [carma-velodyne-lidar-driver PR #125](https://github.com/usdot-fhwa-stol/carma-velodyne-lidar-driver/pull/125) |
+| CARMA Lightbar Driver             | [carma-lightbar-driver PR #82](https://github.com/usdot-fhwa-stol/carma-lightbar-driver/pull/82) |
+| CARMA Msgs                        | [carma-msgs PR #259](https://github.com/usdot-fhwa-stol/carma-msgs/pull/259) |
+| CARMA Novatel OEM7 Driver Wrapper | [carma-novatel-oem-driver-wrapper PR #43](https://github.com/usdot-fhwa-stol/carma-novatel-oem-driver-wrapper/pull/43) |
+| CARMA Torc Pinpoint Driver        | [carma-torc-pinpoint-driver PR #50](https://github.com/usdot-fhwa-stol/carma-torc-pinpoint-driver/pull/50) |
+| V2x Ros Driver                    | [v2x-ros-driver PR# 138](https://github.com/usdot-fhwa-stol/v2x-ros-driver/pull/138) |
+| CARMA Config                      | [carma-config PR #454](https://github.com/usdot-fhwa-stol/carma-config/pull/454) |
+| Carma Cloud                       | [carma-cloud PR 68](https://github.com/usdot-fhwa-stol/carma-cloud/pull/68) |
+
+### **V2X ROS Driver**
+
+In this release, new documentation and scripts have been added for configuring a Cohda MK6 OBU to work with a PC running V2X ROS Driver. Additionally, minor updates have been made to launch files to enable the “v2x_radio_address” parameter to be configured from a YAML file stored within CARMA Messenger’s carma-messenger-config. 
+
+**Enhancements**  
+
+- Pull Requests:
+  - [v2x-ros-driver PR #141](https://github.com/usdot-fhwa-stol/v2x-ros-driver/pull/141) & [v2x-ros-driver PR #145](https://github.com/usdot-fhwa-stol/v2x-ros-driver/pull/145): Add Cohda MK6 OBU setup documentation and scripts.
+  - [v2x-ros-driver PR #143](https://github.com/usdot-fhwa-stol/v2x-ros-driver/pull/143): Expose v2x-ros-driver IP for easier deployment 
+
+
+### **CARMA Web UI**
+
+In this release the base image tag is updated to 8.2-apache-bullseye, and workflow_dispatch is added to enable manual docker build triggers to develop branch.  
+
+**Enhancements**
+  - Pull Requests: [carma-web-ui PR #180](https://github.com/usdot-fhwa-stol/carma-web-ui/pull/180)
+
+**Fixes**  
+
+- Pull Requests: 
+  - [carma-web-ui PR #185](https://github.com/usdot-fhwa-stol/carma-web-ui/pull/185): Update base image tag to 8.2-apache-bullseye.
+  - [carma-web-ui PR #186](https://github.com/usdot-fhwa-stol/carma-web-ui/pull/186): Remove 'There were no segments found the active route.' text from CARMA Web UI. 
+  - [carma-web-ui PR #182](https://github.com/usdot-fhwa-stol/carma-web-ui/pull/182): Fix Google MAPS API error.
+
+### **CARMA Config**
+
+In this release, the local time zone is added to docker containers for carma-platform. Additionally external object recording for MCAP is enabled.
+
+**Enhancements** 
+
+- Enable external object recording for MCAP.
+  - Pull Requests: [carma-config PR #456](https://github.com/usdot-fhwa-stol/carma-config/pull/456)
+
+**Fixes**  
+
+- Pull Requests:
+  - [carma-config PR #452](https://github.com/usdot-fhwa-stol/carma-config/pull/452): Add local time zone to docker containers for carma-platform.
+  - [carma-config PR #453](https://github.com/usdot-fhwa-stol/carma-config/pull/453): Make development folder more up to date with ROS 2 Humble.
+  - [carma-config PR #457](https://github.com/usdot-fhwa-stol/carma-config/pull/457) & [carma-config PR #459](https://github.com/usdot-fhwa-stol/carma-config/pull/459): Fix Google MAPS API and Docker volume for UI. 
+
+### **Autoware.ai**
+No changes are made to this repository since CARMA System 4.10.0 release. 
+
+### **Ros1_bridge** 
+No changes are made to this repository since CARMA System 4.10.0 release. 
+
+### **V2X ROS Conversion**
+No changes are made to this repository since CARMA System 4.10.0 release. 
+
+
 Version 4.10.0, released June 24th, 2025
 ----------------------------------------
 
