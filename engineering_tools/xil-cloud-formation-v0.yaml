@@ -459,8 +459,8 @@ Resources:
           sudo usermod -aG docker ubuntu
 
           # Install carma-config
-          # carma config install ${CarmaConfigImage}
-          # carma config set ${CarmaConfigImage}
+          carma config install ${CarmaConfigImage}
+          carma config set ${CarmaConfigImage}
 
           ## Add VCS Sources
           sudo apt-get update
