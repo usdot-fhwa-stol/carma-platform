@@ -131,7 +131,7 @@ repositories:
 
   src/carma-carla-interation:
     type: git
-    url: git@github.com:usdot-fhwa-stol/carma-carla-interation.git
+    url: git@github.com:usdot-fhwa-stol/carma-carla-integration.git
     version: develop
 
   src/carma-ns3-adapter:
