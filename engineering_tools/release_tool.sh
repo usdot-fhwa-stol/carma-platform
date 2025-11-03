@@ -85,20 +85,38 @@ Arguments:
 
 Recommended workflow:
 0. Capture repositories included in the release in a .repos file 
-   (comment out or remove repositories not included for current release)
+   (comment out or remove repositories not included for the current release)
 1. Clone all repositories from the .repos file into a working directory
-2. Create release branches for all cloned repositories (e.g., release/tempest)
+   Example:
+       ./release_tool.sh clone -d /home/user/releases/2025-q4 -r /home/user/releases/carma-platform.repos
+2. Create release branches for all cloned repositories (e.g., release/2025-q4)
+   Example:
+       ./release_tool.sh create_release_branches -d /home/user/releases/2025-q4 -b release/2025-q4
 3. Checkout all repositories to the release branch (if not already on it)
+   Example:
+       ./release_tool.sh checkout -d /home/user/releases/2025-q4 -b release/2025-q4
 4. Create and checkout an intermediate branch from the release branch 
    (e.g., update_config_releasename) to update .env files in carma-cloud, carma-messenger, and carma-config
+   Example:
+       ./release_tool.sh update_envs -d /home/user/releases/2025-q4 -b release/2025-q4 (Candidate)
+       ./release_tool.sh update_envs -d /home/user/releases/2025-q4 -b release/2025-q4 -v 5.3.0 (Before Merging master PR's)
 5. Commit and push .env file updates to the intermediate branch, then create PRs 
    to merge the intermediate branch into the release branch
+   (Handled automatically by the update_envs command)
 6. Create PRs to merge release branches into master for each repository
+   Example:
+       ./release_tool.sh create_release_prs -d /home/user/releases/2025-q4 -v 5.3.0 --assign your-github-username
 7. Tag each repository's new master commit with the release version
-8. Create Sync branches(e.g., Sync_master_to_dev_releasename) from master and update update .env files in carma-cloud, carma-messenger, and carma-config
-   to point to the dev(usdotfhwastoldev).
-9. Merge sync PRs from intermediate Sync branches(Master changes) → develop 
-
+   Example:
+       ./release_tool.sh tag_repos -d /home/user/releases/2025-q4 -v 5.3.0
+8. Create Sync branches (e.g., Sync_master_to_dev_2025-q4) from master and update .env files
+   in carma-cloud, carma-messenger, and carma-config to point to dev (usdotfhwastoldev)
+   Example:
+       ./release_tool.sh create_develop_sync_branches -d /home/user/releases/2025-q4 -b release/2025-q4
+       ./release_tool.sh update_sync_envs -d /home/user/releases/2025-q4 -b release/2025-q4
+9. Merge Sync PRs from intermediate Sync branches (master changes) → develop
+   Example:
+       ./release_tool.sh create_sync_prs -d /home/user/releases/2025-q4 -b release/2025-q4 --assign your-github-username
 This tool depends on:
 - GitHub CLI (https://cli.github.com/)
 - vcstool (https://github.com/dirk-thomas/vcstool)
