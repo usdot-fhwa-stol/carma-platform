@@ -80,7 +80,6 @@ jobs:
         make_with_coverage.bash -m -e /opt/carma/ -o ./coverage_reports/gcov
 
     - name: Run ROS2 C++ Tests
-      continue-on-error: true ## Adding temporary continue-on-error: true to test sonar workflow
       run: |
         source "$INIT_ENV"
         source "$ROS_2_ENV"
@@ -96,4 +95,5 @@ jobs:
       with:
         sonar-token: ${{ secrets.SONAR_TOKEN }}
         working-dir: /opt/carma/src/${{ github.event.repository.name }}
+
 
