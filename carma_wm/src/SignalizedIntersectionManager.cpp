@@ -492,7 +492,7 @@ namespace carma_wm
 
     if (!semantic_map)
     {
-      RCLCPP_DEBUG_STREAM(rclcpp::get_logger("carma_wm"), "Map is not set yet.");
+      RCLCPP_INFO_STREAM(rclcpp::get_logger("carma_wm"), "Map is not set yet.");
       return;
     }
 
@@ -552,7 +552,7 @@ namespace carma_wm
 
     std::lock_guard<std::mutex> lock(log_mutex);
     if (previous_busy_log_streams_.find(message) == previous_busy_log_streams_.end()) {
-      RCLCPP_DEBUG_STREAM(rclcpp::get_logger("carma_wm"), message);
+      RCLCPP_INFO_STREAM(rclcpp::get_logger("carma_wm"), message);
       previous_busy_log_streams_.insert(message);
     }
   }
