@@ -253,7 +253,7 @@ void WMListenerWorker::mapUpdateCallback(autoware_lanelet2_msgs::msg::MapBin::Sh
 
   }
 
-  RCLCPP_DEBUG_STREAM(rclcpp::get_logger("carma_wm::WMListenerWorker"), "Geofence id" << gf_ptr->id_ << " requests update of size: " << gf_ptr->update_list_.size());
+  RCLCPP_INFO_STREAM(rclcpp::get_logger("carma_wm::WMListenerWorker"), "Geofence id" << gf_ptr->id_ << " requests update of size: " << gf_ptr->update_list_.size());
 
   // we should extract general regem to specific type of regem the geofence specifies
   for (auto const &[lanelet_id, lanelet_to_update]: gf_ptr->update_list_)
@@ -450,7 +450,7 @@ LaneletRoutingGraphPtr WMListenerWorker::routingGraphFromMsg(const autoware_lane
 
   if (msg.participant_type.compare(getVehicleParticipationType()) != 0) {
 
-    RCLCPP_DEBUG_STREAM(rclcpp::get_logger("carma_wm::WMListenerWorker"),"Received routing graph does not have matching vehicle type for world model. WM Type: "
+    RCLCPP_ERROR_STREAM(rclcpp::get_logger("carma_wm::WMListenerWorker"),"Received routing graph does not have matching vehicle type for world model. WM Type: "
       << getVehicleParticipationType()
       << " graph type: " << msg.participant_type
     );
@@ -639,7 +639,7 @@ void WMListenerWorker::routeCallback(const carma_planning_msgs::msg::Route::Shar
   }
 
   if (!world_model_->getMap()) { // This check is a bit redundant but still useful from a debugging perspective as the alternative is a segfault
-    RCLCPP_DEBUG_STREAM(rclcpp::get_logger("carma_wm::WMListenerWorker"), "WMListener received a route before a map was available. Dropping route message.");
+    RCLCPP_ERROR_STREAM(rclcpp::get_logger("carma_wm::WMListenerWorker"), "WMListener received a route before a map was available. Dropping route message.");
     return;
   }
 
