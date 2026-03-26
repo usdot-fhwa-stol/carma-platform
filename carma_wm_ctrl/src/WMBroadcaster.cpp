@@ -1056,7 +1056,7 @@ void WMBroadcaster::externalMapMsgCallback(carma_v2x_msgs::msg::MapData::UniqueP
       break;
     }
   }
-  
+
   if(up_to_date)
   {
     return;
@@ -1752,7 +1752,7 @@ carma_v2x_msgs::msg::TrafficControlRequest WMBroadcaster::controlRequestFromRout
   minY -= tcr_bbox_expansion_meters_;
   maxX += tcr_bbox_expansion_meters_;
   maxY += tcr_bbox_expansion_meters_;
-  
+
   localPoint.x()= minX;
   localPoint.y()= minY;
 
@@ -1871,7 +1871,9 @@ visualization_msgs::msg::Marker WMBroadcaster::composeVisualizerMarkerFromPts(co
   visualization_msgs::msg::Marker marker;
   marker.header.frame_id = "map";
   marker.header.stamp = rclcpp::Time();
-  marker.type = visualization_msgs::msg::Marker::SPHERE_LIST;
+  // marker.type = visualization_msgs::msg::Marker::SPHERE_LIST;
+  marker.type = visualization_msgs::msg::Marker::MESH_RESOURCE;
+  marker.mesh_resource = "package://carma_wm_ctrl/meshes/cone.stl";
   marker.action = visualization_msgs::msg::Marker::ADD;
   marker.ns = "map_update_visualizer";
 
@@ -1888,8 +1890,8 @@ visualization_msgs::msg::Marker WMBroadcaster::composeVisualizerMarkerFromPts(co
   {
     marker.id = 0;
   }
-  marker.color.r = 0.0F;
-  marker.color.g = 1.0F;
+  marker.color.r = 0.50F;
+  marker.color.g = 0.0F;
   marker.color.b = 0.0F;
   marker.color.a = 1.0F;
 
