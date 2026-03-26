@@ -36,6 +36,11 @@ namespace carma_wm_ctrl
     double config_limit = 6.67; //config speed limit in m/s
     std::string vehicle_id = "CARMA";
     std::string participant = "vehicle:car";
+    //! Path to the model file for tcm visualization
+    std::string tcm_icon_path = "package://carma_wm_ctrl/meshes/cone.stl";
+
+    //! Scale factor to apply to the tcm icon model
+    double tcm_icon_scale = 1.0;
 
     // Stream operator for this config
     friend std::ostream &operator<<(std::ostream &output, const Config &c)

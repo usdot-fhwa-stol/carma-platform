@@ -92,7 +92,11 @@ carma_ros2_utils::CallbackReturn WMBroadcasterNode::handle_on_configure(const rc
   get_parameter<double>("traffic_control_request_period", config_.traffic_control_request_period);
   get_parameter<std::string>("vehicle_id", config_.vehicle_id);
   get_parameter<std::string>("vehicle_participant_type", config_.participant);
-  get_parameter<double>("config_speed_limit", config_.config_limit);
+  get_parameter<std::string>("tcm_icon_path", config_.tcm_icon_path);
+  get_parameter<double>("tcm_icon_scale", config_.tcm_icon_scale);
+
+
+
 
   wmb_->setConfigACKPubTimes(config_.ack_pub_times);
   wmb_->setMaxLaneWidth(config_.max_lane_width);
@@ -100,6 +104,7 @@ carma_ros2_utils::CallbackReturn WMBroadcasterNode::handle_on_configure(const rc
   wmb_->setConfigSpeedLimit(config_.config_limit);
   wmb_->setConfigVehicleId(config_.vehicle_id);
   wmb_->setVehicleParticipationType(config_.participant);
+  wmb_->setVisualizationInfo(config_.tcm_icon_path, config_.tcm_icon_scale);
 
   rclcpp::Parameter intersection_coord_correction_param = get_parameter("intersection_coord_correction");
   config_.intersection_coord_correction = intersection_coord_correction_param.as_double_array();

@@ -1253,6 +1253,12 @@ std::string WMBroadcaster::getVehicleParticipationType()
   return participant_;
 }
 
+void WMBroadcaster::setVisualizationInfo(std::string icon_path, double icon_scale)
+{
+  icon_path_ = icon_path;
+  icon_scale_ = icon_scale;
+}
+
 uint32_t WMBroadcaster::generate32BitId(const std::string& label)
 {
   auto pos1 = label.find("INT_ID:") + 7;
@@ -1873,13 +1879,13 @@ visualization_msgs::msg::Marker WMBroadcaster::composeVisualizerMarkerFromPts(co
   marker.header.stamp = rclcpp::Time();
   // marker.type = visualization_msgs::msg::Marker::SPHERE_LIST;
   marker.type = visualization_msgs::msg::Marker::MESH_RESOURCE;
-  marker.mesh_resource = "package://carma_wm_ctrl/meshes/cone.stl";
+  marker.mesh_resource = icon_path_;
   marker.action = visualization_msgs::msg::Marker::ADD;
   marker.ns = "map_update_visualizer";
 
-  marker.scale.x = 0.65;
-  marker.scale.y = 0.65;
-  marker.scale.z = 0.65;
+  marker.scale.x = icon_scale_;
+  marker.scale.y = icon_scale_;
+  marker.scale.z = icon_scale_;
   marker.frame_locked = true;
 
   if (!marker_array.markers.empty())
