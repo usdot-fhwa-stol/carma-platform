@@ -463,8 +463,8 @@ private:
    * It should not be incremented for updates that do not require a full map publication.
    */
   size_t current_map_version_ = 0;
-  std::string icon_path_ = "package://carma_wm_ctrl/meshes/cone.stl";
-  double icon_scale_ = 0.5;
+  std::string icon_path_ = "file:///opt/carma/vehicle/calibration/visualization_meshes/cone.obj";
+  double icon_scale_ = 0.1;
 
   carma_planning_msgs::msg::Route current_route; // Most recently received route message
   /**

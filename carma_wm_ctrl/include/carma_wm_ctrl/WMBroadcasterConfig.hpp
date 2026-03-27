@@ -37,10 +37,10 @@ namespace carma_wm_ctrl
     std::string vehicle_id = "CARMA";
     std::string participant = "vehicle:car";
     //! Path to the model file for tcm visualization
-    std::string tcm_icon_path = "package://carma_wm_ctrl/meshes/cone.stl";
+    std::string tcm_icon_path = "file:///opt/carma/vehicle/calibration/visualization_meshes/cone.obj";
 
     //! Scale factor to apply to the tcm icon model
-    double tcm_icon_scale = 1.0;
+    double tcm_icon_scale = 0.1;
 
     // Stream operator for this config
     friend std::ostream &operator<<(std::ostream &output, const Config &c)

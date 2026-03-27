@@ -1896,20 +1896,24 @@ visualization_msgs::msg::Marker WMBroadcaster::composeVisualizerMarkerFromPts(co
   {
     marker.id = 0;
   }
-  marker.color.r = 0.50F;
+  marker.color.r = 1.0F;
   marker.color.g = 0.0F;
   marker.color.b = 0.0F;
   marker.color.a = 1.0F;
 
-  for (int i = 0; i < input.size(); i++)
-  {
-    geometry_msgs::msg::Point temp_point;
-    temp_point.x = input[i].x();
-    temp_point.y = input[i].y();
-    temp_point.z = 2; //to show up on top of the lanelet lines
+  // for (int i = 0; i < input.size(); i++)
+  // {
+  //   geometry_msgs::msg::Point temp_point;
+  //   temp_point.x = input[i].x();
+  //   temp_point.y = input[i].y();
+  //   temp_point.z = 2; //to show up on top of the lanelet lines
 
-    marker.points.push_back(temp_point);
-  }
+  //   marker.points.push_back(temp_point);
+  // }
+  marker.pose.position.x = input[0].x();
+  marker.pose.position.y = input[0].y();
+  marker.pose.position.z = 1.0;
+  marker.pose.orientation.w = 1.0;
 
   return marker;
  }
