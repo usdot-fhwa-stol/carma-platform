@@ -135,10 +135,11 @@ public:
   * \brief Visualizes in Rviz geometry points related to MAP msg or TrafficControlMessage
   * \param marker_array Previously visualized markers if available to continue marker id
   * \param input geometry points to visualize
+  * \param label tcm label to determine marker shape
   * \return MarkerArray containing only the new visualization from the gf pts
   *         intended to be appended to the previous markers
   */
-  visualization_msgs::msg::Marker composeVisualizerMarkerFromPts(const visualization_msgs::msg::MarkerArray& marker_array, const std::vector<lanelet::Point3d>& input);
+  visualization_msgs::msg::Marker composeVisualizerMarkerFromPts(const visualization_msgs::msg::MarkerArray& marker_array, const std::vector<lanelet::Point3d>& input, const std::string& label);
 
    /*!
   * \brief composeTCRStatus() compose TCM Request visualization on UI
@@ -177,7 +178,7 @@ public:
   void setMaxLaneWidth(double max_lane_width);
 
   /*!
-   * \brief Sets much more bigger the TCR bounding box should be in addition to the route's 
+   * \brief Sets much more bigger the TCR bounding box should be in addition to the route's
    *        original bounding box. This helps avoid certain situations where the box's angle
    *        might prevent carma-cloud from generating TCM.
    */
@@ -202,7 +203,15 @@ public:
  */
   void setVehicleParticipationType(std::string participant);
 
-  void setVisualizationInfo(std::string icon_path, double icon_scale);
+/**
+ * @brief Set the RVIZ visualization information
+ *
+ * @param wz_icon_path icon path for workzone (traffic cone)
+ * @param wz_icon_scale icon scale for workzone
+ * @param tim_icon_path icon path for tim icon (police car)
+ * @param tim_icon_scale icon scale for tim icon
+ */
+  void setVisualizationInfo(const std::string& wz_icon_path, double wz_icon_scale, const std::string& tim_icon_path, double tim_icon_scale);
 
   /**
    * @brief Get the Vehicle Participation Type object
@@ -463,8 +472,10 @@ private:
    * It should not be incremented for updates that do not require a full map publication.
    */
   size_t current_map_version_ = 0;
-  std::string icon_path_ = "file:///opt/carma/vehicle/calibration/visualization_meshes/cone.obj";
-  double icon_scale_ = 0.1;
+  std::string wz_icon_path_ = "file:///opt/carma/vehicle/calibration/visualization_meshes/cone.obj";
+  double wz_icon_scale_ = 0.1;
+  std::string tim_icon_path_ = "file:///opt/carma/vehicle/calibration/visualization_meshes/cop.obj";
+  double tim_icon_scale_ = 0.1;
 
   carma_planning_msgs::msg::Route current_route; // Most recently received route message
   /**
