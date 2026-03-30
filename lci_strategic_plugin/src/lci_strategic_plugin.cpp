@@ -773,7 +773,6 @@ TrajectoryParams LCIStrategicPlugin::handleFailureCaseHelper(const lanelet::Carm
   }
 
   RCLCPP_DEBUG_STREAM(rclcpp::get_logger("lci_strategic_plugin"), "Updated the speed, and using modified_departure_speed: " << return_params.modified_departure_speed);
-  print_params(return_params);
   return return_params;
 }
 
