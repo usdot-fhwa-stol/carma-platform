@@ -19,13 +19,15 @@ intersection_ids_for_correction: [9945, 9001]
 intersection_coord_correction: [0.0, -1.5, -0.5, -1.0]
 
 # Path to the model file for tim visualization (police car)
-tim_icon_path: "package://carma_wm_ctrl/meshes/cop.obj"
+# tim_icon_path: "package://carma_wm_ctrl/meshes/cop.obj"
+tim_icon_path: "file:///opt/carma/vehicle/calibration/visualization_meshes/cop.obj"
 
 # Scale factor to apply to the tim icon model
 tim_icon_icon_scale: 0.1
 
 # Path to the model file for workzone visualization (traffic cone)
-wz_icon_path: "package://carma_wm_ctrl/meshes/cone.stl"
+# wz_icon_path: "package://carma_wm_ctrl/meshes/cone.stl"
+wz_icon_path: "file:///opt/carma/vehicle/calibration/visualization_meshes/cone.stl"
 
 # Scale factor to apply to the tim icon model
 wz_icon_icon_scale: 0.1

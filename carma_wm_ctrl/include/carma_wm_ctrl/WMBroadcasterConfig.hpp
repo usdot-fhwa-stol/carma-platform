@@ -37,11 +37,13 @@ namespace carma_wm_ctrl
     std::string vehicle_id = "CARMA";
     std::string participant = "vehicle:car";
     // Path to the model file for tim visualization
-    std::string tim_icon_path = "package://carma_wm_ctrl/meshes/cop.obj";
+    std::string tim_icon_path = "file:///opt/carma/vehicle/calibration/visualization_meshes/cop.obj";
+    // "package://carma_wm_ctrl/meshes/cop.obj";
     // Scale factor to apply to the tim icon model
     double tim_icon_scale = 0.1;
     // Path to the model file for workzone visualization
-    std::string wz_icon_path = "package://carma_wm_ctrl/meshes/cone.stl";
+    std::string wz_icon_path = "file:///opt/carma/vehicle/calibration/visualization_meshes/cone.stl";
+    // "package://carma_wm_ctrl/meshes/cone.stl";
     // Scale factor to apply to the workzone icon model
     double wz_icon_scale = 0.1;
 
@@ -58,10 +60,10 @@ namespace carma_wm_ctrl
            << "vehicle_id: " << c.vehicle_id << std::endl
            << "participant: " << c.participant << std::endl
            << "config_limit: " << c.config_limit << std::endl
-           << "tim_icon_path: " << c.tcm_icon_path << std::endl
-           << "tim_icon_scale: " << c.tcm_icon_scale << std::endl
-           << "wz_icon_path: " << c.tcm_icon_path << std::endl
-           << "wz_icon_scale: " << c.tcm_icon_scale << std::endl
+           << "tim_icon_path: " << c.tim_icon_path << std::endl
+           << "tim_icon_scale: " << c.tim_icon_scale << std::endl
+           << "wz_icon_path: " << c.wz_icon_path << std::endl
+           << "wz_icon_scale: " << c.wz_icon_scale << std::endl
            << "}" << std::endl;
       return output;
     }

@@ -1535,13 +1535,15 @@ void WMBroadcaster::addGeofence(std::shared_ptr<Geofence> gf_ptr)
       if (update->label_ == carma_wm_ctrl::MAP_MSG_INTERSECTION)
       {
         // MAP msg marker
-        j2735_map_msg_marker_array_.markers.push_back(composeVisualizerMarkerFromPts(j2735_map_msg_marker_array_, update->gf_pts));
+        j2735_map_msg_marker_array_.markers.push_back(composeVisualizerMarkerFromPts(j2735_map_msg_marker_array_, update->gf_pts, update->label_));
       }
       else
       // some kind of geofence
       {
 
-        tcm_marker_array_.markers.push_back(composeVisualizerMarkerFromPts(tcm_marker_array_, update->gf_pts));
+        tcm_marker_array_.markers.push_back(composeVisualizerMarkerFromPts(tcm_marker_array_, update->gf_pts, update->label_));
+        RCLCPP_ERROR_STREAM(rclcpp::get_logger("carma_wm_ctrl"), "label: " << update->label_);
+
       }
     }
 
@@ -1901,7 +1903,7 @@ visualization_msgs::msg::Marker WMBroadcaster::composeVisualizerMarkerFromPts(co
     marker.pose.position.z = 1.0;
     marker.pose.orientation.w = 1.0;
   }
-  else if (label == "MOVE_OVER_LAW" && !tim_icon_path_.empty())
+  else if (label == "MOVE OVER LAW" && !tim_icon_path_.empty())
   {
     marker.type = visualization_msgs::msg::Marker::MESH_RESOURCE;
     marker.mesh_resource = tim_icon_path_;
