@@ -1259,6 +1259,8 @@ void WMBroadcaster::setVisualizationInfo(const std::string& wz_icon_path, double
   wz_icon_scale_ = wz_icon_scale;
   tim_icon_path_ = tim_icon_path;
   tim_icon_scale_ = tim_icon_scale;
+  RCLCPP_ERROR_STREAM(rclcpp::get_logger("carma_wm_ctrl"), "tim_icon_scale_: " << tim_icon_scale_);
+
 }
 
 uint32_t WMBroadcaster::generate32BitId(const std::string& label)
@@ -1903,7 +1905,7 @@ visualization_msgs::msg::Marker WMBroadcaster::composeVisualizerMarkerFromPts(co
     marker.pose.position.z = 1.0;
     marker.pose.orientation.w = 1.0;
   }
-  else if (label == "MOVE OVER LAW" && !tim_icon_path_.empty())
+  if (label == "MOVE OVER LAW" && !tim_icon_path_.empty())
   {
     marker.type = visualization_msgs::msg::Marker::MESH_RESOURCE;
     marker.mesh_resource = tim_icon_path_;

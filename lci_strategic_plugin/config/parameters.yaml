@@ -11,7 +11,7 @@ min_approach_distance : 30.0
 trajectory_smoothing_activation_distance: 140.0
 
 # Double: A buffer infront of the stopping location which will still be considered a valid stop. Units in meters
-stopping_location_buffer : 4.0
+stopping_location_buffer : 7.0
 
 # Double: A buffer in seconds around the green phase which will reduce the phase length such that
 #         vehicle still considers it non-green. For example, having 1s buffer means vehicle will
@@ -25,7 +25,7 @@ stopping_location_buffer : 4.0
 #       planned trajectory, it should be at least or more the value of `vehicle_response_lag`, which
 #       is also a controller parameter that intends to compensate for the uncertainty in the
 #       physical vehicle accurately following a trajectory
-green_light_time_buffer : 0.5
+green_light_time_buffer : 1.0
 
 # Double: Minimum allowable speed in trajectory smoothing algorithm m/s
 algo_minimum_speed : 4.4704
@@ -35,7 +35,7 @@ algo_minimum_speed : 4.4704
 deceleration_fraction : 0.7
 
 # Double: Desired distance to stop buffer in meters
-desired_distance_to_stop_buffer : 1.0
+desired_distance_to_stop_buffer : 15.0
 
 # Double: The minimum period in seconds which a maneuver plan must cover if the plugin wishes to control the whole plan
 min_maneuver_planning_period : 15.1

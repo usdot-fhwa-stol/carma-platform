@@ -40,7 +40,7 @@ namespace carma_wm_ctrl
     std::string tim_icon_path = "file:///opt/carma/vehicle/calibration/visualization_meshes/cop.obj";
     // "package://carma_wm_ctrl/meshes/cop.obj";
     // Scale factor to apply to the tim icon model
-    double tim_icon_scale = 0.1;
+    double tim_icon_scale = 0.002;
     // Path to the model file for workzone visualization
     std::string wz_icon_path = "file:///opt/carma/vehicle/calibration/visualization_meshes/cone.stl";
     // "package://carma_wm_ctrl/meshes/cone.stl";
