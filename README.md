@@ -11,7 +11,7 @@ CARMA<sup>SM</sup>  advances research and development to accelerate market readi
 
 CARMA is a reusable, extensible platform for controlling SAE level 2 connected, automated vehicles (AVs). It provides a rich, generic API for third party plugins that implement vehicle guidance algorithms to plan vehicle trajectories. It is written in C++ and runs in a Robot Operating System (ROS) environment on Ubuntu. The platform can be reused on a variety of properly equipped vehicles.  Migration has begun from the ROS 1 framework to ROS 2.
 
-This readme updated: October 23, 2020
+This readme updated: March 14th, 2025
 
 ## What Is CARMA Platform
 ![CARMA Arch](docs/image/10-052L-CARMA-Diagram_Rev4-011020-1.png)
