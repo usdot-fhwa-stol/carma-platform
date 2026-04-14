@@ -64,8 +64,6 @@ WMBroadcasterNode::WMBroadcasterNode(const rclcpp::NodeOptions &options)
   config_.config_limit = declare_parameter<double>("config_speed_limit", config_.config_limit);
   config_.tim_icon_path = declare_parameter<std::string>("tim_icon_path", config_.tim_icon_path);
   config_.tim_icon_scale = declare_parameter<double>("tim_icon_scale", config_.tim_icon_scale);
-  config_.wz_icon_path = declare_parameter<std::string>("wz_icon_path", config_.wz_icon_path);
-  config_.wz_icon_scale = declare_parameter<double>("wz_icon_scale", config_.wz_icon_scale);
 
   declare_parameter("intersection_ids_for_correction", config_.intersection_ids_for_correction);
   declare_parameter("intersection_coord_correction", config_.intersection_coord_correction);
@@ -99,10 +97,6 @@ carma_ros2_utils::CallbackReturn WMBroadcasterNode::handle_on_configure(const rc
   get_parameter<double>("config_speed_limit", config_.config_limit);
   get_parameter<std::string>("tim_icon_path", config_.tim_icon_path);
   get_parameter<double>("tim_icon_scale", config_.tim_icon_scale);
-  get_parameter<std::string>("wz_icon_path", config_.wz_icon_path);
-  get_parameter<double>("wz_icon_scale", config_.wz_icon_scale);
-
-
 
 
   wmb_->setConfigACKPubTimes(config_.ack_pub_times);
@@ -111,7 +105,7 @@ carma_ros2_utils::CallbackReturn WMBroadcasterNode::handle_on_configure(const rc
   wmb_->setConfigSpeedLimit(config_.config_limit);
   wmb_->setConfigVehicleId(config_.vehicle_id);
   wmb_->setVehicleParticipationType(config_.participant);
-  wmb_->setVisualizationInfo(config_.wz_icon_path, config_.wz_icon_scale, config_.tim_icon_path, config_.tim_icon_scale);
+  wmb_->setVisualizationInfo(config_.tim_icon_path, config_.tim_icon_scale);
 
   rclcpp::Parameter intersection_coord_correction_param = get_parameter("intersection_coord_correction");
   config_.intersection_coord_correction = intersection_coord_correction_param.as_double_array();

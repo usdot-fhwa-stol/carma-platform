@@ -1253,10 +1253,8 @@ std::string WMBroadcaster::getVehicleParticipationType()
   return participant_;
 }
 
-void WMBroadcaster::setVisualizationInfo(const std::string& wz_icon_path, double wz_icon_scale, const std::string& tim_icon_path, double tim_icon_scale)
+void WMBroadcaster::setVisualizationInfo(const std::string& tim_icon_path, double tim_icon_scale)
 {
-  wz_icon_path_ = wz_icon_path;
-  wz_icon_scale_ = wz_icon_scale;
   tim_icon_path_ = tim_icon_path;
   tim_icon_scale_ = tim_icon_scale;
 }
@@ -1540,10 +1538,7 @@ void WMBroadcaster::addGeofence(std::shared_ptr<Geofence> gf_ptr)
       else
       // some kind of geofence
       {
-
         tcm_marker_array_.markers.push_back(composeVisualizerMarkerFromPts(tcm_marker_array_, update->gf_pts, update->label_));
-        RCLCPP_ERROR_STREAM(rclcpp::get_logger("carma_wm_ctrl"), "label: " << update->label_);
-
       }
     }
 
@@ -1887,32 +1882,11 @@ visualization_msgs::msg::Marker WMBroadcaster::composeVisualizerMarkerFromPts(co
   {
     RCLCPP_ERROR_STREAM(rclcpp::get_logger("carma_wm_ctrl"), "here "<< std::to_string(wz_icon_scale_));
 
-    marker.type = visualization_msgs::msg::Marker::MESH_RESOURCE;
-    marker.mesh_resource = wz_icon_path_;
-
-    // marker.color.r = 1.0F;
-    // marker.color.g = 0.65F;
-    // marker.color.b = 0.0F;
-    // marker.color.a = 1.0F;
-
-    // marker.scale.x = wz_icon_scale_;
-    // marker.scale.y = wz_icon_scale_;
-    // marker.scale.z = wz_icon_scale_;
-
-    // size_t mid = input.size() / 2;
-    // marker.pose.position.x = input[mid].x();
-    // marker.pose.position.y = input[mid].y();
-    // marker.pose.position.z = 2.0;
-    // // marker.pose.orientation.w = 1.0;
-    // marker.pose.orientation.x = 0.0;
-    // marker.pose.orientation.y = 0.0;
-    // marker.pose.orientation.z = -0.7071;
-    // marker.pose.orientation.w = 0.7071;
     marker.type = visualization_msgs::msg::Marker::SPHERE_LIST;
 
-    marker.scale.x = 1.8;
-    marker.scale.y = 1.8;
-    marker.scale.z = 1.8;
+    marker.scale.x = 2.0;
+    marker.scale.y = 2.0;
+    marker.scale.z = 2.0;
 
     marker.color.r = 1.0F;
     marker.color.g = 0.65F;
@@ -1954,9 +1928,6 @@ visualization_msgs::msg::Marker WMBroadcaster::composeVisualizerMarkerFromPts(co
   }
   else
   {
-
-    RCLCPP_ERROR_STREAM(rclcpp::get_logger("carma_wm_ctrl"), "Other ");
-
     marker.type = visualization_msgs::msg::Marker::SPHERE_LIST;
 
     marker.scale.x = 0.65;

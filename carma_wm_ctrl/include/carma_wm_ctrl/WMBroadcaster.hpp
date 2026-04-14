@@ -211,7 +211,7 @@ public:
  * @param tim_icon_path icon path for tim icon (police car)
  * @param tim_icon_scale icon scale for tim icon
  */
-  void setVisualizationInfo(const std::string& wz_icon_path, double wz_icon_scale, const std::string& tim_icon_path, double tim_icon_scale);
+  void setVisualizationInfo(const std::string& tim_icon_path, double tim_icon_scale);
 
   /**
    * @brief Get the Vehicle Participation Type object
@@ -472,9 +472,7 @@ private:
    * It should not be incremented for updates that do not require a full map publication.
    */
   size_t current_map_version_ = 0;
-  std::string wz_icon_path_ = "file:///opt/carma/vehicle/calibration/visualization_meshes/cone.obj";
-  double wz_icon_scale_ = 0.1;
-  std::string tim_icon_path_ = "file:///opt/carma/vehicle/calibration/visualization_meshes/cop.obj";
+  std::string tim_icon_path_ = "package://carma_wm_ctrl/meshes/cop.obj";
   double tim_icon_scale_ = 0.1;
 
   carma_planning_msgs::msg::Route current_route; // Most recently received route message

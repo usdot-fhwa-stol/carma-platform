@@ -38,14 +38,8 @@ namespace carma_wm_ctrl
     std::string participant = "vehicle:car";
     // Path to the model file for tim visualization
     std::string tim_icon_path = "package://carma_wm_ctrl/meshes/cop.obj";
-    // "package://carma_wm_ctrl/meshes/cop.obj";
     // Scale factor to apply to the tim icon model
     double tim_icon_scale = 0.002;
-    // Path to the model file for workzone visualization
-    std::string wz_icon_path = "package://carma_wm_ctrl/meshes/cone.stl";
-    // "package://carma_wm_ctrl/meshes/cone.stl";
-    // Scale factor to apply to the workzone icon model
-    double wz_icon_scale = 0.1;
 
     // Stream operator for this config
     friend std::ostream &operator<<(std::ostream &output, const Config &c)
@@ -62,8 +56,6 @@ namespace carma_wm_ctrl
            << "config_limit: " << c.config_limit << std::endl
            << "tim_icon_path: " << c.tim_icon_path << std::endl
            << "tim_icon_scale: " << c.tim_icon_scale << std::endl
-           << "wz_icon_path: " << c.wz_icon_path << std::endl
-           << "wz_icon_scale: " << c.wz_icon_scale << std::endl
            << "}" << std::endl;
       return output;
     }

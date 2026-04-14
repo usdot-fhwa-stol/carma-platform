@@ -314,10 +314,6 @@ def generate_launch_description():
                 ],
                 parameters=[carma_wm_ctrl_param_file,
                             vehicle_config_param_file,
-                            {'wz_icon_path': [
-                                    'file:///',
-                                    vehicle_calibration_dir,
-                                    '/visualization_meshes/cone.stl']},
                             {'tim_icon_path': [
                                     'file:///',
                                     vehicle_calibration_dir,
