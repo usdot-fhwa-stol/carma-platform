@@ -1883,27 +1883,53 @@ visualization_msgs::msg::Marker WMBroadcaster::composeVisualizerMarkerFromPts(co
   // create the marker msgs
   visualization_msgs::msg::Marker marker;
 
-  if (label == "workzone" && !wz_icon_path_.empty())
+  if (label == "workzone")
   {
+    RCLCPP_ERROR_STREAM(rclcpp::get_logger("carma_wm_ctrl"), "here "<< std::to_string(wz_icon_scale_));
+
     marker.type = visualization_msgs::msg::Marker::MESH_RESOURCE;
     marker.mesh_resource = wz_icon_path_;
+
+    // marker.color.r = 1.0F;
+    // marker.color.g = 0.65F;
+    // marker.color.b = 0.0F;
+    // marker.color.a = 1.0F;
+
+    // marker.scale.x = wz_icon_scale_;
+    // marker.scale.y = wz_icon_scale_;
+    // marker.scale.z = wz_icon_scale_;
+
+    // size_t mid = input.size() / 2;
+    // marker.pose.position.x = input[mid].x();
+    // marker.pose.position.y = input[mid].y();
+    // marker.pose.position.z = 2.0;
+    // // marker.pose.orientation.w = 1.0;
+    // marker.pose.orientation.x = 0.0;
+    // marker.pose.orientation.y = 0.0;
+    // marker.pose.orientation.z = -0.7071;
+    // marker.pose.orientation.w = 0.7071;
+    marker.type = visualization_msgs::msg::Marker::SPHERE_LIST;
+
+    marker.scale.x = 1.8;
+    marker.scale.y = 1.8;
+    marker.scale.z = 1.8;
 
     marker.color.r = 1.0F;
     marker.color.g = 0.65F;
     marker.color.b = 0.0F;
     marker.color.a = 1.0F;
 
-    marker.scale.x = wz_icon_scale_;
-    marker.scale.y = wz_icon_scale_;
-    marker.scale.z = wz_icon_scale_;
+    for (int i = 0; i < input.size(); i++)
+    {
+      geometry_msgs::msg::Point temp_point;
+      temp_point.x = input[i].x();
+      temp_point.y = input[i].y();
+      temp_point.z = 2; //to show up on top of the lanelet lines
 
-    size_t mid = input.size() / 2;
-    marker.pose.position.x = input[mid].x();
-    marker.pose.position.y = input[mid].y();
-    marker.pose.position.z = 2.0;
-    marker.pose.orientation.w = 1.0;
+      marker.points.push_back(temp_point);
+    }
   }
-  if (label == "MOVE OVER LAW" && !tim_icon_path_.empty())
+  else if (label == "MOVE OVER LAW")
   {
     marker.type = visualization_msgs::msg::Marker::MESH_RESOURCE;
     marker.mesh_resource = tim_icon_path_;
@@ -1928,6 +1954,8 @@ visualization_msgs::msg::Marker WMBroadcaster::composeVisualizerMarkerFromPts(co
   }
   else
   {
+
+    RCLCPP_ERROR_STREAM(rclcpp::get_logger("carma_wm_ctrl"), "Other ");
 
     marker.type = visualization_msgs::msg::Marker::SPHERE_LIST;
 

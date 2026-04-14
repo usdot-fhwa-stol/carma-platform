@@ -30,4 +30,4 @@ wz_icon_path: "package://carma_wm_ctrl/meshes/cone.stl"
 # wz_icon_path: "file:///opt/carma/vehicle/calibration/visualization_meshes/cone.obj"
 
 # Scale factor to apply to the tim icon model
-wz_icon_scale: 1.0
+wz_icon_scale: 0.1
