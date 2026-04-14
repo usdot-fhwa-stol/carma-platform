@@ -206,8 +206,6 @@ public:
 /**
  * @brief Set the RVIZ visualization information
  *
- * @param wz_icon_path icon path for workzone (traffic cone)
- * @param wz_icon_scale icon scale for workzone
  * @param tim_icon_path icon path for tim icon (police car)
  * @param tim_icon_scale icon scale for tim icon
  */

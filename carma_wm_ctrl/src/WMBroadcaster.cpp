@@ -1880,14 +1880,13 @@ visualization_msgs::msg::Marker WMBroadcaster::composeVisualizerMarkerFromPts(co
 
   if (label == "workzone")
   {
-    RCLCPP_ERROR_STREAM(rclcpp::get_logger("carma_wm_ctrl"), "here "<< std::to_string(wz_icon_scale_));
-
     marker.type = visualization_msgs::msg::Marker::SPHERE_LIST;
 
     marker.scale.x = 2.0;
     marker.scale.y = 2.0;
     marker.scale.z = 2.0;
 
+    // Orange Color
     marker.color.r = 1.0F;
     marker.color.g = 0.65F;
     marker.color.b = 0.0F;
@@ -1908,6 +1907,7 @@ visualization_msgs::msg::Marker WMBroadcaster::composeVisualizerMarkerFromPts(co
     marker.type = visualization_msgs::msg::Marker::MESH_RESOURCE;
     marker.mesh_resource = tim_icon_path_;
 
+    // Blue Color
     marker.color.r = 0.0F;
     marker.color.g = 0.0F;
     marker.color.b = 1.0F;
