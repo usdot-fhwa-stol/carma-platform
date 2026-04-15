@@ -39,7 +39,7 @@ namespace carma_wm_ctrl
     // Path to the model file for tim visualization
     std::string tim_icon_path = "package://carma_wm_ctrl/meshes/cop.obj";
     // Scale factor to apply to the tim icon model
-    double tim_icon_scale = 0.002;
+    double tim_icon_scale = 0.0025;
 
     // Stream operator for this config
     friend std::ostream &operator<<(std::ostream &output, const Config &c)

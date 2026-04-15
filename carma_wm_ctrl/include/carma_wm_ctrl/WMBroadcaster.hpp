@@ -471,7 +471,7 @@ private:
    */
   size_t current_map_version_ = 0;
   std::string tim_icon_path_ = "package://carma_wm_ctrl/meshes/cop.obj";
-  double tim_icon_scale_ = 0.1;
+  double tim_icon_scale_ = 0.0025;
 
   carma_planning_msgs::msg::Route current_route; // Most recently received route message
   /**
