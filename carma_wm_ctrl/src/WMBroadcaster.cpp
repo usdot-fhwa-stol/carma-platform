@@ -1921,6 +1921,9 @@ visualization_msgs::msg::Marker WMBroadcaster::composeVisualizerMarkerFromPts(co
     marker.pose.position.x = input[mid].x();
     marker.pose.position.y = input[mid].y();
     marker.pose.position.z = 2.0;
+
+    // TODO: Story is in backlog to make orientation more generic
+    // https://usdot-carma.atlassian.net/browse/CDAD-254
     marker.pose.orientation.x = 0.0;
     marker.pose.orientation.y = 0.0;
     marker.pose.orientation.z = -0.7071;
