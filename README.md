@@ -1,8 +1,4 @@
-## Develop CI/CD Processes
-| DockerHub Image Build | Unit Tests Workflow |  Sonar Code Quality |
-|----------------------|---------------------|---------------------|
- [![Build Workflows](https://github.com/usdot-fhwa-stol/carma-platform/actions/workflows/dockerhub.yml/badge.svg?branch=develop)](https://github.com/usdot-fhwa-stol/carma-platform/actions/workflows/dockerhub.yml) |  [![Build Workflows](https://github.com/usdot-fhwa-stol/carma-platform/actions/workflows/Ci.yml/badge.svg?branch=develop)](https://github.com/usdot-fhwa-stol/carma-platform/actions/workflows/Ci.yml) | [![Quality Gate Status](https://sonarcloud.io/api/project_badges/measure?project=usdot-fhwa-stol_CARMAPlatform&metric=alert_status)](https://sonarcloud.io/dashboard?id=usdot-fhwa-stol_CARMAPlatform) |
-
+![GitHub Release](https://img.shields.io/github/v/release/usdot-fhwa-stol/carma-platform) [![Docker Hub Build](https://github.com/usdot-fhwa-stol/carma-platform/actions/workflows/dockerhub.yml/badge.svg?branch=develop)](https://github.com/usdot-fhwa-stol/carma-platform/actions/workflows/dockerhub.yml) [![Tests](https://github.com/usdot-fhwa-stol/carma-platform/actions/workflows/Ci.yml/badge.svg?branch=develop)](https://github.com/usdot-fhwa-stol/carma-platform/actions/workflows/Ci.yml) ![Docker Pulls](https://img.shields.io/docker/pulls/usdotfhwastoldev/carma-platform?label=Docker%20Pulls%20-%20carma-platform) [![Quality Gate Status](https://sonarcloud.io/api/project_badges/measure?project=usdot-fhwa-stol_CARMAPlatform&metric=alert_status)](https://sonarcloud.io/summary/new_code?id=usdot-fhwa-stol_CARMAPlatform) [![License](https://img.shields.io/badge/License-Apache%202.0-blue.svg)](https://github.com/usdot-fhwa-stol/carma-platform/blob/develop/docs/License.md)
 
 # CARMA
 ![CARMA Arch](docs/image/CARMA3_Vehicles.jpg)
