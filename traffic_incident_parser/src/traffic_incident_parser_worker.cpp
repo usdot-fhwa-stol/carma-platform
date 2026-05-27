@@ -479,7 +479,7 @@ namespace traffic_incident_parser
             boost::uuids::uuid speed_id = boost::uuids::random_generator()();
             std::copy(speed_id.begin(), speed_id.end(), traffic_mobility_msg.id.id.begin());
             traffic_mobility_msg.params.detail.choice=carma_v2x_msgs::msg::TrafficControlDetail::MAXSPEED_CHOICE;
-            traffic_mobility_msg.params.detail.maxspeed=speed_advisory;
+            traffic_mobility_msg.params.detail.maxspeed=speed_advisory * 0.44704; // convert mph to m/s since world model expects m/s
             output_msg.push_back(traffic_mobility_msg);
 
         }
