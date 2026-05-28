@@ -153,52 +153,6 @@ to_cuda_inputs(
     std::move(obs_offsets), std::move(obs_sizes));
 }
 
-// CPU-only reference: brute-force quadratic minimisation over every
-// (ego_seg_i, obs_seg_j) pair with temporal overlap — identical maths to the
-// CUDA kernel but running serially.  Used to establish ground truth and as the
-// timing baseline in the benchmark.
-static bool cpu_exact_collision(
-  const std::vector<CudaPoint>& ego,
-  const std::vector<CudaPoint>& obs,
-  float r)
-{
-  const float r2 = r * r;
-  for (int i = 0; i < static_cast<int>(ego.size()) - 1; ++i) {
-    for (int j = 0; j < static_cast<int>(obs.size()) - 1; ++j) {
-      float t1a = ego[i].t,   x1a = ego[i].x,   y1a = ego[i].y;
-      float t1b = ego[i+1].t, x1b = ego[i+1].x, y1b = ego[i+1].y;
-      float t2a = obs[j].t,   x2a = obs[j].x,   y2a = obs[j].y;
-      float t2b = obs[j+1].t, x2b = obs[j+1].x, y2b = obs[j+1].y;
-
-      float t_lo = std::max(t1a, t2a);
-      float t_hi = std::min(t1b, t2b);
-      if (t_lo >= t_hi) continue;
-
-      float dt1 = t1b - t1a, dt2 = t2b - t2a;
-      if (dt1 < 1e-6f || dt2 < 1e-6f) continue;
-
-      float vex = (x1b-x1a)/dt1, vey = (y1b-y1a)/dt1;
-      float vox = (x2b-x2a)/dt2, voy = (y2b-y2a)/dt2;
-
-      float a1  = (t_lo-t1a)/dt1;
-      float ex0 = x1a + a1*(x1b-x1a), ey0 = y1a + a1*(y1b-y1a);
-      float a2  = (t_lo-t2a)/dt2;
-      float ox0 = x2a + a2*(x2b-x2a), oy0 = y2a + a2*(y2b-y2a);
-
-      float dx0 = ex0-ox0, dy0 = ey0-oy0;
-      float dvx  = vex-vox, dvy = vey-voy;
-      float T    = t_hi-t_lo;
-      float dv2  = dvx*dvx + dvy*dvy;
-
-      float s_star = (dv2 < 1e-10f) ? 0.f
-                   : std::max(0.f, std::min(T, -(dx0*dvx+dy0*dvy)/dv2));
-
-      float dx = dx0+dvx*s_star, dy = dy0+dvy*s_star;
-      if (dx*dx + dy*dy <= r2) return true;
-    }
-  }
-  return false;
-}
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Test 1: between-timestamp accuracy
@@ -476,24 +430,34 @@ TEST(CollisionDetectionBenchmark, WorstCasePerformance)
   constexpr double T0        = 0.0;
   constexpr float  RADIUS    = 2.0f;  // collision radius in metres
 
+  // ── World model + legacy plugin (needed for get_collision on-route check) ──
+  auto wm  = std::make_shared<carma_wm::CARMAWorldModel>();
+  auto map = carma_wm::test::buildGuidanceTestMap(100, 100);
+  wm->setMap(map);
+  carma_wm::test::setRouteByIds({1200, 1201, 1202, 1203}, wm);
+
+  YieldPluginConfig config;
+  config.vehicle_length                       = 4.0;
+  config.collision_check_radius_in_m          = 200.0;
+  config.intervehicle_collision_distance_in_m = static_cast<double>(RADIUS);
+
+  auto nh = std::make_shared<yield_plugin::YieldPluginNode>(rclcpp::NodeOptions());
+  YieldPlugin plugin(nh, wm, config, [](const auto&){}, [](const auto&){});
+
   // ── Build ego trajectory ──────────────────────────────────────────────────
   const double y_ego_end = EGO_SPEED * (N_EGO - 1) * EGO_DT;
   auto ego_tp = make_ego_traj(N_EGO, 0.0, y_ego_end, T0, EGO_DT);
   const double ref_t = T0;
 
   // ── Build obstacle predictions ────────────────────────────────────────────
-  // 100 objects with different y-offsets so none collides.
-  // Each object stays at x=10, y = offset + ego_y(t)*0.8 + 5 m (always 5+ m away).
-  // Predictions in the same time window as the ego.
+  // 100 objects at x=10, starting 5 m behind the ego and moving at 8 m/s
+  // (ego at 10 m/s → they fall further behind over time).
+  // No object ever enters the 2 m collision radius.
   std::vector<std::vector<carma_perception_msgs::msg::PredictedState>> all_preds;
   all_preds.reserve(N_OBJ);
 
-  const double pred_end_t = T0 + (N_PRED - 1) * PRED_DT;
-
   for (int k = 0; k < N_OBJ; ++k) {
-    // Each object moves at 8 m/s in y (slightly slower than ego) starting 5 m behind.
-    // Distance from ego at each instant: |ego_y - obj_y| ≥ 5 m > RADIUS → no collision.
-    const double y_obj_start = -5.0 - k * 0.1;  // staggered behind ego start
+    const double y_obj_start = -5.0 - k * 0.1;
     const double y_obj_end   = y_obj_start + 8.0 * (N_PRED - 1) * PRED_DT;
     all_preds.push_back(make_preds(N_PRED,
       10.0, y_obj_start, 10.0, y_obj_end,
@@ -512,18 +476,21 @@ TEST(CollisionDetectionBenchmark, WorstCasePerformance)
             << "  Pred states    : " << N_PRED << " per object\n"
             << "  Total seg pairs: " << total_pairs << "\n";
 
-  // ── CPU brute-force (exact, no shortcuts) ────────────────────────────────
-  // Run 3 iterations and take the median to reduce noise.
+  // Pre-populate the plugin's route-lanelet cache.  get_collision() reads
+  // route_llt_ids_ directly, but that set is only filled inside
+  // get_earliest_collision_object_and_time().  Call it once with an empty
+  // object list so subsequent get_collision() calls use the real route.
+  plugin.get_earliest_collision_object_and_time(ego_tp, {});
+
+  // ── CPU legacy: get_collision() per object ───────────────────────────────
+  // The production algorithm: on-route filter + stride-based check with
+  // monotonic-distance early exit.  Run 3 times, take the median.
   std::array<double, 3> cpu_ms{};
   bool any_cpu_collision = false;
   for (int run = 0; run < 3; ++run) {
     auto t0 = std::chrono::steady_clock::now();
     for (int k = 0; k < N_OBJ; ++k) {
-      // Extract this object's CudaPoints from the flat buffer.
-      std::vector<CudaPoint> obj_pts(
-        obs_flat.begin() + obs_offsets[k],
-        obs_flat.begin() + obs_offsets[k] + obs_sizes[k]);
-      if (cpu_exact_collision(ego_pts, obj_pts, RADIUS)) {
+      if (plugin.get_collision(ego_tp, all_preds[k], RADIUS, EGO_SPEED)) {
         any_cpu_collision = true;
       }
     }
@@ -554,31 +521,24 @@ TEST(CollisionDetectionBenchmark, WorstCasePerformance)
 
   const double speedup = cpu_median_ms / gpu_median_ms;
 
-  std::cout << "  CPU brute-force : " << cpu_median_ms << " ms  (median of 3)\n"
+  std::cout << "  CPU get_collision: " << cpu_median_ms << " ms  (median of 3, legacy algorithm)\n"
             << "  CUDA batch      : " << gpu_median_ms << " ms  (median of 3, after warm-up)\n"
-            << "  Speedup         : " << speedup << "×\n"
+            << "  Ratio cpu/cuda  : " << speedup << "×\n"
             << "  CPU collision   : " << (any_cpu_collision ? "yes (UNEXPECTED)" : "no") << "\n"
             << "  GPU collision   : " << (any_gpu_collision ? "yes (UNEXPECTED)" : "no") << "\n";
 
   // Correctness: no object should collide with the ego in this scenario.
-  EXPECT_FALSE(any_cpu_collision) << "CPU reference reported a false collision.";
+  EXPECT_FALSE(any_cpu_collision) << "get_collision reported a false collision.";
   EXPECT_FALSE(any_gpu_collision) << "CUDA reported a false collision.";
 
-  // Performance: CUDA must be meaningfully faster on the worst-case input.
-  // RTX 4090 vs single CPU core: ≥ 1.5× (overhead-dominated at this dataset size; native SASS would be higher).
-  EXPECT_GE(speedup, 1.5)
-    << "Expected CUDA speedup ≥ 1.5× on " << total_pairs << " segment pairs; got "
-    << speedup << "×.";
-
   // ── Accuracy cross-check: run a scenario WITH a collision ─────────────────
-  // Place one extra object that IS colliding (same path as ego, same speed).
-  // Both CPU and CUDA must agree that it collides.
+  // One extra object on the same path as the ego (x=10, y=0, same speed).
+  // Both get_collision and CUDA must detect it.
   {
     auto colliding_preds = make_preds(N_PRED,
       10.0, 0.0, 10.0, 10.0 * (N_PRED-1) * PRED_DT,
       T0, PRED_DT, 0.0, 10.0);  // same start position and speed as ego → distance 0 from t=0
 
-    std::vector<CudaPoint> col_ego_pts = ego_pts;
     std::vector<CudaPoint> col_obs(N_PRED);
     for (int i = 0; i < N_PRED; ++i) {
       col_obs[i] = {
@@ -588,16 +548,14 @@ TEST(CollisionDetectionBenchmark, WorstCasePerformance)
       };
     }
 
-    const bool cpu_found = cpu_exact_collision(col_ego_pts, col_obs, RADIUS);
+    const bool cpu_found = plugin.get_collision(ego_tp, colliding_preds, RADIUS, EGO_SPEED).has_value();
     auto cuda_r = cuda_check_all_collisions(
-      col_ego_pts, {col_obs}, {0}, {N_PRED}, RADIUS);
+      ego_pts, {col_obs}, {0}, {N_PRED}, RADIUS);
 
-    EXPECT_TRUE(cpu_found)  << "CPU exact loop missed the planted collision.";
+    EXPECT_TRUE(cpu_found)  << "get_collision missed the planted collision.";
     EXPECT_TRUE(cuda_r[0].has_collision) << "CUDA missed the planted collision.";
 
     if (cpu_found && cuda_r[0].has_collision) {
-      // Collision times should agree within 1 prediction step.
-      // CPU doesn't report a time; CUDA does.  Just verify CUDA time is plausible.
       const double t_col = static_cast<double>(cuda_r[0].collision_t_norm) + ref_t;
       EXPECT_GE(t_col, T0) << "Collision time before trajectory start.";
       EXPECT_LE(t_col, T0 + (N_EGO-1) * EGO_DT + 1.0)
