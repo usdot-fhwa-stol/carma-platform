@@ -948,7 +948,8 @@ namespace yield_plugin
         }
       }
 
-      // On-route check (CPU) — same stride logic as the original get_collision.
+      // On-route check — stride logic as in get_collision, but uses pre-computed
+      // per-lanelet bounding boxes instead of getLaneletsFromPoint (O(1) vs spatial query).
       const double traj2_speed = std::hypot(
         pred_list.front().predicted_velocity.linear.x,
         pred_list.front().predicted_velocity.linear.y);
@@ -961,11 +962,10 @@ namespace yield_plugin
       bool on_route     = false;
       int  on_route_idx = 0;
       for (size_t j = 0; j < pred_list.size(); j += iteration_stride) {
-        lanelet::BasicPoint2d pt;
-        pt.x() = pred_list[j].predicted_position.position.x;
-        pt.y() = pred_list[j].predicted_position.position.y;
-        for (const auto& llt : wm_->getLaneletsFromPoint(pt, 8)) {
-          if (route_llt_ids_.find(llt.id()) != route_llt_ids_.end()) {
+        const float px = static_cast<float>(pred_list[j].predicted_position.position.x);
+        const float py = static_cast<float>(pred_list[j].predicted_position.position.y);
+        for (const auto& bb : route_llt_bboxes_) {
+          if (px >= bb.min_x && px <= bb.max_x && py >= bb.min_y && py <= bb.max_y) {
             on_route     = true;
             on_route_idx = static_cast<int>(j);
             break;
@@ -1091,11 +1091,23 @@ namespace yield_plugin
       return std::nullopt;
     }
 
-    // save route Ids for faster access
+    // save route Ids and per-lanelet bounding boxes for faster on-route checks
+    route_llt_bboxes_.clear();
     for (const auto& llt: wm_->getRoute()->shortestPath())
     {
       // TODO: Enhancement https://github.com/usdot-fhwa-stol/carma-platform/issues/2316
       route_llt_ids_.insert(llt.id());
+      float min_x = std::numeric_limits<float>::max();
+      float min_y = std::numeric_limits<float>::max();
+      float max_x = std::numeric_limits<float>::lowest();
+      float max_y = std::numeric_limits<float>::lowest();
+      for (const auto& pt : llt.polygon2d()) {
+        min_x = std::min(min_x, static_cast<float>(pt.x()));
+        min_y = std::min(min_y, static_cast<float>(pt.y()));
+        max_x = std::max(max_x, static_cast<float>(pt.x()));
+        max_y = std::max(max_y, static_cast<float>(pt.y()));
+      }
+      route_llt_bboxes_.push_back({min_x, min_y, max_x, max_y});
     }
 
     RCLCPP_DEBUG_STREAM(nh_->get_logger(),"External Object List (external_objects) size: " << external_objects.size());

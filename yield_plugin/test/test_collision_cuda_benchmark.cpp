@@ -470,6 +470,30 @@ TEST(CollisionDetectionBenchmark, WorstCasePerformance)
     to_cuda_inputs(ego_tp, all_preds, ref_t);
 
   const int total_pairs = (N_EGO - 1) * (N_PRED - 1) * N_OBJ;
+
+  // ── getLaneletsFromPoint micro-benchmark ────────────────────────────────
+  // Measures the cost of a single spatial map query — the operation that
+  // dominated the old on-route check.  Extrapolating to 100 objects × ~8
+  // calls each predicts the overhead we observe in the CPU concurrent timing.
+  {
+    constexpr int N_CALLS = 500;
+    lanelet::BasicPoint2d pt;
+    pt.x() = 10.0;  pt.y() = 5.0;
+    auto t0 = std::chrono::steady_clock::now();
+    for (int i = 0; i < N_CALLS; ++i) {
+      (void)wm->getLaneletsFromPoint(pt, 8);
+    }
+    auto t1 = std::chrono::steady_clock::now();
+    const double us_per_call =
+      std::chrono::duration<double, std::micro>(t1 - t0).count() / N_CALLS;
+    // Each object needs ~8 stride-checked calls before finding on-route.
+    const double predicted_onroute_ms = us_per_call * 8 * N_OBJ / 1000.0;
+    std::cout << "\n[getLaneletsFromPoint micro-benchmark]\n"
+              << "  Per call           : " << us_per_call << " μs\n"
+              << "  Predicted overhead : " << predicted_onroute_ms
+              << " ms  (100 objects × ~8 calls each)\n";
+  }
+
   std::cout << "\n[WorstCasePerformanceBenchmark]\n"
             << "  Ego points     : " << N_EGO  << "\n"
             << "  Objects        : " << N_OBJ  << "\n"
