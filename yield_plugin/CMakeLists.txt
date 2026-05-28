@@ -14,7 +14,7 @@
 # the License.
 #
 
-cmake_minimum_required(VERSION 3.8)
+cmake_minimum_required(VERSION 3.18)
 project(yield_plugin)
 
 find_package(carma_cmake_common REQUIRED)
@@ -39,6 +39,26 @@ set(node_lib yield_plugin_node)
 ## System dependencies are found with CMake's conventions
 find_package(Boost)
 find_package(Eigen3 REQUIRED)
+
+###########
+## CUDA  ##
+###########
+
+enable_language(CUDA)
+# nvcc 11.5 is not fully compatible with GCC 11 C++17 headers; C++14 is sufficient
+# for the kernel TU which contains no C++17-specific syntax.
+set(CMAKE_CUDA_STANDARD 14)
+set(CMAKE_CUDA_STANDARD_REQUIRED ON)
+# sm_80 = A100; sm_86 = Ampere desktop (RTX 30xx); sm_89/Ada JIT via PTX fallback
+set(CMAKE_CUDA_ARCHITECTURES "80;86")
+
+# Build the CUDA collision kernel as a separate PIC static library so that
+# ament_auto_add_library (which produces a shared object) can link it cleanly.
+add_library(yield_cuda_lib STATIC src/yield_plugin_cuda.cu)
+target_include_directories(yield_cuda_lib PUBLIC include)
+set_target_properties(yield_cuda_lib PROPERTIES
+  POSITION_INDEPENDENT_CODE ON
+)
 
 ###########
 ## Build ##
@@ -66,6 +86,8 @@ rclcpp_components_register_nodes(${node_lib} "yield_plugin::YieldPluginNode")
 # All locally created targets will need to be manually linked
 # ament auto will handle linking of external dependencies
 target_link_libraries(${node_lib}
+        yield_cuda_lib
+        ${CUDA_LIBRARIES}
         ${Boost_LIBRARIES}
         ${EIGEN3_LIBRARIES}
 )
@@ -88,6 +110,13 @@ if(BUILD_TESTING)
   ament_target_dependencies(test_yield_plugin ${${PROJECT_NAME}_FOUND_TEST_DEPENDS})
 
   target_link_libraries(test_yield_plugin ${node_lib})
+
+  # Accuracy + performance benchmark for the CUDA collision rewrite
+  ament_add_gtest(test_collision_cuda_benchmark
+    test/test_collision_cuda_benchmark.cpp
+  )
+  ament_target_dependencies(test_collision_cuda_benchmark ${${PROJECT_NAME}_FOUND_TEST_DEPENDS})
+  target_link_libraries(test_collision_cuda_benchmark ${node_lib})
 
 endif()
 
