@@ -37,7 +37,9 @@
 #include <basic_autonomy/smoothing/filters.hpp>
 #include <future>
 #include <basic_autonomy/helper_functions.hpp>
+#ifdef YIELD_PLUGIN_WITH_CUDA
 #include <yield_plugin/yield_plugin_cuda.cuh>
+#endif
 
 using oss = std::ostringstream;
 constexpr auto EPSILON {0.01}; //small value to compare doubles
@@ -678,19 +680,13 @@ namespace yield_plugin
       << ", with predict_step_duration: " << predict_step_duration
       << ", iteration_stride_max_time_s: " << iteration_stride_max_time_s);
 
-    for (size_t j = 0; j < trajectory2.size(); j += iteration_stride) // Saving computation time aiming for 1.5 meter interval
+    for (size_t j = 0; j < trajectory2.size(); j += iteration_stride)
     {
-      lanelet::BasicPoint2d curr_point;
-      curr_point.x() = trajectory2.at(j).predicted_position.position.x;
-      curr_point.y() = trajectory2.at(j).predicted_position.position.y;
-
-      auto corresponding_lanelets = wm_->getLaneletsFromPoint(curr_point, 8); // some intersection can have 8 overlapping lanelets
-
-      for (const auto& llt: corresponding_lanelets)
+      const float px = static_cast<float>(trajectory2.at(j).predicted_position.position.x);
+      const float py = static_cast<float>(trajectory2.at(j).predicted_position.position.y);
+      for (const auto& bb : route_llt_bboxes_)
       {
-        RCLCPP_DEBUG_STREAM(nh_->get_logger(), "Checking llt: " << llt.id());
-
-        if (route_llt_ids_.find(llt.id()) != route_llt_ids_.end())
+        if (px >= bb.min_x && px <= bb.max_x && py >= bb.min_y && py <= bb.max_y)
         {
           on_route = true;
           on_route_idx = j;
@@ -701,9 +697,14 @@ namespace yield_plugin
         break;
     }
 
+    RCLCPP_DEBUG_STREAM(rclcpp::get_logger("yield_plugin"), "[CPU] on_route=" << on_route
+      << " on_route_idx=" << on_route_idx
+      << " speed=" << traj2_speed
+      << " stride=" << iteration_stride);
+
     if (!on_route)
     {
-      RCLCPP_DEBUG(nh_->get_logger(), "Predicted states are not on the route! ignoring");
+      RCLCPP_DEBUG(rclcpp::get_logger("yield_plugin"), "[CPU] Object not on route — skipping");
       return std::nullopt;
     }
 
@@ -872,6 +873,7 @@ namespace yield_plugin
     return collision_result.value().collision_time;
   }
 
+#ifdef YIELD_PLUGIN_WITH_CUDA
   std::unordered_map<uint32_t, rclcpp::Time> YieldPlugin::get_collision_times_concurrently(
     const carma_planning_msgs::msg::TrajectoryPlan& original_tp,
     const std::vector<carma_perception_msgs::msg::ExternalObject>& external_objects,
@@ -906,6 +908,9 @@ namespace yield_plugin
       int on_route_idx;  // first prediction index known to be on the route
     };
 
+    RCLCPP_DEBUG_STREAM(rclcpp::get_logger("yield_plugin"),
+      "[GPU] Processing " << external_objects.size() << " external objects");
+
     std::vector<ActiveObject>  active;
     std::vector<CudaPoint>     obs_flat;
     std::vector<int>           obs_offsets;
@@ -914,6 +919,8 @@ namespace yield_plugin
     for (const auto& obj : external_objects) {
       // Skip objects whose entire prediction horizon is before the plan start.
       if (rclcpp::Time(obj.predictions.back().header.stamp).seconds() <= plan_start_time) {
+        RCLCPP_DEBUG_STREAM(rclcpp::get_logger("yield_plugin"),
+          "[GPU] obj=" << obj.id << " skipped — predictions expired before plan start");
         continue;
       }
 
@@ -942,7 +949,11 @@ namespace yield_plugin
       {
         const double dx0 = ego_pts[0].x - obj.pose.pose.position.x;
         const double dy0 = ego_pts[0].y - obj.pose.pose.position.y;
-        if (std::hypot(dx0, dy0) > config_.collision_check_radius_in_m) {
+        const double dist0 = std::hypot(dx0, dy0);
+        if (dist0 > config_.collision_check_radius_in_m) {
+          RCLCPP_DEBUG_STREAM(rclcpp::get_logger("yield_plugin"),
+            "[GPU] obj=" << obj.id << " skipped — dist_from_ego=" << dist0
+            << " > radius=" << config_.collision_check_radius_in_m);
           consecutive_clearance_count_for_obstacles_[obj.id] = 0;
           continue;
         }
@@ -974,6 +985,12 @@ namespace yield_plugin
         if (on_route || traj2_has_zero_speed) break;
       }
 
+      RCLCPP_DEBUG_STREAM(rclcpp::get_logger("yield_plugin"),
+        "[GPU] obj=" << obj.id << " on_route=" << on_route
+        << " on_route_idx=" << on_route_idx
+        << " speed=" << traj2_speed
+        << " stride=" << iteration_stride);
+
       if (!on_route) {
         consecutive_clearance_count_for_obstacles_[obj.id] = 0;
         continue;
@@ -994,6 +1011,10 @@ namespace yield_plugin
       active.push_back({obj.id, std::move(pred_list), on_route_idx});
     }
 
+    RCLCPP_DEBUG_STREAM(rclcpp::get_logger("yield_plugin"),
+      "[GPU] " << active.size() << " / " << external_objects.size()
+      << " objects passed filters — sending to CUDA kernel");
+
     if (active.empty()) return collision_times;
 
     // -----------------------------------------------------------------------
@@ -1010,6 +1031,8 @@ namespace yield_plugin
       const auto& cuda_res = cuda_results[k];
 
       if (!cuda_res.has_collision) {
+        RCLCPP_DEBUG_STREAM(rclcpp::get_logger("yield_plugin"),
+          "[GPU] obj=" << active[k].id << " no collision detected");
         consecutive_clearance_count_for_obstacles_[active[k].id] = 0;
         continue;
       }
@@ -1074,16 +1097,65 @@ namespace yield_plugin
         << ", within actual downtrack distance: "
         << object_downtrack - vehicle_downtrack);
 
+      RCLCPP_DEBUG_STREAM(rclcpp::get_logger("yield_plugin"),
+        "[GPU] obj=" << active[k].id
+        << " collision at t=" << t_col_abs
+        << " ego=(" << ego_pt.x() << "," << ego_pt.y() << ")"
+        << " obs=(" << obs_pt.x() << "," << obs_pt.y() << ")"
+        << " downtrack_gap=" << (object_downtrack - vehicle_downtrack));
       collision_times[active[k].id] = collision_time;
     }
+
+    RCLCPP_DEBUG_STREAM(rclcpp::get_logger("yield_plugin"),
+      "[GPU] Done — " << collision_times.size() << " collision(s) confirmed");
 
     return collision_times;
   }
 
+#else  // YIELD_PLUGIN_WITH_CUDA not defined — CPU-only fallback
+
+  std::unordered_map<uint32_t, rclcpp::Time> YieldPlugin::get_collision_times_concurrently(
+    const carma_planning_msgs::msg::TrajectoryPlan& original_tp,
+    const std::vector<carma_perception_msgs::msg::ExternalObject>& external_objects,
+    double original_tp_max_speed)
+  {
+    std::unordered_map<uint32_t, std::future<std::optional<rclcpp::Time>>> futures;
+    std::unordered_map<uint32_t, rclcpp::Time> collision_times;
+
+    RCLCPP_DEBUG_STREAM(rclcpp::get_logger("yield_plugin"),
+      "[CPU] Launching " << external_objects.size() << " async get_collision_time tasks");
+
+    for (const auto& object : external_objects) {
+      futures[object.id] = std::async(
+        std::launch::async,
+        [this, &original_tp, &object, &original_tp_max_speed] {
+          return get_collision_time(original_tp, object, original_tp_max_speed);
+        });
+    }
+
+    for (const auto& object : external_objects) {
+      if (const auto collision_time{futures.at(object.id).get()}) {
+        RCLCPP_DEBUG_STREAM(rclcpp::get_logger("yield_plugin"),
+          "[CPU] obj=" << object.id << " collision at t=" << collision_time->seconds());
+        collision_times[object.id] = collision_time.value();
+      } else {
+        RCLCPP_DEBUG_STREAM(rclcpp::get_logger("yield_plugin"),
+          "[CPU] obj=" << object.id << " no collision detected");
+      }
+    }
+
+    RCLCPP_DEBUG_STREAM(rclcpp::get_logger("yield_plugin"),
+      "[CPU] Done — " << collision_times.size() << " collision(s) confirmed");
+
+    return collision_times;
+  }
+
+#endif  // YIELD_PLUGIN_WITH_CUDA
+
   std::optional<std::pair<carma_perception_msgs::msg::ExternalObject, double>> YieldPlugin::get_earliest_collision_object_and_time(const carma_planning_msgs::msg::TrajectoryPlan& original_tp,
     const std::vector<carma_perception_msgs::msg::ExternalObject>& external_objects)
   {
-    RCLCPP_DEBUG_STREAM(nh_->get_logger(), "ExternalObjects size: " << external_objects.size());
+    RCLCPP_DEBUG_STREAM(rclcpp::get_logger("yield_plugin"), "ExternalObjects size: " << external_objects.size());
 
     if (!wm_->getRoute())
     {

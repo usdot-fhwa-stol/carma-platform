@@ -81,6 +81,12 @@ namespace yield_plugin
 
     RCLCPP_INFO_STREAM(get_logger(), "YieldPlugin Params: " << config_);
 
+#ifdef YIELD_PLUGIN_WITH_CUDA
+    RCLCPP_INFO(get_logger(), "YieldPlugin collision detection: GPU path (bbox on-route filter + CUDA kernel)");
+#else
+    RCLCPP_INFO(get_logger(), "YieldPlugin collision detection: CPU path (bbox on-route filter + std::async get_collision_time)");
+#endif
+
     worker_ = std::make_shared<YieldPlugin>(shared_from_this(), get_world_model(), config_,
                                                           [this](auto msg) { mob_resp_pub_->publish(msg); },
                                                           [this](auto msg) { lc_status_pub_->publish(msg); });
