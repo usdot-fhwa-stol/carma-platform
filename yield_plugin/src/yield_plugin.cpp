@@ -37,6 +37,7 @@
 #include <basic_autonomy/smoothing/filters.hpp>
 #include <future>
 #include <basic_autonomy/helper_functions.hpp>
+#include <yield_plugin/yield_plugin_cuda.cuh>
 
 using oss = std::ostringstream;
 constexpr auto EPSILON {0.01}; //small value to compare doubles
@@ -871,25 +872,209 @@ namespace yield_plugin
     return collision_result.value().collision_time;
   }
 
-  std::unordered_map<uint32_t, rclcpp::Time> YieldPlugin::get_collision_times_concurrently(const carma_planning_msgs::msg::TrajectoryPlan& original_tp,
-    const std::vector<carma_perception_msgs::msg::ExternalObject>& external_objects, double original_tp_max_speed)
+  std::unordered_map<uint32_t, rclcpp::Time> YieldPlugin::get_collision_times_concurrently(
+    const carma_planning_msgs::msg::TrajectoryPlan& original_tp,
+    const std::vector<carma_perception_msgs::msg::ExternalObject>& external_objects,
+    double original_tp_max_speed)
   {
-
-    std::unordered_map<uint32_t, std::future<std::optional<rclcpp::Time>>> futures;
     std::unordered_map<uint32_t, rclcpp::Time> collision_times;
 
-    // Launch asynchronous tasks to check for collision times
-    for (const auto& object : external_objects) {
-      futures[object.id] = std::async(std::launch::async,[this, &original_tp, &object, &original_tp_max_speed]{
-          return get_collision_time(original_tp, object, original_tp_max_speed);
-        });
+    if (original_tp.trajectory_points.size() < 2) return collision_times;
+
+    const double plan_start_time = get_trajectory_start_time(original_tp);
+
+    // Timestamps as absolute doubles; reference used to normalise into float32.
+    const double ref_t = plan_start_time;
+
+    // Build ego SoA with normalised timestamps.
+    const int n_ego = static_cast<int>(original_tp.trajectory_points.size());
+    std::vector<CudaPoint> ego_pts;
+    ego_pts.reserve(n_ego);
+    for (const auto& tp : original_tp.trajectory_points) {
+      ego_pts.push_back({
+        static_cast<float>(tp.x),
+        static_cast<float>(tp.y),
+        static_cast<float>(rclcpp::Time(tp.target_time).seconds() - ref_t)
+      });
     }
 
-    // Collect results from futures and update collision_times
-    for (const auto& object : external_objects) {
-      if (const auto collision_time{futures.at(object.id).get()}) {
-        collision_times[object.id] = collision_time.value();
+    // Per-object data accumulated for the CUDA batch.
+    struct ActiveObject {
+      uint32_t id;
+      // Prediction list with current position prepended (same as get_collision_time builds).
+      std::vector<carma_perception_msgs::msg::PredictedState> predictions;
+      int on_route_idx;  // first prediction index known to be on the route
+    };
+
+    std::vector<ActiveObject>  active;
+    std::vector<CudaPoint>     obs_flat;
+    std::vector<int>           obs_offsets;
+    std::vector<int>           obs_sizes;
+
+    for (const auto& obj : external_objects) {
+      // Skip objects whose entire prediction horizon is before the plan start.
+      if (rclcpp::Time(obj.predictions.back().header.stamp).seconds() <= plan_start_time) {
+        continue;
       }
+
+      // Build prediction list: prepend current position (mirrors get_collision_time).
+      std::vector<carma_perception_msgs::msg::PredictedState> pred_list;
+      pred_list.reserve(obj.predictions.size() + 1);
+      {
+        carma_perception_msgs::msg::PredictedState curr;
+        curr.header.stamp = obj.header.stamp;
+        curr.predicted_position.position.x = obj.pose.pose.position.x;
+        curr.predicted_position.position.y = obj.pose.pose.position.y;
+        curr.predicted_velocity.linear.x   = obj.velocity.twist.linear.x;
+        curr.predicted_velocity.linear.y   = obj.velocity.twist.linear.y;
+        pred_list.push_back(curr);
+      }
+      pred_list.insert(pred_list.end(), obj.predictions.cbegin(), obj.predictions.cend());
+
+      if (pred_list.size() < 2) continue;
+
+      const double predict_step_duration =
+        (rclcpp::Time(pred_list.at(1).header.stamp) - rclcpp::Time(pred_list.front().header.stamp)).seconds();
+      if (predict_step_duration < 0.0) continue;
+
+      // Quick spatial pre-filter: if the object starts beyond collision_check_radius_in_m
+      // it cannot collide with the ego at the start of the trajectory.
+      {
+        const double dx0 = ego_pts[0].x - obj.pose.pose.position.x;
+        const double dy0 = ego_pts[0].y - obj.pose.pose.position.y;
+        if (std::hypot(dx0, dy0) > config_.collision_check_radius_in_m) {
+          consecutive_clearance_count_for_obstacles_[obj.id] = 0;
+          continue;
+        }
+      }
+
+      // On-route check (CPU) — same stride logic as the original get_collision.
+      const double traj2_speed = std::hypot(
+        pred_list.front().predicted_velocity.linear.x,
+        pred_list.front().predicted_velocity.linear.y);
+      const bool traj2_has_zero_speed = traj2_speed < config_.obstacle_zero_speed_threshold_in_ms;
+
+      const double stride_max_t = 2.0 * config_.intervehicle_collision_distance_in_m /
+        std::sqrt(std::pow(traj2_speed, 2) + std::pow(original_tp_max_speed, 2));
+      const int iteration_stride = std::max(1, static_cast<int>(stride_max_t / predict_step_duration));
+
+      bool on_route     = false;
+      int  on_route_idx = 0;
+      for (size_t j = 0; j < pred_list.size(); j += iteration_stride) {
+        lanelet::BasicPoint2d pt;
+        pt.x() = pred_list[j].predicted_position.position.x;
+        pt.y() = pred_list[j].predicted_position.position.y;
+        for (const auto& llt : wm_->getLaneletsFromPoint(pt, 8)) {
+          if (route_llt_ids_.find(llt.id()) != route_llt_ids_.end()) {
+            on_route     = true;
+            on_route_idx = static_cast<int>(j);
+            break;
+          }
+        }
+        if (on_route || traj2_has_zero_speed) break;
+      }
+
+      if (!on_route) {
+        consecutive_clearance_count_for_obstacles_[obj.id] = 0;
+        continue;
+      }
+
+      // Pack the on-route portion of the prediction into the flat obstacle buffer.
+      obs_offsets.push_back(static_cast<int>(obs_flat.size()));
+      int count = 0;
+      for (int j = on_route_idx; j < static_cast<int>(pred_list.size()); ++j) {
+        obs_flat.push_back({
+          static_cast<float>(pred_list[j].predicted_position.position.x),
+          static_cast<float>(pred_list[j].predicted_position.position.y),
+          static_cast<float>(rclcpp::Time(pred_list[j].header.stamp).seconds() - ref_t)
+        });
+        ++count;
+      }
+      obs_sizes.push_back(count);
+      active.push_back({obj.id, std::move(pred_list), on_route_idx});
+    }
+
+    if (active.empty()) return collision_times;
+
+    // -----------------------------------------------------------------------
+    // GPU: exact, continuous-time segment-pair collision detection.
+    // -----------------------------------------------------------------------
+    const auto cuda_results = cuda_check_all_collisions(
+      ego_pts, obs_flat, obs_offsets, obs_sizes,
+      static_cast<float>(config_.intervehicle_collision_distance_in_m));
+
+    // -----------------------------------------------------------------------
+    // Post-process: recover collision positions and run behind-vehicle check.
+    // -----------------------------------------------------------------------
+    for (size_t k = 0; k < active.size(); ++k) {
+      const auto& cuda_res = cuda_results[k];
+
+      if (!cuda_res.has_collision) {
+        consecutive_clearance_count_for_obstacles_[active[k].id] = 0;
+        continue;
+      }
+
+      // Recover absolute collision time.
+      const double t_col_abs = static_cast<double>(cuda_res.collision_t_norm) + ref_t;
+      const rclcpp::Time collision_time(static_cast<int64_t>(t_col_abs * 1e9));
+
+      // Interpolate ego position at collision time (linear search — O(N), negligible).
+      lanelet::BasicPoint2d ego_pt(ego_pts[0].x, ego_pts[0].y);
+      for (int i = 0; i < n_ego - 1; ++i) {
+        const double ta = rclcpp::Time(original_tp.trajectory_points[i].target_time).seconds();
+        const double tb = rclcpp::Time(original_tp.trajectory_points[i + 1].target_time).seconds();
+        if (ta <= t_col_abs && t_col_abs <= tb) {
+          const double s = (tb > ta) ? (t_col_abs - ta) / (tb - ta) : 0.0;
+          ego_pt.x() = original_tp.trajectory_points[i].x +
+                       s * (original_tp.trajectory_points[i + 1].x - original_tp.trajectory_points[i].x);
+          ego_pt.y() = original_tp.trajectory_points[i].y +
+                       s * (original_tp.trajectory_points[i + 1].y - original_tp.trajectory_points[i].y);
+          break;
+        }
+      }
+
+      // Interpolate obstacle position at collision time.
+      const auto& preds = active[k].predictions;
+      lanelet::BasicPoint2d obs_pt(
+        preds.front().predicted_position.position.x,
+        preds.front().predicted_position.position.y);
+      for (int j = active[k].on_route_idx;
+           j < static_cast<int>(preds.size()) - 1; ++j)
+      {
+        const double ta = rclcpp::Time(preds[j].header.stamp).seconds();
+        const double tb = rclcpp::Time(preds[j + 1].header.stamp).seconds();
+        if (ta <= t_col_abs && t_col_abs <= tb) {
+          const double s = (tb > ta) ? (t_col_abs - ta) / (tb - ta) : 0.0;
+          obs_pt.x() = preds[j].predicted_position.position.x +
+                       s * (preds[j + 1].predicted_position.position.x -
+                            preds[j].predicted_position.position.x);
+          obs_pt.y() = preds[j].predicted_position.position.y +
+                       s * (preds[j + 1].predicted_position.position.y -
+                            preds[j].predicted_position.position.y);
+          break;
+        }
+      }
+
+      const double vehicle_downtrack = wm_->routeTrackPos(ego_pt).downtrack;
+      const double object_downtrack  = wm_->routeTrackPos(obs_pt).downtrack;
+
+      if (is_object_behind_vehicle(active[k].id, collision_time,
+                                   vehicle_downtrack, object_downtrack)) {
+        RCLCPP_INFO_STREAM(nh_->get_logger(),
+          "Confirmed that the object: " << active[k].id
+          << " is behind the vehicle at timestamp "
+          << std::to_string(collision_time.seconds()));
+        continue;
+      }
+
+      RCLCPP_WARN_STREAM(nh_->get_logger(),
+        "Collision detected for object: " << active[k].id
+        << ", at timestamp " << std::to_string(collision_time.seconds())
+        << ", x: " << ego_pt.x() << ", y: " << ego_pt.y()
+        << ", within actual downtrack distance: "
+        << object_downtrack - vehicle_downtrack);
+
+      collision_times[active[k].id] = collision_time;
     }
 
     return collision_times;
