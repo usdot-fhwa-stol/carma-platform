@@ -476,26 +476,38 @@ TEST(CollisionDetectionBenchmark, WorstCasePerformance)
             << "  Pred states    : " << N_PRED << " per object\n"
             << "  Total seg pairs: " << total_pairs << "\n";
 
-  // Pre-populate the plugin's route-lanelet cache.  get_collision() reads
-  // route_llt_ids_ directly, but that set is only filled inside
-  // get_earliest_collision_object_and_time().  Call it once with an empty
-  // object list so subsequent get_collision() calls use the real route.
+  // Pre-populate the plugin's route-lanelet cache (filled lazily inside
+  // get_earliest_collision_object_and_time; get_collision reads it directly).
   plugin.get_earliest_collision_object_and_time(ego_tp, {});
 
-  // ── CPU legacy: get_collision() per object ───────────────────────────────
-  // The production algorithm: on-route filter + stride-based check with
-  // monotonic-distance early exit.  Run 3 times, take the median.
+  // Wrap each object's prediction states as ExternalObject for the concurrent
+  // production path.  get_collision_time prepends the current pose as the
+  // zeroth state, so: current state = all_preds[k][0], predictions = [1..].
+  std::vector<carma_perception_msgs::msg::ExternalObject> ext_objs;
+  ext_objs.reserve(N_OBJ);
+  for (int k = 0; k < N_OBJ; ++k) {
+    carma_perception_msgs::msg::ExternalObject obj;
+    obj.id                              = static_cast<uint32_t>(k + 1);
+    obj.header.stamp                    = all_preds[k].front().header.stamp;
+    obj.pose.pose.position.x            = all_preds[k].front().predicted_position.position.x;
+    obj.pose.pose.position.y            = all_preds[k].front().predicted_position.position.y;
+    obj.velocity.twist.linear.x         = all_preds[k].front().predicted_velocity.linear.x;
+    obj.velocity.twist.linear.y         = all_preds[k].front().predicted_velocity.linear.y;
+    obj.predictions.assign(all_preds[k].begin() + 1, all_preds[k].end());
+    ext_objs.push_back(std::move(obj));
+  }
+
+  // ── CPU parallel: get_collision_times_concurrently() ─────────────────────
+  // The production path: one std::async task per object (same as the plugin
+  // runs on the real vehicle).  Run 3 times, take the median.
   std::array<double, 3> cpu_ms{};
   bool any_cpu_collision = false;
   for (int run = 0; run < 3; ++run) {
     auto t0 = std::chrono::steady_clock::now();
-    for (int k = 0; k < N_OBJ; ++k) {
-      if (plugin.get_collision(ego_tp, all_preds[k], RADIUS, EGO_SPEED)) {
-        any_cpu_collision = true;
-      }
-    }
+    const auto collision_times = plugin.get_collision_times_concurrently(ego_tp, ext_objs, EGO_SPEED);
     auto t1 = std::chrono::steady_clock::now();
     cpu_ms[run] = std::chrono::duration<double, std::milli>(t1 - t0).count();
+    if (!collision_times.empty()) any_cpu_collision = true;
   }
   std::sort(cpu_ms.begin(), cpu_ms.end());
   const double cpu_median_ms = cpu_ms[1];
@@ -521,24 +533,41 @@ TEST(CollisionDetectionBenchmark, WorstCasePerformance)
 
   const double speedup = cpu_median_ms / gpu_median_ms;
 
-  std::cout << "  CPU get_collision: " << cpu_median_ms << " ms  (median of 3, legacy algorithm)\n"
+  std::cout << "  CPU concurrent  : " << cpu_median_ms << " ms  (median of 3, get_collision_times_concurrently)\n"
             << "  CUDA batch      : " << gpu_median_ms << " ms  (median of 3, after warm-up)\n"
             << "  Ratio cpu/cuda  : " << speedup << "×\n"
             << "  CPU collision   : " << (any_cpu_collision ? "yes (UNEXPECTED)" : "no") << "\n"
             << "  GPU collision   : " << (any_gpu_collision ? "yes (UNEXPECTED)" : "no") << "\n";
 
   // Correctness: no object should collide with the ego in this scenario.
-  EXPECT_FALSE(any_cpu_collision) << "get_collision reported a false collision.";
+  EXPECT_FALSE(any_cpu_collision) << "get_collision_times_concurrently reported a false collision.";
   EXPECT_FALSE(any_gpu_collision) << "CUDA reported a false collision.";
 
   // ── Accuracy cross-check: run a scenario WITH a collision ─────────────────
-  // One extra object on the same path as the ego (x=10, y=0, same speed).
-  // Both get_collision and CUDA must detect it.
+  // Obstacle at x=10, y=6 (6 m ahead of ego at y=0) moving at 4 m/s.
+  // Ego closes at 10 m/s: closing speed = 6 m/s.
+  // Distance enters the 2 m collision radius at t = (6-2)/6 ≈ 0.67 s.
+  // Both the concurrent CPU path and CUDA must detect it at a non-trivial time.
   {
-    auto colliding_preds = make_preds(N_PRED,
-      10.0, 0.0, 10.0, 10.0 * (N_PRED-1) * PRED_DT,
-      T0, PRED_DT, 0.0, 10.0);  // same start position and speed as ego → distance 0 from t=0
+    constexpr double OBS_Y_START  = 6.0;
+    constexpr double OBS_SPEED    = 4.0;
+    const double     obs_y_end    = OBS_Y_START + OBS_SPEED * (N_PRED - 1) * PRED_DT;
 
+    auto colliding_preds = make_preds(N_PRED,
+      10.0, OBS_Y_START, 10.0, obs_y_end,
+      T0, PRED_DT, 0.0, OBS_SPEED);
+
+    // Build ExternalObject for the concurrent CPU check.
+    carma_perception_msgs::msg::ExternalObject col_obj;
+    col_obj.id                              = static_cast<uint32_t>(N_OBJ + 1);
+    col_obj.header.stamp                    = colliding_preds.front().header.stamp;
+    col_obj.pose.pose.position.x            = colliding_preds.front().predicted_position.position.x;
+    col_obj.pose.pose.position.y            = colliding_preds.front().predicted_position.position.y;
+    col_obj.velocity.twist.linear.x         = colliding_preds.front().predicted_velocity.linear.x;
+    col_obj.velocity.twist.linear.y         = colliding_preds.front().predicted_velocity.linear.y;
+    col_obj.predictions.assign(colliding_preds.begin() + 1, colliding_preds.end());
+
+    // Build CudaPoint array for the CUDA check.
     std::vector<CudaPoint> col_obs(N_PRED);
     for (int i = 0; i < N_PRED; ++i) {
       col_obs[i] = {
@@ -548,21 +577,23 @@ TEST(CollisionDetectionBenchmark, WorstCasePerformance)
       };
     }
 
-    const bool cpu_found = plugin.get_collision(ego_tp, colliding_preds, RADIUS, EGO_SPEED).has_value();
+    const auto cpu_col  = plugin.get_collision_times_concurrently(ego_tp, {col_obj}, EGO_SPEED);
+    const bool cpu_found = cpu_col.count(col_obj.id) > 0;
     auto cuda_r = cuda_check_all_collisions(
       ego_pts, {col_obs}, {0}, {N_PRED}, RADIUS);
 
-    EXPECT_TRUE(cpu_found)  << "get_collision missed the planted collision.";
+    EXPECT_TRUE(cpu_found)  << "get_collision_times_concurrently missed the planted collision.";
     EXPECT_TRUE(cuda_r[0].has_collision) << "CUDA missed the planted collision.";
 
     if (cpu_found && cuda_r[0].has_collision) {
       const double t_col = static_cast<double>(cuda_r[0].collision_t_norm) + ref_t;
-      EXPECT_GE(t_col, T0) << "Collision time before trajectory start.";
-      EXPECT_LE(t_col, T0 + (N_EGO-1) * EGO_DT + 1.0)
-        << "Collision time beyond trajectory end.";
+      // Continuous-motion first entry into 2 m radius: t = (6-2)/6 ≈ 0.67 s.
+      // Kernel reports end of first colliding segment; expect it to be close.
+      EXPECT_GT(t_col, 0.5) << "Collision time suspiciously early.";
+      EXPECT_LT(t_col, 1.2) << "Collision time suspiciously late.";
       std::cout << "  Planted collision: CPU=" << (cpu_found?"yes":"no")
                 << "  CUDA=" << (cuda_r[0].has_collision?"yes":"no")
-                << "  t_col=" << t_col << " s\n";
+                << "  t_col=" << t_col << " s  (true first entry ≈ 0.67 s)\n";
     }
   }
 }
