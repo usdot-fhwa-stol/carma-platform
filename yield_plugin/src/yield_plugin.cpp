@@ -1082,13 +1082,8 @@ namespace yield_plugin
         }
       }
 
-      auto _rtp_t0_gpu = std::chrono::steady_clock::now();
       const double vehicle_downtrack = wm_->routeTrackPos(ego_pt).downtrack;
       const double object_downtrack  = wm_->routeTrackPos(obs_pt).downtrack;
-      const double _rtp_ms_gpu = std::chrono::duration<double, std::milli>(
-        std::chrono::steady_clock::now() - _rtp_t0_gpu).count();
-      RCLCPP_DEBUG_STREAM(rclcpp::get_logger("yield_plugin"),
-        "[GPU] routeTrackPos x2: " << _rtp_ms_gpu << " ms  (obj=" << active[k].id << ")");
 
       if (is_object_behind_vehicle(active[k].id, collision_time,
                                    vehicle_downtrack, object_downtrack)) {
