@@ -23,7 +23,7 @@ consecutive_clearance_count_for_passed_obstacles_threshold: 20
 # Intervehicle distance that is considered a collision
 # Unit: m
 # Value type: Desired
-intervehicle_collision_distance_in_m: 6.0
+intervehicle_collision_distance_in_m: 2.0
 # Radius to check for potential collision
 # Unit: m
 # Value type: Desired

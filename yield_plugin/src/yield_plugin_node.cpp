@@ -15,6 +15,10 @@
  */
 
 #include <yield_plugin/yield_plugin_node.hpp>
+#include <chrono>
+#ifdef YIELD_PLUGIN_WITH_CUDA
+#include <yield_plugin/yield_plugin_cuda.cuh>
+#endif
 
 namespace yield_plugin
 {
@@ -83,6 +87,20 @@ namespace yield_plugin
 
 #ifdef YIELD_PLUGIN_WITH_CUDA
     RCLCPP_INFO(get_logger(), "YieldPlugin collision detection: GPU path (bbox on-route filter + CUDA kernel)");
+    // Warm up the CUDA runtime so the first real collision check does not pay
+    // the 100-200 ms cold-start cost (driver init, cubin load, heap setup).
+    // Must supply at least 2 ego points and 1 object with 2 states — the
+    // host wrapper returns immediately for empty input, never reaching cudaMalloc.
+    {
+      auto _t0 = std::chrono::steady_clock::now();
+      const std::vector<yield_plugin::CudaPoint> ego  = {{0.f,0.f,0.f},{1.f,0.f,1.f}};
+      const std::vector<yield_plugin::CudaPoint> obs  = {{1e4f,1e4f,0.f},{1e4f,1e4f,1.f}};
+      cuda_check_all_collisions(ego, obs, {0}, {2}, 2.0f);
+      const double _warm_ms = std::chrono::duration<double, std::milli>(
+        std::chrono::steady_clock::now() - _t0).count();
+      RCLCPP_INFO_STREAM(get_logger(),
+        "CUDA warmup complete (" << _warm_ms << " ms) — first call latency paid at startup");
+    }
 #else
     RCLCPP_INFO(get_logger(), "YieldPlugin collision detection: CPU path (bbox on-route filter + std::async get_collision_time)");
 #endif
