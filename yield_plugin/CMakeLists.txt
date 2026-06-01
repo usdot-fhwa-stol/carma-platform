@@ -49,8 +49,9 @@ enable_language(CUDA)
 # for the kernel TU which contains no C++17-specific syntax.
 set(CMAKE_CUDA_STANDARD 14)
 set(CMAKE_CUDA_STANDARD_REQUIRED ON)
-# sm_80 = A100; sm_86 = Ampere desktop (RTX 30xx); sm_89/Ada JIT via PTX fallback
-set(CMAKE_CUDA_ARCHITECTURES "80;86")
+# sm_75 = Turing (RTX 20xx); sm_80 = A100; sm_86 = Ampere (RTX 30xx)
+# sm_89 (Ada/RTX 40xx) is not supported by nvcc 11.7 but JITs from sm_86 PTX at runtime
+set(CMAKE_CUDA_ARCHITECTURES "75;80;86")
 
 # Build the CUDA collision kernel as a separate PIC static library so that
 # ament_auto_add_library (which produces a shared object) can link it cleanly.
