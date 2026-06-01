@@ -21,7 +21,7 @@
 namespace yield_plugin
 {
 
-// A single trajectory/prediction sample in flat SoA layout fed to the GPU.
+// A single trajectory/prediction sample in flat SoA (structure of array) layout fed to the GPU.
 // Timestamps are normalized (t - reference_t) before upload so float32
 // precision is sufficient for the ~15-second planning horizon.
 struct CudaPoint

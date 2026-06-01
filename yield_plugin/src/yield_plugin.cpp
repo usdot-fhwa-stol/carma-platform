@@ -892,7 +892,7 @@ namespace yield_plugin
     // Timestamps as absolute doubles; reference used to normalise into float32.
     const double ref_t = plan_start_time;
 
-    // Build ego SoA with normalised timestamps.
+    // Build ego SoA (structure of array) with normalised timestamps.
     const int n_ego = static_cast<int>(original_tp.trajectory_points.size());
     std::vector<CudaPoint> ego_pts;
     ego_pts.reserve(n_ego);

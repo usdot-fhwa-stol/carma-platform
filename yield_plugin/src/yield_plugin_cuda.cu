@@ -185,7 +185,7 @@ std::vector<CudaCollisionResult> cuda_check_all_collisions(
   const int total_obs    = static_cast<int>(obs_pts_flat.size());
   const int max_obs_size = *std::max_element(obs_sizes.begin(), obs_sizes.end());
 
-  // Flatten SoA for ego
+  // Flatten SoA (structure of array) for ego
   std::vector<float> h_ego_x(n_ego), h_ego_y(n_ego), h_ego_t(n_ego);
   for (int i = 0; i < n_ego; ++i) {
     h_ego_x[i] = ego_pts[i].x;
@@ -193,7 +193,7 @@ std::vector<CudaCollisionResult> cuda_check_all_collisions(
     h_ego_t[i] = ego_pts[i].t;
   }
 
-  // Flatten SoA for obstacles
+  // Flatten SoA (structure of array) for obstacles
   std::vector<float> h_obs_x(total_obs), h_obs_y(total_obs), h_obs_t(total_obs);
   for (int i = 0; i < total_obs; ++i) {
     h_obs_x[i] = obs_pts_flat[i].x;
