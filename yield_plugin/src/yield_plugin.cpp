@@ -161,7 +161,7 @@ namespace yield_plugin
     if (incoming_request.strategy == "carma/cooperative-lane-change")
     {
       if (!map_projector_) {
-        RCLCPP_DEBUG(nh_->get_logger(),"Cannot process mobility request as map projection is not yet set!");
+        RCLCPP_ERROR(nh_->get_logger(),"Cannot process mobility request as map projection is not yet set!");
         return;
       }
       if (incoming_request.plan_type.type == carma_v2x_msgs::msg::PlanType::CHANGE_LANE_LEFT || incoming_request.plan_type.type == carma_v2x_msgs::msg::PlanType::CHANGE_LANE_RIGHT)
