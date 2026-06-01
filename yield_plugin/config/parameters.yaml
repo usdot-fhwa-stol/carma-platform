@@ -21,9 +21,10 @@ time_horizon_until_collision_to_commit_to_stop_in_s: 3.0
 # TODO: Further investigation required for the logic calling this parameter.
 consecutive_clearance_count_for_passed_obstacles_threshold: 20
 # Intervehicle distance that is considered a collision
+# From rear axle of the vehicle to the front of the obstacle
 # Unit: m
 # Value type: Desired
-intervehicle_collision_distance_in_m: 2.0
+intervehicle_collision_distance_in_m: 5.0
 # Radius to check for potential collision
 # Unit: m
 # Value type: Desired

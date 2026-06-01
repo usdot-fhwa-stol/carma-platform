@@ -61,12 +61,12 @@ using namespace yield_plugin;
 // Returns true only when at least one CUDA device is reachable with a
 // driver that matches the compiled runtime.  Used to skip GPU tests gracefully
 // in environments without a compatible GPU (e.g. CI, dev containers).
-// static bool cuda_is_available()
-// {
-//   int count = 0;
-//   cudaError_t err = cudaGetDeviceCount(&count);
-//   return (err == cudaSuccess && count > 0);
-// }
+static bool cuda_is_available()
+{
+  int count = 0;
+  cudaError_t err = cudaGetDeviceCount(&count);
+  return (err == cudaSuccess && count > 0);
+}
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Shared helpers
@@ -179,9 +179,9 @@ to_cuda_inputs(
 
 TEST(CollisionDetectionAccuracy, BetweenTimestampMiss)
 {
-  // if (!cuda_is_available()) {
-  //   GTEST_SKIP() << "No compatible CUDA device found; skipping GPU collision test.";
-  // }
+  if (!cuda_is_available()) {
+    GTEST_SKIP() << "No compatible CUDA device found; skipping GPU collision test.";
+  }
 
   // ── World model (needed by get_collision for the on-route check) ──────────
   auto wm  = std::make_shared<carma_wm::CARMAWorldModel>();
@@ -295,9 +295,9 @@ TEST(CollisionDetectionAccuracy, BetweenTimestampMiss)
 
 TEST(CollisionDetectionAccuracy, StrideSkipMiss)
 {
-  // if (!cuda_is_available()) {
-  //   GTEST_SKIP() << "No compatible CUDA device found; skipping GPU collision test.";
-  // }
+  if (!cuda_is_available()) {
+    GTEST_SKIP() << "No compatible CUDA device found; skipping GPU collision test.";
+  }
 
   auto wm  = std::make_shared<carma_wm::CARMAWorldModel>();
   auto map = carma_wm::test::buildGuidanceTestMap(100, 100);
@@ -419,9 +419,9 @@ TEST(CollisionDetectionAccuracy, StrideSkipMiss)
 
 TEST(CollisionDetectionBenchmark, WorstCasePerformance)
 {
-  // if (!cuda_is_available()) {
-  //   GTEST_SKIP() << "No compatible CUDA device found; skipping GPU collision benchmark.";
-  // }
+  if (!cuda_is_available()) {
+    GTEST_SKIP() << "No compatible CUDA device found; skipping GPU collision benchmark.";
+  }
 
   constexpr int    N_EGO     = 100;   // ego trajectory points
   constexpr int    N_OBJ     = 100;   // number of external objects
