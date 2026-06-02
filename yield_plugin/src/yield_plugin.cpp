@@ -525,7 +525,9 @@ namespace yield_plugin
     for (size_t i = 0; i < polynomial_coefficients.size(); i++) {
       RCLCPP_DEBUG_STREAM(rclcpp::get_logger("yield_plugin"),"Coefficient " << i << ": " << polynomial_coefficients[i]);
     }
-    const auto smallest_time_step = get_smallest_time_step_of_traj(original_tp);
+    // Cap at 0.1 s: finer steps gave no accuracy benefit but caused O(1/dt) loop blow-up
+    // when upstream planners produced sub-10 ms trajectory timesteps.
+    const double smallest_time_step = std::max(get_smallest_time_step_of_traj(original_tp), 0.1);
     int new_traj_idx = 1;
     int original_traj_idx = 1;
     while (new_traj_accumulated_downtrack < goal_pos - EPSILON && original_traj_idx < original_traj_relative_downtracks.size())
@@ -1437,26 +1439,48 @@ namespace yield_plugin
   double YieldPlugin::check_traj_for_digital_min_gap(const carma_planning_msgs::msg::TrajectoryPlan& original_tp) const
   {
     double desired_gap = 0;
+    if (!wm_->getRoute()) return desired_gap;
 
-    for (size_t i = 0; i < original_tp.trajectory_points.size(); i++)
+    // The vehicle travels only on the shortest path, so DigitalMinimumGap regulatory elements
+    // can be read directly from those lanelets without any per-trajectory-point spatial queries.
+    // Two getLaneletsFromPoint calls on the trajectory endpoints identify which contiguous slice
+    // of the shortest path the trajectory covers; everything in between is then walked cheaply.
+    const lanelet::BasicPoint2d traj_start(original_tp.trajectory_points.front().x,
+                                           original_tp.trajectory_points.front().y);
+    const lanelet::BasicPoint2d traj_end(original_tp.trajectory_points.back().x,
+                                         original_tp.trajectory_points.back().y);
+
+    auto start_llts = wm_->getLaneletsFromPoint(traj_start, 1);
+    auto end_llts   = wm_->getLaneletsFromPoint(traj_end,   1);
+
+    if (start_llts.empty() || end_llts.empty())
     {
-      lanelet::BasicPoint2d veh_pos(original_tp.trajectory_points.at(i).x, original_tp.trajectory_points.at(i).y);
-      auto llts = wm_->getLaneletsFromPoint(veh_pos, 1);
-      if (llts.empty())
-      {
-        // This should technically never happen
-        // However, trajectory generation currently may fail due to osm map issue https://github.com/usdot-fhwa-stol/carma-platform/issues/2503
-        RCLCPP_WARN_STREAM(nh_->get_logger(),"Trajectory point: x= " << original_tp.trajectory_points.at(i).x << "y="<< original_tp.trajectory_points.at(i).y);
-        RCLCPP_WARN_STREAM(nh_->get_logger(),"Trajectory is not on the road, so was unable to get the digital minimum gap. Returning default minimum_safety_gap_in_meters: " << config_.minimum_safety_gap_in_meters);
-        return desired_gap;
-      }
-      auto digital_min_gap = llts[0].regulatoryElementsAs<lanelet::DigitalMinimumGap>(); //Returns a list of these elements)
+      // Trajectory generation may place a point off-road in rare edge cases
+      // (see https://github.com/usdot-fhwa-stol/carma-platform/issues/2503)
+      RCLCPP_WARN_STREAM(nh_->get_logger(), "check_traj_for_digital_min_gap: trajectory endpoint "
+        "not on a lanelet, skipping digital gap check.");
+      return desired_gap;
+    }
+
+    const auto start_id = start_llts[0].id();
+    const auto end_id   = end_llts[0].id();
+
+    // Walk the ordered shortest path from the trajectory's start lanelet to its end lanelet.
+    bool in_range = false;
+    for (const auto& llt : wm_->getRoute()->shortestPath())
+    {
+      if (llt.id() == start_id) in_range = true;
+      if (!in_range) continue;
+
+      auto digital_min_gap = llt.regulatoryElementsAs<lanelet::DigitalMinimumGap>();
       if (!digital_min_gap.empty())
       {
-        double digital_gap = digital_min_gap[0]->getMinimumGap(); // Provided gap is in meters
-        RCLCPP_DEBUG_STREAM(nh_->get_logger(),"Digital Gap found with value: " << digital_gap);
+        double digital_gap = digital_min_gap[0]->getMinimumGap();
+        RCLCPP_DEBUG_STREAM(nh_->get_logger(), "Digital Gap found with value: " << digital_gap);
         desired_gap = std::max(desired_gap, digital_gap);
       }
+
+      if (llt.id() == end_id) break;
     }
     return desired_gap;
   }
