@@ -16,7 +16,6 @@
 
 #include <yield_plugin/yield_plugin_node.hpp>
 #include <chrono>
-#ifdef YIELD_PLUGIN_WITH_CUDA
 #include <yield_plugin/yield_plugin_cuda.cuh>
 #endif
 
@@ -85,7 +84,6 @@ namespace yield_plugin
 
     RCLCPP_INFO_STREAM(get_logger(), "YieldPlugin Params: " << config_);
 
-#ifdef YIELD_PLUGIN_WITH_CUDA
     if (cuda_is_available()) {
       RCLCPP_INFO(get_logger(), "YieldPlugin collision detection: GPU path (bbox on-route filter + CUDA kernel)");
       // Warm up the CUDA runtime so the first real collision check does not pay
@@ -100,10 +98,8 @@ namespace yield_plugin
         "CUDA warmup complete (" << _warm_ms << " ms) — first call latency paid at startup");
     } else {
       RCLCPP_WARN(get_logger(), "YieldPlugin built with CUDA but no compatible driver found; using CPU collision detection fallback");
+      RCLCPP_WARN(get_logger(), "YieldPlugin collision detection: CPU path (bbox on-route filter + std::async get_collision_time)");
     }
-#else
-    RCLCPP_INFO(get_logger(), "YieldPlugin collision detection: CPU path (bbox on-route filter + std::async get_collision_time)");
-#endif
 
     worker_ = std::make_shared<YieldPlugin>(shared_from_this(), get_world_model(), config_,
                                                           [this](auto msg) { mob_resp_pub_->publish(msg); },
