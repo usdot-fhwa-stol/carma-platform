@@ -92,8 +92,6 @@ target_link_libraries(${node_lib}
         ${Boost_LIBRARIES}
         ${EIGEN3_LIBRARIES}
 )
-# Activate the CUDA collision path in yield_plugin.cpp.
-target_compile_definitions(${node_lib} PUBLIC YIELD_PLUGIN_WITH_CUDA)
 target_link_libraries(${node_exec}
         ${node_lib}
 )

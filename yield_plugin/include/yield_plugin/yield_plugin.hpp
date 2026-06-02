@@ -295,6 +295,18 @@ public:
    */
   std::unordered_map<uint32_t, rclcpp::Time> get_collision_times_concurrently(const carma_planning_msgs::msg::TrajectoryPlan& original_tp, const std::vector<carma_perception_msgs::msg::ExternalObject>& external_objects, double original_tp_max_speed);
 
+private:
+  std::unordered_map<uint32_t, rclcpp::Time> get_collision_times_concurrently_cpu(
+    const carma_planning_msgs::msg::TrajectoryPlan& original_tp,
+    const std::vector<carma_perception_msgs::msg::ExternalObject>& external_objects,
+    double original_tp_max_speed);
+
+  std::unordered_map<uint32_t, rclcpp::Time> get_collision_times_concurrently_cuda(
+    const carma_planning_msgs::msg::TrajectoryPlan& original_tp,
+    const std::vector<carma_perception_msgs::msg::ExternalObject>& external_objects,
+    double original_tp_max_speed);
+
+public:
   /**
    * \brief Given the object velocity in map frame with x,y components, this function returns the projected velocity along the trajectory at given time.
    * \param object_velocity_in_map_frame trajectory of the ego vehicle

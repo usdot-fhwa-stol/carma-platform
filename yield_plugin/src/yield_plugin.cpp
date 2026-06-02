@@ -37,9 +37,7 @@
 #include <basic_autonomy/smoothing/filters.hpp>
 #include <future>
 #include <basic_autonomy/helper_functions.hpp>
-#ifdef YIELD_PLUGIN_WITH_CUDA
 #include <yield_plugin/yield_plugin_cuda.cuh>
-#endif
 
 using oss = std::ostringstream;
 constexpr auto EPSILON {0.01}; //small value to compare doubles
@@ -877,8 +875,48 @@ namespace yield_plugin
     return collision_result.value().collision_time;
   }
 
-#ifdef YIELD_PLUGIN_WITH_CUDA
   std::unordered_map<uint32_t, rclcpp::Time> YieldPlugin::get_collision_times_concurrently(
+    const carma_planning_msgs::msg::TrajectoryPlan& original_tp,
+    const std::vector<carma_perception_msgs::msg::ExternalObject>& external_objects,
+    double original_tp_max_speed)
+  {
+    if (!cuda_is_available())
+      return get_collision_times_concurrently_cpu(original_tp, external_objects, original_tp_max_speed);
+    return get_collision_times_concurrently_cuda(original_tp, external_objects, original_tp_max_speed);
+  }
+
+  std::unordered_map<uint32_t, rclcpp::Time> YieldPlugin::get_collision_times_concurrently_cpu(
+    const carma_planning_msgs::msg::TrajectoryPlan& original_tp,
+    const std::vector<carma_perception_msgs::msg::ExternalObject>& external_objects,
+    double original_tp_max_speed)
+  {
+    std::unordered_map<uint32_t, std::future<std::optional<rclcpp::Time>>> futures;
+    std::unordered_map<uint32_t, rclcpp::Time> collision_times;
+    RCLCPP_DEBUG_STREAM(rclcpp::get_logger("yield_plugin"),
+      "[CPU] Launching " << external_objects.size() << " async get_collision_time tasks");
+    for (const auto& object : external_objects) {
+      futures[object.id] = std::async(
+        std::launch::async,
+        [this, &original_tp, &object, &original_tp_max_speed] {
+          return get_collision_time(original_tp, object, original_tp_max_speed);
+        });
+    }
+    for (const auto& object : external_objects) {
+      if (const auto collision_time{futures.at(object.id).get()}) {
+        RCLCPP_DEBUG_STREAM(rclcpp::get_logger("yield_plugin"),
+          "[CPU] obj=" << object.id << " collision at t=" << collision_time->seconds());
+        collision_times[object.id] = collision_time.value();
+      } else {
+        RCLCPP_DEBUG_STREAM(rclcpp::get_logger("yield_plugin"),
+          "[CPU] obj=" << object.id << " no collision detected");
+      }
+    }
+    RCLCPP_DEBUG_STREAM(rclcpp::get_logger("yield_plugin"),
+      "[CPU] Done — " << collision_times.size() << " collision(s) confirmed");
+    return collision_times;
+  }
+
+  std::unordered_map<uint32_t, rclcpp::Time> YieldPlugin::get_collision_times_concurrently_cuda(
     const carma_planning_msgs::msg::TrajectoryPlan& original_tp,
     const std::vector<carma_perception_msgs::msg::ExternalObject>& external_objects,
     double original_tp_max_speed)
@@ -1021,6 +1059,7 @@ namespace yield_plugin
     // GPU: exact, continuous-time segment-pair collision detection.
     // -----------------------------------------------------------------------
     auto _t0_cuda = std::chrono::steady_clock::now();
+    try {
     const auto cuda_results = cuda_check_all_collisions(
       ego_pts, obs_flat, obs_offsets, obs_sizes,
       static_cast<float>(config_.intervehicle_collision_distance_in_m));
@@ -1113,48 +1152,13 @@ namespace yield_plugin
     RCLCPP_DEBUG_STREAM(rclcpp::get_logger("yield_plugin"),
       "[GPU] Done — " << collision_times.size() << " collision(s) confirmed");
 
+    } catch (const std::exception& e) {
+      RCLCPP_WARN_STREAM_ONCE(rclcpp::get_logger("yield_plugin"),
+        "[GPU] CUDA unavailable (" << e.what() << "), using CPU fallback");
+      return get_collision_times_concurrently_cpu(original_tp, external_objects, original_tp_max_speed);
+    }
     return collision_times;
   }
-
-#else  // YIELD_PLUGIN_WITH_CUDA not defined — CPU-only fallback
-
-  std::unordered_map<uint32_t, rclcpp::Time> YieldPlugin::get_collision_times_concurrently(
-    const carma_planning_msgs::msg::TrajectoryPlan& original_tp,
-    const std::vector<carma_perception_msgs::msg::ExternalObject>& external_objects,
-    double original_tp_max_speed)
-  {
-    std::unordered_map<uint32_t, std::future<std::optional<rclcpp::Time>>> futures;
-    std::unordered_map<uint32_t, rclcpp::Time> collision_times;
-
-    RCLCPP_DEBUG_STREAM(rclcpp::get_logger("yield_plugin"),
-      "[CPU] Launching " << external_objects.size() << " async get_collision_time tasks");
-
-    for (const auto& object : external_objects) {
-      futures[object.id] = std::async(
-        std::launch::async,
-        [this, &original_tp, &object, &original_tp_max_speed] {
-          return get_collision_time(original_tp, object, original_tp_max_speed);
-        });
-    }
-
-    for (const auto& object : external_objects) {
-      if (const auto collision_time{futures.at(object.id).get()}) {
-        RCLCPP_DEBUG_STREAM(rclcpp::get_logger("yield_plugin"),
-          "[CPU] obj=" << object.id << " collision at t=" << collision_time->seconds());
-        collision_times[object.id] = collision_time.value();
-      } else {
-        RCLCPP_DEBUG_STREAM(rclcpp::get_logger("yield_plugin"),
-          "[CPU] obj=" << object.id << " no collision detected");
-      }
-    }
-
-    RCLCPP_DEBUG_STREAM(rclcpp::get_logger("yield_plugin"),
-      "[CPU] Done — " << collision_times.size() << " collision(s) confirmed");
-
-    return collision_times;
-  }
-
-#endif  // YIELD_PLUGIN_WITH_CUDA
 
   std::optional<std::pair<carma_perception_msgs::msg::ExternalObject, double>> YieldPlugin::get_earliest_collision_object_and_time(const carma_planning_msgs::msg::TrajectoryPlan& original_tp,
     const std::vector<carma_perception_msgs::msg::ExternalObject>& external_objects)
