@@ -58,16 +58,6 @@
 
 using namespace yield_plugin;
 
-// Returns true only when at least one CUDA device is reachable with a
-// driver that matches the compiled runtime.  Used to skip GPU tests gracefully
-// in environments without a compatible GPU (e.g. CI, dev containers).
-static bool cuda_is_available()
-{
-  int count = 0;
-  cudaError_t err = cudaGetDeviceCount(&count);
-  return (err == cudaSuccess && count > 0);
-}
-
 // ─────────────────────────────────────────────────────────────────────────────
 // Shared helpers
 // ─────────────────────────────────────────────────────────────────────────────

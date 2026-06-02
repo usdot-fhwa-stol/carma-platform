@@ -273,4 +273,11 @@ std::vector<CudaCollisionResult> cuda_check_all_collisions(
   return results;
 }
 
+bool cuda_is_available()
+{
+  int count = 0;
+  cudaError_t err = cudaGetDeviceCount(&count);
+  return (err == cudaSuccess && count > 0);
+}
+
 }  // namespace yield_plugin

@@ -60,4 +60,8 @@ std::vector<CudaCollisionResult> cuda_check_all_collisions(
   const std::vector<int>&       obs_sizes,
   float                         collision_radius);
 
+// Returns true when at least one CUDA device is reachable with a driver that
+// matches the compiled runtime.  Safe to call from plain C++ translation units.
+bool cuda_is_available();
+
 }  // namespace yield_plugin
