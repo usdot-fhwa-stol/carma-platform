@@ -17,7 +17,6 @@
 #include <yield_plugin/yield_plugin_node.hpp>
 #include <chrono>
 #include <yield_plugin/yield_plugin_cuda.cuh>
-#endif
 
 namespace yield_plugin
 {
