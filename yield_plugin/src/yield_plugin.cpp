@@ -536,9 +536,6 @@ namespace yield_plugin
       const double downtrack_at_target_time = polynomial_calc(polynomial_coefficients, target_time);
       double velocity_at_target_time = polynomial_calc_d(polynomial_coefficients, target_time);
 
-      RCLCPP_DEBUG_STREAM(rclcpp::get_logger("yield_plugin"), "Calculated speed velocity_at_target_time: " << velocity_at_target_time
-        << ", downtrack_at_target_time: "<< downtrack_at_target_time << ", target_time: " << target_time);
-
       // if the speed becomes negative, the downtrack starts reversing to negative as well
       // which will never reach the goal_pos, so break here.
       if (velocity_at_target_time < 0.0)
@@ -552,8 +549,6 @@ namespace yield_plugin
       // Pick the speed if it matches with the original downtracks
       if (downtrack_at_target_time >= original_traj_accumulated_downtrack)
       {
-        RCLCPP_DEBUG_STREAM(rclcpp::get_logger("yield_plugin"), "Picked calculated speed velocity_at_target_time: " << velocity_at_target_time
-          << ", downtrack_at_target_time: "<< downtrack_at_target_time << ", target_time: " << target_time);
         // velocity_at_target_time doesn't exactly correspond to original_traj_accumulated_downtrack but does for new_traj_accumulated_downtrack.
         // however, the logic is assuming they are close enough that the speed is usable
         calculated_speeds.push_back(velocity_at_target_time);
@@ -573,16 +568,10 @@ namespace yield_plugin
 
     // Moving average filter to smoothen the speeds
     std::vector<double> filtered_speeds = basic_autonomy::smoothing::moving_average_filter(calculated_speeds, config_.speed_moving_average_window_size);
-    RCLCPP_DEBUG_STREAM(rclcpp::get_logger("yield_plugin"), "filtered_speeds size: " << filtered_speeds.size());
-    for (const auto& speed : filtered_speeds)
-    {
-      RCLCPP_DEBUG_STREAM(rclcpp::get_logger("yield_plugin"), "filtered speed: " << speed);
-    }
     // Replace the original trajectory's associated timestamps based on the newly calculated speeds
     double prev_speed = filtered_speeds.at(0);
     last_speed_ = prev_speed;
     last_speed_time_ = nh_->now();
-    RCLCPP_DEBUG_STREAM(rclcpp::get_logger("yield_plugin"), "start speed: " << prev_speed << ", target_time: " << std::to_string(rclcpp::Time(original_tp.trajectory_points[0].target_time).seconds()));
 
     for(size_t i = 1; i < original_tp.trajectory_points.size(); i++)
     {
@@ -616,20 +605,11 @@ namespace yield_plugin
         // Keeping the points help the controller steer the vehicle toward direction of travel even when stopping.
         // Only downside is the trajectory plan is huge where only 15 sec is expected, but since this is stopping case, it shouldn't matter.
         jmt_tpp.target_time = rclcpp::Time(jmt_trajectory_points.back().target_time) + rclcpp::Duration::from_nanoseconds(6000 * 1e9);
-        RCLCPP_DEBUG_STREAM(rclcpp::get_logger("yield_plugin"), "Zero speed = x: " << jmt_tpp.x << ", y:" << jmt_tpp.y
-          << ", t:" << std::to_string(rclcpp::Time(jmt_tpp.target_time).seconds())
-          << ", prev_speed: " << prev_speed << ", current_speed: " << current_speed);
       }
-      else
-      {
-        RCLCPP_DEBUG_STREAM(rclcpp::get_logger("yield_plugin"), "Non-zero speed = x: " << jmt_tpp.x << ", y:" << jmt_tpp.y
-          << ", t:" << std::to_string(rclcpp::Time(jmt_tpp.target_time).seconds())
-          << ", prev_speed: " << prev_speed << ", current_speed: " << current_speed);
-      }
+
 
       jmt_trajectory_points.push_back(jmt_tpp);
       double insta_decel = (current_speed - prev_speed) / (rclcpp::Time(jmt_trajectory_points.at(i).target_time).seconds() - rclcpp::Time(jmt_trajectory_points.at(i - 1).target_time).seconds());
-      RCLCPP_DEBUG_STREAM(rclcpp::get_logger("yield_plugin"), "insta_decel: " << insta_decel );
       prev_speed = current_speed;
     }
 
