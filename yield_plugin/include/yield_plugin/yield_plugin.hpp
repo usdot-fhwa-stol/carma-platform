@@ -330,8 +330,8 @@ private:
   LaneChangeStatusCB lc_status_publisher_;
   std::shared_ptr<carma_ros2_utils::CarmaLifecycleNode> nh_;
   std::set<lanelet::Id> route_llt_ids_;
-  struct RouteLaneletBBox { float min_x, min_y, max_x, max_y; };
-  std::vector<RouteLaneletBBox> route_llt_bboxes_;
+  // Store lanelet polygons for precise geometric containment checking instead of just bounding boxes
+  std::vector<lanelet::ConstLanelet> route_llt_polygons_;
   lanelet::Id previous_llt_id_;
   std::vector<carma_perception_msgs::msg::ExternalObject> external_objects_;
   std::unordered_map<uint32_t, int> consecutive_clearance_count_for_obstacles_;
