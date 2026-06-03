@@ -36,6 +36,7 @@
 #include <carma_v2x_msgs/msg/plan_type.hpp>
 #include <basic_autonomy/smoothing/filters.hpp>
 #include <future>
+#include <unordered_set>
 #include <basic_autonomy/helper_functions.hpp>
 #include <yield_plugin/yield_plugin_cuda.cuh>
 
@@ -1421,17 +1422,15 @@ namespace yield_plugin
     double desired_gap = 0;
     if (!wm_->getRoute()) return desired_gap;
 
-    // The vehicle travels only on the shortest path, so DigitalMinimumGap regulatory elements
-    // can be read directly from those lanelets without any per-trajectory-point spatial queries.
-    // Two getLaneletsFromPoint calls on the trajectory endpoints identify which contiguous slice
-    // of the shortest path the trajectory covers; everything in between is then walked cheaply.
     const lanelet::BasicPoint2d traj_start(original_tp.trajectory_points.front().x,
                                            original_tp.trajectory_points.front().y);
     const lanelet::BasicPoint2d traj_end(original_tp.trajectory_points.back().x,
                                          original_tp.trajectory_points.back().y);
 
-    auto start_llts = wm_->getLaneletsFromPoint(traj_start, 1);
-    auto end_llts   = wm_->getLaneletsFromPoint(traj_end,   1);
+    // Fetch up to 4 candidates per endpoint — a boundary point can lie on
+    // overlapping lanelets and a single result may be the wrong one.
+    auto start_llts = wm_->getLaneletsFromPoint(traj_start, 4);
+    auto end_llts   = wm_->getLaneletsFromPoint(traj_end,   4);
 
     if (start_llts.empty() || end_llts.empty())
     {
@@ -1442,25 +1441,44 @@ namespace yield_plugin
       return desired_gap;
     }
 
-    const auto start_id = start_llts[0].id();
-    const auto end_id   = end_llts[0].id();
+    std::unordered_set<lanelet::Id> start_ids, end_ids;
+    for (const auto& llt : start_llts) start_ids.insert(llt.id());
+    for (const auto& llt : end_llts)   end_ids.insert(llt.id());
 
-    // Walk the ordered shortest path from the trajectory's start lanelet to its end lanelet.
-    bool in_range = false;
-    for (const auto& llt : wm_->getRoute()->shortestPath())
+    // One pass: first index matching any start candidate, last index matching any end candidate.
+    // Taking "last" for end covers all overlapping lanelets at the trajectory's back boundary.
+    std::optional<size_t> start_pos, end_pos;
+    size_t pos = 0;
+    const auto& path = wm_->getRoute()->shortestPath();
+    for (const auto& llt : path)
     {
-      if (llt.id() == start_id) in_range = true;
-      if (!in_range) continue;
+      if (!start_pos && start_ids.count(llt.id())) start_pos = pos;
+      if (end_ids.count(llt.id()))                 end_pos   = pos;
+      ++pos;
+    }
 
-      auto digital_min_gap = llt.regulatoryElementsAs<lanelet::DigitalMinimumGap>();
-      if (!digital_min_gap.empty())
+    if (!start_pos || !end_pos || *start_pos > *end_pos)
+    {
+      RCLCPP_WARN_STREAM(nh_->get_logger(), "check_traj_for_digital_min_gap: trajectory endpoints "
+        "not found on route shortest path, skipping digital gap check.");
+      return desired_gap;
+    }
+
+    pos = 0;
+    for (const auto& llt : path)
+    {
+      if (pos > *end_pos) break;
+      if (pos >= *start_pos)
       {
-        double digital_gap = digital_min_gap[0]->getMinimumGap();
-        RCLCPP_DEBUG_STREAM(nh_->get_logger(), "Digital Gap found with value: " << digital_gap);
-        desired_gap = std::max(desired_gap, digital_gap);
+        auto digital_min_gap = llt.regulatoryElementsAs<lanelet::DigitalMinimumGap>();
+        if (!digital_min_gap.empty())
+        {
+          double digital_gap = digital_min_gap[0]->getMinimumGap();
+          RCLCPP_DEBUG_STREAM(nh_->get_logger(), "Digital Gap found with value: " << digital_gap);
+          desired_gap = std::max(desired_gap, digital_gap);
+        }
       }
-
-      if (llt.id() == end_id) break;
+      ++pos;
     }
     return desired_gap;
   }
