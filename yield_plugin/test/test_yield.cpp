@@ -901,6 +901,7 @@ TEST(YieldPluginTest, min_digital_gap)
   ll_1200.addRegulatoryElement(regulatory_element);
   map->add(regulatory_element);
   wm->setMap(map);
+  carma_wm::test::setRouteByIds({ 1200, 1210, 1220}, wm);
 
   YieldPluginConfig config;
   auto nh = std::make_shared<yield_plugin::YieldPluginNode>(rclcpp::NodeOptions());
