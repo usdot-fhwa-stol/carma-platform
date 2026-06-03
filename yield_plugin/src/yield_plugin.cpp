@@ -1151,8 +1151,25 @@ namespace yield_plugin
       "[GPU] Done — " << collision_times.size() << " collision(s) confirmed");
 
     } catch (const std::runtime_error& e) {
-      RCLCPP_WARN_STREAM_ONCE(rclcpp::get_logger("yield_plugin"),
-        "[GPU] CUDA unavailable (" << e.what() << "), using CPU fallback");
+      std::string error_msg(e.what());
+      // Detect CUDA-specific errors
+      bool is_cuda_error = (error_msg.find("CUDA") != std::string::npos || 
+                            error_msg.find("cuda") != std::string::npos ||
+                            error_msg.find("driver version") != std::string::npos ||
+                            error_msg.find("runtime version") != std::string::npos ||
+                            error_msg.find("GPU") != std::string::npos);
+      
+      if (is_cuda_error) {
+        RCLCPP_WARN_STREAM_ONCE(rclcpp::get_logger("yield_plugin"),
+          "[GPU] CUDA unavailable (" << e.what() << "), please make sure GPU is accessible for this node or container. Using CPU fallback");
+      } else {
+        RCLCPP_ERROR_STREAM_ONCE(rclcpp::get_logger("yield_plugin"),
+          "[GPU] Unexpected error during GPU collision detection: " << e.what() << ", using CPU fallback");
+      }
+      return get_collision_times_concurrently_cpu(original_tp, external_objects, original_tp_max_speed);
+    } catch (const std::exception& e) {
+      RCLCPP_ERROR_STREAM_ONCE(rclcpp::get_logger("yield_plugin"),
+        "[GPU] Unexpected exception during GPU collision detection: " << typeid(e).name() << " - " << e.what() << ", using CPU fallback");
       return get_collision_times_concurrently_cpu(original_tp, external_objects, original_tp_max_speed);
     }
     return collision_times;
