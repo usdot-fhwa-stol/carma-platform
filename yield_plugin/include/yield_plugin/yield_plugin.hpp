@@ -306,6 +306,10 @@ private:
     const std::vector<carma_perception_msgs::msg::ExternalObject>& external_objects,
     double original_tp_max_speed);
 
+  std::pair<bool, int> find_on_route_in_predictions(
+    const std::vector<carma_perception_msgs::msg::PredictedState>& preds,
+    int stride, bool zero_speed) const;
+
 public:
   /**
    * \brief Given the object velocity in map frame with x,y components, this function returns the projected velocity along the trajectory at given time.

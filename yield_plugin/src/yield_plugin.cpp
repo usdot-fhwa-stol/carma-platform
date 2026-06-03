@@ -36,6 +36,7 @@
 #include <carma_v2x_msgs/msg/plan_type.hpp>
 #include <basic_autonomy/smoothing/filters.hpp>
 #include <future>
+#include <thread>
 #include <unordered_set>
 #include <basic_autonomy/helper_functions.hpp>
 #include <yield_plugin/yield_plugin_cuda.cuh>
@@ -610,7 +611,6 @@ namespace yield_plugin
 
 
       jmt_trajectory_points.push_back(jmt_tpp);
-      double insta_decel = (current_speed - prev_speed) / (rclcpp::Time(jmt_trajectory_points.at(i).target_time).seconds() - rclcpp::Time(jmt_trajectory_points.at(i - 1).target_time).seconds());
       prev_speed = current_speed;
     }
 
@@ -667,8 +667,8 @@ namespace yield_plugin
 
     for (size_t j = 0; j < trajectory2.size(); j += iteration_stride)
     {
-      const float px = static_cast<float>(trajectory2.at(j).predicted_position.position.x);
-      const float py = static_cast<float>(trajectory2.at(j).predicted_position.position.y);
+      const auto px = static_cast<float>(trajectory2.at(j).predicted_position.position.x);
+      const auto py = static_cast<float>(trajectory2.at(j).predicted_position.position.y);
       for (const auto& bb : route_llt_bboxes_)
       {
         if (px >= bb.min_x && px <= bb.max_x && py >= bb.min_y && py <= bb.max_y)
@@ -858,6 +858,65 @@ namespace yield_plugin
     return collision_result.value().collision_time;
   }
 
+  static lanelet::BasicPoint2d interp_trajectory_pt_at_time(
+    double t,
+    const std::vector<CudaPoint>& pts,
+    int n,
+    const carma_planning_msgs::msg::TrajectoryPlan& tp)
+  {
+    lanelet::BasicPoint2d result(pts[0].x, pts[0].y);
+    for (int i = 0; i < n - 1; ++i) {
+      const double ta = rclcpp::Time(tp.trajectory_points[i].target_time).seconds();
+      const double tb = rclcpp::Time(tp.trajectory_points[i + 1].target_time).seconds();
+      if (ta <= t && t <= tb) {
+        const double s = (tb > ta) ? (t - ta) / (tb - ta) : 0.0;
+        result.x() = tp.trajectory_points[i].x + s * (tp.trajectory_points[i+1].x - tp.trajectory_points[i].x);
+        result.y() = tp.trajectory_points[i].y + s * (tp.trajectory_points[i+1].y - tp.trajectory_points[i].y);
+        break;
+      }
+    }
+    return result;
+  }
+
+  static lanelet::BasicPoint2d interp_predicted_pt_at_time(
+    double t,
+    const std::vector<carma_perception_msgs::msg::PredictedState>& preds,
+    int start_idx)
+  {
+    lanelet::BasicPoint2d result(
+      preds.front().predicted_position.position.x,
+      preds.front().predicted_position.position.y);
+    for (int j = start_idx; j < static_cast<int>(preds.size()) - 1; ++j) {
+      const double ta = rclcpp::Time(preds[j].header.stamp).seconds();
+      const double tb = rclcpp::Time(preds[j + 1].header.stamp).seconds();
+      if (ta <= t && t <= tb) {
+        const double s = (tb > ta) ? (t - ta) / (tb - ta) : 0.0;
+        result.x() = preds[j].predicted_position.position.x +
+                     s * (preds[j+1].predicted_position.position.x - preds[j].predicted_position.position.x);
+        result.y() = preds[j].predicted_position.position.y +
+                     s * (preds[j+1].predicted_position.position.y - preds[j].predicted_position.position.y);
+        break;
+      }
+    }
+    return result;
+  }
+
+  std::pair<bool, int> YieldPlugin::find_on_route_in_predictions(
+    const std::vector<carma_perception_msgs::msg::PredictedState>& preds,
+    int stride, bool zero_speed) const
+  {
+    for (size_t j = 0; j < preds.size(); j += stride) {
+      const auto px = static_cast<float>(preds[j].predicted_position.position.x);
+      const auto py = static_cast<float>(preds[j].predicted_position.position.y);
+      for (const auto& bb : route_llt_bboxes_) {
+        if (px >= bb.min_x && px <= bb.max_x && py >= bb.min_y && py <= bb.max_y)
+          return {true, static_cast<int>(j)};
+      }
+      if (zero_speed) break;
+    }
+    return {false, 0};
+  }
+
   std::unordered_map<uint32_t, rclcpp::Time> YieldPlugin::get_collision_times_concurrently(
     const carma_planning_msgs::msg::TrajectoryPlan& original_tp,
     const std::vector<carma_perception_msgs::msg::ExternalObject>& external_objects,
@@ -877,13 +936,17 @@ namespace yield_plugin
     std::unordered_map<uint32_t, rclcpp::Time> collision_times;
     RCLCPP_DEBUG_STREAM(rclcpp::get_logger("yield_plugin"),
       "[CPU] Launching " << external_objects.size() << " async get_collision_time tasks");
+    std::vector<std::thread> threads;
+    threads.reserve(external_objects.size());
     for (const auto& object : external_objects) {
-      futures[object.id] = std::async(
-        std::launch::async,
+      std::packaged_task<std::optional<rclcpp::Time>()> task(
         [this, &original_tp, &object, &original_tp_max_speed] {
           return get_collision_time(original_tp, object, original_tp_max_speed);
         });
+      futures[object.id] = task.get_future();
+      threads.emplace_back(std::move(task));
     }
+    for (auto& t : threads) t.join();
     for (const auto& object : external_objects) {
       if (const auto collision_time{futures.at(object.id).get()}) {
         RCLCPP_DEBUG_STREAM(rclcpp::get_logger("yield_plugin"),
@@ -914,7 +977,7 @@ namespace yield_plugin
     const double ref_t = plan_start_time;
 
     // Build ego SoA (structure of array) with normalised timestamps.
-    const int n_ego = static_cast<int>(original_tp.trajectory_points.size());
+    const auto n_ego = static_cast<int>(original_tp.trajectory_points.size());
     std::vector<CudaPoint> ego_pts;
     ego_pts.reserve(n_ego);
     for (const auto& tp : original_tp.trajectory_points) {
@@ -995,20 +1058,7 @@ namespace yield_plugin
         std::sqrt(std::pow(traj2_speed, 2) + std::pow(original_tp_max_speed, 2));
       const int iteration_stride = std::max(1, static_cast<int>(stride_max_t / predict_step_duration));
 
-      bool on_route     = false;
-      int  on_route_idx = 0;
-      for (size_t j = 0; j < pred_list.size(); j += iteration_stride) {
-        const float px = static_cast<float>(pred_list[j].predicted_position.position.x);
-        const float py = static_cast<float>(pred_list[j].predicted_position.position.y);
-        for (const auto& bb : route_llt_bboxes_) {
-          if (px >= bb.min_x && px <= bb.max_x && py >= bb.min_y && py <= bb.max_y) {
-            on_route     = true;
-            on_route_idx = static_cast<int>(j);
-            break;
-          }
-        }
-        if (on_route || traj2_has_zero_speed) break;
-      }
+      const auto [on_route, on_route_idx] = find_on_route_in_predictions(pred_list, iteration_stride, traj2_has_zero_speed);
 
       RCLCPP_DEBUG_STREAM(rclcpp::get_logger("yield_plugin"),
         "[GPU] obj=" << obj.id << " on_route=" << on_route
@@ -1063,46 +1113,11 @@ namespace yield_plugin
         continue;
       }
 
-      // Recover absolute collision time.
       const double t_col_abs = static_cast<double>(cuda_res.collision_t_norm) + ref_t;
       const rclcpp::Time collision_time(static_cast<int64_t>(t_col_abs * 1e9));
 
-      // Interpolate ego position at collision time (linear search — O(N), negligible).
-      lanelet::BasicPoint2d ego_pt(ego_pts[0].x, ego_pts[0].y);
-      for (int i = 0; i < n_ego - 1; ++i) {
-        const double ta = rclcpp::Time(original_tp.trajectory_points[i].target_time).seconds();
-        const double tb = rclcpp::Time(original_tp.trajectory_points[i + 1].target_time).seconds();
-        if (ta <= t_col_abs && t_col_abs <= tb) {
-          const double s = (tb > ta) ? (t_col_abs - ta) / (tb - ta) : 0.0;
-          ego_pt.x() = original_tp.trajectory_points[i].x +
-                       s * (original_tp.trajectory_points[i + 1].x - original_tp.trajectory_points[i].x);
-          ego_pt.y() = original_tp.trajectory_points[i].y +
-                       s * (original_tp.trajectory_points[i + 1].y - original_tp.trajectory_points[i].y);
-          break;
-        }
-      }
-
-      // Interpolate obstacle position at collision time.
-      const auto& preds = active[k].predictions;
-      lanelet::BasicPoint2d obs_pt(
-        preds.front().predicted_position.position.x,
-        preds.front().predicted_position.position.y);
-      for (int j = active[k].on_route_idx;
-           j < static_cast<int>(preds.size()) - 1; ++j)
-      {
-        const double ta = rclcpp::Time(preds[j].header.stamp).seconds();
-        const double tb = rclcpp::Time(preds[j + 1].header.stamp).seconds();
-        if (ta <= t_col_abs && t_col_abs <= tb) {
-          const double s = (tb > ta) ? (t_col_abs - ta) / (tb - ta) : 0.0;
-          obs_pt.x() = preds[j].predicted_position.position.x +
-                       s * (preds[j + 1].predicted_position.position.x -
-                            preds[j].predicted_position.position.x);
-          obs_pt.y() = preds[j].predicted_position.position.y +
-                       s * (preds[j + 1].predicted_position.position.y -
-                            preds[j].predicted_position.position.y);
-          break;
-        }
-      }
+      const lanelet::BasicPoint2d ego_pt = interp_trajectory_pt_at_time(t_col_abs, ego_pts, n_ego, original_tp);
+      const lanelet::BasicPoint2d obs_pt = interp_predicted_pt_at_time(t_col_abs, active[k].predictions, active[k].on_route_idx);
 
       const double vehicle_downtrack = wm_->routeTrackPos(ego_pt).downtrack;
       const double object_downtrack  = wm_->routeTrackPos(obs_pt).downtrack;
@@ -1135,7 +1150,7 @@ namespace yield_plugin
     RCLCPP_DEBUG_STREAM(rclcpp::get_logger("yield_plugin"),
       "[GPU] Done — " << collision_times.size() << " collision(s) confirmed");
 
-    } catch (const std::exception& e) {
+    } catch (const std::runtime_error& e) {
       RCLCPP_WARN_STREAM_ONCE(rclcpp::get_logger("yield_plugin"),
         "[GPU] CUDA unavailable (" << e.what() << "), using CPU fallback");
       return get_collision_times_concurrently_cpu(original_tp, external_objects, original_tp_max_speed);
@@ -1441,18 +1456,20 @@ namespace yield_plugin
       return desired_gap;
     }
 
-    std::unordered_set<lanelet::Id> start_ids, end_ids;
+    std::unordered_set<lanelet::Id> start_ids;
+    std::unordered_set<lanelet::Id> end_ids;
     for (const auto& llt : start_llts) start_ids.insert(llt.id());
     for (const auto& llt : end_llts)   end_ids.insert(llt.id());
 
     // One pass: first index matching any start candidate, last index matching any end candidate.
     // Taking "last" for end covers all overlapping lanelets at the trajectory's back boundary.
-    std::optional<size_t> start_pos, end_pos;
+    std::optional<size_t> start_pos;
+    std::optional<size_t> end_pos;
     size_t pos = 0;
     const auto& path = wm_->getRoute()->shortestPath();
     for (const auto& llt : path)
     {
-      if (!start_pos && start_ids.count(llt.id())) start_pos = pos;
+      if (!start_pos.has_value() && start_ids.count(llt.id())) start_pos = pos;
       if (end_ids.count(llt.id()))                 end_pos   = pos;
       ++pos;
     }
