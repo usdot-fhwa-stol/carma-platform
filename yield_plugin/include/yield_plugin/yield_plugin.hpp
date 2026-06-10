@@ -66,8 +66,8 @@ struct PointSpeedPair
 struct GetCollisionResult
 {
   rclcpp::Time collision_time;
-  lanelet::BasicPoint2d point1;
-  lanelet::BasicPoint2d point2;
+  lanelet::BasicPoint2d ego_point;
+  lanelet::BasicPoint2d object_point;
 };
 
 /**
@@ -203,8 +203,8 @@ public:
 
   /**
    * \brief detect intersection point(s) of two trajectories
-   * \param trajectory1 vector of 2d trajectory points
-   * \param trajectory2 vector of 2d trajectory points
+   * \param self_trajectory vector of 2d trajectory points
+   * \param incoming_trajectory vector of 2d trajectory points
    * \return vector of pairs of 2d intersection points and index of the point in trajectory array
    */
   std::vector<std::pair<int, lanelet::BasicPoint2d>> detect_trajectories_intersection(std::vector<lanelet::BasicPoint2d> self_trajectory, std::vector<lanelet::BasicPoint2d> incoming_trajectory) const;
@@ -245,20 +245,20 @@ public:
 
   /**
    * \brief Return naive collision time and locations based on collision radius given two trajectories with one being obstacle's predicted steps
-   * \param trajectory1 trajectory of the ego vehicle
-   * \param trajectory2 trajectory of predicted steps
+   * \param ego_trajectory trajectory of the ego vehicle
+   * \param object_predictions trajectory of predicted steps
    * \param collision_radius a distance to check between two trajectory points at a same timestamp that is considered a collision
-   * \param trajectory1_max_speed max speed of the trajectory1 to efficiently traverse through possible collision combination of the two trajectories
-   * NOTE: Currently Traj2 is assumed to be a simple cv model to save computational performance
+   * \param ego_max_speed max speed of the ego_trajectory to efficiently traverse through possible collision combination of the two trajectories
+   * NOTE: Currently object_predictions is assumed to be a simple cv model to save computational performance
    * NOTE: Collisions are based on only collision radius at the same predicted time even if ego vehicle maybe past the obstacle. To filter these cases, see `is_object_behind_vehicle()`
    * \return data of time of collision if detected, otherwise, std::nullopt
    */
-  std::optional<GetCollisionResult> get_collision(const carma_planning_msgs::msg::TrajectoryPlan& trajectory1, const std::vector<carma_perception_msgs::msg::PredictedState>& trajectory2, double collision_radius, double trajectory1_max_speed);
+  std::optional<GetCollisionResult> get_collision(const carma_planning_msgs::msg::TrajectoryPlan& ego_trajectory, const std::vector<carma_perception_msgs::msg::PredictedState>& object_predictions, double collision_radius, double ego_max_speed);
 
   /**
    * \brief Return collision time given two trajectories with one being external object with predicted steps
-   * \param trajectory1 trajectory of the ego vehicle
-   * \param trajectory2 trajectory of the obstacle
+   * \param original_tp trajectory of the ego vehicle
+   * \param curr_obstacle trajectory of the obstacle
    * \param original_tp_max_speed max speed of the original_tp to efficiently traverse through possible collision combination of the two trajectories
    * NOTE: Currently curr_obstacle is assumed to be using a simple cv model to save computational performance
    * \return time_of_collision if collision detected, otherwise, std::nullopt
@@ -307,7 +307,7 @@ private:
     double original_tp_max_speed);
 
   std::pair<bool, int> find_on_route_in_predictions(
-    const std::vector<carma_perception_msgs::msg::PredictedState>& preds,
+    const std::vector<carma_perception_msgs::msg::PredictedState>& predictions,
     int stride, bool zero_speed) const;
 
 public:

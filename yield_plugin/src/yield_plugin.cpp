@@ -621,54 +621,54 @@ namespace yield_plugin
     return jmt_trajectory;
   }
 
-  std::optional<GetCollisionResult> YieldPlugin::get_collision(const carma_planning_msgs::msg::TrajectoryPlan& trajectory1,
-    const std::vector<carma_perception_msgs::msg::PredictedState>& trajectory2, double collision_radius, double trajectory1_max_speed)
+  std::optional<GetCollisionResult> YieldPlugin::get_collision(const carma_planning_msgs::msg::TrajectoryPlan& ego_trajectory,
+    const std::vector<carma_perception_msgs::msg::PredictedState>& object_predictions, double collision_radius, double ego_max_speed)
   {
 
     // Iterate through each pair of consecutive points in the trajectories
     RCLCPP_DEBUG_STREAM(nh_->get_logger(), "Starting a new collision detection, trajectory size: "
-      << trajectory1.trajectory_points.size() << ". prediction size: " << trajectory2.size());
+      << ego_trajectory.trajectory_points.size() << ". prediction size: " << object_predictions.size());
 
     // Iterate through the object to check if it's on the route
     bool on_route = false;
     int on_route_idx = 0;
 
     // A flag to stop searching more than one lanelet if the object has no velocity
-    const auto traj2_speed{std::hypot(trajectory2.front().predicted_velocity.linear.x,
-                                  trajectory2.front().predicted_velocity.linear.y)};
-    bool traj2_has_zero_speed = traj2_speed < config_.obstacle_zero_speed_threshold_in_ms;
+    const auto object_speed{std::hypot(object_predictions.front().predicted_velocity.linear.x,
+                                  object_predictions.front().predicted_velocity.linear.y)};
+    bool object_has_zero_speed = object_speed < config_.obstacle_zero_speed_threshold_in_ms;
 
-    if (trajectory2.size() < 2)
+    if (object_predictions.size() < 2)
     {
       throw std::invalid_argument("Object on ther road doesn't have enough predicted states! Please check motion_computation is correctly applying predicted states");
     }
-    const double predict_step_duration = (rclcpp::Time(trajectory2.at(1).header.stamp) - rclcpp::Time(trajectory2.front().header.stamp)).seconds();
-    const double predict_total_duration = get_trajectory_duration(trajectory2);
+    const double object_prediction_step_duration = (rclcpp::Time(object_predictions.at(1).header.stamp) - rclcpp::Time(object_predictions.front().header.stamp)).seconds();
+    const double object_prediction_total_duration = get_trajectory_duration(object_predictions);
 
-    if (predict_step_duration < 0.0)
+    if (object_prediction_step_duration < 0.0)
     {
       throw std::invalid_argument("Predicted states of the object is malformed. Detected trajectory going backwards in time!");
     }
 
-    // In order to optimize the for loops for comparing two trajectories, following logic skips every iteration_stride-th points of the traj2.
-    // Since skipping number of points from the traj2 may result in ignoring potential collisions, its value is dependent on two
+    // In order to optimize the for loops for comparing two trajectories, following logic skips every iteration_stride-th points of the object_predictions.
+    // Since skipping number of points from the object_predictions may result in ignoring potential collisions, its value is dependent on two
     // trajectories' speeds and intervehicle_collision_distance_in_m radius.
     // Therefore, the derivation first calculates the max time, t, that both actors can move while still being in collision radius:
     // sqrt( (v1 * t / 2)^2 + (v2 * t / 2)^2 ) = collision_radius. Here v1 and v2 are assumed to be perpendicular to each other and
     // intersecting at t/2 to get max possible collision_radius. Solving for t gives following:
-    double iteration_stride_max_time_s = 2 * config_.intervehicle_collision_distance_in_m / sqrt(pow(traj2_speed, 2) + pow(trajectory1_max_speed, 2));
-    int iteration_stride = std::max(1, static_cast<int>(iteration_stride_max_time_s / predict_step_duration));
+    double iteration_stride_max_time_s = 2 * config_.intervehicle_collision_distance_in_m / sqrt(pow(object_speed, 2) + pow(ego_max_speed, 2));
+    int iteration_stride = std::max(1, static_cast<int>(iteration_stride_max_time_s / object_prediction_step_duration));
 
     RCLCPP_DEBUG_STREAM(nh_->get_logger(), "Determined iteration_stride: " << iteration_stride
-      << ", with traj2_speed: " << traj2_speed
-      << ", with trajectory1_max_speed: " << trajectory1_max_speed
-      << ", with predict_step_duration: " << predict_step_duration
+      << ", with object_speed: " << object_speed
+      << ", with ego_max_speed: " << ego_max_speed
+      << ", with object_prediction_step_duration: " << object_prediction_step_duration
       << ", iteration_stride_max_time_s: " << iteration_stride_max_time_s);
 
-    for (size_t j = 0; j < trajectory2.size(); j += iteration_stride)
+    for (size_t j = 0; j < object_predictions.size(); j += iteration_stride)
     {
-      const lanelet::BasicPoint2d point(trajectory2.at(j).predicted_position.position.x,
-                                        trajectory2.at(j).predicted_position.position.y);
+      const lanelet::BasicPoint2d point(object_predictions.at(j).predicted_position.position.x,
+                                        object_predictions.at(j).predicted_position.position.y);
       for (const auto& llt : route_llt_polygons_)
       {
         if (boost::geometry::within(point, llt.polygon2d()))
@@ -678,13 +678,13 @@ namespace yield_plugin
           break;
         }
       }
-      if (on_route || traj2_has_zero_speed)
+      if (on_route || object_has_zero_speed)
         break;
     }
 
     RCLCPP_DEBUG_STREAM(rclcpp::get_logger("yield_plugin"), "[CPU] on_route=" << on_route
       << " on_route_idx=" << on_route_idx
-      << " speed=" << traj2_speed
+      << " speed=" << object_speed
       << " stride=" << iteration_stride);
 
     if (!on_route)
@@ -694,55 +694,55 @@ namespace yield_plugin
     }
 
     double smallest_dist = std::numeric_limits<double>::infinity();
-    for (size_t i = 0; i < trajectory1.trajectory_points.size() - 1; ++i)
+    for (size_t i = 0; i < ego_trajectory.trajectory_points.size() - 1; ++i)
     {
-      auto p1a = trajectory1.trajectory_points.at(i);
-      auto p1b = trajectory1.trajectory_points.at(i + 1);
-      double previous_distance_between_predictions = std::numeric_limits<double>::infinity();
-      for (size_t j = on_route_idx; j < trajectory2.size() - 1; j += iteration_stride)
+      auto ego_seg_start = ego_trajectory.trajectory_points.at(i);
+      auto ego_seg_end = ego_trajectory.trajectory_points.at(i + 1);
+      double previous_distance = std::numeric_limits<double>::infinity();
+      for (size_t j = on_route_idx; j < object_predictions.size() - 1; j += iteration_stride)
       {
-        auto p2a = trajectory2.at(j);
-        auto p2b = trajectory2.at(j + 1);
-        double p1a_t = rclcpp::Time(p1a.target_time).seconds();
-        double p1b_t = rclcpp::Time(p1b.target_time).seconds();
-        double p2a_t = rclcpp::Time(p2a.header.stamp).seconds();
-        double p2b_t = rclcpp::Time(p2b.header.stamp).seconds();
+        auto object_seg_start = object_predictions.at(j);
+        auto object_seg_end = object_predictions.at(j + 1);
+        double ego_seg_start_time = rclcpp::Time(ego_seg_start.target_time).seconds();
+        double ego_seg_end_time = rclcpp::Time(ego_seg_end.target_time).seconds();
+        double object_seg_start_time = rclcpp::Time(object_seg_start.header.stamp).seconds();
+        double object_seg_end_time = rclcpp::Time(object_seg_end.header.stamp).seconds();
 
-        RCLCPP_DEBUG_STREAM(nh_->get_logger(), "p1a.target_time: " << std::to_string(p1a_t) << ", p1b.target_time: " << std::to_string(p1b_t));
-        RCLCPP_DEBUG_STREAM(nh_->get_logger(), "p2a.target_time: " << std::to_string(p2a_t) << ", p2b.target_time: " << std::to_string(p2b_t));
-        RCLCPP_DEBUG_STREAM(nh_->get_logger(), "p1a.x: " << p1a.x << ", p1a.y: " << p1a.y);
-        RCLCPP_DEBUG_STREAM(nh_->get_logger(), "p1b.x: " << p1b.x << ", p1b.y: " << p1b.y);
+        RCLCPP_DEBUG_STREAM(nh_->get_logger(), "ego_seg_start.target_time: " << std::to_string(ego_seg_start_time) << ", ego_seg_end.target_time: " << std::to_string(ego_seg_end_time));
+        RCLCPP_DEBUG_STREAM(nh_->get_logger(), "object_seg_start.target_time: " << std::to_string(object_seg_start_time) << ", object_seg_end.target_time: " << std::to_string(object_seg_end_time));
+        RCLCPP_DEBUG_STREAM(nh_->get_logger(), "ego_seg_start.x: " << ego_seg_start.x << ", ego_seg_start.y: " << ego_seg_start.y);
+        RCLCPP_DEBUG_STREAM(nh_->get_logger(), "ego_seg_end.x: " << ego_seg_end.x << ", ego_seg_end.y: " << ego_seg_end.y);
 
-        RCLCPP_DEBUG_STREAM(nh_->get_logger(), "p2a.x: " << p2a.predicted_position.position.x << ", p2a.y: " << p2a.predicted_position.position.y);
-        RCLCPP_DEBUG_STREAM(nh_->get_logger(), "p2b.x: " << p2b.predicted_position.position.x << ", p2b.y: " << p2b.predicted_position.position.y);
+        RCLCPP_DEBUG_STREAM(nh_->get_logger(), "object_seg_start.x: " << object_seg_start.predicted_position.position.x << ", object_seg_start.y: " << object_seg_start.predicted_position.position.y);
+        RCLCPP_DEBUG_STREAM(nh_->get_logger(), "object_seg_end.x: " << object_seg_end.predicted_position.position.x << ", object_seg_end.y: " << object_seg_end.predicted_position.position.y);
 
         // Linearly interpolate positions at a common timestamp for both trajectories
-        double dt = (p2a_t - p1a_t) / (p1b_t - p1a_t);
+        double interp_ratio = (object_seg_start_time - ego_seg_start_time) / (ego_seg_end_time - ego_seg_start_time);
         // if negative extrapolation, skip because car wouldn't go backwards
-        if (dt < 0)
+        if (interp_ratio < 0)
         {
           continue;
         }
-        double x1 = p1a.x + dt * (p1b.x - p1a.x);
-        double y1 = p1a.y + dt * (p1b.y - p1a.y);
-        double x2 = p2a.predicted_position.position.x;
-        double y2 = p2a.predicted_position.position.y;
+        double ego_interp_x = ego_seg_start.x + interp_ratio * (ego_seg_end.x - ego_seg_start.x);
+        double ego_interp_y = ego_seg_start.y + interp_ratio * (ego_seg_end.y - ego_seg_start.y);
+        double object_x = object_seg_start.predicted_position.position.x;
+        double object_y = object_seg_start.predicted_position.position.y;
 
         // Calculate the distance between the two interpolated points
-        const auto distance{std::hypot(x1 - x2, y1 - y2)};
+        const auto distance{std::hypot(ego_interp_x - object_x, ego_interp_y - object_y)};
 
         smallest_dist = std::min(distance, smallest_dist);
 
-        // Following "if logic" assumes the traj2 is a simple cv model, aka, traj2 point is a straight line over time.
-        // And current traj1 point is fixed in this iteration.
-        // Then once the distance between the two start to increase over traj2 iteration,
+        // Following "if logic" assumes the object_predictions is a simple cv model, aka, object_predictions point is a straight line over time.
+        // And current ego_trajectory point is fixed in this iteration.
+        // Then once the distance between the two start to increase over object_predictions iteration,
         // the distance will always increase and it's unnecessary to continue the logic to find the smallest_dist
-        if (previous_distance_between_predictions < distance)
+        if (previous_distance < distance)
         {
           RCLCPP_DEBUG_STREAM(nh_->get_logger(), "Stopping search here because the distance between predictions started to increase");
           break;
         }
-        previous_distance_between_predictions = distance;
+        previous_distance = distance;
 
         if (i == 0 && j == 0 && distance > config_.collision_check_radius_in_m)
         {
@@ -757,9 +757,9 @@ namespace yield_plugin
         }
 
         GetCollisionResult collision_result;
-        collision_result.point1 = lanelet::BasicPoint2d(x1,y1);
-        collision_result.point2 = lanelet::BasicPoint2d(x2,y2);
-        collision_result.collision_time = rclcpp::Time(p2a.header.stamp);
+        collision_result.ego_point = lanelet::BasicPoint2d(ego_interp_x, ego_interp_y);
+        collision_result.object_point = lanelet::BasicPoint2d(object_x, object_y);
+        collision_result.collision_time = rclcpp::Time(object_seg_start.header.stamp);
         return collision_result;
       }
     }
@@ -836,8 +836,8 @@ namespace yield_plugin
     }
 
     // if within collision radius, it is not a collision if obstacle is behind the vehicle despite being in collision radius
-    const double vehicle_downtrack = wm_->routeTrackPos(collision_result.value().point1).downtrack;
-    const double object_downtrack = wm_->routeTrackPos(collision_result.value().point2).downtrack;
+    const double vehicle_downtrack = wm_->routeTrackPos(collision_result.value().ego_point).downtrack;
+    const double object_downtrack = wm_->routeTrackPos(collision_result.value().object_point).downtrack;
 
     if (is_object_behind_vehicle(curr_obstacle.id, collision_result.value().collision_time, vehicle_downtrack, object_downtrack))
     {
@@ -846,12 +846,12 @@ namespace yield_plugin
     }
 
     const auto distance{std::hypot(
-      collision_result.value().point1.x() - collision_result.value().point2.x(),
-      collision_result.value().point1.y() - collision_result.value().point2.y()
+      collision_result.value().ego_point.x() - collision_result.value().object_point.x(),
+      collision_result.value().ego_point.y() - collision_result.value().object_point.y()
     )}; //for debug
 
     RCLCPP_WARN_STREAM(nh_->get_logger(), "Collision detected for object: " << curr_obstacle.id << ", at timestamp " << std::to_string(collision_result.value().collision_time.seconds()) <<
-      ", x: " << collision_result.value().point1.x() << ", y: " << collision_result.value().point1.y() <<
+      ", x: " << collision_result.value().ego_point.x() << ", y: " << collision_result.value().ego_point.y() <<
       ", within actual downtrack distance: " << object_downtrack - vehicle_downtrack <<
       ", and collision distance: " << distance);
 
@@ -859,19 +859,19 @@ namespace yield_plugin
   }
 
   static lanelet::BasicPoint2d interp_trajectory_pt_at_time(
-    double t,
-    const std::vector<CudaPoint>& pts,
-    int n,
-    const carma_planning_msgs::msg::TrajectoryPlan& tp)
+    double query_time,
+    const std::vector<CudaPoint>& ego_points,
+    int num_ego_points,
+    const carma_planning_msgs::msg::TrajectoryPlan& trajectory_plan)
   {
-    lanelet::BasicPoint2d result(pts[0].x, pts[0].y);
-    for (int i = 0; i < n - 1; ++i) {
-      const double ta = rclcpp::Time(tp.trajectory_points[i].target_time).seconds();
-      const double tb = rclcpp::Time(tp.trajectory_points[i + 1].target_time).seconds();
-      if (ta <= t && t <= tb) {
-        const double s = (tb > ta) ? (t - ta) / (tb - ta) : 0.0;
-        result.x() = tp.trajectory_points[i].x + s * (tp.trajectory_points[i+1].x - tp.trajectory_points[i].x);
-        result.y() = tp.trajectory_points[i].y + s * (tp.trajectory_points[i+1].y - tp.trajectory_points[i].y);
+    lanelet::BasicPoint2d result(ego_points[0].x, ego_points[0].y);
+    for (int i = 0; i < num_ego_points - 1; ++i) {
+      const double seg_start_time = rclcpp::Time(trajectory_plan.trajectory_points[i].target_time).seconds();
+      const double seg_end_time = rclcpp::Time(trajectory_plan.trajectory_points[i + 1].target_time).seconds();
+      if (seg_start_time <= query_time && query_time <= seg_end_time) {
+        const double interp_ratio = (seg_end_time > seg_start_time) ? (query_time - seg_start_time) / (seg_end_time - seg_start_time) : 0.0;
+        result.x() = trajectory_plan.trajectory_points[i].x + interp_ratio * (trajectory_plan.trajectory_points[i+1].x - trajectory_plan.trajectory_points[i].x);
+        result.y() = trajectory_plan.trajectory_points[i].y + interp_ratio * (trajectory_plan.trajectory_points[i+1].y - trajectory_plan.trajectory_points[i].y);
         break;
       }
     }
@@ -879,22 +879,22 @@ namespace yield_plugin
   }
 
   static lanelet::BasicPoint2d interp_predicted_pt_at_time(
-    double t,
-    const std::vector<carma_perception_msgs::msg::PredictedState>& preds,
-    int start_idx)
+    double query_time,
+    const std::vector<carma_perception_msgs::msg::PredictedState>& predictions,
+    int start_index)
   {
     lanelet::BasicPoint2d result(
-      preds.front().predicted_position.position.x,
-      preds.front().predicted_position.position.y);
-    for (int j = start_idx; j < static_cast<int>(preds.size()) - 1; ++j) {
-      const double ta = rclcpp::Time(preds[j].header.stamp).seconds();
-      const double tb = rclcpp::Time(preds[j + 1].header.stamp).seconds();
-      if (ta <= t && t <= tb) {
-        const double s = (tb > ta) ? (t - ta) / (tb - ta) : 0.0;
-        result.x() = preds[j].predicted_position.position.x +
-                     s * (preds[j+1].predicted_position.position.x - preds[j].predicted_position.position.x);
-        result.y() = preds[j].predicted_position.position.y +
-                     s * (preds[j+1].predicted_position.position.y - preds[j].predicted_position.position.y);
+      predictions.front().predicted_position.position.x,
+      predictions.front().predicted_position.position.y);
+    for (int j = start_index; j < static_cast<int>(predictions.size()) - 1; ++j) {
+      const double seg_start_time = rclcpp::Time(predictions[j].header.stamp).seconds();
+      const double seg_end_time = rclcpp::Time(predictions[j + 1].header.stamp).seconds();
+      if (seg_start_time <= query_time && query_time <= seg_end_time) {
+        const double interp_ratio = (seg_end_time > seg_start_time) ? (query_time - seg_start_time) / (seg_end_time - seg_start_time) : 0.0;
+        result.x() = predictions[j].predicted_position.position.x +
+                     interp_ratio * (predictions[j+1].predicted_position.position.x - predictions[j].predicted_position.position.x);
+        result.y() = predictions[j].predicted_position.position.y +
+                     interp_ratio * (predictions[j+1].predicted_position.position.y - predictions[j].predicted_position.position.y);
         break;
       }
     }
@@ -902,12 +902,12 @@ namespace yield_plugin
   }
 
   std::pair<bool, int> YieldPlugin::find_on_route_in_predictions(
-    const std::vector<carma_perception_msgs::msg::PredictedState>& preds,
+    const std::vector<carma_perception_msgs::msg::PredictedState>& predictions,
     int stride, bool zero_speed) const
   {
-    for (size_t j = 0; j < preds.size(); j += stride) {
-      const lanelet::BasicPoint2d point(preds[j].predicted_position.position.x,
-                                        preds[j].predicted_position.position.y);
+    for (size_t j = 0; j < predictions.size(); j += stride) {
+      const lanelet::BasicPoint2d point(predictions[j].predicted_position.position.x,
+                                        predictions[j].predicted_position.position.y);
       for (const auto& llt : route_llt_polygons_) {
         if (boost::geometry::within(point, llt.polygon2d())) {
           return {true, static_cast<int>(j)};
@@ -975,17 +975,17 @@ namespace yield_plugin
     const double plan_start_time = get_trajectory_start_time(original_tp);
 
     // Timestamps as absolute doubles; reference used to normalise into float32.
-    const double ref_t = plan_start_time;
+    const double ref_time = plan_start_time;
 
     // Build ego SoA (structure of array) with normalised timestamps.
-    const auto n_ego = static_cast<int>(original_tp.trajectory_points.size());
+    const auto num_ego_points = static_cast<int>(original_tp.trajectory_points.size());
     std::vector<CudaPoint> ego_pts;
-    ego_pts.reserve(n_ego);
+    ego_pts.reserve(num_ego_points);
     for (const auto& tp : original_tp.trajectory_points) {
       ego_pts.push_back({
         static_cast<float>(tp.x),
         static_cast<float>(tp.y),
-        static_cast<float>(rclcpp::Time(tp.target_time).seconds() - ref_t)
+        static_cast<float>(rclcpp::Time(tp.target_time).seconds() - ref_time)
       });
     }
 
@@ -1029,19 +1029,19 @@ namespace yield_plugin
 
       if (pred_list.size() < 2) continue;
 
-      const double predict_step_duration =
+      const double object_prediction_step_duration =
         (rclcpp::Time(pred_list.at(1).header.stamp) - rclcpp::Time(pred_list.front().header.stamp)).seconds();
-      if (predict_step_duration < 0.0) continue;
+      if (object_prediction_step_duration < 0.0) continue;
 
       // Quick spatial pre-filter: if the object starts beyond collision_check_radius_in_m
       // it cannot collide with the ego at the start of the trajectory.
       {
-        const double dx0 = ego_pts[0].x - obj.pose.pose.position.x;
-        const double dy0 = ego_pts[0].y - obj.pose.pose.position.y;
-        const double dist0 = std::hypot(dx0, dy0);
-        if (dist0 > config_.collision_check_radius_in_m) {
+        const double ego_to_object_dx = ego_pts[0].x - obj.pose.pose.position.x;
+        const double ego_to_object_dy = ego_pts[0].y - obj.pose.pose.position.y;
+        const double ego_to_object_dist = std::hypot(ego_to_object_dx, ego_to_object_dy);
+        if (ego_to_object_dist > config_.collision_check_radius_in_m) {
           RCLCPP_DEBUG_STREAM(rclcpp::get_logger("yield_plugin"),
-            "[GPU] obj=" << obj.id << " skipped — dist_from_ego=" << dist0
+            "[GPU] obj=" << obj.id << " skipped — dist_from_ego=" << ego_to_object_dist
             << " > radius=" << config_.collision_check_radius_in_m);
           consecutive_clearance_count_for_obstacles_[obj.id] = 0;
           continue;
@@ -1050,21 +1050,21 @@ namespace yield_plugin
 
       // On-route check — stride logic as in get_collision, but uses pre-computed
       // per-lanelet bounding boxes instead of getLaneletsFromPoint (O(1) vs spatial query).
-      const double traj2_speed = std::hypot(
+      const double object_speed = std::hypot(
         pred_list.front().predicted_velocity.linear.x,
         pred_list.front().predicted_velocity.linear.y);
-      const bool traj2_has_zero_speed = traj2_speed < config_.obstacle_zero_speed_threshold_in_ms;
+      const bool object_has_zero_speed = object_speed < config_.obstacle_zero_speed_threshold_in_ms;
 
       const double stride_max_t = 2.0 * config_.intervehicle_collision_distance_in_m /
-        std::sqrt(std::pow(traj2_speed, 2) + std::pow(original_tp_max_speed, 2));
-      const int iteration_stride = std::max(1, static_cast<int>(stride_max_t / predict_step_duration));
+        std::sqrt(std::pow(object_speed, 2) + std::pow(original_tp_max_speed, 2));
+      const int iteration_stride = std::max(1, static_cast<int>(stride_max_t / object_prediction_step_duration));
 
-      const auto [on_route, on_route_idx] = find_on_route_in_predictions(pred_list, iteration_stride, traj2_has_zero_speed);
+      const auto [on_route, on_route_idx] = find_on_route_in_predictions(pred_list, iteration_stride, object_has_zero_speed);
 
       RCLCPP_DEBUG_STREAM(rclcpp::get_logger("yield_plugin"),
         "[GPU] obj=" << obj.id << " on_route=" << on_route
         << " on_route_idx=" << on_route_idx
-        << " speed=" << traj2_speed
+        << " speed=" << object_speed
         << " stride=" << iteration_stride);
 
       if (!on_route) {
@@ -1079,7 +1079,7 @@ namespace yield_plugin
         obs_flat.push_back({
           static_cast<float>(pred_list[j].predicted_position.position.x),
           static_cast<float>(pred_list[j].predicted_position.position.y),
-          static_cast<float>(rclcpp::Time(pred_list[j].header.stamp).seconds() - ref_t)
+          static_cast<float>(rclcpp::Time(pred_list[j].header.stamp).seconds() - ref_time)
         });
         ++count;
       }
@@ -1105,23 +1105,23 @@ namespace yield_plugin
     // Post-process: recover collision positions and run behind-vehicle check.
     // -----------------------------------------------------------------------
     for (size_t k = 0; k < active.size(); ++k) {
-      const auto& cuda_res = cuda_results[k];
+      const auto& object_result = cuda_results[k];
 
-      if (!cuda_res.has_collision) {
+      if (!object_result.has_collision) {
         RCLCPP_DEBUG_STREAM(rclcpp::get_logger("yield_plugin"),
           "[GPU] obj=" << active[k].id << " no collision detected");
         consecutive_clearance_count_for_obstacles_[active[k].id] = 0;
         continue;
       }
 
-      const double t_col_abs = static_cast<double>(cuda_res.collision_t_norm) + ref_t;
-      const rclcpp::Time collision_time(static_cast<int64_t>(t_col_abs * 1e9));
+      const double collision_time_abs = static_cast<double>(object_result.collision_t_norm) + ref_time;
+      const rclcpp::Time collision_time(static_cast<int64_t>(collision_time_abs * 1e9));
 
-      const lanelet::BasicPoint2d ego_pt = interp_trajectory_pt_at_time(t_col_abs, ego_pts, n_ego, original_tp);
-      const lanelet::BasicPoint2d obs_pt = interp_predicted_pt_at_time(t_col_abs, active[k].predictions, active[k].on_route_idx);
+      const lanelet::BasicPoint2d ego_collision_point = interp_trajectory_pt_at_time(collision_time_abs, ego_pts, num_ego_points, original_tp);
+      const lanelet::BasicPoint2d object_collision_point = interp_predicted_pt_at_time(collision_time_abs, active[k].predictions, active[k].on_route_idx);
 
-      const double vehicle_downtrack = wm_->routeTrackPos(ego_pt).downtrack;
-      const double object_downtrack  = wm_->routeTrackPos(obs_pt).downtrack;
+      const double vehicle_downtrack = wm_->routeTrackPos(ego_collision_point).downtrack;
+      const double object_downtrack  = wm_->routeTrackPos(object_collision_point).downtrack;
 
       if (is_object_behind_vehicle(active[k].id, collision_time,
                                    vehicle_downtrack, object_downtrack)) {
@@ -1135,15 +1135,15 @@ namespace yield_plugin
       RCLCPP_WARN_STREAM(nh_->get_logger(),
         "Collision detected for object: " << active[k].id
         << ", at timestamp " << std::to_string(collision_time.seconds())
-        << ", x: " << ego_pt.x() << ", y: " << ego_pt.y()
+        << ", x: " << ego_collision_point.x() << ", y: " << ego_collision_point.y()
         << ", within actual downtrack distance: "
         << object_downtrack - vehicle_downtrack);
 
       RCLCPP_DEBUG_STREAM(rclcpp::get_logger("yield_plugin"),
         "[GPU] obj=" << active[k].id
-        << " collision at t=" << t_col_abs
-        << " ego=(" << ego_pt.x() << "," << ego_pt.y() << ")"
-        << " obs=(" << obs_pt.x() << "," << obs_pt.y() << ")"
+        << " collision at t=" << collision_time_abs
+        << " ego=(" << ego_collision_point.x() << "," << ego_collision_point.y() << ")"
+        << " obs=(" << object_collision_point.x() << "," << object_collision_point.y() << ")"
         << " downtrack_gap=" << (object_downtrack - vehicle_downtrack));
       collision_times[active[k].id] = collision_time;
     }

@@ -65,14 +65,15 @@ __device__ static void atomic_min_f(float* __restrict__ addr, float val)
  *   y → obs segments   (blockIdx.y * blockDim.y + threadIdx.y)
  *   z → object index   (blockIdx.z, one block layer per object)
  *
- * For the overlapping time window [t_lo, t_hi] the two endpoints move
- * linearly.  Relative displacement is therefore also linear:
+ * For the overlapping time window [overlap_start_t, overlap_end_t] the two
+ * endpoints move linearly.  Relative displacement is therefore also linear:
  *
- *   r(s) = (dx0 + dvx*s, dy0 + dvy*s),  s ∈ [0, T=t_hi-t_lo]
+ *   relative_position(s) = (rel_pos_x + rel_vel_x*s, rel_pos_y + rel_vel_y*s),
+ *   s ∈ [0, overlap_duration]
  *
  * Squared distance is a convex quadratic in s; its minimum is found
- * analytically and clamped to [0, T].  A collision is recorded when the
- * minimum squared distance is ≤ collision_radius².
+ * analytically and clamped to [0, overlap_duration].  A collision is recorded
+ * when the minimum squared distance is ≤ collision_radius².
  *
  * The earliest collision time per object is stored via an atomic float min.
  */
@@ -104,61 +105,61 @@ __global__ void collision_kernel(
   const int base = obs_offsets[obj];
 
   // Ego segment endpoints
-  const float x1a = ego_x[ego_i],     y1a = ego_y[ego_i],     t1a = ego_t[ego_i];
-  const float x1b = ego_x[ego_i + 1], y1b = ego_y[ego_i + 1], t1b = ego_t[ego_i + 1];
+  const float ego_seg_start_x = ego_x[ego_i],     ego_seg_start_y = ego_y[ego_i],     ego_seg_start_t = ego_t[ego_i];
+  const float ego_seg_end_x   = ego_x[ego_i + 1], ego_seg_end_y   = ego_y[ego_i + 1], ego_seg_end_t   = ego_t[ego_i + 1];
 
   // Obstacle segment endpoints
-  const float x2a = obs_x[base + obs_j],     y2a = obs_y[base + obs_j],     t2a = obs_t[base + obs_j];
-  const float x2b = obs_x[base + obs_j + 1], y2b = obs_y[base + obs_j + 1], t2b = obs_t[base + obs_j + 1];
+  const float obj_seg_start_x = obs_x[base + obs_j],     obj_seg_start_y = obs_y[base + obs_j],     obj_seg_start_t = obs_t[base + obs_j];
+  const float obj_seg_end_x   = obs_x[base + obs_j + 1], obj_seg_end_y   = obs_y[base + obs_j + 1], obj_seg_end_t   = obs_t[base + obs_j + 1];
 
-  // Temporal overlap
-  const float t_lo = fmaxf(t1a, t2a);
-  const float t_hi = fminf(t1b, t2b);
-  if (t_lo >= t_hi) return;
+  // Temporal overlap between the two segments
+  const float overlap_start_t = fmaxf(ego_seg_start_t, obj_seg_start_t);
+  const float overlap_end_t   = fminf(ego_seg_end_t, obj_seg_end_t);
+  if (overlap_start_t >= overlap_end_t) return;
 
-  const float dt1 = t1b - t1a;
-  const float dt2 = t2b - t2a;
-  if (dt1 < 1e-6f || dt2 < 1e-6f) return;
+  const float ego_seg_duration = ego_seg_end_t - ego_seg_start_t;
+  const float obj_seg_duration = obj_seg_end_t - obj_seg_start_t;
+  if (ego_seg_duration < 1e-6f || obj_seg_duration < 1e-6f) return;
 
   // Velocities
-  const float vex = (x1b - x1a) / dt1;
-  const float vey = (y1b - y1a) / dt1;
-  const float vox = (x2b - x2a) / dt2;
-  const float voy = (y2b - y2a) / dt2;
+  const float ego_vel_x = (ego_seg_end_x - ego_seg_start_x) / ego_seg_duration;
+  const float ego_vel_y = (ego_seg_end_y - ego_seg_start_y) / ego_seg_duration;
+  const float obj_vel_x = (obj_seg_end_x - obj_seg_start_x) / obj_seg_duration;
+  const float obj_vel_y = (obj_seg_end_y - obj_seg_start_y) / obj_seg_duration;
 
-  // Positions at t_lo
-  const float a1  = (t_lo - t1a) / dt1;
-  const float ex0 = x1a + a1 * (x1b - x1a);
-  const float ey0 = y1a + a1 * (y1b - y1a);
+  // Positions at the start of the overlap window
+  const float ego_interp_ratio = (overlap_start_t - ego_seg_start_t) / ego_seg_duration;
+  const float ego_pos_x = ego_seg_start_x + ego_interp_ratio * (ego_seg_end_x - ego_seg_start_x);
+  const float ego_pos_y = ego_seg_start_y + ego_interp_ratio * (ego_seg_end_y - ego_seg_start_y);
 
-  const float a2  = (t_lo - t2a) / dt2;
-  const float ox0 = x2a + a2 * (x2b - x2a);
-  const float oy0 = y2a + a2 * (y2b - y2a);
+  const float obj_interp_ratio = (overlap_start_t - obj_seg_start_t) / obj_seg_duration;
+  const float obj_pos_x = obj_seg_start_x + obj_interp_ratio * (obj_seg_end_x - obj_seg_start_x);
+  const float obj_pos_y = obj_seg_start_y + obj_interp_ratio * (obj_seg_end_y - obj_seg_start_y);
 
-  // Relative position at t_lo and relative velocity
-  const float dx0 = ex0 - ox0;
-  const float dy0 = ey0 - oy0;
-  const float dvx = vex - vox;
-  const float dvy = vey - voy;
-  const float T   = t_hi - t_lo;
+  // Relative position at the start of the overlap window, and relative velocity
+  const float rel_pos_x = ego_pos_x - obj_pos_x;
+  const float rel_pos_y = ego_pos_y - obj_pos_y;
+  const float rel_vel_x = ego_vel_x - obj_vel_x;
+  const float rel_vel_y = ego_vel_y - obj_vel_y;
+  const float overlap_duration = overlap_end_t - overlap_start_t;
 
-  // Minimise dist²(s) = (dx0+dvx*s)² + (dy0+dvy*s)²  for s ∈ [0, T]
-  // d/ds = 0  →  s* = -(dx0*dvx + dy0*dvy) / (dvx²+dvy²)
-  const float dv2 = dvx * dvx + dvy * dvy;
-  float s_star;
-  if (dv2 < 1e-10f) {
-    s_star = 0.0f;
+  // Minimise dist²(s) = (rel_pos_x + rel_vel_x*s)² + (rel_pos_y + rel_vel_y*s)²  for s ∈ [0, overlap_duration]
+  // d/ds = 0  →  s* = -(rel_pos_x*rel_vel_x + rel_pos_y*rel_vel_y) / (rel_vel_x²+rel_vel_y²)
+  const float rel_speed_sq = rel_vel_x * rel_vel_x + rel_vel_y * rel_vel_y;
+  float closest_approach_offset_t;
+  if (rel_speed_sq < 1e-10f) {
+    closest_approach_offset_t = 0.0f;
   } else {
-    s_star = -(dx0 * dvx + dy0 * dvy) / dv2;
-    s_star  = fmaxf(0.0f, fminf(T, s_star));
+    closest_approach_offset_t = -(rel_pos_x * rel_vel_x + rel_pos_y * rel_vel_y) / rel_speed_sq;
+    closest_approach_offset_t = fmaxf(0.0f, fminf(overlap_duration, closest_approach_offset_t));
   }
 
-  const float dx      = dx0 + dvx * s_star;
-  const float dy      = dy0 + dvy * s_star;
-  const float dist_sq = dx * dx + dy * dy;
+  const float closest_rel_x  = rel_pos_x + rel_vel_x * closest_approach_offset_t;
+  const float closest_rel_y  = rel_pos_y + rel_vel_y * closest_approach_offset_t;
+  const float closest_dist_sq = closest_rel_x * closest_rel_x + closest_rel_y * closest_rel_y;
 
-  if (dist_sq <= collision_radius_sq) {
-    atomic_min_f(&out_collision_t[obj], t_lo + s_star);
+  if (closest_dist_sq <= collision_radius_sq) {
+    atomic_min_f(&out_collision_t[obj], overlap_start_t + closest_approach_offset_t);
   }
 }
 
