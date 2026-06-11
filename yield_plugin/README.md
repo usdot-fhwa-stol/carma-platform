@@ -21,9 +21,9 @@ Upstream planner  -->  [plan_trajectory service]  -->  YieldPlugin  -->  Control
 
 ### 1. Object Avoidance (default)
 
-Runs whenever the ego trajectory needs to be checked against external objects from `/external_object_predictions` (populated from onboard sensors and/or V2X BSMs). This is the default path: it is skipped only when `enable_cooperative_behavior` is `true` (see [yield_config.hpp:37](include/yield_plugin/yield_config.hpp#L37)) *and* the urgency of the latest `MobilityRequest` (`clc_urgency_`, set in `mobilityrequest_cb`, see [yield_plugin.cpp:185](src/yield_plugin.cpp#L185)) exceeds `acceptable_urgency` (see [yield_config.hpp:45](include/yield_plugin/yield_config.hpp#L45)).
+Runs whenever the ego trajectory needs to be checked against external objects from `/external_object_predictions` (populated from onboard sensors and/or V2X msgs such as SDSM). This is the default path: it is skipped only when `enable_cooperative_behavior` is `true` (see [yield_config.hpp:37](include/yield_plugin/yield_config.hpp#L37)) *and* the urgency of the latest `MobilityRequest` (`clc_urgency_`, set in `mobilityrequest_cb`, see [yield_plugin.cpp:185](src/yield_plugin.cpp#L185)) exceeds `acceptable_urgency` (see [yield_config.hpp:45](include/yield_plugin/yield_config.hpp#L45)).
 
-Note this is not a handoff to a different tactical plugin — `update_traj_for_object` is logic within `YieldPlugin` itself that re-times the trajectory already produced by the upstream tactical plugin (see "Role in the Stack").
+Note that the object avoidance is not a handoff to a different tactical plugin. Yield_plugin's `update_traj_for_object` logic re-times the trajectory already produced by the upstream tactical plugin (see "Role in the Stack").
 
 **Pipeline:**
 
@@ -46,8 +46,9 @@ Note this is not a handoff to a different tactical plugin — `update_traj_for_o
 
 ### 2. Cooperative Behavior (V2X Cooperative Lane Change)
 
+_**NOTE: This logic has not been tested since around 2021.**_
+
 Enabled via `enable_cooperative_behavior: true`. Activated when a `MobilityRequest` with strategy `carma/cooperative-lane-change` and urgency above `acceptable_urgency` is received and is not stale (within `acceptable_passed_timesteps` planning cycles).
-NOTE: This logic has not been tested since around 2020.
 
 **Mobility request handling (`mobilityrequest_cb`):**
 
