@@ -296,16 +296,40 @@ public:
   std::unordered_map<uint32_t, rclcpp::Time> get_collision_times_concurrently(const carma_planning_msgs::msg::TrajectoryPlan& original_tp, const std::vector<carma_perception_msgs::msg::ExternalObject>& external_objects, double original_tp_max_speed);
 
 private:
+  /**
+   * \brief CPU implementation of get_collision_times_concurrently. Launches one thread per external object
+   *        and computes get_collision_time for each in parallel
+   * \param original_tp trajectory of the ego vehicle
+   * \param external_objects list of external objects with predicted states
+   * \param original_tp_max_speed max speed of the original_tp to efficiently traverse through possible collision combination of the two trajectories
+   * \return mapping of objects' ids and their corresponding collision times (non-colliding objects are omitted)
+   */
   std::unordered_map<uint32_t, rclcpp::Time> get_collision_times_concurrently_cpu(
     const carma_planning_msgs::msg::TrajectoryPlan& original_tp,
     const std::vector<carma_perception_msgs::msg::ExternalObject>& external_objects,
     double original_tp_max_speed);
 
+  /**
+   * \brief CUDA implementation of get_collision_times_concurrently. Filters objects to those with on-route
+   *        predictions, then batches the collision check across all objects on the GPU.
+   *        Falls back to get_collision_times_concurrently_cpu if no CUDA device is available or on error.
+   * \param original_tp trajectory of the ego vehicle
+   * \param external_objects list of external objects with predicted states
+   * \param original_tp_max_speed max speed of the original_tp to efficiently traverse through possible collision combination of the two trajectories
+   * \return mapping of objects' ids and their corresponding collision times (non-colliding objects are omitted)
+   */
   std::unordered_map<uint32_t, rclcpp::Time> get_collision_times_concurrently_cuda(
     const carma_planning_msgs::msg::TrajectoryPlan& original_tp,
     const std::vector<carma_perception_msgs::msg::ExternalObject>& external_objects,
     double original_tp_max_speed);
 
+  /**
+   * \brief Check whether any predicted state of an object falls within the route lanelet polygons
+   * \param predictions list of predicted states for an object
+   * \param stride step size used to iterate over predictions
+   * \param zero_speed if true, only the first prediction is checked (object is stationary)
+   * \return pair of (true, index of first on-route prediction) if found, otherwise (false, 0)
+   */
   std::pair<bool, int> find_on_route_in_predictions(
     const std::vector<carma_perception_msgs::msg::PredictedState>& predictions,
     int stride, bool zero_speed) const;

@@ -21,13 +21,15 @@ Upstream planner  -->  [plan_trajectory service]  -->  YieldPlugin  -->  Control
 
 ### 1. Object Avoidance (default)
 
-Triggered whenever cooperative behavior is disabled or the urgency of an active cooperative lanechange request is below `acceptable_urgency`.
+Runs whenever the ego trajectory needs to be checked against external objects from `/external_object_predictions` (populated from onboard sensors and/or V2X BSMs). This is the default path: it is skipped only when `enable_cooperative_behavior` is `true` (see [yield_config.hpp:37](include/yield_plugin/yield_config.hpp#L37)) *and* the urgency of the latest `MobilityRequest` (`clc_urgency_`, set in `mobilityrequest_cb`, see [yield_plugin.cpp:185](src/yield_plugin.cpp#L185)) exceeds `acceptable_urgency` (see [yield_config.hpp:45](include/yield_plugin/yield_config.hpp#L45)).
+
+Note this is not a handoff to a different tactical plugin — `update_traj_for_object` is logic within `YieldPlugin` itself that re-times the trajectory already produced by the upstream tactical plugin (see "Role in the Stack").
 
 **Pipeline:**
 
-1. **Concurrent collision detection** — for every external object in `/external_object_predictions` topic callback, `get_collision_times_concurrently()` is dispatched. There are either CPU or GPU approach. Default is GPU approach, but if there is any CUDA error (GPU driver not accessible etc), it falls back to CPU approach. See "Collision Detection: CPU vs. CUDA" for more.
+1. **Concurrent collision detection** — `get_collision_times_concurrently()` checks every external object received on `/external_object_predictions` for a predicted collision with the ego trajectory, using either a CPU or GPU approach. The GPU approach is used by default, falling back to CPU if a CUDA error occurs (e.g., GPU driver not accessible). See "Collision Detection: CPU vs. CUDA" for more.
 
-2. **Earliest collision selection** — the object with the smallest collision timestamp is chosen as the adversary.
+2. **Earliest collision selection** — of the objects with a predicted collision, the one with the closest time to collision is chosen as the adversary.
 
 3. **Goal velocity** — the ego's target speed is set to the obstacle's velocity *projected along the ego trajectory direction* at the collision time (`get_predicted_velocity_at_time`). Stationary obstacles produce a goal velocity of 0.
 
