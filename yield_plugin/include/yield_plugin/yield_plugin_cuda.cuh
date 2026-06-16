@@ -32,7 +32,7 @@ struct CudaPoint
 
 // Per-object result returned from the GPU collision batch.
 struct CudaCollisionResult
-{`
+{
   bool  has_collision        = false;
   float collision_t_norm     = 0.0f;  // collision time, same normalized basis as CudaPoint::t
 };
