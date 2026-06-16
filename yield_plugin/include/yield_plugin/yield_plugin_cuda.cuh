@@ -26,13 +26,13 @@ namespace yield_plugin
 // precision is sufficient for the ~15-second planning horizon.
 struct CudaPoint
 {
-  float x, y;
+  float x, y; // metres in a common Cartesian frame (e.g. ENU)
   float t;  // seconds, normalized relative to a caller-chosen reference
 };
 
 // Per-object result returned from the GPU collision batch.
 struct CudaCollisionResult
-{
+{`
   bool  has_collision        = false;
   float collision_t_norm     = 0.0f;  // collision time, same normalized basis as CudaPoint::t
 };

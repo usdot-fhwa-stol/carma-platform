@@ -721,6 +721,10 @@ namespace yield_plugin
         // if negative extrapolation, skip because car wouldn't go backwards
         if (interp_ratio < 0)
         {
+          RCLCPP_DEBUG_STREAM(nh_->get_logger(),
+            "Negative extrapolation, skipping this pair of points. object_seg_start_time: "
+            << std::to_string(object_seg_start_time) << ", ego_seg_start_time: "
+            << std::to_string(ego_seg_start_time));
           continue;
         }
         double ego_interp_x = ego_seg_start.x + interp_ratio * (ego_seg_end.x - ego_seg_start.x);
@@ -832,6 +836,7 @@ namespace yield_plugin
     {
       // reset the consecutive clearance counter because no collision was detected at this iteration
       consecutive_clearance_count_for_obstacles_[curr_obstacle.id] = 0;
+      RCLCPP_DEBUG_STREAM(rclcpp::get_logger("yield_plugin"), "[CPU] obj=" << curr_obstacle.id << " no collision detected");
       return std::nullopt;
     }
 
@@ -854,6 +859,7 @@ namespace yield_plugin
       ", x: " << collision_result.value().ego_point.x() << ", y: " << collision_result.value().ego_point.y() <<
       ", within actual downtrack distance: " << object_downtrack - vehicle_downtrack <<
       ", and collision distance: " << distance);
+    RCLCPP_DEBUG_STREAM(rclcpp::get_logger("yield_plugin"), "[CPU] obj=" << curr_obstacle.id << " collision at t=" << collision_result.value().collision_time.seconds());
 
     return collision_result.value().collision_time;
   }
@@ -903,7 +909,7 @@ namespace yield_plugin
 
   std::pair<bool, int> YieldPlugin::find_on_route_in_predictions(
     const std::vector<carma_perception_msgs::msg::PredictedState>& predictions,
-    int stride, bool zero_speed) const
+    int stride, bool object_has_zero_speed) const
   {
     for (size_t j = 0; j < predictions.size(); j += stride) {
       const lanelet::BasicPoint2d point(predictions[j].predicted_position.position.x,
@@ -913,7 +919,7 @@ namespace yield_plugin
           return {true, static_cast<int>(j)};
         }
       }
-      if (zero_speed) break;
+      if (object_has_zero_speed) break;
     }
     return {false, 0};
   }
@@ -950,12 +956,7 @@ namespace yield_plugin
     for (auto& t : threads) t.join();
     for (const auto& object : external_objects) {
       if (const auto collision_time{futures.at(object.id).get()}) {
-        RCLCPP_DEBUG_STREAM(rclcpp::get_logger("yield_plugin"),
-          "[CPU] obj=" << object.id << " collision at t=" << collision_time->seconds());
         collision_times[object.id] = collision_time.value();
-      } else {
-        RCLCPP_DEBUG_STREAM(rclcpp::get_logger("yield_plugin"),
-          "[CPU] obj=" << object.id << " no collision detected");
       }
     }
     RCLCPP_DEBUG_STREAM(rclcpp::get_logger("yield_plugin"),
@@ -1154,12 +1155,12 @@ namespace yield_plugin
     } catch (const std::runtime_error& e) {
       std::string error_msg(e.what());
       // Detect CUDA-specific errors
-      bool is_cuda_error = (error_msg.find("CUDA") != std::string::npos || 
+      bool is_cuda_error = (error_msg.find("CUDA") != std::string::npos ||
                             error_msg.find("cuda") != std::string::npos ||
                             error_msg.find("driver version") != std::string::npos ||
                             error_msg.find("runtime version") != std::string::npos ||
                             error_msg.find("GPU") != std::string::npos);
-      
+
       if (is_cuda_error) {
         RCLCPP_WARN_STREAM_ONCE(rclcpp::get_logger("yield_plugin"),
           "[GPU] CUDA unavailable (" << e.what() << "), please make sure GPU is accessible for this node or container. Using CPU fallback");
@@ -1181,19 +1182,10 @@ namespace yield_plugin
   {
     RCLCPP_DEBUG_STREAM(rclcpp::get_logger("yield_plugin"), "ExternalObjects size: " << external_objects.size());
 
-    if (!wm_->getRoute())
+    if (!wm_->getRoute() || route_llt_polygons_.empty())
     {
       RCLCPP_WARN(nh_->get_logger(), "Yield plugin was not able to analyze collision since route is not available! Please check if route is set");
       return std::nullopt;
-    }
-
-    // save route lanelets for precise on-route checks using polygon containment
-    route_llt_polygons_.clear();
-    for (const auto& llt: wm_->getRoute()->shortestPath())
-    {
-      // TODO: Enhancement https://github.com/usdot-fhwa-stol/carma-platform/issues/2316
-      route_llt_ids_.insert(llt.id());
-      route_llt_polygons_.push_back(llt);
     }
 
     RCLCPP_DEBUG_STREAM(nh_->get_logger(),"External Object List (external_objects) size: " << external_objects.size());
@@ -1520,6 +1512,23 @@ namespace yield_plugin
   void YieldPlugin::set_external_objects(const std::vector<carma_perception_msgs::msg::ExternalObject>& object_list)
   {
     external_objects_ = object_list;
+  }
+
+  void YieldPlugin::update_route_llt_cache()
+  {
+    if (!wm_->getRoute())
+    {
+      RCLCPP_WARN(nh_->get_logger(), "update_route_llt_cache called but route is not available");
+      return;
+    }
+    route_llt_ids_.clear();
+    route_llt_polygons_.clear();
+    for (const auto& llt : wm_->getRoute()->shortestPath())
+    {
+      // TODO: Enhancement https://github.com/usdot-fhwa-stol/carma-platform/issues/2316
+      route_llt_ids_.insert(llt.id());
+      route_llt_polygons_.push_back(llt);
+    }
   }
 
 }  // namespace yield_plugin

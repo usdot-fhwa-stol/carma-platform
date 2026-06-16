@@ -244,6 +244,12 @@ public:
   void set_external_objects(const std::vector<carma_perception_msgs::msg::ExternalObject>& object_list);
 
   /**
+   * \brief Rebuild the cached route lanelet polygons and IDs from the current route.
+   *        Should be called once whenever the route changes via setRouteCallback().
+   */
+  void update_route_llt_cache();
+
+  /**
    * \brief Return naive collision time and locations based on collision radius given two trajectories with one being obstacle's predicted steps
    * \param ego_trajectory trajectory of the ego vehicle
    * \param object_predictions trajectory of predicted steps

@@ -104,6 +104,10 @@ namespace yield_plugin
                                                           [this](auto msg) { mob_resp_pub_->publish(msg); },
                                                           [this](auto msg) { lc_status_pub_->publish(msg); });
 
+    get_world_model_listener()->setRouteCallback([this]() {
+      worker_->update_route_llt_cache();
+    });
+
      // Publisher
     mob_resp_pub_ = create_publisher<carma_v2x_msgs::msg::MobilityResponse>("outgoing_mobility_response", 1);
     lc_status_pub_ = create_publisher<carma_planning_msgs::msg::LaneChangeStatus>("cooperative_lane_change_status", 10);
