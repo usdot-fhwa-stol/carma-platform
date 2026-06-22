@@ -6,7 +6,7 @@ A CARMA Platform tactical plugin that modifies an existing trajectory to safely 
 
 ## Role in the Stack
 
-The yield plugin sits downstream of tactical plugins (e.g., inlane_cruising, cooperative_lanechange). It receives a *fully formed* trajectory from the planner and either passes it through unchanged or replaces the timestamps to slow/stop the vehicle before a predicted collision.
+The yield plugin sits downstream of tactical plugins (e.g., inlanecruising_plugin, cooperative_lanechange). It receives a *fully formed* trajectory from the planner and either passes it through unchanged or replaces the timestamps to slow/stop the vehicle before a predicted collision.
 
 ```
 Upstream planner  -->  [plan_trajectory service]  -->  YieldPlugin  -->  Controller
@@ -21,7 +21,7 @@ Upstream planner  -->  [plan_trajectory service]  -->  YieldPlugin  -->  Control
 
 ### 1. Object Avoidance (default)
 
-Runs whenever the ego trajectory needs to be checked against external objects from `/external_object_predictions` (populated from onboard sensors and/or V2X msgs such as SDSM). This is the default path: it is skipped only when `enable_cooperative_behavior` is `true` (see [yield_config.hpp:37](include/yield_plugin/yield_config.hpp#L37)) *and* the urgency of the latest `MobilityRequest` (`clc_urgency_`, set in `mobilityrequest_cb`, see [yield_plugin.cpp:185](src/yield_plugin.cpp#L185)) exceeds `acceptable_urgency` (see [yield_config.hpp:45](include/yield_plugin/yield_config.hpp#L45)).
+Runs whenever the ego trajectory needs to be checked against external objects from `/external_object_predictions` (populated from onboard sensors and/or V2X msgs such as SDSM). This is the default path: it is skipped only when `enable_cooperative_behavior` is `true` (see [config/parameters.yaml:76](config/parameters.yaml#L76)) *and* the urgency of the latest `MobilityRequest` (`clc_urgency_`, set in `mobilityrequest_cb`, see [yield_plugin.cpp:185](src/yield_plugin.cpp#L185)) exceeds `acceptable_urgency` (see [config/parameters.yaml:85](config/parameters.yaml#L85)).
 
 Note that the object avoidance is not a handoff to a different tactical plugin. Yield_plugin's `update_traj_for_object` logic re-times the trajectory already produced by the upstream tactical plugin (see "Role in the Stack").
 
