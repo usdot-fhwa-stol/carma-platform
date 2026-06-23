@@ -1525,7 +1525,6 @@ namespace yield_plugin
     route_llt_polygons_.clear();
     for (const auto& llt : wm_->getRoute()->shortestPath())
     {
-      // TODO: Enhancement https://github.com/usdot-fhwa-stol/carma-platform/issues/2316
       route_llt_ids_.insert(llt.id());
       route_llt_polygons_.push_back(llt);
     }
