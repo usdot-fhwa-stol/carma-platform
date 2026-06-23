@@ -1182,10 +1182,16 @@ namespace yield_plugin
   {
     RCLCPP_DEBUG_STREAM(rclcpp::get_logger("yield_plugin"), "ExternalObjects size: " << external_objects.size());
 
-    if (!wm_->getRoute() || route_llt_polygons_.empty())
+    if (!wm_->getRoute())
     {
       RCLCPP_WARN(nh_->get_logger(), "Yield plugin was not able to analyze collision since route is not available! Please check if route is set");
       return std::nullopt;
+    }
+
+    // Populate route_llt_polygons_ if empty but route is actually available.
+    if (route_llt_polygons_.empty())
+    {
+      update_route_llt_cache();
     }
 
     RCLCPP_DEBUG_STREAM(nh_->get_logger(),"External Object List (external_objects) size: " << external_objects.size());
