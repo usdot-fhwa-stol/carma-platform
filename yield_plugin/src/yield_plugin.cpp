@@ -1310,7 +1310,22 @@ namespace yield_plugin
     RCLCPP_DEBUG_STREAM(nh_->get_logger(),"object_downtrack_lead: " << object_downtrack_lead);
 
     // The vehicle's goal velocity of the yielding behavior is to match the velocity of the object along the trajectory.
-    double goal_velocity = get_predicted_velocity_at_time(earliest_collision_obj.velocity.twist, original_tp, earliest_collision_time_in_seconds);
+    // Vehicle obstacle velocities are in body frame (linear.x = forward speed), so rotate into map frame before
+    // projecting. Pedestrian velocities arrive already in map frame, so no rotation is needed for them.
+    geometry_msgs::msg::Twist object_velocity_in_map_frame = earliest_collision_obj.velocity.twist;
+    if (earliest_collision_obj.object_type == carma_perception_msgs::msg::ExternalObject::VEHICLE)
+    {
+      const auto& q = earliest_collision_obj.pose.pose.orientation;
+      const double yaw = std::atan2(2.0 * (q.w * q.z + q.x * q.y), 1.0 - 2.0 * (q.y * q.y + q.z * q.z));
+      const double bvx = earliest_collision_obj.velocity.twist.linear.x;
+      const double bvy = earliest_collision_obj.velocity.twist.linear.y;
+      object_velocity_in_map_frame.linear.x = bvx * std::cos(yaw) - bvy * std::sin(yaw);
+      object_velocity_in_map_frame.linear.y = bvx * std::sin(yaw) + bvy * std::cos(yaw);
+      RCLCPP_DEBUG_STREAM(nh_->get_logger(), "Rotated vehicle body-frame velocity (" << bvx << ", " << bvy
+        << ") by yaw=" << yaw << " to map-frame (" << object_velocity_in_map_frame.linear.x
+        << ", " << object_velocity_in_map_frame.linear.y << ")");
+    }
+    double goal_velocity = get_predicted_velocity_at_time(object_velocity_in_map_frame, original_tp, earliest_collision_time_in_seconds);
     RCLCPP_DEBUG_STREAM(nh_->get_logger(),"object's speed along trajectory at collision: " << goal_velocity);
 
     // roadway object position
