@@ -901,6 +901,7 @@ TEST(YieldPluginTest, min_digital_gap)
   ll_1200.addRegulatoryElement(regulatory_element);
   map->add(regulatory_element);
   wm->setMap(map);
+  carma_wm::test::setRouteByIds({ 1200, 1201, 1202, 1203 }, wm);
 
   YieldPluginConfig config;
   auto nh = std::make_shared<yield_plugin::YieldPluginNode>(rclcpp::NodeOptions());
@@ -921,16 +922,16 @@ TEST(YieldPluginTest, min_digital_gap)
   trajectory_point_1.y = 1.0;
   trajectory_point_1.target_time = rclcpp::Time(0);
 
-  trajectory_point_2.x = 1.5;
-  trajectory_point_2.y = 1.0;
+  trajectory_point_2.x = 1.0;
+  trajectory_point_2.y = 1.5;
   trajectory_point_2.target_time = rclcpp::Time(1,0);
 
-  trajectory_point_3.x = 2.0;
-  trajectory_point_3.y = 1.0;
+  trajectory_point_3.x = 1.0;
+  trajectory_point_3.y = 2.0;
   trajectory_point_3.target_time = rclcpp::Time(2,0);
 
-  trajectory_point_4.x = 2.5;
-  trajectory_point_4.y = 1.0;
+  trajectory_point_4.x = 1.0;
+  trajectory_point_4.y = 2.5;
   trajectory_point_4.target_time = rclcpp::Time(3,0);
 
   original_tp.trajectory_points = {trajectory_point_1, trajectory_point_2, trajectory_point_3, trajectory_point_4};

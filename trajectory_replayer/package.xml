@@ -1,0 +1,23 @@
+<package format="3">
+  <name>trajectory_replayer</name>
+  <version>0.0.1</version>
+  <description>ROS2 node that replays a recorded vehicle trajectory (pose + speed) from an mcap bag as an ExternalObjectList, restricted to the time it was engaged, as if it were happening now.</description>
+  <maintainer email="your.email@example.com">Your Name</maintainer>
+  <license>Apache License 2.0</license>
+
+  <buildtool_depend>ament_python</buildtool_depend>
+
+  <depend>rclpy</depend>
+  <depend>std_msgs</depend>
+  <depend>geometry_msgs</depend>
+  <depend>carma_perception_msgs</depend>
+  <depend>carma_planning_msgs</depend>
+  <depend>rosbag2_py</depend>
+  <depend>rosbag2_storage_mcap</depend>
+  <depend>rosidl_runtime_py</depend>
+  <depend>python3-numpy</depend>
+
+  <export>
+    <build_type>ament_python</build_type>
+  </export>
+</package>

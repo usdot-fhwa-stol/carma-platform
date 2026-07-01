@@ -11,6 +11,7 @@ myClock.bin
 *.class
 **/bin
 **/__pycache__
+*.npz
 
 # ignore build directories
 build

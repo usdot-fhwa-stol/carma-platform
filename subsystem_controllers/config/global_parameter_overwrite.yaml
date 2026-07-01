@@ -1,0 +1,11 @@
+environment:
+  cp_sdsm_to_detection_list_node:
+    ros__parameters:
+      # Only the parameters we want to change:
+      x_offset: 20.0
+      #y_offset: -20.0: Default package level config will be used
+guidance:
+  inlanecruising_plugin:
+    ros__parameters:
+      # Only the parameters we want to change:
+      default_downsample_ratio: 8

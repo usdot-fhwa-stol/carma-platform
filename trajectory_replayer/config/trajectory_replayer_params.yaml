@@ -1,0 +1,30 @@
+trajectory_replayer:
+  ros__parameters:
+    # Each index pairs mcap_paths[i] with start_offset_secs[i] to define one
+    # replayed object. The same mcap path may repeat across entries (e.g. two
+    # objects drawn from the same recording at different offsets) -- each
+    # unique mcap is only parsed/cached once.
+    mcap_paths:
+      - "/opt/carma/install/trajectory_replayer/share/trajectory_replayer/config/rosbag2_2026-06-30_083523_0.mcap"
+      - "/opt/carma/install/trajectory_replayer/share/trajectory_replayer/config/rosbag2_2026-06-30_083523_0.mcap"
+    start_offset_secs:
+      - 0.0
+      - 5.0
+    storage_id: "mcap"
+    pose_topic: "/localization/current_pose"
+    twist_topic: "/hardware_interface/vehicle/twist"
+    guidance_state_topic: "/guidance/state"
+    engaged_state_value: 4
+    output_topic: "/environment/external_objects"
+    frame_id: ""           # empty: use the frame_id recorded in each bag
+    object_id_base: 1001   # object i gets id = object_id_base + i
+    object_type: 1         # carma_perception_msgs/ExternalObject.SMALL_VEHICLE
+    vehicle_length: 4.5
+    vehicle_width: 1.9
+    vehicle_height: 1.6
+    confidence: 1.0
+    publish_rate_hz: 10.0
+    loop_playback: false
+    use_cache: true        # reuse a fast .npz cache of each extracted trajectory if valid
+    cache_dir: ""           # empty: cache next to each mcap (<mcap>.trajectory_cache.npz)
+    use_sim_time: false
