@@ -50,6 +50,11 @@ J2735_MESSAGE_NAMES = {
     31: "TIM",
     32: "PSM",
     41: "SDSM",
+    # CARMA Mobility messages (PSID 0xBFEE), per wave.json in v2x-ros-driver
+    240: "MobilityRequest",
+    241: "MobilityResponse",
+    242: "MobilityPath",
+    243: "MobilityOperation",
 }
 
 
