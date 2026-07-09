@@ -6,8 +6,14 @@ whether they are carried in IEEE 1609.2 signedData or unsecuredData envelopes.
 Supports:
   - Ethernet captures (DLT_EN10MB / linktype 1)
   - Linux cooked captures v1 (DLT_LINUX_SLL / linktype 113)
-  - IPv4 and IPv6 UDP
-  - MAP, SPaT, BSM, SDSM, PSM, TIM, SRM, and SSM
+  - IPv4 and IPv6 UDP, with a IEEE 1609.2 unsecuredData/signedData envelope
+  - MQTT-over-TCP (used by Ettifos-vendor OBUs on their ethernet-facing
+    interface; requires tshark to be installed for TCP reassembly)
+  - Commsignia-vendor "Tx Request" ASCII protocol (plain Version=/Type=/
+    Payload=... key=value UDP packets the host sends an OBU asking it to
+    broadcast a message - no 1609.2 envelope present, since the OBU applies
+    security before transmitting)
+  - MAP, SPaT, BSM, SDSM, PSM, TIM, SRM, SSM, and CARMA's mobility messages
 
 Direction handling for Linux cooked captures:
   0 = incoming to this host
@@ -15,6 +21,9 @@ Direction handling for Linux cooked captures:
   2 = incoming multicast
   3 = incoming for another host
   4 = outgoing from this host
+MQTT direction is inferred from topic naming ('/ind/' = incoming, '/req/' =
+outgoing). Commsignia Tx Request packets are always treated as outgoing,
+since they are by definition the host asking the OBU to transmit.
 
 Note:
   Detecting signedData does not cryptographically validate the signature.
@@ -24,7 +33,9 @@ from __future__ import annotations
 
 import argparse
 import ipaddress
+import shutil
 import struct
+import subprocess
 import sys
 from collections import Counter, defaultdict
 from dataclasses import dataclass
@@ -349,6 +360,141 @@ def classify_v2x_payload(payload: bytes) -> V2xResult:
     )
 
 
+J2735_MESSAGE_IDS_BY_NAME = {name: message_id for message_id, name in J2735_MESSAGE_NAMES.items()}
+
+
+def classify_commsignia_request(payload: bytes) -> Optional[V2xResult]:
+    """
+    Detects a Commsignia-vendor "Tx Request" packet: a plain-ASCII,
+    newline-separated key=value UDP protocol the host uses to ask the OBU
+    to broadcast a message, e.g.:
+
+        Version=0.7
+        Type=BSM
+        PSID=0020
+        ...
+        Signature=False
+        Encryption=False
+        Payload=<hex, raw unsecured J2735 MessageFrame - no 1609.2 envelope>
+
+    Unlike classify_v2x_payload, there's no envelope to detect - the
+    packet declares its own security treatment via the Signature= field,
+    which is used directly rather than inferred from a byte pattern.
+    Returns None if the payload doesn't look like this protocol at all.
+    """
+    try:
+        text = payload.decode("ascii")
+    except UnicodeDecodeError:
+        return None
+
+    if "Type=" not in text or "Payload=" not in text:
+        return None
+
+    fields = {}
+    for line in text.splitlines():
+        key, sep, value = line.partition("=")
+        if sep:
+            fields[key] = value
+
+    message_name = fields.get("Type")
+    if message_name not in J2735_MESSAGE_IDS_BY_NAME or not fields.get("Payload"):
+        return None
+
+    security = "signedData" if fields.get("Signature") == "True" else "unsecuredData"
+
+    return V2xResult(
+        security=security,
+        message_name=message_name,
+        message_id=J2735_MESSAGE_IDS_BY_NAME[message_name],
+    )
+
+
+@dataclass
+class MqttPublish:
+    timestamp: float
+    topic: str
+    payload: bytes
+    source_ip: str
+    source_port: int
+    destination_ip: str
+    destination_port: int
+
+
+def read_mqtt_publishes(path: Path) -> Iterator[MqttPublish]:
+    """
+    Extracts MQTT PUBLISH messages via tshark (handles TCP reassembly,
+    which a hand-rolled parser would need to duplicate). Used by
+    Ettifos-vendor OBUs on their ethernet-facing interface instead of raw
+    UDP. Yields nothing (with a warning on stderr) if tshark isn't
+    installed, rather than failing the whole analysis.
+    """
+    if shutil.which("tshark") is None:
+        print("WARNING: tshark not found on PATH - skipping MQTT-based message "
+              "detection (only raw-UDP messages will be reported).", file=sys.stderr)
+        return
+
+    proc = subprocess.run(
+        ["tshark", "-r", str(path), "-Y", "mqtt.msgtype==3", "-Tfields",
+         "-e", "frame.time_epoch", "-e", "mqtt.topic", "-e", "mqtt.msg",
+         "-e", "ip.src", "-e", "ip.dst", "-e", "tcp.srcport", "-e", "tcp.dstport"],
+        capture_output=True, text=True,
+    )
+
+    if proc.returncode != 0:
+        print(f"WARNING: tshark exited {proc.returncode} reading {path} for MQTT - "
+              f"using partial output. stderr: {proc.stderr.strip()}", file=sys.stderr)
+
+    for line in proc.stdout.splitlines():
+        parts = line.split('\t')
+
+        if len(parts) != 7 or not parts[0] or not parts[2]:
+            continue
+
+        ts_str, topics_field, msgs_field, src_ip, dst_ip, src_port, dst_port = parts
+        # A single TCP segment can carry multiple MQTT PUBLISH messages;
+        # tshark joins repeated field occurrences within one frame with
+        # commas, 1:1 between the topic and payload fields.
+        topics = topics_field.split(',')
+        msgs = msgs_field.split(',')
+
+        if len(topics) != len(msgs):
+            continue
+
+        for topic, msg_hex in zip(topics, msgs):
+            try:
+                payload = bytes.fromhex(msg_hex)
+            except ValueError:
+                continue
+
+            yield MqttPublish(
+                timestamp=float(ts_str),
+                topic=topic,
+                payload=payload,
+                source_ip=src_ip,
+                source_port=int(src_port) if src_port else 0,
+                destination_ip=dst_ip,
+                destination_port=int(dst_port) if dst_port else 0,
+            )
+
+
+def classify_mqtt_payload(payload: bytes) -> Optional[V2xResult]:
+    """
+    MQTT payloads observed from Ettifos-vendor OBUs are raw J2735
+    MessageFrame bytes (00 <msgid> ...) with no 1609.2 envelope at all -
+    there's nothing to detect a signedData/unsecuredData choice from, so
+    security is reported as "raw" rather than guessing.
+    """
+    if len(payload) < 2 or payload[0] != 0:
+        return None
+
+    message_id = payload[1]
+
+    if message_id not in J2735_MESSAGE_NAMES:
+        return None
+
+    return V2xResult(security="raw", message_name=J2735_MESSAGE_NAMES[message_id], message_id=message_id)
+
+
 def analyze_file(path: Path) -> int:
     total_packets = 0
     udp_packets = 0
@@ -379,20 +525,57 @@ def analyze_file(path: Path) -> int:
             flow_counts[flow_key] += 1
 
             result = classify_v2x_payload(udp.payload)
+            direction = udp.direction
 
             if result.message_name is None:
-                continue
+                # Not a 1609.2-enveloped broadcast - check whether it's a
+                # Commsignia Tx Request instead (host asking the OBU to
+                # transmit). Always "outgoing" by definition, regardless of
+                # what the link layer reported (classic Ethernet captures
+                # carry no direction bit anyway).
+                result = classify_commsignia_request(udp.payload)
+
+                if result is None:
+                    continue
+
+                direction = "outgoing"
 
             recognized_packets += 1
 
             detailed_key = (
-                udp.direction,
+                direction,
                 result.message_name,
                 result.security,
                 udp.source_ip,
                 udp.source_port,
                 udp.destination_ip,
                 udp.destination_port,
+            )
+            detailed_counts[detailed_key] += 1
+
+        mqtt_packets = 0
+
+        for publish in read_mqtt_publishes(path):
+            mqtt_packets += 1
+
+            result = classify_mqtt_payload(publish.payload)
+
+            if result is None:
+                continue
+
+            recognized_packets += 1
+            direction = "incoming" if "/ind/" in publish.topic else (
+                "outgoing" if "/req/" in publish.topic else "unknown"
+            )
+
+            detailed_key = (
+                direction,
+                result.message_name,
+                result.security,
+                publish.source_ip,
+                publish.source_port,
+                publish.destination_ip,
+                publish.destination_port,
             )
             detailed_counts[detailed_key] += 1
 
@@ -403,6 +586,7 @@ def analyze_file(path: Path) -> int:
     print(f"\nFile: {path}")
     print(f"Total packets: {total_packets}")
     print(f"UDP packets: {udp_packets}")
+    print(f"MQTT PUBLISH messages: {mqtt_packets}")
     print(f"Recognized J2735 packets: {recognized_packets}")
 
     if not detailed_counts:
@@ -444,16 +628,17 @@ def analyze_file(path: Path) -> int:
         totals_by_direction[direction][(message_name, security)] += count
 
     print("\nTotals by message type:")
-    print(f"{'Message':<8} {'Signed':>10} {'Unsecured':>12} {'Total':>10}")
-    print("-" * 44)
+    print(f"{'Message':<8} {'Signed':>10} {'Unsecured':>12} {'Raw':>10} {'Total':>10}")
+    print("-" * 55)
 
     for message_name in sorted(totals_by_message):
         signed = totals_by_message[message_name]["signedData"]
         unsecured = totals_by_message[message_name]["unsecuredData"]
+        raw = totals_by_message[message_name]["raw"]
 
         print(
-            f"{message_name:<8} {signed:>10} {unsecured:>12} "
-            f"{signed + unsecured:>10}"
+            f"{message_name:<8} {signed:>10} {unsecured:>12} {raw:>10} "
+            f"{signed + unsecured + raw:>10}"
         )
 
     print("\nTotals by direction:")
@@ -465,8 +650,15 @@ def analyze_file(path: Path) -> int:
             print(f"    {message_name:<8} {security:<14} {count}")
 
     print("\nNotes:")
-    print("  signedData means an IEEE 1609.2 signed envelope was detected.")
-    print("  unsecuredData means an IEEE 1609.2 unsecured envelope was detected.")
+    print("  signedData means an IEEE 1609.2 signed envelope was detected on the wire,")
+    print("  EXCEPT for Commsignia Tx Request packets, where it means the host's")
+    print("  Signature= field declared it should be signed before transmission -")
+    print("  there's no envelope on that channel yet to detect, since the OBU applies")
+    print("  security only once it actually broadcasts the message.")
+    print("  unsecuredData means an IEEE 1609.2 unsecured envelope was detected")
+    print("  (or, for Tx Requests, that Signature=False was declared).")
+    print("  raw means the message was found with no envelope or protocol wrapper at")
+    print("  all (e.g. MQTT-delivered messages), so no security posture is knowable.")
     print("  Signatures are not cryptographically validated.")
     print("  Ethernet PCAP direction may appear as 'unknown' because classic")
     print("  Ethernet captures do not always store packet direction.")
