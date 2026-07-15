@@ -1,0 +1,46 @@
+# Files to be ignored by the Docker context
+# Any files mentioned here will not trigger Docker to force an image reuild
+# if they change
+
+.cache
+
+**/*.class
+*.bak
+logs
+.project
+.classpath
+.settings
+gradle.properties
+.gradle
+*~
+myClock.bin
+/*.tar.gz
+*.class
+**/bin
+
+# ignore build directories
+**/build
+**/target
+**/devel
+
+# ignore Intellij project files and dirs
+*.ipr
+*.iws
+*.iml
+.idea
+/src/ruby/*
+!/src/ruby/*.rb
+
+# Ignore root level CMakeLists.txt
+/CMakeLists.txt
+
+# Ignore Guidance auto-generate VersionID files
+carma/guidance/src/main/resources/version
+carma/guidance/out/**
+carma/route/out/**
+
+# Ignore sensitive data files and directories
+srx_can_driver
+srx_objects
+truck_can_driver
+**/J2735_201603.asn1
