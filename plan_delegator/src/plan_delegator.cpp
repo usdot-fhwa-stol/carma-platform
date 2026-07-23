@@ -15,6 +15,7 @@
  */
 
 #include <stdexcept>
+#include <unordered_set>
 #include <carma_wm/Geometry.hpp>
 #include "plan_delegator.hpp"
 
@@ -264,46 +265,83 @@ namespace plan_delegator
         lanelet::ConstLanelet starting_lanelet = wm_->getMap()->laneletLayer.get(std::stoi(lane_change_maneuver.lane_change_maneuver.starting_lane_id));
         lanelet::ConstLanelet ending_lanelet = wm_->getMap()->laneletLayer.get(std::stoi(lane_change_maneuver.lane_change_maneuver.ending_lane_id));
 
-        // Determine if lane change is a left or right lane change and update lane_change_information accordingly
-        bool shared_boundary_found = false;
+        // Determine if lane change is a left or right lane change and update lane_change_information accordingly.
+        // This function runs directly inside the final_maneuver_plan subscription callback (once per received
+        // plan), so it must never throw here: an uncaught exception in a subscription callback can crash this
+        // node outright. Previously it did throw whenever the walk from starting_lanelet to a shared boundary
+        // with ending_lanelet hit a lanelet with no routable successor -- which happens whenever an intervening
+        // lanelet is closed (e.g. by a TCM) or simply missing adjacency data in the map. Below, that same walk
+        // is attempted first since it is exact when it works, but any inability to complete it (no following
+        // lanelet, a routing loop) now falls through to a purely geometric left/right estimate instead of
+        // failing, so a lane change is always reported instead of crashing.
+        boost::optional<bool> is_right_lane_change;
 
-        lanelet::ConstLanelet current_lanelet = starting_lanelet;
+        if(starting_lanelet.leftBound() == ending_lanelet.rightBound()){
+            RCLCPP_DEBUG_STREAM(rclcpp::get_logger("plan_delegator"), "Lanelet " << std::to_string(starting_lanelet.id()) << " shares left boundary with " << std::to_string(ending_lanelet.id()));
+            is_right_lane_change = false;
+        }
+        else if(starting_lanelet.rightBound() == ending_lanelet.leftBound()){
+            RCLCPP_DEBUG_STREAM(rclcpp::get_logger("plan_delegator"), "Lanelet " << std::to_string(starting_lanelet.id()) << " shares right boundary with " << std::to_string(ending_lanelet.id()));
+            is_right_lane_change = true;
+        }
+        else
+        {
+            RCLCPP_DEBUG_STREAM(rclcpp::get_logger("plan_delegator"), "Searching for shared boundary with starting lanechange lanelet " << std::to_string(starting_lanelet.id()) << " and ending lanelet " << std::to_string(ending_lanelet.id()));
+            lanelet::ConstLanelet current_lanelet = starting_lanelet;
+            std::unordered_set<lanelet::Id> visited{current_lanelet.id()};
 
-        RCLCPP_DEBUG_STREAM(rclcpp::get_logger("plan_delegator"), "Searching for shared boundary with starting lanechange lanelet " << std::to_string(current_lanelet.id()) << " and ending lanelet " << std::to_string(ending_lanelet.id()));
-        while(!shared_boundary_found){
-            // Assumption: Adjacent lanelets share lane boundary
-
-            if(current_lanelet.leftBound() == ending_lanelet.rightBound()){
-                // If current lanelet's left lane boundary matches the ending lanelet's right lane boundary, it is a left lane change
-                RCLCPP_DEBUG_STREAM(rclcpp::get_logger("plan_delegator"), "Lanelet " << std::to_string(current_lanelet.id()) << " shares left boundary with " << std::to_string(ending_lanelet.id()));
-                lane_change_information.is_right_lane_change = false;
-                shared_boundary_found = true;
-            }
-            else if(current_lanelet.rightBound() == ending_lanelet.leftBound()){
-                // If current lanelet's right lane boundary matches the ending lanelet's left lane boundary, it is a right lane change
-                RCLCPP_DEBUG_STREAM(rclcpp::get_logger("plan_delegator"), "Lanelet " << std::to_string(current_lanelet.id()) << " shares right boundary with " << std::to_string(ending_lanelet.id()));
-                lane_change_information.is_right_lane_change = true;
-                shared_boundary_found = true;
-            }
-            else{
-                // If there are no following lanelets on route, lanechange should be completing before reaching it
-                if(wm_->getMapRoutingGraph()->following(current_lanelet, false).empty())
+            while(!is_right_lane_change){
+                // Assumption: Adjacent lanelets share lane boundary
+                auto following_lanelets = wm_->getMapRoutingGraph()->following(current_lanelet, false);
+                if(following_lanelets.empty())
                 {
-                    // Maneuver requires we travel further before completing lane change, but there is no routable lanelet directly ahead;
-                    // in this case we have reached a lanelet which does not have a routable lanelet ahead and isn't adjacent to the lanelet where lane change ends.
-                    // A lane change should have already happened at this point
-                    throw(std::invalid_argument("No following lanelets from current lanelet reachable without a lane change, incorrectly chosen end lanelet"));
+                    RCLCPP_WARN_STREAM(rclcpp::get_logger("plan_delegator"), "No following lanelets from lanelet " << current_lanelet.id()
+                        << " reachable without a lane change (possibly closed or missing from the map); "
+                        << "falling back to a geometric left/right estimate for lane change from "
+                        << starting_lanelet.id() << " to " << ending_lanelet.id());
+                    break;
                 }
 
-                current_lanelet = wm_->getMapRoutingGraph()->following(current_lanelet, false).front();
-                if(current_lanelet.id() == starting_lanelet.id()){
-                    //Looped back to starting lanelet
-                    throw(std::invalid_argument("No lane change in path"));
+                current_lanelet = following_lanelets.front();
+                if(visited.count(current_lanelet.id())){
+                    RCLCPP_WARN_STREAM(rclcpp::get_logger("plan_delegator"), "Detected a routing loop while searching for a shared boundary between lanelet "
+                        << starting_lanelet.id() << " and " << ending_lanelet.id() << "; falling back to a geometric left/right estimate");
+                    break;
                 }
+                visited.insert(current_lanelet.id());
+
                 RCLCPP_DEBUG_STREAM(rclcpp::get_logger("plan_delegator"), "Now checking for shared lane boundary with lanelet " << std::to_string(current_lanelet.id()) << " and ending lanelet " << std::to_string(ending_lanelet.id()));
+                if(current_lanelet.leftBound() == ending_lanelet.rightBound()){
+                    RCLCPP_DEBUG_STREAM(rclcpp::get_logger("plan_delegator"), "Lanelet " << std::to_string(current_lanelet.id()) << " shares left boundary with " << std::to_string(ending_lanelet.id()));
+                    is_right_lane_change = false;
+                }
+                else if(current_lanelet.rightBound() == ending_lanelet.leftBound()){
+                    RCLCPP_DEBUG_STREAM(rclcpp::get_logger("plan_delegator"), "Lanelet " << std::to_string(current_lanelet.id()) << " shares right boundary with " << std::to_string(ending_lanelet.id()));
+                    is_right_lane_change = true;
+                }
             }
         }
 
+        if(!is_right_lane_change)
+        {
+            // Could not confirm a shared boundary via routing (e.g. an intervening lanelet was closed or missing
+            // from the map). Fall back to pure geometry: which side of the starting lanelet's heading does the
+            // ending lanelet fall on? This only needs the two lanelets' own centerlines, so it works even when
+            // they are otherwise disconnected in the routing graph.
+            lanelet::BasicLineString2d starting_centerline = starting_lanelet.centerline2d().basicLineString();
+            lanelet::BasicPoint2d start_pt = starting_centerline.front();
+            lanelet::BasicPoint2d heading_vec = starting_centerline.back() - start_pt;
+            lanelet::BasicPoint2d to_target = ending_lanelet.centerline2d().basicLineString().front() - start_pt;
+            double cross = heading_vec.x() * to_target.y() - heading_vec.y() * to_target.x();
+
+            RCLCPP_WARN_STREAM(rclcpp::get_logger("plan_delegator"), "Could not find a shared lane boundary between starting lanelet "
+                << starting_lanelet.id() << " and ending lanelet " << ending_lanelet.id()
+                << "; estimating lane change direction geometrically instead.");
+
+            is_right_lane_change = (cross < 0.0);
+        }
+
+        lane_change_information.is_right_lane_change = is_right_lane_change.get();
         return lane_change_information;
     }
 
