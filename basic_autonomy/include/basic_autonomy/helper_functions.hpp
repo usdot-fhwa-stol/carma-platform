@@ -111,5 +111,53 @@ namespace waypoint_generation
     int get_nearest_index_by_downtrack(const std::vector<lanelet::BasicPoint2d>& points, const carma_wm::WorldModelConstPtr& wm,
                                       const carma_planning_msgs::msg::VehicleState& state);
 
+    /**
+     * \brief Builds a centerline covering [pivot - backward_length, pivot + forward_length] by walking the
+     * pivot lanelet's own predecessor/successor chain in the routing graph.
+     *
+     * This deliberately avoids any left()/right()/adjacentLeft()/adjacentRight() lookups: those depend on
+     * lane-adjacency data being recorded for every lanelet visited, which can be missing or stripped for
+     * lanelets that a TrafficControlMessage has closed, or that simply were never linked in the source map.
+     * previous()/following() only require that the lanelet be routable, which is a much weaker and more
+     * commonly-satisfied requirement, so building each lane's geometry independently from its own chain
+     * (rather than by asking "what's next to lanelet X" for every lanelet in the other lane) is robust to
+     * those gaps.
+     *
+     * If the routing graph runs out of connected lanelets before reaching the requested length (e.g. a
+     * closed lanelet blocks further routing), this logs a warning and returns whatever centerline was
+     * actually reachable instead of throwing -- the caller is responsible for padding the result out if a
+     * minimum length is required (see extrapolate_to_length below).
+     *
+     * \param wm The carma world model, used to query the map's routing graph
+     * \param pivot The lanelet to build the centerline outward from
+     * \param backward_length The minimum distance the returned centerline must cover behind the start of pivot,
+     *                        gathered by walking pivot's predecessor chain
+     * \param forward_length The minimum distance the returned centerline must cover beyond the end of pivot,
+     *                       gathered by walking pivot's successor chain
+     *
+     * \return The concatenated 2d centerline points of pivot and however many predecessor/successor lanelets
+     *         were needed (and reachable) to satisfy backward_length and forward_length
+     */
+    std::vector<lanelet::BasicPoint2d> build_chain_centerline(const carma_wm::WorldModelConstPtr &wm,
+                                                               lanelet::ConstLanelet pivot,
+                                                               double backward_length,
+                                                               double forward_length);
+
+    /**
+     * \brief Pads a centerline out to target_length by extrapolating a straight line from its last known
+     * heading, if map connectivity could not supply enough real geometry (e.g. because a lanelet the lane
+     * change needed was closed or missing from the map).
+     *
+     * This is a last-resort fallback so that lane change trajectory generation always produces a usable
+     * result rather than throwing when the map has a gap -- the extrapolated portion is only a straight-line
+     * approximation, but it lets the rest of the system (and, most importantly, the vehicle) keep moving
+     * instead of hitting an uncaught exception that stalls trajectory planning entirely.
+     *
+     * \param centerline The centerline to pad, in place, if it falls short of target_length
+     * \param target_length The minimum 2d arc length centerline must cover after this call
+     * \param description A human-readable description of what centerline represents, used in log/exception messages
+     */
+    void extrapolate_to_length(std::vector<lanelet::BasicPoint2d>& centerline, double target_length, const std::string& description);
+
 }
 }
