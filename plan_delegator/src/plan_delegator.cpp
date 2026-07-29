@@ -293,21 +293,28 @@ namespace plan_delegator
             while(!is_right_lane_change){
                 // Assumption: Adjacent lanelets share lane boundary
                 auto following_lanelets = wm_->getMapRoutingGraph()->following(current_lanelet, false);
-                if(following_lanelets.empty())
+                bool no_successor = following_lanelets.empty();
+                lanelet::ConstLanelet candidate_lanelet = no_successor ? current_lanelet : following_lanelets.front();
+                bool loop_detected = !no_successor && visited.count(candidate_lanelet.id()) > 0;
+
+                if(no_successor || loop_detected)
                 {
-                    RCLCPP_WARN_STREAM(rclcpp::get_logger("plan_delegator"), "No following lanelets from lanelet " << current_lanelet.id()
-                        << " reachable without a lane change (possibly closed or missing from the map); "
-                        << "falling back to a geometric left/right estimate for lane change from "
-                        << starting_lanelet.id() << " to " << ending_lanelet.id());
+                    if(no_successor)
+                    {
+                        RCLCPP_WARN_STREAM(rclcpp::get_logger("plan_delegator"), "No following lanelets from lanelet " << current_lanelet.id()
+                            << " reachable without a lane change (possibly closed or missing from the map); "
+                            << "falling back to a geometric left/right estimate for lane change from "
+                            << starting_lanelet.id() << " to " << ending_lanelet.id());
+                    }
+                    else
+                    {
+                        RCLCPP_WARN_STREAM(rclcpp::get_logger("plan_delegator"), "Detected a routing loop while searching for a shared boundary between lanelet "
+                            << starting_lanelet.id() << " and " << ending_lanelet.id() << "; falling back to a geometric left/right estimate");
+                    }
                     break;
                 }
 
-                current_lanelet = following_lanelets.front();
-                if(visited.count(current_lanelet.id())){
-                    RCLCPP_WARN_STREAM(rclcpp::get_logger("plan_delegator"), "Detected a routing loop while searching for a shared boundary between lanelet "
-                        << starting_lanelet.id() << " and " << ending_lanelet.id() << "; falling back to a geometric left/right estimate");
-                    break;
-                }
+                current_lanelet = candidate_lanelet;
                 visited.insert(current_lanelet.id());
 
                 RCLCPP_DEBUG_STREAM(rclcpp::get_logger("plan_delegator"), "Now checking for shared lane boundary with lanelet " << std::to_string(current_lanelet.id()) << " and ending lanelet " << std::to_string(ending_lanelet.id()));

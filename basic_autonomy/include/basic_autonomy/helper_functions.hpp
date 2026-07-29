@@ -130,7 +130,7 @@ namespace waypoint_generation
      *
      * \param wm The carma world model, used to query the map's routing graph
      * \param pivot The lanelet to build the centerline outward from
-     * \param backward_length The minimum distance the returned centerline must cover behind the start of pivot,
+     * \param backward_length The minimum distance the returned centerline must cover behind the end of pivot,
      *                        gathered by walking pivot's predecessor chain
      * \param forward_length The minimum distance the returned centerline must cover beyond the end of pivot,
      *                       gathered by walking pivot's successor chain

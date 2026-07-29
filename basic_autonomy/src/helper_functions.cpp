@@ -156,22 +156,28 @@ namespace waypoint_generation
         while (covered_back < backward_length)
         {
             auto previous = wm->getMapRoutingGraph()->previous(chain.front(), false);
-            if (previous.empty())
+            bool no_predecessor = previous.empty();
+            bool loop_detected = !no_predecessor && visited.count(previous.front().id()) > 0;
+
+            if (no_predecessor || loop_detected)
             {
-                RCLCPP_WARN_STREAM(rclcpp::get_logger(BASIC_AUTONOMY_LOGGER),
-                    "create_lanechange_geometry: No routable predecessor lanelet found before lanelet "
-                    << chain.front().id() << " (possibly closed or missing from the map). Using the "
-                    << covered_back << "m of centerline that was reachable going backward.");
+                if (no_predecessor)
+                {
+                    RCLCPP_WARN_STREAM(rclcpp::get_logger(BASIC_AUTONOMY_LOGGER),
+                        "create_lanechange_geometry: No routable predecessor lanelet found before lanelet "
+                        << chain.front().id() << " (possibly closed or missing from the map). Using the "
+                        << covered_back << "m of centerline that was reachable going backward.");
+                }
+                else
+                {
+                    RCLCPP_WARN_STREAM(rclcpp::get_logger(BASIC_AUTONOMY_LOGGER),
+                        "create_lanechange_geometry: Detected a loop in lanelet connectivity before lanelet "
+                        << chain.front().id() << "; stopping centerline extension.");
+                }
                 break;
             }
+
             lanelet::ConstLanelet prev = previous.front();
-            if (visited.count(prev.id()))
-            {
-                RCLCPP_WARN_STREAM(rclcpp::get_logger(BASIC_AUTONOMY_LOGGER),
-                    "create_lanechange_geometry: Detected a loop in lanelet connectivity before lanelet "
-                    << chain.front().id() << "; stopping centerline extension.");
-                break;
-            }
             visited.insert(prev.id());
             covered_back += carma_wm::geometry::get_lanelet_centerline_length(prev);
             chain.insert(chain.begin(), prev);
@@ -181,22 +187,28 @@ namespace waypoint_generation
         while (covered_fwd < forward_length)
         {
             auto following = wm->getMapRoutingGraph()->following(chain.back(), false);
-            if (following.empty())
+            bool no_successor = following.empty();
+            bool loop_detected = !no_successor && visited.count(following.front().id()) > 0;
+
+            if (no_successor || loop_detected)
             {
-                RCLCPP_WARN_STREAM(rclcpp::get_logger(BASIC_AUTONOMY_LOGGER),
-                    "create_lanechange_geometry: No routable successor lanelet found after lanelet "
-                    << chain.back().id() << " (possibly closed or missing from the map). Using the "
-                    << covered_fwd << "m of centerline that was reachable going forward.");
+                if (no_successor)
+                {
+                    RCLCPP_WARN_STREAM(rclcpp::get_logger(BASIC_AUTONOMY_LOGGER),
+                        "create_lanechange_geometry: No routable successor lanelet found after lanelet "
+                        << chain.back().id() << " (possibly closed or missing from the map). Using the "
+                        << covered_fwd << "m of centerline that was reachable going forward.");
+                }
+                else
+                {
+                    RCLCPP_WARN_STREAM(rclcpp::get_logger(BASIC_AUTONOMY_LOGGER),
+                        "create_lanechange_geometry: Detected a loop in lanelet connectivity after lanelet "
+                        << chain.back().id() << "; stopping centerline extension.");
+                }
                 break;
             }
+
             lanelet::ConstLanelet next = following.front();
-            if (visited.count(next.id()))
-            {
-                RCLCPP_WARN_STREAM(rclcpp::get_logger(BASIC_AUTONOMY_LOGGER),
-                    "create_lanechange_geometry: Detected a loop in lanelet connectivity after lanelet "
-                    << chain.back().id() << "; stopping centerline extension.");
-                break;
-            }
             visited.insert(next.id());
             covered_fwd += carma_wm::geometry::get_lanelet_centerline_length(next);
             chain.push_back(next);
@@ -251,9 +263,9 @@ namespace waypoint_generation
 
         constexpr double step = 1.0; // meters between synthetic points, similar to typical map point spacing
         double remaining = target_length - current_length;
-        for (double d = step; d < remaining; d += step)
+        for (int step_count = 1; step_count * step < remaining; ++step_count)
         {
-            centerline.push_back(last + direction * d);
+            centerline.push_back(last + direction * (step_count * step));
         }
         centerline.push_back(last + direction * remaining); // ensure the full requested length is covered
     }

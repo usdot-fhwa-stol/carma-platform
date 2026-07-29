@@ -330,6 +330,8 @@ namespace basic_autonomy
             // Build the starting-lane (reference) and ending-lane (target) centerlines independently, each from its
             // own lanelet's predecessor/successor chain. See build_chain_centerline's doc comment for why this is
             // done instead of looking up "the lanelet adjacent to X" for every lanelet along the starting lane path.
+            // NOTE: starting_lanelet may NOT be the lanechange lanelets in the route, but could be
+            // little before due to accounting for front bumper in plan_delegator.
             std::vector<lanelet::BasicPoint2d> reference_centerline =
                 build_chain_centerline(wm, starting_lanelet, 0.0, lane_change_length + buffer_ending_downtrack);
             std::vector<lanelet::BasicPoint2d> target_lane_centerline =
@@ -375,7 +377,6 @@ namespace basic_autonomy
                 auto centerlines = resample_linestring_pair_to_same_size(constrained_start_centerline, constrained_target_centerline);
                 constrained_start_centerline = centerlines[0];
                 constrained_target_centerline = centerlines[1];
-
             }
 
             //Create Trajectory geometry
