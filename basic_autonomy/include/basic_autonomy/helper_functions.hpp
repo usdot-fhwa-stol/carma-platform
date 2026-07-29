@@ -112,7 +112,7 @@ namespace waypoint_generation
                                       const carma_planning_msgs::msg::VehicleState& state);
 
     /**
-     * \brief Builds a centerline covering [pivot - backward_length, pivot + forward_length] by walking the
+     * \brief Builds a centerline covering [pivot_end_point - backward_length, pivot_end_point + forward_length] by walking the
      * pivot lanelet's own predecessor/successor chain in the routing graph.
      *
      * This deliberately avoids any left()/right()/adjacentLeft()/adjacentRight() lookups: those depend on
