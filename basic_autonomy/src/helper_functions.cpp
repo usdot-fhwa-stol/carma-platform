@@ -159,21 +159,23 @@ namespace waypoint_generation
             bool no_predecessor = previous.empty();
             bool loop_detected = !no_predecessor && visited.count(previous.front().id()) > 0;
 
+            if (no_predecessor)
+            {
+                RCLCPP_WARN_STREAM(rclcpp::get_logger(BASIC_AUTONOMY_LOGGER),
+                    "create_lanechange_geometry: No routable predecessor lanelet found before lanelet "
+                    << chain.front().id() << " (possibly closed or missing from the map). Using the "
+                    << covered_back << "m of centerline that was reachable going backward.");
+            }
+
+            if (loop_detected)
+            {
+                RCLCPP_WARN_STREAM(rclcpp::get_logger(BASIC_AUTONOMY_LOGGER),
+                    "create_lanechange_geometry: Detected a loop in lanelet connectivity before lanelet "
+                    << chain.front().id() << "; stopping centerline extension.");
+            }
+
             if (no_predecessor || loop_detected)
             {
-                if (no_predecessor)
-                {
-                    RCLCPP_WARN_STREAM(rclcpp::get_logger(BASIC_AUTONOMY_LOGGER),
-                        "create_lanechange_geometry: No routable predecessor lanelet found before lanelet "
-                        << chain.front().id() << " (possibly closed or missing from the map). Using the "
-                        << covered_back << "m of centerline that was reachable going backward.");
-                }
-                else
-                {
-                    RCLCPP_WARN_STREAM(rclcpp::get_logger(BASIC_AUTONOMY_LOGGER),
-                        "create_lanechange_geometry: Detected a loop in lanelet connectivity before lanelet "
-                        << chain.front().id() << "; stopping centerline extension.");
-                }
                 break;
             }
 
@@ -190,21 +192,23 @@ namespace waypoint_generation
             bool no_successor = following.empty();
             bool loop_detected = !no_successor && visited.count(following.front().id()) > 0;
 
+            if (no_successor)
+            {
+                RCLCPP_WARN_STREAM(rclcpp::get_logger(BASIC_AUTONOMY_LOGGER),
+                    "create_lanechange_geometry: No routable successor lanelet found after lanelet "
+                    << chain.back().id() << " (possibly closed or missing from the map). Using the "
+                    << covered_fwd << "m of centerline that was reachable going forward.");
+            }
+
+            if (loop_detected)
+            {
+                RCLCPP_WARN_STREAM(rclcpp::get_logger(BASIC_AUTONOMY_LOGGER),
+                    "create_lanechange_geometry: Detected a loop in lanelet connectivity after lanelet "
+                    << chain.back().id() << "; stopping centerline extension.");
+            }
+
             if (no_successor || loop_detected)
             {
-                if (no_successor)
-                {
-                    RCLCPP_WARN_STREAM(rclcpp::get_logger(BASIC_AUTONOMY_LOGGER),
-                        "create_lanechange_geometry: No routable successor lanelet found after lanelet "
-                        << chain.back().id() << " (possibly closed or missing from the map). Using the "
-                        << covered_fwd << "m of centerline that was reachable going forward.");
-                }
-                else
-                {
-                    RCLCPP_WARN_STREAM(rclcpp::get_logger(BASIC_AUTONOMY_LOGGER),
-                        "create_lanechange_geometry: Detected a loop in lanelet connectivity after lanelet "
-                        << chain.back().id() << "; stopping centerline extension.");
-                }
                 break;
             }
 
