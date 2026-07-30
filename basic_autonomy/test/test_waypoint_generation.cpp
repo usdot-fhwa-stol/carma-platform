@@ -1154,6 +1154,285 @@ namespace basic_autonomy
         }
     }
 
+    struct LoopedLaneletMapIds
+    {
+        lanelet::Id lanelet_1_id;
+        lanelet::Id lanelet_2_id;
+    };
+
+    // Builds two lanelets that are each other's previous() and following() lanelet (l2's bound
+    // linestrings share the same Point3d objects as l1's, just traversed in reverse), forming a
+    // 2-node routing loop. Used to verify build_chain_centerline's loop detection terminates
+    // instead of walking the cycle forever.
+    lanelet::LaneletMapPtr build_looped_two_lanelet_map(LoopedLaneletMapIds& ids, double width = 3.7, double length = 10.0)
+    {
+        auto p_start_left = carma_wm::test::getPoint(0.0, 0.0, 0.0);
+        auto p_start_right = carma_wm::test::getPoint(width, 0.0, 0.0);
+        auto p_end_left = carma_wm::test::getPoint(0.0, length, 0.0);
+        auto p_end_right = carma_wm::test::getPoint(width, length, 0.0);
+
+        lanelet::LineString3d l1_left(lanelet::utils::getId(), {p_start_left, p_end_left});
+        lanelet::LineString3d l1_right(lanelet::utils::getId(), {p_start_right, p_end_right});
+        lanelet::Lanelet l1 = carma_wm::test::getLanelet(l1_left, l1_right);
+
+        lanelet::LineString3d l2_left(lanelet::utils::getId(), {p_end_left, p_start_left});
+        lanelet::LineString3d l2_right(lanelet::utils::getId(), {p_end_right, p_start_right});
+        lanelet::Lanelet l2 = carma_wm::test::getLanelet(l2_left, l2_right);
+
+        ids.lanelet_1_id = l1.id();
+        ids.lanelet_2_id = l2.id();
+
+        lanelet::LaneletMapPtr map = lanelet::utils::createMap({l1, l2}, {});
+        using namespace lanelet::units::literals;
+        lanelet::MapConformer::ensureCompliance(map, 0_mph);
+        return map;
+    }
+
+    struct UnlinkedTwoLaneMapIds
+    {
+        lanelet::Id lane_a_seg1_id;
+        lanelet::Id lane_a_seg2_id;
+        lanelet::Id lane_b_seg1_id;
+        lanelet::Id lane_b_seg2_id;
+    };
+
+    // Builds two parallel, 2-segment lanes (A: a1->a2, B: b1->b2). Each lane is internally
+    // routable (consecutive segments share the same boundary Point3d objects), but the two lanes'
+    // facing boundaries are built from distinct (if geometrically coincident) Point3d/LineString3d
+    // objects -- i.e. they were never linked in the source map. This means the routing graph will
+    // not report the lanes as adjacent (left()/right()/adjacentLeft()/adjacentRight() all return
+    // none), even though previous()/following() work fine within each lane.
+    lanelet::LaneletMapPtr build_unlinked_two_lane_map(UnlinkedTwoLaneMapIds& ids, double width = 3.7, double seg_length = 10.0)
+    {
+        auto a_left_0 = carma_wm::test::getPoint(0.0, 0.0, 0.0);
+        auto a_left_mid = carma_wm::test::getPoint(0.0, seg_length, 0.0);
+        auto a_left_end = carma_wm::test::getPoint(0.0, 2 * seg_length, 0.0);
+
+        auto a_right_0 = carma_wm::test::getPoint(width, 0.0, 0.0);
+        auto a_right_mid = carma_wm::test::getPoint(width, seg_length, 0.0);
+        auto a_right_end = carma_wm::test::getPoint(width, 2 * seg_length, 0.0);
+
+        // Same coordinates as a_right_*, but distinct Point3d objects -- this is what breaks
+        // lateral adjacency detection between lane A and lane B.
+        auto b_left_0 = carma_wm::test::getPoint(width, 0.0, 0.0);
+        auto b_left_mid = carma_wm::test::getPoint(width, seg_length, 0.0);
+        auto b_left_end = carma_wm::test::getPoint(width, 2 * seg_length, 0.0);
+
+        auto b_right_0 = carma_wm::test::getPoint(2 * width, 0.0, 0.0);
+        auto b_right_mid = carma_wm::test::getPoint(2 * width, seg_length, 0.0);
+        auto b_right_end = carma_wm::test::getPoint(2 * width, 2 * seg_length, 0.0);
+
+        lanelet::LineString3d a_left_1(lanelet::utils::getId(), {a_left_0, a_left_mid});
+        lanelet::LineString3d a_left_2(lanelet::utils::getId(), {a_left_mid, a_left_end});
+        lanelet::LineString3d a_right_1(lanelet::utils::getId(), {a_right_0, a_right_mid});
+        lanelet::LineString3d a_right_2(lanelet::utils::getId(), {a_right_mid, a_right_end});
+
+        lanelet::LineString3d b_left_1(lanelet::utils::getId(), {b_left_0, b_left_mid});
+        lanelet::LineString3d b_left_2(lanelet::utils::getId(), {b_left_mid, b_left_end});
+        lanelet::LineString3d b_right_1(lanelet::utils::getId(), {b_right_0, b_right_mid});
+        lanelet::LineString3d b_right_2(lanelet::utils::getId(), {b_right_mid, b_right_end});
+
+        lanelet::Lanelet a1 = carma_wm::test::getLanelet(a_left_1, a_right_1);
+        lanelet::Lanelet a2 = carma_wm::test::getLanelet(a_left_2, a_right_2);
+        lanelet::Lanelet b1 = carma_wm::test::getLanelet(b_left_1, b_right_1);
+        lanelet::Lanelet b2 = carma_wm::test::getLanelet(b_left_2, b_right_2);
+
+        ids.lane_a_seg1_id = a1.id();
+        ids.lane_a_seg2_id = a2.id();
+        ids.lane_b_seg1_id = b1.id();
+        ids.lane_b_seg2_id = b2.id();
+
+        lanelet::LaneletMapPtr map = lanelet::utils::createMap({a1, a2, b1, b2}, {});
+        using namespace lanelet::units::literals;
+        lanelet::MapConformer::ensureCompliance(map, 0_mph);
+        return map;
+    }
+
+    TEST(BasicAutonomyTest, build_chain_centerline_within_pivot_no_predecessor_needed)
+    {
+        std::shared_ptr<carma_wm::CARMAWorldModel> wm = std::make_shared<carma_wm::CARMAWorldModel>();
+        auto map = carma_wm::test::buildGuidanceTestMap(3.7, 10.0);
+        wm->setMap(map);
+
+        lanelet::ConstLanelet pivot = map->laneletLayer.get(1201);
+
+        // backward_length is smaller than pivot's own length, so no predecessor should be fetched
+        auto centerline = waypoint_generation::build_chain_centerline(wm, pivot, 5.0, 0.0);
+
+        // A single simple 2-point-boundary lanelet's centerline() has 3 points (not 2)
+        ASSERT_EQ(3, centerline.size());
+        EXPECT_NEAR(10.0, carma_wm::geometry::compute_arc_lengths(centerline).back(), 0.0001);
+    }
+
+    TEST(BasicAutonomyTest, build_chain_centerline_backward_walks_predecessors)
+    {
+        std::shared_ptr<carma_wm::CARMAWorldModel> wm = std::make_shared<carma_wm::CARMAWorldModel>();
+        auto map = carma_wm::test::buildGuidanceTestMap(3.7, 10.0);
+        wm->setMap(map);
+
+        lanelet::ConstLanelet pivot = map->laneletLayer.get(1202);
+
+        // backward_length exceeds pivot's own length (10m), so one predecessor (1201) must be fetched
+        auto centerline = waypoint_generation::build_chain_centerline(wm, pivot, 15.0, 0.0);
+
+        // Each simple lanelet contributes 3 centerline points, minus 1 shared point per join: 2*2+1=5
+        ASSERT_EQ(5, centerline.size());
+        EXPECT_NEAR(20.0, carma_wm::geometry::compute_arc_lengths(centerline).back(), 0.0001);
+    }
+
+    TEST(BasicAutonomyTest, build_chain_centerline_forward_walks_successors)
+    {
+        std::shared_ptr<carma_wm::CARMAWorldModel> wm = std::make_shared<carma_wm::CARMAWorldModel>();
+        auto map = carma_wm::test::buildGuidanceTestMap(3.7, 10.0);
+        wm->setMap(map);
+
+        lanelet::ConstLanelet pivot = map->laneletLayer.get(1201);
+
+        // forward_length exceeds one successor's length (10m), so two successors (1202, 1203) must be fetched
+        auto centerline = waypoint_generation::build_chain_centerline(wm, pivot, 0.0, 15.0);
+
+        // 3 lanelets' centerlines joined: 2*3+1=7
+        ASSERT_EQ(7, centerline.size());
+        EXPECT_NEAR(30.0, carma_wm::geometry::compute_arc_lengths(centerline).back(), 0.0001);
+    }
+
+    TEST(BasicAutonomyTest, build_chain_centerline_stops_when_routing_graph_exhausted)
+    {
+        std::shared_ptr<carma_wm::CARMAWorldModel> wm = std::make_shared<carma_wm::CARMAWorldModel>();
+        auto map = carma_wm::test::buildGuidanceTestMap(3.7, 10.0);
+        wm->setMap(map);
+
+        // 1203 is the last lanelet in its lane -- there is no routable successor beyond it
+        lanelet::ConstLanelet last_lanelet = map->laneletLayer.get(1203);
+        std::vector<lanelet::BasicPoint2d> forward_centerline;
+        ASSERT_NO_THROW(forward_centerline = waypoint_generation::build_chain_centerline(wm, last_lanelet, 0.0, 1000.0));
+        ASSERT_EQ(3, forward_centerline.size());
+        EXPECT_LT(carma_wm::geometry::compute_arc_lengths(forward_centerline).back(), 1000.0);
+
+        // 1200 is the first lanelet in its lane -- there is no routable predecessor before it
+        lanelet::ConstLanelet first_lanelet = map->laneletLayer.get(1200);
+        std::vector<lanelet::BasicPoint2d> backward_centerline;
+        ASSERT_NO_THROW(backward_centerline = waypoint_generation::build_chain_centerline(wm, first_lanelet, 1000.0, 0.0));
+        ASSERT_EQ(3, backward_centerline.size());
+        EXPECT_LT(carma_wm::geometry::compute_arc_lengths(backward_centerline).back(), 1000.0);
+    }
+
+    TEST(BasicAutonomyTest, build_chain_centerline_detects_routing_loop)
+    {
+        std::shared_ptr<carma_wm::CARMAWorldModel> wm = std::make_shared<carma_wm::CARMAWorldModel>();
+        LoopedLaneletMapIds ids;
+        auto map = build_looped_two_lanelet_map(ids);
+        wm->setMap(map);
+
+        lanelet::ConstLanelet pivot = map->laneletLayer.get(ids.lanelet_1_id);
+
+        // Both requested lengths are far larger than the 2-lanelet loop can ever satisfy (20m total);
+        // without loop detection this would spin forever. Only the other lanelet in the loop should
+        // ever be added before the loop is detected and the walk stops.
+        std::vector<lanelet::BasicPoint2d> backward_centerline;
+        ASSERT_NO_THROW(backward_centerline = waypoint_generation::build_chain_centerline(wm, pivot, 1000.0, 0.0));
+        // Only l1 and l2's own centerline points should be present -- nowhere near the 1000m requested
+        EXPECT_LT(backward_centerline.size(), 10u);
+        EXPECT_NEAR(20.0, carma_wm::geometry::compute_arc_lengths(backward_centerline).back(), 0.0001);
+
+        std::vector<lanelet::BasicPoint2d> forward_centerline;
+        ASSERT_NO_THROW(forward_centerline = waypoint_generation::build_chain_centerline(wm, pivot, 0.0, 1000.0));
+        EXPECT_LT(forward_centerline.size(), 10u);
+        EXPECT_NEAR(20.0, carma_wm::geometry::compute_arc_lengths(forward_centerline).back(), 0.0001);
+    }
+
+    TEST(BasicAutonomyTest, extrapolate_to_length_no_op_when_already_long_enough)
+    {
+        std::vector<lanelet::BasicPoint2d> centerline = {
+            lanelet::BasicPoint2d(0.0, 0.0),
+            lanelet::BasicPoint2d(10.0, 0.0)
+        };
+
+        waypoint_generation::extrapolate_to_length(centerline, 5.0, "test centerline");
+
+        ASSERT_EQ(2, centerline.size());
+        EXPECT_NEAR(0.0, centerline[0].x(), 0.0001);
+        EXPECT_NEAR(10.0, centerline[1].x(), 0.0001);
+    }
+
+    TEST(BasicAutonomyTest, extrapolate_to_length_pads_straight_line)
+    {
+        std::vector<lanelet::BasicPoint2d> centerline = {
+            lanelet::BasicPoint2d(0.0, 0.0),
+            lanelet::BasicPoint2d(10.0, 0.0)
+        };
+
+        waypoint_generation::extrapolate_to_length(centerline, 25.0, "test centerline");
+
+        EXPECT_GT(centerline.size(), 2u);
+        EXPECT_NEAR(25.0, carma_wm::geometry::compute_arc_lengths(centerline).back(), 0.0001);
+        EXPECT_NEAR(25.0, centerline.back().x(), 0.0001);
+        EXPECT_NEAR(0.0, centerline.back().y(), 0.0001);
+    }
+
+    TEST(BasicAutonomyTest, extrapolate_to_length_uses_fallback_direction_when_last_segment_degenerate)
+    {
+        // Last two points are identical, so the last-segment heading is degenerate (zero-length);
+        // extrapolate_to_length should fall back to the direction from the first to the last point.
+        std::vector<lanelet::BasicPoint2d> centerline = {
+            lanelet::BasicPoint2d(0.0, 0.0),
+            lanelet::BasicPoint2d(5.0, 5.0),
+            lanelet::BasicPoint2d(5.0, 5.0)
+        };
+
+        waypoint_generation::extrapolate_to_length(centerline, 20.0, "test centerline");
+
+        EXPECT_GT(centerline.size(), 3u);
+        EXPECT_NEAR(20.0, carma_wm::geometry::compute_arc_lengths(centerline).back(), 0.0001);
+        // The appended points should lie along the diagonal from (0,0) to (5,5), i.e. x == y
+        EXPECT_NEAR(centerline.back().x(), centerline.back().y(), 0.0001);
+    }
+
+    TEST(BasicAutonomyTest, extrapolate_to_length_throws_on_too_few_points)
+    {
+        std::vector<lanelet::BasicPoint2d> empty_centerline;
+        EXPECT_THROW(waypoint_generation::extrapolate_to_length(empty_centerline, 10.0, "test centerline"), std::invalid_argument);
+
+        std::vector<lanelet::BasicPoint2d> single_point_centerline = { lanelet::BasicPoint2d(0.0, 0.0) };
+        EXPECT_THROW(waypoint_generation::extrapolate_to_length(single_point_centerline, 10.0, "test centerline"), std::invalid_argument);
+    }
+
+    TEST(BasicAutonomyTest, create_lanechange_geometry_without_lane_adjacency_data)
+    {
+        UnlinkedTwoLaneMapIds ids;
+        auto map = build_unlinked_two_lane_map(ids);
+
+        std::shared_ptr<carma_wm::CARMAWorldModel> cwm = std::make_shared<carma_wm::CARMAWorldModel>();
+        cwm->setMap(map);
+
+        lanelet::ConstLanelet lane_a_seg1 = map->laneletLayer.get(ids.lane_a_seg1_id);
+
+        // Confirm the premise of this test: lane A and lane B were never linked in the source map,
+        // so lanelet2's adjacency-based lookups all report no relation between them.
+        ASSERT_FALSE(cwm->getMapRoutingGraph()->left(lane_a_seg1));
+        ASSERT_FALSE(cwm->getMapRoutingGraph()->right(lane_a_seg1));
+        ASSERT_FALSE(cwm->getMapRoutingGraph()->adjacentLeft(lane_a_seg1));
+        ASSERT_FALSE(cwm->getMapRoutingGraph()->adjacentRight(lane_a_seg1));
+
+        // A route consisting of only lane A's own chain is enough for routeTrackPos to resolve
+        // downtrack values for points in either lane (it snaps to the nearest point on the route's
+        // shortest path centerline), without ever needing a lane-change route through the routing graph.
+        carma_wm::test::setRouteByIds({ids.lane_a_seg1_id, ids.lane_a_seg2_id}, cwm);
+
+        double starting_downtrack = 2.0;
+        double ending_downtrack = 15.0;
+
+        std::vector<lanelet::BasicPoint2d> centerline_points;
+        ASSERT_NO_THROW(centerline_points = waypoint_generation::create_lanechange_geometry(
+            ids.lane_a_seg1_id, ids.lane_b_seg2_id, starting_downtrack, ending_downtrack, cwm, 1, 5.0));
+
+        ASSERT_FALSE(centerline_points.empty());
+        // Trajectory should start near lane A (x close to 0-3.7) ...
+        EXPECT_LT(centerline_points.front().x(), 3.7);
+        // ... and progress toward lane B (x greater than lane A's width) by the end.
+        EXPECT_GT(centerline_points.back().x(), 3.7);
+    }
+
 } // namespace basic_autonomy
 
 // Run all the tests

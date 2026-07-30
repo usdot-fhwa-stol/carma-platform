@@ -301,5 +301,6 @@ namespace plan_delegator
             FRIEND_TEST(TestPlanDelegator, TestLaneChangeInformation);
             FRIEND_TEST(TestPlanDelegator, TestUpcomingLaneChangeAndTurnSignals);
             FRIEND_TEST(TestPlanDelegator, TestUpdateManeuverParameters);
+            FRIEND_TEST(TestPlanDelegator, TestGetLaneChangeInformation);
     };
 }
