@@ -68,7 +68,9 @@ flowchart LR
     end
     subgraph LaneB["Target lane — a closed/missing lanelet blocks further routing"]
         direction LR
-        RB1(("●")) --> RB2(("●")) --> RB3["closed<br/>(e.g. TCM)"] -. "extrapolate_to_length():<br/>straight-line fallback" .-> RB4["extrapolated<br/>(not real map geometry)"] -.-> RB5["extrapolated"]
+        RB1(("●")) --> RB2(("●")) --> RB3["closed (e.g. TCM)"]
+        RB3 -. "extrapolate_to_length(): straight-line fallback" .-> RB4["extrapolated (not real map geometry)"]
+        RB4 -.-> RB5["extrapolated"]
     end
     RA5 -. "blended trajectory is still generated over this full length" .- RB5
 ```
