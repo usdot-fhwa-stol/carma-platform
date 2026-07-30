@@ -32,56 +32,47 @@ If a lane's chain runs out before covering the required length (e.g. a closed or
 blocks further routing), `extrapolate_to_length` pads the centerline with a straight-line
 extrapolation instead of throwing, so trajectory generation always produces a usable result.
 
-```mermaid
-flowchart LR
-    subgraph LaneA["Reference lane — starting_lanelet's own previous()/following() chain"]
-        direction LR
-        A1(("A1")) --> A2(("A2")) --> A3(["A3 = starting_lanelet (pivot)"]) --> A4(("A4")) --> A5(("A5"))
-    end
-    subgraph LaneB["Target lane — ending_lanelet's own previous()/following() chain"]
-        direction LR
-        B1(("B1")) --> B2(("B2")) --> B3(["B3 = ending_lanelet (pivot)"]) --> B4(("B4")) --> B5(("B5"))
-    end
-    A3 -. "left()/right()/adjacentLeft()/adjacentRight() — NOT used (may be missing or stripped)" .- B3
-```
+![Each lane is walked independently from its own pivot lanelet via previous()/following(); A3/B3 are the route's intended lane-change pair, but starting_lanelet has been shifted back to A2 to account for the front bumper, and neither the A3/B3 link nor the A2/B2 link is ever looked up](docs/images/lanechange_core_logic.png)
 
-Each lane is walked as its own self-contained chain (solid arrows = `previous()`/`following()`,
-followed backward from the pivot for `backward_length` and forward for `forward_length`). The only
-place the two lanes would ever meet -- a direct lateral link between `A3` and `B3` -- is exactly what
-this logic avoids depending on, shown as the dotted, unused edge above.
+The straight segment through `A1` into `A2` is the vehicle simply lane-following before the maneuver
+begins; the arrowhead marks the overall direction of travel (downtrack increases going up the
+diagram). `A3`/`B3` are the lanelets the route's map adjacency actually designates for this lane
+change (they genuinely share a boundary). But `starting_lanelet` as received by this function is
+frequently *not* the route's intended lanelet -- `plan_delegator` shifts it back a lanelet (here, to
+`A2`) to account for the vehicle's front bumper reaching the lane-change point before the vehicle's
+reference point does. Each lane is still walked as its own self-contained chain, outward from
+whatever pivot it is actually given (`A2` for the reference lane, `B3` for the target lane), backward
+for `backward_length` and forward for `forward_length`. Neither lateral link is ever queried -- not
+`A3`/`B3` (the pair the route intends), and not `A2`/`B2` (the pair actually being walked from
+either) -- both shown crossed out above.
 
-### Limitation: mismatched lane lengths can extrapolate over unavailable map
+### Limitation: a closure on either side can pull the trajectory over it
 
-Because of that straight-line fallback, if the reference and target lanes' accessible chains end up
-covering different actual lengths -- for example, part of one lane is missing from the map or closed
-by a traffic control message while the other lane is intact -- CLC will still successfully generate a
-trajectory rather than failing. Part of that trajectory, however, may be an extrapolated straight line
-that does not correspond to real, drivable lane geometry. If the vehicle is actually routed over that
-extrapolated portion, other parts of the system (e.g. lane/route monitoring) may detect it as off the
-mapped road and shut down.
+Because of that straight-line fallback, either lane's own chain can independently run out before
+covering the required length -- a closure isn't only a problem for the target lane; the *reference*
+lane's own forward walk needs to reach just as far, and can just as easily be blocked. CLC still
+successfully generates a trajectory rather than failing, but the result can end up passing directly
+over the closed lanelet's own real footprint.
 
-```mermaid
-flowchart LR
-    subgraph LaneA["Reference lane — fully mapped, walked out to the full requested length"]
-        direction LR
-        RA1(("●")) --> RA2(("●")) --> RA3(("●")) --> RA4(("●")) --> RA5(("●"))
-    end
-    subgraph LaneB["Target lane — a closed/missing lanelet blocks further routing"]
-        direction LR
-        RB1(("●")) --> RB2(("●")) --> RB3["closed (e.g. TCM)"]
-        RB3 -. "extrapolate_to_length(): straight-line fallback" .-> RB4["extrapolated (not real map geometry)"]
-        RB4 -.-> RB5["extrapolated"]
-    end
-    RA5 -. "blended trajectory is still generated over this full length" .- RB5
-```
+![Lane A's own reference centerline (teal) is real through A2/A3, then extrapolate_to_length continues it straight past the A4 closure; lane B's own target centerline (purple) is fully real; the final blended trajectory (orange), mixing a straight guess with a real curve, is pulled directly over the closed A4 lanelet](docs/images/lanechange_limitation.png)
 
-`create_lanechange_geometry` does not know or care that `RB4`/`RB5` are a straight-line guess rather
-than real lane geometry -- it will happily produce a complete trajectory blending into them. If the
-vehicle is actually commanded along that portion, it is physically leaving the mapped road even though
-trajectory generation itself never errored.
+As before, the straight orange segment through `A1`/`A2` is the vehicle lane-following before the
+maneuver starts, and the arrowhead marks the direction of travel. Here `A4` is closed -- `B` is the
+lane that's fully open throughout, and the trouble is on the *reference* side instead.
+`starting_lanelet` (`A2`)'s own forward chain is real through `A3`, but `following()` fails at the
+`A4` closure, so `extrapolate_to_length` continues it as a straight line (teal, dashed) in the last
+known heading. `ending_lanelet`'s own chain (purple) needs no such help -- `B` is open the whole way,
+so it stays real from `B1` through `B4`. The actual trajectory `create_lanechange_geometry` emits
+(orange) is a pointwise blend of those two raw chains, the same way it always is, so it always stays
+between them -- but because one input is a straight guess sitting almost exactly where the real,
+closed `A4` lanelet is, the blend dips directly into that closed lanelet's own footprint for a real
+stretch before climbing back out to meet lane B's real curve. `B3` is sized to the exact same
+downtrack range as `A4` (and ends up larger purely because it's the outer, larger-radius lane on this
+curve) -- their adjacency genuinely exists here too, and is, once again, never queried. CLC has no
+idea `A4` is closed or that its own blend happens to cross it.
 
 **TLDR:** keep the lane change's two segments (reference lane and target lane, over the lane change
-length) the same accessible length in the map. `start_lanelet` and `end_lanelet` themselves can differ
-in length and need not be perfectly adjacent -- but walking forward/backward along their respective
-lanes to cover the lane change must remain accessible on both sides, and pull in as much of the
-routing graph as possible.
+length) the same accessible length in the map, on *both* sides. `start_lanelet` and `end_lanelet`
+themselves can differ in length and need not be perfectly adjacent -- but walking forward/backward
+along their respective lanes to cover the lane change must remain accessible on both sides, and pull
+in as much of the routing graph as possible.
