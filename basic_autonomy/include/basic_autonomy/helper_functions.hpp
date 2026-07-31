@@ -115,14 +115,6 @@ namespace waypoint_generation
      * \brief Builds a centerline covering [pivot_end_point - backward_length, pivot_end_point + forward_length] by walking the
      * pivot lanelet's own predecessor/successor chain in the routing graph.
      *
-     * This deliberately avoids any left()/right()/adjacentLeft()/adjacentRight() lookups: those depend on
-     * lane-adjacency data being recorded for every lanelet visited, which can be missing or stripped for
-     * lanelets that a TrafficControlMessage has closed, or that simply were never linked in the source map.
-     * previous()/following() only require that the lanelet be routable, which is a much weaker and more
-     * commonly-satisfied requirement, so building each lane's geometry independently from its own chain
-     * (rather than by asking "what's next to lanelet X" for every lanelet in the other lane) is robust to
-     * those gaps.
-     *
      * If the routing graph runs out of connected lanelets before reaching the requested length (e.g. a
      * closed lanelet blocks further routing), this logs a warning and returns whatever centerline was
      * actually reachable instead of throwing -- the caller is responsible for padding the result out if a
