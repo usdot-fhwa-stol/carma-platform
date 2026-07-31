@@ -28,7 +28,7 @@ WMListener::WMListener(
   rclcpp::node_interfaces::NodeTopicsInterface::SharedPtr node_topics,
   rclcpp::node_interfaces::NodeParametersInterface::SharedPtr node_params_,
   bool multi_thread)
-    :node_base_(node_base),node_logging_(node_logging),node_topics_(node_topics),worker_(std::unique_ptr<WMListenerWorker>(new WMListenerWorker)), multi_threaded_(multi_thread)
+    :node_base_(node_base),node_logging_(node_logging),node_topics_(node_topics),worker_(std::unique_ptr<WMListenerWorker>(new WMListenerWorker(node_logging->get_logger().get_child("carma_wm")))), multi_threaded_(multi_thread)
 {
 
   RCLCPP_DEBUG_STREAM(node_logging_->get_logger(), "WMListener: Creating world model listener");
