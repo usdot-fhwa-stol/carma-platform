@@ -39,6 +39,7 @@
 #include <thread>
 #include <unordered_set>
 #include <basic_autonomy/helper_functions.hpp>
+#include <basic_autonomy/log/log.hpp>
 #include <yield_plugin/yield_plugin_cuda.cuh>
 
 using oss = std::ostringstream;
@@ -51,7 +52,7 @@ namespace yield_plugin
                                             LaneChangeStatusCB lc_status_publisher)
     : nh_(nh), wm_(wm), config_(config),mobility_response_publisher_(mobility_response_publisher), lc_status_publisher_(lc_status_publisher)
   {
-
+    basic_autonomy::set_logger(nh_->get_logger().get_child("basic_autonomy"));
   }
 
   double get_trajectory_end_time(const carma_planning_msgs::msg::TrajectoryPlan& trajectory)

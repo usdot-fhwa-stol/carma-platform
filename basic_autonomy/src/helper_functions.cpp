@@ -16,6 +16,7 @@
 
 #include <algorithm>
 #include <basic_autonomy/helper_functions.hpp>
+#include <basic_autonomy/log/log.hpp>
 
 
 namespace basic_autonomy
@@ -46,7 +47,7 @@ namespace waypoint_generation
                                                  const carma_planning_msgs::msg::VehicleState& state)
     {
         lanelet::BasicPoint2d veh_point(state.x_pos_global, state.y_pos_global);
-        RCLCPP_DEBUG_STREAM(rclcpp::get_logger(BASIC_AUTONOMY_LOGGER), "veh_point: " << veh_point.x() << ", " << veh_point.y());
+        RCLCPP_DEBUG_STREAM(basic_autonomy::get_logger(), "veh_point: " << veh_point.x() << ", " << veh_point.y());
         double min_distance = std::numeric_limits<double>::max();
         int i = 0;
         int best_index = 0;
@@ -88,7 +89,7 @@ namespace waypoint_generation
     int get_nearest_index_by_downtrack(const std::vector<lanelet::BasicPoint2d>& points, const carma_wm::WorldModelConstPtr& wm, double target_downtrack)
     {
         if(std::empty(points)){
-            RCLCPP_WARN_STREAM(rclcpp::get_logger(BASIC_AUTONOMY_LOGGER), "Empty points vector received, returning -1");
+            RCLCPP_WARN_STREAM(basic_autonomy::get_logger(), "Empty points vector received, returning -1");
             return -1;
         }
 
@@ -106,7 +107,7 @@ namespace waypoint_generation
             best_index = 0;
         }
 
-        RCLCPP_DEBUG_STREAM(rclcpp::get_logger(BASIC_AUTONOMY_LOGGER), "get_nearest_index_by_downtrack>> Found best_index: " << best_index<<", points[i].x(): " << points.at(best_index).x() << ", points[i].y(): " << points.at(best_index).y());
+        RCLCPP_DEBUG_STREAM(basic_autonomy::get_logger(), "get_nearest_index_by_downtrack>> Found best_index: " << best_index<<", points[i].x(): " << points.at(best_index).x() << ", points[i].y(): " << points.at(best_index).y());
 
         return best_index;
     }
@@ -161,7 +162,7 @@ namespace waypoint_generation
 
             if (no_predecessor)
             {
-                RCLCPP_WARN_STREAM(rclcpp::get_logger(BASIC_AUTONOMY_LOGGER),
+                RCLCPP_WARN_STREAM(basic_autonomy::get_logger(),
                     "create_lanechange_geometry: No routable predecessor lanelet found before lanelet "
                     << chain.front().id() << " (possibly closed or missing from the map). Using the "
                     << covered_back << "m of centerline that was reachable going backward.");
@@ -169,7 +170,7 @@ namespace waypoint_generation
 
             if (loop_detected)
             {
-                RCLCPP_WARN_STREAM(rclcpp::get_logger(BASIC_AUTONOMY_LOGGER),
+                RCLCPP_WARN_STREAM(basic_autonomy::get_logger(),
                     "create_lanechange_geometry: Detected a loop in lanelet connectivity before lanelet "
                     << chain.front().id() << "; stopping centerline extension.");
             }
@@ -194,7 +195,7 @@ namespace waypoint_generation
 
             if (no_successor)
             {
-                RCLCPP_WARN_STREAM(rclcpp::get_logger(BASIC_AUTONOMY_LOGGER),
+                RCLCPP_WARN_STREAM(basic_autonomy::get_logger(),
                     "create_lanechange_geometry: No routable successor lanelet found after lanelet "
                     << chain.back().id() << " (possibly closed or missing from the map). Using the "
                     << covered_fwd << "m of centerline that was reachable going forward.");
@@ -202,7 +203,7 @@ namespace waypoint_generation
 
             if (loop_detected)
             {
-                RCLCPP_WARN_STREAM(rclcpp::get_logger(BASIC_AUTONOMY_LOGGER),
+                RCLCPP_WARN_STREAM(basic_autonomy::get_logger(),
                     "create_lanechange_geometry: Detected a loop in lanelet connectivity after lanelet "
                     << chain.back().id() << "; stopping centerline extension.");
             }
@@ -250,7 +251,7 @@ namespace waypoint_generation
             return;
         }
 
-        RCLCPP_WARN_STREAM(rclcpp::get_logger(BASIC_AUTONOMY_LOGGER),
+        RCLCPP_WARN_STREAM(basic_autonomy::get_logger(),
             "create_lanechange_geometry: Only " << current_length << "m of connected lanelet centerline was "
             << "available for " << description << " (needed " << target_length << "m). Extrapolating a "
             << "straight line from the last known heading so a lane change trajectory can still be produced.");

@@ -29,6 +29,7 @@
 #include <Eigen/LU>
 #include <Eigen/SVD>
 #include <inlanecruising_plugin/inlanecruising_plugin.hpp>
+#include <basic_autonomy/log/log.hpp>
 
 
 
@@ -44,7 +45,9 @@ InLaneCruisingPlugin::InLaneCruisingPlugin(std::shared_ptr<carma_ros2_utils::Car
                                           const std::string& plugin_name,
                                           const std::string& version_id)
   : nh_(nh), wm_(wm), config_(config), debug_publisher_(debug_publisher), plugin_name_(plugin_name), version_id_ (version_id)
-{}
+{
+  basic_autonomy::set_logger(nh_->get_logger().get_child("basic_autonomy"));
+}
 
 void InLaneCruisingPlugin::plan_trajectory_callback(
   carma_planning_msgs::srv::PlanTrajectory::Request::SharedPtr req,

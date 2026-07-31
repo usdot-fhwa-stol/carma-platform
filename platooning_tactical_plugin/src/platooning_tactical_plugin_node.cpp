@@ -15,6 +15,7 @@
  */
 #include "platooning_tactical_plugin/platooning_tactical_plugin_node.h"
 #include <carma_ros2_utils/timers/ROSTimerFactory.hpp>
+#include <basic_autonomy/log/log.hpp>
 
 namespace platooning_tactical_plugin
 {
@@ -116,6 +117,7 @@ namespace platooning_tactical_plugin
     // Register runtime parameter update callback
     add_on_set_parameters_callback(std::bind(&Node::parameter_update_callback, this, std_ph::_1));
 
+    basic_autonomy::set_logger(get_logger().get_child("basic_autonomy"));
     worker_ = std::make_shared<PlatooningTacticalPlugin>(get_world_model(), config_, 
       std::make_shared<carma_ros2_utils::timers::ROSTimerFactory>(shared_from_this()));
 

@@ -15,6 +15,7 @@
  */
 #include "light_controlled_intersection_tactical_plugin/light_controlled_intersection_tactical_plugin_node.hpp"
 #include <valarray>
+#include <basic_autonomy/log/log.hpp>
 
 namespace light_controlled_intersection_tactical_plugin
 {
@@ -29,6 +30,7 @@ namespace light_controlled_intersection_tactical_plugin
         :wm_(wm), config_(config), nh_(nh), plugin_name_(plugin_name),
         debug_publisher_(debug_publisher)
     {
+        basic_autonomy::set_logger(nh_->get_logger().get_child("basic_autonomy"));
     }
 
     bool LightControlledIntersectionTacticalPlugin::isLastTrajectoryValid(

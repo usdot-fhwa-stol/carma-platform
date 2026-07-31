@@ -14,6 +14,7 @@
  * the License.
  */
 #include "cooperative_lanechange/cooperative_lanechange_node.hpp"
+#include <basic_autonomy/log/log.hpp>
 
 namespace cooperative_lanechange
 {
@@ -22,6 +23,7 @@ namespace cooperative_lanechange
   CooperativeLaneChangePlugin::CooperativeLaneChangePlugin(const rclcpp::NodeOptions &options)
       : carma_guidance_plugins::TacticalPlugin(options)
   {
+    basic_autonomy::set_logger(get_logger().get_child("basic_autonomy"));
     // Create initial config
     config_ = Config();
 

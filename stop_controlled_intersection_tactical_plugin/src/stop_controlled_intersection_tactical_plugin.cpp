@@ -40,6 +40,7 @@
 #include <math.h>
 #include <std_msgs/msg/float64.hpp>
 #include "stop_controlled_intersection_plugin.hpp"
+#include <basic_autonomy/log/log.hpp>
 
 using oss = std::ostringstream;
 
@@ -51,6 +52,7 @@ namespace std_ph = std::placeholders;
 StopControlledIntersectionTacticalPlugin::StopControlledIntersectionTacticalPlugin(const rclcpp::NodeOptions &options)
   : carma_guidance_plugins::TacticalPlugin(options), config_(StopControlledIntersectionTacticalPluginConfig()) 
 {
+    basic_autonomy::set_logger(get_logger().get_child("basic_autonomy"));
     // Declare parameters
     config_.trajectory_time_length = declare_parameter<double>("trajectory_time_length",   config_.trajectory_time_length);
     config_.curve_resample_step_size = declare_parameter<double>("curve_resample_step_size",   config_.curve_resample_step_size);

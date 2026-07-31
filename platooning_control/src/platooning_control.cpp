@@ -14,6 +14,7 @@
  * the License.
  */
 #include "platooning_control/platooning_control.hpp"
+#include <basic_autonomy/log/log.hpp>
 
 namespace platooning_control
 {
@@ -22,6 +23,7 @@ namespace platooning_control
   PlatooningControlPlugin::PlatooningControlPlugin(const rclcpp::NodeOptions &options)
       : carma_guidance_plugins::ControlPlugin(options), config_(PlatooningControlPluginConfig()), pcw_(PlatooningControlWorker())
   {
+    basic_autonomy::set_logger(get_logger().get_child("basic_autonomy"));
 
     // Declare parameters
     config_.stand_still_headway_m = declare_parameter<double>("stand_still_headway_m", config_.stand_still_headway_m);
