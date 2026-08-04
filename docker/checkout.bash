@@ -42,7 +42,7 @@ while [[ $# -gt 0 ]]; do
 done
 
 cd "${dir}"/src
-
+BRANCH=develop
 git clone --depth=1 https://github.com/usdot-fhwa-stol/carma-msgs.git --branch "${BRANCH}"
 git clone --depth=1 https://github.com/usdot-fhwa-stol/carma-utils.git --branch "${BRANCH}"
 git clone --depth=1 https://github.com/usdot-fhwa-stol/v2x-ros-conversion.git --branch "${BRANCH}"
