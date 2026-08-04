@@ -1,4 +1,4 @@
-o# GitHub Actions triggers based on the PR's and each commits on develop and master
+# GitHub Actions triggers based on the PR's and each commits on develop and master
 name: "CI: Run tests"
 on:
   workflow_dispatch:
