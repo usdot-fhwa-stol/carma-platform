@@ -172,7 +172,7 @@ namespace plan_delegator
 
         // Setup yield_plugin client; plan_delegator is the sole caller of yield_plugin, invoking it on the
         // final trajectory before publishing rather than having every tactical plugin call it independently
-        yield_client_ = create_client<carma_planning_msgs::srv::PlanTrajectory>("yield_plugin/plan_trajectory");
+        yield_client_ = create_client<carma_planning_msgs::srv::PlanTrajectory>("plugins/yield_plugin/plan_trajectory");
 
         // Setup subscribers
         plan_sub_ = create_subscription<carma_planning_msgs::msg::ManeuverPlan>("final_maneuver_plan", 5, std::bind(&PlanDelegator::maneuverPlanCallback, this, std_ph::_1));
