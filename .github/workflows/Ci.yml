@@ -33,6 +33,7 @@ jobs:
         INIT_ENV: "/home/carma/.base-image/init-env.sh"
         ROS_2_ENV: "/opt/ros/humble/setup.bash"
         TERM: xterm
+        TEST_TIMEOUT: "300"
       options: "--user root"
 
     steps:
@@ -88,10 +89,10 @@ jobs:
         # TIMEOUT property of 60s when none is given. CTest always honors a test's own TIMEOUT
         # property over the --timeout passed on the command line, so that 60s cap silently wins
         # no matter what --ctest-args --timeout is set to below. Rewrite every generated
-        # CTestTestfile.cmake to raise each test's TIMEOUT to 300s so the override actually applies.
-        find /opt/carma/build -name CTestTestfile.cmake -exec sed -i -E 's/TIMEOUT [0-9]+/TIMEOUT 300/g' {} +
+        # CTestTestfile.cmake to raise each test's TIMEOUT so the override actually applies.
+        find /opt/carma/build -name CTestTestfile.cmake -exec sed -i -E "s/TIMEOUT [0-9]+/TIMEOUT $TEST_TIMEOUT/g" {} +
         COLCON_CMD="colcon test --return-code-on-test-failure --parallel-workers 4 --event-handlers console_direct+"
-        NEW_CMD="colcon test --return-code-on-test-failure --parallel-workers 16 --event-handlers console_cohesion+ --packages-select \$PACKAGES --ctest-args --output-on-failure --timeout 300"
+        NEW_CMD="colcon test --return-code-on-test-failure --parallel-workers 16 --event-handlers console_cohesion+ --packages-select \$PACKAGES --ctest-args --output-on-failure --timeout $TEST_TIMEOUT"
         sed -i "s|$COLCON_CMD|$NEW_CMD|" /home/carma/.ci-image/engineering_tools/code_coverage/make_with_coverage.bash
         make_with_coverage.bash -t -e /opt/carma/ -o ./coverage_reports/gcov
 
