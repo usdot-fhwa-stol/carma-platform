@@ -76,7 +76,7 @@ if(BUILD_TESTING)
   find_package(ament_lint_auto REQUIRED)
   ament_lint_auto_find_test_dependencies() # This populates the ${${PROJECT_NAME}_FOUND_TEST_DEPENDS} variable
 
-  ament_add_gtest(test_route 
+  ament_add_gtest(test_route
         test/test_route_generator.cpp
         test/test_route_state.cpp
   )
