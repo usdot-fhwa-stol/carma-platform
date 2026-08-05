@@ -77,13 +77,6 @@ public:
     carma_planning_msgs::srv::PlanTrajectory::Request::SharedPtr req,
     carma_planning_msgs::srv::PlanTrajectory::Response::SharedPtr resp);
 
-  /**
-   * \brief set the yield service
-   *
-   * \param yield_srv input yield service
-   */
-  void set_yield_client(carma_ros2_utils::ClientPtr<carma_planning_msgs::srv::PlanTrajectory> client);
-
   carma_planning_msgs::msg::VehicleState ending_state_before_buffer_; //state before applying extra points for curvature calculation that are removed later
 
 private:
@@ -92,7 +85,6 @@ private:
   std::string version_id_;
   carma_wm::WorldModelConstPtr wm_;
   InLaneCruisingPluginConfig config_;
-  carma_ros2_utils::ClientPtr<carma_planning_msgs::srv::PlanTrajectory> yield_client_;
   DebugPublisher debug_publisher_;
   carma_debug_ros2_msgs::msg::TrajectoryCurvatureSpeeds debug_msg_;
   std::shared_ptr<carma_ros2_utils::CarmaLifecycleNode> nh_;

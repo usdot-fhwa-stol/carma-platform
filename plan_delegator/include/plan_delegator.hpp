@@ -24,6 +24,7 @@
 #include <carma_planning_msgs/msg/upcoming_lane_change_status.hpp>
 #include <carma_planning_msgs/srv/plan_trajectory.hpp>
 #include <carma_ros2_utils/carma_lifecycle_node.hpp>
+#include <basic_autonomy/basic_autonomy.hpp>
 #include <geometry_msgs/msg/pose_stamped.hpp>
 #include <geometry_msgs/msg/twist_stamped.hpp>
 #include <autoware_msgs/msg/lamp_cmd.hpp>
@@ -80,6 +81,7 @@ namespace plan_delegator
         int tactical_plugin_service_call_timeout = 100; // (Milliseconds) The maximum duration that Plan Delegator will wait after calling a tactical plugin's trajectory planning service; if trajectory
                                                         // generation takes longer than this, then planning will immediately end for the current trajectory planning iteration.
         int max_traj_generation_reattempt = 5; // The maximum number of times plan_delegator attempts to generate a trajectory before giving up
+        bool enable_object_avoidance = true; // Activate object avoidance logic by calling yield_plugin on the final trajectory before publishing
 
         // Stream operator for this config
         friend std::ostream &operator<<(std::ostream &output, const Config &c)
@@ -93,6 +95,7 @@ namespace plan_delegator
             << "tactical_plugin_service_call_timeout: " << c.tactical_plugin_service_call_timeout << std::endl
             << "max_traj_generation_reattempt: " << c.max_traj_generation_reattempt << std::endl
             << "duration_to_signal_before_lane_change: " << c.duration_to_signal_before_lane_change << std::endl
+            << "enable_object_avoidance: " << c.enable_object_avoidance << std::endl
             << "}" << std::endl;
         return output;
         }
@@ -189,6 +192,8 @@ namespace plan_delegator
 
             // map to store service clients
             std::unordered_map<std::string, carma_ros2_utils::ClientPtr<carma_planning_msgs::srv::PlanTrajectory>> trajectory_planners_;
+            // service client for yield_plugin, used to adjust the final trajectory before publishing to avoid obstacles
+            carma_ros2_utils::ClientPtr<carma_planning_msgs::srv::PlanTrajectory> yield_client_;
             // local storage of incoming messages
             carma_planning_msgs::msg::ManeuverPlan latest_maneuver_plan_;
             bool received_maneuver_plan_ = false;

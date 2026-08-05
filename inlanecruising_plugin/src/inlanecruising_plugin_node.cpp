@@ -40,8 +40,6 @@ namespace inlanecruising_plugin
     config_.buffer_ending_downtrack = declare_parameter<double>("buffer_ending_downtrack", config_.buffer_ending_downtrack);
     config_.max_accel = declare_parameter<double>("vehicle_acceleration_limit", config_.max_accel);
     config_.lateral_accel_limit = declare_parameter<double>("vehicle_lateral_accel_limit", config_.lateral_accel_limit);
-    config_.enable_object_avoidance = declare_parameter<bool>("enable_object_avoidance", config_.enable_object_avoidance);
-    config_.tactical_plugin_service_call_timeout = declare_parameter<int>("tactical_plugin_service_call_timeout", config_.tactical_plugin_service_call_timeout);
   }
 
   carma_ros2_utils::CallbackReturn InLaneCruisingPluginNode::on_configure_plugin()
@@ -63,8 +61,6 @@ namespace inlanecruising_plugin
     get_parameter<double>("buffer_ending_downtrack", config_.buffer_ending_downtrack);
     get_parameter<double>("vehicle_acceleration_limit", config_.max_accel);
     get_parameter<double>("vehicle_lateral_accel_limit", config_.lateral_accel_limit);
-    get_parameter<bool>("enable_object_avoidance", config_.enable_object_avoidance);
-    get_parameter<int>("tactical_plugin_service_call_timeout", config_.tactical_plugin_service_call_timeout);
 
     // Register runtime parameter update callback
     add_on_set_parameters_callback(std::bind(&InLaneCruisingPluginNode::parameter_update_callback, this, std_ph::_1));
@@ -86,11 +82,6 @@ namespace inlanecruising_plugin
                                                           plugin_name_,
                                                           version_id_);
 
-    //TODO: Update yield client to use the Plugin Manager capabilities query, in case someone else wants to add an alternate yield implementation
-    yield_client_ = create_client<carma_planning_msgs::srv::PlanTrajectory>("yield_plugin/plan_trajectory");
-    worker_->set_yield_client(yield_client_);
-    RCLCPP_INFO(rclcpp::get_logger("inlanecruising_plugin"), "Yield Client Set");
-
     // Return success if everything initialized successfully
     return CallbackReturn::SUCCESS;
 
@@ -107,9 +98,6 @@ namespace inlanecruising_plugin
       {"back_distance", config_.back_distance},
       {"buffer_ending_downtrack", config_.buffer_ending_downtrack}}, parameters); // Global acceleration limits not allowed to dynamically update
 
-    auto error_bool = update_params<bool>({
-      {"enable_object_avoidance", config_.enable_object_avoidance}}, parameters);
-
     auto error_int = update_params<int>({
       {"default_downsample_ratio", config_.default_downsample_ratio},
       {"turn_downsample_ratio", config_.turn_downsample_ratio},
@@ -118,7 +106,7 @@ namespace inlanecruising_plugin
 
     rcl_interfaces::msg::SetParametersResult result;
 
-    result.successful = !error_double && !error_bool && !error_int;
+    result.successful = !error_double && !error_int;
 
     return result;
   }

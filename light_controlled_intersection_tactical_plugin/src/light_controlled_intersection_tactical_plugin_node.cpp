@@ -47,8 +47,6 @@ namespace light_controlled_intersection_tactical_plugin
     config_.lateral_accel_limit = declare_parameter<double>("vehicle_lateral_accel_limit", config_.lateral_accel_limit);
     config_.vehicle_accel_limit = declare_parameter<double>("vehicle_acceleration_limit", config_.vehicle_accel_limit);
     config_.vehicle_decel_limit = declare_parameter<double>("vehicle_deceleration_limit", config_.vehicle_decel_limit);
-    config_.tactical_plugin_service_call_timeout = declare_parameter<int>("tactical_plugin_service_call_timeout", config_.tactical_plugin_service_call_timeout);
-    config_.enable_object_avoidance = declare_parameter<bool>("enable_object_avoidance", config_.enable_object_avoidance);
 
   }
 
@@ -115,8 +113,6 @@ namespace light_controlled_intersection_tactical_plugin
     get_parameter<double>("vehicle_lateral_accel_limit", config_.lateral_accel_limit);
     get_parameter<double>("vehicle_acceleration_limit", config_.vehicle_accel_limit);
     get_parameter<double>("vehicle_deceleration_limit", config_.vehicle_decel_limit);
-    get_parameter<int>("tactical_plugin_service_call_timeout", config_.tactical_plugin_service_call_timeout);
-    get_parameter<bool>("enable_object_avoidance", config_.enable_object_avoidance);
 
     // Use the configured multipliers to update the accel limits
     config_.lateral_accel_limit = config_.lateral_accel_limit * config_.lat_accel_multiplier;
@@ -136,10 +132,6 @@ namespace light_controlled_intersection_tactical_plugin
         { trajectory_debug_pub_->publish(msg); },
       get_plugin_name(),
       shared_from_this());
-
-    yield_client_ = create_client<carma_planning_msgs::srv::PlanTrajectory>("yield_plugin/plan_trajectory");
-    worker_->set_yield_client(yield_client_);
-    RCLCPP_INFO(rclcpp::get_logger("light_controlled_intersection_tactical_plugin"), "Yield Client Set");
 
     // Return success if everything initialized successfully
     return CallbackReturn::SUCCESS;

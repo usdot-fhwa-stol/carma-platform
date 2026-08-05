@@ -61,7 +61,6 @@ namespace inlanecruising_plugin
 TEST(InLaneCruisingPluginTest, testPlanningCallback)
 {
   InLaneCruisingPluginConfig config;
-  config.enable_object_avoidance = false;
   config.default_downsample_ratio = 1;
   std::shared_ptr<carma_wm::CARMAWorldModel> wm = std::make_shared<carma_wm::CARMAWorldModel>();
   auto node = std::make_shared<inlanecruising_plugin::InLaneCruisingPluginNode>(rclcpp::NodeOptions());
@@ -166,7 +165,6 @@ TEST(WaypointGeneratorTest, DISABLED_test_full_generation)
   lanelet::MapConformer::ensureCompliance(map, 80_mph);
 
   InLaneCruisingPluginConfig config;
-  config.enable_object_avoidance = false;
   config.lateral_accel_limit = 1.5;
   std::shared_ptr<carma_wm::CARMAWorldModel> wm = std::make_shared<carma_wm::CARMAWorldModel>();
   wm->setMap(map);
