@@ -38,7 +38,7 @@ duration_to_signal_before_lane_change: 2.5
 # before publishing it
 # Units: N/a
 # Overridden by VehicleConfigParams.yaml in carma-config
-enable_object_avoidance: false
+enable_object_avoidance: true
 
 # Int: The maximum number of times plan_delegator attempts to generate a trajectory before giving up
 # When trajectory generations fails, it reuses the last successful trajectory until tries again
