@@ -40,7 +40,6 @@
 #include <math.h>
 #include <std_msgs/msg/float64.hpp>
 #include "stop_controlled_intersection_plugin.hpp"
-#include <basic_autonomy/log/log.hpp>
 
 using oss = std::ostringstream;
 
