@@ -37,8 +37,8 @@ duration_to_signal_before_lane_change: 2.5
 # Bool: Activates object avoidance logic - plan_delegator calls yield_plugin on the final trajectory
 # before publishing it
 # Units: N/a
-# Configured in VehicleConfigParams.yaml in carma-config
-# enable_object_avoidance: true
+# Overridden by VehicleConfigParams.yaml in carma-config
+enable_object_avoidance: false
 
 # Int: The maximum number of times plan_delegator attempts to generate a trajectory before giving up
 # When trajectory generations fails, it reuses the last successful trajectory until tries again
