@@ -33,7 +33,7 @@ jobs:
         INIT_ENV: "/home/carma/.base-image/init-env.sh"
         ROS_2_ENV: "/opt/ros/humble/setup.bash"
         TERM: xterm
-        TEST_TIMEOUT: "300"
+        TEST_TIMEOUT: "300" # increase from default 60 seconds to 300 seconds to accommodate some heavy unit test logic
       options: "--user root"
 
     steps:
