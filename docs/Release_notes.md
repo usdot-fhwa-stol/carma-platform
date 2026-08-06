@@ -7,8 +7,8 @@ CARMA System Release Notes
 
 The CARMA System 4.14.0 release includes the following significant updates:
 
-- The ITS Telematics tool has been updated with direct RSU connectivity and registration management through new RSU Management Service and Telematics V2X radio unit services.
-- The RSU Management Service added RSU configuration and registration management across the backend service, REST APIs, and UI. These updates allow users to register RSUs, monitor RSU status, manage Telematics V2X radio unit (TRU)-to-RSU mappings, and select RSU topics.
+- The ITS Telematics tool has been updated with direct RSU connectivity and registration management through the new RSU Management Service and Telematics V2X radio unit services.
+- The RSU Management Service added RSU configuration and registration management across the backend service, REST APIs, and UI. These updates allow users to register RSUs, monitor RSU status, manage Telematics V2X radio unit-to-RSU mappings, and select RSU topics.
 - The Telematics V2X Radio Unit fork has been updated with telematics-specific V2X Hub changes for RSU data streaming, RSU health/status reporting, source identification, RSU Management Service integration, Docker networking, and CI workflow support.
 - The ITS Telematics Tool has been updated with a new mobile application foundation, including mobile authentication, server configuration, Grafana connectivity, and Capacitor-based Android support.
 - The Telematics Kafka Bridge has been renamed and enhanced to improve Telematics-to-ODE integration, startup behavior, connection handling, publish/error handling, and unit test coverage. This functionality is currently not regression tested and included as a beta version.
@@ -22,7 +22,7 @@ Note: The Telematics V2X Radio Unit fork is based on the V2X Hub 7.11.0 version 
 
 ### CDA Telematics
 
-In this release, CDA Telematics is updated to support mobile field workflows and RSU configuration and registration management. The mobile updates include authentication, server configuration, Grafana connectivity, and Android support. RSU configuration management updates include service, API, and UI support for RSU registration, status monitoring, TRU-to-RSU mapping, and topic selection.
+In this release, CDA Telematics is updated to support mobile field workflows and RSU configuration and registration management. The mobile updates include authentication, server configuration, Grafana connectivity, and Android support. RSU configuration management updates include service, API, and UI support for RSU registration, status monitoring, Telematics V2X Radio Unit-to-RSU mapping, and topic selection.
 
 Note: The tool is referred to as ITS Telematics; this repository retains the name CDA Telematics and is expected to be renamed in a future release.
 
@@ -32,7 +32,7 @@ Note: The tool is referred to as ITS Telematics; this repository retains the nam
 
   * Pull Requests: [cda-telematics PR #269](https://github.com/usdot-fhwa-stol/cda-telematics/pull/269), [cda-telematics PR #272](https://github.com/usdot-fhwa-stol/cda-telematics/pull/272), [cda-telematics PR #273](https://github.com/usdot-fhwa-stol/cda-telematics/pull/273), [cda-telematics PR #275](https://github.com/usdot-fhwa-stol/cda-telematics/pull/275)
 
-- RSU Configuration Management: Added backend service, REST API, and UI support for RSU registration, RSU health/status monitoring, TRU-to-RSU mapping, dynamic RSU configuration updates, RSU topic-selection workflows and reporting unavailable RSU status when SNMP connection timeouts occur.
+- RSU Configuration Management: Added backend service, REST API, and UI support for RSU registration, RSU health/status monitoring, Telematics V2X Radio Unit-to-RSU mapping, dynamic RSU configuration updates, RSU topic-selection workflows and reporting unavailable RSU status when SNMP connection timeouts occur.
 
   * Pull Requests: [cda-telematics PR #268](https://github.com/usdot-fhwa-stol/cda-telematics/pull/268), [cda-telematics PR #271](https://github.com/usdot-fhwa-stol/cda-telematics/pull/271), [cda-telematics PR #274](https://github.com/usdot-fhwa-stol/cda-telematics/pull/274), [cda-telematics PR #290](https://github.com/usdot-fhwa-stol/cda-telematics/pull/290)
 
@@ -40,7 +40,7 @@ Note: The tool is referred to as ITS Telematics; this repository retains the nam
 
   * Pull Requests: [cda-telematics PR #296](https://github.com/usdot-fhwa-stol/cda-telematics/pull/296), [cda-telematics PR #303](https://github.com/usdot-fhwa-stol/cda-telematics/pull/303)
 
-- Data Analysis Support: Added log-analysis scripts for TRU and RSU Management Service logs, including message matching, drop-rate, latency, throughput, and summary output. Optional performance logging was also added to support writing metrics to database for dashboard visualization.
+- Data Analysis Support: Added log-analysis scripts for Telematics V2X Radio Unit and RSU Management Service logs, including message matching, drop-rate, latency, throughput, and summary output. Optional performance logging was also added to support writing metrics to database for dashboard visualization.
 
   * Pull Requests: [cda-telematics PR #305](https://github.com/usdot-fhwa-stol/cda-telematics/pull/305), [cda-telematics PR #306](https://github.com/usdot-fhwa-stol/cda-telematics/pull/306)
 
@@ -58,29 +58,19 @@ Note: The tool is referred to as ITS Telematics; this repository retains the nam
 
   * Pull Requests: [cda-telematics PR #277](https://github.com/usdot-fhwa-stol/cda-telematics/pull/277), [cda-telematics PR #283](https://github.com/usdot-fhwa-stol/cda-telematics/pull/283), [cda-telematics PR #288](https://github.com/usdot-fhwa-stol/cda-telematics/pull/288)
 
-- UI and Mobile Behavior: Fixed issues where old Telematics V2X Radio Unitss continued to appear on the data-selection tab after all TRUs were stopped, tablet login-page content overlapped when the keyboard was opened in horizontal mode, and the mobile registration page used the wrong web_server_uri before calling registration APIs.
+- UI and Mobile Behavior: Fixed issues where old Telematics V2X Radio Units continued to appear on the data-selection tab after all Telematics V2X Radio Units were stopped, tablet login-page content overlapped when the keyboard was opened in horizontal mode, and the mobile registration page used the wrong web_server_uri before calling registration APIs.
 
   * Pull Requests: [cda-telematics PR #285](https://github.com/usdot-fhwa-stol/cda-telematics/pull/285), [cda-telematics PR #293](https://github.com/usdot-fhwa-stol/cda-telematics/pull/293), [cda-telematics PR #295](https://github.com/usdot-fhwa-stol/cda-telematics/pull/295)
 
-- Deployment and Container Fixes: Fixed the Telematics Cloud Messaging Docker image, added localhost origin support to environment files, restored the wait-for-it package required by the web-server image, pinned the Grafana image to a fixed version instead of latest, and updated the MySQL version to resolve Grafana/MySQL compatibility issues.
+- Deployment and Container Fixes: Fixed the Telematics Cloud Messaging Docker image, added localhost origin support to environment files, restored the wait-for-it package required by the web-server image, pinned the Grafana image to a fixed version instead of latest, and updated the MySQL version to resolve Grafana/MySQL compatibility issues. Added container profiles for full-system integration testing.
 
-  * Pull Requests: [cda-telematics PR #280](https://github.com/usdot-fhwa-stol/cda-telematics/pull/280), [cda-telematics PR #294](https://github.com/usdot-fhwa-stol/cda-telematics/pull/294), [cda-telematics PR #307](https://github.com/usdot-fhwa-stol/cda-telematics/pull/307)
+  * Pull Requests: [cda-telematics PR #280](https://github.com/usdot-fhwa-stol/cda-telematics/pull/280), [cda-telematics PR #294](https://github.com/usdot-fhwa-stol/cda-telematics/pull/294), [cda-telematics PR #307](https://github.com/usdot-fhwa-stol/cda-telematics/pull/307), [cda-telematics PR #279](https://github.com/usdot-fhwa-stol/cda-telematics/pull/279)
 
-**Other Updates**
+- Improved CI/CD and dependency management: Improved SonarCloud, coverage, and local code-quality configuration by adding sonar-project.properties, excluding coverage output from Sonar analysis, excluding the UI from coverage results, adding SonarLint VS Code setup, addressing SonarCloud code smells, pinning npm package versions, and committing package-lock.json for more stable builds. Updated third-party GitHub Actions, adding Docker Scout checks, removing the Maven wrapper, and using the Docker base image for Maven installation/version control.
 
-- Added container profiles for full-system integration testing.
+  * Pull Requests: [cda-telematics PR #287](https://github.com/usdot-fhwa-stol/cda-telematics/pull/287), [cda-telematics PR #282](https://github.com/usdot-fhwa-stol/cda-telematics/pull/282), [cda-telematics PR #284](https://github.com/usdot-fhwa-stol/cda-telematics/pull/284), [cda-telematics PR #301](https://github.com/usdot-fhwa-stol/cda-telematics/pull/301), [cda-telematics PR #299](https://github.com/usdot-fhwa-stol/cda-telematics/pull/299), [cda-telematics PR #302](https://github.com/usdot-fhwa-stol/cda-telematics/pull/302), [cda-telematics PR #265](https://github.com/usdot-fhwa-stol/cda-telematics/pull/265), [cda-telematics PR #297](https://github.com/usdot-fhwa-stol/cda-telematics/pull/297), [cda-telematics PR #304](https://github.com/usdot-fhwa-stol/cda-telematics/pull/304), [cda-telematics PR #286](https://github.com/usdot-fhwa-stol/cda-telematics/pull/286)
 
-  * Pull Requests: [cda-telematics PR #279](https://github.com/usdot-fhwa-stol/cda-telematics/pull/279)
-
-- Improved SonarCloud, coverage, and local code-quality configuration by adding sonar-project.properties, excluding coverage output from Sonar analysis, excluding the UI from coverage results, adding SonarLint VS Code setup, addressing SonarCloud code smells, pinning npm package versions, and committing package-lock.json for more stable builds.
-
-  * Pull Requests: [cda-telematics PR #287](https://github.com/usdot-fhwa-stol/cda-telematics/pull/287), [cda-telematics PR #282](https://github.com/usdot-fhwa-stol/cda-telematics/pull/282), [cda-telematics PR #284](https://github.com/usdot-fhwa-stol/cda-telematics/pull/284), [cda-telematics PR #301](https://github.com/usdot-fhwa-stol/cda-telematics/pull/301), [cda-telematics PR #299](https://github.com/usdot-fhwa-stol/cda-telematics/pull/299), [cda-telematics PR #302](https://github.com/usdot-fhwa-stol/cda-telematics/pull/302)
-
-- Improved CI/CD and dependency management by updating third-party GitHub Actions, adding Docker Scout checks, removing the Maven wrapper, and using the Docker base image for Maven installation/version control.
-
-  * Pull Requests: [cda-telematics PR #265](https://github.com/usdot-fhwa-stol/cda-telematics/pull/265), [cda-telematics PR #297](https://github.com/usdot-fhwa-stol/cda-telematics/pull/297), [cda-telematics PR #304](https://github.com/usdot-fhwa-stol/cda-telematics/pull/304), [cda-telematics PR #286](https://github.com/usdot-fhwa-stol/cda-telematics/pull/286)
-
-## Changes to New Repositories
+## New Repositories
 
 ### Telematics V2X Radio Unit
 
@@ -88,7 +78,7 @@ The Telematics V2X Radio Unit is a telematics-specific fork of V2X Hub with no p
 
 **Enhancements**
 
-- Telematics V2X Radio Unit Baseline: Synced the telematics fork with the V2X Hub 7.11.0 / Viper baseline and brought forward upstream telematics TRU updates for multi-RSU data streaming, RSU health/status reporting, source identification in routed messages, RSU Health Monitor configuration updates, and RSU Management Service integration.
+- Telematics V2X Radio Unit Baseline: Synced the telematics fork with the V2X Hub 7.11.0 / Viper baseline and brought forward upstream telematics Telematics V2X Radio Unit (TRU) updates for multi-RSU data streaming, RSU health/status reporting, source identification in routed messages, RSU Health Monitor configuration updates, and RSU Management Service integration.
 
   * Related Pull Requests: V2X-Hub PR #831
 
@@ -106,7 +96,7 @@ The Telematics V2X Radio Unit is a telematics-specific fork of V2X Hub with no p
 
 **Fixes**
 
-- Telematics Telematics V2X Radio Unit Bug Fix Sync: Synced TRU end-to-end testing fixes from V2X Hub, including Docker image workflow updates, TRU database reuse, corrected image tagging, startup auto-configuration fixes, TRU naming, RSU health-monitor startup handling, MIB-version support, available-topic publishing fixes, and separate auto/manual configuration topics.
+- Telematics V2X Radio Unit Bug Fix Sync: Synced Telematics V2X RSU Unit end-to-end testing fixes from V2X Hub, including Docker image workflow updates, Telematics V2X RSU Unit database reuse, corrected image tagging, startup auto-configuration fixes, Telematics V2X RSU Unit naming, RSU health-monitor startup handling, MIB-version support, available-topic publishing fixes, and separate auto/manual configuration topics.
 
   * Pull Requests: [telematics-v2x-radio-unit PR #3](https://github.com/usdot-fhwa-stol/telematics-v2x-radio-unit/pull/3)
 
@@ -114,7 +104,7 @@ The Telematics V2X Radio Unit is a telematics-specific fork of V2X Hub with no p
 
   * Pull Requests: [telematics-v2x-radio-unit PR #5](https://github.com/usdot-fhwa-stol/telematics-v2x-radio-unit/pull/5), [telematics-v2x-radio-unit PR #9](https://github.com/usdot-fhwa-stol/telematics-v2x-radio-unit/pull/9), [telematics-v2x-radio-unit PR #11](https://github.com/usdot-fhwa-stol/telematics-v2x-radio-unit/pull/11)
 
-- TRU Configuration and Networking: Fixed the rsuConfig path used for RSU auto-configuration and updated Docker networking to use a bridge network so ports can be mapped for messageReceiver and tmxCore.
+- Telematics V2X RSU Unit Configuration and Networking: Fixed the rsuConfig path used for RSU auto-configuration and updated Docker networking to use a bridge network so ports can be mapped for messageReceiver and tmxCore.
 
   * Pull Requests: [telematics-v2x-radio-unit PR #8](https://github.com/usdot-fhwa-stol/telematics-v2x-radio-unit/pull/8), [telematics-v2x-radio-unit PR #7](https://github.com/usdot-fhwa-stol/telematics-v2x-radio-unit/pull/7)
 
