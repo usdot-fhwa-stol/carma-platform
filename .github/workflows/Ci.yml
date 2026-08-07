@@ -1,6 +1,7 @@
 # GitHub Actions triggers based on the PR's and each commits on develop and master
 name: "CI: Run tests"
 on:
+  workflow_dispatch:
   pull_request:
     types: [opened, synchronize, reopened]
   push:
