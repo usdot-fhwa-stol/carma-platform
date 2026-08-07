@@ -11,7 +11,7 @@ The CARMA System 4.14.0 release includes the following significant updates:
 - The RSU Management Service added RSU configuration and registration management across the backend service, REST APIs, and UI. These updates allow users to register RSUs, monitor RSU status, manage Telematics V2X radio unit-to-RSU mappings, and select RSU topics.
 - The Telematics V2X Radio Unit fork has been updated with telematics-specific V2X Hub changes for RSU data streaming, RSU health/status reporting, source identification, RSU Management Service integration, Docker networking, and CI workflow support.
 - The ITS Telematics Tool has been updated with a new mobile application foundation, including mobile authentication, server configuration, Grafana connectivity, and Capacitor-based Android support.
-- The Telematics Kafka Bridge has been renamed and enhanced to improve Telematics-to-ODE integration, startup behavior, connection handling, publish/error handling, and unit test coverage. This functionality is currently not regression tested and included as a beta version.
+- The Telematics Kafka Bridge has been renamed and enhanced to improve Telematics-to-ODE integration, startup behavior, connection handling, publish/error handling, and unit test coverage. This functionality will be regression tested in a later release and is currently included as a beta version.
 - Data Analysis scripts for testing support have been updated to support latency and data continuity analysis from generated logs of newly added services.
 - Optional performance logging has been added to stream message processing times to the database to allow performance monitoring from the Grafana dashboard.
 - CI/CD, SonarCloud, Docker Scout, Docker Compose, and dependency-management updates have been added to improve build stability and release configuration.
@@ -70,13 +70,13 @@ Note: The tool is referred to as ITS Telematics; this repository retains the nam
 
   * Pull Requests: [cda-telematics PR #287](https://github.com/usdot-fhwa-stol/cda-telematics/pull/287), [cda-telematics PR #282](https://github.com/usdot-fhwa-stol/cda-telematics/pull/282), [cda-telematics PR #284](https://github.com/usdot-fhwa-stol/cda-telematics/pull/284), [cda-telematics PR #301](https://github.com/usdot-fhwa-stol/cda-telematics/pull/301), [cda-telematics PR #299](https://github.com/usdot-fhwa-stol/cda-telematics/pull/299), [cda-telematics PR #302](https://github.com/usdot-fhwa-stol/cda-telematics/pull/302), [cda-telematics PR #265](https://github.com/usdot-fhwa-stol/cda-telematics/pull/265), [cda-telematics PR #297](https://github.com/usdot-fhwa-stol/cda-telematics/pull/297), [cda-telematics PR #304](https://github.com/usdot-fhwa-stol/cda-telematics/pull/304), [cda-telematics PR #286](https://github.com/usdot-fhwa-stol/cda-telematics/pull/286)
 
-## New Repositories
+## New Forked Repositories
 
 ### Telematics V2X Radio Unit
 
-The Telematics V2X Radio Unit is a telematics-specific fork of V2X Hub with no prior release. In this release, the fork is synced with the V2X Hub 7.11.0 / Viper baseline and updated with telematics-specific Telematics V2X Radio Unit support for RSU data streaming, RSU health/status reporting, source identification, RSU Management Service integration, message receiver configuration, Docker networking, performance logging, and CI workflow support.
+The Telematics V2X Radio Unit is an enhanced telematics-specific fork of V2X Hub with no prior release. In this release, the fork is synced with the V2X Hub 7.11.0 / Viper baseline and updated with telematics-specific Telematics V2X Radio Unit support for RSU data streaming, RSU health/status reporting, source identification, RSU Management Service integration, message receiver configuration, Docker networking, performance logging, and CI workflow support.
 
-**Enhancements**
+**Enhancements made to the V2X Hub Fork**
 
 - Telematics V2X Radio Unit Baseline: Synced the telematics fork with the V2X Hub 7.11.0 / Viper baseline and brought forward upstream telematics Telematics V2X Radio Unit (TRU) updates for multi-RSU data streaming, RSU health/status reporting, source identification in routed messages, RSU Health Monitor configuration updates, and RSU Management Service integration.
 
@@ -94,7 +94,7 @@ The Telematics V2X Radio Unit is a telematics-specific fork of V2X Hub with no p
 
   * Pull Requests: [telematics-v2x-radio-unit PR #12](https://github.com/usdot-fhwa-stol/telematics-v2x-radio-unit/pull/12)
 
-**Fixes**
+**Fixes made to the V2X Hub Fork**
 
 - Telematics V2X Radio Unit Bug Fix Sync: Synced Telematics V2X RSU Unit end-to-end testing fixes from V2X Hub, including Docker image workflow updates, Telematics V2X RSU Unit database reuse, corrected image tagging, startup auto-configuration fixes, Telematics V2X RSU Unit naming, RSU health-monitor startup handling, MIB-version support, available-topic publishing fixes, and separate auto/manual configuration topics.
 
