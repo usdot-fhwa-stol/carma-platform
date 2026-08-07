@@ -24,7 +24,6 @@
 #include <carma_wm/SignalizedIntersectionManager.hpp>
 #include <utility>
 #include <rosgraph_msgs/msg/clock.hpp>
-#include <rclcpp/rclcpp.hpp>
 
 namespace carma_wm
 {
@@ -37,12 +36,8 @@ class WMListenerWorker
 public:
   /*!
    * \brief Constructor
-   *
-   * \param logger Logger to use for all log output. Pass the calling node's
-   *               get_child("carma_wm") logger so messages appear in MCAP.
-   *               Defaults to a standalone logger for backward compatibility.
    */
-  explicit WMListenerWorker(rclcpp::Logger logger = rclcpp::get_logger("carma_wm"));
+  WMListenerWorker();
 
   /*!
    * \brief Constructor
@@ -174,7 +169,6 @@ public:
   SIGNAL_PHASE_PROCESSING getWMSpatProcessingState() const;
 
 private:
-  rclcpp::Logger logger_;
   std::shared_ptr<CARMAWorldModel> world_model_;
   std::function<void()> map_callback_;
   std::function<void()> route_callback_;
