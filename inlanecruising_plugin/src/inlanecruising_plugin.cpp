@@ -109,16 +109,6 @@ void InLaneCruisingPlugin::plan_trajectory_callback(
 
   resp->trajectory_plan = original_trajectory;
 
-  // Aside from the flag, ILC should not call yield_plugin on invalid trajectories
-  if (config_.enable_object_avoidance && original_trajectory.trajectory_points.size() >= 2)
-  {
-    basic_autonomy::waypoint_generation::modify_trajectory_to_yield_to_obstacles(nh_, req, resp, yield_client_, config_.tactical_plugin_service_call_timeout);
-  }
-  else
-  {
-    RCLCPP_DEBUG(nh_->get_logger(), "Ignored Object Avoidance");
-  }
-
   if (config_.publish_debug) { // Publish the debug message if in debug logging mode
     debug_msg_.trajectory_plan = resp->trajectory_plan;
     debug_publisher_(debug_msg_);
@@ -133,11 +123,5 @@ void InLaneCruisingPlugin::plan_trajectory_callback(
     rclcpp::get_logger("inlanecruising_plugin"),
     "ILC ExecutionTime: " << std::chrono::duration<double>(duration).count());
 }
-
-void InLaneCruisingPlugin::set_yield_client(carma_ros2_utils::ClientPtr<carma_planning_msgs::srv::PlanTrajectory> client)
-{
-  yield_client_ = client;
-}
-
 
 }  // namespace inlanecruising_plugin

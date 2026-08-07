@@ -33,6 +33,7 @@ jobs:
         INIT_ENV: "/home/carma/.base-image/init-env.sh"
         ROS_2_ENV: "/opt/ros/humble/setup.bash"
         TERM: xterm
+        TEST_TIMEOUT: "300" # increase from default 60 seconds to 300 seconds to accommodate some heavy unit test logic
       options: "--user root"
 
     steps:
@@ -84,8 +85,16 @@ jobs:
         source "$INIT_ENV"
         source "$ROS_2_ENV"
         source /opt/autoware.ai/ros/install/setup.bash
-        COLCON_CMD="colcon test --return-code-on-test-failure --parallel-workers 4 --event-handlers console_direct+"
-        NEW_CMD="colcon test --return-code-on-test-failure --parallel-workers 16 --event-handlers console_cohesion+ --packages-select \$PACKAGES --ctest-args --output-on-failure --timeout 300"
+        # Every test already has a TIMEOUT property (ament_add_test defaults it to "60"),
+        # and that property overrides any --timeout flag passed to ctest.
+        # Therefore, it needs to be manually updated.
+        find /opt/carma/build -name CTestTestfile.cmake -exec sed -i -E "s/TIMEOUT \"?[0-9]+\"?/TIMEOUT \"$TEST_TIMEOUT\"/g" {} +
+        # make_with_coverage.bash's colcon test line already ends in one --ctest-args block.
+        # A second --ctest-args later on the line would silently win and drop this one, so
+        # COLCON_CMD includes --ctest-args too: sed replaces it, and NEW_CMD writes its own
+        # --ctest-args (with --output-on-failure) right before that same untouched block.
+        COLCON_CMD="colcon test --return-code-on-test-failure --parallel-workers 4 --event-handlers console_direct+ --ctest-args"
+        NEW_CMD="colcon test --return-code-on-test-failure --parallel-workers 16 --event-handlers console_cohesion+ --packages-select \$PACKAGES --ctest-args --output-on-failure"
         sed -i "s|$COLCON_CMD|$NEW_CMD|" /home/carma/.ci-image/engineering_tools/code_coverage/make_with_coverage.bash
         make_with_coverage.bash -t -e /opt/carma/ -o ./coverage_reports/gcov
 
@@ -95,5 +104,3 @@ jobs:
       with:
         sonar-token: ${{ secrets.SONAR_TOKEN }}
         working-dir: /opt/carma/src/${{ github.event.repository.name }}
-
-

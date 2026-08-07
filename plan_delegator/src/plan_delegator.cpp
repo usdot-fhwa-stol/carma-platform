@@ -145,6 +145,7 @@ namespace plan_delegator
         config_.duration_to_signal_before_lane_change = declare_parameter<double>("duration_to_signal_before_lane_change", config_.duration_to_signal_before_lane_change);
         config_.max_traj_generation_reattempt = declare_parameter<int>("max_traj_generation_reattempt", config_.max_traj_generation_reattempt);
         config_.tactical_plugin_service_call_timeout = declare_parameter<int>("tactical_plugin_service_call_timeout", config_.tactical_plugin_service_call_timeout);
+        config_.enable_object_avoidance = declare_parameter<bool>("enable_object_avoidance", config_.enable_object_avoidance);
     }
 
     carma_ros2_utils::CallbackReturn PlanDelegator::handle_on_configure(const rclcpp_lifecycle::State &)
@@ -160,6 +161,7 @@ namespace plan_delegator
         get_parameter<double>("duration_to_signal_before_lane_change", config_.duration_to_signal_before_lane_change);
         get_parameter<int>("tactical_plugin_service_call_timeout", config_.tactical_plugin_service_call_timeout);
         get_parameter<int>("max_traj_generation_reattempt", config_.max_traj_generation_reattempt);
+        get_parameter<bool>("enable_object_avoidance", config_.enable_object_avoidance);
 
         RCLCPP_INFO_STREAM(rclcpp::get_logger("plan_delegator"),"Done loading parameters: " << config_);
 
@@ -167,6 +169,10 @@ namespace plan_delegator
         traj_pub_ = create_publisher<carma_planning_msgs::msg::TrajectoryPlan>("plan_trajectory", 5);
         upcoming_lane_change_status_pub_ = create_publisher<carma_planning_msgs::msg::UpcomingLaneChangeStatus>("upcoming_lane_change_status", 1);
         turn_signal_command_pub_ = create_publisher<autoware_msgs::msg::LampCmd>("lamp_cmd", 1);
+
+        // Setup yield_plugin client; plan_delegator is the sole caller of yield_plugin, invoking it on the
+        // final trajectory before publishing rather than having every tactical plugin call it independently
+        yield_client_ = create_client<carma_planning_msgs::srv::PlanTrajectory>("plugins/yield_plugin/plan_trajectory");
 
         // Setup subscribers
         plan_sub_ = create_subscription<carma_planning_msgs::msg::ManeuverPlan>("final_maneuver_plan", 5, std::bind(&PlanDelegator::maneuverPlanCallback, this, std_ph::_1));
@@ -778,6 +784,30 @@ namespace plan_delegator
             return;
         }
         carma_planning_msgs::msg::TrajectoryPlan trajectory_plan = planTrajectory();
+
+        // Aside from the flag, yield_plugin should not be called on invalid trajectories
+        if (config_.enable_object_avoidance && isTrajectoryValid(trajectory_plan))
+        {
+            auto yield_req = std::make_shared<carma_planning_msgs::srv::PlanTrajectory::Request>();
+            yield_req->vehicle_state.longitudinal_vel = latest_twist_.twist.linear.x;
+            yield_req->vehicle_state.x_pos_global = latest_pose_.pose.position.x;
+            yield_req->vehicle_state.y_pos_global = latest_pose_.pose.position.y;
+            double roll, pitch, yaw;
+            carma_wm::geometry::rpyFromQuaternion(latest_pose_.pose.orientation, roll, pitch, yaw);
+            yield_req->vehicle_state.orientation = yaw;
+
+            auto yield_resp = std::make_shared<carma_planning_msgs::srv::PlanTrajectory::Response>();
+            yield_resp->trajectory_plan = trajectory_plan;
+
+            yield_resp = basic_autonomy::waypoint_generation::modify_trajectory_to_yield_to_obstacles(
+                shared_from_this(), yield_req, yield_resp, yield_client_, config_.tactical_plugin_service_call_timeout);
+
+            trajectory_plan = yield_resp->trajectory_plan;
+        }
+        else
+        {
+            RCLCPP_DEBUG(rclcpp::get_logger("plan_delegator"), "Ignored Object Avoidance");
+        }
 
         // Check if planned trajectory is valid before send out
         if(isTrajectoryValid(trajectory_plan))

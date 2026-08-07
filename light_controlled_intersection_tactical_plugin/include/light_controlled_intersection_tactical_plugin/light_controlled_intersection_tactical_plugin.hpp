@@ -132,7 +132,6 @@ namespace light_controlled_intersection_tactical_plugin
     boost::optional<TSCase> last_case_;
     boost::optional<bool> is_last_case_successful_;
     carma_planning_msgs::msg::TrajectoryPlan last_trajectory_time_unbound_;
-    carma_ros2_utils::ClientPtr<carma_planning_msgs::srv::PlanTrajectory> yield_client_;
     const std::string LCI_TACTICAL_LOGGER = "light_controlled_intersection_tactical_plugin";
     carma_planning_msgs::msg::VehicleState ending_state_before_buffer_; //state before applying extra points for curvature calculation that are removed later
     rclcpp::Time latest_traj_request_header_stamp_;
@@ -234,7 +233,6 @@ namespace light_controlled_intersection_tactical_plugin
       *
       * This function takes a trajectory planning request, applies smoothing algorithms
       * to refine the trajectory, and populates the response with the smoothed trajectory.
-      * NOTE: Function is called by planTrajectoryCB and doesn't use yield client
       * \param req  Shared pointer to the trajectory planning request message.
       * \param resp Shared pointer to the trajectory planning response message to be filled.
       */
@@ -301,13 +299,6 @@ namespace light_controlled_intersection_tactical_plugin
     void planTrajectoryCB(
       carma_planning_msgs::srv::PlanTrajectory::Request::SharedPtr req,
       carma_planning_msgs::srv::PlanTrajectory::Response::SharedPtr resp);
-
-    /**
-     * \brief set the yield service
-     *
-     * \param yield_srv input yield service
-     */
-    void set_yield_client(carma_ros2_utils::ClientPtr<carma_planning_msgs::srv::PlanTrajectory> client);
 
     /**
      * \brief Setter function to set a new config for this object
