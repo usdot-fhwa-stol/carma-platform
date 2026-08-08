@@ -325,88 +325,23 @@ namespace basic_autonomy
             lanelet::ConstLanelet starting_lanelet = wm->getMap()->laneletLayer.get(starting_lane_id);
             lanelet::ConstLanelet ending_lanelet = wm->getMap()->laneletLayer.get(ending_lane_id);
 
-            lanelet::ConstLanelets starting_lane;
-            starting_lane.push_back(starting_lanelet);
+            double lane_change_length = ending_downtrack - starting_downtrack;
 
-            std::vector<lanelet::BasicPoint2d> reference_centerline;
-            // 400 value here is an arbitrary attempt at improving performance by reducing copy operations.
-            // Value picked based on annecdotal evidence from STOL system testing
-            reference_centerline.reserve(400);
-            bool shared_boundary_found = false;
-            bool is_lanechange_left = false;
+            // Build the starting-lane (reference) and ending-lane (target) centerlines independently, each from its
+            // own lanelet's predecessor/successor chain. See build_chain_centerline's doc comment for why this is
+            // done instead of looking up "the lanelet adjacent to X" for every lanelet along the starting lane path.
+            // NOTE: starting_lanelet may NOT be the lanechange lanelets in the route, but could be
+            // little before due to accounting for front bumper in plan_delegator.
+            std::vector<lanelet::BasicPoint2d> reference_centerline =
+                build_chain_centerline(wm, starting_lanelet, 0.0, lane_change_length + buffer_ending_downtrack);
+            std::vector<lanelet::BasicPoint2d> target_lane_centerline =
+                build_chain_centerline(wm, ending_lanelet, lane_change_length, buffer_ending_downtrack);
 
-            lanelet::BasicLineString2d current_lanelet_centerline = starting_lanelet.centerline2d().basicLineString();
-            lanelet::ConstLanelet current_lanelet = starting_lanelet;
-            reference_centerline.insert(reference_centerline.end(), current_lanelet_centerline.begin(), current_lanelet_centerline.end());
-
-            RCLCPP_DEBUG_STREAM(rclcpp::get_logger(BASIC_AUTONOMY_LOGGER), "Searching for shared boundary with starting lanechange lanelet " << std::to_string(current_lanelet.id()) << " and ending lanelet " << std::to_string(ending_lanelet.id()));
-            while(!shared_boundary_found){
-                //Assumption- Adjacent lanelets share lane boundary
-                if(current_lanelet.leftBound() == ending_lanelet.rightBound()){
-                    RCLCPP_DEBUG_STREAM(rclcpp::get_logger(BASIC_AUTONOMY_LOGGER), "Lanelet " << std::to_string(current_lanelet.id()) << " shares left boundary with " << std::to_string(ending_lanelet.id()));
-                    is_lanechange_left = true;
-                    shared_boundary_found = true;
-                }
-
-                else if(current_lanelet.rightBound() == ending_lanelet.leftBound()){
-                    RCLCPP_DEBUG_STREAM(rclcpp::get_logger(BASIC_AUTONOMY_LOGGER), "Lanelet " << std::to_string(current_lanelet.id()) << " shares right boundary with " << std::to_string(ending_lanelet.id()));
-                    shared_boundary_found = true;
-                }
-
-                else{
-                    //If there are no following lanelets on route, lanechange should be completing before reaching it
-                    if(wm->getMapRoutingGraph()->following(current_lanelet, false).empty())
-                    {
-                        // Maneuver requires we travel further before completing lane change, but no routable lanelet directly ahead
-                        //In this case we have reached a lanelet which does not have a routable lanelet ahead + isn't adjacent to the lanelet where lane change ends
-                        //A lane change should have already happened at this point
-                        throw(std::invalid_argument("No following lanelets from current lanelet reachable without a lane change, incorrectly chosen end lanelet"));
-                    }
-
-                    current_lanelet = wm->getMapRoutingGraph()->following(current_lanelet, false).front();
-                    if(current_lanelet.id() == starting_lanelet.id()){
-                        //Looped back to starting lanelet
-                        throw(std::invalid_argument("No lane change in path"));
-                    }
-                    RCLCPP_DEBUG_STREAM(rclcpp::get_logger(BASIC_AUTONOMY_LOGGER), "Now checking for shared lane boundary with lanelet " << std::to_string(current_lanelet.id()) << " and ending lanelet " << std::to_string(ending_lanelet.id()));
-                    auto current_lanelet_linestring = current_lanelet.centerline2d().basicLineString();
-                    //Concatenate linestring starting from + 1 to avoid overlap
-                    reference_centerline.insert(reference_centerline.end(), current_lanelet_linestring.begin() + 1, current_lanelet_linestring.end());
-                    starting_lane.push_back(current_lanelet);
-                }
-            }
-
-            // Create the target lane centerline using lanelets adjacent to the lanechange lanelets in the starting lane
-            std::vector<lanelet::BasicPoint2d> target_lane_centerline;
-            for(size_t i = 0;i<starting_lane.size();++i){
-                lanelet::ConstLanelet curr_end_lanelet;
-
-                if(is_lanechange_left){
-
-                    //get left lanelet
-                    if(wm->getMapRoutingGraph()->left(starting_lane[i])){
-                        curr_end_lanelet = wm->getMapRoutingGraph()->left(starting_lane[i]).get();
-                    }
-                    else{
-                        curr_end_lanelet = wm->getMapRoutingGraph()->adjacentLeft(starting_lane[i]).get();
-                    }
-                }
-                else{
-
-                    //get right lanelet
-                    if(wm->getMapRoutingGraph()->right(starting_lane[i])){
-                        curr_end_lanelet = wm->getMapRoutingGraph()->right(starting_lane[i]).get();
-                    }
-                    else{
-                        curr_end_lanelet = wm->getMapRoutingGraph()->adjacentRight(starting_lane[i]).get();
-                    }
-                }
-
-                auto target_lane_linestring = curr_end_lanelet.centerline2d().basicLineString();
-                //Concatenate linestring starting from + 1 to avoid overlap
-                target_lane_centerline.insert(target_lane_centerline.end(), target_lane_linestring.begin() + 1, target_lane_linestring.end());
-
-            }
+            // If the map didn't have enough connected/routable lanelets to reach the required length (for example a
+            // closed lanelet blocked further routing), pad the centerlines out with a straight-line extrapolation
+            // instead of failing -- see extrapolate_to_length's doc comment.
+            extrapolate_to_length(reference_centerline, lane_change_length + buffer_ending_downtrack, "starting lanelet " + std::to_string(starting_lane_id) + "'s lane");
+            extrapolate_to_length(target_lane_centerline, lane_change_length + buffer_ending_downtrack, "ending lanelet " + std::to_string(ending_lane_id) + "'s lane");
 
             //Downsample centerlines
             // 400 value here is an arbitrary attempt at improving performance by reducing copy operations.
@@ -442,7 +377,6 @@ namespace basic_autonomy
                 auto centerlines = resample_linestring_pair_to_same_size(constrained_start_centerline, constrained_target_centerline);
                 constrained_start_centerline = centerlines[0];
                 constrained_target_centerline = centerlines[1];
-
             }
 
             //Create Trajectory geometry
@@ -460,21 +394,12 @@ namespace basic_autonomy
                 centerline_points.push_back(current_position);
             }
 
-            // Add points from the remaining length of the target lanelet to provide sufficient distance for adding buffer
-            double dist_to_target_lane_end = lanelet::geometry::distance2d(centerline_points.back(), downsampled_target_centerline.back());
+            // Add points from the remaining length of the target lane to provide sufficient distance for the buffer.
+            // target_lane_centerline was already built out to lane_change_length + buffer_ending_downtrack by
+            // build_chain_centerline/extrapolate_to_length above (walking the target lane's own successor chain,
+            // with a straight-line fallback if the map ran out of routable lanelets), so no further lookup of
+            // "the lanelet following ending_lanelet" is needed here.
             centerline_points.insert(centerline_points.end(), downsampled_target_centerline.begin() + end_index_target_centerline, downsampled_target_centerline.end());
-
-            // If the additional distance from the remaining length of the target lanelet does not provide more than the required
-            // buffer_ending_downtrack, then also add points from the lanelet following the target lanelet
-            if (dist_to_target_lane_end < buffer_ending_downtrack) {
-                auto following_lanelets = wm->getMapRoutingGraph()->following(ending_lanelet, false);
-                if(!following_lanelets.empty()){
-                    //Arbitrarily choosing first following lanelet for buffer since points are only being used to fit spline
-                    auto following_lanelet_centerline = following_lanelets.front().centerline2d().basicLineString();
-                    centerline_points.insert(centerline_points.end(), following_lanelet_centerline.begin(),
-                                                                                following_lanelet_centerline.end());
-                }
-            }
 
             return centerline_points;
         }

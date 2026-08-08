@@ -144,5 +144,135 @@ namespace waypoint_generation
         return get_nearest_index_by_downtrack(points, wm, ending_downtrack);
     }
 
+    std::vector<lanelet::BasicPoint2d> build_chain_centerline(const carma_wm::WorldModelConstPtr &wm,
+                                                               lanelet::ConstLanelet pivot,
+                                                               double backward_length,
+                                                               double forward_length)
+    {
+        std::vector<lanelet::ConstLanelet> chain{pivot};
+        std::unordered_set<lanelet::Id> visited{pivot.id()};
+
+        double covered_back = carma_wm::geometry::get_lanelet_centerline_length(pivot);
+        while (covered_back < backward_length)
+        {
+            auto previous = wm->getMapRoutingGraph()->previous(chain.front(), false);
+            bool no_predecessor = previous.empty();
+            bool loop_detected = !no_predecessor && visited.count(previous.front().id()) > 0;
+
+            if (no_predecessor)
+            {
+                RCLCPP_WARN_STREAM(rclcpp::get_logger(BASIC_AUTONOMY_LOGGER),
+                    "create_lanechange_geometry: No routable predecessor lanelet found before lanelet "
+                    << chain.front().id() << " (possibly closed or missing from the map). Using the "
+                    << covered_back << "m of centerline that was reachable going backward.");
+            }
+
+            if (loop_detected)
+            {
+                RCLCPP_WARN_STREAM(rclcpp::get_logger(BASIC_AUTONOMY_LOGGER),
+                    "create_lanechange_geometry: Detected a loop in lanelet connectivity before lanelet "
+                    << chain.front().id() << "; stopping centerline extension.");
+            }
+
+            if (no_predecessor || loop_detected)
+            {
+                break;
+            }
+
+            lanelet::ConstLanelet prev = previous.front();
+            visited.insert(prev.id());
+            covered_back += carma_wm::geometry::get_lanelet_centerline_length(prev);
+            chain.insert(chain.begin(), prev);
+        }
+
+        double covered_fwd = 0.0;
+        while (covered_fwd < forward_length)
+        {
+            auto following = wm->getMapRoutingGraph()->following(chain.back(), false);
+            bool no_successor = following.empty();
+            bool loop_detected = !no_successor && visited.count(following.front().id()) > 0;
+
+            if (no_successor)
+            {
+                RCLCPP_WARN_STREAM(rclcpp::get_logger(BASIC_AUTONOMY_LOGGER),
+                    "create_lanechange_geometry: No routable successor lanelet found after lanelet "
+                    << chain.back().id() << " (possibly closed or missing from the map). Using the "
+                    << covered_fwd << "m of centerline that was reachable going forward.");
+            }
+
+            if (loop_detected)
+            {
+                RCLCPP_WARN_STREAM(rclcpp::get_logger(BASIC_AUTONOMY_LOGGER),
+                    "create_lanechange_geometry: Detected a loop in lanelet connectivity after lanelet "
+                    << chain.back().id() << "; stopping centerline extension.");
+            }
+
+            if (no_successor || loop_detected)
+            {
+                break;
+            }
+
+            lanelet::ConstLanelet next = following.front();
+            visited.insert(next.id());
+            covered_fwd += carma_wm::geometry::get_lanelet_centerline_length(next);
+            chain.push_back(next);
+        }
+
+        std::vector<lanelet::BasicPoint2d> centerline;
+        centerline.reserve(400);
+        for (size_t i = 0; i < chain.size(); ++i)
+        {
+            auto ls = chain[i].centerline2d().basicLineString();
+            if (i == 0)
+            {
+                centerline.insert(centerline.end(), ls.begin(), ls.end());
+            }
+            else
+            {
+                // Concatenate linestring starting from + 1 to avoid duplicating the shared endpoint
+                centerline.insert(centerline.end(), ls.begin() + 1, ls.end());
+            }
+        }
+        return centerline;
+    }
+
+    void extrapolate_to_length(std::vector<lanelet::BasicPoint2d>& centerline, double target_length, const std::string& description)
+    {
+        if (centerline.size() < 2)
+        {
+            throw std::invalid_argument("create_lanechange_geometry: " + description +
+                " has fewer than 2 centerline points; cannot build or extrapolate a lane change trajectory from this map data");
+        }
+
+        double current_length = carma_wm::geometry::compute_arc_lengths(centerline).back();
+        if (current_length >= target_length)
+        {
+            return;
+        }
+
+        RCLCPP_WARN_STREAM(rclcpp::get_logger(BASIC_AUTONOMY_LOGGER),
+            "create_lanechange_geometry: Only " << current_length << "m of connected lanelet centerline was "
+            << "available for " << description << " (needed " << target_length << "m). Extrapolating a "
+            << "straight line from the last known heading so a lane change trajectory can still be produced.");
+
+        lanelet::BasicPoint2d last = centerline.back();
+        lanelet::BasicPoint2d prev = centerline[centerline.size() - 2];
+        lanelet::BasicPoint2d direction = last - prev;
+        if (direction.norm() < 1e-6)
+        {
+            // Degenerate direction from the last segment; fall back to the vector from the first to last point
+            direction = last - centerline.front();
+        }
+        direction.normalize();
+
+        constexpr double step = 1.0; // meters between synthetic points, similar to typical map point spacing
+        double remaining = target_length - current_length;
+        for (int step_count = 1; step_count * step < remaining; ++step_count)
+        {
+            centerline.push_back(last + direction * (step_count * step));
+        }
+        centerline.push_back(last + direction * remaining); // ensure the full requested length is covered
+    }
+
 }   // namespace waypoint_generation
 }   // namespace basic_autonomy

@@ -380,6 +380,123 @@ namespace plan_delegator{
     }
 */
 
+    struct LoopedTestMapIds
+    {
+        lanelet::Id lanelet_1_id;
+        lanelet::Id lanelet_2_id;
+        lanelet::Id lanelet_c_id;
+    };
+
+    // Builds two lanelets (L1, L2) that are each other's previous()/following() lanelet, forming a
+    // 2-node routing loop, plus a third, unrelated lanelet C that never shares a boundary with
+    // either. Used to force getLaneChangeInformation's following()-search to hit a routing loop
+    // before finding a shared-boundary match, exercising its loop-detected fallback to a purely
+    // geometric left/right estimate.
+    lanelet::LaneletMapPtr buildLoopedTestMapWithUnrelatedLanelet(LoopedTestMapIds& ids, double width = 3.7, double length = 10.0)
+    {
+        auto p_start_left = carma_wm::test::getPoint(0.0, 0.0, 0.0);
+        auto p_start_right = carma_wm::test::getPoint(width, 0.0, 0.0);
+        auto p_end_left = carma_wm::test::getPoint(0.0, length, 0.0);
+        auto p_end_right = carma_wm::test::getPoint(width, length, 0.0);
+
+        // L1 and L2 share the same Point3d objects at both ends (just traversed in reverse), so
+        // following(L1) == L2 and following(L2) == L1.
+        lanelet::LineString3d l1_left(lanelet::utils::getId(), {p_start_left, p_end_left});
+        lanelet::LineString3d l1_right(lanelet::utils::getId(), {p_start_right, p_end_right});
+        lanelet::Lanelet l1 = carma_wm::test::getLanelet(l1_left, l1_right);
+
+        lanelet::LineString3d l2_left(lanelet::utils::getId(), {p_end_left, p_start_left});
+        lanelet::LineString3d l2_right(lanelet::utils::getId(), {p_end_right, p_start_right});
+        lanelet::Lanelet l2 = carma_wm::test::getLanelet(l2_left, l2_right);
+
+        // C sits two lane-widths to the right of L1/L2 and shares none of their boundary points,
+        // so it can never be found as a shared-boundary match while walking the loop.
+        auto c_left_0 = carma_wm::test::getPoint(2 * width, 0.0, 0.0);
+        auto c_left_end = carma_wm::test::getPoint(2 * width, length, 0.0);
+        auto c_right_0 = carma_wm::test::getPoint(3 * width, 0.0, 0.0);
+        auto c_right_end = carma_wm::test::getPoint(3 * width, length, 0.0);
+        lanelet::LineString3d c_left(lanelet::utils::getId(), {c_left_0, c_left_end});
+        lanelet::LineString3d c_right(lanelet::utils::getId(), {c_right_0, c_right_end});
+        lanelet::Lanelet c = carma_wm::test::getLanelet(c_left, c_right);
+
+        ids.lanelet_1_id = l1.id();
+        ids.lanelet_2_id = l2.id();
+        ids.lanelet_c_id = c.id();
+
+        lanelet::LaneletMapPtr map = lanelet::utils::createMap({l1, l2, c}, {});
+        using namespace lanelet::units::literals;
+        lanelet::MapConformer::ensureCompliance(map, 0_mph);
+        return map;
+    }
+
+    TEST(TestPlanDelegator, TestGetLaneChangeInformation)
+    {
+        rclcpp::NodeOptions node_options;
+        auto pd = std::make_shared<plan_delegator::PlanDelegator>(node_options);
+
+        std::shared_ptr<carma_wm::CARMAWorldModel> cmw = std::make_shared<carma_wm::CARMAWorldModel>();
+        lanelet::LaneletMapPtr map = carma_wm::test::buildGuidanceTestMap(3.7, 10.0);
+        cmw->setMap(map);
+        pd->wm_ = cmw;
+
+        auto makeLaneChangeManeuver = [](lanelet::Id start_id, lanelet::Id end_id) {
+            carma_planning_msgs::msg::Maneuver maneuver;
+            maneuver.type = carma_planning_msgs::msg::Maneuver::LANE_CHANGE;
+            maneuver.lane_change_maneuver.start_dist = 0.0;
+            maneuver.lane_change_maneuver.starting_lane_id = std::to_string(start_id);
+            maneuver.lane_change_maneuver.ending_lane_id = std::to_string(end_id);
+            return maneuver;
+        };
+
+        // Case 1: starting and ending lanelets directly share a boundary -- right lane change.
+        // (1200 is lane 1 segment 0; 1210 is lane 2 segment 0; both share linestring ls10.)
+        {
+            LaneChangeInformation info = pd->getLaneChangeInformation(makeLaneChangeManeuver(1200, 1210));
+            EXPECT_TRUE(info.is_right_lane_change);
+        }
+
+        // Case 2: starting and ending lanelets directly share a boundary -- left lane change.
+        {
+            LaneChangeInformation info = pd->getLaneChangeInformation(makeLaneChangeManeuver(1210, 1200));
+            EXPECT_FALSE(info.is_right_lane_change);
+        }
+
+        // Case 3: no direct shared boundary, but following(starting_lanelet) does share one with
+        // ending_lanelet -- exercises the following()-search loop's success path.
+        // 1200 (lane 1 seg 0) -> following -> 1201 (lane 1 seg 1), which shares boundary ls11 with
+        // 1211 (lane 2 seg 1).
+        {
+            LaneChangeInformation info = pd->getLaneChangeInformation(makeLaneChangeManeuver(1200, 1211));
+            EXPECT_TRUE(info.is_right_lane_change);
+        }
+
+        // Case 4: starting_lanelet has no routable successor (1203 is the last lanelet in lane 1),
+        // and ending_lanelet (1221) shares no boundary with it -- exercises the no_successor
+        // fallback to a purely geometric left/right estimate.
+        {
+            LaneChangeInformation info = pd->getLaneChangeInformation(makeLaneChangeManeuver(1203, 1221));
+            // 1221 (lane 3) sits at a higher x than 1203 (lane 1) along the same direction of
+            // travel, so the geometric estimate should report a right lane change.
+            EXPECT_TRUE(info.is_right_lane_change);
+        }
+
+        // Case 5: starting_lanelet's following() chain forms a routing loop before any shared
+        // boundary with ending_lanelet is found -- exercises the loop-detected fallback to the
+        // geometric estimate.
+        {
+            LoopedTestMapIds ids;
+            lanelet::LaneletMapPtr looped_map = buildLoopedTestMapWithUnrelatedLanelet(ids);
+            std::shared_ptr<carma_wm::CARMAWorldModel> looped_cmw = std::make_shared<carma_wm::CARMAWorldModel>();
+            looped_cmw->setMap(looped_map);
+            pd->wm_ = looped_cmw;
+
+            LaneChangeInformation info = pd->getLaneChangeInformation(makeLaneChangeManeuver(ids.lanelet_1_id, ids.lanelet_c_id));
+            // Lanelet C sits to the right of the L1/L2 loop, so the geometric fallback should
+            // report a right lane change.
+            EXPECT_TRUE(info.is_right_lane_change);
+        }
+    }
+
     /**
      * Total route length should be 100m
      *

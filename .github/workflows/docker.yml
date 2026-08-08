@@ -1,8 +1,9 @@
-# This workflow will only build for Pull Requests which are opened, changed , merged 
+# This workflow will only build for Pull Requests which are opened, changed , merged
 name: Docker build
 on:
   pull_request:
     types: [opened, synchronize, reopened]
+  workflow_dispatch:
 
 jobs:
   docker:

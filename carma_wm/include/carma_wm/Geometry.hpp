@@ -186,6 +186,14 @@ std::vector<double> compute_arc_lengths(const std::vector<lanelet::BasicPoint2d>
 std::vector<double> compute_arc_lengths(const lanelet::BasicLineString2d& data);
 
 /*!
+ * \brief Returns the total 2d arc length of a lanelet's centerline
+ *
+ * \param ll The lanelet whose centerline length is being computed
+ * \return The total 2d arc length of ll's centerline
+ */
+double get_lanelet_centerline_length(const lanelet::ConstLanelet& ll);
+
+/*!
  * \brief Compute the Euclidean distance between the two points
  */
 double compute_euclidean_distance(const Eigen::Vector2d& a, const Eigen::Vector2d& b);

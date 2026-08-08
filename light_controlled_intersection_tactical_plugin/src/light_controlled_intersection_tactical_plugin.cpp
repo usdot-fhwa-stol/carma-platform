@@ -408,19 +408,7 @@ namespace light_controlled_intersection_tactical_plugin
         RCLCPP_DEBUG_STREAM(rclcpp::get_logger(LCI_TACTICAL_LOGGER),
             "Starting light controlled intersection trajectory planning");
 
-        // Call the function to plan trajectory without yield
         planTrajectorySmoothing(req, resp);
-
-        // Yield for potential obstacles in the road
-        if (config_.enable_object_avoidance && resp->trajectory_plan.trajectory_points.size() >= 2)
-        {
-            basic_autonomy::waypoint_generation::modify_trajectory_to_yield_to_obstacles(
-                nh_, req, resp, yield_client_, config_.tactical_plugin_service_call_timeout);
-        }
-        else
-        {
-            RCLCPP_DEBUG(rclcpp::get_logger(LCI_TACTICAL_LOGGER), "Ignored Object Avoidance");
-        }
 
         std::chrono::system_clock::time_point end_time = std::chrono::system_clock::now();
         auto duration = end_time - start_time;
@@ -612,11 +600,5 @@ namespace light_controlled_intersection_tactical_plugin
     {
         config_ = config;
     }
-
-    void LightControlledIntersectionTacticalPlugin::set_yield_client(carma_ros2_utils::ClientPtr<carma_planning_msgs::srv::PlanTrajectory> client)
-    {
-        yield_client_ = client;
-    }
-
 
 } // light_controlled_intersection_tactical_plugin

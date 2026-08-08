@@ -146,17 +146,6 @@ bool StopandWait::plan_trajectory_cb(carma_planning_msgs::srv::PlanTrajectory::R
 
   resp->trajectory_plan = trajectory;
 
-  // Yield for potential obstacles in the road
-  // Aside from the flag, yield_plugin should not be called on invalid trajectories
-  if (config_.enable_object_avoidance && resp->trajectory_plan.trajectory_points.size() >= 2)
-  {
-    basic_autonomy::waypoint_generation::modify_trajectory_to_yield_to_obstacles(nh_, req, resp, yield_client_, config_.tactical_plugin_service_call_timeout);
-  }
-  else
-  {
-    RCLCPP_DEBUG(rclcpp::get_logger("stop_and_wait_plugin"), "Ignored Object Avoidance");
-  }
-
   std::chrono::system_clock::time_point end_time = std::chrono::system_clock::now();  // Planning complete
 
   auto duration = end_time - start_time;
@@ -419,11 +408,6 @@ void StopandWait::splitPointSpeedPairs(const std::vector<PointSpeedPair>& points
     basic_points->push_back(p.point);
     speeds->push_back(p.speed);
   }
-}
-
-void StopandWait::set_yield_client(carma_ros2_utils::ClientPtr<carma_planning_msgs::srv::PlanTrajectory> client)
-{
-  yield_client_ = client;
 }
 
 }  // namespace stop_and_wait_plugin
