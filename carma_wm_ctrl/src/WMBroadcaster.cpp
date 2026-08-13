@@ -53,6 +53,12 @@ const PublishActiveGeofCallback& active_pub, std::shared_ptr<carma_ros2_utils::t
   std::bind(&WMBroadcaster::routeCallbackMessage, this, _1);
 };
 
+void WMBroadcaster::setLogger(const rclcpp::Logger& logger)
+{
+  logger_ = logger;
+  scheduler_.setLogger(logger);
+}
+
 void WMBroadcaster::baseMapCallback(autoware_lanelet2_msgs::msg::MapBin::UniquePtr map_msg)
 {
   std::lock_guard<std::mutex> guard(map_mutex_);
@@ -62,11 +68,11 @@ void WMBroadcaster::baseMapCallback(autoware_lanelet2_msgs::msg::MapBin::UniqueP
   if (firstCall)
   {
     firstCall = false;
-    RCLCPP_INFO_STREAM(rclcpp::get_logger("carma_wm_ctrl"), "WMBroadcaster::baseMapCallback called for first time with new map message");
+    RCLCPP_INFO_STREAM(logger_, "WMBroadcaster::baseMapCallback called for first time with new map message");
   }
   else
   {
-    RCLCPP_WARN_STREAM(rclcpp::get_logger("carma_wm_ctrl"), "WMBroadcaster::baseMapCallback called multiple times in the same node");
+    RCLCPP_WARN_STREAM(logger_, "WMBroadcaster::baseMapCallback called multiple times in the same node");
   }
 
   lanelet::LaneletMapPtr new_map(new lanelet::LaneletMap);
@@ -78,16 +84,16 @@ void WMBroadcaster::baseMapCallback(autoware_lanelet2_msgs::msg::MapBin::UniqueP
   base_map_ = new_map;  // Store map
   current_map_ = new_map_to_change; // broadcaster makes changes to this
 
-  lanelet::MapConformer::ensureCompliance(base_map_, config_limit);     // Update map to ensure it complies with expectations
-  lanelet::MapConformer::ensureCompliance(current_map_, config_limit);
+  lanelet::MapConformer::ensureCompliance(base_map_, config_limit, logger_);     // Update map to ensure it complies with expectations
+  lanelet::MapConformer::ensureCompliance(current_map_, config_limit, logger_);
 
-  RCLCPP_INFO_STREAM(rclcpp::get_logger("carma_wm_ctrl"), "Building routing graph for base map");
+  RCLCPP_INFO_STREAM(logger_, "Building routing graph for base map");
 
   lanelet::traffic_rules::TrafficRulesUPtr traffic_rules_car = lanelet::traffic_rules::TrafficRulesFactory::create(
   lanelet::traffic_rules::CarmaUSTrafficRules::Location, participant_);
   current_routing_graph_ = lanelet::routing::RoutingGraph::build(*current_map_, *traffic_rules_car);
 
-  RCLCPP_INFO_STREAM(rclcpp::get_logger("carma_wm_ctrl"), "Done building routing graph for base map");
+  RCLCPP_INFO_STREAM(logger_, "Done building routing graph for base map");
 
   // Publish map
   current_map_version_ += 1; // Increment the map version. It should always start from 1 for the first map
@@ -95,14 +101,14 @@ void WMBroadcaster::baseMapCallback(autoware_lanelet2_msgs::msg::MapBin::UniqueP
   autoware_lanelet2_msgs::msg::MapBin compliant_map_msg;
 
   // Populate the routing graph message
-  RCLCPP_INFO_STREAM(rclcpp::get_logger("carma_wm_ctrl"), "Creating routing graph message.");
+  RCLCPP_INFO_STREAM(logger_, "Creating routing graph message.");
 
   auto readable_graph = std::static_pointer_cast<RoutingGraphAccessor>(current_routing_graph_);
 
   compliant_map_msg.routing_graph = readable_graph->routingGraphToMsg(participant_);
   compliant_map_msg.has_routing_graph = true;
 
-  RCLCPP_INFO_STREAM(rclcpp::get_logger("carma_wm_ctrl"), "Done creating routing graph message.");
+  RCLCPP_INFO_STREAM(logger_, "Done creating routing graph message.");
 
   lanelet::utils::conversion::toBinMsg(current_map_, &compliant_map_msg);
   compliant_map_msg.map_version = current_map_version_;
@@ -123,7 +129,7 @@ void WMBroadcaster::addScheduleFromMsg(std::shared_ptr<Geofence> gf_ptr, const c
 
   rclcpp::Time end_time = {msg_schedule.end, clock_type};
   if (!msg_schedule.end_exists) {
-    RCLCPP_DEBUG_STREAM(rclcpp::get_logger("carma_wm_ctrl"), "No end time for geofence, using rclcpp::Time::max()");
+    RCLCPP_DEBUG_STREAM(logger_, "No end time for geofence, using rclcpp::Time::max()");
     end_time = {rclcpp::Time::max(), clock_type}; // If there is no end time use the max time
   }
 
@@ -226,7 +232,7 @@ std::vector<std::shared_ptr<Geofence>> WMBroadcaster::geofenceFromMapMsg(std::sh
 
   if (*sim_ == *sim_copy) // if no change
   {
-    RCLCPP_DEBUG_STREAM(rclcpp::get_logger("carma_wm_ctrl"), ">>> Detected no change from previous, ignoring duplicate message! with gf id: " << gf_ptr->id_);
+    RCLCPP_DEBUG_STREAM(logger_, ">>> Detected no change from previous, ignoring duplicate message! with gf id: " << gf_ptr->id_);
     return {};
   }
 
@@ -244,7 +250,7 @@ std::vector<std::shared_ptr<Geofence>> WMBroadcaster::geofenceFromMapMsg(std::sh
     auto j2735_intersection_id = sim_->regem_id_to_intersection_id_[intersection->id()];
     for (auto pt: sim_->intersection_nodes_[j2735_intersection_id])
     {
-      RCLCPP_DEBUG_STREAM(rclcpp::get_logger("carma_wm_ctrl"), "J2735 MAP msg road geometry points: x: " << pt.x() << ", y: " << pt.y());
+      RCLCPP_DEBUG_STREAM(logger_, "J2735 MAP msg road geometry points: x: " << pt.x() << ", y: " << pt.y());
     }
     update->gf_pts.insert(update->gf_pts.end(), sim_->intersection_nodes_[j2735_intersection_id].begin(), sim_->intersection_nodes_[j2735_intersection_id].end());
     updates_to_send.push_back(update);
@@ -279,7 +285,7 @@ void WMBroadcaster::geofenceFromMsg(std::shared_ptr<Geofence> gf_ptr, const carm
   gf_ptr->affected_parts_ = getAffectedLaneletOrAreas(gf_ptr->gf_pts);
 
   if (gf_ptr->affected_parts_.size() == 0) {
-    RCLCPP_WARN_STREAM(rclcpp::get_logger("carma_wm_ctrl"), "There is no applicable component in map for the new geofence message received by WMBroadcaster with id: " << gf_ptr->id_);
+    RCLCPP_WARN_STREAM(logger_, "There is no applicable component in map for the new geofence message received by WMBroadcaster with id: " << gf_ptr->id_);
     return; // Return empty geofence list
   }
 
@@ -314,13 +320,13 @@ void WMBroadcaster::geofenceFromMsg(std::shared_ptr<Geofence> gf_ptr, const carm
     // @SONAR_STOP@
     if(sL > 80_mph )
     {
-    RCLCPP_WARN_STREAM(rclcpp::get_logger("carma_wm_ctrl"), "Digital maximum speed limit is invalid. Value capped at max speed limit."); //Output warning message
+    RCLCPP_WARN_STREAM(logger_, "Digital maximum speed limit is invalid. Value capped at max speed limit."); //Output warning message
     sL = 80_mph; //Cap the speed limit to the predetermined maximum value
 
     }
     if(sL < 0_mph)
     {
-          RCLCPP_WARN_STREAM(rclcpp::get_logger("carma_wm_ctrl"), "Digital  speed limit is invalid. Value set to 0mph.");
+          RCLCPP_WARN_STREAM(logger_, "Digital  speed limit is invalid. Value set to 0mph.");
       sL = 0_mph;
     }// @SONAR_START@
 
@@ -342,12 +348,12 @@ void WMBroadcaster::geofenceFromMsg(std::shared_ptr<Geofence> gf_ptr, const carm
     // @SONAR_STOP@
     if(sL > 80_mph )
     {
-    RCLCPP_WARN_STREAM(rclcpp::get_logger("carma_wm_ctrl"), "Digital speed limit is invalid. Value capped at max speed limit.");
+    RCLCPP_WARN_STREAM(logger_, "Digital speed limit is invalid. Value capped at max speed limit.");
     sL = 80_mph;
     }
     if(sL < 0_mph)
     {
-      RCLCPP_WARN_STREAM(rclcpp::get_logger("carma_wm_ctrl"), "Digital  speed limit is invalid. Value set to 0mph.");
+      RCLCPP_WARN_STREAM(logger_, "Digital  speed limit is invalid. Value set to 0mph.");
       sL = 0_mph;
     }// @SONAR_START@
     gf_ptr->regulatory_element_ = std::make_shared<lanelet::DigitalSpeedLimit>(lanelet::DigitalSpeedLimit::buildData(lanelet::utils::getId(),
@@ -364,7 +370,7 @@ void WMBroadcaster::geofenceFromMsg(std::shared_ptr<Geofence> gf_ptr, const carm
 
     if(min_gap < 0)
     {
-      RCLCPP_WARN_STREAM(rclcpp::get_logger("carma_wm_ctrl"), "Digital min gap is invalid. Value set to 0 meter.");
+      RCLCPP_WARN_STREAM(logger_, "Digital min gap is invalid. Value set to 0 meter.");
       min_gap = 0;
     }
     addRegionMinimumGap(gf_ptr,msg_v01, min_gap, affected_llts, affected_areas);
@@ -417,7 +423,7 @@ std::shared_ptr<Geofence> WMBroadcaster::createWorkzoneGeofence(std::unordered_m
   // erase cache now that it is processed
   for (auto pair : work_zone_geofence_cache)
   {
-    RCLCPP_INFO_STREAM(rclcpp::get_logger("carma_wm_ctrl"), "Workzone geofence finished processing. Therefore following geofence id is being dropped from cache as it is processed as part of it: " << pair.second->id_);
+    RCLCPP_INFO_STREAM(logger_, "Workzone geofence finished processing. Therefore following geofence id is being dropped from cache as it is processed as part of it: " << pair.second->id_);
   }
   work_zone_geofence_cache.clear();
 
@@ -435,7 +441,7 @@ std::shared_ptr<Geofence> WMBroadcaster::createWorkzoneGeometry(std::unordered_m
 
   lanelet::Lanelet front_llt_diag = createLinearInterpolatingLanelet(parallel_llt_front.leftBound3d().back(), parallel_llt_front.rightBound3d().back(),
                                                                         middle_opposite_lanelets->back().rightBound3d().back(), middle_opposite_lanelets->back().leftBound3d().back());
-  RCLCPP_DEBUG_STREAM(rclcpp::get_logger("carma_wm_ctrl"), "Created diag front_llt_diag id:" << front_llt_diag.id());
+  RCLCPP_DEBUG_STREAM(logger_, "Created diag front_llt_diag id:" << front_llt_diag.id());
   for (auto regem : middle_opposite_lanelets->back().regulatoryElements()) //copy existing regem into the new llts
   {
     front_llt_diag.addRegulatoryElement(regem);
@@ -447,7 +453,7 @@ std::shared_ptr<Geofence> WMBroadcaster::createWorkzoneGeometry(std::unordered_m
 
   lanelet::Lanelet back_llt_diag = createLinearInterpolatingLanelet(middle_opposite_lanelets->front().rightBound3d().front(),  middle_opposite_lanelets->front().leftBound3d().front(),
                                                                      parallel_llt_back.leftBound3d().front(), parallel_llt_back.rightBound3d().front());
-  RCLCPP_DEBUG_STREAM(rclcpp::get_logger("carma_wm_ctrl"), "Created back_llt_diag diag id:" << back_llt_diag.id());
+  RCLCPP_DEBUG_STREAM(logger_, "Created back_llt_diag diag id:" << back_llt_diag.id());
   for (auto regem : parallel_llt_back.regulatoryElements()) //copy existing regem into the new llts
   {
     back_llt_diag.addRegulatoryElement(regem);
@@ -466,7 +472,7 @@ std::shared_ptr<Geofence> WMBroadcaster::createWorkzoneGeometry(std::unordered_m
       middle_llt.addRegulatoryElement(regem); //copy existing regem into the new llts
     }
     middle_llts.push_back(middle_llt);
-    RCLCPP_DEBUG_STREAM(rclcpp::get_logger("carma_wm_ctrl"), "Created matching direction of middle_llt id:" << middle_llt.id());
+    RCLCPP_DEBUG_STREAM(logger_, "Created matching direction of middle_llt id:" << middle_llt.id());
   }
 
   //////////////////////////////
@@ -489,7 +495,7 @@ std::shared_ptr<Geofence> WMBroadcaster::createWorkzoneGeometry(std::unordered_m
   gf_ptr->traffic_light_id_lookup_.push_back({generate32BitId(work_zone_geofence_cache[WorkZoneSection::TAPERRIGHT]->label_),tfl_parallel->id()});
 
   parallel_llt_front.addRegulatoryElement(tfl_parallel);
-  RCLCPP_DEBUG_STREAM(rclcpp::get_logger("carma_wm_ctrl"), "Created TF_LIGHT of Id: " << tfl_parallel->id() << ", to parallel_llt_front id:" << parallel_llt_front.id());
+  RCLCPP_DEBUG_STREAM(logger_, "Created TF_LIGHT of Id: " << tfl_parallel->id() << ", to parallel_llt_front id:" << parallel_llt_front.id());
 
   //////////////////////////////
   //ADD TF_LIGHT TO OPPOSITE LANELET
@@ -515,13 +521,13 @@ std::shared_ptr<Geofence> WMBroadcaster::createWorkzoneGeometry(std::unordered_m
   gf_ptr->traffic_light_id_lookup_.push_back({generate32BitId(work_zone_geofence_cache[WorkZoneSection::OPENRIGHT]->label_), tfl_opposite->id()});
 
   opposite_llts_with_stop_line->front().addRegulatoryElement(tfl_opposite);
-  RCLCPP_DEBUG_STREAM(rclcpp::get_logger("carma_wm_ctrl"), "Created TF_LIGHT of Id: " << tfl_opposite->id() << ", to opposite_llts_with_stop_line->front() id:" << opposite_llts_with_stop_line->front().id());
+  RCLCPP_DEBUG_STREAM(logger_, "Created TF_LIGHT of Id: " << tfl_opposite->id() << ", to opposite_llts_with_stop_line->front() id:" << opposite_llts_with_stop_line->front().id());
 
   //////////////////////////////
   //ADD ALL NEWLY CREATED LANELETS INTO GEOFENCE
   //OBJECTS TO BE PROCESSED LATER BY SCHEDULER
   //////////////////////////////
-  RCLCPP_DEBUG_STREAM(rclcpp::get_logger("carma_wm_ctrl"), "Added parallel_llt_front id:" << parallel_llt_front.id());
+  RCLCPP_DEBUG_STREAM(logger_, "Added parallel_llt_front id:" << parallel_llt_front.id());
   gf_ptr->lanelet_additions_.push_back(parallel_llt_front);
 
   gf_ptr->lanelet_additions_.push_back(front_llt_diag);
@@ -529,7 +535,7 @@ std::shared_ptr<Geofence> WMBroadcaster::createWorkzoneGeometry(std::unordered_m
   gf_ptr->lanelet_additions_.insert(gf_ptr->lanelet_additions_.end(), middle_llts.begin(), middle_llts.end());
 
   gf_ptr->lanelet_additions_.push_back(back_llt_diag);
-  RCLCPP_DEBUG_STREAM(rclcpp::get_logger("carma_wm_ctrl"), "Added parallel_llt_back id:" << parallel_llt_back.id());
+  RCLCPP_DEBUG_STREAM(logger_, "Added parallel_llt_back id:" << parallel_llt_back.id());
   gf_ptr->lanelet_additions_.push_back(parallel_llt_back);
 
   gf_ptr->lanelet_additions_.insert(gf_ptr->lanelet_additions_.end(), opposite_llts_with_stop_line->begin(), opposite_llts_with_stop_line->end());;
@@ -624,11 +630,11 @@ void WMBroadcaster::preprocessWorkzoneGeometry(std::unordered_map<uint8_t, std::
   // to match the output expected of this function as if split happened
   if (new_taper_right_llts.size() == 1 && check_dist_tpr <= error_distance_)
   {
-    RCLCPP_DEBUG_STREAM(rclcpp::get_logger("carma_wm_ctrl"), "Creating duplicate lanelet of 'previous lanelet' due to TAPERRIGHT using entire lanelet...");
+    RCLCPP_DEBUG_STREAM(logger_, "Creating duplicate lanelet of 'previous lanelet' due to TAPERRIGHT using entire lanelet...");
     auto previous_lanelets = current_routing_graph_->previous(work_zone_geofence_cache[WorkZoneSection::TAPERRIGHT]->affected_parts_.front().lanelet().get());
     if (previous_lanelets.empty()) //error if bad match
     {
-      RCLCPP_ERROR_STREAM(rclcpp::get_logger("carma_wm_ctrl"), "Workzone area starts from lanelet with no previous lanelet (Id : " << work_zone_geofence_cache[WorkZoneSection::TAPERRIGHT]->affected_parts_.front().lanelet().get().id()
+      RCLCPP_ERROR_STREAM(logger_, "Workzone area starts from lanelet with no previous lanelet (Id : " << work_zone_geofence_cache[WorkZoneSection::TAPERRIGHT]->affected_parts_.front().lanelet().get().id()
                       << ". This case is rare and not supported at the moment.");
       return;
     }
@@ -640,7 +646,7 @@ void WMBroadcaster::preprocessWorkzoneGeometry(std::unordered_map<uint8_t, std::
     new_taper_right_llts = splitLaneletWithPoint({prev_lanelet_to_copy.centerline2d().back()}, prev_lanelet_to_copy, error_distance_);
   }
   parallel_llts->insert(parallel_llts->end(), new_taper_right_llts.begin(), new_taper_right_llts.end());
-  RCLCPP_DEBUG_STREAM(rclcpp::get_logger("carma_wm_ctrl"), "Finished TAPERRIGHT processing of size: " << new_taper_right_llts.size());
+  RCLCPP_DEBUG_STREAM(logger_, "Finished TAPERRIGHT processing of size: " << new_taper_right_llts.size());
 
   //////////////////////////////////
   /// PARALLEL BACK (OPENRIGHT side)
@@ -656,11 +662,11 @@ void WMBroadcaster::preprocessWorkzoneGeometry(std::unordered_map<uint8_t, std::
   // to match the output expected of this function as if split happened
   if (new_open_right_llts.size() == 1 && check_dist_opr <= error_distance_)
   {
-    RCLCPP_DEBUG_STREAM(rclcpp::get_logger("carma_wm_ctrl"), "Creating duplicate lanelet of 'next lanelet' due to OPENRIGHT using entire lanelet...");
+    RCLCPP_DEBUG_STREAM(logger_, "Creating duplicate lanelet of 'next lanelet' due to OPENRIGHT using entire lanelet...");
     auto next_lanelets = current_routing_graph_->following(work_zone_geofence_cache[WorkZoneSection::OPENRIGHT]->affected_parts_.back().lanelet().get());
     if (next_lanelets.empty()) //error if bad match
     {
-      RCLCPP_ERROR_STREAM(rclcpp::get_logger("carma_wm_ctrl"), "Workzone area ends at lanelet with no following lanelet (Id : " << work_zone_geofence_cache[WorkZoneSection::OPENRIGHT]->affected_parts_.back().lanelet().get().id()
+      RCLCPP_ERROR_STREAM(logger_, "Workzone area ends at lanelet with no following lanelet (Id : " << work_zone_geofence_cache[WorkZoneSection::OPENRIGHT]->affected_parts_.back().lanelet().get().id()
                       << ". This case is rare and not supported at the moment.");
       return;
     }
@@ -672,7 +678,7 @@ void WMBroadcaster::preprocessWorkzoneGeometry(std::unordered_map<uint8_t, std::
     new_open_right_llts = splitLaneletWithPoint({next_lanelet_to_copy.centerline2d().back()}, next_lanelet_to_copy, error_distance_);
   }
   parallel_llts->insert(parallel_llts->end(), new_open_right_llts.begin(), new_open_right_llts.end());
-  RCLCPP_DEBUG_STREAM(rclcpp::get_logger("carma_wm_ctrl"), "Finished OPENRIGHT processing of size: " << new_open_right_llts.size());
+  RCLCPP_DEBUG_STREAM(logger_, "Finished OPENRIGHT processing of size: " << new_open_right_llts.size());
 
   ////////////////////
   /// HANDLE MID HERE
@@ -694,7 +700,7 @@ void WMBroadcaster::preprocessWorkzoneGeometry(std::unordered_map<uint8_t, std::
     {
       // we found what we want, so return
       opposite_llts->insert(opposite_llts->end(), temp_llts.begin(), temp_llts.end());
-      RCLCPP_DEBUG_STREAM(rclcpp::get_logger("carma_wm_ctrl"), "Ended preprocessWorkzoneGeometry with opposite_llts.size()" << opposite_llts->size() << ", and parallel_llts.size()" << parallel_llts->size());
+      RCLCPP_DEBUG_STREAM(logger_, "Ended preprocessWorkzoneGeometry with opposite_llts.size()" << opposite_llts->size() << ", and parallel_llts.size()" << parallel_llts->size());
       return;
     }
     else if (temp_llts.size() == 2) // determine which
@@ -714,7 +720,7 @@ void WMBroadcaster::preprocessWorkzoneGeometry(std::unordered_map<uint8_t, std::
     {
       opposite_llts->insert(opposite_llts->end(), temp_llts.begin() + 1, temp_llts.end()- 1);
     }
-    RCLCPP_DEBUG_STREAM(rclcpp::get_logger("carma_wm_ctrl"), "Finished REVERSE processing of size: " << opposite_llts->size() << " from original of 1 REVERSE lanelet size");
+    RCLCPP_DEBUG_STREAM(logger_, "Finished REVERSE processing of size: " << opposite_llts->size() << " from original of 1 REVERSE lanelet size");
   }
   else //if there are two or more lanelets
   {
@@ -753,10 +759,10 @@ void WMBroadcaster::preprocessWorkzoneGeometry(std::unordered_map<uint8_t, std::
     {
       opposite_llts->insert(opposite_llts->end(), temp_opposite_back_llts.begin(), temp_opposite_back_llts.end());
     }
-    RCLCPP_DEBUG_STREAM(rclcpp::get_logger("carma_wm_ctrl"), "Finished REVERSE processing of size: " << opposite_llts->size() << " from original of more than one REVERSE lanelet size");
+    RCLCPP_DEBUG_STREAM(logger_, "Finished REVERSE processing of size: " << opposite_llts->size() << " from original of more than one REVERSE lanelet size");
   }
 
-  RCLCPP_DEBUG_STREAM(rclcpp::get_logger("carma_wm_ctrl"), "Ended preprocessWorkzoneGeometry with opposite_llts.size()" << opposite_llts->size() << ", and parallel_llts.size()" << parallel_llts->size());
+  RCLCPP_DEBUG_STREAM(logger_, "Ended preprocessWorkzoneGeometry with opposite_llts.size()" << opposite_llts->size() << ", and parallel_llts.size()" << parallel_llts->size());
 }
 
 std::vector<lanelet::Lanelet> WMBroadcaster::splitLaneletWithPoint(const std::vector<lanelet::BasicPoint2d>& input_pts, const lanelet::Lanelet& input_llt, double error_distance)
@@ -776,7 +782,7 @@ std::vector<lanelet::Lanelet> WMBroadcaster::splitLaneletWithPoint(const std::ve
   auto new_parallel_llts = splitLaneletWithRatio(ratios, input_llt, error_distance);
 
   parallel_llts.insert(parallel_llts.end(),new_parallel_llts.begin(), new_parallel_llts.end());
-  RCLCPP_DEBUG_STREAM(rclcpp::get_logger("carma_wm_ctrl"), "splitLaneletWithPoint returning lanelets size: " << parallel_llts.size());
+  RCLCPP_DEBUG_STREAM(logger_, "splitLaneletWithPoint returning lanelets size: " << parallel_llts.size());
   return parallel_llts;
 }
 
@@ -791,13 +797,13 @@ lanelet::Lanelets WMBroadcaster::splitOppositeLaneletWithPoint(std::shared_ptr<s
 
   if (opposing_llts.empty())
   {
-    RCLCPP_ERROR_STREAM(rclcpp::get_logger("carma_wm_ctrl"), "WMBroadcaster was not able to find opposing lane for given point in geofence related to Work Zone! Returning");
+    RCLCPP_ERROR_STREAM(logger_, "WMBroadcaster was not able to find opposing lane for given point in geofence related to Work Zone! Returning");
     return {};
   }
 
   auto new_llts_opposite = splitLaneletWithRatio({1 - point_downtrack_ratio}, opposing_llts[0], error_distance);
   opposite_llts->insert(opposite_llts->begin(),new_llts_opposite.begin(), new_llts_opposite.end());
-  RCLCPP_DEBUG_STREAM(rclcpp::get_logger("carma_wm_ctrl"), "splitOppositeLaneletWithPoint returning lanelets size: " << opposite_llts->size());
+  RCLCPP_DEBUG_STREAM(logger_, "splitOppositeLaneletWithPoint returning lanelets size: " << opposite_llts->size());
   return opposing_llts;
 }
 
@@ -815,7 +821,7 @@ std::vector<lanelet::Lanelet> WMBroadcaster::splitLaneletWithRatio(std::vector<d
   std::vector<lanelet::Lanelet> created_llts;
 
   std::sort(ratios.begin(), ratios.end());
-  RCLCPP_DEBUG_STREAM(rclcpp::get_logger("carma_wm_ctrl"), "splitLaneletWithRatio evaluating input ratios of size: " << ratios.size());
+  RCLCPP_DEBUG_STREAM(logger_, "splitLaneletWithRatio evaluating input ratios of size: " << ratios.size());
 
   ratios.push_back(1.0); //needed to complete the loop
 
@@ -835,13 +841,13 @@ std::vector<lanelet::Lanelet> WMBroadcaster::splitLaneletWithRatio(std::vector<d
     {
       // assuming both linestrings have roughly the same number of points and
       // assuming distance between 0th and index-th points are small enough we can approximate the curve between them as a line:
-      RCLCPP_INFO_STREAM(rclcpp::get_logger("carma_wm_ctrl"), "Ratio: " << ratios[i] << ", is too close to the lanelet's front boundary! Therefore, ignoring... Allowed error_distance: " << error_distance << ", Distance: "
+      RCLCPP_INFO_STREAM(logger_, "Ratio: " << ratios[i] << ", is too close to the lanelet's front boundary! Therefore, ignoring... Allowed error_distance: " << error_distance << ", Distance: "
                         << lanelet::geometry::distance2d(input_lanelet.leftBound2d().front().basicPoint2d(), input_lanelet.leftBound2d()[left_next_pt_idx].basicPoint2d()));
       continue;
     }
     if (lanelet::geometry::distance2d(input_lanelet.leftBound2d().back().basicPoint2d(), input_lanelet.leftBound2d()[left_next_pt_idx].basicPoint2d()) <= error_distance)
     {
-      RCLCPP_INFO_STREAM(rclcpp::get_logger("carma_wm_ctrl"), "Ratio: " << ratios[i] << ", is too close to the lanelet's back boundary! Therefore, ignoring... Allowed error_distance: " << error_distance << ", Distance: "
+      RCLCPP_INFO_STREAM(logger_, "Ratio: " << ratios[i] << ", is too close to the lanelet's back boundary! Therefore, ignoring... Allowed error_distance: " << error_distance << ", Distance: "
                   << lanelet::geometry::distance2d(input_lanelet.leftBound2d().back().basicPoint2d(), input_lanelet.leftBound2d()[left_next_pt_idx].basicPoint2d()));
 
       left_next_pt_idx = left_ls_size - 1;
@@ -878,7 +884,7 @@ std::vector<lanelet::Lanelet> WMBroadcaster::splitLaneletWithRatio(std::vector<d
 
   }
 
-  RCLCPP_DEBUG_STREAM(rclcpp::get_logger("carma_wm_ctrl"), "splitLaneletWithRatio returning lanelets size: " << created_llts.size());
+  RCLCPP_DEBUG_STREAM(logger_, "splitLaneletWithRatio returning lanelets size: " << created_llts.size());
 
   return created_llts;
 }
@@ -1022,12 +1028,12 @@ std::vector<std::string> WMBroadcaster::combineParticipantsToVehicle(const std::
       std::find(input_participants.begin(),input_participants.end(),lanelet::Participants::VehicleCar) != input_participants.end() &&
       std::find(input_participants.begin(),input_participants.end(),lanelet::Participants::VehicleTruck) != input_participants.end())
   {
-    RCLCPP_DEBUG_STREAM(rclcpp::get_logger("carma_wm_ctrl"), "Detected participants to cover all possible vehicle types");
+    RCLCPP_DEBUG_STREAM(logger_, "Detected participants to cover all possible vehicle types");
     participants.emplace_back(lanelet::Participants::Vehicle);
   }
   else
   {
-    RCLCPP_DEBUG_STREAM(rclcpp::get_logger("carma_wm_ctrl"), "Not making any changes to the participants list");
+    RCLCPP_DEBUG_STREAM(logger_, "Not making any changes to the participants list");
     participants = input_participants;
   }
 
@@ -1040,7 +1046,7 @@ void WMBroadcaster::externalMapMsgCallback(carma_v2x_msgs::msg::MapData::UniqueP
 
   if (!current_map_ || current_map_->laneletLayer.size() == 0)
   {
-    RCLCPP_INFO_STREAM(rclcpp::get_logger("carma_wm_ctrl"), "Map is not available yet. Skipping MAP msg");
+    RCLCPP_INFO_STREAM(logger_, "Map is not available yet. Skipping MAP msg");
     return;
   }
 
@@ -1086,7 +1092,7 @@ void WMBroadcaster::geofenceCallback(carma_v2x_msgs::msg::TrafficControlMessage:
   // quickly check if the id has been added
   if (geofence_msg->choice != carma_v2x_msgs::msg::TrafficControlMessage::TCMV01) {
     reason_ss << "Dropping received geofence for unsupported TrafficControl version: " << geofence_msg->choice;
-    RCLCPP_WARN_STREAM(rclcpp::get_logger("carma_wm_ctrl"), reason_ss.str());
+    RCLCPP_WARN_STREAM(logger_, reason_ss.str());
     pubTCMACK(geofence_msg->tcm_v01.reqid, geofence_msg->tcm_v01.msgnum, static_cast<int>(AcknowledgementStatus::REJECTED), reason_ss.str());
     return;
   }
@@ -1096,7 +1102,7 @@ void WMBroadcaster::geofenceCallback(carma_v2x_msgs::msg::TrafficControlMessage:
   if (checked_geofence_ids_.find(boost::uuids::to_string(id)) != checked_geofence_ids_.end()) {
     reason_ss.str("");
     reason_ss << "Dropping received TrafficControl message with already handled id: " << boost::uuids::to_string(id);
-    RCLCPP_DEBUG_STREAM(rclcpp::get_logger("carma_wm_ctrl"), reason_ss.str());
+    RCLCPP_DEBUG_STREAM(logger_, reason_ss.str());
     pubTCMACK(geofence_msg->tcm_v01.reqid, geofence_msg->tcm_v01.msgnum, static_cast<int>(AcknowledgementStatus::ACKNOWLEDGED), reason_ss.str());
     return;
   }
@@ -1110,7 +1116,7 @@ void WMBroadcaster::geofenceCallback(carma_v2x_msgs::msg::TrafficControlMessage:
   // drop if the req has never been sent
   if (generated_geofence_reqids_.find(reqid) == generated_geofence_reqids_.end() && reqid.compare("00000000") != 0)
   {
-    RCLCPP_WARN_STREAM(rclcpp::get_logger("carma_wm_ctrl"), "CARMA_WM_CTRL received a TrafficControlMessage with unknown TrafficControlRequest ID (reqid): " << reqid);
+    RCLCPP_WARN_STREAM(logger_, "CARMA_WM_CTRL received a TrafficControlMessage with unknown TrafficControlRequest ID (reqid): " << reqid);
     return;
   }
 
@@ -1140,7 +1146,7 @@ void WMBroadcaster::geofenceCallback(carma_v2x_msgs::msg::TrafficControlMessage:
 
 void WMBroadcaster::scheduleGeofence(std::shared_ptr<carma_wm_ctrl::Geofence> gf_ptr)
 {
-  RCLCPP_INFO_STREAM(rclcpp::get_logger("carma_wm_ctrl"), "Scheduling new geofence message received by WMBroadcaster with id: " << gf_ptr->id_);
+  RCLCPP_INFO_STREAM(logger_, "Scheduling new geofence message received by WMBroadcaster with id: " << gf_ptr->id_);
 
   bool detected_workzone_signal = gf_ptr->msg_.package.label_exists && gf_ptr->msg_.package.label.find("SIG_WZ") != std::string::npos;
 
@@ -1190,7 +1196,7 @@ void WMBroadcaster::scheduleGeofence(std::shared_ptr<carma_wm_ctrl::Geofence> gf
     }
     if (work_zone_geofence_cache_.size() < WORKZONE_TCM_REQUIRED_SIZE)
     {
-      RCLCPP_INFO_STREAM(rclcpp::get_logger("carma_wm_ctrl"), "Received 'SIG_WZ' signal. Waiting for the rest of the messages, returning for now...");
+      RCLCPP_INFO_STREAM(logger_, "Received 'SIG_WZ' signal. Waiting for the rest of the messages, returning for now...");
       return;
     }
   }
@@ -1209,6 +1215,7 @@ void WMBroadcaster::geoReferenceCallback(std_msgs::msg::String::UniquePtr geo_re
 void WMBroadcaster::setMaxLaneWidth(double max_lane_width)
 {
   sim_ = std::make_shared<carma_wm::SignalizedIntersectionManager>();
+  sim_->setLogger(logger_);
 
   max_lane_width_ = max_lane_width;
   sim_->setMaxLaneWidth(max_lane_width_);
@@ -1273,7 +1280,7 @@ uint32_t WMBroadcaster::generate32BitId(const std::string& label)
 // currently only supports geofence message version 1: TrafficControlMessageV01
 lanelet::Points3d WMBroadcaster::getPointsInLocalFrame(const carma_v2x_msgs::msg::TrafficControlMessageV01& tcm_v01)
 {
-  RCLCPP_DEBUG_STREAM(rclcpp::get_logger("carma_wm_ctrl"), "Getting affected lanelets");
+  RCLCPP_DEBUG_STREAM(logger_, "Getting affected lanelets");
   if (!current_map_ || current_map_->laneletLayer.size() == 0)
   {
     throw lanelet::InvalidObjectStateError(std::string("Base lanelet map is not loaded to the WMBroadcaster"));
@@ -1289,23 +1296,23 @@ lanelet::Points3d WMBroadcaster::getPointsInLocalFrame(const carma_v2x_msgs::msg
   std::string projection = tcm_v01.geometry.proj;
   std::string datum = tcm_v01.geometry.datum;
   if (datum.empty()) {
-    RCLCPP_WARN_STREAM(rclcpp::get_logger("carma_wm_ctrl"), "Datum field not populated. Attempting to use WGS84");
+    RCLCPP_WARN_STREAM(logger_, "Datum field not populated. Attempting to use WGS84");
     datum = "WGS84";
   }
 
-  RCLCPP_DEBUG_STREAM(rclcpp::get_logger("carma_wm_ctrl"), "Projection field: " << projection);
-  RCLCPP_DEBUG_STREAM(rclcpp::get_logger("carma_wm_ctrl"), "Datum field: " << datum);
+  RCLCPP_DEBUG_STREAM(logger_, "Projection field: " << projection);
+  RCLCPP_DEBUG_STREAM(logger_, "Datum field: " << datum);
 
   std::string universal_frame = datum; //lat/long included in TCM is in this datum
 
 
-  RCLCPP_DEBUG_STREAM(rclcpp::get_logger("carma_wm_ctrl"), "Traffic Control heading provided: " << tcm_v01.geometry.heading << " System understanding is that this value will not affect the projection and is only provided for supporting derivative calculations.");
+  RCLCPP_DEBUG_STREAM(logger_, "Traffic Control heading provided: " << tcm_v01.geometry.heading << " System understanding is that this value will not affect the projection and is only provided for supporting derivative calculations.");
 
   // Create the resulting projection transformation
   PJ* universal_to_target = proj_create_crs_to_crs(PJ_DEFAULT_CTX, universal_frame.c_str(), projection.c_str(), nullptr);
   if (universal_to_target == nullptr) { // proj_create_crs_to_crs returns 0 when there is an error in the projection
 
-    RCLCPP_ERROR_STREAM(rclcpp::get_logger("carma_wm_ctrl"), "Failed to generate projection between geofence and map with error number: " <<  proj_context_errno(PJ_DEFAULT_CTX)
+    RCLCPP_ERROR_STREAM(logger_, "Failed to generate projection between geofence and map with error number: " <<  proj_context_errno(PJ_DEFAULT_CTX)
       << " universal_frame: " << universal_frame << " projection: " << projection);
 
     return {}; // Ignore geofence if it could not be projected from universal to TCM frame
@@ -1315,7 +1322,7 @@ lanelet::Points3d WMBroadcaster::getPointsInLocalFrame(const carma_v2x_msgs::msg
 
   if (target_to_map == nullptr) { // proj_create_crs_to_crs returns 0 when there is an error in the projection
 
-    RCLCPP_ERROR_STREAM(rclcpp::get_logger("carma_wm_ctrl"), "Failed to generate projection between geofence and map with error number: " <<  proj_context_errno(PJ_DEFAULT_CTX)
+    RCLCPP_ERROR_STREAM(logger_, "Failed to generate projection between geofence and map with error number: " <<  proj_context_errno(PJ_DEFAULT_CTX)
       << " target_to_map: " << target_to_map << " base_map_georef_: " << base_map_georef_);
 
     return {}; // Ignore geofence if it could not be projected into the map frame
@@ -1331,10 +1338,10 @@ lanelet::Points3d WMBroadcaster::getPointsInLocalFrame(const carma_v2x_msgs::msg
   prev_pt.x = c_init.xyz.x;
   prev_pt.y =  c_init.xyz.y;
 
-  RCLCPP_DEBUG_STREAM(rclcpp::get_logger("carma_wm_ctrl"), "In TCM's frame, initial Point X "<< prev_pt.x<<" Before conversion: Point Y "<< prev_pt.y );
+  RCLCPP_DEBUG_STREAM(logger_, "In TCM's frame, initial Point X "<< prev_pt.x<<" Before conversion: Point Y "<< prev_pt.y );
   for (auto pt : tcm_v01.geometry.nodes)
   {
-    RCLCPP_DEBUG_STREAM(rclcpp::get_logger("carma_wm_ctrl"), "Before conversion in TCM frame: Point X "<< pt.x <<" Before conversion: Point Y "<< pt.y);
+    RCLCPP_DEBUG_STREAM(logger_, "Before conversion in TCM frame: Point X "<< pt.x <<" Before conversion: Point Y "<< pt.y);
 
     PJ_COORD c {{prev_pt.x + pt.x, prev_pt.y + pt.y, 0, 0}}; // z is not currently used
     PJ_COORD c_out;
@@ -1344,7 +1351,7 @@ lanelet::Points3d WMBroadcaster::getPointsInLocalFrame(const carma_v2x_msgs::msg
     prev_pt.x += pt.x;
     prev_pt.y += pt.y;
 
-    RCLCPP_DEBUG_STREAM(rclcpp::get_logger("carma_wm_ctrl"), "After conversion in Map frame: Point X "<< gf_pts.back().x() <<" After conversion: Point Y "<< gf_pts.back().y());
+    RCLCPP_DEBUG_STREAM(logger_, "After conversion in Map frame: Point X "<< gf_pts.back().x() <<" After conversion: Point Y "<< gf_pts.back().y());
   }
 
   // save the points converted to local map frame
@@ -1353,7 +1360,7 @@ lanelet::Points3d WMBroadcaster::getPointsInLocalFrame(const carma_v2x_msgs::msg
 
 lanelet::ConstLaneletOrAreas WMBroadcaster::getAffectedLaneletOrAreas(const lanelet::Points3d& gf_pts)
 {
-  return carma_wm::query::getAffectedLaneletOrAreas(gf_pts, current_map_, current_routing_graph_, max_lane_width_);
+  return carma_wm::query::getAffectedLaneletOrAreas(gf_pts, current_map_, current_routing_graph_, max_lane_width_, logger_);
 }
 
 /*!
@@ -1456,7 +1463,7 @@ void WMBroadcaster::addRegulatoryComponent(std::shared_ptr<Geofence> gf_ptr) con
       current_map_->update(current_map_->laneletLayer.get(el.id()), gf_ptr->regulatory_element_);
       gf_ptr->update_list_.push_back(std::pair<lanelet::Id, lanelet::RegulatoryElementPtr>(el.id(), gf_ptr->regulatory_element_));
     } else {
-      RCLCPP_WARN_STREAM(rclcpp::get_logger("carma_wm_ctrl"), "Regulatory element with invalid id in geofence cannot be added to the map");
+      RCLCPP_WARN_STREAM(logger_, "Regulatory element with invalid id in geofence cannot be added to the map");
     }
   }
 
@@ -1499,7 +1506,7 @@ void WMBroadcaster::addGeofence(std::shared_ptr<Geofence> gf_ptr)
 {
 
   std::lock_guard<std::mutex> guard(map_mutex_);
-  RCLCPP_INFO_STREAM(rclcpp::get_logger("carma_wm_ctrl"), "Adding active geofence to the map with geofence id: " << gf_ptr->id_);
+  RCLCPP_INFO_STREAM(logger_, "Adding active geofence to the map with geofence id: " << gf_ptr->id_);
 
   // if applying workzone geometry geofence, utilize workzone chache to create one
   // also multiple map updates can be sent from one geofence object
@@ -1550,17 +1557,17 @@ void WMBroadcaster::addGeofence(std::shared_ptr<Geofence> gf_ptr)
       addGeofenceHelper(update);
     }
     catch (const lanelet::InvalidInputError& e) {
-      RCLCPP_WARN_STREAM(rclcpp::get_logger("carma_wm_ctrl"),
+      RCLCPP_WARN_STREAM(logger_,
         "carma_wm_ctrl detected a potential issue in processing incoming MAP or Geofence update: " << e.what());
 
       if (!j2735_map_msg_marker_array_.markers.empty()) {
-        RCLCPP_WARN_STREAM(rclcpp::get_logger("carma_wm_ctrl"),
+        RCLCPP_WARN_STREAM(logger_,
           "Detected an attempt to add J2735 MAP msg. May not be error. Please verify J2735 MAP msg visualization or logs for more clues. "
           "Possibly invalid intersection geometry.");
       }
 
       if (!tcm_marker_array_.markers.empty()) {
-        RCLCPP_WARN_STREAM(rclcpp::get_logger("carma_wm_ctrl"),
+        RCLCPP_WARN_STREAM(logger_,
           "Detected an attempt to add map update from TCM msg. May not be error. Please verify TCM msg visualization or logs for more clues. "
           "Possibly invalid geofence geometry.");
       }
@@ -1576,23 +1583,23 @@ void WMBroadcaster::addGeofence(std::shared_ptr<Geofence> gf_ptr)
     // If the geofence invalidates the route graph then recompute the routing graph now that the map has been updated
     if (update->invalidate_route_) {
 
-      RCLCPP_INFO_STREAM(rclcpp::get_logger("carma_wm_ctrl"), "Rebuilding routing graph after is was invalidated by geofence");
+      RCLCPP_INFO_STREAM(logger_, "Rebuilding routing graph after is was invalidated by geofence");
 
       lanelet::traffic_rules::TrafficRulesUPtr traffic_rules_car = lanelet::traffic_rules::TrafficRulesFactory::create(
       lanelet::traffic_rules::CarmaUSTrafficRules::Location, participant_);
       current_routing_graph_ = lanelet::routing::RoutingGraph::build(*current_map_, *traffic_rules_car);
 
-      RCLCPP_INFO_STREAM(rclcpp::get_logger("carma_wm_ctrl"), "Done rebuilding routing graph after is was invalidated by geofence");
+      RCLCPP_INFO_STREAM(logger_, "Done rebuilding routing graph after is was invalidated by geofence");
 
       // Populate routing graph structure
-      RCLCPP_INFO_STREAM(rclcpp::get_logger("carma_wm_ctrl"), "Creating routing graph message");
+      RCLCPP_INFO_STREAM(logger_, "Creating routing graph message");
 
       auto readable_graph = std::static_pointer_cast<RoutingGraphAccessor>(current_routing_graph_);
 
       gf_msg.routing_graph = readable_graph->routingGraphToMsg(participant_);
       gf_msg.has_routing_graph = true;
 
-      RCLCPP_INFO_STREAM(rclcpp::get_logger("carma_wm_ctrl"), "Done creating routing graph message");
+      RCLCPP_INFO_STREAM(logger_, "Done creating routing graph message");
     }
 
 
@@ -1605,7 +1612,7 @@ void WMBroadcaster::addGeofence(std::shared_ptr<Geofence> gf_ptr)
       send_data->sim_ = *sim_;
     }
 
-    carma_wm::toBinMsg(send_data, &gf_msg);
+    carma_wm::toBinMsg(send_data, &gf_msg, logger_);
     update_count_++; // Update the sequence count for the geofence messages
     gf_msg.seq_id = update_count_;
     gf_msg.invalidates_route=update->invalidate_route_;
@@ -1618,7 +1625,7 @@ void WMBroadcaster::addGeofence(std::shared_ptr<Geofence> gf_ptr)
 void WMBroadcaster::removeGeofence(std::shared_ptr<Geofence> gf_ptr)
 {
   std::lock_guard<std::mutex> guard(map_mutex_);
-  RCLCPP_INFO_STREAM(rclcpp::get_logger("carma_wm_ctrl"), "Removing inactive geofence from the map with geofence id: " << gf_ptr->id_);
+  RCLCPP_INFO_STREAM(logger_, "Removing inactive geofence from the map with geofence id: " << gf_ptr->id_);
 
   // Process the geofence object to populate update remove lists
   if (gf_ptr->affected_parts_.empty())
@@ -1634,27 +1641,27 @@ void WMBroadcaster::removeGeofence(std::shared_ptr<Geofence> gf_ptr)
 
   if (gf_ptr->invalidate_route_) { // If a geofence initially invalidated the route it stands to reason its removal should as well
 
-    RCLCPP_INFO_STREAM(rclcpp::get_logger("carma_wm_ctrl"), "Rebuilding routing graph after is was invalidated by geofence removal");
+    RCLCPP_INFO_STREAM(logger_, "Rebuilding routing graph after is was invalidated by geofence removal");
 
     lanelet::traffic_rules::TrafficRulesUPtr traffic_rules_car = lanelet::traffic_rules::TrafficRulesFactory::create(
       lanelet::traffic_rules::CarmaUSTrafficRules::Location, participant_
     );
     current_routing_graph_ = lanelet::routing::RoutingGraph::build(*current_map_, *traffic_rules_car);
 
-    RCLCPP_INFO_STREAM(rclcpp::get_logger("carma_wm_ctrl"), "Done rebuilding routing graph after is was invalidated by geofence removal");
+    RCLCPP_INFO_STREAM(logger_, "Done rebuilding routing graph after is was invalidated by geofence removal");
 
     // Populate routing graph structure
-    RCLCPP_INFO_STREAM(rclcpp::get_logger("carma_wm_ctrl"), "Creating routing graph message for geofence removal");
+    RCLCPP_INFO_STREAM(logger_, "Creating routing graph message for geofence removal");
 
     auto readable_graph = std::static_pointer_cast<RoutingGraphAccessor>(current_routing_graph_);
 
     gf_msg_revert.routing_graph = readable_graph->routingGraphToMsg(participant_);
     gf_msg_revert.has_routing_graph = true;
 
-    RCLCPP_INFO_STREAM(rclcpp::get_logger("carma_wm_ctrl"), "Done creating routing graph message for geofence removal");
+    RCLCPP_INFO_STREAM(logger_, "Done creating routing graph message for geofence removal");
   }
 
-  carma_wm::toBinMsg(send_data, &gf_msg_revert);
+  carma_wm::toBinMsg(send_data, &gf_msg_revert, logger_);
   update_count_++; // Update the sequence count for geofence messages
   gf_msg_revert.seq_id = update_count_;
   gf_msg_revert.map_version = current_map_version_;
@@ -1690,7 +1697,7 @@ carma_v2x_msgs::msg::TrafficControlRequest WMBroadcaster::controlRequestFromRout
   if (!current_map_ || current_map_->laneletLayer.size() == 0)
   {
    // Return / log warning etc.
-    RCLCPP_INFO_STREAM(rclcpp::get_logger("carma_wm_ctrl"), "Value 'current_map_' does not exist.");
+    RCLCPP_INFO_STREAM(logger_, "Value 'current_map_' does not exist.");
     throw lanelet::InvalidObjectStateError(std::string("Base lanelet map is not loaded to the WMBroadcaster"));
 
   }
@@ -1747,7 +1754,7 @@ carma_v2x_msgs::msg::TrafficControlRequest WMBroadcaster::controlRequestFromRout
   if (target_frame.empty())
   {
    // Return / log warning etc.
-    RCLCPP_INFO_STREAM(rclcpp::get_logger("carma_wm_ctrl"), "Value 'target_frame' is empty.");
+    RCLCPP_INFO_STREAM(logger_, "Value 'target_frame' is empty.");
     throw lanelet::InvalidObjectStateError(std::string("Base georeference map may not be loaded to the WMBroadcaster"));
 
   }
@@ -1774,17 +1781,17 @@ carma_v2x_msgs::msg::TrafficControlRequest WMBroadcaster::controlRequestFromRout
 
   if (tmerc_proj == nullptr) { // proj_create_crs_to_crs returns 0 when there is an error in the projection
 
-    RCLCPP_ERROR_STREAM(rclcpp::get_logger("carma_wm_ctrl"), "Failed to generate projection between request bounds frame and map with error number: " <<  proj_context_errno(PJ_DEFAULT_CTX)
+    RCLCPP_ERROR_STREAM(logger_, "Failed to generate projection between request bounds frame and map with error number: " <<  proj_context_errno(PJ_DEFAULT_CTX)
       << " MapProjection: " << target_frame << " Message Projection: " << local_tmerc_enu_proj);
 
     return {}; // Ignore geofence if it could not be projected into the map frame
 
   }
 
-  RCLCPP_DEBUG_STREAM(rclcpp::get_logger("carma_wm_ctrl"), "Before conversion: Top Left: ("<< minX <<", "<<maxY<<")");
-  RCLCPP_DEBUG_STREAM(rclcpp::get_logger("carma_wm_ctrl"), "Before conversion: Top Right: ("<< maxX <<", "<<maxY<<")");
-  RCLCPP_DEBUG_STREAM(rclcpp::get_logger("carma_wm_ctrl"), "Before conversion: Bottom Left: ("<< minX <<", "<<minY<<")");
-  RCLCPP_DEBUG_STREAM(rclcpp::get_logger("carma_wm_ctrl"), "Before conversion: Bottom Right: ("<< maxX <<", "<<minY<<")");
+  RCLCPP_DEBUG_STREAM(logger_, "Before conversion: Top Left: ("<< minX <<", "<<maxY<<")");
+  RCLCPP_DEBUG_STREAM(logger_, "Before conversion: Top Right: ("<< maxX <<", "<<maxY<<")");
+  RCLCPP_DEBUG_STREAM(logger_, "Before conversion: Bottom Left: ("<< minX <<", "<<minY<<")");
+  RCLCPP_DEBUG_STREAM(logger_, "Before conversion: Bottom Right: ("<< maxX <<", "<<minY<<")");
 
   PJ_COORD pj_min {{minX, minY, 0, 0}}; // z is not currently used
   PJ_COORD pj_min_tmerc;
@@ -1793,8 +1800,8 @@ carma_v2x_msgs::msg::TrafficControlRequest WMBroadcaster::controlRequestFromRout
   pj_min_tmerc = proj_trans(tmerc_proj, PJ_FWD, pj_min);
   pj_max_tmerc = proj_trans(tmerc_proj, PJ_FWD, pj_max);
 
-  RCLCPP_DEBUG_STREAM(rclcpp::get_logger("carma_wm_ctrl"), "After conversion: MinPoint ( "<< pj_min_tmerc.xyz.x <<", " << pj_min_tmerc.xyz.y <<" )");
-  RCLCPP_DEBUG_STREAM(rclcpp::get_logger("carma_wm_ctrl"), "After conversion: MaxPoint ( "<< pj_max_tmerc.xyz.x <<", " << pj_max_tmerc.xyz.y <<" )");
+  RCLCPP_DEBUG_STREAM(logger_, "After conversion: MinPoint ( "<< pj_min_tmerc.xyz.x <<", " << pj_min_tmerc.xyz.y <<" )");
+  RCLCPP_DEBUG_STREAM(logger_, "After conversion: MaxPoint ( "<< pj_max_tmerc.xyz.x <<", " << pj_max_tmerc.xyz.y <<" )");
 
   carma_v2x_msgs::msg::TrafficControlRequest cR; /*Fill the latitude value in message cB with the value of lat */
   carma_v2x_msgs::msg::TrafficControlBounds cB; /*Fill the longitude value in message cB with the value of lon*/
@@ -1865,8 +1872,8 @@ carma_v2x_msgs::msg::TrafficControlRequestPolygon WMBroadcaster::composeTCRStatu
     gps_msg.longitude = gps_vertex.lon;
     output.polygon_list.push_back(gps_msg);
 
-    RCLCPP_DEBUG_STREAM(rclcpp::get_logger("carma_wm_ctrl"), "TCR Vertex Lat: "<< std::to_string(gps_vertex.lat));
-    RCLCPP_DEBUG_STREAM(rclcpp::get_logger("carma_wm_ctrl"), "TCR Vertex Lon: "<<std::to_string(gps_vertex.lon));
+    RCLCPP_DEBUG_STREAM(logger_, "TCR Vertex Lat: "<< std::to_string(gps_vertex.lat));
+    RCLCPP_DEBUG_STREAM(logger_, "TCR Vertex Lon: "<<std::to_string(gps_vertex.lon));
 
     i++;
   }
@@ -2055,7 +2062,7 @@ void WMBroadcaster::currentLocationCallback(geometry_msgs::msg::PoseStamped::Uni
     carma_perception_msgs::msg::CheckActiveGeofence check = checkActiveGeofenceLogic(*current_pos);
     active_pub_(check);//Publish
   } else {
-    RCLCPP_DEBUG_STREAM(rclcpp::get_logger("carma_wm_ctrl"), "Could not check active geofence logic because map was not loaded");
+    RCLCPP_DEBUG_STREAM(logger_, "Could not check active geofence logic because map was not loaded");
   }
 }
 
@@ -2090,14 +2097,14 @@ void WMBroadcaster::publishLightId()
 
     if (!traffic_lights.empty())
     {
-      RCLCPP_DEBUG_STREAM(rclcpp::get_logger("carma_wm_ctrl"), "Found Traffic Light Regulatory Element id: " << traffic_lights.front()->id());
+      RCLCPP_DEBUG_STREAM(logger_, "Found Traffic Light Regulatory Element id: " << traffic_lights.front()->id());
       convert_success = convertLightIdToInterGroupId(intersection_id,group_id,  traffic_lights.front()->id());
     }
 
     if (!convert_success)
         continue;
 
-    RCLCPP_DEBUG_STREAM(rclcpp::get_logger("carma_wm_ctrl"), "Found Traffic Light with Intersection id: " << intersection_id << " Group id:" << group_id);
+    RCLCPP_DEBUG_STREAM(logger_, "Found Traffic Light with Intersection id: " << intersection_id << " Group id:" << group_id);
     bool id_exists = false;
     for (int idx = 0; idx < upcoming_intersection_ids_.data.size(); idx +2)
     {
@@ -2153,7 +2160,7 @@ carma_perception_msgs::msg::CheckActiveGeofence WMBroadcaster::checkActiveGeofen
     {
       if (id == current_llt.id())
       {
-        RCLCPP_DEBUG_STREAM(rclcpp::get_logger("carma_wm_ctrl"), "Vehicle is on Lanelet " << current_llt.id() << ", which has an active geofence");
+        RCLCPP_DEBUG_STREAM(logger_, "Vehicle is on Lanelet " << current_llt.id() << ", which has an active geofence");
         outgoing_geof.is_on_active_geofence = true;
         for (auto regem: current_llt.regulatoryElements())
         {
@@ -2166,7 +2173,7 @@ carma_perception_msgs::msg::CheckActiveGeofence WMBroadcaster::checkActiveGeofen
             outgoing_geof.advisory_speed = speed->speed_limit_.value();
             outgoing_geof.reason = speed->getReason();
 
-            RCLCPP_DEBUG_STREAM(rclcpp::get_logger("carma_wm_ctrl"), "Active geofence has a speed limit of " << speed->speed_limit_.value());
+            RCLCPP_DEBUG_STREAM(logger_, "Active geofence has a speed limit of " << speed->speed_limit_.value());
 
             // Cannot overrule outgoing_geof.type if it is already set to LANE_CLOSED
             if(outgoing_geof.type != carma_perception_msgs::msg::CheckActiveGeofence::LANE_CLOSED)
@@ -2181,7 +2188,7 @@ carma_perception_msgs::msg::CheckActiveGeofence WMBroadcaster::checkActiveGeofen
             lanelet::DigitalMinimumGapPtr min_gap =  std::dynamic_pointer_cast<lanelet::DigitalMinimumGap>
             (current_map_->regulatoryElementLayer.get(regem->id()));
             outgoing_geof.minimum_gap = min_gap->getMinimumGap();
-            RCLCPP_DEBUG_STREAM(rclcpp::get_logger("carma_wm_ctrl"), "Active geofence has a minimum gap of " << min_gap->getMinimumGap());
+            RCLCPP_DEBUG_STREAM(logger_, "Active geofence has a minimum gap of " << min_gap->getMinimumGap());
           }
 
           // Assign active geofence fields based on whether the current lane is closed or is immediately adjacent to a closed lane
@@ -2193,8 +2200,8 @@ carma_perception_msgs::msg::CheckActiveGeofence WMBroadcaster::checkActiveGeofen
             // Update the 'type' and 'reason' for this active geofence if the vehicle is in a closed lane
             if(!accessRuleReg->accessable(lanelet::Participants::VehicleCar) || !accessRuleReg->accessable(lanelet::Participants::VehicleTruck))
             {
-              RCLCPP_DEBUG_STREAM(rclcpp::get_logger("carma_wm_ctrl"), "Active geofence is a closed lane.");
-              RCLCPP_DEBUG_STREAM(rclcpp::get_logger("carma_wm_ctrl"), "Closed lane reason: " << accessRuleReg->getReason());
+              RCLCPP_DEBUG_STREAM(logger_, "Active geofence is a closed lane.");
+              RCLCPP_DEBUG_STREAM(logger_, "Closed lane reason: " << accessRuleReg->getReason());
               outgoing_geof.reason = accessRuleReg->getReason();
               outgoing_geof.type = carma_perception_msgs::msg::CheckActiveGeofence::LANE_CLOSED;
             }
@@ -2220,9 +2227,9 @@ carma_perception_msgs::msg::CheckActiveGeofence WMBroadcaster::checkActiveGeofen
                         (current_map_->regulatoryElementLayer.get(rightRegem->id()));
                         if(!rightAccessRuleReg->accessable(lanelet::Participants::VehicleCar) || !rightAccessRuleReg->accessable(lanelet::Participants::VehicleTruck))
                         {
-                          RCLCPP_DEBUG_STREAM(rclcpp::get_logger("carma_wm_ctrl"), "Right adjacent Lanelet " << lanelet.id() << " is CLOSED");
-                          RCLCPP_DEBUG_STREAM(rclcpp::get_logger("carma_wm_ctrl"), "Assigning LANE_CLOSED type to active geofence");
-                          RCLCPP_DEBUG_STREAM(rclcpp::get_logger("carma_wm_ctrl"), "Assigning reason " << rightAccessRuleReg->getReason());
+                          RCLCPP_DEBUG_STREAM(logger_, "Right adjacent Lanelet " << lanelet.id() << " is CLOSED");
+                          RCLCPP_DEBUG_STREAM(logger_, "Assigning LANE_CLOSED type to active geofence");
+                          RCLCPP_DEBUG_STREAM(logger_, "Assigning reason " << rightAccessRuleReg->getReason());
                           outgoing_geof.reason = rightAccessRuleReg->getReason();
                           outgoing_geof.type = carma_perception_msgs::msg::CheckActiveGeofence::LANE_CLOSED;
                         }
@@ -2249,9 +2256,9 @@ carma_perception_msgs::msg::CheckActiveGeofence WMBroadcaster::checkActiveGeofen
                         (current_map_->regulatoryElementLayer.get(leftRegem->id()));
                         if(!leftAccessRuleReg->accessable(lanelet::Participants::VehicleCar) || !leftAccessRuleReg->accessable(lanelet::Participants::VehicleTruck))
                         {
-                          RCLCPP_DEBUG_STREAM(rclcpp::get_logger("carma_wm_ctrl"), "Left adjacent Lanelet " << lanelet.id() << " is CLOSED");
-                          RCLCPP_DEBUG_STREAM(rclcpp::get_logger("carma_wm_ctrl"), "Assigning LANE_CLOSED type to active geofence");
-                          RCLCPP_DEBUG_STREAM(rclcpp::get_logger("carma_wm_ctrl"), "Assigning reason " << leftAccessRuleReg->getReason());
+                          RCLCPP_DEBUG_STREAM(logger_, "Left adjacent Lanelet " << lanelet.id() << " is CLOSED");
+                          RCLCPP_DEBUG_STREAM(logger_, "Assigning LANE_CLOSED type to active geofence");
+                          RCLCPP_DEBUG_STREAM(logger_, "Assigning reason " << leftAccessRuleReg->getReason());
                           outgoing_geof.reason = leftAccessRuleReg->getReason();
                           outgoing_geof.type = carma_perception_msgs::msg::CheckActiveGeofence::LANE_CLOSED;
                         }
@@ -2326,14 +2333,14 @@ void WMBroadcaster::updateUpcomingSGIntersectionIds()
     }
   }
   else{
-     RCLCPP_DEBUG_STREAM(rclcpp::get_logger("carma_wm_ctrl"), "NO matching Traffic lights along the route");
+     RCLCPP_DEBUG_STREAM(logger_, "NO matching Traffic lights along the route");
   }//END Traffic signals
 
   auto intersections = route_lanelet.regulatoryElementsAs<lanelet::SignalizedIntersection>();
   if (intersections.empty())
   {
     // no match if any of the entry lanelet is not part of any intersection.
-    RCLCPP_DEBUG_STREAM(rclcpp::get_logger("carma_wm_ctrl"), "NO matching intersection for current lanelet. lanelet id = " << route_lanelet.id());
+    RCLCPP_DEBUG_STREAM(logger_, "NO matching intersection for current lanelet. lanelet id = " << route_lanelet.id());
   }
   else
   {
@@ -2351,7 +2358,7 @@ void WMBroadcaster::updateUpcomingSGIntersectionIds()
     }
   } //END intersections
 
-  RCLCPP_DEBUG_STREAM(rclcpp::get_logger("carma_wm_ctrl"), "MAP msg: Intersection ID = " <<  map_msg_intersection_id << ", Signal Group ID =" << cur_signal_group_id );
+  RCLCPP_DEBUG_STREAM(logger_, "MAP msg: Intersection ID = " <<  map_msg_intersection_id << ", Signal Group ID =" << cur_signal_group_id );
   if(map_msg_intersection_id != 0 && cur_signal_group_id != 0)
   {
     upcoming_intersection_ids_.data.clear();

@@ -46,6 +46,7 @@ WMListenerWorker::WMListenerWorker(rclcpp::Logger logger)
 : logger_(logger)
 {
   world_model_.reset(new CARMAWorldModel);
+  world_model_->setLogger(logger_);
 }
 
 WorldModelConstPtr WMListenerWorker::getWorldModel() const
@@ -191,7 +192,7 @@ void WMListenerWorker::mapUpdateCallback(autoware_lanelet2_msgs::msg::MapBin::Sh
   auto gf_ptr = std::shared_ptr<carma_wm::TrafficControl>(new carma_wm::TrafficControl);
 
   // convert ros msg to geofence object
-  carma_wm::fromBinMsg(*geofence_msg, gf_ptr, world_model_->getMutableMap());
+  carma_wm::fromBinMsg(*geofence_msg, gf_ptr, world_model_->getMutableMap(), logger_);
 
   RCLCPP_INFO_STREAM(logger_, "Processing Map Update with Geofence Id:" << gf_ptr->id_);
 

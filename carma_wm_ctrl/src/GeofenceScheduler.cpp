@@ -34,6 +34,11 @@ rclcpp::Time GeofenceScheduler::now()
   return timerFactory_->now();
 }
 
+void GeofenceScheduler::setLogger(const rclcpp::Logger& logger)
+{
+  logger_ = logger;
+}
+
 uint32_t GeofenceScheduler::nextId()
 {
   next_id_++;
@@ -71,18 +76,18 @@ void GeofenceScheduler::addGeofence(std::shared_ptr<Geofence> gf_ptr)
 { 
   std::lock_guard<std::mutex> guard(mutex_);
 
-  RCLCPP_INFO_STREAM(rclcpp::get_logger("carma_wm_ctrl"), "Attempting to add Geofence with Id: " << gf_ptr->id_);
+  RCLCPP_INFO_STREAM(logger_, "Attempting to add Geofence with Id: " << gf_ptr->id_);
 
   // Create timer for next start time
   for (size_t schedule_idx = 0; schedule_idx < gf_ptr->schedules.size(); schedule_idx++)
   {
     // resolve clock type
-    auto interval_info = gf_ptr->schedules[schedule_idx].getNextInterval(timerFactory_->now());
+    auto interval_info = gf_ptr->schedules[schedule_idx].getNextInterval(timerFactory_->now(), logger_);
     rclcpp::Time startTime = interval_info.second;
 
     if (!interval_info.first && startTime == rclcpp::Time(0, 0, clock_type_))
     {
-      RCLCPP_WARN_STREAM(rclcpp::get_logger("carma_wm_ctrl"), 
+      RCLCPP_WARN_STREAM(logger_, 
           "Failed to add geofence as its schedule did not contain an active or upcoming control period. GF Id: "
           << gf_ptr->id_);
       return;
@@ -112,7 +117,7 @@ void GeofenceScheduler::startGeofenceCallback(std::shared_ptr<Geofence> gf_ptr, 
   std::lock_guard<std::mutex> guard(mutex_);
   rclcpp::Time endTime = timerFactory_->now() + gf_ptr->schedules[schedule_id].control_span_;
 
-  RCLCPP_INFO_STREAM(rclcpp::get_logger("carma_wm_ctrl"), 
+  RCLCPP_INFO_STREAM(logger_, 
     "Activating Geofence with Id: " 
     << gf_ptr->id_ << ", which will end at:" 
     << std::to_string(endTime.seconds()));
@@ -136,13 +141,13 @@ void GeofenceScheduler::endGeofenceCallback(std::shared_ptr<Geofence> gf_ptr, co
 {
   std::lock_guard<std::mutex> guard(mutex_);
 
-  RCLCPP_INFO_STREAM(rclcpp::get_logger("carma_wm_ctrl"), "Deactivating Geofence with Id: " << gf_ptr->id_);
+  RCLCPP_INFO_STREAM(logger_, "Deactivating Geofence with Id: " << gf_ptr->id_);
 
   inactive_callback_(gf_ptr);
   timers_[timer_id].second = true;  // Mark timer for deletion
 
   // Determine if a new timer is needed for this geofence
-  auto interval_info = gf_ptr->schedules[schedule_id].getNextInterval(timerFactory_->now());
+  auto interval_info = gf_ptr->schedules[schedule_id].getNextInterval(timerFactory_->now(), logger_);
   rclcpp::Time startTime = interval_info.second;
 
   // If this geofence should currently be active set the start time to now

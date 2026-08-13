@@ -80,8 +80,10 @@ public:
  * @param msg [converted ROS message. Only "data" field is filled]
  * NOTE: When converting the geofence object, the converter fills its relevant map update
  * fields (update_list, remove_list) to be read once received at the user
+ * @param logger logger used for debug output. Callers should pass their own node-correlated logger so messages reach /rosout
  */
-void toBinMsg(std::shared_ptr<carma_wm::TrafficControl> gf_ptr, autoware_lanelet2_msgs::msg::MapBin* msg);
+void toBinMsg(std::shared_ptr<carma_wm::TrafficControl> gf_ptr, autoware_lanelet2_msgs::msg::MapBin* msg,
+              const rclcpp::Logger& logger = rclcpp::get_logger("carma_wm::TrafficControl"));
 
 /**
  * [Converts Geofence binary ROS message to carma_wm::TrafficControl object. Similar implementation to 
@@ -92,10 +94,12 @@ void toBinMsg(std::shared_ptr<carma_wm::TrafficControl> gf_ptr, autoware_lanelet
  *                    existing objects' with same lanelet id]
  * NOTE: When converting the geofence object, the converter only fills its relevant map update
  * fields (update_list, remove_list) as the ROS msg doesn't hold any other data field in the object.
- * NOTE: While main map update function needs to use lanelet_map, other utility use cases such as 
+ * NOTE: While main map update function needs to use lanelet_map, other utility use cases such as
  *       unit test or map update logger does not currently use lanelet_map and can use nullptr as input
+ * @param logger logger used for debug output. Callers should pass their own node-correlated logger so messages reach /rosout
  */
-void fromBinMsg(const autoware_lanelet2_msgs::msg::MapBin& msg, std::shared_ptr<carma_wm::TrafficControl> gf_ptr, lanelet::LaneletMapPtr lanelet_map = nullptr);
+void fromBinMsg(const autoware_lanelet2_msgs::msg::MapBin& msg, std::shared_ptr<carma_wm::TrafficControl> gf_ptr, lanelet::LaneletMapPtr lanelet_map = nullptr,
+                 const rclcpp::Logger& logger = rclcpp::get_logger("carma_wm::TrafficControl"));
 
 }  // namespace carma_wm
 

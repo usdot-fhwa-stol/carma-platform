@@ -75,18 +75,19 @@ void WMBroadcasterNode::initializeWorker(std::weak_ptr<carma_ros2_utils::CarmaLi
   std::bind(&WMBroadcasterNode::publishCtrlReq, this, std_ph::_1), std::bind(&WMBroadcasterNode::publishActiveGeofence, this, std_ph::_1),
     std::make_unique<carma_ros2_utils::timers::ROSTimerFactory>(weak_node_pointer),
     std::bind(&WMBroadcasterNode::publishTCMACK, this, std_ph::_1));
+  wmb_->setLogger(get_logger());
 }
 
 carma_ros2_utils::CallbackReturn WMBroadcasterNode::handle_on_configure(const rclcpp_lifecycle::State &)
 {
-  RCLCPP_INFO_STREAM(rclcpp::get_logger("carma_wm_ctrl"),"Starting configuration!");
+  RCLCPP_INFO_STREAM(get_logger(),"Starting configuration!");
 
   // Reset config
   config_ = Config();
 
   initializeWorker(shared_from_this());
 
-  RCLCPP_INFO_STREAM(rclcpp::get_logger("carma_wm_ctrl"),"Done initializing worker!");
+  RCLCPP_INFO_STREAM(get_logger(),"Done initializing worker!");
 
   get_parameter<int>("ack_pub_times", config_.ack_pub_times);
   get_parameter<double>("max_lane_width", config_.max_lane_width);
@@ -115,7 +116,7 @@ carma_ros2_utils::CallbackReturn WMBroadcasterNode::handle_on_configure(const rc
 
   wmb_->setIntersectionCoordCorrection(config_.intersection_ids_for_correction, config_.intersection_coord_correction);
 
-  RCLCPP_INFO_STREAM(rclcpp::get_logger("carma_wm_ctrl"),"Done loading parameters: " << config_);
+  RCLCPP_INFO_STREAM(get_logger(),"Done loading parameters: " << config_);
 
   /////////////
   // PUBLISHERS

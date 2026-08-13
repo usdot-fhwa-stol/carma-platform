@@ -63,7 +63,7 @@ constexpr const char* participant_types[PARTICIPANT_COUNT] = { lanelet::Particip
  *
  * @return A list of german traffic rules which have been implemented
  */
-std::vector<lanelet::traffic_rules::TrafficRulesUPtr> getAllGermanTrafficRules()
+std::vector<lanelet::traffic_rules::TrafficRulesUPtr> getAllGermanTrafficRules(const rclcpp::Logger& logger)
 {
   std::vector<lanelet::traffic_rules::TrafficRulesUPtr> german_traffic_rules_set;
   german_traffic_rules_set.reserve(PARTICIPANT_COUNT);
@@ -82,7 +82,7 @@ std::vector<lanelet::traffic_rules::TrafficRulesUPtr> getAllGermanTrafficRules()
     catch (const lanelet::InvalidInputError& e)
     {
       // Ignore participants which there is no generic rules for
-      RCLCPP_INFO_STREAM ( rclcpp::get_logger("MapConformer"), "Ignoring participant: " << participant_types[i] <<  ", which there is no generic rule for...");
+      RCLCPP_INFO_STREAM (logger, "Ignoring participant: " << participant_types[i] <<  ", which there is no generic rule for...");
     }
   }
 
@@ -479,7 +479,7 @@ void addInferredDirectionOfTravel(Lanelet& lanelet, lanelet::LaneletMapPtr map,
 }
 
 void addValidSpeedLimit(Lanelet& lanelet, lanelet::LaneletMapPtr map, lanelet::Velocity config_limit,
-    const std::vector<lanelet::traffic_rules::TrafficRulesUPtr>& default_traffic_rules )
+    const std::vector<lanelet::traffic_rules::TrafficRulesUPtr>& default_traffic_rules, const rclcpp::Logger& logger)
 {
   lanelet::Velocity max_speed;
     auto speed_limit = lanelet.regulatoryElementsAs<DigitalSpeedLimit>();
@@ -530,13 +530,13 @@ void addValidSpeedLimit(Lanelet& lanelet, lanelet::LaneletMapPtr map, lanelet::V
     if(speed_limit.back().get()->speed_limit_ > max_speed)//Check that speed limit value does not exceed the maximum value
     {
 
-      RCLCPP_DEBUG_STREAM( rclcpp::get_logger("lanelet::MapConformer"), "Invalid speed limit value. Value reset to maximum speed limit.");
+      RCLCPP_DEBUG_STREAM(logger, "Invalid speed limit value. Value reset to maximum speed limit.");
       auto rar = std::make_shared<DigitalSpeedLimit>(DigitalSpeedLimit::buildData(lanelet::utils::getId(), max_speed, {lanelet},
       {}, allowed_participants));
       lanelet.removeRegulatoryElement(speed_limit.back());
       lanelet.addRegulatoryElement(rar);
       map->update(lanelet, rar);//Add DigitalSpeedLimit data to the map
-      RCLCPP_DEBUG_STREAM( rclcpp::get_logger("lanelet::MapConformer"), "Number of Regulatory Elements: "<< map->regulatoryElementLayer.size());
+      RCLCPP_DEBUG_STREAM(logger, "Number of Regulatory Elements: "<< map->regulatoryElementLayer.size());
 
 
     }
@@ -547,10 +547,10 @@ void addValidSpeedLimit(Lanelet& lanelet, lanelet::LaneletMapPtr map, lanelet::V
 
 }  // namespace
 
-void ensureCompliance(lanelet::LaneletMapPtr map, lanelet::Velocity config_limit)
+void ensureCompliance(lanelet::LaneletMapPtr map, lanelet::Velocity config_limit, const rclcpp::Logger& logger)
 {
 
-  auto default_traffic_rules = getAllGermanTrafficRules();  // Use german traffic rules as default as they most closely
+  auto default_traffic_rules = getAllGermanTrafficRules(logger);  // Use german traffic rules as default as they most closely
                                                             // match the generic traffic rules
   // Handle lanelets
   for (auto lanelet : map->laneletLayer)
@@ -558,7 +558,7 @@ void ensureCompliance(lanelet::LaneletMapPtr map, lanelet::Velocity config_limit
     addInferredAccessRule(lanelet, map, default_traffic_rules);
     addInferredPassingControlLine(lanelet, map);
     addInferredDirectionOfTravel(lanelet, map, default_traffic_rules);
-    addValidSpeedLimit(lanelet, map, config_limit, default_traffic_rules);// 0_mph can be changed with the config_limit
+    addValidSpeedLimit(lanelet, map, config_limit, default_traffic_rules, logger);// 0_mph can be changed with the config_limit
   }
   // Handle areas
   for (auto area : map->areaLayer)
@@ -566,7 +566,7 @@ void ensureCompliance(lanelet::LaneletMapPtr map, lanelet::Velocity config_limit
     addInferredAccessRule(area, map, default_traffic_rules);
     addInferredPassingControlLine(area, map);
   }
-  RCLCPP_INFO_STREAM(rclcpp::get_logger("lanelet::MapConformer"),
+  RCLCPP_INFO_STREAM(logger,
     "Ensured compliance of map with "
     << map->laneletLayer.size() << " lanelets and " << map->areaLayer.size());
 }

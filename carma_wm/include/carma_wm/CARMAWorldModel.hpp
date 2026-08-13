@@ -152,6 +152,11 @@ public:
    */
   void setSimulationClock(const rclcpp::Time& time_now);
 
+  /*! \brief Set the logger to use for this instance and any sub-objects (e.g. sim_) so that
+   *         messages are correlated to the owning node's /rosout publisher
+   */
+  void setLogger(const rclcpp::Logger& logger);
+
   /**
    * \brief (non-const version) Gets the underlying lanelet, given the cartesian point on the map
    *
@@ -248,6 +253,8 @@ public:
   carma_wm::SignalizedIntersectionManager sim_; // records SPAT/MAP lane ids to lanelet ids
 
 private:
+
+  rclcpp::Logger logger_ = rclcpp::get_logger("carma_wm");
 
   double config_speed_limit_;
 

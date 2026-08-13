@@ -114,10 +114,12 @@ std::vector<lanelet::Lanelet> nonConnectedAdjacentLeft(const lanelet::LaneletMap
   * \param lanelet_map Lanelet Map Ptr
   * \param routing_graph Routing graph of the lanelet map
   * \param max_lane_width max lane width of the lanes in the map
-  * 
+  * \param logger logger used for debug output. Callers should pass their own node-correlated logger so messages reach /rosout
+  *
   * NOTE:Currently this function only checks lanelets and will be expanded to areas in the future.
   */
-lanelet::ConstLaneletOrAreas getAffectedLaneletOrAreas(const lanelet::Points3d& gf_pts, const lanelet::LaneletMapPtr& lanelet_map, std::shared_ptr<const lanelet::routing::RoutingGraph> routing_graph, double max_lane_width);
+lanelet::ConstLaneletOrAreas getAffectedLaneletOrAreas(const lanelet::Points3d& gf_pts, const lanelet::LaneletMapPtr& lanelet_map, std::shared_ptr<const lanelet::routing::RoutingGraph> routing_graph, double max_lane_width,
+                                                        const rclcpp::Logger& logger = rclcpp::get_logger("carma_wm::query"));
 
 /*!
   * \brief A function that filters successor lanelets of root_lanelets from possible_lanelets

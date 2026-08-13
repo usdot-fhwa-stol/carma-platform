@@ -196,6 +196,11 @@ public:
     const std::shared_ptr<lanelet::LaneletMap>& semantic_map) const;
 
   /**
+   * @brief Set the logger to use so that messages are correlated to the owning node's /rosout publisher
+   */
+  void setLogger(const rclcpp::Logger& logger);
+
+  /**
    * @brief Log an info message only once per unique message
    * @param message The message to log
    */
@@ -239,6 +244,8 @@ public:
   // Mutable because it is used by a non-const logging function that can be used in a const function
   mutable std::set<std::string> previous_busy_log_streams_;
 private:
+  rclcpp::Logger logger_ = rclcpp::get_logger("carma_wm");
+
   // PROJ string of current map
   std::string target_frame_ = "";
 

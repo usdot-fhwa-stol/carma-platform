@@ -18,6 +18,7 @@
 #include <mutex>
 #include <memory>
 #include <unordered_map>
+#include <rclcpp/rclcpp.hpp>
 #include <carma_wm_ctrl/Geofence.hpp>
 #include <carma_ros2_utils/timers/Timer.hpp>
 #include <carma_ros2_utils/timers/TimerFactory.hpp>
@@ -46,6 +47,7 @@ class GeofenceScheduler
   std::function<void(std::shared_ptr<Geofence>)> inactive_callback_;
   uint32_t next_id_ = 0;  // Timer id counter
   rcl_clock_type_t clock_type_ = RCL_SYSTEM_TIME;
+  rclcpp::Logger logger_ = rclcpp::get_logger("carma_wm_ctrl");
 
 public:
   /**
@@ -55,6 +57,11 @@ public:
    * @param timerFactory A pointer to a TimerFactory which can be used to generate timers for geofence triggers.
    */
   GeofenceScheduler(std::shared_ptr<TimerFactory> timerFactory);
+
+  /**
+   * @brief Set the logger to use so that messages are correlated to the owning node's /rosout publisher
+   */
+  void setLogger(const rclcpp::Logger& logger);
 
   /**
    * @brief Add a geofence to the scheduler. This will cause it to trigger an event when it becomes active or goes

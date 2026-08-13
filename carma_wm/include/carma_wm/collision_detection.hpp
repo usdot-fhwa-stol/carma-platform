@@ -14,6 +14,7 @@
  * the License.
  */
 
+#include <rclcpp/rclcpp.hpp>
 #include <carma_perception_msgs/msg/roadway_obstacle_list.hpp>
 #include <carma_perception_msgs/msg/roadway_obstacle.hpp>
 #include <carma_v2x_msgs/msg/vehicle_size.hpp>
@@ -61,11 +62,13 @@ namespace carma_wm {
         * \param tp The TrajectoryPlan of the host vehicle
         * \param size The size of the host vehicle defined in meters
         * \param velocity of the host vehicle m/s
+        * \param logger logger used for debug output. Callers should pass their own node-correlated logger so messages reach /rosout
         * \return A list of obstacles the provided trajectory plan collides with
         */
-        std::vector<carma_perception_msgs::msg::RoadwayObstacle> WorldCollisionDetection(const carma_perception_msgs::msg::RoadwayObstacleList& rwol, 
-                                                                    const carma_planning_msgs::msg::TrajectoryPlan& tp, const geometry_msgs::msg::Vector3& size, 
-                                                                    const geometry_msgs::msg::Twist& velocity);
+        std::vector<carma_perception_msgs::msg::RoadwayObstacle> WorldCollisionDetection(const carma_perception_msgs::msg::RoadwayObstacleList& rwol,
+                                                                    const carma_planning_msgs::msg::TrajectoryPlan& tp, const geometry_msgs::msg::Vector3& size,
+                                                                    const geometry_msgs::msg::Twist& velocity,
+                                                                    const rclcpp::Logger& logger = rclcpp::get_logger("carma_wm::collision_detection"));
         
         /*! \brief Convert RodwayObstable object to the collision_detection::MovingObject 
         * \param rwo A RoadwayObstacle

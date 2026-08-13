@@ -23,11 +23,11 @@ namespace carma_wm {
     namespace collision_detection {
 
         //TODO: consider rewriting this method to improve efficiency; it has object_count*prediction_count*trajectory_point sqrt calls!
-        std::vector<carma_perception_msgs::msg::RoadwayObstacle> WorldCollisionDetection(const carma_perception_msgs::msg::RoadwayObstacleList& rwol, const carma_planning_msgs::msg::TrajectoryPlan& tp, 
-                                                                        const geometry_msgs::msg::Vector3& size, const geometry_msgs::msg::Twist& velocity) {
+        std::vector<carma_perception_msgs::msg::RoadwayObstacle> WorldCollisionDetection(const carma_perception_msgs::msg::RoadwayObstacleList& rwol, const carma_planning_msgs::msg::TrajectoryPlan& tp,
+                                                                        const geometry_msgs::msg::Vector3& size, const geometry_msgs::msg::Twist& velocity, const rclcpp::Logger& logger) {
 
 
-            RCLCPP_DEBUG_STREAM(rclcpp::get_logger("carma_wm::collision_detection"), "WorldCollisionDetection");
+            RCLCPP_DEBUG_STREAM(logger, "WorldCollisionDetection");
 
             std::vector<carma_perception_msgs::msg::RoadwayObstacle> rwo_collison;
 
@@ -38,22 +38,22 @@ namespace carma_wm {
 
                     for(size_t k=0; k < tp.trajectory_points.size(); k++) {
 
-                        RCLCPP_DEBUG_STREAM(rclcpp::get_logger("carma_wm::collision_detection"), "in for loop");
+                        RCLCPP_DEBUG_STREAM(logger, "in for loop");
 
                         double distancex = (tp.trajectory_points[k].x - j.predicted_position.position.x)*(tp.trajectory_points[k].x - j.predicted_position.position.x);
                         double distancey = (tp.trajectory_points[k].y - j.predicted_position.position.y)*(tp.trajectory_points[k].y - j.predicted_position.position.y);
 
-                        RCLCPP_DEBUG_STREAM(rclcpp::get_logger("carma_wm::collision_detection"), "tp.trajectory_points[k].x");
-                        RCLCPP_DEBUG_STREAM(rclcpp::get_logger("carma_wm::collision_detection"), tp.trajectory_points[k].x);
+                        RCLCPP_DEBUG_STREAM(logger, "tp.trajectory_points[k].x");
+                        RCLCPP_DEBUG_STREAM(logger, tp.trajectory_points[k].x);
 
-                        RCLCPP_DEBUG_STREAM(rclcpp::get_logger("carma_wm::collision_detection"), "j.predicted_position.position.x");
-                        RCLCPP_DEBUG_STREAM(rclcpp::get_logger("carma_wm::collision_detection"), j.predicted_position.position.x);
+                        RCLCPP_DEBUG_STREAM(logger, "j.predicted_position.position.x");
+                        RCLCPP_DEBUG_STREAM(logger, j.predicted_position.position.x);
 
-                        RCLCPP_DEBUG_STREAM(rclcpp::get_logger("carma_wm::collision_detection"), "tp.trajectory_points[k].y");
-                        RCLCPP_DEBUG_STREAM(rclcpp::get_logger("carma_wm::collision_detection"), tp.trajectory_points[k].y);
+                        RCLCPP_DEBUG_STREAM(logger, "tp.trajectory_points[k].y");
+                        RCLCPP_DEBUG_STREAM(logger, tp.trajectory_points[k].y);
 
-                        RCLCPP_DEBUG_STREAM(rclcpp::get_logger("carma_wm::collision_detection"), "j.predicted_position.position.y");
-                        RCLCPP_DEBUG_STREAM(rclcpp::get_logger("carma_wm::collision_detection"), j.predicted_position.position.y);
+                        RCLCPP_DEBUG_STREAM(logger, "j.predicted_position.position.y");
+                        RCLCPP_DEBUG_STREAM(logger, j.predicted_position.position.y);
 
 
                         double calcdistance = sqrt(abs(distancex + distancey));

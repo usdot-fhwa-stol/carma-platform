@@ -18,6 +18,7 @@
 #ifndef MAP_CONFORMER_H
 
 
+#include <rclcpp/rclcpp.hpp>
 #include <carma_wm/WorldModel.hpp>
 #include <lanelet2_core/Attribute.h>
 #include <lanelet2_traffic_rules/TrafficRulesFactory.h>
@@ -59,8 +60,11 @@ namespace MapConformer
  * @param map A pointer to the map which will be modified in place
  * 
  * @param config_limit A value corresponding to the configurable speed limit value
+ *
+ * @param logger logger used for debug output. Callers should pass their own node-correlated logger so messages reach /rosout
  */
-void ensureCompliance(lanelet::LaneletMapPtr map, lanelet::Velocity config_limit=80_mph);
+void ensureCompliance(lanelet::LaneletMapPtr map, lanelet::Velocity config_limit=80_mph,
+                       const rclcpp::Logger& logger = rclcpp::get_logger("lanelet::MapConformer"));
 
 
 }  // namespace MapConformer

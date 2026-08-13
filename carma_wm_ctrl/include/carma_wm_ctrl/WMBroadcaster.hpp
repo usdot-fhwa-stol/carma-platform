@@ -178,6 +178,12 @@ public:
   void setMaxLaneWidth(double max_lane_width);
 
   /*!
+   * \brief Set the logger to use for this instance and any sub-objects (e.g. scheduler_) so that
+   *        messages are correlated to the owning node's /rosout publisher
+   */
+  void setLogger(const rclcpp::Logger& logger);
+
+  /*!
    * \brief Sets much more bigger the TCR bounding box should be in addition to the route's
    *        original bounding box. This helps avoid certain situations where the box's angle
    *        might prevent carma-cloud from generating TCM.
@@ -459,6 +465,7 @@ private:
   PublishCtrlRequestCallback control_msg_pub_;
   PublishActiveGeofCallback active_pub_;
   GeofenceScheduler scheduler_;
+  rclcpp::Logger logger_ = rclcpp::get_logger("carma_wm_ctrl");
   PublishMobilityOperationCallback tcm_ack_pub_;
   std::string base_map_georef_;
   double max_lane_width_;

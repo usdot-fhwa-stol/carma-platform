@@ -92,7 +92,10 @@ public:
    * after schedule end
    *
    * TODO the UTC offset is provided in the geofence spec but for now we will ignore and assume all times are UTC
+   *
+   * @param logger logger used for debug output. Callers should pass their own node-correlated logger so messages reach /rosout
    */
-  std::pair<bool, rclcpp::Time> getNextInterval(const rclcpp::Time& time) const;
+  std::pair<bool, rclcpp::Time> getNextInterval(const rclcpp::Time& time,
+                                                 const rclcpp::Logger& logger = rclcpp::get_logger("carma_wm_ctrl")) const;
 };
 }  // namespace carma_wm_ctrl
