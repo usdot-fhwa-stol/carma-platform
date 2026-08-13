@@ -80,7 +80,7 @@ namespace plan_delegator
         double duration_to_signal_before_lane_change = 2.5; // (Seconds) If an upcoming lane change will begin in under this time threshold, a turn signal activation command will be published.
         int tactical_plugin_service_call_timeout = 100; // (Milliseconds) The maximum duration that Plan Delegator will wait after calling a tactical plugin's trajectory planning service; if trajectory
                                                         // generation takes longer than this, then planning will immediately end for the current trajectory planning iteration.
-        int max_traj_generation_reattempt = 5; // The maximum number of times plan_delegator attempts to generate a trajectory before giving up
+        int max_traj_generation_reattempt = 10; // The maximum number of consecutive failed planning cycles tolerated before giving up
         bool enable_object_avoidance = true; // Activate object avoidance logic by calling yield_plugin on the final trajectory before publishing
 
         // Stream operator for this config
@@ -303,6 +303,7 @@ namespace plan_delegator
             // Unit Test Accessors
             FRIEND_TEST(TestPlanDelegator, UnitTestPlanDelegator);
             FRIEND_TEST(TestPlanDelegator, TestPlanDelegator);
+            FRIEND_TEST(TestPlanDelegator, TestTrajectoryGenerationFailureLimit);
             FRIEND_TEST(TestPlanDelegator, TestLaneChangeInformation);
             FRIEND_TEST(TestPlanDelegator, TestUpcomingLaneChangeAndTurnSignals);
             FRIEND_TEST(TestPlanDelegator, TestUpdateManeuverParameters);

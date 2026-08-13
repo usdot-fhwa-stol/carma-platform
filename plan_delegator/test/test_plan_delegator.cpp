@@ -16,6 +16,7 @@
 
 #include <thread>
 #include <chrono>
+#include <stdexcept>
 #include <carma_planning_msgs/msg/maneuver_plan.hpp>
 #include <carma_planning_msgs/srv/plan_trajectory.hpp>
 #include <carma_wm/WMTestLibForGuidance.hpp>
@@ -63,6 +64,7 @@ namespace plan_delegator{
         EXPECT_EQ(pd->config_.planning_topic_suffix, "/plan_trajectory");
         EXPECT_EQ(pd->config_.trajectory_planning_rate, 10.0);
         EXPECT_EQ(pd->config_.max_trajectory_duration, 6.0);
+        EXPECT_EQ(pd->config_.max_traj_generation_reattempt, 10);
 
         // Test maneuver plan callback
         carma_planning_msgs::msg::ManeuverPlan plan;
@@ -121,6 +123,19 @@ namespace plan_delegator{
         EXPECT_NEAR(1.0, req->vehicle_state.y_pos_global, 0.01);
         EXPECT_NEAR(1.0, req->vehicle_state.longitudinal_vel, 0.1);
         EXPECT_EQ(0, req->maneuver_index_to_plan);
+    }
+
+    TEST(TestPlanDelegator, TestTrajectoryGenerationFailureLimit) {
+        rclcpp::NodeOptions node_options;
+        auto pd = std::make_shared<plan_delegator::PlanDelegator>(node_options);
+
+        pd->guidance_engaged = true;
+        pd->received_maneuver_plan_ = true;
+        pd->config_.max_traj_generation_reattempt = 2;
+
+        EXPECT_NO_THROW(pd->onTrajPlanTick());
+        EXPECT_NO_THROW(pd->onTrajPlanTick());
+        EXPECT_THROW(pd->onTrajPlanTick(), std::runtime_error);
     }
 
 
