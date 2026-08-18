@@ -25,6 +25,7 @@ This file is can be used to launch the CARMA cooperative_lanechange_node.
   Though in carma-platform it may be launched directly from the base launch file.
 '''
 
+
 def generate_launch_description():
 
     # Get parameter file path

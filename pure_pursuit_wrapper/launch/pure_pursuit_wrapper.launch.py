@@ -25,6 +25,7 @@ This file is can be used to launch the CARMA Pure Pursuit Wrapper Node.
   Though in carma-platform it may be launched directly from the base launch file.
 '''
 
+
 def generate_launch_description():
 
     carma_pure_pursuit_wrapper_container = ComposableNodeContainer(

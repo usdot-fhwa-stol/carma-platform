@@ -25,6 +25,7 @@ This file is can be used to launch the CARMA sci_strategic_plugin_container.
   Though in carma-platform it may be launched directly from the base launch file.
 '''
 
+
 def generate_launch_description():
 
     sci_strategic_plugin_file_path = os.path.join(

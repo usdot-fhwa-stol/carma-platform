@@ -35,6 +35,7 @@ from launch_ros.actions import PushRosNamespace
 
 # Launch file for launching the nodes in the CARMA guidance stack
 
+
 def generate_launch_description():
 
     route_file_folder = LaunchConfiguration('route_file_folder')
@@ -107,6 +108,7 @@ def generate_launch_description():
     port_drayage_plugin_param_file = os.path.join(
         get_package_share_directory('port_drayage_plugin'), 'config/parameters.yaml')
 
+    # Log level is set from CARMA_ROS_LOGGING_CONFIG, generated from carma_rosconsole.conf in the vehicle config dir (carma-config)
     env_log_levels = EnvironmentVariable('CARMA_ROS_LOGGING_CONFIG', default_value='{ "default_level" : "WARN" }')
 
     subsystem_controller_param_file = LaunchConfiguration('subsystem_controller_param_file')

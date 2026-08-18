@@ -32,6 +32,7 @@ from launch.actions import DeclareLaunchArgument
 
 # Launch file for launching the nodes in the CARMA guidance stack
 
+
 def generate_launch_description():
 
     route_file_folder = LaunchConfiguration('route_file_folder')

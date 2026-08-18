@@ -25,6 +25,7 @@ This file is can be used to launch the CARMA motion_computation_node.
   Though in carma-platform it may be launched directly from the base launch file.
 """
 
+
 def generate_launch_description():
 
     # Get parameter file path

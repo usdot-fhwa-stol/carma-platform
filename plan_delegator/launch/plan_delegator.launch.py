@@ -25,6 +25,7 @@ This file is can be used to launch the Plan Delegator Node.
   Though in carma-platform it may be launched directly from the base launch file.
 '''
 
+
 def generate_launch_description():
 
     plan_delegator_param_file = os.path.join(

@@ -25,6 +25,7 @@ This file is can be used to launch the stop_and_wait_plugin.
   Though in carma-platform it may be launched directly from the base launch file.
 '''
 
+
 def generate_launch_description():
 
     # Launch node(s) in a carma container to allow logging to be configured

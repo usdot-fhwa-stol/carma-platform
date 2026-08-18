@@ -33,11 +33,13 @@ from launch_ros.actions import set_remap
 from launch.conditions import UnlessCondition
 from launch.substitutions import LaunchConfiguration, PythonExpression
 
+
 def generate_launch_description():
     """
     Launch Localization subsystem nodes
     """
 
+    # Log level is set from CARMA_ROS_LOGGING_CONFIG, generated from carma_rosconsole.conf in the vehicle config dir (carma-config)
     env_log_levels = EnvironmentVariable('CARMA_ROS_LOGGING_CONFIG', default_value='{ "default_level" : "WARN" }')
     vehicle_config_param_file = LaunchConfiguration('vehicle_config_param_file')
     subsystem_controller_default_param_file = os.path.join(

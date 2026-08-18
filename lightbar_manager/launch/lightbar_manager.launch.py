@@ -25,6 +25,7 @@ This file is can be used to launch the lightbar manager Node.
   Though in carma-platform it may be launched directly from the base launch file.
 '''
 
+
 def generate_launch_description():
 
     lightbar_manager_param_file = os.path.join(

@@ -28,6 +28,7 @@ from launch.substitutions import PythonExpression
 from pathlib import PurePath
 import os
 
+
 def generate_launch_description():
     """
     Launch perception nodes.
@@ -129,6 +130,7 @@ def generate_launch_description():
     motion_computation_param_file = os.path.join(
         get_package_share_directory('motion_computation'), 'config/parameters.yaml')
 
+    # Log level is set from CARMA_ROS_LOGGING_CONFIG, generated from carma_rosconsole.conf in the vehicle config dir (carma-config)
     env_log_levels = EnvironmentVariable('CARMA_ROS_LOGGING_CONFIG', default_value='{ "default_level" : "WARN" }')
 
     carma_wm_ctrl_param_file = os.path.join(

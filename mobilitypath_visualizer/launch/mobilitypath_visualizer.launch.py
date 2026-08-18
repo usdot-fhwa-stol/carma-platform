@@ -20,6 +20,7 @@ from carma_ros2_utils.launch.get_current_namespace import GetCurrentNamespace
 
 import os
 
+
 def generate_launch_description():
 
     # Get parameter file path

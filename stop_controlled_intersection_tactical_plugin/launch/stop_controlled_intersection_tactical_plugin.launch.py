@@ -25,6 +25,7 @@ This file is can be used to launch the CARMA stop_controlled_intersection_tactic
   Though in carma-platform it may be launched directly from the base launch file.
 '''
 
+
 def generate_launch_description():
 
     stop_controlled_intersection_tactical_plugin_file_path = os.path.join(

@@ -27,6 +27,7 @@ from carma_ros2_utils.launch.get_current_namespace import GetCurrentNamespace
 from launch.conditions import IfCondition
 import os
 
+
 def generate_launch_description():
     """
     Launch the subsystem controller for the hardware interface subsystem.
@@ -47,6 +48,7 @@ def generate_launch_description():
         description = "True if simulation mode is on"
     )
 
+    # Log level is set from CARMA_ROS_LOGGING_CONFIG, generated from carma_rosconsole.conf in the vehicle config dir (carma-config)
     env_log_levels = EnvironmentVariable('CARMA_ROS_LOGGING_CONFIG', default_value='{ "default_level" : "WARN" }')
 
     subsystem_controller_default_param_file = os.path.join(
