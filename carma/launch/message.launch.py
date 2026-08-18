@@ -33,8 +33,6 @@ from launch.launch_description_sources import PythonLaunchDescriptionSource
 from launch.actions import GroupAction
 from launch_ros.actions import set_remap
 
-
-
 def generate_launch_description():
 
     """
@@ -58,7 +56,6 @@ def generate_launch_description():
         default_value = "/opt/carma/vehicle/calibration/identifiers/UniqueVehicleParams.yaml",
         description = "Path to file containing unique vehicle calibrations"
     )
-
 
     vehicle_config_param_file = LaunchConfiguration('vehicle_config_param_file')
     declare_vehicle_config_param_file_arg = DeclareLaunchArgument(
@@ -122,7 +119,6 @@ def generate_launch_description():
                 name='mobilitypath_publisher_node',
                 extra_arguments=[
                     {'use_intra_process_comms': True},
-                    {'--log-level' : GetLogLevel('mobilitypath_publisher', env_log_levels) }
                 ],
                 remappings=[
                     ("plan_trajectory", [ EnvironmentVariable('CARMA_GUIDE_NS', default_value=''), "/plan_trajectory" ] ),
@@ -143,7 +139,6 @@ def generate_launch_description():
                 name='bsm_generator_node',
                 extra_arguments=[
                     {'use_intra_process_comms': True},
-                    {'--log-level' : GetLogLevel('bsm_generator', env_log_levels) }
                 ],
                 remappings=[
                     ("velocity_accel_cov", [ EnvironmentVariable('CARMA_INTR_NS', default_value=''), "/velocity_accel_cov" ] ),
@@ -169,7 +164,6 @@ def generate_launch_description():
                 name='cpp_message_node',
                 extra_arguments=[
                     {'use_intra_process_comms': True},
-                    {'--log-level' : GetLogLevel('cpp_message', env_log_levels) }
                 ],
                 remappings=[
                     ("inbound_binary_msg", [ EnvironmentVariable('CARMA_INTR_NS', default_value=''), "/comms/inbound_binary_msg" ] ),
@@ -186,7 +180,6 @@ def generate_launch_description():
                 name='j2735_convertor_node',
                 extra_arguments=[
                     {'use_intra_process_comms': True},
-                    {'--log-level' : GetLogLevel('j2735_convertor', env_log_levels) }
                 ],
                 remappings=[
                     ("outgoing_bsm", "bsm_outbound" )
@@ -202,7 +195,6 @@ def generate_launch_description():
                 name='carma_cloud_client_node',
                 extra_arguments=[
                     {'use_intra_process_comms': True},
-                    {'--log-level' : GetLogLevel('carma_cloud_client', env_log_levels) }
                 ],
                 remappings=[
                     ("incoming_geofence_control", [ EnvironmentVariable('CARMA_MSG_NS', default_value=''), "/incoming_geofence_control" ] ),
@@ -250,14 +242,12 @@ def generate_launch_description():
 
     subprocess.check_call(['sudo','chmod','400', keyfile])
 
-
     open_tunnels_action = ExecuteProcess(
 
         condition=IfCondition(enable_opening_tunnels),
         cmd = ['sudo',  script, '-u', REMOTE_USER, '-a', REMOTE_ADDR, '-k', keyfile, '-p', REMOTE_PORT,  '-r', HOST_PORT],
         output = 'screen'
     )
-
 
     return LaunchDescription([
         declare_vehicle_config_param_file_arg,

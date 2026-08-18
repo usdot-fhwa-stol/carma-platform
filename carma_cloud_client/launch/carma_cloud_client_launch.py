@@ -16,14 +16,10 @@ from ament_index_python import get_package_share_directory
 from launch import LaunchDescription
 from launch_ros.actions import ComposableNodeContainer
 from launch_ros.descriptions import ComposableNode
-from launch.actions import DeclareLaunchArgument
-from launch.substitutions import LaunchConfiguration
 from carma_ros2_utils.launch.get_current_namespace import GetCurrentNamespace
 
 import os
 import subprocess
-
-
 
 '''
 This file is can be used to launch the CARMA carma_cloud_client_node.
@@ -41,7 +37,6 @@ def open_tunnels():
     param_launch_path = os.path.join(
         get_package_share_directory('carma_cloud_client'), 'launch/scripts')
 
-
     cmd = param_launch_path + '/open_tunnels.sh'
 
     subprocess.check_call(['chmod','u+x', cmd])
@@ -53,19 +48,13 @@ def open_tunnels():
     subprocess.check_call(['sudo','chmod','400', key])
     subprocess.check_call(['sudo', cmd, '-u', REMOTE_USER, '-a', REMOTE_ADDR, '-k', key, '-p', REMOTE_PORT,  '-r', HOST_PORT])
 
-
 def generate_launch_description():
 
     open_tunnels()
-    # Declare the log_level launch argument
-    log_level = LaunchConfiguration('log_level')
-    declare_log_level_arg = DeclareLaunchArgument(
-        name ='log_level', default_value='WARN')
 
     # Get parameter file path
     param_file_path = os.path.join(
         get_package_share_directory('carma_cloud_client'), 'config/parameters.yaml')
-
 
     # Launch node(s) in a carma container to allow logging to be configured
     container = ComposableNodeContainer(
@@ -82,7 +71,6 @@ def generate_launch_description():
                     name='carma_cloud_client',
                     extra_arguments=[
                         {'use_intra_process_comms': True},
-                        {'--log-level' : log_level }
                     ],
                     parameters=[ param_file_path ]
             ),
@@ -90,6 +78,5 @@ def generate_launch_description():
     )
 
     return LaunchDescription([
-        declare_log_level_arg,
         container
     ])

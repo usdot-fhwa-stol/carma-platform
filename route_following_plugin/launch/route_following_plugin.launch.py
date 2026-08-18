@@ -16,12 +16,9 @@ from ament_index_python import get_package_share_directory
 from launch import LaunchDescription
 from launch_ros.actions import ComposableNodeContainer
 from launch_ros.descriptions import ComposableNode
-from launch.actions import DeclareLaunchArgument
-from launch.substitutions import LaunchConfiguration
 from carma_ros2_utils.launch.get_current_namespace import GetCurrentNamespace
 
 import os
-
 
 '''
 This file is can be used to launch the CARMA route_following_plugin_container.
@@ -30,11 +27,6 @@ This file is can be used to launch the CARMA route_following_plugin_container.
 
 def generate_launch_description():
 
-    # Declare the log_level launch argument
-    log_level = LaunchConfiguration('log_level')
-    declare_log_level_arg = DeclareLaunchArgument(
-        name ='log_level', default_value='WARN')
-        
     # Launch node(s) in a carma container to allow logging to be configured
     container = ComposableNodeContainer(
         package='carma_ros2_utils',
@@ -42,7 +34,7 @@ def generate_launch_description():
         namespace=GetCurrentNamespace(),
         executable='carma_component_container_mt',
         composable_node_descriptions=[
-            
+
             # Launch the core node(s)
             ComposableNode(
                     package='route_following_plugin',
@@ -50,13 +42,11 @@ def generate_launch_description():
                     name='route_following_plugin',
                     extra_arguments=[
                         {'use_intra_process_comms': True},
-                        {'--log-level' : log_level }
                     ],
             ),
         ]
     )
 
     return LaunchDescription([
-        declare_log_level_arg,
         container
     ])

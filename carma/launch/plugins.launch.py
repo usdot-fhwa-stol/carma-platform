@@ -124,7 +124,6 @@ def generate_launch_description():
                 name='inlanecruising_plugin',
                 extra_arguments=[
                     {'use_intra_process_comms': True},
-                    {'--log-level' : GetLogLevel('inlanecruising_plugin', env_log_levels) }
                 ],
                 remappings = [
                     ("semantic_map", [ EnvironmentVariable('CARMA_ENV_NS', default_value=''), "/semantic_map" ] ),
@@ -156,7 +155,6 @@ def generate_launch_description():
                 name='route_following_plugin',
                 extra_arguments=[
                     {'use_intra_process_comms': True},
-                    {'--log-level' : GetLogLevel('route_following_plugin', env_log_levels) }
                 ],
                 remappings = [
                     ("semantic_map", [ EnvironmentVariable('CARMA_ENV_NS', default_value=''), "/semantic_map" ] ),
@@ -190,7 +188,6 @@ def generate_launch_description():
                 name='approaching_emergency_vehicle_plugin',
                 extra_arguments=[
                     {'use_intra_process_comms': True},
-                    {'--log-level' : GetLogLevel('approaching_emergency_vehicle_plugin', env_log_levels) }
                 ],
                 remappings = [
                     ("semantic_map", [ EnvironmentVariable('CARMA_ENV_NS', default_value=''), "/semantic_map" ] ),
@@ -232,7 +229,6 @@ def generate_launch_description():
                 name='stop_and_wait_plugin',
                 extra_arguments=[
                     {'use_intra_process_comms': True},
-                    {'--log-level' : GetLogLevel('stop_and_wait_plugin', env_log_levels) }
                 ],
                 remappings = [
                     ("semantic_map", [ EnvironmentVariable('CARMA_ENV_NS', default_value=''), "/semantic_map" ] ),
@@ -263,7 +259,6 @@ def generate_launch_description():
                 name='sci_strategic_plugin',
                 extra_arguments=[
                     {'use_intra_process_comms': True},
-                    {'--log-level' : GetLogLevel('sci_strategic_plugin', env_log_levels) }
                 ],
                 remappings = [
                     ("semantic_map", [ EnvironmentVariable('CARMA_ENV_NS', default_value=''), "/semantic_map" ] ),
@@ -299,7 +294,6 @@ def generate_launch_description():
                 name='lci_strategic_plugin',
                 extra_arguments=[
                     {'use_intra_process_comms': True},
-                    {'--log-level' : GetLogLevel('lci_strategic_plugin', env_log_levels) }
                 ],
                 remappings = [
                     ("semantic_map", [ EnvironmentVariable('CARMA_ENV_NS', default_value=''), "/semantic_map" ] ),
@@ -335,7 +329,6 @@ def generate_launch_description():
                 name='stop_controlled_intersection_tactical_plugin',
                 extra_arguments=[
                     {'use_intra_process_comms': True},
-                    {'--log-level' : GetLogLevel('stop_controlled_intersection_tactical_plugin', env_log_levels) }
                 ],
                 remappings = [
                     ("semantic_map", [ EnvironmentVariable('CARMA_ENV_NS', default_value=''), "/semantic_map" ] ),
@@ -366,7 +359,6 @@ def generate_launch_description():
                 name='cooperative_lanechange',
                 extra_arguments=[
                     {'use_intra_process_comms': True},
-                    {'--log-level' : GetLogLevel('cooperative_lanechange', env_log_levels) }
                 ],
                 remappings = [
                     ("semantic_map", [ EnvironmentVariable('CARMA_ENV_NS', default_value=''), "/semantic_map" ] ),
@@ -405,7 +397,6 @@ def generate_launch_description():
                     name='yield_plugin',
                     extra_arguments=[
                     {'use_intra_process_comms': True},
-                    {'--log-level' : GetLogLevel('yield_plugin', env_log_levels) }
                 ],
                 remappings = [
                     ("semantic_map", [ EnvironmentVariable('CARMA_ENV_NS', default_value=''), "/semantic_map" ] ),
@@ -441,7 +432,6 @@ def generate_launch_description():
                 name='light_controlled_intersection_tactical_plugin',
                 extra_arguments=[
                     {'use_intra_process_comms': True},
-                    {'--log-level' : GetLogLevel('light_controlled_intersection_tactical_plugin', env_log_levels) }
                 ],
                 remappings = [
                     ("semantic_map", [ EnvironmentVariable('CARMA_ENV_NS', default_value=''), "/semantic_map" ] ),
@@ -473,7 +463,6 @@ def generate_launch_description():
                     name='pure_pursuit_wrapper',
                     extra_arguments=[
                     {'use_intra_process_comms': True},
-                    {'--log-level' : GetLogLevel('pure_pursuit_wrapper', env_log_levels) }
                 ],
                 remappings = [
                     ("plugin_discovery", [ EnvironmentVariable('CARMA_GUIDE_NS', default_value=''), "/plugin_discovery" ] ),
@@ -504,7 +493,6 @@ def generate_launch_description():
                 name='latlon_muxer_node',
                 extra_arguments=[
                     {'use_intra_process_comms': False},
-                    {'--log-level' : GetLogLevel('latlon_muxer', env_log_levels) }
                 ],
                 remappings = [
                       ("input/lateral/control_cmd", "trajectory_follower/lateral/control_cmd"),
@@ -522,7 +510,6 @@ def generate_launch_description():
                 name='lateral_controller_node',
                 extra_arguments=[
                     {'use_intra_process_comms': True},
-                    {'--log-level' : GetLogLevel('lateral_controller', env_log_levels) }
                 ],
                 remappings = [
                       ("output/lateral/control_cmd", "trajectory_follower/lateral/control_cmd"),
@@ -541,7 +528,6 @@ def generate_launch_description():
                 name='longitudinal_controller_node',
                 extra_arguments=[
                     {'use_intra_process_comms': False},
-                    {'--log-level' : GetLogLevel('longitudinal_controller', env_log_levels) }
                 ],
                 remappings = [
                       ("output/longitudinal/control_cmd", "trajectory_follower/longitudinal/control_cmd"),
@@ -568,7 +554,6 @@ def generate_launch_description():
                     name='trajectory_follower_wrapper',
                     extra_arguments=[
                     {'use_intra_process_comms': True},
-                    {'--log-level' : GetLogLevel('trajectory_follower_wrapper', env_log_levels) }
                 ],
                 remappings = [
                     ("plugin_discovery", [ EnvironmentVariable('CARMA_GUIDE_NS', default_value=''), "/plugin_discovery" ] ),
@@ -598,7 +583,6 @@ def generate_launch_description():
                 name='platooning_strategic_ihp_node',
                 extra_arguments=[
                     {'use_intra_process_comms': True},
-                    {'--log-level' : GetLogLevel('platooning_strategic_ihp', env_log_levels) }
                 ],
                 remappings = [
                     ("semantic_map", [ EnvironmentVariable('CARMA_ENV_NS', default_value=''), "/semantic_map" ] ),
@@ -640,7 +624,6 @@ def generate_launch_description():
                 name='platooning_tactical_plugin_node',
                 extra_arguments=[
                     {'use_intra_process_comms': True},
-                    {'--log-level' : GetLogLevel('platooning_tactical_plugin', env_log_levels) }
                 ],
                 remappings = [
                     ("semantic_map", [ EnvironmentVariable('CARMA_ENV_NS', default_value=''), "/semantic_map" ] ),
@@ -670,7 +653,6 @@ def generate_launch_description():
                 name='platooning_control',
                 extra_arguments=[
                     {'use_intra_process_comms': True},
-                    {'--log-level' : GetLogLevel('platooning_control_plugin', env_log_levels) }
                 ],
                 remappings = [
                     ("plugin_discovery", [ EnvironmentVariable('CARMA_GUIDE_NS', default_value=''), "/plugin_discovery" ] ),
@@ -700,7 +682,6 @@ def generate_launch_description():
                 name='stop_and_dwell_strategic_plugin',
                 extra_arguments=[
                     {'use_intra_process_comms': True},
-                    {'--log-level' : GetLogLevel('stop_and_dwell_strategic_plugin', env_log_levels) }
                 ],
                 remappings = [
                     ("semantic_map", [ EnvironmentVariable('CARMA_ENV_NS', default_value=''), "/semantic_map" ] ),
@@ -734,7 +715,6 @@ def generate_launch_description():
                 name='intersection_transit_maneuvering',
                 extra_arguments=[
                     {'use_intra_process_comms': True},
-                    {'--log-level' : GetLogLevel('intersection_transit_maneuvering', env_log_levels) }
                 ],
                 remappings = [],
                 parameters=[

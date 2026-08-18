@@ -15,23 +15,14 @@
 from launch import LaunchDescription
 from launch_ros.actions import ComposableNodeContainer
 from launch_ros.descriptions import ComposableNode
-from launch.actions import DeclareLaunchArgument
-from launch.substitutions import LaunchConfiguration
 from carma_ros2_utils.launch.get_current_namespace import GetCurrentNamespace
-
 
 """
 This file is can be used to launch the CARMA roadway_objects_node.
   Though in carma-platform it may be launched directly from the base launch file.
 """
 
-
 def generate_launch_description():
-    # Declare the log_level launch argument
-    log_level = LaunchConfiguration("log_level")
-    declare_log_level_arg = DeclareLaunchArgument(
-        name="log_level", default_value="WARN"
-    )
 
     # Launch node(s) in a carma container to allow logging to be configured
     container = ComposableNodeContainer(
@@ -47,7 +38,6 @@ def generate_launch_description():
                 name="roadway_objects_node",
                 extra_arguments=[
                     {"use_intra_process_comms": True},
-                    {"--log-level": log_level},
                 ],
             ),
         ],

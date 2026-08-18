@@ -33,7 +33,6 @@ from launch_ros.actions import set_remap
 from launch.actions import DeclareLaunchArgument
 from launch_ros.actions import PushRosNamespace
 
-
 # Launch file for launching the nodes in the CARMA guidance stack
 
 def generate_launch_description():
@@ -135,7 +134,6 @@ def generate_launch_description():
                 name='mobilitypath_visualizer_node',
                 extra_arguments=[
                     {'use_intra_process_comms': True},
-                    {'--log-level' : GetLogLevel('mobilitypath_visualizer', env_log_levels) }
                 ],
                 remappings = [
                     ("mobility_path_msg", [ EnvironmentVariable('CARMA_MSG_NS', default_value=''), "/outgoing_mobility_path" ] ),
@@ -155,7 +153,6 @@ def generate_launch_description():
                 name='trajectory_visualizer_node',
                 extra_arguments=[
                     {'use_intra_process_comms': True},
-                    {'--log-level' : GetLogLevel('trajectory_visualizer', env_log_levels) }
                 ],
                 parameters=[
                     trajectory_visualizer_param_file,
@@ -178,7 +175,6 @@ def generate_launch_description():
                 name='plan_delegator',
                 extra_arguments=[
                     {'use_intra_process_comms': True},
-                    {'--log-level' : GetLogLevel('plan_delegator', env_log_levels) }
                 ],
                 remappings = [
                     ("current_velocity", [ EnvironmentVariable('CARMA_INTR_NS', default_value=''), "/vehicle/twist" ] ),
@@ -211,7 +207,6 @@ def generate_launch_description():
                 name='route_node',
                 extra_arguments=[
                     {'use_intra_process_comms': True},
-                    {'--log-level' : GetLogLevel('route', env_log_levels) }
                 ],
                 remappings = [
                     ("current_velocity", [ EnvironmentVariable('CARMA_INTR_NS', default_value=''), "/vehicle/twist" ] ),
@@ -234,7 +229,6 @@ def generate_launch_description():
                 name='trajectory_executor_node',
                 extra_arguments=[
                     {'use_intra_process_comms': True},
-                    {'--log-level' : GetLogLevel('trajectory_executor', env_log_levels) }
                 ],
                 remappings = [
                     ("trajectory", "plan_trajectory"),
@@ -260,7 +254,6 @@ def generate_launch_description():
                 name='arbitrator',
                 extra_arguments=[
                     {'use_intra_process_comms': True},
-                    {'--log-level' : GetLogLevel('arbitrator', env_log_levels) }
                 ],
                 remappings = [
                     ("current_velocity", [ EnvironmentVariable('CARMA_INTR_NS', default_value=''), "/vehicle/twist" ] ),
@@ -290,7 +283,6 @@ def generate_launch_description():
                 name='guidance_node',
                 extra_arguments=[
                     {'use_intra_process_comms': True},
-                    {'--log-level' : GetLogLevel('route', env_log_levels) }
                 ],
                 remappings = [
                     ("vehicle_status", [ EnvironmentVariable('CARMA_INTR_NS', default_value=''), "/vehicle_status" ] ),
@@ -318,7 +310,6 @@ def generate_launch_description():
                 name='port_drayage_plugin_node',
                 extra_arguments=[
                     {'use_intra_process_comms': True},
-                    {'--log-level' : GetLogLevel('port_drayage_plugin', env_log_levels) }
                 ],
                 remappings = [
                     ("guidance_state", [ EnvironmentVariable('CARMA_GUIDE_NS', default_value=''), "/state" ] ),
@@ -350,7 +341,6 @@ def generate_launch_description():
                 name='twist_filter_node',
                 extra_arguments=[
                     {'use_intra_process_comms': True},
-                    {'--log-level' : GetLogLevel('twist_filter', env_log_levels) }
                 ],
                 remappings = [
                     ("/accel_cmd", ["accel_cmd" ] ),
@@ -376,7 +366,6 @@ def generate_launch_description():
                 name='twist_gate_node',
                 extra_arguments=[
                     {'use_intra_process_comms': True},
-                    {'--log-level' : GetLogLevel('twist_gate', env_log_levels) }
                 ],
                 remappings = [
                     ("vehicle_cmd", [ EnvironmentVariable('CARMA_INTR_NS', default_value=''), "/vehicle_cmd" ] ),

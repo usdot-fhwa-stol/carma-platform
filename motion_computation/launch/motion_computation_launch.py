@@ -16,25 +16,16 @@ from ament_index_python import get_package_share_directory
 from launch import LaunchDescription
 from launch_ros.actions import ComposableNodeContainer
 from launch_ros.descriptions import ComposableNode
-from launch.actions import DeclareLaunchArgument
-from launch.substitutions import LaunchConfiguration
 from carma_ros2_utils.launch.get_current_namespace import GetCurrentNamespace
 
 import os
-
 
 """
 This file is can be used to launch the CARMA motion_computation_node.
   Though in carma-platform it may be launched directly from the base launch file.
 """
 
-
 def generate_launch_description():
-    # Declare the log_level launch argument
-    log_level = LaunchConfiguration("log_level")
-    declare_log_level_arg = DeclareLaunchArgument(
-        name="log_level", default_value="WARN"
-    )
 
     # Get parameter file path
     param_file_path = os.path.join(
@@ -55,7 +46,6 @@ def generate_launch_description():
                 name="motion_computation_node",
                 extra_arguments=[
                     {"use_intra_process_comms": True},
-                    {"--log-level": log_level},
                 ],
                 parameters=[param_file_path],
             ),
