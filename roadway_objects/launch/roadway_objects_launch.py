@@ -43,4 +43,4 @@ def generate_launch_description():
         ],
     )
 
-    return LaunchDescription([declare_log_level_arg, container])
+    return LaunchDescription([container])

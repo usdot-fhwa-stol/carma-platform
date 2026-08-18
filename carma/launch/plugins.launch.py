@@ -19,7 +19,6 @@ from launch_ros.actions import Node
 from launch_ros.actions import ComposableNodeContainer
 from launch_ros.descriptions import ComposableNode
 from launch.substitutions import EnvironmentVariable
-from carma_ros2_utils.launch.get_log_level import GetLogLevel
 from carma_ros2_utils.launch.get_current_namespace import GetCurrentNamespace
 from launch.substitutions import LaunchConfiguration
 
@@ -102,8 +101,6 @@ def generate_launch_description():
 
     trajectory_follower_wrapper_param_file = os.path.join(
         get_package_share_directory('trajectory_follower_wrapper'), 'config/parameters.yaml')
-
-    env_log_levels = EnvironmentVariable('CARMA_ROS_LOGGING_CONFIG', default_value='{ "default_level" : "WARN" }')
 
     pure_pursuit_tuning_parameters = [vehicle_calibration_dir, "/pure_pursuit/calibration.yaml"]
 
