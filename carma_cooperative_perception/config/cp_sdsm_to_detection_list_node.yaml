@@ -24,10 +24,10 @@ twist_covariance_z: 0.005  # Z-axis velocity uncertainty
 twist_covariance_yaw: 0.005  # Yaw angular velocity uncertainty
 
 # True to enable adding offsets to the pose of the detected object generated from the SDSM
-adjust_pose: False
+adjust_pose: True
 # Meters in map frame
-x_offset: 7.5
+x_offset: 0.0
 # Meters in map frame
-y_offset: -0.7
+y_offset: -2.0
 # Degrees in map frame, a.k.a positive is counter-clockwise
 yaw_offset: 0.0
