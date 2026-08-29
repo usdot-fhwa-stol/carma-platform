@@ -10,4 +10,8 @@ repositories:
   src/cdasim:
     type: git
     url: git@github.com:usdot-fhwa-stol/cdasim.git
-    version: carma-system-4.6.0
+    version: carma-system-4.9.0
+  src/cdasim_config:
+    type: git
+    url: git@github.com:usdot-fhwa-stol/cdasim-config.git
+    version: develop
