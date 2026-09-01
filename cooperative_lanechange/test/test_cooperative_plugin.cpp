@@ -170,6 +170,14 @@ namespace cooperative_lanechange
         std::vector<carma_planning_msgs::msg::TrajectoryPlanPoint> traj_plan = worker->plan_lanechange(req_ptr);
         EXPECT_TRUE(traj_plan.size() > 2);
 
+        // Plan Delegator can supply a vehicle state before the maneuver start based on the
+        // end of the previously generated trajectory. This should warn but still produce a plan.
+        worker->config_.starting_downtrack_range = 0.0;
+        req_ptr->maneuver_plan.maneuvers[0].lane_change_maneuver.start_dist = starting_downtrack + 1.0;
+        auto resp_ptr = std::make_shared<carma_planning_msgs::srv::PlanTrajectory::Response>();
+        worker->plan_trajectory_callback(std::make_shared<rmw_request_id_t>(), req_ptr, resp_ptr);
+        EXPECT_TRUE(resp_ptr->trajectory_plan.trajectory_points.size() > 2);
+
         carma_v2x_msgs::msg::MobilityRequest request = worker->create_mobility_request(traj_plan, maneuver);
         EXPECT_EQ(carma_v2x_msgs::msg::PlanType::CHANGE_LANE_LEFT, request.plan_type.type);
         /*Test compose trajectort and helper function*/
