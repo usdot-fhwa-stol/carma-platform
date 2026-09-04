@@ -295,10 +295,15 @@ namespace cooperative_lanechange
     RCLCPP_DEBUG_STREAM(get_logger(), "current_downtrack: " << current_downtrack);
     RCLCPP_DEBUG_STREAM(get_logger(), "Starting CLC downtrack: " << maneuver_plan[0].lane_change_maneuver.start_dist);
 
-    if(current_downtrack < maneuver_plan[0].lane_change_maneuver.start_dist - config_.starting_downtrack_range){
+    const double maneuver_start_downtrack = maneuver_plan[0].lane_change_maneuver.start_dist;
+    const double downtrack_difference = maneuver_start_downtrack - current_downtrack;
+
+    if(downtrack_difference > config_.starting_downtrack_range){
       RCLCPP_WARN_STREAM(get_logger(),
       "Current downtrack is more than " << config_.starting_downtrack_range
-      << " meters before the cooperative lane change start. Continuing trajectory planning "
+      << " meters before the cooperative lane change start. maneuver_start_downtrack: "
+      << maneuver_start_downtrack << " m, current_downtrack: " << current_downtrack
+      << " m, difference: " << downtrack_difference << " m. Continuing trajectory planning "
       << "with the vehicle state supplied by plan_delegator.");
     }
     auto current_lanelets = lanelet::geometry::findNearest(wm_->getMap()->laneletLayer, veh_pos, 10);
