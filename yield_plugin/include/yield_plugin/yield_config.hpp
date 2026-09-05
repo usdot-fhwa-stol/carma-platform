@@ -28,6 +28,8 @@ struct YieldPluginConfig
   double on_route_vehicle_collision_horizon_in_s = 10.0;        // time horizon for collision detection in s
   double obstacle_zero_speed_threshold_in_ms = 0.25;       // Minimum speed threshold for moving obstacle in m/s to be considered stopped
   double min_obj_avoidance_plan_time_in_s = 2.0;                     // minimum object avoidance planning time in s
+  double vehicle_acceleration_limit = 2.0;  // max physical longitudinal acceleration in m/s^2
+  double vehicle_deceleration_limit = 2.0;  // max physical longitudinal deceleration in m/s^2
   double yield_max_deceleration_in_ms2 = 3.0;  // max deceleration value in m/s^2
   double minimum_safety_gap_in_meters = 2.0;                       // minimum safety gap in m
   double vehicle_length = 5.0;              // Host vehicle length in m
@@ -53,6 +55,8 @@ struct YieldPluginConfig
           << "time_horizon_until_collision_to_commit_to_stop_in_s: " << c.time_horizon_until_collision_to_commit_to_stop_in_s << std::endl
           << "on_route_vehicle_collision_horizon_in_s: " << c.on_route_vehicle_collision_horizon_in_s << std::endl
           << "obstacle_zero_speed_threshold_in_ms: " << c.obstacle_zero_speed_threshold_in_ms << std::endl
+          << "vehicle_acceleration_limit: " << c.vehicle_acceleration_limit << std::endl
+          << "vehicle_deceleration_limit: " << c.vehicle_deceleration_limit << std::endl
           << "yield_max_deceleration_in_ms2: " << c.yield_max_deceleration_in_ms2 << std::endl
           << "minimum_safety_gap_in_meters: " << c.minimum_safety_gap_in_meters << std::endl
           << "vehicle_length: " << c.vehicle_length << std::endl
