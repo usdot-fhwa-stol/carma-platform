@@ -33,6 +33,10 @@ namespace yield_plugin
     config_.obstacle_zero_speed_threshold_in_ms = declare_parameter<double>("obstacle_zero_speed_threshold_in_ms", config_.obstacle_zero_speed_threshold_in_ms);
     config_.on_route_vehicle_collision_horizon_in_s = declare_parameter<double>("on_route_vehicle_collision_horizon_in_s", config_.on_route_vehicle_collision_horizon_in_s);
     config_.collision_check_radius_in_m = declare_parameter<double>("collision_check_radius_in_m", config_.collision_check_radius_in_m);
+    config_.vehicle_acceleration_limit = declare_parameter<double>(
+      "vehicle_acceleration_limit", config_.vehicle_acceleration_limit);
+    config_.vehicle_deceleration_limit = declare_parameter<double>(
+      "vehicle_deceleration_limit", config_.vehicle_deceleration_limit);
     config_.yield_max_deceleration_in_ms2 = declare_parameter<double>("yield_max_deceleration_in_ms2", config_.yield_max_deceleration_in_ms2);
     config_.min_obj_avoidance_plan_time_in_s = declare_parameter<double>("min_obj_avoidance_plan_time_in_s", config_.min_obj_avoidance_plan_time_in_s);
     config_.minimum_safety_gap_in_meters = declare_parameter<double>("minimum_safety_gap_in_meters", config_.minimum_safety_gap_in_meters);
@@ -63,6 +67,8 @@ namespace yield_plugin
     get_parameter<double>("obstacle_zero_speed_threshold_in_ms", config_.obstacle_zero_speed_threshold_in_ms);
     get_parameter<double>("on_route_vehicle_collision_horizon_in_s", config_.on_route_vehicle_collision_horizon_in_s);
     get_parameter<double>("collision_check_radius_in_m", config_.collision_check_radius_in_m);
+    get_parameter<double>("vehicle_acceleration_limit", config_.vehicle_acceleration_limit);
+    get_parameter<double>("vehicle_deceleration_limit", config_.vehicle_deceleration_limit);
     get_parameter<double>("yield_max_deceleration_in_ms2", config_.yield_max_deceleration_in_ms2);
     get_parameter<double>("minimum_safety_gap_in_meters", config_.minimum_safety_gap_in_meters);
     get_parameter<double>("max_stop_speed_in_ms", config_.max_stop_speed_in_ms);

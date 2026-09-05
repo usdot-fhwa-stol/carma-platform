@@ -25,6 +25,11 @@ Runs whenever the ego trajectory needs to be checked against external objects fr
 
 Note that the object avoidance is not a handoff to a different tactical plugin. Yield_plugin's `update_traj_for_object` logic re-times the trajectory already produced by the upstream tactical plugin (see "Role in the Stack").
 
+Before collision detection, the plugin compares the trajectory's declared initial speed with the measured vehicle
+speed. When they differ, it creates a collision-analysis-only copy whose timestamps respect the configured vehicle
+acceleration and deceleration limits. The original trajectory remains unchanged unless a collision is detected and a
+yield trajectory is generated.
+
 **Pipeline:**
 
 1. **Concurrent collision detection** — `get_collision_times_concurrently()` checks every external object received on `/external_object_predictions` for a predicted collision with the ego trajectory, using either a CPU or GPU approach. The GPU approach is used by default, falling back to CPU if a CUDA error occurs (e.g., GPU driver not accessible). See "Collision Detection: CPU vs. CUDA" for more.
@@ -214,6 +219,8 @@ These are covered by [test/test_collision_cuda_benchmark.cpp](test/test_collisio
 |---|---|---|
 | `intervehicle_collision_distance_in_m` | 6.0 m | Radius for collision detection |
 | `collision_check_radius_in_m` | 150.0 m | Early-exit distance: skip object if first point is farther than this |
+| `vehicle_acceleration_limit` | 2.0 m/s² | Physical acceleration limit used to build the collision-check trajectory |
+| `vehicle_deceleration_limit` | 2.0 m/s² | Physical deceleration limit used to build the collision-check trajectory |
 | `minimum_safety_gap_in_meters` | 10.0 m | Minimum gap to maintain behind an obstacle |
 | `yield_max_deceleration_in_ms2` | 3.0 m/s² | Maximum deceleration for yield planning |
 | `acceleration_adjustment_factor` | 1.0 | Scales the comfortable deceleration time estimate |
