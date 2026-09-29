@@ -123,7 +123,7 @@ class TrafficIncidentParserWorker
   double up_track = 0.0;
   double min_gap = 0.0;
   double speed_advisory = 0.0;
-  std::string event_reason;
+  std::string event_reason = "";
   std::string event_type;
 
   std::string previous_strategy_params="";

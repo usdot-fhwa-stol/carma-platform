@@ -17,3 +17,9 @@ intersection_ids_for_correction: [9945, 9001]
 
 #List of Double: Every 2 element describes coordinate correction [delta_x, delta_y] for each intersection_id in intersection_ids_for_correction in same order
 intersection_coord_correction: [0.0, -1.5, -0.5, -1.0]
+
+# Path to the model file for tim visualization (police car)
+tim_icon_path: "package://carma_wm_ctrl/meshes/cop.obj"
+
+# Scale factor to apply to the tim icon model
+tim_icon_scale: 0.0025

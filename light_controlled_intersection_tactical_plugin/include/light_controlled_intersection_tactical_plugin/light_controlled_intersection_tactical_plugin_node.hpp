@@ -36,8 +36,6 @@ namespace light_controlled_intersection_tactical_plugin
     // Config for this object
     Config config_;
 
-    carma_ros2_utils::ClientPtr<carma_planning_msgs::srv::PlanTrajectory> yield_client_;
-
     carma_ros2_utils::PubPtr<carma_debug_ros2_msgs::msg::TrajectoryCurvatureSpeeds> trajectory_debug_pub_;
 
     // Worker object

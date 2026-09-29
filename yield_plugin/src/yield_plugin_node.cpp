@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022 LEIDOS.
+ * Copyright (C) 2022-2026 LEIDOS.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -15,6 +15,8 @@
  */
 
 #include <yield_plugin/yield_plugin_node.hpp>
+#include <chrono>
+#include <yield_plugin/yield_plugin_cuda.cuh>
 
 namespace yield_plugin
 {
@@ -81,9 +83,30 @@ namespace yield_plugin
 
     RCLCPP_INFO_STREAM(get_logger(), "YieldPlugin Params: " << config_);
 
+    if (cuda_is_available()) {
+      RCLCPP_INFO(get_logger(), "YieldPlugin collision detection: GPU path (bbox on-route filter + CUDA kernel)");
+      // Warm up the CUDA runtime so the first real collision check does not pay
+      // the 100-200 ms cold-start cost (driver init, cubin load, heap setup).
+      auto _t0 = std::chrono::steady_clock::now();
+      const std::vector<yield_plugin::CudaPoint> ego  = {{0.f,0.f,0.f},{1.f,0.f,1.f}};
+      const std::vector<yield_plugin::CudaPoint> obs  = {{1e4f,1e4f,0.f},{1e4f,1e4f,1.f}};
+      cuda_check_all_collisions(ego, obs, {0}, {2}, 2.0f);
+      const double _warm_ms = std::chrono::duration<double, std::milli>(
+        std::chrono::steady_clock::now() - _t0).count();
+      RCLCPP_INFO_STREAM(get_logger(),
+        "CUDA warmup complete (" << _warm_ms << " ms) — first call latency paid at startup");
+    } else {
+      RCLCPP_WARN(get_logger(), "YieldPlugin built with CUDA but no compatible driver found; using CPU collision detection fallback");
+      RCLCPP_WARN(get_logger(), "YieldPlugin collision detection: CPU path (bbox on-route filter + std::async get_collision_time)");
+    }
+
     worker_ = std::make_shared<YieldPlugin>(shared_from_this(), get_world_model(), config_,
                                                           [this](auto msg) { mob_resp_pub_->publish(msg); },
                                                           [this](auto msg) { lc_status_pub_->publish(msg); });
+
+    get_world_model_listener()->setRouteCallback([this]() {
+      worker_->update_route_llt_cache();
+    });
 
      // Publisher
     mob_resp_pub_ = create_publisher<carma_v2x_msgs::msg::MobilityResponse>("outgoing_mobility_response", 1);

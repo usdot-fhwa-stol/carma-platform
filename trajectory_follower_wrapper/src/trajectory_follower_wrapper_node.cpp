@@ -14,6 +14,7 @@
  * the License.
  */
 #include "trajectory_follower_wrapper/trajectory_follower_wrapper_node.hpp"
+#include <basic_autonomy/log/log.hpp>
 
 namespace trajectory_follower_wrapper
 {
@@ -22,6 +23,7 @@ namespace trajectory_follower_wrapper
   TrajectoryFollowerWrapperNode::TrajectoryFollowerWrapperNode(const rclcpp::NodeOptions &options)
       : carma_guidance_plugins::ControlPlugin(options)
   {
+    basic_autonomy::set_logger(get_logger().get_child("basic_autonomy"));
     // Create initial config
     config_ = TrajectoryFollowerWrapperConfig();
     config_.vehicle_response_lag = declare_parameter<double>("vehicle_response_lag", config_.vehicle_response_lag);

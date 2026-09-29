@@ -707,6 +707,7 @@ TrajectoryParams LCIStrategicPlugin::handleFailureCaseHelper(const lanelet::Carm
   // Pick UPPER or LOWER trajectory based on light
   bool is_return_params_found = false;
 
+  // Check UPPER
   if (calculation_success_upper)
   {
     RCLCPP_DEBUG_STREAM(rclcpp::get_logger("lci_strategic_plugin"), "Checking this time!: " << current_time + modified_remaining_time_upper);
@@ -730,6 +731,7 @@ TrajectoryParams LCIStrategicPlugin::handleFailureCaseHelper(const lanelet::Carm
     }
   }
 
+  // Check LOWER
   if (!is_return_params_found)
   {
     auto lower_optional = traffic_light->predictState(lanelet::time::timeFromSec(current_time + modified_remaining_time_lower));
@@ -750,20 +752,28 @@ TrajectoryParams LCIStrategicPlugin::handleFailureCaseHelper(const lanelet::Carm
   }
 
   // Handle hard failure case such as nan or invalid states
-  if (is_return_params_found && !isnan(return_params.modified_departure_speed) && return_params.modified_departure_speed > epsilon_ &&
-      return_params.modified_departure_speed < speed_limit ) //80_mph
-  {
-    RCLCPP_DEBUG_STREAM(rclcpp::get_logger("lci_strategic_plugin"), "Updated the speed, and using modified_departure_speed: " << return_params.modified_departure_speed);
-    print_params(return_params);
-    return return_params;
-  }
-  else
+  if (!is_return_params_found || isnan(return_params.modified_departure_speed))
   {
     RCLCPP_DEBUG_STREAM(rclcpp::get_logger("lci_strategic_plugin"), "Unable to handle edge case gracefully");
     return_params = TrajectoryParams(); //reset
     return_params.is_algorithm_successful = false;
     return return_params;
   }
+
+  // if NOT hard failure case, double check the speed and return
+  if (return_params.modified_departure_speed < 0)
+  {
+    RCLCPP_DEBUG_STREAM(rclcpp::get_logger("lci_strategic_plugin"), "Detected negative modified_departure_speed, setting to zero");
+    return_params.modified_departure_speed = 0.0;
+  }
+  else if (return_params.modified_departure_speed > speed_limit)
+  {
+    RCLCPP_DEBUG_STREAM(rclcpp::get_logger("lci_strategic_plugin"), "Detected modified_departure_speed greater than speed limit, setting to speed limit");
+    return_params.modified_departure_speed = speed_limit;
+  }
+
+  RCLCPP_DEBUG_STREAM(rclcpp::get_logger("lci_strategic_plugin"), "Updated the speed, and using modified_departure_speed: " << return_params.modified_departure_speed);
+  return return_params;
 }
 
 

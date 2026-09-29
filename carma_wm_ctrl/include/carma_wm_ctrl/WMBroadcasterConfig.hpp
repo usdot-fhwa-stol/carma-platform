@@ -36,6 +36,10 @@ namespace carma_wm_ctrl
     double config_limit = 6.67; //config speed limit in m/s
     std::string vehicle_id = "CARMA";
     std::string participant = "vehicle:car";
+    // Path to the model file for tim visualization
+    std::string tim_icon_path = "package://carma_wm_ctrl/meshes/cop.obj";
+    // Scale factor to apply to the tim icon model
+    double tim_icon_scale = 0.0025;
 
     // Stream operator for this config
     friend std::ostream &operator<<(std::ostream &output, const Config &c)
@@ -50,6 +54,8 @@ namespace carma_wm_ctrl
            << "vehicle_id: " << c.vehicle_id << std::endl
            << "participant: " << c.participant << std::endl
            << "config_limit: " << c.config_limit << std::endl
+           << "tim_icon_path: " << c.tim_icon_path << std::endl
+           << "tim_icon_scale: " << c.tim_icon_scale << std::endl
            << "}" << std::endl;
       return output;
     }

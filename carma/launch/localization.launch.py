@@ -39,6 +39,7 @@ def generate_launch_description():
     Launch Localization subsystem nodes
     """
 
+    # Log level is set from CARMA_ROS_LOGGING_CONFIG, generated from carma_rosconsole.conf in the vehicle config dir (carma-config)
     env_log_levels = EnvironmentVariable('CARMA_ROS_LOGGING_CONFIG', default_value='{ "default_level" : "WARN" }')
     vehicle_config_param_file = LaunchConfiguration('vehicle_config_param_file')
     subsystem_controller_default_param_file = os.path.join(
@@ -70,6 +71,22 @@ def generate_launch_description():
     single_pcd_path = LaunchConfiguration('single_pcd_path')
     declare_single_pcd_path = DeclareLaunchArgument(name='single_pcd_path', default_value="['/opt/carma/maps/pcd_map.pcd']", description='Path to the map pcd file if using the noupdate load type')
 
+    vehicle_config_dir = LaunchConfiguration('vehicle_config_dir')
+    declare_vehicle_config_dir_arg = DeclareLaunchArgument(
+        name = 'vehicle_config_dir',
+        default_value = "/opt/carma/vehicle/config",
+        description = "Path to vehicle configuration directory populated by carma-config"
+    )
+
+    # Declare the global_params_override_file launch argument
+    # Parameters in this file will override any parameters loaded in their respective packages
+    global_params_override_file = LaunchConfiguration('global_params_override_file')
+    declare_global_params_override_file_arg = DeclareLaunchArgument(
+        name = 'global_params_override_file',
+        default_value = [vehicle_config_dir, "/GlobalParamsOverride.yaml"],
+        description = "Path to global file containing the parameters overwrite"
+    )
+
     area = LaunchConfiguration('area')
     declare_area = DeclareLaunchArgument(name='area', default_value="1x1")
 
@@ -99,13 +116,14 @@ def generate_launch_description():
                 name='gnss_to_map_convertor',
                 extra_arguments=[
                     {'use_intra_process_comms': True},
-                    {'--log-level' : GetLogLevel('gnss_to_map_convertor', env_log_levels) }
                 ],
                 remappings=[
                     ("gnss_fix_fused",  [EnvironmentVariable('CARMA_INTR_NS', default_value=''),"/gnss_fix_fused"]),
                     ("georeference", "map_param_loader/georeference"),
                 ],
-                parameters=[ gnss_to_map_convertor_param_file, vehicle_config_param_file]
+                parameters=[ gnss_to_map_convertor_param_file,
+                            vehicle_config_param_file,
+                            global_params_override_file]
         )
     ])
 
@@ -121,12 +139,13 @@ def generate_launch_description():
                 name='localization_manager',
                 extra_arguments=[
                     {'use_intra_process_comms': True},
-                    {'--log-level' : GetLogLevel('localization_manager', env_log_levels) }
                 ],
                 remappings=[
 
                 ],
-                parameters=[ localization_manager_convertor_param_file, vehicle_config_param_file ]
+                parameters=[ localization_manager_convertor_param_file,
+                            vehicle_config_param_file,
+                            global_params_override_file]
         )
     ])
 
@@ -145,12 +164,13 @@ def generate_launch_description():
                 name='map_param_loader',
                 extra_arguments=[
                     {'use_intra_process_comms': True},
-                    {'--log-level' : GetLogLevel('map_param_loader', env_log_levels) }
                 ],
                 remappings=[
                     ("georeference", "map_param_loader/georeference"),
                 ],
-                parameters=[ {'file_name' : vector_map_file }, vehicle_config_param_file]
+                parameters=[ {'file_name' : vector_map_file },
+                            vehicle_config_param_file,
+                            global_params_override_file]
         )
     ])
 
@@ -168,14 +188,14 @@ def generate_launch_description():
                 name='points_map_loader',
                 extra_arguments=[
                     {'use_intra_process_comms': True},
-                    {'--log-level' : GetLogLevel('points_map_loader', env_log_levels) }
                 ],
                 parameters=[
                     {'load_type' : load_type },
                     {'pcd_path_parameter' : single_pcd_path },
                     {'area' : area },
                     {'path_area_list' : arealist_path },
-                    vehicle_config_param_file
+                    vehicle_config_param_file,
+                    global_params_override_file
                 ]
             ),
         ]
@@ -195,14 +215,13 @@ def generate_launch_description():
                 name='dead_reckoner',
                 extra_arguments=[
                     {'use_intra_process_comms': True},
-                    {'--log-level' : GetLogLevel('dead_reckoner', env_log_levels) }
                 ],
                 remappings=[
                     ("current_twist", [EnvironmentVariable('CARMA_INTR_NS', default_value=''), "/vehicle/twist" ]),
                     ("current_odom", "vehicle/odom")
                 ],
                 parameters=[
-                    vehicle_config_param_file
+                    vehicle_config_param_file, global_params_override_file
                 ]
             ),
         ]
@@ -225,7 +244,6 @@ def generate_launch_description():
                 name='ndt_matching',
                 extra_arguments=[
                     {'use_intra_process_comms': True},
-                    {'--log-level' : GetLogLevel('ndt_matching', env_log_levels) }
                 ],
                 remappings=[
                     ("/config/ndt", "config/ndt"),
@@ -240,7 +258,8 @@ def generate_launch_description():
                     {'use_odom' : True },
                     {'use_gnss' : 0 },
                     {'gnss_reinit_fitness' : 10000.0 }, # Set to unreasonably high value to ensure no reinitialization occurs as it rarely works
-                    {'base_frame': "base_link"}
+                    {'base_frame': "base_link"},
+                    global_params_override_file
                 ]
             )
         ]
@@ -262,7 +281,6 @@ def generate_launch_description():
                 name='ekf_localizer',
                 extra_arguments=[
                     {'use_intra_process_comms': True},
-                    {'--log-level' : GetLogLevel('ekf_localizer', env_log_levels) }
                 ],
                 remappings=[
                     ("in_pose","selected_pose"),
@@ -300,7 +318,8 @@ def generate_launch_description():
                     {'proc_stddev_yaw_c': 0.005},
                     {'proc_stddev_yaw_bias_c': 0.001},
                     {'proc_stddev_vx_c': 0.1},
-                    {'proc_stddev_wz_c': 0.05}
+                    {'proc_stddev_wz_c': 0.05},
+                    global_params_override_file
                 ],
             )
         ]
@@ -322,13 +341,13 @@ def generate_launch_description():
                 name='voxel_grid_filter_node',
                 extra_arguments=[
                      {'use_intra_process_comms': True},
-                    {'--log-level' : GetLogLevel('voxel_grid_filter', env_log_levels) }
                 ],
                 parameters=[
                     {"points_topic": [EnvironmentVariable('CARMA_INTR_NS', default_value=''), "/lidar/points_raw" ]},
                     {"output_log": False},
                     {"measurement_range": 200.0},
-                    {"voxel_leaf_size": 3.0}
+                    {"voxel_leaf_size": 3.0},
+                    global_params_override_file
                 ],
             ),
         ]
@@ -348,18 +367,17 @@ def generate_launch_description():
                 name='random_filter_node',
                 extra_arguments=[
                     {'use_intra_process_comms': True},
-                    {'--log-level' : GetLogLevel('random_filter', env_log_levels) }
                 ],
                 parameters=[
                     {"points_topic": "filtered_points"},
                     {"output_log": False},
                     {"measurement_range": 200.0},
-                    {"sample_num": 700}
+                    {"sample_num": 700},
+                    global_params_override_file
                 ],
             ),
         ]
     )
-
 
     # subsystem_controller which orchestrates the lifecycle of this subsystem's components
     subsystem_controller = Node(
@@ -382,6 +400,8 @@ def generate_launch_description():
         declare_arealist_path,
         declare_map_file,
         declare_use_sim_time_arg,
+        declare_vehicle_config_dir_arg,
+        declare_global_params_override_file_arg,
         gnss_to_map_convertor_container,
         localization_manager_container,
         dead_reckoner_container,

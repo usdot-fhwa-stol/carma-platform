@@ -61,7 +61,9 @@ WMBroadcasterNode::WMBroadcasterNode(const rclcpp::NodeOptions &options)
   config_.traffic_control_request_period = declare_parameter<double>("traffic_control_request_period", config_.traffic_control_request_period);
   config_.vehicle_id = declare_parameter<std::string>("vehicle_id", config_.vehicle_id);
   config_.participant = declare_parameter<std::string>("vehicle_participant_type", config_.participant);
-  config_.participant = declare_parameter<double>("config_speed_limit", config_.config_limit);
+  config_.config_limit = declare_parameter<double>("config_speed_limit", config_.config_limit);
+  config_.tim_icon_path = declare_parameter<std::string>("tim_icon_path", config_.tim_icon_path);
+  config_.tim_icon_scale = declare_parameter<double>("tim_icon_scale", config_.tim_icon_scale);
 
   declare_parameter("intersection_ids_for_correction", config_.intersection_ids_for_correction);
   declare_parameter("intersection_coord_correction", config_.intersection_coord_correction);
@@ -93,6 +95,9 @@ carma_ros2_utils::CallbackReturn WMBroadcasterNode::handle_on_configure(const rc
   get_parameter<std::string>("vehicle_id", config_.vehicle_id);
   get_parameter<std::string>("vehicle_participant_type", config_.participant);
   get_parameter<double>("config_speed_limit", config_.config_limit);
+  get_parameter<std::string>("tim_icon_path", config_.tim_icon_path);
+  get_parameter<double>("tim_icon_scale", config_.tim_icon_scale);
+
 
   wmb_->setConfigACKPubTimes(config_.ack_pub_times);
   wmb_->setMaxLaneWidth(config_.max_lane_width);
@@ -100,6 +105,7 @@ carma_ros2_utils::CallbackReturn WMBroadcasterNode::handle_on_configure(const rc
   wmb_->setConfigSpeedLimit(config_.config_limit);
   wmb_->setConfigVehicleId(config_.vehicle_id);
   wmb_->setVehicleParticipationType(config_.participant);
+  wmb_->setVisualizationInfo(config_.tim_icon_path, config_.tim_icon_scale);
 
   rclcpp::Parameter intersection_coord_correction_param = get_parameter("intersection_coord_correction");
   config_.intersection_coord_correction = intersection_coord_correction_param.as_double_array();
@@ -140,7 +146,7 @@ carma_ros2_utils::CallbackReturn WMBroadcasterNode::handle_on_configure(const rc
   tcm_ack_pub_ = create_publisher<carma_v2x_msgs::msg::MobilityOperation>("outgoing_geofence_ack", 2 * config_.ack_pub_times );
 
   //TCM Visualizer pub
-  tcm_visualizer_pub_= create_publisher<visualization_msgs::msg::MarkerArray>("tcm_visualizer",1);
+  tcm_visualizer_pub_= create_publisher<visualization_msgs::msg::MarkerArray>("tcm_visualizer",10);
 
   //J2735 MAP msg Visualizer pub
   j2735_map_msg_visualizer_pub_= create_publisher<visualization_msgs::msg::MarkerArray>("j2735_map_msg_visualizer",1);

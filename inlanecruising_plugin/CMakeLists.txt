@@ -78,7 +78,6 @@ if(BUILD_TESTING)
   ament_add_gtest(test_inlanecruising_plugin
         test/test_inlanecruising_plugin.cpp
         test/test_inlanecruising_plugin_planning.cpp
-        test/rostest_ilc.cpp
   )
 
   ament_target_dependencies(test_inlanecruising_plugin ${${PROJECT_NAME}_FOUND_TEST_DEPENDS})

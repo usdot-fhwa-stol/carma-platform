@@ -35,9 +35,6 @@ namespace stop_and_wait_plugin
     config_.crawl_speed = declare_parameter<double>("crawl_speed", config_.crawl_speed);
     config_.centerline_sampling_spacing = declare_parameter<double>("centerline_sampling_spacing", config_.centerline_sampling_spacing);
     config_.default_stopping_buffer = declare_parameter<double>("default_stopping_buffer", config_.default_stopping_buffer);
-    config_.tactical_plugin_service_call_timeout = declare_parameter<int>("tactical_plugin_service_call_timeout", config_.tactical_plugin_service_call_timeout);
-    config_.enable_object_avoidance = declare_parameter<bool>("enable_object_avoidance", config_.enable_object_avoidance);
-
   }
 
   rcl_interfaces::msg::SetParametersResult StopandWaitNode::parameter_update_callback(const std::vector<rclcpp::Parameter> &parameters)
@@ -71,8 +68,6 @@ namespace stop_and_wait_plugin
     get_parameter<double>("crawl_speed", config_.crawl_speed);
     get_parameter<double>("centerline_sampling_spacing", config_.centerline_sampling_spacing);
     get_parameter<double>("default_stopping_buffer", config_.default_stopping_buffer);
-    get_parameter<int>("tactical_plugin_service_call_timeout", config_.tactical_plugin_service_call_timeout);
-    get_parameter<bool>("enable_object_avoidance", config_.enable_object_avoidance);
 
     RCLCPP_INFO_STREAM(rclcpp::get_logger("stop_and_wait_plugin"),"Done loading parameters: " << config_);
 
@@ -80,10 +75,6 @@ namespace stop_and_wait_plugin
     add_on_set_parameters_callback(std::bind(&StopandWaitNode::parameter_update_callback, this, std_ph::_1));
 
     plugin_ = std::make_shared<StopandWait>(shared_from_this(), get_world_model(), config_,plugin_name_,version_id_);
-
-    yield_client_ = create_client<carma_planning_msgs::srv::PlanTrajectory>("yield_plugin/plan_trajectory");
-    plugin_->set_yield_client(yield_client_);
-    RCLCPP_INFO(rclcpp::get_logger("stop_and_wait_plugin"), "Yield Client Set");
 
     // Return success if everything initialized successfully
     return CallbackReturn::SUCCESS;

@@ -543,7 +543,38 @@ Resources:
           chmod +x /home/ubuntu/.xsession
           chown ubuntu:ubuntu /home/ubuntu/.xsession
 
+          # Add NVIDIA package repositories
+          distribution=$(. /etc/os-release;echo $ID$VERSION_ID)
+          sudo apt-get install -y software-properties-common
 
+          # Add the NVIDIA driver PPA
+          sudo add-apt-repository ppa:graphics-drivers/ppa -y
+          sudo apt-get update
+
+          # Install NVIDIA 535 driver
+          sudo apt install -y nvidia-driver-535
+
+          # Install NVIDIA Docker toolkit
+          # Add NVIDIA Docker repo
+          curl -s -L https://nvidia.github.io/libnvidia-container/gpgkey | sudo gpg --dearmor -o /usr/share/keyrings/nvidia-container-toolkit-keyring.gpg
+          curl -s -L https://nvidia.github.io/libnvidia-container/ubuntu$(lsb_release -rs)/libnvidia-container.list | \
+              sed 's#deb #deb [signed-by=/usr/share/keyrings/nvidia-container-toolkit-keyring.gpg] #' | \
+              sudo tee /etc/apt/sources.list.d/nvidia-container-toolkit.list
+
+          sudo apt-get update
+          sudo apt-get install -y nvidia-container-toolkit
+
+          # Configure Docker to use the NVIDIA runtime
+          sudo nvidia-ctk runtime configure --runtime=docker
+          sudo systemctl restart docker
+
+          ### Create a new user called 'carma' if not already present
+          if ! id "carma" &>/dev/null; then
+            sudo adduser --disabled-password --gecos "" carma
+            sudo usermod -aG sudo carma
+            sudo usermod -aG docker carma
+          fi
+          
           reboot
 
       IamInstanceProfile: !Ref C9InstanceProfile

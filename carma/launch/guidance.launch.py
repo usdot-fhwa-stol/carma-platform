@@ -33,8 +33,8 @@ from launch_ros.actions import set_remap
 from launch.actions import DeclareLaunchArgument
 from launch_ros.actions import PushRosNamespace
 
-
 # Launch file for launching the nodes in the CARMA guidance stack
+
 
 def generate_launch_description():
 
@@ -45,12 +45,17 @@ def generate_launch_description():
     strategic_plugins_to_validate = LaunchConfiguration('strategic_plugins_to_validate')
     tactical_plugins_to_validate = LaunchConfiguration('tactical_plugins_to_validate')
     control_plugins_to_validate = LaunchConfiguration('control_plugins_to_validate')
-    vehicle_config_dir = LaunchConfiguration('vehicle_config_dir')
     vehicle_config_param_file = LaunchConfiguration('vehicle_config_param_file')
     declare_vehicle_config_param_file_arg = DeclareLaunchArgument(
         name = 'vehicle_config_param_file',
         default_value = "/opt/carma/vehicle/config/VehicleConfigParams.yaml",
         description = "Path to file contain vehicle configuration parameters"
+    )
+    vehicle_config_dir = LaunchConfiguration('vehicle_config_dir')
+    declare_vehicle_config_dir_arg = DeclareLaunchArgument(
+        name = 'vehicle_config_dir',
+        default_value = "/opt/carma/vehicle/config",
+        description = "Path to vehicle configuration directory populated by carma-config"
     )
 
     use_sim_time = LaunchConfiguration('use_sim_time')
@@ -69,6 +74,15 @@ def generate_launch_description():
 
     subsystem_controller_default_param_file = os.path.join(
         get_package_share_directory('subsystem_controllers'), 'config/guidance_controller_config.yaml')
+
+    # Declare the global_params_override_file launch argument
+    # Parameters in this file will override any parameters loaded in their respective packages
+    global_params_override_file = LaunchConfiguration('global_params_override_file')
+    declare_global_params_override_file_arg = DeclareLaunchArgument(
+        name = 'global_params_override_file',
+        default_value = [vehicle_config_dir, "/GlobalParamsOverride.yaml"],
+        description = "Path to global file containing the parameters overwrite"
+    )
 
     mobilitypath_visualizer_param_file = os.path.join(
         get_package_share_directory('mobilitypath_visualizer'), 'config/params.yaml')
@@ -94,6 +108,7 @@ def generate_launch_description():
     port_drayage_plugin_param_file = os.path.join(
         get_package_share_directory('port_drayage_plugin'), 'config/parameters.yaml')
 
+    # Log level is set from CARMA_ROS_LOGGING_CONFIG, generated from carma_rosconsole.conf in the vehicle config dir (carma-config)
     env_log_levels = EnvironmentVariable('CARMA_ROS_LOGGING_CONFIG', default_value='{ "default_level" : "WARN" }')
 
     subsystem_controller_param_file = LaunchConfiguration('subsystem_controller_param_file')
@@ -121,7 +136,6 @@ def generate_launch_description():
                 name='mobilitypath_visualizer_node',
                 extra_arguments=[
                     {'use_intra_process_comms': True},
-                    {'--log-level' : GetLogLevel('mobilitypath_visualizer', env_log_levels) }
                 ],
                 remappings = [
                     ("mobility_path_msg", [ EnvironmentVariable('CARMA_MSG_NS', default_value=''), "/outgoing_mobility_path" ] ),
@@ -131,7 +145,8 @@ def generate_launch_description():
                 parameters=[
                     vehicle_characteristics_param_file,
                     mobilitypath_visualizer_param_file,
-                    vehicle_config_param_file
+                    vehicle_config_param_file,
+                    global_params_override_file
                 ]
             ),
             ComposableNode(
@@ -140,11 +155,11 @@ def generate_launch_description():
                 name='trajectory_visualizer_node',
                 extra_arguments=[
                     {'use_intra_process_comms': True},
-                    {'--log-level' : GetLogLevel('trajectory_visualizer', env_log_levels) }
                 ],
                 parameters=[
                     trajectory_visualizer_param_file,
-                    vehicle_config_param_file
+                    vehicle_config_param_file,
+                    global_params_override_file
                 ]
             )
         ]
@@ -162,7 +177,6 @@ def generate_launch_description():
                 name='plan_delegator',
                 extra_arguments=[
                     {'use_intra_process_comms': True},
-                    {'--log-level' : GetLogLevel('plan_delegator', env_log_levels) }
                 ],
                 remappings = [
                     ("current_velocity", [ EnvironmentVariable('CARMA_INTR_NS', default_value=''), "/vehicle/twist" ] ),
@@ -176,7 +190,8 @@ def generate_launch_description():
                 ],
                 parameters=[
                     plan_delegator_param_file,
-                    vehicle_config_param_file
+                    vehicle_config_param_file,
+                    global_params_override_file
                 ]
             )
         ]
@@ -194,7 +209,6 @@ def generate_launch_description():
                 name='route_node',
                 extra_arguments=[
                     {'use_intra_process_comms': True},
-                    {'--log-level' : GetLogLevel('route', env_log_levels) }
                 ],
                 remappings = [
                     ("current_velocity", [ EnvironmentVariable('CARMA_INTR_NS', default_value=''), "/vehicle/twist" ] ),
@@ -207,7 +221,8 @@ def generate_launch_description():
                 parameters=[
                     {'route_file_path': route_file_folder},
                     route_param_file,
-                    vehicle_config_param_file
+                    vehicle_config_param_file,
+                    global_params_override_file
                 ]
             ),
             ComposableNode(
@@ -216,14 +231,14 @@ def generate_launch_description():
                 name='trajectory_executor_node',
                 extra_arguments=[
                     {'use_intra_process_comms': True},
-                    {'--log-level' : GetLogLevel('trajectory_executor', env_log_levels) }
                 ],
                 remappings = [
                     ("trajectory", "plan_trajectory"),
                 ],
                 parameters=[
                     trajectory_executor_param_file,
-                    vehicle_config_param_file
+                    vehicle_config_param_file,
+                    global_params_override_file
                 ]
             )
         ]
@@ -241,7 +256,6 @@ def generate_launch_description():
                 name='arbitrator',
                 extra_arguments=[
                     {'use_intra_process_comms': True},
-                    {'--log-level' : GetLogLevel('arbitrator', env_log_levels) }
                 ],
                 remappings = [
                     ("current_velocity", [ EnvironmentVariable('CARMA_INTR_NS', default_value=''), "/vehicle/twist" ] ),
@@ -253,7 +267,8 @@ def generate_launch_description():
                 ],
                 parameters=[
                     arbitrator_param_file_path,
-                    vehicle_config_param_file
+                    vehicle_config_param_file,
+                    global_params_override_file
                 ]
             )
         ]
@@ -270,7 +285,6 @@ def generate_launch_description():
                 name='guidance_node',
                 extra_arguments=[
                     {'use_intra_process_comms': True},
-                    {'--log-level' : GetLogLevel('route', env_log_levels) }
                 ],
                 remappings = [
                     ("vehicle_status", [ EnvironmentVariable('CARMA_INTR_NS', default_value=''), "/vehicle_status" ] ),
@@ -279,7 +293,8 @@ def generate_launch_description():
                 ],
                 parameters=[
                     guidance_param_file,
-                    vehicle_config_param_file
+                    vehicle_config_param_file,
+                    global_params_override_file
                 ]
             )
         ]
@@ -297,7 +312,6 @@ def generate_launch_description():
                 name='port_drayage_plugin_node',
                 extra_arguments=[
                     {'use_intra_process_comms': True},
-                    {'--log-level' : GetLogLevel('port_drayage_plugin', env_log_levels) }
                 ],
                 remappings = [
                     ("guidance_state", [ EnvironmentVariable('CARMA_GUIDE_NS', default_value=''), "/state" ] ),
@@ -310,7 +324,8 @@ def generate_launch_description():
                 parameters=[
                     port_drayage_plugin_param_file,
                     vehicle_characteristics_param_file,
-                    vehicle_config_param_file
+                    vehicle_config_param_file,
+                    global_params_override_file
                 ]
             )
         ]
@@ -328,7 +343,6 @@ def generate_launch_description():
                 name='twist_filter_node',
                 extra_arguments=[
                     {'use_intra_process_comms': True},
-                    {'--log-level' : GetLogLevel('twist_filter', env_log_levels) }
                 ],
                 remappings = [
                     ("/accel_cmd", ["accel_cmd" ] ),
@@ -344,7 +358,8 @@ def generate_launch_description():
                     vehicle_config_param_file,
                     {'lowpass_gain_linear_x':0.1},
                     {'lowpass_gain_angular_z':0.0},
-                    {'lowpass_gain_steering_angle':0.1}
+                    {'lowpass_gain_steering_angle':0.1},
+                    global_params_override_file
                 ]
             ),
             ComposableNode(
@@ -353,7 +368,6 @@ def generate_launch_description():
                 name='twist_gate_node',
                 extra_arguments=[
                     {'use_intra_process_comms': True},
-                    {'--log-level' : GetLogLevel('twist_gate', env_log_levels) }
                 ],
                 remappings = [
                     ("vehicle_cmd", [ EnvironmentVariable('CARMA_INTR_NS', default_value=''), "/vehicle_cmd" ] ),
@@ -365,7 +379,8 @@ def generate_launch_description():
                 parameters = [
                     {'loop_rate':30.0},
                     {'use_decision_maker':False},
-                    vehicle_config_param_file
+                    vehicle_config_param_file,
+                    global_params_override_file
                 ]
             )
         ]
@@ -379,6 +394,7 @@ def generate_launch_description():
                 PythonLaunchDescriptionSource([ThisLaunchFileDir(), '/plugins.launch.py']),
                 launch_arguments={
                     'route_file_folder' : route_file_folder,
+                    'global_params_override_file' : global_params_override_file,
                     'vehicle_calibration_dir' : vehicle_calibration_dir,
                     'vehicle_characteristics_param_file' : vehicle_characteristics_param_file,
                     'vehicle_config_param_file' : vehicle_config_param_file,
@@ -408,6 +424,8 @@ def generate_launch_description():
 
     return LaunchDescription([
         declare_vehicle_config_param_file_arg,
+        declare_vehicle_config_dir_arg,
+        declare_global_params_override_file_arg,
         declare_use_sim_time_arg,
         declare_subsystem_controller_param_file_arg,
         declare_use_real_time_spat_in_sim_arg,

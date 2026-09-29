@@ -154,7 +154,7 @@ namespace carma_wm
       {
         // https://github.com/usdot-fhwa-stol/carma-platform/issues/1593
         // Open issue TODO on how this error is handled
-        logWarnOnce("Logging Once: Given offset points are not inside the map for lane: " 
+        logWarnOnce("Logging Once: Given offset points are not inside the map for lane: "
           + std::to_string((int)lane.lane_id)
           + "| intersection id: " + std::to_string((int)intersection.id.id));
         continue;
@@ -426,6 +426,13 @@ namespace carma_wm
         entry_lanelets.push_back(map->laneletLayer.get(*iter));
       }
 
+      if (entry_lanelets.empty())
+      {
+        logWarnOnce("Logging Once: Unable to create traffic signal for signal group id: "
+          + std::to_string((int)sig_grp_pair.first)
+          + " as entry lanelets are empty!");
+        continue;
+      }
       traffic_signals.push_back(createTrafficSignalUsingSGID(sig_grp_pair.first, entry_lanelets, exit_lanelets));
     }
   }

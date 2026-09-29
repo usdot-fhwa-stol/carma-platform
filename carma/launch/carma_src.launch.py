@@ -37,6 +37,7 @@ import os
 
 from launch import LaunchDescription, LaunchContext
 
+
 def create_ros2_tracing_action(context, *args, **kwargs):
     """
     Opaque Function for generating a 'Trace' ROS 2 launch action, which is dependent on the
@@ -60,6 +61,7 @@ def create_ros2_tracing_action(context, *args, **kwargs):
 
     return [trace]
 
+
 def generate_launch_description():
     """
     Launch CARMA System.
@@ -68,6 +70,7 @@ def generate_launch_description():
     system_controller_param_file = os.path.join(
         get_package_share_directory('system_controller'), 'config/config.yaml')
 
+    # Log level is set from CARMA_ROS_LOGGING_CONFIG, generated from carma_rosconsole.conf in the vehicle config dir (carma-config)
     env_log_levels = EnvironmentVariable('CARMA_ROS_LOGGING_CONFIG', default_value='{ "default_level" : "WARN" }')
 
     # Declare the vehicle_calibration_dir launch argument
@@ -82,7 +85,7 @@ def generate_launch_description():
     declare_vehicle_config_dir_arg = DeclareLaunchArgument(
         name = 'vehicle_config_dir',
         default_value = "/opt/carma/vehicle/config",
-        description = "Path to file containing vehicle config directories"
+        description = "Path to vehicle configuration directory populated by carma-config"
     )
 
     vehicle_characteristics_param_file = LaunchConfiguration('vehicle_characteristics_param_file')
@@ -98,6 +101,15 @@ def generate_launch_description():
         name = 'vehicle_config_param_file',
         default_value = [vehicle_config_dir, "/VehicleConfigParams.yaml"],
         description = "Path to file contain vehicle configuration parameters"
+    )
+
+    # Declare the global_params_override_file launch argument
+    # Parameters in this file will override any parameters loaded in their respective packages
+    global_params_override_file = LaunchConfiguration('global_params_override_file')
+    declare_global_params_override_file_arg = DeclareLaunchArgument(
+        name = 'global_params_override_file',
+        default_value = [vehicle_config_dir, "/GlobalParamsOverride.yaml"],
+        description = "Path to global file containing the parameters overwrite"
     )
 
     use_sim_time = LaunchConfiguration('use_sim_time')
@@ -245,6 +257,7 @@ def generate_launch_description():
                 PythonLaunchDescriptionSource([ThisLaunchFileDir(), '/environment.launch.py']),
                 launch_arguments = {
                     'subsystem_controller_param_file' : [vehicle_config_dir, '/SubsystemControllerParams.yaml'],
+                    'global_params_override_file' : global_params_override_file,
                     'vehicle_config_param_file' : vehicle_config_param_file,
                     'vehicle_calibration_dir': vehicle_calibration_dir,
                     'vehicle_characteristics_param_file' : vehicle_characteristics_param_file,
@@ -264,6 +277,7 @@ def generate_launch_description():
                 PythonLaunchDescriptionSource([ThisLaunchFileDir(), '/localization.launch.py']),
                 launch_arguments = {
                     'vehicle_config_param_file' : vehicle_config_param_file,
+                    'global_params_override_file' : global_params_override_file,
                     'subsystem_controller_param_file' : [vehicle_config_dir, '/SubsystemControllerParams.yaml'],
                     'load_type' : load_type,
                     'single_pcd_path' : single_pcd_path,
@@ -284,6 +298,7 @@ def generate_launch_description():
                 PythonLaunchDescriptionSource([ThisLaunchFileDir(), '/message.launch.py']),
                 launch_arguments = {
                     'vehicle_characteristics_param_file' : vehicle_characteristics_param_file,
+                    'global_params_override_file' : global_params_override_file,
                     'vehicle_config_param_file' : vehicle_config_param_file,
                     'enable_opening_tunnels'  : enable_opening_tunnels,
                     'subsystem_controller_param_file' : [vehicle_config_dir, '/SubsystemControllerParams.yaml'],
@@ -301,6 +316,7 @@ def generate_launch_description():
                 PythonLaunchDescriptionSource([ThisLaunchFileDir(), '/guidance.launch.py']),
                 launch_arguments={
                     'route_file_folder' : route_file_folder,
+                    'global_params_override_file' : global_params_override_file,
                     'vehicle_characteristics_param_file' : vehicle_characteristics_param_file,
                     'vehicle_config_param_file' : vehicle_config_param_file,
                     'enable_guidance_plugin_validator' : enable_guidance_plugin_validator,
@@ -323,6 +339,7 @@ def generate_launch_description():
                 launch_arguments = {
                     'subsystem_controller_param_file' : [vehicle_config_dir, '/SubsystemControllerParams.yaml'],
                     'vehicle_config_param_file' : vehicle_config_param_file,
+                    'global_params_override_file' : global_params_override_file,
                     'use_sim_time' : use_sim_time
                 }.items()
             ),
@@ -335,7 +352,8 @@ def generate_launch_description():
         executable='system_controller',
         parameters=[
                     system_controller_param_file,
-                    {"use_sim_time" : use_sim_time}],
+                    {"use_sim_time" : use_sim_time},
+                    global_params_override_file],
         on_exit = Shutdown(), # Mark the subsystem controller as required for segfaults
         arguments=['--ros-args', '--log-level', GetLogLevel('system_controller', env_log_levels)]
     )
@@ -347,7 +365,7 @@ def generate_launch_description():
             IncludeLaunchDescription(
                 PythonLaunchDescriptionSource([ThisLaunchFileDir(), '/ui.launch.py']),
                 launch_arguments={
-                'port' : port
+                    'port' : port
                 }.items()
             ),
         ]
@@ -375,6 +393,7 @@ def generate_launch_description():
         declare_is_ros2_tracing_enabled,
         declare_is_cp_mot_enabled,
         declare_is_autoware_lidar_obj_detection_enabled,
+        declare_global_params_override_file_arg,
         ros2_rosbag_launch,
         OpaqueFunction(function=create_ros2_tracing_action),
         drivers_group,

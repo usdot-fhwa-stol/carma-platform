@@ -69,9 +69,6 @@ private:
 
   carma_ros2_utils::PubPtr<carma_debug_ros2_msgs::msg::TrajectoryCurvatureSpeeds> trajectory_debug_pub_;
 
-  // Service Clients
-  carma_ros2_utils::ClientPtr<carma_planning_msgs::srv::PlanTrajectory> yield_client_;
-
   // Worker
   std::shared_ptr<InLaneCruisingPlugin> worker_;
 

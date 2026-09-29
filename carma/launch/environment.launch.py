@@ -56,6 +56,22 @@ def generate_launch_description():
         description = "Path to file containing unique vehicle calibrations"
     )
 
+    vehicle_config_dir = LaunchConfiguration('vehicle_config_dir')
+    declare_vehicle_config_dir_arg = DeclareLaunchArgument(
+        name = 'vehicle_config_dir',
+        default_value = "/opt/carma/vehicle/config",
+        description = "Path to vehicle configuration directory populated by carma-config"
+    )
+
+    # Declare the global_params_override_file launch argument
+    # Parameters in this file will override any parameters loaded in their respective packages
+    global_params_override_file = LaunchConfiguration('global_params_override_file')
+    declare_global_params_override_file_arg = DeclareLaunchArgument(
+        name = 'global_params_override_file',
+        default_value = [vehicle_config_dir, "/GlobalParamsOverride.yaml"],
+        description = "Path to global file containing the parameters overwrite"
+    )
+
     vector_map_file = LaunchConfiguration('vector_map_file')
     declare_vector_map_file = DeclareLaunchArgument(name='vector_map_file', default_value = 'vector_map.osm', description = "Path to the map osm file if using the noupdate load type")
 
@@ -114,6 +130,7 @@ def generate_launch_description():
     motion_computation_param_file = os.path.join(
         get_package_share_directory('motion_computation'), 'config/parameters.yaml')
 
+    # Log level is set from CARMA_ROS_LOGGING_CONFIG, generated from carma_rosconsole.conf in the vehicle config dir (carma-config)
     env_log_levels = EnvironmentVariable('CARMA_ROS_LOGGING_CONFIG', default_value='{ "default_level" : "WARN" }')
 
     carma_wm_ctrl_param_file = os.path.join(
@@ -146,7 +163,6 @@ def generate_launch_description():
                 name='lidar_to_map_frame_transformer',
                 extra_arguments=[
                     {'use_intra_process_comms': True},
-                    {'--log-level' : GetLogLevel('frame_transformer', env_log_levels) },
                     {'is_lifecycle_node': True} # Flag to allow lifecycle node loading in lifecycle wrapper
                 ],
                 remappings=[
@@ -160,7 +176,8 @@ def generate_launch_description():
                     { "message_type" : "sensor_msgs/PointCloud2"},
                     { "queue_size" : 1},
                     { "timeout" : 50 },
-                    vehicle_config_param_file
+                    vehicle_config_param_file,
+                    global_params_override_file
                 ]
             ),
             ComposableNode(
@@ -169,7 +186,6 @@ def generate_launch_description():
                 name='points_map_filter',
                 extra_arguments=[
                     {'use_intra_process_comms': True},
-                    {'--log-level' : GetLogLevel('points_map_filter', env_log_levels) },
                     {'is_lifecycle_node': True} # Flag to allow lifecycle node loading in lifecycle wrapper
                 ],
                 remappings=[
@@ -179,7 +195,9 @@ def generate_launch_description():
                     ("change_state", "disabled_change_state"), # Disable lifecycle topics since this is a lifecycle wrapper container
                     ("get_state", "disabled_get_state")        # Disable lifecycle topics since this is a lifecycle wrapper container
                 ],
-                parameters=[ points_map_filter_param_file, vehicle_config_param_file ]
+                parameters=[ points_map_filter_param_file,
+                            vehicle_config_param_file,
+                            global_params_override_file]
             ),
             ComposableNode(
                 package='frame_transformer',
@@ -187,7 +205,6 @@ def generate_launch_description():
                 name='lidar_frame_transformer',
                 extra_arguments=[
                     {'use_intra_process_comms': True},
-                    {'--log-level' : GetLogLevel('frame_transformer', env_log_levels) },
                     {'is_lifecycle_node': True} # Flag to allow lifecycle node loading in lifecycle wrapper
                 ],
                 remappings=[
@@ -196,7 +213,9 @@ def generate_launch_description():
                     ("change_state", "disabled_change_state"), # Disable lifecycle topics since this is a lifecycle wrapper container
                     ("get_state", "disabled_get_state")        # Disable lifecycle topics since this is a lifecycle wrapper container
                 ],
-                parameters=[ frame_transformer_param_file, vehicle_config_param_file ]
+                parameters=[frame_transformer_param_file,
+                            vehicle_config_param_file,
+                            global_params_override_file]
             ),
             ComposableNode(
                 package='ray_ground_classifier_nodes',
@@ -204,13 +223,14 @@ def generate_launch_description():
                 plugin='autoware::perception::filters::ray_ground_classifier_nodes::RayGroundClassifierCloudNode',
                 extra_arguments=[
                     {'use_intra_process_comms': True},
-                    {'--log-level' : GetLogLevel('ray_ground_classifier_nodes', env_log_levels) }
                 ],
                 remappings=[
                     ("points_in", "points_in_base_link"),
                     ("points_nonground", "points_no_ground")
                 ],
-                parameters=[ ray_ground_classifier_param_file, vehicle_config_param_file]
+                parameters=[ray_ground_classifier_param_file,
+                            vehicle_config_param_file,
+                            global_params_override_file]
             ),
             ComposableNode(
                 package='euclidean_cluster_nodes',
@@ -218,12 +238,13 @@ def generate_launch_description():
                 plugin='autoware::perception::segmentation::euclidean_cluster_nodes::EuclideanClusterNode',
                 extra_arguments=[
                     {'use_intra_process_comms': True},
-                    {'--log-level' : GetLogLevel('euclidean_cluster_nodes', env_log_levels) }
                 ],
                 remappings=[
                     ("points_in", "points_no_ground")
                 ],
-                parameters=[ euclidean_cluster_param_file, vehicle_config_param_file]
+                parameters=[euclidean_cluster_param_file,
+                            vehicle_config_param_file,
+                            global_params_override_file]
             ),
             ComposableNode(
                 package='object_detection_tracking',
@@ -231,14 +252,13 @@ def generate_launch_description():
                 name='bounding_box_converter',
                 extra_arguments=[
                     {'use_intra_process_comms': True},
-                    {'--log-level' : GetLogLevel('object_detection_tracking', env_log_levels) },
                     {'is_lifecycle_node': True} # Flag to allow lifecycle node loading in lifecycle wrapper
                 ],
                 remappings=[
                     ("bounding_boxes", "lidar_bounding_boxes"),
                     ("lidar_detected_objects", "detected_objects"),
                 ],
-                parameters=[vehicle_config_param_file]
+                parameters=[vehicle_config_param_file, global_params_override_file]
             ),
             ComposableNode(
                     package='tracking_nodes',
@@ -246,18 +266,18 @@ def generate_launch_description():
                     name='tracking_nodes_node',
                     extra_arguments=[
                         {'use_intra_process_comms': True},
-                        {'--log-level' : GetLogLevel('tracking_nodes', env_log_levels) }
                     ],
                     remappings=[
                         ("ego_state", [ EnvironmentVariable('CARMA_LOCZ_NS', default_value=''), "/current_pose_with_covariance" ] ),
                         # TODO note classified_rois1 is the default single camera input topic
                         # TODO when camera detection is added, we will wan to separate this node into a different component to preserve fault tolerance
                     ],
-                    parameters=[ tracking_nodes_param_file, vehicle_config_param_file]
+                    parameters=[tracking_nodes_param_file,
+                                vehicle_config_param_file,
+                                global_params_override_file]
             )
         ]
     )
-
 
     # carma_external_objects_container contains nodes for object detection and tracking
     # since these nodes can use different object inputs they are a separate container from the lidar_perception_container
@@ -274,7 +294,6 @@ def generate_launch_description():
                 name='carma_wm_broadcaster',
                 extra_arguments=[
                     {'use_intra_process_comms': True},
-                    {'--log-level' : GetLogLevel('carma_wm_ctrl', env_log_levels) }
                 ],
                 remappings=[
                     ("georeference", [ EnvironmentVariable('CARMA_LOCZ_NS', default_value=''), "/map_param_loader/georeference" ] ),
@@ -285,7 +304,14 @@ def generate_launch_description():
                     ("outgoing_geofence_ack", [ EnvironmentVariable('CARMA_MSG_NS', default_value=''), "/outgoing_mobility_operation" ] ),
                     ("outgoing_geofence_request", [ EnvironmentVariable('CARMA_MSG_NS', default_value=''), "/outgoing_geofence_request" ] )
                 ],
-                parameters=[ carma_wm_ctrl_param_file, vehicle_config_param_file, vehicle_characteristics_param_file ]
+                parameters=[carma_wm_ctrl_param_file,
+                            vehicle_config_param_file,
+                            {'tim_icon_path': [
+                                    'file:///',
+                                    vehicle_calibration_dir,
+                                    '/visualization_meshes/cop.obj']},
+                            vehicle_characteristics_param_file,
+                            global_params_override_file]
             ),
             ComposableNode(
                     package='object_detection_tracking',
@@ -293,12 +319,13 @@ def generate_launch_description():
                     name='external_object',
                     extra_arguments=[
                         {'use_intra_process_comms': True},
-                        {'--log-level' : GetLogLevel('object_detection_tracking', env_log_levels) }
                     ],
                     remappings=[
                         ("detected_objects", "tracked_objects"),
                     ],
-                    parameters=[ object_detection_tracking_param_file, vehicle_config_param_file]
+                    parameters=[object_detection_tracking_param_file,
+                                vehicle_config_param_file,
+                                global_params_override_file]
             ),
             ComposableNode(
                     package='object_visualizer',
@@ -306,14 +333,17 @@ def generate_launch_description():
                     name='object_visualizer_node',
                     extra_arguments=[
                         {'use_intra_process_comms': True},
-                        {'--log-level' : GetLogLevel('object_visualizer', env_log_levels) }
                     ],
                     remappings=[
                         ("external_objects", "external_object_predictions"),
                         ("external_objects_viz", "fused_external_objects_viz")
                     ],
                     parameters=[object_visualizer_param_file, vehicle_config_param_file,
-                                {'pedestrian_icon_path': ['file:///', vehicle_calibration_dir, '/visualization_meshes/pedestrian.stl']}
+                                {'pedestrian_icon_path': [
+                                    'file:///',
+                                    vehicle_calibration_dir,
+                                    '/visualization_meshes/pedestrian.stl']},
+                                global_params_override_file
                                 ]
             ),
             ComposableNode(
@@ -322,7 +352,6 @@ def generate_launch_description():
                 name='motion_computation_node',
                 extra_arguments=[
                     {'use_intra_process_comms': True},
-                    {'--log-level' : GetLogLevel('motion_computation', env_log_levels) }
                 ],
                 remappings=[
                     ("incoming_mobility_path", [ EnvironmentVariable('CARMA_MSG_NS', default_value=''), "/incoming_mobility_path" ] ),
@@ -333,7 +362,9 @@ def generate_launch_description():
                     ("external_objects", PythonExpression(['"fused_external_objects" if "', is_cp_mot_enabled, '" == "True" else "external_objects"'])),
                 ],
                 parameters=[
-                    motion_computation_param_file, vehicle_config_param_file
+                    motion_computation_param_file,
+                    vehicle_config_param_file,
+                    global_params_override_file
                 ]
             ),
             ComposableNode( #CARMA Motion Prediction Visualizer Node
@@ -342,12 +373,11 @@ def generate_launch_description():
                     name='motion_prediction_visualizer',
                     extra_arguments=[
                         {'use_intra_process_comms': True},
-                        {'--log-level' : GetLogLevel('motion_prediction_visualizer', env_log_levels) }
                     ],
                     remappings=[
                         ("external_objects", "external_object_predictions" ),
                     ],
-                    parameters=[ vehicle_config_param_file ]
+                    parameters=[ vehicle_config_param_file, global_params_override_file ]
             ),
             ComposableNode(
                     package='traffic_incident_parser',
@@ -355,7 +385,6 @@ def generate_launch_description():
                     name='traffic_incident_parser_node',
                     extra_arguments=[
                         {'use_intra_process_comms': True},
-                        {'--log-level' : GetLogLevel('traffic_incident_parser', env_log_levels) }
                     ],
                     remappings=[
                         ("georeference", [ EnvironmentVariable('CARMA_LOCZ_NS', default_value=''), "/map_param_loader/georeference" ] ),
@@ -365,7 +394,7 @@ def generate_launch_description():
                         ("route", [ EnvironmentVariable('CARMA_GUIDE_NS', default_value=''), "/route" ] )
                     ],
                     parameters = [
-                        vehicle_config_param_file
+                        vehicle_config_param_file, global_params_override_file
                     ]
 
             ),
@@ -385,7 +414,6 @@ def generate_launch_description():
                 name='lanelet2_map_loader',
                 extra_arguments=[
                     {'use_intra_process_comms': True},
-                    {'--log-level' : GetLogLevel('lanelet2_map_loader', env_log_levels) },
                     {'is_lifecycle_node': True} # Flag to allow lifecycle node loading in lifecycle wrapper
                 ],
                 remappings=[
@@ -395,7 +423,8 @@ def generate_launch_description():
                 ],
                 parameters=[
                     { "lanelet2_filename" : vector_map_file},
-                    vehicle_config_param_file
+                    vehicle_config_param_file,
+                    global_params_override_file
                 ]
             )
         ]
@@ -414,7 +443,6 @@ def generate_launch_description():
                 name='lanelet2_map_visualization',
                 extra_arguments=[
                     {'use_intra_process_comms': True},
-                    {'--log-level' : GetLogLevel('lanelet2_map_visualization', env_log_levels) },
                     {'is_lifecycle_node': True} # Flag to allow lifecycle node loading in lifecycle wrapper
                 ],
                 remappings=[
@@ -423,7 +451,8 @@ def generate_launch_description():
                     ("get_state", "disabled_get_state")        # Disable lifecycle topics since this is a lifecycle wrapper container
                 ],
                 parameters=[
-                    vehicle_config_param_file
+                    vehicle_config_param_file,
+                    global_params_override_file
                 ]
             )
         ]
@@ -444,7 +473,6 @@ def generate_launch_description():
                 name='cp_external_object_list_to_detection_list_node',
                 extra_arguments=[
                     {'use_intra_process_comms': True},
-                    {'--log-level' : GetLogLevel('cp_external_object_list_to_detection_list_node', env_log_levels) },
                 ],
                 remappings=[
                     ("input/georeference", [EnvironmentVariable("CARMA_LOCZ_NS", default_value=""), "/map_param_loader/georeference"]),
@@ -452,7 +480,8 @@ def generate_launch_description():
                     ("input/external_objects", "external_objects"),
                 ],
                 parameters=[
-                    vehicle_config_param_file
+                    vehicle_config_param_file,
+                    global_params_override_file
                 ]
             ),
             ComposableNode(
@@ -461,7 +490,6 @@ def generate_launch_description():
                 name='cp_external_object_list_to_sdsm_node',
                 extra_arguments=[
                     {'use_intra_process_comms': True},
-                    {'--log-level' : GetLogLevel('cp_external_object_list_to_sdsm_node', env_log_levels) },
                 ],
                 remappings=[
                     ("input/georeference", [EnvironmentVariable("CARMA_LOCZ_NS", default_value=""), "/map_param_loader/georeference"]),
@@ -470,7 +498,8 @@ def generate_launch_description():
                     ("input/external_objects", "external_objects"),
                 ],
                 parameters=[
-                    vehicle_config_param_file
+                    vehicle_config_param_file,
+                    global_params_override_file
                 ]
             ),
             ComposableNode(
@@ -479,7 +508,6 @@ def generate_launch_description():
                 name='cp_host_vehicle_filter_node',
                 extra_arguments=[
                     {'use_intra_process_comms': True},
-                    {'--log-level' : GetLogLevel('cp_host_vehicle_filter_node', env_log_levels) },
                 ],
                 remappings=[
                     ("input/host_vehicle_pose", [ EnvironmentVariable('CARMA_LOCZ_NS', default_value=''), "/current_pose" ] ),
@@ -488,7 +516,8 @@ def generate_launch_description():
                 ],
                 parameters=[
                     cp_host_vehicle_filter_node_file,
-                    vehicle_config_param_file
+                    vehicle_config_param_file,
+                    global_params_override_file
                 ]
             ),
             ComposableNode(
@@ -497,7 +526,6 @@ def generate_launch_description():
                 name='cp_sdsm_to_detection_list_node',
                 extra_arguments=[
                     {'use_intra_process_comms': True},
-                    {'--log-level' : GetLogLevel('cp_sdsm_to_detection_list_node', env_log_levels) },
                 ],
                 remappings=[
                     ("input/georeference", [ EnvironmentVariable('CARMA_LOCZ_NS', default_value=''), "/map_param_loader/georeference" ] ),
@@ -507,7 +535,8 @@ def generate_launch_description():
                 ],
                 parameters=[
                     vehicle_config_param_file,
-                    cp_sdsm_to_detection_list_node_file
+                    cp_sdsm_to_detection_list_node_file,
+                    global_params_override_file
                 ]
             ),
             ComposableNode(
@@ -516,14 +545,14 @@ def generate_launch_description():
                 name='cp_track_list_to_external_object_list_node',
                 extra_arguments=[
                     {'use_intra_process_comms': True},
-                    {'--log-level' : GetLogLevel('cp_track_list_to_external_object_list_node', env_log_levels) },
                 ],
                 remappings=[
                     ("input/track_list", "cooperative_perception_track_list"),
                     ("output/external_object_list", "fused_external_objects"),
                 ],
                 parameters=[
-                    vehicle_config_param_file
+                    vehicle_config_param_file,
+                    global_params_override_file
                 ]
             ),
             ComposableNode(
@@ -532,7 +561,6 @@ def generate_launch_description():
                 name='cp_multiple_object_tracker_node',
                 extra_arguments=[
                     {'use_intra_process_comms': True},
-                    {'--log-level' : GetLogLevel('cp_multiple_object_tracker_node', env_log_levels) },
                 ],
                 remappings=[
                     ("output/track_list", "cooperative_perception_track_list"),
@@ -540,7 +568,8 @@ def generate_launch_description():
                 ],
                 parameters=[
                     cp_multiple_object_tracker_node_file,
-                    vehicle_config_param_file
+                    vehicle_config_param_file,
+                    global_params_override_file
                 ]
 
             ),
@@ -564,6 +593,8 @@ def generate_launch_description():
     return LaunchDescription([
         declare_vehicle_characteristics_param_file_arg,
         declare_vehicle_config_param_file_arg,
+        declare_vehicle_config_dir_arg,
+        declare_global_params_override_file_arg,
         declare_use_sim_time_arg,
         declare_is_autoware_lidar_obj_detection_enabled,
         declare_is_cp_mot_enabled,

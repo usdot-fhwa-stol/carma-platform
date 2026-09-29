@@ -1,0 +1,35 @@
+# This workflow builds and pushes demo docker images (tags matching carma-system-<VERSION>-demo*)
+# It resolves dependency images/branches (base autoware.ai image, carma-msgs, carma-utils, etc.)
+# against the plain carma-system-<VERSION> release, while still publishing the built image
+# under the full demo tag (e.g. carma-system-4.11.0-demo_uc2_tim_cp).
+name: Docker Hub demo build
+on:
+  push:
+    tags:
+      - "carma-system-*-demo*"
+
+jobs:
+  compute-base-tag:
+    runs-on: ubuntu-latest
+    outputs:
+      base_tag: ${{ steps.compute.outputs.base_tag }}
+    steps:
+      - name: Strip demo suffix from tag
+        id: compute
+        run: |
+          TAG="${GITHUB_REF_NAME}"
+          BASE_TAG="${TAG%%-demo*}"
+          echo "Full tag: $TAG"
+          echo "Base tag used for dependency resolution: $BASE_TAG"
+          echo "base_tag=$BASE_TAG" >> "$GITHUB_OUTPUT"
+
+  dockerhub:
+    needs: compute-base-tag
+    uses: usdot-fhwa-stol/actions/.github/workflows/dockerhub.yml@main
+    with:
+      additional_build_args: |
+        GIT_BRANCH=${{ needs.compute-base-tag.outputs.base_tag }}
+        DOCKER_TAG=${{ needs.compute-base-tag.outputs.base_tag }}
+    secrets:
+      DOCKERHUB_USERNAME: ${{ secrets.DOCKERHUB_USERNAME }}
+      DOCKERHUB_TOKEN: ${{ secrets.DOCKERHUB_TOKEN }}

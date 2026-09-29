@@ -119,7 +119,7 @@ namespace traffic_incident_parser
         double temp_up_track=stod(stringParserHelper(uptrack_str,uptrack_str.find_last_of("up_track:")));
         double temp_min_gap=stod(stringParserHelper(min_gap_str,min_gap_str.find_last_of("min_gap:")));
         double temp_speed_advisory=stod(stringParserHelper(speed_advisory_str,speed_advisory_str.find_last_of("advisory_speed:"))) * MphToMetersPerSec;
-        std::string temp_event_reason=stringParserHelper(event_reason_str,event_reason_str.find_last_of("event_reason:"));
+        std::string temp_event_reason = stringParserHelper(event_reason_str, event_reason_str.find("event_reason:") + std::string("event_reason:").length() - 1);
         std::string temp_event_type=stringParserHelper(event_type_str,event_type_str.find_last_of("event_type:"));
 
         if ( approximate_degree_delta < APPROXIMATE_DEG_PER_5M // If the vehicle has not moved more than 5m and the parameters remain unchanged

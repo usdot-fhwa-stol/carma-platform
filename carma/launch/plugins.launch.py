@@ -19,7 +19,6 @@ from launch_ros.actions import Node
 from launch_ros.actions import ComposableNodeContainer
 from launch_ros.descriptions import ComposableNode
 from launch.substitutions import EnvironmentVariable
-from carma_ros2_utils.launch.get_log_level import GetLogLevel
 from carma_ros2_utils.launch.get_current_namespace import GetCurrentNamespace
 from launch.substitutions import LaunchConfiguration
 
@@ -33,6 +32,7 @@ from launch.actions import DeclareLaunchArgument
 
 # Launch file for launching the nodes in the CARMA guidance stack
 
+
 def generate_launch_description():
 
     route_file_folder = LaunchConfiguration('route_file_folder')
@@ -44,6 +44,22 @@ def generate_launch_description():
     control_plugins_to_validate = LaunchConfiguration('control_plugins_to_validate')
 
     vehicle_config_param_file = LaunchConfiguration('vehicle_config_param_file')
+
+    vehicle_config_dir = LaunchConfiguration('vehicle_config_dir')
+    declare_vehicle_config_dir_arg = DeclareLaunchArgument(
+        name = 'vehicle_config_dir',
+        default_value = "/opt/carma/vehicle/config",
+        description = "Path to vehicle configuration directory populated by carma-config"
+    )
+
+    # Declare the global_params_override_file launch argument
+    # Parameters in this file will override any parameters loaded in their respective packages
+    global_params_override_file = LaunchConfiguration('global_params_override_file')
+    declare_global_params_override_file_arg = DeclareLaunchArgument(
+        name = 'global_params_override_file',
+        default_value = [vehicle_config_dir, "/GlobalParamsOverride.yaml"],
+        description = "Path to global file containing the parameters overwrite"
+    )
 
     inlanecruising_plugin_file_path = os.path.join(
         get_package_share_directory('inlanecruising_plugin'), 'config/parameters.yaml')
@@ -87,8 +103,6 @@ def generate_launch_description():
     trajectory_follower_wrapper_param_file = os.path.join(
         get_package_share_directory('trajectory_follower_wrapper'), 'config/parameters.yaml')
 
-    env_log_levels = EnvironmentVariable('CARMA_ROS_LOGGING_CONFIG', default_value='{ "default_level" : "WARN" }')
-
     pure_pursuit_tuning_parameters = [vehicle_calibration_dir, "/pure_pursuit/calibration.yaml"]
 
     unique_vehicle_calibration_params = [vehicle_calibration_dir, "/identifiers/UniqueVehicleParams.yaml"]
@@ -108,7 +122,6 @@ def generate_launch_description():
                 name='inlanecruising_plugin',
                 extra_arguments=[
                     {'use_intra_process_comms': True},
-                    {'--log-level' : GetLogLevel('inlanecruising_plugin', env_log_levels) }
                 ],
                 remappings = [
                     ("semantic_map", [ EnvironmentVariable('CARMA_ENV_NS', default_value=''), "/semantic_map" ] ),
@@ -120,7 +133,8 @@ def generate_launch_description():
                 ],
                 parameters=[
                     inlanecruising_plugin_file_path,
-                    vehicle_config_param_file
+                    vehicle_config_param_file,
+                    global_params_override_file
                 ]
             ),
         ]
@@ -139,7 +153,6 @@ def generate_launch_description():
                 name='route_following_plugin',
                 extra_arguments=[
                     {'use_intra_process_comms': True},
-                    {'--log-level' : GetLogLevel('route_following_plugin', env_log_levels) }
                 ],
                 remappings = [
                     ("semantic_map", [ EnvironmentVariable('CARMA_ENV_NS', default_value=''), "/semantic_map" ] ),
@@ -153,7 +166,8 @@ def generate_launch_description():
                 ],
                 parameters=[
                     route_following_plugin_file_path,
-                    vehicle_config_param_file
+                    vehicle_config_param_file,
+                    global_params_override_file
                 ]
             ),
         ]
@@ -172,7 +186,6 @@ def generate_launch_description():
                 name='approaching_emergency_vehicle_plugin',
                 extra_arguments=[
                     {'use_intra_process_comms': True},
-                    {'--log-level' : GetLogLevel('approaching_emergency_vehicle_plugin', env_log_levels) }
                 ],
                 remappings = [
                     ("semantic_map", [ EnvironmentVariable('CARMA_ENV_NS', default_value=''), "/semantic_map" ] ),
@@ -194,7 +207,8 @@ def generate_launch_description():
                 parameters=[
                     approaching_emergency_vehicle_plugin_param_file,
                     vehicle_characteristics_param_file,
-                    vehicle_config_param_file
+                    vehicle_config_param_file,
+                    global_params_override_file
                 ]
             ),
         ]
@@ -213,7 +227,6 @@ def generate_launch_description():
                 name='stop_and_wait_plugin',
                 extra_arguments=[
                     {'use_intra_process_comms': True},
-                    {'--log-level' : GetLogLevel('stop_and_wait_plugin', env_log_levels) }
                 ],
                 remappings = [
                     ("semantic_map", [ EnvironmentVariable('CARMA_ENV_NS', default_value=''), "/semantic_map" ] ),
@@ -225,7 +238,8 @@ def generate_launch_description():
                 ],
                 parameters=[
                     stop_and_wait_plugin_param_file,
-                    vehicle_config_param_file
+                    vehicle_config_param_file,
+                    global_params_override_file
                 ]
             ),
         ]
@@ -243,7 +257,6 @@ def generate_launch_description():
                 name='sci_strategic_plugin',
                 extra_arguments=[
                     {'use_intra_process_comms': True},
-                    {'--log-level' : GetLogLevel('sci_strategic_plugin', env_log_levels) }
                 ],
                 remappings = [
                     ("semantic_map", [ EnvironmentVariable('CARMA_ENV_NS', default_value=''), "/semantic_map" ] ),
@@ -260,7 +273,8 @@ def generate_launch_description():
                 ],
                 parameters=[
                     sci_strategic_plugin_file_path,
-                    vehicle_config_param_file
+                    vehicle_config_param_file,
+                    global_params_override_file
                 ]
             ),
         ]
@@ -278,7 +292,6 @@ def generate_launch_description():
                 name='lci_strategic_plugin',
                 extra_arguments=[
                     {'use_intra_process_comms': True},
-                    {'--log-level' : GetLogLevel('lci_strategic_plugin', env_log_levels) }
                 ],
                 remappings = [
                     ("semantic_map", [ EnvironmentVariable('CARMA_ENV_NS', default_value=''), "/semantic_map" ] ),
@@ -295,7 +308,8 @@ def generate_launch_description():
                 parameters=[
                     lci_strategic_plugin_file_path,
                     vehicle_config_param_file,
-                    unique_vehicle_calibration_params
+                    unique_vehicle_calibration_params,
+                    global_params_override_file
                 ]
             ),
         ]
@@ -313,7 +327,6 @@ def generate_launch_description():
                 name='stop_controlled_intersection_tactical_plugin',
                 extra_arguments=[
                     {'use_intra_process_comms': True},
-                    {'--log-level' : GetLogLevel('stop_controlled_intersection_tactical_plugin', env_log_levels) }
                 ],
                 remappings = [
                     ("semantic_map", [ EnvironmentVariable('CARMA_ENV_NS', default_value=''), "/semantic_map" ] ),
@@ -325,7 +338,8 @@ def generate_launch_description():
                 ],
                 parameters=[
                     stop_controlled_intersection_tactical_plugin_file_path,
-                    vehicle_config_param_file
+                    vehicle_config_param_file,
+                    global_params_override_file
                 ]
             ),
         ]
@@ -343,7 +357,6 @@ def generate_launch_description():
                 name='cooperative_lanechange',
                 extra_arguments=[
                     {'use_intra_process_comms': True},
-                    {'--log-level' : GetLogLevel('cooperative_lanechange', env_log_levels) }
                 ],
                 remappings = [
                     ("semantic_map", [ EnvironmentVariable('CARMA_ENV_NS', default_value=''), "/semantic_map" ] ),
@@ -363,7 +376,8 @@ def generate_launch_description():
                 parameters=[
                     cooperative_lanechange_param_file,
                     vehicle_characteristics_param_file,
-                    vehicle_config_param_file
+                    vehicle_config_param_file,
+                    global_params_override_file
                 ]
             ),
         ]
@@ -381,7 +395,6 @@ def generate_launch_description():
                     name='yield_plugin',
                     extra_arguments=[
                     {'use_intra_process_comms': True},
-                    {'--log-level' : GetLogLevel('yield_plugin', env_log_levels) }
                 ],
                 remappings = [
                     ("semantic_map", [ EnvironmentVariable('CARMA_ENV_NS', default_value=''), "/semantic_map" ] ),
@@ -398,7 +411,8 @@ def generate_launch_description():
                 ],
                 parameters=[
                     yield_plugin_file_path,
-                    vehicle_config_param_file
+                    vehicle_config_param_file,
+                    global_params_override_file
                 ]
             ),
         ]
@@ -416,7 +430,6 @@ def generate_launch_description():
                 name='light_controlled_intersection_tactical_plugin',
                 extra_arguments=[
                     {'use_intra_process_comms': True},
-                    {'--log-level' : GetLogLevel('light_controlled_intersection_tactical_plugin', env_log_levels) }
                 ],
                 remappings = [
                     ("semantic_map", [ EnvironmentVariable('CARMA_ENV_NS', default_value=''), "/semantic_map" ] ),
@@ -429,7 +442,8 @@ def generate_launch_description():
                 parameters=[
                     vehicle_config_param_file,
                     vehicle_characteristics_param_file,
-                    light_controlled_intersection_tactical_plugin_param_file
+                    light_controlled_intersection_tactical_plugin_param_file,
+                    global_params_override_file
                 ]
             ),
         ]
@@ -447,7 +461,6 @@ def generate_launch_description():
                     name='pure_pursuit_wrapper',
                     extra_arguments=[
                     {'use_intra_process_comms': True},
-                    {'--log-level' : GetLogLevel('pure_pursuit_wrapper', env_log_levels) }
                 ],
                 remappings = [
                     ("plugin_discovery", [ EnvironmentVariable('CARMA_GUIDE_NS', default_value=''), "/plugin_discovery" ] ),
@@ -459,7 +472,8 @@ def generate_launch_description():
                 parameters=[
                     vehicle_characteristics_param_file, #vehicle_response_lag
                     vehicle_config_param_file,
-                    pure_pursuit_tuning_parameters
+                    pure_pursuit_tuning_parameters,
+                    global_params_override_file
                 ]
             ),
         ]
@@ -477,7 +491,6 @@ def generate_launch_description():
                 name='latlon_muxer_node',
                 extra_arguments=[
                     {'use_intra_process_comms': False},
-                    {'--log-level' : GetLogLevel('latlon_muxer', env_log_levels) }
                 ],
                 remappings = [
                       ("input/lateral/control_cmd", "trajectory_follower/lateral/control_cmd"),
@@ -485,7 +498,8 @@ def generate_launch_description():
                       ("output/control_cmd", "trajectory_follower/control_cmd")
                 ],
                 parameters=[
-                    {'timeout_thr_sec':0.5}
+                    {'timeout_thr_sec':0.5},
+                    global_params_override_file
                 ]
             ),
             ComposableNode(
@@ -494,7 +508,6 @@ def generate_launch_description():
                 name='lateral_controller_node',
                 extra_arguments=[
                     {'use_intra_process_comms': True},
-                    {'--log-level' : GetLogLevel('lateral_controller', env_log_levels) }
                 ],
                 remappings = [
                       ("output/lateral/control_cmd", "trajectory_follower/lateral/control_cmd"),
@@ -502,7 +515,9 @@ def generate_launch_description():
                       ("input/reference_trajectory","trajectory_follower/reference_trajectory" )
                 ],
                 parameters = [
-                    [vehicle_calibration_dir, "/trajectory_follower/lateral_controller_defaults.yaml"]
+                    [vehicle_calibration_dir,
+                     "/trajectory_follower/lateral_controller_defaults.yaml"],
+                    global_params_override_file
                 ]
             ),
             ComposableNode(
@@ -511,7 +526,6 @@ def generate_launch_description():
                 name='longitudinal_controller_node',
                 extra_arguments=[
                     {'use_intra_process_comms': False},
-                    {'--log-level' : GetLogLevel('longitudinal_controller', env_log_levels) }
                 ],
                 remappings = [
                       ("output/longitudinal/control_cmd", "trajectory_follower/longitudinal/control_cmd"),
@@ -519,7 +533,9 @@ def generate_launch_description():
                       ("input/current_state", "trajectory_follower/current_kinematic_state")
                 ],
                 parameters = [
-                    [vehicle_calibration_dir, "/trajectory_follower/longitudinal_controller_defaults.yaml"]
+                    [vehicle_calibration_dir,
+                     "/trajectory_follower/longitudinal_controller_defaults.yaml"],
+                    global_params_override_file
                 ]
             )
         ]
@@ -536,7 +552,6 @@ def generate_launch_description():
                     name='trajectory_follower_wrapper',
                     extra_arguments=[
                     {'use_intra_process_comms': True},
-                    {'--log-level' : GetLogLevel('trajectory_follower_wrapper', env_log_levels) }
                 ],
                 remappings = [
                     ("plugin_discovery", [ EnvironmentVariable('CARMA_GUIDE_NS', default_value=''), "/plugin_discovery" ] ),
@@ -547,7 +562,8 @@ def generate_launch_description():
                 ],
                 parameters=[
                     vehicle_characteristics_param_file,
-                    trajectory_follower_wrapper_param_file
+                    trajectory_follower_wrapper_param_file,
+                    global_params_override_file
                 ]
             ),
         ]
@@ -565,7 +581,6 @@ def generate_launch_description():
                 name='platooning_strategic_ihp_node',
                 extra_arguments=[
                     {'use_intra_process_comms': True},
-                    {'--log-level' : GetLogLevel('platooning_strategic_ihp', env_log_levels) }
                 ],
                 remappings = [
                     ("semantic_map", [ EnvironmentVariable('CARMA_ENV_NS', default_value=''), "/semantic_map" ] ),
@@ -588,7 +603,8 @@ def generate_launch_description():
                 ],
                 parameters=[
                     platooning_strategic_ihp_param_file,
-                    vehicle_config_param_file
+                    vehicle_config_param_file,
+                    global_params_override_file
                 ]
             ),
         ]
@@ -606,7 +622,6 @@ def generate_launch_description():
                 name='platooning_tactical_plugin_node',
                 extra_arguments=[
                     {'use_intra_process_comms': True},
-                    {'--log-level' : GetLogLevel('platooning_tactical_plugin', env_log_levels) }
                 ],
                 remappings = [
                     ("semantic_map", [ EnvironmentVariable('CARMA_ENV_NS', default_value=''), "/semantic_map" ] ),
@@ -617,7 +632,9 @@ def generate_launch_description():
                     ("plugin_discovery", [ EnvironmentVariable('CARMA_GUIDE_NS', default_value=''), "/plugin_discovery" ] ),
                     ("route", [ EnvironmentVariable('CARMA_GUIDE_NS', default_value=''), "/route" ] ),
                 ],
-                parameters=[ platoon_tactical_ihp_param_file, vehicle_config_param_file ]
+                parameters=[platoon_tactical_ihp_param_file,
+                            vehicle_config_param_file,
+                            global_params_override_file]
             ),
         ]
     )
@@ -634,7 +651,6 @@ def generate_launch_description():
                 name='platooning_control',
                 extra_arguments=[
                     {'use_intra_process_comms': True},
-                    {'--log-level' : GetLogLevel('platooning_control_plugin', env_log_levels) }
                 ],
                 remappings = [
                     ("plugin_discovery", [ EnvironmentVariable('CARMA_GUIDE_NS', default_value=''), "/plugin_discovery" ] ),
@@ -644,7 +660,10 @@ def generate_launch_description():
                     ("current_pose", [ EnvironmentVariable('CARMA_LOCZ_NS', default_value=''), "/current_pose" ] ),
                     ("vehicle/twist", [ EnvironmentVariable('CARMA_INTR_NS', default_value=''), "/vehicle/twist" ] ),
                 ],
-                parameters=[ platooning_control_param_file, vehicle_config_param_file, unique_vehicle_calibration_params ]
+                parameters=[ platooning_control_param_file,
+                            vehicle_config_param_file,
+                            unique_vehicle_calibration_params,
+                            global_params_override_file]
             )
         ]
     )
@@ -661,7 +680,6 @@ def generate_launch_description():
                 name='stop_and_dwell_strategic_plugin',
                 extra_arguments=[
                     {'use_intra_process_comms': True},
-                    {'--log-level' : GetLogLevel('stop_and_dwell_strategic_plugin', env_log_levels) }
                 ],
                 remappings = [
                     ("semantic_map", [ EnvironmentVariable('CARMA_ENV_NS', default_value=''), "/semantic_map" ] ),
@@ -676,7 +694,8 @@ def generate_launch_description():
                 ],
                 parameters=[
                     stop_and_dwell_strategic_plugin_container_file_path,
-                    vehicle_config_param_file
+                    vehicle_config_param_file,
+                    global_params_override_file
                 ]
             ),
         ]
@@ -694,17 +713,19 @@ def generate_launch_description():
                 name='intersection_transit_maneuvering',
                 extra_arguments=[
                     {'use_intra_process_comms': True},
-                    {'--log-level' : GetLogLevel('intersection_transit_maneuvering', env_log_levels) }
                 ],
                 remappings = [],
                 parameters=[
-                    vehicle_config_param_file
+                    vehicle_config_param_file,
+                    global_params_override_file
                 ]
             ),
         ]
     )
 
     return LaunchDescription([
+        declare_vehicle_config_dir_arg,
+        declare_global_params_override_file_arg,
         carma_inlanecruising_plugin_container,
         carma_route_following_plugin_container,
         carma_approaching_emergency_vehicle_plugin_container,
