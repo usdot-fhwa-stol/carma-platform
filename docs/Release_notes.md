@@ -1,6 +1,480 @@
 CARMA System Release Notes
 ----------------------------
 
+## Version 4.14.0, released TBD
+
+### Summary
+
+The CARMA System 4.14.0 release includes the following significant updates:
+
+- SAE J2735 2024 Support: CARMA Platform, CARMA Messenger, CARMA Msgs, and V2X ROS Conversion have been upgraded from SAE J2735 2016 to SAE J2735 2024.
+
+- Improved Trajectory Collision Checking: CARMA Platform trajectory planning now applies collision checking (via the yield_plugin) to all planned trajectories, improving the safety of generated trajectories.
+
+- SCMS-Enabled V2X Communication Verification: V2X ROS Driver has been verified to support SCMS-enabled V2X communications with appropriately configured OBUs.
+
+- Ettifos OBU Support: V2X ROS Driver now supports MQTT protocol for use with Ettifos OBUs.
+
+- Simplified Global ROS Parameter Configuration: A global parameter override file (GlobalParamsOverride.yaml) has been added to CARMA Config and CARMA Messenger Config. This allows operators to configure parameters for CARMA Platform and CARMA Messenger packages, including packages in related repositories, from a single location without creating Docker volume mounts for individual packages.
+
+- Improved ROS Logging Configuration: Logging behavior has been improved across CARMA Platform and related repositories. Operators can now configure ROS log levels for software libraries directly through CARMA Config.
+
+## Changes to Key Existing Repositories
+
+### CARMA Platform
+
+In this release, CARMA Platform has been upgraded from SAE J2735 2016 to SAE J2735 2024. Additionally, CARMA Platform has been updated to support a global parameter override file in CARMA Config, to enable ROS log levels to be configured for software libraries in CARMA Config, to apply collision checking (via the yield_plugin) to all planned trajectories, along with other minor enhancements and fixes.
+
+**Enhancements**
+
+- Add support for a global parameter override yaml file (GlobalParamsOverride.yaml) in CARMA Config.
+  * Pull Requests: [carma-platform PR #2631](https://github.com/usdot-fhwa-stol/carma-platform/pull/2631)
+
+- Improve the logging paradigm in CARMA Platform to enable ROS log levels to be set for software libraries (e.g., carma_wm and basic_autonomy) from CARMA Config.
+  * Pull Requests: [carma-platform PR #2653](https://github.com/usdot-fhwa-stol/carma-platform/pull/2653), [carma-platform PR #2654](https://github.com/usdot-fhwa-stol/carma-platform/pull/2654), [carma-platform PR #2663](https://github.com/usdot-fhwa-stol/carma-platform/pull/2663), [carma-platform PR #2664](https://github.com/usdot-fhwa-stol/carma-platform/pull/2664)
+
+- Refactor plan_delegator to apply collision checking (via yield_plugin) to all planned trajectory segments.
+  * Pull Requests: [carma-platform PR #2656](https://github.com/usdot-fhwa-stol/carma-platform/pull/2656)
+
+- Improve RViz work zone visualization to display orange dots resembling traffic barrels based on locations in received TrafficControlMessages (SAE J2735 TestMessage).
+  * Pull Requests: [carma-platform PR #2639](https://github.com/usdot-fhwa-stol/carma-platform/pull/2639)
+
+**Fixes**
+
+- [carma-platform PR #2638](https://github.com/usdot-fhwa-stol/carma-platform/pull/2638): Minor fix applied to MAP message processing to warn, but not shut down, when a signal group ID cannot be matched to a lane.
+
+- [carma-platform PR #2650](https://github.com/usdot-fhwa-stol/carma-platform/pull/2650): Fix cooperative_lanechange logic that requires a non-closed lanelet before a lane change (e.g., near a closed work zone lane).
+
+- [carma-platform PR #2667](https://github.com/usdot-fhwa-stol/carma-platform/pull/2667): Continue cooperative lane change trajectory planning when the supplied vehicle state is more than the configured range before the maneuver start.
+
+- [carma-platform PR #2661](https://github.com/usdot-fhwa-stol/carma-platform/pull/2661): Restore the plan delegator trajectory generation retry limit from 1000 to 10 consecutive planning cycles.
+
+- [carma-platform PR #2645](https://github.com/usdot-fhwa-stol/carma-platform/pull/2645): Fix yield_plugin unit test.
+
+- [carma-platform PR #2657](https://github.com/usdot-fhwa-stol/carma-platform/pull/2657): Increase unit test timeout so that unit tests in the ‘route’ and ‘approaching_emergency_vehicle_plugin’ packages do not fail.
+
+- [carma-platform PR #2659](https://github.com/usdot-fhwa-stol/carma-platform/pull/2659): Fix display of image files (.png) in Doxygen.
+
+**Other Updates**
+
+- [carma-platform PR #2637](https://github.com/usdot-fhwa-stol/carma-platform/pull/2637): Fix Sonar workflow path and deprecation warning.
+
+- [carma-platform PR #2640](https://github.com/usdot-fhwa-stol/carma-platform/pull/2640): Update README status badges.
+
+- [carma-platform PR #2624](https://github.com/usdot-fhwa-stol/carma-platform/pull/2624): Update Doxygen version to 4.10.0.
+
+- [carma-platform PR #2660](https://github.com/usdot-fhwa-stol/carma-platform/pull/2660): Add manual trigger ability for several important CI operations.
+
+### CARMA Messenger
+
+In this release, CARMA Messenger has been upgraded from SAE J2735 2016 to SAE J2735 2024. Additionally, implementation updates have been made to support a global parameter override file in carma-messenger-config.
+
+**Enhancements**
+
+- Upgrade CARMA Messenger from SAE J2735 2016 to SAE J2735 2024.
+  * Pull Requests: [carma-messenger PR #303](https://github.com/usdot-fhwa-stol/carma-messenger/pull/303)
+
+- Add support for a global parameter override yaml file (GlobalParamsOverride.yaml) in carma-messenger-config.
+  * Pull Requests: [carma-messenger PR #298](https://github.com/usdot-fhwa-stol/carma-messenger/pull/298), [carma-messenger PR #304](https://github.com/usdot-fhwa-stol/carma-messenger/pull/304)
+
+**Fixes**
+
+- [carma-messenger PR #305](https://github.com/usdot-fhwa-stol/carma-messenger/pull/305): Fix variable naming in carma-messenger-ui’s ‘emergencyResponse’ widget to avoid a redeclaration error.
+
+**Other Updates**
+
+- [carma-messenger PR #283](https://github.com/usdot-fhwa-stol/carma-messenger/pull/283): Update Doxygen version to 4.10.0.
+
+- [carma-messenger PR #299](https://github.com/usdot-fhwa-stol/carma-messenger/pull/299): Update README status badges.
+
+### CARMA Streets
+
+In this release, CARMA Streets has been updated to support V2X Hub version selection during initialization, improve the SDSM publishing rate, and add necessary configuration settings to resolve the Kafka broker IP when V2X Hub is running on the host network.
+
+**Enhancements**
+
+- The sensor_data_sharing_service configuration has been updated to support a user-defined PROJ string as the geolocation reference for SDSM generation, with detection offsets calculated relative to the specified reference.
+  * Pull Requests: [carma-streets PR #456](https://github.com/usdot-fhwa-stol/carma-streets/pull/456)
+
+- The CARMA Streets initialization script now prompts users to select a V2X-Hub version and automatically checks out the specified version during initialization.
+  * Pull Requests: [carma-streets PR #455](https://github.com/usdot-fhwa-stol/carma-streets/pull/455)
+
+- The sensor_data_sharing_service now processes detections with reduced latency and fewer dropped detections.
+  * Pull Requests: [carma-streets PR #461](https://github.com/usdot-fhwa-stol/carma-streets/pull/461)
+
+**Fixes**
+
+- [carma-streets PR #458](https://github.com/usdot-fhwa-stol/carma-streets/pull/458): Improve CARMAStreetsPlugin parsing of SDSM JSON messages on the v2xhub_sdsm_sub Kafka topic. This eliminates occasional SDSM JSON parsing failures.
+
+- [carma-streets PR #457](https://github.com/usdot-fhwa-stol/carma-streets/pull/457): Add settings necessary to resolve the Kafka broker IP when running V2X Hub on the host network.
+
+**Other Updates**
+
+- [carma-streets PR #449](https://github.com/usdot-fhwa-stol/carma-streets/pull/449): Update Doxygen version to 4.5.1.
+
+### V2X Hub 7.12.0
+
+Version 7.12.0, released TBD
+
+Summary: V2X Hub release 7.12.0 improves deployment, container configuration, security, reliability, and message processing, including streamlined setup, improved MySQL database security, memory-management fixes, and support for ARM-based systems and multiple V2X Hub instances. Additional updates strengthen automated testing, continuous integration, and documentation. Additionally, as part of this release, V2X Hub has been verified to support SCMS-enabled V2X communications with appropriately configured RSUs.
+
+**Enhancements**
+
+- Improve V2X-Hub deployment and container configuration to simplify setup, improve container networking and security, support ARM-based systems and multiple V2X-Hub instances, and reduce production image dependencies.
+  * Pull Requests: [V2X-Hub PR #833](https://github.com/usdot-fhwa-OPS/V2X-Hub/pull/833), [V2X-Hub PR #842](https://github.com/usdot-fhwa-OPS/V2X-Hub/pull/842), [V2X-Hub PR #844](https://github.com/usdot-fhwa-OPS/V2X-Hub/pull/844), [V2X-Hub PR #859](https://github.com/usdot-fhwa-OPS/V2X-Hub/pull/859), [V2X-Hub PR #862](https://github.com/usdot-fhwa-OPS/V2X-Hub/pull/862), [V2X-Hub PR #863](https://github.com/usdot-fhwa-OPS/V2X-Hub/pull/863), [V2X-Hub PR #865](https://github.com/usdot-fhwa-OPS/V2X-Hub/pull/865), [V2X-Hub PR #867](https://github.com/usdot-fhwa-OPS/V2X-Hub/pull/867), [V2X-Hub PR #919](https://github.com/usdot-fhwa-OPS/V2X-Hub/pull/919), [V2X-Hub PR #920](https://github.com/usdot-fhwa-OPS/V2X-Hub/pull/920), [V2X-Hub PR #947](https://github.com/usdot-fhwa-OPS/V2X-Hub/pull/947)
+
+**Fixes**
+
+- [V2X-Hub PR #841](https://github.com/usdot-fhwa-OPS/V2X-Hub/pull/841): Refactor the database connection to use environment variables.
+
+- [V2X-Hub PR #868](https://github.com/usdot-fhwa-OPS/V2X-Hub/pull/868): Fix SQL injection issue.
+
+- [V2X-Hub PR #869](https://github.com/usdot-fhwa-OPS/V2X-Hub/pull/869): Update addEventLogEntry to use prepared statements.
+
+- [V2X-Hub PR #871](https://github.com/usdot-fhwa-OPS/V2X-Hub/pull/871): Update removePluginStatusItems to use prepared statements.
+
+- [V2X-Hub PR #874](https://github.com/usdot-fhwa-OPS/V2X-Hub/pull/874): Use prepared statements and modernized SQL syntax.
+
+- [V2X-Hub PR #875](https://github.com/usdot-fhwa-OPS/V2X-Hub/pull/875): Use prepared statements and modernized SQL syntax for additional database operations.
+
+- [V2X-Hub PR #908](https://github.com/usdot-fhwa-OPS/V2X-Hub/pull/908): Fix a conditional mutex locking issue that could result in unintended deadlock.
+
+- [V2X-Hub PR #873](https://github.com/usdot-fhwa-OPS/V2X-Hub/pull/873): Correct SNMP client behavior for SNMP v1 and v2, including timeout, security model, and logging behavior.
+
+- [V2X-Hub PR #886](https://github.com/usdot-fhwa-OPS/V2X-Hub/pull/886): Fix PSS memory usage reporting to use MB instead of KB.
+
+- [V2X-Hub PR #882](https://github.com/usdot-fhwa-OPS/V2X-Hub/pull/882): Fix TIM Plugin test compatibility with SAE J2735 2016 and 2020.
+
+- [V2X-Hub PR #927](https://github.com/usdot-fhwa-OPS/V2X-Hub/pull/927): Fix memory-management issues in the SAE J2735 message wrapper classes.
+
+- [V2X-Hub PR #952](https://github.com/usdot-fhwa-OPS/V2X-Hub/pull/952): Fix a use-after-free issue when consuming SDSM Kafka payloads from sensor_data_sharing_service.
+
+**Other Updates**
+
+- [V2X-Hub PR #845](https://github.com/usdot-fhwa-OPS/V2X-Hub/pull/845): Update CI workflows for Node.js 24-compatible GitHub Actions.
+
+- [V2X-Hub PR #847](https://github.com/usdot-fhwa-OPS/V2X-Hub/pull/847): Add health checks for automated V2X-Hub integration tests.
+
+- [V2X-Hub PR #853](https://github.com/usdot-fhwa-OPS/V2X-Hub/pull/853): Add GitHub Actions CI for V2X-Hub integration tests.
+
+- [V2X-Hub PR #854](https://github.com/usdot-fhwa-OPS/V2X-Hub/pull/854): Fix Sonar code smells in the Dockerfile and update Docker labels to OCI labels.
+
+- [V2X-Hub PR #858](https://github.com/usdot-fhwa-OPS/V2X-Hub/pull/858): Fix consolidated CI workflow dependencies.
+
+- [V2X-Hub PR #861](https://github.com/usdot-fhwa-OPS/V2X-Hub/pull/861): Add the SonarCloud dependency to the integration-tests job.
+
+- [V2X-Hub PR #870](https://github.com/usdot-fhwa-OPS/V2X-Hub/pull/870): Add Docker Scout to pull request CI.
+
+- [V2X-Hub PR #892](https://github.com/usdot-fhwa-OPS/V2X-Hub/pull/892): Exclude TmxApi unit tests from line coverage analysis.
+
+- [V2X-Hub PR #909](https://github.com/usdot-fhwa-OPS/V2X-Hub/pull/909): Update third-party GitHub Actions versions for Node.js 24 compatibility.
+
+- [V2X-Hub PR #942](https://github.com/usdot-fhwa-OPS/V2X-Hub/pull/942): Add Docker Scout policy evaluation to CI.
+
+- [V2X-Hub PR #948](https://github.com/usdot-fhwa-OPS/V2X-Hub/pull/948): Exclude the copyleft license policy from Docker Scout evaluation.
+
+- [V2X-Hub PR #851](https://github.com/usdot-fhwa-OPS/V2X-Hub/pull/851): Add error handling and mean-latency reporting to the messaging performance script.
+
+- [V2X-Hub PR #857](https://github.com/usdot-fhwa-OPS/V2X-Hub/pull/857): Update the V2X-Hub messaging performance analyzer.
+
+- [V2X-Hub PR #913](https://github.com/usdot-fhwa-OPS/V2X-Hub/pull/913): Add command-line arguments and an average-latency result summary to the messaging performance analyzer.
+
+- [V2X-Hub PR #872](https://github.com/usdot-fhwa-OPS/V2X-Hub/pull/872): Fix GitHub badges.
+
+- [V2X-Hub PR #877](https://github.com/usdot-fhwa-OPS/V2X-Hub/pull/877): Correct Programming Guide documentation.
+
+- [V2X-Hub PR #878](https://github.com/usdot-fhwa-OPS/V2X-Hub/pull/878): Add the V2X-Hub factsheet.
+
+- [V2X-Hub PR #879](https://github.com/usdot-fhwa-OPS/V2X-Hub/pull/879): Update badges to include Docker pulls and license information.
+
+- [V2X-Hub PR #843](https://github.com/usdot-fhwa-OPS/V2X-Hub/pull/843): Rename the Dev Container image to avoid deployment.
+
+- [V2X-Hub PR #897](https://github.com/usdot-fhwa-OPS/V2X-Hub/pull/897): Remove unused Message Receiver functionality.
+
+- [V2X-Hub PR #899](https://github.com/usdot-fhwa-OPS/V2X-Hub/pull/899): Remove the standalone Message Validation Tool from V2X-Hub.
+
+### Distributed Testing
+
+DOT-OSTR-2.0.0 Release Notes
+
+In this release, Distributed Testing adds automated Docker builds and GitHub workflows, TENA V2X Hub build environment automation, SIMDIS integration, and updates to the HASS DT work zone development images and scenario configuration.
+
+**Enhancements**
+
+- Automate TENA V2X Hub build environment creation with full runtime support, and add GitHub workflows and automated Docker builds split by dependency.
+  * Pull Requests: [distributed-testing PR #83](https://github.com/usdot-fhwa-stol/distributed-testing/pull/83), [distributed-testing PR #86](https://github.com/usdot-fhwa-stol/distributed-testing/pull/86), [distributed-testing PR #102](https://github.com/usdot-fhwa-stol/distributed-testing/pull/102)
+
+- Add the SIMDIS Dockerfile for HASS and SIMDIS and yield integration testing changes.
+  * Pull Requests: [distributed-testing PR #72](https://github.com/usdot-fhwa-stol/distributed-testing/pull/72), [distributed-testing PR #81](https://github.com/usdot-fhwa-stol/distributed-testing/pull/81)
+
+- Update the HASS DT work zone development image to the 6.0.11 SDK, update the V2X Hub Dockerfile to V2X Hub develop, and add the V2X Hub V2X plugin Docker build.
+  * Pull Requests: [distributed-testing PR #63](https://github.com/usdot-fhwa-stol/distributed-testing/pull/63), [distributed-testing PR #74](https://github.com/usdot-fhwa-stol/distributed-testing/pull/74), [distributed-testing PR #88](https://github.com/usdot-fhwa-stol/distributed-testing/pull/88)
+
+- Install the STOL J2735 deb package in the Dockerfile and update to the J2735 2024 version.
+  * Pull Requests: [distributed-testing PR #76](https://github.com/usdot-fhwa-stol/distributed-testing/pull/76), [distributed-testing PR #77](https://github.com/usdot-fhwa-stol/distributed-testing/pull/77)
+
+- Add a staleSdsmThreshMs option to the start-entity-generator script, and update scenario XML and Docker-related settings.
+  * Pull Requests: [distributed-testing PR #101](https://github.com/usdot-fhwa-stol/distributed-testing/pull/101), [distributed-testing PR #105](https://github.com/usdot-fhwa-stol/distributed-testing/pull/105)
+
+- Update configurations for dth2, add a testing script from develop, and add PC configuration for HASS-639.
+  * Pull Requests: [distributed-testing PR #65](https://github.com/usdot-fhwa-stol/distributed-testing/pull/65), [distributed-testing PR #66](https://github.com/usdot-fhwa-stol/distributed-testing/pull/66)
+
+**Fixes**
+
+- [distributed-testing PR #108](https://github.com/usdot-fhwa-stol/distributed-testing/pull/108): Fix the verification issuer.
+
+- [distributed-testing PR #104](https://github.com/usdot-fhwa-stol/distributed-testing/pull/104): Update the threads library and UDP protocol IO dependencies to pull the correct branches.
+
+- [distributed-testing PR #97](https://github.com/usdot-fhwa-stol/distributed-testing/pull/97): Remove the runtime build target.
+
+- [distributed-testing PR #98](https://github.com/usdot-fhwa-stol/distributed-testing/pull/98): Fix and update the CI action.
+
+- [distributed-testing PR #91](https://github.com/usdot-fhwa-stol/distributed-testing/pull/91): Fix the version bump.
+
+**Other Updates**
+
+- [distributed-testing PR #106](https://github.com/usdot-fhwa-stol/distributed-testing/pull/106): Add release branch and version tag triggers to CI.
+
+### VUG Entity Generator
+
+In this release, VUG Entity Generator adds VRU LVC entity support and stale SDSM entity pruning, and updates to the J2735 2024 standard.
+
+**Enhancements**
+
+- Add the VRU LVC entity.
+  * Pull Requests: [vug-entity-generator PR #14](https://github.com/usdot-fhwa-stol/vug-entity-generator/pull/14)
+
+- Prune stale SDSM entities after a time threshold.
+  * Pull Requests: [vug-entity-generator PR #27](https://github.com/usdot-fhwa-stol/vug-entity-generator/pull/27)
+
+- No longer request shutdown on thread error; log a warning and skip processing instead.
+  * Pull Requests: [vug-entity-generator PR #26](https://github.com/usdot-fhwa-stol/vug-entity-generator/pull/26)
+
+- Update the STOL J2735 version to the 2024 standard.
+  * Pull Requests: [vug-entity-generator PR #17](https://github.com/usdot-fhwa-stol/vug-entity-generator/pull/17)
+
+**Fixes**
+
+- [vug-entity-generator PR #20](https://github.com/usdot-fhwa-stol/vug-entity-generator/pull/20): Fix the coordinate convention.
+
+- [vug-entity-generator PR #22](https://github.com/usdot-fhwa-stol/vug-entity-generator/pull/22): Fix the offset_z type.
+
+**Other Updates**
+
+- [vug-entity-generator PR #24](https://github.com/usdot-fhwa-stol/vug-entity-generator/pull/24), [vug-entity-generator PR #25](https://github.com/usdot-fhwa-stol/vug-entity-generator/pull/25): Update versions to support the 6.0.11 SDK.
+
+### VUG V2X Hub V2X Plugin
+
+In this release, the VUG V2X Hub V2X Plugin is built against the V2X Hub develop branch, adds host network support, and adds development container support for the new DT V2X Hub images.
+
+**Enhancements**
+
+- Build the V2X Hub TENA V2X plugin using the develop branch of V2X Hub as a base.
+  * Pull Requests: [vug-v2xhub-v2x-plugin PR #7](https://github.com/usdot-fhwa-stol/vug-v2xhub-v2x-plugin/pull/7)
+
+- Use the host network for V2X Hub.
+  * Pull Requests: [vug-v2xhub-v2x-plugin PR #17](https://github.com/usdot-fhwa-stol/vug-v2xhub-v2x-plugin/pull/17)
+
+- Support development container setup for the new dt-v2xhub and dt-build-v2xhub images.
+  * Pull Requests: [vug-v2xhub-v2x-plugin PR #16](https://github.com/usdot-fhwa-stol/vug-v2xhub-v2x-plugin/pull/16)
+
+**Fixes**
+
+- [vug-v2xhub-v2x-plugin PR #12](https://github.com/usdot-fhwa-stol/vug-v2xhub-v2x-plugin/pull/12): Fix the TENA V2X plugin networking issue.
+
+- [vug-v2xhub-v2x-plugin PR #13](https://github.com/usdot-fhwa-stol/vug-v2xhub-v2x-plugin/pull/13): Fix payload bytes being copied from the full length buffer.
+
+- [vug-v2xhub-v2x-plugin PR #15](https://github.com/usdot-fhwa-stol/vug-v2xhub-v2x-plugin/pull/15): Fix the integration test.
+
+**Other Updates**
+
+- [vug-v2xhub-v2x-plugin PR #19](https://github.com/usdot-fhwa-stol/vug-v2xhub-v2x-plugin/pull/19), [vug-v2xhub-v2x-plugin PR #20](https://github.com/usdot-fhwa-stol/vug-v2xhub-v2x-plugin/pull/20): Update versions to support the 6.0.11 SDK.
+
+- [vug-v2xhub-v2x-plugin PR #25](https://github.com/usdot-fhwa-stol/vug-v2xhub-v2x-plugin/pull/25): Update the repository for the Wrangler release.
+
+### VUG Scenario Publisher
+
+In this release, VUG Scenario Publisher is updated to support the 6.0.11 SDK.
+
+**Other Updates**
+
+- [vug-scenario-publisher PR #13](https://github.com/usdot-fhwa-stol/vug-scenario-publisher/pull/13), [vug-scenario-publisher PR #14](https://github.com/usdot-fhwa-stol/vug-scenario-publisher/pull/14): Update versions to support the 6.0.11 SDK.
+
+### VUG V2X Adapter
+
+In this release, VUG V2X Adapter is updated from the 6.0.9 SDK to the 6.0.11 SDK.
+
+**Other Updates**
+
+- [vug-v2x-adapter PR #9](https://github.com/usdot-fhwa-stol/vug-v2x-adapter/pull/9), [vug-v2x-adapter PR #10](https://github.com/usdot-fhwa-stol/vug-v2x-adapter/pull/10): Update versions from the 6.0.9 SDK to the 6.0.11 SDK.
+
+## Other Existing Repositories
+
+A global parameter override file (GlobalParamsOverride.yaml) has been added to CARMA Config, allowing operators to easily re-configure parameters for packages within CARMA Platform (and its related repositories) without needing to create docker volumes to multiple packages. This update was applied to the following repositories:
+
+| Repository | Pull Request |
+|---|---|
+| Autoware.Auto | [autoware.auto PR #46](https://github.com/usdot-fhwa-stol/autoware.auto/pull/46) |
+| CARMA Novatel OEM7 Driver Wrapper | [carma-novatel-oem7-driver-wrapper PR #50](https://github.com/usdot-fhwa-stol/carma-novatel-oem7-driver-wrapper/pull/50), [PR #51](https://github.com/usdot-fhwa-stol/carma-novatel-oem7-driver-wrapper/pull/51) |
+| CARMA Velodyne Lidar Driver | [carma-velodyne-lidar-driver PR #137](https://github.com/usdot-fhwa-stol/carma-velodyne-lidar-driver/pull/137), [PR #138](https://github.com/usdot-fhwa-stol/carma-velodyne-lidar-driver/pull/138) |
+| CARMA Torc Pinpoint Driver | [carma-torc-pinpoint-driver PR #57](https://github.com/usdot-fhwa-stol/carma-torc-pinpoint-driver/pull/57), [PR #58](https://github.com/usdot-fhwa-stol/carma-torc-pinpoint-driver/pull/58) |
+| V2X ROS Driver | [v2x-ros-driver PR #150](https://github.com/usdot-fhwa-stol/v2x-ros-driver/pull/150) |
+
+Additionally, issues related to the SonarCloud configuration file location and workflow path were fixed in this release. This update was applied to the following repositories:
+
+| Repository | Pull Request |
+|---|---|
+| CARMA Lightbar Driver | [carma-lightbar-driver PR #90](https://github.com/usdot-fhwa-stol/carma-lightbar-driver/pull/90) |
+| CARMA Novatel OEM7 Driver Wrapper | [carma-novatel-oem7-driver-wrapper PR #52](https://github.com/usdot-fhwa-stol/carma-novatel-oem7-driver-wrapper/pull/52) |
+| CARMA Velodyne Lidar Driver | [carma-velodyne-lidar-driver PR #139](https://github.com/usdot-fhwa-stol/carma-velodyne-lidar-driver/pull/139) |
+| CARMA Utils | [carma-utils PR #258](https://github.com/usdot-fhwa-stol/carma-utils/pull/258) |
+| CARMA Msgs | [carma-msgs PR #272](https://github.com/usdot-fhwa-stol/carma-msgs/pull/272) |
+| V2X ROS Driver | [v2x-ros-driver PR #154](https://github.com/usdot-fhwa-stol/v2x-ros-driver/pull/154) |
+| Multiple Object Tracking | [multiple_object_tracking PR #165](https://github.com/usdot-fhwa-stol/multiple_object_tracking/pull/165) |
+| CARMA Web UI | [carma-web-ui PR #189](https://github.com/usdot-fhwa-stol/carma-web-ui/pull/189) |
+
+### CARMA Config
+
+In this release, CARMA Config adds a global parameter override file (GlobalParamsOverride.yaml), which makes it easier for operators to re-configure parameters for packages within CARMA Platform (and its related repositories). Additionally, this release includes updates that enable operators to set the ROS log level for CARMA Platform software libraries from CARMA Config. Finally, the Docker Compose files have been updated to provide CUDA access to the carma-platform docker service.
+
+**Enhancements**
+
+- Add support for a global parameter override yaml file (GlobalParamsOverride.yaml).
+  * Pull Requests: [carma-config PR #475](https://github.com/usdot-fhwa-stol/carma-config/pull/475), [carma-config PR #483](https://github.com/usdot-fhwa-stol/carma-config/pull/483), [carma-config PR #478](https://github.com/usdot-fhwa-stol/carma-config/pull/478)
+
+- Improve logging paradigm so ROS log level can be set for software libraries within CARMA Platform.
+  * Pull Requests: [carma-config PR #484](https://github.com/usdot-fhwa-stol/carma-config/pull/484)
+
+- Enable CUDA access for the carma-platform docker service to support GPU-related functionalities in CARMA Platform.
+  * Pull Requests: [carma-config PR #481](https://github.com/usdot-fhwa-stol/carma-config/pull/481)
+
+**Other Updates**
+
+- [carma-config PR #476](https://github.com/usdot-fhwa-stol/carma-config/pull/476): Add GitHub Actions Docker builds for carma-config.
+
+- [carma-config PR #479](https://github.com/usdot-fhwa-stol/carma-config/pull/479): Add demo_uc2_tim_cp to Docker CI workflows.
+
+- [carma-config PR #490](https://github.com/usdot-fhwa-stol/carma-config/pull/490): Remove the demo_uc2_tim_cp Docker build step.
+
+- [carma-config PR #477](https://github.com/usdot-fhwa-stol/carma-config/pull/477): Add demo config folder.
+
+- [carma-config PR #486](https://github.com/usdot-fhwa-stol/carma-config/pull/486): Remove demo config from develop.
+
+- [carma-config PR #480](https://github.com/usdot-fhwa-stol/carma-config/pull/480): Update platform image and README.
+
+### CARMA Msgs
+
+In this release, ROS message definitions are updated from the SAE J2735 2016 standard to the SAE J2735 2024 standard.
+
+**Enhancements**
+
+- [carma-msgs PR #273](https://github.com/usdot-fhwa-stol/carma-msgs/pull/273): Update SAE J2735 ROS message definitions from the 2016 standard to the 2024 standard.
+
+**Fixes**
+
+- [carma-msgs PR #274](https://github.com/usdot-fhwa-stol/carma-msgs/pull/274): Fix BIT STRING encoding for V2X messages.
+
+- [carma-msgs PR #275](https://github.com/usdot-fhwa-stol/carma-msgs/pull/275): Revert to the shorthand name and array for dow in DayOfWeek.msg.
+
+### V2X ROS Conversion
+
+In this release, V2X ROS Conversion is updated from the SAE J2735 2016 standard to the SAE J2735 2024 standard. Additionally, README documentation has been improved, and processing of inbound messages has been enhanced to reduce dropped incoming messages.
+
+**Enhancements**
+
+- Update from the SAE J2735 2016 standard to the SAE J2735 2024 standard.
+  * Pull Requests: [v2x-ros-conversion PR #29](https://github.com/usdot-fhwa-stol/v2x-ros-conversion/pull/29), [v2x-ros-conversion PR #33](https://github.com/usdot-fhwa-stol/v2x-ros-conversion/pull/33)
+
+- Separates inbound and outbound ROS 2 callbacks and increases queue depths to prevent inbound messages from being delayed and silently dropped during outbound processing.
+  * Pull Requests: [v2x-ros-conversion PR #26](https://github.com/usdot-fhwa-stol/v2x-ros-conversion/pull/26)
+
+**Fixes**
+
+- [v2x-ros-conversion PR #30](https://github.com/usdot-fhwa-stol/v2x-ros-conversion/pull/30): Fix brake applied status handling logic.
+
+- [v2x-ros-conversion PR #32](https://github.com/usdot-fhwa-stol/v2x-ros-conversion/pull/32): Fix MAP optional field layerType dereferenced without checking null.
+
+- [v2x-ros-conversion PR #35](https://github.com/usdot-fhwa-stol/v2x-ros-conversion/pull/35): Keep SDSM MsgCount at 127 when decoding.
+
+**Other Updates**
+
+- [v2x-ros-conversion PR #31](https://github.com/usdot-fhwa-stol/v2x-ros-conversion/pull/31): Documentation improvements in README.
+
+### V2X ROS Driver
+
+In this release, V2X ROS Driver adds support for MQTT protocol for use with Ettifos OBUs, along with improved documentation throughout the repository. Additionally, as part of this release, V2X ROS Driver has been verified to support SCMS-enabled V2X communications with both Commsignia and Ettifos OBUs.
+
+**Enhancements**
+
+- Update v2x-ros-driver implementation to support MQTT protocol for use with Ettifos OBUs.
+  * Pull Requests: [v2x-ros-driver PR #153](https://github.com/usdot-fhwa-stol/v2x-ros-driver/pull/153), [v2x-ros-driver PR #156](https://github.com/usdot-fhwa-stol/v2x-ros-driver/pull/156), [v2x-ros-driver PR #158](https://github.com/usdot-fhwa-stol/v2x-ros-driver/pull/158), [v2x-ros-driver PR #163](https://github.com/usdot-fhwa-stol/v2x-ros-driver/pull/163), [v2x-ros-driver PR #155](https://github.com/usdot-fhwa-stol/v2x-ros-driver/pull/155)
+
+- Update Cohda MK6 OBU setup scripts to enable user to enable/disable security.
+  * Pull Requests: [v2x-ros-driver PR #144](https://github.com/usdot-fhwa-stol/v2x-ros-driver/pull/144)
+
+**Fixes**
+
+- [v2x-ros-driver PR #147](https://github.com/usdot-fhwa-stol/v2x-ros-driver/pull/147), [v2x-ros-driver PR #151](https://github.com/usdot-fhwa-stol/v2x-ros-driver/pull/151): Minor fixes to the Cohda MK6 OBU config verification script (check-mk6-conf.sh).
+
+**Other Updates**
+
+- [v2x-ros-driver PR #149](https://github.com/usdot-fhwa-stol/v2x-ros-driver/pull/149): Add a new v2x_decoder_forwarder.py script, which can be useful for developers and testers to receive, decode, and forward SAE J2735 V2X Messages as a JSON string to a remote server.
+
+- [v2x-ros-driver PR #157](https://github.com/usdot-fhwa-stol/v2x-ros-driver/pull/157), [v2x-ros-driver PR #159](https://github.com/usdot-fhwa-stol/v2x-ros-driver/pull/159), [v2x-ros-driver PR #152](https://github.com/usdot-fhwa-stol/v2x-ros-driver/pull/152): Documentation improvements in README.
+
+### CARMA Utils
+
+In this release, logging behavior of CARMA Platform is improved and fixed.
+
+**Enhancements**
+
+- Improves CARMA Platform logging by removing legacy ROS 1 configuration and enabling flexible log-level control for nodes, libraries, and plugin-specific library loggers.
+  * Pull Requests: [carma-utils PR #260](https://github.com/usdot-fhwa-stol/carma-utils/pull/260)
+
+### Autoware.Auto and Autoware.AI
+
+In this release, CI is updated to build and test only the packages needed for CARMA Platform, and a build fix is applied for rclcpp logging macros.
+
+**Fixes**
+
+- [autoware.ai PR #297](https://github.com/usdot-fhwa-stol/autoware.ai/pull/297): Build ‘lanelet2_extension’ package with C++17 for compatibility with ROS 2 Humble.
+
+- [autoware.auto PR #48](https://github.com/usdot-fhwa-stol/autoware.auto/pull/48): Build ‘tracking’ and ‘tracking_test_framework’ packages with C++17 for compatibility with ROS 2 Humble.
+
+**Other Updates**
+
+- [autoware.ai PR #294](https://github.com/usdot-fhwa-stol/autoware.ai/pull/294), [autoware.auto PR #43](https://github.com/usdot-fhwa-stol/autoware.auto/pull/43): Optimizes builds by explicitly declaring the packages and dependencies required for CARMA Platform, reducing the Autoware build from 205 to 65 packages.
+
+- [autoware.ai PR #295](https://github.com/usdot-fhwa-stol/autoware.ai/pull/295), [autoware.auto PR #44](https://github.com/usdot-fhwa-stol/autoware.auto/pull/44): Add GitHub Actions CI to build and test only packages required for CARMA Platform.
+
+## Private Repositories
+
+### CARMA Vehicle Calibration
+
+In this release, visualization meshes are added for the work zone geofence and emergency vehicle, and route and map files are added for the black Pacifica.
+
+**Enhancements**
+
+- [carma-vehicle-calibration PR #152](https://github.com/usdot-fhwa-stol/carma-vehicle-calibration/pull/152): Add meshes for the work zone geofence (orange circles resembling traffic barrels) and emergency vehicle (blue vehicle) to support Rviz visualizations with CARMA Platform. The emergency vehicle is only displayed for the Traffic Incident Management use case.
+
+- [carma-vehicle-calibration PR #154](https://github.com/usdot-fhwa-stol/carma-vehicle-calibration/pull/154): Create a folder for storing demonstration-specific files.
+
+**Other Updates**
+
+- [carma-vehicle-calibration PR #147](https://github.com/usdot-fhwa-stol/carma-vehicle-calibration/pull/147): Correct the license for the white Pacifica.
+
+### STOL J2735
+
+In this release, J2945 Road Geometry and Attributes message support is added to the 2024 J2735 packages.
+
+**Enhancements**
+
+- [stol-j2735 PR #34](https://github.com/usdot-fhwa-stol/stol-j2735/pull/34): Adds J2945 Road Geometry and Attributes ASN definitions, with a corrected object identifier for compatibility with the J2735 MessageFrame definition.
+
+**Other Updates**
+
+- [stol-j2735 PR #36](https://github.com/usdot-fhwa-stol/stol-j2735/pull/36): Add workflow dispatch.
+
 ## Version 4.13.0, released July 16th 2026
 
 ### Summary
