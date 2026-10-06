@@ -7,17 +7,17 @@ CARMA System Release Notes
 
 The CARMA System 4.14.0 release includes the following significant updates:
 
-- SAE J2735 2024 Support: CARMA Platform, CARMA Messenger, CARMA Msgs, and V2X ROS Conversion have been upgraded from SAE J2735 2016 to SAE J2735 2024.
+- **SAE J2735 2024 Support**: CARMA Platform, CARMA Messenger, CARMA Msgs, and V2X ROS Conversion have been upgraded from SAE J2735 2016 to SAE J2735 2024.
 
-- Improved Trajectory Collision Checking: CARMA Platform trajectory planning now applies collision checking (via the yield_plugin) to all planned trajectories, improving the safety of generated trajectories.
+- **Improved Trajectory Collision Checking**: CARMA Platform trajectory planning now applies collision checking (via the yield_plugin) to all planned trajectories, improving the safety of generated trajectories.
 
-- SCMS-Enabled V2X Communication Verification: V2X ROS Driver has been verified to support SCMS-enabled V2X communications with appropriately configured OBUs.
+- **SCMS-Enabled V2X Communication Verification**: V2X ROS Driver has been verified to support SCMS-enabled V2X communications with appropriately configured OBUs.
 
-- Ettifos OBU Support: V2X ROS Driver now supports MQTT protocol for use with Ettifos OBUs.
+- **Ettifos OBU Support**: V2X ROS Driver now supports MQTT protocol for use with Ettifos OBUs.
 
-- Simplified Global ROS Parameter Configuration: A global parameter override file (GlobalParamsOverride.yaml) has been added to CARMA Config and CARMA Messenger Config. This allows operators to configure parameters for CARMA Platform and CARMA Messenger packages, including packages in related repositories, from a single location without creating Docker volume mounts for individual packages.
+- **Simplified Global ROS Parameter Configuration**: A global parameter override file (GlobalParamsOverride.yaml) has been added to CARMA Config and CARMA Messenger Config. This allows operators to configure parameters for CARMA Platform and CARMA Messenger packages, including packages in related repositories, from a single location without creating Docker volume mounts for individual packages.
 
-- Improved ROS Logging Configuration: Logging behavior has been improved across CARMA Platform and related repositories. Operators can now configure ROS log levels for software libraries directly through CARMA Config.
+- **Improved ROS Logging Configuration**: Logging behavior has been improved across CARMA Platform and related repositories. Operators can now configure ROS log levels for software libraries directly through CARMA Config.
 
 ## Changes to Key Existing Repositories
 
@@ -111,202 +111,6 @@ In this release, CARMA Streets has been updated to support V2X Hub version selec
 **Other Updates**
 
 - [carma-streets PR #449](https://github.com/usdot-fhwa-stol/carma-streets/pull/449): Update Doxygen version to 4.5.1.
-
-### V2X Hub 7.12.0
-
-Version 7.12.0, released TBD
-
-Summary: V2X Hub release 7.12.0 improves deployment, container configuration, security, reliability, and message processing, including streamlined setup, improved MySQL database security, memory-management fixes, and support for ARM-based systems and multiple V2X Hub instances. Additional updates strengthen automated testing, continuous integration, and documentation. Additionally, as part of this release, V2X Hub has been verified to support SCMS-enabled V2X communications with appropriately configured RSUs.
-
-**Enhancements**
-
-- Improve V2X-Hub deployment and container configuration to simplify setup, improve container networking and security, support ARM-based systems and multiple V2X-Hub instances, and reduce production image dependencies.
-  * Pull Requests: [V2X-Hub PR #833](https://github.com/usdot-fhwa-OPS/V2X-Hub/pull/833), [V2X-Hub PR #842](https://github.com/usdot-fhwa-OPS/V2X-Hub/pull/842), [V2X-Hub PR #844](https://github.com/usdot-fhwa-OPS/V2X-Hub/pull/844), [V2X-Hub PR #859](https://github.com/usdot-fhwa-OPS/V2X-Hub/pull/859), [V2X-Hub PR #862](https://github.com/usdot-fhwa-OPS/V2X-Hub/pull/862), [V2X-Hub PR #863](https://github.com/usdot-fhwa-OPS/V2X-Hub/pull/863), [V2X-Hub PR #865](https://github.com/usdot-fhwa-OPS/V2X-Hub/pull/865), [V2X-Hub PR #867](https://github.com/usdot-fhwa-OPS/V2X-Hub/pull/867), [V2X-Hub PR #919](https://github.com/usdot-fhwa-OPS/V2X-Hub/pull/919), [V2X-Hub PR #920](https://github.com/usdot-fhwa-OPS/V2X-Hub/pull/920), [V2X-Hub PR #947](https://github.com/usdot-fhwa-OPS/V2X-Hub/pull/947)
-
-**Fixes**
-
-- [V2X-Hub PR #841](https://github.com/usdot-fhwa-OPS/V2X-Hub/pull/841): Refactor the database connection to use environment variables.
-
-- [V2X-Hub PR #868](https://github.com/usdot-fhwa-OPS/V2X-Hub/pull/868): Fix SQL injection issue.
-
-- [V2X-Hub PR #869](https://github.com/usdot-fhwa-OPS/V2X-Hub/pull/869): Update addEventLogEntry to use prepared statements.
-
-- [V2X-Hub PR #871](https://github.com/usdot-fhwa-OPS/V2X-Hub/pull/871): Update removePluginStatusItems to use prepared statements.
-
-- [V2X-Hub PR #874](https://github.com/usdot-fhwa-OPS/V2X-Hub/pull/874): Use prepared statements and modernized SQL syntax.
-
-- [V2X-Hub PR #875](https://github.com/usdot-fhwa-OPS/V2X-Hub/pull/875): Use prepared statements and modernized SQL syntax for additional database operations.
-
-- [V2X-Hub PR #908](https://github.com/usdot-fhwa-OPS/V2X-Hub/pull/908): Fix a conditional mutex locking issue that could result in unintended deadlock.
-
-- [V2X-Hub PR #873](https://github.com/usdot-fhwa-OPS/V2X-Hub/pull/873): Correct SNMP client behavior for SNMP v1 and v2, including timeout, security model, and logging behavior.
-
-- [V2X-Hub PR #886](https://github.com/usdot-fhwa-OPS/V2X-Hub/pull/886): Fix PSS memory usage reporting to use MB instead of KB.
-
-- [V2X-Hub PR #882](https://github.com/usdot-fhwa-OPS/V2X-Hub/pull/882): Fix TIM Plugin test compatibility with SAE J2735 2016 and 2020.
-
-- [V2X-Hub PR #927](https://github.com/usdot-fhwa-OPS/V2X-Hub/pull/927): Fix memory-management issues in the SAE J2735 message wrapper classes.
-
-- [V2X-Hub PR #952](https://github.com/usdot-fhwa-OPS/V2X-Hub/pull/952): Fix a use-after-free issue when consuming SDSM Kafka payloads from sensor_data_sharing_service.
-
-**Other Updates**
-
-- [V2X-Hub PR #845](https://github.com/usdot-fhwa-OPS/V2X-Hub/pull/845): Update CI workflows for Node.js 24-compatible GitHub Actions.
-
-- [V2X-Hub PR #847](https://github.com/usdot-fhwa-OPS/V2X-Hub/pull/847): Add health checks for automated V2X-Hub integration tests.
-
-- [V2X-Hub PR #853](https://github.com/usdot-fhwa-OPS/V2X-Hub/pull/853): Add GitHub Actions CI for V2X-Hub integration tests.
-
-- [V2X-Hub PR #854](https://github.com/usdot-fhwa-OPS/V2X-Hub/pull/854): Fix Sonar code smells in the Dockerfile and update Docker labels to OCI labels.
-
-- [V2X-Hub PR #858](https://github.com/usdot-fhwa-OPS/V2X-Hub/pull/858): Fix consolidated CI workflow dependencies.
-
-- [V2X-Hub PR #861](https://github.com/usdot-fhwa-OPS/V2X-Hub/pull/861): Add the SonarCloud dependency to the integration-tests job.
-
-- [V2X-Hub PR #870](https://github.com/usdot-fhwa-OPS/V2X-Hub/pull/870): Add Docker Scout to pull request CI.
-
-- [V2X-Hub PR #892](https://github.com/usdot-fhwa-OPS/V2X-Hub/pull/892): Exclude TmxApi unit tests from line coverage analysis.
-
-- [V2X-Hub PR #909](https://github.com/usdot-fhwa-OPS/V2X-Hub/pull/909): Update third-party GitHub Actions versions for Node.js 24 compatibility.
-
-- [V2X-Hub PR #942](https://github.com/usdot-fhwa-OPS/V2X-Hub/pull/942): Add Docker Scout policy evaluation to CI.
-
-- [V2X-Hub PR #948](https://github.com/usdot-fhwa-OPS/V2X-Hub/pull/948): Exclude the copyleft license policy from Docker Scout evaluation.
-
-- [V2X-Hub PR #851](https://github.com/usdot-fhwa-OPS/V2X-Hub/pull/851): Add error handling and mean-latency reporting to the messaging performance script.
-
-- [V2X-Hub PR #857](https://github.com/usdot-fhwa-OPS/V2X-Hub/pull/857): Update the V2X-Hub messaging performance analyzer.
-
-- [V2X-Hub PR #913](https://github.com/usdot-fhwa-OPS/V2X-Hub/pull/913): Add command-line arguments and an average-latency result summary to the messaging performance analyzer.
-
-- [V2X-Hub PR #872](https://github.com/usdot-fhwa-OPS/V2X-Hub/pull/872): Fix GitHub badges.
-
-- [V2X-Hub PR #877](https://github.com/usdot-fhwa-OPS/V2X-Hub/pull/877): Correct Programming Guide documentation.
-
-- [V2X-Hub PR #878](https://github.com/usdot-fhwa-OPS/V2X-Hub/pull/878): Add the V2X-Hub factsheet.
-
-- [V2X-Hub PR #879](https://github.com/usdot-fhwa-OPS/V2X-Hub/pull/879): Update badges to include Docker pulls and license information.
-
-- [V2X-Hub PR #843](https://github.com/usdot-fhwa-OPS/V2X-Hub/pull/843): Rename the Dev Container image to avoid deployment.
-
-- [V2X-Hub PR #897](https://github.com/usdot-fhwa-OPS/V2X-Hub/pull/897): Remove unused Message Receiver functionality.
-
-- [V2X-Hub PR #899](https://github.com/usdot-fhwa-OPS/V2X-Hub/pull/899): Remove the standalone Message Validation Tool from V2X-Hub.
-
-### Distributed Testing
-
-DOT-OSTR-2.0.0 Release Notes
-
-In this release, Distributed Testing adds automated Docker builds and GitHub workflows, TENA V2X Hub build environment automation, SIMDIS integration, and updates to the HASS DT work zone development images and scenario configuration.
-
-**Enhancements**
-
-- Automate TENA V2X Hub build environment creation with full runtime support, and add GitHub workflows and automated Docker builds split by dependency.
-  * Pull Requests: [distributed-testing PR #83](https://github.com/usdot-fhwa-stol/distributed-testing/pull/83), [distributed-testing PR #86](https://github.com/usdot-fhwa-stol/distributed-testing/pull/86), [distributed-testing PR #102](https://github.com/usdot-fhwa-stol/distributed-testing/pull/102)
-
-- Add the SIMDIS Dockerfile for HASS and SIMDIS and yield integration testing changes.
-  * Pull Requests: [distributed-testing PR #72](https://github.com/usdot-fhwa-stol/distributed-testing/pull/72), [distributed-testing PR #81](https://github.com/usdot-fhwa-stol/distributed-testing/pull/81)
-
-- Update the HASS DT work zone development image to the 6.0.11 SDK, update the V2X Hub Dockerfile to V2X Hub develop, and add the V2X Hub V2X plugin Docker build.
-  * Pull Requests: [distributed-testing PR #63](https://github.com/usdot-fhwa-stol/distributed-testing/pull/63), [distributed-testing PR #74](https://github.com/usdot-fhwa-stol/distributed-testing/pull/74), [distributed-testing PR #88](https://github.com/usdot-fhwa-stol/distributed-testing/pull/88)
-
-- Install the STOL J2735 deb package in the Dockerfile and update to the J2735 2024 version.
-  * Pull Requests: [distributed-testing PR #76](https://github.com/usdot-fhwa-stol/distributed-testing/pull/76), [distributed-testing PR #77](https://github.com/usdot-fhwa-stol/distributed-testing/pull/77)
-
-- Add a staleSdsmThreshMs option to the start-entity-generator script, and update scenario XML and Docker-related settings.
-  * Pull Requests: [distributed-testing PR #101](https://github.com/usdot-fhwa-stol/distributed-testing/pull/101), [distributed-testing PR #105](https://github.com/usdot-fhwa-stol/distributed-testing/pull/105)
-
-- Update configurations for dth2, add a testing script from develop, and add PC configuration for HASS-639.
-  * Pull Requests: [distributed-testing PR #65](https://github.com/usdot-fhwa-stol/distributed-testing/pull/65), [distributed-testing PR #66](https://github.com/usdot-fhwa-stol/distributed-testing/pull/66)
-
-**Fixes**
-
-- [distributed-testing PR #108](https://github.com/usdot-fhwa-stol/distributed-testing/pull/108): Fix the verification issuer.
-
-- [distributed-testing PR #104](https://github.com/usdot-fhwa-stol/distributed-testing/pull/104): Update the threads library and UDP protocol IO dependencies to pull the correct branches.
-
-- [distributed-testing PR #97](https://github.com/usdot-fhwa-stol/distributed-testing/pull/97): Remove the runtime build target.
-
-- [distributed-testing PR #98](https://github.com/usdot-fhwa-stol/distributed-testing/pull/98): Fix and update the CI action.
-
-- [distributed-testing PR #91](https://github.com/usdot-fhwa-stol/distributed-testing/pull/91): Fix the version bump.
-
-**Other Updates**
-
-- [distributed-testing PR #106](https://github.com/usdot-fhwa-stol/distributed-testing/pull/106): Add release branch and version tag triggers to CI.
-
-### VUG Entity Generator
-
-In this release, VUG Entity Generator adds VRU LVC entity support and stale SDSM entity pruning, and updates to the J2735 2024 standard.
-
-**Enhancements**
-
-- Add the VRU LVC entity.
-  * Pull Requests: [vug-entity-generator PR #14](https://github.com/usdot-fhwa-stol/vug-entity-generator/pull/14)
-
-- Prune stale SDSM entities after a time threshold.
-  * Pull Requests: [vug-entity-generator PR #27](https://github.com/usdot-fhwa-stol/vug-entity-generator/pull/27)
-
-- No longer request shutdown on thread error; log a warning and skip processing instead.
-  * Pull Requests: [vug-entity-generator PR #26](https://github.com/usdot-fhwa-stol/vug-entity-generator/pull/26)
-
-- Update the STOL J2735 version to the 2024 standard.
-  * Pull Requests: [vug-entity-generator PR #17](https://github.com/usdot-fhwa-stol/vug-entity-generator/pull/17)
-
-**Fixes**
-
-- [vug-entity-generator PR #20](https://github.com/usdot-fhwa-stol/vug-entity-generator/pull/20): Fix the coordinate convention.
-
-- [vug-entity-generator PR #22](https://github.com/usdot-fhwa-stol/vug-entity-generator/pull/22): Fix the offset_z type.
-
-**Other Updates**
-
-- [vug-entity-generator PR #24](https://github.com/usdot-fhwa-stol/vug-entity-generator/pull/24), [vug-entity-generator PR #25](https://github.com/usdot-fhwa-stol/vug-entity-generator/pull/25): Update versions to support the 6.0.11 SDK.
-
-### VUG V2X Hub V2X Plugin
-
-In this release, the VUG V2X Hub V2X Plugin is built against the V2X Hub develop branch, adds host network support, and adds development container support for the new DT V2X Hub images.
-
-**Enhancements**
-
-- Build the V2X Hub TENA V2X plugin using the develop branch of V2X Hub as a base.
-  * Pull Requests: [vug-v2xhub-v2x-plugin PR #7](https://github.com/usdot-fhwa-stol/vug-v2xhub-v2x-plugin/pull/7)
-
-- Use the host network for V2X Hub.
-  * Pull Requests: [vug-v2xhub-v2x-plugin PR #17](https://github.com/usdot-fhwa-stol/vug-v2xhub-v2x-plugin/pull/17)
-
-- Support development container setup for the new dt-v2xhub and dt-build-v2xhub images.
-  * Pull Requests: [vug-v2xhub-v2x-plugin PR #16](https://github.com/usdot-fhwa-stol/vug-v2xhub-v2x-plugin/pull/16)
-
-**Fixes**
-
-- [vug-v2xhub-v2x-plugin PR #12](https://github.com/usdot-fhwa-stol/vug-v2xhub-v2x-plugin/pull/12): Fix the TENA V2X plugin networking issue.
-
-- [vug-v2xhub-v2x-plugin PR #13](https://github.com/usdot-fhwa-stol/vug-v2xhub-v2x-plugin/pull/13): Fix payload bytes being copied from the full length buffer.
-
-- [vug-v2xhub-v2x-plugin PR #15](https://github.com/usdot-fhwa-stol/vug-v2xhub-v2x-plugin/pull/15): Fix the integration test.
-
-**Other Updates**
-
-- [vug-v2xhub-v2x-plugin PR #19](https://github.com/usdot-fhwa-stol/vug-v2xhub-v2x-plugin/pull/19), [vug-v2xhub-v2x-plugin PR #20](https://github.com/usdot-fhwa-stol/vug-v2xhub-v2x-plugin/pull/20): Update versions to support the 6.0.11 SDK.
-
-- [vug-v2xhub-v2x-plugin PR #25](https://github.com/usdot-fhwa-stol/vug-v2xhub-v2x-plugin/pull/25): Update the repository for the Wrangler release.
-
-### VUG Scenario Publisher
-
-In this release, VUG Scenario Publisher is updated to support the 6.0.11 SDK.
-
-**Other Updates**
-
-- [vug-scenario-publisher PR #13](https://github.com/usdot-fhwa-stol/vug-scenario-publisher/pull/13), [vug-scenario-publisher PR #14](https://github.com/usdot-fhwa-stol/vug-scenario-publisher/pull/14): Update versions to support the 6.0.11 SDK.
-
-### VUG V2X Adapter
-
-In this release, VUG V2X Adapter is updated from the 6.0.9 SDK to the 6.0.11 SDK.
-
-**Other Updates**
-
-- [vug-v2x-adapter PR #9](https://github.com/usdot-fhwa-stol/vug-v2x-adapter/pull/9), [vug-v2x-adapter PR #10](https://github.com/usdot-fhwa-stol/vug-v2x-adapter/pull/10): Update versions from the 6.0.9 SDK to the 6.0.11 SDK.
 
 ## Other Existing Repositories
 
