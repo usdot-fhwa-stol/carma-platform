@@ -522,7 +522,7 @@ TEST(CollisionDetectionBenchmark, WorstCasePerformance)
   for (int run = 0; run < 3; ++run) {
     auto t0 = std::chrono::steady_clock::now();
     {
-      std::unordered_map<uint32_t, std::future<std::optional<rclcpp::Time>>> futures;
+      std::unordered_map<uint32_t, std::future<std::optional<yield_plugin::GetCollisionResult>>> futures;
       for (const auto& obj : ext_objs) {
         futures[obj.id] = std::async(
           std::launch::async,
@@ -604,7 +604,7 @@ TEST(CollisionDetectionBenchmark, WorstCasePerformance)
     EXPECT_TRUE(gpu_found) << "GPU path (get_collision_times_concurrently) missed the planted collision.";
 
     if (cpu_found && gpu_found) {
-      const double t_col = gpu_col.at(col_obj.id).seconds();
+      const double t_col = gpu_col.at(col_obj.id).collision_time.seconds();
       // Continuous-motion first entry into 2 m radius: t = (6-2)/6 ≈ 0.67 s.
       EXPECT_GT(t_col, 0.5) << "Collision time suspiciously early.";
       EXPECT_LT(t_col, 1.2) << "Collision time suspiciously late.";
