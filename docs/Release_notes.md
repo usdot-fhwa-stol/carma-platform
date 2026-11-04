@@ -106,32 +106,6 @@ CDASim changes improve CARLA and NS-3 coordination, infrastructure registration,
 
 - [cdasim PR #278](https://github.com/usdot-fhwa-stol/cdasim/pull/278): Update SonarCloud CI and JaCoCo configuration.
 
-### V2X-Hub
-
-V2X-Hub changes support simulation deployments using Docker hostnames, infrastructure-specific configuration, and separate log files for each infrastructure instance.
-
-**Enhancements**
-
-- Load a saved configuration state at startup using SAVE_STATE_FILE_PATH and SAVE_STATE_PASS_PHRASE.
-  * Pull Requests: [V2X-Hub PR #977](https://github.com/usdot-fhwa-stol/V2X-Hub/pull/977)
-
-- Make the CDASim registration port configurable and allow the infrastructure spawn location to be set through environment variables.
-  * Pull Requests: [V2X-Hub PR #969](https://github.com/usdot-fhwa-stol/V2X-Hub/pull/969), [V2X-Hub PR #973](https://github.com/usdot-fhwa-stol/V2X-Hub/pull/973)
-
-- Add DNS hostname resolution to the SNMP client for signal-controller connections.
-  * Pull Requests: [V2X-Hub PR #982](https://github.com/usdot-fhwa-stol/V2X-Hub/pull/982)
-
-- Include the infrastructure ID in JSONMessageLogger filenames so logs from different V2X-Hub instances can be identified separately.
-  * Pull Requests: [V2X-Hub PR #981](https://github.com/usdot-fhwa-stol/V2X-Hub/pull/981)
-
-**Fixes**
-
-- Update certificate generation to support either DNS hostnames or IP addresses in V2XHUB_IP.
-  * Pull Requests: [V2X-Hub PR #978](https://github.com/usdot-fhwa-stol/V2X-Hub/pull/978)
-
-- Update SPaT Plugin error handling when the connection to a signal controller fails.
-  * Pull Requests: [V2X-Hub PR #982](https://github.com/usdot-fhwa-stol/V2X-Hub/pull/982)
-
 ### CARMA-CARLA Integration
 
 CARMA-CARLA Integration has been updated to support multiple CARMA vehicles in one CARLA simulation and improve ROS 2 bridge startup and vehicle lifecycle handling.
