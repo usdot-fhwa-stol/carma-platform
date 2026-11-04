@@ -1,7 +1,7 @@
 CARMA System Release Notes
 ----------------------------
 
-## Version Carma-system-4.16.0 release date TBD
+## Version Carma-system-4.16.0 released Nov 4th 2026
 
 ### Summary
 
