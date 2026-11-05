@@ -1,6 +1,221 @@
 CARMA System Release Notes
 ----------------------------
 
+## Version Carma-system-4.16.0 released Nov 4th 2026
+
+### Summary
+
+The CARMA System 4.16.0 release includes the following simulation updates:
+
+- **Automated simulation scenarios:** CDASim Scenario Runner supports CARMA Platform vehicle deployment with configurable routes, start delays, spawn positions, and vehicle networks. Town10 scenarios now cover one to three CARMA vehicles and up to three infrastructure instances.
+
+- **Multi-intersection V2X configuration:** Scenario Runner adds infrastructure-specific sensor configurations and saved V2X-Hub configuration states. EVC SPaT forwarding can be configured using Docker DNS names instead of fixed container IP addresses.
+
+- A containerized ns-3 federate integrates Eclipse MOSAIC and CDASim with ns-3 wireless network simulation. The 5G NR implementation uses ns-3 3.42, based on the CTTC ns-3-dev-v2x-v1.1 source tag, together with the 5G-LENA NR V2X module v2x-1.1. The federate manages dynamic node registration, mobility updates, radio configuration, and wireless packet delivery without interpreting application-layer message types or payload contents.
+
+- **NS-3 radio configuration:** CDASim and Scenario Runner support the selection and configuration of DSRC and 5G NR simulation modes.
+
+- **CARLA simulation improvements:** Updates to CDASim and CARMA-CARLA Integration improve multi-vehicle identification, position synchronization, ROS 2 clock publishing, and simulation startup and shutdown behavior.
+
+- **Simulation deployment and data analysis:** Scenario Runner adds reusable Docker Compose overrides and configurable runtime images. CDASim and CARMA Analytics FOTDA add structured log events and package CDASim analysis tools in a dedicated Docker image.
+
+## Changes to Key Existing Repositories
+
+### CDASim Scenario Runner
+
+CDASim Scenario Runner has been updated to deploy CARMA Platform vehicles and related services, configure multiple infrastructure instances, and run simulation scenarios with selectable container images and radio configurations.
+
+**Enhancements**
+
+- Add support for deploying CARMA Platform vehicles and related services using the basic simulation vehicle configuration. Each vehicle can be assigned an image version, route, start delay, spawn position, and network configuration. Town10 scenarios include one, two, and three-vehicle configurations.
+  * Pull Requests: [cdasim-scenario-runner PR #15](https://github.com/usdot-fhwa-stol/cdasim-scenario-runner/pull/15)
+
+- Generate separate sensor configurations for infrastructure instances and expand Town10 scenarios to support up to three infrastructure instances.
+  * Pull Requests: [cdasim-scenario-runner PR #18](https://github.com/usdot-fhwa-stol/cdasim-scenario-runner/pull/18)
+
+- Add saved V2X-Hub configuration states for infrastructure instances 1, 2, and 3 to configure MAP and SPaT broadcasting.
+  * Pull Requests: [cdasim-scenario-runner PR #28](https://github.com/usdot-fhwa-stol/cdasim-scenario-runner/pull/28)
+
+- Support EVC SPaT forwarding to V2X-Hub through Docker DNS hostnames and allow EVC controller configurations to be selected for each intersection.
+  * Pull Requests: [cdasim-scenario-runner PR #25](https://github.com/usdot-fhwa-stol/cdasim-scenario-runner/pull/25)
+
+- Make EVC an optional CDASim-managed service. A single EVC container can manage multiple intersection controllers when enabled.
+  * Pull Requests: [cdasim-scenario-runner PR #13](https://github.com/usdot-fhwa-stol/cdasim-scenario-runner/pull/13)
+
+- Add reusable Docker Compose overrides, network configuration support, and complete image references for simulation services.
+  * Pull Requests: [cdasim PR #279](https://github.com/usdot-fhwa-stol/cdasim/pull/279), [cdasim-scenario-runner PR #21](https://github.com/usdot-fhwa-stol/cdasim-scenario-runner/pull/21)
+
+- Select the NS-3 federate configuration from the configured image tag, using the -5g-nr or -dsrc suffix.
+  * Pull Requests: [cdasim-scenario-runner PR #27](https://github.com/usdot-fhwa-stol/cdasim-scenario-runner/pull/27)
+
+- Run post-simulation analysis using the Docker image specified by the scenario. The analysis scripts and image build are maintained in CARMA Analytics FOTDA.
+  * Pull Requests: [cdasim-scenario-runner PR #23](https://github.com/usdot-fhwa-stol/cdasim-scenario-runner/pull/23), [PR #26](https://github.com/usdot-fhwa-stol/cdasim-scenario-runner/pull/26)
+
+**Fixes**
+
+- Set the V2X-Hub simulation spawn location from the scenario configuration.
+  * Pull Requests: [cdasim-scenario-runner PR #22](https://github.com/usdot-fhwa-stol/cdasim-scenario-runner/pull/22)
+
+- Create the V2X-Hub JSON log directory with writable permissions so Scenario Runner can collect and clear logs without permission errors.
+  * Pull Requests: [cdasim-scenario-runner PR #31](https://github.com/usdot-fhwa-stol/cdasim-scenario-runner/pull/31)
+
+**Other Updates**
+
+- [cdasim-scenario-runner PR #29](https://github.com/usdot-fhwa-stol/cdasim-scenario-runner/pull/29): Update Town10 scenario image references for the Aventador release candidate.
+
+- [cdasim-scenario-runner PR #30](https://github.com/usdot-fhwa-stol/cdasim-scenario-runner/pull/30): Update Town10 test-case durations.
+
+### CDASim
+
+CDASim changes improve CARLA and NS-3 coordination, infrastructure registration, simulation configuration, and log output for automated analysis.
+
+**Enhancements**
+
+- Add support for selecting DSRC or 5G NR configurations for the NS-3 federate.
+  * Pull Requests: [cdasim PR #273](https://github.com/usdot-fhwa-stol/cdasim/pull/273), [cdasim PR #277](https://github.com/usdot-fhwa-stol/cdasim/pull/277)
+
+- Allow CARLA sensor registration using SUMO coordinates, with conversion into the CARLA coordinate frame when selected in the simulation configuration.
+  * Pull Requests: [cdasim PR #283](https://github.com/usdot-fhwa-stol/cdasim/pull/283)
+
+- Use Docker service hostnames instead of fixed container IP addresses in the Town10 CARLA configuration.
+  * Pull Requests: [cdasim PR #281](https://github.com/usdot-fhwa-stol/cdasim/pull/281)
+
+- Add structured CDASim analysis and network-node registration log events while retaining existing human-readable logs.
+  * Pull Requests: [cdasim PR #286](https://github.com/usdot-fhwa-stol/cdasim/pull/286), [cdasim PR #288](https://github.com/usdot-fhwa-stol/cdasim/pull/288)
+
+**Fixes**
+
+- Use the CARLA vehicle role name consistently across CARLA, MOSAIC, and NS-3, and avoid duplicate vehicle registration.
+  * Pull Requests: [cdasim PR #284](https://github.com/usdot-fhwa-stol/cdasim/pull/284)
+
+- Correct CARMA vehicle position updates and NS-3 network-node activation after the first mobility update.
+  * Pull Requests: [cdasim PR #285](https://github.com/usdot-fhwa-stol/cdasim/pull/285)
+
+- Preserve the configured projected RSU position during network registration to prevent coordinate offsets.
+  * Pull Requests: [cdasim PR #289](https://github.com/usdot-fhwa-stol/cdasim/pull/289)
+
+- Add sender IDs to vehicle and infrastructure V2X transmission logs, and handle unresolved vehicle Docker hostnames without terminating CDASim.
+  * Pull Requests: [cdasim PR #290](https://github.com/usdot-fhwa-stol/cdasim/pull/290)
+
+- Improve CARLA container shutdown by passing termination signals directly to the CARLA process.
+  * Pull Requests: [cdasim PR #282](https://github.com/usdot-fhwa-stol/cdasim/pull/282)
+
+**Other Updates**
+
+- [cdasim PR #280](https://github.com/usdot-fhwa-stol/cdasim/pull/280): Move Scenario Runner into the separate cdasim-scenario-runner repository while preserving its Git history.
+
+- [cdasim PR #278](https://github.com/usdot-fhwa-stol/cdasim/pull/278): Update SonarCloud CI and JaCoCo configuration.
+
+### CARMA-CARLA Integration
+
+CARMA-CARLA Integration has been updated to support multiple CARMA vehicles in one CARLA simulation and improve ROS 2 bridge startup and vehicle lifecycle handling.
+
+**Enhancements**
+
+- Use a configured CARLA role_name when spawning and locating each ego vehicle so multiple vehicles can share the same stack.json configuration.
+  * Pull Requests: [carma-carla-integration PR #119](https://github.com/usdot-fhwa-stol/carma-carla-integration/pull/119)
+
+- Publish ROS /clock from CARLA world snapshots independently of ego-vehicle discovery, and monitor ego vehicles as they appear, disappear, or reconnect.
+  * Pull Requests: [carma-carla-integration PR #121](https://github.com/usdot-fhwa-stol/carma-carla-integration/pull/121)
+
+**Fixes**
+
+- Correct vehicle role and sensor ID handling in multi-vehicle simulations.
+  * Pull Requests: [carma-carla-integration PR #120](https://github.com/usdot-fhwa-stol/carma-carla-integration/pull/120)
+
+- Prevent a segmentation fault when the CARLA readiness check exits after confirming that CARLA is available.
+  * Pull Requests: [carma-carla-integration PR #123](https://github.com/usdot-fhwa-stol/carma-carla-integration/pull/123)
+
+### Ns3-Federate
+
+The release adds containerized ns-3 5G NR V2X network simulation to CDASim. The federate integrates with Eclipse MOSAIC, supports dynamic mobile and infrastructure nodes, and simulates wireless message delivery independently of application-layer message types. The implementation is built on ns-3 3.42, using the CTTC ns-3-dev-v2x-v1.1 source tag, together with the 5G-LENA NR V2X module v2x-1.1.
+
+**Enhancements**
+
+- Add initial 5G NR support and Docker build capabilities for running NS-3 Federate as a container within CDASim.
+  * Pull Requests: [ns3-federate PR #15](https://github.com/usdot-fhwa-stol/ns3-federate/pull/15)
+
+- Add separate DSRC and 5G NR Docker build configurations, allowing users to select the radio technology when building images. DSRC remains the default configuration.
+  * Pull Requests: [ns3-federate PR #18](https://github.com/usdot-fhwa-stol/ns3-federate/pull/18)
+
+- Update the federate implementation to align with the newer MOSAIC ns-3 baseline as part of the 5G NR development work.
+  * Pull Requests: [ns3-federate PR #13](https://github.com/usdot-fhwa-stol/ns3-federate/pull/13)
+
+**Other Updates**
+
+- [ns3-federate PR #16](https://github.com/usdot-fhwa-stol/ns3-federate/pull/16): Add GitHub Actions workflows for Docker builds, CI, and SonarCloud analysis.
+
+- [ns3-federate PR #17](https://github.com/usdot-fhwa-stol/ns3-federate/pull/17): Add changes for NS-3 5G NR integration testing with CDASim.
+
+- [ns3-federate PR #19](https://github.com/usdot-fhwa-stol/ns3-federate/pull/19): Update CI/CD workflows to build and publish separate DSRC and 5G NR Docker images, including Docker Scout image comparisons.
+
+## Other Existing Repositories
+
+### CARMA Config
+
+CARMA Config changes update the basic simulation vehicle image and Docker networking for CARMA Platform and CARMA-CARLA Integration.
+
+**Enhancements**
+
+- Bind CARMA-CARLA Integration's CycloneDDS interface to the vehicle network using CARLA_BRIDGE_ROS_HOST and CYCLONEDDS_URI.
+  * Pull Requests: [carma-config PR #495](https://github.com/usdot-fhwa-stol/carma-config/pull/495)
+
+- Include example vehicle calibration files in the platform simulation configuration image.
+  * Pull Requests: [carma-config PR #498](https://github.com/usdot-fhwa-stol/carma-config/pull/498)
+
+- Include GlobalParamsOverride.yaml in the basic simulation platform vehicle image.
+  * Pull Requests: [carma-config PR #500](https://github.com/usdot-fhwa-stol/carma-config/pull/500)
+
+**Fixes**
+
+- Start vehicle-registration-service after v2x-ros-driver so the Docker hostname is available before registration with CDASim.
+  * Pull Requests: [carma-config PR #501](https://github.com/usdot-fhwa-stol/carma-config/pull/501)
+
+**Other Updates**
+
+- [carma-config PR #492](https://github.com/usdot-fhwa-stol/carma-config/pull/492): Remove the redundant basic simulation vehicle configuration.
+
+- [carma-config PR #502](https://github.com/usdot-fhwa-stol/carma-config/pull/502): Update the release candidate image organization and tag for Aventador.
+
+### CARMA Analytics FOTDA
+
+CARMA Analytics FOTDA adds CDASim analysis tooling and updates J2735 message latency analysis.
+
+**Enhancements**
+
+- Move the CDASim log and MCAP analyzers into CARMA Analytics FOTDA to maintain the analysis scripts in one repository.
+  * Pull Requests: [carma-analytics-fotda PR #138](https://github.com/usdot-fhwa-stol/carma-analytics-fotda/pull/138)
+
+- Add the cdasim-data-analysis Docker image and publication workflows. The image includes CDASim and CARMA Platform analysis scripts and supports structured network-node events.
+  * Pull Requests: [carma-analytics-fotda PR #139](https://github.com/usdot-fhwa-stol/carma-analytics-fotda/pull/139)
+
+- Add PCAP-to-PCAP and MCAP-to-PCAP J2735 latency analysis, including support for WSMP, signed-message payloads, and latency results by message type.
+  * Pull Requests: [carma-analytics-fotda PR #132](https://github.com/usdot-fhwa-stol/carma-analytics-fotda/pull/132), [carma-analytics-fotda PR #136](https://github.com/usdot-fhwa-stol/carma-analytics-fotda/pull/136)
+
+### V2X ROS Driver
+
+**Enhancements**
+
+- Allow UDP radio endpoints to be configured with Docker DNS hostnames in addition to IPv4 addresses.
+  * Pull Requests: [v2x-ros-driver PR #164](https://github.com/usdot-fhwa-stol/v2x-ros-driver/pull/164)
+
+### EVC SUMO
+
+EVC SUMO has been updated to support deployment through CDASim Scenario Runner, improve access to virtual controller SNMP services, and enable SPaT forwarding to V2X-Hub instances using Docker DNS hostnames.
+
+**Enhancements**
+
+- Add a process to generate the PyEOS database file required to run EVC through Scenario Runner.
+  * Pull Requests: [evc-sumo PR #13](https://github.com/usdot-fhwa-stol/evc-sumo/pull/13)
+
+- Add configurable SPaT forwarding from virtual controllers to V2X-Hub instances using Docker DNS hostnames. Forwarding routes are provided through the EVC_SPAT_FORWARDING_JSON environment variable, with socat relays that retry after temporary connection or DNS resolution failures.
+  * Pull Requests: [evc-sumo PR #14](https://github.com/usdot-fhwa-stol/evc-sumo/pull/14), [evc-sumo PR #15](https://github.com/usdot-fhwa-stol/evc-sumo/pull/15)
+
+**Fixes**
+
+- Add socat forwarding to make EVC SNMP services listening on the loopback interface accessible from outside the container, supporting connections to multiple virtual controllers.
+  * Pull Requests: [evc-sumo PR #12](https://github.com/usdot-fhwa-stol/evc-sumo/pull/12)
+
 ## Version 4.14.0, released Sep 30th 2026
 
 ### Summary
