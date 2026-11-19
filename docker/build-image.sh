@@ -56,15 +56,6 @@ while [[ $# -gt 0 ]]; do
             COMPONENT_VERSION_STRING=develop
             shift
             ;;
-        -b|--base-image)
-            PACKAGES_COLLECT=false
-
-            # Image (name:tag or ID) to use as the base of an incremental (--packages) build
-            # instead of the most recent local carma-platform image
-            BASE_IMAGE="$2"
-            shift
-            shift
-            ;;
         --select-packages|--packages)
             PACKAGES_COLLECT=true
 
@@ -93,19 +84,7 @@ if [[ ! -z "$PACKAGES" ]]; then
     # https://stackoverflow.com/questions/50625619/why-doesnt-the-cut-command-work-for-a-docker-image-ls-command
     # Question Asker: Chris F
     # Question Answerer: Arount
-    # An explicit --format is used because the default column layout of `docker image ls` differs between docker versions
-    # (e.g. docker 29 prints "IMAGE ID DISK USAGE" with repo:tag in a single column)
-    if [[ -n "$BASE_IMAGE" ]]; then
-        # Use the explicitly requested base image
-        if ! docker image inspect "$BASE_IMAGE" > /dev/null 2>&1; then
-            echo "Base image $BASE_IMAGE not found locally. Pull it first (docker pull $BASE_IMAGE)."
-            exit -1
-        fi
-        MOST_RECENT_IMAGE_DATA="$BASE_IMAGE $(docker image inspect --format '{{.Id}}' "$BASE_IMAGE" | sed 's/^sha256://' | cut -c1-12) $(docker image inspect --format '{{.Created}}' "$BASE_IMAGE")"
-        MOST_RECENT_IMAGE_DATA="$(echo "$MOST_RECENT_IMAGE_DATA" | sed 's|^\([^ :]*\):\([^ ]*\) |\1 \2 |')"
-    else
-        MOST_RECENT_IMAGE_DATA=$(docker image ls --format '{{.Repository}} {{.Tag}} {{.ID}} {{.CreatedSince}}' | grep "/$IMAGE " | head -n 1)
-    fi
+    MOST_RECENT_IMAGE_DATA=$(docker image ls | grep $IMAGE | tr -s ' ')
 
     if [[ -z "$MOST_RECENT_IMAGE_DATA" ]]; then
         echo No prior image exists to use as base, an initial image must be built first before attempting incremental build.
