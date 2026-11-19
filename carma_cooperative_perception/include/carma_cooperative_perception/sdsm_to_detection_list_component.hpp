@@ -15,6 +15,7 @@
 #ifndef CARMA_COOPERATIVE_PERCEPTION__SDSM_TO_DETECTION_LIST_COMPONENT_HPP_
 #define CARMA_COOPERATIVE_PERCEPTION__SDSM_TO_DETECTION_LIST_COMPONENT_HPP_
 
+#include <chrono>
 #include <string>
 
 #include <carma_cooperative_perception_interfaces/msg/detection_list.hpp>
@@ -130,6 +131,20 @@ public:
 
         for (auto & detection : detection_list_msg.detections) {
           detection.header.stamp = rclcpp::Time(detection.header.stamp) + time_delta;
+        }
+      } else if (get_parameter("use_sim_time").as_bool()) {
+        // The ROS clock is simulated (use_sim_time) but no CDASim clock was received. SDSM
+        // timestamps are wall-clock (UTC), so re-express each detection time in ROS (sim) time:
+        // keep its age relative to the wall clock and subtract that age from the current ROS time.
+        const auto wall_now_ns{std::chrono::duration_cast<std::chrono::nanoseconds>(
+                                 std::chrono::system_clock::now().time_since_epoch())
+                                 .count()};
+        const auto ros_now_ns{now().nanoseconds()};
+
+        for (auto & detection : detection_list_msg.detections) {
+          const auto detection_wall_ns{rclcpp::Time(detection.header.stamp).nanoseconds()};
+          const auto age_ns{wall_now_ns - detection_wall_ns};
+          detection.header.stamp = rclcpp::Time(ros_now_ns - age_ns, RCL_ROS_TIME);
         }
       }
       RCLCPP_DEBUG_STREAM(

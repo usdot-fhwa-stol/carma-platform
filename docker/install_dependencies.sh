@@ -39,6 +39,9 @@ echo "Installing multiple object tracking dependencies"
 sudo ./src/multiple_object_tracking/scripts/install_dependencies.sh
 
 
-# Install dependencies for v2x-ros-conversion - needs branch to pull correct debian version
-echo "Installing cpp_message dependencies"
-sudo ./src/v2x-ros-conversion/docker/install_dependencies.sh -b $BRANCH
+# Install dependencies for v2x-ros-conversion - needs branch to pull correct debian version.
+# Skipped for an incremental build (PACKAGES set) since v2x-ros-conversion is not checked out then.
+if [[ -z "$PACKAGES" ]]; then
+      echo "Installing cpp_message dependencies"
+      sudo ./src/v2x-ros-conversion/docker/install_dependencies.sh -b $BRANCH
+fi
