@@ -84,7 +84,7 @@ if [[ ! -z "$PACKAGES" ]]; then
     # https://stackoverflow.com/questions/50625619/why-doesnt-the-cut-command-work-for-a-docker-image-ls-command
     # Question Asker: Chris F
     # Question Answerer: Arount
-    MOST_RECENT_IMAGE_DATA=$(docker image ls | grep $IMAGE | tr -s ' ')
+    MOST_RECENT_IMAGE_DATA=$(docker image ls --format '{{.Repository}} {{.Tag}} {{.ID}} {{.CreatedSince}}' | grep $IMAGE | tr -s ' ')
 
     if [[ -z "$MOST_RECENT_IMAGE_DATA" ]]; then
         echo No prior image exists to use as base, an initial image must be built first before attempting incremental build.
