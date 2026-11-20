@@ -32,8 +32,9 @@
 # /////////////////////////////////////////////////////////////////////////////
 # Stage 1 - Acquire the CARMA source as well as any extra packages
 # /////////////////////////////////////////////////////////////////////////////
-ARG DOCKER_ORG="usdotfhwastoldev"
-ARG DOCKER_TAG="develop"
+# Base image and dependencies are pinned to CARMA System 4.14.0
+ARG DOCKER_ORG="usdotfhwastol"
+ARG DOCKER_TAG="carma-system-4.14.0"
 FROM ${DOCKER_ORG}/autoware.ai:${DOCKER_TAG} as base-image
 
 FROM base-image AS install
@@ -43,7 +44,7 @@ ENV PACKAGES=${PACKAGES}
 RUN mkdir ~/src
 COPY --chown=carma ./docker /home/carma/src/carma-platform/docker
 
-ARG GIT_BRANCH="develop"
+ARG GIT_BRANCH="carma-system-4.14.0"
 RUN ~/src/carma-platform/docker/checkout.bash -b ${GIT_BRANCH}
 
 COPY --chown=carma . /home/carma/src/carma-platform
