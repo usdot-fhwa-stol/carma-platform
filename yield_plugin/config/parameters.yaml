@@ -31,6 +31,12 @@ intervehicle_collision_distance_in_m: 6.0
 # Unit: m
 # Value type: Desired
 collision_check_radius_in_m: 150.0
+# Physical acceleration limits used to project a reachable ego trajectory for
+# collision checking. The platform launch overrides these from the vehicle config.
+# Units: m/s^2
+# Value type: Vehicle
+vehicle_acceleration_limit: 2.0
+vehicle_deceleration_limit: 2.0
 
 ######################################
 # YIELD PLANNING RELATED PARAMETERS

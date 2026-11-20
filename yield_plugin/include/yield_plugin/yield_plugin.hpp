@@ -103,11 +103,23 @@ public:
   /**
    * \brief trajectory is modified to safely avoid obstacles on the road
    * \param original_tp original trajectory plan without object avoidance
-   * \param current_speed_ current speed of the vehicle
-   * \param
+   * \param initial_velocity initial velocity used to generate a yielding trajectory
+   * \param current_velocity observed vehicle velocity used for collision prediction
    * \return modified trajectory plan
    */
-  carma_planning_msgs::msg::TrajectoryPlan update_traj_for_object(const carma_planning_msgs::msg::TrajectoryPlan& original_tp, const std::vector<carma_perception_msgs::msg::ExternalObject>& external_objects, double initial_velocity);
+  carma_planning_msgs::msg::TrajectoryPlan update_traj_for_object(
+    const carma_planning_msgs::msg::TrajectoryPlan& original_tp,
+    const std::vector<carma_perception_msgs::msg::ExternalObject>& external_objects,
+    double initial_velocity,
+    double current_velocity);
+
+  /**
+   * \brief Compatibility overload that uses initial_velocity for collision prediction
+   */
+  carma_planning_msgs::msg::TrajectoryPlan update_traj_for_object(
+    const carma_planning_msgs::msg::TrajectoryPlan& original_tp,
+    const std::vector<carma_perception_msgs::msg::ExternalObject>& external_objects,
+    double initial_velocity);
 
   /**
    * \brief calculate quintic polynomial equation for a given x
@@ -139,6 +151,17 @@ public:
    * \return vector of relative distances between trajectory points
    */
   std::vector<double> get_relative_downtracks(const carma_planning_msgs::msg::TrajectoryPlan& trajectory_plan) const;
+
+  /**
+   * \brief Builds a collision-only copy of the upstream trajectory whose timestamps
+   *        are reachable from the observed speed within the vehicle acceleration limits
+   * \param original_tp trajectory produced by the upstream tactical planner
+   * \param current_velocity observed longitudinal velocity of the vehicle
+   * \return corrected collision-check trajectory, or original_tp when it cannot be corrected safely
+   */
+  carma_planning_msgs::msg::TrajectoryPlan get_collision_check_trajectory(
+    const carma_planning_msgs::msg::TrajectoryPlan& original_tp,
+    double current_velocity) const;
 
   /**
    * \brief callback for mobility request
