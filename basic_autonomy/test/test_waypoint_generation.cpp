@@ -1085,6 +1085,61 @@ namespace basic_autonomy
         }
     }
 
+    TEST(BasicAutonomyTest, constrain_to_time_boundary_conservatively)
+    {
+        // Points every 10m (like a downsampled centerline) with a 5 m/s target speed (e.g. work zone limit)
+        std::vector<waypoint_generation::PointSpeedPair> points;
+        for (int i = 0; i <= 20; i++)
+        {
+            waypoint_generation::PointSpeedPair p;
+            p.point = lanelet::BasicPoint2d(10.0 * i, 0);
+            p.speed = 5.0;
+            points.push_back(p);
+        }
+
+        // Vehicle is going 10 m/s (faster than target), so geometry must cover at least 6s * 10 m/s = 60m.
+        // The old target-speed based cut (6s * 5 m/s = 30m, minus one point) would only keep 20m.
+        auto result = waypoint_generation::constrain_to_time_boundary_conservatively(points, 6.0, 10.0);
+        ASSERT_FALSE(result.empty());
+        EXPECT_GE(result.back().point.x(), 60.0);
+        EXPECT_LE(result.back().point.x(), 80.0);
+        EXPECT_NEAR(5.0, result.back().speed, 1e-9); // speeds are not modified
+
+        // Vehicle slower than target: target speed is the bound -> at least 6s * 5 m/s = 30m
+        result = waypoint_generation::constrain_to_time_boundary_conservatively(points, 6.0, 2.0);
+        EXPECT_GE(result.back().point.x(), 30.0);
+        EXPECT_LE(result.back().point.x(), 50.0);
+
+        // Not enough points to cover the time span -> all points kept
+        result = waypoint_generation::constrain_to_time_boundary_conservatively(points, 100.0, 10.0);
+        EXPECT_EQ(points.size(), result.size());
+
+        // Empty input
+        std::vector<waypoint_generation::PointSpeedPair> empty;
+        EXPECT_TRUE(waypoint_generation::constrain_to_time_boundary_conservatively(empty, 6.0, 10.0).empty());
+    }
+
+    TEST(BasicAutonomyTest, trim_trajectory_to_time_span)
+    {
+        // Points at 0, 0.7, 1.4, ... seconds
+        auto trajectory = createTestTrajectory(100.0, 0.7, 20);
+
+        auto result = basic_autonomy::waypoint_generation::trim_trajectory_to_time_span(trajectory, 6.0);
+        // First point reaching 6s is at 6.3s (index 9), which must be included
+        ASSERT_EQ(10u, result.size());
+        double duration = (rclcpp::Time(result.back().target_time) - rclcpp::Time(result.front().target_time)).seconds();
+        EXPECT_GE(duration, 6.0);
+        EXPECT_NEAR(6.3, duration, 1e-6);
+
+        // Shorter than the time span -> unchanged
+        result = basic_autonomy::waypoint_generation::trim_trajectory_to_time_span(trajectory, 100.0);
+        EXPECT_EQ(trajectory.size(), result.size());
+
+        // Empty
+        std::vector<carma_planning_msgs::msg::TrajectoryPlanPoint> empty;
+        EXPECT_TRUE(basic_autonomy::waypoint_generation::trim_trajectory_to_time_span(empty, 6.0).empty());
+    }
+
     TEST(BasicAutonomyTest, get_nearest_point_index_trajctory_test)
     {
         // Create a test trajectory
