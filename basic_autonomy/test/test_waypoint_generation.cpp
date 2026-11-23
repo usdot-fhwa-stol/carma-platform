@@ -74,6 +74,49 @@ namespace basic_autonomy
         EXPECT_DOUBLE_EQ(result[3].y(), 2.0);
     }
 
+    TEST(BasicAutonomyTest, downsample_keep_endpoints)
+    {
+        auto make_line = [](int num_points) {
+            lanelet::BasicLineString2d line;
+            for (int i = 0; i < num_points; i++)
+            {
+                line.push_back(lanelet::BasicPoint2d(i, 0)); // 1m spacing like a CARMA centerline
+            }
+            return line;
+        };
+
+        // 54 points (0..53m), ratio 18: regular downsampling keeps 0, 18, 36 and loses the last 17m.
+        // Last point is far (17m > 9m) from 36 so it is appended
+        auto out = waypoint_generation::downsample_keep_endpoints(make_line(54), 18);
+        ASSERT_EQ(4u, out.size());
+        EXPECT_NEAR(0.0, out[0].x(), 1e-9);
+        EXPECT_NEAR(18.0, out[1].x(), 1e-9);
+        EXPECT_NEAR(36.0, out[2].x(), 1e-9);
+        EXPECT_NEAR(53.0, out[3].x(), 1e-9);
+
+        // 41 points (0..40m): last point is 4m (< 9m) from 36, so it replaces 36 to avoid a short segment
+        out = waypoint_generation::downsample_keep_endpoints(make_line(41), 18);
+        ASSERT_EQ(3u, out.size());
+        EXPECT_NEAR(0.0, out[0].x(), 1e-9);
+        EXPECT_NEAR(18.0, out[1].x(), 1e-9);
+        EXPECT_NEAR(40.0, out[2].x(), 1e-9);
+
+        // 37 points (0..36m): last point already on the grid, nothing changes
+        out = waypoint_generation::downsample_keep_endpoints(make_line(37), 18);
+        ASSERT_EQ(3u, out.size());
+        EXPECT_NEAR(36.0, out[2].x(), 1e-9);
+
+        // Fewer points than ratio: first and last are kept (first is never replaced)
+        out = waypoint_generation::downsample_keep_endpoints(make_line(5), 18);
+        ASSERT_EQ(2u, out.size());
+        EXPECT_NEAR(0.0, out[0].x(), 1e-9);
+        EXPECT_NEAR(4.0, out[1].x(), 1e-9);
+
+        // Single point and ratio 0 behave like downsample_vector
+        EXPECT_EQ(1u, waypoint_generation::downsample_keep_endpoints(make_line(1), 18).size());
+        EXPECT_TRUE(waypoint_generation::downsample_keep_endpoints(make_line(10), 0).empty());
+    }
+
     // Test to ensure Eigen::Isometry2d behaves like tf2::Transform
     TEST(BasicAutonomyTest, validate_eigen)
     {

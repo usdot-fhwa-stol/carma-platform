@@ -59,5 +59,52 @@ namespace waypoint_generation
         return filtered_centerline;
     }
 
+    /**
+     * \brief Downsamples the points by keeping every nth point, while always keeping the first and the last point.
+     *
+     * Plain downsampling (keeping indices 0, n, 2n, ...) drops up to n-1 points at the end of the input, so the
+     * geometry stops short of the true end (e.g. a lanelet's end) and the dropped tail gets replaced by a chord.
+     * Here the last point is always kept. If it falls closer than half of the last regular gap to the previously
+     * kept point, it replaces that point instead of being appended, so that no very short segment is created
+     * (which can destabilize the spline fit and curvature computation).
+     *
+     * \param points Container of points (BasicLineString2d or vector of BasicPoint2d)
+     * \param n Keep every nth point. 0 returns an empty container, same as carma_ros2_utils downsample_vector
+     *
+     * \return Downsampled container including the first and last points of the input
+     */
+    template <typename PointContainer>
+    PointContainer downsample_keep_endpoints(const PointContainer & points, unsigned int n)
+    {
+        PointContainer output = carma_ros2_utils::containers::downsample_vector(points, n);
+
+        // First point is always kept by downsample_vector (index 0). Only the last point needs handling.
+        if (output.empty() || points.size() < 2)
+        {
+            return output;
+        }
+
+        const auto & last_point = points.back();
+        double dist_to_last = (last_point - output.back()).norm();
+
+        if (dist_to_last < 1e-6)
+        {
+            return output; // Last point already included
+        }
+
+        if (output.size() > 1)
+        {
+            double last_gap = (output.back() - output[output.size() - 2]).norm();
+            if (dist_to_last < 0.5 * last_gap)
+            {
+                output.back() = last_point; // Replace to avoid a very short final segment
+                return output;
+            }
+        }
+
+        output.push_back(last_point);
+        return output;
+    }
+
 } // namespace waypoint_generation
 } // namespace basic_autonomy

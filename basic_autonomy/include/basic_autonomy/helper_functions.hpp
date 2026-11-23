@@ -22,6 +22,8 @@ namespace waypoint_generation
 {
     //Small value corresponding to 0.1 mm in meters for comparing distance to a near zero.
     const double epsilon_ = 0.0000001;
+    // Tolerance in meters when checking whether a geometry point lies past a maneuver's end_dist
+    const double end_dist_tolerance_ = 0.5;
     /**
      * \brief Returns the nearest point (in terms of cartesian 2d distance) to the provided vehicle pose in the provided l
      *
