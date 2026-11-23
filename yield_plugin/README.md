@@ -199,6 +199,7 @@ These are covered by [test/test_collision_cuda_benchmark.cpp](test/test_collisio
 |---|---|---|
 | `outgoing_mobility_response` | `MobilityResponse` | Accept/reject cooperative requests |
 | `cooperative_lane_change_status` | `LaneChangeStatus` | CLC state machine status |
+| `yield_collision_diagnostic` | `diagnostic_msgs/DiagnosticArray` | Published once per `plan_trajectory` call (10 Hz by default, set by plan_delegator `trajectory_planning_rate`), only while yield is modifying the trajectory for a detected collision. Values: `object_id`, `object_type`, `downtrack_to_collision_m`, `speed_to_match_mph`, `time_to_collision_s`, `detect_and_plan_time_s`. While following a committed stop (no new detection), it reports the object that triggered the stop with `speed_to_match_mph`=0, `time_to_collision_s`=inf and the other values `NA` |
 
 ### Service
 

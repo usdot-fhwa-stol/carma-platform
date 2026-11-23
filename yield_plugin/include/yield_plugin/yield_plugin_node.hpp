@@ -26,6 +26,7 @@
 #include <carma_v2x_msgs/msg/bsm.hpp>
 #include <functional>
 #include <carma_perception_msgs/msg/external_object_list.hpp>
+#include <diagnostic_msgs/msg/diagnostic_array.hpp>
 #include "yield_plugin.hpp"
 #include "yield_config.hpp"
 
@@ -47,7 +48,7 @@ public:
     // Overrides
     ////
     carma_ros2_utils::CallbackReturn on_configure_plugin();
-   
+
     bool get_availability() override;
 
     std::string get_version_id() override final;
@@ -70,6 +71,13 @@ private:
     // Publishers
     rclcpp_lifecycle::LifecyclePublisher<carma_v2x_msgs::msg::MobilityResponse>::SharedPtr mob_resp_pub_;
     rclcpp_lifecycle::LifecyclePublisher<carma_planning_msgs::msg::LaneChangeStatus>::SharedPtr lc_status_pub_;
+    rclcpp_lifecycle::LifecyclePublisher<diagnostic_msgs::msg::DiagnosticArray>::SharedPtr collision_diagnostic_pub_;
+
+    /**
+     * \brief Publishes the yield collision diagnostic of the planning cycle that just ran.
+     *        Publishes nothing if yield did not modify the trajectory for a collision.
+     */
+    void publish_collision_diagnostic();
 
     // Subscribers
     rclcpp::Subscription<carma_v2x_msgs::msg::MobilityRequest>::SharedPtr mob_request_sub_;

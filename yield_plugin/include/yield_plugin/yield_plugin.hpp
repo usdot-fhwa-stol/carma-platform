@@ -44,6 +44,7 @@
 #include <carma_wm/WorldModel.hpp>
 #include <carma_wm/collision_detection.hpp>
 #include <carma_wm/TrafficControl.hpp>
+#include <optional>
 
 
 namespace yield_plugin
@@ -68,6 +69,21 @@ struct GetCollisionResult
   rclcpp::Time collision_time;
   lanelet::BasicPoint2d ego_point;
   lanelet::BasicPoint2d object_point;
+};
+
+/**
+ * \brief Minimal snapshot of the latest object-avoidance yield decision, published as a diagnostic
+ */
+struct YieldCollisionDiagnostic
+{
+  uint32_t object_id = 0;
+  uint8_t object_type = carma_perception_msgs::msg::ExternalObject::UNKNOWN;
+  bool committed_to_stop = false;         // true while following a previously committed stopping trajectory (no new detection ran)
+  double downtrack_to_collision_m = 0.0;  // distance along ego trajectory until the predicted collision point
+  double speed_to_match_mps = 0.0;        // goal velocity of the yield trajectory
+  double time_to_collision_s = 0.0;       // predicted collision time - now
+  double detect_and_plan_time_s = 0.0;    // wall time spent detecting the collision and generating the trajectory
+  rclcpp::Time stamp;                     // ROS time at which this snapshot was produced
 };
 
 /**
@@ -351,6 +367,16 @@ public:
    */
   double get_predicted_velocity_at_time(const geometry_msgs::msg::Twist& object_velocity_in_map_frame, const carma_planning_msgs::msg::TrajectoryPlan& original_tp, double timestamp_in_sec_to_predict);
 
+  /**
+   * \brief Getter for the collision diagnostic of the latest plan_trajectory_callback call
+   * \return diagnostic if the latest planning cycle detected a collision and yielded to it, otherwise std::nullopt
+   */
+  std::optional<YieldCollisionDiagnostic> get_latest_collision_diagnostic() const;
+
+private:
+  std::optional<YieldCollisionDiagnostic> latest_collision_diagnostic_ = std::nullopt;
+  // diagnostic at the moment yield committed to stopping; republished while following the committed trajectory
+  std::optional<YieldCollisionDiagnostic> committed_stop_diagnostic_ = std::nullopt;
 
 private:
 

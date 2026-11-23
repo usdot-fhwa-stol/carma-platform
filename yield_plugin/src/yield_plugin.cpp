@@ -75,6 +75,28 @@ namespace yield_plugin
     return (rclcpp::Time(trajectory.back().header.stamp) - rclcpp::Time(trajectory.front().header.stamp)).seconds();
   }
 
+  // Distance traveled along the trajectory from its first point until the given time (linearly interpolated).
+  // Returns the full trajectory length if the time is past the trajectory end.
+  double distance_along_trajectory_until_time(const carma_planning_msgs::msg::TrajectoryPlan& trajectory, double time_in_s)
+  {
+    double distance = 0.0;
+    for (size_t i = 1; i < trajectory.trajectory_points.size(); ++i)
+    {
+      const auto& a = trajectory.trajectory_points[i - 1];
+      const auto& b = trajectory.trajectory_points[i];
+      const double segment_length = std::hypot(b.x - a.x, b.y - a.y);
+      const double a_time = rclcpp::Time(a.target_time).seconds();
+      const double b_time = rclcpp::Time(b.target_time).seconds();
+      if (b_time >= time_in_s)
+      {
+        const double ratio = (b_time - a_time) > 0.0 ? std::clamp((time_in_s - a_time) / (b_time - a_time), 0.0, 1.0) : 1.0;
+        return distance + ratio * segment_length;
+      }
+      distance += segment_length;
+    }
+    return distance;
+  }
+
   std::vector<std::pair<int, lanelet::BasicPoint2d>> YieldPlugin::detect_trajectories_intersection(std::vector<lanelet::BasicPoint2d> self_trajectory, std::vector<lanelet::BasicPoint2d> incoming_trajectory) const
   {
     std::vector<std::pair<int, lanelet::BasicPoint2d>> intersection_points;
@@ -265,6 +287,9 @@ namespace yield_plugin
     rclcpp::Clock system_clock(RCL_SYSTEM_TIME);
     rclcpp::Time start_time = system_clock.now();  // Start timing the execution time for planning so it can be logged
 
+    // Diagnostic only reflects the current planning cycle; it is set again if a collision is detected
+    latest_collision_diagnostic_ = std::nullopt;
+
     carma_planning_msgs::msg::TrajectoryPlan original_trajectory = req->initial_trajectory_plan;
     carma_planning_msgs::msg::TrajectoryPlan yield_trajectory;
 
@@ -292,6 +317,12 @@ namespace yield_plugin
       }
       last_traj_plan_committed_to_stopping_ = updated_trajectory;
       resp->trajectory_plan = last_traj_plan_committed_to_stopping_.value();
+
+      // No new collision detection runs here; keep reporting the committed stop until yield releases it
+      YieldCollisionDiagnostic diagnostic = committed_stop_diagnostic_.value_or(YieldCollisionDiagnostic{});
+      diagnostic.committed_to_stop = true;
+      diagnostic.stamp = nh_->now();
+      latest_collision_diagnostic_ = diagnostic;
 
       rclcpp::Time end_time = system_clock.now();  // Planning complete
 
@@ -359,6 +390,7 @@ namespace yield_plugin
         // Reset the collision prevention variables
         first_time_stopped_to_prevent_collision_ = std::nullopt;
         last_traj_plan_committed_to_stopping_ = std::nullopt;
+        committed_stop_diagnostic_ = std::nullopt;
 
       }
       else
@@ -1367,6 +1399,15 @@ namespace yield_plugin
     RCLCPP_DEBUG_STREAM(rclcpp::get_logger("yield_plugin"),
       "[timing] generate_JMT_trajectory: " << _jmt_ms << " ms");
 
+    YieldCollisionDiagnostic diagnostic;
+    diagnostic.object_id = earliest_collision_obj.id;
+    diagnostic.object_type = earliest_collision_obj.object_type;
+    diagnostic.downtrack_to_collision_m = distance_along_trajectory_until_time(original_tp, earliest_collision_time_in_seconds);
+    diagnostic.speed_to_match_mps = goal_velocity;
+    diagnostic.time_to_collision_s = earliest_collision_time_in_seconds - nh_->now().seconds();
+    diagnostic.detect_and_plan_time_s = std::chrono::duration<double>(std::chrono::steady_clock::now() - _t0_ect).count();
+    diagnostic.stamp = nh_->now();
+
     // If expected to stop to prevent collision, we should save this trajectory to commit to it
     if (!last_traj_plan_committed_to_stopping_.has_value() &&
         goal_velocity < EPSILON &&
@@ -1374,8 +1415,17 @@ namespace yield_plugin
         <= config_.time_horizon_until_collision_to_commit_to_stop_in_s)
     {
       last_traj_plan_committed_to_stopping_ = jmt_trajectory;
+      committed_stop_diagnostic_ = diagnostic;
     }
+
+    latest_collision_diagnostic_ = diagnostic;
+
     return jmt_trajectory;
+  }
+
+  std::optional<YieldCollisionDiagnostic> YieldPlugin::get_latest_collision_diagnostic() const
+  {
+    return latest_collision_diagnostic_;
   }
 
 
