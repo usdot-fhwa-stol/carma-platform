@@ -16,6 +16,7 @@
 
 #include <basic_autonomy/log/log.hpp>
 #include <basic_autonomy/helper_functions.hpp>
+#include <algorithm>
 
 namespace basic_autonomy
 {
@@ -642,6 +643,67 @@ namespace basic_autonomy
             return time_bound_points;
         }
 
+        std::vector<PointSpeedPair> constrain_to_time_boundary_conservatively(const std::vector<PointSpeedPair> &points,
+                                                                              double time_span, double speed_floor)
+        {
+            if (points.empty() || time_span <= 0)
+            {
+                return points;
+            }
+
+            std::vector<lanelet::BasicPoint2d> basic_points;
+            std::vector<double> speeds;
+            split_point_speed_pairs(points, &basic_points, &speeds);
+
+            // Use a single upper bound of the speed the final trajectory can reach. The final speeds are derived
+            // from the target speeds, the current vehicle speed and the minimum speed, and are only ever lowered by
+            // curvature/acceleration limits and smoothing, so they never exceed this bound. Estimating time with an
+            // upper-bound speed under-estimates the real travel time, so the kept geometry always lasts >= time_span.
+            double speed_upper_bound = std::max(speed_floor, *std::max_element(speeds.begin(), speeds.end()));
+            if (speed_upper_bound <= 0)
+            {
+                return points;
+            }
+            std::fill(speeds.begin(), speeds.end(), speed_upper_bound);
+
+            std::vector<double> downtracks = carma_wm::geometry::compute_arc_lengths(basic_points);
+
+            size_t time_boundary_exclusive_index =
+                trajectory_utils::time_boundary_index(downtracks, speeds, time_span);
+
+            // Keep the first point past the time boundary plus one more point as margin for the small
+            // amount of geometry lost at the end of the curve during spline resampling
+            size_t end_index = std::min(points.size(), time_boundary_exclusive_index + 2);
+
+            RCLCPP_DEBUG_STREAM(basic_autonomy::get_logger(), "constrain_to_time_boundary_conservatively: speed_upper_bound = "
+                << speed_upper_bound << ", time_boundary_exclusive_index = " << time_boundary_exclusive_index
+                << ", keeping " << end_index << " of " << points.size() << " points");
+
+            return std::vector<PointSpeedPair>(points.begin(), points.begin() + end_index);
+        }
+
+        std::vector<carma_planning_msgs::msg::TrajectoryPlanPoint> trim_trajectory_to_time_span(
+            const std::vector<carma_planning_msgs::msg::TrajectoryPlanPoint>& trajectory,
+            double time_span)
+        {
+            if (trajectory.empty() || time_span <= 0)
+            {
+                return trajectory;
+            }
+
+            const auto start_time = rclcpp::Time(trajectory.front().target_time);
+            for (size_t i = 0; i < trajectory.size(); ++i)
+            {
+                if ((rclcpp::Time(trajectory[i].target_time) - start_time).seconds() >= time_span)
+                {
+                    // Include the point reaching the time span so the trajectory is at least time_span long
+                    return std::vector<carma_planning_msgs::msg::TrajectoryPlanPoint>(trajectory.begin(), trajectory.begin() + i + 1);
+                }
+            }
+
+            return trajectory;
+        }
+
         std::pair<double, size_t> min_with_exclusions(const std::vector<double> &values, const std::unordered_set<size_t> &excluded)
         {
             double min = std::numeric_limits<double>::max();
@@ -855,7 +917,13 @@ namespace basic_autonomy
 
             RCLCPP_DEBUG_STREAM(basic_autonomy::get_logger(), "Ready to call constrain_to_time_boundary: future_points size = " << future_points.size() << ", trajectory_time_length = " << detailed_config.trajectory_time_length);
 
-            auto time_bound_points = constrain_to_time_boundary(future_points, detailed_config.trajectory_time_length);
+            // NOTE: The target speeds in the points are not the speeds the trajectory will actually have (e.g. vehicle is
+            // decelerating into a lower speed limit zone such as a work zone), and the points are heavily downsampled.
+            // Pre-cutting the geometry using the target speeds therefore can leave noticeably less than trajectory_time_length
+            // of trajectory even when more road is available to plan. So conservatively keep enough geometry here and
+            // trim to the exact time length after the actual speeds are computed.
+            auto time_bound_points = constrain_to_time_boundary_conservatively(future_points, detailed_config.trajectory_time_length,
+                                                                               std::max(state.longitudinal_vel, detailed_config.minimum_speed));
 
             RCLCPP_DEBUG_STREAM(basic_autonomy::get_logger(), "Got time_bound_points with size:" << time_bound_points.size());
             log::printDebugPerLine(time_bound_points, &log::pointSpeedPairToStream);
@@ -1032,6 +1100,16 @@ namespace basic_autonomy
             // Build trajectory points
             std::vector<carma_planning_msgs::msg::TrajectoryPlanPoint> traj_points =
                 trajectory_from_points_times_orientations(all_sampling_points, times, final_yaw_values, state_time, detailed_config.desired_controller_plugin);
+
+            // Trim to the requested time length now that actual speeds are known
+            traj_points = trim_trajectory_to_time_span(traj_points, detailed_config.trajectory_time_length);
+            RCLCPP_DEBUG_STREAM(basic_autonomy::get_logger(), "Trajectory trimmed to time span: " << detailed_config.trajectory_time_length
+                << ", resulting size: " << traj_points.size());
+
+            // Keep per-point profiles aligned with the trimmed trajectory
+            final_actual_speeds.resize(traj_points.size());
+            downtracks.resize(traj_points.size());
+            final_yaw_values.resize(traj_points.size());
 
             //debug msg
             carma_debug_ros2_msgs::msg::TrajectoryCurvatureSpeeds msg;

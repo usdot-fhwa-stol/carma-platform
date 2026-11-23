@@ -134,6 +134,34 @@ namespace basic_autonomy
             double time_span);
 
        /**
+        * \brief Reduces the input points to a prefix whose geometry is guaranteed to take at least time_span to traverse
+        *        (if enough points exist). Unlike constrain_to_time_boundary, travel time is estimated with an upper bound
+        *        of the speed (max of all target speeds and speed_floor), so the output is never shorter in time than
+        *        time_span once real speeds (which can only be lower than that bound) are applied.
+        *
+        * \param points The input point speed pairs to reduce. Speeds are not modified.
+        * \param time_span The time span in seconds which the output points must at least cover
+        * \param speed_floor Lower bound for the speed upper bound, typically max(current vehicle speed, minimum speed)
+        *
+        * \return The prefix of points covering at least time_span, or all points if they don't
+        */
+        std::vector<PointSpeedPair> constrain_to_time_boundary_conservatively(const std::vector<PointSpeedPair> &points,
+                                                                              double time_span, double speed_floor);
+
+       /**
+        * \brief Trims the trajectory to the first point (inclusive) whose relative time reaches time_span, so the
+        *        result is at least time_span long when the input is.
+        *
+        * \param trajectory The input trajectory plan points each with target_time
+        * \param time_span The time span in seconds
+        *
+        * \return The trimmed trajectory
+        */
+        std::vector<carma_planning_msgs::msg::TrajectoryPlanPoint> trim_trajectory_to_time_span(
+            const std::vector<carma_planning_msgs::msg::TrajectoryPlanPoint>& trajectory,
+            double time_span);
+
+       /**
         * \brief Returns the min, and its idx, from the vector of values, excluding given set of values
         * \param values vector of values
         * \param excluded set of excluded values
