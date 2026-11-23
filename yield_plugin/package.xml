@@ -32,6 +32,7 @@
   <depend>carma_ros2_utils</depend>
   <depend>rclcpp_components</depend>
   <depend>std_msgs</depend>
+  <depend>diagnostic_msgs</depend>
   <depend>autoware_msgs</depend>
   <depend>carma_planning_msgs</depend>
   <depend>carma_v2x_msgs</depend>
