@@ -189,9 +189,9 @@ namespace basic_autonomy
                     lanelet::BasicLineString2d centerline = l.centerline2d().basicLineString();
                     lanelet::BasicLineString2d downsampled_points;
                     if (is_turn) {
-                        downsampled_points = carma_ros2_utils::containers::downsample_vector(centerline, general_config.turn_downsample_ratio);
+                        downsampled_points = downsample_keep_endpoints(centerline, general_config.turn_downsample_ratio);
                     } else {
-                        downsampled_points = carma_ros2_utils::containers::downsample_vector(centerline, general_config.default_downsample_ratio);
+                        downsampled_points = downsample_keep_endpoints(centerline, general_config.default_downsample_ratio);
                     }
 
                     if(downsampled_centerline.size() != 0 && downsampled_points.size() != 0 // If this is not the first lanelet and the points are closer than 1m drop the first point to prevent overlap
@@ -256,7 +256,9 @@ namespace basic_autonomy
                 dist_accumulator += delta_d;
                 RCLCPP_DEBUG_STREAM(basic_autonomy::get_logger(), "Index i: " << i << ", delta_d: " << delta_d << ", dist_accumulator:" << dist_accumulator <<", current_point.x():" << current_point.x() <<
                 "current_point.y():" << current_point.y());
-                if (dist_accumulator > maneuvers.back().lane_following_maneuver.end_dist && !found_unbuffered_idx)
+                // The tolerance keeps the point lying on the maneuver end (lanelet end) despite floating point error
+                // in the accumulated distance; otherwise the ending state snaps back to the previous downsampled point
+                if (dist_accumulator > maneuvers.back().lane_following_maneuver.end_dist + end_dist_tolerance_ && !found_unbuffered_idx)
                 {
                     unbuffered_idx = i - 1;
                     RCLCPP_DEBUG_STREAM(basic_autonomy::get_logger(), "Found index unbuffered_idx at: " << unbuffered_idx);
