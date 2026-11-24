@@ -18,6 +18,7 @@
 #include <trajectory_utils/conversions/conversions.hpp>
 #include <carma_wm/Geometry.hpp>
 #include <algorithm>
+#include <basic_autonomy/log/log.hpp>
 
 
 namespace pure_pursuit_wrapper
@@ -27,6 +28,7 @@ namespace std_ph = std::placeholders;
 PurePursuitWrapperNode::PurePursuitWrapperNode(const rclcpp::NodeOptions& options)
   : carma_guidance_plugins::ControlPlugin(options)
 {
+  basic_autonomy::set_logger(get_logger().get_child("basic_autonomy"));
   config_ = PurePursuitWrapperConfig();
   config_.vehicle_response_lag = declare_parameter<double>("vehicle_response_lag", config_.vehicle_response_lag);
   config_.minimum_lookahead_distance = declare_parameter<double>("minimum_lookahead_distance", config_.minimum_lookahead_distance);

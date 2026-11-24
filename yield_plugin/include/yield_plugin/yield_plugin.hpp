@@ -45,6 +45,7 @@
 #include <carma_wm/WorldModel.hpp>
 #include <carma_wm/collision_detection.hpp>
 #include <carma_wm/TrafficControl.hpp>
+#include <optional>
 
 
 namespace yield_plugin
@@ -69,6 +70,22 @@ struct GetCollisionResult
   rclcpp::Time collision_time;
   lanelet::BasicPoint2d ego_point;
   lanelet::BasicPoint2d object_point;
+};
+
+/**
+ * \brief Minimal snapshot of the latest object-avoidance yield decision, published as a diagnostic
+ */
+struct YieldCollisionDiagnostic
+{
+  uint32_t object_id = 0;
+  uint8_t object_type = carma_perception_msgs::msg::ExternalObject::UNKNOWN;
+  bool committed_to_stop = false;         // true while following a previously committed stopping trajectory (no new detection ran)
+  lanelet::BasicPoint2d collision_point{0.0, 0.0};  // predicted collision location (object's predicted position at collision time) in map frame
+  double downtrack_to_collision_m = 0.0;  // route downtrack from the ego vehicle to the collision location
+  double speed_to_match_mps = 0.0;        // goal velocity of the yield trajectory
+  double time_to_collision_s = 0.0;       // time to reach the collision location at current actual speed from vehicle/twist (downtrack / current speed)
+  double detect_and_plan_time_s = 0.0;    // wall time spent detecting the collision and generating the trajectory
+  rclcpp::Time stamp;                     // ROS time at which this snapshot was produced
 };
 
 /**
@@ -245,6 +262,12 @@ public:
   void set_external_objects(const std::vector<carma_perception_msgs::msg::ExternalObject>& object_list);
 
   /**
+   * \brief Setter for the vehicle's current actual speed (from vehicle/twist), used for the collision diagnostic time to collision
+   * \param speed_mps current longitudinal speed in m/s
+   */
+  void set_current_speed(double speed_mps);
+
+  /**
    * \brief Rebuild the cached route lanelet polygons and IDs from the current route.
    *        Should be called once whenever the route changes via setRouteCallback().
    */
@@ -352,6 +375,24 @@ public:
    */
   double get_predicted_velocity_at_time(const geometry_msgs::msg::Twist& object_velocity_in_map_frame, const carma_planning_msgs::msg::TrajectoryPlan& original_tp, double timestamp_in_sec_to_predict);
 
+  /**
+   * \brief Getter for the collision diagnostic of the latest plan_trajectory_callback call
+   * \return diagnostic if the latest planning cycle detected a collision and yielded to it, otherwise std::nullopt
+   */
+  std::optional<YieldCollisionDiagnostic> get_latest_collision_diagnostic() const;
+
+private:
+  std::optional<YieldCollisionDiagnostic> latest_collision_diagnostic_ = std::nullopt;
+  // diagnostic at the moment yield committed to stopping; republished while following the committed trajectory
+  std::optional<YieldCollisionDiagnostic> committed_stop_diagnostic_ = std::nullopt;
+  // vehicle's current actual speed from vehicle/twist; std::nullopt until the first message is received
+  std::optional<double> current_speed_mps_ = std::nullopt;
+
+  /**
+   * \brief Time to reach the collision location at the vehicle's current actual speed
+   * \return downtrack_to_collision_m / current speed, or infinity if stopped or speed not yet received
+   */
+  double get_time_to_collision(double downtrack_to_collision_m) const;
 
 private:
 

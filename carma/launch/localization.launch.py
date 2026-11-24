@@ -39,6 +39,7 @@ def generate_launch_description():
     Launch Localization subsystem nodes
     """
 
+    # Log level is set from CARMA_ROS_LOGGING_CONFIG, generated from carma_rosconsole.conf in the vehicle config dir (carma-config)
     env_log_levels = EnvironmentVariable('CARMA_ROS_LOGGING_CONFIG', default_value='{ "default_level" : "WARN" }')
     vehicle_config_param_file = LaunchConfiguration('vehicle_config_param_file')
     subsystem_controller_default_param_file = os.path.join(
@@ -115,7 +116,6 @@ def generate_launch_description():
                 name='gnss_to_map_convertor',
                 extra_arguments=[
                     {'use_intra_process_comms': True},
-                    {'--log-level' : GetLogLevel('gnss_to_map_convertor', env_log_levels) }
                 ],
                 remappings=[
                     ("gnss_fix_fused",  [EnvironmentVariable('CARMA_INTR_NS', default_value=''),"/gnss_fix_fused"]),
@@ -139,7 +139,6 @@ def generate_launch_description():
                 name='localization_manager',
                 extra_arguments=[
                     {'use_intra_process_comms': True},
-                    {'--log-level' : GetLogLevel('localization_manager', env_log_levels) }
                 ],
                 remappings=[
 
@@ -165,7 +164,6 @@ def generate_launch_description():
                 name='map_param_loader',
                 extra_arguments=[
                     {'use_intra_process_comms': True},
-                    {'--log-level' : GetLogLevel('map_param_loader', env_log_levels) }
                 ],
                 remappings=[
                     ("georeference", "map_param_loader/georeference"),
@@ -190,7 +188,6 @@ def generate_launch_description():
                 name='points_map_loader',
                 extra_arguments=[
                     {'use_intra_process_comms': True},
-                    {'--log-level' : GetLogLevel('points_map_loader', env_log_levels) }
                 ],
                 parameters=[
                     {'load_type' : load_type },
@@ -218,7 +215,6 @@ def generate_launch_description():
                 name='dead_reckoner',
                 extra_arguments=[
                     {'use_intra_process_comms': True},
-                    {'--log-level' : GetLogLevel('dead_reckoner', env_log_levels) }
                 ],
                 remappings=[
                     ("current_twist", [EnvironmentVariable('CARMA_INTR_NS', default_value=''), "/vehicle/twist" ]),
@@ -248,7 +244,6 @@ def generate_launch_description():
                 name='ndt_matching',
                 extra_arguments=[
                     {'use_intra_process_comms': True},
-                    {'--log-level' : GetLogLevel('ndt_matching', env_log_levels) }
                 ],
                 remappings=[
                     ("/config/ndt", "config/ndt"),
@@ -286,7 +281,6 @@ def generate_launch_description():
                 name='ekf_localizer',
                 extra_arguments=[
                     {'use_intra_process_comms': True},
-                    {'--log-level' : GetLogLevel('ekf_localizer', env_log_levels) }
                 ],
                 remappings=[
                     ("in_pose","selected_pose"),
@@ -347,7 +341,6 @@ def generate_launch_description():
                 name='voxel_grid_filter_node',
                 extra_arguments=[
                      {'use_intra_process_comms': True},
-                    {'--log-level' : GetLogLevel('voxel_grid_filter', env_log_levels) }
                 ],
                 parameters=[
                     {"points_topic": [EnvironmentVariable('CARMA_INTR_NS', default_value=''), "/lidar/points_raw" ]},
@@ -374,7 +367,6 @@ def generate_launch_description():
                 name='random_filter_node',
                 extra_arguments=[
                     {'use_intra_process_comms': True},
-                    {'--log-level' : GetLogLevel('random_filter', env_log_levels) }
                 ],
                 parameters=[
                     {"points_topic": "filtered_points"},
@@ -386,7 +378,6 @@ def generate_launch_description():
             ),
         ]
     )
-
 
     # subsystem_controller which orchestrates the lifecycle of this subsystem's components
     subsystem_controller = Node(

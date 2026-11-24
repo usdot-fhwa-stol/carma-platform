@@ -192,6 +192,7 @@ These are covered by [test/test_collision_cuda_benchmark.cpp](test/test_collisio
 | `incoming_mobility_request` | `MobilityRequest` | Cooperative lanechange requests from other vehicles |
 | `bsm_outbound` | `BSM` | Host vehicle BSM ID (used in mobility response headers) |
 | `georeference` | `std_msgs/String` | Proj string for ECEF→map conversion |
+| `current_velocity` | `geometry_msgs/TwistStamped` | Vehicle's current actual speed (remapped to `/hardware_interface/vehicle/twist`), used for the collision diagnostic `time_to_collision_s` |
 
 ### Published Topics
 
@@ -199,6 +200,7 @@ These are covered by [test/test_collision_cuda_benchmark.cpp](test/test_collisio
 |---|---|---|
 | `outgoing_mobility_response` | `MobilityResponse` | Accept/reject cooperative requests |
 | `cooperative_lane_change_status` | `LaneChangeStatus` | CLC state machine status |
+| `yield_collision_diagnostic` | `diagnostic_msgs/DiagnosticArray` | Published once per `plan_trajectory` call (10 Hz by default, set by plan_delegator `trajectory_planning_rate`), only while yield is modifying the trajectory for a detected collision. Values: `object_id`, `object_type`, `downtrack_to_collision_m`, `speed_to_match_mph`, `time_to_collision_s`, `detect_and_plan_time_s`. `downtrack_to_collision_m` is the route downtrack from the ego vehicle to the predicted collision location (the object's predicted position at the collision time), and `time_to_collision_s` is that downtrack divided by the vehicle's current actual speed from `current_velocity` (remapped to `/hardware_interface/vehicle/twist`; `inf` when stopped or not yet received). While following a committed stop (no new detection), it keeps reporting the object that triggered the stop, with `downtrack_to_collision_m` and `time_to_collision_s` updated each cycle against that stored collision location, and `speed_to_match_mph`/`detect_and_plan_time_s` from the cycle that committed to the stop |
 
 ### Service
 

@@ -39,6 +39,7 @@
 #include <thread>
 #include <unordered_set>
 #include <basic_autonomy/helper_functions.hpp>
+#include <basic_autonomy/log/log.hpp>
 #include <yield_plugin/yield_plugin_cuda.cuh>
 
 using oss = std::ostringstream;
@@ -51,7 +52,7 @@ namespace yield_plugin
                                             LaneChangeStatusCB lc_status_publisher)
     : nh_(nh), wm_(wm), config_(config),mobility_response_publisher_(mobility_response_publisher), lc_status_publisher_(lc_status_publisher)
   {
-
+    basic_autonomy::set_logger(nh_->get_logger().get_child("basic_autonomy"));
   }
 
   double get_trajectory_end_time(const carma_planning_msgs::msg::TrajectoryPlan& trajectory)
@@ -264,6 +265,9 @@ namespace yield_plugin
     rclcpp::Clock system_clock(RCL_SYSTEM_TIME);
     rclcpp::Time start_time = system_clock.now();  // Start timing the execution time for planning so it can be logged
 
+    // Diagnostic only reflects the current planning cycle; it is set again if a collision is detected
+    latest_collision_diagnostic_ = std::nullopt;
+
     carma_planning_msgs::msg::TrajectoryPlan original_trajectory = req->initial_trajectory_plan;
     carma_planning_msgs::msg::TrajectoryPlan yield_trajectory;
 
@@ -289,8 +293,25 @@ namespace yield_plugin
               (updated_trajectory.trajectory_points.begin() + idx_to_start_new_traj,
               updated_trajectory.trajectory_points.end());
       }
+      // The committed trajectory keeps the initial velocity from when it was generated. The controller derives
+      // point speeds from it, so a stale (higher) value makes the vehicle creep instead of stopping, which keeps
+      // yield committed indefinitely. Use the vehicle's current actual speed instead.
+      updated_trajectory.initial_longitudinal_velocity = current_speed_mps_.value_or(req->vehicle_state.longitudinal_vel);
       last_traj_plan_committed_to_stopping_ = updated_trajectory;
       resp->trajectory_plan = last_traj_plan_committed_to_stopping_.value();
+
+      // No new collision detection runs here; keep reporting the committed stop until yield releases it,
+      // with downtrack and time to collision updated against the collision location that triggered the stop at current speed
+      YieldCollisionDiagnostic diagnostic = committed_stop_diagnostic_.value_or(YieldCollisionDiagnostic{});
+      diagnostic.committed_to_stop = true;
+      if (committed_stop_diagnostic_)
+      {
+        diagnostic.downtrack_to_collision_m = wm_->routeTrackPos(diagnostic.collision_point).downtrack
+          - wm_->routeTrackPos(veh_pos).downtrack;
+        diagnostic.time_to_collision_s = get_time_to_collision(diagnostic.downtrack_to_collision_m);
+      }
+      diagnostic.stamp = nh_->now();
+      latest_collision_diagnostic_ = diagnostic;
 
       rclcpp::Time end_time = system_clock.now();  // Planning complete
 
@@ -358,6 +379,7 @@ namespace yield_plugin
         // Reset the collision prevention variables
         first_time_stopped_to_prevent_collision_ = std::nullopt;
         last_traj_plan_committed_to_stopping_ = std::nullopt;
+        committed_stop_diagnostic_ = std::nullopt;
 
       }
       else
@@ -1410,6 +1432,17 @@ namespace yield_plugin
     RCLCPP_DEBUG_STREAM(rclcpp::get_logger("yield_plugin"),
       "[timing] generate_JMT_trajectory: " << _jmt_ms << " ms");
 
+    YieldCollisionDiagnostic diagnostic;
+    diagnostic.object_id = earliest_collision_obj.id;
+    diagnostic.object_type = earliest_collision_obj.object_type;
+    diagnostic.collision_point = earliest_collision_obj_point;
+    // Distance along the route from the ego vehicle to the collision location
+    diagnostic.downtrack_to_collision_m = wm_->routeTrackPos(diagnostic.collision_point).downtrack - vehicle_downtrack;
+    diagnostic.speed_to_match_mps = goal_velocity;
+    diagnostic.time_to_collision_s = get_time_to_collision(diagnostic.downtrack_to_collision_m);
+    diagnostic.detect_and_plan_time_s = std::chrono::duration<double>(std::chrono::steady_clock::now() - _t0_ect).count();
+    diagnostic.stamp = nh_->now();
+
     // If expected to stop to prevent collision, we should save this trajectory to commit to it
     if (!last_traj_plan_committed_to_stopping_.has_value() &&
         goal_velocity < EPSILON &&
@@ -1417,8 +1450,17 @@ namespace yield_plugin
         <= config_.time_horizon_until_collision_to_commit_to_stop_in_s)
     {
       last_traj_plan_committed_to_stopping_ = jmt_trajectory;
+      committed_stop_diagnostic_ = diagnostic;
     }
+
+    latest_collision_diagnostic_ = diagnostic;
+
     return jmt_trajectory;
+  }
+
+  std::optional<YieldCollisionDiagnostic> YieldPlugin::get_latest_collision_diagnostic() const
+  {
+    return latest_collision_diagnostic_;
   }
 
 
@@ -1557,6 +1599,21 @@ namespace yield_plugin
       georeference_ = georeference;
       map_projector_ = std::make_shared<lanelet::projection::LocalFrameProjector>(georeference.c_str());  // Build projector from proj string
     }
+  }
+
+  void YieldPlugin::set_current_speed(double speed_mps)
+  {
+    current_speed_mps_ = speed_mps;
+  }
+
+  double YieldPlugin::get_time_to_collision(double downtrack_to_collision_m) const
+  {
+    if (!current_speed_mps_)
+    {
+      RCLCPP_WARN_STREAM_ONCE(rclcpp::get_logger("yield_plugin"), "No vehicle/twist received yet, reporting time_to_collision_s as inf");
+      return std::numeric_limits<double>::infinity();
+    }
+    return current_speed_mps_.value() > EPSILON ? downtrack_to_collision_m / current_speed_mps_.value() : std::numeric_limits<double>::infinity();
   }
 
   void YieldPlugin::set_external_objects(const std::vector<carma_perception_msgs::msg::ExternalObject>& object_list)

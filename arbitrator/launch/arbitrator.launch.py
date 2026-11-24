@@ -16,30 +16,22 @@ from ament_index_python import get_package_share_directory
 from launch import LaunchDescription
 from launch_ros.actions import ComposableNodeContainer
 from launch_ros.descriptions import ComposableNode
-from launch.actions import DeclareLaunchArgument
-from launch.substitutions import LaunchConfiguration
 from carma_ros2_utils.launch.get_current_namespace import GetCurrentNamespace
 
 import os
-
 
 '''
 This file is can be used to launch the CARMA arbitrator.
   Though in carma-platform it may be launched directly from the base launch file.
 '''
 
+
 def generate_launch_description():
 
-    # Declare the log_level launch argument
-    log_level = LaunchConfiguration('log_level')
-    declare_log_level_arg = DeclareLaunchArgument(
-        name ='log_level', default_value='DEBUG')
-    
     # Get parameter file path
     param_file_path = os.path.join(
         get_package_share_directory('arbitrator'), 'config/arbitrator_params.yaml')
 
-        
     # Launch node(s) in a carma container to allow logging to be configured
     container = ComposableNodeContainer(
         package='carma_ros2_utils',
@@ -47,7 +39,7 @@ def generate_launch_description():
         namespace=GetCurrentNamespace(),
         executable='carma_component_container_mt',
         composable_node_descriptions=[
-            
+
             # Launch the core node(s)
             ComposableNode(
                     package='arbitrator',
@@ -55,7 +47,6 @@ def generate_launch_description():
                     name='arbitrator_node',
                     extra_arguments=[
                         {'use_intra_process_comms': True},
-                        {'--log-level' : log_level }
                     ],
                     parameters=[ param_file_path ]
             ),
@@ -63,6 +54,5 @@ def generate_launch_description():
     )
 
     return LaunchDescription([
-        declare_log_level_arg,
         container
     ])

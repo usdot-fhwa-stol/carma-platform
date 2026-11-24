@@ -29,7 +29,7 @@ namespace basic_autonomy
             bool first = true;
             std::unordered_set<lanelet::Id> visited_lanelets;
 
-            RCLCPP_DEBUG_STREAM(rclcpp::get_logger(BASIC_AUTONOMY_LOGGER), "VehDowntrack:"<<max_starting_downtrack);
+            RCLCPP_DEBUG_STREAM(basic_autonomy::get_logger(), "VehDowntrack:"<<max_starting_downtrack);
             for(const auto &maneuver : maneuvers)
             {
                 double starting_downtrack = GET_MANEUVER_PROPERTY(maneuver, start_dist);
@@ -38,15 +38,15 @@ namespace basic_autonomy
                     starting_downtrack = std::min(starting_downtrack, max_starting_downtrack);
                     first = false;
                 }
-                RCLCPP_DEBUG_STREAM(rclcpp::get_logger(BASIC_AUTONOMY_LOGGER), "Used downtrack: " << starting_downtrack);
+                RCLCPP_DEBUG_STREAM(basic_autonomy::get_logger(), "Used downtrack: " << starting_downtrack);
 
                 if(maneuver.type == carma_planning_msgs::msg::Maneuver::LANE_FOLLOWING){
-                    RCLCPP_DEBUG_STREAM(rclcpp::get_logger(BASIC_AUTONOMY_LOGGER),"Creating Lane Follow Geometry");
+                    RCLCPP_DEBUG_STREAM(basic_autonomy::get_logger(),"Creating Lane Follow Geometry");
                     std::vector<PointSpeedPair> lane_follow_points = create_lanefollow_geometry(maneuver, starting_downtrack, wm, general_config, detailed_config, visited_lanelets);
                     points_and_target_speeds.insert(points_and_target_speeds.end(), lane_follow_points.begin(), lane_follow_points.end());
                 }
                 else if(maneuver.type == carma_planning_msgs::msg::Maneuver::LANE_CHANGE){
-                    RCLCPP_DEBUG_STREAM(rclcpp::get_logger(BASIC_AUTONOMY_LOGGER), "Creating Lane Change Geometry");
+                    RCLCPP_DEBUG_STREAM(basic_autonomy::get_logger(), "Creating Lane Change Geometry");
                     std::vector<PointSpeedPair> lane_change_points = get_lanechange_points_from_maneuver(maneuver, starting_downtrack, wm, ending_state_before_buffer, state, general_config, detailed_config);
                     points_and_target_speeds.insert(points_and_target_speeds.end(), lane_change_points.begin(), lane_change_points.end());
                 }
@@ -125,11 +125,11 @@ namespace basic_autonomy
 
             if (lanelets.empty())
             {
-                RCLCPP_ERROR_STREAM(rclcpp::get_logger(BASIC_AUTONOMY_LOGGER), "Detected no lanelets between starting downtrack: "<< starting_downtrack << ", and lane_following_maneuver.end_dist: "<< lane_following_maneuver.end_dist);
+                RCLCPP_ERROR_STREAM(basic_autonomy::get_logger(), "Detected no lanelets between starting downtrack: "<< starting_downtrack << ", and lane_following_maneuver.end_dist: "<< lane_following_maneuver.end_dist);
                 throw std::invalid_argument("Detected no lanelets between starting_downtrack and end_dist");
             }
 
-            RCLCPP_DEBUG_STREAM(rclcpp::get_logger(BASIC_AUTONOMY_LOGGER), "Maneuver");
+            RCLCPP_DEBUG_STREAM(basic_autonomy::get_logger(), "Maneuver");
 
             lanelet::BasicLineString2d downsampled_centerline;
             // 400 value here is an arbitrary attempt at improving inlane-cruising performance by reducing copy operations.
@@ -145,7 +145,7 @@ namespace basic_autonomy
 
             if(lanelets.size() <= 1) //no lane change anyways if only size 1
             {
-                RCLCPP_DEBUG_STREAM(rclcpp::get_logger(BASIC_AUTONOMY_LOGGER), "Detected one straight lanelet Id:" << lanelets[curr_idx].id());
+                RCLCPP_DEBUG_STREAM(basic_autonomy::get_logger(), "Detected one straight lanelet Id:" << lanelets[curr_idx].id());
                 straight_lanelets = lanelets;
             }
             else
@@ -154,12 +154,12 @@ namespace basic_autonomy
                 while (curr_idx + 1 < lanelets.size() &&
                         std::find(following_lanelets.begin(),following_lanelets.end(), lanelets[curr_idx + 1]) == following_lanelets.end())
                 {
-                    RCLCPP_DEBUG_STREAM(rclcpp::get_logger(BASIC_AUTONOMY_LOGGER), "As there were no directly following lanelets after this, skipping lanelet id: " << lanelets[curr_idx].id());
+                    RCLCPP_DEBUG_STREAM(basic_autonomy::get_logger(), "As there were no directly following lanelets after this, skipping lanelet id: " << lanelets[curr_idx].id());
                     curr_idx ++;
                     following_lanelets = wm->getMapRoutingGraph()->following(lanelets[curr_idx]);
                 }
 
-                RCLCPP_DEBUG_STREAM(rclcpp::get_logger(BASIC_AUTONOMY_LOGGER), "Added lanelet Id for lane follow: " << lanelets[curr_idx].id());
+                RCLCPP_DEBUG_STREAM(basic_autonomy::get_logger(), "Added lanelet Id for lane follow: " << lanelets[curr_idx].id());
                 // guaranteed to have at least one "straight" lanelet (e.g the last one in the list)
                 straight_lanelets.push_back(lanelets[curr_idx]);
                       // add all lanelets on the straight road until next lanechange
@@ -167,7 +167,7 @@ namespace basic_autonomy
                         std::find(following_lanelets.begin(),following_lanelets.end(), lanelets[curr_idx + 1]) != following_lanelets.end())
                 {
                     curr_idx++;
-                    RCLCPP_DEBUG_STREAM(rclcpp::get_logger(BASIC_AUTONOMY_LOGGER), "Added lanelet Id forlane follow: " << lanelets[curr_idx].id());
+                    RCLCPP_DEBUG_STREAM(basic_autonomy::get_logger(), "Added lanelet Id forlane follow: " << lanelets[curr_idx].id());
                     straight_lanelets.push_back(lanelets[curr_idx]);
                     following_lanelets = wm->getMapRoutingGraph()->following(lanelets[curr_idx]);
                 }
@@ -176,7 +176,7 @@ namespace basic_autonomy
 
             for (auto l : straight_lanelets)
             {
-                RCLCPP_DEBUG_STREAM(rclcpp::get_logger(BASIC_AUTONOMY_LOGGER), "Processing lanelet ID: " << l.id());
+                RCLCPP_DEBUG_STREAM(basic_autonomy::get_logger(), "Processing lanelet ID: " << l.id());
                 if (visited_lanelets.find(l.id()) == visited_lanelets.end())
                 {
 
@@ -233,7 +233,7 @@ namespace basic_autonomy
             // though this is not likely to be an issue as they are buffer only
             double ending_downtrack = maneuvers.back().lane_following_maneuver.end_dist + detailed_config.buffer_ending_downtrack;
 
-            RCLCPP_DEBUG_STREAM(rclcpp::get_logger(BASIC_AUTONOMY_LOGGER), "Add lanefollow buffer: ending_downtrack: " << ending_downtrack << ", maneuvers.back().lane_following_maneuver.end_dist: " << maneuvers.back().lane_following_maneuver.end_dist <<
+            RCLCPP_DEBUG_STREAM(basic_autonomy::get_logger(), "Add lanefollow buffer: ending_downtrack: " << ending_downtrack << ", maneuvers.back().lane_following_maneuver.end_dist: " << maneuvers.back().lane_following_maneuver.end_dist <<
                             ", detailed_config.buffer_ending_downtrack: " << detailed_config.buffer_ending_downtrack);
 
             size_t max_i = points_and_target_speeds.size() - 1;
@@ -254,18 +254,18 @@ namespace basic_autonomy
                 double delta_d = lanelet::geometry::distance2d(prev_point, current_point);
 
                 dist_accumulator += delta_d;
-                RCLCPP_DEBUG_STREAM(rclcpp::get_logger(BASIC_AUTONOMY_LOGGER), "Index i: " << i << ", delta_d: " << delta_d << ", dist_accumulator:" << dist_accumulator <<", current_point.x():" << current_point.x() <<
+                RCLCPP_DEBUG_STREAM(basic_autonomy::get_logger(), "Index i: " << i << ", delta_d: " << delta_d << ", dist_accumulator:" << dist_accumulator <<", current_point.x():" << current_point.x() <<
                 "current_point.y():" << current_point.y());
                 if (dist_accumulator > maneuvers.back().lane_following_maneuver.end_dist && !found_unbuffered_idx)
                 {
                     unbuffered_idx = i - 1;
-                    RCLCPP_DEBUG_STREAM(rclcpp::get_logger(BASIC_AUTONOMY_LOGGER), "Found index unbuffered_idx at: " << unbuffered_idx);
+                    RCLCPP_DEBUG_STREAM(basic_autonomy::get_logger(), "Found index unbuffered_idx at: " << unbuffered_idx);
                     found_unbuffered_idx = true;
                 }
 
                 if (dist_accumulator > ending_downtrack) {
                     max_i = i;
-                    RCLCPP_DEBUG_STREAM(rclcpp::get_logger(BASIC_AUTONOMY_LOGGER), "Max_i breaking at: i: " << i << ", max_i: " << max_i);
+                    RCLCPP_DEBUG_STREAM(basic_autonomy::get_logger(), "Max_i breaking at: i: " << i << ", max_i: " << max_i);
                     break;
                 }
 
@@ -275,11 +275,11 @@ namespace basic_autonomy
                 if (i == points_and_target_speeds.size() - 1) // dist_accumulator < ending_downtrack is guaranteed by earlier conditional
                 {
 
-                    RCLCPP_DEBUG_STREAM(rclcpp::get_logger(BASIC_AUTONOMY_LOGGER), "Extending trajectory using buffer beyond end of target lanelet");
+                    RCLCPP_DEBUG_STREAM(basic_autonomy::get_logger(), "Extending trajectory using buffer beyond end of target lanelet");
                     int j = i - 1;
                     while (delta_d < epsilon_ && j >= 0 && !delta_point)
                     {
-                        RCLCPP_DEBUG_STREAM(rclcpp::get_logger(BASIC_AUTONOMY_LOGGER), "Looking at index j: " << j << ", where i: " << i);
+                        RCLCPP_DEBUG_STREAM(basic_autonomy::get_logger(), "Looking at index j: " << j << ", where i: " << i);
                         prev_point = points_and_target_speeds.at(j).point;
                         j--;
                         delta_d = lanelet::geometry::distance2d(prev_point, current_point);
@@ -308,7 +308,7 @@ namespace basic_autonomy
 
             ending_state_before_buffer.x_pos_global = points_and_target_speeds[unbuffered_idx].point.x();
             ending_state_before_buffer.y_pos_global = points_and_target_speeds[unbuffered_idx].point.y();
-            RCLCPP_DEBUG_STREAM(rclcpp::get_logger(BASIC_AUTONOMY_LOGGER), "Here ending_state_before_buffer.x_pos_global: " << ending_state_before_buffer.x_pos_global <<
+            RCLCPP_DEBUG_STREAM(basic_autonomy::get_logger(), "Here ending_state_before_buffer.x_pos_global: " << ending_state_before_buffer.x_pos_global <<
             ", and y_pos_global" << ending_state_before_buffer.y_pos_global);
 
             std::vector<PointSpeedPair> constrained_points(points_and_target_speeds.begin(), points_and_target_speeds.begin() + max_i);
@@ -461,7 +461,7 @@ namespace basic_autonomy
             auto end_time = std::chrono::high_resolution_clock::now();
 
             auto duration = std::chrono::duration_cast<std::chrono::milliseconds>(end_time - start_time);
-            RCLCPP_DEBUG_STREAM(rclcpp::get_logger(BASIC_AUTONOMY_LOGGER), "ExecutionTime for resample lane change centerlines: " << duration.count() << " milliseconds");
+            RCLCPP_DEBUG_STREAM(basic_autonomy::get_logger(), "ExecutionTime for resample lane change centerlines: " << duration.count() << " milliseconds");
 
             return output;
         }
@@ -478,7 +478,7 @@ namespace basic_autonomy
 
             carma_planning_msgs::msg::LaneChangeManeuver lane_change_maneuver = maneuver.lane_change_maneuver;
             double ending_downtrack = lane_change_maneuver.end_dist;
-            RCLCPP_DEBUG_STREAM(rclcpp::get_logger(BASIC_AUTONOMY_LOGGER), "Maneuver ending downtrack:"<<ending_downtrack);
+            RCLCPP_DEBUG_STREAM(basic_autonomy::get_logger(), "Maneuver ending downtrack:"<<ending_downtrack);
             if(starting_downtrack >= ending_downtrack)
             {
                 throw(std::invalid_argument("Start distance is greater than or equal to ending distance"));
@@ -487,19 +487,19 @@ namespace basic_autonomy
             //get route between starting and ending downtracks - downtracks should be constant for complete length of maneuver
             std::vector<lanelet::BasicPoint2d> route_geometry = create_lanechange_geometry(std::stoi(lane_change_maneuver.starting_lane_id),std::stoi(lane_change_maneuver.ending_lane_id),
                                                                                         starting_downtrack, ending_downtrack, wm, general_config.default_downsample_ratio, detailed_config.buffer_ending_downtrack);
-            RCLCPP_DEBUG_STREAM(rclcpp::get_logger(BASIC_AUTONOMY_LOGGER), "Route geometry size:"<<route_geometry.size());
+            RCLCPP_DEBUG_STREAM(basic_autonomy::get_logger(), "Route geometry size:"<<route_geometry.size());
 
             lanelet::BasicPoint2d state_pos(state.x_pos_global, state.y_pos_global);
             double current_downtrack = wm->routeTrackPos(state_pos).downtrack;
             int nearest_pt_index = get_nearest_index_by_downtrack(route_geometry, wm, current_downtrack);
             int ending_pt_index = get_nearest_index_by_downtrack(route_geometry, wm, ending_downtrack);
-            RCLCPP_DEBUG_STREAM(rclcpp::get_logger(BASIC_AUTONOMY_LOGGER), "Nearest pt index in maneuvers to points: "<< nearest_pt_index);
-            RCLCPP_DEBUG_STREAM(rclcpp::get_logger(BASIC_AUTONOMY_LOGGER), "Ending pt index in maneuvers to points: "<< ending_pt_index);
+            RCLCPP_DEBUG_STREAM(basic_autonomy::get_logger(), "Nearest pt index in maneuvers to points: "<< nearest_pt_index);
+            RCLCPP_DEBUG_STREAM(basic_autonomy::get_logger(), "Ending pt index in maneuvers to points: "<< ending_pt_index);
 
             ending_state_before_buffer.x_pos_global = route_geometry[ending_pt_index].x();
             ending_state_before_buffer.y_pos_global = route_geometry[ending_pt_index].y();
 
-            RCLCPP_DEBUG_STREAM(rclcpp::get_logger(BASIC_AUTONOMY_LOGGER), "ending_state_before_buffer_:"<<ending_state_before_buffer.x_pos_global <<
+            RCLCPP_DEBUG_STREAM(basic_autonomy::get_logger(), "ending_state_before_buffer_:"<<ending_state_before_buffer.x_pos_global <<
                     ", ending_state_before_buffer_.y_pos_global" << ending_state_before_buffer.y_pos_global);
 
 
@@ -516,7 +516,7 @@ namespace basic_autonomy
 
             lanelet::BasicLineString2d future_route_geometry(route_geometry.begin() + nearest_pt_index, route_geometry.begin() + ending_pt_index);
             bool first = true;
-            RCLCPP_DEBUG_STREAM(rclcpp::get_logger(BASIC_AUTONOMY_LOGGER), "Future geom size:"<< future_route_geometry.size());
+            RCLCPP_DEBUG_STREAM(basic_autonomy::get_logger(), "Future geom size:"<< future_route_geometry.size());
 
             for (auto p : future_route_geometry)
             {
@@ -532,7 +532,7 @@ namespace basic_autonomy
                 points_and_target_speeds.push_back(pair);
 
             }
-            RCLCPP_DEBUG_STREAM(rclcpp::get_logger(BASIC_AUTONOMY_LOGGER), "Const speed assigned:"<<points_and_target_speeds.back().speed);
+            RCLCPP_DEBUG_STREAM(basic_autonomy::get_logger(), "Const speed assigned:"<<points_and_target_speeds.back().speed);
             return points_and_target_speeds;
 
 
@@ -541,8 +541,8 @@ namespace basic_autonomy
         std::vector<double> apply_speed_limits(const std::vector<double> speeds,
                                                const std::vector<double> speed_limits)
         {
-            RCLCPP_DEBUG_STREAM(rclcpp::get_logger(BASIC_AUTONOMY_LOGGER), "Speeds list size: " << speeds.size());
-            RCLCPP_DEBUG_STREAM(rclcpp::get_logger(BASIC_AUTONOMY_LOGGER), "SpeedLimits list size: " << speed_limits.size());
+            RCLCPP_DEBUG_STREAM(basic_autonomy::get_logger(), "Speeds list size: " << speeds.size());
+            RCLCPP_DEBUG_STREAM(basic_autonomy::get_logger(), "SpeedLimits list size: " << speed_limits.size());
 
             if (speeds.size() != speed_limits.size())
             {
@@ -571,14 +571,14 @@ namespace basic_autonomy
         {
             if (trajectory.empty())
             {
-                RCLCPP_WARN_STREAM(rclcpp::get_logger(BASIC_AUTONOMY_LOGGER),
+                RCLCPP_WARN_STREAM(basic_autonomy::get_logger(),
                     "constrain_to_time_boundary received empty trajectory, returning...");
                 return trajectory;
             }
 
             if (time_span <= 0)
             {
-                RCLCPP_WARN_STREAM(rclcpp::get_logger(BASIC_AUTONOMY_LOGGER),
+                RCLCPP_WARN_STREAM(basic_autonomy::get_logger(),
                     "constrain_to_time_boundary received non-positive time span, returning...");
                 return trajectory;
             }
@@ -618,7 +618,7 @@ namespace basic_autonomy
             size_t time_boundary_exclusive_index =
                 trajectory_utils::time_boundary_index(downtracks, speeds, time_span);
 
-            RCLCPP_DEBUG_STREAM(rclcpp::get_logger(BASIC_AUTONOMY_LOGGER), "time_boundary_exclusive_index = " << time_boundary_exclusive_index);
+            RCLCPP_DEBUG_STREAM(basic_autonomy::get_logger(), "time_boundary_exclusive_index = " << time_boundary_exclusive_index);
 
             if (time_boundary_exclusive_index == 0)
             {
@@ -783,7 +783,7 @@ namespace basic_autonomy
 
         std::unique_ptr<basic_autonomy::smoothing::SplineI> compute_fit(const std::vector<lanelet::BasicPoint2d> &basic_points)
         {
-            RCLCPP_DEBUG_STREAM(rclcpp::get_logger(BASIC_AUTONOMY_LOGGER), "Original basic_points size: " << basic_points.size());
+            RCLCPP_DEBUG_STREAM(basic_autonomy::get_logger(), "Original basic_points size: " << basic_points.size());
 
             // When computing fit, there cannot be duplicate points or points less than 0.5 meters apart.
             // Therefore, this function generally cleans the points for robust spline fit.
@@ -792,11 +792,11 @@ namespace basic_autonomy
 
             if (points_with_min_dis.size() < 4)
             {
-                RCLCPP_WARN_STREAM(rclcpp::get_logger(BASIC_AUTONOMY_LOGGER), "Insufficient Spline Points");
+                RCLCPP_WARN_STREAM(basic_autonomy::get_logger(), "Insufficient Spline Points");
                 return nullptr;
             }
 
-            RCLCPP_DEBUG_STREAM(rclcpp::get_logger(BASIC_AUTONOMY_LOGGER), "points_with_min_dis size: " << points_with_min_dis.size());
+            RCLCPP_DEBUG_STREAM(basic_autonomy::get_logger(), "points_with_min_dis size: " << points_with_min_dis.size());
 
             std::vector<lanelet::BasicPoint2d> resized_points_with_min_dis = points_with_min_dis;
 
@@ -805,10 +805,10 @@ namespace basic_autonomy
             if (resized_points_with_min_dis.size() > 400)
             {
                 resized_points_with_min_dis.resize(400);
-                RCLCPP_DEBUG_STREAM(rclcpp::get_logger(BASIC_AUTONOMY_LOGGER), "resized_points_with_min_dis size: " << resized_points_with_min_dis.size());
+                RCLCPP_DEBUG_STREAM(basic_autonomy::get_logger(), "resized_points_with_min_dis size: " << resized_points_with_min_dis.size());
 
                 size_t left_points_size = points_with_min_dis.size() - resized_points_with_min_dis.size();
-                RCLCPP_DEBUG_STREAM(rclcpp::get_logger(BASIC_AUTONOMY_LOGGER), "Left out points size: " << left_points_size);
+                RCLCPP_DEBUG_STREAM(basic_autonomy::get_logger(), "Left out points size: " << left_points_size);
 
                 float percent_points_lost = 100.0f
                     * static_cast<float>(left_points_size) /
@@ -816,7 +816,7 @@ namespace basic_autonomy
 
                 if (percent_points_lost > 50.0)
                 {
-                    RCLCPP_WARN_STREAM(rclcpp::get_logger(BASIC_AUTONOMY_LOGGER), "More than half of basic points are ignored for spline fitting");
+                    RCLCPP_WARN_STREAM(basic_autonomy::get_logger(), "More than half of basic points are ignored for spline fitting");
                 }
             }
 
@@ -841,7 +841,7 @@ namespace basic_autonomy
             const std::vector<PointSpeedPair> &points, const carma_planning_msgs::msg::VehicleState &state, const rclcpp::Time &state_time, const carma_wm::WorldModelConstPtr &wm,
             const carma_planning_msgs::msg::VehicleState &ending_state_before_buffer, carma_debug_ros2_msgs::msg::TrajectoryCurvatureSpeeds& debug_msg, const DetailedTrajConfig &detailed_config)
         {
-            RCLCPP_DEBUG_STREAM(rclcpp::get_logger(BASIC_AUTONOMY_LOGGER), "VehicleState: "
+            RCLCPP_DEBUG_STREAM(basic_autonomy::get_logger(), "VehicleState: "
                              << " x: " << state.x_pos_global << " y: " << state.y_pos_global << " yaw: " << state.orientation
                              << " speed: " << state.longitudinal_vel);
 
@@ -849,20 +849,20 @@ namespace basic_autonomy
 
             int nearest_pt_index = get_nearest_point_index(points, state);
 
-            RCLCPP_DEBUG_STREAM(rclcpp::get_logger(BASIC_AUTONOMY_LOGGER), "NearestPtIndex: " << nearest_pt_index);
+            RCLCPP_DEBUG_STREAM(basic_autonomy::get_logger(), "NearestPtIndex: " << nearest_pt_index);
 
             std::vector<PointSpeedPair> future_points(points.begin() + nearest_pt_index + 1, points.end()); // Points in front of current vehicle position
 
-            RCLCPP_DEBUG_STREAM(rclcpp::get_logger(BASIC_AUTONOMY_LOGGER), "Ready to call constrain_to_time_boundary: future_points size = " << future_points.size() << ", trajectory_time_length = " << detailed_config.trajectory_time_length);
+            RCLCPP_DEBUG_STREAM(basic_autonomy::get_logger(), "Ready to call constrain_to_time_boundary: future_points size = " << future_points.size() << ", trajectory_time_length = " << detailed_config.trajectory_time_length);
 
             auto time_bound_points = constrain_to_time_boundary(future_points, detailed_config.trajectory_time_length);
 
-            RCLCPP_DEBUG_STREAM(rclcpp::get_logger(BASIC_AUTONOMY_LOGGER), "Got time_bound_points with size:" << time_bound_points.size());
+            RCLCPP_DEBUG_STREAM(basic_autonomy::get_logger(), "Got time_bound_points with size:" << time_bound_points.size());
             log::printDebugPerLine(time_bound_points, &log::pointSpeedPairToStream);
 
             std::vector<PointSpeedPair> back_and_future = attach_past_points(points, time_bound_points, nearest_pt_index, detailed_config.back_distance);
 
-            RCLCPP_DEBUG_STREAM(rclcpp::get_logger(BASIC_AUTONOMY_LOGGER), "Got back_and_future points with size" << back_and_future.size());
+            RCLCPP_DEBUG_STREAM(basic_autonomy::get_logger(), "Got back_and_future points with size" << back_and_future.size());
             log::printDebugPerLine(back_and_future, &log::pointSpeedPairToStream);
 
             std::vector<double> speed_limits;
@@ -875,9 +875,9 @@ namespace basic_autonomy
                 throw std::invalid_argument("Could not fit a spline curve along the given trajectory!");
             }
 
-            RCLCPP_DEBUG_STREAM(rclcpp::get_logger(BASIC_AUTONOMY_LOGGER), "Got fit");
+            RCLCPP_DEBUG_STREAM(basic_autonomy::get_logger(), "Got fit");
 
-            RCLCPP_DEBUG_STREAM(rclcpp::get_logger(BASIC_AUTONOMY_LOGGER), "speed_limits.size() " << speed_limits.size());
+            RCLCPP_DEBUG_STREAM(basic_autonomy::get_logger(), "speed_limits.size() " << speed_limits.size());
 
             std::vector<lanelet::BasicPoint2d> all_sampling_points;
             all_sampling_points.reserve(1 + curve_points.size() * 2);
@@ -915,7 +915,7 @@ namespace basic_autonomy
                 scaled_steps_along_curve += 1.0 / total_step_along_curve;              //adding steps_along_curve_step_size
             }
 
-            RCLCPP_DEBUG_STREAM(rclcpp::get_logger(BASIC_AUTONOMY_LOGGER), "Got sampled points with size:" << all_sampling_points.size());
+            RCLCPP_DEBUG_STREAM(basic_autonomy::get_logger(), "Got sampled points with size:" << all_sampling_points.size());
             log::printDebugPerLine(all_sampling_points, &log::basicPointToStream);
 
             std::vector<double> final_yaw_values = carma_wm::geometry::compute_tangent_orientations(all_sampling_points);
@@ -932,24 +932,24 @@ namespace basic_autonomy
 
             std::vector<double> constrained_speed_limits = apply_speed_limits(ideal_speeds, distributed_speed_limits);
 
-            RCLCPP_DEBUG_STREAM(rclcpp::get_logger(BASIC_AUTONOMY_LOGGER), "Processed all points in computed fit");
+            RCLCPP_DEBUG_STREAM(basic_autonomy::get_logger(), "Processed all points in computed fit");
 
             if (all_sampling_points.empty())
             {
-                RCLCPP_WARN_STREAM(rclcpp::get_logger(BASIC_AUTONOMY_LOGGER), "No trajectory points could be generated");
+                RCLCPP_WARN_STREAM(basic_autonomy::get_logger(), "No trajectory points could be generated");
                 return {};
             }
 
             // Add current vehicle point to front of the trajectory
 
             nearest_pt_index = get_nearest_index_by_downtrack(all_sampling_points, wm, state);
-            RCLCPP_DEBUG_STREAM(rclcpp::get_logger(BASIC_AUTONOMY_LOGGER), "Current state's nearest_pt_index: " << nearest_pt_index);
-            RCLCPP_DEBUG_STREAM(rclcpp::get_logger(BASIC_AUTONOMY_LOGGER), "Curvature right now: " << better_curvature[nearest_pt_index] << ", at state x: " << state.x_pos_global << ", state y: " << state.y_pos_global);
-            RCLCPP_DEBUG_STREAM(rclcpp::get_logger(BASIC_AUTONOMY_LOGGER), "Corresponding to point: x: " << all_sampling_points[nearest_pt_index].x() << ", y:" << all_sampling_points[nearest_pt_index].y());
+            RCLCPP_DEBUG_STREAM(basic_autonomy::get_logger(), "Current state's nearest_pt_index: " << nearest_pt_index);
+            RCLCPP_DEBUG_STREAM(basic_autonomy::get_logger(), "Curvature right now: " << better_curvature[nearest_pt_index] << ", at state x: " << state.x_pos_global << ", state y: " << state.y_pos_global);
+            RCLCPP_DEBUG_STREAM(basic_autonomy::get_logger(), "Corresponding to point: x: " << all_sampling_points[nearest_pt_index].x() << ", y:" << all_sampling_points[nearest_pt_index].y());
 
             int buffer_pt_index = get_nearest_index_by_downtrack(all_sampling_points, wm, ending_state_before_buffer);
-            RCLCPP_DEBUG_STREAM(rclcpp::get_logger(BASIC_AUTONOMY_LOGGER), "Ending state's index before applying buffer (buffer_pt_index): " << buffer_pt_index);
-            RCLCPP_DEBUG_STREAM(rclcpp::get_logger(BASIC_AUTONOMY_LOGGER), "Corresponding to point: x: " << all_sampling_points[buffer_pt_index].x() << ", y:" << all_sampling_points[buffer_pt_index].y());
+            RCLCPP_DEBUG_STREAM(basic_autonomy::get_logger(), "Ending state's index before applying buffer (buffer_pt_index): " << buffer_pt_index);
+            RCLCPP_DEBUG_STREAM(basic_autonomy::get_logger(), "Corresponding to point: x: " << all_sampling_points[buffer_pt_index].x() << ", y:" << all_sampling_points[buffer_pt_index].y());
 
             if(nearest_pt_index + 1 >= buffer_pt_index){
 
@@ -958,12 +958,12 @@ namespace basic_autonomy
 
                 if(wm->routeTrackPos(ending_pos).downtrack < wm->routeTrackPos(current_pos).downtrack ){
 
-                    RCLCPP_WARN_STREAM(rclcpp::get_logger(BASIC_AUTONOMY_LOGGER), "Current state is at or past the planned end distance. Couldn't generate trajectory");
+                    RCLCPP_WARN_STREAM(basic_autonomy::get_logger(), "Current state is at or past the planned end distance. Couldn't generate trajectory");
                     return {};
                 }
                 else{
                     //Current point is behind the ending state of maneuver and a valid trajectory is possible
-                    RCLCPP_WARN_STREAM(rclcpp::get_logger(BASIC_AUTONOMY_LOGGER), "Returning the two remaining points in the maneuver");
+                    RCLCPP_WARN_STREAM(basic_autonomy::get_logger(), "Returning the two remaining points in the maneuver");
 
                     std::vector<lanelet::BasicPoint2d> remaining_traj_points = {current_pos, ending_pos};
 
@@ -993,7 +993,7 @@ namespace basic_autonomy
             std::vector<double>  final_actual_speeds = future_speeds;
             all_sampling_points = future_basic_points;
             final_yaw_values = future_yaw;
-            RCLCPP_DEBUG_STREAM(rclcpp::get_logger(BASIC_AUTONOMY_LOGGER), "Trimmed future points to size: "<< future_basic_points.size());
+            RCLCPP_DEBUG_STREAM(basic_autonomy::get_logger(), "Trimmed future points to size: "<< future_basic_points.size());
 
             lanelet::BasicPoint2d cur_veh_point(state.x_pos_global, state.y_pos_global);
 
@@ -1100,12 +1100,12 @@ namespace basic_autonomy
             const std::vector<PointSpeedPair> &points, const carma_planning_msgs::msg::VehicleState &state, const rclcpp::Time &state_time,
             const carma_wm::WorldModelConstPtr &wm, const carma_planning_msgs::msg::VehicleState &ending_state_before_buffer, const DetailedTrajConfig &detailed_config)
         {
-            RCLCPP_DEBUG_STREAM(rclcpp::get_logger(BASIC_AUTONOMY_LOGGER), "Input points size in compose traj from centerline: "<< points.size());
+            RCLCPP_DEBUG_STREAM(basic_autonomy::get_logger(), "Input points size in compose traj from centerline: "<< points.size());
             int nearest_pt_index = get_nearest_index_by_downtrack(points, wm, state);
-            RCLCPP_DEBUG_STREAM(rclcpp::get_logger(BASIC_AUTONOMY_LOGGER), "nearest_pt_index: "<< nearest_pt_index);
+            RCLCPP_DEBUG_STREAM(basic_autonomy::get_logger(), "nearest_pt_index: "<< nearest_pt_index);
 
             std::vector<PointSpeedPair> future_points(points.begin() + nearest_pt_index + 1, points.end());
-            RCLCPP_DEBUG_STREAM(rclcpp::get_logger(BASIC_AUTONOMY_LOGGER), "future_points size: "<< future_points.size());
+            RCLCPP_DEBUG_STREAM(basic_autonomy::get_logger(), "future_points size: "<< future_points.size());
 
             //Compute yaw values from original trajectory.
             std::vector<lanelet::BasicPoint2d> future_geom_points;
@@ -1116,7 +1116,7 @@ namespace basic_autonomy
             if(!fit_curve){
                 throw std::invalid_argument("Could not fit a spline curve along the given trajectory!");
             }
-            RCLCPP_DEBUG_STREAM(rclcpp::get_logger(BASIC_AUTONOMY_LOGGER), "Got fit");
+            RCLCPP_DEBUG_STREAM(basic_autonomy::get_logger(), "Got fit");
 
             // Add current vehicle position to front of future geometry points
             lanelet::BasicPoint2d current_vehicle_point(state.x_pos_global, state.y_pos_global);
@@ -1129,7 +1129,7 @@ namespace basic_autonomy
             // Now create resampled points using the spline
             auto total_step_along_curve = static_cast<int>(original_downtracks.back() / detailed_config.curve_resample_step_size);
             if (total_step_along_curve == 0) {
-                RCLCPP_WARN_STREAM(rclcpp::get_logger(BASIC_AUTONOMY_LOGGER),
+                RCLCPP_WARN_STREAM(basic_autonomy::get_logger(),
                 "Available distance to resample is less than curve_resample_step_size. "
                 "Only considering the last point of the target destination to generate trajectory."
                 );
@@ -1145,7 +1145,7 @@ namespace basic_autonomy
                 lanelet::BasicPoint2d p = (*fit_curve)(scaled_steps_along_curve);
                 resampled_points.push_back(p);
             }
-            RCLCPP_DEBUG_STREAM(rclcpp::get_logger(BASIC_AUTONOMY_LOGGER), "Got resampled points with size:" << resampled_points.size());
+            RCLCPP_DEBUG_STREAM(basic_autonomy::get_logger(), "Got resampled points with size:" << resampled_points.size());
 
             // Compute downtracks for the resampled points
             std::vector<double> resampled_downtracks = carma_wm::geometry::compute_arc_lengths(resampled_points);
@@ -1187,7 +1187,7 @@ namespace basic_autonomy
             trajectory_utils::conversions::speed_to_time(resampled_downtracks, resampled_speeds, &times);
 
             //Remove extra points
-            RCLCPP_DEBUG_STREAM(rclcpp::get_logger(BASIC_AUTONOMY_LOGGER), "Before removing extra buffer points, future_geom_points.size()"<< future_geom_points.size());
+            RCLCPP_DEBUG_STREAM(basic_autonomy::get_logger(), "Before removing extra buffer points, future_geom_points.size()"<< future_geom_points.size());
 
             // Find the ending point index in the resampled points
             // Always leave at least 2 points in the trajectory
@@ -1199,11 +1199,11 @@ namespace basic_autonomy
                 );
 
             // Resize all arrays to the endpoint
-            RCLCPP_DEBUG_STREAM(rclcpp::get_logger(BASIC_AUTONOMY_LOGGER), "Before removing extra buffer points, resampled_points.size(): " << resampled_points.size());
+            RCLCPP_DEBUG_STREAM(basic_autonomy::get_logger(), "Before removing extra buffer points, resampled_points.size(): " << resampled_points.size());
             resampled_points.resize(end_dist_pt_index + 1);
             times.resize(end_dist_pt_index + 1);
             resampled_yaw_values.resize(end_dist_pt_index + 1);
-            RCLCPP_DEBUG_STREAM(rclcpp::get_logger(BASIC_AUTONOMY_LOGGER), "After removing extra buffer points, resampled_points.size(): " << resampled_points.size());
+            RCLCPP_DEBUG_STREAM(basic_autonomy::get_logger(), "After removing extra buffer points, resampled_points.size(): " << resampled_points.size());
 
             // Create trajectory points from the resampled data
             std::vector<carma_planning_msgs::msg::TrajectoryPlanPoint> traj_points =
@@ -1214,14 +1214,14 @@ namespace basic_autonomy
 
         autoware_auto_msgs::msg::Trajectory process_trajectory_plan(const carma_planning_msgs::msg::TrajectoryPlan& tp, double vehicle_response_lag )
         {
-            RCLCPP_DEBUG_STREAM(rclcpp::get_logger(BASIC_AUTONOMY_LOGGER), "Processing latest TrajectoryPlan message");
+            RCLCPP_DEBUG_STREAM(basic_autonomy::get_logger(), "Processing latest TrajectoryPlan message");
 
             std::vector<double> times;
             std::vector<double> downtracks;
 
             std::vector<carma_planning_msgs::msg::TrajectoryPlanPoint> trajectory_points = tp.trajectory_points;
 
-            RCLCPP_DEBUG_STREAM(rclcpp::get_logger(BASIC_AUTONOMY_LOGGER), "Original Trajectory size:"<<trajectory_points.size());
+            RCLCPP_DEBUG_STREAM(basic_autonomy::get_logger(), "Original Trajectory size:"<<trajectory_points.size());
 
 
             trajectory_utils::conversions::trajectory_to_downtrack_time(trajectory_points, &downtracks, &times);
@@ -1232,8 +1232,8 @@ namespace basic_autonomy
             {
                 if (times[i] == times[i - 1]) //if exactly same, it is stopping case
                 {
-                    RCLCPP_DEBUG_STREAM(rclcpp::get_logger(BASIC_AUTONOMY_LOGGER), "Detected a stopping case where times is exactly equal: " << times[i-1]);
-                    RCLCPP_DEBUG_STREAM(rclcpp::get_logger(BASIC_AUTONOMY_LOGGER), "And index of that is: " << i << ", where size is: " << times.size());
+                    RCLCPP_DEBUG_STREAM(basic_autonomy::get_logger(), "Detected a stopping case where times is exactly equal: " << times[i-1]);
+                    RCLCPP_DEBUG_STREAM(basic_autonomy::get_logger(), "And index of that is: " << i << ", where size is: " << times.size());
                     stopping_index = i;
                     break;
                 }
@@ -1249,7 +1249,7 @@ namespace basic_autonomy
                 // This can only happen if there was negative speed in trajectory generation which usually happens when intending to stop.
                 // The plugin is catching that error and logging it for the user to correct the origin plugin's logic, but continues
                 // the operation by forcing the negative values to be 0, which is the intention usually.
-                RCLCPP_WARN_STREAM(rclcpp::get_logger(BASIC_AUTONOMY_LOGGER), "Detected a negative speed from <point,time> to <point,speed> trajectory conversion with error: "
+                RCLCPP_WARN_STREAM(basic_autonomy::get_logger(), "Detected a negative speed from <point,time> to <point,speed> trajectory conversion with error: "
                     << error.what() << ". Replacing the negative speed with 0.0 speed, but please revisit the trajectory logic. "
                     "Responsible plugin is: " << trajectory_points[std::find(speeds.begin(), speeds.end(), 0.0) - speeds.begin()].planner_plugin_name);
             }
@@ -1262,7 +1262,7 @@ namespace basic_autonomy
             for (size_t i = 0; i < speeds.size(); i++) { // Ensure 0 is min speed
                 if (stopping_index != 0 && i >= stopping_index - 1)
                 {
-                    RCLCPP_DEBUG_STREAM(rclcpp::get_logger(BASIC_AUTONOMY_LOGGER), "Made it to 0, i: " << i);
+                    RCLCPP_DEBUG_STREAM(basic_autonomy::get_logger(), "Made it to 0, i: " << i);
 
                     speeds[i] = 0.0;  //stopping case
                 }
@@ -1277,7 +1277,7 @@ namespace basic_autonomy
 
             autoware_auto_msgs::msg::Trajectory autoware_trajectory;
             autoware_trajectory.header = tp.header;
-            RCLCPP_DEBUG_STREAM(rclcpp::get_logger(BASIC_AUTONOMY_LOGGER), "size: " << trajectory_points.size());
+            RCLCPP_DEBUG_STREAM(basic_autonomy::get_logger(), "size: " << trajectory_points.size());
 
             auto max_size = std::min(99, (int)trajectory_points.size());  //NOTE: more than this size autoware auto raises exception with "Exceeded upper bound while in ACTIVE state."
                                                                             //large portion of the points are not needed anyways
@@ -1303,7 +1303,7 @@ namespace basic_autonomy
                 autoware_point.heading.imag = std::sin(yaw/2);
 
                 autoware_point.time_from_start = rclcpp::Duration::from_nanoseconds(static_cast<int64_t>(times[i] * 1e9));
-                RCLCPP_DEBUG_STREAM(rclcpp::get_logger(BASIC_AUTONOMY_LOGGER), "Setting waypoint idx: " << i <<", with planner: << " << trajectory_points[i].planner_plugin_name << ", x: " << trajectory_points[i].x <<
+                RCLCPP_DEBUG_STREAM(basic_autonomy::get_logger(), "Setting waypoint idx: " << i <<", with planner: << " << trajectory_points[i].planner_plugin_name << ", x: " << trajectory_points[i].x <<
                                         ", y: " << trajectory_points[i].y <<
                                         ", speed: " << lag_speeds[i]* 2.23694 << "mph");
                 autoware_trajectory.points.push_back(autoware_point);

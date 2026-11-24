@@ -48,7 +48,7 @@ def generate_launch_description():
         description = "True if simulation mode is on"
     )
 
-
+    # Log level is set from CARMA_ROS_LOGGING_CONFIG, generated from carma_rosconsole.conf in the vehicle config dir (carma-config)
     env_log_levels = EnvironmentVariable('CARMA_ROS_LOGGING_CONFIG', default_value='{ "default_level" : "WARN" }')
 
     subsystem_controller_default_param_file = os.path.join(
@@ -92,7 +92,6 @@ def generate_launch_description():
                 name='lightbar_manager',
                 extra_arguments=[
                     {'use_intra_process_comms': True},
-                    {'--log-level' : GetLogLevel('lightbar_manager', env_log_levels) },
                     {'is_lifecycle_node': True} # Flag to allow lifecycle node loading in lifecycle wrapper
                 ],
                 remappings=[

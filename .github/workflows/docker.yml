@@ -8,3 +8,11 @@ on:
 jobs:
   docker:
     uses: usdot-fhwa-stol/actions/.github/workflows/docker.yml@main
+    # Base autoware.ai image and dependencies are pinned to CARMA System 4.14.0.
+    # These override the DOCKER_ORG/DOCKER_TAG/GIT_BRANCH build args the shared workflow derives
+    # from the git ref; the pushed image name/tag is still derived from the ref (e.g. release/*).
+    with:
+      additional_build_args: |
+        DOCKER_ORG=usdotfhwastol
+        DOCKER_TAG=carma-system-4.14.0
+        GIT_BRANCH=carma-system-4.14.0

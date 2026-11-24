@@ -18,6 +18,20 @@
 
 namespace basic_autonomy
 {
+
+namespace
+{
+// Function-local static is initialized once and is thread-safe (C++11).
+rclcpp::Logger & module_logger()
+{
+  static rclcpp::Logger logger = rclcpp::get_logger("basic_autonomy");
+  return logger;
+}
+}  // anonymous namespace
+
+rclcpp::Logger get_logger() { return module_logger(); }
+void set_logger(rclcpp::Logger logger) { module_logger() = logger; }
+
 namespace log
 {
 /**
@@ -46,7 +60,7 @@ void printDoublesPerLineWithPrefix(const std::string& prefix, const std::vector<
 {
   for (const auto& value : values)
   {
-    RCLCPP_DEBUG_STREAM(rclcpp::get_logger(BASIC_AUTONOMY_LOGGER), prefix << value);
+    RCLCPP_DEBUG_STREAM(basic_autonomy::get_logger(), prefix << value);
   }
 }
 

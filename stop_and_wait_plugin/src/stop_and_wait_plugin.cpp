@@ -41,6 +41,7 @@
 #include <carma_wm/CARMAWorldModel.hpp>
 #include <math.h>
 #include <std_msgs/msg/float64.hpp>
+#include <basic_autonomy/log/log.hpp>
 #include <math.h>
 
 using oss = std::ostringstream;
@@ -54,7 +55,9 @@ StopandWait::StopandWait(std::shared_ptr<carma_ros2_utils::CarmaLifecycleNode> n
                                           const std::string& plugin_name,
                                           const std::string& version_id)
   : version_id_ (version_id),plugin_name_(plugin_name),config_(config),nh_(nh), wm_(wm)
-{};
+{
+  basic_autonomy::set_logger(nh_->get_logger().get_child("basic_autonomy"));
+};
 
 bool StopandWait::plan_trajectory_cb(carma_planning_msgs::srv::PlanTrajectory::Request::SharedPtr req, carma_planning_msgs::srv::PlanTrajectory::Response::SharedPtr resp)
 {

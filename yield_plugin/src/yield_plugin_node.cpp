@@ -111,6 +111,7 @@ namespace yield_plugin
      // Publisher
     mob_resp_pub_ = create_publisher<carma_v2x_msgs::msg::MobilityResponse>("outgoing_mobility_response", 1);
     lc_status_pub_ = create_publisher<carma_planning_msgs::msg::LaneChangeStatus>("cooperative_lane_change_status", 10);
+    collision_diagnostic_pub_ = create_publisher<diagnostic_msgs::msg::DiagnosticArray>("yield_collision_diagnostic", 10);
 
     // Subscriber
     mob_request_sub_ = create_subscription<carma_v2x_msgs::msg::MobilityRequest>("incoming_mobility_request", 10, std::bind(&YieldPlugin::mobilityrequest_cb,worker_.get(),std_ph::_1));
@@ -125,6 +126,11 @@ namespace yield_plugin
                                                                                                 [this](const carma_perception_msgs::msg::ExternalObjectList::SharedPtr msg) {
                                                                                                   worker_->set_external_objects(msg->objects);
                                                                                                 });
+    // Vehicle's current actual speed, used for the collision diagnostic time to collision
+    current_velocity_sub_ = create_subscription<geometry_msgs::msg::TwistStamped>("current_velocity", 1,
+                                                                                  [this](const geometry_msgs::msg::TwistStamped::SharedPtr msg) {
+                                                                                    worker_->set_current_speed(msg->twist.linear.x);
+                                                                                  });
     // Return success if everything initialized successfully
     return CallbackReturn::SUCCESS;
   }
@@ -135,6 +141,74 @@ namespace yield_plugin
     carma_planning_msgs::srv::PlanTrajectory::Response::SharedPtr resp)
   {
     worker_->plan_trajectory_callback(req, resp);
+    publish_collision_diagnostic();
+  }
+
+  void YieldPluginNode::publish_collision_diagnostic()
+  {
+    constexpr double mps_to_mph = 2.23694;
+
+    const auto diagnostic = worker_->get_latest_collision_diagnostic();
+    if (!diagnostic)
+    {
+      return;
+    }
+
+    const auto to_kv = [](const std::string& key, const std::string& value) {
+      diagnostic_msgs::msg::KeyValue kv;
+      kv.key = key;
+      kv.value = value;
+      return kv;
+    };
+
+    std::string object_type;
+    switch (diagnostic->object_type)
+    {
+      case carma_perception_msgs::msg::ExternalObject::SMALL_VEHICLE: object_type = "SMALL_VEHICLE"; break;
+      case carma_perception_msgs::msg::ExternalObject::LARGE_VEHICLE: object_type = "LARGE_VEHICLE"; break;
+      case carma_perception_msgs::msg::ExternalObject::MOTORCYCLE:    object_type = "MOTORCYCLE"; break;
+      case carma_perception_msgs::msg::ExternalObject::PEDESTRIAN:    object_type = "PEDESTRIAN"; break;
+      default:                                                        object_type = "UNKNOWN"; break;
+    }
+    const std::string object_id = std::to_string(diagnostic->object_id);
+
+    diagnostic_msgs::msg::DiagnosticStatus status;
+    status.level = diagnostic_msgs::msg::DiagnosticStatus::WARN;
+    status.name = "yield_plugin: collision";
+    status.hardware_id = object_id;
+
+    if (diagnostic->committed_to_stop)
+    {
+      // Following the committed stopping trajectory: no new detection ran this cycle. Downtrack and time to
+      // collision are updated against the collision location that triggered the stop; detect_and_plan_time_s
+      // is from the cycle that committed to the stop
+      status.message = "Committed to stop for object " + object_id + " (" + object_type + ")";
+      status.values = {
+        to_kv("object_id", object_id),
+        to_kv("object_type", object_type),
+        to_kv("downtrack_to_collision_m", std::to_string(diagnostic->downtrack_to_collision_m)),
+        to_kv("speed_to_match_mph", std::to_string(diagnostic->speed_to_match_mps * mps_to_mph)),
+        to_kv("time_to_collision_s", std::to_string(diagnostic->time_to_collision_s)),
+        to_kv("detect_and_plan_time_s", std::to_string(diagnostic->detect_and_plan_time_s))
+      };
+    }
+    else
+    {
+      status.message = "Yielding to object " + object_id + " (" + object_type + ")";
+      status.values = {
+        to_kv("object_id", object_id),
+        to_kv("object_type", object_type),
+        to_kv("downtrack_to_collision_m", std::to_string(diagnostic->downtrack_to_collision_m)),
+        to_kv("speed_to_match_mph", std::to_string(diagnostic->speed_to_match_mps * mps_to_mph)),
+        to_kv("time_to_collision_s", std::to_string(diagnostic->time_to_collision_s)),
+        to_kv("detect_and_plan_time_s", std::to_string(diagnostic->detect_and_plan_time_s))
+      };
+    }
+
+    diagnostic_msgs::msg::DiagnosticArray msg;
+    msg.header.stamp = diagnostic->stamp;
+    msg.status.push_back(status);
+    collision_diagnostic_pub_->publish(msg);
   }
 
     bool YieldPluginNode::get_availability()

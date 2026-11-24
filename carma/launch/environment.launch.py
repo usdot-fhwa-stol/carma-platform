@@ -130,6 +130,7 @@ def generate_launch_description():
     motion_computation_param_file = os.path.join(
         get_package_share_directory('motion_computation'), 'config/parameters.yaml')
 
+    # Log level is set from CARMA_ROS_LOGGING_CONFIG, generated from carma_rosconsole.conf in the vehicle config dir (carma-config)
     env_log_levels = EnvironmentVariable('CARMA_ROS_LOGGING_CONFIG', default_value='{ "default_level" : "WARN" }')
 
     carma_wm_ctrl_param_file = os.path.join(
@@ -162,7 +163,6 @@ def generate_launch_description():
                 name='lidar_to_map_frame_transformer',
                 extra_arguments=[
                     {'use_intra_process_comms': True},
-                    {'--log-level' : GetLogLevel('frame_transformer', env_log_levels) },
                     {'is_lifecycle_node': True} # Flag to allow lifecycle node loading in lifecycle wrapper
                 ],
                 remappings=[
@@ -186,7 +186,6 @@ def generate_launch_description():
                 name='points_map_filter',
                 extra_arguments=[
                     {'use_intra_process_comms': True},
-                    {'--log-level' : GetLogLevel('points_map_filter', env_log_levels) },
                     {'is_lifecycle_node': True} # Flag to allow lifecycle node loading in lifecycle wrapper
                 ],
                 remappings=[
@@ -206,7 +205,6 @@ def generate_launch_description():
                 name='lidar_frame_transformer',
                 extra_arguments=[
                     {'use_intra_process_comms': True},
-                    {'--log-level' : GetLogLevel('frame_transformer', env_log_levels) },
                     {'is_lifecycle_node': True} # Flag to allow lifecycle node loading in lifecycle wrapper
                 ],
                 remappings=[
@@ -225,7 +223,6 @@ def generate_launch_description():
                 plugin='autoware::perception::filters::ray_ground_classifier_nodes::RayGroundClassifierCloudNode',
                 extra_arguments=[
                     {'use_intra_process_comms': True},
-                    {'--log-level' : GetLogLevel('ray_ground_classifier_nodes', env_log_levels) }
                 ],
                 remappings=[
                     ("points_in", "points_in_base_link"),
@@ -241,7 +238,6 @@ def generate_launch_description():
                 plugin='autoware::perception::segmentation::euclidean_cluster_nodes::EuclideanClusterNode',
                 extra_arguments=[
                     {'use_intra_process_comms': True},
-                    {'--log-level' : GetLogLevel('euclidean_cluster_nodes', env_log_levels) }
                 ],
                 remappings=[
                     ("points_in", "points_no_ground")
@@ -256,7 +252,6 @@ def generate_launch_description():
                 name='bounding_box_converter',
                 extra_arguments=[
                     {'use_intra_process_comms': True},
-                    {'--log-level' : GetLogLevel('object_detection_tracking', env_log_levels) },
                     {'is_lifecycle_node': True} # Flag to allow lifecycle node loading in lifecycle wrapper
                 ],
                 remappings=[
@@ -271,7 +266,6 @@ def generate_launch_description():
                     name='tracking_nodes_node',
                     extra_arguments=[
                         {'use_intra_process_comms': True},
-                        {'--log-level' : GetLogLevel('tracking_nodes', env_log_levels) }
                     ],
                     remappings=[
                         ("ego_state", [ EnvironmentVariable('CARMA_LOCZ_NS', default_value=''), "/current_pose_with_covariance" ] ),
@@ -284,7 +278,6 @@ def generate_launch_description():
             )
         ]
     )
-
 
     # carma_external_objects_container contains nodes for object detection and tracking
     # since these nodes can use different object inputs they are a separate container from the lidar_perception_container
@@ -301,7 +294,6 @@ def generate_launch_description():
                 name='carma_wm_broadcaster',
                 extra_arguments=[
                     {'use_intra_process_comms': True},
-                    {'--log-level' : GetLogLevel('carma_wm_ctrl', env_log_levels) }
                 ],
                 remappings=[
                     ("georeference", [ EnvironmentVariable('CARMA_LOCZ_NS', default_value=''), "/map_param_loader/georeference" ] ),
@@ -327,7 +319,6 @@ def generate_launch_description():
                     name='external_object',
                     extra_arguments=[
                         {'use_intra_process_comms': True},
-                        {'--log-level' : GetLogLevel('object_detection_tracking', env_log_levels) }
                     ],
                     remappings=[
                         ("detected_objects", "tracked_objects"),
@@ -342,7 +333,6 @@ def generate_launch_description():
                     name='object_visualizer_node',
                     extra_arguments=[
                         {'use_intra_process_comms': True},
-                        {'--log-level' : GetLogLevel('object_visualizer', env_log_levels) }
                     ],
                     remappings=[
                         ("external_objects", "external_object_predictions"),
@@ -362,7 +352,6 @@ def generate_launch_description():
                 name='motion_computation_node',
                 extra_arguments=[
                     {'use_intra_process_comms': True},
-                    {'--log-level' : GetLogLevel('motion_computation', env_log_levels) }
                 ],
                 remappings=[
                     ("incoming_mobility_path", [ EnvironmentVariable('CARMA_MSG_NS', default_value=''), "/incoming_mobility_path" ] ),
@@ -384,7 +373,6 @@ def generate_launch_description():
                     name='motion_prediction_visualizer',
                     extra_arguments=[
                         {'use_intra_process_comms': True},
-                        {'--log-level' : GetLogLevel('motion_prediction_visualizer', env_log_levels) }
                     ],
                     remappings=[
                         ("external_objects", "external_object_predictions" ),
@@ -397,7 +385,6 @@ def generate_launch_description():
                     name='traffic_incident_parser_node',
                     extra_arguments=[
                         {'use_intra_process_comms': True},
-                        {'--log-level' : GetLogLevel('traffic_incident_parser', env_log_levels) }
                     ],
                     remappings=[
                         ("georeference", [ EnvironmentVariable('CARMA_LOCZ_NS', default_value=''), "/map_param_loader/georeference" ] ),
@@ -427,7 +414,6 @@ def generate_launch_description():
                 name='lanelet2_map_loader',
                 extra_arguments=[
                     {'use_intra_process_comms': True},
-                    {'--log-level' : GetLogLevel('lanelet2_map_loader', env_log_levels) },
                     {'is_lifecycle_node': True} # Flag to allow lifecycle node loading in lifecycle wrapper
                 ],
                 remappings=[
@@ -457,7 +443,6 @@ def generate_launch_description():
                 name='lanelet2_map_visualization',
                 extra_arguments=[
                     {'use_intra_process_comms': True},
-                    {'--log-level' : GetLogLevel('lanelet2_map_visualization', env_log_levels) },
                     {'is_lifecycle_node': True} # Flag to allow lifecycle node loading in lifecycle wrapper
                 ],
                 remappings=[
@@ -488,7 +473,6 @@ def generate_launch_description():
                 name='cp_external_object_list_to_detection_list_node',
                 extra_arguments=[
                     {'use_intra_process_comms': True},
-                    {'--log-level' : GetLogLevel('cp_external_object_list_to_detection_list_node', env_log_levels) },
                 ],
                 remappings=[
                     ("input/georeference", [EnvironmentVariable("CARMA_LOCZ_NS", default_value=""), "/map_param_loader/georeference"]),
@@ -506,7 +490,6 @@ def generate_launch_description():
                 name='cp_external_object_list_to_sdsm_node',
                 extra_arguments=[
                     {'use_intra_process_comms': True},
-                    {'--log-level' : GetLogLevel('cp_external_object_list_to_sdsm_node', env_log_levels) },
                 ],
                 remappings=[
                     ("input/georeference", [EnvironmentVariable("CARMA_LOCZ_NS", default_value=""), "/map_param_loader/georeference"]),
@@ -525,7 +508,6 @@ def generate_launch_description():
                 name='cp_host_vehicle_filter_node',
                 extra_arguments=[
                     {'use_intra_process_comms': True},
-                    {'--log-level' : GetLogLevel('cp_host_vehicle_filter_node', env_log_levels) },
                 ],
                 remappings=[
                     ("input/host_vehicle_pose", [ EnvironmentVariable('CARMA_LOCZ_NS', default_value=''), "/current_pose" ] ),
@@ -544,7 +526,6 @@ def generate_launch_description():
                 name='cp_sdsm_to_detection_list_node',
                 extra_arguments=[
                     {'use_intra_process_comms': True},
-                    {'--log-level' : GetLogLevel('cp_sdsm_to_detection_list_node', env_log_levels) },
                 ],
                 remappings=[
                     ("input/georeference", [ EnvironmentVariable('CARMA_LOCZ_NS', default_value=''), "/map_param_loader/georeference" ] ),
@@ -564,7 +545,6 @@ def generate_launch_description():
                 name='cp_track_list_to_external_object_list_node',
                 extra_arguments=[
                     {'use_intra_process_comms': True},
-                    {'--log-level' : GetLogLevel('cp_track_list_to_external_object_list_node', env_log_levels) },
                 ],
                 remappings=[
                     ("input/track_list", "cooperative_perception_track_list"),
@@ -581,7 +561,6 @@ def generate_launch_description():
                 name='cp_multiple_object_tracker_node',
                 extra_arguments=[
                     {'use_intra_process_comms': True},
-                    {'--log-level' : GetLogLevel('cp_multiple_object_tracker_node', env_log_levels) },
                 ],
                 remappings=[
                     ("output/track_list", "cooperative_perception_track_list"),

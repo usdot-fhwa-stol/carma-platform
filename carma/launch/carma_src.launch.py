@@ -37,6 +37,7 @@ import os
 
 from launch import LaunchDescription, LaunchContext
 
+
 def create_ros2_tracing_action(context, *args, **kwargs):
     """
     Opaque Function for generating a 'Trace' ROS 2 launch action, which is dependent on the
@@ -60,6 +61,7 @@ def create_ros2_tracing_action(context, *args, **kwargs):
 
     return [trace]
 
+
 def generate_launch_description():
     """
     Launch CARMA System.
@@ -68,6 +70,7 @@ def generate_launch_description():
     system_controller_param_file = os.path.join(
         get_package_share_directory('system_controller'), 'config/config.yaml')
 
+    # Log level is set from CARMA_ROS_LOGGING_CONFIG, generated from carma_rosconsole.conf in the vehicle config dir (carma-config)
     env_log_levels = EnvironmentVariable('CARMA_ROS_LOGGING_CONFIG', default_value='{ "default_level" : "WARN" }')
 
     # Declare the vehicle_calibration_dir launch argument
