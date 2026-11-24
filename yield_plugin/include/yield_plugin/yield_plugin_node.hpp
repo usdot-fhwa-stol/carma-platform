@@ -27,6 +27,7 @@
 #include <functional>
 #include <carma_perception_msgs/msg/external_object_list.hpp>
 #include <diagnostic_msgs/msg/diagnostic_array.hpp>
+#include <geometry_msgs/msg/twist_stamped.hpp>
 #include "yield_plugin.hpp"
 #include "yield_config.hpp"
 
@@ -84,6 +85,7 @@ private:
     rclcpp::Subscription<carma_v2x_msgs::msg::BSM>::SharedPtr bsm_sub_;
     rclcpp::Subscription<carma_perception_msgs::msg::ExternalObjectList>::SharedPtr external_objects_sub_;
     rclcpp::Subscription<std_msgs::msg::String>::SharedPtr georeference_sub_;
+    rclcpp::Subscription<geometry_msgs::msg::TwistStamped>::SharedPtr current_velocity_sub_;
 };
 
 }  // namespace yield_plugin

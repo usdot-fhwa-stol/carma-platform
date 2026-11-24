@@ -82,7 +82,7 @@ struct YieldCollisionDiagnostic
   lanelet::BasicPoint2d collision_point{0.0, 0.0};  // predicted collision location (object's predicted position at collision time) in map frame
   double downtrack_to_collision_m = 0.0;  // route downtrack from the ego vehicle to the collision location
   double speed_to_match_mps = 0.0;        // goal velocity of the yield trajectory
-  double time_to_collision_s = 0.0;       // time to reach the collision location at current speed (downtrack / current speed)
+  double time_to_collision_s = 0.0;       // time to reach the collision location at current actual speed from vehicle/twist (downtrack / current speed)
   double detect_and_plan_time_s = 0.0;    // wall time spent detecting the collision and generating the trajectory
   rclcpp::Time stamp;                     // ROS time at which this snapshot was produced
 };
@@ -261,6 +261,12 @@ public:
   void set_external_objects(const std::vector<carma_perception_msgs::msg::ExternalObject>& object_list);
 
   /**
+   * \brief Setter for the vehicle's current actual speed (from vehicle/twist), used for the collision diagnostic time to collision
+   * \param speed_mps current longitudinal speed in m/s
+   */
+  void set_current_speed(double speed_mps);
+
+  /**
    * \brief Rebuild the cached route lanelet polygons and IDs from the current route.
    *        Should be called once whenever the route changes via setRouteCallback().
    */
@@ -378,6 +384,14 @@ private:
   std::optional<YieldCollisionDiagnostic> latest_collision_diagnostic_ = std::nullopt;
   // diagnostic at the moment yield committed to stopping; republished while following the committed trajectory
   std::optional<YieldCollisionDiagnostic> committed_stop_diagnostic_ = std::nullopt;
+  // vehicle's current actual speed from vehicle/twist; std::nullopt until the first message is received
+  std::optional<double> current_speed_mps_ = std::nullopt;
+
+  /**
+   * \brief Time to reach the collision location at the vehicle's current actual speed
+   * \return downtrack_to_collision_m / current speed, or infinity if stopped or speed not yet received
+   */
+  double get_time_to_collision(double downtrack_to_collision_m) const;
 
 private:
 
