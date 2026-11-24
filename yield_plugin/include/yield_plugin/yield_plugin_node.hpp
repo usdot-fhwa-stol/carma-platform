@@ -75,10 +75,11 @@ private:
     rclcpp_lifecycle::LifecyclePublisher<diagnostic_msgs::msg::DiagnosticArray>::SharedPtr collision_diagnostic_pub_;
 
     /**
-     * \brief Publishes the yield collision diagnostic of the planning cycle that just ran.
-     *        Publishes nothing if yield did not modify the trajectory for a collision.
+     * \brief Publishes the yield collision diagnostic of the planning cycle that just ran, on every call.
+     *        If yield did not modify the trajectory for a collision, publishes only the callback runtime.
+     * \param callback_time_s Wall time of the whole plan_trajectory callback in seconds
      */
-    void publish_collision_diagnostic();
+    void publish_collision_diagnostic(double callback_time_s);
 
     // Subscribers
     rclcpp::Subscription<carma_v2x_msgs::msg::MobilityRequest>::SharedPtr mob_request_sub_;
