@@ -304,7 +304,7 @@ namespace yield_plugin
       {
         diagnostic.downtrack_to_collision_m = wm_->routeTrackPos(diagnostic.collision_point).downtrack
           - wm_->routeTrackPos(veh_pos).downtrack;
-        diagnostic.time_to_collision_s = req->vehicle_state.longitudinal_vel > EPSILON ? diagnostic.downtrack_to_collision_m / req->vehicle_state.longitudinal_vel : std::numeric_limits<double>::infinity();
+        diagnostic.time_to_collision_s = get_time_to_collision(diagnostic.downtrack_to_collision_m);
       }
       diagnostic.stamp = nh_->now();
       latest_collision_diagnostic_ = diagnostic;
@@ -1398,7 +1398,7 @@ namespace yield_plugin
     // Distance along the route from the ego vehicle to the collision location
     diagnostic.downtrack_to_collision_m = wm_->routeTrackPos(diagnostic.collision_point).downtrack - vehicle_downtrack;
     diagnostic.speed_to_match_mps = goal_velocity;
-    diagnostic.time_to_collision_s = initial_velocity > EPSILON ? diagnostic.downtrack_to_collision_m / initial_velocity : std::numeric_limits<double>::infinity();
+    diagnostic.time_to_collision_s = get_time_to_collision(diagnostic.downtrack_to_collision_m);
     diagnostic.detect_and_plan_time_s = std::chrono::duration<double>(std::chrono::steady_clock::now() - _t0_ect).count();
     diagnostic.stamp = nh_->now();
 
@@ -1558,6 +1558,21 @@ namespace yield_plugin
       georeference_ = georeference;
       map_projector_ = std::make_shared<lanelet::projection::LocalFrameProjector>(georeference.c_str());  // Build projector from proj string
     }
+  }
+
+  void YieldPlugin::set_current_speed(double speed_mps)
+  {
+    current_speed_mps_ = speed_mps;
+  }
+
+  double YieldPlugin::get_time_to_collision(double downtrack_to_collision_m) const
+  {
+    if (!current_speed_mps_)
+    {
+      RCLCPP_WARN_STREAM_ONCE(rclcpp::get_logger("yield_plugin"), "No vehicle/twist received yet, reporting time_to_collision_s as inf");
+      return std::numeric_limits<double>::infinity();
+    }
+    return current_speed_mps_.value() > EPSILON ? downtrack_to_collision_m / current_speed_mps_.value() : std::numeric_limits<double>::infinity();
   }
 
   void YieldPlugin::set_external_objects(const std::vector<carma_perception_msgs::msg::ExternalObject>& object_list)

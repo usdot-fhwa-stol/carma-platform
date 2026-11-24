@@ -126,6 +126,11 @@ namespace yield_plugin
                                                                                                 [this](const carma_perception_msgs::msg::ExternalObjectList::SharedPtr msg) {
                                                                                                   worker_->set_external_objects(msg->objects);
                                                                                                 });
+    // Vehicle's current actual speed, used for the collision diagnostic time to collision
+    current_velocity_sub_ = create_subscription<geometry_msgs::msg::TwistStamped>("current_velocity", 1,
+                                                                                  [this](const geometry_msgs::msg::TwistStamped::SharedPtr msg) {
+                                                                                    worker_->set_current_speed(msg->twist.linear.x);
+                                                                                  });
     // Return success if everything initialized successfully
     return CallbackReturn::SUCCESS;
   }
