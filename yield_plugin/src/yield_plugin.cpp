@@ -293,6 +293,10 @@ namespace yield_plugin
               (updated_trajectory.trajectory_points.begin() + idx_to_start_new_traj,
               updated_trajectory.trajectory_points.end());
       }
+      // The committed trajectory keeps the initial velocity from when it was generated. The controller derives
+      // point speeds from it, so a stale (higher) value makes the vehicle creep instead of stopping, which keeps
+      // yield committed indefinitely. Use the vehicle's current actual speed instead.
+      updated_trajectory.initial_longitudinal_velocity = current_speed_mps_.value_or(req->vehicle_state.longitudinal_vel);
       last_traj_plan_committed_to_stopping_ = updated_trajectory;
       resp->trajectory_plan = last_traj_plan_committed_to_stopping_.value();
 
