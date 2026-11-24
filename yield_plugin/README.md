@@ -27,7 +27,7 @@ Note that the object avoidance is not a handoff to a different tactical plugin. 
 
 **Pipeline:**
 
-1. **Concurrent collision detection** — `get_collision_times_concurrently()` checks every external object received on `/external_object_predictions` for a predicted collision with the ego trajectory, using either a CPU or GPU approach. The GPU approach is used by default, falling back to CPU if a CUDA error occurs (e.g., GPU driver not accessible). See "Collision Detection: CPU vs. CUDA" for more.
+1. **Concurrent collision detection** — `get_collisions_concurrently()` checks every external object received on `/external_object_predictions` for a predicted collision with the ego trajectory, using either a CPU or GPU approach. The GPU approach is used by default, falling back to CPU if a CUDA error occurs (e.g., GPU driver not accessible). See "Collision Detection: CPU vs. CUDA" for more.
 
 2. **Earliest collision selection** — of the objects with a predicted collision, the one with the closest time to collision is chosen as the adversary.
 
@@ -71,12 +71,12 @@ Enabled via `enable_cooperative_behavior: true`. Activated when a `MobilityReque
 
 ## Collision Detection: CPU vs. CUDA
 
-The plugin supports two back-ends for `get_collision_times_concurrently`. At startup, `cuda_is_available()` checks for a reachable CUDA device; the GPU path is used when one is found and falls back to CPU on any runtime error.
+The plugin supports two back-ends for `get_collisions_concurrently`. At startup, `cuda_is_available()` checks for a reachable CUDA device; the GPU path is used when one is found and falls back to CPU on any runtime error.
 
 ```
-get_collision_times_concurrently()
+get_collisions_concurrently()
         │
-        ├─ cuda_is_available()? ──Yes──> get_collision_times_concurrently_cuda()
+        ├─ cuda_is_available()? ──Yes──> get_collisions_concurrently_cuda()
         │                                        │
         │                       on-route filter (CPU, strided, polygon within)
         │                                        │
@@ -84,10 +84,10 @@ get_collision_times_concurrently()
         │                                        │
         │                       post-process: behind-vehicle check (CPU)
         │
-        └─ No / exception ──> get_collision_times_concurrently_cpu()
+        └─ No / exception ──> get_collisions_concurrently_cpu()
                                        │
                                one std::thread per object
-                               get_collision_time() per object (strided CPU loop)
+                               get_collision_with_object() per object (strided CPU loop)
 ```
 
 ### CPU path
@@ -95,7 +95,7 @@ get_collision_times_concurrently()
 **How it works:**
 
 - One OS thread is spawned per external object via `std::thread` + `std::packaged_task`.
-- Each thread runs `get_collision_time()`, which:
+- Each thread runs `get_collision_with_object()`, which:
   1. Prepends the object's current pose to its prediction list.
   2. Runs a strided on-route check using `wm_->getLaneletsFromPoint()` to confirm at least one predicted state falls on a route lanelet.
   3. If on-route, iterates over `(ego_segment_i, obstacle_prediction_j)` pairs, linearly interpolates the ego position to each obstacle timestamp, and tests whether the distance is within the collision radius.

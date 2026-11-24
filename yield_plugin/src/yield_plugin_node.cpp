@@ -97,7 +97,7 @@ namespace yield_plugin
         "CUDA warmup complete (" << _warm_ms << " ms) — first call latency paid at startup");
     } else {
       RCLCPP_WARN(get_logger(), "YieldPlugin built with CUDA but no compatible driver found; using CPU collision detection fallback");
-      RCLCPP_WARN(get_logger(), "YieldPlugin collision detection: CPU path (bbox on-route filter + std::async get_collision_time)");
+      RCLCPP_WARN(get_logger(), "YieldPlugin collision detection: CPU path (bbox on-route filter + std::async get_collision_with_object)");
     }
 
     worker_ = std::make_shared<YieldPlugin>(shared_from_this(), get_world_model(), config_,
