@@ -75,28 +75,6 @@ namespace yield_plugin
     return (rclcpp::Time(trajectory.back().header.stamp) - rclcpp::Time(trajectory.front().header.stamp)).seconds();
   }
 
-  // Distance traveled along the trajectory from its first point until the given time (linearly interpolated).
-  // Returns the full trajectory length if the time is past the trajectory end.
-  double distance_along_trajectory_until_time(const carma_planning_msgs::msg::TrajectoryPlan& trajectory, double time_in_s)
-  {
-    double distance = 0.0;
-    for (size_t i = 1; i < trajectory.trajectory_points.size(); ++i)
-    {
-      const auto& a = trajectory.trajectory_points[i - 1];
-      const auto& b = trajectory.trajectory_points[i];
-      const double segment_length = std::hypot(b.x - a.x, b.y - a.y);
-      const double a_time = rclcpp::Time(a.target_time).seconds();
-      const double b_time = rclcpp::Time(b.target_time).seconds();
-      if (b_time >= time_in_s)
-      {
-        const double ratio = (b_time - a_time) > 0.0 ? std::clamp((time_in_s - a_time) / (b_time - a_time), 0.0, 1.0) : 1.0;
-        return distance + ratio * segment_length;
-      }
-      distance += segment_length;
-    }
-    return distance;
-  }
-
   std::vector<std::pair<int, lanelet::BasicPoint2d>> YieldPlugin::detect_trajectories_intersection(std::vector<lanelet::BasicPoint2d> self_trajectory, std::vector<lanelet::BasicPoint2d> incoming_trajectory) const
   {
     std::vector<std::pair<int, lanelet::BasicPoint2d>> intersection_points;
@@ -318,9 +296,16 @@ namespace yield_plugin
       last_traj_plan_committed_to_stopping_ = updated_trajectory;
       resp->trajectory_plan = last_traj_plan_committed_to_stopping_.value();
 
-      // No new collision detection runs here; keep reporting the committed stop until yield releases it
+      // No new collision detection runs here; keep reporting the committed stop until yield releases it,
+      // with downtrack and time to collision updated against the collision location that triggered the stop at current speed
       YieldCollisionDiagnostic diagnostic = committed_stop_diagnostic_.value_or(YieldCollisionDiagnostic{});
       diagnostic.committed_to_stop = true;
+      if (committed_stop_diagnostic_)
+      {
+        diagnostic.downtrack_to_collision_m = wm_->routeTrackPos(diagnostic.collision_point).downtrack
+          - wm_->routeTrackPos(veh_pos).downtrack;
+        diagnostic.time_to_collision_s = req->vehicle_state.longitudinal_vel > EPSILON ? diagnostic.downtrack_to_collision_m / req->vehicle_state.longitudinal_vel : std::numeric_limits<double>::infinity();
+      }
       diagnostic.stamp = nh_->now();
       latest_collision_diagnostic_ = diagnostic;
 
@@ -835,7 +820,7 @@ namespace yield_plugin
     return false;
   }
 
-  std::optional<rclcpp::Time> YieldPlugin::get_collision_time(const carma_planning_msgs::msg::TrajectoryPlan& original_tp,
+  std::optional<GetCollisionResult> YieldPlugin::get_collision_time(const carma_planning_msgs::msg::TrajectoryPlan& original_tp,
     const carma_perception_msgs::msg::ExternalObject& curr_obstacle, double original_tp_max_speed)
   {
     auto plan_start_time = get_trajectory_start_time(original_tp);
@@ -894,7 +879,7 @@ namespace yield_plugin
       ", and collision distance: " << distance);
     RCLCPP_DEBUG_STREAM(rclcpp::get_logger("yield_plugin"), "[CPU] obj=" << curr_obstacle.id << " collision at t=" << collision_result.value().collision_time.seconds());
 
-    return collision_result.value().collision_time;
+    return collision_result.value();
   }
 
   static lanelet::BasicPoint2d interp_trajectory_pt_at_time(
@@ -957,7 +942,7 @@ namespace yield_plugin
     return {false, 0};
   }
 
-  std::unordered_map<uint32_t, rclcpp::Time> YieldPlugin::get_collision_times_concurrently(
+  std::unordered_map<uint32_t, GetCollisionResult> YieldPlugin::get_collision_times_concurrently(
     const carma_planning_msgs::msg::TrajectoryPlan& original_tp,
     const std::vector<carma_perception_msgs::msg::ExternalObject>& external_objects,
     double original_tp_max_speed)
@@ -967,19 +952,19 @@ namespace yield_plugin
     return get_collision_times_concurrently_cuda(original_tp, external_objects, original_tp_max_speed);
   }
 
-  std::unordered_map<uint32_t, rclcpp::Time> YieldPlugin::get_collision_times_concurrently_cpu(
+  std::unordered_map<uint32_t, GetCollisionResult> YieldPlugin::get_collision_times_concurrently_cpu(
     const carma_planning_msgs::msg::TrajectoryPlan& original_tp,
     const std::vector<carma_perception_msgs::msg::ExternalObject>& external_objects,
     double original_tp_max_speed)
   {
-    std::unordered_map<uint32_t, std::future<std::optional<rclcpp::Time>>> futures;
-    std::unordered_map<uint32_t, rclcpp::Time> collision_times;
+    std::unordered_map<uint32_t, std::future<std::optional<GetCollisionResult>>> futures;
+    std::unordered_map<uint32_t, GetCollisionResult> collision_times;
     RCLCPP_DEBUG_STREAM(rclcpp::get_logger("yield_plugin"),
       "[CPU] Launching " << external_objects.size() << " async get_collision_time tasks");
     std::vector<std::thread> threads;
     threads.reserve(external_objects.size());
     for (const auto& object : external_objects) {
-      std::packaged_task<std::optional<rclcpp::Time>()> task(
+      std::packaged_task<std::optional<GetCollisionResult>()> task(
         [this, &original_tp, &object, &original_tp_max_speed] {
           return get_collision_time(original_tp, object, original_tp_max_speed);
         });
@@ -997,12 +982,12 @@ namespace yield_plugin
     return collision_times;
   }
 
-  std::unordered_map<uint32_t, rclcpp::Time> YieldPlugin::get_collision_times_concurrently_cuda(
+  std::unordered_map<uint32_t, GetCollisionResult> YieldPlugin::get_collision_times_concurrently_cuda(
     const carma_planning_msgs::msg::TrajectoryPlan& original_tp,
     const std::vector<carma_perception_msgs::msg::ExternalObject>& external_objects,
     double original_tp_max_speed)
   {
-    std::unordered_map<uint32_t, rclcpp::Time> collision_times;
+    std::unordered_map<uint32_t, GetCollisionResult> collision_times;
 
     if (original_tp.trajectory_points.size() < 2) return collision_times;
 
@@ -1179,7 +1164,12 @@ namespace yield_plugin
         << " ego=(" << ego_collision_point.x() << "," << ego_collision_point.y() << ")"
         << " obs=(" << object_collision_point.x() << "," << object_collision_point.y() << ")"
         << " downtrack_gap=" << (object_downtrack - vehicle_downtrack));
-      collision_times[active[k].id] = collision_time;
+
+      GetCollisionResult collision_result;
+      collision_result.collision_time = collision_time;
+      collision_result.ego_point = ego_collision_point;
+      collision_result.object_point = object_collision_point;
+      collision_times[active[k].id] = collision_result;
     }
 
     RCLCPP_DEBUG_STREAM(rclcpp::get_logger("yield_plugin"),
@@ -1210,7 +1200,7 @@ namespace yield_plugin
     return collision_times;
   }
 
-  std::optional<std::pair<carma_perception_msgs::msg::ExternalObject, double>> YieldPlugin::get_earliest_collision_object_and_time(const carma_planning_msgs::msg::TrajectoryPlan& original_tp,
+  std::optional<std::tuple<carma_perception_msgs::msg::ExternalObject, double, lanelet::BasicPoint2d>> YieldPlugin::get_earliest_collision_object_and_time(const carma_planning_msgs::msg::TrajectoryPlan& original_tp,
     const std::vector<carma_perception_msgs::msg::ExternalObject>& external_objects)
   {
     RCLCPP_DEBUG_STREAM(rclcpp::get_logger("yield_plugin"), "ExternalObjects size: " << external_objects.size());
@@ -1230,7 +1220,7 @@ namespace yield_plugin
     RCLCPP_DEBUG_STREAM(nh_->get_logger(),"External Object List (external_objects) size: " << external_objects.size());
     const double original_max_speed = max_trajectory_speed(original_tp.trajectory_points, get_trajectory_end_time(original_tp));
     auto _t0_conc = std::chrono::steady_clock::now();
-    std::unordered_map<uint32_t, rclcpp::Time> collision_times = get_collision_times_concurrently(original_tp,external_objects, original_max_speed);
+    std::unordered_map<uint32_t, GetCollisionResult> collision_times = get_collision_times_concurrently(original_tp,external_objects, original_max_speed);
     const double _conc_ms = std::chrono::duration<double, std::milli>(std::chrono::steady_clock::now() - _t0_conc).count();
     RCLCPP_DEBUG_STREAM(rclcpp::get_logger("yield_plugin"),
       "[timing] get_collision_times_concurrently: " << _conc_ms << " ms");
@@ -1239,7 +1229,7 @@ namespace yield_plugin
 
     const auto earliest_colliding_object_id{std::min_element(
       std::cbegin(collision_times), std::cend(collision_times),
-      [](const auto & a, const auto & b){ return a.second < b.second; })->first};
+      [](const auto & a, const auto & b){ return a.second.collision_time < b.second.collision_time; })->first};
 
     const auto earliest_colliding_object{std::find_if(
       std::cbegin(external_objects), std::cend(external_objects),
@@ -1247,7 +1237,8 @@ namespace yield_plugin
 
     RCLCPP_DEBUG_STREAM(nh_->get_logger(),"earliest object x: " << earliest_colliding_object->velocity.twist.linear.x
         << ", y: " << earliest_colliding_object->velocity.twist.linear.y);
-    return std::make_pair(*earliest_colliding_object, collision_times.at(earliest_colliding_object_id).seconds());
+    const auto& earliest_result = collision_times.at(earliest_colliding_object_id);
+    return std::make_tuple(*earliest_colliding_object, earliest_result.collision_time.seconds(), earliest_result.object_point);
 
   }
 
@@ -1316,8 +1307,9 @@ namespace yield_plugin
       return original_tp;
     }
 
-    carma_perception_msgs::msg::ExternalObject earliest_collision_obj = earliest_collision_obj_pair.value().first;
-    double earliest_collision_time_in_seconds = earliest_collision_obj_pair.value().second;
+    carma_perception_msgs::msg::ExternalObject earliest_collision_obj = std::get<0>(earliest_collision_obj_pair.value());
+    double earliest_collision_time_in_seconds = std::get<1>(earliest_collision_obj_pair.value());
+    const lanelet::BasicPoint2d earliest_collision_obj_point = std::get<2>(earliest_collision_obj_pair.value());
 
     // Issue (https://github.com/usdot-fhwa-stol/carma-platform/issues/2155): If the yield_plugin can detect if the roadway object is moving along the route,
     // it is able to plan yielding much earlier and smoother using on_route_vehicle_collision_horizon_in_s.
@@ -1402,9 +1394,11 @@ namespace yield_plugin
     YieldCollisionDiagnostic diagnostic;
     diagnostic.object_id = earliest_collision_obj.id;
     diagnostic.object_type = earliest_collision_obj.object_type;
-    diagnostic.downtrack_to_collision_m = distance_along_trajectory_until_time(original_tp, earliest_collision_time_in_seconds);
+    diagnostic.collision_point = earliest_collision_obj_point;
+    // Distance along the route from the ego vehicle to the collision location
+    diagnostic.downtrack_to_collision_m = wm_->routeTrackPos(diagnostic.collision_point).downtrack - vehicle_downtrack;
     diagnostic.speed_to_match_mps = goal_velocity;
-    diagnostic.time_to_collision_s = earliest_collision_time_in_seconds - nh_->now().seconds();
+    diagnostic.time_to_collision_s = initial_velocity > EPSILON ? diagnostic.downtrack_to_collision_m / initial_velocity : std::numeric_limits<double>::infinity();
     diagnostic.detect_and_plan_time_s = std::chrono::duration<double>(std::chrono::steady_clock::now() - _t0_ect).count();
     diagnostic.stamp = nh_->now();
 

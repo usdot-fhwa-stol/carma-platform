@@ -174,16 +174,17 @@ namespace yield_plugin
 
     if (diagnostic->committed_to_stop)
     {
-      // Following the committed stopping trajectory: no new detection ran this cycle, so only the
-      // object that triggered the stop and the target speed (0) are known
+      // Following the committed stopping trajectory: no new detection ran this cycle. Downtrack and time to
+      // collision are updated against the collision location that triggered the stop; detect_and_plan_time_s
+      // is from the cycle that committed to the stop
       status.message = "Committed to stop for object " + object_id + " (" + object_type + ")";
       status.values = {
         to_kv("object_id", object_id),
         to_kv("object_type", object_type),
-        to_kv("downtrack_to_collision_m", "NA"),
-        to_kv("speed_to_match_mph", std::to_string(0.0)),
-        to_kv("time_to_collision_s", "inf"),
-        to_kv("detect_and_plan_time_s", "NA")
+        to_kv("downtrack_to_collision_m", std::to_string(diagnostic->downtrack_to_collision_m)),
+        to_kv("speed_to_match_mph", std::to_string(diagnostic->speed_to_match_mps * mps_to_mph)),
+        to_kv("time_to_collision_s", std::to_string(diagnostic->time_to_collision_s)),
+        to_kv("detect_and_plan_time_s", std::to_string(diagnostic->detect_and_plan_time_s))
       };
     }
     else
