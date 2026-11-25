@@ -1329,10 +1329,10 @@ namespace yield_plugin
 
     RCLCPP_WARN_STREAM(rclcpp::get_logger("yield_plugin"),"Collision Detected!");
 
-    // earliest_collision_obj_point is the object's predicted position AT the collision time
+    // earliest_collision_point is the object's predicted position AT the collision time
     // (computed once during collision detection), not its current position — so goal_pos
     // reflects where the object will actually be when the collision would occur.
-    const double object_downtrack = wm_->routeTrackPos(earliest_collision_obj_point).downtrack;
+    const double object_downtrack = wm_->routeTrackPos(earliest_collision_point).downtrack;
 
     RCLCPP_DEBUG_STREAM(rclcpp::get_logger("yield_plugin"),"object_downtrack: " << object_downtrack);
     const double _rtp_ms_upd = std::chrono::duration<double, std::milli>(
