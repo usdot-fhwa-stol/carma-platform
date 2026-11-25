@@ -52,10 +52,6 @@ namespace yield_plugin
 using MobilityResponseCB = std::function<void(const carma_v2x_msgs::msg::MobilityResponse&)>;
 using LaneChangeStatusCB = std::function<void(const carma_planning_msgs::msg::LaneChangeStatus&)>;
 
-// Defined in yield_plugin_cuda.cuh
-struct CudaPoint;
-struct CudaCollisionResult;
-
 /**
  * \brief Convenience class for pairing 2d points with speeds
  */
@@ -357,34 +353,6 @@ private:
     const carma_planning_msgs::msg::TrajectoryPlan& original_tp,
     const std::vector<carma_perception_msgs::msg::ExternalObject>& external_objects,
     double original_tp_max_speed);
-
-  /**
-   * \brief On-route object packed into the CUDA collision batch
-   */
-  struct CudaActiveObject
-  {
-    uint32_t id;
-    // Prediction list with current position prepended (same as get_collision_with_object builds)
-    std::vector<carma_perception_msgs::msg::PredictedState> predictions;
-    int on_route_idx;  // first prediction index known to be on the route
-  };
-
-  /**
-   * \brief Turn the GPU batch results into confirmed collisions: recovers the ego and object collision
-   *        positions and drops objects that are behind the vehicle
-   * \param cuda_results one result per entry of active, in the same order
-   * \param active objects that were sent to the GPU batch
-   * \param ego_pts ego trajectory points with timestamps normalized to ref_time
-   * \param original_tp trajectory of the ego vehicle
-   * \param ref_time reference time in seconds used to normalize the CUDA timestamps
-   * \return mapping of objects' ids and their corresponding collision results (non-colliding objects are omitted)
-   */
-  std::unordered_map<uint32_t, GetCollisionResult> confirm_cuda_collisions(
-    const std::vector<CudaCollisionResult>& cuda_results,
-    const std::vector<CudaActiveObject>& active,
-    const std::vector<CudaPoint>& ego_pts,
-    const carma_planning_msgs::msg::TrajectoryPlan& original_tp,
-    double ref_time);
 
   /**
    * \brief Check whether any predicted state of an object falls within the route lanelet polygons
