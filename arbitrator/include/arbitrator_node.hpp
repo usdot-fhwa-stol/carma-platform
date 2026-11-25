@@ -37,14 +37,14 @@
 #include "tree_planner.hpp"
 
 
-namespace arbitrator 
+namespace arbitrator
 {
     /**
      * An arbitrator node instance with currently used configuration/planning paradigms
-     * 
+     *
      * Governs the interactions of plugins during the maneuver planning phase of
      * the CARMA planning process by internally using a worker class with generic planning interface.
-     * 
+     *
      */
     class ArbitratorNode : public carma_ros2_utils::CarmaLifecycleNode
     {
@@ -53,24 +53,26 @@ namespace arbitrator
              * @brief Constructor
              */
             explicit ArbitratorNode(const rclcpp::NodeOptions& options);
-            
+
             ////
             // Overrides
             ////
             carma_ros2_utils::CallbackReturn handle_on_configure(const rclcpp_lifecycle::State &);
             carma_ros2_utils::CallbackReturn handle_on_activate(const rclcpp_lifecycle::State &);
-        
+
         private:
             // helper function to parse plugin_priorities param from yaml as a json
             std::map<std::string, double> plugin_priorities_map_from_json(const std::string& json_string);
             carma_ros2_utils::SubPtr<geometry_msgs::msg::TwistStamped> twist_sub_;
-            
+
             Config config_;
              // wm listener pointer and pointer to the actual wm object
             std::shared_ptr<carma_wm::WMListener> wm_listener_;
             carma_wm::WorldModelConstPtr wm_;
             std::shared_ptr<Arbitrator> arbitrator_;
             rclcpp::TimerBase::SharedPtr bumper_pose_timer_;
+            // Create a cb group for the arbitrator run timer to ensure it does not block other cb
+            rclcpp::CallbackGroup::SharedPtr arbitrator_run_callback_group_;
             rclcpp::TimerBase::SharedPtr arbitrator_run_;
 
     };

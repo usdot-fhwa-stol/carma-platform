@@ -51,10 +51,10 @@ if sudo lsof -t -i:$HOST_PORT >/dev/null; then
 fi
 
 
-# Open forward tunnel: This port (33333) is forwarded to remote host (carma-cloud) and port: 8080 
+# Open forward tunnel: This port (33333) is forwarded to remote host (carma-cloud) and port: 8080
 echo "Open forward tunnel..."
 
-CMD="/usr/bin/ssh -4 -f -i $KEY_FILE -L $HOST_PORT:localhost:8080 -N -o StrictHostKeyChecking=no -o ServerAliveInterval=30 -o ServerAliveCountMax=10 -o UserKnownHostsFile=/dev/null -o LogLevel=quiet $REMOTE_USER@$REMOTE_ADDR" # -f runs ssh in background after it authenticates, -N creates a tunnel without running remote commands to save resources, -T disables pseudo-tty allocation 
+CMD="/usr/bin/ssh -4 -f -i $KEY_FILE -L $HOST_PORT:localhost:8080 -N -o StrictHostKeyChecking=no -o ServerAliveInterval=30 -o ServerAliveCountMax=10 -o UserKnownHostsFile=/dev/null -o LogLevel=quiet $REMOTE_USER@$REMOTE_ADDR" # -f runs ssh in background after it authenticates, -N creates a tunnel without running remote commands to save resources, -T disables pseudo-tty allocation
 ps -x -o pid,cmd | grep "$CMD" > $TEMP_FILE # write the contents of the ps command to a file, it only prints the pid and the command line command used to create the entry
 while read -r line; do # read the lines of the file with ps command
     case "$line" in
@@ -73,12 +73,12 @@ done < $TEMP_FILE
 rm $TEMP_FILE
 exec $CMD &> /dev/null  # create the new tunnel
 
-if [ "$?" -eq 0 ]; then  
-     echo "Forward tunnel is successfully opened!" 
+if [ "$?" -eq 0 ]; then
+     echo "Forward tunnel is successfully opened!"
 fi
 
 if sudo lsof -t -i:$HOST_PORT >/dev/null; then
-    echo "Forward tunnel is successfully opened!"  
+    echo "Forward tunnel is successfully opened!"
 fi
 
 
@@ -90,7 +90,7 @@ if ssh -i  $KEY_FILE  $REMOTE_USER@$REMOTE_ADDR "sudo lsof -Pi:$REMOTE_PORT -sTC
     echo "Closed exiting remote port $REMOTE_PORT"
 fi
 
-# open reverse tunnel:  carma-cloud remote port (10001) is forwarded to local host (v2xhub) and port: 22222
+# open reverse tunnel:  carma-cloud remote port (22222) is forwarded to local host (v2xhub) and port: 22222
 echo "Open reverse tunnel..."
 
 # open http tunnel, port-forwarding from  REMOTE_PORT to port 22222 (222222: running in v2xhub)
@@ -115,8 +115,8 @@ exec $CMD &> /dev/null  # create the new tunnel
 
 
 
-if [ "$?" -eq 0 ]; then   
+if [ "$?" -eq 0 ]; then
    if ssh -i $KEY_FILE $REMOTE_USER@$REMOTE_ADDR "sudo lsof -Pi:$REMOTE_PORT -sTCP:LISTEN" >/dev/null; then
-        echo "Reverse tunnel is successfully opened!" 
-    fi 
+        echo "Reverse tunnel is successfully opened!"
+    fi
 fi

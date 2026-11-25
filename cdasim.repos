@@ -1,0 +1,13 @@
+repositories:
+  src/carma-config:
+    type: git
+    url: git@github.com:usdot-fhwa-stol/carma-config.git
+    version: develop
+  src/carma-platform:
+    type: git
+    url: git@github.com:usdot-fhwa-stol/carma-platform.git
+    version: develop
+  src/cdasim:
+    type: git
+    url: git@github.com:usdot-fhwa-stol/cdasim.git
+    version: carma-system-4.6.0

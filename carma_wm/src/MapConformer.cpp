@@ -27,7 +27,7 @@ namespace lanelet
  * The map conformer is responsible for ensuring that a loaded lanelet2 map meets the expectations of
  * CarmaUsTrafficRules Rather than simply validating the map this class will actually modify the map when possible to
  * ensure compliance.
- * NOTE: This class is not meant to be used by carma_wm users at runtime. It is only used in WMTestLibraryForGuidance 
+ * NOTE: This class is not meant to be used by carma_wm users at runtime. It is only used in WMTestLibraryForGuidance
  * currently to support unit testing.
  */
 namespace MapConformer
@@ -340,7 +340,7 @@ void addInferredPassingControlLine(Lanelet& lanelet, lanelet::LaneletMapPtr map)
     for (auto sub_line : pcl->controlLine())
     {
       bool shouldAdd = false;
-      
+
       if (left_bound.id() == sub_line.id() && !foundLeft)
       {
         foundLeft = true;
@@ -358,7 +358,7 @@ void addInferredPassingControlLine(Lanelet& lanelet, lanelet::LaneletMapPtr map)
         lanelet.addRegulatoryElement(pcl);
       }
     }
-    
+
   }
 
   // If no existing regulation was found for this lanelet's right or left bound then create a new one and add it to
@@ -484,18 +484,18 @@ void addValidSpeedLimit(Lanelet& lanelet, lanelet::LaneletMapPtr map, lanelet::V
   lanelet::Velocity max_speed;
     auto speed_limit = lanelet.regulatoryElementsAs<DigitalSpeedLimit>();
      if(config_limit < 80_mph && config_limit > 0_mph)//Accounting for the configured speed limit, input zero when not in use
-      {  
+      {
         max_speed = config_limit;
       }
       else
       {
         max_speed = 80_mph;
       }
-      
+
     // If the lanelet does not have a digital speed limit then add one with the maximum value of 80
     std::vector<std::string> allowed_participants;
      //Maximum speed limit is 80
-   
+
 
     if (speed_limit.empty())//If there is no assigned speed limit value
     {
@@ -518,7 +518,7 @@ void addValidSpeedLimit(Lanelet& lanelet, lanelet::LaneletMapPtr map, lanelet::V
 
      }
   }
-  else  //If the speed limit value already exists 
+  else  //If the speed limit value already exists
   {
       for(const auto& rules : default_traffic_rules)
          {
@@ -529,18 +529,18 @@ void addValidSpeedLimit(Lanelet& lanelet, lanelet::LaneletMapPtr map, lanelet::V
         }
     if(speed_limit.back().get()->speed_limit_ > max_speed)//Check that speed limit value does not exceed the maximum value
     {
-    
+
       RCLCPP_DEBUG_STREAM( rclcpp::get_logger("lanelet::MapConformer"), "Invalid speed limit value. Value reset to maximum speed limit.");
       auto rar = std::make_shared<DigitalSpeedLimit>(DigitalSpeedLimit::buildData(lanelet::utils::getId(), max_speed, {lanelet},
       {}, allowed_participants));
       lanelet.removeRegulatoryElement(speed_limit.back());
       lanelet.addRegulatoryElement(rar);
       map->update(lanelet, rar);//Add DigitalSpeedLimit data to the map
-      RCLCPP_INFO_STREAM( rclcpp::get_logger("lanelet::MapConformer"), "Number of Regulatory Elements: "<< map->regulatoryElementLayer.size());
+      RCLCPP_DEBUG_STREAM( rclcpp::get_logger("lanelet::MapConformer"), "Number of Regulatory Elements: "<< map->regulatoryElementLayer.size());
 
 
     }
-    
+
   }
 }
 
@@ -549,7 +549,7 @@ void addValidSpeedLimit(Lanelet& lanelet, lanelet::LaneletMapPtr map, lanelet::V
 
 void ensureCompliance(lanelet::LaneletMapPtr map, lanelet::Velocity config_limit)
 {
-  
+
   auto default_traffic_rules = getAllGermanTrafficRules();  // Use german traffic rules as default as they most closely
                                                             // match the generic traffic rules
   // Handle lanelets
@@ -559,8 +559,6 @@ void ensureCompliance(lanelet::LaneletMapPtr map, lanelet::Velocity config_limit
     addInferredPassingControlLine(lanelet, map);
     addInferredDirectionOfTravel(lanelet, map, default_traffic_rules);
     addValidSpeedLimit(lanelet, map, config_limit, default_traffic_rules);// 0_mph can be changed with the config_limit
-
-
   }
   // Handle areas
   for (auto area : map->areaLayer)
@@ -568,6 +566,9 @@ void ensureCompliance(lanelet::LaneletMapPtr map, lanelet::Velocity config_limit
     addInferredAccessRule(area, map, default_traffic_rules);
     addInferredPassingControlLine(area, map);
   }
+  RCLCPP_INFO_STREAM(rclcpp::get_logger("lanelet::MapConformer"),
+    "Ensured compliance of map with "
+    << map->laneletLayer.size() << " lanelets and " << map->areaLayer.size());
 }
 }  // namespace MapConformer
 }  // namespace lanelet

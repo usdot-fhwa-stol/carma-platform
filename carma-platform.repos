@@ -1,77 +1,155 @@
 repositories:
-  src/astuff_sensor_msgs:
-    type: git
-    url: https://github.com/astuff/astuff_sensor_msgs.git
-    version: melodic
-  src/autoware.ai:
-    type: git
-    url: git@github.com:usdot-fhwa-stol/autoware.ai.git
-    version: carma-develop
-  src/avt_vimba_camera:
-    type: git
-    url: git@github.com:usdot-fhwa-stol/avt_vimba_camera.git
-    version: develop
   src/carma-base:
     type: git
     url: git@github.com:usdot-fhwa-stol/carma-base.git
     version: develop
-  src/v2x-ros-driver:
+
+  src/ros1_bridge:
     type: git
-    url: git@github.com:usdot-fhwa-stol/v2x-ros-driver.git
+    url: git@github.com:usdot-fhwa-stol/ros1_bridge.git
     version: develop
-  src/carma-config:
-    type: git
-    url: git@github.com:usdot-fhwa-stol/carma-config.git
-    version: develop
-  src/carma-garmin-lidar-lite-v3-driver-wrapper:
-    type: git
-    url: git@github.com:usdot-fhwa-stol/carma-garmin-lidar-lite-v3-driver-wrapper.git
-    version: develop
-  src/v2x-ros-conversion:
-    type: git
-    url: git@github.com:usdot-fhwa-stol/v2x-ros-conversion.git
-    version: develop
-  src/carma-msgs:
-    type: git
-    url: git@github.com:usdot-fhwa-stol/carma-msgs.git
-    version: develop
-  src/carma-platform:
-    type: git
-    url: git@github.com:usdot-fhwa-stol/carma-platform.git
-    version: develop
-  src/carma-ssc-interface-wrapper:
-    type: git
-    url: git@github.com:usdot-fhwa-stol/carma-ssc-interface-wrapper.git
-    version: develop
+
   src/carma-utils:
     type: git
     url: git@github.com:usdot-fhwa-stol/carma-utils.git
     version: develop
-  src/carma-vehicle-model-framework:
+
+  src/autoware.auto:
     type: git
-    url: git@github.com:usdot-fhwa-stol/carma-vehicle-model-framework.git
+    url: git@github.com:usdot-fhwa-stol/autoware.auto.git
     version: develop
+
+  src/autoware.ai:
+    type: git
+    url: git@github.com:usdot-fhwa-stol/autoware.ai.git
+    version: develop
+
+  src/carma-msgs:
+    type: git
+    url: git@github.com:usdot-fhwa-stol/carma-msgs.git
+    version: develop
+
+  src/stol-j2735:
+    type: git
+    url: git@github.com:usdot-fhwa-stol/stol-j2735.git
+    version: develop
+
+  src/carma-ssc-interface-wrapper:
+    type: git
+    url: git@github.com:usdot-fhwa-stol/carma-ssc-interface-wrapper.git
+    version: develop
+
+  src/v2x-ros-conversion:
+    type: git
+    url: git@github.com:usdot-fhwa-stol/v2x-ros-conversion.git
+    version: develop
+
+  src/carma-novatel-oem7-driver-wrapper:
+    type: git
+    url: git@github.com:usdot-fhwa-stol/carma-novatel-oem7-driver-wrapper.git
+    version: develop
+
   src/carma-velodyne-lidar-driver:
     type: git
     url: git@github.com:usdot-fhwa-stol/carma-velodyne-lidar-driver.git
     version: develop
-  src/carma-web-ui:
+
+  src/v2x-ros-driver:
     type: git
-    url: git@github.com:usdot-fhwa-stol/carma-web-ui.git
+    url: git@github.com:usdot-fhwa-stol/v2x-ros-driver.git
     version: develop
+
   src/carma-lightbar-driver:
     type: git
     url: git@github.com:usdot-fhwa-stol/carma-lightbar-driver.git
     version: develop
-  src/novatel_gps_driver:
+
+  src/carma-web-ui:
     type: git
-    url: git@github.com:usdot-fhwa-stol/novatel_gps_driver.git
+    url: git@github.com:usdot-fhwa-stol/carma-web-ui.git
     version: develop
-  src/opendrive2lanelet:
+
+  src/V2X-Hub:
     type: git
-    url: git@github.com:usdot-fhwa-stol/opendrive2lanelet.git
+    url: git@github.com:usdot-fhwa-stol/V2X-Hub.git
     version: develop
-  src/v2x-ros-conversion:
+
+  src/carma-cloud:
     type: git
-    url: git@github.com:usdot-fhwa-stol/v2x-ros-conversion.git
+    url: git@github.com:usdot-fhwa-stol/carma-cloud.git
+    version: develop
+
+  src/carma-streets:
+    type: git
+    url: git@github.com:usdot-fhwa-stol/carma-streets.git
+    version: develop
+
+  src/carma-messenger:
+    type: git
+    url: git@github.com:usdot-fhwa-stol/carma-messenger.git
+    version: develop
+
+  src/carma-torc-pinpoint-driver:
+    type: git
+    url: git@github.com:usdot-fhwa-stol/carma-torc-pinpoint-driver.git
+    version: develop
+
+  src/multiple_object_tracking:
+    type: git
+    url: git@github.com:usdot-fhwa-stol/multiple_object_tracking.git
+    version: develop
+
+  src/carma-message-filters:
+    type: git
+    url: git@github.com:usdot-fhwa-stol/carma-message-filters.git
+    version: develop
+
+  src/carma-platform:
+    type: git
+    url: git@github.com:usdot-fhwa-stol/carma-platform.git
+    version: develop
+
+  src/carma-config:
+    type: git
+    url: git@github.com:usdot-fhwa-stol/carma-config.git
+    version: develop
+
+  src/carma-vehicle-calibration:
+    type: git
+    url: git@github.com:usdot-fhwa-stol/carma-vehicle-calibration.git
+    version: develop
+
+  src/cdasim:
+    type: git
+    url: git@github.com:usdot-fhwa-stol/cdasim.git
+    version: develop
+
+  src/carla-sensor-lib:
+    type: git
+    url: git@github.com:usdot-fhwa-stol/carla-sensor-lib.git
+    version: develop
+
+  src/carma-carla-interation:
+    type: git
+    url: git@github.com:usdot-fhwa-stol/carma-carla-integration.git
+    version: develop
+
+  src/carma-ns3-adapter:
+    type: git
+    url: git@github.com:usdot-fhwa-stol/carma-ns3-adapter.git
+    version: develop
+
+  src/carma-messenger-bridge:
+    type: git
+    url: git@github.com:usdot-fhwa-stol/carma-messenger-bridge.git
+    version: develop
+
+  src/evc-sumo:
+    type: git
+    url: git@github.com:usdot-fhwa-stol/evc-sumo.git
+    version: develop
+
+  src/cdasim-config:
+    type: git
+    url: git@github.com:usdot-fhwa-stol/cdasim-config.git
     version: develop

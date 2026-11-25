@@ -41,6 +41,7 @@
 #include <carma_wm/CARMAWorldModel.hpp>
 #include <math.h>
 #include <std_msgs/msg/float64.hpp>
+#include <basic_autonomy/log/log.hpp>
 #include <math.h>
 
 using oss = std::ostringstream;
@@ -54,7 +55,9 @@ StopandWait::StopandWait(std::shared_ptr<carma_ros2_utils::CarmaLifecycleNode> n
                                           const std::string& plugin_name,
                                           const std::string& version_id)
   : version_id_ (version_id),plugin_name_(plugin_name),config_(config),nh_(nh), wm_(wm)
-{};
+{
+  basic_autonomy::set_logger(nh_->get_logger().get_child("basic_autonomy"));
+};
 
 bool StopandWait::plan_trajectory_cb(carma_planning_msgs::srv::PlanTrajectory::Request::SharedPtr req, carma_planning_msgs::srv::PlanTrajectory::Response::SharedPtr resp)
 {
@@ -145,17 +148,6 @@ bool StopandWait::plan_trajectory_cb(carma_planning_msgs::srv::PlanTrajectory::R
   trajectory.initial_longitudinal_velocity = initial_speed;
 
   resp->trajectory_plan = trajectory;
-
-  // Yield for potential obstacles in the road
-  // Aside from the flag, yield_plugin should not be called on invalid trajectories
-  if (config_.enable_object_avoidance && resp->trajectory_plan.trajectory_points.size() >= 2)
-  {
-    basic_autonomy::waypoint_generation::modify_trajectory_to_yield_to_obstacles(nh_, req, resp, yield_client_, config_.tactical_plugin_service_call_timeout);
-  }
-  else
-  {
-    RCLCPP_DEBUG(rclcpp::get_logger("stop_and_wait_plugin"), "Ignored Object Avoidance");
-  }
 
   std::chrono::system_clock::time_point end_time = std::chrono::system_clock::now();  // Planning complete
 
@@ -375,7 +367,10 @@ std::vector<carma_planning_msgs::msg::TrajectoryPlanPoint> StopandWait::compose_
   {
     if (times[i] != 0 && !std::isnormal(times[i]) && i != 0)
     {  // If the time
-      RCLCPP_WARN_STREAM(rclcpp::get_logger("stop_and_wait_plugin"),"Detected non-normal (nan, inf, etc.) time. Making it same as before: " << times[i-1]);
+      RCLCPP_WARN_STREAM_THROTTLE(rclcpp::get_logger("stop_and_wait_plugin"),
+        *nh_->get_clock(), 1000,
+        "(Throttled Log 1s) Detected non-normal (nan, inf, etc.) time. Making it same as before: "
+        << times[i-1]);
       // NOTE: overriding the timestamps in assumption that pure_pursuit_wrapper will detect it as stopping case
       times[i] = times[i - 1];
     }
@@ -416,11 +411,6 @@ void StopandWait::splitPointSpeedPairs(const std::vector<PointSpeedPair>& points
     basic_points->push_back(p.point);
     speeds->push_back(p.speed);
   }
-}
-
-void StopandWait::set_yield_client(carma_ros2_utils::ClientPtr<carma_planning_msgs::srv::PlanTrajectory> client)
-{
-  yield_client_ = client;
 }
 
 }  // namespace stop_and_wait_plugin

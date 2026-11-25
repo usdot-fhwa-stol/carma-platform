@@ -32,6 +32,8 @@
 #include <vector>
 
 #include <carma_ros2_utils/carma_lifecycle_node.hpp>
+#include <tf2/LinearMath/Transform.h>
+
 #include "bsm_generator/bsm_generator_worker.hpp"
 #include "bsm_generator/bsm_generator_config.hpp"
 

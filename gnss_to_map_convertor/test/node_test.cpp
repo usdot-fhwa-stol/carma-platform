@@ -53,7 +53,7 @@ TEST(GNSSToMapConvertor, geoReferenceCallback)
 
     gnss_to_map_convertor::GNSSToMapConvertor convertor(
         [](auto msg) {}, [](auto a, auto b) -> boost::optional<geometry_msgs::msg::TransformStamped> { return boost::none; },
-        "map", "base_link", "ned_heading", worker_node->get_node_logging_interface());
+        "map", "base_link", "ned_heading", worker_node);
 
     worker_node->configure(); //Call configure state transition
     worker_node->activate();  //Call activate state transition to get not read for runtime
@@ -102,8 +102,8 @@ TEST(GNSSToMapConvertor, poseFromGnss)
 
     gnss_to_map_convertor::GNSSToMapConvertor convertor(
         [](auto msg) {}, [](auto a, auto b) -> boost::optional<geometry_msgs::msg::TransformStamped> { return boost::none; },
-        "map", "base_link", "ned_heading", worker_node->get_node_logging_interface());
-    
+        "map", "base_link", "ned_heading", worker_node);
+
     worker_node->configure(); //Call configure state transition
     worker_node->activate();  //Call activate state transition to get not read for runtime
 
@@ -236,7 +236,7 @@ TEST(GNSSToMapConvertor, gnssFixCb)
         pose_msg = msg;  // Record the pose message when it is set
       },
       [](auto a, auto b) -> boost::optional<geometry_msgs::msg::TransformStamped> { return boost::none; }, "map",
-      "base_link", "ned_heading", worker_node->get_node_logging_interface());
+      "base_link", "ned_heading", worker_node);
 
   gps_msgs::msg::GPSFix fix_msg;
   fix_msg.header.frame_id = "sensor";
@@ -262,7 +262,7 @@ TEST(GNSSToMapConvertor, gnssFixCb)
         }
         return boost::none;
       },
-      "map", "base_link", "ned_heading", worker_node->get_node_logging_interface());
+      "map", "base_link", "ned_heading", worker_node);
 
   convertor.gnssFixCb(move(fix_ptr));  // Call after baselink transform is set
   ASSERT_FALSE(!!pose_msg);
@@ -290,7 +290,7 @@ TEST(GNSSToMapConvertor, gnssFixCb)
         fail = true;
         return boost::none;
       },
-      "map", "base_link", "ned_heading", worker_node->get_node_logging_interface());
+      "map", "base_link", "ned_heading", worker_node);
 
   // Test point at prime meridian and equator with 0 heading
   fix_msg.latitude = 0.00001;
@@ -348,4 +348,4 @@ int main(int argc, char ** argv)
     rclcpp::shutdown();
 
     return success;
-} 
+}

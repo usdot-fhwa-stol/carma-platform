@@ -64,10 +64,13 @@ def record_ros2_rosbag(context: LaunchContext, vehicle_config_param_file, rosbag
                 exclude_topics_regex = "|".join(exclude_topics) if exclude_topics else ""
 
                 proc = ExecuteProcess(
-                        cmd=['ros2', 'bag', 'record', '-a', '-s', 'mcap',
-                            '--qos-profile-overrides-path', overriding_qos_profiles,
-                            '-o', '/opt/carma/logs/rosbag2_' + str(datetime.now().strftime('%Y-%m-%d_%H%M%S')),
-                            '-x', exclude_topics_regex],
+                        cmd=[
+                            'bash', '-c', 'ros2 bag record -a -s mcap --qos-profile-overrides-path '
+                            + overriding_qos_profiles + ' -o /opt/carma/logs/rosbag2_'
+                            + str(datetime.now().strftime('%Y-%m-%d_%H%M%S')) + ' -x "'
+                            + exclude_topics_regex
+                            #+ '"'], # Uncomment this line to see ros2bag topic subscriptions
+                            + '" >/dev/null 2>&1'],  # Turns off ros2bag print statements
                         output='screen',
                         shell='true'
                     )
@@ -81,7 +84,7 @@ def generate_launch_description():
     declare_vehicle_config_dir_arg = DeclareLaunchArgument(
         name = 'vehicle_config_dir',
         default_value = "/opt/carma/vehicle/config",
-        description = "Path to file containing vehicle config directories"
+        description = "Path to vehicle configuration directory populated by carma-config"
     )
 
     # Declare the vehicle_config_param_file launch argument

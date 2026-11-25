@@ -28,6 +28,7 @@
   <depend>tf2</depend>
   <depend>tf2_geometry_msgs</depend>
   <depend>autoware_msgs</depend>
+  <depend>basic_autonomy</depend>
 
 
   <test_depend>ament_lint_auto</test_depend>

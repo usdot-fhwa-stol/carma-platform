@@ -500,7 +500,13 @@ compute_arc_lengths(const std::vector<lanelet::BasicPoint2d>& data)
   return compute_templated_arc_lengths(data);
 }
 
-double 
+double
+get_lanelet_centerline_length(const lanelet::ConstLanelet& ll)
+{
+  return compute_arc_lengths(ll.centerline2d().basicLineString()).back();
+}
+
+double
 compute_euclidean_distance(const Eigen::Vector2d& a, const Eigen::Vector2d& b)
 {
   return std::sqrt(std::pow(b[0] - a[0], 2) + std::pow(b[1] - a[1], 2));

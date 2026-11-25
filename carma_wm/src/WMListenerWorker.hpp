@@ -24,6 +24,7 @@
 #include <carma_wm/SignalizedIntersectionManager.hpp>
 #include <utility>
 #include <rosgraph_msgs/msg/clock.hpp>
+#include <rclcpp/rclcpp.hpp>
 
 namespace carma_wm
 {
@@ -36,8 +37,12 @@ class WMListenerWorker
 public:
   /*!
    * \brief Constructor
+   *
+   * \param logger Logger to use for all log output. Pass the calling node's
+   *               get_child("carma_wm") logger so messages appear in MCAP.
+   *               Defaults to a standalone logger for backward compatibility.
    */
-  WMListenerWorker();
+  explicit WMListenerWorker(rclcpp::Logger logger = rclcpp::get_logger("carma_wm"));
 
   /*!
    * \brief Constructor
@@ -149,17 +154,28 @@ public:
   /**
    *  \brief set true if simulation_mode is on
    */
-  void isUsingSimTime(bool use_sim_time);
+  void isUsingSimTime(bool use_sim_time) const;
 
   /**
    *  \brief set true if incoming spat is based on wall clock
    */
-  void isSpatWallTime(bool use_real_time_spat_in_sim);
+  void isSpatWallTime(bool use_real_time_spat_in_sim) const;
+
+  /**
+   *  \brief Activate World Model SPAT processor, which is turned off by default,
+   * with OFF (0), ON (1), FIXED (2)
+   */
+  void setWMSpatProcessingState(const SIGNAL_PHASE_PROCESSING& phase_type) const;
+
+  /**
+   *  \brief Get World Model SPAT processor state from signalized intersection manager
+   *  \return World Model SPAT process state OFF (0), ON(1)
+   */
+  SIGNAL_PHASE_PROCESSING getWMSpatProcessingState() const;
 
 private:
+  rclcpp::Logger logger_;
   std::shared_ptr<CARMAWorldModel> world_model_;
-  bool use_sim_time_;
-  bool use_real_time_spat_in_sim_;
   std::function<void()> map_callback_;
   std::function<void()> route_callback_;
   void newRegemUpdateHelper(lanelet::Lanelet parent_llt, lanelet::RegulatoryElement* regem) const;

@@ -46,6 +46,8 @@ class TrafficIncidentParserWorker
  public:
 
   using PublishTrafficControlCallback = std::function<void(const carma_v2x_msgs::msg::TrafficControlMessage&)>;
+  const double MphToMetersPerSec = 0.44704; //Convert miles per hour to meters per second
+
 
   /*!
    * \brief TrafficIncidentParserWorker constructor
@@ -121,7 +123,7 @@ class TrafficIncidentParserWorker
   double up_track = 0.0;
   double min_gap = 0.0;
   double speed_advisory = 0.0;
-  std::string event_reason;
+  std::string event_reason = "";
   std::string event_type;
 
   std::string previous_strategy_params="";

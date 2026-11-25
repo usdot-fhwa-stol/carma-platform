@@ -55,9 +55,6 @@ private:
 
     StopandWaitConfig config_;
 
-    // Service Clients
-    carma_ros2_utils::ClientPtr<carma_planning_msgs::srv::PlanTrajectory> yield_client_;
-
     // Worker
     std::shared_ptr<StopandWait> plugin_;
 

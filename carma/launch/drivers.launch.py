@@ -48,7 +48,7 @@ def generate_launch_description():
         description = "True if simulation mode is on"
     )
 
-
+    # Log level is set from CARMA_ROS_LOGGING_CONFIG, generated from carma_rosconsole.conf in the vehicle config dir (carma-config)
     env_log_levels = EnvironmentVariable('CARMA_ROS_LOGGING_CONFIG', default_value='{ "default_level" : "WARN" }')
 
     subsystem_controller_default_param_file = os.path.join(
@@ -59,6 +59,22 @@ def generate_launch_description():
         name = 'subsystem_controller_param_file',
         default_value = subsystem_controller_default_param_file,
         description = "Path to file containing override parameters for the subsystem controller"
+    )
+
+    vehicle_config_dir = LaunchConfiguration('vehicle_config_dir')
+    declare_vehicle_config_dir_arg = DeclareLaunchArgument(
+        name = 'vehicle_config_dir',
+        default_value = "/opt/carma/vehicle/config",
+        description = "Path to vehicle configuration directory populated by carma-config"
+    )
+
+    # Declare the global_params_override_file launch argument
+    # Parameters in this file will override any parameters loaded in their respective packages
+    global_params_override_file = LaunchConfiguration('global_params_override_file')
+    declare_global_params_override_file_arg = DeclareLaunchArgument(
+        name = 'global_params_override_file',
+        default_value = [vehicle_config_dir, "/GlobalParamsOverride.yaml"],
+        description = "Path to global file containing the parameters overwrite"
     )
 
     lightbar_manager_param_file = os.path.join(
@@ -76,7 +92,6 @@ def generate_launch_description():
                 name='lightbar_manager',
                 extra_arguments=[
                     {'use_intra_process_comms': True},
-                    {'--log-level' : GetLogLevel('lightbar_manager', env_log_levels) },
                     {'is_lifecycle_node': True} # Flag to allow lifecycle node loading in lifecycle wrapper
                 ],
                 remappings=[
@@ -85,7 +100,8 @@ def generate_launch_description():
                 ],
                 parameters=[
                     lightbar_manager_param_file,
-                    vehicle_config_param_file
+                    vehicle_config_param_file,
+                    global_params_override_file
                 ]
             )
         ]
@@ -107,6 +123,8 @@ def generate_launch_description():
     return LaunchDescription([
         declare_subsystem_controller_param_file_arg,
         declare_vehicle_config_param_file_arg,
+        declare_vehicle_config_dir_arg,
+        declare_global_params_override_file_arg,
         declare_use_sim_time_arg,
         lightbar_manager_container,
         subsystem_controller,

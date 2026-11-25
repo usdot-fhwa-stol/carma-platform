@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022 LEIDOS.
+ * Copyright (C) 2022-2026 LEIDOS.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -15,6 +15,8 @@
  */
 
 #include <yield_plugin/yield_plugin_node.hpp>
+#include <chrono>
+#include <yield_plugin/yield_plugin_cuda.cuh>
 
 namespace yield_plugin
 {
@@ -27,6 +29,7 @@ namespace yield_plugin
   {
     // Declare parameters
     config_.acceleration_adjustment_factor = declare_parameter<double>("acceleration_adjustment_factor", config_.acceleration_adjustment_factor);
+    config_.time_horizon_until_collision_to_commit_to_stop_in_s = declare_parameter<double>("time_horizon_until_collision_to_commit_to_stop_in_s", config_.time_horizon_until_collision_to_commit_to_stop_in_s);
     config_.obstacle_zero_speed_threshold_in_ms = declare_parameter<double>("obstacle_zero_speed_threshold_in_ms", config_.obstacle_zero_speed_threshold_in_ms);
     config_.on_route_vehicle_collision_horizon_in_s = declare_parameter<double>("on_route_vehicle_collision_horizon_in_s", config_.on_route_vehicle_collision_horizon_in_s);
     config_.collision_check_radius_in_m = declare_parameter<double>("collision_check_radius_in_m", config_.collision_check_radius_in_m);
@@ -37,8 +40,8 @@ namespace yield_plugin
     config_.enable_cooperative_behavior = declare_parameter< bool>("enable_cooperative_behavior", config_.enable_cooperative_behavior);
     config_.always_accept_mobility_request = declare_parameter< bool>("always_accept_mobility_request", config_.always_accept_mobility_request);
     config_.acceptable_passed_timesteps = declare_parameter<int>("acceptable_passed_timesteps", config_.acceptable_passed_timesteps);
-    config_.consecutive_clearance_count_for_obstacles_threshold = declare_parameter<int>("consecutive_clearance_count_for_obstacles_threshold",
-      config_.consecutive_clearance_count_for_obstacles_threshold);
+    config_.consecutive_clearance_count_for_passed_obstacles_threshold = declare_parameter<int>("consecutive_clearance_count_for_passed_obstacles_threshold",
+      config_.consecutive_clearance_count_for_passed_obstacles_threshold);
     config_.intervehicle_collision_distance_in_m = declare_parameter<double>("intervehicle_collision_distance_in_m", config_.intervehicle_collision_distance_in_m);
     config_.safety_collision_time_gap_in_s = declare_parameter<double>("safety_collision_time_gap_in_s", config_.safety_collision_time_gap_in_s);
     config_.enable_adjustable_gap = declare_parameter<bool>("enable_adjustable_gap", config_.enable_adjustable_gap);
@@ -56,6 +59,7 @@ namespace yield_plugin
     config_ = YieldPluginConfig();
 
     get_parameter<double>("acceleration_adjustment_factor", config_.acceleration_adjustment_factor);
+    get_parameter<double>("time_horizon_until_collision_to_commit_to_stop_in_s", config_.time_horizon_until_collision_to_commit_to_stop_in_s);
     get_parameter<double>("obstacle_zero_speed_threshold_in_ms", config_.obstacle_zero_speed_threshold_in_ms);
     get_parameter<double>("on_route_vehicle_collision_horizon_in_s", config_.on_route_vehicle_collision_horizon_in_s);
     get_parameter<double>("collision_check_radius_in_m", config_.collision_check_radius_in_m);
@@ -65,7 +69,7 @@ namespace yield_plugin
     get_parameter<bool>("enable_cooperative_behavior", config_.enable_cooperative_behavior);
     get_parameter<bool>("always_accept_mobility_request", config_.always_accept_mobility_request);
     get_parameter<int>("acceptable_passed_timesteps", config_.acceptable_passed_timesteps);
-    get_parameter<int>("consecutive_clearance_count_for_obstacles_threshold", config_.consecutive_clearance_count_for_obstacles_threshold);
+    get_parameter<int>("consecutive_clearance_count_for_passed_obstacles_threshold", config_.consecutive_clearance_count_for_passed_obstacles_threshold);
     get_parameter<double>("intervehicle_collision_distance_in_m", config_.intervehicle_collision_distance_in_m);
     get_parameter<double>("safety_collision_time_gap_in_s", config_.safety_collision_time_gap_in_s);
     get_parameter<bool>("enable_adjustable_gap", config_.enable_adjustable_gap);
@@ -79,9 +83,30 @@ namespace yield_plugin
 
     RCLCPP_INFO_STREAM(get_logger(), "YieldPlugin Params: " << config_);
 
+    if (cuda_is_available()) {
+      RCLCPP_INFO(get_logger(), "YieldPlugin collision detection: GPU path (bbox on-route filter + CUDA kernel)");
+      // Warm up the CUDA runtime so the first real collision check does not pay
+      // the 100-200 ms cold-start cost (driver init, cubin load, heap setup).
+      auto _t0 = std::chrono::steady_clock::now();
+      const std::vector<yield_plugin::CudaPoint> ego  = {{0.f,0.f,0.f},{1.f,0.f,1.f}};
+      const std::vector<yield_plugin::CudaPoint> obs  = {{1e4f,1e4f,0.f},{1e4f,1e4f,1.f}};
+      cuda_check_all_collisions(ego, obs, {0}, {2}, 2.0f);
+      const double _warm_ms = std::chrono::duration<double, std::milli>(
+        std::chrono::steady_clock::now() - _t0).count();
+      RCLCPP_INFO_STREAM(get_logger(),
+        "CUDA warmup complete (" << _warm_ms << " ms) — first call latency paid at startup");
+    } else {
+      RCLCPP_WARN(get_logger(), "YieldPlugin built with CUDA but no compatible driver found; using CPU collision detection fallback");
+      RCLCPP_WARN(get_logger(), "YieldPlugin collision detection: CPU path (bbox on-route filter + std::async get_collision_time)");
+    }
+
     worker_ = std::make_shared<YieldPlugin>(shared_from_this(), get_world_model(), config_,
                                                           [this](auto msg) { mob_resp_pub_->publish(msg); },
                                                           [this](auto msg) { lc_status_pub_->publish(msg); });
+
+    get_world_model_listener()->setRouteCallback([this]() {
+      worker_->update_route_llt_cache();
+    });
 
      // Publisher
     mob_resp_pub_ = create_publisher<carma_v2x_msgs::msg::MobilityResponse>("outgoing_mobility_response", 1);

@@ -342,7 +342,7 @@ namespace subsystem_controllers
 
         } else {
           // Current node is not a lifecycle node so log a warning
-          RCLCPP_WARN_STREAM(get_logger(), "Failed to find lifecycle services for node: " << node << " this node will not be managed. NOTE: If this node is wrapped by a lifecycle component that is managed then this is not an issue.");
+          RCLCPP_DEBUG_STREAM(get_logger(), "No lifecycle services found for node: " << node << " this node will not be managed. NOTE: If this node is wrapped by a lifecycle component that is managed then this is not an issue.");
 
           continue;
 

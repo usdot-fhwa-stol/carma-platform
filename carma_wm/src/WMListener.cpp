@@ -28,7 +28,7 @@ WMListener::WMListener(
   rclcpp::node_interfaces::NodeTopicsInterface::SharedPtr node_topics,
   rclcpp::node_interfaces::NodeParametersInterface::SharedPtr node_params_,
   bool multi_thread)
-    :node_base_(node_base),node_logging_(node_logging),node_topics_(node_topics),worker_(std::unique_ptr<WMListenerWorker>(new WMListenerWorker)), multi_threaded_(multi_thread)
+    :node_base_(node_base),node_logging_(node_logging),node_topics_(node_topics),worker_(std::unique_ptr<WMListenerWorker>(new WMListenerWorker(node_logging->get_logger().get_child("carma_wm")))), multi_threaded_(multi_thread)
 {
 
   RCLCPP_DEBUG_STREAM(node_logging_->get_logger(), "WMListener: Creating world model listener");
@@ -56,7 +56,7 @@ WMListener::WMListener(
   rclcpp::Parameter use_real_time_spat_in_sim_param("use_real_time_spat_in_sim");
   if(!node_params_->get_parameter("use_real_time_spat_in_sim", use_real_time_spat_in_sim_param)){
     rclcpp::ParameterValue use_real_time_spat_in_sim_param_value;
-    use_real_time_spat_in_sim_param_value = node_params_->declare_parameter("use_real_time_spat_in_sim", rclcpp::ParameterValue (true));
+    use_real_time_spat_in_sim_param_value = node_params_->declare_parameter("use_real_time_spat_in_sim", rclcpp::ParameterValue (false));
   }
 
   // Get params
@@ -222,6 +222,17 @@ std::unique_lock<std::mutex> WMListener::getLock(bool pre_locked)
 void WMListener::setConfigSpeedLimit(double config_lim) const
 {
   worker_->setConfigSpeedLimit(config_lim);
+}
+
+void WMListener::setWMSpatProcessingState(const
+  carma_wm::SIGNAL_PHASE_PROCESSING& phase_type) const
+{
+  worker_->setWMSpatProcessingState(phase_type);
+}
+
+carma_wm::SIGNAL_PHASE_PROCESSING WMListener::getWMSpatProcessingState() const
+{
+  return worker_->getWMSpatProcessingState();
 }
 
 // @SONAR_START@

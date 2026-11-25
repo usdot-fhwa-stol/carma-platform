@@ -870,6 +870,21 @@ TEST(YieldPluginTest, jmt_traj)
   EXPECT_EQ(jmt_traj.trajectory_points.size(), original_tp.trajectory_points.size());
   EXPECT_LE(rclcpp::Time(jmt_traj.trajectory_points[2].target_time), rclcpp::Time(original_tp.trajectory_points[2].target_time));
 
+  initial_pos = 9.5;
+  goal_pos = 35.0;
+  initial_velocity = 9.0;
+  goal_velocity = 5.0;
+  initial_accel = -1.0;
+  goal_accel = 0.0;
+  initial_time = 1.0;
+  tp = 5;
+
+  jmt_traj = plugin.generate_JMT_trajectory(original_tp, initial_pos, goal_pos, initial_velocity, goal_velocity, tp, rclcpp::Time(original_tp.trajectory_points.back().target_time).seconds());
+  // New trajectory's points should have future target_time as it slows down further
+  EXPECT_EQ(jmt_traj.trajectory_points.size(), original_tp.trajectory_points.size());
+  EXPECT_LE(rclcpp::Time(original_tp.trajectory_points[2].target_time).seconds(), rclcpp::Time(jmt_traj.trajectory_points[2].target_time).seconds());
+  EXPECT_LE(rclcpp::Time(original_tp.trajectory_points[4].target_time).seconds(), rclcpp::Time(jmt_traj.trajectory_points[4].target_time).seconds());
+  EXPECT_LE(rclcpp::Time(original_tp.trajectory_points[5].target_time).seconds(), rclcpp::Time(jmt_traj.trajectory_points[5].target_time).seconds());
 }
 
 TEST(YieldPluginTest, min_digital_gap)
@@ -886,6 +901,7 @@ TEST(YieldPluginTest, min_digital_gap)
   ll_1200.addRegulatoryElement(regulatory_element);
   map->add(regulatory_element);
   wm->setMap(map);
+  carma_wm::test::setRouteByIds({ 1200, 1201, 1202, 1203 }, wm);
 
   YieldPluginConfig config;
   auto nh = std::make_shared<yield_plugin::YieldPluginNode>(rclcpp::NodeOptions());
@@ -906,16 +922,16 @@ TEST(YieldPluginTest, min_digital_gap)
   trajectory_point_1.y = 1.0;
   trajectory_point_1.target_time = rclcpp::Time(0);
 
-  trajectory_point_2.x = 1.5;
-  trajectory_point_2.y = 1.0;
+  trajectory_point_2.x = 1.0;
+  trajectory_point_2.y = 1.5;
   trajectory_point_2.target_time = rclcpp::Time(1,0);
 
-  trajectory_point_3.x = 2.0;
-  trajectory_point_3.y = 1.0;
+  trajectory_point_3.x = 1.0;
+  trajectory_point_3.y = 2.0;
   trajectory_point_3.target_time = rclcpp::Time(2,0);
 
-  trajectory_point_4.x = 2.5;
-  trajectory_point_4.y = 1.0;
+  trajectory_point_4.x = 1.0;
+  trajectory_point_4.y = 2.5;
   trajectory_point_4.target_time = rclcpp::Time(3,0);
 
   original_tp.trajectory_points = {trajectory_point_1, trajectory_point_2, trajectory_point_3, trajectory_point_4};

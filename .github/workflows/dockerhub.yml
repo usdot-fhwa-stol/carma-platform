@@ -9,6 +9,7 @@ on:
       - "release/*"
     tags:
       - "carma-system-*"
+      - "!carma-system-*-demo*"
 
 jobs:
   dockerhub:

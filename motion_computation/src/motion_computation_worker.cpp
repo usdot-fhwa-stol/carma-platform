@@ -36,7 +36,7 @@ void MotionComputationWorker::predictionLogic(
   carma_perception_msgs::msg::ExternalObjectList sensor_list;
   sensor_list.header = obj_list->header;
 
-  if (!obj_list || obj_list->objects.empty()) {
+  if (!obj_list) {
     return;
   }
 

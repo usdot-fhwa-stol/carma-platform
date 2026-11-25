@@ -1,6 +1,1146 @@
 CARMA System Release Notes
 ----------------------------
 
+## Version Carma-system-4.16.0 released Nov 4th 2026
+
+### Summary
+
+The CARMA System 4.16.0 release includes the following simulation updates:
+
+- **Automated simulation scenarios:** CDASim Scenario Runner supports CARMA Platform vehicle deployment with configurable routes, start delays, spawn positions, and vehicle networks. Town10 scenarios now cover one to three CARMA vehicles and up to three infrastructure instances.
+
+- **Multi-intersection V2X configuration:** Scenario Runner adds infrastructure-specific sensor configurations and saved V2X-Hub configuration states. EVC SPaT forwarding can be configured using Docker DNS names instead of fixed container IP addresses.
+
+- A containerized ns-3 federate integrates Eclipse MOSAIC and CDASim with ns-3 wireless network simulation. The 5G NR implementation uses ns-3 3.42, based on the CTTC ns-3-dev-v2x-v1.1 source tag, together with the 5G-LENA NR V2X module v2x-1.1. The federate manages dynamic node registration, mobility updates, radio configuration, and wireless packet delivery without interpreting application-layer message types or payload contents.
+
+- **NS-3 radio configuration:** CDASim and Scenario Runner support the selection and configuration of DSRC and 5G NR simulation modes.
+
+- **CARLA simulation improvements:** Updates to CDASim and CARMA-CARLA Integration improve multi-vehicle identification, position synchronization, ROS 2 clock publishing, and simulation startup and shutdown behavior.
+
+- **Simulation deployment and data analysis:** Scenario Runner adds reusable Docker Compose overrides and configurable runtime images. CDASim and CARMA Analytics FOTDA add structured log events and package CDASim analysis tools in a dedicated Docker image.
+
+## Changes to Key Existing Repositories
+
+### CDASim Scenario Runner
+
+CDASim Scenario Runner has been updated to deploy CARMA Platform vehicles and related services, configure multiple infrastructure instances, and run simulation scenarios with selectable container images and radio configurations.
+
+**Enhancements**
+
+- Add support for deploying CARMA Platform vehicles and related services using the basic simulation vehicle configuration. Each vehicle can be assigned an image version, route, start delay, spawn position, and network configuration. Town10 scenarios include one, two, and three-vehicle configurations.
+  * Pull Requests: [cdasim-scenario-runner PR #15](https://github.com/usdot-fhwa-stol/cdasim-scenario-runner/pull/15)
+
+- Generate separate sensor configurations for infrastructure instances and expand Town10 scenarios to support up to three infrastructure instances.
+  * Pull Requests: [cdasim-scenario-runner PR #18](https://github.com/usdot-fhwa-stol/cdasim-scenario-runner/pull/18)
+
+- Add saved V2X-Hub configuration states for infrastructure instances 1, 2, and 3 to configure MAP and SPaT broadcasting.
+  * Pull Requests: [cdasim-scenario-runner PR #28](https://github.com/usdot-fhwa-stol/cdasim-scenario-runner/pull/28)
+
+- Support EVC SPaT forwarding to V2X-Hub through Docker DNS hostnames and allow EVC controller configurations to be selected for each intersection.
+  * Pull Requests: [cdasim-scenario-runner PR #25](https://github.com/usdot-fhwa-stol/cdasim-scenario-runner/pull/25)
+
+- Make EVC an optional CDASim-managed service. A single EVC container can manage multiple intersection controllers when enabled.
+  * Pull Requests: [cdasim-scenario-runner PR #13](https://github.com/usdot-fhwa-stol/cdasim-scenario-runner/pull/13)
+
+- Add reusable Docker Compose overrides, network configuration support, and complete image references for simulation services.
+  * Pull Requests: [cdasim PR #279](https://github.com/usdot-fhwa-stol/cdasim/pull/279), [cdasim-scenario-runner PR #21](https://github.com/usdot-fhwa-stol/cdasim-scenario-runner/pull/21)
+
+- Select the NS-3 federate configuration from the configured image tag, using the -5g-nr or -dsrc suffix.
+  * Pull Requests: [cdasim-scenario-runner PR #27](https://github.com/usdot-fhwa-stol/cdasim-scenario-runner/pull/27)
+
+- Run post-simulation analysis using the Docker image specified by the scenario. The analysis scripts and image build are maintained in CARMA Analytics FOTDA.
+  * Pull Requests: [cdasim-scenario-runner PR #23](https://github.com/usdot-fhwa-stol/cdasim-scenario-runner/pull/23), [PR #26](https://github.com/usdot-fhwa-stol/cdasim-scenario-runner/pull/26)
+
+**Fixes**
+
+- Set the V2X-Hub simulation spawn location from the scenario configuration.
+  * Pull Requests: [cdasim-scenario-runner PR #22](https://github.com/usdot-fhwa-stol/cdasim-scenario-runner/pull/22)
+
+- Create the V2X-Hub JSON log directory with writable permissions so Scenario Runner can collect and clear logs without permission errors.
+  * Pull Requests: [cdasim-scenario-runner PR #31](https://github.com/usdot-fhwa-stol/cdasim-scenario-runner/pull/31)
+
+**Other Updates**
+
+- [cdasim-scenario-runner PR #29](https://github.com/usdot-fhwa-stol/cdasim-scenario-runner/pull/29): Update Town10 scenario image references for the Aventador release candidate.
+
+- [cdasim-scenario-runner PR #30](https://github.com/usdot-fhwa-stol/cdasim-scenario-runner/pull/30): Update Town10 test-case durations.
+
+### CDASim
+
+CDASim changes improve CARLA and NS-3 coordination, infrastructure registration, simulation configuration, and log output for automated analysis.
+
+**Enhancements**
+
+- Add support for selecting DSRC or 5G NR configurations for the NS-3 federate.
+  * Pull Requests: [cdasim PR #273](https://github.com/usdot-fhwa-stol/cdasim/pull/273), [cdasim PR #277](https://github.com/usdot-fhwa-stol/cdasim/pull/277)
+
+- Allow CARLA sensor registration using SUMO coordinates, with conversion into the CARLA coordinate frame when selected in the simulation configuration.
+  * Pull Requests: [cdasim PR #283](https://github.com/usdot-fhwa-stol/cdasim/pull/283)
+
+- Use Docker service hostnames instead of fixed container IP addresses in the Town10 CARLA configuration.
+  * Pull Requests: [cdasim PR #281](https://github.com/usdot-fhwa-stol/cdasim/pull/281)
+
+- Add structured CDASim analysis and network-node registration log events while retaining existing human-readable logs.
+  * Pull Requests: [cdasim PR #286](https://github.com/usdot-fhwa-stol/cdasim/pull/286), [cdasim PR #288](https://github.com/usdot-fhwa-stol/cdasim/pull/288)
+
+**Fixes**
+
+- Use the CARLA vehicle role name consistently across CARLA, MOSAIC, and NS-3, and avoid duplicate vehicle registration.
+  * Pull Requests: [cdasim PR #284](https://github.com/usdot-fhwa-stol/cdasim/pull/284)
+
+- Correct CARMA vehicle position updates and NS-3 network-node activation after the first mobility update.
+  * Pull Requests: [cdasim PR #285](https://github.com/usdot-fhwa-stol/cdasim/pull/285)
+
+- Preserve the configured projected RSU position during network registration to prevent coordinate offsets.
+  * Pull Requests: [cdasim PR #289](https://github.com/usdot-fhwa-stol/cdasim/pull/289)
+
+- Add sender IDs to vehicle and infrastructure V2X transmission logs, and handle unresolved vehicle Docker hostnames without terminating CDASim.
+  * Pull Requests: [cdasim PR #290](https://github.com/usdot-fhwa-stol/cdasim/pull/290)
+
+- Improve CARLA container shutdown by passing termination signals directly to the CARLA process.
+  * Pull Requests: [cdasim PR #282](https://github.com/usdot-fhwa-stol/cdasim/pull/282)
+
+**Other Updates**
+
+- [cdasim PR #280](https://github.com/usdot-fhwa-stol/cdasim/pull/280): Move Scenario Runner into the separate cdasim-scenario-runner repository while preserving its Git history.
+
+- [cdasim PR #278](https://github.com/usdot-fhwa-stol/cdasim/pull/278): Update SonarCloud CI and JaCoCo configuration.
+
+### CARMA-CARLA Integration
+
+CARMA-CARLA Integration has been updated to support multiple CARMA vehicles in one CARLA simulation and improve ROS 2 bridge startup and vehicle lifecycle handling.
+
+**Enhancements**
+
+- Use a configured CARLA role_name when spawning and locating each ego vehicle so multiple vehicles can share the same stack.json configuration.
+  * Pull Requests: [carma-carla-integration PR #119](https://github.com/usdot-fhwa-stol/carma-carla-integration/pull/119)
+
+- Publish ROS /clock from CARLA world snapshots independently of ego-vehicle discovery, and monitor ego vehicles as they appear, disappear, or reconnect.
+  * Pull Requests: [carma-carla-integration PR #121](https://github.com/usdot-fhwa-stol/carma-carla-integration/pull/121)
+
+**Fixes**
+
+- Correct vehicle role and sensor ID handling in multi-vehicle simulations.
+  * Pull Requests: [carma-carla-integration PR #120](https://github.com/usdot-fhwa-stol/carma-carla-integration/pull/120)
+
+- Prevent a segmentation fault when the CARLA readiness check exits after confirming that CARLA is available.
+  * Pull Requests: [carma-carla-integration PR #123](https://github.com/usdot-fhwa-stol/carma-carla-integration/pull/123)
+
+### Ns3-Federate
+
+The release adds containerized ns-3 5G NR V2X network simulation to CDASim. The federate integrates with Eclipse MOSAIC, supports dynamic mobile and infrastructure nodes, and simulates wireless message delivery independently of application-layer message types. The implementation is built on ns-3 3.42, using the CTTC ns-3-dev-v2x-v1.1 source tag, together with the 5G-LENA NR V2X module v2x-1.1.
+
+**Enhancements**
+
+- Add initial 5G NR support and Docker build capabilities for running NS-3 Federate as a container within CDASim.
+  * Pull Requests: [ns3-federate PR #15](https://github.com/usdot-fhwa-stol/ns3-federate/pull/15)
+
+- Add separate DSRC and 5G NR Docker build configurations, allowing users to select the radio technology when building images. DSRC remains the default configuration.
+  * Pull Requests: [ns3-federate PR #18](https://github.com/usdot-fhwa-stol/ns3-federate/pull/18)
+
+- Update the federate implementation to align with the newer MOSAIC ns-3 baseline as part of the 5G NR development work.
+  * Pull Requests: [ns3-federate PR #13](https://github.com/usdot-fhwa-stol/ns3-federate/pull/13)
+
+**Other Updates**
+
+- [ns3-federate PR #16](https://github.com/usdot-fhwa-stol/ns3-federate/pull/16): Add GitHub Actions workflows for Docker builds, CI, and SonarCloud analysis.
+
+- [ns3-federate PR #17](https://github.com/usdot-fhwa-stol/ns3-federate/pull/17): Add changes for NS-3 5G NR integration testing with CDASim.
+
+- [ns3-federate PR #19](https://github.com/usdot-fhwa-stol/ns3-federate/pull/19): Update CI/CD workflows to build and publish separate DSRC and 5G NR Docker images, including Docker Scout image comparisons.
+
+## Other Existing Repositories
+
+### CARMA Config
+
+CARMA Config changes update the basic simulation vehicle image and Docker networking for CARMA Platform and CARMA-CARLA Integration.
+
+**Enhancements**
+
+- Bind CARMA-CARLA Integration's CycloneDDS interface to the vehicle network using CARLA_BRIDGE_ROS_HOST and CYCLONEDDS_URI.
+  * Pull Requests: [carma-config PR #495](https://github.com/usdot-fhwa-stol/carma-config/pull/495)
+
+- Include example vehicle calibration files in the platform simulation configuration image.
+  * Pull Requests: [carma-config PR #498](https://github.com/usdot-fhwa-stol/carma-config/pull/498)
+
+- Include GlobalParamsOverride.yaml in the basic simulation platform vehicle image.
+  * Pull Requests: [carma-config PR #500](https://github.com/usdot-fhwa-stol/carma-config/pull/500)
+
+**Fixes**
+
+- Start vehicle-registration-service after v2x-ros-driver so the Docker hostname is available before registration with CDASim.
+  * Pull Requests: [carma-config PR #501](https://github.com/usdot-fhwa-stol/carma-config/pull/501)
+
+**Other Updates**
+
+- [carma-config PR #492](https://github.com/usdot-fhwa-stol/carma-config/pull/492): Remove the redundant basic simulation vehicle configuration.
+
+- [carma-config PR #502](https://github.com/usdot-fhwa-stol/carma-config/pull/502): Update the release candidate image organization and tag for Aventador.
+
+### CARMA Analytics FOTDA
+
+CARMA Analytics FOTDA adds CDASim analysis tooling and updates J2735 message latency analysis.
+
+**Enhancements**
+
+- Move the CDASim log and MCAP analyzers into CARMA Analytics FOTDA to maintain the analysis scripts in one repository.
+  * Pull Requests: [carma-analytics-fotda PR #138](https://github.com/usdot-fhwa-stol/carma-analytics-fotda/pull/138)
+
+- Add the cdasim-data-analysis Docker image and publication workflows. The image includes CDASim and CARMA Platform analysis scripts and supports structured network-node events.
+  * Pull Requests: [carma-analytics-fotda PR #139](https://github.com/usdot-fhwa-stol/carma-analytics-fotda/pull/139)
+
+- Add PCAP-to-PCAP and MCAP-to-PCAP J2735 latency analysis, including support for WSMP, signed-message payloads, and latency results by message type.
+  * Pull Requests: [carma-analytics-fotda PR #132](https://github.com/usdot-fhwa-stol/carma-analytics-fotda/pull/132), [carma-analytics-fotda PR #136](https://github.com/usdot-fhwa-stol/carma-analytics-fotda/pull/136)
+
+### V2X ROS Driver
+
+**Enhancements**
+
+- Allow UDP radio endpoints to be configured with Docker DNS hostnames in addition to IPv4 addresses.
+  * Pull Requests: [v2x-ros-driver PR #164](https://github.com/usdot-fhwa-stol/v2x-ros-driver/pull/164)
+
+### EVC SUMO
+
+EVC SUMO has been updated to support deployment through CDASim Scenario Runner, improve access to virtual controller SNMP services, and enable SPaT forwarding to V2X-Hub instances using Docker DNS hostnames.
+
+**Enhancements**
+
+- Add a process to generate the PyEOS database file required to run EVC through Scenario Runner.
+  * Pull Requests: [evc-sumo PR #13](https://github.com/usdot-fhwa-stol/evc-sumo/pull/13)
+
+- Add configurable SPaT forwarding from virtual controllers to V2X-Hub instances using Docker DNS hostnames. Forwarding routes are provided through the EVC_SPAT_FORWARDING_JSON environment variable, with socat relays that retry after temporary connection or DNS resolution failures.
+  * Pull Requests: [evc-sumo PR #14](https://github.com/usdot-fhwa-stol/evc-sumo/pull/14), [evc-sumo PR #15](https://github.com/usdot-fhwa-stol/evc-sumo/pull/15)
+
+**Fixes**
+
+- Add socat forwarding to make EVC SNMP services listening on the loopback interface accessible from outside the container, supporting connections to multiple virtual controllers.
+  * Pull Requests: [evc-sumo PR #12](https://github.com/usdot-fhwa-stol/evc-sumo/pull/12)
+
+## Version 4.14.0, released Sep 30th 2026
+
+### Summary
+
+The CARMA System 4.14.0 release includes the following significant updates:
+
+- **SAE J2735 2024 Support**: CARMA Platform, CARMA Messenger, CARMA Msgs, and V2X ROS Conversion have been upgraded from SAE J2735 2016 to SAE J2735 2024.
+
+- **Improved Trajectory Collision Checking**: CARMA Platform trajectory planning now applies collision checking (via the yield_plugin) to all planned trajectories, improving the safety of generated trajectories.
+
+- **SCMS-Enabled V2X Communication Verification**: V2X ROS Driver has been verified to support SCMS-enabled V2X communications with appropriately configured OBUs.
+
+- **Ettifos OBU Support**: V2X ROS Driver now supports MQTT protocol for use with Ettifos OBUs.
+
+- **Simplified Global ROS Parameter Configuration**: A global parameter override file (GlobalParamsOverride.yaml) has been added to CARMA Config and CARMA Messenger Config. This allows operators to configure parameters for CARMA Platform and CARMA Messenger packages, including packages in related repositories, from a single location without creating Docker volume mounts for individual packages.
+
+- **Improved ROS Logging Configuration**: Logging behavior has been improved across CARMA Platform and related repositories. Operators can now configure ROS log levels for software libraries directly through CARMA Config.
+
+## Changes to Key Existing Repositories
+
+### CARMA Platform
+
+In this release, CARMA Platform has been upgraded from SAE J2735 2016 to SAE J2735 2024. Additionally, CARMA Platform has been updated to support a global parameter override file in CARMA Config, to enable ROS log levels to be configured for software libraries in CARMA Config, to apply collision checking (via the yield_plugin) to all planned trajectories, along with other minor enhancements and fixes.
+
+**Enhancements**
+
+- Add support for a global parameter override yaml file (GlobalParamsOverride.yaml) in CARMA Config.
+  * Pull Requests: [carma-platform PR #2631](https://github.com/usdot-fhwa-stol/carma-platform/pull/2631)
+
+- Improve the logging paradigm in CARMA Platform to enable ROS log levels to be set for software libraries (e.g., carma_wm and basic_autonomy) from CARMA Config.
+  * Pull Requests: [carma-platform PR #2653](https://github.com/usdot-fhwa-stol/carma-platform/pull/2653), [carma-platform PR #2654](https://github.com/usdot-fhwa-stol/carma-platform/pull/2654), [carma-platform PR #2663](https://github.com/usdot-fhwa-stol/carma-platform/pull/2663), [carma-platform PR #2664](https://github.com/usdot-fhwa-stol/carma-platform/pull/2664)
+
+- Refactor plan_delegator to apply collision checking (via yield_plugin) to all planned trajectory segments.
+  * Pull Requests: [carma-platform PR #2656](https://github.com/usdot-fhwa-stol/carma-platform/pull/2656)
+
+- Improve RViz work zone visualization to display orange dots resembling traffic barrels based on locations in received TrafficControlMessages (SAE J2735 TestMessage).
+  * Pull Requests: [carma-platform PR #2639](https://github.com/usdot-fhwa-stol/carma-platform/pull/2639)
+
+**Fixes**
+
+- [carma-platform PR #2638](https://github.com/usdot-fhwa-stol/carma-platform/pull/2638): Minor fix applied to MAP message processing to warn, but not shut down, when a signal group ID cannot be matched to a lane.
+
+- [carma-platform PR #2650](https://github.com/usdot-fhwa-stol/carma-platform/pull/2650): Fix cooperative_lanechange logic that requires a non-closed lanelet before a lane change (e.g., near a closed work zone lane).
+
+- [carma-platform PR #2667](https://github.com/usdot-fhwa-stol/carma-platform/pull/2667): Continue cooperative lane change trajectory planning when the supplied vehicle state is more than the configured range before the maneuver start.
+
+- [carma-platform PR #2661](https://github.com/usdot-fhwa-stol/carma-platform/pull/2661): Restore the plan delegator trajectory generation retry limit from 1000 to 10 consecutive planning cycles.
+
+- [carma-platform PR #2645](https://github.com/usdot-fhwa-stol/carma-platform/pull/2645): Fix yield_plugin unit test.
+
+- [carma-platform PR #2657](https://github.com/usdot-fhwa-stol/carma-platform/pull/2657): Increase unit test timeout so that unit tests in the ‘route’ and ‘approaching_emergency_vehicle_plugin’ packages do not fail.
+
+- [carma-platform PR #2659](https://github.com/usdot-fhwa-stol/carma-platform/pull/2659): Fix display of image files (.png) in Doxygen.
+
+**Other Updates**
+
+- [carma-platform PR #2637](https://github.com/usdot-fhwa-stol/carma-platform/pull/2637): Fix Sonar workflow path and deprecation warning.
+
+- [carma-platform PR #2640](https://github.com/usdot-fhwa-stol/carma-platform/pull/2640): Update README status badges.
+
+- [carma-platform PR #2624](https://github.com/usdot-fhwa-stol/carma-platform/pull/2624): Update Doxygen version to 4.10.0.
+
+- [carma-platform PR #2660](https://github.com/usdot-fhwa-stol/carma-platform/pull/2660): Add manual trigger ability for several important CI operations.
+
+### CARMA Messenger
+
+In this release, CARMA Messenger has been upgraded from SAE J2735 2016 to SAE J2735 2024. Additionally, implementation updates have been made to support a global parameter override file in carma-messenger-config.
+
+**Enhancements**
+
+- Upgrade CARMA Messenger from SAE J2735 2016 to SAE J2735 2024.
+  * Pull Requests: [carma-messenger PR #303](https://github.com/usdot-fhwa-stol/carma-messenger/pull/303)
+
+- Add support for a global parameter override yaml file (GlobalParamsOverride.yaml) in carma-messenger-config.
+  * Pull Requests: [carma-messenger PR #298](https://github.com/usdot-fhwa-stol/carma-messenger/pull/298), [carma-messenger PR #304](https://github.com/usdot-fhwa-stol/carma-messenger/pull/304)
+
+**Fixes**
+
+- [carma-messenger PR #305](https://github.com/usdot-fhwa-stol/carma-messenger/pull/305): Fix variable naming in carma-messenger-ui’s ‘emergencyResponse’ widget to avoid a redeclaration error.
+
+**Other Updates**
+
+- [carma-messenger PR #283](https://github.com/usdot-fhwa-stol/carma-messenger/pull/283): Update Doxygen version to 4.10.0.
+
+- [carma-messenger PR #299](https://github.com/usdot-fhwa-stol/carma-messenger/pull/299): Update README status badges.
+
+### CARMA Streets
+
+In this release, CARMA Streets has been updated to support V2X Hub version selection during initialization, improve the SDSM publishing rate, and add necessary configuration settings to resolve the Kafka broker IP when V2X Hub is running on the host network.
+
+**Enhancements**
+
+- The sensor_data_sharing_service configuration has been updated to support a user-defined PROJ string as the geolocation reference for SDSM generation, with detection offsets calculated relative to the specified reference.
+  * Pull Requests: [carma-streets PR #456](https://github.com/usdot-fhwa-stol/carma-streets/pull/456)
+
+- The CARMA Streets initialization script now prompts users to select a V2X-Hub version and automatically checks out the specified version during initialization.
+  * Pull Requests: [carma-streets PR #455](https://github.com/usdot-fhwa-stol/carma-streets/pull/455)
+
+- The sensor_data_sharing_service now processes detections with reduced latency and fewer dropped detections.
+  * Pull Requests: [carma-streets PR #461](https://github.com/usdot-fhwa-stol/carma-streets/pull/461)
+
+**Fixes**
+
+- [carma-streets PR #458](https://github.com/usdot-fhwa-stol/carma-streets/pull/458): Improve CARMAStreetsPlugin parsing of SDSM JSON messages on the v2xhub_sdsm_sub Kafka topic. This eliminates occasional SDSM JSON parsing failures.
+
+- [carma-streets PR #457](https://github.com/usdot-fhwa-stol/carma-streets/pull/457): Add settings necessary to resolve the Kafka broker IP when running V2X Hub on the host network.
+
+**Other Updates**
+
+- [carma-streets PR #449](https://github.com/usdot-fhwa-stol/carma-streets/pull/449): Update Doxygen version to 4.5.1.
+
+## Other Existing Repositories
+
+A global parameter override file (GlobalParamsOverride.yaml) has been added to CARMA Config, allowing operators to easily re-configure parameters for packages within CARMA Platform (and its related repositories) without needing to create docker volumes to multiple packages. This update was applied to the following repositories:
+
+| Repository | Pull Request |
+|---|---|
+| Autoware.Auto | [autoware.auto PR #46](https://github.com/usdot-fhwa-stol/autoware.auto/pull/46) |
+| CARMA Novatel OEM7 Driver Wrapper | [carma-novatel-oem7-driver-wrapper PR #50](https://github.com/usdot-fhwa-stol/carma-novatel-oem7-driver-wrapper/pull/50), [PR #51](https://github.com/usdot-fhwa-stol/carma-novatel-oem7-driver-wrapper/pull/51) |
+| CARMA Velodyne Lidar Driver | [carma-velodyne-lidar-driver PR #137](https://github.com/usdot-fhwa-stol/carma-velodyne-lidar-driver/pull/137), [PR #138](https://github.com/usdot-fhwa-stol/carma-velodyne-lidar-driver/pull/138) |
+| CARMA Torc Pinpoint Driver | [carma-torc-pinpoint-driver PR #57](https://github.com/usdot-fhwa-stol/carma-torc-pinpoint-driver/pull/57), [PR #58](https://github.com/usdot-fhwa-stol/carma-torc-pinpoint-driver/pull/58) |
+| V2X ROS Driver | [v2x-ros-driver PR #150](https://github.com/usdot-fhwa-stol/v2x-ros-driver/pull/150) |
+
+Additionally, issues related to the SonarCloud configuration file location and workflow path were fixed in this release. This update was applied to the following repositories:
+
+| Repository | Pull Request |
+|---|---|
+| CARMA Lightbar Driver | [carma-lightbar-driver PR #90](https://github.com/usdot-fhwa-stol/carma-lightbar-driver/pull/90) |
+| CARMA Novatel OEM7 Driver Wrapper | [carma-novatel-oem7-driver-wrapper PR #52](https://github.com/usdot-fhwa-stol/carma-novatel-oem7-driver-wrapper/pull/52) |
+| CARMA Velodyne Lidar Driver | [carma-velodyne-lidar-driver PR #139](https://github.com/usdot-fhwa-stol/carma-velodyne-lidar-driver/pull/139) |
+| CARMA Utils | [carma-utils PR #258](https://github.com/usdot-fhwa-stol/carma-utils/pull/258) |
+| CARMA Msgs | [carma-msgs PR #272](https://github.com/usdot-fhwa-stol/carma-msgs/pull/272) |
+| V2X ROS Driver | [v2x-ros-driver PR #154](https://github.com/usdot-fhwa-stol/v2x-ros-driver/pull/154) |
+| Multiple Object Tracking | [multiple_object_tracking PR #165](https://github.com/usdot-fhwa-stol/multiple_object_tracking/pull/165) |
+| CARMA Web UI | [carma-web-ui PR #189](https://github.com/usdot-fhwa-stol/carma-web-ui/pull/189) |
+
+### CARMA Config
+
+In this release, CARMA Config adds a global parameter override file (GlobalParamsOverride.yaml), which makes it easier for operators to re-configure parameters for packages within CARMA Platform (and its related repositories). Additionally, this release includes updates that enable operators to set the ROS log level for CARMA Platform software libraries from CARMA Config. Finally, the Docker Compose files have been updated to provide CUDA access to the carma-platform docker service.
+
+**Enhancements**
+
+- Add support for a global parameter override yaml file (GlobalParamsOverride.yaml).
+  * Pull Requests: [carma-config PR #475](https://github.com/usdot-fhwa-stol/carma-config/pull/475), [carma-config PR #483](https://github.com/usdot-fhwa-stol/carma-config/pull/483), [carma-config PR #478](https://github.com/usdot-fhwa-stol/carma-config/pull/478)
+
+- Improve logging paradigm so ROS log level can be set for software libraries within CARMA Platform.
+  * Pull Requests: [carma-config PR #484](https://github.com/usdot-fhwa-stol/carma-config/pull/484)
+
+- Enable CUDA access for the carma-platform docker service to support GPU-related functionalities in CARMA Platform.
+  * Pull Requests: [carma-config PR #481](https://github.com/usdot-fhwa-stol/carma-config/pull/481)
+
+**Other Updates**
+
+- [carma-config PR #476](https://github.com/usdot-fhwa-stol/carma-config/pull/476): Add GitHub Actions Docker builds for carma-config.
+
+- [carma-config PR #479](https://github.com/usdot-fhwa-stol/carma-config/pull/479): Add demo_uc2_tim_cp to Docker CI workflows.
+
+- [carma-config PR #490](https://github.com/usdot-fhwa-stol/carma-config/pull/490): Remove the demo_uc2_tim_cp Docker build step.
+
+- [carma-config PR #477](https://github.com/usdot-fhwa-stol/carma-config/pull/477): Add demo config folder.
+
+- [carma-config PR #486](https://github.com/usdot-fhwa-stol/carma-config/pull/486): Remove demo config from develop.
+
+- [carma-config PR #480](https://github.com/usdot-fhwa-stol/carma-config/pull/480): Update platform image and README.
+
+### CARMA Msgs
+
+In this release, ROS message definitions are updated from the SAE J2735 2016 standard to the SAE J2735 2024 standard.
+
+**Enhancements**
+
+- [carma-msgs PR #273](https://github.com/usdot-fhwa-stol/carma-msgs/pull/273): Update SAE J2735 ROS message definitions from the 2016 standard to the 2024 standard.
+
+**Fixes**
+
+- [carma-msgs PR #274](https://github.com/usdot-fhwa-stol/carma-msgs/pull/274): Fix BIT STRING encoding for V2X messages.
+
+- [carma-msgs PR #275](https://github.com/usdot-fhwa-stol/carma-msgs/pull/275): Revert to the shorthand name and array for dow in DayOfWeek.msg.
+
+### V2X ROS Conversion
+
+In this release, V2X ROS Conversion is updated from the SAE J2735 2016 standard to the SAE J2735 2024 standard. Additionally, README documentation has been improved, and processing of inbound messages has been enhanced to reduce dropped incoming messages.
+
+**Enhancements**
+
+- Update from the SAE J2735 2016 standard to the SAE J2735 2024 standard.
+  * Pull Requests: [v2x-ros-conversion PR #29](https://github.com/usdot-fhwa-stol/v2x-ros-conversion/pull/29), [v2x-ros-conversion PR #33](https://github.com/usdot-fhwa-stol/v2x-ros-conversion/pull/33)
+
+- Separates inbound and outbound ROS 2 callbacks and increases queue depths to prevent inbound messages from being delayed and silently dropped during outbound processing.
+  * Pull Requests: [v2x-ros-conversion PR #26](https://github.com/usdot-fhwa-stol/v2x-ros-conversion/pull/26)
+
+**Fixes**
+
+- [v2x-ros-conversion PR #30](https://github.com/usdot-fhwa-stol/v2x-ros-conversion/pull/30): Fix brake applied status handling logic.
+
+- [v2x-ros-conversion PR #32](https://github.com/usdot-fhwa-stol/v2x-ros-conversion/pull/32): Fix MAP optional field layerType dereferenced without checking null.
+
+- [v2x-ros-conversion PR #35](https://github.com/usdot-fhwa-stol/v2x-ros-conversion/pull/35): Keep SDSM MsgCount at 127 when decoding.
+
+**Other Updates**
+
+- [v2x-ros-conversion PR #31](https://github.com/usdot-fhwa-stol/v2x-ros-conversion/pull/31): Documentation improvements in README.
+
+### V2X ROS Driver
+
+In this release, V2X ROS Driver adds support for MQTT protocol for use with Ettifos OBUs, along with improved documentation throughout the repository. Additionally, as part of this release, V2X ROS Driver has been verified to support SCMS-enabled V2X communications with both Commsignia and Ettifos OBUs.
+
+**Enhancements**
+
+- Update v2x-ros-driver implementation to support MQTT protocol for use with Ettifos OBUs.
+  * Pull Requests: [v2x-ros-driver PR #153](https://github.com/usdot-fhwa-stol/v2x-ros-driver/pull/153), [v2x-ros-driver PR #156](https://github.com/usdot-fhwa-stol/v2x-ros-driver/pull/156), [v2x-ros-driver PR #158](https://github.com/usdot-fhwa-stol/v2x-ros-driver/pull/158), [v2x-ros-driver PR #163](https://github.com/usdot-fhwa-stol/v2x-ros-driver/pull/163), [v2x-ros-driver PR #155](https://github.com/usdot-fhwa-stol/v2x-ros-driver/pull/155)
+
+- Update Cohda MK6 OBU setup scripts to enable user to enable/disable security.
+  * Pull Requests: [v2x-ros-driver PR #144](https://github.com/usdot-fhwa-stol/v2x-ros-driver/pull/144)
+
+**Fixes**
+
+- [v2x-ros-driver PR #147](https://github.com/usdot-fhwa-stol/v2x-ros-driver/pull/147), [v2x-ros-driver PR #151](https://github.com/usdot-fhwa-stol/v2x-ros-driver/pull/151): Minor fixes to the Cohda MK6 OBU config verification script (check-mk6-conf.sh).
+
+**Other Updates**
+
+- [v2x-ros-driver PR #149](https://github.com/usdot-fhwa-stol/v2x-ros-driver/pull/149): Add a new v2x_decoder_forwarder.py script, which can be useful for developers and testers to receive, decode, and forward SAE J2735 V2X Messages as a JSON string to a remote server.
+
+- [v2x-ros-driver PR #157](https://github.com/usdot-fhwa-stol/v2x-ros-driver/pull/157), [v2x-ros-driver PR #159](https://github.com/usdot-fhwa-stol/v2x-ros-driver/pull/159), [v2x-ros-driver PR #152](https://github.com/usdot-fhwa-stol/v2x-ros-driver/pull/152): Documentation improvements in README.
+
+### CARMA Utils
+
+In this release, logging behavior of CARMA Platform is improved and fixed.
+
+**Enhancements**
+
+- Improves CARMA Platform logging by removing legacy ROS 1 configuration and enabling flexible log-level control for nodes, libraries, and plugin-specific library loggers.
+  * Pull Requests: [carma-utils PR #260](https://github.com/usdot-fhwa-stol/carma-utils/pull/260)
+
+### Autoware.Auto and Autoware.AI
+
+In this release, CI is updated to build and test only the packages needed for CARMA Platform, and a build fix is applied for rclcpp logging macros.
+
+**Fixes**
+
+- [autoware.ai PR #297](https://github.com/usdot-fhwa-stol/autoware.ai/pull/297): Build ‘lanelet2_extension’ package with C++17 for compatibility with ROS 2 Humble.
+
+- [autoware.auto PR #48](https://github.com/usdot-fhwa-stol/autoware.auto/pull/48): Build ‘tracking’ and ‘tracking_test_framework’ packages with C++17 for compatibility with ROS 2 Humble.
+
+**Other Updates**
+
+- [autoware.ai PR #294](https://github.com/usdot-fhwa-stol/autoware.ai/pull/294), [autoware.auto PR #43](https://github.com/usdot-fhwa-stol/autoware.auto/pull/43): Optimizes builds by explicitly declaring the packages and dependencies required for CARMA Platform, reducing the Autoware build from 205 to 65 packages.
+
+- [autoware.ai PR #295](https://github.com/usdot-fhwa-stol/autoware.ai/pull/295), [autoware.auto PR #44](https://github.com/usdot-fhwa-stol/autoware.auto/pull/44): Add GitHub Actions CI to build and test only packages required for CARMA Platform.
+
+## Private Repositories
+
+### CARMA Vehicle Calibration
+
+In this release, visualization meshes are added for the work zone geofence and emergency vehicle, and route and map files are added for the black Pacifica.
+
+**Enhancements**
+
+- [carma-vehicle-calibration PR #152](https://github.com/usdot-fhwa-stol/carma-vehicle-calibration/pull/152): Add meshes for the work zone geofence (orange circles resembling traffic barrels) and emergency vehicle (blue vehicle) to support Rviz visualizations with CARMA Platform. The emergency vehicle is only displayed for the Traffic Incident Management use case.
+
+- [carma-vehicle-calibration PR #154](https://github.com/usdot-fhwa-stol/carma-vehicle-calibration/pull/154): Create a folder for storing demonstration-specific files.
+
+**Other Updates**
+
+- [carma-vehicle-calibration PR #147](https://github.com/usdot-fhwa-stol/carma-vehicle-calibration/pull/147): Correct the license for the white Pacifica.
+
+### STOL J2735
+
+In this release, J2945 Road Geometry and Attributes message support is added to the 2024 J2735 packages.
+
+**Enhancements**
+
+- [stol-j2735 PR #34](https://github.com/usdot-fhwa-stol/stol-j2735/pull/34): Adds J2945 Road Geometry and Attributes ASN definitions, with a corrected object identifier for compatibility with the J2735 MessageFrame definition.
+
+**Other Updates**
+
+- [stol-j2735 PR #36](https://github.com/usdot-fhwa-stol/stol-j2735/pull/36): Add workflow dispatch.
+
+## Version 4.13.0, released July 16th 2026
+
+### Summary
+
+The CARMA System 4.13.0 release includes the following significant updates:
+
+- A new XML-RPC server and client pair were added to CDASim for the CARLA–MOSAIC bridge, replacing the original TraCI-based communication.
+- An initial version of CDASim's automated regression testing tool was developed as part of an ITS demo, including a PySide6 GUI, a scenario generator, and a scenario runner.
+- The CARLA-CARMA bridge in carma-carla-integration migrated from ROS1 to ROS2 (Humble). Every bridge node (external objects, localization, vehicle status, odometry, Ackermann command, route, plugins, guidance, robot status, driver status) was ported from rospy to rclpy, with a new Docker build for the ROS2 stack.
+- Carla-sensor-lib went through a CARLA 0.10.0 modernization pass.
+- Cdasim-config picked up Town10 EVC configuration and a fix for the move-over-law lane-change scenario.
+
+## Changes to Key Existing Repositories
+
+### CDASim
+
+#### CDASim ROS2 Migration
+
+**Enhancements**
+
+- **CDAS-34:** New scenario for UGA's ROS2 migration integration testing that excludes EVC-related configuration, since UGA doesn't have EVC access.
+  * Pull Requests: [cdasim PR #248](https://github.com/usdot-fhwa-stol/cdasim/pull/248)
+- **CDAS-22:** Added a Town10 MOSAIC scenario to support ROS2 migration Phase 2 integration testing, ahead of the CARLA 0.10.0 upgrade.
+  * Pull Requests: [cdasim PR #258](https://github.com/usdot-fhwa-stol/cdasim/pull/258)
+- **CDAS-101:** Added Docker-in-Docker support so CDASim (Ubuntu 18.04) can launch the upgraded NS-3 Federate (Ubuntu 22.04) inside its own container via MOSAIC's DockerFederateExecutor, resolving the Docker Ubuntu version incompatibility introduced by the ROS2 migration.
+  * Pull Requests: [cdasim PR #262](https://github.com/usdot-fhwa-stol/cdasim/pull/262)
+
+**Other Updates**
+
+- [cdasim PR #264](https://github.com/usdot-fhwa-stol/cdasim/pull/264), [cdasim PR #260](https://github.com/usdot-fhwa-stol/cdasim/pull/260): ROS2 migration Phase 2/3 integration testing.
+- [cdasim PR #266](https://github.com/usdot-fhwa-stol/cdasim/pull/266): Merge ROS2 upgrade into develop.
+
+#### CDASim CARLA–MOSAIC Bridge
+
+**Enhancements**
+
+- **CDAS-66 / CDAS-69:** New XML-RPC server and client implementation for the CARLA–MOSAIC bridge, replacing the original TraCI-based communication.
+  * Pull Requests: [cdasim PR #251](https://github.com/usdot-fhwa-stol/cdasim/pull/251), [cdasim PR #252](https://github.com/usdot-fhwa-stol/cdasim/pull/252)
+- **CDAS-80:** Added a CARLA XML-RPC-based control path through the CarlaAmbassador/AbstractSumoAmbassador/CARLA XML-RPC server, enabling traffic-light sync through MOSAIC driven by either CARLA or SUMO.
+  * Pull Requests: [cdasim PR #256](https://github.com/usdot-fhwa-stol/cdasim/pull/256)
+
+#### CDASim Automated Regression Test Tool
+
+> **Note:** The changes below represent an initial version of the automated regression testing tool, developed as part of an ITS demo. The tool is still under active development and is not yet complete.
+
+**Enhancements**
+
+- **CDAS-65 — Initial GUI for Automated Testing Tool:** New PySide6 GUI for managing CDASim: browse a cdasim-config repository, select configurations, set up map/route files, pull Docker images, and build/start/stop simulations.
+  * Pull Requests: [cdasim PR #250](https://github.com/usdot-fhwa-stol/cdasim/pull/250)
+- **CDAS-43:** Scenario generator that produces deployment scripts (via YAML + Jinja2) for sequential Docker Compose simulation runs, removing manual setup.
+  * Pull Requests: [cdasim PR #254](https://github.com/usdot-fhwa-stol/cdasim/pull/254)
+- **CDAS-71:** Main automation script for CDASim's multi-scenario testing workflow reads test cases from a YAML file, generates scenario-specific docker-compose files, runs each simulation, and collects outputs.
+  * Pull Requests: [cdasim PR #257](https://github.com/usdot-fhwa-stol/cdasim/pull/257)
+- **CDAS-87:** Added new log sources for data collection.
+  * Pull Requests: [cdasim PR #263](https://github.com/usdot-fhwa-stol/cdasim/pull/263)
+
+**Fixes**
+
+- **CDAS-98:** Fixed vehicles "jumping" (visible vertical oscillation) when SUMO-controlled vehicles are mapped into the CARLA 3D world during CARLA-SUMO co-simulation via MOSAIC.
+  * Pull Requests: [cdasim PR #261](https://github.com/usdot-fhwa-stol/cdasim/pull/261)
+- **CDAS-79:** Fixed a CARLA version conflict by enabling CARLA to launch via the official CARLA Docker image in a Docker-in-Docker setup, since CDASim itself runs in a container.
+  * Pull Requests: [cdasim PR #255](https://github.com/usdot-fhwa-stol/cdasim/pull/255)
+- **SIM-31:** Fixed a bug where a CARMA vehicle's SUMO position was getting an offset applied twice; the CARMA vehicle is now filtered out of that step in the SUMO ambassador.
+  * Pull Requests: [cdasim PR #271](https://github.com/usdot-fhwa-stol/cdasim/pull/271)
+
+**Other Updates**
+
+- **CDAS-23:** Finalized the SUMO network configuration for the Town10 map so the traffic light system is correctly synchronized with CARLA for co-simulation stability.
+  * Pull Requests: [cdasim PR #259](https://github.com/usdot-fhwa-stol/cdasim/pull/259)
+- [cdasim PR #267](https://github.com/usdot-fhwa-stol/cdasim/pull/267): Removed the ns3 docker setup from the docker build.
+- [cdasim PR #269](https://github.com/usdot-fhwa-stol/cdasim/pull/269): Updated CARMA Messenger to support a new test plan.
+
+### Carma Carla Integration
+
+This release migrates the CARLA-CARMA ROS bridge from ROS1 to ROS2 (Humble) the largest single piece of work in this release and includes the CI/CD fixes needed to support the new ROS2 branch.
+
+**Enhancements**
+
+- **ROS1-to-ROS2 (Humble) bridge migration (CDAS-30, CDAS-31, CDAS-35, CDAS-44 through CDAS-50, CDAS-52 through CDAS-57, CDAS-61):** Ported the external objects, localization, vehicle status/info, odometry, Ackermann command (both directions), route, plugins, guidance, robot status, and driver status nodes from rospy to rclpy, including a new ament_python package structure and a Docker build for ROS2 Humble.
+  * Pull Requests: [carma-carla-integration PR #81](https://github.com/usdot-fhwa-stol/carma-carla-integration/pull/81), [carma-carla-integration PR #84](https://github.com/usdot-fhwa-stol/carma-carla-integration/pull/84), [carma-carla-integration PR #85](https://github.com/usdot-fhwa-stol/carma-carla-integration/pull/85), [carma-carla-integration PR #86](https://github.com/usdot-fhwa-stol/carma-carla-integration/pull/86), [carma-carla-integration PR #87](https://github.com/usdot-fhwa-stol/carma-carla-integration/pull/87), [carma-carla-integration PR #88](https://github.com/usdot-fhwa-stol/carma-carla-integration/pull/88), [carma-carla-integration PR #93](https://github.com/usdot-fhwa-stol/carma-carla-integration/pull/93), [carma-carla-integration PR #94](https://github.com/usdot-fhwa-stol/carma-carla-integration/pull/94), [carma-carla-integration PR #95](https://github.com/usdot-fhwa-stol/carma-carla-integration/pull/95), [carma-carla-integration PR #96](https://github.com/usdot-fhwa-stol/carma-carla-integration/pull/96), [carma-carla-integration PR #97](https://github.com/usdot-fhwa-stol/carma-carla-integration/pull/97), [carma-carla-integration PR #98](https://github.com/usdot-fhwa-stol/carma-carla-integration/pull/98), [carma-carla-integration PR #99](https://github.com/usdot-fhwa-stol/carma-carla-integration/pull/99), [carma-carla-integration PR #100](https://github.com/usdot-fhwa-stol/carma-carla-integration/pull/100), [carma-carla-integration PR #101](https://github.com/usdot-fhwa-stol/carma-carla-integration/pull/101), [carma-carla-integration PR #102](https://github.com/usdot-fhwa-stol/carma-carla-integration/pull/102), [carma-carla-integration PR #104](https://github.com/usdot-fhwa-stol/carma-carla-integration/pull/104), [carma-carla-integration PR #105](https://github.com/usdot-fhwa-stol/carma-carla-integration/pull/105), [carma-carla-integration PR #106](https://github.com/usdot-fhwa-stol/carma-carla-integration/pull/106), [carma-carla-integration PR #108](https://github.com/usdot-fhwa-stol/carma-carla-integration/pull/108)
+
+**Fixes**
+
+- [carma-carla-integration PR #103](https://github.com/usdot-fhwa-stol/carma-carla-integration/pull/103): Fixed CI/CD builds by including the develop-ros2 branch in GitHub Actions triggers (ci.yml, docker.yml, dockerhub.yml) and adding a suffix-replace argument that swaps -ros2 for -noetic.
+- [carma-carla-integration PR #113](https://github.com/usdot-fhwa-stol/carma-carla-integration/pull/113): Updated the Sonar workflow and renamed the properties file to sonar-project.properties to align with the shared usdot-fhwa-stol/actions sonar-scanner action.
+
+**Other Updates**
+
+- **ARC-205:** Renamed j2735_msgs and j322_msgs packages after they were merged into j2735_v2x_msgs and j3224_v2x_msgs in carma-msgs.
+  * Pull Requests: [carma-carla-integration PR #77](https://github.com/usdot-fhwa-stol/carma-carla-integration/pull/77)
+- **CDAS-62:** Integration testing of the carma-carla-bridge and carla-ros2-bridge against the CARMA platform and CARLA sim environment.
+  * Pull Requests: [carma-carla-integration PR #109](https://github.com/usdot-fhwa-stol/carma-carla-integration/pull/109)
+- **CDAS-83:** ROS2 migration Phase 2/3 integration testing.
+  * Pull Requests: [carma-carla-integration PR #110](https://github.com/usdot-fhwa-stol/carma-carla-integration/pull/110), [carma-carla-integration PR #112](https://github.com/usdot-fhwa-stol/carma-carla-integration/pull/112)
+- [carma-carla-integration PR #114](https://github.com/usdot-fhwa-stol/carma-carla-integration/pull/114): Merge ROS2 upgrades into develop.
+
+### Cdasim Config
+
+This release adds Town10 configuration with the move-over-law lane-change scenario.
+
+**Enhancements**
+
+- **CDAS-34:** New scenario for UGA's XML RPC migration integration testing that excludes EVC-related configuration, since UGA doesn't have EVC access.
+  * Pull Requests: [cdasim-config PR #35](https://github.com/usdot-fhwa-stol/cdasim-config/pull/35)
+- [cdasim-config PR #46](https://github.com/usdot-fhwa-stol/cdasim-config/pull/46), [cdasim-config PR #48](https://github.com/usdot-fhwa-stol/cdasim-config/pull/48): ROS2 migration Phase 2 integration testing.
+- [cdasim-config PR #54](https://github.com/usdot-fhwa-stol/cdasim-config/pull/54): Added a new loop route.
+
+**Fixes**
+
+- [cdasim-config PR #57](https://github.com/usdot-fhwa-stol/cdasim-config/pull/57): Fixed the move-over-law scenario in Town10 by correcting lanelet linestring/buffer configuration so all expected lane-change areas are properly marked.
+- **CAR-6128:** Fixed the Google Maps API key for the UI; the key was previously exposed directly and wasn't working, the new key is now pulled from a private repo.
+  * Pull Requests: [cdasim-config PR #36](https://github.com/usdot-fhwa-stol/cdasim-config/pull/36)
+
+**Other Updates**
+
+- [cdasim-config PR #51](https://github.com/usdot-fhwa-stol/cdasim-config/pull/51), [cdasim-config PR #49](https://github.com/usdot-fhwa-stol/cdasim-config/pull/49): Replaced Docker Hub automated builds with GitHub Actions Docker builds for xil-town10 and for cdasim-config generally.
+- **CDAS-122:** Updated EVC config, docker compose file, and localhost.sql for Town10.
+  * Pull Requests: [cdasim-config PR #53](https://github.com/usdot-fhwa-stol/cdasim-config/pull/53)
+- [cdasim-config PR #52](https://github.com/usdot-fhwa-stol/cdasim-config/pull/52): Updated docker-compose configuration.
+- [cdasim-config PR #33](https://github.com/usdot-fhwa-stol/cdasim-config/pull/33): Brought the development folder up to date with ROS2 (Humble upgrade work), removed extra folders.
+- [cdasim-config PR #56](https://github.com/usdot-fhwa-stol/cdasim-config/pull/56): Updated CARMA Messenger configuration settings to support an updated test plan.
+- **TT-174:** Updated the README with instructions for placing and using the PyEOS bundle file in EVC-SUMO.
+  * Pull Requests: [cdasim-config PR #5](https://github.com/usdot-fhwa-stol/cdasim-config/pull/5)
+- [cdasim-config PR #50](https://github.com/usdot-fhwa-stol/cdasim-config/pull/50): Merge ROS2 upgrade into develop.
+
+### Carma NS3 Adapter
+
+**Enhancements**
+
+- **CDAS-74:** Added support for a global parameter override YAML file in carma-config, so map- or scenario-specific parameter overrides can be version-controlled.
+  * Pull Requests: [carma-ns3-adapter PR #35](https://github.com/usdot-fhwa-stol/carma-ns3-adapter/pull/35)
+- **CDAS-38:** Added a new registration sender script.
+  * Pull Requests: [carma-ns3-adapter PR #36](https://github.com/usdot-fhwa-stol/carma-ns3-adapter/pull/36)
+
+### Carla Sensor Lib
+
+**Enhancements**
+
+- **CDAS-70 — Carla Sensor Lib Carla 0.10.0 Modernization:** Removed the y-axis negation workaround that was needed for the old API, replaced the deprecated upper_fov/lower_fov attributes with horizontal_fov, and adopted the new carla.SemanticLidar API.
+  * Pull Requests: [carla-sensor-lib PR #22](https://github.com/usdot-fhwa-stol/carla-sensor-lib/pull/22)
+
+**Other Updates**
+
+- [carla-sensor-lib PR #24](https://github.com/usdot-fhwa-stol/carla-sensor-lib/pull/24): Updated docker network configuration and removed an unsafe logging call ahead of phase 3 network testing and added CARLA 0.10.0 configuration support.
+
+
+
+Version 4.11.0, released Aug 14th, 2025
+----------------------------------------
+
+### **Summary**
+The CARMA System 4.11.0 release includes the following significant updates: 
+
+- Enhancements have been made to CARMA Platform’s cooperative perception pipeline and planning nodes to enable it to correctly process and yield to objects based on received Sensor Data Sharing Messages (SDSMs) as part of live vehicle field testing. This has been tested using a pedestrian dummy and a smart infrastructure system running V2X Hub version 7.10.0.  
+- The CARMA Messenger UI for Traffic Incident Manager has been updated to be more interactive for users. 
+- Scripts have been added to CARMA Platform’s repository to support creating, transforming, and rotating Lanelet2 (.osm) and OpenDrive (.xodr) maps to support testing of specific road networks at different test locations. 
+- A new automation workflow has been added to all repositories, which sends an email to Cavsupportservices@dot.gov when a GitHub issue is created by an external user. 
+- Note: Software in release CARMA System 4.11.0 was tested against V2X Hub release 7.10.0. 
+
+## **Changes to Key Existing Repositories**
+
+### **CARMA Cloud**
+
+In this release, the deployment configuration for CARMA Cloud is updated. Updates include adding environment variables for default user credentials of the CARMA Cloud instance. Additionally, a volume has been added to the JSON files required to load an OpenDrive (.xodr) map file.
+
+**Enhancements** 
+
+- Pull Requests: [carma-cloud PR #68](https://github.com/usdot-fhwa-stol/carma-cloud/pull/68), [carma-cloud PR #74](https://github.com/usdot-fhwa-stol/carma-cloud/pull/74)
+
+### **CARMA Platform**
+
+In this release, enhancements and fixes are added to CARMA Platform’s planning nodes to [1] enable the ego vehicle to yield to objects based on received SDSMs in real world field testing and [2] enable parallel processing of various callbacks. Item [1] was initially part of the CARMA System 4.5.0 release, which was tested in CDASim. In this CARMA System 4.11.0 release, this functionality has been tested in the real world with a pedestrian dummy. 
+
+Additionally, scripts are added to create, transform, and rotate Lanelet2 (.osm) maps and OpenDrive (.xodr) maps to support testing of specific road networks at different test locations. 
+
+**Enhancements**
+
+- Yield to VRU using cooperative perception (with SDSMs): This includes all enhancements required to enable CARMA Platform to receive and process received SDSMs and yield if necessary. These enhancements have been field tested using outputs from a FLIR Camera, which are processed by V2X Hub and CARMA Streets. All field testing was conducted with a pedestrian dummy.
+  - Pull Requests: [carma-platform PR #2563](https://github.com/usdot-fhwa-stol/carma-platform/pull/2563), [carma-platform PR #2575](https://github.com/usdot-fhwa-stol/carma-platform/pull/2575), [carma-platform PR #2581](https://github.com/usdot-fhwa-stol/carma-platform/pull/2581), [carma-platform PR #2582](https://github.com/usdot-fhwa-stol/carma-platform/pull/2582), [carma-platform PR #2583](https://github.com/usdot-fhwa-stol/carma-platform/pull/2583), [carma-platform PR #2589](https://github.com/usdot-fhwa-stol/carma-platform/pull/2589), [carma-platform PR #2615](https://github.com/usdot-fhwa-stol/carma-platform/pull/2615)
+  
+- Lanelet2 and OpenDrive Map Creation and Transformation: This includes all enhancements to enable Lanelet2 (.osm) maps to be created from scratch and for Lanelet2 and OpenDrive (.xodr) maps to be edited (trimming, shifting, rotating around a new reference point, etc.). 
+  - Pull Requests: [carma-platform PR #2561](https://github.com/usdot-fhwa-stol/carma-platform/pull/2561), [carma-platform PR #2562](https://github.com/usdot-fhwa-stol/carma-platform/pull/2562), [carma-platform PR #2566](https://github.com/usdot-fhwa-stol/carma-platform/pull/2566), [carma-platform PR #2572](https://github.com/usdot-fhwa-stol/carma-platform/pull/2572)
+
+- CDASim Live Training: Improvements to aws instance scripts for CDASim deployment in the cloud with better user experience.
+  - Pull Requests: [carma-platform PR #2564](https://github.com/usdot-fhwa-stol/carma-platform/pull/2564), [carma-platform PR #2573](https://github.com/usdot-fhwa-stol/carma-platform/pull/2573)
+  
+**Fixes**  
+
+Planning nodes’ (arbitrator and plan_delegator) parallel processing improvements: These changes allow planning nodes to correctly update the vehicle state such as location and speed while waiting for response from the tactical plugins: 
+  - Pull Requests: [carma-platform PR #2591](https://github.com/usdot-fhwa-stol/carma-platform/pull/2591), [carma-platform PR #2596](https://github.com/usdot-fhwa-stol/carma-platform/pull/2596), [carma-platform PR #2597](https://github.com/usdot-fhwa-stol/carma-platform/pull/2597), [carma-platform PR #2598](https://github.com/usdot-fhwa-stol/carma-platform/pull/2598), [carma-platform PR #2602](https://github.com/usdot-fhwa-stol/carma-platform/pull/2602), [carma-platform PR #2607](https://github.com/usdot-fhwa-stol/carma-platform/pull/2607)
+
+**Other**  
+  
+  - [carma-platform PR #2567](https://github.com/usdot-fhwa-stol/carma-platform/pull/2567): Fix object visualizer launch parameter syntax error that is causing carma-platform shut down.
+  - [carma-platform PR #2579](https://github.com/usdot-fhwa-stol/carma-platform/pull/2579): Fix Lane change recover by removing extra unused code from ILC.
+  - [carma-platform PR #2586](https://github.com/usdot-fhwa-stol/carma-platform/pull/2586): Fix Traffic Incident Parser so that it doesn’t ignore some messages and speed limit change
+  - [carma-platform PR #2590](https://github.com/usdot-fhwa-stol/carma-platform/pull/2590): Remove outdated OBU scripts from engineering_tools.
+
+**Other Updates**  
+
+- Pull Requests:
+  - [carma-platform PR #2571](https://github.com/usdot-fhwa-stol/carma-platform/pull/2571): Create External Issues notification workflow. 
+  - [carma-platform PR #2606](https://github.com/usdot-fhwa-stol/carma-platform/pull/2606): Add feature to increase TCR bounding box.
+
+### **CARMA Messenger**
+
+In this release, the CARMA Messenger UI is updated to enable a more interactive Traffic Incident Management (TIM) interface. TIM message can now be broadcasted using GPS location from either TORC pinpoint driver or selected zones on Google Maps.  
+
+NOTE: Multiple lane selection of UI is not connected to the back end and only broadcasts the main lane’s info as TIM message.
+
+**Enhancements**
+
+- Add interactive UI design for CARMA Messenger that lets the user select TIM zones on Google Maps:. 
+  - Pull Requests: [carma-messenger PR #272](https://github.com/usdot-fhwa-stol/carma-messenger/pull/272), [carma-messenger PR #276](https://github.com/usdot-fhwa-stol/carma-messenger/pull/276), [carma-messenger PR #277](https://github.com/usdot-fhwa-stol/carma-messenger/pull/277), [carma-messenger PR #278](https://github.com/usdot-fhwa-stol/carma-messenger/pull/278), [carma-messenger PR #281](https://github.com/usdot-fhwa-stol/carma-messenger/pull/281), [carma-messenger PR #282](https://github.com/usdot-fhwa-stol/carma-messenger/pull/282)
+
+**Other Updates**  
+
+- Pull Requests:
+  - [carma-messenger PR#279](https://github.com/usdot-fhwa-stol/carma-messenger/pull/279): Update docker base image with Debian Bullseye for the CARMA Messenger UI.
+  - [carma-messenger PR#280](https://github.com/usdot-fhwa-stol/carma-messenger/pull/280): Add incremental ROS package build option for CARMA Messenger.
+
+### **CARMA Streets**
+
+The main update in this release for CARMA Streets is that Sensor Data Sharing Service was updated to support TraffiSense 2 FLIR Camera Pedestrian Presence detection data for generating Sensor Data Sharing messages (J3224). Several enhancements and fixes were also implemented because of TFHRC and Summit Point Testing. 
+
+**Enhancements**
+
+- CDAD-130: Enable infrastructure to consume TraffiSense 2 FLIR Camera Pedestrian Detection data and generate Sensor Data Sharing Messages (J3224) for Cooperative Perception.
+  - Pull Requests: [carma-streets PR #439](https://github.com/usdot-fhwa-stol/carma-streets/pull/439), [carma-streets PR #441](https://github.com/usdot-fhwa-stol/carma-streets/pull/441), [carma-streets PR #442](https://github.com/usdot-fhwa-stol/carma-streets/pull/442), [carma-streets PR #443](https://github.com/usdot-fhwa-stol/carma-streets/pull/443), [carma-streets PR #445](https://github.com/usdot-fhwa-stol/carma-streets/pull/445), [carma-streets PR #446](https://github.com/usdot-fhwa-stol/carma-streets/pull/446), [carma-streets PR #436](https://github.com/usdot-fhwa-stol/carma-streets/pull/436), [carma-streets PR #437](https://github.com/usdot-fhwa-stol/carma-streets/pull/437)
+- TT-91: CARMA Streets MMITSS integration (beta)
+  - Pull Requests: [carma-streets PR #432](https://github.com/usdot-fhwa-stol/carma-streets/pull/432), [carma-streets PR #433](https://github.com/usdot-fhwa-stol/carma-streets/pull/433)
+- FCP-1: CARMA Streets MUST Sensor integration fixes and improvements in sensor_data_sharing_service for Cooperative Perception (beta)
+  - Pull Requests: [carma-streets PR #426](https://github.com/usdot-fhwa-stol/carma-streets/pull/426), [carma-streets PR #429](https://github.com/usdot-fhwa-stol/carma-streets/pull/429)
+
+**Fixes** 
+- Pull Requests:
+  - [carma-streets PR #413](https://github.com/usdot-fhwa-stol/carma-streets/pull/413): Failing unit test in sensor data sharing service. 
+  - [carma-streets PR #427](https://github.com/usdot-fhwa-stol/carma-streets/pull/427): Sensor Data Sharing Service currently depends on an OSM map for getting georeference information detection.
+  - [carma-streets PR #437](https://github.com/usdot-fhwa-stol/carma-streets/pull/437): Fix detected object JSON processing.
+  - [carma-streets PR #447](https://github.com/usdot-fhwa-stol/carma-streets/pull/447): Fix release-candidate setup for CARMA Streets initialization script.
+    
+**Other Updates**  
+
+- Pull Requests:
+  - [carma-streets PR #422](https://github.com/usdot-fhwa-stol/carma-streets/pull/422): Upgrade base lanelet2 aware image ubuntu bionic to focal. 
+  - [carma-streets PR #424](https://github.com/usdot-fhwa-stol/carma-streets/pull/424): Update GitHub action (develop.yml) to use ubuntu focal version of lanelet aware image.
+  - [carma-streets PR #431](https://github.com/usdot-fhwa-stol/carma-streets/pull/431): Update GitHub Actions Third-Party Action Versions.
+  - [carma-streets PR #435](https://github.com/usdot-fhwa-stol/carma-streets/pull/435): Add Workflow for External Issues Notification.
+
+## **Other Existing Repositories**
+
+Email Notification When a GitHub Issue is Created
+  - For the following existing repositories, this release added a new automation workflow that sends an email to **Cavsupportservices@dot.gov** when a GitHub issue is created by an external user:
+
+| Repository                        | Pull Request                                   |
+|-----------------------------------|------------------------------------------------|
+| CARMA Base                        | [carma-base PR #244](https://github.com/usdot-fhwa-stol/carma-base/pull/244) |
+| Autoware.Auto                     | [autoware.auto PR #37](https://github.com/usdot-fhwa-stol/autoware.auto/pull/37) |
+| CARMA SSC Interface Wrapper       | [carma-ssc-interface-wrapper PR #181](https://github.com/usdot-fhwa-stol/carma-ssc-interface-wrapper/pull/181) |
+| CARMA Utils                       | [carma-utils PR #251](https://github.com/usdot-fhwa-stol/carma-utils/pull/251) |
+| CARMA Velodyne Lidar Driver       | [carma-velodyne-lidar-driver PR #125](https://github.com/usdot-fhwa-stol/carma-velodyne-lidar-driver/pull/125) |
+| CARMA Lightbar Driver             | [carma-lightbar-driver PR #82](https://github.com/usdot-fhwa-stol/carma-lightbar-driver/pull/82) |
+| CARMA Msgs                        | [carma-msgs PR #259](https://github.com/usdot-fhwa-stol/carma-msgs/pull/259) |
+| CARMA Novatel OEM7 Driver Wrapper | [carma-novatel-oem-driver-wrapper PR #43](https://github.com/usdot-fhwa-stol/carma-novatel-oem-driver-wrapper/pull/43) |
+| CARMA Torc Pinpoint Driver        | [carma-torc-pinpoint-driver PR #50](https://github.com/usdot-fhwa-stol/carma-torc-pinpoint-driver/pull/50) |
+| V2x Ros Driver                    | [v2x-ros-driver PR# 138](https://github.com/usdot-fhwa-stol/v2x-ros-driver/pull/138) |
+| CARMA Config                      | [carma-config PR #454](https://github.com/usdot-fhwa-stol/carma-config/pull/454) |
+| Carma Cloud                       | [carma-cloud PR 68](https://github.com/usdot-fhwa-stol/carma-cloud/pull/68) |
+
+### **V2X ROS Driver**
+
+In this release, new documentation and scripts have been added for configuring a Cohda MK6 OBU to work with a PC running V2X ROS Driver. Additionally, minor updates have been made to launch files to enable the “v2x_radio_address” parameter to be configured from a YAML file stored within CARMA Messenger’s carma-messenger-config. 
+
+**Enhancements**  
+
+- Pull Requests:
+  - [v2x-ros-driver PR #141](https://github.com/usdot-fhwa-stol/v2x-ros-driver/pull/141) & [v2x-ros-driver PR #145](https://github.com/usdot-fhwa-stol/v2x-ros-driver/pull/145): Add Cohda MK6 OBU setup documentation and scripts.
+  - [v2x-ros-driver PR #143](https://github.com/usdot-fhwa-stol/v2x-ros-driver/pull/143): Expose v2x-ros-driver IP for easier deployment 
+
+
+### **CARMA Web UI**
+
+In this release the base image tag is updated to 8.2-apache-bullseye, and workflow_dispatch is added to enable manual docker build triggers to develop branch.  
+
+**Enhancements**
+  - Pull Requests: [carma-web-ui PR #180](https://github.com/usdot-fhwa-stol/carma-web-ui/pull/180)
+
+**Fixes**  
+
+- Pull Requests: 
+  - [carma-web-ui PR #185](https://github.com/usdot-fhwa-stol/carma-web-ui/pull/185): Update base image tag to 8.2-apache-bullseye.
+  - [carma-web-ui PR #186](https://github.com/usdot-fhwa-stol/carma-web-ui/pull/186): Remove 'There were no segments found the active route.' text from CARMA Web UI. 
+  - [carma-web-ui PR #182](https://github.com/usdot-fhwa-stol/carma-web-ui/pull/182): Fix Google MAPS API error.
+
+### **CARMA Config**
+
+In this release, the local time zone is added to docker containers for carma-platform. Additionally external object recording for MCAP is enabled.
+
+**Enhancements** 
+
+- Enable external object recording for MCAP.
+  - Pull Requests: [carma-config PR #456](https://github.com/usdot-fhwa-stol/carma-config/pull/456)
+
+**Fixes**  
+
+- Pull Requests:
+  - [carma-config PR #452](https://github.com/usdot-fhwa-stol/carma-config/pull/452): Add local time zone to docker containers for carma-platform.
+  - [carma-config PR #453](https://github.com/usdot-fhwa-stol/carma-config/pull/453): Make development folder more up to date with ROS 2 Humble.
+  - [carma-config PR #457](https://github.com/usdot-fhwa-stol/carma-config/pull/457) & [carma-config PR #459](https://github.com/usdot-fhwa-stol/carma-config/pull/459): Fix Google MAPS API and Docker volume for UI. 
+
+### **Autoware.ai**
+No changes are made to this repository since CARMA System 4.10.0 release. 
+
+### **Ros1_bridge** 
+No changes are made to this repository since CARMA System 4.10.0 release. 
+
+### **V2X ROS Conversion**
+No changes are made to this repository since CARMA System 4.10.0 release. 
+
+
+Version 4.10.0, released June 24th, 2025
+----------------------------------------
+
+### **Summary**
+
+The CARMA System 4.10.0 release includes the following significant updates: 
+
+- Updated CARMA Platform, CARMA Messenger, and their related repositories to ROS 2 Humble. 
+- Created a new ‘v2x-ros-conversion’ repository, which handles the conversion between UPER-encoded SAE J2735 messages and their ROS message formats. This allows users to leverage a lightweight standalone service for integrating SAE V2X messages in their ROS 2 systems. 
+- Replaced the manually compiled message encoder (originally stored in CARMA Messenger) with a new SAE J2735 message encoder and decoder library called ‘STOL J2735’, installable as a Debian Package. This improves dependency management by including versioning information with the package, guaranteeing compatibility for tools that install the same version of the package. It also provides CMake installation configuration files to simplify the process to include this package in new tools. Lastly, it eliminates the need for separate tools to recompile the same library separately, reducing build duplication and time required for building our tools. 
+- Added a prototyped ‘Trajectory Follower Wrapper’ control plugin, which wraps the official Autoware.Universe Trajectory Follower control algorithm, to CARMA Platform. 
+- Improved the CI/CD workflows for multiple repositories.
+
+With the upgrade to ROS 2 Humble in this release, Ubuntu 22.04 is the preferred operating system for a PC running CARMA Platform or CARMA Messenger. Please refer to the [Development Environment Setup Instructions](https://usdot-carma.atlassian.net/wiki/spaces/CRMPLT/pages/486178827/Development+Environment+Setup) (for setup on a local development PC) and the [Vehicle PC Setup Instructions](https://usdot-carma.atlassian.net/wiki/spaces/CRMPLT/pages/2539159553/Vehicle+Installation+setup) on Confluence for more detailed setup and deployment instructions. 
+
+More details regarding the updates to each repository included in this release are listed below.  
+
+For technical support from the CARMA team, please contact the CARMA help desk at CAVSupportServices@dot.gov. 
+
+Note: Software in release CARMA System 4.10.0 was tested against [V2X Hub release 7.9.0](https://github.com/usdot-fhwa-OPS/V2X-Hub/blob/master/docs/Release_notes.md)
+
+## **New Repositories**
+
+### **V2X ROS Conversion**
+
+This new ‘v2x-ros-conversion’ repository includes ROS software packages that have been separated out of CARMA Messenger so that users can leverage them without needing all of CARMA Messenger to be built into their system. Specifically, this repository contains ROS software packages that [1] perform the conversion between UPER-encoded SAE J2735 messages and their ROS message formats (as defined in the ‘carma-msgs’ repository) and [2] perform the conversion of numerical fields between the non-standard units intended for V2X messages and SI Base units, which are more common to work with.
+
+## **Changes to Key Existing Repositories**
+
+### **CARMA Cloud**
+
+Improved containerized deployment to include more detailed documentation for deployment steps and template configuration files. 
+
+**Enhancements** 
+
+- Pull Requests: [carma-cloud PR #76](https://github.com/usdot-fhwa-stol/carma-cloud/pull/76), [carma-cloud PR #77](https://github.com/usdot-fhwa-stol/carma-cloud/pull/77), [carma-cloud PR #74](https://github.com/usdot-fhwa-stol/carma-cloud/pull/74), [carma-cloud PR #75](https://github.com/usdot-fhwa-stol/carma-cloud/pull/75), [carma-cloud PR #80](https://github.com/usdot-fhwa-stol/carma-cloud/pull/80), [carma-cloud PR #68](https://github.com/usdot-fhwa-stol/carma-cloud/pull/68)
+
+### **CARMA Platform**
+
+The most significant upgrade for this release is the upgrade of all ROS software packages and dependencies to ROS 2 Humble. Additionally, several quality of life improvements have been made such as [1] new support for 3D models for the ego vehicle and 2D image representations for pedestrians in Rviz, [2] new support for MAP message visualization in Rviz, [3] using ‘GNSS only with fixed offset’ the default localization approach (which bypasses the need for a pcd_map), and [4] minor improvements to support live vehicle and simulation testing.
+
+**Enhancements**
+
+- ROS 2 Humble Upgrades: Upgrades of ROS packages and dependencies from ROS 2 Foxy to ROS 2 Humble. 
+  - Pull Requests: [carma-platform PR #2476](https://github.com/usdot-fhwa-stol/carma-platform/pull/2476), [carma-platform PR #2474](https://github.com/usdot-fhwa-stol/carma-platform/pull/2474), [carma-platform PR #2456](https://github.com/usdot-fhwa-stol/carma-platform/pull/2456), [carma-platform PR #2477](https://github.com/usdot-fhwa-stol/carma-platform/pull/2477), [carma-platform PR #2475](https://github.com/usdot-fhwa-stol/carma-platform/pull/2475), [carma-platform PR #2377](https://github.com/usdot-fhwa-stol/carma-platform/pull/2377), [carma-platform PR #2417](https://github.com/usdot-fhwa-stol/carma-platform/pull/2417), [carma-platform PR #2438](https://github.com/usdot-fhwa-stol/carma-platform/pull/2438), [carma-platform PR #2439](https://github.com/usdot-fhwa-stol/carma-platform/pull/2439), [carma-platform PR #2558](https://github.com/usdot-fhwa-stol/carma-platform/pull/2558), [carma-platform PR #2510](https://github.com/usdot-fhwa-stol/carma-platform/pull/2510), [carma-platform PR #2517](https://github.com/usdot-fhwa-stol/carma-platform/pull/2517), [carma-platform PR #2496](https://github.com/usdot-fhwa-stol/carma-platform/pull/2496), [carma-platform PR #2560](https://github.com/usdot-fhwa-stol/carma-platform/pull/2560), [carma-platform PR #2532](https://github.com/usdot-fhwa-stol/carma-platform/pull/2532), [carma-platform PR #2511](https://github.com/usdot-fhwa-stol/carma-platform/pull/2511), [carma-platform PR #2513](https://github.com/usdot-fhwa-stol/carma-platform/pull/2513), [#2574](https://github.com/usdot-fhwa-stol/carma-platform/pull/2574), [carma-platform PR #2482](https://github.com/usdot-fhwa-stol/carma-platform/pull/2482), [carma-platform PR #2468](https://github.com/usdot-fhwa-stol/carma-platform/pull/2468), [carma-platform PR #2469](https://github.com/usdot-fhwa-stol/carma-platform/pull/2469), [carma-platform PR #2467](https://github.com/usdot-fhwa-stol/carma-platform/pull/2467), [carma-platform PR #2488](https://github.com/usdot-fhwa-stol/carma-platform/pull/2488), [carma-platform PR #2453](https://github.com/usdot-fhwa-stol/carma-platform/pull/2453)
+  
+- Create a New ‘Trajectory Follower Wrapper’ Control Plugin: Prototypes a new ‘Trajectory Follower Wrapper’ control plugin, which wraps the Autoware.Universe ‘Trajectory Follower’ control algorithm contained in the USDOT-FHWA-STOL fork of Autoware.Auto. The plugin is tuned for basic testing with a live vehicle and, while Pure Pursuit is still the default control plugin used with CARMA Platform, it is possible that this control plugin could have performance improvements given additional tuning. 
+  - Pull Requests: [carma-platform PR #2447](https://github.com/usdot-fhwa-stol/carma-platform/pull/2447), [carma-platform PR #2448](https://github.com/usdot-fhwa-stol/carma-platform/pull/2448), [carma-platform PR #2430](https://github.com/usdot-fhwa-stol/carma-platform/pull/2430), [carma-platform PR #2379](https://github.com/usdot-fhwa-stol/carma-platform/pull/2379), [carma-platform PR #2419](https://github.com/usdot-fhwa-stol/carma-platform/pull/2419)
+  
+**Fixes**  
+
+- Pull Requests: 
+  - [carma-platform PR #2333](https://github.com/usdot-fhwa-stol/carma-platform/pull/2333) & [carma-platform PR #2387](https://github.com/usdot-fhwa-stol/carma-platform/pull/2387):  Temporarily disable failing unit tests in carma-platform's CI 
+  - [carma-platform PR #2458](https://github.com/usdot-fhwa-stol/carma-platform/pull/2458): Fix basic_autonomy unit test.
+  - [carma-platform PR #2531](https://github.com/usdot-fhwa-stol/carma-platform/pull/2531): Cooperative Lane change is not using the resample_step_size distance. 
+  - [carma-platform PR #2504](https://github.com/usdot-fhwa-stol/carma-platform/pull/2504): Fix for removing duplicate lane centerline points during trajectory generation
+  - [carma-platform PR #2535](https://github.com/usdot-fhwa-stol/carma-platform/pull/2535): Remove throw in yielding functionality.
+  - [carma-platform PR #2308](https://github.com/usdot-fhwa-stol/carma-platform/pull/2308): Fix cloud-sim launch script for multiple users.
+  - [carma-platform PR #2303](https://github.com/usdot-fhwa-stol/carma-platform/pull/2303): Fix failing unit test in 'route_following_plugin' package.
+  - [carma-platform PR #2322](https://github.com/usdot-fhwa-stol/carma-platform/pull/2322): Fix failing unit tests in 'approaching_emergency_vehicle_plugin' package.
+  - [carma-platform PR #2365](https://github.com/usdot-fhwa-stol/carma-platform/pull/2365): Fix CARMA cloud client parsing TCMs.
+  - [carma-platform PR #2380](https://github.com/usdot-fhwa-stol/carma-platform/pull/2380): carma-platform is not buildable locally due to Dockerfile bug. 
+  - [carma-platform PR #2397](https://github.com/usdot-fhwa-stol/carma-platform/pull/2397): Fix lanechange start_llt_id picking logic.
+  - [carma-platform PR #2432](https://github.com/usdot-fhwa-stol/carma-platform/pull/2432): Remove unused ROS1 code and launch files.
+  - [carma-platform PR #2404](https://github.com/usdot-fhwa-stol/carma-platform/pull/2404): Fix georeference processing callbacks across CARMA Platform.
+
+**Other Updates**  
+
+- Pull Requests:
+  - [carma-platform PR #2530](https://github.com/usdot-fhwa-stol/carma-platform/pull/2530): Fix initial conditions in JMT algorithm in yield plugin.
+  - [carma-platform PR #2502](https://github.com/usdot-fhwa-stol/carma-platform/pull/2502): Improve yield_plugin to remove exceptions and shutdowns.
+  - [carma-platform PR #2502](https://github.com/usdot-fhwa-stol/carma-platform/pull/2305): Add skeleton documentation for Platform.
+  - [carma-platform PR #2229](https://github.com/usdot-fhwa-stol/carma-platform/pull/2229): Add Feature github actions CI/CD.
+  - [carma-platform PR #2371](https://github.com/usdot-fhwa-stol/carma-platform/pull/2371): Sync Develop with master branch. 
+  - [carma-platform PR #2366](https://github.com/usdot-fhwa-stol/carma-platform/pull/2366): Add spat wall time process. 
+  - [carma-platform PR #2378](https://github.com/usdot-fhwa-stol/carma-platform/pull/2378): Adding message intersect script for parsing payload from V2X Hub and sending to CARMA Messenger.
+  - [carma-platform PR #2399](https://github.com/usdot-fhwa-stol/carma-platform/pull/2399) & [carma-platform PR #2400](https://github.com/usdot-fhwa-stol/carma-platform/pull/2400): Make motion models in motion comp configurable.
+  - [carma-platform PR #2444](https://github.com/usdot-fhwa-stol/carma-platform/pull/2444): Handle only ROS1 SSC in drivers_controller and remove camera related logics.
+
+### **CARMA Messenger**
+
+In this release, all ROS software packages and dependencies were upgraded to ROS 2 Humble. Additionally, software packages that performed the conversion between UPER-encoded SAE J2735 messages and their ROS message formats were factored out into a new independent repository named ‘v2x-ros-conversion'. This change will make it easier for other tools (e.g., CARMA Platform) to depend on these specific software packages without requiring that all of CARMA Messenger be a dependency.
+
+**Enhancements**
+
+- ROS 2 Humble Upgrades: Upgrades of ROS packages and dependencies from ROS 2 Foxy to ROS 2 Humble. 
+  - Pull Requests: [carma-messenger PR #238](https://github.com/usdot-fhwa-stol/carma-messenger/pull/238), [carma-messenger PR #260](https://github.com/usdot-fhwa-stol/carma-messenger/pull/260), [carma-messenger PR #264](https://github.com/usdot-fhwa-stol/carma-messenger/pull/264)
+
+**Fixes**  
+
+- Pull Requests:
+  - [carma-messenger PR #239](https://github.com/usdot-fhwa-stol/carma-messenger/pull/239): Fix header time develop-humble. 
+  - [carma-messenger PR #256](https://github.com/usdot-fhwa-stol/carma-messenger/pull/256): Update install_deps for v2x-ros-conversion.
+
+**Other Updates**  
+
+- Pull Requests:
+  - [carma-messenger PR#251](https://github.com/usdot-fhwa-stol/carma-messenger/pull/251): Update carma-messenger to use v2x-ros-conversion.
+
+
+## **Other Existing Repositories**
+
+### **CARMA Base**
+
+Completed upgrades to ROS 2 Humble, which included creating separate Docker files for ROS 2 Humble and ROS 1 Noetic base images. While the ROS 2 Humble Dockerfile is used for nearly all CARMA Platform- and CARMA Messenger-related repositories, the ROS 1 Noetic Dockerfile will continue to support third-party ROS 1 Noetic code within the ‘carma-ssc-interface-wrapper' repository.
+
+**Enhancements**
+
+- ROS 2 Humble Upgrades: Upgrades of ROS dependencies from ROS 2 Foxy to ROS 2 Humble.
+  - Pull Requests: [carma-base PR #223](https://github.com/usdot-fhwa-stol/carma-base/pull/223), [carma-base PR #219](https://github.com/usdot-fhwa-stol/carma-base/pull/219), [carma-base PR #217](https://github.com/usdot-fhwa-stol/carma-base/pull/217), [carma-base PR #228](https://github.com/usdot-fhwa-stol/carma-base/pull/228), [carma-base PR #220](https://github.com/usdot-fhwa-stol/carma-base/pull/220), [carma-base PR #206](https://github.com/usdot-fhwa-stol/carma-base/pull/206), [carma-base PR #215](https://github.com/usdot-fhwa-stol/carma-base/pull/215), [carma-base PR #218](https://github.com/usdot-fhwa-stol/carma-base/pull/218), [carma-base PR #207](https://github.com/usdot-fhwa-stol/carma-base/pull/207), [carma-base PR #214](https://github.com/usdot-fhwa-stol/carma-base/pull/214), [carma-base PR #227](https://github.com/usdot-fhwa-stol/carma-base/pull/227), [carma-base PR #216](https://github.com/usdot-fhwa-stol/carma-base/pull/216), [carma-base PR #239](https://github.com/usdot-fhwa-stol/carma-base/pull/239), [carma-base PR #240](https://github.com/usdot-fhwa-stol/carma-base/pull/240), [carma-base PR #241](https://github.com/usdot-fhwa-stol/carma-base/pull/241), [carma-base PR #198](https://github.com/usdot-fhwa-stol/carma-base/pull/198), [carma-base PR #191](https://github.com/usdot-fhwa-stol/carma-base/pull/191), [carma-base PR #193](https://github.com/usdot-fhwa-stol/carma-base/pull/193), [carma-base PR #195](https://github.com/usdot-fhwa-stol/carma-base/pull/195), [carma-base PR #199](https://github.com/usdot-fhwa-stol/carma-base/pull/199), [carma-base PR #208](https://github.com/usdot-fhwa-stol/carma-base/pull/208), [carma-base PR #232](https://github.com/usdot-fhwa-stol/carma-base/pull/232), [carma-base PR #209](https://github.com/usdot-fhwa-stol/carma-base/pull/209), [carma-base PR #212](https://github.com/usdot-fhwa-stol/carma-base/pull/212), [carma-base PR #204](https://github.com/usdot-fhwa-stol/carma-base/pull/204), [carma-base PR #226](https://github.com/usdot-fhwa-stol/carma-base/pull/226), [carma-base PR #224](https://github.com/usdot-fhwa-stol/carma-base/pull/224)
+
+**Other Updates**  
+
+- Pull Requests:
+  - [carma-base PR #211](https://github.com/usdot-fhwa-stol/carma-base/pull/211): Install pacmod3-msgs for the ros2 ssc wrapper interface.
+  - [carma-base PR #242](https://github.com/usdot-fhwa-stol/carma-base/pull/242): Update ros_packages.txt.
+
+### **V2X ROS Driver**
+
+In this release, the previous ‘carma-cohda-dsrc-driver’ repository has been renamed to ‘v2x-ros-driver’, and documentation has been updated to reflect this change. The other significant update for this release is that software packages and dependencies have been upgraded to ROS 2 Humble. 
+
+**Enhancements**  
+
+- ROS 2 Humble Upgrades: Upgrades of ROS packages and dependencies from ROS 2 Foxy to ROS 2 Humble.
+  - Pull Requests: [v2x-ros-driver PR #123](https://github.com/usdot-fhwa-stol/v2x-ros-driver/pull/123), [v2x-ros-driver PR #124](https://github.com/usdot-fhwa-stol/v2x-ros-driver/pull/124), [v2x-ros-driver PR #133](https://github.com/usdot-fhwa-stol/v2x-ros-driver/pull/133), [v2x-ros-driver PR #134](https://github.com/usdot-fhwa-stol/v2x-ros-driver/pull/134), [v2x-ros-driver PR #137](https://github.com/usdot-fhwa-stol/v2x-ros-driver/pull/137)
+
+**Other Updates**  
+ 
+- Pull Requests: 
+  - [v2x-ros-driver PR #130](https://github.com/usdot-fhwa-stol/v2x-ros-driver/pull/130) &  [v2x-ros-driver PR #132](https://github.com/usdot-fhwa-stol/v2x-ros-driver/pull/132): Update Sonar cloud Project from carma-cohda-dsrc-driver. 
+  - [v2x-ros-driver PR #131](https://github.com/usdot-fhwa-stol/v2x-ros-driver/pull/131): Update README.md and CI Badges.
+  - [v2x-ros-driver PR #136](https://github.com/usdot-fhwa-stol/v2x-ros-driver/pull/136): Fix message frame length parser.
+  - [v2x-ros-driver PR #128](https://github.com/usdot-fhwa-stol/v2x-ros-driver/pull/128): Fix driver message parser.
+
+### **Autoware.Auto**
+
+In this fork of the Autoware Foundation’s Autoware.Auto repository, updates were made to integrate the ‘Trajectory Follower’ control algorithm from the Autoware Foundation’s more up-to-date Autoware.Universe repository. Additionally, updates were made to upgrade existing packages from ROS 2 Foxy to ROS 2 Humble. 
+
+**Enhancements**  
+
+- Integrate the Autoware.Universe ‘Trajectory Follower’ Control Algorithm: Integrates the ‘Trajectory Follower’ control algorithm from Autoware.Universe into this fork of Autoware.Auto so that it can be leveraged by CARMA Platform.  
+  - Pull Requests: [autoware.auto PR #26](https://github.com/usdot-fhwa-stol/autoware.auto/pull/26)
+
+- ROS 2 Humble Upgrades: Upgrades of ROS packages and dependencies from ROS 2 Foxy to ROS 2 Humble. 
+  - Pull Requests: [autoware.auto PR #31](https://github.com/usdot-fhwa-stol/autoware.auto/pull/31), [autoware.auto PR #32](https://github.com/usdot-fhwa-stol/autoware.auto/pull/32), [autoware.auto PR #29](https://github.com/usdot-fhwa-stol/autoware.auto/pull/29), [autoware.auto PR #30](https://github.com/usdot-fhwa-stol/autoware.auto/pull/30), [autoware.auto PR #21](https://github.com/usdot-fhwa-stol/autoware.auto/pull/21)
+
+**Other Updates**  
+
+- Pull Requests: 
+  - [autoware.auto PR #35](https://github.com/usdot-fhwa-stol/autoware.auto/pull/35): Merge humble changes into develop branch.
+  - [autoware.auto PR #33](https://github.com/usdot-fhwa-stol/autoware.auto/pull/33): Merge develop into develop-humble for humble development.
+  - [autoware.auto PR #25](https://github.com/usdot-fhwa-stol/autoware.auto/pull/25): Sync Develop with master branch.
+  - [autoware.auto PR #27](https://github.com/usdot-fhwa-stol/autoware.auto/pull/27): Update readme.md documentation.
+
+
+### **CARMA SSC Interface Wrapper**
+
+Updated CI and build scripts for ROS 2 Humble. Introduced new Docker workflows to build both humble and noetic images. Additionally, migrated vehicle control-related ROS 1 Noetic software packages from the ‘autoware.ai’ and ‘carma-utils’ repositories since CARMA SSC Interface Wrapper is the only repository that depends on them, and this helps consolidate the leftover ROS 1 Noetic software across our repositories.
+
+**Enhancements**  
+
+- ROS 2 Humble Upgrades: Upgrades of ROS packages and dependencies from ROS 2 Foxy to ROS 2 Humble. 
+  - Pull Requests: [carma-ssc-interface-wrapper PR #166](https://github.com/usdot-fhwa-stol/carma-ssc-interface-wrapper/pull/166), [carma-ssc-interface-wrapper PR #168](https://github.com/usdot-fhwa-stol/carma-ssc-interface-wrapper/pull/168), [carma-ssc-interface-wrapper PR #161](https://github.com/usdot-fhwa-stol/carma-ssc-interface-wrapper/pull/161), [carma-ssc-interface-wrapper PR #162](https://github.com/usdot-fhwa-stol/carma-ssc-interface-wrapper/pull/162), [carma-ssc-interface-wrapper PR #163](https://github.com/usdot-fhwa-stol/carma-ssc-interface-wrapper/pull/163), [carma-ssc-interface-wrapper PR #171](https://github.com/usdot-fhwa-stol/carma-ssc-interface-wrapper/pull/171), [#172](https://github.com/usdot-fhwa-stol/carma-ssc-interface-wrapper/pull/172), [carma-ssc-interface-wrapper PR #177](https://github.com/usdot-fhwa-stol/carma-ssc-interface-wrapper/pull/177)
+
+**Fixes**  
+
+- Pull Requests:
+  - [carma-ssc-interface-wrapper PR #153](https://github.com/usdot-fhwa-stol/carma-ssc-interface-wrapper/pull/153): Remove ros-foxy-pacmod-msgs from install script.
+  - [carma-ssc-interface-wrapper PR #167](https://github.com/usdot-fhwa-stol/carma-ssc-interface-wrapper/pull/167): Fix the CI workflow.
+  - [carma-ssc-interface-wrapper PR #165](https://github.com/usdot-fhwa-stol/carma-ssc-interface-wrapper/pull/165): Remove installation for unrequired packages.
+  - [carma-ssc-interface-wrapper PR #180](https://github.com/usdot-fhwa-stol/carma-ssc-interface-wrapper/pull/180): Update ros2 docker build
+  - [carma-ssc-interface-wrapper PR #179](https://github.com/usdot-fhwa-stol/carma-ssc-interface-wrapper/pull/179): Blue Lexus CARMA Web UI does not update certain metrics/icons.
+
+**Other Updates**  
+
+- Pull Requests: 
+  - [carma-ssc-interface-wrapper PR #164](https://github.com/usdot-fhwa-stol/carma-ssc-interface-wrapper/pull/164): Update README.md documentation.
+  - [carma-ssc-interface-wrapper PR #159](https://github.com/usdot-fhwa-stol/carma-ssc-interface-wrapper/pull/159): Sync develop with master
+  - [carma-ssc-interface-wrapper PR #170](https://github.com/usdot-fhwa-stol/carma-ssc-interface-wrapper/pull/170) & [carma-ssc-interface-wrapper PR #173](https://github.com/usdot-fhwa-stol/carma-ssc-interface-wrapper/pull/173) & [carma-ssc-interface-wrapper PR #175](https://github.com/usdot-fhwa-stol/carma-ssc-interface-wrapper/pull/175): Merge develop into humble branch.
+  - [carma-ssc-interface-wrapper PR #169](https://github.com/usdot-fhwa-stol/carma-ssc-interface-wrapper/pull/169): Use new ROS1 repo to build data speed controller messages.
+
+### **CARMA Utils**
+
+This release includes updates that upgrade nearly all of this repository’s packages to ROS 2 Humble. Other improvements in this release include [1] removing excessive logging related to ROS lifecycle nodes, [2] fixing quintic polynomial equation solver used in yield plugin for improved precision of parameter solutions, and [3] moving the carma_record package here from CARMA Platform.
+
+**Enhancements**  
+
+- ROS 2 Humble Upgrades: Upgrades of ROS packages and dependencies from ROS 2 Foxy to ROS 2 Humble. 
+  - Pull Requests: [carma-utils PR #237](https://github.com/usdot-fhwa-stol/carma-utils/pull/237), [carma-utils PR #243](https://github.com/usdot-fhwa-stol/carma-utils/pull/243), [carma-utils PR #247](https://github.com/usdot-fhwa-stol/carma-utils/pull/247), [carma-utils PR #241](https://github.com/usdot-fhwa-stol/carma-utils/pull/241), [carma-utils PR #242](https://github.com/usdot-fhwa-stol/carma-utils/pull/242), [carma-utils PR #244](https://github.com/usdot-fhwa-stol/carma-utils/pull/244), [carma-utils PR #235](https://github.com/usdot-fhwa-stol/carma-utils/pull/235) 
+
+**Fixes**  
+
+- Pull Requests: 
+  - [carma-utils PR #249](https://github.com/usdot-fhwa-stol/carma-utils/pull/249): Fix quintic polynomial equation solver.
+
+**Other Updates**  
+
+- Pull Requests: 
+  - [carma-utils PR #239](https://github.com/usdot-fhwa-stol/carma-utils/pull/239): Update README.md documentation
+  - [carma-utils PR #250](https://github.com/usdot-fhwa-stol/carma-utils/pull/250): Remove excessive CARMA Platform logging in default configuration.
+  - [carma-utils PR #240](https://github.com/usdot-fhwa-stol/carma-utils/pull/240): Upgrade packages in carma-utils repository to ROS 2 Humble. 
+  - [carma-utils PR #234](https://github.com/usdot-fhwa-stol/carma-utils/pull/234): Remove unused ROS1 code from carma-utils. 
+
+### **CARMA Velodyne Lidar Driver**
+
+This release includes updates that complete the upgrade of this driver to ROS 2 Humble.
+
+**Enhancements**
+
+- ROS 2 Humble Upgrades: Upgrades of ROS packages and dependencies from ROS 2 Foxy to ROS 2 Humble. 
+  - Pull Requests: [carma-velodyne-lidar-driver PR #120](https://github.com/usdot-fhwa-stol/carma-velodyne-lidar-driver/pull/120), [carma-velodyne-lidar-driver PR #121](https://github.com/usdot-fhwa-stol/carma-velodyne-lidar-driver/pull/121), [carma-velodyne-lidar-driver PR #122](https://github.com/usdot-fhwa-stol/carma-velodyne-lidar-driver/pull/122), [carma-velodyne-lidar-driver PR #111](https://github.com/usdot-fhwa-stol/carma-velodyne-lidar-driver/pull/111)
+
+**Other Updates**  
+
+- Pull Requests: 
+  - [carma-velodyne-lidar-driver PR #118](https://github.com/usdot-fhwa-stol/carma-velodyne-lidar-driver/pull/118): Sync develop with master branch release changes.
+  - [carma-velodyne-lidar-driver PR #119](https://github.com/usdot-fhwa-stol/carma-velodyne-lidar-driver/pull/119): Update README.md documentation. 
+  - [carma-velodyne-lidar-driver PR #127](https://github.com/usdot-fhwa-stol/carma-velodyne-lidar-driver/pull/127): Fix ROS key.
+
+### **CARMA Lightbar Driver**
+
+This release includes updates that complete the upgrade of this driver to ROS 2 Humble. 
+
+**Enhancements**  
+
+- ROS 2 Humble Upgrades: Upgrades of ROS packages and dependencies from ROS 2 Foxy to ROS 2 Humble: 
+  - Pull Requests: [carma-lightbar-driver PR #76](https://github.com/usdot-fhwa-stol/carma-lightbar-driver/pull/76), [carma-lightbar-driver PR #77](https://github.com/usdot-fhwa-stol/carma-lightbar-driver/pull/77), [carma-lightbar-driver PR #78](https://github.com/usdot-fhwa-stol/carma-lightbar-driver/pull/78), [carma-lightbar-driver PR #79](https://github.com/usdot-fhwa-stol/carma-lightbar-driver/pull/79)
+
+### **Carma Messenger Bridge**
+
+This release includes updates that complete the upgrade of this repository’s software packages to ROS 2 Humble. 
+
+**Enhancements**  
+
+- ROS 2 Humble Upgrades: Upgrades of ROS packages and dependencies from ROS 2 Foxy to ROS 2 Humble.
+  - Pull Requests: [carma-messenger-bridge PR #10](https://github.com/usdot-fhwa-stol/carma-messenger-bridge/pull/10)
+
+### **CARMA Msgs**
+
+Completed upgrades to ROS 2 Humble while still maintain builds for ROS 1 Noetic versions of messages to support the use of ros1_bridge between ROS 1 Noetic and ROS 2 Humble systems. 
+
+**Enhancements**
+
+- ROS 2 Humble Upgrades: Upgrades of ROS packages and dependencies from ROS 2 Foxy to ROS 2 Humble.
+  - Pull Requests: [carma-msgs PR #247](https://github.com/usdot-fhwa-stol/carma-msgs/pull/247), [carma-msgs PR #248](https://github.com/usdot-fhwa-stol/carma-msgs/pull/248), [carma-msgs PR #249](https://github.com/usdot-fhwa-stol/carma-msgs/pull/249), [#251](https://github.com/usdot-fhwa-stol/carma-msgs/pull/251), [carma-msgs PR #242](https://github.com/usdot-fhwa-stol/carma-msgs/pull/242), [carma-msgs PR #243](https://github.com/usdot-fhwa-stol/carma-msgs/pull/243), [carma-msgs PR #254](https://github.com/usdot-fhwa-stol/carma-msgs/pull/254), [carma-msgs PR #256](https://github.com/usdot-fhwa-stol/carma-msgs/pull/256), [carma-msgs PR #257](https://github.com/usdot-fhwa-stol/carma-msgs/pull/257), [carma-msgs PR #253](https://github.com/usdot-fhwa-stol/carma-msgs/pull/253)
+
+
+### **CARMA Novatel OEM7 Driver Wrapper**
+
+This release includes updates that complete the upgrade of this driver wrapper to ROS 2 Humble. 
+
+**Enhancements**
+
+- ROS 2 Humble Upgrades: Upgrades of ROS packages and dependencies from ROS 2 Foxy to ROS 2 Humble.
+  - Pull Requests: [carma-novatel-oem-driver-wrapper PR #37](https://github.com/usdot-fhwa-stol/carma-novatel-oem-driver-wrapper/pull/37), [carma-novatel-oem-driver-wrapper PR #41](https://github.com/usdot-fhwa-stol/carma-novatel-oem-driver-wrapper/pull/41), [carma-novatel-oem-driver-wrapper PR #35](https://github.com/usdot-fhwa-stol/carma-novatel-oem-driver-wrapper/pull/35)
+
+### **CARMA Torc Pinpoint Driver**
+
+This release includes updates that complete the upgrade of this driver to ROS 2 Humble. 
+
+**Enhancements**  
+
+- ROS 2 Humble Upgrades: Upgrades of ROS packages and dependencies from ROS 2 Foxy to ROS 2 Humble. 
+  - Pull Requests: [carma-torc-pinpoint-driver PR #46](https://github.com/usdot-fhwa-stol/carma-torc-pinpoint-driver/pull/46), [carma-torc-pinpoint-driver PR #48](https://github.com/usdot-fhwa-stol/carma-torc-pinpoint-driver/pull/48)
+
+**Other Updates**  
+
+- Pull Requests: 
+  - [carma-torc-pinpoint-driver PR #39](https://github.com/usdot-fhwa-stol/carma-torc-pinpoint-driver/pull/39): Fix latitude and longitude truncation from being converted to a float.
+  - [carma-torc-pinpoint-driver PR #40](https://github.com/usdot-fhwa-stol/carma-torc-pinpoint-driver/pull/40): Add GitHub Actions docker.
+
+### **CARMA Web UI**
+
+In this release, minor updates have been made to support upgrades to ROS 2 Humble. Additionally, several broken visualizations in the Web UI have been fixed, such as real-time monitoring of vehicle steering wheel angle and GPS status.  
+
+**Enhancements**
+
+- ROS 2 Humble Upgrades: Upgrades of ROS packages and dependencies from ROS 2 Foxy to ROS 2 Humble.
+  - Pull Requests: [carma-web-ui PR #172](https://github.com/usdot-fhwa-stol/carma-web-ui/pull/172)
+
+**Fixes**  
+
+- Pull Requests: 
+  - [carma-web-ui PR #176](https://github.com/usdot-fhwa-stol/carma-web-ui/pull/176): Modify UI to showcase Simulation Countdown time SPAT.
+  - [carma-web-ui PR #179](https://github.com/usdot-fhwa-stol/carma-web-ui/pull/179): Blue Lexus CARMA Web UI does not update certain metrics/icons. 
+  - [carma-web-ui PR #178](https://github.com/usdot-fhwa-stol/carma-web-ui/pull/178): CARMA Web UI fails to call route select service call on Blue Lexus.
+
+### **CARMA Config**
+
+In this release, minor updates have been made to support upgrades of CARMA Platform-related repositories to ROS 2 Humble. Additionally, minor enhancements have been made including [1] adding a few new ROS Topics to the default ros1_bridge configurations (in bridge.yml) and [2] exposing several additional CARMA Platform configuration parameters directly in CARMA Config.
+
+**Enhancements** 
+
+- ROS 2 Humble Upgrades: Upgrades of ROS packages and dependencies from ROS 2 Foxy to ROS 2 Humble.
+  - Pull Requests: [carma-config PR #440](https://github.com/usdot-fhwa-stol/carma-config/pull/440), [carma-config PR #455](https://github.com/usdot-fhwa-stol/carma-config/pull/455), [carma-config PR #408](https://github.com/usdot-fhwa-stol/carma-config/pull/408), [carma-config PR #411](https://github.com/usdot-fhwa-stol/carma-config/pull/411)
+
+**Fixes**  
+
+- Pull Requests:
+  - [carma-config PR #426](https://github.com/usdot-fhwa-stol/carma-config/pull/426): Fix MAP msg broadcasting.
+
+**Other Updates**  
+
+- Pull Requests: 
+  - [carma-config PR #420](https://github.com/usdot-fhwa-stol/carma-config/pull/420): Create Econolite Virtual Controller Config Town05.cfg.
+  - [carma-config PR #419](https://github.com/usdot-fhwa-stol/carma-config/pull/419) & [carma-config PR #424](https://github.com/usdot-fhwa-stol/carma-config/pull/424): Rename dsrc driver to v2x-ros-driver.
+  - [carma-config PR #430](https://github.com/usdot-fhwa-stol/carma-config/pull/430): Add ROS1 controller topics to bridge.yml.
+
+### **Autoware.ai**
+
+In this release, updates have been made to upgrade packages leveraged by CARMA Platform to ROS 2 Humble. Additionally, the ROS 1 Noetic ‘as’ package has been removed and migrated to the ‘carma-ssc-interface-wrapper' repository since that is the only repository that depends on the package. This further consolidates the leftover ROS 1 Noetic software across our repositories.
+
+**Enhancements** 
+
+- ROS 2 Humble Upgrades: Upgrades of ROS packages and dependencies from ROS 2 Foxy to ROS 2 Humble. 
+  - Pull Requests: [autoware.ai PR #275](https://github.com/usdot-fhwa-stol/autoware.ai/pull/275), [autoware.ai PR #276](https://github.com/usdot-fhwa-stol/autoware.ai/pull/276), [autoware.ai PR #273](https://github.com/usdot-fhwa-stol/autoware.ai/pull/273), [autoware.ai PR #286](https://github.com/usdot-fhwa-stol/autoware.ai/pull/286)
+
+**Fixes**  
+
+- Pull Requests: 
+  - [autoware.ai PR #281](https://github.com/usdot-fhwa-stol/autoware.ai/pull/281): Fix QOS of georeference.
+
+### **Ros1_bridge** 
+
+Updated the forked repository to be up to date (as of Jan 31, 2024) with the upstream repository and applied updated to make it compatible with the ROS 2 Humble version of CARMA Platform.
+
+
 Version 4.9.0, released Feb 14th, 2025
 ----------------------------------------
 

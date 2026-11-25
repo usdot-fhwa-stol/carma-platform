@@ -24,21 +24,35 @@ namespace waypoint_generation
     const double epsilon_ = 0.0000001;
     /**
      * \brief Returns the nearest point (in terms of cartesian 2d distance) to the provided vehicle pose in the provided l
-     * 
+     *
      * \param points The points to evaluate
      * \param state The current vehicle state
-     * 
+     *
      * \return index of nearest point in points
      */
     int get_nearest_point_index(const std::vector<lanelet::BasicPoint2d>& points,
                                                  const carma_planning_msgs::msg::VehicleState& state);
 
     /**
+     * \brief Find the index of the closest trajectory plan point to a given position.
+     *
+     * This function iterates through the trajectory points and determines the one closest
+     * to the provided 2D position.
+     *
+     * \param trajectory A vector of trajectory plan points.
+     * \param position The reference 2D point.
+     * \return The index of the trajectory point closest to the given position.
+     */
+    size_t get_nearest_point_index(
+        const std::vector<carma_planning_msgs::msg::TrajectoryPlanPoint>& trajectory,
+        const lanelet::BasicPoint2d& position);
+
+    /**
      * \brief Returns the nearest point (in terms of cartesian 2d distance) to the provided vehicle pose in the provided list
-     * 
+     *
      * \param points The points to evaluate
      * \param state The current vehicle state
-     * 
+     *
      * \return index of nearest point in points
      */
     int get_nearest_point_index(const std::vector<PointSpeedPair>& points,
@@ -49,20 +63,20 @@ namespace waypoint_generation
      * NOTE: This function compares the downtrack, provided by routeTrackPos, of each points in the list to get the closest one to the given point's downtrack.
      * Therefore, it is rather costlier method than comparing cartesian distance between the points and getting the closest. This way, however, the function
      * correctly returns the end point's index if the given state, despite being valid, is farther than the given points and can technically be near any of them.
-     * 
+     *
      * \param points BasicLineString2d points
      * \param target_downtrack target downtrack along the route to get index near to
-     * 
+     *
      * \return index of nearest point in points with a downtrack less than 'target_downtrack', or -1 if the received 'points' vector is empty.
      */
     int get_nearest_index_by_downtrack(const std::vector<lanelet::BasicPoint2d>& points, const carma_wm::WorldModelConstPtr& wm, double target_downtrack);
 
     /**
-     * \brief Helper method to split a list of PointSpeedPair into separate point and speed lists 
+     * \brief Helper method to split a list of PointSpeedPair into separate point and speed lists
      * \param points Point Speed pair to split
      * \param basic_points points vector to be filled
      * \param speeds speeds vector to be filled
-     */ 
+     */
     void split_point_speed_pairs(const std::vector<PointSpeedPair>& points,
                                                 std::vector<lanelet::BasicPoint2d>* basic_points,
                                                 std::vector<double>* speeds);
@@ -72,11 +86,11 @@ namespace waypoint_generation
      * NOTE: This function compares the downtrack, provided by routeTrackPos, of each points in the list to get the closest one to the given point's downtrack.
      * Therefore, it is rather costlier method than comparing cartesian distance between the points and getting the closest. This way, however, the function
      * correctly returns the end point's index if the given state, despite being valid, is farther than the given points and can technically be near any of them.
-     * 
+     *
      * \param points The points and speed pairs to evaluate
      * \param state The current vehicle state
      * \param wm The carma world model
-     * 
+     *
      * \return index of nearest point in points
      */
     int get_nearest_index_by_downtrack(const std::vector<PointSpeedPair>& points, const carma_wm::WorldModelConstPtr& wm,
@@ -87,15 +101,55 @@ namespace waypoint_generation
      * NOTE: This function compares the downtrack, provided by routeTrackPos, of each points in the list to get the closest one to the given point's downtrack.
      * Therefore, it is rather costlier method than comparing cartesian distance between the points and getting the closest. This way, however, the function
      * correctly returns the end point if the given state, despite being valid, is farther than the given points and can technically be near any of them.
-     * 
+     *
      * \param points The points to evaluate
      * \param state The current vehicle state
      * \param wm The carma world model
-     * 
+     *
      * \return index of nearest point in points
      */
     int get_nearest_index_by_downtrack(const std::vector<lanelet::BasicPoint2d>& points, const carma_wm::WorldModelConstPtr& wm,
-                                      const carma_planning_msgs::msg::VehicleState& state);    
+                                      const carma_planning_msgs::msg::VehicleState& state);
+
+    /**
+     * \brief Builds a centerline covering [pivot_end_point - backward_length, pivot_end_point + forward_length] by walking the
+     * pivot lanelet's own predecessor/successor chain in the routing graph.
+     *
+     * If the routing graph runs out of connected lanelets before reaching the requested length (e.g. a
+     * closed lanelet blocks further routing), this logs a warning and returns whatever centerline was
+     * actually reachable instead of throwing -- the caller is responsible for padding the result out if a
+     * minimum length is required (see extrapolate_to_length below).
+     *
+     * \param wm The carma world model, used to query the map's routing graph
+     * \param pivot The lanelet to build the centerline outward from
+     * \param backward_length The minimum distance the returned centerline must cover behind the end of pivot,
+     *                        gathered by walking pivot's predecessor chain
+     * \param forward_length The minimum distance the returned centerline must cover beyond the end of pivot,
+     *                       gathered by walking pivot's successor chain
+     *
+     * \return The concatenated 2d centerline points of pivot and however many predecessor/successor lanelets
+     *         were needed (and reachable) to satisfy backward_length and forward_length
+     */
+    std::vector<lanelet::BasicPoint2d> build_chain_centerline(const carma_wm::WorldModelConstPtr &wm,
+                                                               lanelet::ConstLanelet pivot,
+                                                               double backward_length,
+                                                               double forward_length);
+
+    /**
+     * \brief Pads a centerline out to target_length by extrapolating a straight line from its last known
+     * heading, if map connectivity could not supply enough real geometry (e.g. because a lanelet the lane
+     * change needed was closed or missing from the map).
+     *
+     * This is a last-resort fallback so that lane change trajectory generation always produces a usable
+     * result rather than throwing when the map has a gap -- the extrapolated portion is only a straight-line
+     * approximation, but it lets the rest of the system (and, most importantly, the vehicle) keep moving
+     * instead of hitting an uncaught exception that stalls trajectory planning entirely.
+     *
+     * \param centerline The centerline to pad, in place, if it falls short of target_length
+     * \param target_length The minimum 2d arc length centerline must cover after this call
+     * \param description A human-readable description of what centerline represents, used in log/exception messages
+     */
+    void extrapolate_to_length(std::vector<lanelet::BasicPoint2d>& centerline, double target_length, const std::string& description);
 
 }
 }

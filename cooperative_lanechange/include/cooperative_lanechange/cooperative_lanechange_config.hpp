@@ -43,7 +43,7 @@ namespace cooperative_lanechange
     double destination_range = 0.0;
     double lanechange_time_out = 6.0;
     double min_timestep = 0.1;
-    double starting_downtrack_range = 5.0;
+    double starting_downtrack_range = 50.0;
     double starting_fraction = 0.2;
     double mid_fraction = 0.5;
     double min_desired_gap = 5.0;

@@ -41,7 +41,50 @@
 
 namespace carma_cooperative_perception
 {
-auto to_time_msg(const DDateTime & d_date_time) -> builtin_interfaces::msg::Time;
+class SdsmToDetectionListConfig
+{
+public:
+  SdsmToDetectionListConfig() = default;
+  bool overwrite_covariance{false};
+  double pose_covariance_x{0.125};
+  double pose_covariance_y{0.125};
+  double pose_covariance_z{0.125};
+  double pose_covariance_yaw{0.005};
+  double twist_covariance_x{0.005};
+  double twist_covariance_z{0.005};
+  double twist_covariance_yaw{0.005};
+  bool adjust_pose{false};
+  double x_offset{0.0};
+  double y_offset{0.0};
+  double yaw_offset{0.0};
+
+  // Stream operator for logging
+  friend std::ostream & operator<<(std::ostream & os, const SdsmToDetectionListConfig & config)
+  {
+    os << "SdsmToDetectionListConfig{"
+       << "\n  overwrite_covariance: " << config.overwrite_covariance
+       << "\n  pose_covariance_x: " << config.pose_covariance_x
+       << "\n  pose_covariance_y: " << config.pose_covariance_y
+       << "\n  pose_covariance_z: " << config.pose_covariance_z
+       << "\n  pose_covariance_yaw: " << config.pose_covariance_yaw
+       << "\n  twist_covariance_x: " << config.twist_covariance_x
+       << "\n  twist_covariance_z: " << config.twist_covariance_z
+       << "\n  twist_covariance_yaw: " << config.twist_covariance_yaw
+       << "\n  adjust_pose: " << config.adjust_pose
+       << "\n  x_offset: " << config.x_offset
+       << "\n  y_offset: " << config.y_offset
+       << "\n  yaw_offset: " << config.yaw_offset
+       << "\n}";
+    return os;
+  }
+};
+
+// NOTE: If incoming SDSM message doesn't have timezone enabled,
+// it automatically uses the local timezone. If the node is running in a container,
+// it would mean the container's default timezone (most likely UTC), unless otherwise set.
+// Make sure the container's timezone is same as the implicit timezone of the SDSM's timestamp
+auto to_time_msg(
+  const DDateTime & d_date_time, bool is_simulation) -> builtin_interfaces::msg::Time;
 
 auto calc_detection_time_stamp(DDateTime d_date_time, const MeasurementTimeOffset & offset)
   -> DDateTime;
@@ -69,7 +112,8 @@ auto transform_pose_from_map_to_wgs84(
   -> carma_v2x_msgs::msg::Position3D;
 
 auto to_detection_list_msg(
-  const carma_v2x_msgs::msg::SensorDataSharingMessage & sdsm, std::string_view georeference)
+  const carma_v2x_msgs::msg::SensorDataSharingMessage & sdsm, std::string_view georeference,
+  bool is_simulation, const std::optional<SdsmToDetectionListConfig>& conversion_adjustment)
   -> carma_cooperative_perception_interfaces::msg::DetectionList;
 
 struct MotionModelMapping

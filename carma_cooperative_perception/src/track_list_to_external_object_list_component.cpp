@@ -41,7 +41,7 @@ auto TrackListToExternalObjectListNode::handle_on_configure(
 
   track_list_subscription_ = create_subscription<
     carma_cooperative_perception_interfaces::msg::TrackList>(
-    "input/track_list", 1,
+    "input/track_list", 100,
     [this](const carma_cooperative_perception_interfaces::msg::TrackList::SharedPtr msg_ptr) {
       if (const auto current_state{this->get_current_state().label()}; current_state == "active") {
         publish_as_external_object_list(*msg_ptr);

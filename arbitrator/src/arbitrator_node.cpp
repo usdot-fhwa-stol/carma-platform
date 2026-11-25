@@ -99,9 +99,12 @@ namespace arbitrator
                                 std::chrono::milliseconds(100),
                                 [this]() {this->arbitrator_->bumper_pose_cb();});
 
+        arbitrator_run_callback_group_ =
+            create_callback_group(rclcpp::CallbackGroupType::MutuallyExclusive);
+
         arbitrator_run_ = create_timer(get_clock(),
-                                std::chrono::duration<double>(1/(config_.planning_frequency * 2 )), //there is waiting state between each planning state
-                                [this]() {this->arbitrator_->run();});
+            std::chrono::duration<double>(1/(config_.planning_frequency * 2 )), //there is waiting state between each planning state
+            [this]() {this->arbitrator_->run();}, arbitrator_run_callback_group_);
         //The intention is to keep the arbitrator planning at intended frequency - 1s. Looks like ROS2 conversion kept the WAITING state from ROS1,
         //which occurs between PLANNING state in the state machine. So if the timer calls state callback each 1 second, the arbitrator ends up planning
         //every 2s due to PLANNING > WAITING > PLANNING transition. That's why the frequency is doubled.

@@ -159,7 +159,6 @@ namespace trajectory_executor
 
     cur_traj_ = std::unique_ptr<carma_planning_msgs::msg::TrajectoryPlan>(move(msg));
     timesteps_since_last_traj_ = 0;
-    RCLCPP_INFO_STREAM(get_logger(), "Successfully swapped trajectories!");
   }
 
   void TrajectoryExecutor::guidanceStateMonitor(carma_planning_msgs::msg::GuidanceState::UniquePtr msg)

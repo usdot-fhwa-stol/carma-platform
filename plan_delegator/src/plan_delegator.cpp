@@ -15,6 +15,7 @@
  */
 
 #include <stdexcept>
+#include <unordered_set>
 #include <carma_wm/Geometry.hpp>
 #include "plan_delegator.hpp"
 
@@ -142,7 +143,9 @@ namespace plan_delegator
         config_.max_trajectory_duration = declare_parameter<double>("trajectory_duration_threshold", config_.max_trajectory_duration);
         config_.min_crawl_speed = declare_parameter<double>("min_speed", config_.min_crawl_speed);
         config_.duration_to_signal_before_lane_change = declare_parameter<double>("duration_to_signal_before_lane_change", config_.duration_to_signal_before_lane_change);
+        config_.max_traj_generation_reattempt = declare_parameter<int>("max_traj_generation_reattempt", config_.max_traj_generation_reattempt);
         config_.tactical_plugin_service_call_timeout = declare_parameter<int>("tactical_plugin_service_call_timeout", config_.tactical_plugin_service_call_timeout);
+        config_.enable_object_avoidance = declare_parameter<bool>("enable_object_avoidance", config_.enable_object_avoidance);
     }
 
     carma_ros2_utils::CallbackReturn PlanDelegator::handle_on_configure(const rclcpp_lifecycle::State &)
@@ -157,6 +160,8 @@ namespace plan_delegator
         get_parameter<double>("min_speed", config_.min_crawl_speed);
         get_parameter<double>("duration_to_signal_before_lane_change", config_.duration_to_signal_before_lane_change);
         get_parameter<int>("tactical_plugin_service_call_timeout", config_.tactical_plugin_service_call_timeout);
+        get_parameter<int>("max_traj_generation_reattempt", config_.max_traj_generation_reattempt);
+        get_parameter<bool>("enable_object_avoidance", config_.enable_object_avoidance);
 
         RCLCPP_INFO_STREAM(rclcpp::get_logger("plan_delegator"),"Done loading parameters: " << config_);
 
@@ -164,6 +169,10 @@ namespace plan_delegator
         traj_pub_ = create_publisher<carma_planning_msgs::msg::TrajectoryPlan>("plan_trajectory", 5);
         upcoming_lane_change_status_pub_ = create_publisher<carma_planning_msgs::msg::UpcomingLaneChangeStatus>("upcoming_lane_change_status", 1);
         turn_signal_command_pub_ = create_publisher<autoware_msgs::msg::LampCmd>("lamp_cmd", 1);
+
+        // Setup yield_plugin client; plan_delegator is the sole caller of yield_plugin, invoking it on the
+        // final trajectory before publishing rather than having every tactical plugin call it independently
+        yield_client_ = create_client<carma_planning_msgs::srv::PlanTrajectory>("plugins/yield_plugin/plan_trajectory");
 
         // Setup subscribers
         plan_sub_ = create_subscription<carma_planning_msgs::msg::ManeuverPlan>("final_maneuver_plan", 5, std::bind(&PlanDelegator::maneuverPlanCallback, this, std_ph::_1));
@@ -179,9 +188,10 @@ namespace plan_delegator
 
     carma_ros2_utils::CallbackReturn PlanDelegator::handle_on_activate(const rclcpp_lifecycle::State &)
     {
+        timer_callback_group_ = create_callback_group(rclcpp::CallbackGroupType::MutuallyExclusive);
         traj_timer_ = create_timer(get_clock(),
             std::chrono::milliseconds((int)(1 / config_.trajectory_planning_rate * 1000)),
-            std::bind(&PlanDelegator::onTrajPlanTick, this));
+            std::bind(&PlanDelegator::onTrajPlanTick, this), timer_callback_group_);
          return CallbackReturn::SUCCESS;
     }
 
@@ -195,7 +205,7 @@ namespace plan_delegator
         RCLCPP_INFO_STREAM(rclcpp::get_logger("plan_delegator"),"Received request to delegate plan ID " << std::string(plan->maneuver_plan_id));
         // do basic check to see if the input is valid
         auto copy_plan = *plan;
-
+        received_maneuver_plan_ = true;
         if (isManeuverPlanValid(copy_plan))
         {
             latest_maneuver_plan_ = copy_plan;
@@ -261,46 +271,92 @@ namespace plan_delegator
         lanelet::ConstLanelet starting_lanelet = wm_->getMap()->laneletLayer.get(std::stoi(lane_change_maneuver.lane_change_maneuver.starting_lane_id));
         lanelet::ConstLanelet ending_lanelet = wm_->getMap()->laneletLayer.get(std::stoi(lane_change_maneuver.lane_change_maneuver.ending_lane_id));
 
-        // Determine if lane change is a left or right lane change and update lane_change_information accordingly
-        bool shared_boundary_found = false;
+        // Determine if lane change is a left or right lane change and update lane_change_information accordingly.
+        // This function runs directly inside the final_maneuver_plan subscription callback (once per received
+        // plan), so it must never throw here: an uncaught exception in a subscription callback can crash this
+        // node outright. Previously it did throw whenever the walk from starting_lanelet to a shared boundary
+        // with ending_lanelet hit a lanelet with no routable successor -- which happens whenever an intervening
+        // lanelet is closed (e.g. by a TCM) or simply missing adjacency data in the map. Below, that same walk
+        // is attempted first since it is exact when it works, but any inability to complete it (no following
+        // lanelet, a routing loop) now falls through to a purely geometric left/right estimate instead of
+        // failing, so a lane change is always reported instead of crashing.
+        boost::optional<bool> is_right_lane_change;
 
-        lanelet::ConstLanelet current_lanelet = starting_lanelet;
+        if(starting_lanelet.leftBound() == ending_lanelet.rightBound()){
+            RCLCPP_DEBUG_STREAM(rclcpp::get_logger("plan_delegator"), "Lanelet " << std::to_string(starting_lanelet.id()) << " shares left boundary with " << std::to_string(ending_lanelet.id()));
+            is_right_lane_change = false;
+        }
+        else if(starting_lanelet.rightBound() == ending_lanelet.leftBound()){
+            RCLCPP_DEBUG_STREAM(rclcpp::get_logger("plan_delegator"), "Lanelet " << std::to_string(starting_lanelet.id()) << " shares right boundary with " << std::to_string(ending_lanelet.id()));
+            is_right_lane_change = true;
+        }
+        else
+        {
+            RCLCPP_DEBUG_STREAM(rclcpp::get_logger("plan_delegator"), "Searching for shared boundary with starting lanechange lanelet " << std::to_string(starting_lanelet.id()) << " and ending lanelet " << std::to_string(ending_lanelet.id()));
+            lanelet::ConstLanelet current_lanelet = starting_lanelet;
+            std::unordered_set<lanelet::Id> visited{current_lanelet.id()};
 
-        RCLCPP_DEBUG_STREAM(rclcpp::get_logger("plan_delegator"), "Searching for shared boundary with starting lanechange lanelet " << std::to_string(current_lanelet.id()) << " and ending lanelet " << std::to_string(ending_lanelet.id()));
-        while(!shared_boundary_found){
-            // Assumption: Adjacent lanelets share lane boundary
+            while(!is_right_lane_change){
+                // Assumption: Adjacent lanelets share lane boundary
+                auto following_lanelets = wm_->getMapRoutingGraph()->following(current_lanelet, false);
+                bool no_successor = following_lanelets.empty();
+                lanelet::ConstLanelet candidate_lanelet = no_successor ? current_lanelet : following_lanelets.front();
+                bool loop_detected = !no_successor && visited.count(candidate_lanelet.id()) > 0;
 
-            if(current_lanelet.leftBound() == ending_lanelet.rightBound()){
-                // If current lanelet's left lane boundary matches the ending lanelet's right lane boundary, it is a left lane change
-                RCLCPP_DEBUG_STREAM(rclcpp::get_logger("plan_delegator"), "Lanelet " << std::to_string(current_lanelet.id()) << " shares left boundary with " << std::to_string(ending_lanelet.id()));
-                lane_change_information.is_right_lane_change = false;
-                shared_boundary_found = true;
-            }
-            else if(current_lanelet.rightBound() == ending_lanelet.leftBound()){
-                // If current lanelet's right lane boundary matches the ending lanelet's left lane boundary, it is a right lane change
-                RCLCPP_DEBUG_STREAM(rclcpp::get_logger("plan_delegator"), "Lanelet " << std::to_string(current_lanelet.id()) << " shares right boundary with " << std::to_string(ending_lanelet.id()));
-                lane_change_information.is_right_lane_change = true;
-                shared_boundary_found = true;
-            }
-            else{
-                // If there are no following lanelets on route, lanechange should be completing before reaching it
-                if(wm_->getMapRoutingGraph()->following(current_lanelet, false).empty())
+                if(no_successor)
                 {
-                    // Maneuver requires we travel further before completing lane change, but there is no routable lanelet directly ahead;
-                    // in this case we have reached a lanelet which does not have a routable lanelet ahead and isn't adjacent to the lanelet where lane change ends.
-                    // A lane change should have already happened at this point
-                    throw(std::invalid_argument("No following lanelets from current lanelet reachable without a lane change, incorrectly chosen end lanelet"));
+                    RCLCPP_WARN_STREAM(rclcpp::get_logger("plan_delegator"), "No following lanelets from lanelet " << current_lanelet.id()
+                        << " reachable without a lane change (possibly closed or missing from the map); "
+                        << "falling back to a geometric left/right estimate for lane change from "
+                        << starting_lanelet.id() << " to " << ending_lanelet.id());
                 }
 
-                current_lanelet = wm_->getMapRoutingGraph()->following(current_lanelet, false).front();
-                if(current_lanelet.id() == starting_lanelet.id()){
-                    //Looped back to starting lanelet
-                    throw(std::invalid_argument("No lane change in path"));
+                if (loop_detected)
+                {
+                    RCLCPP_WARN_STREAM(rclcpp::get_logger("plan_delegator"), "Detected a routing loop while searching for a shared boundary between lanelet "
+                        << starting_lanelet.id() << " and " << ending_lanelet.id() << "; falling back to a geometric left/right estimate");
                 }
+
+                if(no_successor || loop_detected)
+                {
+                    break;
+                }
+
+                current_lanelet = candidate_lanelet;
+                visited.insert(current_lanelet.id());
+
                 RCLCPP_DEBUG_STREAM(rclcpp::get_logger("plan_delegator"), "Now checking for shared lane boundary with lanelet " << std::to_string(current_lanelet.id()) << " and ending lanelet " << std::to_string(ending_lanelet.id()));
+                if(current_lanelet.leftBound() == ending_lanelet.rightBound()){
+                    RCLCPP_DEBUG_STREAM(rclcpp::get_logger("plan_delegator"), "Lanelet " << std::to_string(current_lanelet.id()) << " shares left boundary with " << std::to_string(ending_lanelet.id()));
+                    is_right_lane_change = false;
+                }
+                else if(current_lanelet.rightBound() == ending_lanelet.leftBound()){
+                    RCLCPP_DEBUG_STREAM(rclcpp::get_logger("plan_delegator"), "Lanelet " << std::to_string(current_lanelet.id()) << " shares right boundary with " << std::to_string(ending_lanelet.id()));
+                    is_right_lane_change = true;
+                }
             }
         }
 
+        if(!is_right_lane_change)
+        {
+            // Could not confirm a shared boundary via routing (e.g. an intervening lanelet was closed or missing
+            // from the map). Fall back to pure geometry: which side of the starting lanelet's heading does the
+            // ending lanelet fall on? This only needs the two lanelets' own centerlines, so it works even when
+            // they are otherwise disconnected in the routing graph.
+            lanelet::BasicLineString2d starting_centerline = starting_lanelet.centerline2d().basicLineString();
+            lanelet::BasicPoint2d start_pt = starting_centerline.front();
+            lanelet::BasicPoint2d heading_vec = starting_centerline.back() - start_pt;
+            lanelet::BasicPoint2d to_target = ending_lanelet.centerline2d().basicLineString().front() - start_pt;
+            double cross = heading_vec.x() * to_target.y() - heading_vec.y() * to_target.x();
+
+            RCLCPP_WARN_STREAM(rclcpp::get_logger("plan_delegator"), "Could not find a shared lane boundary between starting lanelet "
+                << starting_lanelet.id() << " and ending lanelet " << ending_lanelet.id()
+                << "; estimating lane change direction geometrically instead.");
+
+            is_right_lane_change = (cross < 0.0);
+        }
+
+        lane_change_information.is_right_lane_change = is_right_lane_change.get();
         return lane_change_information;
     }
 
@@ -411,10 +467,14 @@ namespace plan_delegator
         return false;
     }
 
-    std::shared_ptr<carma_planning_msgs::srv::PlanTrajectory::Request> PlanDelegator::composePlanTrajectoryRequest(const carma_planning_msgs::msg::TrajectoryPlan& latest_trajectory_plan, const uint16_t& current_maneuver_index) const
+    std::shared_ptr<carma_planning_msgs::srv::PlanTrajectory::Request>
+    PlanDelegator::composePlanTrajectoryRequest(
+        const carma_planning_msgs::msg::TrajectoryPlan& latest_trajectory_plan,
+        const carma_planning_msgs::msg::ManeuverPlan& locked_maneuver_plan,
+        const uint16_t& current_maneuver_index) const
     {
         auto plan_req = std::make_shared<carma_planning_msgs::srv::PlanTrajectory::Request>();
-        plan_req->maneuver_plan = latest_maneuver_plan_;
+        plan_req->maneuver_plan = locked_maneuver_plan;
 
         // set current vehicle state if we have NOT planned any previous trajectories
         if(latest_trajectory_plan.trajectory_points.empty())
@@ -592,11 +652,14 @@ namespace plan_delegator
     carma_planning_msgs::msg::TrajectoryPlan PlanDelegator::planTrajectory()
     {
         carma_planning_msgs::msg::TrajectoryPlan latest_trajectory_plan;
+        bool full_plan_generation_failed = false;
         if(!guidance_engaged)
         {
             RCLCPP_INFO_STREAM(rclcpp::get_logger("plan_delegator"),"Guidance is not engaged. Plan delegator will not plan trajectory.");
             return latest_trajectory_plan;
         }
+        // latest_maneuver_plan may get updated, so local copy to avoid race condition
+        auto locked_maneuver_plan = latest_maneuver_plan_;
 
         // Flag for the first received trajectory plan service response
         bool first_trajectory_plan = true;
@@ -605,10 +668,9 @@ namespace plan_delegator
         uint16_t current_maneuver_index = 0;
 
         // Loop through maneuver list to make service call to applicable Tactical Plugin
-        while(current_maneuver_index < latest_maneuver_plan_.maneuvers.size())
+        while(current_maneuver_index < locked_maneuver_plan.maneuvers.size())
         {
-            // const auto& maneuver = latest_maneuver_plan_.maneuvers[current_maneuver_index];
-            auto& maneuver = latest_maneuver_plan_.maneuvers[current_maneuver_index];
+            auto& maneuver = locked_maneuver_plan.maneuvers[current_maneuver_index];
 
             // ignore expired maneuvers
             if(isManeuverExpired(maneuver, get_clock()->now()))
@@ -633,7 +695,6 @@ namespace plan_delegator
                 continue;
             }
 
-
             // get corresponding ros service client for plan trajectory
             auto maneuver_planner = GET_MANEUVER_PROPERTY(maneuver, parameters.planning_tactical_plugin);
 
@@ -642,7 +703,8 @@ namespace plan_delegator
             RCLCPP_DEBUG_STREAM(rclcpp::get_logger("plan_delegator"),"Current planner: " << maneuver_planner);
 
             // compose service request
-            auto plan_req = composePlanTrajectoryRequest(latest_trajectory_plan, current_maneuver_index);
+            auto plan_req = composePlanTrajectoryRequest(
+                latest_trajectory_plan, locked_maneuver_plan, current_maneuver_index);
 
             auto future_response = client->async_send_request(plan_req);
 
@@ -650,8 +712,9 @@ namespace plan_delegator
 
             if (future_status != std::future_status::ready)
             {
-                RCLCPP_WARN_STREAM(rclcpp::get_logger("plan_delegator"),"Unsuccessful service call to trajectory planner:" << maneuver_planner << " for plan ID " << std::string(latest_maneuver_plan_.maneuver_plan_id));
+                RCLCPP_WARN_STREAM(rclcpp::get_logger("plan_delegator"),"Unsuccessful service call to trajectory planner:" << maneuver_planner << " for plan ID " << std::string(locked_maneuver_plan.maneuver_plan_id));
                 // if one service call fails, it should end plan immediately because it is there is no point to generate plan with empty space
+                full_plan_generation_failed = true;
                 break;
             }
 
@@ -660,7 +723,11 @@ namespace plan_delegator
             // validate trajectory before add to the plan
             if(!isTrajectoryValid(plan_response->trajectory_plan))
             {
-                RCLCPP_WARN_STREAM(rclcpp::get_logger("plan_delegator"),"Found invalid trajectory with less than 2 trajectory points for " << std::string(latest_maneuver_plan_.maneuver_plan_id));
+                RCLCPP_WARN_STREAM(rclcpp::get_logger("plan_delegator"),
+                    "Found invalid trajectory with less than 2 trajectory "
+                    << "points for maneuver_plan_id: "
+                    << std::string(locked_maneuver_plan.maneuver_plan_id));
+                full_plan_generation_failed = true;
                 break;
             }
             //Remove duplicate point from start of trajectory
@@ -685,7 +752,7 @@ namespace plan_delegator
 
             if(isTrajectoryLongEnough(latest_trajectory_plan))
             {
-                RCLCPP_INFO_STREAM(rclcpp::get_logger("plan_delegator"),"Plan Trajectory completed for " << std::string(latest_maneuver_plan_.maneuver_plan_id));
+                RCLCPP_INFO_STREAM(rclcpp::get_logger("plan_delegator"),"Plan Trajectory completed for " << std::string(locked_maneuver_plan.maneuver_plan_id));
                 break;
             }
 
@@ -697,22 +764,93 @@ namespace plan_delegator
             }
         }
 
+        if (full_plan_generation_failed)
+        {
+            RCLCPP_WARN_STREAM(rclcpp::get_logger("plan_delegator"),
+                "Plan_delegator's current run wasn't fully able to generate trajectory!");
+
+            carma_planning_msgs::msg::TrajectoryPlan empty_plan;
+            return empty_plan;
+        }
+
         return latest_trajectory_plan;
     }
 
     void PlanDelegator::onTrajPlanTick()
     {
+        // Guidance not engaged or haven't received a maneuver plan yet
+        if (!guidance_engaged || !received_maneuver_plan_)
+        {
+            return;
+        }
         carma_planning_msgs::msg::TrajectoryPlan trajectory_plan = planTrajectory();
+
+        // Aside from the flag, yield_plugin should not be called on invalid trajectories
+        if (config_.enable_object_avoidance && isTrajectoryValid(trajectory_plan))
+        {
+            auto yield_req = std::make_shared<carma_planning_msgs::srv::PlanTrajectory::Request>();
+            yield_req->vehicle_state.longitudinal_vel = latest_twist_.twist.linear.x;
+            yield_req->vehicle_state.x_pos_global = latest_pose_.pose.position.x;
+            yield_req->vehicle_state.y_pos_global = latest_pose_.pose.position.y;
+            double roll, pitch, yaw;
+            carma_wm::geometry::rpyFromQuaternion(latest_pose_.pose.orientation, roll, pitch, yaw);
+            yield_req->vehicle_state.orientation = yaw;
+
+            auto yield_resp = std::make_shared<carma_planning_msgs::srv::PlanTrajectory::Response>();
+            yield_resp->trajectory_plan = trajectory_plan;
+
+            yield_resp = basic_autonomy::waypoint_generation::modify_trajectory_to_yield_to_obstacles(
+                shared_from_this(), yield_req, yield_resp, yield_client_, config_.tactical_plugin_service_call_timeout);
+
+            trajectory_plan = yield_resp->trajectory_plan;
+        }
+        else
+        {
+            RCLCPP_DEBUG(rclcpp::get_logger("plan_delegator"), "Ignored Object Avoidance");
+        }
 
         // Check if planned trajectory is valid before send out
         if(isTrajectoryValid(trajectory_plan))
         {
             trajectory_plan.header.stamp = get_clock()->now();
+            last_successful_traj_ = trajectory_plan;
             traj_pub_->publish(trajectory_plan);
+            consecutive_traj_gen_failure_num_ = 0;
         }
         else
         {
-            RCLCPP_WARN_STREAM(rclcpp::get_logger("plan_delegator"),"Planned trajectory is empty. It will not be published!");
+            consecutive_traj_gen_failure_num_ ++;
+            RCLCPP_WARN_STREAM(rclcpp::get_logger("plan_delegator"),
+                "Guidance is engaged, but new planned trajectory has less than 2 points. " <<
+                "It will not be published! Consecutive failure count: "
+                << consecutive_traj_gen_failure_num_);
+
+            // Case where traj generation fails after a successful one
+            if (last_successful_traj_.has_value()
+                && consecutive_traj_gen_failure_num_
+                    <= config_.max_traj_generation_reattempt)
+            {
+                RCLCPP_WARN_STREAM(rclcpp::get_logger("plan_delegator"),
+                    "Instead, last available trajectory is published with outdated timestamp of:"
+                    << std::to_string(
+                        rclcpp::Time(last_successful_traj_.value().header.stamp).seconds()));
+                traj_pub_->publish(last_successful_traj_.value());
+            }
+            // Case where traj generation fails from the beginning.
+            // Attempt replanning for configured number of tries before throwing runtime error.
+            else if (!last_successful_traj_.has_value() &&
+                consecutive_traj_gen_failure_num_ <= config_.max_traj_generation_reattempt)
+            {
+                RCLCPP_WARN_STREAM(rclcpp::get_logger("plan_delegator"),
+                    "Instead, tried publishing last available trajectory, but it's not available!");
+            }
+            else
+            {
+                RCLCPP_ERROR_STREAM(rclcpp::get_logger("plan_delegator"),
+                    "No valid trajectory is available to publish! "
+                    "Please check the planner plugins and their configurations.");
+                throw std::runtime_error("No valid trajectory is available to publish!");
+            }
         }
     }
 

@@ -52,6 +52,7 @@ LCIStrategicPlugin::LCIStrategicPlugin(const rclcpp::NodeOptions &options)
   config_.trajectory_smoothing_activation_distance = declare_parameter<double>("trajectory_smoothing_activation_distance", config_.trajectory_smoothing_activation_distance);
   config_.stopping_location_buffer = declare_parameter<double>("stopping_location_buffer", config_.stopping_location_buffer);
   config_.green_light_time_buffer = declare_parameter<double>("green_light_time_buffer", config_.green_light_time_buffer);
+  config_.vehicle_response_lag = declare_parameter<double>("vehicle_response_lag", config_.vehicle_response_lag);
   config_.algo_minimum_speed = declare_parameter<double>("algo_minimum_speed", config_.algo_minimum_speed);
   config_.deceleration_fraction = declare_parameter<double>("deceleration_fraction",  config_.deceleration_fraction);
   config_.desired_distance_to_stop_buffer = declare_parameter<double>("desired_distance_to_stop_buffer", config_.desired_distance_to_stop_buffer);
@@ -62,6 +63,9 @@ LCIStrategicPlugin::LCIStrategicPlugin(const rclcpp::NodeOptions &options)
   config_.intersection_transit_plugin_name = declare_parameter<std::string>("intersection_transit_plugin_name", config_.intersection_transit_plugin_name);
   config_.enable_carma_streets_connection = declare_parameter<bool>("enable_carma_streets_connection",config_.enable_carma_streets_connection);
   config_.mobility_rate = declare_parameter<double>("mobility_rate", config_.mobility_rate);
+  config_.enable_carma_wm_spat_processing =
+    declare_parameter<long>("enable_carma_wm_spat_processing",
+    config_.enable_carma_wm_spat_processing);
   config_.vehicle_id = declare_parameter<std::string>("vehicle_id", config_.vehicle_id);
 
   max_comfort_accel_ = config_.vehicle_accel_limit * config_.vehicle_accel_limit_multiplier;
@@ -84,6 +88,7 @@ carma_ros2_utils::CallbackReturn LCIStrategicPlugin::on_configure_plugin()
   get_parameter<double>("trajectory_smoothing_activation_distance", config_.trajectory_smoothing_activation_distance);
   get_parameter<double>("stopping_location_buffer", config_.stopping_location_buffer);
   get_parameter<double>("green_light_time_buffer", config_.green_light_time_buffer);
+  get_parameter<double>("vehicle_response_lag", config_.vehicle_response_lag);
   get_parameter<double>("algo_minimum_speed", config_.algo_minimum_speed);
   get_parameter<double>("deceleration_fraction", config_.deceleration_fraction);
   get_parameter<double>("desired_distance_to_stop_buffer", config_.desired_distance_to_stop_buffer);
@@ -93,6 +98,7 @@ carma_ros2_utils::CallbackReturn LCIStrategicPlugin::on_configure_plugin()
   get_parameter<std::string>("stop_and_wait_plugin_name", config_.stop_and_wait_plugin_name);
   get_parameter<std::string>("intersection_transit_plugin_name", config_.intersection_transit_plugin_name);
   get_parameter<bool>("enable_carma_streets_connection", config_.enable_carma_streets_connection);
+  get_parameter<int>("enable_carma_wm_spat_processing", config_.enable_carma_wm_spat_processing);
   get_parameter<double>("mobility_rate", config_.mobility_rate);
   get_parameter<std::string>("vehicle_id", config_.vehicle_id);
 
@@ -100,6 +106,11 @@ carma_ros2_utils::CallbackReturn LCIStrategicPlugin::on_configure_plugin()
   max_comfort_decel_ = -1 * config_.vehicle_decel_limit * config_.vehicle_decel_limit_multiplier;
   max_comfort_decel_norm_ = config_.vehicle_decel_limit * config_.vehicle_decel_limit_multiplier;
   emergency_decel_norm_ = 2 * config_.vehicle_decel_limit * config_.vehicle_decel_limit_multiplier;
+  config_.green_light_time_buffer =
+    std::max(config_.vehicle_response_lag, config_.green_light_time_buffer);
+  RCLCPP_INFO_STREAM(rclcpp::get_logger("lci_strategic_plugin"),
+    "LCI Strategic Plugin updated green_light_time_buffer based on vehicle_response_lag to "
+    << config_.green_light_time_buffer);
 
   // clang-format on
 
@@ -118,8 +129,13 @@ carma_ros2_utils::CallbackReturn LCIStrategicPlugin::on_configure_plugin()
   bsm_sub_ = create_subscription<carma_v2x_msgs::msg::BSM>("bsm_outbound", 1,
     std::bind(&LCIStrategicPlugin::BSMCb,this,std_ph::_1));
 
-  // set world model point form wm listener
+  // set world model point from wm listener
   wm_ = get_world_model();
+
+  // Activate SPAT processor, which is turned off by default,
+  // with OFF (0), ON (1)
+  get_world_model_listener()->setWMSpatProcessingState(
+    static_cast<carma_wm::SIGNAL_PHASE_PROCESSING>(config_.enable_carma_wm_spat_processing));
 
   // Setup publishers
   mobility_operation_pub_ = create_publisher<carma_v2x_msgs::msg::MobilityOperation>("outgoing_mobility_operation", 1);
@@ -143,6 +159,7 @@ rcl_interfaces::msg::SetParametersResult LCIStrategicPlugin::parameter_update_ca
     {"trajectory_smoothing_activation_distance", config_.trajectory_smoothing_activation_distance},
     {"stopping_location_buffer", config_.stopping_location_buffer},
     {"green_light_time_buffer", config_.green_light_time_buffer},
+    {"vehicle_response_lag", config_.vehicle_response_lag},
     {"algo_minimum_speed", config_.algo_minimum_speed},
     {"deceleration_fraction", config_.deceleration_fraction},
     {"desired_distance_to_stop_buffer", config_.desired_distance_to_stop_buffer},
@@ -150,6 +167,12 @@ rcl_interfaces::msg::SetParametersResult LCIStrategicPlugin::parameter_update_ca
     {"mobility_rate", config_.mobility_rate},
   }, parameters);
 
+  config_.green_light_time_buffer =
+    std::max(config_.vehicle_response_lag, config_.green_light_time_buffer);
+
+  RCLCPP_INFO_STREAM(rclcpp::get_logger("lci_strategic_plugin"),
+    "LCI Strategic Plugin updated green_light_time_buffer based on vehicle_response_lag to "
+    << config_.green_light_time_buffer);
   rcl_interfaces::msg::SetParametersResult result;
 
   result.successful = !error_double;
@@ -684,6 +707,7 @@ TrajectoryParams LCIStrategicPlugin::handleFailureCaseHelper(const lanelet::Carm
   // Pick UPPER or LOWER trajectory based on light
   bool is_return_params_found = false;
 
+  // Check UPPER
   if (calculation_success_upper)
   {
     RCLCPP_DEBUG_STREAM(rclcpp::get_logger("lci_strategic_plugin"), "Checking this time!: " << current_time + modified_remaining_time_upper);
@@ -707,6 +731,7 @@ TrajectoryParams LCIStrategicPlugin::handleFailureCaseHelper(const lanelet::Carm
     }
   }
 
+  // Check LOWER
   if (!is_return_params_found)
   {
     auto lower_optional = traffic_light->predictState(lanelet::time::timeFromSec(current_time + modified_remaining_time_lower));
@@ -727,20 +752,28 @@ TrajectoryParams LCIStrategicPlugin::handleFailureCaseHelper(const lanelet::Carm
   }
 
   // Handle hard failure case such as nan or invalid states
-  if (is_return_params_found && !isnan(return_params.modified_departure_speed) && return_params.modified_departure_speed > epsilon_ &&
-      return_params.modified_departure_speed < speed_limit ) //80_mph
-  {
-    RCLCPP_DEBUG_STREAM(rclcpp::get_logger("lci_strategic_plugin"), "Updated the speed, and using modified_departure_speed: " << return_params.modified_departure_speed);
-    print_params(return_params);
-    return return_params;
-  }
-  else
+  if (!is_return_params_found || isnan(return_params.modified_departure_speed))
   {
     RCLCPP_DEBUG_STREAM(rclcpp::get_logger("lci_strategic_plugin"), "Unable to handle edge case gracefully");
     return_params = TrajectoryParams(); //reset
     return_params.is_algorithm_successful = false;
     return return_params;
   }
+
+  // if NOT hard failure case, double check the speed and return
+  if (return_params.modified_departure_speed < 0)
+  {
+    RCLCPP_DEBUG_STREAM(rclcpp::get_logger("lci_strategic_plugin"), "Detected negative modified_departure_speed, setting to zero");
+    return_params.modified_departure_speed = 0.0;
+  }
+  else if (return_params.modified_departure_speed > speed_limit)
+  {
+    RCLCPP_DEBUG_STREAM(rclcpp::get_logger("lci_strategic_plugin"), "Detected modified_departure_speed greater than speed limit, setting to speed limit");
+    return_params.modified_departure_speed = speed_limit;
+  }
+
+  RCLCPP_DEBUG_STREAM(rclcpp::get_logger("lci_strategic_plugin"), "Updated the speed, and using modified_departure_speed: " << return_params.modified_departure_speed);
+  return return_params;
 }
 
 
@@ -1331,7 +1364,7 @@ void LCIStrategicPlugin::plan_maneuvers_callback(
     current_lanelet = llt_on_route_optional.value();
   }
   else{
-    RCLCPP_WARN_STREAM(rclcpp::get_logger("lci_strategic_plugin"), "When identifying the corresponding lanelet for requested maneuever's state, x: " 
+    RCLCPP_WARN_STREAM(rclcpp::get_logger("lci_strategic_plugin"), "When identifying the corresponding lanelet for requested maneuever's state, x: "
       << req->veh_x << ", y: " << req->veh_y << ", no possible lanelet was found to be on the shortest path."
       << "Picking arbitrary lanelet: " << current_lanelets[0].id() << ", instead");
     current_lanelet = current_lanelets[0];

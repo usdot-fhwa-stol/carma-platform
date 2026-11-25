@@ -112,7 +112,10 @@ void GeofenceScheduler::startGeofenceCallback(std::shared_ptr<Geofence> gf_ptr, 
   std::lock_guard<std::mutex> guard(mutex_);
   rclcpp::Time endTime = timerFactory_->now() + gf_ptr->schedules[schedule_id].control_span_;
 
-  RCLCPP_INFO_STREAM(rclcpp::get_logger("carma_wm_ctrl"), "Activating Geofence with Id: " << gf_ptr->id_ << ", which will end at:" << endTime.seconds());
+  RCLCPP_INFO_STREAM(rclcpp::get_logger("carma_wm_ctrl"), 
+    "Activating Geofence with Id: " 
+    << gf_ptr->id_ << ", which will end at:" 
+    << std::to_string(endTime.seconds()));
 
   active_callback_(gf_ptr);
 

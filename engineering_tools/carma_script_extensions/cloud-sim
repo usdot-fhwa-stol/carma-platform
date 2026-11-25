@@ -26,6 +26,8 @@ cloud-sim__config() {
         mkdir "${CARMA_CLOUD_SIM_CONFIG_DIR}"
     fi
 
+    local region_set=0
+
     # Create config file if it does not already exist
     if [ ! -f "$CARMA_CLOUD_SIM_CONFIG_PATH" ]; then
 # Not indented so that vscode will display bash coloring correctly
@@ -33,6 +35,8 @@ cat <<EOF > ${CARMA_CLOUD_SIM_CONFIG_PATH}
 USER_ARN=
 PASS=
 CONFIG_IMAGE=
+AMI_ID=
+REGION=
 EOF
 
     fi
@@ -81,6 +85,27 @@ EOF
                 shift
                 shift
                 ;;
+            -am|--amiid)
+
+                if [[ -z $2 ]]; then
+                    echo "When using -am a full ami id must be specified."
+                    exit 1
+                fi
+
+                AMI_ID=$2
+                export AMI_ID
+
+                sed -i "s|AMI_ID=.*|AMI_ID=${AMI_ID}|" "${CARMA_CLOUD_SIM_CONFIG_PATH}"
+                shift
+                shift
+                ;;
+            -r|--region)
+                # | is used instead of / as delimeter in sed because the ARN usually contains slashes
+                sed -i "s|REGION=.*|REGION=${2}|" "${CARMA_CLOUD_SIM_CONFIG_PATH}"
+                region_set = 1
+                shift
+                shift
+                ;;
             *)
                 echo "Invalid argument $arg"
                 exit 1
@@ -88,6 +113,17 @@ EOF
 
         esac
     done
+
+    if [[ $region_set -eq 0 ]]; then
+
+        local_aws_region=$(aws configure get region 2>/dev/null)
+
+        if [[ -z "$local_aws_region" ]]; then
+            local_aws_region="us-east-1"
+        fi
+
+        sed -i "s|REGION=.*|REGION=${local_aws_region}|" "${CARMA_CLOUD_SIM_CONFIG_PATH}"
+    fi
 
     if ! command -v "aws" &> /dev/null
     then
@@ -118,8 +154,6 @@ cloud-sim__start() {
         echo "No configuration file exists at ${CARMA_CLOUD_SIM_CONFIG_PATH}, please run: carma cloud-sim cofig -a <User ARN> -p <Instance Password> -v <Desired config image>"
         exit 1
     fi
-
-    echo $1
     if [ ! -f "$CARMA_CLOUD_SIM_CLOUD_FORMATION_PATH" ] || [ "${1}" == '-c'  ]; then
 
         echo "###################################"
@@ -137,6 +171,12 @@ cloud-sim__start() {
     local USER_ARN=$(cat ${CARMA_CLOUD_SIM_CONFIG_PATH} | grep "USER_ARN=" | sed "s|USER_ARN=||")
     local PASS=$(cat ${CARMA_CLOUD_SIM_CONFIG_PATH} | grep "PASS=" | sed "s|PASS=||")
     local CONFIG_IMAGE=$(cat ${CARMA_CLOUD_SIM_CONFIG_PATH} | grep "CONFIG_IMAGE=" | sed "s|CONFIG_IMAGE=||")
+    local AMI_ID=$(cat ${CARMA_CLOUD_SIM_CONFIG_PATH} | grep "AMI_ID=" | sed "s|AMI_ID=||")
+    local REGION=$(cat ${CARMA_CLOUD_SIM_CONFIG_PATH} | grep "REGION=" | sed "s|REGION=||")
+    if [ -z "$REGION" ]; then
+        REGION="us-east-1"
+        echo "No region specified in config. Defaulting to us-east-1."
+    fi
 
     if [ -z "$USER_ARN" ]; then
         echo "Configuration does not include AWS User ARN. Please run: carma cloud-sim config -a <User ARN>"
@@ -148,6 +188,14 @@ cloud-sim__start() {
 
     if [ -z "$CONFIG_IMAGE" ]; then
         echo "Configuration does not include AWS User ARN. Please run: carma cloud-sim config -v <Desired config version>"
+    fi
+
+    if [ -z "$AMI_ID" ]; then
+        echo "Configuration does not include AMI ID. Please run: carma cloud-sim config -am <AMI ID>"
+    fi
+
+    if [ -z "$REGION" ]; then
+        echo "Configuration does not include region, defaulting to ${local_aws_region}. To change region, please run: carma cloud-sim config -r <Region>"
     fi
 
     if ! command -v "aws" &> /dev/null
@@ -166,7 +214,6 @@ cloud-sim__start() {
         local VPC_ID=$(aws ec2 describe-vpcs --filters "Name=tag:Name,Values=CDASim VPC" --query 'Vpcs[].VpcId' --output text)
         # Get the Route Table ID
         local ROUTETABLE_ID=$(aws ec2 describe-route-tables --filters "Name=tag:Name,Values=CDASim RouteTable" --query 'RouteTables[].RouteTableId' --output text)
-
         # Get subnet information
         local SubnetCIDRBlock="10.0.0.0/24"
 
@@ -213,17 +260,18 @@ cloud-sim__start() {
         fi
 
 
-        local RESULT=$(aws --region us-east-1 cloudformation create-stack --template-body "file://${CARMA_CLOUD_SIM_CLOUD_FORMATION_PATH}" \
+        local RESULT=$(aws --region "${REGION}" cloudformation create-stack --template-body "file://${CARMA_CLOUD_SIM_CLOUD_FORMATION_PATH}" \
             --stack-name "${STACK_NAME}" \
             --parameters  ParameterKey=Cloud9AccessRoleName,ParameterValue="${USER_ARN}" \
             ParameterKey=Password,ParameterValue="${PASS}" \
             ParameterKey=CarmaConfigImage,ParameterValue="${CONFIG_IMAGE}" \
+            ParameterKey=CarmaConfigAMI,ParameterValue="${AMI_ID}" \
             ParameterKey=ExistingVPCID,ParameterValue="${VPC_ID}" \
             ParameterKey=ExistingRouteTableID,ParameterValue="${ROUTETABLE_ID}" \
             ParameterKey=EC2SubnetCIDRBlock,ParameterValue="${SubnetCIDRBlock}" \
             --capabilities CAPABILITY_NAMED_IAM)
 
-        local VALID_LAUNCH=$(echo "${RESULT}" | grep 'arn:aws:cloudformation:us-east-1')
+        local VALID_LAUNCH=$(echo "${RESULT}" | grep "arn:aws:cloudformation:${REGION}")
         if [ -z "${VALID_LAUNCH}" ]; then
             echo "AWS Launch Failed with error:"
             echo ${RESULT}
@@ -291,7 +339,7 @@ cloud-sim__start() {
 
         local PUBLIC_DNS=$(aws ec2 describe-instances --instance-ids ${DEV_MACHINE_ID} --output text --query Reservations[].Instances[].PublicDnsName)
 
-        local CLOUD9_ADDRESS_BASE="https://us-east-1.console.aws.amazon.com/cloud9/ide"
+        local CLOUD9_ADDRESS_BASE="https://${REGION}.console.aws.amazon.com/cloud9/ide"
         # 1. Extract cloud9 name from stack details
         local CLOUD9_ENVS=$(aws cloud9 list-environments --output text | sed "s|ENVIRONMENTIDS\s||")
         # 2. Determine cloud9 environment id
@@ -334,7 +382,7 @@ cloud-sim__stop() {
         exist -1
     fi
 
-    aws --region us-east-1 cloudformation delete-stack --stack-name "${STACK_NAME}"
+    aws --region "${REGION}" cloudformation delete-stack --stack-name "${STACK_NAME}"
 }
 
 cloud-sim__status() {
@@ -590,6 +638,15 @@ Please enter one of the following commands when using the cloud-sim extension:
                     - Specify the exact carma-config to use for launching the vehicle and simulation
                       For example " -i image usdotfhwastol/carma-config:carma-system-1.0.1 "
                       This option is an alternative to -v and should only be used if that option is not specified.
+                -am
+                    - Specify the exact AMI ID to use for launching the cloud simulation stack
+                      For example " -am ami-0a1b2c3d4e5f6g7h8 "
+                      This option is an alternative to -v and should only be used if that option is not specified.
+                -r
+                    - Specify the region to use for launching the cloud simulation stack
+                      For example " -r us-east-1 "
+                      This option is an alternative to -v and should only be used if that option is not specified.
+                      Defaults to us-east-1 if not specified.
             init-resources
                 - Initialize the resources required to deploy the cloud environment. Creates a VPC with internet gateway and route table.
                  Created resources are required will persist for all users in organization until `clean` is called.

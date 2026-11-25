@@ -1,8 +1,4 @@
-## Develop CI/CD Processes
-| DockerHub Image Build | Unit Tests Workflow |  Sonar Code Quality |
-|----------------------|---------------------|---------------------|
- [![Build Workflows](https://github.com/usdot-fhwa-stol/carma-platform/actions/workflows/dockerhub.yml/badge.svg?branch=develop)](https://github.com/usdot-fhwa-stol/carma-platform/actions/workflows/dockerhub.yml) |  [![Build Workflows](https://github.com/usdot-fhwa-stol/carma-platform/actions/workflows/Ci.yml/badge.svg?branch=develop)](https://github.com/usdot-fhwa-stol/carma-platform/actions/workflows/Ci.yml) | [![Quality Gate Status](https://sonarcloud.io/api/project_badges/measure?project=usdot-fhwa-stol_CARMAPlatform&metric=alert_status)](https://sonarcloud.io/dashboard?id=usdot-fhwa-stol_CARMAPlatform) |
-
+[![GitHub Release](https://img.shields.io/github/v/release/usdot-fhwa-stol/carma-platform)](https://github.com/usdot-fhwa-stol/carma-platform/releases) [![Docker Hub Build](https://github.com/usdot-fhwa-stol/carma-platform/actions/workflows/dockerhub.yml/badge.svg?branch=develop)](https://github.com/usdot-fhwa-stol/carma-platform/actions/workflows/dockerhub.yml?query=branch:develop) [![Tests](https://github.com/usdot-fhwa-stol/carma-platform/actions/workflows/Ci.yml/badge.svg?branch=develop)](https://github.com/usdot-fhwa-stol/carma-platform/actions/workflows/Ci.yml?query=branch:develop) [![Docker Pulls](https://img.shields.io/docker/pulls/usdotfhwastol/carma-platform?label=Docker%20Pulls%20%28carma-platform%20releases%29)](https://hub.docker.com/r/usdotfhwastol/carma-platform) [![Quality Gate Status](https://sonarcloud.io/api/project_badges/measure?project=usdot-fhwa-stol_CARMAPlatform&metric=alert_status)](https://sonarcloud.io/project/overview?id=usdot-fhwa-stol_CARMAPlatform) [![License](https://img.shields.io/badge/License-Apache%202.0-blue.svg)](https://github.com/usdot-fhwa-stol/carma-platform/blob/develop/docs/License.md)
 
 # CARMA
 ![CARMA Arch](docs/image/CARMA3_Vehicles.jpg)
@@ -10,8 +6,6 @@
 CARMA<sup>SM</sup>  advances research and development to accelerate market readiness and deployment of cooperative driving automation, while advancing automated driving technology safety, security, data, and artificial intelligence. It encourages collaboration and participation by a community of engineers and researchers to advance understanding of cooperative driving automation using open source software (OSS) and agile project management practices.
 
 CARMA is a reusable, extensible platform for controlling SAE level 2 connected, automated vehicles (AVs). It provides a rich, generic API for third party plugins that implement vehicle guidance algorithms to plan vehicle trajectories. It is written in C++ and runs in a Robot Operating System (ROS) environment on Ubuntu. The platform can be reused on a variety of properly equipped vehicles.  Migration has begun from the ROS 1 framework to ROS 2.
-
-This readme updated: October 23, 2020
 
 ## What Is CARMA Platform
 ![CARMA Arch](docs/image/10-052L-CARMA-Diagram_Rev4-011020-1.png)

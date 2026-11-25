@@ -337,7 +337,7 @@ TEST_F(LCIStrategicTestFixture, handleFailureCaseHelper)
   config.vehicle_decel_limit= 2;
   config.green_light_time_buffer = 1.0;
   auto lcip = std::make_shared<lci_strategic_plugin::LCIStrategicPlugin>(rclcpp::NodeOptions());
-
+  EXPECT_EQ(carma_ros2_utils::CallbackReturn::SUCCESS, lcip->on_configure_plugin());
   lcip->wm_ = cmw_;
   lcip->config_ = config;
 

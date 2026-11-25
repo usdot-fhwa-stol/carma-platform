@@ -148,16 +148,11 @@ namespace carma_cloud_client
 
     }
 
-
-
-    char port[config_.port.size() + 1];
-    strcpy(port, config_.port.c_str());
-
     char list[config_.list.size() + 1];
     strcpy(list, config_.list.c_str());
 
     // with port and list
-    sprintf(xml_str,"<?xml version=\"1.0\" encoding=\"UTF-8\"?><TrafficControlRequest port=\"%s\" list=\"%s\"><reqid>%s</reqid><reqseq>%ld</reqseq><scale>%ld</scale>%s</TrafficControlRequest>",port, list, reqid, reqseq,scale,bounds_str);
+    sprintf(xml_str,"<?xml version=\"1.0\" encoding=\"UTF-8\"?><TrafficControlRequest port=\"%s\" list=\"%s\"><reqid>%s</reqid><reqseq>%ld</reqseq><scale>%ld</scale>%s</TrafficControlRequest>", std::to_string(config_.webport).c_str(), list, reqid, reqseq,scale,bounds_str);
 
     RCLCPP_DEBUG_STREAM(  get_logger(), "xml_str: " << xml_str);
 

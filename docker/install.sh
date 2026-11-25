@@ -18,17 +18,7 @@ set -e
 
 # Build the software and its dependencies
 
-cd ~/carma_ws
-
-if [[ -z "$PACKAGES" ]]; then
-    echo "Installing multiple object tracking dependencies"
-    sudo ./src/multiple_object_tracking/scripts/install_dependencies.sh
-fi
-
-if [[ -z "$PACKAGES" ]]; then
-    echo "Installing cpp_message dependencies"
-    sudo ./src/v2x-ros-conversion/docker/install_dependencies.sh
-fi
+cd ~
 
 sudo mkdir -p /opt/carma # Create install directory
 sudo chown carma /opt/carma # Set owner to expose permissions for build
@@ -44,7 +34,7 @@ else
     source /opt/autoware.ai/ros/install/setup.bash
 fi
 
-cd ~/carma_ws
+cd ~
 
 echo "Building Selected CARMA Components"
 
