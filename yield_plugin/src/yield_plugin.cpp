@@ -340,6 +340,16 @@ namespace yield_plugin
           RCLCPP_DEBUG(nh_->get_logger(), "First time stopped to prevent collision: %f",
             first_time_stopped_to_prevent_collision_.value().seconds());
         }
+        // The vehicle has stopped for the committed trajectory, so release it. Otherwise the small creep from the
+        // stopped replan below re-enters the committed branch and replays that old trajectory, whose timestamps are
+        // seconds stale, so plan_delegator rejects it and drives the original trajectory instead. Planning from the
+        // current state below commits again with a fresh trajectory if a stop is still needed.
+        if (last_traj_plan_committed_to_stopping_.has_value())
+        {
+          RCLCPP_DEBUG(nh_->get_logger(), "Stopped for the committed trajectory, releasing it");
+          last_traj_plan_committed_to_stopping_ = std::nullopt;
+          committed_stop_diagnostic_ = std::nullopt;
+        }
       }
 
       // seperating cooperative yield with regular object detection for better performance.
