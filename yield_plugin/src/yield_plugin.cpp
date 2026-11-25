@@ -741,14 +741,6 @@ namespace yield_plugin
         double object_seg_start_time = rclcpp::Time(object_seg_start.header.stamp).seconds();
         double object_seg_end_time = rclcpp::Time(object_seg_end.header.stamp).seconds();
 
-        RCLCPP_DEBUG_STREAM(nh_->get_logger(), "ego_seg_start.target_time: " << std::to_string(ego_seg_start_time) << ", ego_seg_end.target_time: " << std::to_string(ego_seg_end_time));
-        RCLCPP_DEBUG_STREAM(nh_->get_logger(), "object_seg_start.target_time: " << std::to_string(object_seg_start_time) << ", object_seg_end.target_time: " << std::to_string(object_seg_end_time));
-        RCLCPP_DEBUG_STREAM(nh_->get_logger(), "ego_seg_start.x: " << ego_seg_start.x << ", ego_seg_start.y: " << ego_seg_start.y);
-        RCLCPP_DEBUG_STREAM(nh_->get_logger(), "ego_seg_end.x: " << ego_seg_end.x << ", ego_seg_end.y: " << ego_seg_end.y);
-
-        RCLCPP_DEBUG_STREAM(nh_->get_logger(), "object_seg_start.x: " << object_seg_start.predicted_position.position.x << ", object_seg_start.y: " << object_seg_start.predicted_position.position.y);
-        RCLCPP_DEBUG_STREAM(nh_->get_logger(), "object_seg_end.x: " << object_seg_end.predicted_position.position.x << ", object_seg_end.y: " << object_seg_end.predicted_position.position.y);
-
         // Linearly interpolate positions at a common timestamp for both trajectories
         double interp_ratio = (object_seg_start_time - ego_seg_start_time) / (ego_seg_end_time - ego_seg_start_time);
         // if negative extrapolation, skip because car wouldn't go backwards
