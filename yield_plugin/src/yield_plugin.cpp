@@ -292,6 +292,17 @@ namespace yield_plugin
               std::vector<carma_planning_msgs::msg::TrajectoryPlanPoint>
               (updated_trajectory.trajectory_points.begin() + idx_to_start_new_traj,
               updated_trajectory.trajectory_points.end());
+
+          // Trimming by position keeps the original absolute target_times, which fall behind whenever the vehicle
+          // runs slower than planned (e.g. creeping from a stop). Once they are seconds old, plan_delegator rejects
+          // the plan and drives the original trajectory instead. Shift them so the trajectory starts now, keeping
+          // the relative timing between points.
+          const rclcpp::Duration time_shift =
+            nh_->now() - rclcpp::Time(updated_trajectory.trajectory_points.front().target_time);
+          for (auto& point : updated_trajectory.trajectory_points)
+          {
+            point.target_time = rclcpp::Time(point.target_time) + time_shift;
+          }
       }
       // The committed trajectory keeps the initial velocity from when it was generated. The controller derives
       // point speeds from it, so a stale (higher) value makes the vehicle creep instead of stopping, which keeps
