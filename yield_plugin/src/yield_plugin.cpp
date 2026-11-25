@@ -306,9 +306,7 @@ namespace yield_plugin
       diagnostic.committed_to_stop = true;
       if (committed_stop_diagnostic_)
       {
-        diagnostic.downtrack_to_collision_m = wm_->routeTrackPos(diagnostic.collision_point).downtrack
-          - wm_->routeTrackPos(veh_pos).downtrack;
-        diagnostic.time_to_collision_s = get_time_to_collision(diagnostic.downtrack_to_collision_m);
+        update_distance_to_collision(diagnostic, wm_->routeTrackPos(veh_pos).downtrack);
       }
       diagnostic.stamp = nh_->now();
       latest_collision_diagnostic_ = diagnostic;
@@ -1399,10 +1397,8 @@ namespace yield_plugin
     diagnostic.object_id = earliest_collision_obj.id;
     diagnostic.object_type = earliest_collision_obj.object_type;
     diagnostic.collision_point = earliest_collision_point;
-    // Distance along the route from the ego vehicle to the collision location
-    diagnostic.downtrack_to_collision_m = wm_->routeTrackPos(diagnostic.collision_point).downtrack - vehicle_downtrack;
+    update_distance_to_collision(diagnostic, vehicle_downtrack);
     diagnostic.speed_to_match_mps = goal_velocity;
-    diagnostic.time_to_collision_s = get_time_to_collision(diagnostic.downtrack_to_collision_m);
     diagnostic.detect_and_plan_time_s = std::chrono::duration<double>(std::chrono::steady_clock::now() - _t0_ect).count();
     diagnostic.stamp = nh_->now();
 
@@ -1577,6 +1573,13 @@ namespace yield_plugin
       return std::numeric_limits<double>::infinity();
     }
     return current_speed_mps_.value() > EPSILON ? downtrack_to_collision_m / current_speed_mps_.value() : std::numeric_limits<double>::infinity();
+  }
+
+  void YieldPlugin::update_distance_to_collision(YieldCollisionDiagnostic& diagnostic, double vehicle_downtrack) const
+  {
+    // Distance along the route from the ego vehicle to the collision location
+    diagnostic.downtrack_to_collision_m = wm_->routeTrackPos(diagnostic.collision_point).downtrack - vehicle_downtrack;
+    diagnostic.time_to_collision_s = get_time_to_collision(diagnostic.downtrack_to_collision_m);
   }
 
   void YieldPlugin::set_external_objects(const std::vector<carma_perception_msgs::msg::ExternalObject>& object_list)

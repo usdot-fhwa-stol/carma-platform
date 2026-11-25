@@ -395,6 +395,14 @@ private:
    */
   double get_time_to_collision(double downtrack_to_collision_m) const;
 
+  /**
+   * \brief Set the diagnostic's downtrack_to_collision_m (route downtrack from the ego vehicle to its collision_point)
+   *        and time_to_collision_s (that downtrack at the vehicle's current actual speed)
+   * \param diagnostic diagnostic whose collision_point is set; updated in place
+   * \param vehicle_downtrack route downtrack of the ego vehicle
+   */
+  void update_distance_to_collision(YieldCollisionDiagnostic& diagnostic, double vehicle_downtrack) const;
+
 private:
 
   carma_wm::WorldModelConstPtr wm_;
