@@ -27,6 +27,7 @@
 #include <functional>
 #include <carma_perception_msgs/msg/external_object_list.hpp>
 #include <diagnostic_msgs/msg/diagnostic_array.hpp>
+#include <geometry_msgs/msg/twist_stamped.hpp>
 #include "yield_plugin.hpp"
 #include "yield_config.hpp"
 
@@ -74,16 +75,18 @@ private:
     rclcpp_lifecycle::LifecyclePublisher<diagnostic_msgs::msg::DiagnosticArray>::SharedPtr collision_diagnostic_pub_;
 
     /**
-     * \brief Publishes the yield collision diagnostic of the planning cycle that just ran.
-     *        Publishes nothing if yield did not modify the trajectory for a collision.
+     * \brief Publishes the yield collision diagnostic of the planning cycle that just ran, on every call.
+     *        If yield did not modify the trajectory for a collision, publishes only the callback runtime.
+     * \param callback_time_s Wall time of the whole plan_trajectory callback in seconds
      */
-    void publish_collision_diagnostic();
+    void publish_collision_diagnostic(double callback_time_s) const;
 
     // Subscribers
     rclcpp::Subscription<carma_v2x_msgs::msg::MobilityRequest>::SharedPtr mob_request_sub_;
     rclcpp::Subscription<carma_v2x_msgs::msg::BSM>::SharedPtr bsm_sub_;
     rclcpp::Subscription<carma_perception_msgs::msg::ExternalObjectList>::SharedPtr external_objects_sub_;
     rclcpp::Subscription<std_msgs::msg::String>::SharedPtr georeference_sub_;
+    rclcpp::Subscription<geometry_msgs::msg::TwistStamped>::SharedPtr current_velocity_sub_;
 };
 
 }  // namespace yield_plugin

@@ -408,6 +408,7 @@ def generate_launch_description():
                     ("cooperative_lane_change_status", [ EnvironmentVariable('CARMA_GUIDE_NS', default_value=''), "/cooperative_lane_change_status" ] ),
                     ("georeference", [ EnvironmentVariable('CARMA_LOCZ_NS', default_value=''), "/map_param_loader/georeference"]),
                     ("bsm_outbound", [ EnvironmentVariable('CARMA_MSG_NS', default_value=''), "/bsm_outbound" ] ),
+                    ("current_velocity", [ EnvironmentVariable('CARMA_INTR_NS', default_value=''), "/vehicle/twist" ] ),
                 ],
                 parameters=[
                     yield_plugin_file_path,
