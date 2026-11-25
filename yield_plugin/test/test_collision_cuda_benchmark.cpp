@@ -522,7 +522,7 @@ TEST(CollisionDetectionBenchmark, WorstCasePerformance)
   for (int run = 0; run < 3; ++run) {
     auto t0 = std::chrono::steady_clock::now();
     {
-      std::unordered_map<uint32_t, std::future<std::optional<yield_plugin::GetCollisionResult>>> futures;
+      std::unordered_map<uint32_t, std::future<std::optional<yield_plugin::CollisionResult>>> futures;
       for (const auto& obj : ext_objs) {
         futures[obj.id] = std::async(
           std::launch::async,

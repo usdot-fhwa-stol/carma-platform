@@ -62,12 +62,19 @@ struct PointSpeedPair
 };
 
 /**
- * \brief Convenience class for saving collision results
+ * \brief A predicted collision between the ego vehicle and one object.
+ *
+ * A collision means the ego trajectory and the object's predicted path come within the
+ * collision radius of each other at the same time, so the two are not at the same spot.
+ * Both points are in the map frame.
  */
-struct GetCollisionResult
+struct CollisionResult
 {
+  //! Time at which the ego and the object are predicted to be within the collision radius
   rclcpp::Time collision_time;
+  //! Ego position on its planned trajectory at collision_time (map frame)
   lanelet::BasicPoint2d ego_point;
+  //! Object position on its predicted path at collision_time (map frame)
   lanelet::BasicPoint2d object_point;
 };
 
@@ -282,7 +289,7 @@ public:
    * NOTE: Collisions are based on only collision radius at the same predicted time even if ego vehicle maybe past the obstacle. To filter these cases, see `is_object_behind_vehicle()`
    * \return data of time of collision if detected, otherwise, std::nullopt
    */
-  std::optional<GetCollisionResult> get_collision(const carma_planning_msgs::msg::TrajectoryPlan& ego_trajectory, const std::vector<carma_perception_msgs::msg::PredictedState>& object_predictions, double collision_radius, double ego_max_speed);
+  std::optional<CollisionResult> get_collision(const carma_planning_msgs::msg::TrajectoryPlan& ego_trajectory, const std::vector<carma_perception_msgs::msg::PredictedState>& object_predictions, double collision_radius, double ego_max_speed);
 
   /**
    * \brief Return the predicted collision between the ego trajectory and an external object's predicted steps,
@@ -293,7 +300,7 @@ public:
    * NOTE: Currently curr_obstacle is assumed to be using a simple cv model to save computational performance
    * \return collision time, ego location and object location at that time if collision detected, otherwise, std::nullopt
    */
-  std::optional<GetCollisionResult> get_collision_with_object(const carma_planning_msgs::msg::TrajectoryPlan& original_tp, const carma_perception_msgs::msg::ExternalObject& curr_obstacle, double original_tp_max_speed);
+  std::optional<CollisionResult> get_collision_with_object(const carma_planning_msgs::msg::TrajectoryPlan& original_tp, const carma_perception_msgs::msg::ExternalObject& curr_obstacle, double original_tp_max_speed);
 
   /**
    * \brief Check if object location is behind the vehicle using estimates of the vehicle's length and route downtracks
@@ -324,7 +331,7 @@ public:
    * \param original_tp_max_speed max speed of the original_tp to efficiently traverse through possible collision combination of the two trajectories
    * \return mapping of objects' ids and their corresponding collision results (time, ego and object locations; non-colliding objects are omitted)
    */
-  std::unordered_map<uint32_t, GetCollisionResult> get_collisions_concurrently(const carma_planning_msgs::msg::TrajectoryPlan& original_tp, const std::vector<carma_perception_msgs::msg::ExternalObject>& external_objects, double original_tp_max_speed);
+  std::unordered_map<uint32_t, CollisionResult> get_collisions_concurrently(const carma_planning_msgs::msg::TrajectoryPlan& original_tp, const std::vector<carma_perception_msgs::msg::ExternalObject>& external_objects, double original_tp_max_speed);
 
 private:
   /**
@@ -335,7 +342,7 @@ private:
    * \param original_tp_max_speed max speed of the original_tp to efficiently traverse through possible collision combination of the two trajectories
    * \return mapping of objects' ids and their corresponding collision results (time, ego and object locations; non-colliding objects are omitted)
    */
-  std::unordered_map<uint32_t, GetCollisionResult> get_collisions_concurrently_cpu(
+  std::unordered_map<uint32_t, CollisionResult> get_collisions_concurrently_cpu(
     const carma_planning_msgs::msg::TrajectoryPlan& original_tp,
     const std::vector<carma_perception_msgs::msg::ExternalObject>& external_objects,
     double original_tp_max_speed);
@@ -349,7 +356,7 @@ private:
    * \param original_tp_max_speed max speed of the original_tp to efficiently traverse through possible collision combination of the two trajectories
    * \return mapping of objects' ids and their corresponding collision results (time, ego and object locations; non-colliding objects are omitted)
    */
-  std::unordered_map<uint32_t, GetCollisionResult> get_collisions_concurrently_cuda(
+  std::unordered_map<uint32_t, CollisionResult> get_collisions_concurrently_cuda(
     const carma_planning_msgs::msg::TrajectoryPlan& original_tp,
     const std::vector<carma_perception_msgs::msg::ExternalObject>& external_objects,
     double original_tp_max_speed);
