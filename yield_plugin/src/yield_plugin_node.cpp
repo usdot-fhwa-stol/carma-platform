@@ -97,7 +97,7 @@ namespace yield_plugin
         "CUDA warmup complete (" << _warm_ms << " ms) — first call latency paid at startup");
     } else {
       RCLCPP_WARN(get_logger(), "YieldPlugin built with CUDA but no compatible driver found; using CPU collision detection fallback");
-      RCLCPP_WARN(get_logger(), "YieldPlugin collision detection: CPU path (bbox on-route filter + std::async get_collision_time)");
+      RCLCPP_WARN(get_logger(), "YieldPlugin collision detection: CPU path (bbox on-route filter + std::async get_collision_with_object)");
     }
 
     worker_ = std::make_shared<YieldPlugin>(shared_from_this(), get_world_model(), config_,
@@ -140,61 +140,65 @@ namespace yield_plugin
     carma_planning_msgs::srv::PlanTrajectory::Request::SharedPtr req,
     carma_planning_msgs::srv::PlanTrajectory::Response::SharedPtr resp)
   {
+    // Wall time of the whole yield planning callback, reported on every call in the diagnostic
+    const auto callback_start = std::chrono::steady_clock::now();
     worker_->plan_trajectory_callback(req, resp);
-    publish_collision_diagnostic();
+    const double callback_time_s = std::chrono::duration<double>(std::chrono::steady_clock::now() - callback_start).count();
+    publish_collision_diagnostic(callback_time_s);
   }
 
-  void YieldPluginNode::publish_collision_diagnostic()
+  namespace
   {
-    constexpr double mps_to_mph = 2.23694;
-
-    const auto diagnostic = worker_->get_latest_collision_diagnostic();
-    if (!diagnostic)
+    diagnostic_msgs::msg::KeyValue to_kv(const std::string& key, const std::string& value)
     {
-      return;
-    }
-
-    const auto to_kv = [](const std::string& key, const std::string& value) {
       diagnostic_msgs::msg::KeyValue kv;
       kv.key = key;
       kv.value = value;
       return kv;
-    };
-
-    std::string object_type;
-    switch (diagnostic->object_type)
-    {
-      case carma_perception_msgs::msg::ExternalObject::SMALL_VEHICLE: object_type = "SMALL_VEHICLE"; break;
-      case carma_perception_msgs::msg::ExternalObject::LARGE_VEHICLE: object_type = "LARGE_VEHICLE"; break;
-      case carma_perception_msgs::msg::ExternalObject::MOTORCYCLE:    object_type = "MOTORCYCLE"; break;
-      case carma_perception_msgs::msg::ExternalObject::PEDESTRIAN:    object_type = "PEDESTRIAN"; break;
-      default:                                                        object_type = "UNKNOWN"; break;
     }
-    const std::string object_id = std::to_string(diagnostic->object_id);
 
-    diagnostic_msgs::msg::DiagnosticStatus status;
-    status.level = diagnostic_msgs::msg::DiagnosticStatus::WARN;
-    status.name = "yield_plugin: collision";
-    status.hardware_id = object_id;
-
-    if (diagnostic->committed_to_stop)
+    std::string object_type_to_string(uint8_t object_type)
     {
-      // Following the committed stopping trajectory: no new detection ran this cycle. Downtrack and time to
-      // collision are updated against the collision location that triggered the stop; detect_and_plan_time_s
-      // is from the cycle that committed to the stop
-      status.message = "Committed to stop for object " + object_id + " (" + object_type + ")";
-      status.values = {
-        to_kv("object_id", object_id),
-        to_kv("object_type", object_type),
-        to_kv("downtrack_to_collision_m", std::to_string(diagnostic->downtrack_to_collision_m)),
-        to_kv("speed_to_match_mph", std::to_string(diagnostic->speed_to_match_mps * mps_to_mph)),
-        to_kv("time_to_collision_s", std::to_string(diagnostic->time_to_collision_s)),
-        to_kv("detect_and_plan_time_s", std::to_string(diagnostic->detect_and_plan_time_s))
-      };
+      switch (object_type)
+      {
+        case carma_perception_msgs::msg::ExternalObject::SMALL_VEHICLE: return "SMALL_VEHICLE";
+        case carma_perception_msgs::msg::ExternalObject::LARGE_VEHICLE: return "LARGE_VEHICLE";
+        case carma_perception_msgs::msg::ExternalObject::MOTORCYCLE:    return "MOTORCYCLE";
+        case carma_perception_msgs::msg::ExternalObject::PEDESTRIAN:    return "PEDESTRIAN";
+        default:                                                        return "UNKNOWN";
+      }
+    }
+  }  // namespace
+
+  void YieldPluginNode::publish_collision_diagnostic(double callback_time_s)
+  {
+    constexpr double mps_to_mph = 2.23694;
+
+    diagnostic_msgs::msg::DiagnosticArray msg;
+    diagnostic_msgs::msg::DiagnosticStatus status;
+    status.name = "yield_plugin: collision";
+
+    const auto diagnostic = worker_->get_latest_collision_diagnostic();
+    if (!diagnostic)
+    {
+      // Trajectory was checked and left unchanged: report only the callback runtime
+      msg.header.stamp = this->now();
+      status.level = diagnostic_msgs::msg::DiagnosticStatus::OK;
+      status.message = "No collision";
     }
     else
     {
-      status.message = "Yielding to object " + object_id + " (" + object_type + ")";
+      // While following the committed stopping trajectory no new detection ran this cycle. Downtrack and time to
+      // collision are updated against the collision location that triggered the stop; detect_and_plan_time_s
+      // is from the cycle that committed to the stop, while callback_time_s is from this cycle
+      const std::string object_id = std::to_string(diagnostic->object_id);
+      const std::string object_type = object_type_to_string(diagnostic->object_type);
+
+      msg.header.stamp = diagnostic->stamp;
+      status.level = diagnostic_msgs::msg::DiagnosticStatus::WARN;
+      status.hardware_id = object_id;
+      status.message = (diagnostic->committed_to_stop ? "Committed to stop for object " : "Yielding to object ")
+        + object_id + " (" + object_type + ")";
       status.values = {
         to_kv("object_id", object_id),
         to_kv("object_type", object_type),
@@ -204,9 +208,8 @@ namespace yield_plugin
         to_kv("detect_and_plan_time_s", std::to_string(diagnostic->detect_and_plan_time_s))
       };
     }
+    status.values.push_back(to_kv("callback_time_s", std::to_string(callback_time_s)));
 
-    diagnostic_msgs::msg::DiagnosticArray msg;
-    msg.header.stamp = diagnostic->stamp;
     msg.status.push_back(status);
     collision_diagnostic_pub_->publish(msg);
   }
