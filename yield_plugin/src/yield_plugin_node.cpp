@@ -16,6 +16,8 @@
 
 #include <yield_plugin/yield_plugin_node.hpp>
 #include <chrono>
+#include <string>
+#include <string_view>
 #include <yield_plugin/yield_plugin_cuda.cuh>
 
 namespace yield_plugin
@@ -149,7 +151,7 @@ namespace yield_plugin
 
   namespace
   {
-    diagnostic_msgs::msg::KeyValue to_kv(const std::string& key, const std::string& value)
+    diagnostic_msgs::msg::KeyValue to_kv(std::string_view key, std::string_view value)
     {
       diagnostic_msgs::msg::KeyValue kv;
       kv.key = key;
@@ -170,7 +172,7 @@ namespace yield_plugin
     }
   }  // namespace
 
-  void YieldPluginNode::publish_collision_diagnostic(double callback_time_s)
+  void YieldPluginNode::publish_collision_diagnostic(double callback_time_s) const
   {
     constexpr double mps_to_mph = 2.23694;
 
@@ -178,8 +180,7 @@ namespace yield_plugin
     diagnostic_msgs::msg::DiagnosticStatus status;
     status.name = "yield_plugin: collision";
 
-    const auto diagnostic = worker_->get_latest_collision_diagnostic();
-    if (!diagnostic)
+    if (const auto diagnostic = worker_->get_latest_collision_diagnostic(); !diagnostic.has_value())
     {
       // Trajectory was checked and left unchanged: report only the callback runtime
       msg.header.stamp = this->now();

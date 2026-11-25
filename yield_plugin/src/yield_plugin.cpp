@@ -1010,18 +1010,11 @@ namespace yield_plugin
       });
     }
 
-    // Per-object data accumulated for the CUDA batch.
-    struct ActiveObject {
-      uint32_t id;
-      // Prediction list with current position prepended (same as get_collision_with_object builds).
-      std::vector<carma_perception_msgs::msg::PredictedState> predictions;
-      int on_route_idx;  // first prediction index known to be on the route
-    };
-
     RCLCPP_DEBUG_STREAM(rclcpp::get_logger("yield_plugin"),
       "[GPU] Processing " << external_objects.size() << " external objects");
 
-    std::vector<ActiveObject>  active;
+    // Per-object data accumulated for the CUDA batch.
+    std::vector<CudaActiveObject> active;
     std::vector<CudaPoint>     obs_flat;
     std::vector<int>           obs_offsets;
     std::vector<int>           obs_sizes;
@@ -1122,9 +1115,46 @@ namespace yield_plugin
     RCLCPP_DEBUG_STREAM(rclcpp::get_logger("yield_plugin"),
       "[timing] cuda_check_all_collisions: " << _cuda_ms << " ms");
 
-    // -----------------------------------------------------------------------
-    // Post-process: recover collision positions and run behind-vehicle check.
-    // -----------------------------------------------------------------------
+    collision_results = confirm_cuda_collisions(cuda_results, active, ego_pts, original_tp, ref_time);
+
+    RCLCPP_DEBUG_STREAM(rclcpp::get_logger("yield_plugin"),
+      "[GPU] Done — " << collision_results.size() << " collision(s) confirmed");
+
+    } catch (const std::runtime_error& e) {
+      std::string error_msg(e.what());
+      // Detect CUDA-specific errors
+      bool is_cuda_error = (error_msg.find("CUDA") != std::string::npos ||
+                            error_msg.find("cuda") != std::string::npos ||
+                            error_msg.find("driver version") != std::string::npos ||
+                            error_msg.find("runtime version") != std::string::npos ||
+                            error_msg.find("GPU") != std::string::npos);
+
+      if (is_cuda_error) {
+        RCLCPP_WARN_STREAM_ONCE(rclcpp::get_logger("yield_plugin"),
+          "[GPU] CUDA unavailable (" << e.what() << "), please make sure GPU is accessible for this node or container. Using CPU fallback");
+      } else {
+        RCLCPP_ERROR_STREAM_ONCE(rclcpp::get_logger("yield_plugin"),
+          "[GPU] Unexpected error during GPU collision detection: " << e.what() << ", using CPU fallback");
+      }
+      return get_collisions_concurrently_cpu(original_tp, external_objects, original_tp_max_speed);
+    } catch (const std::exception& e) {
+      RCLCPP_ERROR_STREAM_ONCE(rclcpp::get_logger("yield_plugin"),
+        "[GPU] Unexpected exception during GPU collision detection: " << typeid(e).name() << " - " << e.what() << ", using CPU fallback");
+      return get_collisions_concurrently_cpu(original_tp, external_objects, original_tp_max_speed);
+    }
+    return collision_results;
+  }
+
+  std::unordered_map<uint32_t, GetCollisionResult> YieldPlugin::confirm_cuda_collisions(
+    const std::vector<CudaCollisionResult>& cuda_results,
+    const std::vector<CudaActiveObject>& active,
+    const std::vector<CudaPoint>& ego_pts,
+    const carma_planning_msgs::msg::TrajectoryPlan& original_tp,
+    double ref_time)
+  {
+    std::unordered_map<uint32_t, GetCollisionResult> collision_results;
+    const auto num_ego_points = static_cast<int>(ego_pts.size());
+
     for (size_t k = 0; k < active.size(); ++k) {
       const auto& object_result = cuda_results[k];
 
@@ -1172,32 +1202,6 @@ namespace yield_plugin
       collision_result.ego_point = ego_collision_point;
       collision_result.object_point = object_collision_point;
       collision_results[active[k].id] = collision_result;
-    }
-
-    RCLCPP_DEBUG_STREAM(rclcpp::get_logger("yield_plugin"),
-      "[GPU] Done — " << collision_results.size() << " collision(s) confirmed");
-
-    } catch (const std::runtime_error& e) {
-      std::string error_msg(e.what());
-      // Detect CUDA-specific errors
-      bool is_cuda_error = (error_msg.find("CUDA") != std::string::npos ||
-                            error_msg.find("cuda") != std::string::npos ||
-                            error_msg.find("driver version") != std::string::npos ||
-                            error_msg.find("runtime version") != std::string::npos ||
-                            error_msg.find("GPU") != std::string::npos);
-
-      if (is_cuda_error) {
-        RCLCPP_WARN_STREAM_ONCE(rclcpp::get_logger("yield_plugin"),
-          "[GPU] CUDA unavailable (" << e.what() << "), please make sure GPU is accessible for this node or container. Using CPU fallback");
-      } else {
-        RCLCPP_ERROR_STREAM_ONCE(rclcpp::get_logger("yield_plugin"),
-          "[GPU] Unexpected error during GPU collision detection: " << e.what() << ", using CPU fallback");
-      }
-      return get_collisions_concurrently_cpu(original_tp, external_objects, original_tp_max_speed);
-    } catch (const std::exception& e) {
-      RCLCPP_ERROR_STREAM_ONCE(rclcpp::get_logger("yield_plugin"),
-        "[GPU] Unexpected exception during GPU collision detection: " << typeid(e).name() << " - " << e.what() << ", using CPU fallback");
-      return get_collisions_concurrently_cpu(original_tp, external_objects, original_tp_max_speed);
     }
     return collision_results;
   }
@@ -1567,7 +1571,7 @@ namespace yield_plugin
 
   double YieldPlugin::get_time_to_collision(double downtrack_to_collision_m) const
   {
-    if (!current_speed_mps_)
+    if (!current_speed_mps_.has_value())
     {
       RCLCPP_WARN_STREAM_ONCE(rclcpp::get_logger("yield_plugin"), "No vehicle/twist received yet, reporting time_to_collision_s as inf");
       return std::numeric_limits<double>::infinity();

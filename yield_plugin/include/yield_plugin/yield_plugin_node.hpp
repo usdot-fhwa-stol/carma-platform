@@ -79,7 +79,7 @@ private:
      *        If yield did not modify the trajectory for a collision, publishes only the callback runtime.
      * \param callback_time_s Wall time of the whole plan_trajectory callback in seconds
      */
-    void publish_collision_diagnostic(double callback_time_s);
+    void publish_collision_diagnostic(double callback_time_s) const;
 
     // Subscribers
     rclcpp::Subscription<carma_v2x_msgs::msg::MobilityRequest>::SharedPtr mob_request_sub_;
