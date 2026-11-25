@@ -162,18 +162,18 @@ namespace yield_plugin
     if (incoming_request.strategy == "carma/cooperative-lane-change")
     {
       if (!map_projector_) {
-        RCLCPP_ERROR(rclcpp::get_logger("yield_plugin"),"Cannot process mobility request as map projection is not yet set!");
+        RCLCPP_ERROR(nh_->get_logger(),"Cannot process mobility request as map projection is not yet set!");
         return;
       }
       if (incoming_request.plan_type.type == carma_v2x_msgs::msg::PlanType::CHANGE_LANE_LEFT || incoming_request.plan_type.type == carma_v2x_msgs::msg::PlanType::CHANGE_LANE_RIGHT)
       {
-        RCLCPP_DEBUG(rclcpp::get_logger("yield_plugin"),"Cooperative Lane Change Request Received");
+        RCLCPP_DEBUG(nh_->get_logger(),"Cooperative Lane Change Request Received");
         lc_status_msg.status = carma_planning_msgs::msg::LaneChangeStatus::REQUEST_RECEIVED;
         lc_status_msg.description = "Received lane merge request";
 
         if (incoming_request.m_header.recipient_id == config_.vehicle_id)
         {
-          RCLCPP_DEBUG(rclcpp::get_logger("yield_plugin"),"CLC Request correctly received");
+          RCLCPP_DEBUG(nh_->get_logger(),"CLC Request correctly received");
         }
 
         // extract mobility header
@@ -184,7 +184,7 @@ namespace yield_plugin
         carma_v2x_msgs::msg::Trajectory incoming_trajectory = incoming_request.trajectory;
         std::string req_strategy_params = incoming_request.strategy_params;
         clc_urgency_ = incoming_request.urgency;
-        RCLCPP_DEBUG_STREAM(rclcpp::get_logger("yield_plugin"),"received urgency: " << clc_urgency_);
+        RCLCPP_DEBUG_STREAM(nh_->get_logger(),"received urgency: " << clc_urgency_);
 
         // Parse strategy parameters
         using boost::property_tree::ptree;
@@ -196,9 +196,9 @@ namespace yield_plugin
         int start_lanelet_id = pt.get<int>("sl");
         int end_lanelet_id = pt.get<int>("el");
         double req_traj_speed = static_cast<double>(req_traj_speed_full) + static_cast<double>(req_traj_fractional)/10.0;
-        RCLCPP_DEBUG_STREAM(rclcpp::get_logger("yield_plugin"),"req_traj_speed" << req_traj_speed);
-        RCLCPP_DEBUG_STREAM(rclcpp::get_logger("yield_plugin"),"start_lanelet_id" << start_lanelet_id);
-        RCLCPP_DEBUG_STREAM(rclcpp::get_logger("yield_plugin"),"end_lanelet_id" << end_lanelet_id);
+        RCLCPP_DEBUG_STREAM(nh_->get_logger(),"req_traj_speed" << req_traj_speed);
+        RCLCPP_DEBUG_STREAM(nh_->get_logger(),"start_lanelet_id" << start_lanelet_id);
+        RCLCPP_DEBUG_STREAM(nh_->get_logger(),"end_lanelet_id" << end_lanelet_id);
 
         std::vector<lanelet::BasicPoint2d> req_traj_plan = {};
 
@@ -220,19 +220,19 @@ namespace yield_plugin
           lc_status_msg.status = carma_planning_msgs::msg::LaneChangeStatus::REQUEST_ACCEPTED;
           lc_status_msg.description = "Accepted lane merge request";
           response_to_clc_req = true;
-          RCLCPP_DEBUG(rclcpp::get_logger("yield_plugin"),"CLC accepted");
+          RCLCPP_DEBUG(nh_->get_logger(),"CLC accepted");
         }
         else
         {
           lc_status_msg.status = carma_planning_msgs::msg::LaneChangeStatus::REQUEST_REJECTED;
           lc_status_msg.description = "Rejected lane merge request";
           response_to_clc_req = false;
-          RCLCPP_DEBUG(rclcpp::get_logger("yield_plugin"),"CLC rejected");
+          RCLCPP_DEBUG(nh_->get_logger(),"CLC rejected");
         }
         carma_v2x_msgs::msg::MobilityResponse outgoing_response = compose_mobility_response(req_sender_id, req_plan_id, response_to_clc_req);
         mobility_response_publisher_(outgoing_response);
         lc_status_msg.status = carma_planning_msgs::msg::LaneChangeStatus::RESPONSE_SENT;
-        RCLCPP_DEBUG(rclcpp::get_logger("yield_plugin"),"response sent");
+        RCLCPP_DEBUG(nh_->get_logger(),"response sent");
       }
     }
     lc_status_publisher_(lc_status_msg);
@@ -244,7 +244,7 @@ namespace yield_plugin
     req_trajectory_points_ = req_trajectory;
     req_target_speed_ = req_speed;
     req_target_plan_time_ = req_planning_time;
-    RCLCPP_DEBUG_STREAM(rclcpp::get_logger("yield_plugin"),"req_target_plan_time_" << req_target_plan_time_);
+    RCLCPP_DEBUG_STREAM(nh_->get_logger(),"req_target_plan_time_" << req_target_plan_time_);
     req_timestamp_ = req_timestamp;
   }
 
@@ -258,7 +258,7 @@ namespace yield_plugin
   carma_planning_msgs::srv::PlanTrajectory::Request::SharedPtr req,
   carma_planning_msgs::srv::PlanTrajectory::Response::SharedPtr resp)
 {
-    RCLCPP_DEBUG(rclcpp::get_logger("yield_plugin"),"Yield_plugin was called!");
+    RCLCPP_DEBUG(nh_->get_logger(),"Yield_plugin was called!");
     if (req->initial_trajectory_plan.trajectory_points.size() < 2){
       throw std::invalid_argument("Empty Trajectory received by Yield");
     }
@@ -275,7 +275,7 @@ namespace yield_plugin
     if (req->vehicle_state.longitudinal_vel > EPSILON &&
       last_traj_plan_committed_to_stopping_.has_value())
     {
-      RCLCPP_DEBUG(rclcpp::get_logger("yield_plugin"), "Using last committed trajectory to stopping");
+      RCLCPP_DEBUG(nh_->get_logger(), "Using last committed trajectory to stopping");
       lanelet::BasicPoint2d veh_pos(req->vehicle_state.x_pos_global,
             req->vehicle_state.y_pos_global);
       auto updated_trajectory = last_traj_plan_committed_to_stopping_.value();
@@ -337,7 +337,7 @@ namespace yield_plugin
           !first_time_stopped_to_prevent_collision_.has_value())
         {
           first_time_stopped_to_prevent_collision_ = nh_->now();
-          RCLCPP_DEBUG(rclcpp::get_logger("yield_plugin"), "First time stopped to prevent collision: %f",
+          RCLCPP_DEBUG(nh_->get_logger(), "First time stopped to prevent collision: %f",
             first_time_stopped_to_prevent_collision_.value().seconds());
         }
       }
@@ -345,22 +345,22 @@ namespace yield_plugin
       // seperating cooperative yield with regular object detection for better performance.
       if (config_.enable_cooperative_behavior && clc_urgency_ > config_.acceptable_urgency)
       {
-        RCLCPP_DEBUG(rclcpp::get_logger("yield_plugin"),"Only consider high urgency clc");
+        RCLCPP_DEBUG(nh_->get_logger(),"Only consider high urgency clc");
         if (timesteps_since_last_req_ < config_.acceptable_passed_timesteps)
         {
-          RCLCPP_DEBUG(rclcpp::get_logger("yield_plugin"),"Yield for CLC. We haven't received an updated negotiation this timestep");
+          RCLCPP_DEBUG(nh_->get_logger(),"Yield for CLC. We haven't received an updated negotiation this timestep");
           yield_trajectory = update_traj_for_cooperative_behavior(original_trajectory, initial_velocity);
           timesteps_since_last_req_++;
         }
         else
         {
-          RCLCPP_DEBUG(rclcpp::get_logger("yield_plugin"),"unreliable CLC communication, switching to object avoidance");
+          RCLCPP_DEBUG(nh_->get_logger(),"unreliable CLC communication, switching to object avoidance");
           yield_trajectory = update_traj_for_object(original_trajectory, external_objects_, initial_velocity); // Compute the trajectory
         }
       }
       else
       {
-        RCLCPP_DEBUG(rclcpp::get_logger("yield_plugin"),"Yield for object avoidance");
+        RCLCPP_DEBUG(nh_->get_logger(),"Yield for object avoidance");
         auto _t0_upd = std::chrono::steady_clock::now();
         yield_trajectory = update_traj_for_object(original_trajectory, external_objects_, initial_velocity); // Compute the trajectory
         const double _upd_ms = std::chrono::duration<double, std::milli>(std::chrono::steady_clock::now() - _t0_upd).count();
@@ -389,8 +389,8 @@ namespace yield_plugin
       }
     }
     catch(const std::runtime_error& e) {
-      RCLCPP_WARN_STREAM(rclcpp::get_logger("yield_plugin"), "Yield Plugin failed to plan trajectory due to known negative time issue: " << e.what());
-      RCLCPP_WARN_STREAM(rclcpp::get_logger("yield_plugin"), "Returning the original trajectory, and retrying at the next call.");
+      RCLCPP_WARN_STREAM(nh_->get_logger(), "Yield Plugin failed to plan trajectory due to known negative time issue: " << e.what());
+      RCLCPP_WARN_STREAM(nh_->get_logger(), "Returning the original trajectory, and retrying at the next call.");
       resp->trajectory_plan = original_trajectory;
     }
 
@@ -428,14 +428,14 @@ namespace yield_plugin
       double dy = original_tp.trajectory_points[0].y - intersection_point.y();
       // check if a digital_gap is available
       double digital_gap = check_traj_for_digital_min_gap(original_tp);
-      RCLCPP_DEBUG_STREAM(rclcpp::get_logger("yield_plugin"),"digital_gap: " << digital_gap);
+      RCLCPP_DEBUG_STREAM(nh_->get_logger(),"digital_gap: " << digital_gap);
       goal_pos = sqrt(dx*dx + dy*dy) - std::max(config_.minimum_safety_gap_in_meters, digital_gap);
-      RCLCPP_DEBUG_STREAM(rclcpp::get_logger("yield_plugin"),"Goal position (goal_pos): " << goal_pos);
+      RCLCPP_DEBUG_STREAM(nh_->get_logger(),"Goal position (goal_pos): " << goal_pos);
       double collision_time = req_timestamp_ + (intersection_points[0].first * ecef_traj_timestep_) - config_.safety_collision_time_gap_in_s;
-      RCLCPP_DEBUG_STREAM(rclcpp::get_logger("yield_plugin"),"req time stamp: " << req_timestamp_);
-      RCLCPP_DEBUG_STREAM(rclcpp::get_logger("yield_plugin"),"Collision time: " << collision_time);
-      RCLCPP_DEBUG_STREAM(rclcpp::get_logger("yield_plugin"),"intersection num: " << intersection_points[0].first);
-      RCLCPP_DEBUG_STREAM(rclcpp::get_logger("yield_plugin"),"Planning time: " << planning_time);
+      RCLCPP_DEBUG_STREAM(nh_->get_logger(),"req time stamp: " << req_timestamp_);
+      RCLCPP_DEBUG_STREAM(nh_->get_logger(),"Collision time: " << collision_time);
+      RCLCPP_DEBUG_STREAM(nh_->get_logger(),"intersection num: " << intersection_points[0].first);
+      RCLCPP_DEBUG_STREAM(nh_->get_logger(),"Planning time: " << planning_time);
       // calculate distance traveled from beginning of trajectory to collision point
       double dx2 = intersection_point.x() - req_trajectory_points_[0].x();
       double dy2 = intersection_point.y() - req_trajectory_points_[0].y();
@@ -445,8 +445,8 @@ namespace yield_plugin
       goal_velocity = std::min(goal_velocity, incoming_trajectory_speed);
       double min_time = (initial_velocity - goal_velocity)/config_.yield_max_deceleration_in_ms2;
 
-      RCLCPP_DEBUG_STREAM(rclcpp::get_logger("yield_plugin"),"goal_velocity: " << goal_velocity);
-      RCLCPP_DEBUG_STREAM(rclcpp::get_logger("yield_plugin"),"incoming_trajectory_speed: " << incoming_trajectory_speed);
+      RCLCPP_DEBUG_STREAM(nh_->get_logger(),"goal_velocity: " << goal_velocity);
+      RCLCPP_DEBUG_STREAM(nh_->get_logger(),"incoming_trajectory_speed: " << incoming_trajectory_speed);
 
       if (planning_time > min_time)
       {
@@ -457,7 +457,7 @@ namespace yield_plugin
       else
       {
         cooperative_request_acceptable_ = false;
-        RCLCPP_DEBUG(rclcpp::get_logger("yield_plugin"),"The incoming requested trajectory is rejected, due to insufficient gap");
+        RCLCPP_DEBUG(nh_->get_logger(),"The incoming requested trajectory is rejected, due to insufficient gap");
         cooperative_trajectory = original_tp;
       }
 
@@ -465,7 +465,7 @@ namespace yield_plugin
     else
     {
       cooperative_request_acceptable_ = true;
-      RCLCPP_DEBUG(rclcpp::get_logger("yield_plugin"),"The incoming requested trajectory does not overlap with host vehicle's trajectory");
+      RCLCPP_DEBUG(nh_->get_logger(),"The incoming requested trajectory does not overlap with host vehicle's trajectory");
       cooperative_trajectory = original_tp;
     }
 
@@ -659,7 +659,7 @@ namespace yield_plugin
   {
 
     // Iterate through each pair of consecutive points in the trajectories
-    RCLCPP_DEBUG_STREAM(rclcpp::get_logger("yield_plugin"), "Starting a new collision detection, trajectory size: "
+    RCLCPP_DEBUG_STREAM(nh_->get_logger(), "Starting a new collision detection, trajectory size: "
       << ego_trajectory.trajectory_points.size() << ". prediction size: " << object_predictions.size());
 
     // Iterate through the object to check if it's on the route
@@ -692,7 +692,7 @@ namespace yield_plugin
     double iteration_stride_max_time_s = 2 * config_.intervehicle_collision_distance_in_m / sqrt(pow(object_speed, 2) + pow(ego_max_speed, 2));
     int iteration_stride = std::max(1, static_cast<int>(iteration_stride_max_time_s / object_prediction_step_duration));
 
-    RCLCPP_DEBUG_STREAM(rclcpp::get_logger("yield_plugin"), "Determined iteration_stride: " << iteration_stride
+    RCLCPP_DEBUG_STREAM(nh_->get_logger(), "Determined iteration_stride: " << iteration_stride
       << ", with object_speed: " << object_speed
       << ", with ego_max_speed: " << ego_max_speed
       << ", with object_prediction_step_duration: " << object_prediction_step_duration
@@ -741,6 +741,14 @@ namespace yield_plugin
         double object_seg_start_time = rclcpp::Time(object_seg_start.header.stamp).seconds();
         double object_seg_end_time = rclcpp::Time(object_seg_end.header.stamp).seconds();
 
+        RCLCPP_DEBUG_STREAM(nh_->get_logger(), "ego_seg_start.target_time: " << std::to_string(ego_seg_start_time) << ", ego_seg_end.target_time: " << std::to_string(ego_seg_end_time));
+        RCLCPP_DEBUG_STREAM(nh_->get_logger(), "object_seg_start.target_time: " << std::to_string(object_seg_start_time) << ", object_seg_end.target_time: " << std::to_string(object_seg_end_time));
+        RCLCPP_DEBUG_STREAM(nh_->get_logger(), "ego_seg_start.x: " << ego_seg_start.x << ", ego_seg_start.y: " << ego_seg_start.y);
+        RCLCPP_DEBUG_STREAM(nh_->get_logger(), "ego_seg_end.x: " << ego_seg_end.x << ", ego_seg_end.y: " << ego_seg_end.y);
+
+        RCLCPP_DEBUG_STREAM(nh_->get_logger(), "object_seg_start.x: " << object_seg_start.predicted_position.position.x << ", object_seg_start.y: " << object_seg_start.predicted_position.position.y);
+        RCLCPP_DEBUG_STREAM(nh_->get_logger(), "object_seg_end.x: " << object_seg_end.predicted_position.position.x << ", object_seg_end.y: " << object_seg_end.predicted_position.position.y);
+
         // Linearly interpolate positions at a common timestamp for both trajectories
         double interp_ratio = (object_seg_start_time - ego_seg_start_time) / (ego_seg_end_time - ego_seg_start_time);
         // if negative extrapolation, skip because car wouldn't go backwards
@@ -768,14 +776,14 @@ namespace yield_plugin
         // the distance will always increase and it's unnecessary to continue the logic to find the smallest_dist
         if (previous_distance < distance)
         {
-          RCLCPP_DEBUG_STREAM(rclcpp::get_logger("yield_plugin"), "Stopping search here because the distance between predictions started to increase");
+          RCLCPP_DEBUG_STREAM(nh_->get_logger(), "Stopping search here because the distance between predictions started to increase");
           break;
         }
         previous_distance = distance;
 
         if (i == 0 && j == 0 && distance > config_.collision_check_radius_in_m)
         {
-          RCLCPP_DEBUG(rclcpp::get_logger("yield_plugin"), "Too far away" );
+          RCLCPP_DEBUG(nh_->get_logger(), "Too far away" );
           return std::nullopt;
         }
 
@@ -809,7 +817,7 @@ namespace yield_plugin
     if (object_downtrack < vehicle_downtrack - config_.vehicle_length / 2)
     {
       consecutive_clearance_count_for_obstacles_[object_id] = std::min(consecutive_clearance_count_for_obstacles_[object_id] + 1, config_.consecutive_clearance_count_for_passed_obstacles_threshold);
-      RCLCPP_INFO_STREAM(rclcpp::get_logger("yield_plugin"), "Detected an object nearby might be behind the vehicle at timestamp: " << std::to_string(collision_time.seconds()) <<
+      RCLCPP_INFO_STREAM(nh_->get_logger(), "Detected an object nearby might be behind the vehicle at timestamp: " << std::to_string(collision_time.seconds()) <<
         ", and consecutive_clearance_count_for obstacle: " <<  object_id << ", is: " << consecutive_clearance_count_for_obstacles_[object_id]);
     }
     // confirmed false positive for a collision
@@ -832,7 +840,7 @@ namespace yield_plugin
   {
     auto plan_start_time = get_trajectory_start_time(original_tp);
 
-    RCLCPP_DEBUG_STREAM(rclcpp::get_logger("yield_plugin"), "Object's back time: " << std::to_string(rclcpp::Time(curr_obstacle.predictions.back().header.stamp).seconds())
+    RCLCPP_DEBUG_STREAM(nh_->get_logger(), "Object's back time: " << std::to_string(rclcpp::Time(curr_obstacle.predictions.back().header.stamp).seconds())
       << ", plan_start_time: " << std::to_string(plan_start_time));
 
     // do not process outdated objects
@@ -850,7 +858,7 @@ namespace yield_plugin
     // NOTE: predicted_velocity is not used for collision calculation, but timestamps
     curr_state.predicted_velocity.linear.x = curr_obstacle.velocity.twist.linear.x;
     curr_state.predicted_velocity.linear.y = curr_obstacle.velocity.twist.linear.y;
-    RCLCPP_DEBUG_STREAM(rclcpp::get_logger("yield_plugin"), "Object: " << curr_obstacle.id <<", type: " << static_cast<int>(curr_obstacle.object_type)
+    RCLCPP_DEBUG_STREAM(nh_->get_logger(), "Object: " << curr_obstacle.id <<", type: " << static_cast<int>(curr_obstacle.object_type)
       << ", speed_x: " << curr_obstacle.velocity.twist.linear.x  << ", speed_y: " << curr_obstacle.velocity.twist.linear.y);
     new_list.push_back(curr_state);
     new_list.insert(new_list.end(), curr_obstacle.predictions.cbegin(), curr_obstacle.predictions.cend());
@@ -871,7 +879,7 @@ namespace yield_plugin
 
     if (is_object_behind_vehicle(curr_obstacle.id, collision_result.value().collision_time, vehicle_downtrack, object_downtrack))
     {
-      RCLCPP_INFO_STREAM(rclcpp::get_logger("yield_plugin"), "Confirmed that the object: " << curr_obstacle.id << " is behind the vehicle at timestamp " << std::to_string(collision_result.value().collision_time.seconds()));
+      RCLCPP_INFO_STREAM(nh_->get_logger(), "Confirmed that the object: " << curr_obstacle.id << " is behind the vehicle at timestamp " << std::to_string(collision_result.value().collision_time.seconds()));
       return std::nullopt;
     }
 
@@ -880,7 +888,7 @@ namespace yield_plugin
       collision_result.value().ego_point.y() - collision_result.value().object_point.y()
     )}; //for debug
 
-    RCLCPP_WARN_STREAM(rclcpp::get_logger("yield_plugin"), "Collision detected for object: " << curr_obstacle.id << ", at timestamp " << std::to_string(collision_result.value().collision_time.seconds()) <<
+    RCLCPP_WARN_STREAM(nh_->get_logger(), "Collision detected for object: " << curr_obstacle.id << ", at timestamp " << std::to_string(collision_result.value().collision_time.seconds()) <<
       ", x: " << collision_result.value().ego_point.x() << ", y: " << collision_result.value().ego_point.y() <<
       ", within actual downtrack distance: " << object_downtrack - vehicle_downtrack <<
       ", and collision distance: " << distance);
@@ -1151,14 +1159,14 @@ namespace yield_plugin
 
       if (is_object_behind_vehicle(active[k].id, collision_time,
                                    vehicle_downtrack, object_downtrack)) {
-        RCLCPP_INFO_STREAM(rclcpp::get_logger("yield_plugin"),
+        RCLCPP_INFO_STREAM(nh_->get_logger(),
           "Confirmed that the object: " << active[k].id
           << " is behind the vehicle at timestamp "
           << std::to_string(collision_time.seconds()));
         continue;
       }
 
-      RCLCPP_WARN_STREAM(rclcpp::get_logger("yield_plugin"),
+      RCLCPP_WARN_STREAM(nh_->get_logger(),
         "Collision detected for object: " << active[k].id
         << ", at timestamp " << std::to_string(collision_time.seconds())
         << ", x: " << ego_collision_point.x() << ", y: " << ego_collision_point.y()
@@ -1214,7 +1222,7 @@ namespace yield_plugin
 
     if (!wm_->getRoute())
     {
-      RCLCPP_WARN(rclcpp::get_logger("yield_plugin"), "Yield plugin was not able to analyze collision since route is not available! Please check if route is set");
+      RCLCPP_WARN(nh_->get_logger(), "Yield plugin was not able to analyze collision since route is not available! Please check if route is set");
       return std::nullopt;
     }
 
@@ -1224,7 +1232,7 @@ namespace yield_plugin
       update_route_llt_cache();
     }
 
-    RCLCPP_DEBUG_STREAM(rclcpp::get_logger("yield_plugin"),"External Object List (external_objects) size: " << external_objects.size());
+    RCLCPP_DEBUG_STREAM(nh_->get_logger(),"External Object List (external_objects) size: " << external_objects.size());
     const double original_max_speed = max_trajectory_speed(original_tp.trajectory_points, get_trajectory_end_time(original_tp));
     auto _t0_conc = std::chrono::steady_clock::now();
     std::unordered_map<uint32_t, GetCollisionResult> collision_results = get_collisions_concurrently(original_tp,external_objects, original_max_speed);
@@ -1242,7 +1250,7 @@ namespace yield_plugin
       std::cbegin(external_objects), std::cend(external_objects),
       [&earliest_colliding_object_id](const auto & object) { return object.id == earliest_colliding_object_id; })};
 
-    RCLCPP_DEBUG_STREAM(rclcpp::get_logger("yield_plugin"),"earliest object x: " << earliest_colliding_object->velocity.twist.linear.x
+    RCLCPP_DEBUG_STREAM(nh_->get_logger(),"earliest object x: " << earliest_colliding_object->velocity.twist.linear.x
         << ", y: " << earliest_colliding_object->velocity.twist.linear.y);
     const auto& earliest_result = collision_results.at(earliest_colliding_object_id);
     return std::make_tuple(*earliest_colliding_object, earliest_result.collision_time.seconds(), earliest_result.object_point);
@@ -1252,7 +1260,7 @@ namespace yield_plugin
   double YieldPlugin::get_predicted_velocity_at_time(const geometry_msgs::msg::Twist& object_velocity_in_map_frame,
     const carma_planning_msgs::msg::TrajectoryPlan& original_tp, double timestamp_in_sec_to_predict)
   {
-    RCLCPP_DEBUG_STREAM(rclcpp::get_logger("yield_plugin"), "timestamp_in_sec_to_predict: " << std::to_string(timestamp_in_sec_to_predict) <<
+    RCLCPP_DEBUG_STREAM(nh_->get_logger(), "timestamp_in_sec_to_predict: " << std::to_string(timestamp_in_sec_to_predict) <<
       ", trajectory_end_time: " << std::to_string(get_trajectory_end_time(original_tp)));
 
     double point_b_time = 0.0;
@@ -1276,7 +1284,7 @@ namespace yield_plugin
     auto dy = point_b.y - point_a.y;
     const tf2::Vector3 trajectory_direction(dx, dy, 0);
 
-    RCLCPP_DEBUG_STREAM(rclcpp::get_logger("yield_plugin"), "timestamp_in_sec_to_predict: " << std::to_string(timestamp_in_sec_to_predict)
+    RCLCPP_DEBUG_STREAM(nh_->get_logger(), "timestamp_in_sec_to_predict: " << std::to_string(timestamp_in_sec_to_predict)
       << ", point_b_time: " << std::to_string(point_b_time)
       << ", dx: " << dx << ", dy: " << dy << ", "
       << ", object_velocity_in_map_frame.x: " << object_velocity_in_map_frame.linear.x
@@ -1297,7 +1305,7 @@ namespace yield_plugin
   {
     if (original_tp.trajectory_points.size() < 2)
     {
-      RCLCPP_WARN(rclcpp::get_logger("yield_plugin"), "Yield plugin received less than 2 points in update_traj_for_object, returning unchanged...");
+      RCLCPP_WARN(nh_->get_logger(), "Yield plugin received less than 2 points in update_traj_for_object, returning unchanged...");
       return original_tp;
     }
 
@@ -1310,7 +1318,7 @@ namespace yield_plugin
 
     if (!earliest_collision)
     {
-      RCLCPP_DEBUG(rclcpp::get_logger("yield_plugin"),"No collision detected, so trajectory not modified.");
+      RCLCPP_DEBUG(nh_->get_logger(),"No collision detected, so trajectory not modified.");
       return original_tp;
     }
 
@@ -1325,23 +1333,23 @@ namespace yield_plugin
     auto _rtp_t0_upd = std::chrono::steady_clock::now();
     const double vehicle_downtrack = wm_->routeTrackPos(vehicle_point).downtrack;
 
-    RCLCPP_DEBUG_STREAM(rclcpp::get_logger("yield_plugin"),"vehicle_downtrack: " << vehicle_downtrack);
+    RCLCPP_DEBUG_STREAM(nh_->get_logger(),"vehicle_downtrack: " << vehicle_downtrack);
 
-    RCLCPP_WARN_STREAM(rclcpp::get_logger("yield_plugin"),"Collision Detected!");
+    RCLCPP_WARN_STREAM(nh_->get_logger(),"Collision Detected!");
 
     // earliest_collision_point is the object's predicted position AT the collision time
     // (computed once during collision detection), not its current position — so goal_pos
     // reflects where the object will actually be when the collision would occur.
     const double object_downtrack = wm_->routeTrackPos(earliest_collision_point).downtrack;
 
-    RCLCPP_DEBUG_STREAM(rclcpp::get_logger("yield_plugin"),"object_downtrack: " << object_downtrack);
+    RCLCPP_DEBUG_STREAM(nh_->get_logger(),"object_downtrack: " << object_downtrack);
     const double _rtp_ms_upd = std::chrono::duration<double, std::milli>(
       std::chrono::steady_clock::now() - _rtp_t0_upd).count();
     RCLCPP_DEBUG_STREAM(rclcpp::get_logger("yield_plugin"),
       "[update_traj] routeTrackPos x2: " << _rtp_ms_upd << " ms");
 
     const double object_downtrack_lead = std::max(0.0, object_downtrack - vehicle_downtrack);
-    RCLCPP_DEBUG_STREAM(rclcpp::get_logger("yield_plugin"),"object_downtrack_lead: " << object_downtrack_lead);
+    RCLCPP_DEBUG_STREAM(nh_->get_logger(),"object_downtrack_lead: " << object_downtrack_lead);
 
     // The vehicle's goal velocity of the yielding behavior is to match the velocity of the object along the trajectory.
     // Vehicle obstacle velocities are in body frame (linear.x = forward speed), so rotate into map frame before
@@ -1360,10 +1368,10 @@ namespace yield_plugin
         << ", " << object_velocity_in_map_frame.linear.y << ")");
     }
     double goal_velocity = get_predicted_velocity_at_time(object_velocity_in_map_frame, original_tp, earliest_collision_time_in_seconds);
-    RCLCPP_DEBUG_STREAM(rclcpp::get_logger("yield_plugin"),"object's speed along trajectory at collision: " << goal_velocity);
+    RCLCPP_DEBUG_STREAM(nh_->get_logger(),"object's speed along trajectory at collision: " << goal_velocity);
 
     if (goal_velocity <= config_.obstacle_zero_speed_threshold_in_ms){
-      RCLCPP_WARN_STREAM(rclcpp::get_logger("yield_plugin"),"The obstacle is not moving, goal velocity is set to 0 from: " << goal_velocity);
+      RCLCPP_WARN_STREAM(nh_->get_logger(),"The obstacle is not moving, goal velocity is set to 0 from: " << goal_velocity);
       goal_velocity = 0.0;
     }
 
@@ -1397,7 +1405,7 @@ namespace yield_plugin
       const double _gap_ms = std::chrono::duration<double, std::milli>(std::chrono::steady_clock::now() - _t0_gap).count();
       RCLCPP_DEBUG_STREAM(rclcpp::get_logger("yield_plugin"),
         "[timing] check_traj_for_digital_min_gap: " << _gap_ms << " ms");
-      RCLCPP_DEBUG_STREAM(rclcpp::get_logger("yield_plugin"),"externally_commanded_safety_gap: " << externally_commanded_safety_gap);
+      RCLCPP_DEBUG_STREAM(nh_->get_logger(),"externally_commanded_safety_gap: " << externally_commanded_safety_gap);
       // if a digital gap is available, it is replaced as safety gap
       safety_gap = std::max(safety_gap, externally_commanded_safety_gap);
     }
@@ -1406,7 +1414,7 @@ namespace yield_plugin
     const double initial_pos = 0.0; //relative initial position (first trajectory point)
     const double original_max_speed = max_trajectory_speed(original_tp.trajectory_points, earliest_collision_time_in_seconds);
     const double delta_v_max = fabs(goal_velocity - original_max_speed);
-    RCLCPP_DEBUG_STREAM(rclcpp::get_logger("yield_plugin"),"delta_v_max: " << delta_v_max << ", safety_gap: " << safety_gap);
+    RCLCPP_DEBUG_STREAM(nh_->get_logger(),"delta_v_max: " << delta_v_max << ", safety_gap: " << safety_gap);
 
     const double min_time_required_for_comfortable_decel_in_s = delta_v_max / config_.yield_max_deceleration_in_ms2;
 
@@ -1418,9 +1426,9 @@ namespace yield_plugin
 
     // planning time for object avoidance
     double planning_time_in_s = std::max({config_.min_obj_avoidance_plan_time_in_s, time_until_collision_in_s, min_time_required_for_comfortable_decel_in_s});
-    RCLCPP_DEBUG_STREAM(rclcpp::get_logger("yield_plugin"),"time_until_collision_in_s: " << time_until_collision_in_s << ", min_time_required_for_comfortable_decel_in_s: " << min_time_required_for_comfortable_decel_in_s);
+    RCLCPP_DEBUG_STREAM(nh_->get_logger(),"time_until_collision_in_s: " << time_until_collision_in_s << ", min_time_required_for_comfortable_decel_in_s: " << min_time_required_for_comfortable_decel_in_s);
 
-    RCLCPP_DEBUG_STREAM(rclcpp::get_logger("yield_plugin"),"Object avoidance planning time: " << planning_time_in_s);
+    RCLCPP_DEBUG_STREAM(nh_->get_logger(),"Object avoidance planning time: " << planning_time_in_s);
 
     auto _t0_jmt = std::chrono::steady_clock::now();
     auto jmt_trajectory = generate_JMT_trajectory(original_tp,
@@ -1539,7 +1547,7 @@ namespace yield_plugin
     {
       // Trajectory generation may place a point off-road in rare edge cases
       // (see https://github.com/usdot-fhwa-stol/carma-platform/issues/2503)
-      RCLCPP_WARN_STREAM(rclcpp::get_logger("yield_plugin"), "check_traj_for_digital_min_gap: trajectory endpoint "
+      RCLCPP_WARN_STREAM(nh_->get_logger(), "check_traj_for_digital_min_gap: trajectory endpoint "
         "not on a lanelet, skipping digital gap check.");
       return desired_gap;
     }
@@ -1564,7 +1572,7 @@ namespace yield_plugin
 
     if (!start_pos || !end_pos || *start_pos > *end_pos)
     {
-      RCLCPP_WARN_STREAM(rclcpp::get_logger("yield_plugin"), "check_traj_for_digital_min_gap: trajectory endpoints "
+      RCLCPP_WARN_STREAM(nh_->get_logger(), "check_traj_for_digital_min_gap: trajectory endpoints "
         "not found on route shortest path, skipping digital gap check.");
       return desired_gap;
     }
@@ -1579,7 +1587,7 @@ namespace yield_plugin
         if (!digital_min_gap.empty())
         {
           double digital_gap = digital_min_gap[0]->getMinimumGap();
-          RCLCPP_DEBUG_STREAM(rclcpp::get_logger("yield_plugin"), "Digital Gap found with value: " << digital_gap);
+          RCLCPP_DEBUG_STREAM(nh_->get_logger(), "Digital Gap found with value: " << digital_gap);
           desired_gap = std::max(desired_gap, digital_gap);
         }
       }
@@ -1628,7 +1636,7 @@ namespace yield_plugin
   {
     if (!wm_->getRoute())
     {
-      RCLCPP_WARN(rclcpp::get_logger("yield_plugin"), "update_route_llt_cache called but route is not available");
+      RCLCPP_WARN(nh_->get_logger(), "update_route_llt_cache called but route is not available");
       return;
     }
     route_llt_ids_.clear();
