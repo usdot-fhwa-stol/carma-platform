@@ -62,12 +62,19 @@ struct PointSpeedPair
 };
 
 /**
- * \brief Convenience class for saving collision results
+ * \brief A predicted collision between the ego vehicle and one object.
+ *
+ * A collision means the ego trajectory and the object's predicted path come within the
+ * collision radius of each other at the same time, so the two are not at the same spot.
+ * Both points are in the map frame.
  */
-struct GetCollisionResult
+struct CollisionResult
 {
+  //! Time at which the ego and the object are predicted to be within the collision radius
   rclcpp::Time collision_time;
+  //! Ego position on its planned trajectory at collision_time (map frame)
   lanelet::BasicPoint2d ego_point;
+  //! Object position on its predicted path at collision_time (map frame)
   lanelet::BasicPoint2d object_point;
 };
 
@@ -79,9 +86,10 @@ struct YieldCollisionDiagnostic
   uint32_t object_id = 0;
   uint8_t object_type = carma_perception_msgs::msg::ExternalObject::UNKNOWN;
   bool committed_to_stop = false;         // true while following a previously committed stopping trajectory (no new detection ran)
-  double downtrack_to_collision_m = 0.0;  // distance along ego trajectory until the predicted collision point
+  lanelet::BasicPoint2d collision_point{0.0, 0.0};  // predicted collision location (object's predicted position at collision time) in map frame
+  double downtrack_to_collision_m = 0.0;  // route downtrack from the ego vehicle to the collision location
   double speed_to_match_mps = 0.0;        // goal velocity of the yield trajectory
-  double time_to_collision_s = 0.0;       // predicted collision time - now
+  double time_to_collision_s = 0.0;       // time to reach the collision location at current actual speed from vehicle/twist (downtrack / current speed)
   double detect_and_plan_time_s = 0.0;    // wall time spent detecting the collision and generating the trajectory
   rclcpp::Time stamp;                     // ROS time at which this snapshot was produced
 };
@@ -260,6 +268,12 @@ public:
   void set_external_objects(const std::vector<carma_perception_msgs::msg::ExternalObject>& object_list);
 
   /**
+   * \brief Setter for the vehicle's current actual speed (from vehicle/twist), used for the collision diagnostic time to collision
+   * \param speed_mps current longitudinal speed in m/s
+   */
+  void set_current_speed(double speed_mps);
+
+  /**
    * \brief Rebuild the cached route lanelet polygons and IDs from the current route.
    *        Should be called once whenever the route changes via setRouteCallback().
    */
@@ -275,17 +289,18 @@ public:
    * NOTE: Collisions are based on only collision radius at the same predicted time even if ego vehicle maybe past the obstacle. To filter these cases, see `is_object_behind_vehicle()`
    * \return data of time of collision if detected, otherwise, std::nullopt
    */
-  std::optional<GetCollisionResult> get_collision(const carma_planning_msgs::msg::TrajectoryPlan& ego_trajectory, const std::vector<carma_perception_msgs::msg::PredictedState>& object_predictions, double collision_radius, double ego_max_speed);
+  std::optional<CollisionResult> get_collision(const carma_planning_msgs::msg::TrajectoryPlan& ego_trajectory, const std::vector<carma_perception_msgs::msg::PredictedState>& object_predictions, double collision_radius, double ego_max_speed);
 
   /**
-   * \brief Return collision time given two trajectories with one being external object with predicted steps
+   * \brief Return the predicted collision between the ego trajectory and an external object's predicted steps,
+   *        excluding objects confirmed to be behind the vehicle (see `is_object_behind_vehicle()`)
    * \param original_tp trajectory of the ego vehicle
-   * \param curr_obstacle trajectory of the obstacle
+   * \param curr_obstacle external object with predicted steps
    * \param original_tp_max_speed max speed of the original_tp to efficiently traverse through possible collision combination of the two trajectories
    * NOTE: Currently curr_obstacle is assumed to be using a simple cv model to save computational performance
-   * \return time_of_collision if collision detected, otherwise, std::nullopt
+   * \return collision time, ego location and object location at that time if collision detected, otherwise, std::nullopt
    */
-  std::optional<rclcpp::Time> get_collision_time(const carma_planning_msgs::msg::TrajectoryPlan& original_tp, const carma_perception_msgs::msg::ExternalObject& curr_obstacle, double original_tp_max_speed);
+  std::optional<CollisionResult> get_collision_with_object(const carma_planning_msgs::msg::TrajectoryPlan& original_tp, const carma_perception_msgs::msg::ExternalObject& curr_obstacle, double original_tp_max_speed);
 
   /**
    * \brief Check if object location is behind the vehicle using estimates of the vehicle's length and route downtracks
@@ -300,47 +315,48 @@ public:
   bool is_object_behind_vehicle(uint32_t object_id, const rclcpp::Time& collision_time, double vehicle_point, double object_downtrack);
 
   /**
-   * \brief Return the earliest collision object and time of collision pair from the given trajectory and list of external objects with predicted states.
+   * \brief Return the earliest collision object, its collision time and collision location from the given trajectory and list of external objects with predicted states.
             Function first filters obstacles based on whether if their any of predicted state will be on the route. Only then, the logic compares trajectory and predicted states.
    * \param original_tp trajectory of the ego vehicle
    * \param external_objects list of external objects with predicted states
-   * \return earliest collision object and its collision time if collision detected. std::nullopt if no collision is detected or if route is not available.
+   * \return tuple of (earliest collision object, collision time in seconds, collision location as the object's predicted position at that time in map frame)
+   *         if collision detected. std::nullopt if no collision is detected or if route is not available.
    */
-  std::optional<std::pair<carma_perception_msgs::msg::ExternalObject, double>> get_earliest_collision_object_and_time(const carma_planning_msgs::msg::TrajectoryPlan& original_tp, const std::vector<carma_perception_msgs::msg::ExternalObject>& external_objects);
+  std::optional<std::tuple<carma_perception_msgs::msg::ExternalObject, double, lanelet::BasicPoint2d>> get_earliest_collision(const carma_planning_msgs::msg::TrajectoryPlan& original_tp, const std::vector<carma_perception_msgs::msg::ExternalObject>& external_objects);
 
   /**
-   * \brief Given the list of objects with predicted states, get all collision times concurrently using multi-threading
+   * \brief Given the list of objects with predicted states, get all collisions concurrently using multi-threading (GPU, or CPU fallback)
    * \param original_tp trajectory of the ego vehicle
    * \param external_objects list of external objects with predicted states
    * \param original_tp_max_speed max speed of the original_tp to efficiently traverse through possible collision combination of the two trajectories
-   * \return mapping of objects' ids and their corresponding collision times (non-colliding objects are omitted)
+   * \return mapping of objects' ids and their corresponding collision results (time, ego and object locations; non-colliding objects are omitted)
    */
-  std::unordered_map<uint32_t, rclcpp::Time> get_collision_times_concurrently(const carma_planning_msgs::msg::TrajectoryPlan& original_tp, const std::vector<carma_perception_msgs::msg::ExternalObject>& external_objects, double original_tp_max_speed);
+  std::unordered_map<uint32_t, CollisionResult> get_collisions_concurrently(const carma_planning_msgs::msg::TrajectoryPlan& original_tp, const std::vector<carma_perception_msgs::msg::ExternalObject>& external_objects, double original_tp_max_speed);
 
 private:
   /**
-   * \brief CPU implementation of get_collision_times_concurrently. Launches one thread per external object
-   *        and computes get_collision_time for each in parallel
+   * \brief CPU implementation of get_collisions_concurrently. Launches one thread per external object
+   *        and computes get_collision_with_object for each in parallel
    * \param original_tp trajectory of the ego vehicle
    * \param external_objects list of external objects with predicted states
    * \param original_tp_max_speed max speed of the original_tp to efficiently traverse through possible collision combination of the two trajectories
-   * \return mapping of objects' ids and their corresponding collision times (non-colliding objects are omitted)
+   * \return mapping of objects' ids and their corresponding collision results (time, ego and object locations; non-colliding objects are omitted)
    */
-  std::unordered_map<uint32_t, rclcpp::Time> get_collision_times_concurrently_cpu(
+  std::unordered_map<uint32_t, CollisionResult> get_collisions_concurrently_cpu(
     const carma_planning_msgs::msg::TrajectoryPlan& original_tp,
     const std::vector<carma_perception_msgs::msg::ExternalObject>& external_objects,
     double original_tp_max_speed);
 
   /**
-   * \brief CUDA implementation of get_collision_times_concurrently. Filters objects to those with on-route
+   * \brief CUDA implementation of get_collisions_concurrently. Filters objects to those with on-route
    *        predictions, then batches the collision check across all objects on the GPU.
-   *        Falls back to get_collision_times_concurrently_cpu if no CUDA device is available or on error.
+   *        Falls back to get_collisions_concurrently_cpu if no CUDA device is available or on error.
    * \param original_tp trajectory of the ego vehicle
    * \param external_objects list of external objects with predicted states
    * \param original_tp_max_speed max speed of the original_tp to efficiently traverse through possible collision combination of the two trajectories
-   * \return mapping of objects' ids and their corresponding collision times (non-colliding objects are omitted)
+   * \return mapping of objects' ids and their corresponding collision results (time, ego and object locations; non-colliding objects are omitted)
    */
-  std::unordered_map<uint32_t, rclcpp::Time> get_collision_times_concurrently_cuda(
+  std::unordered_map<uint32_t, CollisionResult> get_collisions_concurrently_cuda(
     const carma_planning_msgs::msg::TrajectoryPlan& original_tp,
     const std::vector<carma_perception_msgs::msg::ExternalObject>& external_objects,
     double original_tp_max_speed);
@@ -377,6 +393,22 @@ private:
   std::optional<YieldCollisionDiagnostic> latest_collision_diagnostic_ = std::nullopt;
   // diagnostic at the moment yield committed to stopping; republished while following the committed trajectory
   std::optional<YieldCollisionDiagnostic> committed_stop_diagnostic_ = std::nullopt;
+  // vehicle's current actual speed from vehicle/twist; std::nullopt until the first message is received
+  std::optional<double> current_speed_mps_ = std::nullopt;
+
+  /**
+   * \brief Time to reach the collision location at the vehicle's current actual speed
+   * \return downtrack_to_collision_m / current speed, or infinity if stopped or speed not yet received
+   */
+  double get_time_to_collision(double downtrack_to_collision_m) const;
+
+  /**
+   * \brief Set the diagnostic's downtrack_to_collision_m (route downtrack from the ego vehicle to its collision_point)
+   *        and time_to_collision_s (that downtrack at the vehicle's current actual speed)
+   * \param diagnostic diagnostic whose collision_point is set; updated in place
+   * \param vehicle_downtrack route downtrack of the ego vehicle
+   */
+  void update_distance_to_collision(YieldCollisionDiagnostic& diagnostic, double vehicle_downtrack) const;
 
 private:
 

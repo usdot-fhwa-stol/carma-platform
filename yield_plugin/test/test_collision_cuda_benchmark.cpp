@@ -493,11 +493,11 @@ TEST(CollisionDetectionBenchmark, WorstCasePerformance)
             << "  Total seg pairs: " << total_pairs << "\n";
 
   // Pre-populate the plugin's route-lanelet cache (filled lazily inside
-  // get_earliest_collision_object_and_time; get_collision reads it directly).
-  plugin.get_earliest_collision_object_and_time(ego_tp, {});
+  // get_earliest_collision; get_collision reads it directly).
+  plugin.get_earliest_collision(ego_tp, {});
 
   // Wrap each object's prediction states as ExternalObject for the concurrent
-  // production path.  get_collision_time prepends the current pose as the
+  // production path.  get_collision_with_object prepends the current pose as the
   // zeroth state, so: current state = all_preds[k][0], predictions = [1..].
   std::vector<carma_perception_msgs::msg::ExternalObject> ext_objs;
   ext_objs.reserve(N_OBJ);
@@ -513,21 +513,21 @@ TEST(CollisionDetectionBenchmark, WorstCasePerformance)
     ext_objs.push_back(std::move(obj));
   }
 
-  // ── CPU (old path): std::async + get_collision_time() per object ───────────
+  // ── CPU (old path): std::async + get_collision_with_object() per object ───────────
   // Recreates the legacy production path: one async task per object, each
-  // running get_collision_time (getLaneletsFromPoint on-route check + strided
+  // running get_collision_with_object (getLaneletsFromPoint on-route check + strided
   // CPU distance comparison).  Run 3 times, take the median.
   std::array<double, 3> cpu_ms{};
   bool any_cpu_collision = false;
   for (int run = 0; run < 3; ++run) {
     auto t0 = std::chrono::steady_clock::now();
     {
-      std::unordered_map<uint32_t, std::future<std::optional<rclcpp::Time>>> futures;
+      std::unordered_map<uint32_t, std::future<std::optional<yield_plugin::CollisionResult>>> futures;
       for (const auto& obj : ext_objs) {
         futures[obj.id] = std::async(
           std::launch::async,
           [&plugin, &ego_tp, &obj]() {
-            return plugin.get_collision_time(ego_tp, obj, EGO_SPEED);
+            return plugin.get_collision_with_object(ego_tp, obj, EGO_SPEED);
           });
       }
       for (const auto& obj : ext_objs) {
@@ -541,25 +541,25 @@ TEST(CollisionDetectionBenchmark, WorstCasePerformance)
   const double cpu_median_ms = cpu_ms[1];
 
   // ── GPU (new path): bbox on-route filter + CUDA kernel ───────────────────
-  // get_collision_times_concurrently: bbox check per object then one batched
+  // get_collisions_concurrently: bbox check per object then one batched
   // cuda_check_all_collisions call.  Warm up once before timing.
-  plugin.get_collision_times_concurrently(ego_tp, ext_objs, EGO_SPEED);
+  plugin.get_collisions_concurrently(ego_tp, ext_objs, EGO_SPEED);
 
   std::array<double, 3> gpu_ms{};
   bool any_gpu_collision = false;
   for (int run = 0; run < 3; ++run) {
     auto t0 = std::chrono::steady_clock::now();
-    const auto cuda_times = plugin.get_collision_times_concurrently(ego_tp, ext_objs, EGO_SPEED);
+    const auto cuda_results = plugin.get_collisions_concurrently(ego_tp, ext_objs, EGO_SPEED);
     auto t1 = std::chrono::steady_clock::now();
     gpu_ms[run] = std::chrono::duration<double, std::milli>(t1 - t0).count();
-    if (!cuda_times.empty()) any_gpu_collision = true;
+    if (!cuda_results.empty()) any_gpu_collision = true;
   }
   std::sort(gpu_ms.begin(), gpu_ms.end());
   const double gpu_median_ms = gpu_ms[1];
 
   const double speedup = cpu_median_ms / gpu_median_ms;
 
-  std::cout << "  CPU (legacy)    : " << cpu_median_ms << " ms  (median of 3, std::async + get_collision_time)\n"
+  std::cout << "  CPU (legacy)    : " << cpu_median_ms << " ms  (median of 3, std::async + get_collision_with_object)\n"
             << "  GPU (new path)  : " << gpu_median_ms << " ms  (median of 3, bbox filter + CUDA kernel)\n"
             << "  Speedup gpu/cpu : " << speedup << "×\n"
             << "  CPU collision   : " << (any_cpu_collision ? "yes (UNEXPECTED)" : "no") << "\n"
@@ -593,18 +593,18 @@ TEST(CollisionDetectionBenchmark, WorstCasePerformance)
     col_obj.velocity.twist.linear.y         = colliding_preds.front().predicted_velocity.linear.y;
     col_obj.predictions.assign(colliding_preds.begin() + 1, colliding_preds.end());
 
-    // CPU (legacy): get_collision_time — getLaneletsFromPoint + strided check.
-    const bool cpu_found = plugin.get_collision_time(ego_tp, col_obj, EGO_SPEED).has_value();
+    // CPU (legacy): get_collision_with_object — getLaneletsFromPoint + strided check.
+    const bool cpu_found = plugin.get_collision_with_object(ego_tp, col_obj, EGO_SPEED).has_value();
 
-    // GPU (new path): bbox filter + CUDA kernel via get_collision_times_concurrently.
-    const auto gpu_col  = plugin.get_collision_times_concurrently(ego_tp, {col_obj}, EGO_SPEED);
+    // GPU (new path): bbox filter + CUDA kernel via get_collisions_concurrently.
+    const auto gpu_col  = plugin.get_collisions_concurrently(ego_tp, {col_obj}, EGO_SPEED);
     const bool gpu_found = gpu_col.count(col_obj.id) > 0;
 
-    EXPECT_TRUE(cpu_found) << "Legacy CPU path (get_collision_time) missed the planted collision.";
-    EXPECT_TRUE(gpu_found) << "GPU path (get_collision_times_concurrently) missed the planted collision.";
+    EXPECT_TRUE(cpu_found) << "Legacy CPU path (get_collision_with_object) missed the planted collision.";
+    EXPECT_TRUE(gpu_found) << "GPU path (get_collisions_concurrently) missed the planted collision.";
 
     if (cpu_found && gpu_found) {
-      const double t_col = gpu_col.at(col_obj.id).seconds();
+      const double t_col = gpu_col.at(col_obj.id).collision_time.seconds();
       // Continuous-motion first entry into 2 m radius: t = (6-2)/6 ≈ 0.67 s.
       EXPECT_GT(t_col, 0.5) << "Collision time suspiciously early.";
       EXPECT_LT(t_col, 1.2) << "Collision time suspiciously late.";

@@ -27,7 +27,7 @@ Note that the object avoidance is not a handoff to a different tactical plugin. 
 
 **Pipeline:**
 
-1. **Concurrent collision detection** — `get_collision_times_concurrently()` checks every external object received on `/external_object_predictions` for a predicted collision with the ego trajectory, using either a CPU or GPU approach. The GPU approach is used by default, falling back to CPU if a CUDA error occurs (e.g., GPU driver not accessible). See "Collision Detection: CPU vs. CUDA" for more.
+1. **Concurrent collision detection** — `get_collisions_concurrently()` checks every external object received on `/external_object_predictions` for a predicted collision with the ego trajectory, using either a CPU or GPU approach. The GPU approach is used by default, falling back to CPU if a CUDA error occurs (e.g., GPU driver not accessible). See "Collision Detection: CPU vs. CUDA" for more.
 
 2. **Earliest collision selection** — of the objects with a predicted collision, the one with the closest time to collision is chosen as the adversary.
 
@@ -71,12 +71,12 @@ Enabled via `enable_cooperative_behavior: true`. Activated when a `MobilityReque
 
 ## Collision Detection: CPU vs. CUDA
 
-The plugin supports two back-ends for `get_collision_times_concurrently`. At startup, `cuda_is_available()` checks for a reachable CUDA device; the GPU path is used when one is found and falls back to CPU on any runtime error.
+The plugin supports two back-ends for `get_collisions_concurrently`. At startup, `cuda_is_available()` checks for a reachable CUDA device; the GPU path is used when one is found and falls back to CPU on any runtime error.
 
 ```
-get_collision_times_concurrently()
+get_collisions_concurrently()
         │
-        ├─ cuda_is_available()? ──Yes──> get_collision_times_concurrently_cuda()
+        ├─ cuda_is_available()? ──Yes──> get_collisions_concurrently_cuda()
         │                                        │
         │                       on-route filter (CPU, strided, polygon within)
         │                                        │
@@ -84,10 +84,10 @@ get_collision_times_concurrently()
         │                                        │
         │                       post-process: behind-vehicle check (CPU)
         │
-        └─ No / exception ──> get_collision_times_concurrently_cpu()
+        └─ No / exception ──> get_collisions_concurrently_cpu()
                                        │
                                one std::thread per object
-                               get_collision_time() per object (strided CPU loop)
+                               get_collision_with_object() per object (strided CPU loop)
 ```
 
 ### CPU path
@@ -95,7 +95,7 @@ get_collision_times_concurrently()
 **How it works:**
 
 - One OS thread is spawned per external object via `std::thread` + `std::packaged_task`.
-- Each thread runs `get_collision_time()`, which:
+- Each thread runs `get_collision_with_object()`, which:
   1. Prepends the object's current pose to its prediction list.
   2. Runs a strided on-route check using `wm_->getLaneletsFromPoint()` to confirm at least one predicted state falls on a route lanelet.
   3. If on-route, iterates over `(ego_segment_i, obstacle_prediction_j)` pairs, linearly interpolates the ego position to each obstacle timestamp, and tests whether the distance is within the collision radius.
@@ -192,6 +192,7 @@ These are covered by [test/test_collision_cuda_benchmark.cpp](test/test_collisio
 | `incoming_mobility_request` | `MobilityRequest` | Cooperative lanechange requests from other vehicles |
 | `bsm_outbound` | `BSM` | Host vehicle BSM ID (used in mobility response headers) |
 | `georeference` | `std_msgs/String` | Proj string for ECEF→map conversion |
+| `current_velocity` | `geometry_msgs/TwistStamped` | Vehicle's current actual speed (remapped to `/hardware_interface/vehicle/twist`), used for the collision diagnostic `time_to_collision_s` |
 
 ### Published Topics
 
@@ -199,7 +200,7 @@ These are covered by [test/test_collision_cuda_benchmark.cpp](test/test_collisio
 |---|---|---|
 | `outgoing_mobility_response` | `MobilityResponse` | Accept/reject cooperative requests |
 | `cooperative_lane_change_status` | `LaneChangeStatus` | CLC state machine status |
-| `yield_collision_diagnostic` | `diagnostic_msgs/DiagnosticArray` | Published once per `plan_trajectory` call (10 Hz by default, set by plan_delegator `trajectory_planning_rate`), only while yield is modifying the trajectory for a detected collision. Values: `object_id`, `object_type`, `downtrack_to_collision_m`, `speed_to_match_mph`, `time_to_collision_s`, `detect_and_plan_time_s`. While following a committed stop (no new detection), it reports the object that triggered the stop with `speed_to_match_mph`=0, `time_to_collision_s`=inf and the other values `NA` |
+| `yield_collision_diagnostic` | `diagnostic_msgs/DiagnosticArray` | Published once per `plan_trajectory` call (10 Hz by default, set by plan_delegator `trajectory_planning_rate`). Every message has `callback_time_s`, the wall time of the whole yield `plan_trajectory` callback. When no collision is found the status is OK with message `No collision` and only `callback_time_s`. While yield is modifying the trajectory for a detected collision the status is WARN with values `object_id`, `object_type`, `downtrack_to_collision_m`, `speed_to_match_mph`, `time_to_collision_s`, `detect_and_plan_time_s` (collision detection plus yield trajectory generation only), `callback_time_s`. `downtrack_to_collision_m` is the route downtrack from the ego vehicle to the predicted collision location (the object's predicted position at the collision time), and `time_to_collision_s` is that downtrack divided by the vehicle's current actual speed from `current_velocity` (remapped to `/hardware_interface/vehicle/twist`; `inf` when stopped or not yet received). While following a committed stop (no new detection), it keeps reporting the object that triggered the stop, with `downtrack_to_collision_m` and `time_to_collision_s` updated each cycle against that stored collision location, and `speed_to_match_mph`/`detect_and_plan_time_s` from the cycle that committed to the stop |
 
 ### Service
 
