@@ -17,6 +17,7 @@
  */
 
 #include <vector>
+#include <tuple>
 #include <carma_planning_msgs/msg/trajectory_plan.hpp>
 #include <carma_planning_msgs/msg/trajectory_plan_point.hpp>
 #include <carma_planning_msgs/msg/plugin.hpp>

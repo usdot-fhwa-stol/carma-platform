@@ -516,6 +516,19 @@ namespace yield_plugin
         initial_accel = 0.0;
       }
 
+      // Noisy velocity readings between back-to-back planning calls produce physically impossible
+      // acceleration values (observed: ±43 m/s²) that cause the quintic polynomial to overshoot
+      // goal_pos, turn negative, and fill the rest of the trajectory with 0-speed / 6000s gaps.
+      // Clamp to the configured deceleration limit to keep the polynomial well-behaved.
+      const double clamped = std::clamp(initial_accel,
+        -config_.yield_max_deceleration_in_ms2, config_.yield_max_deceleration_in_ms2);
+      if (clamped != initial_accel)
+      {
+        RCLCPP_DEBUG_STREAM(rclcpp::get_logger("yield_plugin"), "Clamping initial_accel from "
+          << initial_accel << " to " << clamped << " m/s²");
+        initial_accel = clamped;
+      }
+
       RCLCPP_DEBUG_STREAM(rclcpp::get_logger("yield_plugin"),"Detecting initial_accel: " << initial_accel
         << ", initial_velocity:" << initial_velocity
         << ", last_speed_: " << last_speed_.value()
@@ -582,11 +595,11 @@ namespace yield_plugin
 
     }
 
-    // if the loop above finished prematurely due to negative speed, fill with 0.0 speeds
-    // since the speed crossed 0.0 and algorithm indicates stopping
+    // Pad remaining points with goal_velocity. For a stopped obstacle goal_velocity=0 so behavior
+    // is unchanged; for a moving obstacle the ego should cruise at goal_velocity rather than stop.
     std::fill_n(std::back_inserter(calculated_speeds),
                 std::size(original_traj_relative_downtracks) - std::size(calculated_speeds),
-                0.0);
+                goal_velocity);
 
     // Moving average filter to smoothen the speeds
     std::vector<double> filtered_speeds = basic_autonomy::smoothing::moving_average_filter(calculated_speeds, config_.speed_moving_average_window_size);
@@ -1324,8 +1337,10 @@ namespace yield_plugin
 
     RCLCPP_WARN_STREAM(nh_->get_logger(),"Collision Detected!");
 
-    const lanelet::BasicPoint2d object_point(earliest_collision_obj.pose.pose.position.x, earliest_collision_obj.pose.pose.position.y);
-    const double object_downtrack = wm_->routeTrackPos(object_point).downtrack;
+    // earliest_collision_point is the object's predicted position AT the collision time
+    // (computed once during collision detection), not its current position — so goal_pos
+    // reflects where the object will actually be when the collision would occur.
+    const double object_downtrack = wm_->routeTrackPos(earliest_collision_point).downtrack;
 
     RCLCPP_DEBUG_STREAM(nh_->get_logger(),"object_downtrack: " << object_downtrack);
     const double _rtp_ms_upd = std::chrono::duration<double, std::milli>(
@@ -1337,19 +1352,44 @@ namespace yield_plugin
     RCLCPP_DEBUG_STREAM(nh_->get_logger(),"object_downtrack_lead: " << object_downtrack_lead);
 
     // The vehicle's goal velocity of the yielding behavior is to match the velocity of the object along the trajectory.
-    double goal_velocity = get_predicted_velocity_at_time(earliest_collision_obj.velocity.twist, original_tp, earliest_collision_time_in_seconds);
+    // Vehicle obstacle velocities are in body frame (linear.x = forward speed), so rotate into map frame before
+    // projecting. Pedestrian velocities arrive already in map frame, so no rotation is needed for them.
+    geometry_msgs::msg::Twist object_velocity_in_map_frame = earliest_collision_obj.velocity.twist;
+    if (earliest_collision_obj.object_type != carma_perception_msgs::msg::ExternalObject::PEDESTRIAN)
+    {
+      const auto& q = earliest_collision_obj.pose.pose.orientation;
+      const double yaw = std::atan2(2.0 * (q.w * q.z + q.x * q.y), 1.0 - 2.0 * (q.y * q.y + q.z * q.z));
+      const double bvx = earliest_collision_obj.velocity.twist.linear.x;
+      const double bvy = earliest_collision_obj.velocity.twist.linear.y;
+      object_velocity_in_map_frame.linear.x = bvx * std::cos(yaw) - bvy * std::sin(yaw);
+      object_velocity_in_map_frame.linear.y = bvx * std::sin(yaw) + bvy * std::cos(yaw);
+      RCLCPP_DEBUG_STREAM(rclcpp::get_logger("yield_plugin"), "Rotated vehicle body-frame velocity (" << bvx << ", " << bvy
+        << ") by yaw=" << yaw << " to map-frame (" << object_velocity_in_map_frame.linear.x
+        << ", " << object_velocity_in_map_frame.linear.y << ")");
+    }
+    double goal_velocity = get_predicted_velocity_at_time(object_velocity_in_map_frame, original_tp, earliest_collision_time_in_seconds);
     RCLCPP_DEBUG_STREAM(nh_->get_logger(),"object's speed along trajectory at collision: " << goal_velocity);
-
-    // roadway object position
-    const double gap_time_until_min_gap_distance = std::max(0.0, object_downtrack_lead - config_.minimum_safety_gap_in_meters)/initial_velocity;
 
     if (goal_velocity <= config_.obstacle_zero_speed_threshold_in_ms){
       RCLCPP_WARN_STREAM(nh_->get_logger(),"The obstacle is not moving, goal velocity is set to 0 from: " << goal_velocity);
       goal_velocity = 0.0;
     }
 
-    // determine the safety inter-vehicle gap based on speed
-    double safety_gap = std::max(goal_velocity * gap_time_until_min_gap_distance, config_.minimum_safety_gap_in_meters);
+    // For a stopped obstacle the gap_time formula accounts for approach distance; for a moving obstacle
+    // goal_velocity >> initial_velocity inflates safety_gap beyond object_downtrack_lead, always giving goal_pos=0.
+    // A moving obstacle just needs minimum_safety_gap as the buffer since ego will match its speed.
+    double safety_gap;
+    if (goal_velocity > config_.obstacle_zero_speed_threshold_in_ms)
+    {
+      safety_gap = config_.minimum_safety_gap_in_meters;
+    }
+    else
+    {
+      const double gap_time_until_min_gap_distance = std::max(0.0, object_downtrack_lead - config_.minimum_safety_gap_in_meters) / initial_velocity;
+      safety_gap = std::max(goal_velocity * gap_time_until_min_gap_distance, config_.minimum_safety_gap_in_meters);
+    }
+    RCLCPP_DEBUG_STREAM(rclcpp::get_logger("yield_plugin"), "object_downtrack_lead: " << object_downtrack_lead
+      << ", safety_gap: " << safety_gap << ", vehicle_length: " << config_.vehicle_length);
     if (!std::isnormal(safety_gap))
     {
       RCLCPP_WARN_STREAM(rclcpp::get_logger("yield_plugin"),"Detected non-normal (nan, inf, etc.) safety_gap."
@@ -1376,12 +1416,17 @@ namespace yield_plugin
     const double delta_v_max = fabs(goal_velocity - original_max_speed);
     RCLCPP_DEBUG_STREAM(nh_->get_logger(),"delta_v_max: " << delta_v_max << ", safety_gap: " << safety_gap);
 
-    const double time_required_for_comfortable_decel_in_s = config_.acceleration_adjustment_factor * 2 * goal_pos / delta_v_max;
     const double min_time_required_for_comfortable_decel_in_s = delta_v_max / config_.yield_max_deceleration_in_ms2;
 
+    // The JMT should reach goal_pos/goal_velocity by the time the collision would actually occur,
+    // not some heuristically-derived duration disconnected from that timestamp. The deceleration-limit
+    // floor is still respected so the polynomial never implies decelerating harder than
+    // config_.yield_max_deceleration_in_ms2 allows, even if the collision is imminent.
+    const double time_until_collision_in_s = earliest_collision_time_in_seconds - get_trajectory_start_time(original_tp);
+
     // planning time for object avoidance
-    double planning_time_in_s = std::max({config_.min_obj_avoidance_plan_time_in_s, time_required_for_comfortable_decel_in_s, min_time_required_for_comfortable_decel_in_s});
-    RCLCPP_DEBUG_STREAM(nh_->get_logger(),"time_required_for_comfortable_decel_in_s: " << time_required_for_comfortable_decel_in_s << ", min_time_required_for_comfortable_decel_in_s: " << min_time_required_for_comfortable_decel_in_s);
+    double planning_time_in_s = std::max({config_.min_obj_avoidance_plan_time_in_s, time_until_collision_in_s, min_time_required_for_comfortable_decel_in_s});
+    RCLCPP_DEBUG_STREAM(nh_->get_logger(),"time_until_collision_in_s: " << time_until_collision_in_s << ", min_time_required_for_comfortable_decel_in_s: " << min_time_required_for_comfortable_decel_in_s);
 
     RCLCPP_DEBUG_STREAM(nh_->get_logger(),"Object avoidance planning time: " << planning_time_in_s);
 
