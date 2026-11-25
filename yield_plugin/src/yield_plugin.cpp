@@ -292,6 +292,17 @@ namespace yield_plugin
               std::vector<carma_planning_msgs::msg::TrajectoryPlanPoint>
               (updated_trajectory.trajectory_points.begin() + idx_to_start_new_traj,
               updated_trajectory.trajectory_points.end());
+
+          // Trimming by position keeps the original absolute target_times, which fall behind whenever the vehicle
+          // runs slower than planned (e.g. creeping from a stop). Once they are seconds old, plan_delegator rejects
+          // the plan and drives the original trajectory instead. Shift them so the trajectory starts now, keeping
+          // the relative timing between points.
+          const rclcpp::Duration time_shift =
+            nh_->now() - rclcpp::Time(updated_trajectory.trajectory_points.front().target_time);
+          for (auto& point : updated_trajectory.trajectory_points)
+          {
+            point.target_time = rclcpp::Time(point.target_time) + time_shift;
+          }
       }
       // The committed trajectory keeps the initial velocity from when it was generated. The controller derives
       // point speeds from it, so a stale (higher) value makes the vehicle creep instead of stopping, which keeps
@@ -339,6 +350,16 @@ namespace yield_plugin
           first_time_stopped_to_prevent_collision_ = nh_->now();
           RCLCPP_DEBUG(nh_->get_logger(), "First time stopped to prevent collision: %f",
             first_time_stopped_to_prevent_collision_.value().seconds());
+        }
+        // The vehicle has stopped for the committed trajectory, so release it. Otherwise the small creep from the
+        // stopped replan below re-enters the committed branch and replays that old trajectory, whose timestamps are
+        // seconds stale, so plan_delegator rejects it and drives the original trajectory instead. Planning from the
+        // current state below commits again with a fresh trajectory if a stop is still needed.
+        if (last_traj_plan_committed_to_stopping_.has_value())
+        {
+          RCLCPP_DEBUG(nh_->get_logger(), "Stopped for the committed trajectory, releasing it");
+          last_traj_plan_committed_to_stopping_ = std::nullopt;
+          committed_stop_diagnostic_ = std::nullopt;
         }
       }
 
