@@ -102,7 +102,7 @@ EOF
             -r|--region)
                 # | is used instead of / as delimeter in sed because the ARN usually contains slashes
                 sed -i "s|REGION=.*|REGION=${2}|" "${CARMA_CLOUD_SIM_CONFIG_PATH}"
-                region_set = 1
+                region_set=1
                 shift
                 shift
                 ;;
